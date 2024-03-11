@@ -34,7 +34,7 @@ def delete_program(request, domain, prog_id):
 
 class ProgramListView(BaseCommTrackManageView):
     urlname = 'commtrack_program_list'
-    template_name = 'programs/manage/programs.html'
+    template_name = 'programs/manage/bootstrap3/programs.html'
     page_title = gettext_noop("Programs")
 
     @property
