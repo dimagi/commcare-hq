@@ -122,7 +122,6 @@ from dimagi.utils.modules import to_function
 
 from corehq import toggles
 from corehq.apps.celery import periodic_task
-from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 
 from .const import ALERT_INFO, COMMON_TAGS, MPM_ALL, GATED_DETAILED_TAGS
@@ -331,21 +330,6 @@ def limit_tags(tags: Dict[str, str], domain: str):
         return tags
 
     return {k: v for k, v in tags.items() if k not in GATED_DETAILED_TAGS}
-
-
-@quickcache([], timeout=24 * 60 * 60)
-def _domains_to_tag():
-    # Only tag big projects individually
-    # I expect this implementation may need to evolve
-    from corehq.apps.accounting import models
-    return set(models.Subscription.visible_objects.filter(
-        is_active=True,
-        plan_version__plan__edition=models.SoftwarePlanEdition.ENTERPRISE,
-        service_type__in=[models.SubscriptionType.IMPLEMENTATION, models.SubscriptionType.SANDBOX],
-    ).values_list(
-        'subscriber__domain',
-        flat=True
-    ))
 
 
 def push_metrics():
