@@ -125,5 +125,13 @@
       "label": "analytics/forms",
       "compare_all_files": true
     }
+  ],
+  "apps/programs/templates/programs/manage": [
+    {
+      "directories": ["bootstrap3/", "bootstrap5/"],
+      "file_type": "template",
+      "label": "programs/manage",
+      "compare_all_files": true
+    }
   ]
 }
