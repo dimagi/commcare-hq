@@ -117,7 +117,10 @@ from corehq.util.global_request import get_request_domain
 from corehq.util.html_utils import strip_tags
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
-from corehq.apps.data_dictionary.util import get_deprecated_fields
+from corehq.apps.data_dictionary.util import (
+    get_data_dict_props_by_case_type,
+    get_deprecated_fields,
+)
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.util import get_indicator_adapter
 
@@ -1740,6 +1743,7 @@ class ExportDataSchema(Document):
         identifier,
         force_rebuild=False,
         only_process_current_builds=False,
+        only_use_data_dictionary=False,
         task=None,
     ):
         """
@@ -1755,6 +1759,8 @@ class ExportDataSchema(Document):
             apps, not any builds. This means that deleted items may not
             be present in the schema since past builds have not been
             processed.
+        :param only_use_data_dictionary: Only use Data dictionary to
+            update the current schema
         :param task: A celery task to update the progress of the build
         :returns: Returns a ExportDataSchema instance
         """
@@ -1768,16 +1774,20 @@ class ExportDataSchema(Document):
         else:
             current_schema = cls()
 
-        app_ids_for_domain = cls._get_current_app_ids_for_domain(domain, app_id)
-        app_build_ids = []
-        if not only_process_current_builds:
-            app_build_ids = cls._get_app_build_ids_to_process(
-                domain,
-                app_ids_for_domain,
-                current_schema.last_app_versions,
-            )
-        app_build_ids.extend(app_ids_for_domain)
-        current_schema = cls._process_apps_for_export(domain, current_schema, identifier, app_build_ids, task)
+        if only_use_data_dictionary:
+            current_schema = cls._update_schema_from_data_dictionary(
+                domain, current_schema, identifier, task)
+        else:
+            app_ids_for_domain = cls._get_current_app_ids_for_domain(domain, app_id)
+            app_build_ids = []
+            if not only_process_current_builds:
+                app_build_ids = cls._get_app_build_ids_to_process(
+                    domain,
+                    app_ids_for_domain,
+                    current_schema.last_app_versions,
+                )
+            app_build_ids.extend(app_ids_for_domain)
+            current_schema = cls._process_apps_for_export(domain, current_schema, identifier, app_build_ids, task)
 
         inferred_schema = cls._get_inferred_schema(domain, app_id, identifier)
         if inferred_schema:
@@ -1798,6 +1808,23 @@ class ExportDataSchema(Document):
             original_id,
             original_rev
         )
+        return current_schema
+
+    @classmethod
+    def _update_schema_from_data_dictionary(cls, domain, current_schema, case_type, task):
+        data_dict_props_by_case_type = get_data_dict_props_by_case_type(domain)
+
+        if case_type not in data_dict_props_by_case_type:
+            raise Exception("Case type not found in data dictionary")
+
+        case_property_mapping = {
+            case_type: data_dict_props_by_case_type[case_type]
+        }
+
+        case_schema = cls._generate_schema_from_case_property_mapping(case_property_mapping)
+        current_schema = cls._merge_schemas(current_schema, case_schema)
+
+        set_task_progress(task, current=1, total=1, src='ExportDataSchema._generate_schema_from_data_dictionary')
         return current_schema
 
     @classmethod
@@ -2358,7 +2385,8 @@ class CaseExportDataSchema(ExportDataSchema):
         return cls._merge_schemas(*case_schemas)
 
     @classmethod
-    def _generate_schema_from_case_property_mapping(cls, case_property_mapping, parent_types, app_id, app_version):
+    def _generate_schema_from_case_property_mapping(cls, case_property_mapping,
+                                                    parent_types=None, app_id=None, app_version=None):
         """
         Generates the schema for the main Case tab on the export page
         Includes system export properties for the case as well as properties for exporting parent case IDs
@@ -2369,7 +2397,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
         group_schema = ExportGroupSchema(
             path=MAIN_TABLE,
-            last_occurrences={app_id: app_version},
+            last_occurrences={app_id: app_version} if app_id else {},
         )
 
         for case_type, case_properties in case_property_mapping.items():
@@ -2378,16 +2406,17 @@ class CaseExportDataSchema(ExportDataSchema):
                 group_schema.items.append(ScalarItem(
                     path=[PathNode(name=prop)],
                     label=prop,
-                    last_occurrences={app_id: app_version},
+                    last_occurrences={app_id: app_version} if app_id else {},
                 ))
 
-        for case_type, identifier in parent_types:
-            group_schema.items.append(CaseIndexItem(
-                path=[PathNode(name='indices'), PathNode(name=case_type)],
-                label='{}.{}'.format(identifier, case_type),
-                last_occurrences={app_id: app_version},
-                tag=PROPERTY_TAG_CASE,
-            ))
+        if parent_types:
+            for case_type, identifier in parent_types:
+                group_schema.items.append(CaseIndexItem(
+                    path=[PathNode(name='indices'), PathNode(name=case_type)],
+                    label='{}.{}'.format(identifier, case_type),
+                    last_occurrences={app_id: app_version} if app_id else {},
+                    tag=PROPERTY_TAG_CASE,
+                ))
 
         schema.group_schemas.append(group_schema)
         return schema
