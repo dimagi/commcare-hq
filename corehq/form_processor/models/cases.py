@@ -328,6 +328,18 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     closed_on = models.DateTimeField(null=True)
     closed_by = models.CharField(max_length=255, null=True)
 
+    """
+    NOTE: deleted and deleted_on currently serve 2 different purposes
+    deleted == True: the case was "unmade" as a result of archiving its create form or deleting its owner
+    deleted_on != None: the case deleted using the case deletion workflow, and eligible to be tombstoned
+
+    In summary:
+    deleted == False, deleted_on == None: Normal state, case is accessible
+    deleted == True, deleted_on == None: Archived or removed due to user deletion
+    deleted == False, deleted_on != None: Deleted through case deletion
+    deleted == True, deleted_on != None: The cases' create form was first archived, and then deleted (which
+                                         triggers the case deletion as well)
+    """
     deleted = models.BooleanField(default=False, null=False)
     deleted_on = models.DateTimeField(null=True)
     deletion_id = models.CharField(max_length=255, null=True)
