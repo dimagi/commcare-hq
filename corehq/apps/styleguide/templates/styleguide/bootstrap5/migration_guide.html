@@ -216,7 +216,16 @@
     When new split directories are created, please ensure the paths to these directories are added to
     <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/tests/data/bootstrap5_diff_config.json" target="_blank">
       bootstrap5_diff_config.json
-    </a> and commit those changes. Once these paths are added, please run the following management command and commit the results.
+    </a> and commit those changes.
+    To confirm which directories to add, check your app for directories with "bootstrap" in the name:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">find corehq/apps/&lt;app_name&gt; -type d | grep bootstrap</pre>
+    </div>
+  </div>
+  <p>
+    Once these paths are added, please run the following management command and commit the results.
   </p>
   <div class="card text-bg-light mb-3">
     <div class="card-body">
