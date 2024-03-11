@@ -94,6 +94,7 @@ $ ./manage.py link_to_upstream_domain \
 ```
 
 The specified username and API key are needed to authenticate requests to the upstream environment.
+
 ### Pulling Changes From the Upstream Domain
 
 On a downstream domain's HQ environment that has the `release_management` or `lite_release_management` permission, navigate to the
@@ -103,7 +104,11 @@ in the context of remote links.
 
 #### Linking Remote Applications
 
-If you don't already have an upstream application you would like to link, create an app in the upstream domain. Then create an app in the downstream domain to serve as a placeholder. These app ids can then be used when running the `link_app_to_remote` management command:
+In order to link remote applications, you will need an existing application to reference in _both_ the upstream and downstream environments.
+If needed, please create an application in the upstream and/or downstream environment(s) to reference in the following management command.
+
+Once you have an upstream and downstream application ready to link, you can run `link_app_to_remote` from the downstream domain's
+environment, using the IDs of the applications you intend to link:
 ```
 $ ./manage.py link_app_to_remote \
     --downstream_id {downstream_app_id} \
