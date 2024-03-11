@@ -151,7 +151,7 @@ django-crispy-forms==2.0
     # via
     #   -r base-requirements.in
     #   crispy-bootstrap3to5
-django-cte==1.2.0
+django-cte==1.3.2
     # via -r base-requirements.in
 django-field-audit==1.2.6
     # via -r base-requirements.in
