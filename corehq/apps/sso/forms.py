@@ -553,6 +553,10 @@ class EditIdentityProviderAdminForm(forms.Form):
         return self.idp
 
 
+def checkbox_field(field_name, **kwargs):
+    return crispy.Field(field_name, template='bootstrap3to5/layout/prepended_appended_text.html', **kwargs)
+
+
 class BaseSsoEnterpriseSettingsForm(forms.Form):
     """This form manages fields that enterprise admins can update.
     """
@@ -595,11 +599,99 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, identity_provider, *args, **kwargs):
+    always_show_user_api_keys = forms.BooleanField(
+        label=gettext_lazy("Reveal Keys"),
+        required=False,
+        help_text=gettext_lazy(
+            "When enabled, all keys on a user’s API Key page will no longer be partially hidden after creation. "
+            "This also removes the suggestion to copy an API key to another location when generating a new key."
+        ),
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Always display full API keys to SSO users"
+            ),
+        ),
+    )
+
+    enforce_user_api_key_expiration = forms.BooleanField(
+        label=gettext_lazy("Require Expiration Date"),
+        required=False,
+        help_text=gettext_lazy(
+            "When enabled, this ensures that a date of expiration is always provided when SSO users "
+            "generated new keys from their API Keys page"
+        ),
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Always require an expiration date for API keys"
+            ),
+        ),
+    )
+
+    max_days_until_user_api_key_expiration = forms.TypedChoiceField(
+        label=gettext_lazy("Maximum Expiration Length"),
+        required=False,
+        help_text=gettext_lazy(
+            "If an expiration date is required, the expiration date will not exceed this many days "
+            "from the date an API key is created"
+        ),
+        choices=(
+            ('', '-----'),
+            (365, gettext_lazy("1 Year")),
+            (180, gettext_lazy("180 Days")),
+            (160, gettext_lazy("160 Days")),
+            (120, gettext_lazy("120 Days")),
+            (90, gettext_lazy("90 Days")),
+            (60, gettext_lazy("60 Days")),
+            (30, gettext_lazy("30 Days")),
+        ),
+        coerce=int,
+        empty_value=None
+    )
+
+    expiration_warning_message = gettext_lazy(
+        'All existing API keys that do not comply with this expiration date policy will be updated to ensure a '
+        'compliant expiration date is present. For keys that do not have an expiration date set, the date of '
+        'expiration will be <span data-bind="text: expirationLength"></span> from today after clicking '
+        '"Update Configuration" below. This will apply only to SSO users associated with this Identity Provider.'
+    )
+
+    def __init__(self, identity_provider, *args, allow_multi_view_api_keys=False, **kwargs):
         self.idp = identity_provider
+        self.allow_multi_view_api_keys = allow_multi_view_api_keys
         super().__init__(*args, **kwargs)
 
     def get_primary_fields(self):
+        if self.allow_multi_view_api_keys:
+            fieldset = crispy.Fieldset(
+                _('API Key Management'),
+                checkbox_field('always_show_user_api_keys'),
+                checkbox_field('enforce_user_api_key_expiration', data_bind='checked: enforceExpiration'),
+                crispy.Div(
+                    crispy.Field(
+                        'max_days_until_user_api_key_expiration', data_bind="value: expirationLengthValue"),
+                    crispy.HTML(
+                        '<div class="col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2" '
+                        'data-bind="visible: showExpirationWarning">'
+                        '<p class="alert alert-warning">'
+                        '<i class="fa fa-warning"></i> {}'
+                        '</p>'
+                        '</div>'.format(self.expiration_warning_message)
+                    ),
+                    data_bind='visible: enforceExpiration'
+                ),
+            )
+
+            api_key_management = \
+                crispy.Div(
+                    crispy.Div(
+                        fieldset,
+                        css_class="panel-body"
+                    ),
+                    css_class="panel panel-modern-gray panel-form-only"
+                )
+        else:
+            api_key_management = None
+
         return [
             crispy.Div(
                 crispy.Div(
@@ -620,6 +712,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
                 ),
                 css_class="panel panel-modern-gray panel-form-only"
             ),
+            api_key_management,
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     gettext_lazy("Update Configuration"),
@@ -641,6 +734,19 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         _check_required_when_active(is_active, entity_id)
         _ensure_entity_id_matches_expected_provider(entity_id, self.idp)
         return entity_id
+
+    def clean_max_days_until_user_api_key_expiration(self):
+        enforce_expiration = bool(self.data.get('enforce_user_api_key_expiration'))
+        if not enforce_expiration:
+            return None
+
+        return self.cleaned_data['max_days_until_user_api_key_expiration']
+
+    def clean(self):
+        if not self.has_error('max_days_until_user_api_key_expiration'):
+            enforces_expiration = bool(self.cleaned_data['enforce_user_api_key_expiration'])
+            if enforces_expiration and not self.cleaned_data.get('max_days_until_user_api_key_expiration', None):
+                self.add_error('max_days_until_user_api_key_expiration', gettext('a value must be specified'))
 
     def update_identity_provider(self, admin_user):
         raise NotImplementedError("please implement update_identity_provider")
@@ -712,6 +818,8 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
             ]
 
         self.helper = FormHelper()
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.attrs['name'] = 'configuration'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(

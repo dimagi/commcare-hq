@@ -7,6 +7,7 @@
 
 {% block page_content %}
   {% initial_page_data 'idp_slug' idp_slug %}
+  {% initial_page_data 'show_api_fields' show_api_fields %}
   {% initial_page_data 'toggle_client_secret' toggle_client_secret %}
 
   <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
@@ -16,9 +17,7 @@
   </ul>
   <div class="tab-content tab-padded">
     <div class="tab-pane" id="idp">
-      <form class="form form-horizontal" method="post" enctype="multipart/form-data">
-        {% crispy edit_idp_form %}
-      </form>
+      {% crispy edit_idp_form %}
     </div>
     <div class="tab-pane" id="sso-exempt-users">
       {% include 'sso/partials/manage_sso_exempt_users.html' %}
