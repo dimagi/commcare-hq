@@ -12,7 +12,9 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        currentSelections = null,
+        ongoingRequests = [];
 
     var API = {
         queryFormplayer: function (params, route) {
@@ -114,6 +116,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 formEntryUtils.reloginErrorHtml(),
                                 true
                             );
+                        } else if ( response.statusText === 'abort' ) {
+                            console.log(`statusText: ${ response.statusText } do nothing`)
                         } else {
                             FormplayerFrontend.trigger(
                                 'showError',
@@ -173,7 +177,26 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 });
 
                 var callStartTime = performance.now();
-                menus.fetch($.extend(true, {}, options)).always(function () {
+                const updateRequest = menus.fetch($.extend(true, {}, options));
+
+                if (route.startsWith("navigate_menu")) {
+                    console.log(`currentSelection:  ${ JSON.stringify(currentSelections) }, new selections: ${ JSON.stringify(params.selections) }`);
+                    if (!_.isEqual(params.selections, currentSelections)) {
+                        console.log('different selection: interrupt ongoing defers')
+                        currentSelections = params.selections;
+                        while (ongoingRequests.length > 0) {
+                            const ongoingRequest = ongoingRequests.pop();
+                            if (ongoingRequest.readyState !== 4) {
+                                console.log('found pending defer. rejecting it.')
+                                ongoingRequest.abort();
+                            }
+                        }
+                    }
+                    ongoingRequests.push(updateRequest);
+                }
+
+
+                updateRequest.always(function () {
                     if (data.requestInitiatedByTags && data.requestInitiatedByTags.includes(constants.requestInitiatedByTagsMapping.DYNAMIC_SEARCH)) {
                         var callEndTime = performance.now();
                         var callResponseTime = callEndTime - callStartTime;
