@@ -749,6 +749,8 @@ phonelog
  0012_server_date_not_null
  0013_delete_olddevicereportentry
  0014_auto_20170718_2039
+phonenumber
+ 0001_squashed_0001_initial (10 squashed migrations)
 pillow_retry
  0001_initial
  0002_pillowerror_queued
@@ -1111,13 +1113,7 @@ translations
  0008_remove_couch_id
  0009_auto_20200924_1753
 two_factor
- 0001_initial
- 0002_auto_20150110_0810
- 0003_auto_20150817_1733
- 0004_auto_20160205_1827
- 0005_auto_20160224_0450
- 0006_phonedevice_key_default
- 0007_auto_20201201_1019
+ (no migrations)
 user_importer
  0001_initial
 userreports
