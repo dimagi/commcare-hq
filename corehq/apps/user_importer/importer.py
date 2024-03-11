@@ -396,6 +396,7 @@ class BaseUserRow:
         self.importer = importer
         self.row = row
         self.status_row = {
+            'username': row.get('username'),
             'row': copy.copy(row)
         }
         self.error = None
