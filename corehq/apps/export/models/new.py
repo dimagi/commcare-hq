@@ -2508,7 +2508,7 @@ class SMSExportDataSchema(ExportDataSchema):
 
     @classmethod
     def generate_schema(cls, domain, app_id, identifier, force_rebuild=False,
-            only_process_current_builds=False, task=None):
+                        only_process_current_builds=False, task=None):
         return cls(domain=domain)
 
     @classmethod
