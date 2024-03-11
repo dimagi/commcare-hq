@@ -35,7 +35,7 @@
 /corehq/apps/domain/auth.py @esoergel
 /corehq/apps/es/ @esoergel @amitphulera
 /corehq/apps/hqcase/ @esoergel
-/corehq/apps/hqwebapp/ @orangejenny
+/corehq/apps/hqwebapp/ @orangejenny @biyeun
 /corehq/apps/linked_domain/ @gherceg
 /corehq/apps/locations/ @esoergel
 /corehq/apps/locations/adjacencylist.py @esoergel @millerdev
@@ -47,7 +47,8 @@
 /corehq/apps/receiverwrapper/ @snopoke
 /corehq/apps/sms*/ @orangejenny @mkangia
 /corehq/apps/smsbillables/ @dannyroberts @biyeun
-/corehq/apps/styleguide/ @orangejenny
+/corehq/apps/sso/ @biyeun
+/corehq/apps/styleguide/ @orangejenny @biyeun
 /corehq/apps/translations/app_translations/ @orangejenny
 /corehq/apps/user_importer/ @stephherbers
 /corehq/apps/userreports/ @calellowitz
