@@ -21,8 +21,8 @@ class TransifexApiClient(object):
         return self.api.I18nFormat(id="PO")
 
     @property
-    def project_details(self):
-        return self.project.to_dict()
+    def project_name(self):
+        return self.project.name
 
     @property
     def source_language_id(self):
