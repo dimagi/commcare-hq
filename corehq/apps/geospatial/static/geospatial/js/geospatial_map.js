@@ -153,7 +153,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 },
                 error: function () {
                     alertUser.alert_user(
-                        gettext("Oops! Something went wrong! Please contact admin if the problem persists."), 'danger'
+                        gettext("Oops! Something went wrong! Please check that your geospatial settings are configured correctly or contact admin if the problem persists."), 'danger'
                     );
                     self.setBusy(false);
                 },

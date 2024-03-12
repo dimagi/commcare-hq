@@ -28,6 +28,7 @@ from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
+    create_unique_index_name,
 )
 from corehq.util.json import CommCareJSONEncoder
 
@@ -327,6 +328,18 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
     closed_on = models.DateTimeField(null=True)
     closed_by = models.CharField(max_length=255, null=True)
 
+    """
+    NOTE: deleted and deleted_on currently serve 2 different purposes
+    deleted == True: the case was "unmade" as a result of archiving its create form or deleting its owner
+    deleted_on != None: the case deleted using the case deletion workflow, and eligible to be tombstoned
+
+    In summary:
+    deleted == False, deleted_on == None: Normal state, case is accessible
+    deleted == True, deleted_on == None: Archived or removed due to user deletion
+    deleted == False, deleted_on != None: Deleted through case deletion
+    deleted == True, deleted_on != None: The cases' create form was first archived, and then deleted (which
+                                         triggers the case deletion as well)
+    """
     deleted = models.BooleanField(default=False, null=False)
     deleted_on = models.DateTimeField(null=True)
     deletion_id = models.CharField(max_length=255, null=True)
@@ -827,6 +840,13 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
             ["domain", "external_id", "type"],
             ["domain", "type"],
         ]
+        indexes = [
+            models.Index(fields=['deleted_on'],
+                         name=create_unique_index_name('form_processor',
+                                                       'commcarecase',
+                                                       ['deleted_on']),
+                         condition=models.Q(deleted_on__isnull=False))
+        ]
         app_label = "form_processor"
         db_table = 'form_processor_commcarecasesql'
 
@@ -839,6 +859,23 @@ def get_index_map(indices):
             "relationship": index.relationship,
         } for index in indices
     }
+
+
+class TempCaseCache:
+    def __init__(self):
+        self.cache = {}
+
+    def get_cases(self, case_ids):
+        cases = [self.cache[case_id] for case_id in case_ids if case_id in self.cache]
+        not_cached_cases = [case_id for case_id in case_ids if case_id not in self.cache]
+        if not_cached_cases:
+            retrieved_cases = CommCareCase.objects.get_cases(not_cached_cases, ordered=True)
+            for case in retrieved_cases:
+                self.cache[case.case_id] = case
+            cases += retrieved_cases
+        if len(case_ids) > 1:
+            sort_with_id_list(cases, case_ids, 'case_id')
+        return cases
 
 
 class CaseAttachmentManager(RequireDBManager):
