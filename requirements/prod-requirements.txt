@@ -111,7 +111,6 @@ defusedxml==0.7.1
     #   oic
 deprecated==1.2.10
     # via
-    #   jwcrypto
     #   opentelemetry-api
     #   pygithub
 diff-match-patch==20230430
@@ -330,7 +329,7 @@ jsonschema==4.17.3
     # via
     #   -r base-requirements.in
     #   ddtrace
-jwcrypto==1.5.1
+jwcrypto==1.5.6
     # via django-oauth-toolkit
 kafka-python==1.4.7
     # via -r base-requirements.in
@@ -620,6 +619,7 @@ typing-extensions==4.8.0
     #   cattrs
     #   ddtrace
     #   django-countries
+    #   jwcrypto
     #   oic
     #   qrcode
     #   stripe
