@@ -126,6 +126,18 @@
     replace the straightforward changes, while flagging more complex changes to be addressed later.
   </p>
   <p>
+    Pre-work: Your life will be easier if you lint the app's JavaScript <em>before</em> the migration script
+    duplicates every js file. This is usually not arduous. To find lint errors, make sure you have
+    <a href="https://eslint.org/docs/latest/use/getting-started#quick-start">eslint installed locally</a> and then
+    run:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">npx eslint corehq/apps/&lt;app_name&gt;</pre>
+    </div>
+  </div>
+  <p>
+    Now, on to the migration.
     Please set aside focused time to PR these changes as soon as possible to avoid any migration conflicts or
     missed renamed references, especially in parts of the codebase that are undergoing frequent front-end changes. This
     initial "split file" Pull Request should <strong>only</strong> contain changes automatically made by the management command.
@@ -204,7 +216,16 @@
     When new split directories are created, please ensure the paths to these directories are added to
     <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/tests/data/bootstrap5_diff_config.json" target="_blank">
       bootstrap5_diff_config.json
-    </a> and commit those changes. Once these paths are added, please run the following management command and commit the results.
+    </a> and commit those changes.
+    To confirm which directories to add, check your app for directories with "bootstrap" in the name:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">find corehq/apps/&lt;app_name&gt; -type d | grep bootstrap</pre>
+    </div>
+  </div>
+  <p>
+    Once these paths are added, please run the following management command and commit the results.
   </p>
   <div class="card text-bg-light mb-3">
     <div class="card-body">
