@@ -231,6 +231,7 @@ DEFAULT_APPS = (
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'two_factor',
+    'two_factor.plugins.phonenumber',
     'ws4redis',
     'statici18n',
     'django_user_agents',
