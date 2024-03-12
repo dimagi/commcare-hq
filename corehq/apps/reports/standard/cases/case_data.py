@@ -99,6 +99,7 @@ from corehq.form_processor.models import (
     XFormInstance,
 )
 from corehq.form_processor.models.forms import TempFormCache
+from corehq.form_processor.models.cases import TempCaseCache
 from corehq.motech.repeaters.dbaccessors import (
     get_repeat_records_by_payload_id,
 )
@@ -604,6 +605,7 @@ class DeleteCaseView(BaseProjectReportSectionView):
     @method_decorator(require_case_view_permission)
     def dispatch(self, request, *args, **kwargs):
         self.form_cache = TempFormCache()
+        self.case_cache = TempCaseCache()
         self.case_block_cache = TempCaseBlockCache()
         if self.xform_id:
             self.template_name = 'reports/reportdata/form_case_delete.html'
@@ -762,7 +764,7 @@ class DeleteCaseView(BaseProjectReportSectionView):
         potentially pass into another recursion.
         :return: A list of FormAffectedCases objects that detail how the form_obj changed them.
         """
-        touched_cases = get_all_cases_from_form(form_obj, self.domain, self.case_block_cache)
+        touched_cases = get_all_cases_from_form(form_obj, self.case_cache, self.case_block_cache)
         form_id = form_obj.form_id
         case_actions = []
         for touched_id in touched_cases:

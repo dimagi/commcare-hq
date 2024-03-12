@@ -107,18 +107,21 @@ class TempCaseBlockCacheTests(TestCase):
         })
         cache_obj.cache[self.form_id] = blocks
         block_form = create_form_for_test(self.domain, form_id=self.form_id)
+        self.addCleanup(block_form.delete)
         retrieved_blocks = cache_obj.get_case_blocks(block_form)
         self.assertEqual(retrieved_blocks, blocks)
 
     def test_extracts_case_blocks_if_not_cached(self):
         cache_obj = TempCaseBlockCache()
         block_form = create_form_for_test(self.domain, form_id=self.form_id)
+        self.addCleanup(block_form.delete)
         retrieved_blocks = cache_obj.get_case_blocks(block_form)
         self.assertEqual(retrieved_blocks, [])  # test form has no case blocks
 
     def test_caches_case_blocks_if_not_cached(self):
         cache_obj = TempCaseBlockCache()
         block_form = create_form_for_test(self.domain, form_id=self.form_id)
+        self.addCleanup(block_form.delete)
         cache_obj.get_case_blocks(block_form)
         self.assertEqual(cache_obj.cache[self.form_id], [])  # test form has no case blocks
 

@@ -861,6 +861,23 @@ def get_index_map(indices):
     }
 
 
+class TempCaseCache:
+    def __init__(self):
+        self.cache = {}
+
+    def get_cases(self, case_ids):
+        cases = [self.cache[case_id] for case_id in case_ids if case_id in self.cache]
+        not_cached_cases = [case_id for case_id in case_ids if case_id not in self.cache]
+        if not_cached_cases:
+            retrieved_cases = CommCareCase.objects.get_cases(not_cached_cases, ordered=True)
+            for case in retrieved_cases:
+                self.cache[case.case_id] = case
+            cases += retrieved_cases
+        if len(case_ids) > 1:
+            sort_with_id_list(cases, case_ids, 'case_id')
+        return cases
+
+
 class CaseAttachmentManager(RequireDBManager):
 
     def get_attachments(self, case_id):

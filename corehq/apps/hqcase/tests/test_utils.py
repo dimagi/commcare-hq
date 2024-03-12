@@ -24,6 +24,7 @@ from corehq.form_processor.tests.utils import create_case
 from corehq.apps.reports.tests.test_case_data import _delete_all_cases_and_forms
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.models.forms import TempFormCache
+from corehq.form_processor.models.cases import TempCaseCache
 
 DOMAIN = 'test-domain'
 
@@ -168,7 +169,7 @@ class TestCaseDeletionUtil(TestCase):
     def test_get_cases_irrespective_of_deleted_state(self):
         cases, xforms = self.make_case()
         xforms['child_xform'].archive()
-        cases_from_form = get_all_cases_from_form(xforms['child_xform'], DOMAIN, TempCaseBlockCache())
+        cases_from_form = get_all_cases_from_form(xforms['child_xform'], TempCaseCache(), TempCaseBlockCache())
 
         self.assertItemsEqual(list(cases.values()), list(cases_from_form.keys()))
 

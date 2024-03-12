@@ -4,7 +4,6 @@ from casexml.apps.case.xform import get_case_updates
 
 from corehq.apps.hqwebapp.doc_info import get_case_url
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
-from corehq.form_processor.models import CommCareCase
 
 
 @define
@@ -109,10 +108,10 @@ def _get_deleted_case_name(case, form_cache, case_block_cache):
             return case_block['create']['case_name']
 
 
-def get_all_cases_from_form(form, domain, case_block_cache):
+def get_all_cases_from_form(form, case_cache, case_block_cache):
     case_updates = get_case_updates(form, case_block_cache=case_block_cache)
     update_ids = [update.id for update in case_updates]
-    all_cases = CommCareCase.objects.get_cases(update_ids, domain, ordered=True)
+    all_cases = case_cache.get_cases(update_ids)
     all_actions = [{action.action_type_slug for action in update.actions} for update in case_updates]
 
     touched_cases = {}

@@ -33,6 +33,7 @@ from corehq.apps.users.models import (
 )
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.models.forms import TempFormCache
+from corehq.form_processor.models.cases import TempCaseCache
 from corehq.form_processor.tests.utils import create_case
 from corehq.util.test_utils import unit_testing_only
 
@@ -166,6 +167,7 @@ class TestCaseDeletion(TestCase):
             view.kwargs['xform_id'] = form_id
         view.request = self.request
         view.form_cache = TempFormCache()
+        view.case_cache = TempCaseCache()
         view.case_block_cache = TempCaseBlockCache()
         return view
 
