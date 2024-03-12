@@ -102,6 +102,22 @@
       ]
     }
   ],
+  "apps/builds/templates/builds": [
+    {
+      "directories": ["partials/bootstrap3/", "partials/bootstrap5/"],
+      "file_type": "template",
+      "label": "builds/partials",
+      "compare_all_files": true
+    }
+  ],
+  "apps/builds/static/builds": [
+    {
+      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
+      "file_type": "javascript",
+      "label": "javascript/builds",
+      "compare_all_files": true
+    }
+  ],
   "apps/notifications/templates/notifications": [
     {
       "directories": ["partials/bootstrap3/", "partials/bootstrap5/"],
