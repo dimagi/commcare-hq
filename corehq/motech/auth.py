@@ -228,6 +228,7 @@ class OAuth2ClientGrantManager(AuthManager):
                     token_url=self.token_url,
                     client_id=self.client_id,
                     client_secret=self.client_secret,
+                    include_client_id=True,
                 )
 
         refresh_kwargs = {
