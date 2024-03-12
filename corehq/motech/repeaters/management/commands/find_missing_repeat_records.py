@@ -554,11 +554,11 @@ class Command(BaseCommand):
             domains_to_inspect = [domain]
         elif startswith:
             domains_to_inspect = list(
-                SQLRepeatRecord.objects.get_domains_having_records()
+                SQLRepeatRecord.objects.get_domains_with_records()
                 .filter(domain__startswith=startswith)
             )
         else:
-            domains_to_inspect = list(SQLRepeatRecord.objects.get_domains_having_records())
+            domains_to_inspect = list(SQLRepeatRecord.objects.get_domains_with_records())
 
         logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
         if command == CASES:
