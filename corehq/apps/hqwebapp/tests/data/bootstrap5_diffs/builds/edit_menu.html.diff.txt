@@ -62,7 +62,7 @@
 -          </td>
 -        </tr>
 -      </table>
-+<div class="card">
++<div class="card mb-4">
 +  <div class="card-header">{% trans "Menu Options" %}</div>
 +  <div class="card-body">
 +    <div class="card-text">
@@ -173,7 +173,7 @@
 -          {% trans "Version" %}
 -        </label>
 -        <div class="col-sm-8">
-+<div class="card">
++<div class="card mb-4">
 +  <div class="card-header">{% trans "Import a new build from the build server" %}</div>
 +  <div class="card-body">
 +    <div class="card-text">
