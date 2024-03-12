@@ -71,11 +71,14 @@ requirejs.config({
             exports: 'RMI',
         },
         "ko.mapping": { deps: ['knockout'] },
+        // Use the uncompressed version of mapbox, because the compressed version lacks an ending semicolon,
+        // which can interfere with whatever modules is included after it in bundle files.
+        // During deploy, build_requirejs will minify it.
         "leaflet-fullscreen/dist/Leaflet.fullscreen.min": {
-            deps: ["mapbox.js/dist/mapbox"],
+            deps: ["mapbox.js/dist/mapbox.uncompressed"],
             exports: "L",
         },
-        "mapbox.js/dist/mapbox": { exports: "L" },
+        "mapbox.js/dist/mapbox.uncompressed": { exports: "L" },
         "nvd3/nv.d3.min": {
             deps: ['d3/d3.min'],
             exports: 'nv',

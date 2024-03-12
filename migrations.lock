@@ -411,6 +411,7 @@ es
  0006_verify_es2_indices_reindexed
  0007_init_indices_for_fresh_es_5
  0008_add_doc_id_to_all_mappings
+ 0009_add_indices_for_reindex_in_es5
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -1083,6 +1084,7 @@ sso
  0004_login_enforcement_type_sso_test_user
  0005_alter_identityprovider_idp_type
  0006_add_new_fields_in_identityprovider
+ 0007_add_multi_view_api_fields
 start_enterprise
  0001_initial
 stock

@@ -431,11 +431,10 @@ class Command(BaseCommand):
 
     @staticmethod
     def format_code(code_text, split_lines=False, break_length=80):
-        break_line = get_break_line("`  ", break_length)
         lines = [
-            f'\n{break_line}\n',
+            '\n```\n',
             code_text,
-            f'\n{break_line}\n\n',
+            '\n```\n\n',
         ]
         if split_lines:
             return lines

@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('accounting/js/widgets', [
     'jquery',
     'knockout',
@@ -11,7 +12,6 @@ hqDefine('accounting/js/widgets', [
     emailUtils
 ) {
     var asyncSelect2Handler = function (field, multiple, handlerSlug) {
-        'use strict';
         var self = {};
 
         self.fieldName = field;
@@ -66,7 +66,6 @@ hqDefine('accounting/js/widgets', [
     };
 
     var emailSelect2Handler = function (field) {
-        'use strict';
         var self = {};
 
         self.fieldName = field;

@@ -25,7 +25,7 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", [
 ) {
     describe('WebForm', function () {
         before(function () {
-            hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", {
+            initialPageData.register("toggles_dict", {
                 WEB_APPS_ANCHORED_SUBMIT: false,
                 USE_PROMINENT_PROGRESS_BAR: false,
             });
