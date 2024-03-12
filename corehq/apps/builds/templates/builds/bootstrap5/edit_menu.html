@@ -16,8 +16,8 @@
 
 
 <div class="card">
+  <div class="card-header">{% trans "Menu Options" %}</div>
   <div class="card-body">
-    <h5 class="card-title">{% trans "Menu Options" %}</h5>
     <div class="card-text">
       <form id="menu-form" method="POST">{% csrf_token %}
         <table id="menu-table" class="table table-striped">
@@ -89,10 +89,8 @@
   </div>
 </div>
 <div class="card">
+  <div class="card-header">{% trans "Import a new build from the build server" %}</div>
   <div class="card-body">
-    <h5 class="card-title">
-      {% trans "Import a new build from the build server" %}
-    </h5>
     <div class="card-text">
       <form action="{% url 'import_build' %}" method="post">
         {% csrf_token %}
