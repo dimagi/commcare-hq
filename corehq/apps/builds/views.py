@@ -13,6 +13,7 @@ from dimagi.utils.web import json_request, json_response
 
 from corehq.apps.api.models import require_api_user
 from corehq.apps.domain.decorators import require_superuser
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.util.view_utils import json_error
 
@@ -56,11 +57,12 @@ def get_all(request):
 
 
 class EditMenuView(BasePageView):
-    template_name = "builds/edit_menu.html"
+    template_name = "builds/bootstrap5/edit_menu.html"
     urlname = 'edit_menu'
     doc_id = "config--commcare-builds"
     page_title = gettext_lazy("Edit CommCare Builds")
 
+    @use_bootstrap5
     @method_decorator(require_superuser)
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
