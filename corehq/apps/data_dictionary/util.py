@@ -382,7 +382,7 @@ def is_case_type_or_prop_name_valid(case_prop_name):
     return match_obj is not None
 
 
-@quickcache(vary_on=['domain'], timeout=60 * 60)
+@quickcache(vary_on=['domain'], timeout=60 * 10)
 def get_used_props_by_case_type(domain):
     agg = TermsAggregation('case_types', 'type.exact').aggregation(
         NestedAggregation('case_props', CASE_PROPERTIES_PATH).aggregation(

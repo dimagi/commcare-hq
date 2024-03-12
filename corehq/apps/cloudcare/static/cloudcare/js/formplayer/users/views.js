@@ -1,3 +1,4 @@
+'use strict';
 /*global Backbone, Marionette */
 
 hqDefine("cloudcare/js/formplayer/users/views", function () {

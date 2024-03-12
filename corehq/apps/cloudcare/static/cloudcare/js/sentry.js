@@ -1,3 +1,4 @@
+'use strict';
 /* global Sentry */
 hqDefine('cloudcare/js/sentry', [
     'hqwebapp/js/initial_page_data',

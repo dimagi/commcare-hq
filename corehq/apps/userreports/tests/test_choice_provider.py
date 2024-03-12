@@ -263,7 +263,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     domain = 'user-choice-provider'
 
     @classmethod
-    @patch_user_data_db_layer
+    @patch_user_data_db_layer()
     def make_mobile_worker(cls, username, domain=None):
         domain = domain or cls.domain
         user = CommCareUser(username=normalize_username(username, domain),

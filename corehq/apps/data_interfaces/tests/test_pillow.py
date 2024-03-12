@@ -16,6 +16,9 @@ from corehq.form_processor.models import CommCareCase
 from corehq.apps.hqcase.utils import resave_case
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 
+from corehq.form_processor.tests.utils import create_case
+from corehq.form_processor.change_publishers import publish_case_saved
+
 
 @override_settings(RUN_UNKNOWN_USER_PILLOW=False)
 @override_settings(RUN_FORM_META_PILLOW=False)
@@ -119,6 +122,25 @@ class DeduplicationPillowTest(TestCase):
         self.pillow.process_changes(since=self.kafka_offset, forever=False)
 
         mock_run_rules.assert_not_called()
+
+    def test_pillow_processes_restored_forms(self):
+        # This test was created to ensure that 'Undo-ing' a delete, or archiving a deletion request,
+        # was not causing the correct deduplication logic to occur.
+        # Because, from the code's perspective, these situations both just appear
+        # as a case published without an associated form, that is what is being tested here
+        rule = self._create_rule('test', ['name'])
+        action = CaseDeduplicationActionDefinition.from_rule(rule)
+        case1 = create_case(domain=self.domain, name='test', case_type=self.case_type, save=True)
+        case2 = create_case(domain=self.domain, name='test', case_type=self.case_type, save=True)
+        publish_case_saved(case1)
+
+        self.find_duplicates_mock.return_value = [case1.case_id, case2.case_id]
+
+        self.pillow.process_changes(since=self.kafka_offset, forever=False)
+
+        hash = CaseDuplicateNew.case_and_action_to_hash(case1, action)
+        resulting_ids = CaseDuplicateNew.objects.filter(action=action, hash=hash).values_list('case_id', flat=True)
+        self.assertIn(case1.case_id, resulting_ids)
 
     def _create_rule(self, name='test', match_on=None):
         rule = AutomaticUpdateRule.objects.create(

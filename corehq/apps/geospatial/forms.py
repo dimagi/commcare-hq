@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django import forms
 from corehq.apps.geospatial.models import GeoConfig
+from corehq import toggles
 
 
 LOCATION_SOURCE_OPTIONS = [
@@ -15,6 +16,13 @@ LOCATION_SOURCE_OPTIONS = [
 
 
 class GeospatialConfigForm(forms.ModelForm):
+
+    RADIAL_ALGORITHM_OPTION = (GeoConfig.RADIAL_ALGORITHM, _('Radial Algorithm'))
+    ROAD_NETWORK_ALGORITHM_OPTION = (GeoConfig.ROAD_NETWORK_ALGORITHM, _('Road Network Algorithm'))
+
+    DISBURSEMENT_ALGORITHM_OPTIONS = [
+        RADIAL_ALGORITHM_OPTION,
+    ]
 
     class Meta:
         model = GeoConfig
@@ -26,6 +34,7 @@ class GeospatialConfigForm(forms.ModelForm):
             "min_cases_per_group",
             "target_group_count",
             "selected_disbursement_algorithm",
+            "plaintext_api_token",
         ]
 
     user_location_property_name = forms.CharField(
@@ -39,7 +48,6 @@ class GeospatialConfigForm(forms.ModelForm):
         required=True,
         help_text=_("The name of the case property storing the geo-location data of your cases."),
     )
-
     selected_grouping_method = forms.ChoiceField(
         label=_("Grouping method"),
         # TODO: Add relevant documentation link to help_text when geospatial feature is GA'ed
@@ -73,12 +81,26 @@ class GeospatialConfigForm(forms.ModelForm):
         #       '<a href="{}" target="_blank">support documentation</a>.'),
         #     'https://confluence.dimagi.com/pages/viewpage.action?pageId=164694245'
         # ),
-        choices=GeoConfig.VALID_DISBURSEMENT_ALGORITHMS,
+        choices=DISBURSEMENT_ALGORITHM_OPTIONS,
         required=True,
+    )
+    plaintext_api_token = forms.CharField(
+        label=_("Enter mapbox token"),
+        help_text=_(
+            "Enter your Mapbox API token here. Make sure your token has the correct scope configured"
+            " for use of the Mapbox Matrix API."
+        ),
+        required=False,
+        widget=forms.PasswordInput(),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if toggles.SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM.enabled(self.domain):
+            choices = self.fields['selected_disbursement_algorithm'].choices
+            choices.append(self.ROAD_NETWORK_ALGORITHM_OPTION)
+            self.fields['selected_disbursement_algorithm'].choices = choices
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.add_layout(
@@ -133,7 +155,25 @@ class GeospatialConfigForm(forms.ModelForm):
                 ),
                 crispy.Fieldset(
                     _('Algorithms'),
-                    crispy.Field('selected_disbursement_algorithm'),
+                    crispy.Field(
+                        'selected_disbursement_algorithm',
+                        data_bind='value: selectedAlgorithm',
+                    ),
+                    crispy.Div(
+                        crispy.Field('plaintext_api_token', data_bind="value: plaintext_api_token"),
+                        data_bind="visible: captureApiToken"
+                    ),
+                    crispy.Div(
+                        StrictButton(
+                            _('Test API Key'),
+                            type='button',
+                            css_id='test-connection-button',
+                            css_class='btn btn-default',
+                            data_bind="click: validateApiToken",
+                        ),
+                        css_class=hqcrispy.CSS_ACTION_CLASS,
+                        data_bind="visible: captureApiToken"
+                    ),
                 ),
                 hqcrispy.FormActions(
                     StrictButton(
@@ -145,6 +185,10 @@ class GeospatialConfigForm(forms.ModelForm):
                 )
             )
         )
+
+    @property
+    def domain(self):
+        return self.instance.domain
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -164,4 +208,14 @@ class GeospatialConfigForm(forms.ModelForm):
             if not cleaned_data['target_group_count']:
                 raise ValidationError(_("Value for target group count required"))
 
+        algorithm = cleaned_data.get('selected_disbursement_algorithm')
+        token = cleaned_data.get('plaintext_api_token')
+        if algorithm == GeoConfig.ROAD_NETWORK_ALGORITHM and not token:
+            raise ValidationError(_("Mapbox API token required"))
+
         return cleaned_data
+
+    def save(self, commit=True):
+        if self.cleaned_data.get('plaintext_api_token'):
+            self.instance.plaintext_api_token = self.cleaned_data.get('plaintext_api_token')
+        return super().save(commit)

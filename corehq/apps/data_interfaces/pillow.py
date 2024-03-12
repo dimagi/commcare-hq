@@ -63,13 +63,13 @@ class CaseDeduplicationProcessor(PillowProcessor):
         domain = change.metadata.domain
         associated_form_id = change.metadata.associated_document_id
 
-        if not associated_form_id:
-            return []
-
         # TODO: feels like there should be some enforced order for running through rules?
         rules = self._get_rules(domain)
 
-        if associated_form_id == UPDATE_REASON_RESAVE:
+        if not associated_form_id or associated_form_id == UPDATE_REASON_RESAVE:
+            # no associated form occurs whenever a form is rebuilt. Forms can be rebuilt
+            # when a deletion is being undone or a form is being restored. In either case,
+            # all rules may be interested in these changes
             applicable_rules = rules
         else:
             associated_form = self._get_associated_form(change)

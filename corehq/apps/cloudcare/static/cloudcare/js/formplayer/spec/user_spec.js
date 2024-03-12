@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/user_spec", function () {
     describe('User', function () {

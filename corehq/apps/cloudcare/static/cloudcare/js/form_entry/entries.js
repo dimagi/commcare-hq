@@ -1,3 +1,4 @@
+'use strict';
 /* globals moment, SignaturePad, DOMPurify */
 hqDefine("cloudcare/js/form_entry/entries", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),

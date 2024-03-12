@@ -1,3 +1,4 @@
+'use strict';
 /**
  * Generates mock formplayer responses. Use as a fake for queryFormplayer.
  *
