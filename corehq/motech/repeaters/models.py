@@ -1595,6 +1595,14 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
 
     @property
     def succeeded(self):
+        """True if the record was sent successfully or if there was nothing to send
+
+        It is considered a successful attempt if the payload was empty
+        and nothing was sent, in which case the record will have an
+        Empty state.
+        """
+        # See also the comment in add_success_attempt about possible
+        # incorrect status code interpretation resulting in Empty state.
         return self.state == State.Success or self.state == State.Empty
 
     def is_queued(self):
