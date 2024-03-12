@@ -171,7 +171,7 @@ hqDefine('cloudcare/js/utils', [
             const progressView = ProgressBar({
                 progressMessage: gettext("Loading..."),
             });
-            hqRequire(["cloudcare/js/formplayer/app", function (FormplayerFrontend) {
+            hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
                 if (!FormplayerFrontend.regions) {
                     FormplayerFrontend.regions = getRegionContainer();
                 }
