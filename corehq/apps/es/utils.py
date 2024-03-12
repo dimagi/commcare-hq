@@ -94,7 +94,11 @@ def check_task_progress(task_id, just_once=False):
     from corehq.apps.es.client import manager
 
     node_id = task_id.split(':')[0]
-    node_name = manager.get_node_info(node_id, metric="name")
+    try:
+        node_name = manager.get_node_info(node_id, metric="name")
+    except KeyError:
+        raise CommandError(f"Invalid Task Id. Please ensure that {node_id} is valid")
+
     print(f"Looking for task with ID '{task_id}' running on '{node_name}'")
     progress_data = []
     while True:
