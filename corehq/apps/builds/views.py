@@ -56,7 +56,7 @@ def get_all(request):
 
 
 class EditMenuView(BasePageView):
-    template_name = "builds/edit_menu.html"
+    template_name = "builds/bootstrap3/edit_menu.html"
     urlname = 'edit_menu'
     doc_id = "config--commcare-builds"
     page_title = gettext_lazy("Edit CommCare Builds")
