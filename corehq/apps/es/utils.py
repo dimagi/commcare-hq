@@ -89,6 +89,7 @@ def check_task_progress(task_id, just_once=False):
     """
     A util to be used in management commands to check the state of a task in ES.
     If just_once is set to False it will continuoslly poll for task stats until task is completed.
+    Returns true if the task is completed
     """
     from corehq.apps.es.client import manager
 
@@ -100,12 +101,9 @@ def check_task_progress(task_id, just_once=False):
         try:
             task_details = manager.get_task(task_id=task_id)
         except TaskMissing:
-            if not just_once:
-                return  # task completed ES 2
             raise CommandError(f"Task with id {task_id} not found")
         except TaskError as err:
             raise CommandError(f"Fetching task failed: {err}")
-
         status = task_details["status"]
         total = status["total"]
         if total:  # total can be 0 initially
@@ -147,10 +145,10 @@ def check_task_progress(task_id, just_once=False):
                   f"(average since start = {_format_timedelta(remaining_time_absolute)}) "
                   f"(recent average = {_format_timedelta(remaining_time_relative)})  "
                   f"Task ID: {task_id}")
+        if task_details.get("completed"):
+            return True
         if just_once:
             return
-        if task_details.get("completed"):
-            return  # task completed ES 5
         time.sleep(TASK_POLL_DELAY)
 
 
