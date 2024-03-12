@@ -9,8 +9,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         toggles = hqImport("hqwebapp/js/toggles"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         cloudcareUtils = hqImport("cloudcare/js/utils"),
-        markdown = hqImport("cloudcare/js/markdown"),
-        formplayerConstants = hqImport("cloudcare/js/formplayer/constants");
+        markdown = hqImport("cloudcare/js/markdown");
 
     const MenuView = Marionette.View.extend({
         tagName: function () {
@@ -323,7 +322,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
             currentUrlToObject.endpointId = endpointId;
             currentUrlToObject.isBackground = isBackground;
-            currentUrlToObject.addRequestInitiatedByTags(formplayerConstants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
+            currentUrlToObject.addRequestInitiatedByTags(constants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
             function resetIcon() {
                 $moduleIcon.css('display', '');
                 $iconButton.removeClass('disabled');
@@ -343,7 +342,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const self = this;
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
-            urlObject.addRequestInitiatedByTags(formplayerConstants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
+            urlObject.addRequestInitiatedByTags(constants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
             urlObject.clickedIcon = true;
             const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
