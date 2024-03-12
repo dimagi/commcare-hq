@@ -480,7 +480,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseTileView = CaseView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style panel panel-default",
+        className: "formplayer-request list-cell-wrapper-style",
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileView.__super__.templateContext.apply(this, arguments);
@@ -504,7 +504,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseTileViewUnclickable = CaseTileView.extend({
         events: {},
-        className: "list-cell-wrapper-style panel panel-default",
+        className: "list-cell-wrapper-style",
         rowClick: function () {},
     });
 
