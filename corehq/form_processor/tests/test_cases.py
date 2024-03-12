@@ -495,12 +495,10 @@ class TestCommCareCase(BaseCaseManagerTest):
 class TempCaseCacheTests(TestCase):
     def test_no_db_hit_if_cached(self):
         cache_obj = TempCaseCache()
-        cache_case = _create_case(name="cached_case")
+        cache_case = _create_case(name="not_cached_case")
         self.addCleanup(cache_case.delete)
+        cache_case.name = "cached_case"
         cache_obj.cache[cache_case.case_id] = cache_case
-        same_case = CommCareCase.objects.get_case(cache_case.case_id)
-        same_case.name = "not_cached_case"
-        same_case.save()
         retrieved_case = cache_obj.get_cases([cache_case.case_id])[0]
         self.assertEqual(retrieved_case.name, "cached_case")
 

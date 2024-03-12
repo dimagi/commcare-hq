@@ -440,12 +440,10 @@ class TempFormCacheTests(TestCase):
 
     def test_no_db_hit_if_cached(self):
         cache_obj = TempFormCache()
-        cache_form = create_form_for_test(self.domain, xmlns="cached_form")
+        cache_form = create_form_for_test(self.domain, xmlns="not_cached_form")
         self.addCleanup(cache_form.delete)
+        cache_form.xmlns = "cached_form"
         cache_obj.cache[cache_form.form_id] = cache_form
-        same_form = XFormInstance.objects.get_form(cache_form.form_id)
-        same_form.xmlns = "not_cached_form"
-        same_form.save()
         retrieved_form = cache_obj.get_forms([cache_form.form_id])[0]
         self.assertEqual(retrieved_form.xmlns, "cached_form")
 
