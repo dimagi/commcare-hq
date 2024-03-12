@@ -55,10 +55,7 @@ class TransifexApiClient(object):
         return upload
 
     def move_resource(self, old_resource_slug, new_resource_slug):
-        # get the old resource
         old_resource = self.api.Resource.get(slug=old_resource_slug, project=self.project)
-
-        # create the new resource
         new_resource = self.api.Resource(
             name=old_resource.name,
             slug=new_resource_slug,
@@ -66,29 +63,7 @@ class TransifexApiClient(object):
             i18n_format=self.i18n_format
         )
         new_resource.save()
-
-        # download source language strings from old resource
-        download = self.api.ResourceStringsAsyncDownload.download(resource=old_resource)
-        response = requests.get(download, stream=True)
-
-        # upload source language strings for new resource
-        cls = self.api.ResourceStringsAsyncUpload
-        self._create_with_form(cls, response.content, new_resource.id)
-
-        language_stats_list = self.api.ResourceLanguageStats.filter(resource=old_resource, project=self.project)
-        for stats in language_stats_list:
-            # download translations for each language
-            language = stats.language
-            if language == self.project.related["source_language"]:
-                continue
-            download = self.api.ResourceTranslationsAsyncDownload.download(
-                resource=old_resource, language=language)
-            response = requests.get(download, stream=True)
-
-            # upload translations for new resource
-            cls = self.api.ResourceTranslationsAsyncUpload
-            self._create_with_form(cls, response.content, new_resource.id, language.id)
-
+        old_resource.delete()
         return new_resource
 
     def delete_resource(self, resource_slug):
