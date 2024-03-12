@@ -17,32 +17,32 @@ class TransifexApiClient(object):
         self.project = self.api.Project.get(slug=project, organization=self.organization)
 
     @property
-    def i18n_format(self):
+    def _i18n_format(self):
         return self.api.I18nFormat(id="PO")
 
     @property
     def project_details(self):
         return self.project.to_dict()
 
-    def list_resources_by_version(self, version):
-        """
-        :return: list of resources corresponding to version
-        """
-        all_resources = self.api.Resource.filter(project=self.project)
-        if version and self.use_version_postfix:
-            # get all resources with version postfix
-            return [r for r in all_resources
-                    if r.slug.endswith("v%s" % version)]
-        elif version and not self.use_version_postfix:
-            # get all resources that don't have version postfix
-            return [r for r in all_resources
-                    if not r.slug.endswith("v%s" % version)]
-        else:
-            # get all resources
-            return all_resources
+    @property
+    def source_language_id(self):
+        return self.project.related["source_language"].id
+
+    @property
+    def source_lang_code(self):
+        return self._to_lang_code(self.source_language_id)
+
+    def _create_resource(self, resource_slug, resource_name):
+        resource = self.api.Resource.create(
+            name=resource_name,
+            slug=resource_slug,
+            project=self.project,
+            i18n_format=self._i18n_format
+        )
+        return resource
 
     @staticmethod
-    def _create_with_form(cls, content, resource_id, language_id=None):
+    def _upload_content(cls, content, resource_id, language_id=None):
         # TransifexApi.upload() waits for async upload which we don't need, so create the upload manually
         data = {"resource": resource_id}
         if language_id is not None:
@@ -52,23 +52,51 @@ class TransifexApiClient(object):
         # mirror TransifexApi error handling
         if hasattr(upload, "errors") and len(upload.errors) > 0:
             raise UploadException(upload.errors[0]["detail"], upload.errors)
-        return upload
 
-    def move_resource(self, old_resource_slug, new_resource_slug):
-        old_resource = self.api.Resource.get(slug=old_resource_slug, project=self.project)
-        new_resource = self.api.Resource(
-            name=old_resource.name,
-            slug=new_resource_slug,
-            project=self.project,
-            i18n_format=self.i18n_format
-        )
-        new_resource.save()
-        old_resource.delete()
-        return new_resource
+    def _upload_resource_strings(self, content, resource_id):
+        cls = self.api.ResourceStringsAsyncUpload
+        self._upload_content(cls, content, resource_id)
+
+    def _upload_resource_translations(self, content, resource_id, language_id):
+        cls = self.api.ResourceTranslationsAsyncUpload
+        self._upload_content(cls, content, resource_id, language_id=language_id)
+
+    def _list_language_stats(self, resource_id=None, language_id=None):
+        language_stats_list = self.api.ResourceLanguageStats.filter(project=self.project)
+        if resource_id:
+            language_stats_list.filter(resource=resource_id)
+        if language_id:
+            language_stats_list.filter(language=language_id)
+        return language_stats_list
+
+    def _get_resource(self, resource_slug):
+        resource = self.api.Resource.get(slug=resource_slug, project=self.project)
+        return resource
+
+    def _list_resources(self):
+        resources = self.api.Resource.filter(project=self.project)
+        return resources
+
+    @staticmethod
+    def _download_content(cls, resource_id, language_id=None):
+        if language_id is None:
+            download = cls.download(resource=resource_id)
+        else:
+            download = cls.download(resource=resource_id, language=language_id)
+        response = requests.get(download, stream=True)
+        return response.content
+
+    def _download_resource_strings(self, resource_id):
+        cls = self.api.ResourceStringsAsyncDownload
+        return self._download_content(cls, resource_id)
+
+    def _download_resource_translations(self, resource_id, language_id):
+        cls = self.api.ResourceTranslationsAsyncDownload
+        return self._download_content(cls, resource_id, language_id=language_id)
 
     def delete_resource(self, resource_slug):
-        resource = self.api.Resource.get(slug=resource_slug, project=self.project)
-        return resource.delete()
+        resource = self._get_resource(resource_slug)
+        resource.delete()
 
     def upload_resource(self, path_to_pofile, resource_slug, resource_name, update_resource):
         """
@@ -80,23 +108,15 @@ class TransifexApiClient(object):
         :param update_resource: update resource
         """
         if update_resource:
-            resource = self.api.Resource.get(slug=resource_slug, project=self.project)
+            resource = self._get_resource(resource_slug)
         else:
             # must create the new resource first
             if resource_name is None:
                 __, filename = os.path.split(path_to_pofile)
                 resource_name = filename
-            resource = self.api.Resource(
-                name=resource_name,
-                slug=resource_slug,
-                project=self.project,
-                i18n_format=self.i18n_format
-            )
-            resource.save()
-
-        cls = self.api.ResourceStringsAsyncUpload
+            resource = self._create_resource(name=resource_name, slug=resource_slug)
         content = open(path_to_pofile, 'r', encoding="utf-8").read()
-        return self._create_with_form(cls, content, resource.id)
+        self._upload_resource_strings(content, resource.id)
 
     def upload_translation(self, path_to_pofile, resource_slug, hq_lang_code):
         """
@@ -106,32 +126,27 @@ class TransifexApiClient(object):
         :param resource_slug: resource slug
         :param hq_lang_code: lang code on hq
         """
-        language_id = self._lang_code_to_language_id(self.transifex_lang_code(hq_lang_code))
-        resource = self.api.Resource.get(slug=resource_slug, project=self.project)
-
-        cls = self.api.ResourceTranslationsAsyncUpload
+        language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
+        resource = self._get_resource(resource_slug)
         content = open(path_to_pofile, 'r', encoding="utf-8").read()
-        return self._create_with_form(cls, content, resource.id, language_id)
+        self._upload_resource_translations(content, resource.id, language_id)
 
-    def translation_completed(self, resource_slug, hq_lang_code=None):
+    def get_resource_slugs(self, version):
         """
-        check if a resource has been completely translated for
-        all langs or a specific target lang
+        :return: list of resource slugs corresponding to version
         """
-        def completed(stats):
-            return not bool(stats.untranslated_words)
-
-        resource = self.api.Resource.get(slug=resource_slug, project=self.project)
-        if hq_lang_code:
-            language_id = self._lang_code_to_language_id(self.transifex_lang_code(hq_lang_code))
-            language = self.api.Language(id=language_id)
-            language_stats = self.api.ResourceLanguageStats.get(
-                language=language, resource=resource, project=self.project)
-            return completed(language_stats)
+        all_resources = self._list_resources()
+        if version and self.use_version_postfix:
+            # get all resources with version postfix
+            return [r.slug for r in all_resources
+                    if r.slug.endswith("v%s" % version)]
+        elif version and not self.use_version_postfix:
+            # get all resources that don't have version postfix
+            return [r.slug for r in all_resources
+                    if not r.slug.endswith("v%s" % version)]
         else:
-            language_stats_list = self.api.ResourceLanguageStats.filter(
-                resource=resource, project=self.project)
-            return all(completed(stats) for stats in language_stats_list)
+            # get all resources
+            return [r.slug for r in all_resources]
 
     def get_translation(self, resource_slug, hq_lang_code, lock_resource):
         """
@@ -143,25 +158,47 @@ class TransifexApiClient(object):
         :param lock_resource: lock resource after pulling translation
         :return: list of POEntry objects
         """
-        language_id = self._lang_code_to_language_id(self.transifex_lang_code(hq_lang_code))
-        language = self.api.Language(id=language_id)
-        resource = self.api.Resource.get(slug=resource_slug, project=self.project)
-        download = self.api.ResourceTranslationsAsyncDownload.download(resource=resource, language=language)
-        response = requests.get(download, stream=True)
+        resource = self._get_resource(resource_slug)
+        language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
+        content = self._download_resource_translations(resource.id, language_id)
         temp_file = tempfile.NamedTemporaryFile()
         with open(temp_file.name, 'w', encoding='utf-8') as f:
-            f.write(response.content.decode(encoding="utf-8"))
+            f.write(content.decode(encoding="utf-8"))
         if lock_resource:
             resource.save(accept_translations=False)
         return polib.pofile(temp_file.name)
 
-    @staticmethod
-    def _lang_code_to_language_id(lang_code):
-        return f"l:{lang_code}"
+    def move_resource(self, old_resource_slug, new_resource_slug):
+        old_resource = self._get_resource(slug=old_resource_slug)
+        self._create_resource(new_resource_slug, old_resource.name)
+        self.delete_resource(old_resource_slug)
 
-    @staticmethod
-    def _language_id_to_lang_code(language_id):
-        return language_id.replace("l:", "")
+    def get_project_langcodes(self):
+        language_stats_list = self._list_language_stats()
+        return [self._to_lang_code(stats.language.id) for stats in language_stats_list]
+
+    def source_lang_is(self, hq_lang_code):
+        """
+        confirm is source lang on transifex is same as hq lang code
+        """
+        return self.transifex_lang_code(hq_lang_code) == self.source_lang_code
+
+    def translation_completed(self, resource_slug, hq_lang_code=None):
+        """
+        check if a resource has been completely translated for
+        all langs or a specific target lang
+        """
+        def completed(stats):
+            return not bool(stats.untranslated_words)
+
+        resource = self._get_resource(resource_slug)
+        if hq_lang_code:
+            language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
+            language_stats = self._list_language_stats(resource_id=resource.id, language_id=language_id)[0]
+            return completed(language_stats)
+        else:
+            language_stats_list = self._list_language_stats(resource_id=resource.id)
+            return all(completed(stats) for stats in language_stats_list)
 
     @staticmethod
     def transifex_lang_code(hq_lang_code):
@@ -172,22 +209,10 @@ class TransifexApiClient(object):
         """
         return SOURCE_LANGUAGE_MAPPING.get(hq_lang_code, hq_lang_code)
 
-    def source_lang_is(self, hq_lang_code):
-        """
-        confirm is source lang on transifex is same as hq lang code
-        """
-        return self.transifex_lang_code(hq_lang_code) == self.get_source_lang()
+    @staticmethod
+    def _to_language_id(lang_code):
+        return f"l:{lang_code}"
 
-    def get_source_lang(self):
-        """
-        :return: source lang code on transifex
-        """
-        source_language = self.project.related["source_language"]
-        return self._language_id_to_lang_code(source_language.id)
-
-    def get_project_langs(self):
-        """
-        :return: list of lang codes used in project on transifex
-        """
-        language_stats_list = self.api.ResourceLanguageStats.filter(project=self.project)
-        return [self._language_id_to_lang_code(stats.language.id) for stats in language_stats_list]
+    @staticmethod
+    def _to_lang_code(language_id):
+        return language_id.replace("l:", "")

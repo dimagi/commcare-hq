@@ -85,7 +85,7 @@ class Transifex(object):
 
     @cached_property
     def transifex_project_source_lang(self):
-        return self.client.transifex_lang_code(self.client.get_source_lang())
+        return self.client.transifex_lang_code(self.client.source_lang_code)
 
     def _resource_name_in_project_lang(self, resource_slug, app_trans_generator):
         """
@@ -129,8 +129,7 @@ class Transifex(object):
         if self._resource_slugs:
             return self._resource_slugs
         else:
-            resources = self.client.list_resources_by_version(self.version)
-            return [resource.slug for resource in resources]
+            return self.client.get_resource_slugs(self.version)
 
     def _ensure_resources_belong_to_version(self):
         """

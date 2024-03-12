@@ -143,7 +143,7 @@ class ProjectMigrator(object):
 
     @cached_property
     def get_project_source_lang(self):
-        return self.client.get_source_lang()
+        return self.client.source_lang_code
 
     @cached_property
     def source_app_default_lang(self):
