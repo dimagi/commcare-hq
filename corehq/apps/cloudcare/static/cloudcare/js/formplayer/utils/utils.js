@@ -6,14 +6,15 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
     'DOMPurify/dist/purify.min',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
-    "cloudcare/js/formplayer/users/models",
+    'cloudcare/js/formplayer/constants',
 ], function (
     $,
     _,
     Backbone,
     DOMPurify,
     initialPageData,
-    toggles
+    toggles,
+    constants
 ) {
     var Utils = {};
 
@@ -449,6 +450,68 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
             secure: initialPageData.get('secure_cookies'),
         });
     };
+
+    Utils.setSyncInterval = function (appId, restartInterval) {
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            const currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
+            let customProperties = {};
+            if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
+                customProperties = currentApp.attributes.profile.custom_properties || {};
+            }
+
+            const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
+            if (!useAggressiveSyncTiming) {
+                return;
+            }
+
+            const FIVE_MINUTES_IN_MILLISECONDS = 1000 * 60 * 5;
+            if (restartInterval) {
+                stopSyncInterval();
+                startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
+            } else {
+                startSyncInterval(FIVE_MINUTES_IN_MILLISECONDS);
+            }
+        });
+    };
+
+    function startSyncInterval(delayInMilliseconds) {
+        function shouldSync() {
+            const currentTime = Date.now(),
+                lastUserActivityTime =  sessionStorage.getItem("lastUserActivityTime") || 0,
+                elapsedTimeSinceLastActivity = currentTime - lastUserActivityTime,
+                isInApp = Utils.currentUrlToObject().appId !== undefined;
+            if (elapsedTimeSinceLastActivity <= delayInMilliseconds && isInApp) {
+                return true;
+            }
+        }
+
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            if (!FormplayerFrontend.syncInterval) {
+                FormplayerFrontend.syncInterval = setInterval(function () {
+                    const urlObject = Utils.currentUrlToObject(),
+                        currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", urlObject.appId);
+                    let customProperties = {};
+                    if (currentApp && currentApp.attributes && currentApp.attributes.profile) {
+                        customProperties = currentApp.attributes.profile.custom_properties || {};
+                    }
+                    const useAggressiveSyncTiming = (customProperties[constants.POST_FORM_SYNC] === "yes");
+                    if (!useAggressiveSyncTiming) {
+                        stopSyncInterval();
+                    }
+                    if (shouldSync() && FormplayerFrontend.permitIntervalSync) {
+                        FormplayerFrontend.trigger("interval_sync-db", urlObject.appId);
+                    }
+                }, delayInMilliseconds);
+            }
+        });
+    }
+
+    function stopSyncInterval() {
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            clearInterval(FormplayerFrontend.syncInterval);
+            FormplayerFrontend.syncInterval = null;
+        });
+    }
 
     return Utils;
 });
