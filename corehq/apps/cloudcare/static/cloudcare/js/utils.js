@@ -5,11 +5,13 @@ hqDefine('cloudcare/js/utils', [
     'hqwebapp/js/initial_page_data',
     "hqwebapp/js/toggles",
     "cloudcare/js/formplayer/constants",
+    "cloudcare/js/formplayer/layout/views/progress_bar",
 ], function (
     $,
     initialPageData,
     toggles,
-    constants
+    constants,
+    ProgressBar
 ) {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
@@ -153,8 +155,7 @@ hqDefine('cloudcare/js/utils', [
     var showLoading = function () {
         hqRequire([
             "cloudcare/js/formplayer/app",
-            "cloudcare/js/formplayer/layout/views/progress_bar",
-        ], function (FormplayerFrontend, ProgressBar) {
+        ], function (FormplayerFrontend) {
             if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
                 const progressView = ProgressBar({
                     progressMessage: gettext("Loading..."),
