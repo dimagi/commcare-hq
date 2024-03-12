@@ -5,6 +5,8 @@
  */
 
 hqDefine("cloudcare/js/formplayer/menus/api", function () {
+    'use strict';
+
     var Collections = hqImport("cloudcare/js/formplayer/menus/collections"),
         constants = hqImport("cloudcare/js/formplayer/constants"),
         errors = hqImport("cloudcare/js/form_entry/errors"),
@@ -116,8 +118,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 formEntryUtils.reloginErrorHtml(),
                                 true
                             );
-                        } else if ( response.statusText === 'abort' ) {
-                            console.log(`statusText: ${ response.statusText } do nothing`)
+                        } else if (response.statusText === 'abort') {
+                            // do nothing
                         } else {
                             FormplayerFrontend.trigger(
                                 'showError',
@@ -179,14 +181,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 const updateRequest = menus.fetch($.extend(true, {}, options));
 
                 if (route.startsWith("navigate_menu")) {
-                    console.log(`currentSelection:  ${ JSON.stringify(currentSelections) }, new selections: ${ JSON.stringify(params.selections) }`);
                     if (!_.isEqual(params.selections, currentSelections)) {
-                        console.log('different selection: interrupt ongoing defers')
                         currentSelections = params.selections;
                         while (ongoingRequests.length > 0) {
                             const ongoingRequest = ongoingRequests.pop();
                             if (ongoingRequest.readyState !== 4) {
-                                console.log('found pending defer. rejecting it.')
                                 ongoingRequest.abort();
                             }
                         }
