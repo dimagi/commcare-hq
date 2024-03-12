@@ -1,0 +1,125 @@
+{% extends 'hqwebapp/bootstrap5/base_page.html' %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load i18n %}
+
+{% requirejs_main 'builds/js/bootstrap5/edit_builds' %}
+
+{% block page_title %}
+{% trans "Editing CommCare Builds" %}
+{% endblock %}
+
+{% block page_content %}
+{% initial_page_data 'doc' doc %}
+{% initial_page_data 'available_versions' all_versions %}
+<div class="alert alert-info"><strong>{% trans "Editing" %} {{ doc.ID }}</strong></div>
+
+
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">{% trans "Menu Options" %}</h5>
+    <div class="card-text">
+      <form id="menu-form" method="POST">{% csrf_token %}
+        <table id="menu-table" class="table table-striped">
+          <thead>
+          <tr>
+            <th>{% trans "Version" %}</th>
+            <th>{% trans "Label" %}</th>
+            <th>{% trans "Superuser Only" %}</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody data-bind="foreach: versions">
+          <tr>
+            <td>
+              <select class="form-control" data-bind="
+                                      options: $root.available_versions,
+                                      value: version
+                                  ">
+              </select>
+            </td>
+            <td>
+              <input class="form-control" type="text" data-bind="value: label">
+            </td>
+            <td>
+              <input type="checkbox" value="superuser-only" data-bind="checked: superuser_only"/>
+            </td>
+            <td>
+              <button type="button" class="btn btn-outline-danger" data-bind="click: $root.removeVersion">
+                <i class="fa fa-remove"></i>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+        <button data-bind="click: addVersion" class="btn btn-outline-primary">
+          <i class="fa fa-plus"></i>
+          {% trans "Add a Version" %}
+        </button>
+
+        <hr/>
+
+        <fieldset>
+          <legend>Defaults</legend>
+          <div class="mb-3">
+            <label class="form-label" for="select-default-1">
+              {% trans "Default 1.x Build" %}
+            </label>
+            <select class="form-control" id="select-default-1" data-bind="
+                                options: available_ones,
+                                value: default_one"></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="select-default-2">
+              {% trans "Default 2.x Build" %}
+            </label>
+            <select class="form-control" id="select-default-2" data-bind="
+                                    options: available_twos,
+                                    value: default_two"></select>
+          </div>
+          <div class="mb-3">
+            <button class="btn btn-primary" type="button">{% trans "Update Menu Options" %}</button>
+          </div>
+        </fieldset>
+      </form>
+      <form id="submit-menu-form" method="POST">
+        {% csrf_token %}
+      </form>
+    </div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">
+      {% trans "Import a new build from the build server" %}
+    </h5>
+    <div class="card-text">
+      <form action="{% url 'import_build' %}" method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label" for="import_build_version">
+            {% trans "Version" %}
+          </label>
+          <input id="import_build_version" type="text" name="version" class="form-control"/>
+          <ol class="help-block">
+            <li>
+              <a href="https://github.com/dimagi/commcare-android/releases" target="_blank">
+                {% trans "Browse versions" %}
+              </a>
+            </li>
+            <li>{% trans "Paste the latest version in the box above in the format x.y.z" %}</li>
+            <li>{% trans "Click Import Build" %}</li>
+            <li>
+              {% blocktrans %}
+              You can also automatically fetch the latest build from GitHub using the following management command:
+              <b>./manage.py add_commcare_build --latest </b>
+              {% endblocktrans %}
+            </li>
+          </ol>
+          <button type="submit" class="btn btn-primary">{% trans "Import Build" %}</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
