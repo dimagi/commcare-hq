@@ -792,9 +792,8 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
 
         aggregations = query.aggregations
         if self.selected_app_id:
-            (last_submission_buckets, last_sync_buckets) = [
-                agg.filtered_agg.date_histogram.normalized_buckets for agg in aggregations
-            ]
+            last_submission_buckets = aggregations[0].filtered_agg.date_histogram.normalized_buckets
+            last_sync_buckets = aggregations[1].filtered_agg.date_histogram.normalized_buckets
         else:
             last_submission_buckets = aggregations[0].normalized_buckets
             last_sync_buckets = aggregations[1].normalized_buckets
