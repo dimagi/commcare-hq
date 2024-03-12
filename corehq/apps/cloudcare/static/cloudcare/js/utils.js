@@ -3,10 +3,12 @@
 hqDefine('cloudcare/js/utils', [
     'jquery',
     'hqwebapp/js/initial_page_data',
+    "hqwebapp/js/toggles",
     "cloudcare/js/formplayer/constants",
 ], function (
     $,
     initialPageData,
+    toggles,
     constants
 ) {
     if (!String.prototype.startsWith) {
@@ -151,9 +153,8 @@ hqDefine('cloudcare/js/utils', [
     var showLoading = function () {
         hqRequire([
             "cloudcare/js/formplayer/app",
-            "hqwebapp/js/toggles",
             "cloudcare/js/formplayer/layout/views/progress_bar",
-        ], function (FormplayerFrontend, toggles, ProgressBar) {
+        ], function (FormplayerFrontend, ProgressBar) {
             if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
                 const progressView = ProgressBar({
                     progressMessage: gettext("Loading..."),
@@ -237,7 +238,7 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var hideLoading = function () {
-        hqRequire(["cloudcare/js/formplayer/app", "hqwebapp/js/toggles"], function (FormplayerFrontend, toggles) {
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
             if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
                 $('#breadcrumb-region').css('z-index', '');
                 clearInterval(sessionStorage.progressIncrementInterval);
