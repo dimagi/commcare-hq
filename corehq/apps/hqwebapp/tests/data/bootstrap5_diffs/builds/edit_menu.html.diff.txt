@@ -12,7 +12,7 @@
  
  {% block page_title %}
  {% trans "Editing CommCare Builds" %}
-@@ -15,103 +15,91 @@
+@@ -15,103 +15,89 @@
  <div class="alert alert-info"><strong>{% trans "Editing" %} {{ doc.ID }}</strong></div>
  
  
@@ -63,8 +63,8 @@
 -        </tr>
 -      </table>
 +<div class="card">
++  <div class="card-header">{% trans "Menu Options" %}</div>
 +  <div class="card-body">
-+    <h5 class="card-title">{% trans "Menu Options" %}</h5>
 +    <div class="card-text">
 +      <form id="menu-form" method="POST">{% csrf_token %}
 +        <table id="menu-table" class="table table-striped">
@@ -162,10 +162,7 @@
 -<div class="panel panel-default">
 -  <div class="panel-heading">
 -    <h3 class="panel-title">
-+<div class="card">
-+  <div class="card-body">
-+    <h5 class="card-title">
-       {% trans "Import a new build from the build server" %}
+-      {% trans "Import a new build from the build server" %}
 -    </h3>
 -  </div>
 -  <div class="panel-body">
@@ -176,7 +173,9 @@
 -          {% trans "Version" %}
 -        </label>
 -        <div class="col-sm-8">
-+    </h5>
++<div class="card">
++  <div class="card-header">{% trans "Import a new build from the build server" %}</div>
++  <div class="card-body">
 +    <div class="card-text">
 +      <form action="{% url 'import_build' %}" method="post">
 +        {% csrf_token %}
@@ -187,7 +186,7 @@
            <input id="import_build_version" type="text" name="version" class="form-control"/>
            <ol class="help-block">
              <li>
-@@ -128,14 +116,9 @@
+@@ -128,14 +114,9 @@
                {% endblocktrans %}
              </li>
            </ol>
