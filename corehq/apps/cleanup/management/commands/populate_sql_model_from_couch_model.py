@@ -1,8 +1,10 @@
 import datetime
 import json
 import os
+import pdb
 import sys
 import traceback
+from collections import defaultdict
 from contextlib import nullcontext
 from functools import partial
 from time import sleep
@@ -130,12 +132,13 @@ class PopulateSQLCommand(BaseCommand):
         if len(docs) != len(objects):
             diffs.append(f"{name}: {len(docs)} in couch != {len(objects)} in sql")
         else:
-            for couch_field, sql_field in list(zip(docs, objects)):
+            for i, (couch_field, sql_field) in enumerate(zip(docs, objects)):
+                prefix = f"{name}[{i}]"
                 if attr_list:
                     for attr in attr_list:
-                        diffs.append(cls.diff_attr(attr, couch_field, sql_field, name_prefix=name))
+                        diffs.append(cls.diff_attr(attr, couch_field, sql_field, name_prefix=prefix))
                 else:
-                    diffs.append(cls.diff_value(name, couch_field, sql_field))
+                    diffs.append(cls.diff_value(prefix, couch_field, sql_field))
         return diffs
 
     def handle_override_is_completed(self, override_is_completed):
@@ -177,14 +180,14 @@ class PopulateSQLCommand(BaseCommand):
         print("Sampling items to be migrated...")
         counts = [get_count() for x in range(10)]
         print(f"counts={counts} avg={sum(counts) / len(counts)}")
-        return sum(counts) / len(counts)
+        return max(sum(counts) / len(counts), 0)
 
     @classmethod
     def count_items_to_be_migrated(cls):
         status = cls.get_migration_status()
         if status.get("is_completed"):
             return 0
-        couch_count = get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
+        couch_count = cls._get_couch_doc_count_for_type()
         ignored_count = status.get("ignored_count", 0)
         sql_count = cls.sql_class().objects.count()
         return couch_count - ignored_count - sql_count
@@ -193,11 +196,17 @@ class PopulateSQLCommand(BaseCommand):
     def _migration_status_slug(cls):
         return f"{cls.couch_doc_type()}-sql-migration-status"
 
-    def save_migration_status(self, **extra):
+    def save_migration_status(self, fixup_diffs=False, **extra):
+        ignored_count = self.ignored_count
+        if fixup_diffs:
+            status = self.get_migration_status()
+            if "ignored_count" not in status:
+                return
+            ignored_count += status["ignored_count"]
         self.couch_db().save_doc({
             "_id": self._migration_status_slug,
             "doc_type": "PopulateSQLCommandStatus",
-            "ignored_count": self.ignored_count,
+            "ignored_count": ignored_count,
             **extra
         }, force_update=True)
 
@@ -224,7 +233,7 @@ class PopulateSQLCommand(BaseCommand):
             Should only be called from within a django migration.
             Calls sys.exit on failure.
         """
-        to_migrate = cls.count_items_to_be_migrated()
+        to_migrate = max(cls.count_items_to_be_migrated(), 0)
         print(f"Found {to_migrate} {cls.couch_doc_type()} documents to migrate.")
 
         migrated = to_migrate == 0
@@ -328,8 +337,13 @@ Run the following commands to run the migration and get up to date:
                 remove override.
             """
         )
+        parser.add_argument(
+            '--debug',
+            action='store_true',
+            help="Debug uncaught exceptions.",
+        )
 
-    def handle(self, chunk_size, fixup_diffs, override_is_completed, **options):
+    def handle(self, chunk_size, fixup_diffs, override_is_completed, debug, **options):
         if override_is_completed:
             return self.handle_override_is_completed(override_is_completed)
 
@@ -406,11 +420,16 @@ Run the following commands to run the migration and get up to date:
                         doc_index += 1
                         if doc_index % 1000 == 0:
                             print(f"Diff count: {self.diff_count}")
-                self.save_migration_status()
+                self.save_migration_status(fixup_diffs)
             except KeyboardInterrupt:
                 traceback.print_exc(file=logfile)
                 aborted = True
                 print("Aborted.")
+            except Exception as exc:
+                if not debug:
+                    raise
+                traceback.print_exception(type(exc), exc, exc.__traceback__)
+                pdb.post_mortem(exc.__traceback__)
 
         if not is_bulk:
             print(f"Processed {doc_index} documents")
@@ -418,6 +437,8 @@ Run the following commands to run the migration and get up to date:
             print(f"Ignored {self.ignored_count} Couch documents")
         if not skip_verify:
             print(f"Found {self.diff_count} differences")
+            if self.diff_count:
+                print(f"\nRun again with --fixup-diffs={log_path} to resolve differences.")
         if aborted:
             sys.exit(1)
 
@@ -425,6 +446,12 @@ Run the following commands to run the migration and get up to date:
         def update_log(action, doc_ids):
             for doc_id in doc_ids:
                 logfile.write(f"{action} model for {couch_doc_type} with id {doc_id}\n")
+
+        def update_sub_creates(pairs):
+            for sub_class, subs in pairs:
+                if subs:
+                    submodel_creates[sub_class].extend(subs)
+
         couch_doc_type = self.couch_doc_type()
         sql_class = self.sql_class()
         couch_class = sql_class._migration_get_couch_model_class()
@@ -437,6 +464,9 @@ Run the following commands to run the migration and get up to date:
             objs_by_couch_id = {obj._migration_couch_id for obj in objs.only(couch_id_name)}
         creates = []
         updates = []
+        submodel_specs = couch_class._migration_get_submodels()
+        submodel_creates = defaultdict(list)
+        self._prepare_for_submodel_creation(docs)
         # cache ignored ids in instance variable so _verify_docs does not need to recalculate
         self._ignored_ids_cache = ignored = self.get_ids_to_ignore(
             [d for d in docs if d["_id"] not in objs_by_couch_id])
@@ -452,26 +482,64 @@ Run the following commands to run the migration and get up to date:
                     else:
                         continue  # already migrated
                 else:
+                    if submodel_specs:
+                        update_sub_creates(self._create_submodels(doc, submodel_specs))
                     continue  # already migrated
             else:
                 obj = sql_class()
                 obj._migration_couch_id = doc["_id"]
                 creates.append(obj)
             couch_class.wrap(doc)._migration_sync_to_sql(obj, save=False)
-        if creates or updates:
+        if creates or updates or submodel_creates:
             with transaction.atomic(), disable_sync_to_couch(sql_class):
-                sql_class.objects.bulk_create(creates, ignore_conflicts=True)
+                # ignore conflicts when the PK value is not needed for submodels
+                sql_class.objects.bulk_create(creates, ignore_conflicts=not submodel_specs)
+                update_sub_creates(self._group_submodels(creates, submodel_specs))
+                for sub_class, sub_creates in submodel_creates.items():
+                    sub_class.objects.bulk_create(sub_creates)
                 for obj in updates:
                     obj.save()
         update_log("Created", [obj._migration_couch_id for obj in creates])
         update_log("Updated", [obj._migration_couch_id for obj in updates])
         update_log("Ignored", ignored)
 
-    def _verify_docs(self, docs, logfile, verify_only):
+    def _prepare_for_submodel_creation(self, docs):
+        """Populate caches or otherwise prepare for submodel creation"""
+        pass
+
+    def _create_submodels(self, doc, obj, submodel_specs):
+        """Create (unsaved) submodels for a previously synced doc
+
+        The default implementation does nothing, but this hook can be
+        used by subclasses to implement submodel creation for models
+        that do not sync submodels to SQL on every Couch document save.
+
+        :returns: Iterable of ``(submodel_type, submodels_list)`` pairs.
+        """
+        return []
+
+    def _group_submodels(self, creates, submodel_specs):
+        combined = defaultdict(list)
+        for spec in submodel_specs:
+            for obj in creates:
+                sql_submodels, manager = obj._new_submodels[spec.sql_class]
+                if sql_submodels:
+                    combined[spec.sql_class].extend(sql_submodels)
+        return combined.items()
+
+    def _sql_query_from_docs(self, docs):
+        """Construct SQL query for records corresponding to the given docs
+
+        Override to augment the query with ``prefetch_related()``
+        for submodel query optimization, etc.
+        """
         sql_class = self.sql_class()
         couch_id_name = getattr(sql_class, '_migration_couch_id_name', 'couch_id')
         couch_ids = [doc["_id"] for doc in docs]
-        objs = sql_class.objects.filter(**{couch_id_name + "__in": couch_ids})
+        return sql_class.objects.filter(**{couch_id_name + "__in": couch_ids})
+
+    def _verify_docs(self, docs, logfile, verify_only):
+        objs = self._sql_query_from_docs(docs)
         objs_by_couch_id = {obj._migration_couch_id: obj for obj in objs}
         diff_count = self.diff_count
         if verify_only:
@@ -550,8 +618,9 @@ Run the following commands to run the migration and get up to date:
         return get_all_docs_with_doc_types(
             self.couch_db(), [self.couch_doc_type()], chunk_size)
 
-    def _get_couch_doc_count_for_type(self):
-        return get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
+    @classmethod
+    def _get_couch_doc_count_for_type(cls):
+        return get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
 
     @staticmethod
     def open_log(log_path, mode="w"):

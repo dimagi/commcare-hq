@@ -199,6 +199,7 @@ class ConnectionSettings(models.Model):
                 client_secret=self.plaintext_client_secret,
                 token_url=self.token_url,
                 refresh_url=self.refresh_url,
+                pass_credentials_in_header=self.pass_credentials_in_header,
                 connection_settings=self,
             )
 

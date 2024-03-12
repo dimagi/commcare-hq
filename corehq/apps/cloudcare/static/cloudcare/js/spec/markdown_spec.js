@@ -28,13 +28,6 @@ hqDefine("cloudcare/js/spec/markdown_spec", function () {
                 );
             });
 
-            it('should render headings with tabindex set', function () {
-                assert.equal(
-                    render("# heading"),
-                    "<h1 tabindex=\"0\">heading</h1>\n"
-                );
-            });
-
             it('should render newlines as breaks', function () {
                 assert.equal(
                     render("line 1\nline 2"),

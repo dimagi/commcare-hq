@@ -238,6 +238,7 @@ cleanup
  0013_migrate_kafka_checkpoint_format
  0014_deletedcouchdoc
  0015_deletedcouchdoc_unique_id_and_type
+ 0016_add_deletedsqldoc
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
@@ -795,6 +796,7 @@ repeaters
  0004_fix_whitelist_bug_repeaters
  0005_datasourcerepeater
  0006_int_state_add_next_check_rm_repeater_id
+ 0007_lengthen_payload_id
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -1198,6 +1200,7 @@ users
  0054_connectiduserlink
  0055_add_user_data
  0056_add_manage_domain_alerts_permission
+ 0057_populate_sql_user_data
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

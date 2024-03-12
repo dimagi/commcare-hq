@@ -113,8 +113,9 @@ class Command(BaseCommand):
         for file_path in files:
             short_path = self.get_short_path(app_name, file_path, is_template)
 
-            confirm = input(f'\n{HARD_BREAK_LINE}\n\nReady to migrate "{short_path}"? [y/n] ')
-            if confirm.lower() != 'y':
+            self.stdout.write(f'\n{HARD_BREAK_LINE}\n\n')
+            confirm = self.get_confirmation(f'Ready to migrate "{short_path}"?')
+            if not confirm:
                 self.stdout.write(f"\tok, skipping {short_path}")
                 continue
 
@@ -164,27 +165,35 @@ class Command(BaseCommand):
             for flag in flags:
                 changelog.append(old_line)
                 changelog.append(f"\n{SOFT_BREAK_LINE}\n{flag}\n{SOFT_BREAK_LINE}\n\n")
-                self.stdout.write("".join(changelog[-2:]))
-                self.stdout.write("\nIMPORTANT: This complex change requires MANUAL intervention."
-                                  "\n\tHitting enter DOES NOT make this change."
-                                  "\n\tThis guidance is saved to logs for reference later."
-                                  "\n\tThis file is NOT fully migrated UNTIL this issue is addressed.\n")
-                input("ENTER to continue...")
+                self.display_flag_summary(changelog)
+                self.enter_to_continue()
                 self.stdout.write('\n')
             if renames:
                 changelog.append(f"-{old_line}")
                 changelog.append(f"+{new_line}")
                 changelog.append("\nRENAMES\n  - " + "\n   - ".join(renames))
-                self.stdout.write("".join(changelog[-3:]))
+                self.display_rename_summary(changelog)
                 changelog.append("\n\n")
-                self.stdout.write("\nIMPORTANT: Answering 'y' below will automatically make this change "
-                                  "in the Bootstrap 5 version of this file.")
-                confirm = input("\nKeep changes? [y/n] ")
-                if confirm.lower() != 'y':
+
+                confirm = self.get_confirmation("Keep changes?")
+                if not confirm:
                     changelog.append("CHANGES DISCARDED\n\n")
                     self.stdout.write("ok, discarding changes...")
                     return old_line, changelog
         return new_line, changelog
+
+    def display_flag_summary(self, changelog):
+        self.stdout.write("".join(changelog[-2:]))
+        self.stdout.write("\nIMPORTANT: This complex change requires MANUAL intervention."
+                          "\n\tHitting enter DOES NOT make this change."
+                          "\n\tThis guidance is saved to logs for reference later."
+                          "\n\tThis file is NOT fully migrated UNTIL this issue is addressed.\n")
+
+    def display_rename_summary(self, changelog):
+        self.stdout.write("".join(changelog[-3:]))
+        changelog.append("\n\n")
+        self.stdout.write("\nIMPORTANT: Answering 'y' below will automatically make this change "
+                          "in the Bootstrap 5 version of this file.\n")
 
     def record_file_changes(self, template_path, app_name, changelog, is_template):
         short_path = self.get_short_path(app_name, template_path.parent, is_template)
@@ -195,59 +204,61 @@ class Command(BaseCommand):
         readme_path = readme_directory / readme_filename
         with open(readme_path, 'w') as readme_file:
             readme_file.writelines(changelog)
+        self.show_information_about_readme(readme_path)
+
+    def show_information_about_readme(self, readme_path):
         self.stdout.write(f"\nYou can reference the logs for these changes here:"
                           f"\n\t{readme_path}"
                           f"\n\t\tThis is IMPORTANT to take note of if you have any suggested changes!\n")
 
     def save_re_checked_file_changes(self, app_name, file_path, changed_lines, is_template):
         short_path = self.get_short_path(app_name, file_path, is_template)
-        confirm = input(f'\nSave changes to {short_path}? [y/n] ')
-        if confirm == 'y':
-            with open(file_path, 'w') as readme_file:
-                readme_file.writelines(changed_lines)
-            self.stdout.write("\nChanges saved.")
-            self.stdout.write("\nNow would be a good time to review changes with git and "
-                              "commit before moving on to the next template.")
-            input("\nENTER to continue...")
-        else:
+
+        confirm = self.get_confirmation(f"\nSave changes to {short_path}?")
+
+        if not confirm:
             self.stdout.write("ok, skipping save...\n\n")
+            return
+
+        with open(file_path, 'w') as readme_file:
+            readme_file.writelines(changed_lines)
+        self.stdout.write("\nChanges saved.")
+        self.suggest_commit_message(f"re-ran migration for {short_path}")
 
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = self.get_short_path(app_name, file_path, is_template)
-        confirm = input(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
-                        f'and update references? [y/n] ')
-        if confirm == 'y':
-            bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
-            bootstrap3_short_path = self.get_short_path(app_name, bootstrap3_path, is_template)
-            bootstrap5_short_path = self.get_short_path(app_name, bootstrap5_path, is_template)
-            self.stdout.write(f"ok, saving changes..."
-                              f"\n\t{bootstrap3_short_path}"
-                              f"\n\t{bootstrap5_short_path}\n\n")
-            if '/bootstrap5/' not in str(file_path):
-                self.save_split_templates(
-                    file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
-                )
-                self.stdout.write("updating references...")
-                references = self.update_and_get_references(short_path, bootstrap3_short_path, is_template)
-                if not is_template:
-                    # also check extension-less references for javascript files
-                    references.extend(self.update_and_get_references(
-                        short_path.replace('.js', ''),
-                        bootstrap3_short_path.replace('.js', ''),
-                        is_template=False
-                    ))
-                if references:
-                    self.stdout.write(f"Updated references to {short_path} in these files:")
-                    self.stdout.write("\n".join(references))
-                else:
-                    self.stdout.write(f"No references were found for {short_path}...")
-            self.stdout.write("\nNow would be a good time to review changes with git and "
-                              "commit before moving on to the next template.")
-            self.stdout.write("\nSuggested commit message:")
-            self.stdout.write(f"bootstrap 3 to 5 auto-migration for {short_path}")
-            input("\nENTER to continue...")
-        else:
+
+        confirm = self.get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
+                                        f'and update references?')
+        if not confirm:
             self.stdout.write("ok, skipping...\n\n")
+            return
+
+        bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
+        bootstrap3_short_path = self.get_short_path(app_name, bootstrap3_path, is_template)
+        bootstrap5_short_path = self.get_short_path(app_name, bootstrap5_path, is_template)
+        self.stdout.write(f"ok, saving changes..."
+                          f"\n\t{bootstrap3_short_path}"
+                          f"\n\t{bootstrap5_short_path}\n\n")
+        if '/bootstrap5/' not in str(file_path):
+            self.save_split_templates(
+                file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
+            )
+            self.stdout.write("updating references...")
+            references = self.update_and_get_references(short_path, bootstrap3_short_path, is_template)
+            if not is_template:
+                # also check extension-less references for javascript files
+                references.extend(self.update_and_get_references(
+                    short_path.replace('.js', ''),
+                    bootstrap3_short_path.replace('.js', ''),
+                    is_template=False
+                ))
+            if references:
+                self.stdout.write(f"Updated references to {short_path} in these files:")
+                self.stdout.write("\n".join(references))
+            else:
+                self.stdout.write(f"No references were found for {short_path}...")
+        self.suggest_commit_message(f"initial auto-migration for {short_path}, splitting templates")
 
     @staticmethod
     def save_split_templates(original_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines):
@@ -289,11 +300,7 @@ class Command(BaseCommand):
             if references:
                 self.stdout.write(f"\n\nUpdated references to {old_reference} in these files:")
                 self.stdout.write("\n".join(references))
-                self.stdout.write("\nNow would be a good time to review changes with git and "
-                                  "commit before moving on to the next template.")
-                self.stdout.write(f"\nSuggested commit message:\n"
-                                  f"Bootstrap 5 - Updated references to '{old_reference}'\n")
-                input("\nENTER to continue...")
+                self.suggest_commit_message(f"updated path references to '{references}'")
                 self.stdout.write("\n\n")
 
     @staticmethod
@@ -361,3 +368,32 @@ class Command(BaseCommand):
             str(replace_path) + '/',
             ''
         )
+
+    @staticmethod
+    def select_option_from_prompt(prompt, options):
+        formatted_options = '/'.join(options)
+        prompt_with_options = f"{prompt} [{formatted_options}] "
+        while True:
+            option = input(prompt_with_options).lower()
+            if option in options:
+                break
+            else:
+                prompt_with_options = f'Sorry, "{option}" is not an option. ' \
+                                      f'Please choose from [{formatted_options}]: '
+        return option
+
+    def get_confirmation(self, prompt):
+        option = self.select_option_from_prompt(prompt, ['y', 'n'])
+        return option == 'y'
+
+    @staticmethod
+    def enter_to_continue():
+        input("\nENTER to continue...")
+
+    def suggest_commit_message(self, message):
+        self.stdout.write("\nNow would be a good time to review changes with git and "
+                          "commit before moving on to the next template.")
+        self.stdout.write("\nSuggested commit message:")
+        self.stdout.write(f"Bootstrap 5 Migration - {message}")
+        self.stdout.write("\n")
+        self.enter_to_continue()

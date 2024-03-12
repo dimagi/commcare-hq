@@ -2069,7 +2069,6 @@ msgstr ""
 #: corehq/apps/reports/standard/forms/reports.py
 #: corehq/apps/reports/standard/inspect.py
 #: corehq/apps/reports/standard/monitoring.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/project_health/partials/user_list.html
 #: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/accept_invite.html
@@ -2494,7 +2493,6 @@ msgstr ""
 #: corehq/apps/reports/filters/dates.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
 #: corehq/apps/users/templates/users/web_users.html custom/up_nrhm/sql_data.py
 msgid "Date"
@@ -3648,7 +3646,6 @@ msgstr ""
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/message_event_display.py
 #: corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/messaging/survey_detail.html
 #: corehq/apps/sms/models.py corehq/apps/sms/views.py
 msgid "Unknown"
@@ -5502,7 +5499,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
-msgid "This is a <i class=\"fa fa-file-o\"></i> Survey."
+msgid "This is a <i class=\"fa-regular fa-file\"></i> Survey."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
@@ -9028,7 +9025,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
 #: corehq/apps/linked_domain/const.py corehq/apps/registry/models.py
-#: corehq/apps/reports/standard/web_user_activity.py
 #: corehq/apps/reports/templates/reports/reports_home.html
 #: corehq/apps/userreports/reports/builder/forms.py
 msgid "Report"
@@ -13001,10 +12997,8 @@ msgid "Restore Case Type"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#, fuzzy
-#| msgid "Case Type:"
 msgid "Delete Case Type"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 msgid "Show Deprecated"
@@ -13940,7 +13934,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 msgid ""
 "\n"
-"          Create rules for finding and updating duplicate cases.\n"
+"          Create rules for finding duplicate cases.\n"
 "          Rules are run on each form submission.\n"
 "          When rules are created or edited the rule will be locked for "
 "further changes and a backfill process will be run.\n"
@@ -15820,11 +15814,6 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid "Added By"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/admin/manage_alerts.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-msgid "Activate or De-activate"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
@@ -18245,6 +18234,10 @@ msgid "Mobile User"
 msgstr ""
 
 #: corehq/apps/enterprise/enterprise.py
+msgid "Unnamed"
+msgstr ""
+
+#: corehq/apps/enterprise/enterprise.py
 msgid "App not found"
 msgstr ""
 
@@ -20170,6 +20163,10 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Custom Path"
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+msgid "Select geo property"
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
@@ -22829,8 +22826,7 @@ msgstr ""
 
 #: corehq/apps/hqcase/case_helper.py
 #, python-brace-format
-msgid ""
-"Original case owner {owner_id} cannot copy case {case_id} to themselves."
+msgid "Original case owner {owner_id} cannot copy case {case_id} to themselves"
 msgstr ""
 
 #: corehq/apps/hqcase/utils.py
@@ -23142,7 +23138,7 @@ msgstr ""
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_zip_notice.html
 msgid ""
 "\n"
-"        <i class=\"fa fa-exclamation-triangle\"></i>\n"
+"        <i class=\"fa-solid fa-triangle-exclamation\"></i>\n"
 "        This application is missing references, so this zip will be "
 "incomplete.\n"
 "      "
@@ -24521,6 +24517,10 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid "Scheduled end"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Activate or De-activate"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
@@ -30602,10 +30602,6 @@ msgstr ""
 
 #: corehq/apps/reports/standard/users/reports.py
 msgid "Added"
-msgstr ""
-
-#: corehq/apps/reports/standard/web_user_activity.py
-msgid "Web User Activity"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/async/aggregate_user_status.html
@@ -37165,6 +37161,16 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/views.py
+#, python-brace-format
+msgid "CommCare Analytics on {server}"
+msgstr ""
+
+#: corehq/apps/userreports/views.py
+#, python-brace-format
+msgid "Data source {ds} on {server}"
+msgstr ""
+
+#: corehq/apps/userreports/views.py
 msgid "Filter {} not found!"
 msgstr ""
 
@@ -37355,7 +37361,7 @@ msgid ""
 "            <div id=\"phone-error\">\n"
 "                <span data-bind=\"visible: $root.phoneStatus() !== $root."
 "STATUS.NONE\">\n"
-"                    <i class=\"fa fa-exclamation-triangle\"\n"
+"                    <i class=\"fa-solid fa-triangle-exclamation\"\n"
 "                    data-bind=\"visible: $root.phoneStatus() === $root."
 "STATUS.ERROR\"></i>\n"
 "                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->\n"

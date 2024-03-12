@@ -292,10 +292,7 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
     def test_get_task(self):
         with self._mock_single_task_response() as (task_id, patched):
             task = self.adapter.get_task(task_id)
-            if self.adapter.elastic_major_version == 2:
-                patched.assert_called_once_with(task_id=task_id, detailed=True)
-            else:
-                patched.assert_called_once_with(task_id=task_id)
+            patched.assert_called_once_with(task_id=task_id)
             self.assertIn("running_time_in_nanos", task)
 
     def test_cancel_task_with_invalid_task_id(self):
@@ -379,12 +376,8 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
                     info["tasks"].pop(t_id)
                 else:
                     es5_response['task'] = info['tasks'][t_id]
-        if self.adapter.elastic_major_version == 2:
-            with patch.object(self.adapter._es.tasks, "list", return_value=response) as patched:
-                yield task_id, patched
-        else:
-            with patch.object(self.adapter._es.tasks, "get", return_value=es5_response) as patched:
-                yield task_id, patched
+        with patch.object(self.adapter._es.tasks, "get", return_value=es5_response) as patched:
+            yield task_id, patched
 
     def test_get_task_missing(self):
         node_name = list(self.adapter._es.nodes.info()["nodes"])[0]
@@ -500,8 +493,6 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
             with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
 
-                # purge_ids is not added here as it is required temporarily
-                # And setting it would require turning on inline script updates on test es docker
                 manager.reindex(
                     test_adapter.index_name, SECONDARY_INDEX,
                     wait_for_completion=True,

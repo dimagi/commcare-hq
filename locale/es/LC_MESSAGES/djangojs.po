@@ -1372,10 +1372,8 @@ msgstr ""
 "li><li>Grandes - 0.5 megapixeles</li></ul>"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#, fuzzy
-#| msgid "Image"
 msgid "Micro-Image"
-msgstr "Imagen"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Video Capture"
@@ -3277,8 +3275,8 @@ msgstr "nombre de propiedad del caso"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid ""
-"<a href='<%- link %>' target='_blank'>View <i class='fa fa-external-link'></"
-"i></a>"
+"<a href='<%- link %>' target='_blank'>View <i class='fa-solid fa-up-right-"
+"from-square'></i></a>"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
@@ -3527,6 +3525,10 @@ msgstr "Excel (versiones antiguas)"
 
 #: corehq/apps/export/static/export/js/models.js
 msgid "Excel 2007+"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js
+msgid "GeoJSON"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js
@@ -4089,11 +4091,11 @@ msgid "fa-ban"
 msgstr ""
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
-msgid "fa-clock-o"
+msgid "fa-regular fa-clock"
 msgstr ""
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
-msgid "fa-check-circle-o"
+msgid "fa-regular fa-circle-check"
 msgstr ""
 
 #: corehq/apps/registry/static/registry/js/registry_text.js

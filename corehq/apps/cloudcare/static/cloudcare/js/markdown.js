@@ -105,22 +105,9 @@ hqDefine('cloudcare/js/markdown', [
             defaultLinkOpen = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
                 return self.renderToken(tokens, idx, options);
             },
-            defaultHeadingOpen = md.renderer.rules.heading_open || function (tokens, idx, options, env, self) {
-                return self.renderToken(tokens, idx, options);
-            },
             defaultTextOpen = md.renderer.rules.text || function (tokens, idx, options, env, self) {
                 return self.renderToken(tokens, idx, options);
             };
-
-        md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
-            let aIndex = tokens[idx].attrIndex('tabindex');
-
-            if (aIndex < 0) {
-                tokens[idx].attrPush(['tabindex', '0']);
-            }
-
-            return defaultHeadingOpen(tokens, idx, options, env, self);
-        };
 
         let renderers = getChainedRenderers();
         md.renderer.rules.link_open = function (tokens, idx, options, env, self) {

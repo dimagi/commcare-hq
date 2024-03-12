@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from django.core.cache import caches, DEFAULT_CACHE_ALIAS
 from django.test import TestCase
 
@@ -36,7 +37,8 @@ class InferredSchemaSignalTest(TestCase):
         dd_props = {c.name for c in sql_props}
         self.assertEqual(dd_props, props)
 
-    def test_add_inferred_export_properties(self):
+    @patch('corehq.apps.data_dictionary.models.domain_has_privilege', return_value=True)
+    def test_add_inferred_export_properties(self, mock_domain_has_privilege):
         props = set(['one', 'two'])
         self._add_props(props)
         schema = get_case_inferred_schema(self.domain, self.case_type)
@@ -44,7 +46,8 @@ class InferredSchemaSignalTest(TestCase):
         self.assertEqual(set([item.path[0].name for item in group_schema.items]), props)
         self._check_sql_props(props)
 
-    def test_add_inferred_export_properties_saved_schema(self):
+    @patch('corehq.apps.data_dictionary.models.domain_has_privilege', return_value=True)
+    def test_add_inferred_export_properties_saved_schema(self, mock_domain_has_privilege):
         props = set(['one', 'two'])
         props_two = set(['one', 'three'])
         combined_props = props | props_two
@@ -62,7 +65,8 @@ class InferredSchemaSignalTest(TestCase):
         )
         self._check_sql_props(combined_props)
 
-    def test_add_inferred_export_properties_system(self):
+    @patch('corehq.apps.data_dictionary.models.domain_has_privilege', return_value=True)
+    def test_add_inferred_export_properties_system(self, mock_domain_has_privilege):
         """
         Ensures that when we add a system property, it uses the system's item type
         """
@@ -74,7 +78,8 @@ class InferredSchemaSignalTest(TestCase):
         self.assertEqual(group_schema.items[0].__class__, ExportItem)
         self._check_sql_props(props)
 
-    def test_add_inferred_export_properties_system_with_transform(self):
+    @patch('corehq.apps.data_dictionary.models.domain_has_privilege', return_value=True)
+    def test_add_inferred_export_properties_system_with_transform(self, mock_domain_has_privilege):
         """
         Ensures that when we add a system property with redundant paths, it uses the item's transform
         """
@@ -84,7 +89,8 @@ class InferredSchemaSignalTest(TestCase):
         group_schema = schema.group_schemas[0]
         self.assertEqual(len(group_schema.items), 1)
 
-    def test_cache_add_inferred_export_properties(self):
+    @patch('corehq.apps.data_dictionary.models.domain_has_privilege', return_value=True)
+    def test_cache_add_inferred_export_properties(self, mock_domain_has_privilege):
         props = set(['one', 'two'])
         self._add_props(props)
         self._add_props(props, 0)
