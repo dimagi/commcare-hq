@@ -1,22 +1,42 @@
 'use strict';
-/* global Sentry */
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
-
-hqDefine("cloudcare/js/formplayer/menus/api", function () {
-    var Collections = hqImport("cloudcare/js/formplayer/menus/collections"),
-        constants = hqImport("cloudcare/js/formplayer/constants"),
-        errors = hqImport("cloudcare/js/form_entry/errors"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+hqDefine("cloudcare/js/formplayer/menus/api", [
+    'jquery',
+    'underscore',
+    'sentry_browser',
+    'hqwebapp/js/initial_page_data',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/form_entry/errors',
+    'cloudcare/js/form_entry/utils',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/apps/api',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/layout/views/progress_bar',
+], function (
+    $,
+    _,
+    Sentry,
+    initialPageData,
+    Collections,
+    constants,
+    errors,
+    formEntryUtils,
+    FormplayerFrontend,
+    AppsAPI,
+    UsersModels,
+    formplayerUtils,
+    ProgressBar
+) {
+    let currentSelections = null,
+        ongoingRequests = [];
 
     var API = {
         queryFormplayer: function (params, route) {
-            var user = FormplayerFrontend.getChannel().request('currentUser'),
+            var user = UsersModels.getCurrentUser(),
                 lastRecordedLocation = FormplayerFrontend.getChannel().request('lastRecordedLocation'),
                 timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
                 tzFromBrowser = Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -26,7 +46,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 options,
                 menus;
 
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
+            $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
                 if (!params.preview) {
                     // Make sure the user has access to the app
                     if (!appCollection.find(function (app) {
@@ -46,7 +66,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         return;
                     }
                 }
-
+                FormplayerFrontend.permitIntervalSync = true;
                 options = {
                     success: function (parsedMenus, response) {
                         if (response.status === 'retry') {
@@ -94,6 +114,12 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 return;
                             }
 
+                            let attemptRestore = undefined;
+                            if (parsedMenus.metaData) {
+                                attemptRestore = parsedMenus.metaData.attemptRestore;
+                            }
+                            formplayerUtils.setSyncInterval(params.appId, attemptRestore);
+                            sessionStorage.setItem("lastUserActivityTime",  Date.now());
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
@@ -114,6 +140,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 formEntryUtils.reloginErrorHtml(),
                                 true
                             );
+                        } else if (response.statusText === 'abort') {
+                            // do nothing
                         } else {
                             FormplayerFrontend.trigger(
                                 'showError',
@@ -155,6 +183,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "selected_values": params.selectedValues,
                     "isShortDetail": params.isShortDetail,
                     "isRefreshCaseSearch": params.isRefreshCaseSearch,
+                    "requestInitiatedByTags": params.requestInitiatedByTags,
                 };
                 options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;
@@ -172,8 +201,24 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 });
 
                 var callStartTime = performance.now();
-                menus.fetch($.extend(true, {}, options)).always(function () {
-                    if (data.query_data && data.query_data.results && data.query_data.results.initiatedBy === constants.queryInitiatedBy.DYNAMIC_SEARCH) {
+                const updateRequest = menus.fetch($.extend(true, {}, options));
+
+                if (route.startsWith("navigate_menu")) {
+                    if (!_.isEqual(params.selections, currentSelections)) {
+                        currentSelections = params.selections;
+                        while (ongoingRequests.length > 0) {
+                            const ongoingRequest = ongoingRequests.pop();
+                            if (ongoingRequest.readyState !== 4) {
+                                ongoingRequest.abort();
+                            }
+                        }
+                    }
+                    ongoingRequests.push(updateRequest);
+                }
+
+
+                updateRequest.always(function () {
+                    if (data.requestInitiatedByTags && data.requestInitiatedByTags.includes(constants.requestInitiatedByTagsMapping.DYNAMIC_SEARCH)) {
                         var callEndTime = performance.now();
                         var callResponseTime = callEndTime - callStartTime;
                         $.ajax(initialPageData.reverse('api_histogram_metrics'), {
@@ -205,7 +250,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         });
         FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
 
-        var user = FormplayerFrontend.getChannel().request('currentUser');
+        var user = UsersModels.getCurrentUser();
         if (options.forceLoginAs && !user.restoreAs) {
             // Workflow requires a mobile user, likely because we're trying to access
             // a session endpoint as a web user. If user isn't logged in as, send them
@@ -227,7 +272,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
     FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent, isShortDetail, isRefreshCaseSearch) {
         options.isPersistent = isPersistent;
-        options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+        options.preview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
         options.isShortDetail = isShortDetail;
         options.isRefreshCaseSearch = isRefreshCaseSearch;
         return API.queryFormplayer(options, 'get_details');
