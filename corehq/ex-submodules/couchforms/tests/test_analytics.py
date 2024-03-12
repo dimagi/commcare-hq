@@ -15,6 +15,7 @@ from couchforms.analytics import (
     get_number_of_forms_in_domain,
 )
 
+from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.client import manager
 from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
@@ -36,7 +37,7 @@ from corehq.util.test_utils import (
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
-@es_test(requires=[form_adapter], setup_class=True)
+@es_test(requires=[form_adapter, app_adapter], setup_class=True)
 @disable_quickcache
 class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
     maxDiff = None
@@ -74,6 +75,9 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         ]
         cls.error_forms = [create_form_for_test(domain=cls.domain, state=XFormInstance.ERROR, save=False)]
         cls.all_forms = cls.forms + cls.error_forms
+
+        for app in cls.apps:
+            app_adapter.index(app, refresh=True)
         for form in cls.all_forms:
             form_adapter.index(form, refresh=True)
 
@@ -125,7 +129,35 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
                 'form': {'name': {}, 'id': 0},
                 'app': {'langs': [], 'name': None, 'id': self.app_id_3},
                 'module': {'name': {}, 'id': 0},
-                'app_deleted': True, 'submissions': 1},
+                'app_deleted': True, 'submissions': 1,
+            },
+            'key': ['exports_forms_analytics_domain', self.app_id_3,
+                    'my://crazy.xmlns/deleted-app']
+        }])
+
+    def test_get_exports_by_form_es(self):
+        self.assertEqual(get_exports_by_form(self.domain, use_es=True), [{
+            'value': {'xmlns': 'my://crazy.xmlns/', 'submissions': 2},
+            'key': ['exports_forms_analytics_domain', self.app_id_1,
+                    'my://crazy.xmlns/']
+        }, {
+            'value': {
+                'xmlns': 'my://crazy.xmlns/app',
+                'form': {'name': {}, 'id': 0},
+                'app': {'langs': [], 'name': None, 'id': self.app_id_2},
+                'module': {'name': {}, 'id': 0},
+                'app_deleted': False, 'submissions': 1},
+            'key': ['exports_forms_analytics_domain', self.app_id_2,
+                    'my://crazy.xmlns/app']
+        }, {
+            'value': {
+                'xmlns': 'my://crazy.xmlns/deleted-app',
+                'submissions': 1,
+                'form': {'name': {}, 'id': 0},
+                'app': {'langs': [], 'name': None, 'id': self.app_id_3},
+                'module': {'name': {}, 'id': 0},
+                'app_deleted': True
+            },
             'key': ['exports_forms_analytics_domain', self.app_id_3,
                     'my://crazy.xmlns/deleted-app']
         }])
