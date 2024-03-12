@@ -1,9 +1,6 @@
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
-from transifex.api.exceptions import UploadException
-from transifex.api.jsonapi.exceptions import DoesNotExist
-
 from corehq.apps.app_manager.dbaccessors import get_version_build_id
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.generators import (
@@ -13,6 +10,7 @@ from corehq.apps.translations.generators import (
 from corehq.apps.translations.integrations.transifex.client import (
     TransifexApiClient,
 )
+from corehq.apps.translations.integrations.transifex.exceptions import TransifexApiException
 from corehq.apps.translations.integrations.transifex.parser import (
     TranslationsParser,
 )
@@ -120,7 +118,7 @@ class Transifex(object):
                         self.source_lang
                     )
                 file_uploads[resource_name] = _("Successfully Uploaded")
-            except UploadException as e:
+            except TransifexApiException as e:
                 file_uploads[resource_name] = "Upload Error: {}".format(e)
         return file_uploads
 
@@ -182,6 +180,6 @@ class Transifex(object):
             try:
                 self.client.delete_resource(resource_slug)
                 delete_status[resource_slug] = _("Successfully Removed")
-            except DoesNotExist:
+            except TransifexApiException:
                 delete_status[resource_slug] = "Resource {} not found".format(resource_slug)
         return delete_status

@@ -8,7 +8,6 @@ from django.utils.translation import gettext as _
 
 import polib
 from memoized import memoized
-from transifex.api.jsonapi.exceptions import DoesNotExist
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.translations.integrations.transifex.client import (
@@ -20,6 +19,7 @@ from corehq.apps.translations.integrations.transifex.const import (
 )
 from corehq.apps.translations.integrations.transifex.exceptions import (
     InvalidProjectMigration,
+    TransifexApiException,
 )
 from corehq.apps.translations.models import TransifexProject
 
@@ -46,20 +46,23 @@ class ProjectMigrator(object):
         ProjectMigrationValidator(self).validate()
 
     def migrate(self):
-        slug_update_responses = self._move_resources()
-        menus_and_forms_sheet_update_responses = self._update_menus_and_forms_sheet()
-        return slug_update_responses, menus_and_forms_sheet_update_responses
+        move_resource_errors = self._move_resources()
+        menus_and_forms_sheet_update_errors = self._update_menus_and_forms_sheet()
+        return move_resource_errors, menus_and_forms_sheet_update_errors
 
     def _move_resources(self):
-        responses = {}
+        errors = {}
         for resource_type, old_id, new_id in self.resource_ids_mapping:
             slug_prefix = self._get_slug_prefix(resource_type)
             if not slug_prefix:
                 continue
             resource_slug = "%s_%s" % (slug_prefix, old_id)
             new_resource_slug = "%s_%s" % (slug_prefix, new_id)
-            responses[old_id] = self.client.move_resource(resource_slug, new_resource_slug)
-        return responses
+            try:
+                self.client.move_resource(resource_slug, new_resource_slug)
+            except TransifexApiException as e:
+                errors[old_id] = e
+        return errors
 
     @memoized
     def _get_slug_prefix(self, resource_type):
@@ -71,7 +74,7 @@ class ProjectMigrator(object):
         for lang in langs:
             try:
                 translations[lang] = self.client.get_translation("Menus_and_forms", lang, lock_resource=False)
-            except DoesNotExist:
+            except TransifexApiException:
                 # Probably a lang in app not present on Transifex, so skip
                 pass
         self._update_context(translations)
@@ -106,7 +109,10 @@ class ProjectMigrator(object):
         # HQ keeps the default lang on top and hence it should be the first one here
         assert list(translations.keys())[0] == self.target_app_default_lang
         for lang_code in translations:
-            responses[lang_code] = self._upload_translation(translations[lang_code], lang_code)
+            try:
+                self._upload_translation(translations[lang_code], lang_code)
+            except TransifexApiException as e:
+                responses[lang_code] = e
         return responses
 
     def _upload_translation(self, translations, lang_code):
@@ -118,10 +124,10 @@ class ProjectMigrator(object):
             po.save(temp_file.name)
             temp_file.seek(0)
             if lang_code == self.target_app_default_lang:
-                return self.client.upload_resource(temp_file.name, "Menus_and_forms", "Menus_and_forms",
-                                                   update_resource=True)
+                self.client.upload_resource(temp_file.name, "Menus_and_forms", "Menus_and_forms",
+                                            update_resource=True)
             else:
-                return self.client.upload_translation(temp_file.name, "Menus_and_forms", lang_code)
+                self.client.upload_translation(temp_file.name, "Menus_and_forms", lang_code)
 
     def get_metadata(self):
         now = str(datetime.datetime.now())
