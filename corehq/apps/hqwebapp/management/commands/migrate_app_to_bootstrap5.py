@@ -461,8 +461,8 @@ class Command(BaseCommand):
     def suggest_commit_message(self, message):
         self.stdout.write("\nNow would be a good time to review changes with git and "
                           "commit before moving on to the next template.")
-        self.stdout.write("\nSuggested commit message:")
-        self.stdout.write(f"Bootstrap 5 Migration - {message}")
+        self.stdout.write("\nSuggested command:")
+        self.stdout.write(f"git commit --no-verify -m \"Bootstrap 5 Migration - {message}\"")
         self.stdout.write("\n")
         self.enter_to_continue()
 
