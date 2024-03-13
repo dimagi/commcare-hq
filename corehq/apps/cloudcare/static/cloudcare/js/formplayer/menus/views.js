@@ -426,7 +426,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
-                altText: this.options.model.get('altText'),
+                altText: this.options.model.get('altText') || '',
                 styles: this.options.styles,
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: markdown.render,
