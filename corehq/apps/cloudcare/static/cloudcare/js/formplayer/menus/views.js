@@ -322,7 +322,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
             currentUrlToObject.endpointId = endpointId;
             currentUrlToObject.isBackground = isBackground;
-
+            currentUrlToObject.addRequestInitiatedByTags(constants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
             function resetIcon() {
                 $moduleIcon.css('display', '');
                 $iconButton.removeClass('disabled');
@@ -342,6 +342,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const self = this;
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
+            urlObject.addRequestInitiatedByTags(constants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
             urlObject.clickedIcon = true;
             const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
