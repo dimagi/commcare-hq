@@ -105,6 +105,7 @@ def find_missing_form_repeat_records_for_form(form, domain, repeaters, enddate, 
         SQLRepeatRecord.objects
         .filter(domain=domain, payload_id=form.get_id)
         .values_list("repeater_id", flat=True)
+        .order_by()
     )
     for repeater in repeaters:
         if not repeater.allowed_to_forward(form):
@@ -192,7 +193,7 @@ def find_missing_case_repeat_records_for_domain(domain, startdate, enddate, shou
 def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate, enddate, should_create=False):
     successful_count = missing_all_count = missing_create_count = missing_update_count = 0
 
-    repeat_records = SQLRepeatRecord.objects.filter(domain=domain, payload_id=case.get_id)
+    repeat_records = SQLRepeatRecord.objects.filter(domain=domain, payload_id=case.get_id).order_by()
     # grab repeat records that were registered during the date range
     records_during_daterange = [record for record in repeat_records
                                 if startdate <= record.registered_at.date() <= enddate]
@@ -402,7 +403,7 @@ def find_missing_repeat_records_in_domain(domain, repeaters, payload, enddate, s
         domain=domain,
         payload_id=payload.get_id,
         registered_at__gte=payload.last_modified.date(),
-    ).values_list("repeater_id", flat=True))
+    ).order_by().values_list("repeater_id", flat=True))
 
     for repeater in repeaters:
         # if repeater.started_at.date() >= enddate:
