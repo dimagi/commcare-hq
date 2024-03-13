@@ -3,7 +3,7 @@
 {% load compress %}
 {% load i18n %}
 
-{% requirejs_main 'builds/js/edit-builds' %}
+{% requirejs_main 'builds/js/bootstrap5/edit_builds' %}
 
 {% block page_title %}
 {% trans "Editing CommCare Builds" %}
@@ -15,27 +15,23 @@
 <div class="alert alert-info"><strong>{% trans "Editing" %} {{ doc.ID }}</strong></div>
 
 
-<div class="panel panel-default">
-  <div class="panel-heading">
-    <h3 class="panel-title">{% trans "Menu Options" %}</h3>
+<div class="card card-default">
+  <div class="card-header">
+    <h3 class="card-title">{% trans "Menu Options" %}</h3>
   </div>
-  <div class="panel-body">
+  <div class="card-body">
     <form id="menu-form" class="form-horizontal" action="." method="POST">{% csrf_token %}
       <table id="menu-table" class="table table-striped">
         <thead>
         <tr>
-          <th></th>
           <th>{% trans "Version" %}</th>
           <th>{% trans "Label" %}</th>
           <th>{% trans "Superuser Only" %}</th>
           <th></th>
         </tr>
         </thead>
-        <tbody data-bind="sortable: versions">
+        <tbody data-bind="foreach: versions">
         <tr>
-          <td class="sortable-handle">
-            <i class="fa-solid fa-up-down"></i>
-          </td>
           <td>
             <select class="form-control" data-bind="
                                     options: $root.available_versions,
@@ -44,13 +40,13 @@
             </select>
           </td>
           <td>
-            <input class="form-control" type="text" data-bind="value: label">
+            <input class="form-control" type="text" data-bind="value: badge">
           </td>
           <td>
             <input type="checkbox" value="superuser-only" data-bind="checked: superuser_only"/>
           </td>
           <td>
-            <button type="button" class="btn btn-danger" data-bind="click: $root.removeVersion">
+            <button type="button" class="btn btn-outline-danger" data-bind="click: $root.removeVersion">
               <i class="fa fa-remove"></i>
             </button>
           </td>
@@ -58,7 +54,7 @@
         </tbody>
         <tr>
           <td colspan="5">
-            <button data-bind="click: addVersion" class="btn btn-default">
+            <button data-bind="click: addVersion" class="btn btn-outline-primary">
               <i class="fa fa-plus"></i>
               {% trans "Add a Version" %}
             </button>
@@ -71,20 +67,20 @@
       <fieldset>
         <legend>Defaults</legend>
         <div class="form-group">
-          <label class="control-label col-sm-3" for="select-default-1">
+          <label class="form-label col-md-3" for="select-default-1">
             {% trans "Default 1.x Build" %}
           </label>
-          <div class="col-sm-8">
+          <div class="col-md-8">
             <select class="form-control" id="select-default-1" data-bind="
                                 options: available_ones,
                                 value: default_one"></select>
           </div>
         </div>
         <div class="form-group">
-          <label class="control-label col-sm-3" for="select-default-2">
+          <label class="form-label col-md-3" for="select-default-2">
             {% trans "Default 2.x Build" %}
           </label>
-          <div class="col-sm-8">
+          <div class="col-md-8">
             <select class="form-control" id="select-default-2" data-bind="
                                     options: available_twos,
                                     value: default_two"></select>
@@ -102,20 +98,20 @@
     </form>
   </div>
 </div>
-<div class="panel panel-default">
-  <div class="panel-heading">
-    <h3 class="panel-title">
+<div class="card card-default">
+  <div class="card-header">
+    <h3 class="card-title">
       {% trans "Import a new build from the build server" %}
     </h3>
   </div>
-  <div class="panel-body">
+  <div class="card-body">
     <form class="form-horizontal" action="{% url 'import_build' %}" method="post">
       {% csrf_token %}
       <div class="form-group">
-        <label class="control-label col-sm-3" for="import_build_version">
+        <label class="form-label col-md-3" for="import_build_version">
           {% trans "Version" %}
         </label>
-        <div class="col-sm-8">
+        <div class="col-md-8">
           <input id="import_build_version" type="text" name="version" class="form-control"/>
           <ol class="help-block">
             <li>

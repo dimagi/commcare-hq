@@ -1,4 +1,14 @@
 # https://help.github.com/en/articles/about-code-owners
+#
+# Contributors can added themselves as "Code Owners" for specific parts of the
+# codebase by adding their Github username next to any number of folders or files.
+# For pull requests that make changes to these folders or files, code owners are
+# automatically added as a "Reviewer" to the pull request and are hence, notified
+# about the changes.
+# Code Owners can share feedback or concerns over these Pull Requests, though
+# it is not mandatory for them to do so.
+# Adding yourself as a Code Owner, is also a good way to stay updated with changes
+# in code areas you are interested in.
 
 
 /.github/ @orangejenny
@@ -35,7 +45,7 @@
 /corehq/apps/domain/auth.py @esoergel
 /corehq/apps/es/ @esoergel @amitphulera
 /corehq/apps/hqcase/ @esoergel
-/corehq/apps/hqwebapp/ @orangejenny
+/corehq/apps/hqwebapp/ @orangejenny @biyeun
 /corehq/apps/linked_domain/ @gherceg
 /corehq/apps/locations/ @esoergel
 /corehq/apps/locations/adjacencylist.py @esoergel @millerdev
@@ -47,7 +57,8 @@
 /corehq/apps/receiverwrapper/ @snopoke
 /corehq/apps/sms*/ @orangejenny @mkangia
 /corehq/apps/smsbillables/ @dannyroberts @biyeun
-/corehq/apps/styleguide/ @orangejenny
+/corehq/apps/sso/ @biyeun
+/corehq/apps/styleguide/ @orangejenny @biyeun
 /corehq/apps/translations/app_translations/ @orangejenny
 /corehq/apps/user_importer/ @stephherbers
 /corehq/apps/userreports/ @calellowitz
