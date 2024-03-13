@@ -614,10 +614,10 @@ class TestRepeatRecordManager(RepeaterTestCase):
 
     def test_count_pending_records_for_domain(self):
         now = datetime.utcnow()
-        self.new_record(next_check=now - timedelta(hours=2))
         self.new_record(next_check=now - timedelta(hours=1))
         self.new_record(next_check=now - timedelta(minutes=15))
         self.new_record(next_check=now - timedelta(minutes=5))
+        self.new_record(next_check=now + timedelta(minutes=5))
         self.new_record(next_check=None, state=State.Success)
         self.new_record(next_check=now - timedelta(hours=1), domain="other")
         pending = SQLRepeatRecord.objects.count_pending_records_for_domain("test")
