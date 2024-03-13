@@ -13,7 +13,6 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data, progress_tracker):
@@ -126,10 +125,9 @@ def property_references_parent(case_property):
 
 
 def operate_on_payloads(
-    repeat_record_ids: List[str],
+    repeat_record_ids: List,
     domain: str,
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    use_sql: bool,
     task: Optional = None,
     from_excel: bool = False,
 ):
@@ -147,10 +145,7 @@ def operate_on_payloads(
         DownloadBase.set_progress(task, 0, len(repeat_record_ids))
 
     for record_id in repeat_record_ids:
-        if use_sql:
-            record = _get_sql_repeat_record(domain, record_id)
-        else:
-            record = _get_couch_repeat_record(domain, record_id)
+        record = _get_sql_repeat_record(domain, record_id)
 
         if record:
             try:
@@ -158,16 +153,11 @@ def operate_on_payloads(
                     record.fire(force_send=True)
                     message = _("Successfully resent repeat record (id={})").format(record_id)
                 elif action == 'cancel':
-                    if use_sql:
-                        record.state = RECORD_CANCELLED_STATE
-                    else:
-                        record.cancel()
+                    record.cancel()
                     record.save()
                     message = _("Successfully cancelled repeat record (id={})").format(record_id)
                 elif action == 'requeue':
                     record.requeue()
-                    if not use_sql:
-                        record.save()
                     message = _("Successfully requeued repeat record (id={})").format(record_id)
                 else:
                     raise ValueError(f'Unknown action {action!r}')
@@ -193,23 +183,12 @@ def operate_on_payloads(
     return {"messages": response}
 
 
-def _get_couch_repeat_record(domain, record_id):
-    from corehq.motech.repeaters.models import RepeatRecord
-
-    try:
-        couch_record = RepeatRecord.get(record_id)
-    except ResourceNotFound:
-        return None
-    if couch_record.domain != domain:
-        return None
-    return couch_record
-
-
 def _get_sql_repeat_record(domain, record_id):
-    from corehq.motech.repeaters.models import SQLRepeatRecord
+    from corehq.motech.repeaters.models import SQLRepeatRecord, is_sql_id
 
+    where = {"id": record_id} if is_sql_id(record_id) else {"couch_id": record_id}
     try:
-        return SQLRepeatRecord.objects.get(domain=domain, pk=record_id)
+        return SQLRepeatRecord.objects.get(domain=domain, **where)
     except SQLRepeatRecord.DoesNotExist:
         return None
 
