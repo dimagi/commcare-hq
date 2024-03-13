@@ -85,6 +85,7 @@ requirejs.config({
         },
         "sentry_browser": { exports: "Sentry" },
     },
+    wrapShim: true,
     packages: [{
         name: 'moment',
         location: 'moment',
