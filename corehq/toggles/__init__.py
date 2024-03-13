@@ -1556,6 +1556,15 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+
+EXPORT_HIDE_DELETED_APPLICATIONS = StaticToggle(
+    'hide_deleted_apps_exports',
+    'Allow hiding of deleted applications in exports',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
+
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Enikshay: Disable column limit in UCR',
