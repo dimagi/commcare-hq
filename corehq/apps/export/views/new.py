@@ -177,9 +177,12 @@ class BaseExportView(BaseProjectDataView):
         format_options = ["xls", "xlsx", "csv"]
 
         should_support_geojson = (
-            self.export_type == CASE_EXPORT
-            and toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain)
-            and not self._is_bulk_export
+            toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain)
+            and (
+                self.export_type == CASE_EXPORT
+                and not self._is_bulk_export
+                or self.export_type == FORM_EXPORT
+            )
         )
         if should_support_geojson:
             format_options.append("geojson")
