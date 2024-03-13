@@ -1,8 +1,10 @@
+'use strict';
 hqDefine("cloudcare/js/form_entry/const", function () {
     return {
         GROUP_TYPE: 'sub-group',
         REPEAT_TYPE: 'repeat-juncture',
         QUESTION_TYPE: 'question',
+        GROUPED_ELEMENT_TILE_ROW_TYPE: 'grouped-element-tile-row',
 
         // Entry types
         STRING: 'str',
@@ -34,6 +36,17 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         TIME_12_HOUR: '12-hour',
         ETHIOPIAN: 'ethiopian',
         SIGNATURE: 'signature',
+        PER_ROW: '-per-row',
+        PER_ROW_PATTERN: new RegExp(`\\d+-per-row(\\s|$)`),
+        PER_ROW_REPEAT_PATTERN: new RegExp(`\\d+-per-row-repeat(\\s|$)`),
+        TEXT_ALIGN_CENTER: 'text-align-center',
+        TEXT_ALIGN_RIGHT: 'text-align-right',
+        BUTTON_SELECT: 'button-select',
+        SHORT: 'short',
+        MEDIUM: 'medium',
+        STRIPE_REPEATS: 'stripe-repeats',
+        GROUP_BORDER: 'group-border',
+        HINT_AS_PLACEHOLDER: 'hint-as-placeholder',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,
@@ -46,6 +59,9 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         BLOCK_NONE: 'block-none',
         BLOCK_SUBMIT: 'block-submit',
         BLOCK_ALL: 'block-all',
+        FULL_WIDTH: 'col-sm-12',
+        SHORT_WIDTH: 'col-sm-2',
+        MEDIUM_WIDTH: 'col-sm-4',
 
         // XForm Navigation
         QUESTIONS_FOR_INDEX: 'questions_for_index',
@@ -56,6 +72,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         NEW_FORM: 'new-form',
         ANSWER: 'answer',
         ANSWER_MEDIA: 'answer_media',
+        CLEAR_ANSWER: 'clear_answer',
         CURRENT: 'current',
         EVALUATE_XPATH: 'evaluate-xpath',
         NEW_REPEAT: 'new-repeat',
@@ -93,5 +110,8 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         FLOAT_LENGTH_LIMIT: 15,
         FLOAT_VALUE_LIMIT: +("9".repeat(14)),
         FILE_PREFIX: "C:\\fakepath\\",
+
+        // Boostrap
+        GRID_COLUMNS: 12,
     };
 });

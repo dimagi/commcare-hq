@@ -149,3 +149,4 @@ BULK_CASE_EXPORT_CACHE = 'bulk-case-export-task'
 # Max limits allowed for being able to do a bulk case export
 MAX_CASE_TYPE_COUNT = 30
 MAX_APP_COUNT = 20
+EXCEL_MAX_SHEET_NAME_LENGTH = 31

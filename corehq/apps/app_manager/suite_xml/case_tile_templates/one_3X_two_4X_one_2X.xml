@@ -1,0 +1,285 @@
+<detail id="{detail_id}">
+  <title>
+    <text>
+      <locale id="{title_text_id}"/>
+    </text>
+  </title>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="small" show-border="true">
+      <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{header[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{header[format]}">
+      <text>
+        <xpath function="{header[xpath_function]}">
+          {header[variables]}
+        </xpath>
+      </text>
+    </template>
+    {header[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="small" show-border="true">
+      <grid grid-height="1" grid-width="12" grid-x="0" grid-y="1"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{top[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{top[format]}">
+      <text>
+        <xpath function="{top[xpath_function]}">
+          {top[variables]}
+        </xpath>
+      </text>
+    </template>
+    {top[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="small" show-border="true">
+      <grid grid-height="1" grid-width="12" grid-x="0" grid-y="2"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{middle0[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{middle0[format]}">
+      <text>
+        <xpath function="{middle0[xpath_function]}">
+          {middle0[variables]}
+        </xpath>
+      </text>
+    </template>
+    {middle0[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="center" vert-align="top" font-size="small">
+      <grid grid-height="1" grid-width="1" grid-x="0" grid-y="3" />
+    </style>
+    <header>
+      <text>
+      </text>
+    </header>
+    <template form="image">
+      <text>
+        <xpath function="{middle1_left_img[xpath_function]}"/>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="top" font-size="small">
+      <grid grid-height="1" grid-width="11" grid-x="1" grid-y="3"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{middle1_right[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{middle1_right[format]}">
+      <text>
+        <xpath function="{middle1_right[xpath_function]}">
+          {middle1_right[variables]}
+        </xpath>
+      </text>
+    </template>
+    {middle1_right[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="center" vert-align="top" font-size="small">
+      <grid grid-height="1" grid-width="1" grid-x="0" grid-y="4" />
+    </style>
+    <header>
+      <text>
+      </text>
+    </header>
+    <template form="image">
+      <text>
+        <xpath function="{middle2_left_img[xpath_function]}"/>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="top" font-size="small">
+      <grid grid-height="1" grid-width="11" grid-x="1" grid-y="4"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{middle2_right[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{middle2_right[format]}">
+      <text>
+        <xpath function="{middle2_right[xpath_function]}">
+          {middle2_right[variables]}
+        </xpath>
+      </text>
+    </template>
+    {middle2_right[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="center" vert-align="top" font-size="small">
+      <grid grid-height="1" grid-width="1" grid-x="0" grid-y="5" />
+    </style>
+    <header>
+      <text>
+      </text>
+    </header>
+    <template form="image">
+      <text>
+        <xpath function="{middle3_left_img[xpath_function]}"/>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="top" font-size="small">
+      <grid grid-height="1" grid-width="11" grid-x="1" grid-y="5"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{middle3_right[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{middle3_right[format]}">
+      <text>
+        <xpath function="{middle3_right[xpath_function]}">
+          {middle3_right[variables]}
+        </xpath>
+      </text>
+    </template>
+    {middle3_right[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="center" vert-align="top" font-size="small">
+      <grid grid-height="1" grid-width="1" grid-x="0" grid-y="6" />
+    </style>
+    <header>
+      <text>
+      </text>
+    </header>
+    <template form="image">
+      <text>
+        <xpath function="{middle4_left_img[xpath_function]}"/>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="top" font-size="small">
+      <grid grid-height="1" grid-width="11" grid-x="1" grid-y="6"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{middle4_right[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{middle4_right[format]}">
+      <text>
+        <xpath function="{middle4_right[xpath_function]}">
+          {middle4_right[variables]}
+        </xpath>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="center" vert-align="center" font-size="small" show-border="true">
+      <grid grid-height="1" grid-width="12" grid-x="0" grid-y="7"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{middle5[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{middle5[format]}">
+      <text>
+        <xpath function="{middle5[xpath_function]}">
+          {middle5[variables]}
+        </xpath>
+      </text>
+    </template>
+    {middle5[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="center" vert-align="center" font-size="small" show-border="true">
+      <grid grid-height="1" grid-width="12" grid-x="0" grid-y="8"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{bottom[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{bottom[format]}">
+      <text>
+        <xpath function="{bottom[xpath_function]}">
+          {bottom[variables]}
+        </xpath>
+      </text>
+    </template>
+    {bottom[endpoint_action]}
+  </field>
+
+  <field>
+    <header>
+      <text>
+        <locale id="{map[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{map[format]}" width="0">
+      <text>
+        <xpath function="concat({map[xpath_function]}, if(here(), '', ''))"> <!-- Without the here() call sessionStorage.locationLat will not be populated -->
+          {map[variables]}
+        </xpath>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="small" show-border="true">
+      <grid grid-height="1" grid-width="12" grid-x="0" grid-y="4"/>
+    </style>
+    <header>
+      <text>
+      </text>
+    </header>
+    <template form="plain">
+      <text>
+          <xpath function="''">
+        </xpath>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="small" show-border="true">
+      <grid grid-height="2" grid-width="12" grid-x="0" grid-y="5"/>
+    </style>
+    <header>
+      <text>
+      </text>
+    </header>
+    <template form="plain">
+      <text>
+          <xpath function="''">
+        </xpath>
+      </text>
+    </template>
+  </field>
+
+</detail>

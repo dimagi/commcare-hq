@@ -21,10 +21,13 @@ from dimagi.utils.parsing import json_format_datetime
 
 from . import aggregations, filters
 from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_CASES_INDEX_CANONICAL_NAME,
+    HQ_CASES_INDEX_NAME,
+    HQ_CASES_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-
-HQ_CASES_INDEX_CANONICAL_NAME = 'cases'
 
 
 class CaseES(HQESQuery):
@@ -88,8 +91,9 @@ class ElasticCase(ElasticDocumentAdapter):
 
 case_adapter = create_document_adapter(
     ElasticCase,
-    "hqcases_2016-03-04",
+    HQ_CASES_INDEX_NAME,
     "case",
+    secondary=HQ_CASES_SECONDARY_INDEX_NAME,
 )
 
 

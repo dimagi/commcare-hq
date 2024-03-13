@@ -106,16 +106,20 @@ class TestUpdateUserMethods(TestCase):
         self.assertEqual(self.user.default_phone_number, '50253311399')
 
     def test_update_user_data_succeeds(self):
-        self.user.update_metadata({'custom_data': "initial custom data"})
+        self.user.get_user_data(self.domain)['custom_data'] = "initial custom data"
         update(self.user, 'user_data', {'custom_data': 'updated custom data'})
-        self.assertEqual(self.user.metadata["custom_data"], "updated custom data")
+        self.assertEqual(self.user.get_user_data(self.domain)["custom_data"], "updated custom data")
 
     def test_update_user_data_raises_exception_if_profile_conflict(self):
         profile_id = self._setup_profile()
         with self.assertRaises(UpdateUserException) as cm:
             update(self.user, 'user_data', {PROFILE_SLUG: profile_id, 'conflicting_field': 'no'})
+        self.assertEqual(cm.exception.message, "'conflicting_field' cannot be set directly")
 
-        self.assertEqual(cm.exception.message, 'metadata properties conflict with profile: conflicting_field')
+    def test_profile_not_found(self):
+        with self.assertRaises(UpdateUserException) as cm:
+            update(self.user, 'user_data', {PROFILE_SLUG: 123456})
+        self.assertEqual(cm.exception.message, "User data profile not found")
 
     def test_update_groups_succeeds(self):
         group = Group({"name": "test", "domain": self.user.domain})
@@ -283,7 +287,7 @@ class TestUpdateUserMethodsLogChanges(TestCase):
         self.assertNotIn('phone_numbers', self.user_change_logger.change_messages.keys())
 
     def test_update_user_data_logs_change(self):
-        self.user.update_metadata({'custom_data': "initial custom data"})
+        self.user.get_user_data(self.domain)['custom_data'] = "initial custom data"
 
         update(self.user,
                'user_data',
@@ -293,7 +297,7 @@ class TestUpdateUserMethodsLogChanges(TestCase):
         self.assertIn('user_data', self.user_change_logger.fields_changed.keys())
 
     def test_update_user_data_does_not_log_no_change(self):
-        self.user.update_metadata({'custom_data': "unchanged custom data"})
+        self.user.get_user_data(self.domain)['custom_data'] = "unchanged custom data"
         update(self.user, 'user_data', {'custom_data': 'unchanged custom data'})
         self.assertNotIn('user_data', self.user_change_logger.fields_changed.keys())
 

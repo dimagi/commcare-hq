@@ -44,6 +44,8 @@ class HQThrottle(BaseThrottle):
 
         return not api_rate_limiter.allow_usage(identifier.domain)
 
+    def retry_after(self, identifier):
+        return api_rate_limiter.get_retry_after(scope=identifier.domain)
 
     def accessed(self, identifier, **kwargs):
         """

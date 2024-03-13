@@ -1,13 +1,9 @@
-from django.conf import settings
-from django.contrib import messages
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-from corehq.util.es.elasticsearch import TransportError
 from memoized import memoized
 
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.utils import track_es_report_load
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -15,7 +11,10 @@ from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
-from corehq.apps.reports.standard import ProjectReportParametersMixin
+from corehq.apps.reports.standard import (
+    ProjectReport,
+    ProjectReportParametersMixin,
+)
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.reports.standard.cases.utils import (
     all_project_data_filter,
@@ -23,11 +22,8 @@ from corehq.apps.reports.standard.cases.utils import (
     get_case_owners,
     query_location_restricted_cases,
 )
-from corehq.apps.reports.standard.inspect import ProjectInspectionReport
-from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.elastic import ESError
-from corehq.toggles import CASE_LIST_EXPLORER
-from corehq.util.timezones.conversions import PhoneTime
+from corehq.util.es.elasticsearch import TransportError
 
 from .data_sources import CaseDisplayES
 
@@ -45,11 +41,16 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     asynchronous = True
     search_class = case_es.CaseES
 
+    def _base_query(self):
+        return (
+            self.search_class()
+            .domain(self.domain)
+            .size(self.pagination.count)
+            .start(self.pagination.start)
+        )
+
     def _build_query(self):
-        query = (self.search_class()
-                 .domain(self.domain)
-                 .size(self.pagination.count)
-                 .start(self.pagination.start))
+        query = self._base_query()
         query.es_query['sort'] = self.get_sorting_block()
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
 
@@ -58,8 +59,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
         query = query.NOT(case_es.case_type("user-owner-mapping-case"))
 
-        if self.case_type:
-            query = query.case_type(self.case_type)
+        if self.case_types:
+            query = query.case_type(self.case_types)
 
         if self.case_status:
             query = query.is_closed(self.case_status == 'closed')
@@ -85,7 +86,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             or EMWF.selected_group_ids(mobile_user_and_group_slugs)
             or EMWF.selected_location_ids(mobile_user_and_group_slugs)
         ):
-            track_es_report_load(self.domain, self.slug, len(self.case_owners))
             case_owner_filters.append(case_es.owner(self.case_owners))
 
         query = query.OR(*case_owner_filters)
@@ -129,7 +129,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             raise ValueError("Case object is not in search result %s" % row)
 
         if case_dict['domain'] != self.domain:
-            raise Exception("case.domain != self.domain; %r and %r, respectively" % (case_dict['domain'], self.domain))
+            raise Exception(
+                f"case.domain != self.domain; {case_dict['domain']!r} and "
+                f"{self.domain!r}, respectively"
+            )
 
         return case_dict
 
@@ -144,7 +147,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
 
 @location_safe
-class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
+class CaseListReport(CaseListMixin, ProjectReport, ReportDataSource):
 
     # note that this class is not true to the spirit of ReportDataSource; the whole
     # point is the decouple generating the raw report data from the report view/django
@@ -168,26 +171,6 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
                 'urlname': CaseDataView.urlname,
             },
         ]
-
-    @property
-    def can_upgrade_to_case_list_explorer(self):
-        if settings.ENTERPRISE_MODE:
-            return False
-
-        if self.request.couch_user.is_dimagi and not CASE_LIST_EXPLORER.enabled(self.domain):
-            return True
-
-        return False
-
-    @property
-    def view_response(self):
-        if self.can_upgrade_to_case_list_explorer:
-            messages.warning(
-                self.request,
-                'Hey Dimagi User! Have you tried out the <a href="https://confluence.dimagi.com/display/saas/Case+List+Explorer" target="_blank">Case List Explorer</a> yet? It might be just what you are looking for!',
-                extra_tags='html',
-            )
-        return super(CaseListReport, self).view_response
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):

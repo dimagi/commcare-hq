@@ -7,7 +7,15 @@
 
 {% block page_content %}
   {% initial_page_data 'current_values' form.current_values %}
+  {% registerurl "get_attendees_and_attendance_takers" domain %}
 
+  <div id="attendance-list-error" class="alert alert-danger hidden">
+    <p>
+      {% blocktrans %}
+      There was a problem fetching the list of attendees and attendance takers. Please try again.
+      {% endblocktrans %}
+    </p>
+  </div>
   <form id="tracking-event-form" class="form-horizontal disable-on-submit" method="post">
     {% crispy form %}
   </form>

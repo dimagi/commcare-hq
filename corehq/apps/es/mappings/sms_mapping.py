@@ -15,61 +15,61 @@ SMS_MAPPING = {
     "dynamic": False,
     "properties": {
         "backend_api": {
-            "type": "string"
+            "type": "text"
         },
         "backend_id": {
-            "type": "string"
+            "type": "text"
         },
         "base_doc": {
-            "type": "string"
+            "type": "text"
         },
         "billed": {
             "type": "boolean"
         },
         "couch_recipient": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "couch_recipient_doc_type": {
-            "type": "string"
+            "type": "text"
         },
         "date": {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "direction": {
-            "type": "string"
+            "type": "text"
+        },
+        "doc_id": {
+            "type": "keyword"
         },
         "doc_type": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "domain": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         "phone_number": {
-            "type": "string"
+            "type": "text"
         },
         "processed": {
             "type": "boolean"
         },
         "reminder_id": {
-            "type": "string"
+            "type": "text"
         },
         "text": {
-            "type": "string"
+            "type": "text"
         },
         "workflow": {
-            "type": "string"
+            "type": "text"
         },
         "xforms_session_couch_id": {
-            "type": "string"
+            "type": "text"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"

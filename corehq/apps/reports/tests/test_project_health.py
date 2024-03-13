@@ -15,7 +15,7 @@ from corehq.apps.reports.standard.project_health import (
     MonthlyPerformanceSummary,
     ProjectHealthDashboard,
 )
-from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.const import MISSING_APP_ID
 
 

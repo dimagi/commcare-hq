@@ -1,3 +1,4 @@
+import datetime
 from unittest.mock import Mock
 
 from django.test import TestCase, override_settings
@@ -11,12 +12,14 @@ from corehq.apps.sms.forms import (
 )
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.models import CommCareUser
+from corehq.messaging.fcm.exceptions import FCMTokenValidationException
 from corehq.messaging.scheduling.exceptions import EmailValidationException
 from corehq.messaging.scheduling.models import (
     Content as AbstractContent,
     CustomContent,
     Schedule as AbstractSchedule,
     EmailContent,
+    FCMNotificationContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
@@ -48,10 +51,12 @@ class TestContent(TestCase):
         cls.sms_translations = get_or_create_sms_translations(cls.domain)
         cls.sms_translations.set_translations('es', {})
         cls.sms_translations.save()
+        cls.mobile_user = CommCareUser.create(cls.domain, 'mobile', 'abc', None, None, device_id='test_dev')
 
     @classmethod
     def tearDownClass(cls):
         cls.sms_translations.delete()
+        cls.domain_obj.delete()
         super(TestContent, cls).tearDownClass()
 
     @override_settings(AVAILABLE_CUSTOM_SCHEDULING_CONTENT=AVAILABLE_CUSTOM_SCHEDULING_CONTENT)
@@ -236,6 +241,37 @@ class TestContent(TestCase):
         with self.assertRaises(EmailValidationException) as e:
             EmailContent().get_recipient_email(recipient)
         self.assertEqual(e.exception.error_type, MessagingEvent.ERROR_INVALID_EMAIL_ADDRESS)
+
+    def _reset_user_fcm_tokens(self):
+        for device in self.mobile_user.devices:
+            device.fcm_token = None
+            device.fcm_token_timestamp = None
+            device.save()
+
+    def test_fcm_recipient_token_absent(self):
+        self._reset_user_fcm_tokens()
+        with self.assertRaises(FCMTokenValidationException) as e:
+            FCMNotificationContent().get_recipient_devices_fcm_tokens(self.mobile_user)
+        self.assertEqual(e.exception.error_type, MessagingEvent.ERROR_NO_FCM_TOKENS)
+
+    def test_fcm_recipient_token_present(self):
+        self._reset_user_fcm_tokens()
+        self.mobile_user.update_device_id_last_used(self.mobile_user.device_ids[0], fcm_token='abcd',
+                                                    fcm_token_timestamp=datetime.datetime.utcnow())
+        devices_token = FCMNotificationContent().get_recipient_devices_fcm_tokens(self.mobile_user)
+        self.assertEqual(devices_token, ['abcd'])
+
+    def test_fcm_content_data_field_action_absent(self):
+        fcm_content = FCMNotificationContent()
+        data = fcm_content.build_fcm_data_field(self.mobile_user)
+        self.assertEqual(data, {})
+
+    def test_fcm_content_data_field_action_present(self):
+        fcm_content = FCMNotificationContent(action='SYNC')
+        data = fcm_content.build_fcm_data_field(self.mobile_user)
+        self.assertEqual(data['action'], 'SYNC')
+        self.assertEqual(data['domain'], self.mobile_user.domain)
+        self.assertEqual(data['username'], self.mobile_user.raw_username)
 
 
 @unregistered_django_model

@@ -1,0 +1,45 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div id="downgrade-modal"
+     class="modal"
+     data-slug="downgrade_pending"
+     data-domain="{{ domain }}">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header {% if days_until_downgrade <= 30 %}bg-danger text-danger{% endif %}">
+        <h4 class="modal-title">
+          {% blocktrans %}
+            Your invoice for {{ invoice_month }} is past due!
+          {% endblocktrans %}
+        </h4>
+      </div>
+
+      <div class="modal-body">
+        <p>
+          {% blocktrans count days_until_downgrade=days_until_downgrade %}
+            You're at risk of losing access to your project space
+            if your invoice isn't paid in 1 day.
+          {% plural %}
+            You're at risk of losing access to your project space
+            if your invoice isn't paid in {{ days_until_downgrade }}
+            days.
+          {% endblocktrans %}
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button id="overdue-invoice-snooze" class="btn btn-outline-primary">
+          {% trans "Remind me later" %}
+        </button>
+        <a id="overdue-invoice-link"
+           class="btn btn-primary"
+           href={% url 'domain_billing_statements' domain %}>
+          {% trans "Pay invoice now" %}
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>

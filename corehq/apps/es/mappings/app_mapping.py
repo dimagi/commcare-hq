@@ -17,26 +17,25 @@ APP_MAPPING = {
             "type": "date"
         },
         "admin_password": {
-            "type": "string"
+            "type": "text"
         },
         "admin_password_charset": {
-            "type": "string"
+            "type": "text"
         },
         "application_version": {
-            "type": "string"
+            "type": "text"
         },
         "attribution_notes": {
-            "type": "string"
+            "type": "text"
         },
         "build_broken": {
             "type": "boolean"
         },
         "build_comment": {
-            "type": "string"
+            "type": "text"
         },
         "build_langs": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "build_signed": {
             "type": "boolean"
@@ -49,14 +48,13 @@ APP_MAPPING = {
                     "type": "long"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "latest": {
                     "type": "boolean"
                 },
                 "version": {
-                    "type": "string"
+                    "type": "text"
                 }
             }
         },
@@ -76,8 +74,7 @@ APP_MAPPING = {
                     "type": "date"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "latest": {
                     "type": "boolean"
@@ -86,7 +83,7 @@ APP_MAPPING = {
                     "type": "boolean"
                 },
                 "version": {
-                    "type": "string"
+                    "type": "text"
                 }
             }
         },
@@ -101,20 +98,19 @@ APP_MAPPING = {
             "type": "boolean"
         },
         "comment_from": {
-            "type": "string"
+            "type": "text"
         },
         "copy_history": {
-            "type": "string"
+            "type": "text"
         },
         "copy_of": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "cp_is_active": {
             "type": "boolean"
         },
         "created_from_template": {
-            "type": "string"
+            "type": "text"
         },
         "date_created": {
             "format": DATE_FORMATS_STRING,
@@ -125,23 +121,24 @@ APP_MAPPING = {
             "type": "date"
         },
         "description": {
-            "type": "string"
+            "type": "text"
+        },
+        "doc_id": {
+            "type": "keyword"
         },
         "doc_type": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "domain": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         "family_id": {
-            "type": "string"
+            "type": "text"
         },
         "force_http": {
             "type": "boolean"
@@ -150,8 +147,7 @@ APP_MAPPING = {
             "type": "boolean"
         },
         "langs": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "modules": {
             "dynamic": False,
@@ -162,8 +158,7 @@ APP_MAPPING = {
                     "type": "object",
                     "properties": {
                         "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "label": {
                             "dynamic": False,
@@ -177,11 +172,10 @@ APP_MAPPING = {
                 "case_type": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
-                    "type": "string"
+                    "type": "text"
                 },
                 "details": {
                     "dynamic": False,
@@ -192,22 +186,20 @@ APP_MAPPING = {
                             "type": "object",
                             "properties": {
                                 "advanced": {
-                                    "type": "string"
+                                    "type": "text"
                                 },
                                 "doc_type": {
-                                    "index": "not_analyzed",
-                                    "type": "string"
+                                    "type": "keyword"
                                 },
                                 "enum": {
                                     "dynamic": False,
                                     "type": "object",
                                     "properties": {
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "key": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "value": {
                                             "dynamic": False,
@@ -216,13 +208,13 @@ APP_MAPPING = {
                                     }
                                 },
                                 "field": {
-                                    "type": "string"
+                                    "type": "text"
                                 },
                                 "filter_xpath": {
-                                    "type": "string"
+                                    "type": "text"
                                 },
                                 "format": {
-                                    "type": "string"
+                                    "type": "text"
                                 },
                                 "header": {
                                     "dynamic": False,
@@ -232,7 +224,7 @@ APP_MAPPING = {
                                     "type": "long"
                                 },
                                 "model": {
-                                    "type": "string"
+                                    "type": "text"
                                 },
                                 "time_ago_interval": {
                                     "type": "float"
@@ -240,39 +232,36 @@ APP_MAPPING = {
                             }
                         },
                         "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "filter": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "sort_elements": {
                             "dynamic": False,
                             "type": "object",
                             "properties": {
                                 "direction": {
-                                    "type": "string"
+                                    "type": "text"
                                 },
                                 "doc_type": {
-                                    "index": "not_analyzed",
-                                    "type": "string"
+                                    "type": "keyword"
                                 },
                                 "field": {
-                                    "type": "string"
+                                    "type": "text"
                                 },
                                 "type": {
-                                    "type": "string"
+                                    "type": "text"
                                 }
                             }
                         },
                         "type": {
-                            "type": "string"
+                            "type": "text"
                         }
                     }
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "forms": {
                     "dynamic": False,
@@ -291,23 +280,21 @@ APP_MAPPING = {
                                             "type": "object",
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "preload": {
                                             "dynamic": False,
@@ -324,23 +311,21 @@ APP_MAPPING = {
                                             "type": "object",
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         }
                                     }
                                 },
@@ -353,29 +338,26 @@ APP_MAPPING = {
                                             "type": "object",
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         }
                                     }
                                 },
                                 "doc_type": {
-                                    "index": "not_analyzed",
-                                    "type": "string"
+                                    "type": "keyword"
                                 },
                                 "load_from_form": {
                                     "dynamic": False,
@@ -386,23 +368,21 @@ APP_MAPPING = {
                                             "type": "object",
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "preload": {
                                             "dynamic": False,
@@ -419,29 +399,27 @@ APP_MAPPING = {
                                             "type": "object",
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "external_id": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "name_path": {
-                                            "type": "string"
+                                            "type": "text"
                                         }
                                     }
                                 },
@@ -454,29 +432,27 @@ APP_MAPPING = {
                                             "type": "object",
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "followup_date": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "name_path": {
-                                            "type": "string"
+                                            "type": "text"
                                         }
                                     }
                                 },
@@ -489,23 +465,21 @@ APP_MAPPING = {
                                             "type": "object",
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "preload": {
                                             "dynamic": False,
@@ -518,43 +492,41 @@ APP_MAPPING = {
                                     "type": "nested",
                                     "properties": {
                                         "case_name": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "case_properties": {
                                             "dynamic": False,
                                             "type": "object"
                                         },
                                         "case_type": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "condition": {
                                             "dynamic": False,
                                             "type": "object",
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "reference_id": {
-                                            "type": "string"
+                                            "type": "text"
                                         },
                                         "repeat_context": {
-                                            "type": "string"
+                                            "type": "text"
                                         }
                                     }
                                 },
@@ -567,23 +539,21 @@ APP_MAPPING = {
                                             "type": "object",
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "update": {
                                             "dynamic": False,
@@ -600,61 +570,56 @@ APP_MAPPING = {
                                             "type": "object",
                                             "properties": {
                                                 "answer": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "doc_type": {
-                                                    "index": "not_analyzed",
-                                                    "type": "string"
+                                                    "type": "keyword"
                                                 },
                                                 "question": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 },
                                                 "type": {
-                                                    "type": "string"
+                                                    "type": "text"
                                                 }
                                             }
                                         },
                                         "doc_type": {
-                                            "index": "not_analyzed",
-                                            "type": "string"
+                                            "type": "keyword"
                                         },
                                         "followup_date": {
-                                            "type": "string"
+                                            "type": "text"
                                         }
                                     }
                                 }
                             }
                         },
                         "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "form_filter": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "form_type": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "name": {
                             "dynamic": False,
                             "type": "object"
                         },
                         "requires": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "show_count": {
                             "type": "boolean"
                         },
                         "unique_id": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "version": {
                             "type": "long"
                         },
                         "xmlns": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     }
                 },
@@ -670,14 +635,13 @@ APP_MAPPING = {
                             "type": "boolean"
                         },
                         "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "module_id": {
-                            "type": "string"
+                            "type": "text"
                         },
                         "relationship": {
-                            "type": "string"
+                            "type": "text"
                         }
                     }
                 },
@@ -689,8 +653,7 @@ APP_MAPPING = {
                     "type": "object",
                     "properties": {
                         "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "label": {
                             "dynamic": False,
@@ -702,16 +665,14 @@ APP_MAPPING = {
                     }
                 },
                 "root_module_id": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "task_list": {
                     "dynamic": False,
                     "type": "object",
                     "properties": {
                         "doc_type": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "label": {
                             "dynamic": False,
@@ -723,7 +684,7 @@ APP_MAPPING = {
                     }
                 },
                 "unique_id": {
-                    "type": "string"
+                    "type": "text"
                 }
             }
         },
@@ -732,17 +693,16 @@ APP_MAPPING = {
             "type": "object",
             "properties": {
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "media_type": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "multimedia_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "unique_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "version": {
                     "type": "long"
@@ -752,56 +712,52 @@ APP_MAPPING = {
         "name": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         "phone_model": {
-            "type": "string"
+            "type": "text"
         },
         "platform": {
-            "type": "string"
+            "type": "text"
         },
         "profile": {
             "dynamic": True,
             "type": "object"
         },
         "recipients": {
-            "type": "string"
+            "type": "text"
         },
         "secure_submissions": {
             "type": "boolean"
         },
         "short_odk_media_url": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "short_odk_url": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "short_url": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "success_message": {
             "dynamic": False,
             "type": "object"
         },
         "text_input": {
-            "type": "string"
+            "type": "text"
         },
         "translation_strategy": {
-            "type": "string"
+            "type": "text"
         },
         "translations": {
             "dynamic": False,
             "type": "object"
         },
         "upstream_app_id": {
-            "type": "string"
+            "type": "text"
         },
         "upstream_version": {
             "type": "long"
@@ -810,7 +766,7 @@ APP_MAPPING = {
             "type": "boolean"
         },
         "user_type": {
-            "type": "string"
+            "type": "text"
         },
         "vellum_case_management": {
             "type": "boolean"

@@ -8,6 +8,9 @@ from django.utils.translation import gettext_lazy
 
 import dateutil
 from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from crispy_forms.bootstrap import StrictButton
 
 from corehq import privileges
 from dimagi.utils.dates import DateSpan
@@ -51,6 +54,7 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 from corehq.util import flatten_non_iterable_list
+from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 
 
 class DateSpanField(forms.CharField):
@@ -74,7 +78,7 @@ class CreateExportTagForm(forms.Form):
         ]
     )
     app_type = forms.CharField(widget=forms.Select(choices=[]))
-    application = forms.CharField(widget=forms.Select(choices=[]))
+    application = forms.CharField(required=False, widget=forms.Select(choices=[]))
 
     # Form export fields
     module = forms.CharField(required=False, widget=forms.Select(choices=[]))
@@ -121,12 +125,12 @@ class CreateExportTagForm(forms.Form):
                     ),
                     data_bind="visible: showAppType()",
                 ),
-                crispy.Field(
-                    'application',
-                    placeholder=_("Select Application"),
-                    data_bind="value: application",
-                ),
                 crispy.Div(  # Form export fields
+                    crispy.Field(
+                        'application',
+                        placeholder=_("Select Application"),
+                        data_bind="value: application",
+                    ),
                     crispy.Field(
                         'module',
                         placeholder=_("Select Menu"),
@@ -146,10 +150,7 @@ class CreateExportTagForm(forms.Form):
                     crispy.Field(
                         'case_type',
                         placeholder=_("Select Case Type"),
-                        data_bind='''
-                            value: caseType,
-                            disable: !application(),
-                        ''',
+                        data_bind="value: caseType",
                     ),
                     data_bind="visible: isCaseModel()",
                 ),
@@ -442,10 +443,10 @@ class DashboardFeedFilterForm(forms.Form):
         """
         # Confirm that either form filter data or case filter data but not both has been submitted.
         assert (
-            (self.cleaned_data['emwf_form_filter'] is not None) !=
-            (self.cleaned_data['emwf_case_filter'] is not None)
+            (self.cleaned_data['emwf_form_filter'] is not None)
+            != (self.cleaned_data['emwf_case_filter'] is not None)
         )
-        assert(export_type == 'form' or export_type == 'case')
+        assert (export_type == 'form' or export_type == 'case')
         if export_type == 'form':
             filters = self._to_form_export_instance_filters(can_access_all_locations, accessible_location_ids)
         else:
@@ -475,8 +476,8 @@ class DashboardFeedFilterForm(forms.Form):
             can_access_all_locations=can_access_all_locations,
             accessible_location_ids=accessible_location_ids,
             sharing_groups=CaseListFilter.selected_sharing_group_ids(emwf_selections),
-            show_all_data=CaseListFilter.show_all_data(emwf_selections) or
-            CaseListFilter.no_filters_selected(emwf_selections),
+            show_all_data=CaseListFilter.show_all_data(emwf_selections)
+            or CaseListFilter.no_filters_selected(emwf_selections),
             show_project_data=CaseListFilter.show_project_data(emwf_selections),
         )
 
@@ -509,16 +510,16 @@ class DashboardFeedFilterForm(forms.Form):
         if export_instance_filters:
             date_period = export_instance_filters.date_period
             selected_items = (
-                export_instance_filters.users +
-                export_instance_filters.reporting_groups +
-                export_instance_filters.locations +
-                export_instance_filters.user_types
+                export_instance_filters.users
+                + export_instance_filters.reporting_groups
+                + export_instance_filters.locations
+                + export_instance_filters.user_types
             )
             if isinstance(export_instance_filters, CaseExportInstanceFilters):
                 selected_items += (
-                    export_instance_filters.sharing_groups +
-                    (["all_data"] if export_instance_filters.show_all_data else []) +
-                    (["project_data"] if export_instance_filters.show_project_data else [])
+                    export_instance_filters.sharing_groups
+                    + (["all_data"] if export_instance_filters.show_all_data else [])
+                    + (["project_data"] if export_instance_filters.show_project_data else [])
                 )
 
             emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else \
@@ -751,7 +752,8 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         if date_filter:
             form_filters.append(date_filter)
         if not can_access_all_locations:
-            form_filters.append(self._scope_filter(accessible_location_ids))
+            show_inactive_users = HQUserType.DEACTIVATED in user_types
+            form_filters.append(self._scope_filter(accessible_location_ids, show_inactive_users))
 
         return form_filters
 
@@ -777,10 +779,10 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
 
         return all_user_filters
 
-    def _scope_filter(self, accessible_location_ids):
+    def _scope_filter(self, accessible_location_ids, include_inactive_users=False):
         # Filter to be applied in AND with filters for export for restricted user
         # Restricts to forms submitted by users at accessible locations
-        accessible_user_ids = mobile_user_ids_at_locations(list(accessible_location_ids))
+        accessible_user_ids = mobile_user_ids_at_locations(list(accessible_location_ids), include_inactive_users)
         return FormSubmittedByFilter(accessible_user_ids)
 
 
@@ -1072,4 +1074,49 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
                 'date_range',
                 data_bind='value: dateRange',
             ),
+        ]
+
+
+class DatasourceExportDownloadForm(forms.Form):
+
+    data_source = forms.ChoiceField(
+        label=gettext_lazy("Select project data source"),
+        required=True,
+    )
+
+    def __init__(self, domain, *args, **kwargs):
+        super(DatasourceExportDownloadForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
+
+        self.fields['data_source'].choices = self.domain_datasources(domain)
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "",
+                crispy.Div(
+                    crispy.Field(
+                        'data_source',
+                        css_class='input-xlarge',
+                        data_bind='value: dataSource'
+                    ),
+                    data_bind='visible: haveDatasources'
+                ),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Download Data Export Tool query file"),
+                    type="submit",
+                    css_class="btn-primary",
+                    data_bind="enable: haveDatasources"
+                ),
+            )
+        )
+
+    @staticmethod
+    def domain_datasources(domain):
+        return [
+            (ds.data_source_id, ds.table_id)
+            for ds in get_datasources_for_domain(domain)
         ]

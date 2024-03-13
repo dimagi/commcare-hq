@@ -8,11 +8,15 @@ from openpyxl import load_workbook
 
 from corehq.apps.export.det.exceptions import DETConfigError
 from corehq.apps.export.det.schema_generator import (
+    FormDETSchemaHelper,
     generate_from_form_export_instance,
     generate_from_case_export_instance,
-    FormDETSchemaHelper)
+    generate_from_datasource_export_instance,
+)
 from corehq.apps.export.models import FormExportInstance, CaseExportInstance
 from corehq.util.test_utils import TestFileMixin
+from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.export.models.new import datasource_export_instance
 
 
 class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
@@ -202,3 +206,121 @@ class TestDETFormInstanceWithRepeat(SimpleTestCase, TestFileMixin):
         self.assertEqual('form.form.children[*]', rows_by_headings[0]['Data Source'])
         self.assertEqual('child_name', rows_by_headings[1]['Source Field'])
         self.assertEqual('child_dob', rows_by_headings[2]['Source Field'])
+
+
+class TestDatasourceInstance(SimpleTestCase, TestFileMixin):
+
+    domain = "test-domain"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.config = DataSourceConfiguration(**cls._sample_data_source_dict())
+
+    def test_generate_from_datasource_export_instance(self):
+        export_instance = datasource_export_instance(self.config)
+
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.xlsx') as tmp:
+            generate_from_datasource_export_instance(export_instance, tmp)
+            wb = load_workbook(filename=tmp.name)
+
+            self.assertEqual(len(wb.worksheets), 1)
+            ws = wb.worksheets[0]
+            ws_data = list(ws.values)
+            headings = ws_data.pop(0)
+            data_by_headings = [dict(zip(headings, row)) for row in ws_data]
+
+            self.assertEqual(data_by_headings[0]['Data Source'], "ucr")
+            self.assertEqual(data_by_headings[1]['Source Field'], "doc_id")
+            self.assertEqual(data_by_headings[2]['Source Field'], "inserted_at")
+            self.assertEqual(data_by_headings[2]['Map Via'], "str2date")
+            self.assertEqual(data_by_headings[3]['Source Field'], "name_string")
+            self.assertEqual(data_by_headings[4]['Source Field'], "computed_owner_name")
+            self.assertEqual(data_by_headings[5]['Source Field'], "age_string")
+            self.assertEqual(data_by_headings[6]['Source Field'], "closed_string")
+
+    @classmethod
+    def _sample_data_source_dict(cls):
+        return {
+            'domain': cls.domain,
+            'table_id': 'table_id',
+            'display_name': 'Test datasource',
+            'referenced_doc_type': 'CommCareCase',
+            'configured_filter': {
+                'type': 'boolean_expression',
+                'operator': 'eq',
+                'expression': {
+                    'type': 'property_name',
+                    'property_name': 'type',
+                    'datatype': None
+                },
+                'property_value': 'case',
+                'comment': None
+            },
+            'configured_indicators': [
+                {
+                    'type': 'expression',
+                    'column_id': 'name_string',
+                    'datatype': 'string',
+                    'display_name': 'name',
+                    'expression': {
+                        'type': 'property_name',
+                        'property_name': 'name',
+                        'datatype': None
+                    },
+                    'is_nullable': True,
+                    'is_primary_key': False,
+                    'create_index': False,
+                    'transform': {},
+                    'comment': None
+                },
+                {
+                    'datatype': 'string',
+                    'type': 'expression',
+                    'column_id': 'computed_owner_name',
+                    'expression': {
+                        'type': 'property_name',
+                        'property_name': 'owner_id',
+                        'datatype': 'string'
+                    },
+                    'is_nullable': True,
+                    'is_primary_key': False,
+                    'create_index': False,
+                    'transform': {},
+                    'display_name': None,
+                    'comment': None
+                },
+                {
+                    'type': 'expression',
+                    'column_id': 'age_string',
+                    'datatype': 'string',
+                    'display_name': 'age',
+                    'expression': {
+                        'type': 'property_name',
+                        'property_name': 'age',
+                        'datatype': None
+                    },
+                    'is_nullable': True,
+                    'is_primary_key': False,
+                    'create_index': False,
+                    'transform': {},
+                    'comment': None
+                },
+                {
+                    'type': 'expression',
+                    'column_id': 'closed_string',
+                    'datatype': 'string',
+                    'display_name': 'closed',
+                    'expression': {
+                        'type': 'property_name',
+                        'property_name': 'closed',
+                        'datatype': None
+                    },
+                    'is_nullable': True,
+                    'is_primary_key': False,
+                    'create_index': False,
+                    'transform': {},
+                    'comment': None
+                }
+            ],
+        }

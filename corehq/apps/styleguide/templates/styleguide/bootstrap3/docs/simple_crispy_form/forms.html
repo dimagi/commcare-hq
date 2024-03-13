@@ -1,0 +1,84 @@
+{% extends 'styleguide/bootstrap3/base_doc.html' %}
+
+{% block doc_content %}
+    <div class="row">
+        <div class="col-lg-4"></div>
+        <div class="col-lg-8"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">gettext_noop</span><span class="p">,</span> <span class="n">gettext</span> <span class="k">as</span> <span class="n">_</span>
+<span class="kn">from</span> <span class="nn">crispy_forms</span> <span class="kn">import</span> <span class="n">layout</span> <span class="k">as</span> <span class="n">crispy</span>
+<span class="kn">from</span> <span class="nn">crispy_forms</span> <span class="kn">import</span> <span class="n">bootstrap</span> <span class="k">as</span> <span class="n">twbscrispy</span>
+<span class="kn">from</span> <span class="nn">corehq.apps.hqwebapp</span> <span class="kn">import</span> <span class="n">crispy</span> <span class="k">as</span> <span class="n">hqcrispy</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"><p>This is an EXAMPLE form that demonstrates the use of Crispy Forms in HQ.</p></div>
+        <div class="col-lg-8"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ExampleUserLoginForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"></div>
+        <div class="col-lg-8"><div class="highlight"><pre>    <span class="n">full_name</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">gettext_noop</span><span class="p">(</span><span class="s">&quot;Full Name&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">EmailField</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">gettext_noop</span><span class="p">(</span><span class="s">&quot;Email&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">gettext_noop</span><span class="p">(</span><span class="s">&quot;Password&quot;</span><span class="p">),</span>
+        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">PasswordInput</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="n">password_repeat</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">gettext_noop</span><span class="p">(</span><span class="s">&quot;Password (Repeat)&quot;</span><span class="p">),</span>
+        <span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">PasswordInput</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="n">phone_number</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">gettext_noop</span><span class="p">(</span><span class="s">&quot;Phone Number&quot;</span><span class="p">),</span>
+        <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">is_staff</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">gettext_noop</span><span class="p">(</span><span class="s">&quot;Has Staff Privileges&quot;</span><span class="p">),</span>
+        <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">language</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">ChoiceField</span><span class="p">(</span>
+        <span class="n">label</span><span class="o">=</span><span class="n">gettext_noop</span><span class="p">(</span><span class="s">&quot;Language&quot;</span><span class="p">),</span>
+        <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+    <span class="p">)</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"></div>
+        <div class="col-lg-8"><div class="highlight"><pre>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ExampleUserLoginForm</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"><p>Here's what makes the form a Crispy Form. It also adds a few Bootstrap classes so the form has standard proportions.</p></div>
+        <div class="col-lg-8"><div class="highlight"><pre>        <span class="bp">self</span><span class="o">.</span><span class="n">helper</span> <span class="o">=</span> <span class="n">hqcrispy.HQFormHelper</span><span class="p">()</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"><p>This is the layout of the form where we can explicitly specify the
+order of fields and group fields into fieldsets.</p></div>
+        <div class="col-lg-8"><div class="highlight"><pre>        <span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">crispy</span><span class="o">.</span><span class="n">Layout</span><span class="p">(</span>
+            <span class="n">crispy</span><span class="o">.</span><span class="n">Fieldset</span><span class="p">(</span></pre></div></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-4"><p>This is the title for the group of fields that follows:</p></div>
+        <div class="col-lg-8"><div class="highlight"><pre>                <span class="n">_</span><span class="p">(</span><span class="s">&quot;Basic Information&quot;</span><span class="p">),</span>
+                <span class="s">&#39;full_name&#39;</span><span class="p">,</span> <span class="c"># crispy.Field is used as the default display component</span>
+                <span class="n">crispy</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="s">&#39;email&#39;</span><span class="p">),</span>  <span class="c"># effectively the same as the line above</span>
+                <span class="s">&#39;password&#39;</span><span class="p">,</span>
+                <span class="s">&#39;password_repeat&#39;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">crispy</span><span class="o">.</span><span class="n">Fieldset</span><span class="p">(</span>
+                <span class="n">_</span><span class="p">(</span><span class="s">&quot;Advanced Information&quot;</span><span class="p">),</span>
+                <span class="s">&#39;is_staff&#39;</span><span class="p">,</span>
+                <span class="n">twbscrispy</span><span class="o">.</span><span class="n">PrependedText</span><span class="p">(</span><span class="s">&#39;phone_number&#39;</span><span class="p">,</span> <span class="s">&#39;+&#39;</span><span class="p">,</span>
+                                         <span class="n">placeholder</span><span class="o">=</span><span class="s">&#39;15555555555&#39;</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">hqcrispy</span><span class="o">.</span><span class="n">FormActions</span><span class="p">(</span>
+                <span class="n">twbscrispy</span><span class="o">.</span><span class="n">StrictButton</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s">&quot;Create User&quot;</span><span class="p">),</span>
+                                        <span class="nb">type</span><span class="o">=</span><span class="s">&#39;submit&#39;</span><span class="p">,</span>
+                                        <span class="n">css_class</span><span class="o">=</span><span class="s">&#39;btn-primary&#39;</span><span class="p">),</span>
+                <span class="n">twbscrispy</span><span class="o">.</span><span class="n">StrictButton</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s">&quot;Cancel&quot;</span><span class="p">),</span> <span class="n">css_class</span><span class="o">=</span><span class="s">&#39;btn-default&#39;</span><span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+</pre></div></div>
+    </div>
+{% endblock doc_content %}

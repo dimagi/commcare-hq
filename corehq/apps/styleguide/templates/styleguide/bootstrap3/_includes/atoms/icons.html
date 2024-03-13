@@ -1,0 +1,45 @@
+{% load hq_shared_tags %}
+<section class="hq-styleguide-article">
+  <h1 id="atoms-icons">Icons</h1>
+  <p class="lead">
+    Visual communication can be essential in scanning and understanding for populations whose first language
+    may not be English.  Please be sympathetic with the goal of cohesion and don’t use an icon for a purpose it
+    was not intended for.
+  </p>
+  <p>
+    Consistent iconography in any user interface is critical to creating
+    a product that is highly accessible across all different levels of
+    literacy. Icons may need to be localized for different cultures and languages.
+  </p>
+  <p>
+    Good icons use <strong>simple, graphic shapes</strong> so they can be understood even at a small size.
+    They have little detail. They are as <strong>universal</strong> as possible, consistent with other
+    platforms.
+  </p>
+
+  <h2>Primary vs Secondary Icons</h2>
+  <p>
+    Primary icons are used for <strong>navigation</strong> or <strong>interaction</strong>.
+    Primary icons are interactive, they change the surround environment or data. They likely don’t need to be coupled with text.
+  </p>
+  <p>
+    Secondary icons <strong>provide clarity</strong>.
+    Secondary icons are used <strong>before</strong> text to communicate topical information.
+  </p>
+  <p>
+    Most of HQ's icons come from
+    <a href="https://fontawesome.com/v4.7.0/cheatsheet/">FontAwesome</a>.
+    All icons in FontAwesome are already built into HQ.
+    Other icons have been custom created for HQ.
+  </p>
+  {% include 'styleguide/bootstrap3/_includes/atoms/icons/panel.html' with icons=common_icons %}
+  {% include 'styleguide/bootstrap3/_includes/atoms/icons/panel.html' with icons=custom_icons %}
+
+  <h2>Creating New Icons</h2>
+  <p>
+    The
+    <a href="{% url "styleguide_atoms_icons_b5" %}#creating-an-icon">process for creating a new icon</a>
+    has been updated and can be found in the Bootstrap 5 styleguide,
+    as the process is the same for both Bootstrap 3 and Bootstrap 5.
+  </p>
+</section>

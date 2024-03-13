@@ -119,7 +119,7 @@ class BlobMeta(PartitionedModel, Model):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.key
+        return self.parent_id, self.key
 
 
 class DeletedBlobMeta(PartitionedModel, Model):

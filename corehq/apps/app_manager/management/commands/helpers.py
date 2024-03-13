@@ -49,7 +49,7 @@ class AppMigrationCommandBase(BaseCommand):
     Base class for commands that want to migrate apps.
     """
     chunk_size = 100
-    include_builds = False
+    include_builds = True
     include_linked_apps = False
 
     options = {}
@@ -162,7 +162,8 @@ class AppMigrationCommandBase(BaseCommand):
         return app_doc
 
     def get_app_ids(self, domain=None):
-        return get_all_app_ids(domain=domain, include_builds=self.include_builds)
+        return (list(get_deleted_app_ids(domain))
+                + list(get_all_app_ids(domain=domain, include_builds=self.include_builds)))
 
     def get_domains(self):
         return None

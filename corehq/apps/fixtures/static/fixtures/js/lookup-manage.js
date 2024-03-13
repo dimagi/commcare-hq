@@ -7,8 +7,8 @@ hqDefine("fixtures/js/lookup-manage", [
     "knockout",
     "hqwebapp/js/assert_properties",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/hq.helpers",
-    "hqwebapp/js/knockout_bindings.ko",
+    "hqwebapp/js/bootstrap3/hq.helpers",
+    "hqwebapp/js/bootstrap3/knockout_bindings.ko",
 ], function (
     $,
     _,
@@ -25,23 +25,34 @@ hqDefine("fixtures/js/lookup-manage", [
 
     function makeEditable(o) {
         o.saveState = ko.observable('saved');
+        o.viewing = ko.observable(false);
         o.editing = ko.observable(false);
+
+        o.startViewing = function () {
+            o.viewing(true);
+        };
+
         o.startEditing = function () {
+            o.viewing(true);
             o.editing(true);
             try {
                 o._backup = o.serialize();
             } catch (e) {
-
+                // swallow exception
             }
         };
+
         o.stopEdit = function () {
+            o.viewing(false);
             o.editing(false);
         };
         o.cancelEdit = function () {
+            o.viewing(false);
             o.editing(false);
             o.cancel();
         };
         o.saveEdit = function () {
+            o.viewing(false);
             o.editing(false);
             log(o);
             o.save();
@@ -119,6 +130,12 @@ hqDefine("fixtures/js/lookup-manage", [
                 with_props: with_props,
             });
         }
+
+        self.handleEdit = function (vm, e) {
+            let context = ko.contextFor(e.target);
+            context.$parent.setModalModel(vm);
+            $('#edit-warning-modal').modal('show');
+        };
 
         self.save = function () {
             $.ajax({
@@ -246,6 +263,25 @@ hqDefine("fixtures/js/lookup-manage", [
         self.file = ko.observable();
         self.selectedTables = ko.observableArray([]);
 
+        self.modalModel = ko.observable();
+        self.unlockLinkedData = ko.observable(false);
+
+        self.toggleLinkedLock = function () {
+            self.unlockLinkedData(!self.unlockLinkedData());
+        };
+
+        self.hasLinkedModels = ko.computed(function () {
+            // TODO: _destroy seems to be a convention from rails that isn't necessary for our codebase
+            // This may be how things are done elsewhere, but it might make sense to explicitly delete them instead
+            return self.data_types().some(element => element.is_synced() && !element._destroy);
+        });
+
+        self.allowEdit = options.can_edit_linked_data;
+
+        self.setModalModel = function (dataType) {
+            self.modalModel(dataType);
+        };
+
         self.removeBadDataType = function (dataType) {
             setTimeout(function () {
                 // This needs to be here otherwise if you remove the dataType
@@ -364,8 +400,10 @@ hqDefine("fixtures/js/lookup-manage", [
                 fields: ko.observableArray([]),
                 is_global: true,
                 description: "",
+                is_synced: false,
             }, self);
             dataType.editing(true);
+            dataType.viewing(true);
             self.data_types.push(dataType);
         };
         self.removeDataType = function (dataType) {
@@ -382,9 +420,11 @@ hqDefine("fixtures/js/lookup-manage", [
     var el = $('#fixtures-ui');
     var app = appModel({
         data_types: initialPageData.get('data_types'),
+        can_edit_linked_data: initialPageData.get('can_edit_linked_data'),
     });
     el.koApplyBindings(app);
     $('#fixture-upload').koApplyBindings(app);
+    $('#edit-warning-modal').koApplyBindings(app);
     $("#fixture-download").on("hidden.bs.modal", function () {
         $("#downloading").removeClass('hide');
         $("#download-progress").addClass('hide');

@@ -6,7 +6,7 @@ hqDefine("users/js/custom_data_fields", [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/select2_knockout_bindings.ko',     // selects2 for fields
-    'hqwebapp/js/widgets',      // select2 for user fields profile
+    'hqwebapp/js/bootstrap3/widgets',      // select2 for user fields profile
 ], function (
     ko,
     _,
@@ -22,7 +22,7 @@ hqDefine("users/js/custom_data_fields", [
 
     var customDataFieldsEditor = function (options) {
         assertProperties.assertRequired(options, ['profiles', 'slugs', 'profile_slug'], ['user_data']);
-        options.metadata = options.metadata || {};
+        options.user_data = options.user_data || {};
         var self = {};
 
         self.profiles = _.indexBy(options.profiles, 'id');
@@ -32,8 +32,8 @@ hqDefine("users/js/custom_data_fields", [
         var originalProfileFields = {},
             originalProfileId,
             originalProfile;
-        if (options.metadata) {
-            originalProfileId = options.metadata[options.profile_slug];
+        if (options.user_data) {
+            originalProfileId = options.user_data[options.profile_slug];
             if (originalProfileId) {
                 originalProfile = self.profiles[originalProfileId];
                 if (originalProfile) {
@@ -43,7 +43,7 @@ hqDefine("users/js/custom_data_fields", [
         }
         _.each(self.slugs, function (slug) {
             self[slug] = fieldModel({
-                value: options.metadata[slug] || originalProfileFields[slug],
+                value: options.user_data[slug] || originalProfileFields[slug],
                 disable: !!originalProfileFields[slug],
             });
         });
@@ -65,7 +65,7 @@ hqDefine("users/js/custom_data_fields", [
             }
             _.each(self.slugs, function (slug) {
                 var field = self[slug];
-                if (fields[slug]) {
+                if (Object.prototype.hasOwnProperty.call(fields, slug)) {
                     if (!field.disable()) {
                         field.previousValue(field.value());
                     }

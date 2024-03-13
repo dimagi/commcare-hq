@@ -22,8 +22,11 @@
       background-color: #dbdbdb;
     }
   }
-  &.nav li.active {
-    > a, > a:link, > a:visited, > a:hover {
+  &.nav li {
+    > a.active,
+    > a.active:link,
+    > a.active:visited,
+    > a.active:hover {
       background-color: $brand-primary;
       color: #ffffff;
     }
@@ -54,6 +57,7 @@
 .nav-main-icon {
   font-size: 1.7em;
   line-height: 0.7em;
+  color: $gray-light;
 }
 
 .text-hq-nav-header {

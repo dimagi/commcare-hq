@@ -15,6 +15,7 @@ from corehq.apps.reports.datatables import (
     DataTablesColumn,
     DataTablesColumnGroup,
     DataTablesHeader,
+    DTSortType,
 )
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.util import format_datatables_data
@@ -306,7 +307,7 @@ class SubscriptionInterface(AddItemInterface):
                     ),
                     sort_key=subscription.account.name,
                 ),
-                subscription.plan_version.plan.name,
+                subscription.plan_version,
                 subscription.is_active,
                 subscription.salesforce_contract_id,
                 subscription.date_start,
@@ -369,8 +370,8 @@ class SubscriptionInterface(AddItemInterface):
         filter_created_by = CreatedSubAdjMethodFilter.get_value(
             self.request, self.domain)
         if (
-            filter_created_by is not None and
-            filter_created_by in [s[0] for s in SubscriptionAdjustmentMethod.CHOICES]
+            filter_created_by is not None
+            and filter_created_by in [s[0] for s in SubscriptionAdjustmentMethod.CHOICES]
         ):
             queryset = queryset.filter(
                 subscriptionadjustment__reason=SubscriptionAdjustmentReason.CREATE,
@@ -486,6 +487,9 @@ class InvoiceInterfaceBase(GenericTabularReport):
     exportable = True
     export_format_override = Format.CSV
 
+    def filter_by_subscription(self, subscription):
+        self.subscription = subscription
+
 
 class WireInvoiceInterface(InvoiceInterfaceBase):
     name = "Wire Invoices"
@@ -518,9 +522,9 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Postal Code"),
             DataTablesColumn("Country"),
             DataTablesColumnGroup("Statement Period",
-                                  DataTablesColumn("Start"),
-                                  DataTablesColumn("End")),
-            DataTablesColumn("Date Due"),
+                                  DataTablesColumn("Start", sort_type=DTSortType.DATE),
+                                  DataTablesColumn("End", sort_type=DTSortType.DATE)),
+            DataTablesColumn("Date Due", sort_type=DTSortType.DATE),
             DataTablesColumn("Total"),
             DataTablesColumn("Amount Due"),
             DataTablesColumn("Payment Status"),
@@ -534,8 +538,8 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 WireInvoiceSummaryView, ManageBillingAccountView,
             )
             new_this_month = (
-                invoice.date_created.month == invoice.account.date_created.month and
-                invoice.date_created.year == invoice.account.date_created.year
+                invoice.date_created.month == invoice.account.date_created.month
+                and invoice.date_created.year == invoice.account.date_created.year
             )
             try:
                 contact_info = BillingContactInfo.objects.get(account=invoice.account)
@@ -566,9 +570,9 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 contact_info.state_province_region,
                 contact_info.postal_code,
                 contact_info.country,
-                invoice.date_start,
-                invoice.date_end,
-                invoice.date_due,
+                format_datatables_data(invoice.date_start, invoice.date_start),
+                format_datatables_data(invoice.date_end, invoice.date_end),
+                format_datatables_data(invoice.date_due if invoice.date_due else "None", invoice.date_due),
                 get_exportable_column(invoice.subtotal),
                 get_exportable_column(invoice.balance),
                 "Paid" if invoice.is_paid else "Not paid",
@@ -674,9 +678,9 @@ class InvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Salesforce Account ID"),
             DataTablesColumn("Salesforce Contract ID"),
             DataTablesColumnGroup("Statement Period",
-                                  DataTablesColumn("Start"),
-                                  DataTablesColumn("End")),
-            DataTablesColumn("Date Due"),
+                                  DataTablesColumn("Start", sort_type=DTSortType.DATE),
+                                  DataTablesColumn("End", sort_type=DTSortType.DATE)),
+            DataTablesColumn("Date Due", sort_type=DTSortType.DATE),
             DataTablesColumn("Plan Cost"),
             DataTablesColumn("Plan Credits"),
             DataTablesColumn("SMS Cost"),
@@ -701,8 +705,8 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 ManageBillingAccountView, EditSubscriptionView,
             )
             new_this_month = (
-                invoice.date_created.month == invoice.subscription.account.date_created.month and
-                invoice.date_created.year == invoice.subscription.account.date_created.year
+                invoice.date_created.month == invoice.subscription.account.date_created.month
+                and invoice.date_created.year == invoice.subscription.account.date_created.year
             )
             try:
                 contact_info = BillingContactInfo.objects.get(
@@ -711,10 +715,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
             except BillingContactInfo.DoesNotExist:
                 contact_info = BillingContactInfo()
 
-            plan_name = "{name} v{version}".format(
-                name=invoice.subscription.plan_version.plan.name,
-                version=invoice.subscription.plan_version.version,
-            )
+            plan_name = invoice.subscription.plan_version
             plan_href = reverse(EditSubscriptionView.urlname, args=[invoice.subscription.id])
             account_name = invoice.subscription.account.name
             account_href = reverse(ManageBillingAccountView.urlname, args=[invoice.subscription.account.id])
@@ -744,9 +745,9 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 contact_info.country,
                 invoice.subscription.account.salesforce_account_id or "--",
                 invoice.subscription.salesforce_contract_id or "--",
-                invoice.date_start,
-                invoice.date_end,
-                invoice.date_due if invoice.date_due else "None",
+                format_datatables_data(invoice.date_start, invoice.date_start),
+                format_datatables_data(invoice.date_end, invoice.date_end),
+                format_datatables_data(invoice.date_due if invoice.date_due else "None", invoice.date_due),
             ]
 
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(
@@ -926,9 +927,6 @@ class InvoiceInterface(InvoiceInterfaceBase):
             'rows': self.rows,
         })
 
-    def filter_by_subscription(self, subscription):
-        self.subscription = subscription
-
 
 class CustomerInvoiceInterface(InvoiceInterfaceBase):
     name = "Customer Invoices"
@@ -947,7 +945,7 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
         'corehq.apps.accounting.interface.IsHiddenFilter',
     ]
 
-    account = None
+    subscription = None
 
     @property
     def headers(self):
@@ -968,9 +966,9 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Country"),
             DataTablesColumn("Salesforce Account ID"),
             DataTablesColumnGroup("Statement Period",
-                                  DataTablesColumn("Start"),
-                                  DataTablesColumn("End")),
-            DataTablesColumn("Date Due"),
+                                  DataTablesColumn("Start", sort_type=DTSortType.DATE),
+                                  DataTablesColumn("End", sort_type=DTSortType.DATE)),
+            DataTablesColumn("Date Due", sort_type=DTSortType.DATE),
             DataTablesColumn("Plan Cost"),
             DataTablesColumn("Plan Credits"),
             DataTablesColumn("SMS Cost"),
@@ -993,8 +991,8 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
         def _invoice_to_row(invoice):
             from corehq.apps.accounting.views import ManageBillingAccountView
             new_this_month = (
-                invoice.date_created.month == invoice.account.date_created.month and
-                invoice.date_created.year == invoice.account.date_created.year
+                invoice.date_created.month == invoice.account.date_created.month
+                and invoice.date_created.year == invoice.account.date_created.year
             )
             try:
                 contact_info = BillingContactInfo.objects.get(
@@ -1024,9 +1022,9 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
                 contact_info.postal_code,
                 contact_info.country,
                 invoice.account.salesforce_account_id or "--",
-                invoice.date_start,
-                invoice.date_end,
-                invoice.date_due if invoice.date_due else "None",
+                format_datatables_data(invoice.date_start, invoice.date_start),
+                format_datatables_data(invoice.date_end, invoice.date_end),
+                format_datatables_data(invoice.date_due if invoice.date_due else "None", invoice.date_due),
             ]
 
             plan_subtotal, plan_deduction = get_subtotal_and_deduction(
@@ -1074,6 +1072,9 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
     @memoized
     def _invoices(self):
         queryset = CustomerInvoice.objects.all()
+
+        if self.subscription:
+            queryset = queryset.filter(subscriptions=self.subscription)
 
         account_name = NameFilter.get_value(self.request, self.domain)
         if account_name is not None:
@@ -1184,9 +1185,6 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
             'month': statement_start.strftime("%B"),
             'rows': self.rows,
         })
-
-    def filter_by_account(self, account):
-        self.account = account
 
 
 def _get_domain_from_payment_record(payment_record):
@@ -1485,9 +1483,9 @@ class CreditAdjustmentInterface(GenericTabularReport):
         domain = DomainFilter.get_value(self.request, self.domain)
         if domain is not None:
             queryset = queryset.filter(
-                Q(credit_line__subscription__subscriber__domain=domain) |
-                Q(invoice__subscription__subscriber__domain=domain) |
-                Q(
+                Q(credit_line__subscription__subscriber__domain=domain)
+                | Q(invoice__subscription__subscriber__domain=domain)
+                | Q(
                     credit_line__subscription__isnull=True,
                     invoice__isnull=True,
                     credit_line__account__created_by_domain=domain,

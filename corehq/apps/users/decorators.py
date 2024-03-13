@@ -149,6 +149,7 @@ require_can_edit_or_view_groups = require_permission(
 require_can_view_roles = require_permission('view_roles')
 require_can_login_as = require_permission_raw(lambda user, domain: user.can_login_as(domain))
 require_can_coordinate_events = require_permission('manage_attendance_tracking')
+require_can_manage_domain_alerts = require_permission('manage_domain_alerts')
 
 
 def require_permission_to_edit_user(view_func):

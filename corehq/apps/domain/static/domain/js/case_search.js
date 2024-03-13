@@ -3,7 +3,7 @@ hqDefine('domain/js/case_search', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/main',
+    'hqwebapp/js/bootstrap3/main',
 ], function (
     $,
     ko,

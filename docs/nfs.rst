@@ -25,7 +25,8 @@ Using apache / nginx to handle downloads
     if transfer_enabled:
         path = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, uuid.uuid4().hex)
     else:
-        _, path = tempfile.mkstemp()
+        fd, path = tempfile.mkstemp()
+        os.close(fd)
 
     make_file(path)
 
@@ -46,7 +47,8 @@ This also works for files that are generated asynchronously::
         if use_transfer:
             path = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, uuid.uuid4().hex)
         else:
-            _, path = tempfile.mkstemp()
+            fd, path = tempfile.mkstemp()
+            os.close(fd)
 
         generate_file(path)
 

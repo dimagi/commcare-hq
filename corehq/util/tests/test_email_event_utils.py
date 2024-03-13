@@ -1,18 +1,20 @@
+import datetime
 import json
 import os
-import datetime
 
 from django.test import TestCase
 
-from corehq.util.email_event_utils import get_relevant_aws_meta, \
-    handle_email_sns_event
+from corehq.util.email_event_utils import (
+    get_relevant_aws_meta,
+    handle_email_sns_event,
+)
 from corehq.util.models import (
+    AwsMeta,
+    BouncedEmail,
+    BounceSubType,
     ComplaintBounceMeta,
     PermanentBounceMeta,
-    BouncedEmail,
     TransientBounceEmail,
-    AwsMeta,
-    BounceSubType,
 )
 from corehq.util.test_utils import TestFileMixin
 
@@ -116,7 +118,10 @@ class TestBouncedEmailManager(TestSnsEmailBase):
                     main_type='Permanent',
                     sub_type='General',
                     email='permanent_general_bounce@company.org',
-                    reason='smtp; 550 5.4.1 Recipient address rejected: Access denied. AS(redacted) [redacted.outlook.com]',
+                    reason=(
+                        'smtp; 550 5.4.1 Recipient address rejected: Access '
+                        'denied. AS(redacted) [redacted.outlook.com]'
+                    ),
                     headers={
                         'returnPath': 'noreplyemail@company.com',
                         'from': ['noreplyemail@company.com'],
@@ -154,11 +159,15 @@ class TestBouncedEmailManager(TestSnsEmailBase):
                     main_type='Permanent',
                     sub_type='Suppressed',
                     email='permanent.suppressed@company.org',
-                    reason='Amazon SES has suppressed sending to this address because '
-                           'it has a recent history of bouncing as an invalid address. '
-                           'For more information about how to remove an address from the '
-                           'suppression list, see the Amazon SES Developer Guide: '
-                           'http://docs.aws.amazon.com/ses/latest/DeveloperGuide/remove-from-suppressionlist.html ',
+                    reason=(
+                        'Amazon SES has suppressed sending to this address '
+                        'because it has a recent history of bouncing as an '
+                        'invalid address. For more information about how to '
+                        'remove an address from the suppression list, see the '
+                        'Amazon SES Developer Guide: '
+                        'http://docs.aws.amazon.com/ses/latest/DeveloperGuide/'
+                        'remove-from-suppressionlist.html '
+                    ),
                     headers={
                         'returnPath': 'noreplyemail@company.com',
                         'from': ['noreplyemail@company.com'],
@@ -197,7 +206,11 @@ class TestBouncedEmailManager(TestSnsEmailBase):
                     main_type='Transient',
                     sub_type='General',
                     email='transientEmail@company.org',
-                    reason='smtp; 554 4.4.7 Message expired: unable to deliver in 840 minutes.<421 4.4.0 Unable to lookup DNS for company.org>',
+                    reason=(
+                        'smtp; 554 4.4.7 Message expired: unable to deliver '
+                        'in 840 minutes.<421 4.4.0 Unable to lookup DNS for '
+                        'company.org>'
+                    ),
                     headers={
                         'returnPath': 'noreplyemail@company.com',
                         'from': ['noreplyemail@company.com'],

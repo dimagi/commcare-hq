@@ -6,7 +6,6 @@ from corehq.apps.linked_domain.const import (
     LINKED_MODELS_MAP,
     MODEL_APP,
     MODEL_CASE_SEARCH,
-    MODEL_DATA_DICTIONARY,
     MODEL_DIALER_SETTINGS,
     MODEL_FLAGS,
     MODEL_HMAC_CALLOUT_SETTINGS,
@@ -96,17 +95,6 @@ class TestReleaseManager(BaseReleaseManagerTest):
             self._linked_data_view_model(MODEL_CASE_SEARCH),
         ], error="Feature flag for Case Search Settings is not enabled")
 
-    @flag_enabled('DATA_DICTIONARY')
-    def test_data_dictionary_on(self):
-        self._assert_release([
-            self._linked_data_view_model(MODEL_DATA_DICTIONARY),
-        ])
-
-    def test_data_dictionary_off(self):
-        self._assert_release([
-            self._linked_data_view_model(MODEL_DATA_DICTIONARY),
-        ], error="Feature flag for Data Dictionary is not enabled")
-
     @flag_enabled('WIDGET_DIALER')
     def test_widget_dialer_on(self):
         self._assert_release([
@@ -175,6 +163,54 @@ class TestReleaseManager(BaseReleaseManagerTest):
             self._assert_release([
                 self._linked_data_view_model(MODEL_APP, detail=AppLinkDetail(app_id=self.master1._id).to_json()),
             ], error="Updated app but did not build or release: Boom!", build_apps=True)
+
+    def test_no_error_domains_on_init(self):
+        manager = ReleaseManager(self.domain, self.user.username)
+        self.assertEqual(manager.get_error_domain_count(), 0)
+
+    def test_error_count_shows_number_of_errored_domains(self):
+        manager = ReleaseManager(self.domain, self.user.username)
+        manager.add_error('test-domain1', 'Something went wrong')
+        manager.add_error('test-domain2', 'Something different went wrong')
+        self.assertEqual(manager.get_error_domain_count(), 2)
+
+    def test_error_count_does_not_count_multiple_errors(self):
+        manager = ReleaseManager(self.domain, self.user.username)
+        manager.add_error('test-domain', 'Error1')
+        manager.add_error('test-domain', 'Error2')
+        self.assertEqual(manager.get_error_domain_count(), 1)
+
+    def test_no_success_domains_on_init(self):
+        manager = ReleaseManager(self.domain, self.user.username)
+        self.assertEqual(manager.get_success_domain_count(), 0)
+
+    def test_success_count_shows_number_of_successful_domains(self):
+        manager = ReleaseManager(self.domain, self.user.username)
+        manager.add_success('test-domain1', 'It worked!')
+        manager.add_success('test-domain2', 'It also worked!')
+        self.assertEqual(manager.get_success_domain_count(), 2)
+
+    def test_success_count_does_not_count_multiple_successes(self):
+        manager = ReleaseManager(self.domain, self.user.username)
+        manager.add_success('test-domain', 'Object1')
+        manager.add_success('test-domain', 'Object2')
+        self.assertEqual(manager.get_success_domain_count(), 1)
+
+    def test_successes_are_idempotent(self):
+        # This test exists because '_get_successes()' was inserting a new key into the error dictionary,
+        # causing the success count to increase.
+        # The success count should be unaffected by any calls to '_get_successes()'
+        manager = ReleaseManager(self.domain, self.user.username)
+        manager._get_successes('test-domain')
+        self.assertEqual(manager.get_success_domain_count(), 0)
+
+    def test_errors_are_idempotent(self):
+        # This test exists because '_get_errors()' was inserting a new key into the error dictionary,
+        # causing the error count to increase.
+        # The error count should be unaffected by any calls to '_get_errors()'
+        manager = ReleaseManager(self.domain, self.user.username)
+        manager._get_errors('test-domain')
+        self.assertEqual(manager.get_error_domain_count(), 0)
 
 
 class TestReleaseApp(BaseReleaseManagerTest):

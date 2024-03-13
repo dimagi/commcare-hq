@@ -34,7 +34,6 @@
   {% compress css %}
     <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
     <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
-    <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
     <link rel="stylesheet" href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
   {% endcompress %}
   {% compress css %}
@@ -79,6 +78,8 @@
   {% initial_page_data 'hmac_api_key' integrations.hmac_api_key %}
   {% initial_page_data 'hmac_hashed_secret' integrations.hmac_hashed_secret %}
   {% initial_page_data 'sentry' sentry %}
+  {% initial_page_data 'valid_multimedia_extensions_map' valid_multimedia_extensions_map %}
+  {% initial_page_data 'lang_code_name_mapping' lang_code_name_mapping %}
   {% registerurl 'list_case_exports' request.domain %}
   {% registerurl 'list_form_exports' request.domain %}
   {% registerurl 'case_data' request.domain '---' %}
@@ -86,6 +87,7 @@
   {% registerurl 'report_formplayer_error' request.domain %}
   {% registerurl 'report_sentry_error' request.domain %}
   {% registerurl 'dialer_view' request.domain %}
+  {% registerurl 'api_histogram_metrics' request.domain %}
   {% if integrations.gaen_otp_enabled %}
     {% registerurl 'gaen_otp_view' request.domain %}
   {% endif %}
@@ -103,13 +105,16 @@
       <div class="container case-tile-container">
         <div id="persistent-case-tile" class="print-container"></div>
       </div>
-      <div id="menu-region" class="container print-container"></div>
-      <section id="webforms" data-bind="
-                template: {
-                    name: 'form-fullform-ko-template',
-                    afterRender: afterRender
-                }">
-      </section>
+      <div id="content-container" class="container">
+        <div id="sidebar-region" class="noprint-sub-container"></div>
+        <div id="menu-region" class="print-container"></div>
+        <section id="webforms" data-bind="
+                  template: {
+                      name: 'form-fullform-ko-template',
+                      afterRender: afterRender
+                  }">
+        </section>
+      </div>
     </div>
     <div role="region" id="sr-notification-region" class="sr-only" aria-live="assertive" aria-relevant="all"></div>
     <small id="version-info"></small>

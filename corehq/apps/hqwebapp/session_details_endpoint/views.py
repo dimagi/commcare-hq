@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
@@ -13,6 +14,10 @@ from corehq.apps.users.models import CouchUser
 from corehq.feature_previews import previews_enabled_for_domain
 from corehq.middleware import TimeoutMiddleware
 from corehq.toggles import toggles_enabled_for_user, toggles_enabled_for_domain
+from corehq.util.metrics import (
+    limit_domains,
+    metrics_histogram
+)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -33,6 +38,7 @@ class SessionDetailsView(View):
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
+        start_time = datetime.now()
         try:
             data = json.loads(request.body.decode('utf-8'))
         except ValueError:
@@ -69,6 +75,14 @@ class SessionDetailsView(View):
             domains.update(EnterprisePermissions.get_domains(member_domain))
 
         enabled_toggles = toggles_enabled_for_user(user.username) | toggles_enabled_for_domain(domain)
+        enabled_previews = previews_enabled_for_domain(domain)
+        end_time = datetime.now()
+        metrics_histogram("commcare.session_details.processing_time",
+                      int((end_time - start_time).total_seconds() * 1000),
+                      bucket_tag='duration_bucket',
+                      buckets=(250, 1000, 3000),
+                      bucket_unit='ms',
+                      tags={'domain': limit_domains(domain)})
         return JsonResponse({
             'username': user.username,
             'djangoUserId': user.pk,
@@ -77,5 +91,5 @@ class SessionDetailsView(View):
             'domains': list(domains),
             'anonymous': False,
             'enabled_toggles': list(enabled_toggles),
-            'enabled_previews': list(previews_enabled_for_domain(domain))
+            'enabled_previews': list(enabled_previews)
         })

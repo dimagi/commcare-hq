@@ -8,6 +8,7 @@ from django.db.models import Q
 import architect
 from oauth2_provider.settings import APPLICATION_MODEL
 
+from corehq.sql_db.fields import CharIdField
 from corehq.util.markup import mark_up_urls
 from corehq.util.models import ForeignValue, foreign_init
 from corehq.util.quickcache import quickcache
@@ -24,7 +25,7 @@ class GaTracker(namedtuple('GaTracking', 'category action label')):
         return super(GaTracker, cls).__new__(cls, category, action, label)
 
 
-class MaintenanceAlert(models.Model):
+class Alert(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=False)
@@ -35,25 +36,31 @@ class MaintenanceAlert(models.Model):
 
     text = models.TextField()
     domains = ArrayField(models.CharField(max_length=126), null=True)
+    created_by_domain = CharIdField(max_length=255, null=True, db_index=True)
+    created_by_user = CharIdField(max_length=128, null=True)
 
     class Meta(object):
         app_label = 'hqwebapp'
+        db_table = 'hqwebapp_maintenancealert'
 
     @property
     def html(self):
         return mark_up_urls(self.text)
 
-    def __repr__(self):
-        return "MaintenanceAlert(text='{}', active='{}', domains='{}')".format(
-            self.text, self.active, ", ".join(self.domains) if self.domains else "All Domains")
-
     def save(self, *args, **kwargs):
-        MaintenanceAlert.get_active_alerts.clear(MaintenanceAlert)
-        super(MaintenanceAlert, self).save(*args, **kwargs)
+        cls = type(self)
+        cls.get_active_alerts.clear(cls)
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        cls = type(self)
+        cls.get_active_alerts.clear(cls)
+        super().delete(*args, **kwargs)
 
     @classmethod
     @quickcache([], timeout=1 * 60)
     def get_active_alerts(cls):
+        # return active HQ alerts
         now = datetime.utcnow()
         active_alerts = cls.objects.filter(
             Q(active=True),

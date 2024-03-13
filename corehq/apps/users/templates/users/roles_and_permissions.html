@@ -24,6 +24,7 @@
   {% initial_page_data "data_file_download_enabled" data_file_download_enabled %}
   {% initial_page_data "export_ownership_enabled" export_ownership_enabled %}
   {% initial_page_data "data_registry_choices" data_registry_choices %}
+  {% initial_page_data "can_edit_linked_data" can_edit_linked_data %}
 
   <p class="lead">
     {% if can_edit_roles %}
@@ -37,13 +38,51 @@
     {% endif %}
   </p>
 
-  <p>
-    <i class="fa fa-info-circle"></i>
-    {% blocktrans %}
-      <a href="https://confluence.dimagi.com/display/commcarepublic/Roles+and+Permissions"
-         target="_blank">Learn more</a> about how roles &amp; permissions are used.
-    {% endblocktrans %}
-  </p>
+  <div class="row ko-template" id="infobar">
+    <div class="col-sm-8 col-md-9">
+      <p>
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+          <a href="https://confluence.dimagi.com/display/commcarepublic/Roles+and+Permissions"
+            target="_blank">Learn more</a> about how roles &amp; permissions are used.
+        {% endblocktrans %}
+      </p>
+    </div>
+    <div class="col-sm-4 col-md-3" data-bind="if: hasLinkedRoles">
+      <p class="pull-right">
+        <!-- ko if: allowEdit -->
+          <span data-bind="ifnot: unlockLinkedRoles">
+            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modal_linked_roles">
+              <i class="fa fa-link"></i>
+              {% trans 'Unlock Linked Roles For Me' %}
+            </button>
+          </span>
+          <span data-bind="if: unlockLinkedRoles">
+            <button type="button" class="btn btn-default" data-bind="click: toggleLinkedRoles">
+              <i class="fa fa-link"></i>
+              {% trans 'Lock Linked Roles For Me' %}
+            </button>
+          </span>
+        <!-- /ko -->
+        <!-- ko ifnot: allowEdit -->
+          <span>
+            <i class="fa fa-link"></i>
+            Contains Linked Roles
+          </span>
+        <!-- /ko -->
+        <span class="hq-help-template"
+            data-placement="left"
+            data-title="{% trans 'Linked Configurations' %}"
+            data-content="
+              {% blocktrans %}
+                Linked configurations are controlled from a separate, linked project space.
+                  <a href='https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</a>.
+              {% endblocktrans %}">
+        </span>
+      </div>
+    </p>
+  </div>
+
 
   {% if not can_edit_roles and is_domain_admin %}
     {% url "domain_select_plan" domain as subscription_url %}
@@ -88,7 +127,7 @@
           <th class="text-center">
             {% trans "Locations" %}
           </th>
-          {% if request|toggle_enabled:"DATA_DICTIONARY" %}
+          {% if request|request_has_privilege:"DATA_DICTIONARY" %}
             <th class="text-center">
               {% trans "Data Dictionary" %}
             </th>
@@ -98,7 +137,7 @@
           </th>
           {% if request|request_has_privilege:"EXPORT_OWNERSHIP" %}
             <th class="text-center">
-              {% trans "Shared Exports" %}
+              {% trans "Manage Shared Exports" %}
             </th>
           {% endif %}
           <th class="text-center">
@@ -129,6 +168,9 @@
           </th>
           {% endif %}
           <th>{% trans "Actions" %}</th>
+          {% if is_managed_by_upstream_domain %}
+          <th></th>
+          {% endif %}
         </tr>
         </thead>
         <tbody data-bind="foreach: userRoles">
@@ -167,7 +209,7 @@
                                               view: permissions.view_locations
                                             }"></div>
           </td>
-          {% if request|toggle_enabled:"DATA_DICTIONARY" %}
+          {% if request|request_has_privilege:"DATA_DICTIONARY" %}
             <td class="text-center">
               <div data-bind="visible: permissions.access_all_locations,
                                               permissionIcon: {
@@ -254,19 +296,29 @@
           {% endif %}
           <td>
             <button class="btn btn-default" data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null">
-                                <span data-bind="visible: !$root.allowEdit">
-                                    {% trans "View Details" %}
-                                </span>
-              <span data-bind="visible: $root.allowEdit">
+                                <span data-bind="if: $root.allowEdit && (!upstream_id() || $parent.unlockLinkedRoles())">
                                     <i class="fa fa-edit"></i>
                                     {% trans "Edit Role" %}
                                 </span>
+                                <span data-bind="ifnot: $root.allowEdit && (!upstream_id() || $parent.unlockLinkedRoles())">
+                                    <i class="fa-solid fa-eye"></i>
+                                    {% trans "View Role" %}
+                                </span>
             </button>
-            <button class="btn btn-danger" data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit, click: $data._id ? $root.setRoleBeingDeleted : null">
-              <i class="fa fa-trash"></i>
-              {% trans "Delete Role" %}
+            <button class="btn btn-danger"
+              data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit && isEditable,
+                click: $data._id ? $root.setRoleBeingDeleted : null">
+              <i class="fa-regular fa-trash-can"></i>
+              {% trans "Delete" %}
             </button>
           </td>
+          {% if is_managed_by_upstream_domain %}
+          <td class="text-center">
+            <span data-bind="if: upstream_id">
+              <i class="fa fa-link"></i>
+            </span>
+          </td>
+          {% endif %}
         </tr>
         </tbody>
       </table>
@@ -331,4 +383,6 @@
       </div>
     </div>
   </div>
+
+  {% include 'users/partials/linked_roles_modal.html' %}
 {% endblock %}

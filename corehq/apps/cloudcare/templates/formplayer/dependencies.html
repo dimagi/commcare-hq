@@ -1,8 +1,6 @@
 {% load compress %}
 {% load hq_shared_tags %}
 
-  <script src='https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.js' async></script>
-  <link href='https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.css' rel='stylesheet' />
   {# serve sentry directly to prevent over zealous ad blockers from blocking it #}
   <script src="{% static 'sentry/js/sentry.browser.7.28.0.min.js' %}" crossorigin="anonymous"></script>
   <script src="{% static 'sentry/js/sentry.captureconsole.7.28.0.min.js' %}" crossorigin="anonymous"></script>
@@ -33,6 +31,7 @@
   <script src="{% static 'integration/js/hmac_callout.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/constants.js' %}"></script>
   <script src="{% static 'cloudcare/js/utils.js' %}"></script>
+  <script src="{% static 'cloudcare/js/markdown.js' %}"></script>
   <script src="{% static 'cloudcare/js/sentry.js' %}"></script>
   <script src="{% static 'Caret.js/dist/jquery.caret.js' %}"></script>
   <script src="{% static 'At.js/dist/js/jquery.atwho.js' %}"></script>
@@ -40,6 +39,8 @@
   <script src="{% static 'clipboard/dist/clipboard.js' %}"></script>
   <script src="{% static 'reports/js/readable_form.js' %}"></script>
   <script src="{% static 'url-polyfill/url-polyfill.js' %}"></script>
+  <script src="{% static 'mapbox.js/dist/mapbox.js' %}"></script>
+  <script src="{% static 'leaflet-fullscreen/dist/Leaflet.fullscreen.min.js' %}"></script>
 {% endcompress %}
 
 {% include 'hqwebapp/includes/ui_element_js.html' %}
@@ -54,6 +55,7 @@
   <script src="{% static 'cloudcare/js/form_entry/form_ui.js' %}"></script>
   <script src="{% static 'cloudcare/js/form_entry/web_form_session.js' %}"></script>
   <script src="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min.js' %}"></script>
+  <script src="{% static 'signature_pad/dist/signature_pad.umd.min.js' %}"></script>
 {% endcompress %}
 
 {% compress js %}
@@ -99,13 +101,6 @@
 
 {% endcompress %}
 
-{% compress css %}
-  <link type="text/less"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'cloudcare/less/markdown-table.less' %}"/>
-{% endcompress %}
-
   <link
     rel="stylesheet"
     href="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css' %}"
@@ -116,4 +111,14 @@
   rel="stylesheet"
   type="text/css"
   href="{% static 'calendars/dist/css/jquery.calendars.picker.css' %}"
+/>
+
+<link
+  rel='stylesheet'
+  href="{% static 'mapbox.js/dist/mapbox.css' %}"
+/>
+
+<link
+  rel="stylesheet"
+  href="{% static 'leaflet-fullscreen/dist/leaflet.fullscreen.css' %}"
 />

@@ -150,7 +150,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         return configs
 
     @classmethod
-    @quickcache(['domain', 'only_id'], timeout=1*60*60)
+    @quickcache(['domain', 'only_id'], timeout=1 * 60 * 60)
     def shared_on_domain(cls, domain, only_id=False):
         shared_config_ids = {
             id_ for rn in ReportNotification.by_domain(domain, stale=False)
@@ -196,12 +196,14 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             ConfigurableReportView,
             CustomConfigurableReportDispatcher,
         )
+        from corehq.apps.geospatial.dispatchers import CaseManagementMapDispatcher
 
         dispatchers = [
             ProjectReportDispatcher,
             CustomProjectReportDispatcher,
             EnterpriseReportDispatcher,
             ReleaseManagementReportDispatcher,
+            CaseManagementMapDispatcher
         ]
 
         for dispatcher in dispatchers:
@@ -361,15 +363,26 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def owner(self):
         return CouchUser.get_by_user_id(self.owner_id)
 
-    def get_report_content(self, lang, attach_excel=False, couch_user=None):
+    def get_report_content(self, lang, attach_excel=False, couch_user=None, subreport_slug=None):
         """
         Get the report's HTML content as rendered by the static view format.
 
         """
         from corehq.apps.locations.middleware import LocationAccessMiddleware
+        from corehq.apps.userreports.reports.util import report_has_location_filter
+        from corehq import toggles
 
         if couch_user is None:
             couch_user = self.owner
+
+        if ((not toggles.LOCATION_RESTRICTED_SCHEDULED_REPORTS.enabled(self.domain)
+                or not report_has_location_filter(subreport_slug, self.domain)
+                or not couch_user.get_location_ids(self.domain))
+                and not couch_user.has_permission(self.domain, 'access_all_locations')):
+            return ReportContent(_("This project has restricted data access rules. \
+                                                 Please contact your project administrator to be assigned access \
+                                                 to data in this project."),
+                                 None, )
 
         try:
             if self.report is None:
@@ -385,10 +398,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
         if getattr(self.report, 'is_deprecated', False):
             return ReportContent(
-                self.report.deprecation_email_message or
-                _("[DEPRECATED] %s report has been deprecated and will stop working soon. "
-                  "Please update your saved reports email settings if needed." % self.report.name
-                  ),
+                self.report.deprecation_email_message
+                or _("[DEPRECATED] %s report has been deprecated and will stop working soon. "
+                     "Please update your saved reports email settings if needed." % self.report.name
+                     ),
                 None,
             )
 
@@ -835,9 +848,10 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def _send_email(self, title, email, body, excel_files):
         send_HTML_email(
             title, email, body,
-            email_from=settings.DEFAULT_FROM_EMAIL,
             file_attachments=excel_files,
-            smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
+            smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES,
+            domain=self.domain,
+            use_domain_gateway=True,)
 
     def _send_only_attachments(self, title, emails, excel_files):
         message = _("Unable to generate email report. Excel files are attached.")
@@ -845,8 +859,9 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             title,
             emails,
             message,
-            email_from=settings.DEFAULT_FROM_EMAIL,
-            file_attachments=excel_files
+            file_attachments=excel_files,
+            domain=self.domain,
+            use_domain_gateway=True,
         )
 
     def _export_report(self, emails, title):

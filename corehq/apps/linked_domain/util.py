@@ -88,11 +88,20 @@ def pull_missing_multimedia_for_app_and_notify(domain, app_id, email, force=Fals
         send_html_email_async.delay(subject, email, _(
             "Something went wrong while pulling multimedia for your linked app. "
             "Our team has been notified and will monitor the situation. "
-            "Please try again, and if the problem persists report it as an issue."))
+            "Please try again, and if the problem persists report it as an issue."),
+            domain=domain,
+            use_domain_gateway=True
+        )
         raise
     else:
         message = _("Multimedia was successfully updated for the linked app.")
-    send_html_email_async.delay(subject, email, message)
+    send_html_email_async.delay(
+        subject,
+        email,
+        message,
+        domain=domain,
+        use_domain_gateway=True,
+    )
 
 
 def pull_missing_multimedia_for_app(app, old_multimedia_ids=None, force=False):

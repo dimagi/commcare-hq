@@ -1,24 +1,22 @@
 import decimal
 import uuid
 from datetime import datetime, timedelta
-
-from django.test import SimpleTestCase, TestCase
-
 from unittest import mock
 from unittest.mock import patch
 
+from django.test import SimpleTestCase, TestCase
+
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.pillow_utils import rebuild_table
-from corehq.form_processor.signals import sql_case_post_save
 from pillow_retry.models import PillowError
-
+from corehq.motech.repeaters.models import RepeatRecord
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.data_source_providers import (
+    DynamicDataSourceProvider,
     MockDataSourceProvider,
-    DynamicDataSourceProvider)
+)
 from corehq.apps.userreports.exceptions import StaleRebuildError
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.models import (
     AsyncIndicator,
     DataSourceConfiguration,
@@ -30,6 +28,7 @@ from corehq.apps.userreports.pillow import (
     ConfigurableReportPillowProcessor,
     ConfigurableReportTableManager,
 )
+from corehq.apps.userreports.pillow_utils import rebuild_table
 from corehq.apps.userreports.tasks import (
     queue_async_indicators,
     rebuild_indicators,
@@ -43,9 +42,16 @@ from corehq.apps.userreports.tests.utils import (
 )
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.signals import sql_case_post_save
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
+from corehq.motech.repeaters.models import (
+    ConnectionSettings,
+    DataSourceRepeater,
+)
+from corehq.motech.repeaters.tests.test_repeater import BaseRepeaterTest
 from corehq.pillows.case import get_case_pillow
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.test_utils import softer_assert, flaky_slow
+from corehq.util.test_utils import flag_enabled, flaky_slow, softer_assert
 
 
 def setup_module():
@@ -102,6 +108,8 @@ class ConfigurableReportTableManagerDbTest(TestCase):
     def test_table_adapters(self):
         data_source_1 = get_sample_data_source()
         ds_1_domain = data_source_1.domain
+        data_source_1.save()
+
         table_manager = ConfigurableReportTableManager([MockDataSourceProvider({
             ds_1_domain: [data_source_1]
         })])
@@ -370,7 +378,9 @@ class ChunkedUCRProcessorTest(TestCase):
         bootstrap_if_needed.assert_called_once_with()
 
 
-class IndicatorPillowTest(TestCase):
+class IndicatorPillowTest(BaseRepeaterTest):
+
+    domain = "user-reports"
 
     @classmethod
     def setUpClass(cls):
@@ -381,6 +391,11 @@ class IndicatorPillowTest(TestCase):
         cls.adapter.build_table()
         cls.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
         cls.pillow = _get_pillow([cls.config])
+        cls.conn_setting = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            name="TestConnectionSetting",
+            url="http://example.test",
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -389,6 +404,7 @@ class IndicatorPillowTest(TestCase):
         super(IndicatorPillowTest, cls).tearDownClass()
 
     def tearDown(self):
+        delete_all_repeat_records()
         self.adapter.clear_table()
 
     @flaky_slow
@@ -424,12 +440,38 @@ class IndicatorPillowTest(TestCase):
         self.pillow.process_change(doc_to_change(sample_doc))
         self._check_sample_doc_state(expected_indicators)
 
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @mock.patch('corehq.motech.repeaters.signals.create_repeat_records')
+    @mock.patch('corehq.apps.userreports.specs.datetime')
+    def test_datasource_change_triggers_change_signal(self, datetime_mock, create_repeat_records_mock):
+        from corehq.apps.userreports.util import DataSourceUpdateLog
+        data_source_id = self.config._id
+        num_repeaters = 2
+        self._setup_data_source_subscription(self.config.domain, data_source_id, num_repeaters=num_repeaters)
+
+        datetime_mock.utcnow.return_value = self.fake_time_now
+        sample_doc, _expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
+        self.pillow.process_change(doc_to_change(sample_doc))
+
+        # Assert that a repeat records will be created, since there is a DataSourceRepeater for this datasource
+        create_repeat_records_mock.assert_called()
+        # Assert that it will be created with the expected args
+        call_args = create_repeat_records_mock.call_args[0]
+        self.assertEqual(call_args[0], DataSourceRepeater)
+        self.assertTrue(isinstance(call_args[1], DataSourceUpdateLog))
+        update_log = call_args[1]
+        self.assertEqual(update_log.domain, self.domain)
+        self.assertEqual(update_log.data_source_id, self.config._id)
+        self.assertEqual(update_log.doc_id, sample_doc["_id"])
+
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_rebuild_indicators(self, datetime_mock):
+        data_source_id = self.config._id
+        self._setup_data_source_subscription(self.config.domain, data_source_id)
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
         _save_sql_case(sample_doc)
-        rebuild_indicators(self.config._id)
+        rebuild_indicators(data_source_id)
         self._check_sample_doc_state(expected_indicators)
 
     def test_bad_integer_datatype(self):
@@ -485,11 +527,35 @@ class IndicatorPillowTest(TestCase):
 
         CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
 
+    @flag_enabled('SUPERSET_ANALYTICS')
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql_chunked(self, datetime_mock):
+        self._setup_data_source_subscription(self.config.domain, self.config._id, num_repeaters=2)
+
         self.pillow = _get_pillow([self.config], processor_chunk_size=100)
         self._test_process_deleted_doc_from_sql(datetime_mock)
         self.pillow = _get_pillow([self.config])
+        later = datetime.utcnow() + timedelta(hours=50)
+        repeat_records = RepeatRecord.all(domain=self.domain, due_before=later)
+        # We expect 2 repeat records for 2 repeaters each
+        self.assertEqual(repeat_records.count(), 4)
+
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @mock.patch('corehq.motech.repeaters.models.Repeater.register')
+    @mock.patch('corehq.apps.userreports.specs.datetime')
+    def test_delete_doc_should_not_forward_change(self, datetime_mock, register_mock):
+        """Test that a no attempt is made to register a repeat record if there's no data source repeater"""
+        self._test_process_deleted_doc_from_sql(datetime_mock)
+        self.assertEqual(register_mock.call_count, 0)
+
+    def _setup_data_source_subscription(self, domain, data_source_id, num_repeaters=1):
+        for _i in range(num_repeaters):
+            DataSourceRepeater.objects.create(
+                data_source_id=data_source_id,
+                domain=domain,
+                connection_settings_id=self.conn_setting.id,
+            )
+        self.assertTrue(DataSourceRepeater.datasource_is_subscribed_to(domain, data_source_id))
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql(self, datetime_mock):
@@ -515,6 +581,7 @@ class IndicatorPillowTest(TestCase):
         self.assertEqual(0, self.adapter.get_query_object().count())
 
         CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
+        return sample_doc
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_filter_no_longer_pass(self, datetime_mock):

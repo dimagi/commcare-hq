@@ -83,6 +83,7 @@ class LookupTable(models.Model):
     fields = AttrsList(TypeField, default=list)
     item_attributes = models.JSONField(default=list)
     description = models.CharField(max_length=255, default="")
+    is_synced = models.BooleanField(default=False)
 
     class Meta:
         app_label = 'fixtures'

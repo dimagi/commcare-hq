@@ -98,6 +98,7 @@ from corehq.apps.linked_domain.view_helpers import (
     get_upstream_and_downstream_keywords,
     get_upstream_and_downstream_reports,
     get_upstream_and_downstream_ucr_expressions,
+    get_upstream_and_downstream_update_rules
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import ReleaseManagementReportDispatcher
@@ -290,6 +291,8 @@ class DomainLinkView(BaseProjectSettingsView):
             self.domain
         )
 
+        upstream_rules, downstream_rules = get_upstream_and_downstream_update_rules(self.domain, upstream_link)
+
         is_superuser = self.request.couch_user.is_superuser
         timezone = get_timezone_for_request()
         view_models_to_pull = build_pullable_view_models_from_data_models(
@@ -300,6 +303,7 @@ class DomainLinkView(BaseProjectSettingsView):
             downstream_reports,
             downstream_keywords,
             downstream_ucr_expressions,
+            downstream_rules,
             timezone,
             is_superuser=is_superuser
         )
@@ -311,6 +315,7 @@ class DomainLinkView(BaseProjectSettingsView):
             upstream_reports,
             upstream_keywords,
             upstream_ucr_expressions,
+            upstream_rules,
             is_superuser=is_superuser
         )
 
@@ -325,10 +330,28 @@ class DomainLinkView(BaseProjectSettingsView):
         else:
             remote_linkable_ucr = None
 
+        linked_status = None
+        if upstream_link:
+            linked_status = 'downstream'
+            track_workflow(
+                self.request.couch_user.username,
+                'Lands on feature page (downstream)',
+                {'domain': self.domain}
+            )
+        elif linked_domains:
+            linked_status = 'upstream'
+            track_workflow(
+                self.request.couch_user.username,
+                'Lands on feature page (upstream)',
+                {'domain': self.domain}
+            )
+
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
+            'linked_status': linked_status,
             'view_data': {
+                'domain': self.domain,
                 'is_superuser': is_superuser,
                 'is_downstream_domain': bool(upstream_link),
                 'upstream_domains': upstream_domain_urls,
@@ -355,6 +378,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         detail_obj = wrap_detail(type_, detail) if detail else None
         timezone = get_timezone_for_request()
         domain_link = get_upstream_domain_link(self.domain)
+        overwrite = in_data['overwrite'] or False
 
         try:
             validate_pull(self.request.couch_user, domain_link)
@@ -370,16 +394,21 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
         error = ""
         try:
-            update_model_type(domain_link, type_, detail_obj)
+            update_model_type(domain_link, type_, detail_obj, is_pull=True, overwrite=overwrite)
             model_detail = detail_obj.to_json() if detail_obj else None
             domain_link.update_last_pull(type_, self.request.couch_user._id, model_detail=model_detail)
         except (DomainLinkError, UnsupportedActionError) as e:
             error = str(e)
 
+        metric_name = "Linked domain: pulled and overwrote data model" \
+            if overwrite else "Linked domain: pulled data model"
         track_workflow(
             self.request.couch_user.username,
-            "Linked domain: pulled data model",
-            {"data_model": type_}
+            metric_name,
+            {
+                'domain': self.domain,
+                'data_model': type_,
+            }
         )
 
         return {
@@ -411,14 +440,20 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
                 'message': e.message,
             }
 
-        push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
-                          in_data['build_apps'], self.request.couch_user.username)
+        overwrite = in_data.get('overwrite', False)
 
-        track_workflow(
-            self.request.couch_user.username,
-            "Linked domain: pushed data models",
-            {"data_models": in_data['models']}
-        )
+        push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
+                          in_data['build_apps'], self.request.couch_user.username, overwrite)
+
+        metric_args = {
+            'domain': self.domain,
+            'build_apps': in_data['build_apps'],
+            'data_models': in_data['models'],
+        }
+        metric_name = "Linked domain: pushed and overwrote data models" \
+            if overwrite else "Linked domain: pushed data models"
+
+        track_workflow(self.request.couch_user.username, metric_name, metric_args)
 
         return {
             'success': True,
@@ -622,7 +657,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
     def _make_user_cell(self, record):
         doc_info = get_doc_info_by_id(self.domain, record.user_id)
         user = WebUser.get_by_user_id(record.user_id)
-        if self.domain not in user.get_domains() and 'link' in doc_info:
+        if user and self.domain not in user.get_domains() and 'link' in doc_info:
             doc_info['link'] = None
 
         return pretty_doc_info(doc_info)

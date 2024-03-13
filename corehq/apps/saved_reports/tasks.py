@@ -1,5 +1,6 @@
 import re
 from datetime import datetime, timedelta
+from urllib.parse import unquote
 
 from django.conf import settings
 from django.http import HttpRequest
@@ -131,37 +132,12 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
 
     user_id = request_data['couch_user']
     couch_user = CouchUser.get_by_user_id(user_id)
-    mock_request = HttpRequest()
 
+    mock_request = HttpRequest()
     mock_request.method = 'GET'
     mock_request.GET = request_data['GET']
 
-    config = ReportConfig()
-
-    # see ReportConfig.query_string()
-    object.__setattr__(config, '_id', 'dummy')
-    config.name = _("Emailed report")
-    config.report_type = report_type
-    config.report_slug = report_slug
-    config.owner_id = user_id
-    config.domain = domain
-
-    config.start_date = request_data['datespan'].startdate.date()
-    if request_data['datespan'].enddate:
-        config.date_range = 'range'
-        config.end_date = request_data['datespan'].enddate.date()
-    else:
-        config.date_range = 'since'
-
-    GET = dict(six.iterlists(request_data['GET']))
-    exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
-    filters = {}
-    for field in GET:
-        if field not in exclude:
-            filters[field] = GET.get(field)
-
-    config.filters = filters
-
+    config = create_config_for_email(report_type, report_slug, user_id, domain, request_data)
     subject = cleaned_data['subject'] or _("Email report from CommCare HQ")
 
     try:
@@ -173,8 +149,8 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
 
         for recipient in recipient_emails:
             send_HTML_email(subject, recipient,
-                            body, email_from=settings.DEFAULT_FROM_EMAIL,
-                            smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
+                            body, smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES,
+                            domain=domain, use_domain_gateway=True,)
 
     except Exception as er:
         notify_exception(
@@ -198,3 +174,44 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
             export_all_rows_task(config.report, report_state, recipient_list=recipient_emails)
         else:
             self.retry(exc=er)
+
+
+def create_config_for_email(report_type, report_slug, user_id, domain, request_data):
+    config = ReportConfig()
+
+    # see ReportConfig.query_string()
+    object.__setattr__(config, '_id', 'dummy')
+    config.name = _("Emailed report")
+    config.report_type = report_type
+    config.report_slug = report_slug
+    config.owner_id = user_id
+    config.domain = domain
+
+    GET = dict(six.iterlists(request_data['GET']))
+    exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
+    filters = {}
+    for field in GET:
+        if field == 'params':
+            params = unquote(GET.get(field)[0])
+            params = params.split('&')
+            for param in params:
+                key, value = tuple(param.split('=', 1))
+                if key in filters:
+                    filters[key] = filters[key] + [value] if isinstance(filters[key], list) \
+                        else [filters[key]] + [value]
+                else:
+                    filters[key] = value
+        if field not in exclude:
+            filters[field] = GET.get(field) or filters[field]
+
+    config.filters = filters
+
+    if 'startdate' in config.filters and report_slug != 'project_health':
+        config.start_date = datetime.strptime(config.filters['startdate'], '%Y-%m-%d').date()
+        if 'enddate' in config.filters:
+            config.date_range = 'range'
+            config.end_date = datetime.strptime(config.filters['enddate'], '%Y-%m-%d').date()
+        else:
+            config.date_range = 'since'
+
+    return config

@@ -1,3 +1,12 @@
+from corehq.apps.case_search.const import (
+    CASE_PROPERTIES_PATH,
+    GEOPOINT_VALUE,
+    IDENTIFIER,
+    INDEXED_ON,
+    INDICES_PATH,
+    REFERENCED_ID,
+    VALUE,
+)
 from corehq.apps.es.client import Tombstone
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
@@ -13,24 +22,23 @@ CASE_SEARCH_MAPPING = {
     "date_formats": DATE_FORMATS_ARR,
     "dynamic": False,
     "properties": {
-        "@indexed_on": {
+        INDEXED_ON: {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
-        "case_properties": {
+        CASE_PROPERTIES_PATH: {
             "dynamic": False,
             "type": "nested",
             "properties": {
                 "key": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
-                    "type": "string"
+                    "type": "text"
                 },
-                "value": {
+                VALUE: {
                     "fields": {
                         "date": {
                             "format": DATE_FORMATS_STRING,
@@ -39,9 +47,8 @@ CASE_SEARCH_MAPPING = {
                         },
                         "exact": {
                             "ignore_above": 8191,
-                            "index": "not_analyzed",
                             "null_value": "",
-                            "type": "string"
+                            "type": "keyword"
                         },
                         "numeric": {
                             "ignore_malformed": True,
@@ -49,13 +56,12 @@ CASE_SEARCH_MAPPING = {
                         },
                         "phonetic": {
                             "analyzer": "phonetic",
-                            "type": "string"
+                            "type": "text"
                         }
                     },
-                    "null_value": "",
-                    "type": "string"
+                    "type": "text"
                 },
-                "geopoint_value": {
+                GEOPOINT_VALUE: {
                     "type": "geo_point"
                 }
             }
@@ -64,59 +70,52 @@ CASE_SEARCH_MAPPING = {
             "type": "boolean"
         },
         "closed_by": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "closed_on": {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
+        "doc_id": {
+            "type": "keyword"
+        },
         "doc_type": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "domain": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         "external_id": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
-        "indices": {
+        INDICES_PATH: {
             "dynamic": False,
             "type": "nested",
             "properties": {
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
-                "identifier": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                IDENTIFIER: {
+                    "type": "keyword"
                 },
-                "referenced_id": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                REFERENCED_ID: {
+                    "type": "keyword"
                 },
                 "referenced_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "relationship": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             }
         },
         "location_id": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "modified_on": {
             "format": DATE_FORMATS_STRING,
@@ -125,23 +124,20 @@ CASE_SEARCH_MAPPING = {
         "name": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         "opened_by": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "opened_on": {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "owner_id": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "server_modified_on": {
             "format": DATE_FORMATS_STRING,
@@ -150,15 +146,13 @@ CASE_SEARCH_MAPPING = {
         "type": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         "user_id": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"

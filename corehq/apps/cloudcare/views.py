@@ -12,12 +12,14 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
 )
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.views.generic import View
 from django.views.generic.base import TemplateView
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -25,10 +27,12 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 import urllib.parse
 from text_unidecode import unidecode
 
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
+from couchforms.const import VALID_ATTACHMENT_FILE_EXTENSION_MAP
 from dimagi.utils.logging import notify_error, notify_exception
-from dimagi.utils.web import get_url_base, json_response
+from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import (
@@ -48,12 +52,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_doc,
     get_latest_released_build_id,
 )
-from corehq.apps.app_manager.exceptions import (
-    FormNotFoundException,
-    ModuleNotFoundException,
-)
-from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import get_cloudcare_session_data
+
 from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
     WEB_APPS_ENVIRONMENT,
@@ -62,7 +61,7 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_applicatio
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
-from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
+from corehq.apps.cloudcare.utils import get_mobile_ucr_count, should_restrict_web_apps_usage
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -82,10 +81,10 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
-from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.models import CommCareCase
-from corehq.form_processor.models import XFormInstance
+from corehq.util.metrics import metrics_histogram
 from xml2json.lib import xml2json
+
+from langcodes import get_name
 
 
 @require_cloudcare_access
@@ -99,6 +98,7 @@ class FormplayerMain(View):
     preview = False
     urlname = 'formplayer_main'
 
+    @xframe_options_sameorigin
     @use_daterangepicker
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
@@ -168,6 +168,10 @@ class FormplayerMain(View):
         return request.couch_user, set_cookie
 
     def get(self, request, domain):
+        mobile_ucr_count = get_mobile_ucr_count(domain)
+        if should_restrict_web_apps_usage(domain, mobile_ucr_count):
+            return redirect('block_web_apps', domain=domain)
+
         option = request.GET.get('option')
         if option == 'apps':
             return self.get_option_apps(request, domain)
@@ -195,6 +199,9 @@ class FormplayerMain(View):
 
         domain_obj = Domain.get_by_name(domain)
 
+        lang_codes = set().union(*(app.get("langs", []) for app in apps))
+        lang_code_name_mapping = {code: get_name(code) for code in lang_codes}
+
         context = {
             "domain": domain,
             "default_geocoder_location": domain_obj.default_geocoder_location,
@@ -209,7 +216,10 @@ class FormplayerMain(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
+            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
+            "lang_code_name_mapping": lang_code_name_mapping,
         }
+
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
         )
@@ -280,6 +290,7 @@ class FormplayerPreviewSingleApp(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
+            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -291,6 +302,10 @@ class PreviewAppView(TemplateView):
     @use_daterangepicker
     @xframe_options_sameorigin
     def get(self, request, *args, **kwargs):
+        mobile_ucr_count = get_mobile_ucr_count(request.domain)
+        if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
+            context = BlockWebAppsView.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
+            return render(request, 'preview_app/block_app_preview.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
@@ -299,6 +314,7 @@ class PreviewAppView(TemplateView):
             "environment": PREVIEW_APP_ENVIRONMENT,
             "integrations": integration_contexts(request.domain),
             "has_geocoder_privs": has_geocoder_privs(request.domain),
+            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         })
 
 
@@ -364,7 +380,7 @@ class LoginAsUsers(View):
         user = CouchUser.wrap_correctly(user_json)
         formatted_user = {
             'username': user.raw_username,
-            'customFields': user.metadata,
+            'customFields': user.get_user_data(self.domain).to_dict(),
             'first_name': user.first_name,
             'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,
@@ -563,7 +579,7 @@ def _message_to_sentry_thread_topic(message):
 @require_cloudcare_access
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 @location_safe
-def session_endpoint(request, domain, app_id, endpoint_id):
+def session_endpoint(request, domain, app_id, endpoint_id=None):
     def _fail(error):
         messages.error(request, error)
         return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]))
@@ -591,13 +607,56 @@ def session_endpoint(request, domain, app_id, endpoint_id):
     if force_login_as and not can_use_restore_as(request):
         return _fail(_("This user cannot access this link."))
 
-    cloudcare_state = json.dumps({
-        "appId": build_id,
-        "endpointId": endpoint_id,
-        "endpointArgs": {
-            urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)
-            for key, value in request.GET.items()
-        },
-        "forceLoginAs": force_login_as,
-    })
+    state = {"appId": build_id, "forceLoginAs": force_login_as}
+    if endpoint_id is not None:
+        state.update({
+            "endpointId": endpoint_id,
+            "endpointArgs": {
+                urllib.parse.quote_plus(key): urllib.parse.quote_plus(value)
+                for key, value in request.GET.items()
+            }
+        })
+    cloudcare_state = json.dumps(state)
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
+
+
+class BlockWebAppsView(BaseDomainView):
+
+    urlname = 'block_web_apps'
+    template_name = 'block_web_apps.html'
+
+    def get(self, request, *args, **kwargs):
+        mobile_ucr_count = get_mobile_ucr_count(request.domain)
+        context = self.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
+        return render(request, self.template_name, context)
+
+    @staticmethod
+    def get_context_for_ucr_limit_error(domain, mobile_ucr_count):
+        return {
+            'domain': domain,
+            'ucr_limit': settings.MAX_MOBILE_UCR_LIMIT,
+            'error_message': _("""You have the MOBILE_UCR feature flag enabled, and have {ucr_count} mobile UCRs
+                               which exceeds the maximum limit of {ucr_limit} total User Configurable Reports used
+                               across all of your applications. To resolve, you must remove references to UCRs in
+                               your applications until you are under the limit. If you believe this is a mistake,
+                               please reach out to support.
+                            """).format(ucr_count=mobile_ucr_count, ucr_limit=settings.MAX_MOBILE_UCR_LIMIT)
+        }
+
+
+@login_and_domain_required
+@require_POST
+def api_histogram_metrics(request, domain):
+    request_dict = request.POST
+
+    metric_name = request_dict.get("metrics")
+    duration = float(request_dict.get("responseTime"))
+
+    if metric_name and duration:
+        metrics_histogram(metric_name,
+                          duration,
+                          bucket_tag='duration_bucket',
+                          buckets=(1000, 2000, 5000),
+                          bucket_unit='ms',
+                          tags={'domain': domain})
+    return HttpResponse("Success!!")

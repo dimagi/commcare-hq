@@ -4,7 +4,13 @@
   {# Developer is working on analytics #}
   {% initial_analytics_data 'appcues.apiId' ANALYTICS_IDS.APPCUES_ID %}
 {% elif is_saas_environment %}
-  {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
+  {% comment %}
+  HACK: project/domain_links is a hacky way for us to ensure appcues is being shown on the ERM/MRM page.
+  /cloudcare/apps/v2/ is a way for us to ensure appcues is being shown on Web Apps.
+  If we remove these checks so all users see appcues, we risk going over our appcues user cap
+  This is intended to be a short-term fix as we search for tour alternatives.
+  {% endcomment %}
+  {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 or '/project/domain_links/' in request.path or '/cloudcare/apps/v2/' in request.path%}
     {% initial_analytics_data 'appcues.apiId' ANALYTICS_IDS.APPCUES_ID %}
   {% endif %}
 {% endif %}

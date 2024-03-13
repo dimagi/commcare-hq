@@ -6,15 +6,19 @@
     <thead data-bind="visible: columns().length > 0">
     <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
       <th class="col-sm-1"></th>
-      <th class="col-sm-3">{% trans "Property" %}</th>
-      <!-- ko if: showCaseTileColumn() -->
+      <th class="col-sm-2">{% trans "Property" %}</th>
       <th class="col-sm-2">{% trans "Display Text" %}</th>
-      <th class="col-sm-3">{% trans "Format" %}</th>
-      <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
+      <!-- ko if: showCaseTileMappingColumn() -->
+        <th class="col-sm-3">{% trans "Format" %}</th>
+        <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
       <!--/ko-->
-      <!-- ko ifnot: showCaseTileColumn() -->
-      <th class="col-sm-3">{% trans "Display Text" %}</th>
-      <th class="col-sm-4">{% trans "Format" %}</th>
+      <!-- ko ifnot: showCaseTileMappingColumn() -->
+        <th class="col-sm-2">{% trans "Format" %}</th>
+      <!-- /ko -->
+      <!-- ko if: showCaseTileConfigColumns() -->
+        <th class="col-sm-1">{% trans "Row/Column" %}</th>
+        <th class="col-sm-1">{% trans "Width/Height" %}</th>
+        <th class="col-sm-1">{% trans "Style" %}</th>
       <!-- /ko -->
       <th class="col-sm-1"></th>
     </tr>
@@ -34,58 +38,73 @@
             ">
       <td class="text-center col-sm-1">
         <span class="sort-disabled" data-bind="ifnot: grip"></span>
-        <i class="grip sortable-handle fa fa-arrows-v" data-bind="
+        <i class="grip sortable-handle fa-solid fa-up-down" data-bind="
                         if: grip,
                         event: {mousedown: function(){ $(':focus').blur(); }}
                     "></i>
       </td>
       <!--ko if: !isTab -->
-      <td class="col-sm-3" data-bind="css: {'has-error': showWarning}">
-        <div data-bind="html: hqImport('app_manager/js/details/utils').getFieldHtml(field.val()), visible: !field.edit"></div>
-        <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
-        <!-- ko if: useXpathExpression -->
-        <div class="label label-default">{% trans "Calculated Property" %}&nbsp;(#<span data-bind="text: $index() + 1"></span>)</div>
-        <!-- /ko -->
-        <div data-bind="visible: showWarning">
-          <span class="help-block" data-bind="
-              text: hqImport('app_manager/js/details/utils').fieldFormatWarningMessage
-          ">
-          </span>
-        </div>
-      </td>
-      <td data-bind="jqueryElement: header.ui, css: {
-                            'col-sm-2': $parent.showCaseTileColumn(),
-                            'col-sm-3': !$parent.showCaseTileColumn(),
-                        }"></td>
-      <td data-bind="jqueryElement: $format, css: {
-                            'col-sm-3': $parent.showCaseTileColumn(),
-                            'col-sm-4': !$parent.showCaseTileColumn(),
-                        }"></td>
+        <td class="col-sm-2" data-bind="css: {'has-error': showWarning}">
+          <div data-bind="html: hqImport('app_manager/js/details/utils').getFieldHtml(field.val()), visible: !field.edit"></div>
+          <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
+          <!-- ko if: useXpathExpression -->
+            <div class="label label-default">{% trans "Calculated Property" %}&nbsp;(#<span data-bind="text: $index() + 1"></span>)</div>
+          <!-- /ko -->
+          <div data-bind="visible: showWarning">
+            <span class="help-block" data-bind="
+                text: hqImport('app_manager/js/details/utils').fieldFormatWarningMessage
+            ">
+            </span>
+          </div>
+        </td>
+        <td data-bind="jqueryElement: header.ui"></td>
+        <td data-bind="jqueryElement: $format, css: {
+                              'col-sm-3': $parent.showCaseTileMappingColumn(),
+                              'col-sm-2': !$parent.showCaseTileMappingColumn(),
+                          }"></td>
+        <!-- ko if: $parent.showCaseTileConfigColumns() -->
+          <td class="col-sm-1">
+            <select class="form-control" data-bind="value: tileRowStart, options: tileRowOptions, visible: coordinatesVisible"></select>
+            <select class="form-control" data-bind="value: tileColumnStart, options: tileColumnOptions, visible: coordinatesVisible"></select>
+          </td>
+          <td class="col-sm-1">
+            <select class="form-control" data-bind="value: tileWidth, options: tileWidthOptions, visible: coordinatesVisible"></select>
+            <select class="form-control" data-bind="value: tileHeight, options: tileHeightOptions, visible: coordinatesVisible"></select>
+          </td>
+          <td class="col-sm-1">
+            <button class="btn btn-default" data-bind="click: openStyleModal, visible: coordinatesVisible">{% trans "Edit" %}</button>
+          </td>
+        <!--/ko-->
       <!--/ko-->
       <!--ko if: isTab -->
-      <!--ko if: $data.hasNodeset -->
-      <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
-      <td class="col-sm-3 form-group">
-        <div data-bind="jqueryElement: relevant.ui"></div>
-      </td>
-      <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}">
-      <div data-bind="jqueryElement: nodeset_extra.ui"></div>
-      <span class="help-block"
-            data-bind="text: 'Please enter an expression.', visible: showWarning"></span>
-      </td>
+        <!--ko if: $data.hasNodeset -->
+          <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+          <td class="col-sm-3 form-group">
+            <div data-bind="jqueryElement: relevant.ui"></div>
+          </td>
+          <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}">
+          <div data-bind="jqueryElement: nodeset_extra.ui"></div>
+          <span class="help-block"
+                data-bind="text: gettext('Please enter an expression.'), visible: showWarning"></span>
+          </td>
+        <!--/ko-->
+        <!--ko ifnot: $data.hasNodeset -->
+          <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+          <td class="col-sm-3 form-group">
+            <div data-bind="jqueryElement: relevant.ui"></div>
+          </td>
+          <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}"></td>
+        <!--/ko-->
+        <!-- ko if: $parent.showCaseTileConfigColumns() -->
+          <td class="col-sm-1"></td>
+          <td class="col-sm-1"></td>
+          <td class="col-sm-1"></td>
+        <!--/ko-->
       <!--/ko-->
-      <!--ko ifnot: $data.hasNodeset -->
-      <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
-      <td class="col-sm-3 form-group">
-        <div data-bind="jqueryElement: relevant.ui"></div>
-      </td>
-      <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}"></td>
-      <!--/ko-->
-      <!--/ko-->
-      <!-- ko if: $parent.showCaseTileColumn() -->
-      <td class="col-sm-2">
-        <select class="form-control" data-bind="value: case_tile_field, options: $parent.caseTileFields"></select>
-      </td>
+      <!-- ko if: $parent.showCaseTileMappingColumn() && $parent.caseTileFieldsForTemplate() -->
+        <td class="col-sm-2">
+          <select class="form-control" data-bind="value: case_tile_field, options: $parent.caseTileFieldsForTemplate, visible: !$data.isTab"></select>
+        </td>
       <!-- /ko -->
       <td class="col-sm-1 text-center">
         <i style="cursor: pointer;"

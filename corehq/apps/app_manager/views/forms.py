@@ -21,10 +21,10 @@ from django.views.decorators.http import require_GET
 
 from diff_match_patch import diff_match_patch
 from lxml import etree
+from no_exceptions.exceptions import Http400
 from text_unidecode import unidecode
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
-from corehq.apps.hqwebapp.decorators import waf_allow
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 
@@ -38,11 +38,11 @@ from corehq.apps.app_manager.const import (
     USERCASE_PREFIX,
     USERCASE_TYPE,
     WORKFLOW_DEFAULT,
-    WORKFLOW_ROOT,
-    WORKFLOW_PARENT_MODULE,
-    WORKFLOW_MODULE,
-    WORKFLOW_PREVIOUS,
     WORKFLOW_FORM,
+    WORKFLOW_MODULE,
+    WORKFLOW_PARENT_MODULE,
+    WORKFLOW_PREVIOUS,
+    WORKFLOW_ROOT,
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import (
@@ -53,8 +53,8 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppMisconfigurationError,
     FormNotFoundException,
-    XFormValidationFailed,
     ModuleNotFoundException,
+    XFormValidationFailed,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
@@ -86,9 +86,9 @@ from corehq.apps.app_manager.util import (
     advanced_actions_use_usercase,
     enable_usercase,
     is_usercase_in_use,
-    save_xform,
     module_loads_registry_case,
     module_uses_inline_search,
+    save_xform,
 )
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
@@ -101,8 +101,8 @@ from corehq.apps.app_manager.views.utils import (
     form_has_submissions,
     get_langs,
     handle_custom_icon_edits,
-    validate_custom_assertions,
     set_session_endpoint,
+    validate_custom_assertions,
 )
 from corehq.apps.app_manager.xform import (
     CaseError,
@@ -119,11 +119,11 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
     track_domain_request,
 )
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import set_file_download
-from no_exceptions.exceptions import Http400
 
 
 @no_conflict_require_POST
@@ -454,6 +454,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit('session_endpoint_id'):
         raw_endpoint_id = request.POST['session_endpoint_id']
         set_session_endpoint(form, raw_endpoint_id, app)
+
+    if should_edit('access_hidden_forms'):
+        form.respect_relevancy = not ('true' in request.POST.getlist('access_hidden_forms'))
 
     if should_edit('function_datum_endpoints'):
         if request.POST['function_datum_endpoints']:
@@ -915,9 +918,16 @@ def _get_linkable_forms_context(module, langs):
         return trans(module.name, langs)
 
     def _form_name(module, form):
-        module_name = _module_name(module)
+        names = [_module_name(m) for m in _module_hierarchy(module)]
+        module_names = " > ".join(names)
         form_name = trans(form.name, langs)
-        return "{} > {}".format(module_name, form_name)
+        return "{} > {}".format(module_names, form_name)
+
+    def _module_hierarchy(module):
+        if not module.root_module_id:
+            return [module]
+        else:
+            return _module_hierarchy(module.root_module) + [module]
 
     linkable_items = []
     is_multi_select = module.is_multi_select()
@@ -933,13 +943,18 @@ def _get_linkable_forms_context(module, langs):
                 and module.root_module_id is not None
                 and module.root_module.case_type == candidate_module.root_module.case_type
             )
-            if is_top_level or is_child_match:
+            parent_name = ""
+            if candidate_module.root_module_id:
+                parent_name = _module_name(candidate_module.root_module) + " > "
+            auto_link = is_top_level or is_child_match
+            if auto_link or toggles.FORM_LINK_ADVANCED_MODE.enabled(module.get_app().domain):
                 linkable_items.append({
                     'unique_id': candidate_module.unique_id,
-                    'name': _module_name(candidate_module),
-                    'auto_link': True,
-                    'allow_manual_linking': False,
+                    'name': parent_name + _module_name(candidate_module),
+                    'auto_link': auto_link,
+                    'allow_manual_linking': toggles.FORM_LINK_ADVANCED_MODE.enabled(module.get_app().domain),
                 })
+
         for candidate_form in candidate_module.get_suite_forms():
             # Forms can be linked automatically if their module is the same case type as this module,
             # or if they belong to this module's parent module. All other forms can be linked manually.

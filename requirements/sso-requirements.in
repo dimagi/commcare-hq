@@ -1,2 +1,1 @@
-pyOpenSSL>=22.1.0  # min version for cryptography==39.0.0
 python3-saml

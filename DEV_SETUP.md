@@ -122,13 +122,13 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     brew install libmagic libxmlsec1 libxml2 libxslt openssl readline sqlite3 xz zlib tcl-tk
     ```
 
-- Java (JDK 8)
+- Java (JDK 17)
 
   - **Linux**:
 
-    install `default-jre` via apt:
+    install `openjdk-17-jre` via apt:
     ```sh
-    sudo apt install default-jre
+    sudo apt install openjdk-17-jre
     ```
 
   - **macOS**:
@@ -163,12 +163,15 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
 
     If you have an M1 chip and are using a Rosetta-based install of Postgres and run into problems with psycopg2, see [this solution](https://github.com/psycopg/psycopg2/issues/1216#issuecomment-767892042).
 
-##### A note on `xmlsec`
+##### Notes on `xmlsec`
 
 `xmlsec` is a `pip` dependency that will require some non-`pip`-installable
 packages. The above notes should have covered these requirements for linux and
 macOS, but if you are on a different platform or still experiencing issues,
 please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
+
+If you encounter issues installing `xmlsec` on a M1 mac, you can try following a workaround
+outlined in the Mac setup [Supplementary Guide](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP_MAC.md).
 
 
 ## Downloading & Running CommCare HQ
@@ -421,7 +424,7 @@ needs of most developers.
     ```sh
     ./scripts/docker up -d
     # Optionally, start only specific containers.
-    ./scripts/docker up -d postgres couch redis elasticsearch2 zookeeper kafka minio formplayer
+    ./scripts/docker up -d postgres couch redis elasticsearch5 zookeeper kafka minio formplayer
     ```
 
    **Mac OS:** Note that you will encounter many issues at this stage.
@@ -498,17 +501,66 @@ Before running any of the commands below, you should have all of the following
 running: Postgres, CouchDB, Redis, and Elasticsearch.
 The easiest way to do this is using the Docker instructions above.
 
+If you want to use a partitioned database, change
+`USE_PARTITIONED_DATABASE = False` to `True` in `localsettings.py`.
+
+You will also need to create the additional databases manually:
+
+```sh
+$ psql -h localhost -p 5432 -U commcarehq
+```
+
+(assuming that "commcarehq" is the username in `DATABASES` in
+`localsettings.py`). When prompted, use the password associated with the
+username, of course.
+
+```sh
+commcarehq=# CREATE DATABASE commcarehq_proxy;
+CREATE DATABASE
+commcarehq=# CREATE DATABASE commcarehq_p1;
+CREATE DATABASE
+commcarehq=# CREATE DATABASE commcarehq_p2;
+CREATE DATABASE
+commcarehq=# \q
+```
+
 Populate your database:
 
 ```sh
-./manage.py sync_couch_views
-./manage.py create_kafka_topics
-env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
+$ ./manage.py sync_couch_views
+$ ./manage.py create_kafka_topics
+$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
+```
+
+If you are using a partitioned database, populate the additional
+databases too, and configure PL/Proxy:
+
+```sh
+$ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate_multi --noinput
+$ ./manage.py configure_pl_proxy_cluster --create_only
 ```
 
 You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
+
+#### Troubleshooting errors from the CouchDB Docker container
+
+If you are seeing errors from the CouchDB Docker container that include
+`database_does_not_exist` ... `"_users"`, it could be because CouchDB
+is missing its three system databases, `_users`, `_replicator` and
+`_global_changes`. The `_global_changes` database is not necessary if
+you do not expect to be using the global changes feed. You can use
+`curl` to create the databases:
+
+```sh
+$ curl -X PUT http://username:password@127.0.0.1:5984/_users
+$ curl -X PUT http://username:password@127.0.0.1:5984/_replicator
+```
+
+where "username" and "password" are the values of "COUCH_USERNAME"
+and "COUCH_PASSWORD" given in `COUCH_DATABASES` set in
+`dev_settings.py`.
 
 #### Troubleshooting Issues with `sync_couch_views`
 
@@ -637,16 +689,32 @@ curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
-### Step 8: Configure LESS CSS (2 Options)
+### Step 8: Configure CSS Precompilers (2 Options)
 
-#### Option 1: Let Client Side Javascript (less.js) handle it for you
+#### Requirements: Install Dart Sass
+
+At present, we are undergoing a migration from Bootstrap 3 to 5. Bootstrap 3 uses LESS
+as its CSS precompiler, and Bootstrap 5 using SASS / SCSS. You will need both installed.
+
+LESS is already taken care of by `package.json` when you run `yarn install`. In order to
+compile SASS, we need Dart Sass. There is a `sass` npm package that can be installed globally with
+`npm install -g sass`, however this installs the pure javascript version without a binary. For speed in a
+development environment, it is recommended to install `sass` with homebrew:
+
+```shell
+brew install sass/sass/sass
+```
+
+You can also view [alternative installation instructions](https://sass-lang.com/install/) if homebrew doesn't work for you.
+
+#### Option 1: Compile CSS on page-load without compression
 
 This is the setup most developers use. If you don't know which option to use,
 use this one. It's the simplest to set up and the least painful way to develop:
 just make sure your `localsettings.py` does not contain `COMPRESS_ENABLED` or
 `COMPRESS_OFFLINE` settings (or has them both set to `False`).
 
-The disadvantage is that this is a different setup than production, where LESS
+The disadvantage is that this is a different setup than production, where LESS/SASS
 files are compressed.
 
 #### Option 2: Compress OFFLINE, just like production
@@ -663,7 +731,7 @@ COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
 ```
 
-For all STATICFILES changes (primarily LESS and JavaScript), run:
+For all STATICFILES changes (primarily LESS, SASS, and JavaScript), run:
 
 ```sh
 ./manage.py collectstatic
@@ -1114,6 +1182,21 @@ For example:
 ```
 http://localhost:8000/mocha/app_manager/b3
 ```
+
+### Measuring test coverage
+
+To generate a JavaScript test coverage report, ensure the development server is
+active on port 8000 and run:
+
+```sh
+./scripts/coverage-js.sh
+```
+
+This script goes through the steps to prepare a report for test coverage of
+JavaScript files _that are touched by tests_, i.e., apps and files with 0% test
+coverage will not be shown. A coverage summary is output to the terminal and a
+detailed html report is generated at ``coverage-js/index.html``.
+
 
 ## Sniffer
 

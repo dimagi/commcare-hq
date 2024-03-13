@@ -16,15 +16,13 @@ hqDefine("reports/js/inspect_data", [
         return _.map($(selector).select2("data"), function (item) {
             if (item.id.startsWith(typePrefix)) {
                 return userTypes[item.id.substring(typePrefix.length)];
-            }
-            else if (item.id.startsWith(userPrefix)) {
+            } else if (item.id.startsWith(userPrefix)) {
                 if (item.is_active === undefined && dataLookup[item.id]) {
                     return item.id + (dataLookup[item.id].is_active ? " [Active]" : " [Deactivated]");
                 } else {
                     return item.id + (item.is_active ? " [Active]" : " [Deactivated]");
                 }
-            }
-            else {
+            } else {
                 return item.id;
             }
         }).join();

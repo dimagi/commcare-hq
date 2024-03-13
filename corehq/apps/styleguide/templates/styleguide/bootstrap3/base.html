@@ -1,0 +1,86 @@
+{% load compress %}{% load hq_shared_tags %}{% load statici18n %}<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>CommCare HQ Style Guide</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    {% include 'hqwebapp/includes/bootstrap3/core_stylesheets.html' %}
+    {% compress css %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'hqwebapp/less/docs-style.less' %}" />
+      <link type="text/css"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'select2/dist/css/select2.min.css' %}" />
+      <link type="text/css"
+            rel="stylesheet"
+            media="screen"
+            href="{% static "multiselect/css/multi-select.css" %}" />
+      <link type="text/less"
+            rel="stylesheet"
+            media="screen"
+            href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
+    {% endcompress %}
+
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
+
+    {% javascript_libraries hq=True %}
+    <script src="{% statici18n LANGUAGE_CODE %}"></script>
+    {% compress js %}
+      <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/bootstrap3/widgets.js' %}"></script>
+      <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
+      <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
+    {% endcompress %}
+  </head>
+  <body data-spy="scroll" data-target=".docs-nav">
+    <div class="navbar navbar-inverse navbar-static-top navbar-docs">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="{% url "styleguide_home" %}"
+             class="navbar-brand">
+            HQ Style Guide
+          </a>
+        </div>
+        <nav class="collapse navbar-collapse" role="navigation">
+          <ul class="nav navbar-nav">
+            <li><a href="{% url 'styleguide_atoms' %}">Atoms</a></li>
+            <li><a href="{% url 'styleguide_molecules' %}">Molecules</a></li>
+            <li><a href="{% url 'styleguide_organisms' %}">Organisms</a></li>
+            <li><a href="{% url 'styleguide_pages' %}">Pages</a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    <div class="docs-content" data-spy="scroll" data-target=".docs-subnav">
+      <div class="alert alert-info text-lg">
+        <h1>This guide will be deprecated soon!</h1>
+        <p class="lead">
+          CommCare HQ is currently undergoing a migration to Bootstrap 5.
+          <strong><a href="{% url "styleguide_home_b5" %}">You can find the updated style guide here.</a></strong>
+        </p>
+      </div>
+      {% block content %}
+      {% endblock content %}
+    </div>
+
+    {# Knockout component templates #}
+    {% include 'hqwebapp/partials/bootstrap3/ko_pagination.html' %}
+    {% include 'hqwebapp/partials/bootstrap3/ko_inline_edit.html' %}
+    {% include 'hqwebapp/partials/bootstrap3/ko_search_box.html' %}
+    {% include 'hqwebapp/partials/bootstrap3/ko_select_toggle.html' %}
+    {% include 'hqwebapp/partials/bootstrap3/ko_feedback.html' %}
+
+    <footer class="docs-footer">
+      <div class="container">
+        <p class="lead">Thanks for reading the style guide! <3</p>
+      </div>
+    </footer>
+  </body>
+</html>

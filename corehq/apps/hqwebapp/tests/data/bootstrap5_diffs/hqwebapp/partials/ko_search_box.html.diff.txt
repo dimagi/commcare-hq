@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -3,14 +3,12 @@
+     <form class="input-group" data-bind="submit: clickAction">
+       <input type="text" class="form-control"
+              data-bind="value: value, valueUpdate: 'afterkeydown', attr: {placeholder: placeholder}, event: {keypress: keypressAction}"  />
+-      <span class="input-group-btn">
+-        <button type="button" class="btn btn-default" data-bind="click: clickAction, visible: !immediate">
+-          <i class="fa fa-search"></i>
+-        </button>
+-        <button class="btn btn-default" type="button" data-bind="click: clearQuery">
+-          <i class="fa fa-times"></i>
+-        </button>
+-      </span>
++      <button type="button" class="btn btn-outline-primary" data-bind="click: clickAction, visible: !immediate">
++        <i class="fa fa-search"></i>
++      </button>
++      <button class="btn btn-outline-primary" type="button" data-bind="click: clearQuery">
++        <i class="fa fa-times"></i>
++      </button>
+     </form>
+   </div>
+ </script>

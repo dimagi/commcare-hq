@@ -109,7 +109,7 @@ class CustomDataEditor(object):
                                    validators=[validator])
         elif field.choices:
             # If form uses knockout, knockout must have control over the select2.
-            # Otherwise, use .hqwebapp-select2 and hqwebapp/js/widgets to make the select2.
+            # Otherwise, use .hqwebapp-select2 and hqwebapp/js/bootstrap3/widgets to make the select2.
             attrs = {
                 'data-placeholder': _('Select one'),
                 'data-allow-clear': 'true',

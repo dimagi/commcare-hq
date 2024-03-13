@@ -1,11 +1,10 @@
+html, body {
+  height: 100%;
+}
+
 .hq-container {
     min-height: 100%;
     height: auto !important;
     margin-bottom: -$navbar-footer-height;
     padding-bottom: $navbar-footer-height;
-}
-
-.container.ui-widget,
-.container.ui-widget.ui-widget-content {
-  border: none;
 }

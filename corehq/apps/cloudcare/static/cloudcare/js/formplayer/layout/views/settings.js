@@ -1,3 +1,4 @@
+'use strict';
 /*global Marionette */
 
 hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
@@ -9,6 +10,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
         SET_DISPLAY: 'display',
         CLEAR_USER_DATA: 'clear-user-data',
         BREAK_LOCKS: 'break-locks',
+        SYNC: 'sync',
     };
 
     /**
@@ -112,6 +114,25 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
         },
     });
 
+    /**
+     * Sync button
+     * The feature flag HIDE_SYNC_BUTTON moves the sync button here
+     */
+    var SyncView = Marionette.View.extend({
+        template: _.template($("#sync-setting-template").html() || ""),
+        tagName: 'tr',
+        ui: {
+            sync: '.js-sync',
+        },
+        events: {
+            'click @ui.sync': 'onClickSync',
+        },
+        onClickSync: function (e) {
+            FormplayerFrontend.trigger('sync');
+            $(e.currentTarget).prop('disabled', true);
+        },
+    });
+
     var SettingsView = Marionette.CollectionView.extend({
         childViewContainer: 'tbody',
         childView: function (item) {
@@ -123,6 +144,8 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
                 return ClearUserDataView;
             } else if (item.get('slug') === slugs.BREAK_LOCKS) {
                 return BreakLocksView;
+            } else if (item.get('slug') === slugs.SYNC) {
+                return SyncView;
             }
         },
         ui: {

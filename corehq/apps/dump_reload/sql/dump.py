@@ -10,9 +10,10 @@ from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
     FilteredModelIteratorBuilder,
     ManyFilters,
+    MultimediaBlobMetaFilter,
     SimpleFilter,
-    UniqueFilteredModelIteratorBuilder,
     UnfilteredModelIteratorBuilder,
+    UniqueFilteredModelIteratorBuilder,
     UserIDFilter,
     UsernameFilter,
 )
@@ -25,6 +26,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('locations.LocationType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('locations.SQLLocation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('blobs.BlobMeta', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('blobs.BlobMeta', MultimediaBlobMetaFilter()),
 
     FilteredModelIteratorBuilder('form_processor.XFormInstance', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.XFormOperation', SimpleFilter('form__domain')),
@@ -45,6 +47,14 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent',
                                        SimpleFilter('randomtimedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent',
+                                       SimpleFilter('casepropertytimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSCallbackContent',
+                                       SimpleFilter('alertevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSCallbackContent',
+                                       SimpleFilter('timedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSCallbackContent',
+                                       SimpleFilter('randomtimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSCallbackContent',
                                        SimpleFilter('casepropertytimedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.EmailContent', SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.EmailContent', SimpleFilter('timedevent__schedule__domain')),
@@ -73,6 +83,14 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     UniqueFilteredModelIteratorBuilder('scheduling.CustomContent',
                                        SimpleFilter('randomtimedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.CustomContent',
+                                       SimpleFilter('casepropertytimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.FCMNotificationContent',
+                                       SimpleFilter('alertevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.FCMNotificationContent',
+                                       SimpleFilter('timedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.FCMNotificationContent',
+                                       SimpleFilter('randomtimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.FCMNotificationContent',
                                        SimpleFilter('casepropertytimedevent__schedule__domain')),
     FilteredModelIteratorBuilder('scheduling.AlertSchedule', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('scheduling.AlertEvent', SimpleFilter('schedule__domain')),
@@ -105,6 +123,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     UniqueFilteredModelIteratorBuilder('data_interfaces.UCRFilterDefinition',
                                        SimpleFilter('caserulecriteria__rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CreateScheduleInstanceActionDefinition',
+                                 SimpleFilter('caseruleaction__rule__domain')),
+    FilteredModelIteratorBuilder('data_interfaces.CaseDeduplicationActionDefinition',
                                  SimpleFilter('caseruleaction__rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleAction', SimpleFilter('rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleCriteria', SimpleFilter('rule__domain')),
@@ -145,12 +165,14 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
     FilteredModelIteratorBuilder('user_importer.UserUploadRecord', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('users.ConnectIDUserLink', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.DeactivateMobileWorkerTrigger', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.DomainRequest', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.Invitation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.RoleAssignableBy', SimpleFilter('role__domain')),
     FilteredModelIteratorBuilder('users.RolePermission', SimpleFilter('role__domain')),
     FilteredModelIteratorBuilder('users.UserRole', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('users.SQLUserData', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('locations.LocationFixtureConfiguration', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('commtrack.CommtrackConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('commtrack.ActionConfig', SimpleFilter('commtrack_config__domain')),
@@ -200,13 +222,19 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('fixtures.LookupTable', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('fixtures.LookupTableRow', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('fixtures.LookupTableRowOwner', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('hqmedia.LogoForSystemEmailsReference', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('userreports.UCRExpression', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('generic_inbound.ConfigurableAPI', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('generic_inbound.ConfigurableApiValidation', SimpleFilter('api__domain')),
     FilteredModelIteratorBuilder('generic_inbound.RequestLog', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('generic_inbound.ProcessingAttempt', SimpleFilter('log__domain')),
+    FilteredModelIteratorBuilder('geospatial.GeoPolygon', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('hqwebapp.Alert', SimpleFilter('created_by_domain')),
     FilteredModelIteratorBuilder('domain.AppReleaseModeSetting', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('events.Event', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('events.AttendanceTrackingConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('geospatial.GeoConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('email.EmailSettings', SimpleFilter('domain')),
 ]]
 
 
@@ -214,6 +242,20 @@ class SqlDataDumper(DataDumper):
     slug = 'sql'
 
     def dump(self, output_stream):
+        """
+        When serializing data using JsonLinesSerializer().serialize(...), the additional parameters are set for
+        the following reasons:
+
+        use_natural_primary_keys is necessary for sharded models to ensure the primary key, which will not be
+        unique across shards, is not used. This can be thought of as "use natural primary keys when defined".
+
+        use_natural_foreign_keys is necessary for foreign keys that reference primary keys on models that have a
+        natural_key method defined. This can be thought of as "use natural foreign keys when defined". For example,
+        SQLUserData has a foreign key to User based on the primary key. However a natural_key method is defined on
+        the User model, so its primary key will not be serialized when use_natural_primary_keys=True. To resolve,
+        we set use_natural_foreign_keys=True which will result in natural keys being serialized as part of the
+        foreign key field when referencing a model with natural_key defined.
+        """
         stats = Counter()
         objects = get_objects_to_dump(
             self.domain,
@@ -222,9 +264,10 @@ class SqlDataDumper(DataDumper):
             stats_counter=stats,
             stdout=self.stdout,
         )
+
         JsonLinesSerializer().serialize(
             objects,
-            use_natural_foreign_keys=False,
+            use_natural_foreign_keys=True,
             use_natural_primary_keys=True,
             stream=output_stream
         )
@@ -324,6 +367,7 @@ def get_apps_and_models(app_or_model_label):
             except LookupError:
                 from corehq.util.couch import get_document_class_by_doc_type
                 from corehq.util.exceptions import DocumentClassNotFound
+
                 # ignore this if it's a couch doc type
                 try:
                     get_document_class_by_doc_type(label)

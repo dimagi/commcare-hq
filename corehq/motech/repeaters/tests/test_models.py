@@ -1,8 +1,10 @@
 import uuid
 from contextlib import contextmanager
-from datetime import timedelta
+from datetime import datetime, timedelta
 from unittest.mock import patch, Mock
 from uuid import uuid4
+
+from dateutil.parser import isoparse
 
 from django.conf import settings
 from django.db.models.deletion import ProtectedError
@@ -23,12 +25,13 @@ from ..const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
+    State,
 )
 from ..models import (
     FormRepeater,
     Repeater,
     RepeatRecord,
-    are_repeat_records_migrated,
+    SQLRepeatRecord,
     format_response,
     get_all_repeater_types,
     is_response,
@@ -52,10 +55,16 @@ class RepeaterTestCase(TestCase):
         self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
         self.repeater = FormRepeater(
             domain=DOMAIN,
-            repeater_id=uuid.uuid4().hex,
             connection_settings=self.conn,
         )
         self.repeater.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        # TODO remove when RepeatRecords are no longer in Couch
+        super().tearDownClass()
+        from ..dbaccessors import delete_all_repeat_records
+        delete_all_repeat_records()
 
 
 class TestSoftDeleteRepeaters(RepeaterTestCase):
@@ -66,7 +75,6 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
             r = FormRepeater(
                 domain=DOMAIN,
                 connection_settings=self.conn,
-                repeater_id=uuid4().hex
             )
             r.save()
             self.all_repeaters.append(r)
@@ -79,8 +87,8 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
         self.all_repeaters[0].save()
         self.assertEqual(FormRepeater.objects.all().count(), 4)
         self.assertEqual(
-            set(FormRepeater.objects.all().values_list('repeater_id', flat=True)),
-            set([r.repeater_id for r in self.all_repeaters if not r.is_deleted])
+            set(FormRepeater.objects.all().values_list('id', flat=True)),
+            set([r.id for r in self.all_repeaters if not r.is_deleted])
         )
 
     def test_repeatrs_retired_from_sql(self):
@@ -103,7 +111,7 @@ class TestSQLRepeatRecordOrdering(RepeaterTestCase):
         self.repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id='eve',
-            registered_at='1970-02-01',
+            registered_at=isoparse('1970-02-01'),
         )
 
     def test_earlier_record_created_later(self):
@@ -114,7 +122,7 @@ class TestSQLRepeatRecordOrdering(RepeaterTestCase):
             # is Unix Rosh Hashanah, the sixth day of Creation, the day
             # [Lilith][1] and Adam were created from clay.
             # [1] https://en.wikipedia.org/wiki/Lilith
-            registered_at='1970-01-06',
+            registered_at=isoparse('1970-01-06'),
         )
         repeat_records = self.repeater.repeat_records.all()
         self.assertEqual(repeat_records[0].payload_id, 'lilith')
@@ -124,7 +132,7 @@ class TestSQLRepeatRecordOrdering(RepeaterTestCase):
         self.repeater.repeat_records.create(
             domain=self.repeater.domain,
             payload_id='cain',
-            registered_at='1995-01-06',
+            registered_at=isoparse('1995-01-06'),
         )
         repeat_records = self.repeater.repeat_records.all()
         self.assertEqual(repeat_records[0].payload_id, 'eve')
@@ -262,7 +270,7 @@ class FormatResponseTests(SimpleTestCase):
 
     def test_non_response(self):
         resp = ResponseMock()
-        self.assertIsNone(format_response(resp))
+        self.assertEqual(format_response(resp), '')
 
     def test_no_text(self):
         resp = ResponseMock()
@@ -400,22 +408,6 @@ class AddAttemptsTests(RepeaterTestCase):
         self.assertEqual(self.repeat_record.attempts[0].traceback, tb_str)
 
 
-class TestAreRepeatRecordsMigrated(RepeaterTestCase):
-
-    def setUp(self):
-        super().setUp()
-        are_repeat_records_migrated.clear(DOMAIN)
-
-    def test_no(self):
-        is_migrated = are_repeat_records_migrated(DOMAIN)
-        self.assertFalse(is_migrated)
-
-    def test_yes(self):
-        with make_repeat_record(self.repeater, RECORD_PENDING_STATE):
-            is_migrated = are_repeat_records_migrated(DOMAIN)
-        self.assertTrue(is_migrated)
-
-
 class TestConnectionSettingsUsedBy(TestCase):
 
     def setUp(self):
@@ -514,3 +506,150 @@ class TestFormRepeaterAllowedToForward(RepeaterTestCase):
         ]
         payload = Mock(xmlns='http://openrosa.org/formdesigner/def456')
         self.assertFalse(self.repeater.allowed_to_forward(payload))
+
+
+class TestCouchRepeatRecordMethods(TestCase):
+
+    def test_repeater_returns_active_repeater(self):
+        repeater = Repeater.objects.create(
+            domain=self.domain,
+            connection_settings=self.conn_settings,
+            is_deleted=False
+        )
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=repeater.repeater_id
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertIsNotNone(repeat_record.repeater)
+
+    def test_repeater_does_not_return_deleted_repeater(self):
+        repeater = Repeater.objects.create(
+            domain=self.domain,
+            connection_settings=self.conn_settings,
+            is_deleted=True
+        )
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=repeater.repeater_id
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertIsNone(repeat_record.repeater)
+
+    def test_repeater_returns_none_if_not_found(self):
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id='404aaaaaaaaaaaaaaaaaaaaaaaaaa404',
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertIsNone(repeat_record.repeater)
+
+    def test_exceeded_max_retries_returns_false_if_fewer_tries_than_possible(self):
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=self.repeater.repeater_id,
+            failure_reason='test',
+            overall_tries=0,
+            max_possible_tries=1
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertFalse(repeat_record.exceeded_max_retries)
+
+    def test_exceeded_max_retries_returns_true_if_equal(self):
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=self.repeater.repeater_id,
+            failure_reason='test',
+            overall_tries=1,
+            max_possible_tries=1
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertTrue(repeat_record.exceeded_max_retries)
+
+    def test_exceeded_max_retries_returns_true_if_more_tries_than_possible(
+            self):
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=self.repeater.repeater_id,
+            failure_reason='test',
+            overall_tries=2,
+            max_possible_tries=1
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertTrue(repeat_record.exceeded_max_retries)
+
+    def test_exceeded_max_retries_returns_false_if_not_failure_state(
+            self):
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=self.repeater.repeater_id,
+            overall_tries=2,
+            max_possible_tries=1
+        )
+        repeat_record.save()
+        self.addCleanup(repeat_record.delete)
+
+        self.assertFalse(repeat_record.exceeded_max_retries)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'repeat-record-tests'
+        cls.conn_settings = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            name='To Be Deleted',
+            url="http://localhost/api/"
+        )
+        cls.repeater = Repeater.objects.create(
+            domain=cls.domain,
+            connection_settings=cls.conn_settings,
+        )
+
+
+class TestRepeatRecordMethods(RepeaterTestCase):
+    # TODO combine with TestCouchRepeatRecordMethods after SQL migration
+    model_class = RepeatRecord
+
+    def test_requeue(self):
+        now = datetime.utcnow()
+        record = self.model_class(
+            domain="test",
+            repeater_id=self.repeater.id.hex,
+            payload_id="abc123",
+            state=State.Empty,
+            registered_at=now - timedelta(hours=1),
+        )
+        record.requeue()
+
+        self.assertEqual(record.state, State.Pending)
+        self.assertLessEqual(record.next_check, datetime.utcnow())
+
+
+class TestSQLRepeatRecordMethods(TestRepeatRecordMethods):
+    model_class = SQLRepeatRecord

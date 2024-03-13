@@ -10,29 +10,23 @@
     {% crispy commtrack.update_form %}
   </fieldset>
   {% if not request.is_view_only %}
-    {% if locations_with_single_user %}
+    {% if warning_banner_info and warning_banner_info.orphaned_case_count_per_location %}
       <div class="alert alert-warning">
         <p>
           {% blocktrans %}
             The user is the only assigned user who can view cases in the following locations:
           {% endblocktrans %}
         </p>
-        {% for location, case_count in locations_with_single_user.items %}
+        {% for location, case_count in warning_banner_info.orphaned_case_count_per_location.items %}
           <ul>
             <li>{{ location }} ({{ case_count }})</li>
           </ul>
         {% endfor %}
         <p>
-          Depending on your application's case sharing configuration, changing one or more of these
-          locations may result in some cases not being visible to any user until a new user is assigned
-          to those locations.
-        </p>
-      </div>
-    {% else %}
-      <div class="alert alert-info">
-        <p>
           {% blocktrans %}
-            The user shares all assigned locations with one or more other users.
+            Depending on your application's case sharing configuration, changing one or more of these
+            locations may result in some cases not being visible to any user until a new user is assigned
+            to those locations.
           {% endblocktrans %}
         </p>
       </div>

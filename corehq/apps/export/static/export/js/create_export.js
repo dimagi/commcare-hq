@@ -171,7 +171,7 @@ hqDefine("export/js/create_export", [
             self.hasNoCaseTypes(false);
             self.setModules();
             self.setForms();
-            self.setCaseTypes();
+            self.setCaseTypes(self._all_case_types);
         });
         self.application.subscribe(function (newValue) {
             if (newValue) {
@@ -181,7 +181,7 @@ hqDefine("export/js/create_export", [
                     self.selectedFormData({});
                     self.setForms();
                 } else {
-                    var caseTypeChoices = self._case_types_by_app[newValue];
+                    var caseTypeChoices = self._all_case_types[newValue];
                     self.setCaseTypes(caseTypeChoices);
                     self.hasNoCaseTypes(_.isEmpty(caseTypeChoices));
                 }
@@ -227,11 +227,16 @@ hqDefine("export/js/create_export", [
         // Behavior related to validating and resetting the drilldown form
         self.isValid = ko.computed(function () {
             return self.modelType()
-                && self.appType()
-                && self.application()
-                && (self.module() || self.isCaseModel())
-                && (self.form() || self.isCaseModel())
-                && (self.caseType() || self.isFormModel());
+            && (
+                (self.isCaseModel && self.caseType())
+                || (
+                    self.isFormModel()
+                    && self.appType()
+                    && self.application()
+                    && self.module()
+                    && self.form()
+                )
+            );
         });
         self.resetForm = function () {
             if (!self.isLoaded()) {
@@ -242,7 +247,7 @@ hqDefine("export/js/create_export", [
             self.setApps(self._apps_by_type.all || []);
             self.setModules();
             self.setForms();
-            self.setCaseTypes();
+            self.setCaseTypes(self._all_case_types);
             self.selectedAppData({});
             self.selectedFormData({});
             self.hasNoCaseTypes(false);
@@ -327,13 +332,17 @@ hqDefine("export/js/create_export", [
                     self._apps_by_type = data.apps_by_type || {};
                     self._modules_by_app = data.modules_by_app || {};
                     self._forms_by_app_by_module = data.forms_by_app_by_module || {};
-                    self._case_types_by_app = data.case_types_by_app || {};
+                    if (data.case_types_by_app) {
+                        self._all_case_types = data.case_types_by_app['_all_apps'];
+                    } else {
+                        self._all_case_types = {};
+                    }
 
                     self.setAppTypes();
                     self.setApps(data.apps_by_type[self.appType()]);
                     self.setModules();
                     self.setForms();
-                    self.setCaseTypes();
+                    self.setCaseTypes(self._all_case_types);
                 }
                 self.isLoaded(true);
             },

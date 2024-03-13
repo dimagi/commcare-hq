@@ -15,10 +15,6 @@
           rel="stylesheet"
           media="all"
           href="{% static 'cloudcare/less/font-formplayer.less' %}" />
-    <link type="text/css"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'cloudcare/css/webforms.css' %}">
     <link type="text/less"
           rel="stylesheet"
           media="all"
@@ -47,7 +43,7 @@
   <link rel="stylesheet" href="{% static 'jquery-ui-built-themes/base/jquery-ui.min.css' %}">
   <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
 
-  {% javascript_libraries underscore=True jquery_ui=True ko=True hq=True analytics=True %}
+  {% javascript_libraries use_bootstrap5=use_bootstrap5 underscore=True jquery_ui=True ko=True hq=True analytics=True %}
   <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
   {% compress js %}

@@ -12,14 +12,15 @@
  * @param options
  */
 hqDefine("app_manager/js/details/screen", function () {
-    var Utils = hqImport('app_manager/js/details/utils'),
-        ColumnModel = hqImport("app_manager/js/details/column");
+    const Utils = hqImport('app_manager/js/details/utils'),
+        ColumnModel = hqImport("app_manager/js/details/column"),
+        uiMapList = hqImport("hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list");
 
-    var getPropertyTitle = function (property) {
+    const getPropertyTitle = function (property) {
         // Strip "<prefix>:" before converting to title case.
         // This is aimed at prefixes like ledger: and attachment:
         property = property || '';
-        var i = property.indexOf(":");
+        const i = property.indexOf(":");
         return Utils.toTitleCase(property.substring(i + 1));
     };
 
@@ -27,7 +28,8 @@ hqDefine("app_manager/js/details/screen", function () {
         var self = {};
         var i,
             columns;
-        hqImport("hqwebapp/js/main").eventize(self);
+        hqImport("hqwebapp/js/bootstrap3/main").eventize(self);
+        self.moduleId = options.moduleId;
         self.type = spec.type;
         self.saveUrl = options.saveUrl;
         self.config = config;
@@ -42,6 +44,8 @@ hqDefine("app_manager/js/details/screen", function () {
         // as the name of the key in the data object that is sent to the
         // server on save.
         self.columnKey = options.columnKey;
+        let detail = spec[self.columnKey];
+
         // Not all screenModel instances will handle sorting, parent selection,
         // and filtering. E.g The "Case Detail" tab only handles the module's
         // "long" case details. These flags will make sure this instance
@@ -55,38 +59,283 @@ hqDefine("app_manager/js/details/screen", function () {
         self.containsSearchConfiguration = options.containsSearchConfiguration;
         self.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
         self.allowsTabs = options.allowsTabs;
-        self.caseTileFields = options.caseTileFields;
-        self.caseTileTemplate = ko.observable(spec[self.columnKey].case_tile_template ? "yes" : "no");
-        self.showCaseTileColumn = ko.computed(function () {
-            return self.caseTileTemplate() === "yes" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
+
+        let baseCaseTileTemplateOptions = [[null, gettext("Don't Use Case Tiles")]];
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE_CUSTOM')) {
+            baseCaseTileTemplateOptions = baseCaseTileTemplateOptions.concat([["custom", gettext("Manually configure Case Tiles")]]);
+        }
+        if (self.columnKey === 'short') {
+            baseCaseTileTemplateOptions = baseCaseTileTemplateOptions.concat(options.caseTileTemplateOptions);
+        }
+
+        self.caseTileTemplateOptions = baseCaseTileTemplateOptions;
+        self.caseTileTemplateOptions = self.caseTileTemplateOptions.map(function (templateOption) {
+            return {templateValue: templateOption[0], templateName: templateOption[1]};
         });
-        self.persistCaseContext = ko.observable(spec[self.columnKey].persist_case_context || false);
-        self.persistentCaseContextXML = ko.observable(spec[self.columnKey].persistent_case_context_xml || 'case_name');
+        self.caseTileTemplate = ko.observable(detail.case_tile_template || null);
+        self.caseTileTemplateConfigs = options.caseTileTemplateConfigs;
+        self.caseTileFieldsForTemplate = ko.computed(function () {
+            return (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).fields;
+        });
+        self.caseTilePreviewColumns = ko.computed(function () {
+            const grid = (self.caseTileTemplateConfigs[self.caseTileTemplate()] || {}).grid;
+            if (grid) {
+                return _.map(grid, function (value, key) {
+                    return {
+                        showInTilePreview: true,
+                        horizontalAlign: value["horz-align"],
+                        verticalAlign: value["vert-align"],
+                        tileRowStart: value.y + 1,
+                        tileRowEnd: value.y + value.height + 1,
+                        tileColumnStart: value.x + 1,
+                        tileColumnEnd: value.x + value.width + 1,
+                        tileContent: key,
+                    };
+                });
+            }
+
+            return self.columns();
+        });
+        self.showCaseTileConfigColumns = ko.computed(function () {
+            const featureFlag = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE_CUSTOM');
+            const template = self.caseTileTemplate();
+            return featureFlag && template === "custom";
+        });
+        self.showCaseTileMappingColumn = ko.computed(function () {
+            const featureFlag = hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
+            const caseTileTemplate = self.caseTileTemplate() && self.caseTileTemplate() !== "custom";
+            return caseTileTemplate && featureFlag;
+        });
+        self.persistCaseContext = ko.observable(detail.persist_case_context || false);
+        self.persistentCaseContextXML = ko.observable(detail.persistent_case_context_xml || 'case_name');
+
+        self.caseTileGrouped = ko.observable(!!detail.case_tile_group.index_identifier || false);
+        self.caseTileGroupBy = ko.observable(detail.case_tile_group.index_identifier);
+        self.caseTileGroupHeaderRows = ko.observable(detail.case_tile_group.header_rows);
+
         self.customVariablesViewModel = {
             enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
-            xml: ko.observable(spec[self.columnKey].custom_variables || ""),
+            dict: detail.custom_variables_dict || {},
         };
-        self.customVariablesViewModel.xml.subscribe(function () {
+        const customDataEditor = uiMapList.new(`${ self.moduleId }-${self.columnKey}`, gettext("Edit Custom Variables"));
+        customDataEditor.val(self.customVariablesViewModel.dict);
+        customDataEditor.on("change", function () {
+            self.customVariablesViewModel.dict = this.val();
             self.fireChange();
         });
-        self.multiSelectEnabled = ko.observable(spec[self.columnKey].multi_select);
+        $(`#custom-variables-editor-${self.columnKey}`).append(customDataEditor.ui);
+
+        self.multiSelectEnabled = ko.observable(detail.multi_select);
         self.multiSelectEnabled.subscribe(function () {
             self.autoSelectEnabled(self.multiSelectEnabled() && self.autoSelectEnabled());
             self.fireChange();
         });
-        self.maxSelectValue = ko.observable(spec[self.columnKey].max_select_value);
+        self.maxSelectValue = ko.observable(detail.max_select_value);
         self.maxSelectValue.subscribe(function () {
             self.fireChange();
         });
-        self.autoSelectEnabled = ko.observable(spec[self.columnKey].auto_select);
+        self.autoSelectEnabled = ko.observable(detail.auto_select);
         self.autoSelectEnabled.subscribe(function () {
             self.fireChange();
         });
-        self.persistTileOnForms = ko.observable(spec[self.columnKey].persist_tile_on_forms || false);
-        self.enableTilePullDown = ko.observable(spec[self.columnKey].pull_down_tile || false);
+        self.persistTileOnForms = ko.observable(detail.persist_tile_on_forms || false);
+        self.enableTilePullDown = ko.observable(detail.pull_down_tile || false);
+        self.resetCaseTilePreview = function () {   // TODO: probably want to move this
+            // On click, make each cell height 1, width 1-4 depending on number of columns, x and y top left to bottom right
+            _.each(self.columns(), function (column, index) {
+                if (index >= 12) {
+                    return;
+                }
+                column.tileRowStart(Math.ceil((index + 1) / 4));
+                column.tileColumnStart((index % 4) * 3 + 1);
+                column.tileHeight(1);
+                column.tileWidth(3);
+            });
+        };
+
+        // Given a column model, return a boolean indicating whether the column is on an odd
+        // or an even tab, for the sake of being able to differentiate in the case tile preview
+        // which rows go with which tab.
+        self.tabPolarity = function (column) {
+            const self = this;
+            let flag = false;
+            _.find(self.columns(), function (c) {
+                if (c.isTab) {
+                    flag = !flag;
+                }
+                return c === column;
+            });
+            return flag;
+        };
+
+        self.adjustTileGridArea = function (activeColumnIndex, rowDelta, columnDelta, widthDelta, heightDelta) {
+            let matrix = self._buildMatrix();
+            matrix = self._adjustTileGridArea(matrix, activeColumnIndex, rowDelta, columnDelta, widthDelta, heightDelta);
+            self._parseMatrix(matrix);
+        };
+
+        // TODO: replace rowDelta, columnDelta, widthDelta, heightDelta with a single action param
+        self._adjustTileGridArea = function (matrix, activeColumnIndex, rowDelta, columnDelta, widthDelta, heightDelta) {
+            let activeColumn = self.columns()[activeColumnIndex];
+
+            // Validate column still has size
+            if (activeColumn.tileWidth() + widthDelta < 1 || activeColumn.tileHeight() + heightDelta < 1) {
+                throw new Error("tile shrank to nothing");
+            }
+
+            // Validate boundaries
+            const newRowStart = activeColumn.tileRowStart() + rowDelta,
+                newColumnStart = activeColumn.tileColumnStart() + columnDelta,
+                newRowEnd = newRowStart + activeColumn.tileHeight() + heightDelta,
+                newColumnEnd = newColumnStart + activeColumn.tileWidth() + widthDelta;
+            if (newRowStart < 1 || newRowEnd > activeColumn.tileRowMax ||
+                newColumnStart < 1 || newColumnEnd > activeColumn.tileColumnMax()) {
+                throw new Error("cannot move tile out of bounds");
+            }
+
+            // Identify matrix points to null out
+            if (rowDelta === 1) {
+                matrix = self._nullMatrixRow(matrix, activeColumn.tileRowStart(), activeColumn.tileColumnStart(), activeColumn.tileColumnEnd());
+            } else if (rowDelta === -1 || heightDelta === -1) {
+                matrix = self._nullMatrixRow(matrix, activeColumn.tileRowEnd() - 1, activeColumn.tileColumnStart(), activeColumn.tileColumnEnd());
+            } else if (columnDelta === 1) {
+                matrix = self._nullMatrixColumn(matrix, activeColumn.tileColumnStart(), activeColumn.tileRowStart(), activeColumn.tileRowEnd());
+            } else if (columnDelta === -1 || widthDelta === -1) {
+                matrix = self._nullMatrixColumn(matrix, activeColumn.tileColumnEnd() - 1, activeColumn.tileRowStart(), activeColumn.tileRowEnd());
+            }
+
+            // Identify matrix points to fill in
+            if (rowDelta === 1 || heightDelta === 1) {
+                matrix = self._replaceMatrixRow(matrix, activeColumnIndex, activeColumn.tileRowEnd(), activeColumn.tileColumnStart(), activeColumn.tileColumnEnd());
+            } else if (rowDelta === -1) {
+                matrix = self._replaceMatrixRow(matrix, activeColumnIndex, activeColumn.tileRowStart() - 1, activeColumn.tileColumnStart(), activeColumn.tileColumnEnd());
+            } else if (columnDelta === 1 || widthDelta === 1) {
+                matrix = self._replaceMatrixColumn(matrix, activeColumnIndex, activeColumn.tileColumnEnd(), activeColumn.tileRowStart(), activeColumn.tileRowEnd());
+            } else if (columnDelta === -1) {
+                matrix = self._replaceMatrixColumn(matrix, activeColumnIndex, activeColumn.tileColumnStart() - 1, activeColumn.tileRowStart(), activeColumn.tileRowEnd());
+            }
+
+            return matrix;
+        };
+
+        // TODO: combine these into 2 functions instead of 4
+        self._nullMatrixRow = function (matrix, row, col1, col2) {
+            for (let i = col1 - 1; i < col2 - 1; i++) {
+                matrix[row - 1][i] = null;
+            }
+            return matrix;
+        };
+        self._nullMatrixColumn = function (matrix, column, row1, row2) {
+            for (let i = row1 - 1; i < row2 - 1; i++) {
+                matrix[i][column - 1] = null;
+            }
+            return matrix;
+        };
+
+        self._replaceMatrixRow = function (matrix, newValue, row, col1, col2) {
+            for (let i = col1 - 1; i < col2 - 1; i++) {
+                const oldValue = matrix[row - 1][i];
+                if (oldValue !== null) {
+                    try {
+                        // Attempt to move. If the row above is newValue, move down, otherwise move up.
+                        const rowDelta = row > 1 && matrix[row - 2][i] === newValue ? 1 : -1;
+                        console.log("Attempt to move #" + oldValue + " " + (rowDelta === 1 ? "down" : "up"));
+                        matrix = self._adjustTileGridArea(matrix, oldValue, rowDelta, 0, 0, 0);
+                    } catch (e) {
+                        try {
+                            // attempt to shrink height
+                            console.log("Attempt to shrink height of #" + oldValue);
+                            matrix = self._adjustTileGridArea(matrix, oldValue, 0, 0, 0, -1);
+                        } catch (e) {
+                            throw new Error("cannot _replaceMatrixRow");
+                        }
+                    }
+                }
+                matrix[row - 1][i] = newValue;
+            }
+            return matrix;
+        };
+        self._replaceMatrixColumn = function (matrix, newValue, column, row1, row2) {
+            for (let i = row1 - 1; i < row2 - 1; i++) {
+                const oldValue = matrix[i][column - 1];
+                if (oldValue !== null) {
+                    try {
+                        // Attempt to move. If the column to the left is newValue, move right, otherwise move left.
+                        const columnDelta = column > 1 && matrix[i][column - 2] === newValue ? 1 : -1;
+                        console.log("Attempt to move #" + oldValue + " " + (columnDelta === 1 ? "right" : "left"));
+                        matrix = self._adjustTileGridArea(matrix, oldValue, 0, columnDelta, 0, 0);
+                    } catch (e) {
+                        try {
+                            // attempt to shrink width
+                            console.log("Attempt to shrink width of #" + oldValue);
+                            matrix = self._adjustTileGridArea(matrix, oldValue, 0, 0, -1, 0);
+                        } catch (e) {
+                            throw new Error("cannot _replaceMatrixColumn");
+                        }
+                    }
+                }
+                matrix[i][column - 1] = newValue;
+            }
+            return matrix;
+        };
+
+        self._buildMatrix = function () {
+            let matrix = [
+                [null, null, null, null, null, null, null, null, null, null, null, null],
+                [null, null, null, null, null, null, null, null, null, null, null, null],
+                [null, null, null, null, null, null, null, null, null, null, null, null],
+            ];
+            _.each(self.columns(), function (column, columnIndex) {
+                if (!column.showInTilePreview()) {
+                    return;
+                }
+                for (let i = 0; i < column.tileHeight(); i++) {
+                    for (let j = 0; j < column.tileWidth(); j++) {
+                        matrix[i + column.tileRowStart() - 1][j + column.tileColumnStart() - 1] = columnIndex;
+                    }
+                }
+            });
+            return matrix;
+        };
+        self._parseMatrix = function (matrix) {
+            let columns = _.map(_.range(self.columns().length), function () {
+                return {
+                    rowStart: null,
+                    rowEnd: null,
+                    columnStart: null,
+                    columnEnd: null,
+                };
+            });
+
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 12; j++) {
+                    const columnIndex = matrix[i][j];
+                    if (columnIndex === null) {
+                        continue;
+                    }
+                    if (columns[columnIndex].rowStart === null) {
+                        columns[columnIndex].rowStart = i;
+                    }
+                    columns[columnIndex].rowEnd = i;
+                    if (columns[columnIndex].columnStart === null) {
+                        columns[columnIndex].columnStart = j;
+                    }
+                    columns[columnIndex].columnEnd = j;
+                }
+            }
+
+            _.each(columns, function (c, i) {
+                if (c.rowStart !== null) {
+                    self.columns()[i].tileRowStart(c.rowStart + 1);
+                    self.columns()[i].tileWidth(c.columnEnd - c.columnStart + 1);
+                    self.columns()[i].tileColumnStart(c.columnStart + 1);
+                    self.columns()[i].tileHeight(c.rowEnd - c.rowStart + 1);
+                }
+            });
+        };
         self.allowsEmptyColumns = options.allowsEmptyColumns;
         self.persistentCaseTileFromModule = (
-            ko.observable(spec[self.columnKey].persistent_case_tile_from_module || ""));
+            ko.observable(detail.persistent_case_tile_from_module || ""));
         self.fireChange = function () {
             self.fire('change');
         };
@@ -128,16 +377,16 @@ hqDefine("app_manager/js/details/screen", function () {
                     self.fire("columnChange", [{
                         "value": column,
                         "index": self.columns.indexOf(column),
-                        "status": "edited"
+                        "status": "edited",
                     }]);
                 }
-            })
+            });
             return column;
         };
 
-        columns = spec[self.columnKey].columns;
+        columns = detail.columns;
         // Inject tabs into the columns list:
-        var tabs = spec[self.columnKey].tabs || [];
+        var tabs = detail.tabs || [];
         for (i = 0; i < tabs.length; i++) {
             columns.splice(
                 tabs[i].starting_index + i,
@@ -173,33 +422,35 @@ hqDefine("app_manager/js/details/screen", function () {
             self.initColumnAsColumn(self.columns()[i]);
         }
 
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.caseTileRowMax = ko.computed(() => _.max([self.columns().length + 1, 7]));
+        self.caseTileRowMax.subscribe(function (newValue) {
+            self.updateTileRowMaxForColumns(newValue);
+        });
+
+        self.updateTileRowMaxForColumns = function (newValue) {
+            _.each(self.columns(), function (column) {
+                column.tileRowMax(newValue);
+            });
+        };
+        self.updateTileRowMaxForColumns(self.caseTileRowMax());
+
+        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
             unsavedMessage: gettext('You have unsaved detail screen configurations.'),
             save: function () {
                 self.save();
             },
         });
-        self.on('change', function () {
-            self.saveButton.fire('change');
-        });
-        self.caseTileTemplate.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistCaseContext.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistentCaseContextXML.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistTileOnForms.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.persistentCaseTileFromModule.subscribe(function () {
-            self.saveButton.fire('change');
-        });
-        self.enableTilePullDown.subscribe(function () {
-            self.saveButton.fire('change');
-        });
+        let saveButtonFire = () => self.saveButton.fire('change');
+        self.on('change', saveButtonFire);
+        self.caseTileTemplate.subscribe(saveButtonFire);
+        self.persistCaseContext.subscribe(saveButtonFire);
+        self.persistentCaseContextXML.subscribe(saveButtonFire);
+        self.persistTileOnForms.subscribe(saveButtonFire);
+        self.persistentCaseTileFromModule.subscribe(saveButtonFire);
+        self.enableTilePullDown.subscribe(saveButtonFire);
+        self.caseTileGrouped.subscribe(saveButtonFire);
+        self.caseTileGroupBy.subscribe(saveButtonFire);
+        self.caseTileGroupHeaderRows.subscribe(saveButtonFire);
         self.columns.subscribe(function (changes) {
             self.saveButton.fire('change');
 
@@ -232,8 +483,8 @@ hqDefine("app_manager/js/details/screen", function () {
                 affectedColumns.forEach(c => {
                     let index = self.columns.indexOf(c);
                     events.push({
-                        value: c, index: index, status: "added", moved: index + move
-                    })
+                        value: c, index: index, status: "added", moved: index + move,
+                    });
                 });
             }
 
@@ -333,12 +584,17 @@ hqDefine("app_manager/js/details/screen", function () {
                 }
             ));
 
-            data.caseTileTemplate = self.caseTileTemplate() === "yes" ? "person_simple" : null;
+            data.caseTileTemplate = self.caseTileTemplate();
             data.persistCaseContext = self.persistCaseContext();
             data.persistentCaseContextXML = self.persistentCaseContextXML();
             data.persistTileOnForms = self.persistTileOnForms();
             data.persistentCaseTileFromModule = self.persistentCaseTileFromModule();
             data.enableTilePullDown = self.persistTileOnForms() ? self.enableTilePullDown() : false;
+
+            data.case_tile_group = JSON.stringify({
+                index_identifier: self.caseTileGrouped() ? self.caseTileGroupBy() : null,
+                header_rows: self.caseTileGroupHeaderRows(),
+            });
 
             if (self.containsParentConfiguration) {
                 var parentSelect;
@@ -386,7 +642,7 @@ hqDefine("app_manager/js/details/screen", function () {
             if (self.containsCustomXMLConfiguration) {
                 data.custom_xml = self.config.customXMLViewModel.xml();
             }
-            data[self.columnKey + '_custom_variables'] = self.customVariablesViewModel.xml();
+            data[self.columnKey + '_custom_variables_dict'] = JSON.stringify(self.customVariablesViewModel.dict);
             data.multi_select = self.multiSelectEnabled();
             data.auto_select = self.autoSelectEnabled();
             data.max_select_value = self.maxSelectValue();

@@ -58,13 +58,12 @@ from corehq.apps.app_manager.models import (
     ApplicationBase,
     DeleteApplicationRecord,
     ExchangeApplication,
-    Form,
     Module,
     ModuleNotFoundException,
     app_template_dir,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.models import load_app_template
+from corehq.apps.app_manager.models import load_app_template, LinkedApplication
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
 from corehq.apps.app_manager.util import (
     app_doc_types,
@@ -84,7 +83,6 @@ from corehq.apps.app_manager.views.utils import (
     update_linked_app,
     validate_langs,
 )
-from corehq.apps.app_manager.xform import XFormException
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig
 from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
@@ -99,7 +97,6 @@ from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
-from corehq.apps.linked_domain.dbaccessors import is_active_upstream_domain
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors import (
@@ -226,7 +223,8 @@ def get_app_view_context(request, app):
     if (app.get_doc_type() == 'Application'
             and toggles.CUSTOM_PROPERTIES.enabled(request.domain)
             and 'custom_properties' in getattr(app, 'profile', {})):
-        custom_properties_array = [{'key': p[0], 'value': p[1]} for p in app.profile.get('custom_properties').items()]
+        custom_properties_array = [{'key': p[0], 'value': p[1]} for p in
+                                   app.profile.get('custom_properties').items()]
         app_view_options.update({'customProperties': custom_properties_array})
     context.update({
         'app_view_options': app_view_options,
@@ -249,10 +247,8 @@ def get_app_view_context(request, app):
         # get setting dict from settings_layout
         if not settings_layout:
             return None
-        matched = [x for x in [
-                setting for section in settings_layout
-                for setting in section['settings']
-            ] if x['type'] == setting_type and x['id'] == setting_id]
+        matched = [x for x in [setting for section in settings_layout for setting in section['settings']]
+                   if x['type'] == setting_type and x['id'] == setting_id]
         if matched:
             return matched[0]
         else:
@@ -380,11 +376,14 @@ def get_apps_base_context(request, domain, app):
     else:
         timezone = None
 
+    linked_name = app.get_master_name() if isinstance(app, LinkedApplication) else ''
+
     context = {
         'lang': lang,
         'langs': langs,
         'domain': domain,
         'app': app,
+        'linked_name': linked_name,
         'app_subset': {
             'commcare_minor_release': app.commcare_minor_release,
             'doc_type': app.get_doc_type(),
@@ -564,7 +563,6 @@ def _build_sample_app(app):
     return copy
 
 
-
 @require_can_edit_apps
 def app_exchange(request, domain):
     template = "app_manager/app_exchange.html"
@@ -653,7 +651,7 @@ def import_app(request, domain):
         if not valid_request:
             return render(request, template, {'domain': domain})
 
-        assert(source is not None)
+        assert (source is not None)
         app = import_app_util(source, domain, {'name': name}, request=request)
 
         return back_to_main(request, domain, app_id=app._id)
@@ -676,8 +674,8 @@ def import_app(request, domain):
 
         if app_id:
             app = get_app(None, app_id)
-            assert(app.get_doc_type() in ('Application', 'RemoteApp'))
-            assert(request.couch_user.is_member_of(app.domain))
+            assert (app.get_doc_type() in ('Application', 'RemoteApp'))
+            assert (request.couch_user.is_member_of(app.domain))
         else:
             app = None
 
@@ -884,6 +882,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('custom_base_url', None, _always_allowed),
         ('mobile_ucr_restore_version', None, _always_allowed),
         ('location_fixture_restore', None, _always_allowed),
+        ('split_screen_dynamic_search', None, _always_allowed)
     )
     for attribute, transformation, can_set_attr in easy_attrs:
         if should_edit(attribute):

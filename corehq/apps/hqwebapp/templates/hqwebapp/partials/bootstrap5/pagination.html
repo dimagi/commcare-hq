@@ -1,0 +1,40 @@
+{% load i18n %}
+
+<div class="float-end">
+  <ul class="pagination" data-bind="foreach: allPages">
+    <li data-bind="
+                visible: ($data == $parent.allPages()[0]),
+                disabledOnUndefined: $parent.previousPage
+            ">
+      <a href="#"
+         data-bind="
+                   click: function (data, event) {
+                        $parent.changePage($parent.previousPage);
+                    }
+               ">{% trans 'Previous' %}</a>
+    </li>
+    <li data-bind="
+                activeOnSimilar: $parent.currentPage,
+                compareText: $data
+            ">
+      <a href="#"
+         data-bind="
+                    click: $parent.changePage.bind($data),
+                    text: $data
+               "></a>
+    </li>
+    <li data-bind="
+                visible: ($data == $parent.allPages()[$parent.allPages().length - 1]),
+                disabledOnUndefined: $parent.nextPage
+            ">
+      <a href="#"
+         data-bind="
+                    click: function (data, event) {
+                        $parent.changePage($parent.nextPage);
+                    }
+                ">
+        {% trans 'Next' %}
+      </a>
+    </li>
+  </ul>
+</div>

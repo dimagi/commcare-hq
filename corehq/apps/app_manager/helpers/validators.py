@@ -18,6 +18,7 @@ from corehq.apps.app_manager.const import (
     AUTO_SELECT_RAW,
     AUTO_SELECT_USER,
     CALCULATED_SORT_FIELD_RX,
+    MOBILE_UCR_VERSION_1,
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
@@ -43,11 +44,11 @@ from corehq.apps.app_manager.util import (
     app_callout_templates,
     module_case_hierarchy_has_circular_reference,
     module_loads_registry_case,
+    module_uses_inline_search,
     module_uses_smart_links,
     split_path,
     xpath_references_case,
     xpath_references_usercase,
-    module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import parse_xml as _parse_xml
 from corehq.apps.app_manager.xpath import LocationXpath, interpolate_xpath
@@ -281,6 +282,7 @@ class ApplicationValidator(ApplicationBaseValidator):
 class ModuleBaseValidator(object):
     def __init__(self, module):
         self.module = module
+        self.app = module.get_app()
 
     def get_module_info(self):
         return {
@@ -336,13 +338,9 @@ class ModuleBaseValidator(object):
 
         errors.extend(self.validate_smart_links())
 
-        if self.module.root_module_id:
-            root_module = self.module.get_app().get_module_by_unique_id(self.module.root_module_id)
-            if root_module and module_uses_inline_search(root_module):
-                errors.append({
-                    'type': 'inline search as parent module',
-                    'module': self.get_module_info(),
-                })
+        errors.extend(self.validate_search_config())
+
+        errors.extend(self.validate_case_list_field_actions())
 
         for form in self.module.get_suite_forms():
             errors.extend(form.validator.validate_for_module(self.module))
@@ -354,18 +352,17 @@ class ModuleBaseValidator(object):
             return []
 
         errors = []
-        app = self.module.get_app()
         try:
-            form = app.get_form(self.module.case_list_form.form_id)
+            form = self.app.get_form(self.module.case_list_form.form_id)
         except FormNotFoundException:
             errors.append({
                 'type': 'case list form missing',
                 'module': self.get_module_info()
             })
         else:
-            if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+            if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(self.app.domain):
                 from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
-                valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, self.module)]
+                valid_forms = [f.unique_id for f in get_parent_select_followup_forms(self.app, self.module)]
                 if form.unique_id not in valid_forms and not form.is_registration_form(self.module.case_type):
                     errors.append({
                         'type': 'invalid case list followup form',
@@ -400,37 +397,34 @@ class ModuleBaseValidator(object):
         if not hasattr(self.module, 'parent_select') or not self.module.parent_select.active:
             return []
 
-        app = self.module.get_app()
         errors = []
 
         if self.module.parent_select.relationship == 'parent':
             from corehq.apps.app_manager.views.modules import get_modules_with_parent_case_type
-            valid_modules = get_modules_with_parent_case_type(app, self.module)
+            valid_modules = get_modules_with_parent_case_type(self.app, self.module)
         else:
             from corehq.apps.app_manager.views.modules import get_all_case_modules
-            valid_modules = get_all_case_modules(app, self.module)
+            valid_modules = get_all_case_modules(self.app, self.module)
         valid_module_ids = [info['unique_id'] for info in valid_modules]
+        search_config = getattr(self.module, 'search_config', None)
         if self.module.parent_select.module_id not in valid_module_ids:
             errors.append({
                 'type': 'invalid parent select id',
                 'module': self.get_module_info(),
             })
-        else:
-            module_id = self.module.parent_select.module_id
-            parent_select_module = self.module.get_app().get_module_by_unique_id(module_id)
+
+        elif search_config:
+            parent_module_id = self.module.parent_select.module_id
+            parent_select_module = self.module.get_app().get_module_by_unique_id(parent_module_id)
             if parent_select_module and module_uses_inline_search(parent_select_module):
-                errors.append({
-                    'type': 'parent select is inline search module',
-                    'module': self.get_module_info(),
-                })
-
-        if module_uses_inline_search(self.module):
-            if self.module.parent_select.relationship:
-                errors.append({
-                    'type': 'inline search parent select relationship',
-                    'module': self.get_module_info(),
-                })
-
+                parent_module_instance_name = parent_select_module.search_config.get_instance_name()
+                if search_config.get_instance_name() == parent_module_instance_name:
+                    errors.append({
+                        'type': 'non-unique instance name with parent select module',
+                        "message": f'The instance "{search_config.get_instance_name()}" is not unique',
+                        "module": self.get_module_info(),
+                        "details": search_config.get_instance_name()
+                    })
         return errors
 
     def validate_smart_links(self):
@@ -509,8 +503,122 @@ class ModuleBaseValidator(object):
                         'column': column,
                     }
 
+    def validate_search_config(self):
+        search_config = getattr(self.module, 'search_config', None)
+        if search_config:
+            for prop in search_config.properties:
+                if prop.itemset.instance_id:
+                    scheme = prop.itemset.instance_id.split(':', 1)[0]
+                    is_mobile_ucr = scheme == 'commcare-reports'
+                    is_lookup_table = scheme == 'item-list'
+                    if not (is_mobile_ucr or is_lookup_table):
+                        yield {
+                            'type': 'case search nodeset invalid',
+                            'module': self.get_module_info(),
+                            'property': prop.name,
+                            'message': _('It must reference a lookup table or mobile report.'),
+                        }
+                    if is_mobile_ucr and self.app.mobile_ucr_restore_version == MOBILE_UCR_VERSION_1:
+                        yield {
+                            'type': 'case search nodeset invalid',
+                            'module': self.get_module_info(),
+                            'property': prop.name,
+                            'message': _('This feature is compatible with only version 2 of Mobile UCR'),
+                        }
+            if self.module.root_module_id:
+                root_module = self.app.get_module_by_unique_id(self.module.root_module_id)
+                if root_module and module_uses_inline_search(root_module):
+                    root_module_instance_name = root_module.search_config.get_instance_name()
+                    if search_config.get_instance_name() == root_module_instance_name:
+                        yield {
+                            "type": "non-unique instance name with parent module",
+                            "message": f'The instance "{search_config.get_instance_name()}" is not unique',
+                            "module": self.get_module_info(),
+                            "details": search_config.get_instance_name()
+                        }
+            module_contains_grouping_property = any(prop.is_group for prop in search_config.properties)
+            if module_contains_grouping_property:
+                ungrouped_properties = [prop for prop in search_config.properties if not prop.group_key]
+                for prop in ungrouped_properties:
+                    yield {
+                        "type": "invalid grouping from ungrouped search property",
+                        "module": self.get_module_info(),
+                        "property": prop.name,
+                    }
+            if search_config.search_on_clear and self.module.is_auto_select():
+                yield {
+                    "type": "search on clear with auto select",
+                    "module": self.get_module_info(),
+                }
+
+    def validate_case_list_field_actions(self):
+        if hasattr(self.module, 'case_details'):
+            columns = [column for column in self.module.case_details.short.columns if column.endpoint_action_id]
+            form_endpoints = {
+                form.session_endpoint_id for form in self.app.get_forms() if form.session_endpoint_id
+            }
+
+            for column in columns:
+                if column.endpoint_action_id not in form_endpoints:
+                    yield {
+                        'type': 'case list field action endpoint missing',
+                        'module': self.get_module_info(),
+                        'column': column,
+                    }
+
 
 class ModuleDetailValidatorMixin(object):
+
+    __invalid_tile_configuration_type: str = "invalid tile configuration"
+    __invalid_clickable_icon_configuration: str = "invalid clickable icon configuration"
+    __deprecated_popup_configuration: str = "deprecated popup configuration"
+
+    __address_popup = 'address-popup'
+    __address_popup_display = 'Address Popup'
+
+    def _validate_fields_with_format_duplicate(
+        self,
+        format_value: str,
+        format_display: str,
+        columns: list,
+        errors: list
+    ):
+        fields_with_address_format = [c.field for c in columns if c.format == format_value]
+        if len(fields_with_address_format) > 1:
+            fields_with_address_format_str = '"' + '", "'.join(fields_with_address_format) + '"'
+            errors.append({
+                'type': self.__invalid_tile_configuration_type,
+                'module': self.get_module_info(),
+                'reason': _('Format "{}" can only be used once but is used by multiple properties: {}'
+                            .format(format_display, fields_with_address_format_str))
+            })
+
+    def _validate_address_popup_in_long(
+        self,
+        errors: list
+    ):
+        fields_with_address_format = \
+            {c.field for c in self.module.case_details.short.columns if c.format == self.__address_popup}
+        if len(fields_with_address_format) > 0:
+            errors.append({
+                'type': self.__deprecated_popup_configuration,
+                'module': self.get_module_info(),
+                'reason': _('Format "{}" should be used in the Case Detail not Case List.'
+                            .format(self.__address_popup_display))
+            })
+
+    def _validate_clickable_icons(
+        self,
+        columns: list,
+        errors: list
+    ):
+        for field in [c.field for c in columns if c.format == 'clickable-icon' and c.endpoint_action_id == '']:
+            errors.append({
+                'type': self.__invalid_clickable_icon_configuration,
+                'module': self.get_module_info(),
+                'reason': _('Column/Field "{}": Clickable Icons require a form to be configured.'.format(field))
+            })
+
     '''
     Validation logic common to basic and shadow modules, which both have detail configuration.
     '''
@@ -536,22 +644,42 @@ class ModuleDetailValidatorMixin(object):
                     'module': self.get_module_info(),
                     'filter': self.module.case_list_filter,
                 })
+
         for detail in [self.module.case_details.short, self.module.case_details.long]:
             if detail.case_tile_template:
-                if not detail.display == "short":
-                    errors.append({
-                        'type': "invalid tile configuration",
-                        'module': self.get_module_info(),
-                        'reason': _('Case tiles may only be used for the case list (not the case details).')
-                    })
+                if detail.display != "short":
+                    if detail.case_tile_template != "custom":
+                        errors.append({
+                            'type': self.__invalid_tile_configuration_type,
+                            'module': self.get_module_info(),
+                            'reason': _('Case tiles on the case detail must be manually configured.'),
+                        })
+
+                    tab_spans = detail.get_tab_spans()
+                    tile_rows = defaultdict(set)   # tile row index => {tabs that appear in that row}
+                    for index, span in enumerate(tab_spans):
+                        for col in detail.columns[span[0]:span[1]]:
+                            if col.grid_y is not None:
+                                tile_rows[col.grid_y].add(index)
+                    for row_index, tab_index_list in tile_rows.items():
+                        if len(tab_index_list) > 1:
+                            errors.append({
+                                'type': self.__invalid_tile_configuration_type,
+                                'module': self.get_module_info(),
+                                'reason': _('Each row of the tile may contain fields only from a single tab. '
+                                            'Row #{} contains fields from multiple tabs.').format(row_index + 1),
+                            })
                 col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
                 for field in case_tile_template_config(detail.case_tile_template).fields:
                     if field not in col_by_tile_field:
                         errors.append({
-                            'type': "invalid tile configuration",
+                            'type': self.__invalid_tile_configuration_type,
                             'module': self.get_module_info(),
-                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
+                            'reason': _('A case property must be assigned to the "{}" tile field.').format(field)
                         })
+            self._validate_fields_with_format_duplicate('address', 'Address', detail.columns, errors)
+            self._validate_clickable_icons(detail.columns, errors)
+
             if detail.has_persistent_tile() and self.module.report_context_tile:
                 errors.append({
                     'type': "invalid tile configuration",
@@ -560,6 +688,15 @@ class ModuleDetailValidatorMixin(object):
                         A menu may not use both a persistent case list tile and a persistent report tile.
                     """),
                 })
+
+        self._validate_fields_with_format_duplicate(
+            self.__address_popup,
+            self.__address_popup_display,
+            self.module.case_details.long.columns,
+            errors)
+
+        self._validate_address_popup_in_long(errors)
+
         return errors
 
     def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):

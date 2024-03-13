@@ -1,0 +1,75 @@
+--- 
++++ 
+@@ -2,11 +2,11 @@
+  * Adds URL hash behavior to bootstrap tabs. This enables bookmarking/refreshing and browser back/forward.
+  * Lightly modified from https://stackoverflow.com/questions/18999501/bootstrap-3-keep-selected-tab-on-page-refresh
+  */
+-hqDefine("hqwebapp/js/bootstrap3/sticky_tabs", [
++hqDefine("hqwebapp/js/bootstrap5/sticky_tabs", [
+     "jquery",
+-    "bootstrap",    // needed for $.tab
++    "es6!hqwebapp/js/bootstrap5_loader",    // needed for $.tab
+ ], function (
+-    $
++    $, bootstrap
+ ) {
+     var getHash = function () {
+         if (window.location.hash) {
+@@ -16,21 +16,28 @@
+         }
+         return "";
+     };
+-
+     $(function () {
+-        var tabSelector = "a[data-toggle='tab']",
++        var tabSelector = "a[data-bs-toggle='tab']",
+             navSelector = ".nav.sticky-tabs",
+             hash = getHash(),
+-            $tabFromUrl = hash ? $("a[href='" + hash + "']") : undefined;
++            $tabFromUrl = hash ? $("a[href='" + hash + "']") : undefined,
++            $altTabSelector = $(navSelector + ' ' + tabSelector).first(),
++            tabController;
++
++        // make sure we don't treat all anchor tags as a sticky tab
++        if ($tabFromUrl && $tabFromUrl.parents('.sticky-tabs').length === 0) return;
+ 
+         if ($tabFromUrl && $tabFromUrl.length) {
+-            $tabFromUrl.tab('show');
+-        } else {
+-            $(navSelector + ' ' + tabSelector).first().tab('show');
++            tabController = new bootstrap.Tab($tabFromUrl);
++            tabController.show();
++        } else if ($altTabSelector.length) {
++            tabController = new bootstrap.Tab($altTabSelector);
++            tabController.show();
+         }
+ 
+         $('body').on('click', tabSelector, function (e) {
+-            var $link = $(this);
++            var $link = $(this),
++                linkTab = new bootstrap.Tab($link);
+             if (!$link.closest(navSelector).length) {
+                 return true;
+             }
+@@ -42,13 +49,18 @@
+                 window.location.hash = tabName;
+             }
+ 
+-            $link.tab('show');
++            linkTab.show();
+             return false;
+         });
+ 
+         $(window).on('popstate', function () {
+-            var anchor = getHash() || $(navSelector + ' ' + tabSelector).first().attr('href');
+-            $("a[href='" + anchor + "']").tab('show');
++            var anchor = getHash() || $(navSelector + ' ' + tabSelector).first().attr('href'),
++                $anchorSelector = $("a[href='" + anchor + "']"),
++                anchorTab;
++            if ($anchorSelector.length) {
++                anchorTab = new bootstrap.Tab($anchorSelector);
++                anchorTab.show();
++            }
+         });
+     });
+ });

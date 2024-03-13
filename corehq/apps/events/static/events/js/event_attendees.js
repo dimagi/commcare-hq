@@ -5,8 +5,8 @@ hqDefine("events/js/event_attendees",[
     'hqwebapp/js/initial_page_data',
     'jquery.rmi/jquery.rmi',
     'locations/js/widgets',
-    "hqwebapp/js/widgets",
-    "hqwebapp/js/components.ko", // for pagination
+    "hqwebapp/js/bootstrap3/widgets",
+    "hqwebapp/js/bootstrap3/components.ko", // for pagination
 ], function (
     $,
     ko,

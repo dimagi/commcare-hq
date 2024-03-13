@@ -1,3 +1,9 @@
+.row > div > .form-check:first-child,
+.row > div > .input-group > .form-check:first-child {
+  padding-top: add($input-padding-y, $input-border-width);
+  margin-bottom: 0;
+}
+
 .form-hide-actions .form-actions {
   display: none;
 }
@@ -17,4 +23,27 @@ p.help-block {
   margin-top: 5px;
   margin-bottom: 10px;
   color: lighten($cc-text, 25%);
+}
+
+legend {
+  border-bottom: 1px solid $border-color;
+  padding-bottom: $spacer * .25;
+  margin-bottom: $spacer * 1.25;
+}
+
+.form-actions {
+  border-top: 1px solid $border-color;
+  background-color: $light;
+  border-bottom-left-radius: $border-radius;
+  border-bottom-right-radius: $border-radius;
+  padding: $spacer 0;
+  margin: 0 0 $spacer 0;
+
+  div {
+    padding-left: 6px;
+  }
+}
+
+.ms-header .btn {
+  margin-top: -3px;
 }

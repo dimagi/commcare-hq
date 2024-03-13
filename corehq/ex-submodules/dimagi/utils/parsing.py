@@ -12,7 +12,8 @@ def string_to_boolean(val):
     A very dumb string to boolean converter.  Will fail hard
     if the conversion doesn't succeed.
     """
-    if val is None: return False
+    if val is None:
+        return False
     if isinstance(val, bool):
         return val
     if val.lower().strip() in TRUE_STRINGS:

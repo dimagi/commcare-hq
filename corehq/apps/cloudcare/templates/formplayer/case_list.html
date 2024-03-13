@@ -3,9 +3,37 @@
 
 <script type="text/template" id="case-view-list-template">
   <div class="module-case-list-container">
-
-    <div aria-label="<%- title %>" tabindex="0" class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
-
+    <button id="scroll-to-bottom" class="btn btn-lg btn-circle btn-primary hidden-md hidden-lg" type="button" aria-label="{% trans 'Scroll to bottom' %}" style="display: none;">
+      <i class="fa fa-lg fa-arrow-down" aria-hidden="true"></i>
+    </button>
+    <div class="page-header menu-header clearfix" id="case-list-menu-header">
+      <div class="pull-right">
+      <% if (showMap) { %>
+        <button id="hide-map-button" class="btn btn-primary pull-right" type="button"
+           aria-expanded="true" aria-controls="module-case-list-map">
+          {% trans "Hide Map" %}
+        </button>
+      <% } %>
+      <% if (sidebarEnabled) { %>
+        <button id="search-more" class="btn btn-primary visible-xs visible-sm pull-right" type="button"
+          data-toggle="collapse" data-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
+          {% trans "Refine search" %}
+        </button>
+      <% } %>
+        </div>
+      <% if (title.length > 0) { %>
+        <h1  aria-label="<%- title %>" tabindex="0" class="page-title"><%- title %></h1>
+      <% } %>
+      <% if (sidebarEnabled && description.length > 0) { %>
+        <div aria-label="<%- description %>" tabindex="0" class="query-description"><%= description %></div>
+      <% } %>
+    </div>
+    <% if (isMultiSelect) { %>
+      <div class="case-list-actions">
+        {% include 'formplayer/multi_select_continue_button.html' %}
+      </div>
+    <% } %>
+    <% if (!sidebarEnabled) { %>
     <div class="module-search-container">
       <div class="input-group input-group-lg">
         <input type="text" class="form-control" placeholder="Search" id="searchText">
@@ -16,64 +44,87 @@
         </div>
       </div>
     </div>
-
-    <% if (useTiles) { %>
-      <% if (isMultiSelect && !hasNoItems) { %>
-        <input type="checkbox" id="select-all-tile-checkbox"/>
-        <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
-      <% } %>
-      <section class="js-case-container clearfix list-cell-container-style"></section>
-    <% } else { %>
-    <div class="module-case-list-table-container">
-      <table class="table module-table module-table-case-list">
-        <thead>
-        <tr>
-          <% if (isMultiSelect && !hasNoItems) { %>
-          <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/></th>
-          <% } %>
-          <% _.each(headers, function(header, index) { %>
-            <% if (columnVisible(index)) { %>
-              <% if (columnSortable(index)) { %>
-                <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%- header %></th>
-              <% } else { %>
-                <th class="module-case-list-header" data-id="<%- index %>"> <%- header %></th>
-              <% } %>
-            <% } %>
-          <% }); %>
-        </tr>
-        </thead>
-          <% if (hasNoItems) { %>
-          <tbody>
-          <tr>
-            <td class="module-case-list-column module-case-list-column-empty" colspan="<%-headers.length%>">
-              <% if (noItemsText === null) {%>
-                <div class="alert alert-info">{% trans "List is empty." %}</div>
-              <% } else { %>
-                <div class="alert alert-info"><%- noItemsText %></div>
-              <% } %>
-            </td>
-          </tr>
-          </tbody>
-          <% } %>
-          <tbody class="wrapper js-case-container">
-          </tbody>
-        </table>
-      </div>
     <% } %>
 
-    <% if (actions || isMultiSelect) { %>
-    <div class="case-list-actions">
-      <% if (isMultiSelect) { %>
-      <button type="button" class="btn btn-success btn-lg formplayer-request" disabled="true" id="multi-select-continue-btn">{% trans "Continue" %} (<span id="multi-select-btn-text"><%- selectedCaseIds.length %></span>)</button>
+    <div id="module-case-list-container__results-container" class="row row-no-gutters">
+      <% if (showMap) { %>
+        <div id="module-case-list-map" class="sticky sticky-map col-md-5 col-md-push-9<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
       <% } %>
-      <% if (actions) { %>
-        <% _.each(actions, function(action, index) { %>
-        <div class="case-list-action-button btn-group formplayer-request">
-          <button type="button" class="btn btn-default btn-lg " data-index="<%- index %>"><%- action.text %></button>
+      <div id="module-case-list" class="col-md<% if (showMap) { %>-7 col-md-pull-5<% } %>">
+        <% if (useTiles) { %>
+          <% if (hasNoItems) { %>
+            {% include 'formplayer/no_items_text.html' %}
+          <% } else { %>
+            <div id="case-list-search-controls">
+              <div>
+                <% if (isMultiSelect) { %>
+                  <input type="checkbox" id="select-all-tile-checkbox"/>
+                  <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
+                <% } %>
+              </div>
+              <div class="dropdown">
+                <button class="btn" id="case-list-sort-by-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <span> {% trans "Sort By" %} </span><i class="fa fa-sort" aria-hidden="true"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="case-list-sort-by">
+                  <%  _.each(sortOptions, function(sortOption) { %>
+                    <li tabindex="0" class="header-clickable formplayer-request" data-id="<%- sortOption.index %>" role="menuitem">
+                      <a>
+                        <%= sortOption.header %>
+                        <% if (sortOption.sortOrder) { %>
+                          <i class="fa fa-arrow-<%= sortOption.sortOrder === 'V' ? 'down' : 'up' %> pull-right"></i>
+                        <% } %>
+                      </a>
+                    </li>
+                  <% }); %>
+                </ul>
+              </div>
+            </div>
+          <% } %>
+          <section class="js-case-container clearfix list-cell-container-style"></section>
+        <% } else { %>
+        <div class="module-case-list-table-container">
+          <table class="table module-table module-table-case-list">
+              <thead>
+                <tr>
+                  <% if (isMultiSelect && !hasNoItems) { %>
+                    <th class="module-case-list-header"><input type="checkbox" id="select-all-checkbox"/></th>
+                  <% } %>
+                  <%  _.each(headers, function(header, index) { %>
+                    <% if (columnVisible(index)) { %>
+                      <% if (columnSortable(index)) { %>
+                        <th class="module-case-list-header header-clickable formplayer-request" data-id="<%- index %>"> <%= header %></th>
+                      <% } else { %>
+                        <th class="module-case-list-header" data-id="<%- index %>"> <%= header %></th>
+                      <% } %>
+                    <% } %>
+                  <% }); %>
+                </tr>
+              </thead>
+
+            <% if (hasNoItems) { %>
+              {% include 'formplayer/no_items_text.html' %}
+            <% } %>
+            <tbody class="wrapper js-case-container">
+            </tbody>
+          </table>
         </div>
-        <% }) %>
-      <% } %>
+        <% } %>
+      </div>
     </div>
+    <% if (actions || isMultiSelect) { %>
+      <div class="case-list-actions">
+        <% if (isMultiSelect) { %>
+          {% include 'formplayer/multi_select_continue_button.html' %}
+        <% } %>
+        <% if (actions) { %>
+          <% _.each(actions, function(action, index) { %>
+            <div class="case-list-action-button btn-group formplayer-request">
+              <button type="button" class="btn btn-default btn-lg " data-index="<%- index %>"><%- action.text %></button>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
     <% } %>
 
     <% if (!hasNoItems) { %>
@@ -86,20 +137,27 @@
 
 <script type="text/template" id="case-view-item-template">
   <% if (isMultiSelect) { %>
-  <td class="module-case-list-column-checkbox"><input type="checkbox" class="select-row-checkbox"/></td>
+    <td class="module-case-list-column-checkbox"><input type="checkbox" class="select-row-checkbox"/></td>
   <% } %>
   <% _.each(data, function(datum, index) { %>
-  <% if (!(styles[index].widthHint === 0)) { %>
-  <% if (styles[index].displayFormat === 'Image') { %>
-  <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
-  <% } else if (styles[index].displayFormat === 'Markdown') { %>
-  <td class="module-case-list-column"><%= renderMarkdown(datum) %></td>
-  <% } else if (styles[index].displayFormat === 'Graph') { %>
-  <td class="module-case-list-column"><iframe srcdoc="<%- datum %>" height="300" width="300"></iframe></td>
-  <% } else { %>
-  <td class="module-case-list-column"><%- datum %></td>
-  <% } %>
-  <% } %>
+    <% if (!(styles[index].widthHint === 0)) { %>
+      <% if (styles[index].displayFormat === 'Image') { %>
+        <td class="module-case-list-column"><img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/></td>
+      <% } else if (styles[index].displayFormat === 'ClickableIcon') { %>
+        <td class="module-case-list-column">
+          <button class="clickable-icon">
+            <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
+            <i class="fa fa-spin fa-spinner" style="display:none"></i>
+          </button>
+        </td>
+      <% } else if (styles[index].displayFormat === 'Markdown') { %>
+        <td class="module-case-list-column webapp-markdown-output"><%= renderMarkdown(datum) %></td>
+      <% } else if (styles[index].displayFormat === 'Graph') { %>
+        <td class="module-case-list-column"><iframe srcdoc="<%- datum %>" height="300" width="300"></iframe></td>
+      <% } else { %>
+        <td class="module-case-list-column"><%- datum %></td>
+      <% } %>
+    <% } %>
   <% }); %>
 </script>
 
@@ -110,51 +168,142 @@
       </div>
     <% } %>
 
-  <div class="<%- prefix %>-cell-grid-style">
+  <div class="<%- prefix %>-cell-grid-style collapsible-tile-content">
     <% _.each(data, function(datum, index) { %>
     <div class="<%- prefix %>-grid-style-<%- index %> box">
       <% if (styles[index].displayFormat === 'Image') {
       if(resolveUri(datum)) { %>
-      <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+        <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
+      <% } %>
+      <% } else if (styles[index].displayFormat === 'ClickableIcon') {
+      if(resolveUri(datum)) { %>
+        <button class="clickable-icon">
+          <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
+          <i class="fa fa-spin fa-spinner" style="display:none"></i>
+        </button>
       <% } %>
       <% } else if(styles[index].widthHint === 0) { %>
-      <div style="display:none;"><%- datum %></div>
+        <div style="display:none;"><%- datum %></div>
       <% } else { %>
-      <div><%= renderMarkdown(datum) %></div>
+        <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
       <% } %>
     </div>
     <% }); %>
   </div>
 </script>
 
+<script type="text/template" id="case-tile-grouped-view-item-template">
+  <% if (isMultiSelect) { %>
+    <div class="select-row-checkbox-div">
+      <input type="checkbox" class="select-row-checkbox"/>
+    </div>
+  <% } %>
+
+  <div class="group-data collapsible-tile-content">
+    <div class="<%- prefix %>-cell-grid-style">
+      <% for (let [index, datum] of Object.entries(indexedHeaderData)) { %>
+        <div class="<%- prefix %>-grid-style-<%- index %> box" >
+          <% if (styles[index].displayFormat === 'ClickableIcon') {
+          if(resolveUri(datum)) { %>
+            <button class="clickable-icon">
+              <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" style="max-width:100%; max-height:100%;"/>
+              <i class="fa fa-spin fa-spinner" style="display:none"></i>
+            </button>
+          <% } %>
+          <% } else if (styles[index].displayFormat === 'Image') {
+          if(resolveUri(datum)) { %>
+            <img alt="<%- altText[index] %>" class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+          <% } %>
+          <% } else if(styles[index].widthHint === 0) { %>
+            <div style="display:none;"><%- datum %></div>
+          <% } else { %>
+            <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
+          <% } %>
+        </div>
+      <% }; %>
+    </div>
+
+    <div class="group-rows">
+      <% _.each(indexedRowDataList, function(indexedRowData) { %>
+        <div class="<%- prefix %>-cell-grid-style group-row">
+          <% for (let index in indexedRowData) { %>
+            <% let datum = indexedRowData[index]; %>
+            <div class="<%- prefix %>-grid-style-<%- index %> box">
+              <% if (styles[index].displayFormat === 'Image') {
+                if(resolveUri(datum)) { %>
+                  <img alt="<%- altText[index] %>" class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+                <% } %>
+              <% } else if (styles[index].displayFormat === 'ClickableIcon') {
+                if(resolveUri(datum)) { %>
+                  <button class="clickable-icon">
+                    <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" style="max-width:100%; max-height:100%;"/>
+                    <i class="fa fa-spin fa-spinner" style="display:none"></i>
+                  </button>
+                <% } %>
+              <% } else { %>
+                  <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</script>
+
 <script type="text/template" id="cell-layout-style-template">
   <% _.each(models, function(model){ %>
-  .<%- model.id %> {
-  grid-area: <%- model.gridStyle %>;
-  font-size: <%- model.fontStyle %>;
-  }
+    .<%- model.id %> {
+      grid-area: <%- model.gridStyle %>;
+      font-size: <%- model.fontStyle %>;
+      text-align: <%- model.horizontalAlign %>;
+      <% if (!model.borderInTile && !model.shadingInTile) { %>
+        justify-self: <%- model.horizontalAlign %>;
+        align-self: <%- model.verticalAlign %>;
+      <% } else { %>
+        <% if (model.showBorder || model.showShading) { %>
+          border-radius: 8px;
+          padding-top: 5px;
+          padding-bottom: 0px;
+          padding-left: 5px;
+          padding-right: 5px;
+          justify-self: stretch;
+          margin-left: 4px;
+          margin-right: 4px;
+          margin-bottom: 5px;
+          margin-top: 2px;
+          <% if (model.showBorder) { %>
+            border: 1px solid #685c53;
+          <% } %>
+          <% if (model.showShading) { %>
+            background-color: white;
+            z-index: -1;
+          <% } %>
+        <% } else { %>
+          margin: 7px;
+          justify-self: <%- model.horizontalAlign %>;
+          align-self: <%- model.verticalAlign %>;
+        <% } %>
+      <% } %>
+    }
   <% }); %>
 </script>
 
 <script type="text/template" id="cell-grid-style-template">
   .<%- model.prefix %>-cell-grid-style {
   display: grid;
-  grid-template-columns: repeat(<%- model.numColumns %>, 1fr) min-content 5px;
-  grid-template-rows: repeat(<%- model.numRows %>, <%- model.heightString %>) min-content 5px;
+  grid-template-columns: repeat(<%- model.numColumns %>, 1fr);
+  grid-template-rows: repeat(<%- model.numRows %>, <%- model.heightString %>);
   background-color: transparent;
   color: #685c53;
   justify-items: left;
-  padding: 10px 20px 0 20px;
-  }
-</script>
-
-<script type="text/template" id="cell-wrapper-style-template">
-  .list-cell-wrapper-style {
-  border: 1px solid white;
-  border-collapse: collapse;
-  vertical-align: top;
-  background-color: #f2f2f1;
-  container-type: inline-size;
+  <% if (model.prefix === "persistent") { %>
+    margin: 20px 20px 10px 20px;
+  <% } else if (model.isMultiSelect) { %>
+    margin: 10px 30px 0 10px;
+  <% } else { %>
+    margin: 10px 20px 0 20px;
+  <% } %>
   }
 </script>
 
@@ -176,7 +325,7 @@
         <tr>
           <% _.each(headers, function(header, index) { %>
           <% if (!(styles[index].widthHint === 0)) { %>
-          <th class="module-case-list-header"> <%- header %></th>
+          <th class="module-case-list-header"> <%= header %></th>
           <% } %>
           <% }); %>
         </tr>
@@ -195,4 +344,8 @@
       </table>
     </div>
   </div>
+</script>
+
+<script type="text/template" id="case-view-tile-detail-template">
+  <section class="js-case-container clearfix list-cell-container-style"></section>
 </script>

@@ -27,7 +27,7 @@
     {% for subscription, last_due_date in subscription_list %}
       <tr>
         <td>{{ subscription.subscriber.domain }}</td>
-        <td>{{ subscription.plan_version.plan.name }}</td>
+        <td>{{ subscription.plan_version }}</td>
         <td>{{ subscription.date_start }}</td>
         <td>{{ subscription.date_end }}</td>
         <td>{{ subscription.is_active }}</td>

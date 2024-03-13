@@ -1,10 +1,11 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<tr>
+<tr data-bind="css: {'info': isGroup}">
   <td class="text-center">
-    <i class="grip sortable-handle hq-icon-full fa fa-arrows-v"></i>
+    <i class="grip sortable-handle hq-icon-full fa-solid fa-up-down"></i>
   </td>
+  <!--ko if: !isGroup -->
   <td data-bind="css: {'has-error': $parent.isCommon(ko.unwrap(name()))}">
     <input class="form-control" type="text" data-bind="value: name"/>
     <div data-bind="visible: $parent.isCommon(ko.unwrap(name()))" class="help-block">
@@ -148,6 +149,17 @@
                     <input class="form-control" type="text" data-bind="value: itemset.sort, attr:{placeholder:dropdownLabels().labelPlaceholder}"/>
                   </div>
                 </div>
+                <div class="form-group">
+                  <label class="control-label col-xs-12 col-sm-3">
+                    {% trans "Instance Nodeset" %}
+                  </label>
+                  <div class="col-xs-12 col-sm-9">
+                    <input class="form-control" type="text" data-bind="value: itemset.nodeset"/>
+                    <p class="alert alert-warning" data-bind="visible: !itemset.nodesetValid()">
+                      {% trans "This refers to data other than selected report/lookup-table." %}
+                    </p>
+                  </div>
+                </div>
                 </fieldset>
                 {% if js_options.has_geocoder_privs or js_options.ush_case_claim_2_53 %}
                     <fieldset>
@@ -218,28 +230,6 @@
                       {% endif %}
                     </fieldset>
                 {% endif %}
-                <fieldset data-bind="visible: appearanceFinal() == 'fixture' || appearanceFinal() == 'checkbox'">
-                  <legend  data-bind="text: dropdownLabels().advancedLabel"></legend>
-                  <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-3">
-                      {% trans "Instance URI" %}
-                    </label>
-                    <div class="col-xs-12 col-sm-9">
-                      <input class="form-control" type="text" data-bind="value: itemset.instance_uri"/>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="control-label col-xs-12 col-sm-3">
-                      {% trans "Instance Nodeset" %}
-                    </label>
-                    <div class="col-xs-12 col-sm-9">
-                      <input class="form-control" type="text" data-bind="value: itemset.nodeset"/>
-                      <p class="alert alert-warning" data-bind="visible: !itemset.nodesetValid()">
-                        {% trans "This refers to data other than selected report/lookup-table." %}
-                      </p>
-                    </div>
-                  </div>
-                </fieldset>
               {% endif %}
             </div>
           </div>
@@ -254,6 +244,14 @@
     </div>
   </td>
   {% endif %}
+  <!-- /ko -->
+  <!--ko if: isGroup -->
+    <td>
+      <input class="form-control" type="text" placeholder="{% trans "Group Name" %}" data-bind="value: label"/>
+    </td>
+    <td></td>
+    <td></td>
+  <!--/ko-->
   <td>
     <i style="cursor: pointer;" class="fa fa-remove"
        data-bind="click: $parent.removeProperty"></i>

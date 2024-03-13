@@ -1,10 +1,1 @@
-<div class="form-group">
-{% if form_show_labels %}
-    <label class="control-label {{ label_class }}">
-        {{ field_label }}
-    </label>
-{% endif %}
-    <div class="controls {{ field_class }}">
-      <p class="form-control-static">{{ field_value }}</p>
-    </div>
-</div>
+{% if use_bootstrap5 %}{% include 'hqwebapp/crispy/bootstrap5/static_field.html' %}{% else %}{% include 'hqwebapp/crispy/bootstrap3/static_field.html' %}{% endif %}

@@ -1,3 +1,4 @@
+"use strict";
 hqDefine("accounting/js/stripe_card_manager", [
     'jquery',
     'knockout',
@@ -7,7 +8,7 @@ hqDefine("accounting/js/stripe_card_manager", [
     ko,
     Stripe
 ) {
-    var newStripeCardModel = function(data, cardManager){
+    var newStripeCardModel = function (data, cardManager) {
         var self = {};
         var mapping = {
             observe: ['number', 'cvc', 'expMonth','expYear', 'isAutopay', 'token'],
@@ -78,7 +79,6 @@ hqDefine("accounting/js/stripe_card_manager", [
     };
 
     var stripeCardModel = function (card, baseUrl, cardManager) {
-        'use strict';
         var self = {};
         var mapping = {
             include: ['brand', 'last4', 'exp_month','exp_year', 'is_autopay'],
@@ -148,7 +148,7 @@ hqDefine("accounting/js/stripe_card_manager", [
     };
 
 
-    var stripeCardManager = function (data){
+    var stripeCardManager = function (data) {
         var self = {};
         var mapping = {
             'cards': {

@@ -1,9 +1,9 @@
 /* globals process */
 
-module.exports = function(grunt) {
+module.exports = function (grunt) {
     var headless = require('mocha-headless-chrome'),
         _ = require('lodash'),
-        colors = require('colors');
+        fs = require('fs');
 
     // use localhost unless we're running on travis
     var BASE_ADDRESS = process.env.WEB_TEST_PORT_8000_TCP_ADDR || 'localhost',
@@ -65,7 +65,7 @@ module.exports = function(grunt) {
             currentTestPath = BASE_URL + currentApp,
             testText = "Running Test '" + currentApp + "'",
             reporter = grunt.option('verbose') ? 'spec' : 'dot',
-            runner_options = {
+            runnerOptions = {
                 file: currentTestPath,
                 visible: false,
                 timeout: 120000,
@@ -73,17 +73,28 @@ module.exports = function(grunt) {
             };
 
         // For running in docker/travis
-        if (process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD) {
-            runner_options.executablePath = 'google-chrome-unstable';
+        if (process.env.PUPPETEER_SKIP_DOWNLOAD) {
+            runnerOptions.executablePath = 'google-chrome-unstable';
         }
 
         grunt.log.writeln("\n");
         grunt.log.writeln(testText.bold);
         grunt.log.write(currentTestPath.italic.cyan);
 
-        headless.runner(runner_options).then(function (data) {
+        headless.runner(runnerOptions).then(function (data) {
             if (data.result.failures.length) {
                 failures[currentApp] = data.result.failures;
+            }
+            if (grunt.option('coverage')) {
+                var coverageDir = './coverage-js/',
+                    filePath = coverageDir + currentApp.replace(/\//g, '-') + '.json';
+                if (!fs.existsSync(coverageDir)) {
+                    fs.mkdir(coverageDir, error =>
+                        error && grunt.log.write(error));
+                }
+                fs.writeFile(filePath, JSON.stringify(data.coverage), { flag: 'w+' }, error =>
+                    error && grunt.log.write(error)
+                );
             }
             finishedTests.push(currentApp);
             runTest(
@@ -128,7 +139,7 @@ module.exports = function(grunt) {
         }
     );
 
-    grunt.registerTask('list', 'Lists all available apps to test', function() {
+    grunt.registerTask('list', 'Lists all available apps to test', function () {
         testPaths.forEach(function (app) { console.log('"' + app + '"'); });
     });
 };

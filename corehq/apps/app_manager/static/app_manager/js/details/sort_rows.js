@@ -6,7 +6,7 @@
  * sorting-related attributes like direction.
  */
 hqDefine("app_manager/js/details/sort_rows", function () {
-    var uiElement = hqImport('hqwebapp/js/ui-element');
+    var uiElement = hqImport('hqwebapp/js/bootstrap3/ui-element');
 
     var sortRow = function (params, saveButton) {
         var Utils = hqImport('app_manager/js/details/utils'),
@@ -149,7 +149,7 @@ hqDefine("app_manager/js/details/sort_rows", function () {
                 }
                 row.selectField.fire("change");
             });
-        }
+        };
 
         return self;
     };

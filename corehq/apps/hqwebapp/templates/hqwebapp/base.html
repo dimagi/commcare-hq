@@ -106,12 +106,34 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_datatables and not use_bootstrap5 %}
+    {% if request.use_datatables %}
+      {% if use_bootstrap5 %}
+        {% compress css %}
+          <link type="text/css"
+                rel="stylesheet"
+                media="all"
+                href="{% static 'datatables.net-bs5/css/dataTables.bootstrap5.min.css' %}" />
+          <link type="text/css"
+                rel="stylesheet"
+                media="all"
+                href="{% static 'datatables.net-fixedcolumns-bs5/css/fixedColumns.bootstrap5.min.css' %}" />
+        {% endcompress %}
+      {% else %}
+        {% compress css %}
+          <link type="text/css"
+                rel="stylesheet"
+                media="all"
+                href="{% static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
+        {% endcompress %}
+      {% endif %}
+    {% endif %}
+
+    {% if request.use_datetimepicker and use_bootstrap5 %}
       {% compress css %}
         <link type="text/css"
               rel="stylesheet"
-              media="all"
-              href="{% static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
+              media="screen"
+              href="{% static "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css" %}" />
       {% endcompress %}
     {% endif %}
 
@@ -136,8 +158,12 @@
       {% endcompress %}
     {% endif %}
 
+    <script>
+      window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
+    </script>
+
     {% if not requirejs_main %}
-      {% javascript_libraries underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
+      {% javascript_libraries use_bootstrap5=use_bootstrap5 underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
     {% endif %}
 
     {# Up here because if daterangepicker is called from within a form widget, #}
@@ -184,7 +210,11 @@
     {% block modals %}{% endblock %}
 
     {% if show_mobile_ux_warning %}
-      {% include "hqwebapp/partials/mobile_ux_warning.html" %}
+      {% if use_bootstrap5 %}
+        {% include "hqwebapp/partials/bootstrap5/mobile_ux_warning.html" %}
+      {% else %}
+        {% include "hqwebapp/partials/bootstrap3/mobile_ux_warning.html" %}
+      {% endif %}
     {% endif %}
 
     {# Report Issue #}
@@ -205,10 +235,22 @@
       </style>
     {% endif %}
 
+    {% if request.couch_user.is_dimagi %}
+      {% if use_bootstrap5 %}
+        {% include 'hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html' %}
+      {% else %}
+        {% include 'hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html' %}
+      {% endif %}
+    {% endif %}
+
     {% if EULA_COMPLIANCE %}
       {% if request.couch_user and not request.couch_user.is_eula_signed %}
         {% registerurl 'agree_to_eula' %}
-        {% include 'hqwebapp/includes/modal_eula.html' %}
+        {% if use_bootstrap5 %}
+          {% include 'hqwebapp/includes/bootstrap5/modal_eula.html' %}
+        {% else %}
+          {% include 'hqwebapp/includes/bootstrap3/modal_eula.html' %}
+        {% endif %}
       {% endif %}
     {% endif %}
 
@@ -219,7 +261,11 @@
     {% registerurl 'submit_hubspot_cta_form' %}
 
     {# 30 Day Trial #}
-    {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
+    {% if use_bootstrap5 %}
+      {% include 'hqwebapp/includes/bootstrap5/modal_30_day_trial.html' %}
+    {% else %}
+      {% include 'hqwebapp/includes/bootstrap3/modal_30_day_trial.html' %}
+    {% endif %}
 
     {% block additional_initial_page_data %}
       {% comment %}
@@ -239,6 +285,7 @@
 
     {# for get demo and get trial forms #}
     {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
+    {% initial_page_data 'ace_base_path' 'ace-builds/src-min-noconflict'|static %}
 
     {% if demo_workflow_ab_v2 %}
       {% analytics_ab_test 'kissmetrics.demo_workflow_ab_v2' demo_workflow_ab_v2 %}
@@ -280,33 +327,47 @@
 
     {# javascript below this line #}
 
-    {% if use_bootstrap5 %}
-      <script src="{% static "bootstrap5/dist/js/bootstrap.bundle.min.js" %}"></script>
-    {% else %}
-      {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
-    {% endif %}
+    {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
 
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
     {# HQ Specific Libraries #}
     {% if not requirejs_main %}
-      {% compress js %}
-        <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
-      {% endcompress %}
+      {% if use_bootstrap5 %}
+        {% compress js %}
+          <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/email-request.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/alert_user.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/main.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
+        {% endcompress %}
+      {% else %}
+        {% compress js %}
+          <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap3/email-request.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap3/alert_user.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap3/main.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
+        {% endcompress %}
+      {% endif %}
     {% endif %}
 
     {# JavaScript Display Logic Libaries #}
 
     {% if request.couch_user and not requirejs_main %}
-      <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
-      <script src="{% static 'notifications/js/notifications_service_main.js' %}"></script>
+      {% if use_bootstrap5 %}
+        <script src="{% static 'notifications/js/bootstrap5/notifications_service.js' %}"></script>
+        <script src="{% static 'notifications/js/bootstrap5/notifications_service_main.js' %}"></script>
+      {% else %}
+        <script src="{% static 'notifications/js/bootstrap3/notifications_service.js' %}"></script>
+        <script src="{% static 'notifications/js/bootstrap3/notifications_service_main.js' %}"></script>
+      {% endif %}
     {% endif %}
 
     {% if not requirejs_main %}
@@ -332,18 +393,35 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_datatables and not requirejs_main and not use_bootstrap5 %}
-      {% compress js %}
-        <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
-        <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
-        <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
-      {% endcompress %}
+    {% if request.use_datatables and not requirejs_main %}
+      {% if use_bootstrap5 %}
+        {% compress js %}
+          <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
+          <script src="{% static 'datatables.net-bs5/js/dataTables.bootstrap5.min.js' %}"></script>
+          <script src="{% static 'datatables.net-fixedcolumns/js/dataTables.fixedColumns.min.js' %}"></script>
+          <script src="{% static 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5.min.js' %}"></script>
+        {% endcompress %}
+      {% else %}
+        {% compress js %}
+          <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
+          <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
+          <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
+        {% endcompress %}
+      {% endif %}
     {% endif %}
 
     {% if request.use_typeahead and not requirejs_main and not use_bootstrap5 %}
       {% compress js %}
         <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
         <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
+      {% endcompress %}
+    {% endif %}
+
+    {% if request.use_datetimepicker and not requirejs_main and use_bootstrap5 %}
+      {% compress js %}
+        <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
+        <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
+        <script src="{% static '@eonasdan/tempus-dominus/dist/js/jQuery-provider.min.js' %}"></script>
       {% endcompress %}
     {% endif %}
 
@@ -382,26 +460,50 @@
 
     {% if request.use_ko_validation and not requirejs_main %}
       <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
+      {% if use_bootstrap5 %}
+        <script src="{% static 'hqwebapp/js/bootstrap5/validators.ko.js' %}"></script>
+      {% else %}
+        <script src="{% static 'hqwebapp/js/bootstrap3/validators.ko.js' %}"></script>
+      {% endif %}
     {% endif %}
 
     {% if is_demo_visible %}
-      {% include "hqwebapp/partials/get_demo_modals.html" %}
+      {% if use_bootstrap5 %}
+        {% include "hqwebapp/partials/bootstrap5/get_demo_modals.html" %}
+      {% else %}
+        {% include "hqwebapp/partials/bootstrap3/get_demo_modals.html" %}
+      {% endif %}
     {% endif %}
 
     {# Knockout component templates #}
-    {% include 'hqwebapp/partials/ko_pagination.html' %}
-    {% include 'hqwebapp/partials/ko_inline_edit.html' %}
-    {% include 'hqwebapp/partials/ko_search_box.html' %}
-    {% include 'hqwebapp/partials/ko_select_toggle.html' %}
-    {% include 'hqwebapp/partials/ko_feedback.html' %}
+    {% if use_bootstrap5 %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_pagination.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_inline_edit.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_search_box.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_select_toggle.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/ko_feedback.html' %}
+    {% else %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_pagination.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_inline_edit.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_search_box.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_select_toggle.html' %}
+      {% include 'hqwebapp/partials/bootstrap3/ko_feedback.html' %}
+    {% endif %}
 
     {% if show_overdue_invoice_modal and not requirejs_main %}
-      <script src="{% static 'hqwebapp/js/downgrade_modal.js' %}"></script>
+      {% if use_bootstrap5 %}
+        <script src="{% static 'hqwebapp/js/bootstrap5/downgrade_modal.js' %}"></script>
+      {% else %}
+        <script src="{% static 'hqwebapp/js/bootstrap3/downgrade_modal.js' %}"></script>
+      {% endif %}
     {% endif %}
 
     {% if show_prepaid_modal and not requirejs_main %}
-      <script src="{% static 'hqwebapp/js/prepaid_modal.js' %}"></script>
+      {% if use_bootstrap5 %}
+        <script src="{% static 'hqwebapp/js/bootstrap5/prepaid_modal.js' %}"></script>
+      {% else %}
+        <script src="{% static 'hqwebapp/js/bootstrap3/prepaid_modal.js' %}"></script>
+      {% endif %}
     {% endif %}
 
     {% if show_status_page %}

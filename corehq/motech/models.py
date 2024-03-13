@@ -57,7 +57,7 @@ class ConnectionQuerySet(models.QuerySet):
 
     def delete(self):
         from .repeaters.models import Repeater
-        repeaters = Repeater.all_objects.filter(connection_settings_id__in=self.values("id"))
+        repeaters = Repeater.all_objects.filter(connection_settings_id__in=list(self.values_list("id", flat=True)))
         if repeaters.exists():
             raise models.ProtectedError(
                 "Cannot delete ConnectionSettings with related Repeater(s)",
@@ -199,6 +199,7 @@ class ConnectionSettings(models.Model):
                 client_secret=self.plaintext_client_secret,
                 token_url=self.token_url,
                 refresh_url=self.refresh_url,
+                pass_credentials_in_header=self.pass_credentials_in_header,
                 connection_settings=self,
             )
 

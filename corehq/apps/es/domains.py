@@ -12,15 +12,18 @@ DomainES
              .size(0))
 """
 
-from django_countries import Countries
+from django_countries import countries
 
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_DOMAINS_INDEX_CANONICAL_NAME,
+    HQ_DOMAINS_INDEX_NAME,
+    HQ_DOMAINS_SECONDARY_INDEX_NAME,
+)
 from .es_query import HQESQuery
 from .index.analysis import COMMA_ANALYSIS
 from .index.settings import IndexSettingsKey
-
-HQ_DOMAINS_INDEX_CANONICAL_NAME = 'domains'
 
 
 class DomainES(HQESQuery):
@@ -75,19 +78,21 @@ class ElasticDomain(ElasticDocumentAdapter):
 
         sub = Subscription.visible_objects.filter(subscriber__domain=domain_dict['name'], is_active=True)
         domain_dict['deployment'] = domain_dict.get('deployment') or {}
-        countries = domain_dict['deployment'].get('countries', [])
+        domain_countries = domain_dict['deployment'].get('countries', [])
         domain_dict['deployment']['countries'] = []
         if sub:
             domain_dict['subscription'] = sub[0].plan_version.plan.edition
-        for country in countries:
-            domain_dict['deployment']['countries'].append(Countries[country].upper())
+        countries_map = dict(countries)
+        for country in domain_countries:
+            domain_dict['deployment']['countries'].append(countries_map[country].upper())
         return super()._from_dict(domain_dict)
 
 
 domain_adapter = create_document_adapter(
     ElasticDomain,
-    "hqdomains_2021-03-08",
+    HQ_DOMAINS_INDEX_NAME,
     "hqdomain",
+    secondary=HQ_DOMAINS_SECONDARY_INDEX_NAME,
 )
 
 

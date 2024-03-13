@@ -7,16 +7,20 @@ from django.utils.translation import gettext_lazy
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import property_changed_in_action
+from couchexport.deid import deid_date, deid_ID
 from dimagi.utils.parsing import json_format_datetime
 
+from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
+from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
+from corehq.apps.export.const import DEID_DATE_TRANSFORM, DEID_ID_TRANSFORM
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound, MissingFormXml
 from corehq.form_processor.models import CommCareCase
-from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.motech.dhis2.const import XMLNS_DHIS2
+from corehq.apps.hqcase.constants import UPDATE_REASON_RESAVE
 
 CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
@@ -221,7 +225,7 @@ def bulk_update_cases(domain, case_changes, device_id, xmlns=None):
 
 def resave_case(domain, case, send_post_save_signal=True):
     from corehq.form_processor.change_publishers import publish_case_saved
-    publish_case_saved(case, send_post_save_signal)
+    publish_case_saved(case, associated_form_id=UPDATE_REASON_RESAVE, send_post_save_signal=send_post_save_signal)
 
 
 def get_last_non_blank_value(case, case_property):
@@ -238,3 +242,68 @@ def get_last_non_blank_value(case, case_property):
             property_changed_info = None
         if property_changed_info and property_changed_info.new_value:
             return property_changed_info.new_value
+
+
+def get_case_value(case, value):
+    """
+    Returns the case's ``value`` and whether it's a property on the case
+    (as opposed to attribute).
+
+    :param case: the relevant case
+    :param value: the value you want from the case
+    :returns: A tuple containing the value and whether that value is a
+        property on the case. If no value is found ``(None, None)`` is
+        returned
+    """
+    if not value:
+        return None, None
+
+    if value in SPECIAL_CASE_PROPERTIES_MAP:
+        return SPECIAL_CASE_PROPERTIES_MAP[value].value_getter(case.to_json()), False
+    elif value in case.case_json:
+        return case.case_json.get(value, None), True
+    return None, None
+
+
+def get_deidentified_data(case, censor_data):
+    """
+    This function is used to get the data on the specified case, but
+    with the ``censor_data`` properties censored.
+
+    :param case: the case to censor the data for
+    :param censor_data: a dictionary containing as key the case
+        attribute or property to de-identify, and as value the name of
+        the transform method to use to de-identify the data. An invalid
+        transform name will result in a blank value.
+    :returns: A tuple containing a dictionary of censored case
+        attributes and their de-identified values, and a dictionary of
+        censored case properties and their de-identified values.
+    """
+    attrs = {}
+    props = {}
+
+    if censor_data:
+        for attr_or_prop, transform in censor_data.items():
+            case_value, is_case_property = get_case_value(case, attr_or_prop)
+
+            if not case_value:
+                continue
+
+            censored_value = ''
+            if transform == DEID_DATE_TRANSFORM:
+                censored_value = deid_date(case_value, None, key=case.case_id)
+            if transform == DEID_ID_TRANSFORM:
+                censored_value = deid_ID(case_value, None)
+
+            if is_case_property:
+                props[attr_or_prop] = censored_value
+            else:
+                attrs[attr_or_prop] = censored_value
+
+    return attrs, props
+
+
+def is_copied_case(case):
+    """Returns True if the case was created by copying an existing case using the 'COPY_CASES' feature"""
+    from corehq.apps.hqcase.case_helper import CaseCopier
+    return CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME in case.case_json

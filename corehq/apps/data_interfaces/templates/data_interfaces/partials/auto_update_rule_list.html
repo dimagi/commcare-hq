@@ -9,6 +9,36 @@
     </button>
   </a>
 
+  <p class="pull-right" id="lock-container" data-bind="if: hasLinkedModels">
+    <!-- ko if: allowEdit -->
+      <!-- ko ifnot: unlockLinkedData -->
+        <button class="btn btn-default" data-toggle="modal" data-target="#edit-warning-modal">
+          <i class="fa fa-link"></i>
+          {% trans 'Unlock Linked Rules For Me' %}
+        </button>
+      <!-- /ko -->
+      <!-- ko if: unlockLinkedData -->
+        <button class="btn btn-default" data-bind="click: toggleLinkedLock">
+          <i class="fa fa-link"></i>
+          {% trans "Lock Linked Rules For Me" %}
+        </button>
+      <!-- /ko -->
+    <!-- /ko -->
+    <!-- ko ifnot: allowEdit -->
+      <i class="fa fa-link"></i>
+      Contains Linked Roles
+    <!-- /ko -->
+    <span class="hq-help-template"
+        data-placement="left"
+        data-title="{% trans 'Linked Configurations' %}"
+        data-content="
+          {% blocktrans %}
+            Linked configurations are controlled from a separate, linked project space.
+              <a href='https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</a>.
+          {% endblocktrans %}">
+    </span>
+  </p>
+
   <div class="spacer"></div>
 
   <div class="panel panel-default">
@@ -21,30 +51,36 @@
           <th>{% trans "Status" %}</th>
           <th>{% trans "Last Run" %}</th>
           <th>{% trans "Action" %}</th>
+          <!-- ko if: $root.has_linked_data -->
+            <th></th> <!-- Empty linked header -->
+          <!-- /ko -->
         </tr>
         </thead>
         <tbody data-bind="foreach: paginatedRules">
           <tr>
             <td>
-              <a data-bind="attr: {href: edit_url}">
-                <strong data-bind="text: name"></strong>
-              </a>
+              <a data-bind="attr: {href: url}"><strong data-bind="text: name"></strong></a>
             </td>
-            <td data-bind="text: case_type"></td>
+            <td>
+              <span data-bind="text: case_type" style="display: inline-block;"></span>
+              <span data-bind="visible: is_case_type_deprecated" class="label label-warning" style="display: inline-block;">{% trans "deprecated" %}</span>
+            </td>
             <td>
               <span class="label label-success" data-bind="visible: active()">{% trans "Active" %}</span>
               <span class="label label-danger" data-bind="visible: !active()">{% trans "Inactive" %}</span>
             </td>
             <td data-bind="text: last_run"></td>
             <td>
-              <button type="button" class="btn btn-default" data-bind="click: $root.updateRule.bind($data, 'activate'), visible: !active()">
+              <button type="button" class="btn btn-default"
+                data-bind="click: $root.updateRule.bind($data, 'activate'), visible: !active(), enable: !upstream_id() || $root.unlockLinkedData">
                 {% trans "Activate" %}
               </button>
-              <button type="button" class="btn btn-default" data-bind="click: $root.updateRule.bind($data, 'deactivate'), visible: active()">
+              <button type="button" class="btn btn-default"
+                data-bind="click: $root.updateRule.bind($data, 'deactivate'), visible: active(), enable: !upstream_id() || $root.unlockLinkedData">
                 {% trans "Deactivate" %}
               </button>
               <button type="button" data-toggle="modal" class="btn btn-danger"
-                      data-bind="attr: { 'data-target': '#delete-rule-' + id() }">
+                      data-bind="attr: { 'data-target': '#delete-rule-' + id() }, enable: !upstream_id() || $root.unlockLinkedData">
                 <i class="fa fa-remove"></i>
                 {% trans "Delete" %}
               </button>
@@ -77,10 +113,15 @@
                 </div>
               </div>
               <p class="help-block" data-bind="visible: action_error">
-                <i class="fa fa-exclamation-triangle"></i>
+                <i class="fa-solid fa-triangle-exclamation"></i>
                 <span data-bind="text: action_error"></span>
               </p>
             </td>
+            <!-- ko if: $root.has_linked_data -->
+              <td data-bind="if: upstream_id">
+                <i class="fa fa-link"></i>
+              </td>
+            <!-- /ko -->
           </tr>
         </tbody>
       </table>

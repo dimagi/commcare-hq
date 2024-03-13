@@ -5,6 +5,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
     'hqwebapp/js/select2_handler',
     'jquery-ui/ui/widgets/datepicker',
     'bootstrap-timepicker/js/bootstrap-timepicker',
+    'hqwebapp/js/ckeditor_knockout_bindings',
 ], function ($, ko, initialPageData, select2Handler) {
     ko.bindingHandlers.useTimePicker = {
         init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
@@ -22,6 +23,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
 
         self.language_code = ko.observable(language_code);
         self.message = ko.observable(message);
+        self.html_message = ko.observable(message);
     };
 
     var TranslationViewModel = function (language_codes, translations) {
@@ -45,6 +47,9 @@ hqDefine("scheduling/js/create_schedule.ko", [
                     if (!messageModel.message()) {
                         messageModel.message(self.nonTranslatedMessage());
                     }
+                    if (!messageModel.html_message()) {
+                        messageModel.html_message(self.nonTranslatedMessage());
+                    }
                 });
             }
         });
@@ -54,6 +59,18 @@ hqDefine("scheduling/js/create_schedule.ko", [
             if (self.translate()) {
                 self.translatedMessages().forEach(function (messageModel) {
                     result[messageModel.language_code()] = messageModel.message();
+                });
+            } else {
+                result['*'] = self.nonTranslatedMessage();
+            }
+            return JSON.stringify(result);
+        });
+
+        self.htmlMessagesJSONString = ko.computed(function () {
+            var result = {};
+            if (self.translate()) {
+                self.translatedMessages().forEach(function (messageModel) {
+                    result[messageModel.language_code()] = messageModel.html_message();
                 });
             } else {
                 result['*'] = self.nonTranslatedMessage();
@@ -82,8 +99,14 @@ hqDefine("scheduling/js/create_schedule.ko", [
             initialPageData.get("language_list"),
             initial_values.message
         );
+        self.html_message = new TranslationViewModel(
+            initialPageData.get("language_list"),
+            initial_values.html_message
+        );
 
         self.survey_reminder_intervals_enabled = ko.observable(initial_values.survey_reminder_intervals_enabled);
+        self.fcm_message_type = ko.observable(initial_values.fcm_message_type);
+
     };
 
     var EventAndContentViewModel = function (initial_values) {
@@ -133,6 +156,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
                 time: '12:00',
                 minutes_to_wait: 0,
                 deleted: false,
+                html_message: { '*': initialPageData.get('html_message_template') },
             };
         }
 

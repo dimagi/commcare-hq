@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -13,7 +13,7 @@
+     <h1>{% trans "Please login again with Single Sign-On" %}</h1>
+   </div>
+   <div class="row">
+-    <div class="col-sm-12">
++    <div class="col-md-12">
+       <p>
+         {% blocktrans %}
+           We opened a new window for you to log in again with

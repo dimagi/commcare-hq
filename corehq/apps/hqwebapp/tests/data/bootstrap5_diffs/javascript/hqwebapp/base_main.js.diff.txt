@@ -1,0 +1,25 @@
+--- 
++++ 
+@@ -1,13 +1,13 @@
+-hqDefine("hqwebapp/js/bootstrap3/base_main", [
+-    'hqwebapp/js/bootstrap3/downgrade_modal',
+-    'hqwebapp/js/bootstrap3/prepaid_modal',
+-    'hqwebapp/js/bootstrap3/hq.helpers',
++hqDefine("hqwebapp/js/bootstrap5/base_main", [
++    'hqwebapp/js/bootstrap5/downgrade_modal',
++    'hqwebapp/js/bootstrap5/prepaid_modal',
++    'hqwebapp/js/bootstrap5/hq.helpers',
+     'hqwebapp/js/layout',
+-    'hqwebapp/js/bootstrap3/email-request',
+-    'hqwebapp/js/bootstrap3/sticky_tabs',
+-    'hqwebapp/js/bootstrap3/main',
+-    'hqwebapp/js/bootstrap3/inactivity',
+-    'notifications/js/bootstrap3/notifications_service_main',
++    'hqwebapp/js/bootstrap5/email-request',
++    'hqwebapp/js/bootstrap5/sticky_tabs',
++    'hqwebapp/js/bootstrap5/main',
++    'hqwebapp/js/bootstrap5/inactivity',
++    'notifications/js/bootstrap5/notifications_service_main',
+     'analytix/js/appcues',
+     'analytix/js/drift',
+     'analytix/js/google',

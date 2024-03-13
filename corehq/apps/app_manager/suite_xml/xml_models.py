@@ -137,6 +137,14 @@ class Text(XmlObject):
     locale = NodeField('locale', Locale)
     locale_id = StringField('locale/@id')
 
+    def get_all_xpaths(self):
+        result = {self.xpath_function}
+        if self.xpath:
+            for variable in self.xpath.variables:
+                if variable.xpath:
+                    result.add(variable.xpath.function)
+        return result - {None}
+
 
 class ConfigurationItem(Text):
     ROOT_NAME = "text"
@@ -271,6 +279,14 @@ class DisplayNode(XmlObject):
         elif text:
             self.text = text
 
+    def get_all_xpaths(self):
+        result = set()
+        if self.text:
+            result.update(self.text.get_all_xpaths())
+        if self.display:
+            result.update(self.display.text.get_all_xpaths())
+        return result - {None}
+
 
 class LocaleId(XmlObject):
     ROOT_NAME = 'locale'
@@ -283,6 +299,14 @@ class MediaText(XmlObject):
     locale = NodeField('locale', LocaleId)
     xpath = NodeField('xpath', TextXPath)
     xpath_function = XPathField('xpath/@function')
+
+    def get_all_xpaths(self):
+        result = {self.xpath_function}
+        if self.xpath:
+            for variable in self.xpath.variables:
+                if variable.xpath:
+                    result.add(variable.xpath.function)
+        return result - {None}
 
 
 class LocalizedMediaDisplay(XmlObject):
@@ -331,6 +355,15 @@ class TextOrDisplay(XmlObject):
             )
         elif text:
             self.text = text
+
+    def get_all_xpaths(self):
+        result = set()
+        if self.text:
+            result.update(self.text.get_all_xpaths())
+        if self.display:
+            for text in self.display.media_text:
+                result.update(text.get_all_xpaths())
+        return result - {None}
 
 
 class CommandMixin(XmlObject):
@@ -390,6 +423,12 @@ class InstanceDatum(SessionDatum):
 
 class StackDatum(IdNode):
     ROOT_NAME = 'datum'
+
+    value = XPathField('@value')
+
+
+class StackInstanceDatum(IdNode):
+    ROOT_NAME = 'instance-datum'
 
     value = XPathField('@value')
 
@@ -487,12 +526,17 @@ class StackJump(XmlObject):
 class Argument(IdNode):
     ROOT_NAME = 'argument'
 
+    instance_id = StringField('@instance-id')
+    instance_src = StringField('@instance-src')
+
 
 class SessionEndpoint(IdNode):
     ROOT_NAME = 'endpoint'
 
     arguments = NodeListField('argument', Argument)
     stack = NodeField('stack', Stack)
+
+    respect_relevancy = BooleanField('@respect-relevancy', required=False)
 
 
 class Assertion(XmlObject):
@@ -526,6 +570,14 @@ class QueryPrompt(DisplayNode):
 
     itemset = NodeField('itemset', Itemset)
 
+    group_key = StringField('@group_key', required=False)
+
+
+class QueryPromptGroup(DisplayNode):
+    ROOT_NAME = 'group'
+
+    key = StringField('@key')
+
 
 class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'query'
@@ -538,7 +590,10 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     description = NodeField('description', DisplayNode)
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
+    prompt_groups = NodeListField('group', QueryPromptGroup)
     default_search = BooleanField("@default_search")
+    dynamic_search = BooleanField("@dynamic_search")
+    search_on_clear = BooleanField("@search_on_clear", required=False)
 
     @property
     def id(self):
@@ -567,9 +622,12 @@ class Entry(OrderedXmlObject, XmlObject):
 
     form = StringField('form')
     post = NodeField('post', RemoteRequestPost)
-    command = NodeField('command', Command)
-    instances = NodeListField('instance', Instance)
 
+    # command and localized_command are mutually exclusive based on the app version
+    command = NodeField('command', Command)
+    localized_command = NodeField('command', LocalizedCommand)
+
+    instances = NodeListField('instance', Instance)
     datums = NodeListField('session/datum', SessionDatum)
     queries = NodeListField('session/query', RemoteRequestQuery)
     session_children = NodeListField('session/*', _wrap_session_datums)
@@ -620,20 +678,33 @@ class MenuMixin(XmlObject):
     style = StringField('@style')
     commands = NodeListField('command', Command)
     assertions = NodeListField('assertions/assert', Assertion)
+    instances = NodeListField('instance', Instance)
 
 
 class Menu(MenuMixin, DisplayNode, IdNode):
     """
         For CC < 2.21
     """
-    pass
+
+    def get_all_xpaths(self):
+        result = super().get_all_xpaths()
+        result.update({assertion.test for assertion in self.assertions})
+        if self.relevant:
+            result.add(self.relevant)
+        return result - {None}
 
 
 class LocalizedMenu(MenuMixin, TextOrDisplay, IdNode):
     """
         For CC >= 2.21
     """
-    pass
+
+    def get_all_xpaths(self):
+        result = super().get_all_xpaths()
+        result.update({assertion.test for assertion in self.assertions})
+        if self.relevant:
+            result.add(self.relevant)
+        return result - {None}
 
 
 class AbstractTemplate(XmlObject):
@@ -644,6 +715,10 @@ class AbstractTemplate(XmlObject):
 
 class Template(AbstractTemplate):
     ROOT_NAME = 'template'
+
+
+class AltText(AbstractTemplate):
+    ROOT_NAME = 'alt_text'
 
 
 class GraphTemplate(Template):
@@ -731,6 +806,8 @@ class Style(XmlObject):
     grid_width = StringField("grid/@grid-width")
     grid_x = StringField("grid/@grid-x")
     grid_y = StringField("grid/@grid-y")
+    show_border = BooleanField("@show-border")
+    show_shading = BooleanField("@show-shading")
 
 
 class Extra(XmlObject):
@@ -744,32 +821,6 @@ class Response(XmlObject):
     ROOT_NAME = 'response'
 
     key = StringField("@key")
-
-
-class Field(OrderedXmlObject):
-    ROOT_NAME = 'field'
-    ORDER = ('header', 'template', 'sort_node')
-
-    sort = StringField('@sort')
-    print_id = StringField('@print-id')
-    style = NodeField('style', Style)
-    header = NodeField('header', Header)
-    template = NodeField('template', Template)
-    sort_node = NodeField('sort', Sort)
-    background = NodeField('background/text', Text)
-
-
-class Lookup(OrderedXmlObject):
-    ROOT_NAME = 'lookup'
-    ORDER = ('auto_launch', 'extras', 'responses', 'field')
-
-    name = StringField("@name")
-    auto_launch = BooleanField("@auto_launch")
-    action = StringField("@action", required=True)
-    image = StringField("@image")
-    extras = NodeListField('extra', Extra)
-    responses = NodeListField('response', Response)
-    field = NodeField('field', Field)
 
 
 class ActionMixin(OrderedXmlObject):
@@ -793,6 +844,41 @@ class LocalizedAction(ActionMixin, TextOrDisplay):
     pass
 
 
+class EndpointAction(XmlObject):
+    ROOT_NAME = 'endpoint_action'
+
+    endpoint_id = StringField('@endpoint_id')
+    background = StringField('@background')
+
+
+class Field(OrderedXmlObject):
+    ROOT_NAME = 'field'
+    ORDER = ('style', 'header', 'template', 'endpoint_action', 'sort_node', 'alt_text')
+
+    sort = StringField('@sort')
+    print_id = StringField('@print-id')
+    style = NodeField('style', Style)
+    header = NodeField('header', Header)
+    template = NodeField('template', Template)
+    sort_node = NodeField('sort', Sort)
+    background = NodeField('background/text', Text)
+    endpoint_action = NodeField('endpoint_action', EndpointAction)
+    alt_text = NodeField('alt_text', AltText)
+
+
+class Lookup(OrderedXmlObject):
+    ROOT_NAME = 'lookup'
+    ORDER = ('auto_launch', 'extras', 'responses', 'field')
+
+    name = StringField("@name")
+    auto_launch = BooleanField("@auto_launch")
+    action = StringField("@action", required=True)
+    image = StringField("@image")
+    extras = NodeListField('extra', Extra)
+    responses = NodeListField('response', Response)
+    field = NodeField('field', Field)
+
+
 class DetailVariable(XmlObject):
     ROOT_NAME = '_'
     function = XPathField('@function')
@@ -812,9 +898,16 @@ class DetailVariableList(XmlObject):
     variables = NodeListField('_', DetailVariable)
 
 
+class TileGroup(XmlObject):
+    ROOT_NAME = "group"
+
+    function = XPathField('@function')
+    header_rows = IntegerField('@header-rows')
+
+
 class Detail(OrderedXmlObject, IdNode):
     """
-    <detail id="">
+    <detail id="" lazy_loading="false">
         <title><text/></title>
         <lookup action="" image="" name="">
             <extra key="" value = "" />
@@ -832,6 +925,9 @@ class Detail(OrderedXmlObject, IdNode):
     """
 
     ROOT_NAME = 'detail'
+
+    lazy_loading = BooleanField('@lazy_loading')
+
     ORDER = ('title', 'lookup', 'no_items_text', 'details', 'fields')
 
     nodeset = StringField('@nodeset')
@@ -843,8 +939,10 @@ class Detail(OrderedXmlObject, IdNode):
     fields = NodeListField('field', Field)
     actions = NodeListField('action', Action)
     details = NodeListField('detail', "self")
+    select_text = NodeField('select_text/text', Text)
     _variables = NodeField('variables', DetailVariableList)
     relevant = StringField('@relevant')
+    tile_group = NodeField('group', TileGroup)
 
     def _init_variables(self):
         if self._variables is None:
@@ -903,12 +1001,8 @@ class Detail(OrderedXmlObject, IdNode):
                     result.add(series.nodeset)
                     result.update(_get_graph_config_xpaths(series.configuration))
             else:
-                result.add(field.header.text.xpath_function)
-                result.add(field.template.text.xpath_function)
-                if field.template.text.xpath:
-                    for variable in field.template.text.xpath.variables:
-                        if variable.xpath:
-                            result.add(str(variable.xpath.function))
+                result.update(field.header.text.get_all_xpaths())
+                result.update(field.template.text.get_all_xpaths())
 
         for detail in self.details:
             result.update(detail.get_all_xpaths())
@@ -967,7 +1061,11 @@ class Suite(OrderedXmlObject):
 
     details = NodeListField('detail', Detail)
     entries = NodeListField('entry', Entry)
+
+    # menus and localized_menus are mutually exclusive based on the app version
     menus = NodeListField('menu', Menu)
+    localized_menus = NodeListField('menu', LocalizedMenu)
+
     endpoints = NodeListField('endpoint', SessionEndpoint)
     remote_requests = NodeListField('remote-request', RemoteRequest)
 

@@ -1,13 +1,12 @@
-/* global moment, NProgress */
+'use strict';
+/* global Marionette, moment, NProgress, Sentry */
 hqDefine('cloudcare/js/utils', [
     'jquery',
     'hqwebapp/js/initial_page_data',
-    'integration/js/hmac_callout',
     "cloudcare/js/formplayer/constants",
 ], function (
     $,
     initialPageData,
-    HMACCallout,
     constants
 ) {
     if (!String.prototype.startsWith) {
@@ -39,6 +38,11 @@ hqDefine('cloudcare/js/utils', [
 
     var showError = function (message, $el, reportToHq) {
         message = getErrorMessage(message);
+        // Make message more user friendly since html isn't useful here
+        if (message.includes('500') && message.includes('<!DOCTYPE html>')) {
+            message = 'Sorry, something went wrong. Please try again in a few minutes. ' +
+            'If this problem persists, please report it to CommCare Support.';
+        }
         _show(message, $el, null, "alert alert-danger");
         if (reportToHq === undefined || reportToHq) {
             reportFormplayerErrorToHQ({
@@ -121,12 +125,67 @@ hqDefine('cloudcare/js/utils', [
         return $container;
     };
 
+    var shouldShowLoading = function () {
+        const answerInProgress = (sessionStorage.answerQuestionInProgress && JSON.parse(sessionStorage.answerQuestionInProgress));
+        const validationInProgress = (sessionStorage.validationInProgress && JSON.parse(sessionStorage.validationInProgress));
+        return !answerInProgress && !validationInProgress;
+    };
+
+    var getRegionContainer = function () {
+        const RegionContainer = Marionette.View.extend({
+            el: "#menu-container",
+
+            regions: {
+                main: "#menu-region",
+                loadingProgress: "#formplayer-progress-container",
+                breadcrumb: "#breadcrumb-region",
+                persistentCaseTile: "#persistent-case-tile",
+                restoreAsBanner: '#restore-as-region',
+                sidebar: '#sidebar-region',
+            },
+        });
+
+        return new RegionContainer();
+    };
+
     var showLoading = function () {
-        NProgress.start();
+        hqRequire([
+            "cloudcare/js/formplayer/app",
+            "hqwebapp/js/toggles",
+            "cloudcare/js/formplayer/layout/views/progress_bar",
+        ], function (FormplayerFrontend, toggles, ProgressBar) {
+            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+                const progressView = ProgressBar({
+                    progressMessage: gettext("Loading..."),
+                });
+                if (!FormplayerFrontend.regions) {
+                    FormplayerFrontend.regions = getRegionContainer();
+                }
+                $('#breadcrumb-region').css('z-index', '0');
+                const loadingElement = FormplayerFrontend.regions.getRegion('loadingProgress');
+                loadingElement.show(progressView);
+                let currentProgress = 10;
+                progressView.progressEl.find('.progress').css("height", "12px");
+                progressView.progressEl.find('.progress-container').css("width", "50%");
+                progressView.progressEl.find('.progress-title h1').css("font-size", "25px");
+                progressView.progressEl.find('#formplayer-progress ').css("background-color", "rgba(255, 255, 255, 0.7)");
+                progressView.setProgress(currentProgress, 100, 200);
+                sessionStorage.progressIncrementInterval = setInterval(function () {
+                    if (currentProgress <= 100) {
+                        progressView.setProgress(currentProgress, 100, 200);
+                        currentProgress += 1;
+                    }
+                }, 250);
+            } else {
+                NProgress.start();
+            }
+        });
     };
 
     var formplayerLoading = function () {
-        showLoading();
+        if (shouldShowLoading()) {
+            showLoading();
+        }
     };
 
     var formplayerLoadingComplete = function (isError, message) {
@@ -178,7 +237,21 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var hideLoading = function () {
-        NProgress.done();
+        hqRequire(["cloudcare/js/formplayer/app", "hqwebapp/js/toggles"], function (FormplayerFrontend, toggles) {
+            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+                $('#breadcrumb-region').css('z-index', '');
+                clearInterval(sessionStorage.progressIncrementInterval);
+                const progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
+                if (progressView) {
+                    progressView.setProgress(100, 100, 200);
+                    setTimeout(function () {
+                    FormplayerFrontend.regions.getRegion('loadingProgress').empty();
+                    }, 250);
+                }
+            } else {
+                NProgress.done();
+            }
+        });
     };
 
     function getSentryMessage(data) {
@@ -206,7 +279,7 @@ hqDefine('cloudcare/js/utils', [
                         errorType: data.type,
                     },
                     extra: sentryData,
-                    level: "error"
+                    level: "error",
                 });
 
                 $.ajax({
@@ -230,92 +303,6 @@ hqDefine('cloudcare/js/utils', [
                 );
             }
         });
-    };
-
-    function chainedRenderer(matcher, transform, target) {
-        return function (tokens, idx, options, env, self) {
-            var hIndex = tokens[idx].attrIndex('href');
-            var matched = false;
-            if (hIndex >= 0) {
-                var href =  tokens[idx].attrs[hIndex][1];
-                if (matcher(href)) {
-                    transform(href, hIndex, tokens[idx]);
-                    matched = true;
-                }
-            }
-            if (matched) {
-                var aIndex = tokens[idx].attrIndex('target');
-
-                if (aIndex < 0) {
-                    tokens[idx].attrPush(['target', target]); // add new attribute
-                } else {
-                    tokens[idx].attrs[aIndex][1] = target;    // replace value of existing attr
-                }
-            }
-            return matched;
-        };
-    }
-
-    var addDelegatedClickDispatch = function (linkTarget, linkDestination) {
-        document.addEventListener('click', function (event) {
-            if (event.target.target === linkTarget) {
-                linkDestination(event.target);
-                event.preventDefault();
-            }
-        }, true);
-    };
-
-    var injectMarkdownAnchorTransforms = function () {
-        if (window.mdAnchorRender) {
-            var renderers = [];
-
-            if (initialPageData.get('dialer_enabled')) {
-                renderers.push(chainedRenderer(
-                    function (href) { return href.startsWith("tel://"); },
-                    function (href, hIndex, anchor) {
-                        var callout = href.substring("tel://".length);
-                        var url = initialPageData.reverse("dialer_view");
-                        anchor.attrs[hIndex][1] = url + "?callout_number=" + callout;
-                    },
-                    "dialer"
-                ));
-            }
-
-            if (initialPageData.get('gaen_otp_enabled')) {
-                renderers.push(chainedRenderer(
-                    function (href) { return href.startsWith("cchq://passthrough/gaen_otp/"); },
-                    function (href, hIndex, anchor) {
-                        var params = href.substring("cchq://passthrough/gaen_otp/".length);
-                        var url = initialPageData.reverse("gaen_otp_view");
-                        anchor.attrs[hIndex][1] = url + params;
-                    },
-                    "gaen_otp"
-                ));
-                addDelegatedClickDispatch('gaen_otp',
-                    function (element) {
-                        HMACCallout.unsignedCallout(element, 'otp_view', true);
-                    });
-            }
-
-            if (initialPageData.get('hmac_root_url')) {
-                renderers.push(chainedRenderer(
-                    function (href) { return href.startsWith(initialPageData.get('hmac_root_url')); },
-                    function () {},
-                    "hmac_callout"
-                ));
-                addDelegatedClickDispatch('hmac_callout',
-                    function (element) {
-                        HMACCallout.signedCallout(element);
-                    });
-            }
-
-            window.mdAnchorRender = function (tokens, idx, options, env, self) {
-                renderers.forEach(function (r) {
-                    r(tokens, idx, options, env, self);
-                });
-                return self.renderToken(tokens, idx, options);
-            };
-        }
     };
 
     var dateTimePickerTooltips = {     // use default text, but enable translations
@@ -430,6 +417,39 @@ hqDefine('cloudcare/js/utils', [
         $el.on("focusout", $el.data("DateTimePicker").hide);
     };
 
+    var smallScreenIsEnabled = function () {
+        return window.innerWidth < constants.SMALL_SCREEN_WIDTH_PX;
+    };
+
+    /**
+     *  Listen for screen size changes to enable or disable small screen functionality.
+     *  Accepts a callback function that should take in the new value of smallScreenEnabled.
+     *  Callback runs once initially, then every time the small screen threshold is passed.
+     *  Returns an object with two methods:
+     *      listen() initiates a jQuery event listener and runs callback once
+     *      stopListening() removes the jQuery event listener
+     */
+    var smallScreenListener = function (callback) {
+        var smallScreenEnabled = smallScreenIsEnabled();
+        var handleSmallScreenChange = () => {
+            var shouldEnableSmallScreen = window.innerWidth < constants.SMALL_SCREEN_WIDTH_PX;
+            if (smallScreenEnabled !== shouldEnableSmallScreen) {
+                smallScreenEnabled = shouldEnableSmallScreen;
+                callback(smallScreenEnabled);
+            }
+        };
+
+        return {
+            listen: function () {
+                $(window).on('resize', handleSmallScreenChange);
+                callback(smallScreenEnabled);
+            },
+            stopListening: function () {
+                $(window).off('resize', handleSmallScreenChange);
+            },
+        };
+    };
+
     return {
         dateFormat: dateFormat,
         convertTwoDigitYear: convertTwoDigitYear,
@@ -448,6 +468,8 @@ hqDefine('cloudcare/js/utils', [
         formplayerLoadingComplete: formplayerLoadingComplete,
         formplayerSyncComplete: formplayerSyncComplete,
         reportFormplayerErrorToHQ: reportFormplayerErrorToHQ,
-        injectMarkdownAnchorTransforms: injectMarkdownAnchorTransforms,
+        smallScreenIsEnabled: smallScreenIsEnabled,
+        smallScreenListener: smallScreenListener,
+        getRegionContainer: getRegionContainer,
     };
 });

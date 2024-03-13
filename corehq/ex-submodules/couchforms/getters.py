@@ -1,5 +1,5 @@
 from django.utils.datastructures import MultiValueDictKeyError
-from couchforms.const import MAGIC_PROPERTY
+from couchforms.const import MAGIC_PROPERTY, VALID_ATTACHMENT_FILE_EXTENSIONS
 import logging
 from datetime import datetime
 from django.conf import settings
@@ -9,17 +9,20 @@ from couchforms.exceptions import (
     MultipartEmptyPayload,
     MultipartFilenameError,
     PayloadTooLarge,
+    InvalidAttachmentFileError,
     InvalidSubmissionFileExtensionError,
     AttachmentSizeTooLarge,
 )
 from dimagi.utils.parsing import string_to_utc_datetime
-from dimagi.utils.web import get_ip, get_site_domain
+from dimagi.utils.web import get_ip, get_site_domain, IP_RE
 
 
 __all__ = ['get_path', 'get_instance_and_attachment',
            'get_location', 'get_received_on', 'get_date_header',
            'get_submit_ip', 'get_last_sync_token', 'get_openrosa_headers']
 
+# Header that formplayer adds to request to store user ip address on form submission
+COMMCAREHQ_ORIGIN_IP = 'HTTP_X_COMMCAREHQ_ORIGIN_IP'
 
 def get_path(request):
     return request.path
@@ -49,13 +52,15 @@ def get_instance_and_attachment(request):
             if instance_file.size > settings.MAX_UPLOAD_SIZE:
                 logging.info("Domain {request.domain} attempted to submit a form exceeding the allowed size")
                 raise PayloadTooLarge()
-            if not _valid_file_extension(instance_file):
+            if not _valid_instance_file_extension(instance_file):
                 raise InvalidSubmissionFileExtensionError()
             instance = instance_file.read()
             for key, item in request.FILES.items():
                 if key != MAGIC_PROPERTY:
                     if _attachment_exceeds_size_limit(item):
                         raise AttachmentSizeTooLarge()
+                    if not _valid_attachment_file(item):
+                        raise InvalidAttachmentFileError()
                     attachments[key] = item
         if not instance:
             raise MultipartEmptyPayload()
@@ -69,11 +74,33 @@ def get_instance_and_attachment(request):
     return instance, attachments
 
 
-def _valid_file_extension(file):
-    if "." not in file.name:
+def _valid_instance_file_extension(file):
+    return _valid_file_extension(file.name, ['xml'])
+
+
+def _valid_file_extension(filename, valid_extensions):
+    if "." not in filename:
         return False
-    file_extension = file.name.rsplit(".", 1)[-1]
-    return file_extension == 'xml'
+    file_extension = filename.rsplit(".", 1)[-1]
+    return file_extension in valid_extensions
+
+
+def _valid_attachment_file(file):
+    return _valid_attachment_file_extension(file) or _valid_attachment_file_mimetype(file)
+
+
+def _valid_attachment_file_extension(file):
+    return _valid_file_extension(file.name, VALID_ATTACHMENT_FILE_EXTENSIONS)
+
+
+def _valid_attachment_file_mimetype(file):
+    return (
+        file.content_type.startswith(("audio/", "image/", "video/"))
+        # default mimetype set by CommCare
+        or file.content_type == "application/octet-stream"
+        # supported by formplayer
+        or file.content_type == "application/pdf"
+    )
 
 
 def _attachment_exceeds_size_limit(file):
@@ -123,6 +150,13 @@ def get_date_header(request):
 
 
 def get_submit_ip(request):
+    from corehq.apps.ota.decorators import ORIGIN_TOKEN_HEADER, validate_origin_token
+    x_commcarehq_origin_ip = request.META.get(COMMCAREHQ_ORIGIN_IP, None)
+    origin_token = request.META.get(ORIGIN_TOKEN_HEADER, None)
+    if x_commcarehq_origin_ip:
+        is_ip_address = IP_RE.match(x_commcarehq_origin_ip)
+        if is_ip_address and validate_origin_token(origin_token):
+            return x_commcarehq_origin_ip
     return get_ip(request)
 
 

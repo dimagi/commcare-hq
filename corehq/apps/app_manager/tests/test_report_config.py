@@ -504,7 +504,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               <text/>
             </title>
             <field>
-              <style horz-align="left" font-size="small">
+              <style horz-align="left" font-size="small" show-border="false" show-shading="false">
                 <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
               </style>
               <header>

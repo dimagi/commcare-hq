@@ -19,6 +19,7 @@ class TestRawDocLookup(TestCase):
             "fields": {
                 "domain": "test-domain",
                 "is_global": True,
+                "is_synced": False,
                 "tag": "item",
                 "fields": [
                     {

@@ -4,7 +4,7 @@ from datetime import datetime
 from io import BytesIO
 
 from django.db import InternalError, models, transaction
-from django.db.models import F, Q
+from django.db.models import Q
 
 from jsonfield.fields import JSONField
 from lxml import etree
@@ -25,6 +25,7 @@ from corehq.blobs.models import BlobMeta
 from corehq.blobs.exceptions import NotFound
 from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.sql_db.util import (
+    create_unique_index_name,
     get_db_alias_for_partitioned_doc,
     get_db_aliases_for_partitioned_query,
     paginate_query_across_partitioned_databases,
@@ -187,11 +188,29 @@ class XFormInstanceManager(RequireDBManager):
         for db_name in get_db_aliases_for_partitioned_query():
             result.extend(
                 self.using(db_name)
-                .annotate(state_deleted=F('state').bitand(XFormInstance.DELETED))
-                .filter(domain=domain, state_deleted=XFormInstance.DELETED)
+                .filter(domain=domain, deleted_on__isnull=False)
                 .values_list('form_id', flat=True)
             )
         return result
+
+    def hard_delete_forms_before_cutoff(self, cutoff, dry_run=True):
+        """
+        Permanently deletes forms with deleted_on set to a datetime earlier than
+        the specified cutoff datetime
+        :param cutoff: datetime used to obtain the forms to be hard deleted
+        :param dry_run: if True, no changes will be committed to the database
+        and this method is effectively read-only
+        :return: dictionary of count of deleted objects per table
+        """
+        counts = {}
+        for db_name in get_db_aliases_for_partitioned_query():
+            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
+            if dry_run:
+                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
+            else:
+                deleted_counts = queryset.delete()[1]
+            counts.update(deleted_counts)
+        return counts
 
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
@@ -210,7 +229,7 @@ class XFormInstanceManager(RequireDBManager):
     def _get_form_ids_for_user(self, domain, user_id, is_deleted):
         with self.model.get_plproxy_cursor(readonly=True) as cursor:
             cursor.execute(
-                'SELECT form_id FROM get_form_ids_for_user(%s, %s, %s)',
+                'SELECT form_id FROM get_form_ids_for_user_2(%s, %s, %s)',
                 [domain, user_id, is_deleted]
             )
             results = fetchall_as_namedtuple(cursor)
@@ -341,7 +360,7 @@ class XFormInstanceManager(RequireDBManager):
         deletion_date = deletion_date or datetime.utcnow()
         with self.model.get_plproxy_cursor() as cursor:
             cursor.execute(
-                'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
+                'SELECT soft_delete_forms_3(%s, %s, %s, %s) as affected_count',
                 [domain, form_ids, deletion_date, deletion_id]
             )
             results = fetchall_as_namedtuple(cursor)
@@ -357,7 +376,7 @@ class XFormInstanceManager(RequireDBManager):
         problem = 'Restored on {}'.format(datetime.utcnow())
         with self.model.get_plproxy_cursor() as cursor:
             cursor.execute(
-                'SELECT soft_undelete_forms(%s, %s, %s) as affected_count',
+                'SELECT soft_undelete_forms_3(%s, %s, %s) as affected_count',
                 [domain, form_ids, problem]
             )
             results = fetchall_as_namedtuple(cursor)
@@ -370,7 +389,12 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
-    def hard_delete_forms(self, domain, form_ids, delete_attachments=True):
+    def hard_delete_forms(self, domain, form_ids, delete_attachments=True, *, publish_changes=True):
+        """Delete forms permanently
+
+        :param publish_changes: Flag for change feed publication.
+            Documents in Elasticsearch will not be deleted if this is false.
+        """
         assert isinstance(form_ids, list)
 
         deleted_count = 0
@@ -394,7 +418,8 @@ class XFormInstanceManager(RequireDBManager):
             metas = get_blob_db().metadb.get_for_parents(deleted_forms)
             get_blob_db().bulk_delete(metas=metas)
 
-        self.publish_deleted_forms(domain, form_ids)
+        if publish_changes:
+            self.publish_deleted_forms(domain, form_ids)
 
         return deleted_count
 
@@ -422,7 +447,6 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     DUPLICATE = 8
     ERROR = 16
     SUBMISSION_ERROR_LOG = 32
-    DELETED = 64
     STATES = (
         (NORMAL, 'normal'),
         (ARCHIVED, 'archived'),
@@ -430,7 +454,6 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         (DUPLICATE, 'duplicate'),
         (ERROR, 'error'),
         (SUBMISSION_ERROR_LOG, 'submission_error'),
-        (DELETED, 'deleted'),
     )
     DOC_TYPE_TO_STATE = {
         "XFormInstance": NORMAL,
@@ -515,6 +538,13 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         return XFormOperation.objects.get_form_operations(self.__original_form_id)
 
     def natural_key(self):
+        """
+        Django requires returning a tuple in natural_key methods:
+        https://docs.djangoproject.com/en/3.2/topics/serialization/#serialization-of-natural-keys
+        We intentionally do not follow this to optimize corehq.apps.dump_reload.sql.load.SqlDataLoader when other
+        models reference CommCareCase or XFormInstance via a foreign key. This means our loader code may break in
+        future Django upgrades.
+        """
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
         return self.form_id
@@ -557,9 +587,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
 
     @property
     def is_deleted(self):
-        # deleting a form adds the deleted state to the current state
-        # in order to support restoring the pre-deleted state.
-        return self.state & self.DELETED == self.DELETED
+        return bool(self.deleted_on)
 
     @property
     def doc_type(self):
@@ -634,8 +662,9 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         return None
 
     def soft_delete(self):
-        type(self).objects.soft_delete_forms(self.domain, [self.form_id])
-        self.state |= self.DELETED
+        deleted_on = datetime.utcnow()
+        type(self).objects.soft_delete_forms(self.domain, [self.form_id], deleted_on)
+        self.deleted_on = deleted_on
 
     def to_json(self, include_attachments=False):
         from ..serializers import XFormInstanceSerializer, lazy_serialize_form_attachments, \
@@ -706,7 +735,12 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
             ('domain', 'user_id'),
         ]
         indexes = [
-            models.Index(fields=['xmlns'])
+            models.Index(fields=['xmlns']),
+            models.Index(fields=['deleted_on'],
+                         name=create_unique_index_name('form_processor',
+                                                       'xforminstance',
+                                                       ['deleted_on']),
+                         condition=models.Q(deleted_on__isnull=False))
         ]
 
 
@@ -753,7 +787,7 @@ class XFormOperation(PartitionedModel, SaveStateMixin, models.Model):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.form, self.user_id, self.date
+        return self.form_id, self.user_id, self.date
 
     @property
     def user(self):

@@ -33,6 +33,7 @@ intuitive items first.
   [JSTree](https://www.jstree.com/plugins/) plugin system. Many very important
   components are implemented as plugins, so just because something is a plugin
   does not mean it is a second-rate feature.
+  For more details on plugins, see [PLUGIN_DEVELOPMENT.md](PLUGIN_DEVELOPMENT.md).
 
 Usage
 -----
@@ -123,7 +124,12 @@ or to run a specific test:
 ./test "Name of specific test"
 ```
 
-a block like the following:
+or pass a regex to run multiple tests:
+```
+./test "SaveToCase"  # run all tests with 'SaveToCase' in the name
+```
+
+A block like the following:
 ```
 describe('the test', () => ...
   describe('with this condition', () => ...

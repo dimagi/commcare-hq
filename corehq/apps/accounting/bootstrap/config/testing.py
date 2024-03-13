@@ -21,6 +21,7 @@ BOOTSTRAP_CONFIG_TESTING = {
         'feature_rates': {
             FeatureType.USER: dict(monthly_limit=4, per_excess_fee=Decimal('1.00')),
             FeatureType.SMS: dict(monthly_limit=3),
+            FeatureType.WEB_USER: dict(monthly_limit=10, per_excess_fee=Decimal('10.00')),
         }
     },
     (SoftwarePlanEdition.PRO, False, False): {

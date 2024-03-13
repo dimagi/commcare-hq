@@ -1,5 +1,4 @@
 import uuid
-from corehq.util.exceptions import AccessRestricted
 
 
 class UUIDGeneratorException(Exception):

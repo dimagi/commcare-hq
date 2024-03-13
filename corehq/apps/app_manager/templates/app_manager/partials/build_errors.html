@@ -187,28 +187,23 @@
                 uses smart links and is configured to make search input available after search.
                 These two features are not compatible.
               {% endblocktrans %}
-            {% case "inline search as parent module" %}
+            {% case "non-unique instance name with parent module" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                has a Parent Menu configured with "make search input available after search",
-                This workflow is unsupported.
+              The case list in <a href="{{ module_url }}">{{ module_name }}</a> can not use the same "search input instance name" as its Parent Menu.
+              {% endblocktrans %}
+            {% case "non-unique instance name with parent select module" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+              The case list in <a href="{{ module_url }}">{{ module_name }}</a> can not use the same "search input instance name" as its Parent Select Menu.
+              {% endblocktrans %}
+            {% case "search on clear with auto select" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+              The case list in <a href="{{ module_url }}">{{ module_name }}</a> uses both multi-select auto select and "Clearing search terms resets search results".
+              These two features are not compatible.
               {% endblocktrans %}
             {% case "inline search to display only forms" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 uses "Display only forms" and is also configured with
-                "make search input available after search". This workflow is unsupported.
-              {% endblocktrans %}
-            {% case "parent select is inline search module" %}
-              {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                uses parent case selection but parent case list is using
-                "make search input available after search". This workflow is unsupported.
-              {% endblocktrans %}
-            {% case "inline search parent select relationship" %}
-              {% blocktrans with module_name=error.module.name|trans:langs %}
-                <a href="{{ module_url }}">{{ module_name }}</a>
-                uses parent case selection and is configured with
                 "make search input available after search". This workflow is unsupported.
               {% endblocktrans %}
             {% case "circular case hierarchy" %}
@@ -326,6 +321,18 @@
                 The case list in
                 <a href="{{ module_url }}">{{ module_name }}</a>
                 has an invalid case tile configuration. Reason: {{ error_reason }}
+              {% endblocktrans %}
+            {% case "deprecated popup configuration" %}
+              {% blocktrans with module_name=error.module.name|trans:langs %}
+                The case list in
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                has an address popup configuration that should be moved to case detail.
+              {% endblocktrans %}
+            {% case "invalid clickable icon configuration" %}
+              {% blocktrans with module_name=error.module.name|trans:langs error_reason=error.reason %}
+                The case list in
+                <a href="{{ module_url }}">{{ module_name }}</a>
+                has an invalid clickable icon configuration. Reason: {{ error_reason }}
               {% endblocktrans %}
             {% case "no source module id" %}
               {% blocktrans with module_name=error.module.name|trans:langs %}
@@ -499,6 +506,21 @@
               {% if not not_actual_build %}The shadow form is {% include "app_manager/partials/form_error_message.html" %}{% endif %}
             {% case "password_format" %}
               {# Do nothing; the full message is contained in error.message #}
+            {% case "invalid grouping from ungrouped search property" %}
+              {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
+                <a href="{{ module_url }}">{{ module_name }}</a> has a case search property
+                <code>{{ property }}</code> that is not assigned to a group.
+              {% endblocktrans %}
+            {% case "case search nodeset invalid" %}
+              {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
+                <a href="{{ module_url }}">{{ module_name }}</a> has a case search property
+                <code>{{ property }}</code> that references an invalid instance.
+              {% endblocktrans %}
+            {% case "case list field action endpoint missing" %}
+              {% blocktrans with module_name=error.module.name|trans:langs property=error.property %}
+                <a href="{{ module_url }}">{{ module_name }}</a> has a case list property
+                that references a missing form endpoint: <code>{{ column.header|trans:langs }}</code>.
+              {% endblocktrans %}
             {% case "error" %}
               Details: {{ error.message }}
             {% else %}

@@ -1,3 +1,4 @@
+'use strict';
 /*global Backbone, Marionette, moment */
 
 hqDefine("cloudcare/js/formplayer/sessions/views", function () {
@@ -42,7 +43,9 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             e.stopPropagation();
             utils.confirmationModal({
                 title: gettext('Delete incomplete form?'),
-                message: gettext("Are you sure you want to delete '" + self.model.get('title') + "'"),
+                message: _.template(gettext("Are you sure you want to delete '<%- title %>'?"))({
+                    title: self.model.get('title'),
+                }),
                 confirmText: gettext('Yes'),
                 cancelText: gettext('No'),
                 onConfirm: function () {
@@ -123,19 +126,18 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
         },
         templateContext: function () {
             var user = FormplayerFrontend.getChannel().request('currentUser');
-            var paginationConfig = utils.paginateOptions(this.options.pageNumber, this.options.totalPages);
-            return {
+            var paginationConfig = utils.paginateOptions(
+                this.options.pageNumber,
+                this.options.totalPages,
+                this.collection.totalSessions
+            );
+            return _.extend(paginationConfig, {
                 total: this.collection.totalSessions,
                 totalPages: this.options.totalPages,
                 currentPage: this.model.get('page') - 1,
-                startPage: paginationConfig.startPage,
-                endPage: paginationConfig.endPage,
-                pageCount: paginationConfig.pageCount,
-                rowRange: [10, 25, 50, 100],
                 limit: this.model.get("limit"),
-                pageNumLabel: _.template(gettext("Page <%-num%>")),
                 isPreviewEnv: user.environment === constants.PREVIEW_APP_ENVIRONMENT,
-            };
+            });
         },
     });
 

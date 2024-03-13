@@ -7,7 +7,7 @@
 
 {% requirejs_main 'hqwebapp/js/500' %}
 
-{% block page_name %}<h2>{% trans "Oh no, something unexpected just happened!" %}</h2>{% endblock %}
+{% block page_name %}{% trans "Oh no, something unexpected just happened!" %}{% endblock %}
 {% block page_content %}
   <div class="row">
   {% if not enterprise_mode %}
@@ -16,47 +16,49 @@
     </div>
   {% endif %}
     <div class="{% if not enterprise_mode %}col-sm-8{% else %}col-sm-12{% endif %}">
-      <div class="well">
-        <form>
-          <fieldset>
-            <legend>
-              {% trans "First time here?" %}
-            </legend>
+      <div class="card text-bg-light mb-3">
+        <div class="card-body">
+          <h4 class="card-title pb-1 mb-3 border-bottom">
+            {% trans "First time here?" %}
+          </h4>
+          <p>
             {% blocktrans %}
-              Try refreshing. Often the problem is temporary and the page will succeed if you try again.<br><br>
+              Try refreshing. Often the problem is temporary and the page will succeed if you try again.
             {% endblocktrans %}
-            <button id="refresh" class="btn btn-primary">{% trans "Refresh Page" %}</button>
-          </fieldset>
-        </form>
+          </p>
+          <p class="mb-0">
+            <button id="refresh" type="button" class="btn btn-outline-primary">{% trans "Refresh Page" %}</button>
+          </p>
+        </div>
       </div>
 
       {% if not enterprise_mode %}
-        <div class="well">
-          <div class="form">
-            <fieldset>
-              <legend>
-                {% trans "Check the status of our services." %}
-              </legend>
+        <div class="card text-bg-light mb-3">
+          <div class="card-body">
+            <h4 class="card-title pb-1 mb-3 border-bottom">
+              {% trans "Check the status of our services." %}
+            </h4>
+            <p>
               {% blocktrans %}
                 If there is a problem with our systems, we'll post an update to our Status Page.
-              {% endblocktrans %}<br/><br/>
-              <a href="https://status.commcarehq.org/" class="btn btn-primary">{% trans "View Status Page" %}</a>
-            </fieldset>
+              {% endblocktrans %}
+            </p>
+            <p class="mb-0">
+              <a href="https://status.commcarehq.org/" class="btn btn-outline-primary">{% trans "View Status Page" %}</a>
+            </p>
           </div>
         </div>
       {% endif %}
 
       {% if allow_report_an_issue %}
-        <div class="panel panel-modern-gray">
-          <div class="panel-heading">
-            <h4 class="panel-title panel-title-nolink">
+        <div class="card text-bg-light">
+          <div class="card-body">
+            <h4 class="card-title pb-1 mb-3 border-bottom">
               {% blocktrans %}
                 Been here before? Report an issue to help us get this problem fixed faster.
               {% endblocktrans %}
             </h4>
-          </div>
-          <div class="panel-body">
-            <form class="form form-horizontal" action="{% url "bug_report" %}" method="post">
+            <form action="{% url "bug_report" %}" method="post">
               {% csrf_token %}
               <input type="hidden" id="bug-report-500-url" name="url" value="{{ request.build_absolute_uri }}"/>
               <input type="hidden" id="bug-report-500-username" name="username" value="{{ user.username }}"/>
@@ -71,25 +73,16 @@
               {{ now }}
               <fieldset>
                 {% trans "We would appreciate any additional information about what happened before you encountered this problem." %}<br><br>
-                <div class="form-group">
-                  <label class="col-sm-3 control-label" for="bug-report-500-subject">{% trans "Short Description" %}</label>
-                  <div class="col-sm-6">
-                    <input type="text" class="form-control" name="subject" id="bug-report-500-subject">
-                  </div>
+                <div class="mb-3">
+                  <label class="form-label" for="bug-report-500-subject">{% trans "Short Description" %}</label>
+                  <input type="text" class="form-control" name="subject" id="bug-report-500-subject">
                 </div>
-                <div class="form-group">
-                  <label class="col-sm-3 control-label" for="bug-report-500-message">{% trans "Full Description" %}</label>
-                  <div class="col-sm-6">
-                    <textarea class="form-control vertical-resize" name="message" id="bug-report-500-message" rows="5"></textarea>
-                  </div>
+                <div class="mb-3">
+                  <label class="form-label" for="bug-report-500-message">{% trans "Full Description" %}</label>
+                  <textarea class="form-control vertical-resize" name="message" id="bug-report-500-message" rows="5"></textarea>
                 </div>
               </fieldset>
-
-              <div class="form-actions">
-                <div class="col-sm-offset-3">
-                  <button type="submit" class="btn btn-primary">{% trans "Submit Report" %}</button>
-                </div>
-              </div>
+              <button type="submit" class="btn btn-primary">{% trans "Submit Report" %}</button>
             </form>
           </div>
         </div>

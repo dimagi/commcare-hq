@@ -1,5 +1,6 @@
 import json
 from contextlib import contextmanager
+from copy import deepcopy
 from unittest.mock import patch
 
 from django.http import Http404
@@ -7,6 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.es.users import user_adapter
@@ -36,6 +38,12 @@ from corehq.util.test_utils import (
     generate_cases,
     privilege_enabled,
 )
+
+
+def get_default_available_permissions(**kwargs):
+    permissions = HqPermissions(**kwargs).to_json()
+    permissions.pop('manage_domain_alerts')
+    return permissions
 
 
 class TestMobileWorkerListView(TestCase):
@@ -193,7 +201,7 @@ class TestUpdateRoleFromView(TestCase):
         'is_non_admin_editable': False,
         'is_archived': False,
         'upstream_id': None,
-        'permissions': HqPermissions(edit_web_users=True).to_json(),
+        'permissions': get_default_available_permissions(edit_web_users=True),
         'assignable_by': []
     }
 
@@ -216,7 +224,7 @@ class TestUpdateRoleFromView(TestCase):
                 role.delete()
 
     def test_create_role(self):
-        role_data = self.BASE_JSON.copy()
+        role_data = deepcopy(self.BASE_JSON)
         role_data["name"] = "role2"
         role_data["assignable_by"] = [self.role.couch_id]
         role = _update_role_from_view(self.domain, role_data)
@@ -228,20 +236,20 @@ class TestUpdateRoleFromView(TestCase):
         return role
 
     def test_create_role_duplicate_name(self):
-        role_data = self.BASE_JSON.copy()
+        role_data = deepcopy(self.BASE_JSON)
         role_data["name"] = "role1"
         with self.assertRaises(ValueError):
             _update_role_from_view(self.domain, role_data)
 
     def test_update_role(self):
-        role = self.test_create_role()
-
-        role_data = self.BASE_JSON.copy()
-        role_data["_id"] = role.get_id
+        role_data = deepcopy(self.BASE_JSON)
+        role_data["_id"] = self.role.get_id
         role_data["name"] = "role1"  # duplicate name during update is OK for now
         role_data["default_landing_page"] = None
         role_data["is_non_admin_editable"] = True
-        role_data["permissions"] = HqPermissions(edit_reports=True, view_report_list=["report1"]).to_json()
+        role_data["permissions"] = get_default_available_permissions(
+            edit_reports=True, view_report_list=["report1"]
+        )
         updated_role = _update_role_from_view(self.domain, role_data)
         self.assertEqual(updated_role.name, "role1")
         self.assertIsNone(updated_role.default_landing_page)
@@ -249,8 +257,27 @@ class TestUpdateRoleFromView(TestCase):
         self.assertEqual(updated_role.assignable_by, [])
         self.assertEqual(updated_role.permissions.to_json(), role_data['permissions'])
 
+    def test_update_role_for_manage_domain_alerts(self):
+        def patch_privilege_check(_domain, privilege_slug):
+            if privilege_slug == privileges.CUSTOM_DOMAIN_ALERTS:
+                return True
+            return domain_has_privilege(_domain, privilege_slug)
+
+        role_data = deepcopy(self.BASE_JSON)
+        role_data['_id'] = self.role.get_id
+        role_data['permissions']['manage_domain_alerts'] = True
+        self.assertFalse(self.role.permissions.to_json()['manage_domain_alerts'])
+
+        with self.assertRaisesMessage(ValueError, "Update subscription to set access for custom domain alerts"):
+            _update_role_from_view(self.domain, role_data)
+
+        with patch('corehq.apps.users.views.domain_has_privilege', side_effect=patch_privilege_check):
+            _update_role_from_view(self.domain, role_data)
+        self.role.refresh_from_db()
+        self.assertTrue(self.role.permissions.to_json()['manage_domain_alerts'])
+
     def test_landing_page_validation(self):
-        role_data = self.BASE_JSON.copy()
+        role_data = deepcopy(self.BASE_JSON)
         role_data["default_landing_page"] = "bad value"
         with self.assertRaises(ValueError):
             _update_role_from_view(self.domain, role_data)
@@ -259,8 +286,7 @@ class TestUpdateRoleFromView(TestCase):
 class TestDeleteRole(TestCase):
     domain = 'test-role-delete'
 
-    @patch("corehq.apps.users.views.get_role_user_count", return_value=0)
-    def test_delete_role(self, _):
+    def test_delete_role(self):
         role = UserRole.create(self.domain, 'test-role')
         _delete_user_role(self.domain, {"_id": role.get_id})
         self.assertFalse(UserRole.objects.filter(pk=role.id).exists())
@@ -269,8 +295,8 @@ class TestDeleteRole(TestCase):
         with self.assertRaises(Http404):
             _delete_user_role(self.domain, {"_id": "mising"})
 
-    @patch("corehq.apps.users.views.get_role_user_count", return_value=1)
-    def test_delete_role_with_users(self, _):
+    def test_delete_role_with_users(self):
+        self.user_count_mock.return_value = 1
         role = UserRole.create(self.domain, 'test-role')
         with self.assertRaisesRegex(InvalidRequestException, "It has one user"):
             _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
@@ -284,6 +310,11 @@ class TestDeleteRole(TestCase):
         role = UserRole.create("other-domain", 'test-role')
         with self.assertRaises(Http404):
             _delete_user_role(self.domain, {"_id": role.get_id})
+
+    def setUp(self):
+        user_count_patcher = patch('corehq.apps.users.views.get_role_user_count', return_value=0)
+        self.user_count_mock = user_count_patcher.start()
+        self.addCleanup(user_count_patcher.stop)
 
 
 class TestDeletePhoneNumberView(TestCase):

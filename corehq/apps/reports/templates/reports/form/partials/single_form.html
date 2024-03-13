@@ -231,6 +231,19 @@
             </button>
           </form>
         {% endif %}
+        {% if is_archived %}
+          <form>
+            <span class="hq-help-template"
+                  data-title="{% trans "Deleting Forms" %}"
+                  data-content="{% trans "This is a permanent action that cannot be undone." %}"
+                  data-placement="left"
+            ></span>
+            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#delete-form-modal">
+              <i class="fa-regular fa-trash-can"></i>
+              {% trans 'Delete this form' %}
+            </button>
+          </form>
+        {% endif %}
 
       {% endif %}
     </div>
@@ -333,10 +346,10 @@
   <div class="tab-pane" id="form-xml">
     <p class="btn-group">
       <a class="btn btn-default" href="{% url "download_form" domain instance.form_id %}" target="_blank">
-        <i class="fa fa-external-link"></i>&nbsp;{% trans "Open XML in New Window" %}
+        <i class="fa-solid fa-up-right-from-square"></i>&nbsp;{% trans "Open XML in New Window" %}
       </a>
       <button class="btn btn-default copy-xml" data-toggle="tooltip" data-trigger="manual">
-        <i class="fa fa-files-o"></i>&nbsp;{% trans "Copy XML to clipboard" %}
+        <i class="fa-regular fa-files"></i>&nbsp;{% trans "Copy XML to clipboard" %}
       </button>
     </p>
     {% render_form_xml instance %}
@@ -348,3 +361,37 @@
     {% include 'reports/partials/data_corrections_modal.html' %}
   {% endif %}
 {% endif %}
+
+<div class="modal fade" id="delete-form-modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">{% trans 'Permanently Delete Form' %}</h4>
+      </div>
+      <div class="modal-body">
+        <form action="{% url "soft_delete_form" domain instance.form_id %}" method="POST">{% csrf_token %}
+          <p class="alert alert-warning">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            {% blocktrans %}
+              It is important you read the entire message below thoroughly before completing this action.
+            {% endblocktrans %}
+          </p>
+          <p>
+            {% blocktrans %}
+              Once deleted, you will not be able to recover this form. Are you sure you want to delete this form?
+            {% endblocktrans %}
+          </p>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default disable-on-submit-no-spinner" data-dismiss="modal">
+              {% trans "Cancel" %}
+            </button>
+            <button type="submit" class="btn btn-danger disable-on-submit" id="delete-form-btn">
+              {% trans "Delete" %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

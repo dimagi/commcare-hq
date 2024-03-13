@@ -162,7 +162,11 @@ class ReadableFormdataTest(SimpleTestCase):
                 "timeEnd": "2014-04-28T18:27:05Z",
                 "appVersion": {
                     "@xmlns": "http://commcarehq.org/xforms",
-                    "#text": "CommCare ODK, version \"2.11.0\"(29272). App v8. CommCare Version 2.11. Build 29272, built on: February-14-2014"
+                    "#text": (
+                        "CommCare ODK, version \"2.11.0\"(29272). App v8. "
+                        "CommCare Version 2.11. "
+                        "Build 29272, built on: February-14-2014"
+                    )
                 },
                 "timeStart": "2014-04-28T18:26:38Z",
                 "deviceID": "990004280784863"
@@ -280,7 +284,11 @@ class ReadableFormdataTest(SimpleTestCase):
                 "timeEnd": "2014-04-28T18:27:05Z",
                 "appVersion": {
                     "@xmlns": "http://commcarehq.org/xforms",
-                    "#text": "CommCare ODK, version \"2.11.0\"(29272). App v8. CommCare Version 2.11. Build 29272, built on: February-14-2014"
+                    "#text": (
+                        "CommCare ODK, version \"2.11.0\"(29272). "
+                        "App v8. CommCare Version 2.11. "
+                        "Build 29272, built on: February-14-2014"
+                    )
                 },
                 "timeStart": "2014-04-28T18:26:38Z",
                 "deviceID": "990004280784863"

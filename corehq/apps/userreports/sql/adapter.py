@@ -20,7 +20,7 @@ from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.test_utils import unit_testing_only
-
+from corehq.apps.userreports.util import register_data_source_row_change
 logger = logging.getLogger(__name__)
 
 
@@ -177,6 +177,12 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             for query in queries:
                 session.execute(query)
 
+        register_data_source_row_change(
+            domain=self.config.domain,
+            data_source_id=self.config._id,
+            doc_ids=doc_ids,
+        )
+
     def supports_upsert(self):
         """Return True if supports UPSERTS else False
 
@@ -208,6 +214,12 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         with self.session_context() as session:
             session.execute(delete)
 
+        register_data_source_row_change(
+            domain=self.config.domain,
+            data_source_id=self.config._id,
+            doc_ids=set(doc_ids),
+        )
+
     def delete(self, doc, use_shard_col=True):
         self.bulk_delete([doc], use_shard_col)
 
@@ -215,6 +227,24 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         with self.session_context() as session:
             query = session.query(self.get_table()).filter_by(doc_id=doc['_id'])
             return session.query(query.exists()).scalar()
+
+    def get_rows_by_doc_id(self, doc_id):
+        """
+        Returns the rows of the data source for the form submission or
+        case identified by ``doc_id``.
+
+        The return value is a list of dictionaries with column names as
+        keys.
+        """
+        table = self.get_table()
+        headers = list(table.columns.keys())
+        rows = []
+        with self.session_context() as session:
+            query = session.query(self.get_table()).filter_by(doc_id=doc_id)
+            for row_values in query:
+                row_dict = {k: v for k, v in zip(headers, row_values)}
+                rows.append(row_dict)
+        return rows
 
 
 class MultiDBSqlAdapter(object):
@@ -306,13 +336,15 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
         if orig_exception and isinstance(orig_exception, psycopg2.IntegrityError):
             if orig_exception.pgcode == psycopg2.errorcodes.NOT_NULL_VIOLATION:
                 from corehq.apps.userreports.models import InvalidUCRData
-                InvalidUCRData.objects.create(
+                InvalidUCRData.objects.get_or_create(
                     doc_id=doc['_id'],
-                    doc_type=doc['doc_type'],
-                    domain=doc['domain'],
                     indicator_config_id=self.config._id,
                     validation_name='not_null_violation',
-                    validation_text='A column in this doc violates an is_nullable constraint'
+                    defaults={
+                        'doc_type': doc['doc_type'],
+                        'domain': doc['domain'],
+                        'validation_text': 'A column in this doc violates an is_nullable constraint'
+                    }
                 )
                 return
 

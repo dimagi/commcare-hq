@@ -104,7 +104,7 @@ class BulkUploadForm(forms.Form):
                 *self.crispy_form_fields(context)
             ),
             StrictButton(
-                ('<i class="fa fa-cloud-upload"></i> Upload %s' % plural_noun),
+                ('<i class="fa-solid fa-cloud-arrow-up"></i> Upload %s' % plural_noun),
                 css_class='btn-primary disable-on-submit',
                 data_bind='disable: !file()',
                 type='submit',
@@ -200,7 +200,7 @@ class FormListForm(object):
     columns = None  # list configuring the columns to display
 
     child_form_data = forms.CharField(widget=forms.HiddenInput)
-    template = "hqwebapp/partials/form_list_form.html"
+    template = "hqwebapp/partials/bootstrap3/form_list_form.html"
 
     def __init__(self, data=None, request=None, *args, **kwargs):
         self.request = request

@@ -155,7 +155,7 @@
           <locale id="m1.case_short.case_name_1.header"/>
         </text>
       </header>
-      <template>
+      <template form="plain">
         <text>
           &lt;b&gt;Name &lt;/b&gt;
           <xpath function="case_name">
@@ -180,7 +180,7 @@
           <locale id="m1.case_short.case_calculated_property_2.header"/>
         </text>
       </header>
-      <template>
+      <template form="plain">
         <text>
           &lt;b&gt;Name &lt;/b&gt;
           <xpath function="count(instance('item-list:persistent')/persistent_list/persistent)">
@@ -205,7 +205,7 @@
           <locale id="m1.case_short.case_name_4.header"/>
         </text>
       </header>
-      <template>
+      <template form="plain">
         <text>
           &lt;b&gt;Name &lt;/b&gt;
           <xpath function="case_name">
@@ -220,10 +220,10 @@
        </style>
       <header>
         <text>
-          <locale id="m1.case_short.case_name_1.header"/>
+          <locale id="m1.case_short.case_name_3.header"/>
         </text>
       </header>
-      <template>
+      <template form="plain">
         <text>
           &lt;b&gt;Name &lt;/b&gt;
           <xpath function="case_name">
@@ -245,10 +245,10 @@
        </style>
       <header>
         <text>
-          <locale id="m1.case_short.case_name_1.header"/>
+          <locale id="m1.case_short.case_name_5.header"/>
         </text>
       </header>
-      <template>
+      <template form="plain">
         <text>&lt;b&gt;Name &lt;/b&gt; <xpath function="case_name"/></text>
       </template>
     </field>

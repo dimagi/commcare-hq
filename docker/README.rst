@@ -38,7 +38,7 @@ etc.), you should stop them now.
 
 Run ::
 
-    $ scripts/docker up -d postgres couch redis elasticsearch2 zookeeper kafka minio
+    $ scripts/docker up -d postgres couch redis elasticsearch5 zookeeper kafka minio
 
 to build and start those Docker services in the background. (Omit ``-d``
 to run them in the foreground.)
@@ -224,3 +224,44 @@ DOCKER_HQ_OVERLAYFS_METACOPY=[ on | **off** ]
    (performance optimization, has security implications). (Default: "off")
 
 See ``.travis.yml`` for environment variable options used on Travis.
+
+
+Run containers with Podman instead of Docker
+============================================
+
+Podman 4.3 or later can be used to run HQ containers. Unlike docker, podman is
+daemonless and runs containers in rootless mode by default. Podman 4.x is
+available on recent versions of Ubuntu. Older versions, such as Ubuntu 22.04,
+require `a third-party package repository <https://podman.io/docs/installation#debian>`_.
+
+
+Install Podman
+--------------
+
+.. code:: bash
+
+    sudo apt install podman podman-docker
+    
+    echo 'export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock' >> ~/.bashrc
+    echo 'export DOCKER_SOCK=$XDG_RUNTIME_DIR/podman/podman.sock' >> ~/.bashrc
+
+Create a podman wrapper script named `docker` with the following content
+somewhere on your ``PATH`` (``~/.local/bin/docker`` may be a good place if it
+is on your ``PATH``).
+
+.. code:: bash
+
+    #! /usr/bin/bash
+    if [[ "$1" == compose ]]; then
+        shift
+        /usr/bin/docker-compose "$@"  # v1, installed by podman-docker
+    else
+        podman "$@"
+    fi
+
+Start containers
+----------------
+
+::
+
+    ./scripts/docker up -d

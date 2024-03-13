@@ -1,0 +1,22 @@
+{% extends "hqwebapp/base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block title %}{% trans "Thank you for logging in!" %}{% endblock %}
+
+{% block container_class %}container-fluid{% endblock %}
+
+{% block content %}
+  <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+  <div class="page-header">
+    <h1>{% trans "Thank you for logging in!" %}</h1>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <p>
+        {% trans "You may close this window and return to your work." %}
+      </p>
+    </div>
+  </div>
+{% endblock content %}

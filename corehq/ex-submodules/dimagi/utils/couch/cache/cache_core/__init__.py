@@ -12,7 +12,7 @@ MOCK_REDIS_CACHE = None
 
 try:
     REDIS_CACHE = cache.caches['redis']
-except:
+except InvalidCacheBackendError:
     REDIS_CACHE = None
 
 DEBUG_TRACE = False
@@ -64,6 +64,6 @@ def key_doc_id(doc_id):
 
 # has to be down here because of cyclic dependency
 # todo: move all above out of init; this should really be the only thing in init
-from .api import *
-from .gen import *
-from .const import *
+from .api import *  # noqa: E402
+from .gen import *  # noqa: E402
+from .const import *  # noqa: E402

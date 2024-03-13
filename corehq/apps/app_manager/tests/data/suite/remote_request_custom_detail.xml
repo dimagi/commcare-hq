@@ -21,6 +21,7 @@
     <session>
       <query url="https://www.example.com/a/test_domain/phone/search/123/"
              default_search="false"
+             dynamic_search="false"
              storage-instance="results"
              template="case">
         <title>

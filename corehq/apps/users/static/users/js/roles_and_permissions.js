@@ -4,21 +4,21 @@ hqDefine("users/js/roles_and_permissions",[
     'underscore',
     "hqwebapp/js/initial_page_data",
     'users/js/roles',
-    'hqwebapp/js/knockout_bindings.ko', // for roles modal
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // for roles modal
 ], function ($, ko, _, initialPageData, userRoles) {
 
     ko.bindingHandlers.permissionIcon = {
         init: function (element) {
-            $('<i class="icon fa"></i> <div class="details"></div>').appendTo(element);
+            $('<i class="icon"></i> <div class="details"></div>').appendTo(element);
         },
         update: function (element, valueAccessor) {
             var opts = valueAccessor(),
                 isEdit = ko.utils.unwrapObservable(opts.edit),
                 isView = ko.utils.unwrapObservable(opts.view),
                 isManage = ko.utils.unwrapObservable(opts.manage),
-                iconEdit = 'fa-check',
-                iconView = 'fa-eye',
-                iconManage = 'fa-check',
+                iconEdit = 'fa-solid fa-check',
+                iconView = 'fa-solid fa-eye',
+                iconManage = 'fa-solid fa-check',
                 details = $(element).find('.details'),
                 $icon = $(element).find('.icon');
 
@@ -53,8 +53,10 @@ hqDefine("users/js/roles_and_permissions",[
         var url = initialPageData.reverse;
 
         var $userRolesTable = $('#user-roles-table');
+        let $linkedRolesModal = $('#modal_linked_roles');
+        const $infoBar = $('#infobar');
 
-        userRoles.initUserRoles($userRolesTable, {
+        userRoles.initUserRoles($userRolesTable, $linkedRolesModal, $infoBar, {
             userRoles: initialPageData.get("user_roles"),
             nonAdminRoles: initialPageData.get("non_admin_roles"),
             defaultRole: initialPageData.get("default_role"),
@@ -72,6 +74,7 @@ hqDefine("users/js/roles_and_permissions",[
             DataFileDownloadEnabled: initialPageData.get("data_file_download_enabled"),
             ExportOwnershipEnabled: initialPageData.get("export_ownership_enabled"),
             dataRegistryChoices: initialPageData.get("data_registry_choices"),
+            canEditLinkedData: initialPageData.get("can_edit_linked_data"),
         });
     });
 });

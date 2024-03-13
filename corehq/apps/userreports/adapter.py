@@ -122,9 +122,9 @@ class IndicatorAdapter(object):
         from corehq.apps.userreports.models import DataSourceActionLog
         self._log_action(initiated_by, source, DataSourceActionLog.DROP, skip=skip)
 
-    def log_table_migrate(self, source, diffs):
+    def log_table_migrate(self, source, diffs, initiated_by=None):
         from corehq.apps.userreports.models import DataSourceActionLog
-        self._log_action(None, source, DataSourceActionLog.MIGRATE, diffs=diffs)
+        self._log_action(initiated_by, source, DataSourceActionLog.MIGRATE, diffs=diffs)
 
     def _log_action(self, initiated_by, source, action, diffs=None, skip_destructive=False, skip=False):
         """

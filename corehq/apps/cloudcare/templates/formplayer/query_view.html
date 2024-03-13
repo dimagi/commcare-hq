@@ -3,31 +3,66 @@
 
 <script type="text/template" id="query-view-list-template">
   <form>
-    <% if (title.length > 0) {%>
+    <% if (sidebarEnabled) {%>
+      <button type="button" class="close visible-xs visible-sm" aria-label="{% trans "Close" %}"
+        data-toggle="collapse" data-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <div class="query-button-container">
+        <button class="btn btn-default" type="button" id="query-clear-button">
+          <div>{% trans "Clear" %}</div>
+        </button>
+        <button class="btn btn-primary" type="submit" id="query-submit-button">
+          <div>{% trans "Search" %}</div>
+        </button>
+      </div>
+    <% } %>
+    <% if (title.length > 0 && !sidebarEnabled) { %>
       <h2 tabindex="0"><%- title %></h2>
     <% } %>
-    <% if (description.length > 0) {%>
-      <div id="query-description" tabindex="0">
+    <% if (description.length > 0 && !sidebarEnabled) { %>
+      <div class="query-description" tabindex="0">
         <%= description %>
       </div>
     <% } %>
-    <table class="table table-hover table-striped table-bordered" role="presentation">
+    <table class="table table-hover <%= grouped ? '' : 'table-striped table-bordered' %>" role="presentation">
       <tbody id="query-properties">
       </tbody>
     </table>
-    <button class="btn btn-default" type="button" id="query-clear-button">
-      <div>{% trans "Clear" %}</div>
-    </button>
-    <button class="btn btn-primary" type="submit" id="query-submit-button">
-      <div>{% trans "Submit" %}</div>
-    </button>
+    <% if (!sidebarEnabled) {%>
+      <button class="btn btn-default" type="button" id="query-clear-button">
+        <div>{% trans "Clear" %}</div>
+      </button>
+      <button class="btn btn-primary" type="submit" id="query-submit-button">
+        <div>{% trans "Search" %}</div>
+      </button>
+    <% } %>
   </form>
 </script>
 
+<script type="text/template" id="query-view-group-template">
+  <td class="search-query-group">
+    <% if (named) { %>
+    <div class="search-query-group-header <% if (required) { %> required<% } %>" data-toggle="collapse" data-target="#group-<%- groupKey %>" aria-expanded="true" aria-controls="group-<%- groupKey %>">
+      <label class="search-query-group-header-label"><%= groupName %></label>
+      <i class="fa fa-angle-double-down pull-right" style="font-size: larger"></i>
+    </div>
+    <% } %>
+    <div id="group-<%- groupKey %>" class="in">
+      <table class="table table-hover" role="presentation">
+        <tbody id="query-group-content">
+        </tbody>
+      </table>
+    </div>
 
+  </td>
+</script>
 
 <script type="text/template" id="query-view-item-template">
-  <td class="col-sm-6 query-caption<% if (required) { %> required<% } %><% if (errorMessage) { %> has-error<% } %>">
+  <<%- contentTag %>
+    class="<% if (contentTag === 'td') { %>col-sm-6 <% } %>query-caption
+           <% if (required) { %> required<% } %>
+           <% if (errorMessage) { %> has-error<% } %>">
     <div>
       <label class="control-label" for="<%- text ? text : "" %>">
         <%- text ? text : "" %>
@@ -40,8 +75,11 @@
       </div>
       <% } %>
     </div>
-  </td>
-  <td class="col-sm-6 query-input-group<% if (errorMessage) { %> has-error<% } %>">
+  </<%- contentTag %>>
+  <<%- contentTag %>
+    class="<% if (contentTag === 'td') { %>col-sm-6 <% } else { %>input-group-sm <% } %>query-input-group
+           <% if (errorMessage) { %> has-error<% } %>">
+
     <% if (input == "select1") { %>
     <select class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>"<% if (required) { %> aria-required="true"<% } %>>
         <option value=""></option>
@@ -68,7 +106,7 @@
              class="date query-field form-control"
              value="<%- value %>"
              <% if (required) { %> aria-required="true"<% } %>>
-      <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+      <span class="input-group-addon"><i class="fa-solid fa-calendar-days"></i></span>
     </div>
 
     <% } else if (input === "daterange") { %>
@@ -112,5 +150,5 @@
               {% trans "Include results where '<%- text %>' is blank" %}
             </label>
             <% } %>
-  </td>
+  </<%- contentTag %>>
 </script>

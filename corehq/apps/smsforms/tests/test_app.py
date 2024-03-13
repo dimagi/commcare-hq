@@ -22,10 +22,12 @@ from corehq.apps.smsforms.app import (
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import WebUser
+from corehq.apps.users.tests.util import patch_user_data_db_layer
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.util import utcnow
 
 
+@patch_user_data_db_layer()
 @patch('corehq.apps.smsforms.app.tfsms.start_session')
 class TestStartSession(TestCase):
     domain = "test-domain"
@@ -127,7 +129,9 @@ class TestStartSession(TestCase):
                 'commcare_first_name': None,
                 'commcare_last_name': None,
                 'commcare_phone_number': None,
+                'commcare_profile': '',
                 'commcare_project': self.domain,
+                'commcare_user_type': 'web',
             },
             'app_id': None
         }

@@ -1,34 +1,23 @@
-{% extends "reports/standard/base_template.html" %}
+{% extends "base_template.html" %}
 
-{% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
 
 {% block page_title %}
 {{ current_page.title }}
-{% load compress %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <!-- Scripts for mapbox -->
-    <script src='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js'></script>
-    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.js'></script>
     {% compress js %}
         <script src="{% static 'geospatial/js/geospatial_map.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
- {% block stylesheets %}
- {{ block.super }}
- <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css">
- <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css" type="text/css">
- {% endblock %}
-
-
-{% block additional_initial_page_data %}
-    {% initial_page_data "mapbox_access_token" mapbox_access_token %}
-{% endblock %}
-
-{% block page_content %}{{ block.super }}
-    <div id="geospatial-map" style="height: 500px"></div>
+{% block additional_initial_page_data %}{{ block.super }}
+    {% initial_page_data "saved_polygons" saved_polygons %}
+    {% registerurl 'geo_polygon' domain %}
+    {% registerurl 'case_disbursement' domain %}
+    {% registerurl 'get_users_with_gps' domain %}
+    {% registerurl 'edit_commcare_user' domain '---' %}
+    {% registerurl 'location_search' domain %}
 {% endblock %}

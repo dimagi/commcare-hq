@@ -140,7 +140,7 @@ class TestZapierIntegration(TestCase):
             )
             self.assertIsNotNone(subscription.repeater_id)
             self.assertNotEqual(subscription.repeater_id, '')
-            self.assertEqual(repeater_class.objects.get(repeater_id=subscription.repeater_id).repeater_type,
+            self.assertEqual(repeater_class.objects.get(id=subscription.repeater_id).repeater_type,
                              repeater_class._repeater_type)
 
     def test_subscribe_error(self):

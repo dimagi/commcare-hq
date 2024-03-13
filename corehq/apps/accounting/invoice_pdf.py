@@ -13,7 +13,7 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.util.view_utils import absolute_reverse
 
 LOGO_FILENAME = \
-    'corehq/apps/accounting/static/accounting/images/Dimagi-Logo-RGB.jpg'
+    'corehq/apps/accounting/static/accounting/images/Dimagi-Deep-Purple-Standard-Logo.jpg'
 
 
 def prepend_newline_if_not_empty(string):

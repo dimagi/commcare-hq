@@ -151,7 +151,7 @@ class RestoreContent(object):
             self._write_to_file(fileobj)
             fileobj.seek(0)
             return fileobj
-        except:
+        except:  # noqa
             fileobj.close()
             raise
 
@@ -313,7 +313,7 @@ class RestoreParams(object):
         return self.device_id and self.device_id.startswith("WebAppsLogin")
 
     def __repr__(self):
-        return "RestoreParams(sync_log_id='{}', version={}, app='{}', device_id='{}'".format(
+        return "RestoreParams(sync_log_id='{}', version={}, app='{}', device_id='{}')".format(
             self.sync_log_id,
             self.version,
             self.app,
@@ -394,7 +394,7 @@ class RestoreState:
 
                 if self.params.is_webapps:
                     # ignore this from webapps for now and just report
-                    notify_error("State hash mistmatch from webapps", details={
+                    notify_error("State hash mismatch from webapps", details={
                         'synclog_id': self.params.sync_log_id,
                         'device_id': self.params.device_id,
                         'app_id': self.params.app_id,
@@ -584,8 +584,10 @@ class RestoreConfig(object):
                 payload = self.get_payload()
             response = payload.get_http_response()
         except RestoreException as e:
-            logger.exception("%s error during restore submitted by %s: %s" %
-                              (type(e).__name__, self.restore_user.username, str(e)))
+            logger.exception(
+                "%s error during restore submitted by %s: %s" %
+                (type(e).__name__, self.restore_user.username, str(e))
+            )
             is_async = False
             response = get_simple_response_xml(
                 str(e),
@@ -653,7 +655,7 @@ class RestoreConfig(object):
             else:
                 fileobj.seek(0)
                 response = RestoreResponse(fileobj)
-        except:
+        except:  # noqa
             fileobj.close()
             raise
         return response

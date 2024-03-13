@@ -34,32 +34,29 @@
             <td data-bind="text: name"></td>
             <td data-bind="text: lastUpdate"></td>
             <td data-bind="css: {'has-error': error}">
+              <button class="btn btn-danger" data-bind="visible: showUpdate() && !update_url, click: update">
+                <i class="fa fa-refresh"></i> {% trans "Sync" %}
+              </button>
               <button class="btn btn-danger" data-toggle="modal" data-bind="visible: showUpdate() && !update_url, attr: {'data-target': '#overwrite-content-modal-' + $index()}">
-                <i class="fa fa-refresh"></i> {% trans "Sync & Overwrite" %}
+                <i class="fa fa-refresh"></i> {% trans "Sync & Overwrite Matches" %}
               </button>
               <div class="modal fade" tabindex="-1" role="dialog" data-bind="attr: {'id': 'overwrite-content-modal-' + $index()}">
                 <div class="modal-dialog" role="document">
                   <div class="modal-content">
                     <div class="modal-header">
                       <button type="button" class="close" data-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
-                      <h4 class="modal-title">{% trans 'Sync & Overwrite' %}</h4>
+                      <h4 class="modal-title">{% trans 'Sync & Overwrite Matches?' %}</h4>
                     </div>
                     <div class="modal-body">
-                      <h4>
-                        {% blocktrans trimmed %}
-                          Are you sure you want to overwrite <b data-bind="text: name"></b>?
-                        {% endblocktrans %}
-                      </h4>
                       <p>
                         {% blocktrans trimmed %}
-                          This will pull <!-- ko text: name --><!-- /ko --> from the upstream project space <b data-bind="text: $parent.domainLink.upstreamDomain"></b>, overwriting the existing <!-- ko text: name --><!-- /ko -->.<br/>
-                          <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn more</a> about pulling content from an upstream project space into a downstream project space.
+                        If this project space has unlinked configurations that match with the configurations being synced from the upstream project space, continuing will overwrite them and establish them as linked configurations. <a href="https://confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces" target="_blank">Learn More</a>
                         {% endblocktrans %}
                       </p>
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                      <button type="button" class="btn btn-primary" data-bind="click: update" data-dismiss="modal">{% trans 'Sync & Overwrite' %}</button>
+                      <button type="button" class="btn btn-primary" data-bind="click: forceUpdate" data-dismiss="modal">{% trans 'Sync & Overwrite' %}</button>
                     </div>
                   </div>
                 </div>
@@ -67,10 +64,10 @@
               <button class="btn btn-default disabled" data-bind="visible: showSpinner">
                 <i class="fa fa-spinner"></i>
               </button>
-              <button class="btn btn-success disabled" data-bind="visible: hasSuccess">
+              <button class="btn btn-success" data-bind="visible: hasSuccess, click: resetStatus">
                 <i class="fa fa-check"></i> {% trans "Success" %}
               </button>
-              <button class="btn btn-danger disabled" data-bind="visible: error">
+              <button class="btn btn-danger" data-bind="visible: error, click: resetStatus">
                 <i class="fa fa-times"></i> {% trans "Error" %}
               </button>
               <span class="help-block" data-bind="visible: error, text: error"></span>

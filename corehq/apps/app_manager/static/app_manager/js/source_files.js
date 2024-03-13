@@ -12,8 +12,7 @@ hqDefine('app_manager/js/source_files', [
             $(this).parents('tr').next('tr').toggleClass("hide");
         });
 
-        var currentVersion = initialPageData.get('current_version'),
-            $form = $("#compare-form"),
+        var $form = $("#compare-form"),
             $select = $form.find("select");
 
         $form.find("button").click(function () {

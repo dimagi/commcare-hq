@@ -1,7 +1,7 @@
 hqDefine("dhis2/js/dataset_map_update", [
     "jquery",
-    "hqwebapp/js/crud_paginated_list_init",
-    "hqwebapp/js/widgets",
+    "hqwebapp/js/bootstrap3/crud_paginated_list_init",
+    "hqwebapp/js/bootstrap3/widgets",
     'jquery-ui/ui/widgets/datepicker',
 ], function ($) {
     function showCompleteDateColumnInput(shouldShow) {

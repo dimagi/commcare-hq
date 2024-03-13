@@ -3,7 +3,7 @@ hqDefine('hqadmin/js/system_info', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
 ], function (
     $,
     ko,
@@ -20,18 +20,18 @@ hqDefine('hqadmin/js/system_info', [
         var minutes = date.getMinutes();
         // seconds part from the timestamp
         var seconds = date.getSeconds(),
-            second_str;
+            secondStr;
         if (seconds < 10) {
-            second_str = "0" + seconds;
+            secondStr = "0" + seconds;
         } else {
-            second_str = seconds;
+            secondStr = seconds;
         }
 
         var year = date.getFullYear();
         var month = date.getMonth() + 1;
         var day = date.getDate();
 
-        return  year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' +  second_str;
+        return  year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' +  secondStr;
 
     }
 
@@ -294,7 +294,9 @@ hqDefine('hqadmin/js/system_info', [
                     var err = 'Unknown server error';
                     try {
                         err = JSON.parse(jqxhr.responseText).error;
-                    } catch (e) {}
+                    } catch (e) {
+                        // do nothing
+                    }
                     self.operationInProgress(false);
                 }).always(function () {
                     $('#pillow_operation_modal').modal('hide');

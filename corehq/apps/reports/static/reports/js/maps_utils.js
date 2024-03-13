@@ -1,4 +1,3 @@
-/* globals L */
 hqDefine("reports/js/maps_utils", function () {
     var module = {};
     module.displayDimensions = ['size', 'color', 'icon'];
@@ -47,10 +46,10 @@ hqDefine("reports/js/maps_utils", function () {
     function MetricsViewModel(control) {
         var model = this;
 
-        this.root = ko.observable();
-        this.defaultMetric = null;
+        model.root = ko.observable();
+        model.defaultMetric = null;
 
-        this.load = function (metrics) {
+        model.load = function (metrics) {
             this.root(new MetricModel({
                 title: '_root',
                 children: metrics,
@@ -64,11 +63,11 @@ hqDefine("reports/js/maps_utils", function () {
             }
         };
 
-        this.renderMetric = function (metric) {
+        model.renderMetric = function (metric) {
             control.render(metric);
         };
 
-        this.unselectAll = function () {
+        model.unselectAll = function () {
             var unselect = function (node) {
                 $.each(node.children(), function (i, e) {
                     unselect(e);
@@ -82,18 +81,18 @@ hqDefine("reports/js/maps_utils", function () {
     function MetricModel(data, parent, root) {
         var m = this;
 
-        this.metric = null;
-        this.name = ko.observable();
-        this.children = ko.observableArray();
-        this.expanded = ko.observable(false);
-        this.selected = ko.observable(false);
-        this.parent = parent;
+        m.metric = null;
+        m.name = ko.observable();
+        m.children = ko.observableArray();
+        m.expanded = ko.observable(false);
+        m.selected = ko.observable(false);
+        m.parent = parent;
 
-        this.group = ko.computed(function () {
+        m.group = ko.computed(function () {
             return this.children().length > 0;
-        }, this);
+        }, m);
 
-        this.onclick = function () {
+        m.onclick = function () {
             if (this.group()) {
                 this.toggle();
             } else {
@@ -102,11 +101,11 @@ hqDefine("reports/js/maps_utils", function () {
             }
         };
 
-        this.toggle = function () {
+        m.toggle = function () {
             this.expanded(!this.expanded());
         };
 
-        this.select = function () {
+        m.select = function () {
             root.unselectAll();
 
             var node = this;
@@ -117,7 +116,7 @@ hqDefine("reports/js/maps_utils", function () {
             }
         };
 
-        this.load = function (data) {
+        m.load = function (data) {
             this.metric = data;
             this.name(data.title);
             this.children($.map(data.children || [], function (e) {
@@ -128,7 +127,7 @@ hqDefine("reports/js/maps_utils", function () {
             }
         };
 
-        this.load(data);
+        m.load(data);
     }
 
     var LegendControl = L.Control.extend({
@@ -136,7 +135,7 @@ hqDefine("reports/js/maps_utils", function () {
             position: 'bottomright',
         },
 
-        onAdd: function (map) {
+        onAdd: function () {
             this.$div = $('#legend');
             this.div = this.$div[0];
             return this.div;
@@ -159,7 +158,7 @@ hqDefine("reports/js/maps_utils", function () {
             position: 'bottomright',
         },
 
-        onAdd: function (map) {
+        onAdd: function () {
             this.$div = $('#info');
             this.div = this.$div[0];
             return this.div;
@@ -359,8 +358,8 @@ hqDefine("reports/js/maps_utils", function () {
         zoomToAll(map);
     }
 
-    function initLayers(map, layers_spec) {
-        LAYER_FAMILIES = {
+    function initLayers(map, layersSpec) {
+        var LAYER_FAMILIES = {
             'fallback': {
                 url_template: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 args: {
@@ -377,10 +376,10 @@ hqDefine("reports/js/maps_utils", function () {
 
         var mkLayer = function (spec) {
             if (spec.family) {
-                var family_spec = LAYER_FAMILIES[spec.family];
-                spec.url_template = family_spec.url_template;
+                var familySpec = LAYER_FAMILIES[spec.family];
+                spec.url_template = familySpec.url_template;
                 spec.args = spec.args || {};
-                $.each(family_spec.args || {}, function (k, v) {
+                $.each(familySpec.args || {}, function (k, v) {
                     spec.args[k] = v;
                 });
             }
@@ -389,7 +388,7 @@ hqDefine("reports/js/maps_utils", function () {
 
         var layers = {};
         var defaultLayer = null;
-        $.each(layers_spec, function (k, v) {
+        $.each(layersSpec, function (k, v) {
             layers[k] = mkLayer(v);
             if (v['default']) {
                 defaultLayer = k;
@@ -669,8 +668,8 @@ hqDefine("reports/js/maps_utils", function () {
         };
     }
 
-    DEFAULT_SIZE = 10;
-    DEFAULT_MIN_SIZE = 3;
+    var DEFAULT_SIZE = 10;
+    var DEFAULT_MIN_SIZE = 3;
 
     function getSize(meta, props) {
         if (meta == null) {
@@ -694,7 +693,7 @@ hqDefine("reports/js/maps_utils", function () {
         return DEFAULT_SIZE * Math.sqrt(val / baseline);
     }
 
-    DEFAULT_COLOR = 'rgba(255, 120, 0, .8)';
+    var DEFAULT_COLOR = 'rgba(255, 120, 0, .8)';
 
     function getColor(meta, props) {
         var c = (function () {
@@ -727,8 +726,6 @@ hqDefine("reports/js/maps_utils", function () {
             alpha: c.alpha(),
         };
     }
-
-    DEFAULT_ICON_URL = '/static/reports/css/leaflet/images/default_custom.png';
 
     function getIcon(meta, props) {
         //TODO support css sprites
@@ -766,18 +763,18 @@ hqDefine("reports/js/maps_utils", function () {
     // return formatted info about a row/feature, suitable for display
     // in different places (detail popup, hover infobox, table row, etc.)
     function infoContext(feature, config, mode) {
-        var prop_cols = _.keys(feature.properties);
-        var info_cols;
+        var propCols = _.keys(feature.properties);
+        var infoCols;
         if (mode == null) {
             throw "no context mode provided!";
         } else if (mode == 'detail') {
-            info_cols = config.detail_columns;
+            infoCols = config.detail_columns;
         } else if (mode == 'table') {
-            info_cols = getTableColumns(config, true);
+            infoCols = getTableColumns(config, true);
         } else {
             // 'mode' is an explicit list (subset) of columns
-            prop_cols = mode;
-            info_cols = mode;
+            propCols = mode;
+            infoCols = mode;
         }
         var formatForDisplay = function (col, datum) {
             // if display value was explicitly provided from server, use it above all else
@@ -798,7 +795,7 @@ hqDefine("reports/js/maps_utils", function () {
         var displayProperties = {};
         var rawProperties = {};
         var propTitles = {};
-        $.each(prop_cols, function (i, k) {
+        $.each(propCols, function (i, k) {
             var v = feature.properties[k];
             displayProperties[k] = formatForDisplay(k, v);
             rawProperties[k] = (v instanceof Date ? v.getTime() : v);
@@ -813,7 +810,7 @@ hqDefine("reports/js/maps_utils", function () {
             name: (config.name_column ? feature.properties[config.name_column] : null),
             info: [],
         };
-        $.each(info_cols, function (i, e) {
+        $.each(infoCols, function (i, e) {
             context.info.push({
                 slug: e, // FIXME this will cause problems if column keys have weird chars or spaces
                 label: propTitles[e],
@@ -865,9 +862,9 @@ hqDefine("reports/js/maps_utils", function () {
         if (typeof metric.color === 'object') {
             if (!metric.color.categories && !metric.color.colorstops) {
                 var stats = summarizeColumn(metric.color, data);
-                var numeric_data = (!metric.color.thresholds && !stats.nonnumeric);
-                if (numeric_data) {
-                    metric.color.colorstops = (magnitude_based_field(stats) ?
+                var numericData = (!metric.color.thresholds && !stats.nonnumeric);
+                if (numericData) {
+                    metric.color.colorstops = (magnitudeBasedField(stats) ?
                         [
                             [0, 'rgba(20, 20, 20, .8)'],
                             [stats.max || 1, DEFAULT_COLOR],
@@ -897,7 +894,7 @@ hqDefine("reports/js/maps_utils", function () {
         if (typeof metric.icon === 'object') {
             if (!metric.icon.categories) {
                 metric.icon.categories = {
-                    _other: DEFAULT_ICON_URL,
+                    _other: '/static/reports/css/leaflet/images/default_custom.png',
                 };
             }
         }
@@ -913,7 +910,7 @@ hqDefine("reports/js/maps_utils", function () {
 
         var _cols = {};
         $.each(data.features, function (i, e) {
-            $.each(e.properties, function (k, v) {
+            $.each(e.properties, function (k) {
                 if (!isIgnored(k)) {
                     _cols[k] = true;
                 }
@@ -944,7 +941,7 @@ hqDefine("reports/js/maps_utils", function () {
         };
         var stats = summarizeColumn(meta, data);
         var metric = {};
-        if (stats.nonnumeric || !magnitude_based_field(stats) || stats.nonpoint) {
+        if (stats.nonnumeric || !magnitudeBasedField(stats) || stats.nonpoint) {
             metric.color = meta;
         } else {
             metric.size = meta;
@@ -1009,7 +1006,7 @@ hqDefine("reports/js/maps_utils", function () {
             }
         });
         var uniq = [];
-        $.each(_uniq, function (k, v) {
+        $.each(_uniq, function (k) {
             uniq.push(k);
         });
         uniq.sort();
@@ -1040,12 +1037,12 @@ hqDefine("reports/js/maps_utils", function () {
 
     // based on the results of summarizeColumn, determine if this column is better
     // represented as a magnitude (0-max) or narrower range (min-max)
-    function magnitude_based_field(stats) {
+    function magnitudeBasedField(stats) {
         if (stats.min < 0 || stats.hasDates) {
             return false;
         } else if (stats.stdev != null && stats.stdev > 0) {
-            var effective_range = Math.max(stats.max, 0) - Math.min(stats.min, 0);
-            return (stats.stdev / effective_range > .1);
+            var effectiveRange = Math.max(stats.max, 0) - Math.min(stats.min, 0);
+            return (stats.stdev / effectiveRange > .1);
         } else {
             return true;
         }
@@ -1094,16 +1091,13 @@ hqDefine("reports/js/maps_utils", function () {
             });
         }
 
-        return $.map(enums, function (e, i) {
+        return $.map(enums, function (e) {
             return {
                 label: toLabel(e),
                 value: e,
             };
         });
     }
-
-    OTHER_LABEL = gettext('Other');
-    NULL_LABEL = gettext('No Data');
 
     function getEnumCaption(column, value, config, fallbacks) {
         if (isNull(value)) {
@@ -1113,8 +1107,8 @@ hqDefine("reports/js/maps_utils", function () {
 
         fallbacks = fallbacks || {};
         $.each({
-            '_other': OTHER_LABEL,
-            '_null': NULL_LABEL,
+            '_other': gettext('Other'),
+            '_null': gettext('No Data'),
         }, function (k, v) {
             fallbacks[k] = fallbacks[k] || v;
         });
@@ -1167,7 +1161,7 @@ hqDefine("reports/js/maps_utils", function () {
             $h.text(getColumnTitle(col, config));
             $e.append($h);
 
-            $div = $('<div>');
+            var $div = $('<div>');
             ({
                 size: sizeLegend,
                 color: colorLegend,
@@ -1219,10 +1213,10 @@ hqDefine("reports/js/maps_utils", function () {
         });
     }
 
-    SCALEBAR_HEIGHT = 150; //px
-    SCALEBAR_WIDTH = 20; // TODO seems like we want to tie this to em-height instead
-    TICK_SPACING = 40; //px
-    MIN_BUFFER = 15; //px
+    var SCALEBAR_HEIGHT = 150; //px
+    var SCALEBAR_WIDTH = 20; // TODO seems like we want to tie this to em-height instead
+    var TICK_SPACING = 40; //px
+    var MIN_BUFFER = 15; //px
     function colorScaleLegend($e, meta) {
         var EPOCH2000 = 946684800;
         var fromDate = function (s) {
@@ -1242,7 +1236,7 @@ hqDefine("reports/js/maps_utils", function () {
         var range = max - min;
         var step = range / (SCALEBAR_HEIGHT - 1);
 
-        var $canvas = make_canvas(SCALEBAR_WIDTH, SCALEBAR_HEIGHT);
+        var $canvas = makeConvas(SCALEBAR_WIDTH, SCALEBAR_HEIGHT);
         var ctx = $canvas[0].getContext('2d');
         for (var i = 0; i < SCALEBAR_HEIGHT; i++) {
             var k = i / (SCALEBAR_HEIGHT - 1);
@@ -1254,15 +1248,15 @@ hqDefine("reports/js/maps_utils", function () {
 
         var interval = (dateScale ? niceRoundInterval : niceRoundNumber)(step * TICK_SPACING);
         var tickvals = [];
-        for (var k = interval * Math.ceil(min / interval); k <= max; k += interval) {
+        for (var j = interval * Math.ceil(min / interval); j <= max; j += interval) {
             // TODO snap date intervals >= 1 month to start of month
-            tickvals.push(k);
+            tickvals.push(j);
         }
-        var buffer_dist = step * MIN_BUFFER;
-        if (tickvals[0] - min > buffer_dist) {
+        var bufferDist = step * MIN_BUFFER;
+        if (tickvals[0] - min > bufferDist) {
             tickvals.splice(0, 0, min);
         }
-        if (max - tickvals.slice(-1)[0] > buffer_dist) {
+        if (max - tickvals.slice(-1)[0] > bufferDist) {
             tickvals.push(max);
         }
 
@@ -1354,7 +1348,7 @@ hqDefine("reports/js/maps_utils", function () {
     function matchCategories(val, categories) {
         if (isNull(val)) {
             return categories._null;
-        } else if (categories.hasOwnProperty(val)) {
+        } else if (_.has(categories, val)) {
             return categories[val];
         } else {
             return categories._other;
@@ -1379,11 +1373,11 @@ hqDefine("reports/js/maps_utils", function () {
         });
 
         var bracket = matchThresholds(val, x);
-        var lo = (bracket == '-' ? -1 : x.indexOf(bracket));
+        var lo = (bracket === '-' ? -1 : x.indexOf(bracket));
         var hi = lo + 1;
-        if (lo == -1) {
+        if (lo === -1) {
             return y[hi];
-        } else if (hi == x.length) {
+        } else if (hi === x.length) {
             return y[lo];
         } else {
             return blendfunc(y[lo], y[hi], (val - x[lo]) / (x[hi] - x[lo]));
@@ -1419,9 +1413,9 @@ hqDefine("reports/js/maps_utils", function () {
             return $.Color(channels);
         };
 
-        lA = toLinear(a);
-        lB = toLinear(b);
-        lBlend = [];
+        var lA = toLinear(a);
+        var lB = toLinear(b);
+        var lBlend = [];
         for (var i = 0; i < 4; i++) {
             lBlend.push(blendLinear(lA[i], lB[i], k));
         }
@@ -1429,8 +1423,8 @@ hqDefine("reports/js/maps_utils", function () {
     }
 
     function niceRoundNumber(x, stops, orderOfMagnitude) {
-        var orderOfMagnitude = orderOfMagnitude || 10;
-        var stops = stops || [1, 2, 5];
+        orderOfMagnitude = orderOfMagnitude || 10;
+        stops = stops || [1, 2, 5];
         // numbers will snap to .1, .2, .5, 1, 2, 5, 10, 20, 50, 100, 200, etc.
 
         var xLog = Math.log(x) / Math.log(orderOfMagnitude);
@@ -1438,7 +1432,7 @@ hqDefine("reports/js/maps_utils", function () {
         var xNorm = Math.pow(orderOfMagnitude, xLog - exponent);
 
         var getStop = function (i) {
-            return (i == stops.length ? orderOfMagnitude * stops[0] : stops[i]);
+            return (i === stops.length ? orderOfMagnitude * stops[0] : stops[i]);
         };
         var cutoffs = $.map(stops, function (e, i) {
             var multiplier = getStop(i + 1);
@@ -1459,7 +1453,7 @@ hqDefine("reports/js/maps_utils", function () {
         var bucket = matchThresholds(xNorm, $.map(cutoffs, function (co) {
             return co.cutoff;
         }), true);
-        var multiplier = (bucket == -1 ? cutoffs.slice(-1)[0].mult / orderOfMagnitude : cutoffs[bucket].mult);
+        var multiplier = (bucket === -1 ? cutoffs.slice(-1)[0].mult / orderOfMagnitude : cutoffs[bucket].mult);
         return Math.pow(orderOfMagnitude, exponent) * multiplier;
     }
 
@@ -1537,7 +1531,7 @@ hqDefine("reports/js/maps_utils", function () {
     }
 
     // create a (hidden) canvas
-    function make_canvas(w, h) {
+    function makeConvas(w, h) {
         var $canvas = $('<canvas />');
         $canvas.attr('width', w);
         $canvas.attr('height', h);
@@ -1546,7 +1540,7 @@ hqDefine("reports/js/maps_utils", function () {
 
     // a map control map that lists the various display metrics for this report
     // and allows you to select and display them
-    MetricsControl = L.Control.extend({
+    var MetricsControl = L.Control.extend({
         options: {
             position: 'bottomleft',
         },
@@ -1625,12 +1619,21 @@ hqDefine("reports/js/maps_utils", function () {
 
     // initialize leaflet map
     function initMap($div, layers, default_pos, default_zoom) {
-        var map = L.map($div.attr('id'), {trackResize: false}).setView(default_pos, default_zoom);
+        var map = L.map($div.attr('id'), {
+            trackResize: false,
+            zoomControl: false,
+        }).setView(default_pos, default_zoom);
         initLayers(map, layers);
 
         new ZoomToFitControl().addTo(map);
         new ToggleTableControl().addTo(map);
         L.control.scale().addTo(map);
+
+        // Moving all the zoom controls to the bottom right for consistency.
+        // Could not test this instance because of other issues.
+        L.control.zoom({
+            position: 'bottomright',
+        }).addTo(map);
 
         return map;
     }

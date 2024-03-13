@@ -7,6 +7,12 @@
       "compare_all_files": true
     },
     {
+      "directories": ["crispy/bootstrap3/", "crispy/bootstrap5/"],
+      "file_type": "template",
+      "label": "hqwebapp/crispy",
+      "compare_all_files": true
+    },
+    {
       "directories": ["includes/bootstrap3/", "includes/bootstrap5/"],
       "file_type": "template",
       "label": "hqwebapp/includes",
@@ -20,6 +26,24 @@
     }
   ],
   "apps/hqwebapp/static/hqwebapp": [
+    {
+      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp",
+      "compare_all_files": true
+    },
+    {
+      "directories": ["js/components/bootstrap3/", "js/components/bootstrap5/"],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp/components",
+      "compare_all_files": true
+    },
+    {
+      "directories": ["js/ui_elements/bootstrap3/", "js/ui_elements/bootstrap5/"],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp/ui_elements",
+      "compare_all_files": true
+    },
     {
       "directories": ["less/", "scss/"],
       "file_type": "stylesheet",
@@ -36,6 +60,7 @@
         ["includes/variables.less", "_variables.scss"],
         ["includes/variables.less", "_variables_bootstrap3.scss"],
         ["includes/mixins.less", "_mixins.scss"],
+        ["ace_cle.less", "_ace_cle.scss"],
         ["alerts.less", "_alert.scss"],
         ["appcues.less", "_appcues.scss"],
         ["backgrounds.less", "_backgrounds.scss"],
@@ -77,11 +102,43 @@
       ]
     }
   ],
+  "apps/builds/templates/builds": [
+    {
+      "directories": ["bootstrap3/", "bootstrap5/"],
+      "file_type": "template",
+      "label": "builds",
+      "compare_all_files": true
+    }
+  ],
+  "apps/builds/static/builds": [
+    {
+      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
+      "file_type": "javascript",
+      "label": "javascript/builds",
+      "compare_all_files": true
+    }
+  ],
   "apps/notifications/templates/notifications": [
     {
       "directories": ["partials/bootstrap3/", "partials/bootstrap5/"],
       "file_type": "template",
       "label": "notifications/partials",
+      "compare_all_files": true
+    }
+  ],
+  "apps/notifications/static/notifications": [
+    {
+      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
+      "file_type": "javascript",
+      "label": "javascript/notifications",
+      "compare_all_files": true
+    }
+  ],
+  "apps/analytics/templates/analytics": [
+    {
+      "directories": ["forms/bootstrap3/", "forms/bootstrap5/"],
+      "file_type": "template",
+      "label": "analytics/forms",
       "compare_all_files": true
     }
   ]

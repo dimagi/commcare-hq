@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from typing import Union, List
 
 from django.utils.translation import gettext as _
 from eulxml.xpath import parse as parse_xpath
@@ -24,8 +25,18 @@ from corehq.apps.case_search.xpath_functions.comparison import property_comparis
 
 @dataclass
 class SearchFilterContext:
-    domain: str
+    domain: Union[str, List[str]]  # query domain
     fuzzy: bool = False
+    request_domain: str = None
+
+    def __post_init__(self):
+        if self.request_domain is None:
+            if isinstance(self.domain, str):
+                self.request_domain = self.domain
+            elif len(self.domain) == 1:
+                self.request_domain = self.domain[0]
+            else:
+                raise ValueError("When domain is a list with more than one item, request_domain cannot be None.")
 
 
 def print_ast(node):
@@ -114,7 +125,7 @@ def build_filter_from_ast(node, context):
     return visit(node)
 
 
-def build_filter_from_xpath(domain, xpath, fuzzy=False):
+def build_filter_from_xpath(query_domain, xpath, fuzzy=False, request_domain=None):
     """Given an xpath expression this function will generate an Elasticsearch
     filter"""
     error_message = _(
@@ -122,8 +133,7 @@ def build_filter_from_xpath(domain, xpath, fuzzy=False):
         "Please try reformatting your query. "
         "The operators we accept are: {}"
     )
-
-    context = SearchFilterContext(domain, fuzzy)
+    context = SearchFilterContext(query_domain, fuzzy, request_domain)
     try:
         return build_filter_from_ast(parse_xpath(xpath), context)
     except TypeError as e:

@@ -6,7 +6,7 @@
 <div data-bind="saveButton: longScreen.saveButton"></div>
 
 
-{% include 'app_manager/partials/modules/custom_detail_variables.html' with screen='longScreen'%}
+{% include 'app_manager/partials/modules/custom_detail_variables.html' with screen='longScreen' editorId='custom-variables-editor-long' %}
 
 <div class="panel panel-appmanager">
   <div class="panel-heading">
@@ -19,6 +19,11 @@
     </h4>
   </div>
   <div class="panel-body" data-bind="with: longScreen">
+    {% if request|toggle_enabled:'CASE_LIST_TILE_CUSTOM' %}
+      {% include 'app_manager/partials/modules/case_tile_templates.html' %}
+      {% include 'app_manager/partials/modules/case_tile_preview.html' %}
+    {% endif %}
+
     {% include 'app_manager/partials/modules/case_list_properties.html' %}
   </div>
 </div>
@@ -71,7 +76,7 @@
                                 attr: { 'data-hqmediapath': path },
                                 event: { mediaUploadComplete: uploadComplete },
                             ">
-              <i class="fa fa-cloud-upload"></i>
+              <i class="fa-solid fa-cloud-arrow-up"></i>
               <span data-bind="{visible: !url()}">{% trans "Upload HTML" %}</span>
               <span data-bind="{visible: url()}">{% trans "Replace HTML" %}</span>
             </button>

@@ -5,9 +5,9 @@ hqDefine("reports/js/edit_scheduled_report", [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/toggles",
     "hqwebapp/js/multiselect_utils",
-    "hqwebapp/js/widgets",  // autocomplete widget for email recipient list
+    "hqwebapp/js/bootstrap3/widgets",  // autocomplete widget for email recipient list
     "jquery-ui/ui/widgets/datepicker",
-    'hqwebapp/js/components.ko',    // select toggle widget
+    'hqwebapp/js/bootstrap3/components.ko',    // select toggle widget
 ], function (
     $,
     _,
@@ -16,10 +16,10 @@ hqDefine("reports/js/edit_scheduled_report", [
     toggles,
     multiselectUtils
 ) {
-    var add_options_to_select = function ($select, opt_list, selected_val) {
-        for (var i = 0; i < opt_list.length; i++) {
-            var $opt = $('<option />').val(opt_list[i][0]).text(opt_list[i][1]);
-            if (opt_list[i][0] === selected_val) {
+    var addOptionsToSelect = function ($select, optList, selectedVal) {
+        for (var i = 0; i < optList.length; i++) {
+            var $opt = $('<option />').val(optList[i][0]).text(optList[i][1]);
+            if (optList[i][0] === selectedVal) {
                 $opt.prop("selected", true);
             }
             $select.append($opt);
@@ -27,25 +27,24 @@ hqDefine("reports/js/edit_scheduled_report", [
         return $select;
     };
 
-    var update_interval_aux_input = function (weekly_options, monthly_options, day_value) {
+    var updateIntervalAuxInput = function (weeklyOptions, monthlyOptions, dayValue) {
         var $interval = $interval || $('[name="interval"]');
         $('#div_id_day').remove();
         if ($interval.val() !== 'hourly' && $interval.val() !== 'daily') {
-            var opts = $interval.val() === 'weekly' ? weekly_options : monthly_options;
-            var $day_select = $('<select id="id_day" class="select form-control" name="day" />');
-            $day_select = add_options_to_select($day_select, opts, day_value);
-            var $day_control_group = $('<div id="div_id_day" class="form-group" />')
+            var opts = $interval.val() === 'weekly' ? weeklyOptions : monthlyOptions;
+            var $daySelect = $('<select id="id_day" class="select form-control" name="day" />');
+            $daySelect = addOptionsToSelect($daySelect, opts, dayValue);
+            var $dayControlGroup = $('<div id="div_id_day" class="form-group" />')
                 .append($('<label for="id_day" class="control-label col-sm-3 col-md-2 requiredField">Day<span class="asteriskField">*</span></label>'))
-                .append($('<div class="controls col-sm-9 col-md-8 col-lg-6" />').append($day_select));
-            $interval.closest('.form-group').after($day_control_group);
+                .append($('<div class="controls col-sm-9 col-md-8 col-lg-6" />').append($daySelect));
+            $interval.closest('.form-group').after($dayControlGroup);
         }
 
         $('#div_id_stop_hour').hide();
         if ($interval.val() === 'hourly') {
             $("label[for='id_hour']").text(gettext('From Time') + "*");
             $('#div_id_stop_hour').show();
-        }
-        else {
+        } else {
             $("label[for='id_hour']").text(gettext('Time') + "*");
         }
     };
@@ -60,10 +59,10 @@ hqDefine("reports/js/edit_scheduled_report", [
             $(function () {
                 _.delay(function () {
                     // Delay initialization so that widget is created by the time this code is called
-                    update_interval_aux_input(self.weekly_options, self.monthly_options, self.day_value);
+                    updateIntervalAuxInput(self.weekly_options, self.monthly_options, self.day_value);
                 });
                 $(document).on('change', '[name="interval"]', function () {
-                    update_interval_aux_input(self.weekly_options, self.monthly_options);
+                    updateIntervalAuxInput(self.weekly_options, self.monthly_options);
                 });
                 $("#id_start_date").datepicker({
                     dateFormat: "yy-mm-dd",
@@ -100,23 +99,23 @@ hqDefine("reports/js/edit_scheduled_report", [
                 return memo;
             }, {});
             var currentLanguageOptions = Object.keys(languageSet).sort();
-            var $id_language = $('#id_language');
+            var $idLanguage = $('#id_language');
 
             if (currentLanguageOptions.length === 1 && currentLanguageOptions[0] === 'en') {
-                $id_language.val('en');
+                $idLanguage.val('en');
                 $('#div_id_language').hide();
             } else {
                 // Update the options of the select2
-                var current = $id_language.val();
-                $id_language.empty();
+                var current = $idLanguage.val();
+                $idLanguage.empty();
 
                 // Populate the select2
                 _.map(currentLanguageOptions, function (l) {
-                    $id_language.append(
+                    $idLanguage.append(
                         $("<option></option>").attr("value", l).text(languagesForSelect[l][1])
                     );
                 });
-                $id_language.val(current);
+                $idLanguage.val(current);
                 $("#div_id_language").show();
             }
         } else {
@@ -137,8 +136,7 @@ hqDefine("reports/js/edit_scheduled_report", [
                 return $("<div>").text($(this).text()).get(0);
             })
         );
-    }
-    else {
+    } else {
         multiselectUtils.createFullMultiselectWidget('id_config_ids', {
             selectableHeaderTitle: gettext("Available Reports"),
             selectedHeaderTitle: gettext("Included Reports"),
@@ -147,12 +145,12 @@ hqDefine("reports/js/edit_scheduled_report", [
     }
     updateUcrElements($("#id_config_ids").val());
 
-    var scheduled_report_form_helper = new ScheduledReportFormHelper({
+    var helper = new ScheduledReportFormHelper({
         weekly_options: initialPageData.get('weekly_day_options'),
         monthly_options: initialPageData.get('monthly_day_options'),
         day_value: initialPageData.get('day_value'),
     });
-    scheduled_report_form_helper.init();
+    helper.init();
 
     $('#id-scheduledReportForm').submit(function () {
         googleAnalytics.track.event('Scheduled Reports', 'Create a scheduled report', '-', "", {}, function () {

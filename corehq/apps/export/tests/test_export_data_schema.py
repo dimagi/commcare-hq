@@ -1074,7 +1074,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         # Only the new property should be added. The repeated one should be merged
         self.assertEqual(len(group_schema.items), 3)
 
-    @patch('corehq.apps.export.models.new.get_case_types_from_apps', return_value=(case_type,))
+    @patch('corehq.apps.export.models.new.get_case_types_for_domain', return_value=(case_type,))
     def test_build_with_bulk_schema(self, _):
         schema = CaseExportDataSchema.generate_schema_from_builds(
             self.domain,

@@ -20,20 +20,20 @@ class TestUserES(TestCase):
         cls.domain_obj = create_domain(cls.domain)
 
         with sync_users_to_es():
-            cls._create_mobile_worker('stark', metadata={'sigil': 'direwolf', 'seat': 'Winterfell'})
-            cls._create_mobile_worker('lannister', metadata={'sigil': 'lion', 'seat': 'Casterly Rock'})
-            cls._create_mobile_worker('targaryen', metadata={'sigil': 'dragon', 'false_sigil': 'direwolf'})
+            cls._create_mobile_worker('stark', user_data={'sigil': 'direwolf', 'seat': 'Winterfell'})
+            cls._create_mobile_worker('lannister', user_data={'sigil': 'lion', 'seat': 'Casterly Rock'})
+            cls._create_mobile_worker('targaryen', user_data={'sigil': 'dragon', 'false_sigil': 'direwolf'})
         manager.index_refresh(user_adapter.index_name)
 
     @classmethod
-    def _create_mobile_worker(cls, username, metadata):
+    def _create_mobile_worker(cls, username, user_data):
         CommCareUser.create(
             domain=cls.domain,
             username=username,
             password="*****",
             created_by=None,
             created_via=None,
-            metadata=metadata,
+            user_data=user_data,
         )
 
     @classmethod
@@ -42,20 +42,20 @@ class TestUserES(TestCase):
         cls.domain_obj.delete()
         super().tearDownClass()
 
-    def test_basic_metadata_query(self):
-        direwolf_families = UserES().metadata('sigil', 'direwolf').values_list('username', flat=True)
+    def test_basic_user_data_query(self):
+        direwolf_families = UserES().user_data('sigil', 'direwolf').values_list('username', flat=True)
         self.assertEqual(direwolf_families, ['stark'])
 
-    def test_chained_metadata_queries_where_both_match(self):
+    def test_chained_user_data_queries_where_both_match(self):
         direwolf_families = (UserES()
-                             .metadata('sigil', 'direwolf')
-                             .metadata('seat', 'Winterfell')
+                             .user_data('sigil', 'direwolf')
+                             .user_data('seat', 'Winterfell')
                              .values_list('username', flat=True))
         self.assertEqual(direwolf_families, ['stark'])
 
-    def test_chained_metadata_queries_with_only_one_match(self):
+    def test_chained_user_data_queries_with_only_one_match(self):
         direwolf_families = (UserES()
-                             .metadata('sigil', 'direwolf')
-                             .metadata('seat', 'Casterly Rock')
+                             .user_data('sigil', 'direwolf')
+                             .user_data('seat', 'Casterly Rock')
                              .values_list('username', flat=True))
         self.assertEqual(direwolf_families, [])

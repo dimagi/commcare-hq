@@ -300,7 +300,6 @@ class ImportEncounterTest(TestCase, TestFileMixin):
     def get_repeater_dict(self, observations, diagnoses):
         return {
             "domain": "test_domain",
-            "repeater_id": "123456",
             "connection_settings": self.connx,
             "white_listed_case_types": ['patient'],
             "openmrs_config": {
@@ -348,11 +347,11 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                     <last_visit_date>2018-01-18</last_visit_date>
                   </update>
                 </case>"""
-            case_block_re = ''.join((l.strip() for l in case_block_re.split('\n'))).replace('»', '')
+            case_block_re = ''.join((x.strip() for x in case_block_re.split('\n'))).replace('»', '')
             ([case_block], domain), kwargs = submit_case_blocks_patch.call_args
             self.assertRegex(case_block, case_block_re)
             self.assertEqual(domain, 'test_domain')
-            self.assertEqual(kwargs['device_id'], 'openmrs-atomfeed-123456')
+            self.assertEqual(kwargs['device_id'], f'openmrs-atomfeed-{self.repeater.id.hex}')
             self.assertEqual(kwargs['xmlns'], 'http://commcarehq.org/openmrs-integration')
 
     def test_get_case_block_kwargs_from_observations(self):
@@ -413,7 +412,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 <parent case_type="patient" relationship="extension">test-case-id</parent>
               </index>
             </case>"""
-        case_block = ''.join((l.strip() for l in case_block.split('\n'))).replace('»', '')
+        case_block = ''.join((x.strip() for x in case_block.split('\n'))).replace('»', '')
         self.assertEqual(case_blocks[0].as_text(), case_block)
 
     def test_get_case_blocks_from_bahmni_diagnoses(self):
@@ -446,7 +445,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 <parent case_type="patient" relationship="extension">test-case-id</parent>
               </index>
             </case>"""
-        case_block = ''.join((l.strip() for l in case_block.split('\n'))).replace('»', '')
+        case_block = ''.join((x.strip() for x in case_block.split('\n'))).replace('»', '')
         self.assertEqual(case_blocks[0].as_text(), case_block)
 
 

@@ -2,10 +2,10 @@ import glob
 import json
 import os
 import re
+from ast import literal_eval
 from collections import namedtuple
 from copy import copy, deepcopy
-from corehq import toggles
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from django.conf import settings
@@ -15,12 +15,13 @@ from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
+import requests
 import yaml
+from celery.states import FAILURE
 from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from jsonpath_ng.ext import parser
 from memoized import memoized
-from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -44,10 +45,12 @@ from dimagi.utils.couch.undo import is_deleted
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 
+from corehq import toggles
 from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
@@ -188,10 +191,8 @@ class DataSourceBuildInformation(DocumentSchema):
     def is_rebuilding(self):
         return (
             self.initiated
-            and (
-                not self.finished
-                and not self.rebuilt_asynchronously
-            )
+            and not self.finished
+            and not self.rebuilt_asynchronously
         )
 
     @property
@@ -204,6 +205,72 @@ class DataSourceBuildInformation(DocumentSchema):
     @property
     def is_rebuild_in_progress(self):
         return self.is_rebuilding or self.is_rebuilding_in_place
+
+    def rebuild_failed(self, data_source_config_id):
+        """
+        Returns ``True`` if the rebuild failed, ``False`` if it succeeded
+        or has not yet failed, or ``None`` if Flower is not available.
+        """
+        flower_url = getattr(settings, 'CELERY_FLOWER_URL', None)
+
+        def none_max(a, b):
+            if a is None:
+                return b
+            if b is None:
+                return a
+            return max(a, b)
+
+        def format_datetime(dt):
+            return dt.strftime('%Y-%m-%d %H:%M')
+
+        def is_this_data_source(rebuild_task):
+            args = literal_eval(rebuild_task['args'])  # a tuple
+            return args[0] == data_source_config_id
+
+        def iter_tasks():
+            task_names = (
+                'corehq.apps.userreports.tasks.rebuild_indicators',
+                'corehq.apps.userreports.tasks.rebuild_indicators_in_place',
+                'corehq.apps.userreports.tasks.resume_building_indicators',
+            )
+            initiated_at = none_max(self.initiated, self.initiated_in_place)
+            start = format_datetime(initiated_at - timedelta(seconds=60))
+            for task_name in task_names:
+                tasks = requests.get(
+                    flower_url + '/api/tasks',
+                    params={
+                        'taskname': task_name,
+                        'received_start': start,
+                    },
+                    timeout=3,
+                ).json()
+                for task_uuid, task in tasks.items():
+                    if is_this_data_source(task):
+                        yield task
+
+        if not self.initiated and not self.initiated_in_place:
+            # The rebuild task hasn't started.
+            return False
+
+        if (
+            (self.initiated and self.finished)
+            or (self.initiated_in_place and self.finished_in_place)
+        ):
+            # The rebuild task completed.
+            return False
+
+        if not flower_url:
+            # We are unable to find out about the rebuild task.
+            return None
+
+        rebuild_tasks = sorted(iter_tasks(), key=lambda t: t['started'])
+        if rebuild_tasks:
+            # Return True if the last task failed, otherwise return False.
+            return rebuild_tasks[-1]['state'] == FAILURE
+
+        # The rebuild is not finished and the task is not found. It must
+        # have died.
+        return True
 
 
 class DataSourceMeta(DocumentSchema):
@@ -450,9 +517,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             }
         }, self.get_factory_context())]
 
-        default_indicators.append(IndicatorFactory.from_spec({
-            "type": "inserted_at",
-        }, self.get_factory_context()))
+        default_indicators.append(self._get_inserted_at_indicator())
 
         if self.base_item_expression:
             default_indicators.append(IndicatorFactory.from_spec({
@@ -460,6 +525,11 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             }, self.get_factory_context()))
 
         return default_indicators
+
+    def _get_inserted_at_indicator(self):
+        return IndicatorFactory.from_spec({
+            "type": "inserted_at",
+        }, self.get_factory_context())
 
     @property
     @memoized
@@ -677,6 +747,13 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             columns = self.sql_settings.primary_key
         return columns
 
+    @cached_property
+    def rebuild_failed(self):
+        # `has_died()` returns `None` if we can't use the Flower API,
+        # and so we don't know. Treating `None` as falsy allows calling
+        # code to give `rebuild_has_died` the benefit of the doubt.
+        return self.meta.build.rebuild_failed(self._id)
+
 
 class RegistryDataSourceConfiguration(DataSourceConfiguration):
     """This is a special data source that can contain data from
@@ -875,7 +952,9 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def cached_data_source(self):
-        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        from corehq.apps.userreports.reports.data_source import (
+            ConfigurableReportDataSource,
+        )
         return ConfigurableReportDataSource.from_spec(self).data_source
 
     @property
@@ -932,7 +1011,9 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
         return langs
 
     def validate(self, required=True):
-        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        from corehq.apps.userreports.reports.data_source import (
+            ConfigurableReportDataSource,
+        )
 
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
@@ -1438,6 +1519,7 @@ class UCRExpression(models.Model):
         description = f": {description}" if description else ""
         return f"{self.name}{description}"
 
+
 def get_datasource_config_infer_type(config_id, domain):
     return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
 
@@ -1600,35 +1682,3 @@ class FilterValueEncoder(DjangoJSONEncoder):
         if isinstance(obj, DateSpan):
             return str(obj)
         return super(FilterValueEncoder, self).default(obj)
-
-
-class ReportComparisonException(models.Model):
-    date_created = models.DateTimeField(auto_now_add=True)
-    domain = models.TextField()
-    control_report_config_id = models.TextField()
-    candidate_report_config_id = models.TextField()
-    filter_values = models.JSONField(encoder=FilterValueEncoder)
-    exception = models.TextField()
-    notes = models.TextField(blank=True)
-
-
-class ReportComparisonDiff(models.Model):
-    date_created = models.DateTimeField(auto_now_add=True)
-    domain = models.TextField()
-    control_report_config_id = models.TextField()
-    candidate_report_config_id = models.TextField()
-    filter_values = models.JSONField(encoder=FilterValueEncoder)
-    control = models.JSONField()
-    candidate = models.JSONField()
-    diff = models.JSONField()
-    notes = models.TextField(blank=True)
-
-
-class ReportComparisonTiming(models.Model):
-    date_created = models.DateTimeField(auto_now_add=True)
-    domain = models.TextField()
-    control_report_config_id = models.TextField()
-    candidate_report_config_id = models.TextField()
-    filter_values = models.JSONField(encoder=FilterValueEncoder)
-    control_duration = models.DecimalField(max_digits=10, decimal_places=3)
-    candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)

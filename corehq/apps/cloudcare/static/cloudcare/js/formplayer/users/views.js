@@ -1,3 +1,4 @@
+'use strict';
 /*global Backbone, Marionette */
 
 hqDefine("cloudcare/js/formplayer/users/views", function () {
@@ -67,7 +68,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         },
         onClickUser: function () {
             formplayerUtils.confirmationModal({
-                title: _.template(gettext('Log in as <%= username %>?'))({username: this.model.get('username')}),
+                title: _.template(gettext('Log in as <%- username %>?'))({username: this.model.get('username')}),
                 message: _.template($('#user-data-template').html())(
                     { user: this.model.toJSON() }
                 ),
@@ -139,18 +140,17 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
         },
         templateContext: function () {
-            var paginationOptions = formplayerUtils.paginateOptions(this.model.get('page') - 1, this.totalPages());
-            return {
+            var paginationOptions = formplayerUtils.paginateOptions(
+                this.model.get('page') - 1,
+                this.totalPages(),
+                this.collection.total
+            );
+            return _.extend(paginationOptions, {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
                 limit: this.limit,
-                rowRange: [10, 25, 50, 100],
-                startPage: paginationOptions.startPage,
-                endPage: paginationOptions.endPage,
-                pageCount: paginationOptions.pageCount,
                 currentPage: this.model.get('page') - 1,
-                pageNumLabel: _.template(gettext("Page <%- num %>")),
-            };
+            });
         },
         navigate: function () {
             FormplayerFrontend.navigate(

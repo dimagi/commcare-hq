@@ -2,6 +2,7 @@
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load crispy_forms_tags %}
 
 {% block page_sidebar_classes %}sidebar-offcanvas col-xs-12 col-sm-3 col-lg-2{% endblock %}
 
@@ -36,6 +37,7 @@
     <script src="{% static 'reports/js/project_health_dashboard.js' %}"></script>
     <script src="{% static 'reports/js/aggregate_user_status.js' %}"></script>
     <script src="{% static 'reports/js/user_history.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/bootstrap3/widgets.js' %}"></script>
   {% endcompress %}
 {% endblock %}
 
@@ -95,8 +97,10 @@
   {% initial_page_data "web_user_id" request.couch_user.userID %}
   {% initial_page_data "web_username" request.couch_user.username %}
   {% initial_page_data 'user_types' user_types %}
-  {% registerurl "reassign_case_options" domain %}
+  {% initial_page_data 'action' action %}
+  {% registerurl "case_action_options" domain %}
   {% registerurl "receiver_secure_post" domain %}
+  {% registerurl "copy_cases" domain %}
 
   {% if request.datespan %}
     {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
@@ -127,70 +131,7 @@
               {{ datespan.enddate|date:"Y-m-d" }}
             </h4>
           </div>
-          <form class="form form-horizontal" method="post">
-            <div class="modal-body">
-              <div class="form-group">
-                <label class="control-label col-xs-2" for="email-report-subject">{% trans "Subject" %}</label>
-                <div class="col-xs-10">
-                  <input type="text"
-                         id="email-report-subject"
-                         name="subject"
-                         data-bind="value: subject"
-                         class="form-control" />
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="control-label col-xs-2">{% trans "Sending Options" %}</label>
-                <div class="col-xs-10">
-                  <div class="checkbox">
-                    <label>
-                      <input type="checkbox" data-bind="checked: send_to_owner" /> {% trans "Send to me" %}
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="control-label col-xs-2"
-                       for="email-report-recipient_emails">{% trans "Additional Recipients" %}</label>
-                <div class="col-xs-10">
-                  <textarea rows="3"
-                            id="email-report-recipient_emails"
-                            name="recipient_emails"
-                            data-bind="value: recipient_emails"
-                            aria-describedby="email-report-recipient_emails-help-block"
-                            class="form-control vertical-resize"></textarea>
-                  <span id="email-report-recipient_emails-help-block"
-                        class="help-block">
-                    Separate email addresses with commas
-                  </span>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="control-label col-xs-2" for="email-report-notes">{% trans "Report notes" %}</label>
-                <div class="col-xs-10">
-                  <textarea rows="3"
-                            id="email-report-notes"
-                            name="notes"
-                            data-bind="value: notes"
-                            class="form-control vertical-resize"></textarea>
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <div class="pull-left">
-                <div class="email-status label label-success hide">{% trans 'Email successfully sent!' %}</div>
-                <div class="email-status label label-danger hide">{% trans 'Error sending email.' %}</div></div>
-              <div class="btn-toolbar pull-right">
-                <a href="#"
-                   class="btn btn-default cancel-button"
-                   data-dismiss="modal"
-                   data-bind="click: resetModal">{% trans "Close" %}</a>
-                <button class="btn btn-primary send-button" type="button"
-                        data-loading-text="{% trans 'Sending...' %}"
-                        data-bind="click: sendEmail">{% trans 'Send Email' %}</button>
-              </div>
-            </div>
-          </form>
+          {% crispy email_form %}
         </div>
       </div>
     </div>

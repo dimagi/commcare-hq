@@ -1,119 +1,124 @@
-from dataclasses import dataclass
+from django.db import models
+from django.utils.translation import gettext as _
+from django.forms.models import model_to_dict
 
-import geopandas as gpd
-from geopy.distance import great_circle
-from shapely.geometry import Point
-
-from .exceptions import InvalidCoordinate, InvalidDistributionParam
+from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY, ALGO_AES
+from corehq.apps.geospatial.routing_solvers import pulp
+from corehq.motech.utils import b64_aes_encrypt, b64_aes_decrypt
 
 
-@dataclass
-class GeoObject:
+class GeoPolygon(models.Model):
     """
-    `lat` and `lon` are assumed to be in a EPSG:4326 map projection.
+    A GeoJSON file representing a polygon shape
     """
-    id: str
-    lon: float
-    lat: float
 
-    def __post_init__(self):
-        if self.lon < -180 or self.lon > 180:
-            raise InvalidCoordinate("Invalid lon value. Must be [-180, 180]")
-        if self.lat < -90 or self.lat > 90:
-            raise InvalidCoordinate("Invalid lat value. Must be [-90, 90]")
-
-    def get_point(self):
-        return Point(self.lon, self.lat)
-
-    def get_info(self):
-        return {
-            'id': self.id,
-            'geometry': self.get_point()
-        }
+    name = models.CharField(max_length=256)
+    geo_json = models.JSONField(default=dict)
+    domain = models.CharField(max_length=256, db_index=True)
 
 
-@dataclass
-class Objective(GeoObject):
-    is_assigned: bool = False
+class GeoConfig(models.Model):
 
-    def get_info(self):
-        info = super().get_info()
-        info['is_assigned'] = self.is_assigned
-        return info
+    CUSTOM_USER_PROPERTY = 'custom_user_property'
+    ASSIGNED_LOCATION = 'assigned_location'
+    RADIAL_ALGORITHM = 'radial_algorithm'
+    ROAD_NETWORK_ALGORITHM = 'road_network_algorithm'
+    MIN_MAX_GROUPING = 'min_max_grouping'
+    TARGET_SIZE_GROUPING = 'target_size_grouping'
 
+    VALID_DISBURSEMENT_ALGORITHM_CLASSES = {
+        RADIAL_ALGORITHM: pulp.RadialDistanceSolver,
+        ROAD_NETWORK_ALGORITHM: pulp.RoadNetworkSolver,
+    }
 
-class ObjectiveAllocator:
-    """
-    :param users: Should be a list of objects of class/subclass `GeoObject` with id of `user_id`
-    :param objectives: Should be a list of objects of class/subclass `GeoObject` with id of `case_id`
-    :param max_distance: The maximum distance allowed for an objective to be assignable to a user (unit is km)
-        If set to None, the maximum distance will not be limited
-    :param max_assignable: The maximum number of objectives that can be assigned to a user
-        If set to None, the maximum assignable count will not be limited
-    """
-    def __init__(self, users, objectives, max_distance=None, max_assignable=None):
-        if (max_distance and max_distance < 0) or (max_assignable and max_assignable < 0):
-            raise InvalidDistributionParam(
-                "Maximum distance and assignable count must be positive numbers"
-            )
+    VALID_LOCATION_SOURCES = [
+        CUSTOM_USER_PROPERTY,
+        ASSIGNED_LOCATION,
+    ]
+    VALID_DISBURSEMENT_ALGORITHMS = [
+        (RADIAL_ALGORITHM, _('Radial Algorithm')),
+        (ROAD_NETWORK_ALGORITHM, _('Road Network Algorithm')),
+    ]
+    VALID_GROUPING_METHODS = [
+        (MIN_MAX_GROUPING, _('Min/Max Grouping')),
+        (TARGET_SIZE_GROUPING, _('Target Size Grouping')),
+    ]
 
-        self.users = users
-        self.objectives = objectives
-        self.max_distance = max_distance
-        self.max_assignable = max_assignable
+    domain = models.CharField(max_length=256, db_index=True, primary_key=True)
+    location_data_source = models.CharField(max_length=126, default=CUSTOM_USER_PROPERTY)
+    user_location_property_name = models.CharField(max_length=256, default=GPS_POINT_CASE_PROPERTY)
+    case_location_property_name = models.CharField(max_length=256, default=GPS_POINT_CASE_PROPERTY)
 
-    def _create_dataframe(self, item_list):
-        return gpd.GeoDataFrame([item.get_info() for item in item_list]).set_index('id')
+    selected_grouping_method = models.CharField(
+        choices=VALID_GROUPING_METHODS,
+        default=MIN_MAX_GROUPING,
+        max_length=50
+    )
+    max_cases_per_group = models.IntegerField(null=True)
+    min_cases_per_group = models.IntegerField(null=True)
+    target_group_count = models.IntegerField(null=True)
 
-    def get_unassigned_objectives(self, id_only=True):
-        return [
-            (objective.id if id_only else objective) for objective in self.objectives
-            if not objective.is_assigned
+    selected_disbursement_algorithm = models.CharField(
+        choices=VALID_DISBURSEMENT_ALGORITHMS,
+        default=RADIAL_ALGORITHM,
+        max_length=50
+    )
+    api_token = models.CharField(max_length=255, blank=True, null=True, db_column="api_token")
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._clear_caches()
+
+    def delete(self, *args, **kwargs):
+        self._clear_caches()
+        return super().delete(*args, **kwargs)
+
+    def _clear_caches(self):
+        from .utils import get_geo_case_property, get_geo_user_property
+
+        get_geo_case_property.clear(self.domain)
+        get_geo_user_property.clear(self.domain)
+
+    @property
+    def disbursement_solver(self):
+        return self.VALID_DISBURSEMENT_ALGORITHM_CLASSES[
+            self.selected_disbursement_algorithm
         ]
 
-    def allocate_objectives(self):
+    @property
+    def plaintext_api_token(self):
+        if self.api_token and self.api_token.startswith(f'${ALGO_AES}$'):
+            ciphertext = self.api_token.split('$', 2)[2]
+            return b64_aes_decrypt(ciphertext)
+        return self.api_token
+
+    @plaintext_api_token.setter
+    def plaintext_api_token(self, value):
+        if value is None:
+            self.api_token = None
+        else:
+            assert isinstance(value, str), "Only string values allowed for api token"
+
+            if value and not value.startswith(f'${ALGO_AES}$'):
+                ciphertext = b64_aes_encrypt(value)
+                self.api_token = f'${ALGO_AES}${ciphertext}'
+            else:
+                raise Exception("Unexpected value set for plaintext api token")
+
+    def as_dict(self, fields=None):
         """
-        Allocates objectives to given users within the constraints of `max_distance` and `max_assignable`.
-        Returns a dict with user_id as the key and a list of assigned objective_id as the value.
-            {
-                'user_a': ['obj_a', 'obj_b']
-            }
-        Users that have not been assigned at least one objective will not be included in the final output.
+        Returns the model as a dictionary.
+
+        :param fields: Specify the specific fields you're interested in. A value of None will return all fields.
+
+        Example usage:
+        >>> config.as_dict(fields=[])
+        {}
+        >>> config.as_dict(fields=['domain'])
+        {'domain': <value>}
         """
-        if not (self.users and self.objectives):
-            return {}
+        config = model_to_dict(self, fields=fields)
 
-        gdf = self._create_dataframe(self.users)
-
-        user_assignment = {}
-        for obj in self.objectives:
-            # We have run out of available users, and so we cannot assign any more objectives
-            if not len(gdf):
-                break
-
-            obj_point = obj.get_point()
-            users_dist_to_obj = gdf.distance(obj_point)
-
-            closest_user_id = users_dist_to_obj.idxmin()
-            if self.max_distance:
-                closest_user_geo = gdf.loc[closest_user_id].geometry
-                closest_user_dist = great_circle(
-                    (closest_user_geo.y, closest_user_geo.x),  # Format (lat, lon)
-                    (obj_point.y, obj_point.x)
-                ).kilometers
-
-                # If objective is too far for closest user,
-                # then no user can access this objective and we'll skip it
-                if closest_user_dist > self.max_distance:
-                    continue
-
-            if closest_user_id not in user_assignment:
-                user_assignment[closest_user_id] = []
-            user_assignment[closest_user_id].append(obj.id)
-            obj.is_assigned = True
-
-            # Remove user from selection if they've hit their assignable limit
-            if self.max_assignable and len(user_assignment[closest_user_id]) >= self.max_assignable:
-                gdf.drop(closest_user_id, inplace=True)
-
-        return user_assignment
+        if fields is None or 'plaintext_api_token' in fields:
+            config['plaintext_api_token'] = self.plaintext_api_token
+        return config

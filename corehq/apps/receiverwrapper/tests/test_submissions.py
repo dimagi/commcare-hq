@@ -1,8 +1,10 @@
 import json
 import os
 from io import BytesIO
+from rest_framework import status
 import copy
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
@@ -19,7 +21,10 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
-from couchforms.exceptions import InvalidSubmissionFileExtensionError
+from couchforms.exceptions import (
+    InvalidAttachmentFileError,
+    InvalidSubmissionFileExtensionError
+)
 
 
 class BaseSubmissionTest(TestCase):
@@ -138,6 +143,55 @@ class SubmissionTest(BaseSubmissionTest):
             f'</message></OpenRosaResponse>'
         )
 
+    def test_submission_with_only_mobile_supported_content_types(self):
+        image = SimpleUploadedFile("image.abc", b"fake image", content_type="application/octet-stream")
+        response = self._submit('simple_form.xml', attachments={
+            "image.png": image,
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_submission_with_only_formplayer_supported_content_types(self):
+        image = SimpleUploadedFile("image.abc", b"fake image", content_type="application/pdf")
+        response = self._submit('simple_form.xml', attachments={
+            "image.png": image,
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_valid_attachment_file_extension_with_valid_mimetype(self):
+        image = SimpleUploadedFile("image.png", b"fake image", content_type="image/png")
+        response = self._submit('simple_form.xml', attachments={
+            "image.png": image,
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_invalid_attachment_file_extension_with_valid_mimetype(self):
+        image = SimpleUploadedFile("image.xyz", b"fake image", content_type="image/png")
+        response = self._submit('simple_form.xml', attachments={
+            "image.xyz": image,
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_valid_attachment_file_extension_with_invalid_mimetype(self):
+        image = SimpleUploadedFile("image.png", b"fake image", content_type="fake/image")
+        response = self._submit('simple_form.xml', attachments={
+            "image.png": image,
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_invalid_attachment_file_extension_with_invalid_mimetype(self):
+        image = SimpleUploadedFile("image.xyz", b"fake image", content_type="fake/image")
+        response = self._submit('simple_form.xml', attachments={
+            "image.xyz": image,
+        })
+        expected_error = InvalidAttachmentFileError()
+        self.assertEqual(response.status_code, expected_error.status_code)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            f'<OpenRosaResponse xmlns="http://openrosa.org/http/response"><message nature="processing_failure">'
+            f'{expected_error.message}'
+            f'</message></OpenRosaResponse>'
+        )
+
     @softer_assert()
     def test_submit_deprecated_form_with_attachments(self):
         def list_attachments(form):
@@ -150,7 +204,7 @@ class SubmissionTest(BaseSubmissionTest):
         # submit a form to try again as duplicate with one attachment modified
         self._submit('simple_form.xml', attachments={
             "image": BytesIO(b"fake image"),
-            "file": BytesIO(b"text file"),
+            "audio": BytesIO(b"fake audio"),
         })
         response = self._submit(
             'simple_form_edited.xml',
@@ -163,10 +217,10 @@ class SubmissionTest(BaseSubmissionTest):
         self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
         self.assertEqual(
             list_attachments(old_form),
-            [("file", b"text file"), ("image", b"fake image")])
+            [("audio", b"fake audio"), ("image", b"fake image")])
         self.assertEqual(
             list_attachments(new_form),
-            [("file", b"text file"), ("image", b"other fake image")])
+            [("audio", b"fake audio"), ("image", b"other fake image")])
 
     def test_submit_invalid_attachment_size(self):
         file_data = BytesIO(b"a" * (settings.MAX_UPLOAD_SIZE_ATTACHMENT + 1))
@@ -175,7 +229,7 @@ class SubmissionTest(BaseSubmissionTest):
             attachments={"file": file_data},
             url=reverse("receiver_secure_post", args=[self.domain]),
         )
-        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.status_code, status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
         self.assertEqual(response.content.decode('utf-8'),
                          f"Attachment exceeds {settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}MB"
                          f" size limit\n")
@@ -187,7 +241,7 @@ class SubmissionTest(BaseSubmissionTest):
             attachments={"file": file_data, "image": copy.copy(file_data)},
             url=reverse("receiver_secure_post", args=[self.domain]),
         )
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         form = XFormInstance.objects.get_form(response['X-CommCareHQ-FormID'])
         self.assertEqual(len(form.get_attachments()), 3)
 
@@ -206,7 +260,7 @@ class NoAuthSubmissionTest(BaseSubmissionTest):
 
     def test_ignore_all_non_demo_user_submissions(self, *_):
         response = self._submit('simple_form.xml', url=self.url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
 @patch('corehq.apps.receiverwrapper.views.domain_requires_auth', return_value=True)
@@ -284,7 +338,7 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
     @override_settings(IGNORE_ALL_DEMO_USER_SUBMISSIONS=True)
     def test_invalid_form_xml(self):
         response = self._submit('invalid_form_xml.xml')
-        self.assertTrue(response.status_code, 422)
+        self.assertTrue(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertTrue("There was an error processing the form: Invalid XML" in response.content.decode('utf-8'))
 
     @override_settings(IGNORE_ALL_DEMO_USER_SUBMISSIONS=True)

@@ -3,7 +3,12 @@
 {% load hq_shared_tags %}
 {% block filter_content %}
   <div class="xpath-instructions">
-    <p>{% trans "Filter your cases by entering a search query in the box below." %}</p>
+    <p>
+      <i class="fa fa-info-circle"></i>
+      {% blocktrans %}
+      Filter your cases by entering a <a href="https://confluence.dimagi.com/pages/viewpage.action?spaceKey=commcarepublic&title=Case+Query+Language" target="_blank">Case Search Query</a>.
+      {% endblocktrans %}
+    </p>
   </div>
   <div class="report-filter-xpath-textarea" data-suggestions="{{ suggestions }}">
     <pre data-bind="xPathAutocomplete: suggestedProperties">{{ default }}</pre>

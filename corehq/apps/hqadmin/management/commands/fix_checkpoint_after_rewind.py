@@ -19,7 +19,7 @@ class Command(BaseCommand):
     You must first stop the targeted pillow before running this command, and be
     sure to start the pillow again once complete. An example usage is:
     ``cchq --control <env> service pillowtop stop --only=<pillow_name>``
-    ``cchq --control <env> django-manage manage.py fix_checkpoint_after_rewind <pillow_name>``
+    ``cchq --control <env> django-manage fix_checkpoint_after_rewind <pillow_name>``
     ``cchq --control <env> service pillowtop start --only=<pillow_name>``
     """
     help = ("Update the sequence ID of a pillow that has been rewound due to a cloudant issue")

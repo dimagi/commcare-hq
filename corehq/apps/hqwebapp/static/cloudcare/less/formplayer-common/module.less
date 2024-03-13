@@ -15,6 +15,10 @@
   }
 }
 
+.module-column-name {
+  margin: 0 10px 0 10px;
+}
+
 .badge-container {
   position: relative;
   > .badge {
@@ -22,6 +26,12 @@
     bottom: -5px;
     right: -5px;
   }
+}
+
+button.clickable-icon {
+  background: unset;
+  border: unset;
+  padding: unset;
 }
 
 .module-icon-image {
@@ -88,12 +98,12 @@
   }
 }
 
-.query-caption.required .control-label::before {
-  content: '*';
-  font-weight: bold;
-  color: #c0392b;
-  margin: 0 3px;
-  float: left;
+.query-button-container {
+  padding: 8px;
+  text-align: center;
+}
+.query-button-container .btn{
+  width: 48%;
 }
 
 .module-table .module-case-list-header {
@@ -124,12 +134,11 @@
   transition: background .6s;
 }
 
-// Apply to all children to cover both regular case lists and case tiles
-.module-table-case-list tbody tr:nth-child(even) > * {
+.module-table-case-list tbody tr:nth-child(even) > td {
   background-color: @cc-bg;
 }
 
-.module-table-case-list tbody tr:hover > * {
+.module-table-case-list tbody tr:hover > td {
   background-color: darken(@cc-bg, 5);
 }
 
@@ -138,13 +147,19 @@
 }
 
 .module-go-container {
-  margin: 17px;
-  width: 190px;
+  margin-top: 17px;
+}
+
+.pagination-container {
+  width: inherit;
+  padding-left: 17px;
+  padding-right: 17px;
+  min-height: 76px;
 }
 
 .module-per-page-container {
   display: inline-block;
-  margin: 17px;
+  margin-top: 17px;
 }
 
 .module-table-case-list tbody tr:hover .module-case-list-column-empty {

@@ -4,7 +4,7 @@ hqDefine('commtrack/js/products_and_programs_main', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'commtrack/js/base_list_view_model',
-    'hqwebapp/js/widgets',   // "Additional Information" on product page uses a .hqwebapp-select2
+    'hqwebapp/js/bootstrap3/widgets',   // "Additional Information" on product page uses a .hqwebapp-select2
 ], function (
     $,
     ko,
@@ -97,9 +97,9 @@ hqDefine('commtrack/js/products_and_programs_main', [
 
     ko.bindingHandlers.isPaginationActive = {
         update: function (element, valueAccessor, allBindingsAccessor) {
-            var current_page = parseInt(valueAccessor()());
-            var current_item = parseInt(allBindingsAccessor()['text']);
-            if (current_page === current_item) {
+            var currentPage = parseInt(valueAccessor()()),
+                currentItem = parseInt(allBindingsAccessor()['text']);
+            if (currentPage === currentItem) {
                 $(element).parent().addClass('active');
             } else {
                 $(element).parent().removeClass('active');

@@ -1,0 +1,148 @@
+{% load compress %}{% load hq_shared_tags %}{% load statici18n %}<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>CommCare HQ Style Guide (Bootstrap 5)</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
+
+    {% include 'hqwebapp/includes/bootstrap5/core_stylesheets.html' %}
+    {% compress css %}
+      <link type="text/css"
+            rel="stylesheet"
+            media="all"
+            href="{% static '@fortawesome/fontawesome-free/css/all.min.css' %}" />
+      <link type="text/scss"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'hqwebapp/scss/styleguide.scss' %}" />
+      <link type="text/css"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'select2/dist/css/select2.min.css' %}" />
+      <link type="text/css"
+            rel="stylesheet"
+            media="screen"
+            href="{% static "multiselect/css/multi-select.css" %}" />
+      <link type="text/less"
+            rel="stylesheet"
+            media="screen"
+            href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
+      <link type="text/css"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css" %}" />
+    {% endcompress %}
+
+    {% block stylesheets %}
+    {% endblock stylesheets %}
+
+    <script>
+      window.USE_BOOTSTRAP5 = true;
+    </script>
+
+    {% block csrf_token_block %}
+      <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+    {% endblock %}
+
+    {% javascript_libraries hq=True use_bootstrap5=True %}
+    <script src="{% statici18n LANGUAGE_CODE %}"></script>
+  </head>
+  <body>
+    <header class="navbar navbar-expand-lg sg-navbar sticky-top bg-dark">
+      <nav class="container-xxl sg-gutter flex-wrap flex-lg-nowrap text-light"
+           aria-label="Main Navigation">
+        <a class="navbar-brand text-light"
+           href="{% url "styleguide_home_b5" %}">
+          HQ Style Guide - Bootstrap 5
+        </a>
+      </nav>
+    </header>
+    <div class="container-xxl sg-gutter mt-3 my-md-4 sg-layout">
+      <aside class="sg-sidebar">
+        {% include 'styleguide/bootstrap5/partials/sidebar.html' %}
+      </aside>
+      <main class="sg-main order-1">
+        <div class="sg-intro pt-2 ps-lg-2">
+          {% block intro %}
+          {% endblock intro %}
+        </div>
+        <div class="sg-toc mt-3 mb-5 my-lg-0 mb-lg-5 px-sm-1 text-body-secondary">
+          {% block toc %}
+          {% endblock toc %}
+        </div>
+        <div class="sg-content pt-2 ps-lg-2"
+             data-bs-spy="scroll"
+             data-bs-target="#TableOfContents"
+             data-bs-smooth-scroll="true" >
+          {% block content %}
+          {% endblock content %}
+        </div>
+      </main>
+    </div>
+    <footer class="sg-footer py-4 py-md-5 mt-5 bg-body-tertiary">
+      <div class="container">
+        <h6>Quick Links</h6>
+        <ul>
+          <li>
+            <a href="https://getbootstrap.com/docs/5.3/getting-started/">Bootstrap 5 Docs</a>
+          </li>
+          <li>
+            <a href="https://knockoutjs.com/documentation/introduction.html">Knockout.js Docs</a>
+          </li>
+          <li>
+            <a href="https://lawsofux.com/">Laws of UX</a>
+          </li>
+        </ul>
+        <p>Thanks for reading the style guide! <3</p>
+      </div>
+    </footer>
+
+    {% initial_page_data 'ace_base_path' 'ace-builds/src-min-noconflict'|static %}
+
+    {# Knockout component templates #}
+    {% include 'hqwebapp/partials/bootstrap5/ko_pagination.html' %}
+    {% include 'hqwebapp/partials/bootstrap5/ko_inline_edit.html' %}
+    {% include 'hqwebapp/partials/bootstrap5/ko_search_box.html' %}
+    {% include 'hqwebapp/partials/bootstrap5/ko_select_toggle.html' %}
+    {% include 'hqwebapp/partials/bootstrap5/ko_feedback.html' %}
+
+    {% compress js %}
+      <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/bootstrap5/widgets.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/select_2_ajax_widget.js' %}"></script>
+      <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
+      <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
+      <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
+      <script src="{% static 'ace-builds/src-min-noconflict/mode-python.js' %}"></script>
+      <script src="{% static 'ace-builds/src-min-noconflict/mode-javascript.js' %}"></script>
+      <script src="{% static 'ace-builds/src-min-noconflict/mode-html.js' %}"></script>
+      <script src="{% static 'styleguide/main.js' %}"></script>
+      <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/bootstrap5/validators.ko.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/password_validators.ko.js' %}"></script>
+      <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
+      <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
+      <script src="{% static '@eonasdan/tempus-dominus/dist/js/jQuery-provider.min.js' %}"></script>
+    {% endcompress %}
+
+    {% block javascript %}
+    {% endblock javascript %}
+
+    <div class="initial-page-data" class="hide">
+      {% block initial_page_data %}
+        {# do not override this block, use initial_page_data template tag to populate #}
+      {% endblock %}
+    </div>
+    <div class="commcarehq-urls" class="hide">
+      {% block registered_urls %}
+        {# do not override this block, use registerurl template tag to populate #}
+      {% endblock %}
+    </div>
+
+  </body>
+</html>

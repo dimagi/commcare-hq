@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
 
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.extensions import extension_points
 from corehq.apps.enterprise.urls import \
     domain_specific as enterprise_domain_specific
@@ -61,6 +62,7 @@ domain_specific = [
     url(r'^phone/', include('corehq.apps.ota.urls')),
     url(r'^phone/', include('corehq.apps.mobile_auth.urls')),
     url(r'^sms/', include('corehq.apps.sms.urls')),
+    url(r'^email/', include('corehq.apps.email.urls')),
     url(r'^reminders/', include('corehq.apps.reminders.urls')),
     url(r'^reports/', include('corehq.apps.reports.urls')),
     url(r'^messaging/', include('corehq.messaging.scheduling.urls')),
@@ -70,6 +72,7 @@ domain_specific = [
     url(r'^case/', include('corehq.apps.hqcase.urls')),
     url(r'^case/', include('corehq.apps.case_search.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
+    url(r'^geospatial/', include('corehq.apps.geospatial.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
     url(r'^up_nrhm/', include('custom.up_nrhm.urls')),
@@ -137,12 +140,14 @@ urlpatterns = [
     url(r'^builds/', include('corehq.apps.builds.urls')),
     url(r'^downloads/temp/', include('soil.urls')),
     url(r'^styleguide/', include('corehq.apps.styleguide.urls')),
-    url(r'^500/$', TemplateView.as_view(template_name='500.html')),
-    url(r'^404/$', TemplateView.as_view(template_name='404.html')),
-    url(r'^403/$', TemplateView.as_view(template_name='403.html')),
+    url(r'^500/$', use_bootstrap5(TemplateView.as_view(template_name='500.html'))),
+    url(r'^404/$', use_bootstrap5(TemplateView.as_view(template_name='404.html'))),
+    url(r'^403/$', use_bootstrap5(TemplateView.as_view(template_name='403.html'))),
     url(r'^eula/$', redirect_to_dimagi('terms/')),
     url(r'^product_agreement/$', redirect_to_dimagi('terms/')),
-    url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),
+    url(r'^apache_license_basic/$',
+        TemplateView.as_view(template_name='apache_license.html'),
+        name='apache_license_basic'),
     url(r'^apache_license/$', apache_license, name='apache_license'),
     url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),
     url(r'^bsd_license/$', bsd_license, name='bsd_license'),

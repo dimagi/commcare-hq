@@ -34,7 +34,7 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
-from corehq.apps.domain.exceptions import NameUnavailableException
+from corehq.apps.domain.exceptions import NameUnavailableException, ErrorInitializingDomain
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_ko_validation
@@ -49,6 +49,7 @@ from corehq.apps.registration.models import (
 )
 from corehq.apps.registration.utils import (
     activate_new_user_via_reg_form,
+    project_logo_emails_context,
     request_new_domain,
     send_domain_registration_email,
     send_mobile_experience_reminder,
@@ -181,6 +182,13 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                 return {
                     'errors': {
                         'project name unavailable': [],
+                    }
+                }
+            except ErrorInitializingDomain as e:
+                logging.error(f"Unable to initialize domain during new user signup: {str(e)}")
+                return {
+                    'errors': {
+                        'temporary system issue': [],
                     }
                 }
             return {
@@ -388,6 +396,16 @@ class RegisterDomainView(TemplateView):
                 'show_homepage_link': 1
             })
             return render(request, 'error.html', context)
+        except ErrorInitializingDomain as e:
+            logging.error(f"Error initializing domain in RegisterDomainView: {str(e)}")
+            context.update({
+                'current_page': {'page_name': _('Oops!')},
+                'error_msg': _('We encountered a temporary system issue. '
+                               'Please try again in a few minutes. '
+                               'If the issue persists, please contact support.'),
+                'show_homepage_link': 1
+            })
+            return render(request, 'error.html', context)
 
         if self.is_new_user:
             context.update({
@@ -504,7 +522,7 @@ def confirm_domain(request, guid=''):
 
         # Has guid already been confirmed?
         if requested_domain.is_active:
-            assert(req.confirm_time is not None and req.confirm_ip is not None)
+            assert (req.confirm_time is not None and req.confirm_ip is not None)
             messages.success(request, 'Your account %s has already been activated. '
                 'No further validation is required.' % req.new_user_username)
             return HttpResponseRedirect(reverse(view_name, args=view_args))
@@ -553,5 +571,6 @@ def eula_agreement(request):
 @login_required
 @require_POST
 def send_mobile_reminder(request):
-    send_mobile_experience_reminder(request.couch_user.get_email(), request.couch_user.full_name)
+    send_mobile_experience_reminder(request.couch_user.get_email(), request.couch_user.full_name,
+                                    additional_email_context=project_logo_emails_context(None, request.couch_user))
     return HttpResponse()

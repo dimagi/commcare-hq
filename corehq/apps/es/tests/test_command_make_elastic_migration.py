@@ -38,9 +38,10 @@ class TestMakeElasticMigrationCommand(TestCase):
             self.assertEqual({}, changes)
             self.assertIsInstance(operation, CreateIndex)
             self.assertEqual("groups-20221228", operation.name)
+            self.assertEqual([5, 6], operation.es_versions)
 
         with patch.object(Command, "write_migration_files", test_changes):
-            call_command("make_elastic_migration", "-c", "groups")
+            call_command("make_elastic_migration", "-c", "groups", "-t", 5, "-t", 6)
 
     def test_build_migration_delete_index(self):
 
@@ -115,10 +116,11 @@ class TestMakeElasticMigrationCommand(TestCase):
 
     def test_build_migration(self):
         creates = [(groups.group_adapter, "groups-custom")]
-        updates = [(groups.group_adapter, {"domain": {"type": "string"}})]
+        updates = [(groups.group_adapter, {"domain": {"type": "text"}})]
         deletes = ["trashme"]
         command = Command()
         command.empty = False
+        command.target_versions = []
         migration = command.build_migration(creates, updates, deletes)
         create_op, delete_op, update_op = sorted(migration.operations, key=sort_ops)
         self.assertIsInstance(create_op, CreateIndex)
@@ -127,14 +129,15 @@ class TestMakeElasticMigrationCommand(TestCase):
         self.assertEqual(delete_op.name, "trashme")
         self.assertIsInstance(update_op, UpdateIndexMapping)
         self.assertEqual(update_op.name, groups.group_adapter.index_name)
-        self.assertEqual(update_op.properties, {"domain": {"type": "string"}})
+        self.assertEqual(update_op.properties, {"domain": {"type": "text"}})
 
     def test_build_migration_fails_for_multiple_operations_on_the_same_index(self):
         conflict_index = groups.group_adapter.index_name
-        updates = [(groups.group_adapter, {"domain": {"type": "string"}})]
+        updates = [(groups.group_adapter, {"domain": {"type": "text"}})]
         deletes = [conflict_index]
         command = Command()
         command.empty = False
+        command.target_versions = []
         prefix = f"Multiple operations for the same index ({conflict_index}):"
         with self.assertRaisesRegex(CommandError, f"^{re.escape(prefix)}"):
             command.build_migration([], updates, deletes)

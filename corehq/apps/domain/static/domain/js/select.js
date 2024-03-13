@@ -4,7 +4,7 @@ hqDefine("domain/js/select", [
     'knockout',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/components.ko',    // search box
+    'hqwebapp/js/bootstrap3/components.ko',    // search box
 ], function (
     $,
     _,

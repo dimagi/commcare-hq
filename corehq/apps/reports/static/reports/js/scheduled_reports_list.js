@@ -11,7 +11,7 @@ hqDefine("reports/js/scheduled_reports_list", [
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
-    'hqwebapp/js/components.ko', // pagination & feedback widget
+    'hqwebapp/js/bootstrap3/components.ko', // pagination & feedback widget
 ], function (
     $,
     ko,

@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,352 +1,3 @@
+@@ -1,356 +1,7 @@
 -// FORM ACTIONS from TWBS 2
 -// ------------
 -
@@ -11,7 +11,10 @@
 -.form-actions {
 -  padding: (@line-height-base * @font-size-base - 1px) 0px @line-height-base * @font-size-base;
 -  margin-top: @line-height-base * 1em;
--  margin-bottom: 0;
++.row > div > .form-check:first-child,
++.row > div > .input-group > .form-check:first-child {
++  padding-top: add($input-padding-y, $input-border-width);
+   margin-bottom: 0;
 -  background-color: @navbar-default-bg;
 -  border-top: 1px solid @legend-border-color;
 -  .border-bottom-radius(@border-radius-base);
@@ -38,6 +41,12 @@
 -  font-size: .8em;
 -  color: lighten(@cc-text, 40%);
 -  padding-bottom: 5px;
+-}
+-
+-.checkbox, .radio {
+-  input[type="checkbox"], input[type="radio"] {
+-    margin-top: 1.5px;
+-  }
 -}
 -
 -.checkbox-table-cell {
@@ -348,12 +357,10 @@
 -
 -.controls-text {
 -  padding-top: 7px;
--}
--
- .form-hide-actions .form-actions {
-   display: none;
  }
-@@ -355,7 +6,15 @@
+ 
+ .form-hide-actions .form-actions {
+@@ -361,15 +12,38 @@
    .validationMessage {
      display: block;
      padding-top: 8px;
@@ -362,11 +369,40 @@
      font-weight: bold;
    }
  }
-+
-+.help-block,
+ 
+-.checkboxinput.form-control {
+-  border-radius: 0 !important;
+-  height: 13px;
+-  float: none;
+-  position: initial;
+-  width: 13px;
+-}+.help-block,
 +p.help-block {
 +  display: block;
 +  margin-top: 5px;
 +  margin-bottom: 10px;
 +  color: lighten($cc-text, 25%);
++}
++
++legend {
++  border-bottom: 1px solid $border-color;
++  padding-bottom: $spacer * .25;
++  margin-bottom: $spacer * 1.25;
++}
++
++.form-actions {
++  border-top: 1px solid $border-color;
++  background-color: $light;
++  border-bottom-left-radius: $border-radius;
++  border-bottom-right-radius: $border-radius;
++  padding: $spacer 0;
++  margin: 0 0 $spacer 0;
++
++  div {
++    padding-left: 6px;
++  }
++}
++
++.ms-header .btn {
++  margin-top: -3px;
 +}

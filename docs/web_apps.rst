@@ -267,7 +267,11 @@ This contains miscellaneous utilities, mostly around error/success/progress mess
 * Error and success messaging for syncing and the "settings" actions: clearing user data and breaking locks
 * Sending formplayer errors to HQ so they show up in sentry
 
-It also contains a bunch of code, ``injectMarkdownAnchorTransforms`` and its helpers, related to some custom feature flags that integrate web apps with external applications.
+markdown.js
+-----------
+Code for initializing the markdown renderer including a bunch of code, ``injectMarkdownAnchorTransforms`` and its
+helpers, related to some custom feature flags that integrate web apps with external applications.
+
 
 JavaScript Architectural Concepts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

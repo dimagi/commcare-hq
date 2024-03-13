@@ -2,46 +2,43 @@
 EntriesContributor
 ------------------
 
-This is the largest and most complex of the suite sections, responsible for generating an ``<entry>``
-element for each form, including the datums required for form entry. The ``EntriesHelper``, which does all of the
-heavy lifting here, is imported into other places in HQ that need to know what datums a form requires,
-such as the session schema generator for form builder and the UI for form linking.
+This is the largest and most complex of the suite sections, responsible
+for generating an ``<entry>`` element for each form, including the
+datums required for form entry. The ``EntriesHelper``, which does all
+of the heavy lifting here, is imported into other places in HQ that
+need to know what datums a form requires, such as the session schema
+generator for form builder and the UI for form linking.
 
-When forms work with multiple datums, they need to be named in a way that is predictable for app builders, who
-reference them inside forms. This is most relevant to the "select parent first" feature and to parent/child
-modules.  See ``update_refs`` and ``rename_other_id``, both inner functions in ``add_parent_datums``, plus
-`this comment <https://github.com/dimagi/commcare-hq/blob/c9fa01d1ccbb73d8f07fefbe56a0bbe1dbe231f8/corehq/apps/app_manager/suite_xml/sections/entries.py#L966-L971>`_
-on matching parent and child datums.
+When forms work with multiple datums, they need to be named in a way
+that is predictable for app builders, who reference them inside forms.
+This is most relevant to the "select parent first" feature and to
+parent/child modules.  See ``update_refs`` and ``rename_other_id``,
+both inner functions in ``add_parent_datums``, plus `this comment`_ on
+matching parent and child datums.
 
-"""
+
+.. _this comment: https://github.com/dimagi/commcare-hq/blob/c9fa01d1ccbb73d8f07fefbe56a0bbe1dbe231f8/corehq/apps/app_manager/suite_xml/sections/entries.py#L966-L971
+"""  # noqa
 from collections import defaultdict
-from itertools import zip_longest
+
+from django.utils.translation import gettext as _
 
 import attr
-from django.utils.translation import gettext as _
 from memoized import memoized
 
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
+from corehq.apps.app_manager.const import CASE_LIST_FILTER_LOCATIONS_FIXTURE, USERCASE_ID, USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ParentModuleReferenceError,
     SuiteValidationError,
 )
-from corehq.apps.app_manager.suite_xml.contributors import (
-    SuiteContributorByModule,
-)
-from corehq.apps.app_manager.suite_xml.utils import (
-    get_form_locale_id,
-    get_select_chain_meta,
-    get_ordered_case_types,
-)
-from corehq.apps.app_manager.suite_xml.xml_models import *
 from corehq.apps.app_manager.util import (
     actions_use_usercase,
     module_loads_registry_case,
-    module_uses_inline_search,
     module_offers_search,
+    module_uses_inline_search,
+    module_uses_inline_search_with_parent_relationship_parent_select,
 )
 from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_advanced_action,
@@ -49,20 +46,43 @@ from corehq.apps.app_manager.xform import (
     autoset_owner_id_for_subcase,
 )
 from corehq.apps.app_manager.xpath import (
+    CaseClaimXpath,
     CaseIDXPath,
     ItemListFixtureXpath,
     ProductInstanceXpath,
+    LocationInstanceXpath,
     UsercaseXPath,
     XPath,
     interpolate_xpath,
     session_var,
 )
 from corehq.apps.case_search.const import EXCLUDE_RELATED_CASES_FILTER
-from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, \
-    case_search_sync_cases_on_form_entry_enabled_for_domain
+from corehq.apps.case_search.models import (
+    CASE_SEARCH_REGISTRY_ID_KEY,
+    case_search_sync_cases_on_form_entry_enabled_for_domain,
+)
 from corehq.toggles import USH_SEARCH_FILTER
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
+
+from ..contributors import SuiteContributorByModule
+from ..utils import (
+    get_form_locale_id,
+    get_ordered_case_types,
+    get_select_chain_meta,
+)
+from ..xml_models import (
+    Assertion,
+    Command,
+    Entry,
+    InstanceDatum,
+    LocaleArgument,
+    LocalizedCommand,
+    QueryData,
+    RemoteRequestQuery,
+    SessionDatum,
+    Text,
+)
 
 
 @attr.s(repr=False)
@@ -111,7 +131,7 @@ class EntriesContributor(SuiteContributorByModule):
 class EntriesHelper(object):
 
     def __init__(self, app, modules=None, build_profile_id=None):
-        from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
+        from ..sections.details import DetailsHelper
         self.app = app
         self.modules = modules or list(app.get_modules())
         self.build_profile_id = build_profile_id
@@ -228,28 +248,41 @@ class EntriesHelper(object):
         )
         return (using_inline_search or sync_on_form_entry) and not loads_registry_case
 
+    def add_post_to_entry(self, form, module, e):
+        from ..post_process.remote_requests import (
+            QuerySessionXPath,
+            RemoteRequestFactory,
+        )
+        case_session_var = self.get_case_session_var_for_form(form)
+        storage_instance = module.search_config.get_instance_name() if module_uses_inline_search(module) \
+            else 'casedb'
+        remote_request_factory = RemoteRequestFactory(
+            None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
+            exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
+        e.post = remote_request_factory.build_remote_request_post()
+        if module_uses_inline_search_with_parent_relationship_parent_select(module):
+            case_datum_ids = [form_datum.datum.id for form_datum in self.get_case_datums_basic_module(module, form)
+                     if (form_datum.datum.id != case_session_var and not form_datum.is_new_case_id)]
+            for case_datum_id in case_datum_ids:
+                data = QueryData(key='case_id')
+                data.ref = QuerySessionXPath(case_datum_id).instance()
+                data.exclude = CaseIDXPath(data.ref).case().count().neq(0)
+                e.post.data.append(data)
+            e.post.relevant = CaseClaimXpath.multi_case_relevant()
+
     def entry_for_module(self, module):
         # avoid circular dependency
-        from corehq.apps.app_manager.models import Module, AdvancedModule
+        from corehq.apps.app_manager.models import AdvancedModule, Module
         results = []
         for form in module.get_suite_forms():
             e = Entry()
             e.form = form.xmlns
 
             if module.report_context_tile:
-                from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_report_context_tile_datum
+                from ..features.mobile_ucr import get_report_context_tile_datum
                 e.datums.append(get_report_context_tile_datum())
             if form.requires_case() and self.include_post_in_entry(module.get_or_create_unique_id()):
-                case_session_var = self.get_case_session_var_for_form(form)
-                from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-                    RemoteRequestFactory, RESULTS_INSTANCE_INLINE
-                )
-                storage_instance = RESULTS_INSTANCE_INLINE if module_uses_inline_search(module) \
-                    else 'casedb'
-                remote_request_factory = RemoteRequestFactory(
-                    None, module, [], case_session_var=case_session_var, storage_instance=storage_instance,
-                    exclude_relevant=case_search_sync_cases_on_form_entry_enabled_for_domain(self.app.domain))
-                e.post = remote_request_factory.build_remote_request_post()
+                self.add_post_to_entry(form, module, e)
 
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
@@ -284,10 +317,10 @@ class EntriesHelper(object):
             EntriesHelper.add_custom_assertions(e, form)
 
             if (
-                self.app.commtrack_enabled and
-                session_var('supply_point_id') in getattr(form, 'source', "")
+                self.app.commtrack_enabled
+                and session_var('supply_point_id') in getattr(form, 'source', "")
             ):
-                from corehq.apps.app_manager.models import AUTO_SELECT_LOCATION
+                from corehq.apps.app_manager.const import AUTO_SELECT_LOCATION
                 datum, assertions = EntriesHelper.get_userdata_autoselect(
                     'commtrack-supply-point',
                     'supply_point_id',
@@ -395,7 +428,7 @@ class EntriesHelper(object):
         entry.assertions.append(assertion)
 
     @staticmethod
-    def get_extra_case_id_datums(form):
+    def get_extra_case_id_datums(form, case_datum=None):
         datums = []
         actions = form.active_actions()
         if form.form_type == 'module_form' and actions_use_usercase(actions):
@@ -405,6 +438,29 @@ class EntriesHelper(object):
                 case_type=USERCASE_TYPE,
                 requires_selection=False,
                 action=None  # Unused (and could be actions['usercase_update'] or actions['usercase_preload'])
+            ))
+        if case_datum and form.get_module().has_grouped_tiles():
+            # add a datum for the parent case ids
+            case_datum_id = case_datum.datum.id
+            index_identifier = form.get_module().case_details.short.case_tile_group.index_identifier
+            if isinstance(case_datum.datum, InstanceDatum):
+                # distinct-values(instance('casedb')/casedb/case[selected(
+                #     join(' ', instance('selected_cases')/results/value),
+                #     @case_id
+                # )]/index/parent)
+                predicate = f"selected(join(' ', instance('{case_datum_id}')/results/value), @case_id)"
+            else:
+                predicate = f"@case_id = instance('commcaresession')/session/data/{case_datum_id}"
+            func = (
+                "join(' ', distinct-values(instance('casedb')/casedb/case["
+                f"{predicate}"
+                f"]/index/{index_identifier}))"
+            )
+            datums.append(FormDatumMeta(
+                datum=SessionDatum(id=f"{case_datum_id}_parent_ids", function=func),
+                case_type=None,
+                requires_selection=False,
+                action=None
             ))
         return datums
 
@@ -458,9 +514,10 @@ class EntriesHelper(object):
         if not form or form.requires_case():
             datums.extend(self.get_datum_meta_module(module, use_filter=True))
 
+        case_datum = datums[-1] if datums else None
         if form:
             datums.extend(EntriesHelper.get_new_case_id_datums_meta(form))
-            datums.extend(EntriesHelper.get_extra_case_id_datums(form))
+            datums.extend(EntriesHelper.get_extra_case_id_datums(form, case_datum))
 
         return self.add_parent_datums(datums, module)
 
@@ -549,10 +606,14 @@ class EntriesHelper(object):
 
             fixture_select_filter = ''
             if datum['module'].fixture_select.active:
+                if datum['module'].fixture_select.fixture_type == CASE_LIST_FILTER_LOCATIONS_FIXTURE:
+                    nodeset = LocationInstanceXpath().instance()
+                else:
+                    nodeset = ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance()
                 datums.append(FormDatumMeta(
                     datum=SessionDatum(
                         id=id_strings.fixture_session_var(datum['module']),
-                        nodeset=ItemListFixtureXpath(datum['module'].fixture_select.fixture_type).instance(),
+                        nodeset=nodeset,
                         value=datum['module'].fixture_select.variable_column,
                         detail_select=id_strings.fixture_detail(detail_module)
                     ),
@@ -573,7 +634,8 @@ class EntriesHelper(object):
             uses_inline_search = module_uses_inline_search(detail_module)
             if loads_registry_case or uses_inline_search:
                 if uses_inline_search:
-                    instance_name, root_element = "results:inline", "results"
+                    instance_name = detail_module.search_config.get_instance_name()
+                    root_element = "results"
                 elif loads_registry_case:
                     instance_name, root_element = "results", "results"
                 if detail_module.search_config.search_filter and USH_SEARCH_FILTER.enabled(self.app.domain):
@@ -616,10 +678,11 @@ class EntriesHelper(object):
         workflow and put the query directly in the entry.
         The case details is then populated with data from the results of the query.
         """
-        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
-            RemoteRequestFactory, RESULTS_INSTANCE_INLINE, RESULTS_INSTANCE
+        from ..post_process.remote_requests import (
+            RESULTS_INSTANCE,
+            RemoteRequestFactory,
         )
-        storage_instance = RESULTS_INSTANCE_INLINE if uses_inline_search else RESULTS_INSTANCE
+        storage_instance = module.search_config.get_instance_name() if uses_inline_search else RESULTS_INSTANCE
         factory = RemoteRequestFactory(None, module, [], storage_instance=storage_instance)
         query = factory.build_remote_request_queries()[0]
         return FormDatumMeta(datum=query, case_type=None, requires_selection=False, action=None)
@@ -629,7 +692,7 @@ class EntriesHelper(object):
         the user selected is in the user's casedb so we have to get the data directly from HQ before
         entering the form. This data is then available in the 'registry' instance (``instance('registry')``)
         """
-        from corehq.apps.app_manager.suite_xml.post_process.remote_requests import REGISTRY_INSTANCE
+        from ..post_process.remote_requests import REGISTRY_INSTANCE
 
         case_ids_expressions = {session_var(datum.id)} | set(module.search_config.additional_registry_cases)
         data = [
@@ -659,8 +722,13 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_auto_select_datums_and_assertions(action, auto_select, form):
-        from corehq.apps.app_manager.models import AUTO_SELECT_USER, AUTO_SELECT_CASE, \
-            AUTO_SELECT_FIXTURE, AUTO_SELECT_RAW, AUTO_SELECT_USERCASE
+        from corehq.apps.app_manager.const import (
+            AUTO_SELECT_CASE,
+            AUTO_SELECT_FIXTURE,
+            AUTO_SELECT_RAW,
+            AUTO_SELECT_USER,
+            AUTO_SELECT_USERCASE,
+        )
         if auto_select.mode == AUTO_SELECT_USER:
             return EntriesHelper.get_userdata_autoselect(
                 auto_select.value_key,
@@ -720,8 +788,10 @@ class EntriesHelper(object):
         datums = []
         load_case_from_fixture = action.load_case_from_fixture
 
-        if (load_case_from_fixture.arbitrary_datum_id and
-                load_case_from_fixture.arbitrary_datum_function):
+        if (
+            load_case_from_fixture.arbitrary_datum_id
+            and load_case_from_fixture.arbitrary_datum_function
+        ):
             datums.append(FormDatumMeta(
                 SessionDatum(
                     id=load_case_from_fixture.arbitrary_datum_id,
@@ -799,7 +869,9 @@ class EntriesHelper(object):
                 if module_id == module.unique_id:
                     return module
 
-                from corehq.apps.app_manager.models import ModuleNotFoundException
+                from corehq.apps.app_manager.models import (
+                    ModuleNotFoundException,
+                )
                 try:
                     target = module.get_app().get_module_by_unique_id(module_id,
                              error=_("Could not find target module used by form '{}'").format(form.default_name()))
@@ -986,10 +1058,12 @@ class EntriesHelper(object):
 
     def _get_module_for_persistent_context(self, module_unique_id):
         module_for_persistent_context = self.app.get_module_by_unique_id(module_unique_id)
-        if (module_for_persistent_context and
-                (module_for_persistent_context.case_details.short.case_tile_template
-                 or module_for_persistent_context.case_details.short.custom_xml
-                 )):
+        if (
+            module_for_persistent_context and (
+                module_for_persistent_context.case_details.short.case_tile_template
+                or module_for_persistent_context.case_details.short.custom_xml
+            )
+        ):
             return module_for_persistent_context
 
     def get_detail_persistent_attr(self, module, detail_type="case_short"):

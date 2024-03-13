@@ -1,3 +1,4 @@
+'use strict';
 /*global Marionette, Backbone */
 
 /**
@@ -13,7 +14,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         GGAnalytics = hqImport("analytix/js/google"),
         Kissmetrics = hqImport("analytix/js/kissmetrix"),
         ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
-        Toggles = hqImport("hqwebapp/js/toggles"),
         UsersModels = hqImport("cloudcare/js/formplayer/users/models"),
         WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session');
 
@@ -32,19 +32,20 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             // resolve immediately
             xsrfRequest.resolve();
         }
-        var RegionContainer = Marionette.View.extend({
-            el: "#menu-container",
 
-            regions: {
-                main: "#menu-region",
-                loadingProgress: "#formplayer-progress-container",
-                breadcrumb: "#breadcrumb-region",
-                persistentCaseTile: "#persistent-case-tile",
-                restoreAsBanner: '#restore-as-region',
-            },
+        if (!FormplayerFrontend.regions) {
+            FormplayerFrontend.regions = CloudcareUtils.getRegionContainer();
+        }
+        let sidebar = FormplayerFrontend.regions.getRegion('sidebar');
+        sidebar.on('show', function () {
+            $('#content-container').addClass('full-width');
+            $('#menu-region').addClass('sidebar-push');
+        });
+        sidebar.on('hide empty', function () {
+            $('#content-container').removeClass('full-width');
+            $('#menu-region').removeClass('sidebar-push');
         });
 
-        FormplayerFrontend.regions = new RegionContainer();
         hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
             FormplayerFrontend.router = Router.start();
         });
@@ -80,7 +81,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
             var resource = currentApp.get('multimedia_map')[resourcePath];
             if (!resource) {
-                console.warn('Unable to find resource ' + resourcePath + 'in multimedia map');
+                console.warn('Unable to find resource ' + resourcePath + ' in multimedia map');
                 return;
             }
             var id = resource.multimedia_id;
@@ -128,6 +129,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.getChannel().reply('clearMenu', function () {
         $('#menu-region').html("");
+        $('#sidebar-region').html("");
     });
 
     $(document).on("ajaxStart", function () {
@@ -289,7 +291,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         if (user.environment === Const.WEB_APPS_ENVIRONMENT) {
             // This isn't a circular import, but importing it at the top level would
             // mean it would need to be faked for tests
-            hqRequire(["notifications/js/notifications_service_main"], function (Notifications) {
+            hqRequire(["notifications/js/bootstrap3/notifications_service_main"], function (Notifications) {
                 Notifications.initNotifications();
             });
         }
@@ -712,6 +714,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             appId,
             currentUser = FormplayerFrontend.getChannel().request('currentUser');
         urlObject.clearExceptApp();
+        FormplayerFrontend.regions.getRegion('sidebar').empty();
         FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         if (currentUser.displayOptions.singleAppMode) {
             appId = FormplayerFrontend.getChannel().request('getCurrentAppId');

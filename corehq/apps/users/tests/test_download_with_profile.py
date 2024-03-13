@@ -60,7 +60,7 @@ class TestDownloadMobileWorkersWithProfile(TestCase, DomainSubscriptionMixin):
             None,
             first_name='Edith',
             last_name='Wharton',
-            metadata={'born': 1862}
+            user_data={'born': 1862}
         )
         cls.user2 = CommCareUser.create(
             cls.domain_obj.name,
@@ -70,7 +70,7 @@ class TestDownloadMobileWorkersWithProfile(TestCase, DomainSubscriptionMixin):
             None,
             first_name='George',
             last_name='Eliot',
-            metadata={'born': 1849, PROFILE_SLUG: cls.profile.id},
+            user_data={'born': 1849, PROFILE_SLUG: cls.profile.id},
         )
 
     @classmethod

@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,11 +1,11 @@
+ {% load i18n %}
+ 
+-<div class="paused-plan well">
++<div class="paused-plan card">
+   <div class="row">
+-    <div class="col-xs-3 column-icon">
++    <div class="col-sm-3 column-icon">
+       <i class="fa-regular fa-circle-pause"></i>
+     </div>
+-    <div class="col-xs-9 column-text">
++    <div class="col-sm-9 column-text">
+       <h3>
+         {% if is_trial %}
+           {% blocktrans %}

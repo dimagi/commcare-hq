@@ -78,6 +78,7 @@ from .views.mobile.users import (
     send_confirmation_sms,
     CommcareUserUploadJobPollView,
     ClearCommCareUsers,
+    link_connectid_user,
 )
 from ..hqwebapp.decorators import waf_allow
 
@@ -245,6 +246,11 @@ urlpatterns = [
         r'^commcare/confirm_account_sms/(?P<user_invite_hash>[\S-]+)/$',
         CommCareUserConfirmAccountBySMSView.as_view(),
         name=CommCareUserConfirmAccountBySMSView.urlname
+    ),
+    url(
+        r'^commcare/link_connectid_user/$',
+        link_connectid_user,
+        name='link_connectid_user'
     ),
 ] + [
     url(r'^groups/$', GroupsListView.as_view(), name=GroupsListView.urlname),

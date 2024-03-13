@@ -21,16 +21,14 @@ class TestUpdateDataDictionary(BaseLinkedDomainTest):
                                            description='Name of patient',
                                            deprecated=False,
                                            data_type='plain',
-                                           group='Suspected group',
-                                           group_obj=self.suspected_group)
+                                           group=self.suspected_group)
         self.suspected_name.save()
         self.suspected_date = CaseProperty(case_type=self.suspected,
                                            name='Date opened',
                                            description='Date the case was opened',
                                            deprecated=False,
                                            data_type='date',
-                                           group='Suspected group',
-                                           group_obj=self.suspected_group)
+                                           group=self.suspected_group)
         self.suspected_date.save()
 
         self.confirmed = CaseType(domain=self.domain,
@@ -47,24 +45,21 @@ class TestUpdateDataDictionary(BaseLinkedDomainTest):
                                            description='Name of patient',
                                            deprecated=False,
                                            data_type='plain',
-                                           group='Confirmed group',
-                                           group_obj=self.confirmed_group)
+                                           group=self.confirmed_group)
         self.confirmed_name.save()
         self.confirmed_date = CaseProperty(case_type=self.confirmed,
                                            name='Date opened',
                                            description='Date the case was opened',
                                            deprecated=False,
                                            data_type='date',
-                                           group='Confirmed group',
-                                           group_obj=self.confirmed_group)
+                                           group=self.confirmed_group)
         self.confirmed_date.save()
         self.confirmed_test = CaseProperty(case_type=self.confirmed,
                                            name='Test',
                                            description='Type of test performed',
                                            deprecated=False,
                                            data_type='plain',
-                                           group='Confirmed group',
-                                           group_obj=self.confirmed_group)
+                                           group=self.confirmed_group)
         self.confirmed_test.save()
 
     def tearDown(self):
@@ -115,6 +110,7 @@ class TestUpdateDataDictionary(BaseLinkedDomainTest):
                 'domain': domain,
                 'description': description,
                 'fully_generated': True,
+                'is_deprecated': False,
                 'groups': groups
             }
 
@@ -159,16 +155,14 @@ class TestUpdateDataDictionary(BaseLinkedDomainTest):
                                           description='Name of patient',
                                           deprecated=False,
                                           data_type='plain',
-                                          group='Archived group',
-                                          group_obj=self.archived_group)
+                                          group=self.archived_group)
         self.archived_name.save()
         self.archived_reason = CaseProperty(case_type=self.archived,
                                             name='Reason',
                                             description='Reason for archiving',
                                             deprecated=False,
                                             data_type='plain',
-                                            group='Archived group',
-                                            group_obj=self.archived_group)
+                                            group=self.archived_group)
         self.archived_reason.save()
         update_data_dictionary(self.domain_link)
 

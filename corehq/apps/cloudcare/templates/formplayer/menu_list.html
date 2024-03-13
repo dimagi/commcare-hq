@@ -120,24 +120,24 @@
 </script>
 
 <script type="text/template" id="breadcrumb-list-template">
-  <div class="breadcrumb-nav">
+  <nav class="breadcrumb-nav" aria-label="Breadcrumb">
     <ol class="breadcrumb">
-      <li class="js-home breadcrumb-text" role="link" tabindex="0" aria-label="{% trans_html_attr 'Home' %}"><i class="fa fa-home"></i></li>
+      <li class="js-home breadcrumb-text" role="link" tabindex="0">{% trans 'Home' %}</li>
     </ol>
-    <div class="pull-right dropdown dropdown-menu-right" id="form-menu">
+    <div class="pull-right dropdown dropdown-menu-right" id="breadcrumb__menu-dropdown">
     </div>
-  </div>
+  </nav>
 </script>
 
-<script type="text/template" id="form-menu-template">
-  <div class="btn-group" id="form-menu-dropdown">
+<script type="text/template" id="menu-dropdown-template">
+  <div class="btn-group" id="menu-dropdown">
     <button class="btn btn-primary-dark dropdown-toggle" role="button"
             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
       <i class="fa fa-bars"></i>
       <span class="sr-only">{% trans 'Dropdown toggle' %}</span>
     </button>
     <ul class="dropdown-menu dropdown-menu-right noprint-sub-container" aria-label="Dropdown">
-      <li tabindex="0" class="dropdown-header" id="print-header">{% trans "Print" %}</li>
+      <li tabindex="0" class="dropdown-header print-button">{% trans "Print" %}</li>
       <% if (languageOptionsEnabled) { %>
       <li><hr class="dropdown-divider"></li>
       <li class="dropdown-header">{% trans "Languages" %}</li>
@@ -148,6 +148,6 @@
 
 <script type="text/template" id="language-option-template">
   <% if (languageOptionsEnabled) { %>
-  <a tabindex="0" class="lang" id="<%- lang %>"><%- lang %></a>
+  <a tabindex="0" class="lang" id="<%- lang_code %>"><%- lang_label %></a>
   <% } %>
 </script>

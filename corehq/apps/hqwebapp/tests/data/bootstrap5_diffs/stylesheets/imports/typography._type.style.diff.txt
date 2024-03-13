@@ -28,3 +28,9 @@
  }
  
  .no-border {
+@@ -88,4 +89,4 @@
+ 
+ a {
+     cursor: pointer;
+-}
++}

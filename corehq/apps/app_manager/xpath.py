@@ -69,21 +69,27 @@ def dot_interpolate(string, replacement):
     return new
 
 
-def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, form=None):
-    """
-    Replace xpath shortcuts with full value.
-    """
-    if case_xpath is None and any([
+def _ensure_no_case_references(string, module, form, interpolate_dots=True):
+    bad_references = [
         '#case' in string,
         '#parent' in string,
         '#host' in string,
-        # DOT_INTERPOLATE_PATTERN throws false positives, so if it flags the string,
-        # verify that the string's dots would actually get replaced
-        re.search(DOT_INTERPOLATE_PATTERN, string) and dot_interpolate(string, "") != string,
-    ]):
+    ]
+    if interpolate_dots:
+        bad_references.append(re.search(DOT_INTERPOLATE_PATTERN, string) and dot_interpolate(string, "") != string)
+    if any(bad_references):
         # At the moment this function is only used by module and form filters.
         # If that changes, amend the error message accordingly.
         raise CaseXPathValidationError(_(CASE_REFERENCE_VALIDATION_ERROR), module=module, form=form)
+
+
+def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, form=None, interpolate_dots=True):
+    """
+    Replace xpath shortcuts with full value.
+    """
+    if case_xpath is None:
+        _ensure_no_case_references(string, module, form, interpolate_dots)
+
     replacements = {
         '#user': UsercaseXPath().case(),
         '#session/': session_var('', path=''),
@@ -346,7 +352,8 @@ class CaseClaimXpath(object):
         # count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0
         return CaseIDXPath(session_var(self.session_var_name)).case().count().eq(0)
 
-    def multi_select_relevant(self):
+    @classmethod
+    def multi_case_relevant(cls):
         # Verifies that there's at least one case that isn't yet owned by the user
         return XPath("$case_id").neq(XPath.string(""))
 
@@ -418,6 +425,11 @@ class SearchSelectedCasesInstanceXpath(InstanceXpath):
     @property
     def id(self):
         return self or self.default_id
+
+
+class LocationInstanceXpath(InstanceXpath):
+    id = 'locations'
+    path = 'locations/location'
 
 
 class CommCareSession(object):

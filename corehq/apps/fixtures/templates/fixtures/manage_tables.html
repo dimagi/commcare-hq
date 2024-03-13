@@ -9,6 +9,7 @@
 
 {% block page_content %}
   {% initial_page_data 'data_types' types %}
+  {% initial_page_data 'can_edit_linked_data' can_edit_linked_data %}
   {% registerurl 'download_fixtures' domain %}
   {% registerurl 'fixture_interface_dispatcher' domain 'view_lookup_tables' %}
   {% registerurl 'update_lookup_tables' domain %}
@@ -33,11 +34,44 @@
 
   <div class="row ko-template" id="fixtures-ui">
     <div class="col-sm-12">
-      <p class="pull-right">
+      <p class="pull-left">
         <a href="#" class="btn btn-primary"
            data-bind="click: downloadExcels, attr: {'disabled': selectedTables().length < 1}">
-          <i class="fa fa-cloud-download"></i> {% trans "Download Lookup Tables" %}
+          <i class="fa-solid fa-cloud-arrow-down"></i> {% trans "Download Lookup Tables" %}
         </a>
+        </p>
+        <p class="pull-right">
+        <!-- ko if: hasLinkedModels -->
+          <!-- ko if: allowEdit -->
+            <!-- ko ifnot: unlockLinkedData -->
+              <button class="btn btn-default" data-toggle="modal" data-target="#edit-warning-modal">
+                <i class="fa fa-link"></i>
+                {% trans 'Unlock Linked Tables For Me' %}
+              </button>
+            <!-- /ko -->
+            <!-- ko if: unlockLinkedData -->
+              <button class="btn btn-default" data-bind="click: toggleLinkedLock">
+                <i class="fa fa-link"></i>
+                {% trans "Lock Linked Tables For Me" %}
+              </button>
+            <!-- /ko -->
+          <!-- /ko -->
+          <!-- ko ifnot: allowEdit -->
+            <span>
+              <i class="fa fa-link"></i>
+              Contains Linked Roles
+            </span>
+          <!-- /ko -->
+        <span class="hq-help-template"
+            data-placement="left"
+            data-title="{% trans 'Linked Configurations' %}"
+            data-content="
+              {% blocktrans %}
+                Linked configurations are controlled from a separate, linked project space.
+                  <a href='https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</a>.
+              {% endblocktrans %}">
+        </span>
+        <!-- /ko -->
       </p>
     </div>
     <div class="col-sm-12">
@@ -49,7 +83,7 @@
           </th>
           <th class="col-sm-2">
             {% trans "View Table" %}
-            <i class="fa fa-external-link"></i>
+            <i class="fa-solid fa-up-right-from-square"></i>
           </th>
           <th class="col-sm-3">
             {% trans "Edit or Delete Table" %}
@@ -59,6 +93,10 @@
             <a href="#" class="btn btn-xs btn-default toggle" data-all="true" data-bind="click: updateSelectedTables">{% trans "all" %}</a>
             <a href="#" class="btn btn-xs btn-default toggle" data-all="false" data-bind="click: updateSelectedTables">{% trans "none" %}</a>
           </th>
+          {% if is_managed_by_upstream_domain %}
+          <th class="col-sm-2">
+          </th>
+          {% endif %}
         </tr>
         </thead>
         <tbody>
@@ -71,24 +109,39 @@
             <a data-bind="attr: {href: view_link}" target='_blank'>{% trans "View Table" %}</a>
           </td>
           <td>
+            <!-- ko if: !is_synced() || $parent.unlockLinkedData() -->
             <button class="btn btn-default" data-bind="click: startEditing, visible: saveState() === 'saved'">
               <i class="fa fa-edit"></i>
               {% trans "Edit" %}
             </button>
+            <button class="btn btn-danger" data-bind="click: $root.removeDataType">
+              <i class="fa-regular fa-trash-can"></i>
+              {% trans "Delete" %}
+            </button>
+            <!-- /ko -->
+            <!-- ko ifnot: !is_synced() || $parent.unlockLinkedData() -->
+            <button class="btn btn-default" data-bind="click: startViewing, visible: saveState() === 'saved'">
+              <i class="fa-solid fa-eye"></i>
+              {% trans "View" %}
+            </button>
+            <!-- /ko -->
             <button class="btn btn-default disabled" data-bind="visible: saveState() === 'saving'">
               {% trans "Saving..." %}
             </button>
             {% include "fixtures/partials/edit_table_modal.html" %}
-            <button class="btn btn-danger" data-bind="click: $root.removeDataType">
-              <i class="fa fa-trash"></i>
-              {% trans "Delete" %}
-            </button>
           </td>
           <td>
             <label>
               <input type="checkbox" class="select-bulk" data-bind="event: {change: $root.updateSelectedTables}, value: _id" />
             </label>
           </td>
+          {% if is_managed_by_upstream_domain %}
+          <td>
+            <!-- ko if: is_synced-->
+              <i class="icon fa fa-link"></i>
+            <!-- /ko -->
+          </td>
+          {% endif %}
         </tr>
         <!-- /ko -->
         <tr>
@@ -151,13 +204,14 @@
         <div class="form-actions">
           <div class="col-sm-offset-3">
             <button type="submit" class="btn btn-primary disable-on-submit" data-bind="attr: {'disabled': !file()}">
-              <i class="fa fa-cloud-upload"></i> {% trans 'Upload Tables' %}
+              <i class="fa-solid fa-cloud-arrow-up"></i> {% trans 'Upload Tables' %}
             </button>
           </div>
         </div>
       </form>
     </div>
   </div>
+  {% include 'fixtures/partials/modal_edit.html' %}
   <div class="modal fade" id="fixture-download">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -175,7 +229,7 @@
             <p class="alert alert-success">{% trans "Your file is ready." %}</p>
             <a href="#" id="file-download-url">
               <button type="submit" class="btn btn-primary" data-bind="attr:">
-                <i class="fa fa-cloud-download"></i> {% trans 'Download File Now' %}
+                <i class="fa-solid fa-cloud-arrow-down"></i> {% trans 'Download File Now' %}
               </button>
             </a>
           </div>

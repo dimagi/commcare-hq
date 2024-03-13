@@ -10,7 +10,7 @@
         <instance id="item-list:colors" src="jr://fixture/item-list:colors"/>
         <instance id="results" src="jr://instance/remote/results"/>
         <session>
-          <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results" template="case" default_search="false">
+          <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results" template="case" default_search="false" dynamic_search="false">
             <title>
               <text>
                 <locale id="case_search.m0.inputs"/>

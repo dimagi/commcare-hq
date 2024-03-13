@@ -1,18 +1,16 @@
-import contextlib
 import uuid
 from datetime import time
 
 from django.test import TestCase, override_settings
 
-from unittest.mock import patch
-
 from casexml.apps.case.tests.util import create_case
+
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
-    PROFILE_SLUG,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
@@ -21,10 +19,10 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.models import CommCareCase
-from corehq.form_processor.utils import is_commcarecase
 from corehq.apps.users.util import normalize_username
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.pillow import get_case_messaging_sync_pillow
 from corehq.messaging.scheduling.models import (
     Content,
@@ -35,8 +33,9 @@ from corehq.messaging.scheduling.models import (
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
     CaseTimedScheduleInstance,
-    ScheduleInstance as AbstractScheduleInstance,
 )
+from corehq.messaging.scheduling.scheduling_partitioned.models import \
+    ScheduleInstance as AbstractScheduleInstance
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
 from corehq.util.test_utils import (
     create_test_case,
@@ -66,17 +65,17 @@ class SchedulingRecipientTest(TestCase):
         cls.mobile_user2 = CommCareUser.create(cls.domain, 'mobile2', 'abc', None, None)
         cls.mobile_user2.set_location(cls.state_location)
 
-        cls.mobile_user3 = CommCareUser.create(cls.domain, 'mobile3', 'abc', None, None, metadata={
+        cls.mobile_user3 = CommCareUser.create(cls.domain, 'mobile3', 'abc', None, None, user_data={
             'role': 'pharmacist',
         })
         cls.mobile_user3.save()
 
-        cls.mobile_user4 = CommCareUser.create(cls.domain, 'mobile4', 'abc', None, None, metadata={
+        cls.mobile_user4 = CommCareUser.create(cls.domain, 'mobile4', 'abc', None, None, user_data={
             'role': 'nurse',
         })
         cls.mobile_user4.save()
 
-        cls.mobile_user5 = CommCareUser.create(cls.domain, 'mobile5', 'abc', None, None, metadata={
+        cls.mobile_user5 = CommCareUser.create(cls.domain, 'mobile5', 'abc', None, None, user_data={
             'role': ['nurse', 'pharmacist'],
         })
         cls.mobile_user5.save()
@@ -99,14 +98,14 @@ class SchedulingRecipientTest(TestCase):
             definition=cls.definition,
         )
         cls.profile.save()
-        cls.mobile_user6 = CommCareUser.create(cls.domain, 'mobile6', 'abc', None, None, metadata={
+        cls.mobile_user6 = CommCareUser.create(cls.domain, 'mobile6', 'abc', None, None, user_data={
             PROFILE_SLUG: cls.profile.id,
         })
         cls.mobile_user5.save()
 
         cls.web_user = WebUser.create(cls.domain, 'web', 'abc', None, None)
 
-        cls.web_user2 = WebUser.create(cls.domain, 'web2', 'abc', None, None, metadata={
+        cls.web_user2 = WebUser.create(cls.domain, 'web2', 'abc', None, None, user_data={
             'role': 'nurse',
         })
         cls.web_user2.save()

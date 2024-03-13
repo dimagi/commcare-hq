@@ -22,6 +22,7 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
 @patch('corehq.apps.app_manager.app_schemas.case_properties.get_per_type_defaults', MagicMock(return_value={}))
+@patch('corehq.apps.app_manager.app_schemas.case_properties.domain_has_privilege', MagicMock(return_value=False))
 class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data',)
 

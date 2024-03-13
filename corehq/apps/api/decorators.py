@@ -55,7 +55,7 @@ def api_throttle(view):
         throttle = get_hq_throttle()
         should_be_throttled = throttle.should_be_throttled(identifier)
         if should_be_throttled:
-            return HttpResponse(status=429)
+            return HttpResponse(status=429, headers={'Retry-After': throttle.retry_after(identifier)})
         throttle.accessed(identifier, url=request.get_full_path(), request_method=request.method.lower())
         return view(request, *args, **kwargs)
     return wrapped_view

@@ -13,6 +13,7 @@ from .const import (
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
     RECORD_EMPTY_STATE,
+    COUCH_STATES,
 )
 
 
@@ -61,8 +62,8 @@ def get_sql_repeat_record_count(domain, repeater_id=None, state=None):
 
     queryset = SQLRepeatRecord.objects.filter(domain=domain)
     if repeater_id:
-        queryset = queryset.filter(repeater__repeater_id=repeater_id)
-    if state:
+        queryset = queryset.filter(repeater__id=repeater_id)
+    if state is not None:
         queryset = queryset.filter(state=state)
     return estimate_row_count(queryset)
 
@@ -81,6 +82,8 @@ def get_overdue_repeat_record_count(overdue_threshold=datetime.timedelta(minutes
 
 def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None):
     kwargs = {}
+    if state is not None:
+        state = COUCH_STATES[state]
 
     if repeater_id and not state:
         kwargs['endkey'] = [domain, repeater_id]
@@ -127,12 +130,12 @@ def get_paged_sql_repeat_records(domain, skip, limit, repeater_id=None, state=No
 
     queryset = SQLRepeatRecord.objects.filter(domain=domain)
     if repeater_id:
-        queryset = queryset.filter(repeater__repeater_id=repeater_id)
-    if state:
+        queryset = queryset.filter(repeater__id=repeater_id)
+    if state is not None:
         queryset = queryset.filter(state=state)
     return (queryset.order_by('-registered_at')[skip:skip + limit]
             .select_related('repeater')
-            .prefetch_related('sqlrepeatrecordattempt_set'))
+            .prefetch_related('attempt_set'))
 
 
 def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, chunk_size=1000):
@@ -183,9 +186,6 @@ def _iter_repeat_records_by_repeater(domain, repeater_id, chunk_size,
 
 
 def get_repeat_records_by_payload_id(domain, payload_id):
-    repeat_records = get_sql_repeat_records_by_payload_id(domain, payload_id)
-    if repeat_records:
-        return repeat_records
     return get_couch_repeat_records_by_payload_id(domain, payload_id)
 
 
@@ -261,17 +261,10 @@ def get_domains_that_have_repeat_records():
 @unit_testing_only
 def delete_all_repeat_records():
     from .models import RepeatRecord
-    results = RepeatRecord.get_db().view('repeaters/repeat_records', reduce=False).all()
-    for result in results:
-        try:
-            repeat_record = RepeatRecord.get(result['id'])
-        except Exception:
-            pass
-        else:
-            repeat_record.delete()
-
-
-@unit_testing_only
-def delete_all_repeaters():
-    from .models import Repeater
-    Repeater.objects.all().delete()
+    db = RepeatRecord.get_db()
+    results = db.view(
+        'repeaters/repeat_records_by_payload_id',
+        reduce=False,
+        include_docs=True,
+    ).all()
+    db.bulk_delete([r["doc"] for r in results], empty_on_delete=False)

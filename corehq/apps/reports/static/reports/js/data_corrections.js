@@ -34,9 +34,9 @@ hqDefine("reports/js/data_corrections", [
     "underscore",
     "hqwebapp/js/assert_properties",
     "analytix/js/kissmetrix",
-    "hqwebapp/js/components.ko",     // pagination
+    "hqwebapp/js/bootstrap3/components.ko",     // pagination
     "select2/dist/js/select2.full.min",
-    "hqwebapp/js/components.ko",    // search box
+    "hqwebapp/js/bootstrap3/components.ko",    // search box
 ], function (
     $,
     ko,
@@ -250,7 +250,7 @@ hqDefine("reports/js/data_corrections", [
                 .filter(function (prop) { return prop.dirty(); })
                 .indexBy('name')
                 .mapObject(function (model) { return model.value(); })
-            .value();
+                .value();
             $.post({
                 url: options.saveUrl,
                 data: {

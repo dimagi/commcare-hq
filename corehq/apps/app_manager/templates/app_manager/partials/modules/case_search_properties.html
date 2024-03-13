@@ -33,13 +33,21 @@
             {% include "app_manager/partials/modules/case_search_property.html" %}
           </tbody>
         </table>
-        <p>
+        <div class="btn-group">
           <button type="button"
                   class="btn btn-default"
                   data-bind="click: addProperty">
-            <i class="fa fa-plus"></i> {% trans "Add search property" %}
+            <i class="fa fa-plus"></i> {% trans "Add Search Property" %}
           </button>
-        </p>
+          {% if app.supports_grouped_case_search_properties %}
+            <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+              <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li data-bind="click: addGroupProperty"><a>{% trans "Add Group" %}</a></li>
+            </ul>
+          {% endif %}
+        </div>
       </div>
     </div>
     <div class="panel panel-appmanager">
@@ -89,6 +97,71 @@
         </p>
       </div>
     </div>
+    <div class="panel panel-appmanager">
+      <div class="panel-heading">
+        <h4 class="panel-title panel-title-nolink">
+          {% trans "Custom Sort Properties" %}
+        </h4>
+      </div>
+      <div class="panel-body">
+        <p>{% trans "Sort search results by case property before filtering. These will affect the priority in which results are returned and are hidden from the user." %}</p>
+        <table class="table table-condensed">
+          <thead data-bind="visible: custom_sort_properties().length > 0">
+            <tr>
+              <th></th>
+              <th>{% trans "Case Property" %}</th>
+              <th>{% trans "Format" %}</th>
+              <th>{% trans "Direction" %}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody data-bind="foreach: custom_sort_properties, sortableList: custom_sort_properties" class="ui-sortable">
+            <tr>
+              <td>
+                <i class="grip fa-solid fa-up-down icon-blue"></i>
+              </td>
+              <td class="form-group">
+                <input class="form-control" type="text" data-bind="value: property_name"/>
+              </td>
+              <td>
+                <select class="form-control" data-bind="value: sort_type">
+                  <option value="exact">
+                    {% trans "Exact" %}
+                  </option>
+                  <option value="date">
+                    {% trans "Date" %}
+                  </option>
+                  <option value="numeric">
+                    {% trans "Numeric" %}
+                  </option>
+                </select>
+              </td>
+              <td>
+                <select class="form-control" data-bind="value: direction">
+                  <option value="ascending">
+                    {% trans "Ascending" %}
+                  </option>
+                  <option value="descending">
+                    {% trans "Descending" %}
+                  </option>
+                </select>
+              </td>
+              <td>
+                <a data-bind="click: $parent.removeCustomSortProperty">
+                  <i class="fa fa-remove icon-blue"></i>
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="form-group">
+          <button class="btn btn-default" data-bind="click: addCustomSortProperty">
+            <i class="fa fa-plus"></i>
+            {% trans "Add custom sort property" %}
+          </button>
+        </div>
+      </div>
+    </div>
     <div class="panel panel-appmanager" data-bind="visible: isEnabled">
       <div class="panel-heading">
         <h4 class="panel-title panel-title-nolink">{% trans "Search and Claim Options" %}</h4>
@@ -134,6 +207,20 @@
                 <input type="checkbox" data-bind="checked: inline_search" />
                 <input type="hidden" name="search-input" data-bind="value: inline_search"/>
               </label>
+              <p class="help-block" data-bind="visible: inlineSearchActive">
+                Example: <span data-bind="text: exampleInstance" ></span>
+              </p>
+            </div>
+          </div>
+          <div class="form-group" data-bind="visible: inlineSearchActive">
+            <label class="control-label {% css_label_class %}">
+              {% trans "Search Input Instance Name" %}
+              <span class="hq-help-template" data-title="{% trans "Search Input Instance Name" %}"
+                    data-content="{% trans_html_attr "Customize the name used to reference the search input values.  If modified, you'll need to update any existing references to it." %}">
+              </span>
+            </label>
+            <div class="{% css_field_class %}">
+              <input type="text" name="instance_name" class="form-control" data-bind="value: instance_name"/>
             </div>
           </div>
           {% endif %}
@@ -155,23 +242,25 @@
               {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
             <!-- /ko -->
           </div>
-          <div class="form-group" data-bind="hidden: inlineSearchActive">
-            <label for="search_again_label" class="{% css_label_class %} control-label">
-              {% trans "Label for Searching Again" %}
-              <span class="hq-help-template" data-title="{% trans "Label for Searching Again" %}"
-                    data-content="{% trans_html_attr "This text is for the search button displayed at the bottom of search results, so users can search again." %}">
-            </label>
-            <div class="{% css_field_class %}">
-              {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: search_again_label" %}
+            {% if not request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' %}
+            <div class="form-group" data-bind="hidden: inlineSearchActive">
+              <label for="search_again_label" class="{% css_label_class %} control-label">
+                {% trans "Label for Searching Again" %}
+                <span class="hq-help-template" data-title="{% trans "Label for Searching Again" %}"
+                      data-content="{% trans_html_attr "This text is for the search button displayed at the bottom of search results, so users can search again." %}">
+              </label>
+              <div class="{% css_field_class %}">
+                {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: search_again_label" %}
+              </div>
             </div>
-          </div>
-          <div class="case-search-multimedia-input" data-bind="hidden: inlineSearchActive">
-          <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
-          <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
-            <!-- ko stopBinding: true -->
-              {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
-            <!-- /ko -->
-          </div>
+            <div class="case-search-multimedia-input" data-bind="hidden: inlineSearchActive">
+            <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
+            <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
+              <!-- ko stopBinding: true -->
+                {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_again_label_media_' ICON_LABEL="Search Again Icon" AUDIO_LABEL="Search Again Audio" %}
+              <!-- /ko -->
+            </div>
+            {% endif %}
           <div class="form-group">
             <label for="search_screen_title" class="{% css_label_class %} control-label">
               {% trans "Search Screen Title" %}
@@ -226,7 +315,7 @@
               ></textarea>
               <p class="help-block">
                 <button class="pull-right btn-xs btn btn-default" data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter">
-                  <i class="fa fa-mail-reply"></i>
+                  <i class="fa-solid fa-reply"></i>
                   {% trans "Copy case list filter" %}
                 </button>
                 {% trans "Example: age > 5" %}
@@ -377,11 +466,23 @@
             </div>
           </div>
           {% endif %}
+          {% if request|toggle_enabled:'SPLIT_SCREEN_CASE_SEARCH' and not app.split_screen_dynamic_search%}
+          <div class="form-group">
+            <label class="control-label {% css_label_class %}">
+              {% trans "Clearing search terms resets search results" %}
+            </label>
+            <div class="{% css_field_class %} checkbox">
+              <label>
+                <input type="checkbox" data-bind="checked: search_on_clear" />
+              </label>
+            </div>
+          </div>
+          {% endif %}
           <span class="hide" id="searchFilterXpathErrorHtml">
             {% blocktrans %}
               This is not a valid xpath expression. Check to make sure your parentheses match and you are referencing case properties correctly.
             {% endblocktrans %}
-            </span>
+          </span>
         </div>
       </div>
     </div>

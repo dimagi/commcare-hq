@@ -1,9 +1,17 @@
 --- 
 +++ 
-@@ -1,26 +1,5 @@
+@@ -1,34 +1,5 @@
+-@import "../../../../../../node_modules/bootstrap/less/buttons.less";
+-
 -.btn-primary {
 -  .button-variant(#ffffff; @call-to-action-mid; @call-to-action-mid);
 -  font-weight: bold;
+-}
+-
+-input::file-selector-button {
+-  .btn;
+-  .btn-xs;
+-  .btn-default;
 -}
 -
 -.btn-default {
@@ -28,7 +36,7 @@
  }
  
  .btn-full-width {
-@@ -30,25 +9,25 @@
+@@ -38,25 +9,35 @@
  // Separated button groups in toolbars need more space between them,
  // since the buttons within the group have space between them
  .btn-toolbar > .btn-group-separated:not(:first-child) {
@@ -70,3 +78,13 @@
      }
 +  }
  }
++
++.btn-outline-danger:hover {
++  color: #ffffff;
++}
++
++input::file-selector-button {
++  @extend .btn;
++  @extend .btn-sm;
++  @extend .btn-outline-primary;
++}

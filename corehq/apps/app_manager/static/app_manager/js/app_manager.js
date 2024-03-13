@@ -1,7 +1,7 @@
 hqDefine('app_manager/js/app_manager', function () {
     'use strict';
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-    var module = hqImport("hqwebapp/js/main").eventize({});
+    var module = hqImport("hqwebapp/js/bootstrap3/main").eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
     _private.prependedPageTitle = "";
@@ -73,7 +73,7 @@ hqDefine('app_manager/js/app_manager', function () {
         if (module.fetchAndShowFormValidation) {
             module.fetchAndShowFormValidation();
         }
-        hqImport("hqwebapp/js/main").updateDOM(update);
+        hqImport("hqwebapp/js/bootstrap3/main").updateDOM(update);
     };
 
     module.setupValidation = function (validationUrl) {
@@ -122,7 +122,7 @@ hqDefine('app_manager/js/app_manager', function () {
                 } else {
                     area.find('*').hide();
                     upgradeMessage.append(
-                        $('<i></i>').addClass('fa').addClass('fa-arrow-left')
+                        $('<i></i>').addClass('fa fa-arrow-left')
                     ).append(
                         $('<span></span>').text(' Requires CommCare ' + version)
                     ).appendTo(area);
@@ -164,7 +164,9 @@ hqDefine('app_manager/js/app_manager', function () {
                     stopSubmit = $(e.target).closest('button').data('stopsubmit') === 'yes',
                     $form;
 
-                if (stopSubmit) return;
+                if (stopSubmit) {
+                    return;
+                }
 
                 if (isForm) {
                     var caseAction =  $(e.target).closest('button').data('case-action'),
@@ -249,7 +251,7 @@ hqDefine('app_manager/js/app_manager', function () {
 
         function initDragHandles() {
             var $scope = $(".appmanager-main-menu");
-            $scope.find('.drag_handle').addClass('fa fa-arrows-v');
+            $scope.find('.drag_handle').addClass('fa-solid fa-up-down');
             $scope.find('.js-appnav-drag-module').on('mouseenter', function () {
                 $(this).closest('.js-sorted-li').addClass('appnav-highlight');
             }).on('mouseleave', function () {
@@ -392,10 +394,10 @@ hqDefine('app_manager/js/app_manager', function () {
                 method: 'POST',
                 data: data,
                 success: function () {
-                    hqImport('hqwebapp/js/alert_user').alert_user(gettext("Moved successfully."), "success");
+                    hqImport('hqwebapp/js/bootstrap3/alert_user').alert_user(gettext("Moved successfully."), "success");
                 },
                 error: function (xhr) {
-                    hqImport('hqwebapp/js/alert_user').alert_user(xhr.responseJSON.error, "danger");
+                    hqImport('hqwebapp/js/bootstrap3/alert_user').alert_user(xhr.responseJSON.error, "danger");
                 },
             });
             hqImport("app_manager/js/menu").setPublishStatus(true);
@@ -412,7 +414,7 @@ hqDefine('app_manager/js/app_manager', function () {
         $forms.each(function () {
             var $form = $(this),
                 $buttonHolder = $form.find('.save-button-holder'),
-                button = hqImport("hqwebapp/js/main").initSaveButtonForm($form, {
+                button = hqImport("hqwebapp/js/bootstrap3/main").initSaveButtonForm($form, {
                     unsavedMessage: gettext("You have unsaved changes"),
                     success: function (data) {
                         var key;

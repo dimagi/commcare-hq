@@ -1,4 +1,5 @@
 from datetime import datetime
+from casexml.apps.phone.models import OTARestoreWebUser
 from casexml.apps.case.xml.generator import date_to_xml_string
 
 DUMMY_ID = "foo"
@@ -13,6 +14,7 @@ def dummy_user_xml(user=None):
     user_id = user.user_id if user else DUMMY_ID
     date_joined = user.date_joined if user else datetime.utcnow()
     project = user.domain if user else DUMMY_PROJECT
+    user_type = 'web' if isinstance(user, OTARestoreWebUser) else 'commcare'
 
     return """
     <Registration xmlns="http://openrosa.org/user/registration">
@@ -24,7 +26,9 @@ def dummy_user_xml(user=None):
             <data key="commcare_first_name"/>
             <data key="commcare_last_name"/>
             <data key="commcare_phone_number"/>
+            <data key="commcare_profile"/>
             <data key="commcare_project">{}</data>
+            <data key="commcare_user_type">{}</data>
             <data key="something">arbitrary</data>
         </user_data>
     </Registration>""".format(
@@ -32,7 +36,8 @@ def dummy_user_xml(user=None):
         password,
         user_id,
         date_to_xml_string(date_joined),
-        project
+        project,
+        user_type,
     )
 
 DUMMY_RESTORE_XML_TEMPLATE = ("""

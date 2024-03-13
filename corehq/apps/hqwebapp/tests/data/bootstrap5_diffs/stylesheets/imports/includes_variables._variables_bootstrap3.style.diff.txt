@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,119 +1,66 @@
+@@ -1,124 +1,69 @@
 -@import "@{b3-import-variables}";
 +/*
 +These are Boostrap 3 variables that were carried over in the
@@ -137,6 +137,7 @@
 -@checkbox-default-color: @call-to-action-mid;
 -
 -@breadcrumb-separator: '>';
+-@breadcrumb-height-cloudcare: 46px;
 -
 -@grid-gutter-width: 20px;
 +$checkbox-default-color: $call-to-action-mid;
@@ -154,16 +155,23 @@
 -@zindex-report-loading:               100;
 -@zindex-app-preview:                  998;
 -@zindex-navbar-cloudcare:             995;
+-@zindex-persistent-tile-cloudcare:    993;
 -@zindex-formplayer-progress:          990;
 -@zindex-cloudcare-debugger:           1005;
+-@zindex-formplayer-scroll-to-bottom:    5;
+-@zindex-formplayer-anchored-submit:     2;
 +$zindex-navbar:                       1000;
 +$zindex-report-loading:               100;
 +$zindex-app-preview:                  998;
 +$zindex-navbar-cloudcare:             995;
++$zindex-persistent-tile-cloudcare:             993;
 +$zindex-formplayer-progress:          990;
 +$zindex-cloudcare-debugger:           1005;
++$zindex-formplayer-scroll-to-bottom:    5;
++$zindex-formplayer-anchored-submit:     2;
  
 -
 -@input-border-radius-large:       5px;
+-@input-color:                     #000;
 -@cursor-disabled:                 'not-allowed';
 +$cursor-disabled: 'not-allowed';

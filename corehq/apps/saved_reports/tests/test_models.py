@@ -1,26 +1,85 @@
-from django.conf import settings
+from datetime import datetime, timedelta
+from django.http.request import QueryDict
 from django.test import SimpleTestCase, TestCase
 from smtplib import SMTPSenderRefused
+from dimagi.utils.dates import DateSpan
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODE
 from unittest.mock import create_autospec, patch, PropertyMock, ANY
 from corehq.apps.reports import views
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.saved_reports import models
+from corehq.apps.saved_reports.tasks import create_config_for_email
 from ..models import ReportNotification, ReportConfig
 
 
 class TestReportConfig(TestCase):
 
-    def tearDown(self) -> None:
-        self.config.delete()
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.user_id = 'nothing'
+        cls.report_slug = 'case_list_explorer'
+        cls.report_type = 'project_report'
+
+        GET = {'send_to_owner': 'true',
+               'subject': 'Case List Explorer',
+               'getReportRenderUrl':
+                   '/a/test-domain/reports/undefined/case_list_explorer/?search_xpath=case_name%3D%22EXAMPLEXPATH'
+                   '%22&explorer_columns=%5B%7B%22name%22%3A%22%40case_type%22%2C%22label%22%3A%22%40case_type'
+                   '%22%7D%2C%7B%22name%22%3A%22case_name%22%2C%22label%22%3A%22case_name%22%7D%2C%7B%22name'
+                   '%22%3A%22last_modified%22%2C%22label%22%3A%22last_modified'
+                   '%22%7D%5D&case_list_filter=project_data&case_type=&is_open=',
+               'params':
+                   'search_xpath=case_name%3D%22EXAMPLEXPATH%22&explorer_columns=%5B%7B%22name'
+                   '%22%3A%22%40case_type%22%2C%22label%22%3A%22%40case_type%22%7D%2C%7B%22name'
+                   '%22%3A%22case_name%22%2C%22label%22%3A%22case_name%22%7D%2C%7B%22name'
+                   '%22%3A%22last_modified%22%2C%22label%22%3A%22last_modified'
+                   '%22%7D%5D&case_list_filter=project_data&case_type=&is_open='
+               }
+        GET_dict = QueryDict('', mutable=True)
+        GET_dict.update(GET)
+        test_date = datetime(2023, 7, 25)
+
+        cls.request_data = {
+            'GET': GET_dict,
+            'META': {'QUERY_STRING': '', 'PATH_INFO': '/a/test-domain/reports/email_onceoff/case_list_explorer/'},
+            'datespan': DateSpan(
+                startdate=test_date - timedelta(days=30),
+                enddate=test_date
+            ),
+            'couch_user': cls.user_id,
+            'can_access_all_locations': True
+        }
 
     def test_report_is_shared_on_domain(self):
-        domain = 'test_domain'
         self.config = ReportConfig(
-            domain=domain,
+            domain=self.domain,
         )
+        self.addCleanup(self.config.delete)
         self.config.save()
         self.assertFalse(self.config.is_shared_on_domain())
+
+    def test_report_config_contents(self):
+        self.config = create_config_for_email(
+            self.report_type, self.report_slug, self.user_id, self.domain, self.request_data
+        )
+        self.config.save()
+        self.addCleanup(self.config.delete)
+        self.assertEqual(self.config.filters.get('search_xpath'), 'case_name="EXAMPLEXPATH"')
+        self.assertEqual(self.config.filters.get('explorer_columns'),
+                         '[{"name":"@case_type","label":"@case_type"},'
+                         '{"name":"case_name","label":"case_name"},'
+                         '{"name":"last_modified","label":"last_modified"}]')
+
+    def test_report_config_does_not_have_datespan_if_not_in_params(self):
+        self.config = create_config_for_email(
+            self.report_type, self.report_slug, self.user_id, self.domain, self.request_data
+        )
+        self.config.save()
+        self.addCleanup(self.config.delete)
+        self.assertEqual(self.config.filters.get('startdate'), None)
+        self.assertEqual(self.config.filters.get('enddate'), None)
 
 
 class TestReportNotification(SimpleTestCase):
@@ -167,8 +226,8 @@ class TestSendEmails(SimpleTestCase):
         self.mock_send_email.assert_called_with('Test Report',
             ['test1@dimagi.com', 'test2@dimagi.com'],
             'Unable to generate email report. Excel files are attached.',
-            email_from=settings.DEFAULT_FROM_EMAIL,
-            file_attachments=['abba'])
+            file_attachments=['abba'],
+            domain='test-domain', use_domain_gateway=True)
 
     def test_failing_emails_are_logged(self):
         self.mock_send_email.side_effect = Exception('Email failed to send')

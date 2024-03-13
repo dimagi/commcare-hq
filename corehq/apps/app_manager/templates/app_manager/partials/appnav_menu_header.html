@@ -4,7 +4,7 @@
   <div class="appnav-name-settings">
     <a href="{% url "app_settings" domain app_id %}"
        class="appnav-responsive{% if settings_active %} active{% endif %}">
-      <i class="fa fa-gear"></i>
+      <i class="fa-solid fa-gear"></i>
     </a>
   </div>
   <h2 class="appnav-name">
@@ -18,4 +18,13 @@
        style="display: none;">
     {% trans "Updates Available to Publish" %}
   </div>
+  {% if linked_name and linked_version %}
+  <div id="js-linked-status"
+       class="appnav-name-linked"
+  >
+    {% blocktrans with name=linked_name version=linked_version %}
+    Linked from {{ name }} | V{{version}}
+    {% endblocktrans %}
+  </div>
+  {% endif %}
 </div>

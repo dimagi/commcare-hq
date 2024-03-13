@@ -1,24 +1,24 @@
 import uuid
 from collections import namedtuple
 from itertools import chain
-from xml.etree import cElementTree as ElementTree
+from lxml import etree
 
 from django.core.cache import cache
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.apps.domain.models import Domain
-from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
+from corehq.apps.domain.models import Domain
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.models import CommCareCase
+from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 
 
-class _UserCaseHelper(object):
+class _UserCaseHelper:
 
     CASE_SOURCE_ID = __name__ + "._UserCaseHelper."
 
@@ -90,7 +90,7 @@ class _UserCaseHelper(object):
 
 
 def _domain_has_new_fields(domain, field_names):
-    cache_key = 'user_case_fields_{}'.format(domain)
+    cache_key = f'user_case_fields_{domain}'
     cached_fields = cache.get(cache_key)
     new_field_set = set(field_names)
     if cached_fields != new_field_set:
@@ -101,10 +101,10 @@ def _domain_has_new_fields(domain, field_names):
 
 
 def _get_sync_usercase_helper(user, domain, case_type, owner_id, case=None):
-    fields = _get_user_case_fields(user, case_type, owner_id)
-    case = case or CommCareCase.objects.get_case_by_external_id(domain, user._id, case_type)
+    fields = _get_user_case_fields(user, case_type, owner_id, domain)
+    case = case or CommCareCase.objects.get_case_by_external_id(domain, user.user_id, case_type)
     close = user.to_be_deleted() or not user.is_active
-    user_case_helper = _UserCaseHelper(domain, owner_id, user._id)
+    user_case_helper = _UserCaseHelper(domain, owner_id, user.user_id)
 
     def case_should_be_reopened(case, user_case_should_be_closed):
         return case and case.closed and not user_case_should_be_closed
@@ -121,17 +121,17 @@ def _get_sync_usercase_helper(user, domain, case_type, owner_id, case=None):
     return user_case_helper
 
 
-def _get_user_case_fields(user, case_type, owner_id):
+def _get_user_case_fields(user, case_type, owner_id, domain):
 
     def valid_element_name(name):
         try:
-            ElementTree.fromstring('<{}/>'.format(name))
+            etree.Element(name)
             return True
-        except ElementTree.ParseError:
+        except ValueError:
             return False
 
     # remove any keys that aren't valid XML element names
-    fields = {k: v for k, v in user.metadata.items() if
+    fields = {k: v for k, v in user.get_user_data(domain).items() if
               valid_element_name(k)}
     # language or phone_number can be null and will break
     # case submission
@@ -181,15 +181,6 @@ def _get_changed_fields(case, fields):
     return changed_fields
 
 
-def get_sync_lock_key(user_id, domain):
-    return [f"sync_user_case_for_{user_id}_{domain}"]
-
-
-def sync_call_center_user_case(user, domain):
-    with CriticalSection(get_sync_lock_key(user._id, domain)):
-        _UserCaseHelper.commit(list(_iter_call_center_case_helpers(user)))
-
-
 def _iter_call_center_case_helpers(user):
     if user.is_web_user():
         return
@@ -208,7 +199,7 @@ def _get_call_center_case_and_owner(user, domain_obj):
     """
     config = domain_obj.call_center_config
     case = CommCareCase.objects.get_case_by_external_id(
-        domain_obj.name, user._id, config.case_type
+        domain_obj.name, user.user_id, config.case_type
     )
     if config.use_user_location_as_owner:
         owner_id = _call_center_location_owner(user, config.user_location_ancestor_level)
@@ -234,16 +225,9 @@ def _call_center_location_owner(user, ancestor_level):
     return owner_id
 
 
-def sync_usercase(user, domain):
-    with CriticalSection(get_sync_lock_key(user._id, domain)):
-        domain_obj = Domain.get_by_name(domain)
-        _UserCaseHelper.commit(list(_iter_sync_usercase_helpers(user, domain_obj)))
-
-
 def _iter_sync_usercase_helpers(user, domain_obj):
-    if user.is_web_user() and not USH_USERCASES_FOR_WEB_USERS.enabled(domain_obj.name):
-        return
-    if domain_obj.usercase_enabled:
+    if (domain_obj.usercase_enabled
+            and USH_USERCASES_FOR_WEB_USERS.enabled(domain_obj.name) or not user.is_web_user()):
         yield _get_sync_usercase_helper(
             user,
             domain_obj.name,
@@ -252,19 +236,18 @@ def _iter_sync_usercase_helpers(user, domain_obj):
         )
 
 
-def sync_usercases(user, domain):
+def sync_usercases(user, domain, sync_call_center=True):
     """
-    Each time a CommCareUser is saved this method gets called and creates or updates
+    Each time a user is saved this method gets called and creates or updates
     a case associated with the user with the user's details.
 
     This is also called to create usercases when the usercase is used for the
     first time.
     """
-    domain_obj = Domain.get_by_name(domain)
-    with CriticalSection(get_sync_lock_key(user._id, domain)):
+    with CriticalSection([f"sync_user_case_for_{user.user_id}_{domain}"]):
+        domain_obj = Domain.get_by_name(domain)
         helpers = list(chain(
             _iter_sync_usercase_helpers(user, domain_obj),
-            _iter_call_center_case_helpers(user),
+            _iter_call_center_case_helpers(user) if sync_call_center else [],
         ))
-        if helpers:
-            _UserCaseHelper.commit(helpers)
+        _UserCaseHelper.commit(helpers)

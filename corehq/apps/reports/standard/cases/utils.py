@@ -144,8 +144,7 @@ def get_case_owners(request, domain, mobile_user_and_group_slugs):
                              .domain(domain)
                              .doc_type("Group")
                              .term("case_sharing", True)
-                             .term("users", (selected_reporting_group_users +
-                                             selected_user_ids))
+                             .term("users", (selected_reporting_group_users + selected_user_ids))
                              .get_ids())
 
     owner_ids = list(set().union(

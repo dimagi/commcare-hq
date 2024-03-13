@@ -78,7 +78,7 @@ class OTARestoreUser(object):
         """
         # This method is called by `RestoreState.get_safe_loadtest_factor()`,
         # which sets guard rails by checking the user's case load.
-        if loadtest_users_enabled(self.domain):
+        if domain_has_privilege(self.domain, privileges.LOADTEST_USERS):
             return self._loadtest_factor or 1
         return 1
 
@@ -776,8 +776,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
         deleted_indices = self.index_tree.indices.pop(to_remove, {})
         deleted_indices.update(self.extension_index_tree.indices.pop(to_remove, {}))
 
-        self._validate_case_removal(to_remove, all_to_remove, deleted_indices, checked_case_id, xform_id)
-
         try:
             self.case_ids_on_phone.remove(to_remove)
         except KeyError:
@@ -798,21 +796,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         if to_remove in self.dependent_case_ids_on_phone:
             self.dependent_case_ids_on_phone.remove(to_remove)
-
-    def _validate_case_removal(self, case_to_remove, all_to_remove,
-                               deleted_indices, checked_case_id, xform_id):
-        """Traverse immediate outgoing indices. Validate that these are also candidates for removal."""
-        if case_to_remove == checked_case_id:
-            return
-
-        # Logging removed temporarily: https://github.com/dimagi/commcare-hq/pull/16259#issuecomment-303176217
-        # for index in deleted_indices.values():
-        #     if xform_id and not _domain_has_legacy_toggle_set():
-        #         # unblocking http://manage.dimagi.com/default.asp?185850
-        #         _assert = soft_assert(send_to_ops=False, log_to_file=True, exponential_backoff=True,
-        #                               fail_if_debug=True)
-        #         _assert(index in (all_to_remove | set([checked_case_id])),
-        #                 "expected {} in {} but wasn't".format(index, all_to_remove))
 
     def _add_primary_case(self, case_id):
         self.case_ids_on_phone.add(case_id)
@@ -865,38 +848,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
             ', '.join(self.dependent_case_ids_on_phone)))
         _get_logger().debug('index tree before update: {}'.format(self.index_tree))
         _get_logger().debug('extension index tree before update: {}'.format(self.extension_index_tree))
-
-        class CaseUpdate(object):
-
-            def __init__(self, case_id, owner_ids_on_phone):
-                self.case_id = case_id
-                self.owner_ids_on_phone = owner_ids_on_phone
-                self.was_live_previously = True
-                self.final_owner_id = None
-                self.is_closed = None
-                self.indices_to_add = []
-                self.indices_to_delete = []
-
-            @property
-            def extension_indices_to_add(self):
-                return [index for index in self.indices_to_add
-                        if index.relationship == const.CASE_INDEX_EXTENSION]
-
-            def has_extension_indices_to_add(self):
-                return len(self.extension_indices_to_add) > 0
-
-            @property
-            def is_live(self):
-                """returns whether an update is live for a specifc set of owner_ids"""
-                if self.is_closed:
-                    return False
-                elif self.final_owner_id is None:
-                    # we likely didn't touch owner_id so just default to whatever it was previously
-                    return self.was_live_previously
-                else:
-                    return self.final_owner_id in self.owner_ids_on_phone
-
-        ShortIndex = namedtuple('ShortIndex', ['case_id', 'identifier', 'referenced_id', 'relationship'])
 
         # this is a variable used via closures in the function below
         owner_id_map = {}
@@ -1030,22 +981,46 @@ class SimplifiedSyncLog(AbstractSyncLog):
             self.rev_before_last_submitted = self._rev
         return made_changes
 
-    def purge_dependent_cases(self):
+
+class CaseUpdate:
+
+    def __init__(self, case_id, owner_ids_on_phone):
+        self.case_id = case_id
+        self.owner_ids_on_phone = owner_ids_on_phone
+        self.was_live_previously = True
+        self.final_owner_id = None
+        self.is_closed = None
+        self.indices_to_add = []
+        self.indices_to_delete = []
+
+    @property
+    def extension_indices_to_add(self):
+        return [index for index in self.indices_to_add
+                if index.relationship == const.CASE_INDEX_EXTENSION]
+
+    def has_extension_indices_to_add(self):
+        return len(self.extension_indices_to_add) > 0
+
+    @property
+    def is_live(self):
         """
-        Attempt to purge any dependent cases from the sync log.
+        Returns whether an update is live for a specific set of
+        owner_ids.
         """
-        # this is done when migrating from old formats or during initial sync
-        # to purge non-relevant dependencies
-        for dependent_case_id in list(self.dependent_case_ids_on_phone):
-            # need this additional check since the case might have already been purged/remove
-            # as a result of purging the child case
-            if dependent_case_id in self.dependent_case_ids_on_phone:
-                # this will be a no-op if the case cannot be purged due to dependencies
-                self.purge(dependent_case_id)
+        if self.is_closed:
+            return False
+        elif self.final_owner_id is None:
+            # we likely didn't touch owner_id so just default to
+            # whatever it was previously
+            return self.was_live_previously
+        else:
+            return self.final_owner_id in self.owner_ids_on_phone
 
 
-def loadtest_users_enabled(domain: str) -> bool:
-    return domain_has_privilege(domain, privileges.LOADTEST_USERS)
+ShortIndex = namedtuple(
+    'ShortIndex',
+    ['case_id', 'identifier', 'referenced_id', 'relationship'],
+)
 
 
 def _domain_has_legacy_toggle_set():

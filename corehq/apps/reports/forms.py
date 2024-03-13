@@ -235,22 +235,60 @@ class ScheduledReportForm(forms.Form):
 
 
 class EmailReportForm(forms.Form):
-    subject = forms.CharField(required=False)
-    send_to_owner = forms.BooleanField(required=False)
-    attach_excel = forms.BooleanField(required=False)
-    recipient_emails = MultiEmailField(required=False)
-    notes = forms.CharField(required=False)
+    subject = forms.CharField(required=False, label=_('Subject'))
+    send_to_owner = forms.BooleanField(required=False, label=_('Send to me'))
+    recipient_emails = MultiEmailField(required=False, label=_('Additional Recipients'))
+    notes = forms.CharField(required=False, label=_('Report notes'), widget=forms.Textarea(attrs={"rows": 3}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = HQFormHelper()
+        self.helper.field_class = "col-xs-10"
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('subject', data_bind="value: subject"),
+                crispy.Field('send_to_owner', data_bind="checked: send_to_owner"),
+                crispy.Field('recipient_emails', css_id='email-report-recipient_emails',
+                    data_bind="selectedOptions: recipient_emails"),
+                crispy.Field('notes', data_bind="value: notes"),
+                css_class='modal-body'
+            ),
+            FormActions(
+                crispy.Div(
+                    crispy.Button('close', _('Close'), css_class='btn btn-default cancel-button',
+                        data_bind='click: resetModal', data_dismiss='modal'),
+                    crispy.Submit('submit_btn', _('Send Email'), css_class="btn btn-primary send-button",
+                        data_bind='click: sendEmail', data_loading_text=_('Sending...')),
+                    css_class='pull-right',
+                )
+            )
+        )
 
     def clean(self):
-        cleaned_data = super(EmailReportForm, self).clean()
+        cleaned_data = super().clean()
         _verify_email(cleaned_data)
         return cleaned_data
+
+    def get_readable_errors(self):
+        errors = []
+
+        if not self.errors:
+            return errors
+
+        for field in self.errors:
+            field_name = self.fields[field].label if field in self.fields else ''
+            for error in self.errors.get_json_data(escape_html=True)[field]:
+                prefix = f'{field_name}: ' if field_name else ''
+                errors.append(f'{prefix}{error["message"]}')
+
+        return errors
 
 
 def _verify_email(cleaned_data):
     if ('recipient_emails' in cleaned_data
-        and not (cleaned_data['recipient_emails'] or
-                     cleaned_data['send_to_owner'])):
+        and not (cleaned_data['recipient_emails']
+            or cleaned_data['send_to_owner'])):
         raise forms.ValidationError("You must specify at least one "
                                     "valid recipient")
 
@@ -279,6 +317,13 @@ class TableauServerForm(forms.Form):
         label=_('Target Site'),
     )
 
+    tableau_groups_allowed = forms.MultipleChoiceField(
+        label=_("Allowed Tableau Groups"),
+        choices=[],
+        required=False,
+        widget=forms.CheckboxSelectMultiple()
+    )
+
     class Meta:
         model = TableauServer
         fields = [
@@ -286,12 +331,14 @@ class TableauServerForm(forms.Form):
             'server_name',
             'validate_hostname',
             'target_site',
+            'tableau_groups_allowed'
         ]
 
-    def __init__(self, data, *args, **kwargs):
+    def __init__(self, data, user_syncing_config={}, *args, **kwargs):
         self.domain = kwargs.pop('domain')
         kwargs['initial'] = self.initial_data
         super(TableauServerForm, self).__init__(data, *args, **kwargs)
+        self.fields['tableau_groups_allowed'].choices = []
 
         self.helper = HQFormHelper()
         self.helper.form_method = 'POST'
@@ -313,6 +360,26 @@ class TableauServerForm(forms.Form):
             )
         )
 
+        if user_syncing_config['user_syncing_enabled'] and user_syncing_config.get('server_reachable'):
+            self._setup_tableau_groups_allowed_field(kwargs, user_syncing_config)
+            self.add_allowed_tableau_groups_field = bool(self.fields['tableau_groups_allowed'].choices)
+            if self.add_allowed_tableau_groups_field:
+                self.helper.layout.insert(
+                    -1,
+                    'tableau_groups_allowed',
+                )
+        else:
+            self.add_allowed_tableau_groups_field = False
+
+    def _setup_tableau_groups_allowed_field(self, kwargs, user_syncing_config):
+        self.all_tableau_groups = user_syncing_config['all_tableau_groups']
+        allowed_tableau_groups_initial = kwargs['initial']['allowed_tableau_groups']
+        self.fields['tableau_groups_allowed'].initial = []
+        for i, group in enumerate(self.all_tableau_groups):
+            self.fields['tableau_groups_allowed'].choices.append((i, group.name))
+            if allowed_tableau_groups_initial and group.name in allowed_tableau_groups_initial:
+                self.fields['tableau_groups_allowed'].initial.append(i)
+
     @property
     @memoized
     def _existing_config(self):
@@ -328,6 +395,7 @@ class TableauServerForm(forms.Form):
             'server_name': self._existing_config.server_name,
             'validate_hostname': self._existing_config.validate_hostname,
             'target_site': self._existing_config.target_site,
+            'allowed_tableau_groups': self._existing_config.allowed_tableau_groups,
         }
 
     def save(self):
@@ -335,6 +403,9 @@ class TableauServerForm(forms.Form):
         self._existing_config.server_name = self.cleaned_data['server_name']
         self._existing_config.validate_hostname = self.cleaned_data['validate_hostname']
         self._existing_config.target_site = self.cleaned_data['target_site']
+        if self.add_allowed_tableau_groups_field:
+            self._existing_config.allowed_tableau_groups = [
+                self.all_tableau_groups[int(i)].name for i in self.cleaned_data['tableau_groups_allowed']]
         self._existing_config.save()
 
 

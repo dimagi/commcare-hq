@@ -34,7 +34,6 @@ class HandleShadowChildModulesTest(TestCase):
 
         # m0
         self.basic_module, self.form0 = self.factory.new_basic_module("basic_module", "parrot")
-        form1 = self.factory.new_form(self.basic_module)
 
         # m1
         self.child_module, form2 = self.factory.new_basic_module(
@@ -140,6 +139,8 @@ class HandleShadowChildModulesTest(TestCase):
             "excluded_form_ids",
             "shadow_module_version",
             "session_endpoint_id",
+            "case_list_session_endpoint_id",
+            "form_session_endpoints",
         ]
         required_properties = {
             prop
@@ -161,6 +162,7 @@ class HandleShadowChildModulesTest(TestCase):
             "case_type",
             "unique_id",
             "session_endpoint_id",
+            "case_list_session_endpoint_id",
             "custom_assertions",
         ]
         required_properties = {

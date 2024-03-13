@@ -1,7 +1,10 @@
+'use strict';
 /*global MapboxGeocoder*/
 hqDefine("cloudcare/js/form_entry/utils", function () {
     var errors = hqImport("cloudcare/js/form_entry/errors"),
-        formEntryConst = hqImport("cloudcare/js/form_entry/const");
+        formEntryConst = hqImport("cloudcare/js/form_entry/const"),
+        toggles = hqImport("hqwebapp/js/toggles"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     var module = {
         resourceMap: undefined,
@@ -69,23 +72,46 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
     /**
      * Sets a div to be a mapbox geocoder input
      * @param {(string|string[])} divId - Div ID for the Mapbox input
-     * @param {Object} itemCallback - function to call back after new search
-     * @param {Object} clearCallBack - function to call back after clearing the input
-     * @param {Object} initialPageData - initial_page_data object
+     * @param {function} itemCallback - function to call back after new search
+     * @param {function} clearCallBack - function to call back after clearing the input
      * @param {function|undefined} inputOnKeyDown - inputOnKeyDown function (optional)
-     */
-    module.renderMapboxInput = function (divId, itemCallback, clearCallBack, initialPageData, inputOnKeyDown) {
+     * @param {boolean} showGeolocationButton - show geolocation button. Defaults to false. (optional)
+     * @param {boolean} geolocateOnLoad - geolocate the user's location on load. Defaults to false. (optional)
+     * @param {boolean} useBoundingBox - use default locations bbox to filter results. Defaults to false. (optional)
+     * @param {string} responseDataTypes - set Mapbox's data type response https://docs.mapbox.com/api/search/geocoding/#data-types (optional)
+    */
+    module.renderMapboxInput = function ({
+        divId,
+        itemCallback,
+        clearCallBack,
+        inputOnKeyDown,
+        showGeolocationButton = false,
+        geolocateOnLoad = false,
+        useBoundingBox = false,
+        responseDataTypes = 'address',
+    }) {
+        showGeolocationButton = showGeolocationButton || toggles.toggleEnabled('GEOCODER_MY_LOCATION_BUTTON');
+        geolocateOnLoad = geolocateOnLoad || toggles.toggleEnabled('GEOCODER_AUTOLOAD_USER_LOCATION');
+        var setProximity = toggles.toggleEnabled('GEOCODER_USER_PROXIMITY');
         var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
         var geocoder = new MapboxGeocoder({
             accessToken: initialPageData.get("mapbox_access_token"),
-            types: 'address',
+            types: responseDataTypes,
             enableEventLogging: false,
-            getItemValue: itemCallback,
+            enableGeolocation: showGeolocationButton,
         });
-        if (defaultGeocoderLocation.coordinates) {
+        if (setProximity && geocoder.geolocation.isSupport()) {
+            geocoder.geolocation.getCurrentPosition().then(function (position) {
+                geocoder.setProximity(position.coords);
+            }).catch(error => console.log("Unable to set geocoder proximity: ", error.message));
+        } else if (defaultGeocoderLocation.coordinates) {
             geocoder.setProximity(defaultGeocoderLocation.coordinates);
         }
+        if (setProximity && useBoundingBox && defaultGeocoderLocation.bbox) {
+            geocoder.setBbox(defaultGeocoderLocation.bbox);
+        }
         geocoder.on('clear', clearCallBack);
+        geocoder.on('result', (item) => itemCallback(item.result));
         geocoder.addTo('#' + divId);
         const divEl = $("#" + divId);
         const liveRegionEl = $("#" + divId + "-sr[role='region']");
@@ -108,10 +134,14 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         // This populates the "region" html node with the first option, so that it is read by
         // screen readers on focus.
         geocoder.on('results', (items) => {
-            if (items && items.features) {
+            if (items && !_.isEmpty(items.features)) {
                 liveRegionEl.html("<p>" + items.features[0].place_name + "</p>");
             }
         });
+
+        if (geolocateOnLoad) {
+            geocoder._geolocateUser();
+        }
     };
 
     /**
@@ -195,7 +225,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
     module.getBroadcastContainer = (question) => {
         return getRoot(question, function (container) {
             // Return first containing repeat group, or form if there are no ancestor repeats
-            var parent = container.parent;
+            var parent = container.parent.parent;
             return parent && parent.type && parent.type() === formEntryConst.REPEAT_TYPE;
         });
     };

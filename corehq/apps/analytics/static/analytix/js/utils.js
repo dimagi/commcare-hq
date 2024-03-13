@@ -1,4 +1,3 @@
-/* globals JSON */
 hqDefine('analytix/js/utils', [
     'jquery',
     'underscore',

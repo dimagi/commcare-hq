@@ -3,6 +3,7 @@ from collections import Counter
 
 from couchdbkit.exceptions import ResourceNotFound
 
+from corehq.apps.app_manager.models import Application, LinkedApplication, RemoteApp
 from corehq.apps.dump_reload.exceptions import DataExistsException
 from corehq.apps.dump_reload.interface import DataLoader
 from corehq.util.couch import (
@@ -53,7 +54,10 @@ class CouchDataLoader(DataLoader):
             if couch_db is None:
                 raise DocumentClassNotFound('No Document class with name "{}" could be found.'.format(doc_type))
             callback = LoaderCallback(self._success_counter, self.stdout)
-            db = IterDB(couch_db, new_edits=False, callback=callback)
+            chunksize = 100
+            if doc_type in [Application._doc_type, LinkedApplication._doc_type, RemoteApp._doc_type]:
+                chunksize = 1
+            db = IterDB(couch_db, new_edits=False, callback=callback, chunksize=chunksize)
             db.__enter__()
             self._dbs[doc_type] = db
         return self._dbs[doc_type]

@@ -1,13 +1,18 @@
 alembic
 architect
 attrs>=21.4
+beautifulsoup4  # USH - used for rich text messaging emails, and some tests
+bleach  # USH - used for rich text messaging emails
+bleach[css]  # USH - used for rich text messaging emails
 boto3
 celery
 CommcareTranslationChecker>=0.9.7
+cryptography>=42.0
 csiphash
+css_inline  # USH - used for rich text messaging emails
 datadog
 ddtrace
-decorator==4.0.11  # required by django-digest
+decorator==5.1.1  # required by django-digest
 defusedxml
 diff-match-patch
 dimagi-memoized
@@ -18,10 +23,10 @@ django-celery-results
 django-compressor
 django-countries
 django-crispy-forms
+crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165
 django-cte
 django-field-audit
 django-formtools
-django-logentry-admin
 django-oauth-toolkit
 django-otp
 django-phonenumber-field
@@ -38,19 +43,17 @@ django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websock
 django>=3.2.18,<4.0
 djangorestframework
 dropbox
-elasticsearch2>=2.0.0,<3.0.0  # we will be deprecating support for ES2 soon
-elasticsearch5>=5.0.0,<6.0.0  # ES5 support is currently in development
+elasticsearch5>=5.0.0,<6.0.0
 ethiopian-date-converter
 eulxml
-geopandas
-geopy
+firebase-admin  # India Division - used for FCM Push Notifications
 gevent
-ghdiff
 google-api-python-client==2.32.0
 google-auth-httplib2==0.1.0
-google-auth-oauthlib==0.4.6
+google-auth-oauthlib==1.2.0
 greenlet
 gunicorn
+haversine  # SolTech - Used in Geospatial features
 hiredis
 httpagentparser
 iso8601
@@ -67,6 +70,7 @@ looseversion
 lxml
 markdown
 oic
+pulp  # Used in Geospatial features to solve routing problems - SolTech
 openpyxl
 packaging
 phonenumberslite
@@ -83,6 +87,7 @@ python-dateutil
 python-imap
 pyphonetics
 python-magic
+pytz
 pyjwt
 PyYAML
 hl7apy
@@ -97,7 +102,6 @@ requests
 schema
 sentry-sdk
 sh
-shapely
 # Package has an unfixed issue https://github.com/danthedeckie/simpleeval/issues/90 Can use that once https://github.com/danthedeckie/simpleeval/pull/91 is merged
 simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
 simplejson

@@ -3,15 +3,15 @@ hqDefine("settings/js/user_api_keys", [
     "knockout",
     'underscore',
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/crud_paginated_list",
-    'hqwebapp/js/widgets',
+    "hqwebapp/js/bootstrap3/crud_paginated_list",
+    'hqwebapp/js/bootstrap3/widgets',
 ], function (
     $,
     ko,
     _,
     initialPageData,
     CRUDPaginatedList,
-    widgets,
+    widgets
 ) {
 
     var ApiKeyListModel = function () {

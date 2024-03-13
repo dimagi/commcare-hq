@@ -2,7 +2,7 @@ hqDefine("reports/js/filters/main", [
     'jquery',
     'underscore',
     'knockout',
-    'hqwebapp/js/main',
+    'hqwebapp/js/bootstrap3/main',
     'reports/js/standard_hq_report',
     'reports/js/filters/select2s',
     'reports/js/filters/phone_number',
@@ -57,7 +57,8 @@ hqDefine("reports/js/filters/main", [
 
         // other Datespans *groan* TODO unify on this one
         $('.report-filter-datespan-filter').each(function (i, el) {
-            var $el = $(el), data = $el.data();
+            var $el = $(el),
+                data = $el.data();
             var $filterStart = $("#" + data.cssId + "-start");
             var $filterEnd = $("#" + data.cssId + "-end");
 
@@ -198,7 +199,8 @@ hqDefine("reports/js/filters/main", [
             });
         });
         $('.report-filter-location-async').each(function (i, el) {
-            var $el = $(el), data = $el.data();
+            var $el = $(el),
+                data = $el.data();
             var model = locationDrilldown.locationSelectViewModel({
                 "hierarchy": data.hierarchy,
                 "show_location_filter": data.makeOptional && (data.locId === 'None' || !data.locId) ? "n" : "y",
@@ -210,9 +212,14 @@ hqDefine("reports/js/filters/main", [
             model.load(data.locs, data.locId);
         });
         $('.report-filter-drilldown-options').each(function (i, el) {
-            var $el = $(el), data = $el.data();
-            if ($el.parents('.report-filter-form-drilldown').length > 0) return;
-            if (data.isEmpty) return;
+            var $el = $(el),
+                data = $el.data();
+            if ($el.parents('.report-filter-form-drilldown').length > 0) {
+                return;
+            }
+            if (data.isEmpty) {
+                return;
+            }
             var model = drilldownOptions.drilldownOptionFilterControl({
                 drilldown_map: data.drilldownMap,
                 controls: data.controls,
@@ -225,7 +232,8 @@ hqDefine("reports/js/filters/main", [
         $('.report-filter-form-drilldown').each(function (i, el) {
             // This is copied from drilldown-options above because the order matters
             // http://manage.dimagi.com/default.asp?231773
-            var $el = $(el), data = $el.data();
+            var $el = $(el),
+                data = $el.data();
             if (!data.isEmpty) {
                 var model = drilldownOptions.drilldownOptionFilterControl({
                     drilldown_map: data.drilldownMap,
@@ -253,7 +261,8 @@ hqDefine("reports/js/filters/main", [
             }
         });
         $('.report-filter-logtag').each(function (i, el) {
-            var $el = $(el), data = $el.data();
+            var $el = $(el),
+                data = $el.data();
             if (data.defaultOn) {
                 $el.attr("name", "");
                 $el.change(function () {
@@ -279,7 +288,8 @@ hqDefine("reports/js/filters/main", [
         });
 
         $('.report-filter-dynamic-choice-list').each(function (i, el) {
-            var $el = $(el), data = $el.data();
+            var $el = $(el),
+                data = $el.data();
             var initialValues = _.map(data.initialValues, function (value) {
                 return choiceListUtils.formatValueForSelect2(value);
             });

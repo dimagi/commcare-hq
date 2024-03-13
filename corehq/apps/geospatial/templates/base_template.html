@@ -1,0 +1,35 @@
+{% extends "reports/base_template.html" %}
+
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <!-- Scripts for mapbox -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js'></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.js'></script>
+    <script src="{% static 'geospatial/js/utils.js' %}"></script>
+    <script src="{% static 'geospatial/js/models.js' %}"></script>
+{% endblock %}
+
+ {% block stylesheets %}
+ {{ block.super }}
+ <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css">
+ <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css" type="text/css">
+ <style>
+    #layer-toggle-menu {
+      background: #fff;
+      position: absolute;
+      z-index: 1;
+      top: 10px;
+      left: 10px;
+      max-height: 150px;
+      border: 1px solid rgba(0, 0, 0, 0.4);
+      overflow-y: auto;
+    }
+  </style>
+
+ {% endblock %}
+
+
+{% block additional_initial_page_data %}{{ block.super }}
+    {% initial_page_data "mapbox_access_token" mapbox_access_token %}
+{% endblock %}

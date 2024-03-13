@@ -5,6 +5,10 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import *
 
+from corehq.apps.styleguide.context import (
+    get_common_icons,
+    get_custom_icons,
+)
 from corehq.apps.styleguide.example_forms import (
     BasicCrispyForm,
     CheckboxesForm,
@@ -16,18 +20,18 @@ def styleguide_default(request):
 
 
 class MainStyleGuideView(TemplateView):
-    template_name = 'styleguide/home.html'
+    template_name = 'styleguide/bootstrap3/home.html'
     urlname = 'styleguide_home'
 
 
 class BaseStyleGuideArticleView(TemplateView):
-    template_name = 'styleguide/base_section.html'
+    template_name = 'styleguide/bootstrap3/base_section.html'
 
     @property
     def sections(self):
         """This will be inserted into the page context's sections variable
         as a list of strings following the format
-        'styleguide/_includes/<section>.html'
+        'styleguide/bootstrap3/_includes/<section>.html'
         Make sure you create the corresponding template in the styleguide app.
 
         :return: List of the sections in order. Usually organized by
@@ -38,7 +42,7 @@ class BaseStyleGuideArticleView(TemplateView):
     @property
     def navigation_name(self):
         """This will be inserted into the page context under
-        styleguide/_includes/nav/<navigation_name>.html. Make sure
+        styleguide/bootstrap3/_includes/nav/<navigation_name>.html. Make sure
         you create the corresponding template in the styleguide app
         when you add this.
         :return: a string that is the name of the navigation section
@@ -48,9 +52,9 @@ class BaseStyleGuideArticleView(TemplateView):
     @property
     def section_context(self):
         return {
-            'sections': ['styleguide/_includes/%s.html' % s
+            'sections': ['styleguide/bootstrap3/_includes/%s.html' % s
                          for s in self.sections],
-            'navigation': ('styleguide/_includes/nav/%s.html'
+            'navigation': ('styleguide/bootstrap3/_includes/nav/%s.html'
                            % self.navigation_name),
         }
 
@@ -63,7 +67,8 @@ class BaseStyleGuideArticleView(TemplateView):
         return {}
 
     def example(self, filename):
-        examples = os.path.join(os.path.dirname(__file__), '..', 'templates', 'styleguide', 'examples')
+        examples = os.path.join(os.path.dirname(__file__),
+                                '..', 'templates', 'styleguide', 'bootstrap3', 'examples')
         with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
             return content.read()
 
@@ -92,46 +97,8 @@ class AtomsStyleGuideView(BaseStyleGuideArticleView):
     @property
     def page_context(self):
         return {
-            'common_icons': [
-                {
-                    'name': 'Common FontAwesome primary icons',
-                    'icons': [
-                        'fa-plus', 'fa-trash', 'fa-remove', 'fa-search',
-                        'fa-angle-double-right', 'fa-angle-double-down',
-                    ],
-                },
-                {
-                    'name': 'Common FontAwesome secondary icons',
-                    'icons': [
-                        'fa-cloud-download', 'fa-cloud-upload',
-                        'fa-warning', 'fa-info-circle', 'fa-question-circle', 'fa-check',
-                        'fa-external-link',
-                    ],
-                }
-            ],
-            'custom_icons': [
-                {
-                    'name': 'Custom HQ icons',
-                    'icons': [
-                        'fcc-flower', 'fcc-applications', 'fcc-commtrack', 'fcc-reports', 'fcc-data', 'fcc-users',
-                        'fcc-settings', 'fcc-help', 'fcc-exchange', 'fcc-messaging', 'fcc-chart-report',
-                        'fcc-form-report', 'fcc-datatable-report', 'fcc-piegraph-report', 'fcc-survey',
-                        'fcc-casemgt', 'fcc-blankapp', 'fcc-globe', 'fcc-app-createform', 'fcc-app-updateform',
-                        'fcc-app-completeform',
-                    ],
-                },
-                {
-                    'name': 'Custom HQ icons specific to form builder',
-                    'icons': [
-                        'fcc-fd-text', 'fcc-fd-numeric', 'fcc-fd-data', 'fcc-fd-variable', 'fcc-fd-single-select',
-                        'fcc-fd-single-circle', 'fcc-fd-multi-select', 'fcc-fd-multi-box', 'fcc-fd-decimal',
-                        'fcc-fd-long', 'fcc-fd-datetime', 'fcc-fd-audio-capture', 'fcc-fd-android-intent',
-                        'fcc-fd-signature', 'fcc-fd-multi-box', 'fcc-fd-single-circle', 'fcc-fd-hash',
-                        'fcc-fd-external-case', 'fcc-fd-external-case-data', 'fcc-fd-expand', 'fcc-fd-collapse',
-                        'fcc-fd-case-property', 'fcc-fd-edit-form',
-                    ],
-                },
-            ],
+            'common_icons': get_common_icons(),
+            'custom_icons': get_custom_icons(),
             'swatches': {
                 'RED': {
                     'main': ('e73c27', 'cc-att-neg-mid'),

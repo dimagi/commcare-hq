@@ -217,9 +217,49 @@ class CommCareFeatureSupportMixin(object):
         )
 
     @property
+    def supports_select_text(self):
+        """
+        Ability to configure select button text through bulk translations
+        """
+        return self._require_minimum_version('2.54')
+
+    @property
+    def supports_menu_instances(self):
+        return self._require_minimum_version('2.54')
+
+    @property
     def supports_module_assertions(self):
         # form-level assertions have been supported longer
         return (
             toggles.CUSTOM_ASSERTIONS.enabled(self.domain)
             and self._require_minimum_version('2.54')
+        )
+
+    @property
+    def supports_grouped_case_tiles(self):
+        return (
+            toggles.CASE_LIST_TILE.enabled(self.domain)
+            and self._require_minimum_version('2.54')
+        )
+
+    @property
+    def supports_detail_field_action(self):
+        return (
+            toggles.CASE_LIST_CLICKABLE_ICON.enabled(self.domain)
+            and self._require_minimum_version('2.54')
+        )
+
+    @property
+    def supports_grouped_case_search_properties(self):
+        return (
+            self._require_minimum_version('2.54')
+        )
+
+    @property
+    def supports_alt_text(self):
+        """
+        Alt text for case list icons and clickable icons
+        """
+        return (
+            self._require_minimum_version('2.54')
         )

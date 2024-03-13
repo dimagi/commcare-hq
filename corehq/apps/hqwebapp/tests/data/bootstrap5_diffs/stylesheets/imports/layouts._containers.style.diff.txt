@@ -1,10 +1,12 @@
 --- 
 +++ 
-@@ -1,32 +1,11 @@
+@@ -1,22 +1,10 @@
 -body, html {
 -    height: 100%;
--}
--
++html, body {
++  height: 100%;
+ }
+ 
  .hq-container {
      min-height: 100%;
      height: auto !important;
@@ -13,12 +15,6 @@
 +    margin-bottom: -$navbar-footer-height;
 +    padding-bottom: $navbar-footer-height;
  }
--
- 
- .container.ui-widget,
- .container.ui-widget.ui-widget-content {
-   border: none;
--}
 -
 -.footer-mobile {
 -  font-size: 10px;
@@ -31,8 +27,3 @@
 -    margin: 0;
 -  }
 -}
--
--.ui-widget-content a.btn-primary {
--  color: white;
--}
-+}

@@ -11,11 +11,11 @@
   <% if (style.displayFormat === 'Graph') { %>
   <td><iframe srcdoc="<%- data %>" height="300" width="300"></iframe></td>
   <% } else if (style.displayFormat === 'Image') { %>
-  <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(data) %>"/></td>
+  <td class="module-case-list-column"><img alt="<%- altText %>" class="module-icon" src="<%- resolveUri(data) %>"/></td>
   <% } else if (style.displayFormat === 'Phone') { %>
   <td><a href="tel:<%- data %>"><%- data %></a></td>
   <% } else if (style.displayFormat === 'Markdown' && html) { %>
-  <td><%= html %></td>
+  <td class="webapp-markdown-output"><%= html %></td>
   <% } else { %>
   <td><%- data %></td>
   <% } %>
@@ -58,8 +58,8 @@
         <div class="js-detail-tabs module-case-detail-tabs"></div>
         <div class="js-detail-content"></div>
       </div>
-      <div class="modal-footer" style="text-align: center">
-        <div class="js-detail-footer-content"></div>
+      <div class="modal-footer">
+        <div class="js-detail-footer-content text-center"></div>
       </div>
     </div>
   </div>

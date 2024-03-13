@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -3,169 +3,207 @@
+@@ -3,185 +3,228 @@
  {% load hq_shared_tags %}
  
  {% if request.couch_user %}
@@ -94,11 +94,19 @@
 -            <li>
 -                <a href="{% url "domain_subscription_view" domain %}" class="track-usage-link"
 -                   data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
--                    <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
+-                    <i class="fa-solid fa-gauge icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
 -                </a>
 -            </li>
 +              </li>
              {% endif %}
+-            {% if user.is_superuser %}
+-            <li>
+-                <a href="{% url "feature_flags_and_privileges" domain %}" class="track-usage-link"
+-                   data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
+-                    <i class="fa fa-flag dropdown-icon"></i> {% trans "Feature Flags and Privileges" %}
+-                </a>
+-            </li>
+-            {% endif %}
 -            {% if request|toggle_enabled:"SUPPORT" %}
 -            <li class="nav-divider divider"></li>
 +          <li><hr class="dropdown-divider"></li>
@@ -113,7 +121,15 @@
 +          <li>
 +            <a href="{% url "domain_subscription_view" domain %}" class="dropdown-item track-usage-link"
 +               data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
-+              <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
++              <i class="fa-solid fa-gauge icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
++            </a>
++          </li>
++          {% endif %}
++          {% if user.is_superuser %}
++          <li>
++            <a href="{% url "feature_flags_and_privileges" domain %}" class="dropdown-item track-usage-link"
++               data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
++              <i class="fa fa-flag dropdown-icon"></i> {% trans "Feature Flags and Privileges" %}
 +            </a>
 +          </li>
 +          {% endif %}
@@ -194,36 +210,6 @@
 -                        {{ cc_name }} Help
 -                    {% endblocktrans %}
 -                </li>
--                <li>
--                    <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" class="track-usage-link" target="_blank"
--                       data-category="Nav Bar" data-action="Question Mark" data-label="Visit the Help Site">
--                        <i class="fa fa-question-circle icon-question-sign dropdown-icon"></i> {% trans "Visit the Help Site" %}
--                    </a>
--                </li>
--                <li>
--                    <a href="{% trans 'https://forum.dimagi.com/' %}" class="track-usage-link" target="_blank"
--                       data-category="Nav Bar" data-action="Question Mark" data-label="User Forum">
--                        <i class="fa fa-comments icon-comments dropdown-icon"></i> {% trans "User Forum" %}
--                    </a>
--                </li>
--            {% endif %}
--            {% if allow_report_an_issue and not 500traceback %}
--                <li>
--                    <a href="#modalReportIssue" data-toggle="modal" class="track-usage-link"
--                       data-category="Nav Bar" data-action="Question Mark" data-label="Report an Issue">
--                        <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
--                    </a>
--                </li>
--            {% endif %}
--            {% if not enterprise_mode %}
--                <li>
--                    <a href="https://status.commcarehq.org/" data-toggle="modal" class="track-usage-link"
--                       data-category="Nav Bar" data-action="Question Mark" data-label="Status Page">
--                        <i class="fa fa-info-circle dropdown-icon"></i> {% trans "Status Page" %}
--                    </a>
--                </li>
--              {% endif %}
--        </ul>
 +        <ul class="dropdown-menu dropdown-menu-right"
 +            aria-labelledby="helpDropdown"
 +            role="menu">
@@ -264,11 +250,58 @@
 +                 data-category="Nav Bar"
 +                 data-action="Question Mark"
 +                 data-label="Report an Issue">
-+                  <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i>
++                  <i class="fa-solid fa-triangle-exclamation icon-warning-sign dropdown-icon"></i>
 +                  {% trans "Report an Issue" %}
 +              </a>
 +            </li>
 +          {% endif %}
++          {% if request.couch_user and request.couch_user.is_dimagi and is_dimagi_environment %}
+                 <li>
+-                    <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" class="track-usage-link" target="_blank"
+-                       data-category="Nav Bar" data-action="Question Mark" data-label="Visit the Help Site">
+-                        <i class="fa fa-question-circle icon-question-sign dropdown-icon"></i> {% trans "Visit the Help Site" %}
+-                    </a>
+-                </li>
+-                <li>
+-                    <a href="{% trans 'https://forum.dimagi.com/' %}" class="track-usage-link" target="_blank"
+-                       data-category="Nav Bar" data-action="Question Mark" data-label="User Forum">
+-                        <i class="fa fa-comments icon-comments dropdown-icon"></i> {% trans "User Forum" %}
++                    <a href="#modalSolutionsFeatureRequest"
++                       data-bs-toggle="modal"
++                       class="dropdown-item track-usage-link"
++                       data-category="Nav Bar"
++                       data-action="Question Mark"
++                       data-label="Solutions Feature Request">
++                        <i class="fa fa-wrench dropdown-icon"></i>
++                        {% trans "Solutions Feature Request" %}
+                     </a>
+                 </li>
+             {% endif %}
+-            {% if allow_report_an_issue and not 500traceback %}
+-                <li>
+-                    <a href="#modalReportIssue" data-toggle="modal" class="track-usage-link"
+-                       data-category="Nav Bar" data-action="Question Mark" data-label="Report an Issue">
+-                        <i class="fa-solid fa-triangle-exclamation icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
+-                    </a>
+-                </li>
+-            {% endif %}
+-            {% if request.couch_user and request.couch_user.is_dimagi and is_dimagi_environment %}
+-                <li>
+-                    <a href="#modalSolutionsFeatureRequest" data-toggle="modal" class="track-usage-link"
+-                    data-category="Nav Bar" data-action="Question Mark" data-label="Solutions Feature Request">
+-                        <i class="fa fa-wrench dropdown-icon"></i> {% trans "Solutions Feature Request" %}
+-                    </a>
+-                </li>
+-            {% endif %}
+-            {% if not enterprise_mode %}
+-                <li>
+-                    <a href="https://status.commcarehq.org/" data-toggle="modal" class="track-usage-link"
+-                       data-category="Nav Bar" data-action="Question Mark" data-label="Status Page">
+-                        <i class="fa fa-info-circle dropdown-icon"></i> {% trans "Status Page" %}
+-                    </a>
+-                </li>
+-              {% endif %}
+-        </ul>
 +          {% if not enterprise_mode %}
 +            <li>
 +              <a href="https://status.commcarehq.org/"

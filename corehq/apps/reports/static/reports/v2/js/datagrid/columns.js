@@ -42,8 +42,12 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.sort = ko.observable(data.sort);
 
         self.sortIconClass = ko.computed(function () {
-            if (self.sort() === 'asc') return 'glyphicon glyphicon-sort-by-attributes';
-            if (self.sort() === 'desc') return 'glyphicon glyphicon-sort-by-attributes-alt';
+            if (self.sort() === 'asc') {
+                return 'glyphicon glyphicon-sort-by-attributes';
+            }
+            if (self.sort() === 'desc') {
+                return 'glyphicon glyphicon-sort-by-attributes-alt';
+            }
             return 'glyphicon glyphicon-sort';
         });
 
@@ -85,7 +89,9 @@ hqDefine('reports/v2/js/datagrid/columns', [
         });
 
         self.getInitialNameValue = function () {
-            if (!data.name) return null;
+            if (!data.name) {
+                return null;
+            }
             return {
                 id: data.name,
                 text: data.name,
@@ -110,20 +116,32 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.noDeleteColumnCondition = options.noDeleteColumnCondition;
 
         self.showColumnFilters = ko.computed(function () {
-            if (!self.column()) return false;
-            if (!self.column().name()) return false;
-            if (!_.isFunction(self.hideColumnFilterCondition)) return true;
+            if (!self.column()) {
+                return false;
+            }
+            if (!self.column().name()) {
+                return false;
+            }
+            if (!_.isFunction(self.hideColumnFilterCondition)) {
+                return true;
+            }
             return !self.hideColumnFilterCondition(self.column());
         });
 
         self.showColumnFilterPlaceholder = ko.computed(function () {
-            if (!self.column()) return false;
+            if (!self.column()) {
+                return false;
+            }
             return self.column().name() === undefined || self.column().name().length === 0;
         });
 
         self.showDelete = ko.computed(function () {
-            if (!_.isFunction(self.noDeleteColumnCondition)) return true;
-            if (!self.column()) return true;
+            if (!_.isFunction(self.noDeleteColumnCondition)) {
+                return true;
+            }
+            if (!self.column()) {
+                return true;
+            }
             return !self.noDeleteColumnCondition(self.column());
         });
 

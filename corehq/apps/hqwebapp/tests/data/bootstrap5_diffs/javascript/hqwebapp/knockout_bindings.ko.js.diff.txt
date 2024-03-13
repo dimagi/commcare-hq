@@ -1,0 +1,87 @@
+--- 
++++ 
+@@ -1,12 +1,14 @@
+-hqDefine("hqwebapp/js/bootstrap3/knockout_bindings.ko", [
++hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
+     'jquery',
+     'underscore',
+     'knockout',
++    "es6!hqwebapp/js/bootstrap5_loader",
+     'jquery-ui/ui/widgets/sortable',
+ ], function (
+     $,
+     _,
+-    ko
++    ko,
++    bootstrap
+ ) {
+     // Need this due to https://github.com/knockout/knockout/pull/2324
+     // so that ko.bindingHandlers.foreach.update works properly
+@@ -344,19 +346,15 @@
+ 
+     ko.bindingHandlers.modal = {
+         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+-            $(element).addClass('modal fade').modal({
+-                show: false,
+-            });
+-            //        ko.bindingHandlers['if'].init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
++            viewModel.binding_modal = new bootstrap.Modal(element);
+         },
+         update: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+             ko.bindingHandlers.visible.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+-            var value = ko.utils.unwrapObservable(valueAccessor());
+-            //        ko.bindingHandlers['if'].update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
++            let value = ko.utils.unwrapObservable(valueAccessor());
+             if (value) {
+-                $(element).modal('show');
++                viewModel.binding_modal.show();
+             } else {
+-                $(element).modal('hide');
++                viewModel.binding_modal.hide();
+             }
+         },
+     };
+@@ -383,19 +381,21 @@
+                 templateID = value.templateId;
+                 ifValue = _.has(value, 'if') ? value.if : true;
+             }
+-            var modal = $('<div></div>').addClass('modal fade').appendTo('body'),
++            let modalElement = $('<div></div>').addClass('modal fade').attr("tabindex", "-1").appendTo('body'),
+                 newValueAccessor = function () {
+-                    var clickAction = function () {
++                    let clickAction = function () {
+                         if (!ifValue) {
+                             return;
+                         }
+-                        ko.bindingHandlers.template.init(modal.get(0), function () {
++                        ko.bindingHandlers.template.init(modalElement.get(0), function () {
+                             return templateID;
+                         }, allBindingsAccessor, viewModel, bindingContext);
+-                        ko.bindingHandlers.template.update(modal.get(0), function () {
++                        ko.bindingHandlers.template.update(modalElement.get(0), function () {
+                             return templateID;
+                         }, allBindingsAccessor, viewModel, bindingContext);
+-                        modal.modal('show');
++
++                        let modal = new bootstrap.Modal(modalElement.get(0));
++                        modal.show();
+                     };
+                     return clickAction;
+                 };
+@@ -405,11 +405,13 @@
+ 
+     ko.bindingHandlers.openRemoteModal = {
+         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+-            var modal = $('<div></div>').addClass('modal fade').appendTo('body'),
++            var modalElement = $('<div></div>').addClass('modal fade').attr("tabindex", "-1").appendTo('body'),
+                 newValueAccessor = function () {
+                     var clickAction = function () {
+-                        modal.load($(element).data('ajaxSource'));
+-                        modal.modal('show');
++                        modalElement.load($(element).data('ajaxSource'), function () {
++                            let modal = new bootstrap.Modal(modalElement.get(0));
++                            modal.show();
++                        });
+                     };
+                     return clickAction;
+                 };

@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import uuid4
 
 from django.conf import settings
 from django.db import transaction
@@ -18,6 +19,7 @@ from couchforms.exceptions import UnexpectedDeletedXForm
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.retry import retry_on
 from soil import DownloadBase
 
 from corehq import toggles
@@ -93,7 +95,9 @@ def bulk_download_users_async(domain, download_id, user_filters, is_web_download
 
 # rate limit to two bulk saves per second so cloudant has time to reindex
 @task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True)
-def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
+def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date=None):
+    if not deletion_date:
+        deletion_date = datetime.utcnow()
     from corehq.apps.data_interfaces.tasks import delete_duplicates_for_cases
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.messaging.scheduling.tasks import (
@@ -103,8 +107,7 @@ def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, delet
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
     delete_phone_numbers_for_owners.delay(case_ids)
     delete_schedule_instances_for_cases.delay(domain, case_ids)
-    if toggles.CASE_DEDUPE.enabled(domain):
-        delete_duplicates_for_cases.delay(case_ids)
+    delete_duplicates_for_cases.delay(case_ids)
 
 
 @task(serializer='pickle', rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
@@ -292,10 +295,20 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
 
 @task(serializer='pickle')
 def remove_unused_custom_fields_from_users_task(domain):
-    from corehq.apps.users.custom_data import (
-        remove_unused_custom_fields_from_users,
+    """Removes all unused custom data fields from all users in the domain"""
+    from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+    from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
+    from corehq.apps.users.views.mobile.custom_data_fields import (
+        CUSTOM_USER_DATA_FIELD_TYPE,
     )
-    remove_unused_custom_fields_from_users(domain)
+    fields_definition = CustomDataFieldsDefinition.get(domain, CUSTOM_USER_DATA_FIELD_TYPE)
+    assert fields_definition, 'remove_unused_custom_fields_from_users_task called without a valid definition'
+    schema_fields = {f.slug for f in fields_definition.get_fields()}
+    for user in get_all_commcare_users_by_domain(domain):
+        user_data = user.get_user_data(domain)
+        changed = user_data.remove_unrecognized(schema_fields)
+        if changed:
+            user.save()
 
 
 @task()
@@ -323,10 +336,8 @@ process_reporting_metadata_staging_schedule = deserialize_run_every_setting(
     queue='background_queue',
 )
 def process_reporting_metadata_staging():
-    from corehq.apps.users.models import (
-        CouchUser,
-        UserReportingMetadataStaging,
-    )
+    from corehq.apps.users.models import UserReportingMetadataStaging
+
     lock_key = "PROCESS_REPORTING_METADATA_STAGING_TASK"
     process_reporting_metadata_lock = get_redis_lock(
         lock_key,
@@ -339,21 +350,7 @@ def process_reporting_metadata_staging():
 
     try:
         start = datetime.utcnow()
-
-        for i in range(100):
-            with transaction.atomic():
-                records = (
-                    UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk')
-                )[:1]
-                for record in records:
-                    user = CouchUser.get_by_user_id(record.user_id, record.domain)
-                    try:
-                        record.process_record(user)
-                    except ResourceConflict:
-                        # https://sentry.io/organizations/dimagi/issues/1479516073/
-                        user = CouchUser.get_by_user_id(record.user_id, record.domain)
-                        record.process_record(user)
-                    record.delete()
+        _process_reporting_metadata_staging()
     finally:
         process_reporting_metadata_lock.release()
 
@@ -361,6 +358,28 @@ def process_reporting_metadata_staging():
     run_again = run_periodic_task_again(process_reporting_metadata_staging_schedule, start, duration)
     if run_again and UserReportingMetadataStaging.objects.exists():
         process_reporting_metadata_staging.delay()
+
+
+def _process_reporting_metadata_staging():
+    from corehq.apps.users.models import UserReportingMetadataStaging
+    for i in range(100):
+        with transaction.atomic():
+            records = (UserReportingMetadataStaging.objects.select_for_update(skip_locked=True).order_by('pk'))[:1]
+            for record in records:
+                _process_record_with_retry(record)
+                record.delete()
+
+
+@retry_on(ResourceConflict, delays=[0, 0.5])
+def _process_record_with_retry(record):
+    """
+    It is possible that an unrelated user update is saved to the db while we are processing the record
+    but before saving any user updates resulting from process_record. In this case, a ResourceConflict is
+    raised so we should try once more to see if it was just bad timing or a persistent error.
+    """
+    from corehq.apps.users.models import CouchUser
+    user = CouchUser.get_by_user_id(record.user_id, record.domain)
+    record.process_record(user)
 
 
 @task(queue='background_queue', acks_late=True)
@@ -389,3 +408,11 @@ def apply_correct_demo_mode_to_loadtest_user(commcare_user_id):
             user.is_loadtest_user = False  # This change gets saved by
             # turn_off_demo_mode()
             turn_off_demo_mode(user)
+
+
+@task(queue='background_queue')
+def remove_users_test_cases(domain, owner_ids):
+    from corehq.apps.reports.util import domain_copied_cases_by_owner
+
+    test_case_ids = domain_copied_cases_by_owner(domain, owner_ids)
+    tag_cases_as_deleted_and_remove_indices(domain, test_case_ids, uuid4().hex)

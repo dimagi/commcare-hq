@@ -16,6 +16,7 @@ hqDefine("reports/js/tabular", [
             var tableConfig = tableOptions,
                 options = {
                     dataTableElem: '#report_table_' + slug,
+                    forcePageSize: tableConfig.force_page_size,
                     defaultRows: tableConfig.default_rows,
                     startAtRowNum: tableConfig.start_at_row,
                     showAllRowsOption: tableConfig.show_all_rows,

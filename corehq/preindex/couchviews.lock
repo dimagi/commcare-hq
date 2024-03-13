@@ -33,7 +33,7 @@ fac1f3b0e29a7c020867 corehq/apps/domain/_design/filters/all_domains.js
 01379054eea2ae2a7e0f corehq/apps/domain/_design/views/copied_from_snapshot/map.js
 fe3f949a047b7cc6ee56 corehq/apps/domain/_design/views/deleted_domains/map.js
 83d4baace1fa5a6ede96 corehq/apps/domain/_design/views/deleted_domains/reduce.js
-5d23f6378ecc8535fb82 corehq/apps/domain/_design/views/domains/map.js
+ff130f933f39c4413cbb corehq/apps/domain/_design/views/domains/map.js
 83d4baace1fa5a6ede96 corehq/apps/domain/_design/views/domains/reduce.js
 4b217a943ac88f66c7ab corehq/apps/domain/_design/views/not_snapshots/map.js
 769390ec41abbbb32c4e corehq/apps/domain/_design/views/published_snapshots/map.js

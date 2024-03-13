@@ -10,7 +10,6 @@ from django.utils.translation import gettext_lazy as _
 from django_prbac.models import Grant, Role, UserRole
 
 from corehq.const import USER_DATE_FORMAT
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import add_months
 
 from corehq import privileges
@@ -142,6 +141,13 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     return False
 
 
+def get_domains_with_privilege(privilege_slug):
+    return [
+        domain for domain in Domain.get_all_names()
+        if domain_has_privilege(domain, privilege_slug.slug)
+    ]
+
+
 @quickcache(['domain_name'], timeout=15 * 60)
 def domain_is_on_trial(domain_name):
     from corehq.apps.accounting.models import Subscription
@@ -210,28 +216,6 @@ def quantize_accounting_decimal(decimal_value):
 
 def fmt_dollar_amount(decimal_value):
     return _("USD %s") % quantize_accounting_decimal(decimal_value)
-
-
-def get_customer_cards(username, domain):
-    from corehq.apps.accounting.models import (
-        StripePaymentMethod, PaymentMethodType,
-    )
-    import stripe
-    try:
-        payment_method = StripePaymentMethod.objects.get(
-            web_user=username,
-            method_type=PaymentMethodType.STRIPE
-        )
-        stripe_customer = payment_method.customer
-        return dict(stripe_customer.cards)
-    except StripePaymentMethod.DoesNotExist:
-        pass
-    except stripe.error.AuthenticationError:
-        if not settings.STRIPE_PRIVATE_KEY:
-            log_accounting_info("Private key is not defined in settings")
-        else:
-            raise
-    return None
 
 
 def is_accounting_admin(user):

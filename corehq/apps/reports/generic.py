@@ -64,6 +64,20 @@ def _sanitize_col(col):
     return col
 
 
+def get_filter_classes(fields, request, domain, timezone):
+    filters = []
+    fields = fields
+    for field in fields or []:
+        if isinstance(field, str):
+            klass = to_function(field, failhard=True)
+        else:
+            klass = field
+        filters.append(
+            klass(request, domain, timezone)
+        )
+    return filters
+
+
 class GenericReportView(object):
     """
         A generic report structure for viewing a report
@@ -116,6 +130,7 @@ class GenericReportView(object):
 
     # not required
     description = None  # Human-readable description of the report
+    documentation_link = None  # Link to docs page if available
     report_template_path = None
     report_partial_path = None
 
@@ -142,7 +157,10 @@ class GenericReportView(object):
     show_time_notice = False
     is_admin_report = False
     special_notice = None
-    override_permissions_check = False # whether to ignore the permissions check that's done when rendering the report
+
+    # whether to ignore the permissions check that's done when rendering
+    # the report
+    override_permissions_check = False
 
     report_title = None
     report_subtitles = []
@@ -159,13 +177,11 @@ class GenericReportView(object):
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
-            raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
-            " slug: %(slug)s, dispatcher: %(dispatcher)s" % dict(
-                name=self.name,
-                section_name=self.section_name,
-                slug=self.slug,
-                dispatcher=self.dispatcher
-            ))
+            raise NotImplementedError(
+                f'Missing a required parameter: (name: {self.name}, '
+                f'section_name: {self.section_name}, slug: {self.slug}, '
+                f'dispatcher: {self.dispatcher}'
+            )
 
         from corehq.apps.reports.dispatcher import ReportDispatcher
         if isinstance(self.dispatcher, ReportDispatcher):
@@ -176,18 +192,23 @@ class GenericReportView(object):
         self.domain = normalize_domain_name(domain)
         self.context = base_context or {}
         self._update_initial_context()
-        self.is_rendered_as_email = False # setting this to true in email_response
+        self.is_rendered_as_email = False  # setting this to true in email_response
         self.is_rendered_as_export = False
         self.override_template = "reports/async/email_report.html"
 
     def __str__(self):
-        return "%(klass)s report named '%(name)s' with slug '%(slug)s' in section '%(section)s'.%(desc)s%(fields)s" % dict(
-            klass=self.__class__.__name__,
-            name=self.name,
-            slug=self.slug,
-            section=self.section_name,
-            desc="\n   Report Description: %s" % self.description if self.description else "",
-            fields="\n   Report Fields: \n     -%s" % "\n     -".join(self.fields) if self.fields else ""
+        if self.fields:
+            field_lines = "\n     -".join(self.fields)
+            fields = f"\n   Report Fields: \n     -{field_lines}"
+        else:
+            fields = ""
+        if self.description:
+            desc = f"\n   Report Description: {self.description}"
+        else:
+            desc = ""
+        return (
+            f"{self.__class__.__name__} report named '{self.name}' with slug "
+            f"'{self.slug}' in section '{self.section_name}'.{desc}{fields}"
         )
 
     def __getstate__(self):
@@ -209,7 +230,7 @@ class GenericReportView(object):
         """
             For unpickling a pickled report.
         """
-        logging = get_task_logger(__name__) # logging lis likely to happen within celery.
+        logging = get_task_logger(__name__)  # logging is likely to happen within celery.
         self.domain = state.get('domain')
         self.context = state.get('context', {})
 
@@ -235,7 +256,7 @@ class GenericReportView(object):
             request.couch_user = couch_user
         except Exception as e:
             logging.error("Could not unpickle couch_user from request for report %s. Error: %s" %
-                            (self.name, e))
+                          (self.name, e))
         self.request = request
         self._caching = True
         self.request_params = state.get('request_params')
@@ -309,17 +330,7 @@ class GenericReportView(object):
     @property
     @memoized
     def filter_classes(self):
-        filters = []
-        fields = self.fields
-        for field in fields or []:
-            if isinstance(field, str):
-                klass = to_function(field, failhard=True)
-            else:
-                klass = field
-            filters.append(
-                klass(self.request, self.domain, self.timezone)
-            )
-        return filters
+        return get_filter_classes(self.fields, self.request, self.domain, self.timezone)
 
     @property
     @memoized
@@ -454,6 +465,7 @@ class GenericReportView(object):
             report=dict(
                 title=self.rendered_report_title,
                 description=self.description,
+                documentation_link=self.documentation_link,
                 section_name=self.section_name,
                 slug=self.slug,
                 sub_slug=None,
@@ -470,7 +482,7 @@ class GenericReportView(object):
                     or self.request.couch_user.can_view_some_reports(self.domain)
                 ),
                 is_emailable=self.emailable,
-                is_export_all = self.exportable_all,
+                is_export_all=self.exportable_all,
                 is_printable=self.printable,
                 is_admin=self.is_admin_report,
                 special_notice=self.special_notice,
@@ -539,10 +551,10 @@ class GenericReportView(object):
         if hasattr(self, 'datespan'):
             self.context.update(datespan=self.datespan)
         if self.show_timezone_notice:
-            self.context.update(timezone=dict(
-                    now=datetime.datetime.now(tz=self.timezone),
-                    zone=self.timezone.zone
-                ))
+            self.context.update(timezone={
+                'now': datetime.datetime.now(tz=self.timezone),
+                'zone': self.timezone.zone,
+            })
         self.context.update(self._validate_context_dict(self.template_context))
 
     def update_report_context(self):
@@ -715,7 +727,7 @@ class GenericReportView(object):
                              ', '.join(cls.dispatcher.allowed_renderings()))
         url_args = [domain] if domain is not None else []
         if render_as is not None:
-            url_args.append(render_as+'/')
+            url_args.append(render_as + '/')
         if relative:
             return reverse(cls.dispatcher.name(), args=url_args + [cls.slug])
         return absolute_reverse(cls.dispatcher.name(), args=url_args + [cls.slug])
@@ -816,6 +828,7 @@ class GenericTabularReport(GenericReportView):
     # new class properties
     total_row = None
     statistics_rows = None
+    force_page_size = False  # force page size to be as the default rows
     default_rows = 10
     start_at_row = 0
     show_all_rows = False
@@ -977,7 +990,7 @@ class GenericTabularReport(GenericReportView):
     def export_sheet_name(self):
         if self._export_sheet_name is None:
             override = self.override_export_sheet_name
-            self._export_sheet_name = override if isinstance(override, str) else self.name # unicode?
+            self._export_sheet_name = override if isinstance(override, str) else self.name
         return self._export_sheet_name
 
     @property
@@ -991,6 +1004,7 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
+
         def _unformat_row(row):
             def _unformat_val(val):
                 if isinstance(val, dict):
@@ -1028,7 +1042,7 @@ class GenericTabularReport(GenericReportView):
             Don't override.
             Override the properties headers and rows instead of this.
         """
-        headers = self.headers # not all headers have been memoized
+        headers = self.headers  # not all headers have been memoized
         assert isinstance(headers, (DataTablesHeader, list))
         if isinstance(headers, list):
             raise DeprecationWarning("Property 'headers' should be a DataTablesHeader object, not a list.")
@@ -1070,6 +1084,7 @@ class GenericTabularReport(GenericReportView):
                 rows=rows,
                 total_row=self.total_row,
                 statistics_rows=self.statistics_rows,
+                force_page_size=self.force_page_size,
                 default_rows=self.default_rows,
                 start_at_row=self.start_at_row,
                 show_all_rows=self.show_all_rows,
@@ -1087,6 +1102,7 @@ class GenericTabularReport(GenericReportView):
         context.update({
             'report_table_js_options': {
                 'datatables': report_table['datatables'],
+                'force_page_size': report_table['force_page_size'],
                 'default_rows': report_table['default_rows'] or 10,
                 'start_at_row': report_table['start_at_row'] or 0,
                 'show_all_rows': report_table['show_all_rows'],
@@ -1131,21 +1147,6 @@ def summary_context(report):
     return {"summary_values": report.summary_values}
 
 
-class ProjectInspectionReportParamsMixin(object):
-
-    @property
-    def shared_pagination_GET_params(self):
-        # This was moved from ProjectInspectionReport so that it could be included in CaseReassignmentInterface too
-        # I tried a number of other inheritance schemes, but none of them worked because of the already
-        # complicated multiple-inheritance chain
-        # todo: group this kind of stuff with the field object in a comprehensive field refactor
-
-        return [dict(name='individual', value=self.individual),
-                dict(name='group', value=self.group_id),
-                dict(name='case_type', value=self.case_type),
-                dict(name='ufilter', value=[f.type for f in self.user_filter if f.show])]
-
-
 class PaginatedReportMixin(object):
     default_sort = None
 
@@ -1181,8 +1182,7 @@ class GetParamsMixin(object):
         return ret
 
 
-class ElasticProjectInspectionReport(GetParamsMixin, ProjectInspectionReportParamsMixin,
-                                     PaginatedReportMixin, GenericTabularReport):
+class ElasticProjectInspectionReport(GetParamsMixin, PaginatedReportMixin, GenericTabularReport):
     """
     Tabular report that provides framework for doing elasticsearch backed tabular reports.
 

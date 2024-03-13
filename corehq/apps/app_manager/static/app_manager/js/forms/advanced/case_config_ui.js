@@ -48,7 +48,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
 
             self.descriptionDict = params.propertyDescriptions;
 
-            self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+            self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
                 unsavedMessage: "You have unchanged case settings",
                 save: function () {
                     var actions = JSON.stringify(self.caseConfigViewModel.unwrap());
@@ -215,7 +215,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     });
 
                     $('.hq-help-template').each(function () {
-                        hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
+                        hqImport("hqwebapp/js/bootstrap3/main").transformHelpTemplate($(this), true);
                     });
 
                     caseConfigUtils.initRefreshQuestions(self.questions);

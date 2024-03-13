@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -1,12 +1,12 @@
+ <script type="text/html" id="ko-select-toggle">
+   <div class="ko-select-toggle">
+-    <select class="hide" data-bind="foreach: options(), attr: htmlAttrs, value: value">
++    <select class="d-none" data-bind="foreach: options(), attr: htmlAttrs, value: value">
+       <option data-bind="value: $data.id,
+                                text: $data.text,
+                                attr: {selected: $data.selected}"></option>
+     </select>
+     <div class="btn-group-separated" data-bind="foreach: options()">
+-      <button class="btn btn-default"
++      <button class="btn btn-outline-primary"
+               data-bind="css: {
+                            active: $data.selected,
+                            disabled: $parent.disabled,
+@@ -16,4 +16,5 @@
+         <!-- ko text: $data.text --><!-- /ko -->
+       </button>
+     </div>
++  </div>
+ </script>

@@ -1,15 +1,17 @@
 from contextlib import contextmanager
 from unittest.mock import patch
 
-from django.test import TestCase
-from django.test.client import Client
+from django.test import TestCase, override_settings
+from django.test.client import Client, RequestFactory
 from django.urls import reverse
+from corehq.apps.domain.models import Domain
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 
 from ..interface import FixtureEditInterface
 from ..models import LookupTable, LookupTableRow, Field, TypeField
+from corehq.apps.fixtures.views import update_tables
 
 DOMAIN = "lookup"
 USER = "test@test.com"
@@ -251,7 +253,6 @@ class LookupTableViewsTest(TestCase):
 
 
 class TestFixtureEditInterface(TestCase):
-
     def test_json_conversion(self):
         # initial_page_data performs JSON conversion in manage_tables.html
         class FakeRequest:
@@ -272,6 +273,7 @@ class TestFixtureEditInterface(TestCase):
             [{
                 "_id": table.id.hex,
                 "is_global": True,
+                "is_synced": False,
                 "tag": "atable",
                 "fields": [{
                     "name": "wing",
@@ -282,3 +284,35 @@ class TestFixtureEditInterface(TestCase):
                 "description": "A Table",
             }],
         )
+
+
+@override_settings(REQUIRE_TWO_FACTOR_FOR_SUPERUSERS=False)
+class UpdateTablesTests(TestCase):
+    def test_can_delete_synced_fixture(self):
+        request = self._create_request('DELETE')
+        fixture = LookupTable.objects.create(domain='test-domain', tag='test-fixture', is_synced=True)
+
+        update_tables(request, 'test-domain', fixture.id)
+
+        remaining_table_count = LookupTable.objects.filter(domain='test-domain', tag='test-fixture').count()
+        self.assertEqual(remaining_table_count, 0)
+
+    def setUp(self):
+        super().setUp()
+
+        self.domain = Domain(name='test-domain', is_active=True)
+
+        patcher = patch.object(Domain, 'get_by_name', return_value=self.domain)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        privilege_patcher = patch('django_prbac.decorators.has_privilege', return_value=True)
+        privilege_patcher.start()
+        self.addCleanup(privilege_patcher.stop)
+
+    def _create_request(self, method):
+        method = method.lower()
+        request = getattr(RequestFactory(), method)('/some/url')
+        request.user = request.couch_user = WebUser(is_superuser=True, is_authenticated=True, is_active=True)
+
+        return request

@@ -19,6 +19,7 @@ class Migration(migrations.Migration):
             properties={
                 '__is_tombstone__': {'type': 'boolean'},
             },
+            es_versions=[2],
         ),
         corehq.apps.es.migration_operations.UpdateIndexMapping(
             name=getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29"),
@@ -26,6 +27,7 @@ class Migration(migrations.Migration):
             properties={
                 '__is_tombstone__': {'type': 'boolean'},
             },
+            es_versions=[2],
         ),
         corehq.apps.es.migration_operations.UpdateIndexMapping(
             name='hqcases_2016-03-04',
@@ -33,6 +35,7 @@ class Migration(migrations.Migration):
             properties={
                 '__is_tombstone__': {'type': 'boolean'},
             },
+            es_versions=[2],
         ),
         corehq.apps.es.migration_operations.UpdateIndexMapping(
             name='hqdomains_2021-03-08',
@@ -40,6 +43,7 @@ class Migration(migrations.Migration):
             properties={
                 '__is_tombstone__': {'type': 'boolean'},
             },
+            es_versions=[2],
         ),
         corehq.apps.es.migration_operations.UpdateIndexMapping(
             name=getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07"),
@@ -47,6 +51,7 @@ class Migration(migrations.Migration):
             properties={
                 '__is_tombstone__': {'type': 'boolean'},
             },
+            es_versions=[2],
         ),
         corehq.apps.es.migration_operations.UpdateIndexMapping(
             name='hqgroups_2017-05-29',
@@ -54,6 +59,7 @@ class Migration(migrations.Migration):
             properties={
                 '__is_tombstone__': {'type': 'boolean'},
             },
+            es_versions=[2],
         ),
         corehq.apps.es.migration_operations.UpdateIndexMapping(
             name='smslogs_2020-01-28',
@@ -61,6 +67,7 @@ class Migration(migrations.Migration):
             properties={
                 '__is_tombstone__': {'type': 'boolean'},
             },
+            es_versions=[2],
         ),
         corehq.apps.es.migration_operations.UpdateIndexMapping(
             name='hqusers_2017-09-07',
@@ -68,5 +75,6 @@ class Migration(migrations.Migration):
             properties={
                 '__is_tombstone__': {'type': 'boolean'},
             },
+            es_versions=[2],
         ),
     ]

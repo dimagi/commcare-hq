@@ -31,6 +31,18 @@
       <div id="tabbed-content-container">
         <div class="row">
           <div class="col-sm-12">
+            {% if is_case_type_deprecated %}
+              <div class="alert alert-warning">
+                <p>
+                  {% blocktrans %}
+                    This case uses a deprecated case type.
+                    See the
+                    <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary">help documentation</a>
+                    for more information.
+                  {% endblocktrans %}
+                </p>
+              </div>
+            {% endif %}
             {% include "reports/partials/case_property_table.html" with rows=default_properties_as_table %}
           </div>
         </div>
@@ -60,9 +72,7 @@
             <div class="tab-content">
               <div class="tab-pane" id="properties">
                 <div class="row-fluid">
-                  {% if dynamic_properties_table %}
-                    {% include "reports/partials/case_property_table.html" with rows=dynamic_properties_table %}
-                  {% elif dd_properties_tables %}
+                  {% if case_property_tables %}
                     {% if show_expand_collapse_buttons %}
                       <div class="pull-right btn-grp" role="group">
                         <button class="btn btn-sm btn-default" type="button" id="expand-all-accordion-btn">Expand All</button>
@@ -70,7 +80,7 @@
                       </div>
                     {% endif %}
                     <div class="panel-group" id="case-properties-accordion">
-                      {% for table in dd_properties_tables %}
+                      {% for table in case_property_tables %}
                         <div class="panel panel-appmanager" id="property-table-{{ forloop.counter }}-parent">
                           {% if table.name is not None %}
                             <div class="panel-heading">
@@ -242,7 +252,7 @@
       <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
           <a class="btn btn-default pull-left" href="{% url 'download_case_history' domain case_id %}">
-            <i class="fa fa-cloud-download"></i>
+            <i class="fa-solid fa-cloud-arrow-down"></i>
             {% trans 'Download Case History' %}
           </a>
           {% if show_properties_edit %}

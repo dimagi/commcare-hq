@@ -8,7 +8,7 @@ from uuid import UUID
 
 from django.conf import settings
 from django.db import InternalError, transaction, router
-from django.db.models import F, Q
+from django.db.models import Q
 from django.db.models.expressions import Value
 from django.db.models.functions import Concat
 
@@ -335,9 +335,8 @@ class FormReindexAccessor(ReindexAccessor):
     def extra_filters(self, for_count=False):
         filters = []
         if not (for_count or self.include_deleted):
-            # don't inlucde in count query since the query planner can't account for it
-            # hack for django: 'state & DELETED = 0' so 'state = state + state & DELETED'
-            filters.append(Q(state=F('state').bitand(XFormInstance.DELETED) + F('state')))
+            # don't include in count query since the query planner can't account for it
+            filters.append(Q(deleted_on__isnull=True))
         if self.domain:
             filters.append(Q(domain=self.domain))
         if self.start_date is not None:

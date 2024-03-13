@@ -1,3 +1,4 @@
+'use strict';
 /**
  * Generates mock formplayer responses. Use as a fake for queryFormplayer.
  *
@@ -169,7 +170,8 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
     module.makeQueryResponse = function (options) {
         AssertProperties.assertRequired(options, ["displays", "queryKey"]);
         return _.defaults(makeResponse(options), {
-            type: "query",
+            "type": "query",
+            "groupHeaders": {},
         });
     };
 

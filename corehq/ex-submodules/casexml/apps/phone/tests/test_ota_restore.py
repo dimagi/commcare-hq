@@ -24,7 +24,6 @@ from casexml.apps.phone.tests.utils import (
     deprecated_generate_restore_payload,
 )
 from casexml.apps.phone.utils import get_restore_config, MockDevice
-from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
@@ -66,17 +65,15 @@ class SimpleOtaRestoreTest(TestCase):
 
         def assertRegistrationData(key, val):
             if val is None:
-                template = '<data key="{prefix}_{key}"/>'
+                expected = f'<data key="{key}"/>'
             else:
-                template = '<data key="{prefix}_{key}">{val}</data>'
-            self.assertIn(
-                template.format(prefix=SYSTEM_PREFIX, key=key, val=val),
-                payload,
-            )
+                expected = f'<data key="{key}">{val}</data>'
+            self.assertIn(expected, payload)
 
-        assertRegistrationData("first_name", "mclovin")
-        assertRegistrationData("last_name", None)
-        assertRegistrationData("phone_number", "555555")
+        assertRegistrationData("commcare_first_name", "mclovin")
+        assertRegistrationData("commcare_last_name", None)
+        assertRegistrationData("commcare_phone_number", "555555")
+        assertRegistrationData("commcare_user_type", "commcare")
 
 
 class BaseOtaRestoreTest(TestCase, TestFileMixin):

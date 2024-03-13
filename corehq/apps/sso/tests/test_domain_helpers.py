@@ -134,6 +134,7 @@ class TestIsDomainUsingSso(TestCase):
         Ensure that the quickcache for is_domain_using_sso properly gets
         cleared when a domain suddenly gains SSO access.
         """
+        self.addCleanup(is_domain_using_sso.clear, self.domain_pending_sso.name)
         self.assertFalse(is_domain_using_sso(self.domain_pending_sso.name))
         new_idp = generator.create_idp('dimagi-org', self.account_pending_sso)
         new_idp.is_active = True

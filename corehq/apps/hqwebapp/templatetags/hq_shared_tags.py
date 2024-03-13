@@ -24,7 +24,7 @@ from dimagi.utils.web import json_handler
 
 from corehq import privileges
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException, TemplateTagJSONException
-from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.apps.hqwebapp.models import Alert
 from corehq.motech.utils import pformat_json
 
 register = template.Library()
@@ -139,11 +139,6 @@ def domains_for_user(context, request, selected_domain=None):
     )
 
 
-@register.simple_tag
-def commcare_user():
-    return _(settings.COMMCARE_USER_TERM)
-
-
 # This is taken from https://code.djangoproject.com/ticket/15583
 @register.filter(name='sort')
 def listsort(value):
@@ -242,19 +237,28 @@ def can_use_restore_as(request):
 
 @register.simple_tag
 def css_label_class():
-    from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS
+    from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS, CSS_LABEL_CLASS_BOOTSTRAP5
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+    if get_bootstrap_version() == BOOTSTRAP_5:
+        return CSS_LABEL_CLASS_BOOTSTRAP5
     return CSS_LABEL_CLASS
 
 
 @register.simple_tag
 def css_field_class():
-    from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS
+    from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS, CSS_FIELD_CLASS_BOOTSTRAP5
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+    if get_bootstrap_version() == BOOTSTRAP_5:
+        return CSS_FIELD_CLASS_BOOTSTRAP5
     return CSS_FIELD_CLASS
 
 
 @register.simple_tag
 def css_action_class():
-    from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
+    from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS, get_form_action_class
+    from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+    if get_bootstrap_version() == BOOTSTRAP_5:
+        return get_form_action_class()
     return CSS_ACTION_CLASS
 
 
@@ -394,13 +398,19 @@ def chevron(value):
 
 
 @register.simple_tag
-def maintenance_alerts(request):
-    active_alerts = MaintenanceAlert.get_active_alerts()
-    domain = getattr(request, 'domain', None)
+def commcarehq_alerts(request):
+    from corehq.apps.domain.auth import user_can_access_domain_specific_pages
+
+    active_alerts = Alert.get_active_alerts()
+    load_alerts_for_domain = None
+
+    if hasattr(request, 'domain') and user_can_access_domain_specific_pages(request):
+        load_alerts_for_domain = request.domain
+
     return [
         alert for alert in active_alerts
         if (not alert.domains
-            or domain in alert.domains)
+            or load_alerts_for_domain in alert.domains)
     ]
 
 
@@ -689,6 +699,7 @@ def javascript_libraries(context, **kwargs):
         'analytics': kwargs.pop('analytics', False),
         'hq': kwargs.pop('hq', False),
         'helpers': kwargs.pop('helpers', False),
+        'use_bootstrap5': kwargs.pop('use_bootstrap5', False),
     }
 
 

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional  # noqa: F401
 
 from django.conf import settings
 from django.core.cache import cache
@@ -27,7 +27,7 @@ from corehq.motech.repeaters.dbaccessors import (
 from corehq.apps.case_importer.do_import import SubmitCaseBlockHandler, RowAndCase
 from corehq.motech.repeaters.models import SQLRepeatRecord
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.toggles import CASE_DEDUPE, DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
+from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
@@ -37,6 +37,7 @@ from .interfaces import FormManagementMode
 from .models import (
     AutomaticUpdateRule,
     CaseDuplicate,
+    CaseDuplicateNew,
     CaseRuleSubmission,
     DomainCaseRuleRun,
 )
@@ -65,9 +66,6 @@ def _get_upload_progress_tracker(upload_id):
 @no_result_task(queue='case_rule_queue', acks_late=True,
                 soft_time_limit=15 * settings.CELERY_TASK_SOFT_TIME_LIMIT)
 def reset_and_backfill_deduplicate_rule_task(domain, rule_id):
-    if not CASE_DEDUPE.enabled(domain):
-        return
-
     try:
         rule = AutomaticUpdateRule.objects.get(
             id=rule_id,
@@ -89,6 +87,8 @@ def reset_and_backfill_deduplicate_rule_task(domain, rule_id):
 def delete_duplicates_for_cases(case_ids):
     CaseDuplicate.bulk_remove_unique_cases(case_ids)
     CaseDuplicate.remove_duplicates_for_case_ids(case_ids)
+
+    CaseDuplicateNew.remove_duplicates_for_case_ids(case_ids)
 
 
 @task(serializer='pickle', ignore_result=True)
@@ -167,11 +167,12 @@ def run_case_update_rules_for_domain(domain, now=None):
     serializer='pickle',
 )
 def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=None):
-    all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
-    rules = list(all_rules.filter(case_type=case_type))
+    rules = list(
+        AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case_type)
+    )
 
-    boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-    iterator = AutomaticUpdateRule.iter_cases(domain, case_type, boundary_date, db=db)
+    modified_before = AutomaticUpdateRule.get_boundary_date(rules, now)
+    iterator = AutomaticUpdateRule.iter_cases(domain, case_type, db=db, modified_lte=modified_before)
     run = iter_cases_and_run_rules(domain, iterator, rules, now, run_id, case_type, db)
 
     if run.status == DomainCaseRuleRun.STATUS_FINISHED:
@@ -245,7 +246,7 @@ def _get_repeat_record_ids(
         if use_sql:
             queryset = SQLRepeatRecord.objects.filter(
                 domain=domain,
-                repeater__repeater_id=repeater_id,
+                repeater__id=repeater_id,
             )
             return [r['id'] for r in queryset.values('id')]
         else:
@@ -259,7 +260,12 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url)
     DownloadBase.set_progress(task, 0, len(case_ids))
     user = CouchUser.get_by_user_id(user_id)
     submission_handler = SubmitCaseBlockHandler(
-        domain, None, None, user, None, throttle=True
+        domain,
+        import_results=None,
+        case_type=None,
+        user=user,
+        record_form_callback=None,
+        throttle=True,
     )
     for idx, case_id in enumerate(case_ids):
         submission_handler.add_caseblock(
@@ -290,6 +296,54 @@ def bulk_case_reassign_async(domain, user_id, owner_id, download_id, report_url)
             user.get_email(),
             render_to_string("data_interfaces/partials/case_reassign_complete_email.html", context),
             text_content=text_content,
+            domain=domain,
+            use_domain_gateway=True,
+        )
+
+    _send_email()
+    return {"messages": result}
+
+
+@task
+def bulk_case_copy_async(domain, user_id, owner_id, download_id, report_url, **kwargs):
+    from corehq.apps.hqcase.case_helper import CaseCopier
+    task = bulk_case_copy_async
+    case_ids = DownloadBase.get(download_id).get_content()
+    DownloadBase.set_progress(task, 0, len(case_ids))
+    user = CouchUser.get_by_user_id(user_id)
+
+    case_copier = CaseCopier(
+        domain,
+        to_owner=owner_id,
+        censor_data=kwargs.get('sensitive_properties', {}),
+    )
+    case_copier.copy_cases(case_ids, progress_task=task)
+
+    DownloadBase.set_progress(task, len(case_ids), len(case_ids))
+    result = case_copier.submission_handler.results.to_json()
+    result['success'] = True
+    result['case_count'] = len(case_ids)
+    result['report_url'] = report_url
+
+    def _send_email():
+        context = {
+            'case_count': len(case_ids),
+            'report_url': report_url,
+        }
+        text_content = """
+        {case_count} cases were copied. The list of cases that
+        were copied are <a href='{report_url}'>here</a>.
+        It's possible that in the report the owner_id is not yet
+        updated, you can open individual cases and confirm
+        the right case owner, the report gets updated with a slight delay.
+        """.format(**context)
+        send_HTML_email(
+            "Copy Cases Complete on {domain}- CommCare HQ",
+            user.get_email(),
+            render_to_string("data_interfaces/partials/case_copy_complete_email.html", context),
+            text_content=text_content,
+            domain=domain,
+            use_domain_gateway=True,
         )
 
     _send_email()

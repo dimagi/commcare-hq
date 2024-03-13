@@ -1,11 +1,13 @@
 import os
 import uuid
+from datetime import datetime, timedelta
 from unittest import mock
 
 from django.http import HttpResponse
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
+from oauth2_provider.models import get_access_token_model
 from urllib.parse import urlencode
 
 from couchforms import openrosa_response
@@ -255,6 +257,46 @@ class _AuthTestsBothBackends(object):
                 'authenticated': False,
                 'user_id': None,
             }
+        )
+
+    def test_oauth2_good_scope(self):
+        client = Client(HTTP_AUTHORIZATION="bearer mytoken")
+        token_model = get_access_token_model()
+        one_hour = datetime.utcnow() + timedelta(hours=1)
+        token_model.objects.create(
+            user=self.user.get_django_user(),
+            token='mytoken',
+            scope='sync',
+            expires=one_hour
+        )
+        expected_auth_context = {
+            'doc_type': 'AuthContext',
+            'domain': self.domain,
+            'authenticated': True,
+            'user_id': self.user.get_id,
+        }
+        self._test_post(
+            file_path=self.bare_form,
+            client=client,
+            authtype='oauth2',
+            expected_auth_context=expected_auth_context
+        )
+
+    def test_oauth2_bad_scope(self):
+        client = Client(HTTP_AUTHORIZATION="bearer badtoken")
+        token_model = get_access_token_model()
+        one_hour = datetime.utcnow() + timedelta(hours=1)
+        token_model.objects.create(
+            user=self.user.get_django_user(),
+            token='badtoken',
+            scope='api_access',
+            expires=one_hour
+        )
+        self._test_post(
+            file_path=self.bare_form,
+            client=client,
+            authtype='oauth2',
+            expected_status=401
         )
 
 

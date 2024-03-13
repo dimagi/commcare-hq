@@ -40,9 +40,10 @@ hqDefine('hqwebapp/js/multiselect_utils', [
     };
 
     var _renderSearch = function (inputId, placeholder) {
-        var input = _.template(
+        var inputGroupTextClass = (window.USE_BOOTSTRAP5) ? "input-group-text" : "input-group-addon",
+            input = _.template(
             '<div class="input-group ms-input-group">' +
-                '<span class="input-group-addon">' +
+                '<span class="' + inputGroupTextClass + '">' +
                     '<i class="fa fa-search"></i>' +
                 '</span>' +
                 '<input type="search" class="form-control search-input" id="<%- searchInputId %>" autocomplete="off" placeholder="<%- searchInputPlaceholder %>" />' +
@@ -76,17 +77,18 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             selectAllId = baseId + '-select-all',
             removeAllId = baseId + '-remove-all',
             searchSelectableId = baseId + '-search-selectable',
-            searchSelectedId = baseId + '-search-selected';
+            searchSelectedId = baseId + '-search-selected',
+            defaultBtnClass = (window.USE_BOOTSTRAP5) ? 'btn-outline-primary btn-sm' : 'btn-default';
 
         $element.multiSelect({
             selectableHeader: _renderHeader(
                 selectableHeaderTitle,
-                _renderAction(selectAllId, 'btn-default', 'fa fa-plus', gettext("Add All"), disableModifyAllActions),
+                _renderAction(selectAllId, defaultBtnClass, 'fa fa-plus', gettext("Add All"), disableModifyAllActions),
                 _renderSearch(searchSelectableId, searchItemTitle)
             ),
             selectionHeader: _renderHeader(
                 selectedHeaderTitle,
-                _renderAction(removeAllId, 'btn-default', 'fa fa-remove', gettext("Remove All"), disableModifyAllActions),
+                _renderAction(removeAllId, defaultBtnClass, 'fa fa-remove', gettext("Remove All"), disableModifyAllActions),
                 _renderSearch(searchSelectedId, searchItemTitle)
             ),
             afterInit: function () {

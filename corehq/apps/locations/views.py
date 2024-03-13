@@ -7,6 +7,7 @@ from django.http import Http404, HttpResponseRedirect
 from django.http.response import HttpResponseServerError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
@@ -305,11 +306,24 @@ class LocationTypesView(BaseDomainView):
     @property
     def page_context(self):
         return {
-            'location_types': self._get_loc_types(),
+            'location_types': self._location_types,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
+            'suggest_orphan_case_alerts_setting': self._suggest_orphan_case_alerts_setting,
+            'project_settings_url': reverse('domain_settings_default', args=[self.domain])
         }
 
-    def _get_loc_types(self):
+    @property
+    def _suggest_orphan_case_alerts_setting(self):
+        """Determine if the `orphan_case_alerts_warning` info banner should be shown. It should be shown when
+        the setting is disabled and any organization level can own cases
+        """
+        if self.domain_object.orphan_case_alerts_warning:
+            return False
+
+        return any(filter(lambda location_type: location_type['shares_cases'], self._location_types))
+
+    @cached_property
+    def _location_types(self):
         return [{
             'pk': loc_type.pk,
             'name': loc_type.name,
@@ -363,10 +377,11 @@ class LocationTypesView(BaseDomainView):
                     # to check if the name/code was swapped with another location by confirming if
                     # either name/code has changed but the current name is still present in the names/codes passed
                     if (
-                            (location_type.name != payload_loc_type_name_by_pk.get(location_type.pk) and
-                             location_type.name in names) or
-                            (location_type.code != payload_loc_type_code_by_pk.get(location_type.pk) and
-                             location_type.code in codes)
+                        location_type.name != payload_loc_type_name_by_pk.get(location_type.pk)
+                        and location_type.name in names
+                    ) or (
+                        location_type.code != payload_loc_type_code_by_pk.get(location_type.pk)
+                        and location_type.code in codes
                     ):
                         return False
             return True
@@ -731,8 +746,8 @@ class EditLocationView(BaseEditLocationView):
     @memoized
     def products_form(self):
         if (
-            self.location.location_type_object.administrative or
-            not toggles.PRODUCTS_PER_LOCATION.enabled(self.request.domain)
+            self.location.location_type.administrative
+            or not toggles.PRODUCTS_PER_LOCATION.enabled(self.request.domain)
         ):
             return None
 
@@ -851,7 +866,7 @@ class EditLocationView(BaseEditLocationView):
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = gettext_noop('Organization Structure Import Status')
-    template_name = 'hqwebapp/soil_status_full.html'
+    template_name = 'hqwebapp/bootstrap3/soil_status_full.html'
 
     @method_decorator(require_can_edit_locations)
     def dispatch(self, request, *args, **kwargs):
@@ -1048,7 +1063,7 @@ class DownloadLocationStatusView(BaseLocationView):
             'next_url': next_url,
             'next_url_text': next_url_text,
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

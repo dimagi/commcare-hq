@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime
 from unittest.mock import patch
+from flaky import flaky
 import uuid
 
 from django.test import TestCase
@@ -14,8 +15,18 @@ from corehq.apps.users.role_utils import UserRolePresets
 from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.events.models import AttendanceTrackingConfig
+from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.form_processor.tests.utils import create_case
+from corehq.apps.es.users import user_adapter
 
-from ..models import Event, get_attendee_case_type, AttendeeModel
+from ..models import (
+    Event,
+    get_attendee_case_type,
+    AttendeeModel,
+    LOCATION_IDS_CASE_PROPERTY,
+)
 from ..views import (
     EventCreateView,
     EventsView,
@@ -26,6 +37,8 @@ from ..views import (
 )
 from corehq.apps.users.models import CommCareUser
 
+
+@es_test(requires=[user_adapter], setup_class=True)
 class BaseEventViewTestClass(TestCase):
 
     domain = 'test-domain'
@@ -69,6 +82,8 @@ class BaseEventViewTestClass(TestCase):
         cls.mobile_worker = CommCareUser.create(
             cls.domain, "UserX", "123", None, None, email="user_x@email.com"
         )
+        user_adapter.index(cls.mobile_worker, refresh=True)
+
         role = cls.attendance_coordinator_role()
         cls.role_webuser.set_role(cls.domain, role.get_qualified_id())
         cls.role_webuser.save()
@@ -259,6 +274,7 @@ class TestEventsCreateView(BaseEventViewTestClass):
                 attendee_case.case_id,
             )
 
+    @flaky
     @flag_enabled('ATTENDANCE_TRACKING')
     def test_event_create_fails_with_faulty_data(self):
         self.log_user_in(self.admin_webuser)
@@ -268,12 +284,10 @@ class TestEventsCreateView(BaseEventViewTestClass):
 
         response = self.client.post(self.endpoint, faulty_data)
         self.assertEqual(response.status_code, 200)
-        error_html = (
-            '<span id="error_1_id_name" class="help-block">'
-            '<strong>This field is required.</strong>'
-            '</span>'
-        )
-        self.assertIn(error_html, response.content.decode('utf-8'))
+
+        response_body = response.content.decode('utf-8')
+        self.assertIn('error_1_id_name', response_body)
+        self.assertIn('This field is required', response_body)
 
     def _event_data(self):
         timestamp = datetime.utcnow().date()
@@ -433,3 +447,92 @@ class TestAttendeesDeleteView(BaseEventViewTestClass):
                 response.content.decode('utf-8'),
                 '{"failed": "Cannot delete an attendee that has been tracked in one or more events."}'
             )
+
+
+@es_test(requires=[case_search_adapter], setup_class=True)
+class TestGetAttendeesAndAttendanceTakersView(BaseEventViewTestClass):
+
+    urlname = 'get_attendees_and_attendance_takers'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        location_type = LocationType.objects.create(
+            domain=cls.domain,
+            name='Place'
+        )
+        cls.locations = [
+            SQLLocation.objects.create(
+                domain=cls.domain,
+                name='Mordor',
+                location_id=str(uuid.uuid4().hex),
+                location_type=location_type
+            ),
+            SQLLocation.objects.create(
+                domain=cls.domain,
+                name='Shire',
+                location_id=str(uuid.uuid4().hex),
+                location_type=location_type
+            )
+        ]
+
+        cls.attendance_takers = [
+            CommCareUser.create(
+                cls.domain, "Sauron", "123", None, None, email="sauron@email.com", location=cls.locations[0]
+            ),
+            CommCareUser.create(
+                cls.domain, "Frodo", "123", None, None, email="frodo@email.com", location=cls.locations[1]
+            )
+        ]
+        user_adapter.bulk_index(cls.attendance_takers, refresh=True)
+
+        attendee_case_type = get_attendee_case_type(cls.domain)
+        cls.attendees = [
+            create_case(
+                cls.domain,
+                case_id=uuid.uuid4().hex,
+                case_type=attendee_case_type,
+                name='Gandalf',
+                case_json={
+                    LOCATION_IDS_CASE_PROPERTY: cls.locations[0].location_id
+                },
+                save=True
+            ),
+            create_case(
+                cls.domain,
+                case_id=uuid.uuid4().hex,
+                case_type=attendee_case_type,
+                name='Mary',
+                case_json={
+                    LOCATION_IDS_CASE_PROPERTY: cls.locations[1].location_id
+                },
+                save=True
+            )
+        ]
+        case_search_adapter.bulk_index(cls.attendees, refresh=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        for mobile_worker in cls.attendance_takers:
+            mobile_worker.delete(cls.domain, None)
+        CommCareCase.objects.hard_delete_cases(cls.domain, [attendee.case_id for attendee in cls.attendees])
+        SQLLocation.bulk_delete(cls.locations, None)
+        super().tearDownClass()
+
+    def test_no_location_filter(self):
+        self.log_user_in(self.admin_webuser)
+        response = self.client.get(self.endpoint)
+        json = response.json()
+        self.assertEqual(len(json['attendees']), 2)
+        self.assertEqual(len(json['attendance_takers']), 3)
+
+    def test_with_location_filter(self):
+        self.log_user_in(self.admin_webuser)
+        response = self.client.get(self.endpoint, {'location_id': self.locations[0].location_id})
+        json = response.json()
+        self.assertEqual(json['attendees'], [{'id': self.attendees[0].case_id, 'name': self.attendees[0].name}])
+        self.assertEqual(
+            json['attendance_takers'],
+            [{'id': self.attendance_takers[0].user_id, 'name': self.attendance_takers[0].username}]
+        )

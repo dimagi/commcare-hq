@@ -50,6 +50,7 @@ IGNORE_MODELS = {
     'blobs.BlobMigrationState',
     'blobs.DeletedBlobMeta',
     'cleanup.DeletedCouchDoc',
+    'cleanup.DeletedSQLDoc',
     'domain.DomainAuditRecordEntry',
     'domain.ProjectLimit',
     'domain.SuperuserProjectEntryRecord',
@@ -59,9 +60,8 @@ IGNORE_MODELS = {
     'fixtures.UserLookupTableStatus',
     'fixtures.LookupTableRow',          # handled by cascading delete
     'fixtures.LookupTableRowOwner',     # handled by cascading delete
-    'userreports.ReportComparisonDiff',
-    'userreports.ReportComparisonException',
-    'userreports.ReportComparisonTiming',
+    'repeaters.SQLRepeatRecord',         # handled by cascading delete
+    'repeaters.SQLRepeatRecordAttempt',  # handled by cascading delete
     'sms.MigrationStatus',
     'util.BouncedEmail',
     'util.ComplaintBounceMeta',

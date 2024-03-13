@@ -5,7 +5,6 @@ from django.conf import settings
 
 from corehq.apps.change_feed.topics import FORM_TOPICS
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.apps.es.forms import form_adapter
@@ -51,9 +50,9 @@ def xform_pillow_filter(doc_dict):
     :return: True to filter out doc
     """
     return (
-        doc_dict.get('xmlns', None) == DEVICE_LOG_XMLNS or
-        doc_dict.get('domain', None) is None or
-        doc_dict['form'] is None
+        doc_dict.get('xmlns', None) == DEVICE_LOG_XMLNS
+        or doc_dict.get('domain', None) is None
+        or doc_dict['form'] is None
     )
 
 
@@ -103,7 +102,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
       - :py:class:`corehq.apps.data_interfaces.pillow.CaseDeduplicationPillow``
     """
     if topics:
-        assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process cases only"
+        assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process forms only"
     topics = topics or FORM_TOPICS
     change_feed = KafkaChangeFeed(
         topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num,
@@ -141,8 +140,6 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         processors.append(unknown_user_form_processor)
     if settings.RUN_FORM_META_PILLOW:
         processors.append(form_meta_processor)
-    if settings.RUN_DEDUPLICATION_PILLOW:
-        processors.append(CaseDeduplicationProcessor())
     if not skip_ucr:
         processors.append(ucr_processor)
 

@@ -103,6 +103,19 @@ class FundamentalFormTests(FundamentalBaseTests):
         self.assertFalse(form.is_deleted)
         self.assertGreater(form.server_modified_on, before)
 
+    def test_deleted_on_value(self):
+        form_id = uuid.uuid4().hex
+        submit_form_locally(get_simple_form_xml(form_id), DOMAIN)
+
+        before = datetime.utcnow()
+        form = self.formdb.get_form(form_id)
+        self.assertIsNone(form.deleted_on)
+
+        form.soft_delete()
+        form = self.formdb.get_form(form_id)
+        self.assertIsNotNone(form.deleted_on)
+        self.assertGreater(form.deleted_on, before)
+
 
 class FundamentalCaseTests(FundamentalBaseTests):
     def test_create_case(self):

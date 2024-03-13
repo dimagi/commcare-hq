@@ -8,3 +8,7 @@ class NameUnavailableException(Exception):
 
 class DomainDoesNotExist(Exception):
     pass
+
+
+class ErrorInitializingDomain(Exception):
+    pass

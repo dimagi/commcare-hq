@@ -104,7 +104,7 @@ class CommCareUserResource(UserResource):
         return super(UserResource, self).dehydrate(bundle)
 
     def dehydrate_user_data(self, bundle):
-        user_data = bundle.obj.metadata
+        user_data = bundle.obj.get_user_data(bundle.obj.domain).to_dict()
         if self.determine_format(bundle.request) == 'application/xml':
             # attribute names can't start with digits in xml
             user_data = {k: v for k, v in user_data.items() if not k[0].isdigit()}
@@ -149,7 +149,7 @@ class WebUserResource(UserResource):
         username = bundle.request.GET.get('web_username')
         if username:
             user = WebUser.get_by_username(username)
-            if not (user and user.is_member_of(domain)):
+            if not (user and user.is_member_of(domain) and user.is_active):
                 user = None
             return [user] if user else []
         return list(WebUser.by_domain(domain))

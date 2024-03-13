@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_page.html' %}
+{% extends 'hqwebapp/bootstrap3/base_page.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
@@ -153,7 +153,7 @@
 
       <hr/>
       <div id="toggle_editing_ko">
-        <div data-bind="saveButton: saveButton"></div>
+        <div data-bind="saveButton: saveButtonTop"></div>
         {% if is_random_editable %}
           <div class="input-group">
             <label for="randomness-edit">Randomness Level: </label>
@@ -182,7 +182,7 @@
             <div class="col-sm-4">
               <div class="input-group">
                 <div class="input-group-btn">
-                  <a href="#" class="btn btn-danger" data-bind="click: $parent.removeItem"><i class="fa fa-trash"></i></a>
+                  <a href="#" class="btn btn-danger" data-bind="click: $parent.removeItem"><i class="fa-regular fa-trash-can"></i></a>
                 </div>
                 <input class="input-medium form-control" type="text" data-bind="value: value">
                 <span class="input-group-addon"
@@ -200,6 +200,7 @@
             </button>
           {% endfor %}
         {% endif %}
+        <div data-bind="saveButton: saveButtonBottom"></div>
       </div>
     </div>
   </div>

@@ -39,13 +39,13 @@
                 visible: savedApps().length,
                 click: function () { return trackClick('Compare App Versions: Clicked Version Preview'); }
                 ">
-        <i class="fa fa-exchange"></i>
+        <i class="fa-solid fa-right-left"></i>
         {% trans "Preview" %}
       </a>
     {% endif %}
     {% if user.is_superuser %}
       <a class="btn btn-default" href="{% url "app_build_timings" %}?app_id={{ app.id }}" target="_blank">
-        <i class="fa fa-clock-o"></i>
+        <i class="fa-regular fa-clock"></i>
         {% trans "Timing" %}
       </a>
     {% endif %}
@@ -62,6 +62,23 @@
   </p>
 
   <div id="build-errors-wrapper"></div>
+  <div class="alert alert-warning" data-bind="visible: depCaseTypes().length" id="deprecated-case-types-warning">
+    <p>
+      <i class="fa fa-warning"></i>
+      {% blocktrans %}
+        The new application build contains the following deprecated case types:
+      {% endblocktrans %}
+    </p>
+    <ul id="deprecated-case-types-list" data-bind="foreach: depCaseTypes">
+      <li data-bind="text: $data"></li>
+    </ul>
+    <p>
+      {% blocktrans %}
+        For more information on deprecated case types, see the following
+        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary">documentation</a>.
+      {% endblocktrans %}
+    </p>
+  </div>
 
   <div class="row">
     <div class="col-md-3 col-md-offset-9">
@@ -111,7 +128,7 @@
                data-bind="openModal: 'delete-build-modal-template',
                                   visible: !_deleteState(),
                                   css: {hide: false}">
-              <i class="fa fa-trash"></i>
+              <i class="fa-regular fa-trash-can"></i>
             </a>
             <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
               <i class="fa fa-spin fa-spinner"></i>
@@ -174,10 +191,6 @@
           <span data-bind="text: menu_item_label()"></span>
           <!--/ko-->
           <span data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</span>
-          {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
-            | <a class="release-error-report-link" data-bind="text: numErrorsText,
-                              attr: {href: $root.app_error_url('{{ app.id }}', version())}"></a>
-          {% endif %}
         </h4>
       </div>
       <div class="panel-body">
@@ -207,7 +220,7 @@
                         return trackClick('Compare App Versions: Clicked View Changes');
                     }
                     visible: $parent.previousBuildId($index())">
-            <i class="fa fa-exchange"></i>
+            <i class="fa-solid fa-right-left"></i>
             {% trans "View Changes" %}
           </a>
         {% endif %}

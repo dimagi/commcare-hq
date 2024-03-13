@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main "hqwebapp/js/widgets" %}
+{% requirejs_main "hqwebapp/js/bootstrap3/widgets" %}
 
 {% block page_content %}
   <div id="blacklist-trans-form" class="tab-pane">
@@ -30,7 +30,7 @@
           <td>{{ translation.display_text }}</td>
           <td>
             <a href="{{ translation.delete_url }}" class="btn btn-danger">
-              <i class="fa fa-trash-o"></i>
+              <i class="fa-regular fa-trash-can"></i>
               {% trans "Delete" %}
             </a>
           </td>

@@ -2,9 +2,9 @@ hqDefine("reports/js/base", function () {
     $(function () {
         hqImport("reports/js/filters/main").init();
 
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
-        var defaultConfig = initial_page_data('default_config') || {};
-        if (initial_page_data('has_datespan')) {
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        var defaultConfig = initialPageData.get('default_config') || {};
+        if (initialPageData.get('has_datespan')) {
             defaultConfig.date_range = 'last7';
         } else {
             defaultConfig.date_range = null;
@@ -18,9 +18,9 @@ hqDefine("reports/js/base", function () {
             var reportConfigModels = hqImport("reports/js/report_config_models"),
                 reportConfigsView = reportConfigModels.reportConfigsViewModel({
                     filterForm: $("#reportFilters"),
-                    items: initial_page_data('report_configs'),
+                    items: initialPageData.get('report_configs'),
                     defaultItem: defaultConfig,
-                    saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
+                    saveUrl: initialPageData.reverse("add_report_config"),
                 });
             $savedReports.koApplyBindings(reportConfigsView);
             reportConfigsView.setConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));

@@ -466,7 +466,8 @@ class MessageLogReport(BaseCommConnectLogReport):
                 return phone_number[0:7] if phone_number[0] == "+" else phone_number[0:6]
             return phone_number
 
-        get_direction = lambda d: self._fmt_direction(d)['html']
+        def get_direction(d):
+            return self._fmt_direction(d)['html']
 
         def get_timestamp(date_):
             timestamp = ServerTime(date_).user_time(self.timezone).done()

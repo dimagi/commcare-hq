@@ -1,0 +1,101 @@
+<partial>
+  <detail id="m0_case_long">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <detail>
+      <title>
+        <text>
+          <locale id="m0.case_long.tab.1.title"/>
+        </text>
+      </title>
+      <field>
+        <style show-border="false" show-shading="false">
+          <grid grid-height="1" grid-width="6" grid-x="0" grid-y="0"/>
+        </style>
+        <header>
+          <text>
+            <locale id="m0.case_long.case_artist_1.header"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="artist"/>
+          </text>
+        </template>
+      </field>
+      <field>
+        <style show-border="false" show-shading="false">
+          <grid grid-height="1" grid-width="6" grid-x="5" grid-y="0"/>
+        </style>
+        <header>
+          <text>
+            <locale id="m0.case_long.case_name_2.header"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="case_name"/>
+          </text>
+        </template>
+      </field>
+    </detail>
+    <detail>
+      <title>
+        <text>
+          <locale id="m0.case_long.tab.2.title"/>
+        </text>
+      </title>
+      <field>
+        <style show-border="false" show-shading="false">
+          <grid grid-height="1" grid-width="4" grid-x="0" grid-y="1"/>
+        </style>
+        <header>
+          <text>
+            <locale id="m0.case_long.case_rating_3.header"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="rating"/>
+          </text>
+        </template>
+      </field>
+      <field>
+        <style show-border="false" show-shading="false">
+          <grid grid-height="1" grid-width="4" grid-x="5" grid-y="1"/>
+        </style>
+        <header>
+          <text>
+            <locale id="m0.case_long.case_energy_4.header"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="energy"/>
+          </text>
+        </template>
+      </field>
+      <field>
+        <style show-border="false" show-shading="false">
+          <grid grid-height="1" grid-width="4" grid-x="9" grid-y="1"/>
+        </style>
+        <header>
+          <text>
+            <locale id="m0.case_long.case_mood_5.header"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="mood"/>
+          </text>
+        </template>
+      </field>
+    </detail>
+    <variables>
+      <case_id function="./@case_id"/>
+    </variables>
+  </detail>
+</partial>

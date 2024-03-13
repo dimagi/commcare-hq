@@ -173,7 +173,10 @@ class AppFactory(object):
                 if not parent_tag:
                     parent_tag = form.actions.load_update_cases[-1].case_tag
 
-                action.case_indices = [CaseIndex(tag=parent_tag, relationship='extension' if is_extension else 'child')]
+                action.case_indices = [CaseIndex(
+                    tag=parent_tag,
+                    relationship='extension' if is_extension else 'child'
+                )]
 
             form.actions.open_cases.append(action)
 
@@ -216,6 +219,7 @@ class AppFactory(object):
         case_module, update_case_form = factory.new_basic_module('case_module', 'suite_test')
 
         register_module, register_form = factory.new_basic_module('register_case', 'suite_test')
+        factory.form_opens_case(register_form)
 
         case_module.case_list_form.form_id = register_form.get_unique_id()
         case_module.case_list_form.label = {
@@ -233,6 +237,7 @@ class AppFactory(object):
         case_module.search_config.description = {
             'en': 'More information',
         }
+
         case_module.search_config.properties = [CaseSearchProperty(
             name='name',
             label={'en': 'Name of Mother'}

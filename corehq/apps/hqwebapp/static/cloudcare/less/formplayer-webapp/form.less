@@ -1,44 +1,136 @@
-@form-text-indent: 20px;
+@form-text-indent: 23px;
+@form-text-size: 16px;
+@group-indent: 15px;
 
 .form-container {
   background-color: white;
   .box-shadow(0 0 10px 2px rgba(0,0,0,.1));
   margin-bottom: 2rem;
-  margin-top: 20px;
-  font-size: 16px;
+  font-size: @form-text-size;   // Don't overshadow inputs
 
-  .page-header {
-    padding-bottom: 30px;
-
-    h1 {
-      padding-left: @form-text-indent - 5px;
-    }
+  .page-header h1 {
+    padding-left: @form-text-indent - 8px;
   }
 
-  .loading {
-    right: 20px;
-  }
   .controls {
     padding-right: 25px;
     padding-top: 3px;
   }
+
+  .form-control {
+    font-size: @form-text-size;
+  }
+
   .form-actions {
-    margin-top: 30px;
+    margin: 30px 0 0 0;
+    &.form-group {
+      margin-left: -@form-text-indent;
+      margin-right: -@form-text-indent;
+    }
+
     background-color: lighten(@cc-brand-hi, 10);
     .border-bottom-radius(0);
+
+    .nonanchored-submit .btn {
+      font-size: 20px;
+      padding: 13px 24px;
+      .transition(all .5s);
+    }
+  }
+
+  .anchored-submit {
+    background-color: @call-to-action-low;
+    width: 100vw;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    position: fixed;
+    bottom: 0px;
+    left: 0;
+    z-index: @zindex-formplayer-anchored-submit;
+  }
+
+  // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
+  .row {
+    margin-left: 0px;
+    margin-right: 0px;
+  }
+  .question-container {
+    padding-left: @form-text-indent;
+    padding-right: @form-text-indent;
   }
 
   .form-group {
-    padding-left: 25px;
-    padding-right: 20px;
+    margin-left: 0px;
+    margin-right: 0px;
     .caption.control-label {
       display: block;
     }
   }
 
+  .group-body {
+    margin-left: @group-indent;
+    margin-right: @group-indent;
+  }
+
+  .gr.panel {
+    border-radius: 0px;
+  }
+
+  .rep.panel {
+    border-radius: 0px;
+  }
+
+  .col-sm-12,
+  .col-sm-11,
+  .col-sm-10,
+  .col-sm-9,
+  .col-sm-8,
+  .col-sm-7,
+  .col-sm-6,
+  .col-sm-5,
+  .col-sm-4,
+  .col-sm-3,
+  .col-sm-2,
+  .col-sm-1 {
+    &:first-child {
+      padding-left: 0;
+    }
+    &:last-child {
+      padding-right: 0;
+    }
+  }
+
   .panel-body {
-    padding-left: @form-text-indent + 5px;
-    padding-right: @form-text-indent + 5px;
+    @media (max-width: @screen-xs-max) {
+      padding-left: 0px;
+      padding-right: 0px;
+    }
+  }
+
+  .stripe-repeats {
+    > .row, .panel-body > .children > .row {
+      &:nth-of-type(odd) {
+        background-color: @table-bg-accent;
+      }
+      &:nth-of-type(even) {
+        background-color: white;
+      }
+      &:hover {
+        background-color: @table-bg-hover;
+      }
+    }
+  }
+
+  .group-border {
+    border: solid 1px @cc-neutral-mid;
+    border-radius: 8px;
+    margin: 2px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+
+  .info {
+    overflow-x: auto;
   }
 
   .gr-header {
@@ -46,18 +138,13 @@
       float: left;
       margin-right: 10px;
     }
-
-    legend {
-      padding-left: @form-text-indent + 3px;
-    }
   }
 
-}
+  .panel-heading {
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+  }
 
-.form-container .form-actions .btn {
-  font-size: 20px;
-  padding: 13px 24px;
-  .transition(all .5s);
 }
 
 .form-group-required-label {
@@ -116,19 +203,39 @@
 
 }
 
+.case-tile-container {
+  background: transparent !important;
+  > div {
+    background: white;
+    margin-bottom: 20px;
+    display: grid;
+    container-type: inline-size;
+  }
 
-.question-container .gr .children {
-  .info.panel-default {
-    border: none;
-    background-color: transparent;
-    .box-shadow(none);
+  #persistent-case-tile .persistent-sticky .webapp-markdown-output {
+    img {
+      max-height: 100%;
+      max-width: 100%;
+    }
 
-    .panel-body {
-      padding-top: 6px;
+    h1,h2,h3 {
+      margin-top: 0px
     }
   }
 }
 
+@media screen {
+    .case-tile-container {
+        position: sticky;
+        top: @breadcrumb-height-cloudcare;
+        z-index: @zindex-persistent-tile-cloudcare;
+
+        #persistent-case-tile .persistent-sticky {
+            box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid @cc-neutral-hi;
+        }
+    }
+}
 
 @media print {
   .form-container.print-container {
@@ -158,4 +265,42 @@
     color: #52616f !important;
     font-size: 14px;
   }
+
+  .case-tile-container {
+    > div {
+      margin-bottom: 0px;
+    }
+    > div:not(:empty) {
+      border-bottom: 1px dashed black;
+    }
+  }
+}
+
+.question-tile-row:has(div.q) {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.question-tile-row {
+  display: flex;
+  align-items: start;
+  * .form-group, * p, * .control-label {
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+  }
+}
+
+.question-tile-row {
+  .gr {
+    padding-right: 0px !important;
+    padding-left: 0px !important;
+  }
+}
+
+.question-tile-row .gr-no-children.gr-has-no-questions.gr-has-no-nested-questions {
+  // Prevents a priority issue that's happened three times where
+  // a group with hidden values creates whitespace.
+  display: none;
 }

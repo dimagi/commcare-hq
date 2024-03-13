@@ -168,7 +168,10 @@ class UCRMultiDBTest(TestCase):
             with db_adapter.session_context() as session:
                 self.assertEqual(0, session.query(db_adapter.get_table()).count())
 
-        with patch('pillowtop.models.KafkaCheckpoint.get_or_create_for_checkpoint_id'):
+        with (
+            patch('pillowtop.models.KafkaCheckpoint.get_or_create_for_checkpoint_id'),
+            patch('corehq.apps.userreports.pillow_utils._is_datasource_active', return_value=True)
+        ):
             pillow = get_case_pillow(ucr_configs=[ds3])
         sample_doc, _ = get_sample_doc_and_indicators()
         pillow.process_change(doc_to_change(sample_doc))

@@ -24,6 +24,7 @@ from corehq.apps.accounting.models import (
     UNLIMITED_FEATURE_USAGE,
     BillingAccount,
     BillingRecord,
+    BillingAccountWebUserHistory,
     CreditLine,
     CustomerBillingRecord,
     CustomerInvoice,
@@ -209,9 +210,9 @@ class DomainInvoiceFactory(object):
                 prev_sub_end = sub.date_end
 
                 if (
-                    ind == len(subscriptions) - 1 and
-                    sub.date_end is not None and
-                    sub.date_end <= self.date_end
+                    ind == len(subscriptions) - 1
+                    and sub.date_end is not None
+                    and sub.date_end <= self.date_end
                 ):
                     # the last subscription ended BEFORE the end of
                     # the invoicing period
@@ -221,12 +222,26 @@ class DomainInvoiceFactory(object):
             return community_ranges
 
     def _generate_invoice(self, subscription, invoice_start, invoice_end):
-        invoice, is_new_invoice = Invoice.objects.get_or_create(
-            subscription=subscription,
-            date_start=invoice_start,
-            date_end=invoice_end,
-            is_hidden=subscription.do_not_invoice,
-        )
+        # use create_or_get when is_hidden_to_ops is False to utilize unique index on Invoice
+        # so our test will make sure the unique index prevent race condition
+        # use get_or_create when is_hidden_to_ops is True
+        # because our index is partial index cannot prevent duplicates in this case.
+        # Note that there is a race condition in get_or_create that can result in
+        # duplicate invoices.
+        if subscription.do_not_invoice:
+            invoice, is_new_invoice = Invoice.objects.get_or_create(
+                subscription=subscription,
+                date_start=invoice_start,
+                date_end=invoice_end,
+                is_hidden=subscription.do_not_invoice,
+            )
+        else:
+            invoice, is_new_invoice = Invoice.objects.create_or_get(
+                subscription=subscription,
+                date_start=invoice_start,
+                date_end=invoice_end,
+                is_hidden=subscription.do_not_invoice,
+            )
 
         if not is_new_invoice:
             raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
@@ -250,8 +265,8 @@ class DomainInvoiceFactory(object):
         total_balance = sum(invoice.balance for invoice in visible_domain_invoices)
 
         should_set_date_due = (
-            total_balance > SMALL_INVOICE_THRESHOLD or
-            (invoice.account.auto_pay_enabled and total_balance > Decimal(0))
+            total_balance > SMALL_INVOICE_THRESHOLD
+            or (invoice.account.auto_pay_enabled and total_balance > Decimal(0))
         )
         if should_set_date_due:
             days_until_due = DEFAULT_DAYS_UNTIL_DUE
@@ -386,7 +401,8 @@ class CustomerAccountInvoiceFactory(object):
             )
 
     def _generate_customer_invoice(self):
-        invoice, is_new_invoice = CustomerInvoice.objects.get_or_create(
+        # We have unique index on account, date_start and date_end
+        invoice, is_new_invoice = CustomerInvoice.objects.create_or_get(
             account=self.account,
             date_start=self.date_start,
             date_end=self.date_end
@@ -410,8 +426,8 @@ class CustomerAccountInvoiceFactory(object):
 
     def _update_invoice_due_date(self, invoice, factory_date_end):
         should_set_date_due = (
-            invoice.balance > SMALL_INVOICE_THRESHOLD or
-            (invoice.account.auto_pay_enabled and invoice.balance > Decimal(0))
+            invoice.balance > SMALL_INVOICE_THRESHOLD
+            or (invoice.account.auto_pay_enabled and invoice.balance > Decimal(0))
         )
         if should_set_date_due:
             invoice.date_due = factory_date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
@@ -469,6 +485,8 @@ def generate_line_items(invoice, subscription):
         feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
             feature_rate.feature.feature_type
         )
+        if feature_factory_class == WebUserLineItemFactory and not subscription.account.bill_web_user:
+            continue
         feature_factory = feature_factory_class(subscription, feature_rate, invoice)
         feature_factory.create()
 
@@ -537,6 +555,7 @@ class LineItemFactory(object):
             return {
                 FeatureType.SMS: SmsLineItemFactory,
                 FeatureType.USER: UserLineItemFactory,
+                FeatureType.WEB_USER: WebUserLineItemFactory,
             }[feature_type]
         except KeyError:
             raise LineItemError("No line item factory exists for the feature type '%s" % feature_type)
@@ -748,8 +767,7 @@ class UserLineItemFactory(FeatureLineItemFactory):
             _, month_end = get_previous_month_date_range(month_end)
         return dates
 
-    @property
-    def unit_description(self):
+    def _unit_description_by_user_type(self, user_type):
         prorated_notice = ""
         if self.is_prorated:
             prorated_notice = _(" (Prorated for {date_range})").format(
@@ -760,15 +778,44 @@ class UserLineItemFactory(FeatureLineItemFactory):
             )
         if self.quantity > 0:
             return ngettext(
-                "Per-user fee exceeding limit of {monthly_limit} user "
+                "Per-{user} fee exceeding limit of {monthly_limit} {user} "
                 "with plan above.{prorated_notice}",
-                "Per-user fee exceeding limit of {monthly_limit} users "
+                "Per-{user} fee exceeding limit of {monthly_limit} {user}s "
                 "with plan above.{prorated_notice}",
                 self.rate.monthly_limit
             ).format(
                 monthly_limit=self.rate.monthly_limit,
                 prorated_notice=prorated_notice,
+                user=user_type
             )
+
+    @property
+    def unit_description(self):
+        return self._unit_description_by_user_type("mobile user")
+
+
+class WebUserLineItemFactory(UserLineItemFactory):
+
+    @property
+    @memoized
+    def quantity(self):
+        # Iterate through all months in the invoice date range to aggregate total users into one line item
+        dates = self.all_month_ends_in_invoice()
+        excess_users = 0
+        for date in dates:
+            total_users = 0
+            try:
+                history = BillingAccountWebUserHistory.objects.get(
+                    billing_account=self.subscription.account, record_date=date)
+                total_users += history.num_users
+            except BillingAccountWebUserHistory.DoesNotExist:
+                raise
+            excess_users += max(total_users - self.rate.monthly_limit, 0)
+        return excess_users
+
+    @property
+    def unit_description(self):
+        return super()._unit_description_by_user_type("web user")
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):
@@ -802,6 +849,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     @property
     @memoized
     def unit_cost(self):
+        """Return aggregate cost of all the excess SMS"""
         total_excess = Decimal('0.0')
         if self.is_within_monthly_limit:
             return total_excess

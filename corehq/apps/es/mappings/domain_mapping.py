@@ -17,19 +17,18 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "area": {
-            "type": "string"
+            "type": "text"
         },
         "attribution_notes": {
-            "type": "string"
+            "type": "text"
         },
         "author": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         "cached_properties": {
             "dynamic": False,
@@ -40,14 +39,13 @@ DOMAIN_MAPPING = {
             "type": "object",
             "properties": {
                 "case_owner_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "case_type": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "enabled": {
                     "type": "boolean"
@@ -66,8 +64,7 @@ DOMAIN_MAPPING = {
                     "type": "object"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "form_details": {
                     "dynamic": False,
@@ -87,24 +84,22 @@ DOMAIN_MAPPING = {
                     "type": "date"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "signed": {
                     "type": "boolean"
                 },
                 "type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "user_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "user_ip": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "version": {
-                    "type": "string"
+                    "type": "text"
                 }
             }
         },
@@ -112,7 +107,7 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "copy_history": {
-            "type": "string"
+            "type": "text"
         },
         "cp_300th_form_submission": {
             "format": DATE_FORMATS_STRING,
@@ -236,14 +231,14 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "creating_user": {
-            "type": "string"
+            "type": "text"
         },
         "date_created": {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "default_timezone": {
-            "type": "string"
+            "type": "text"
         },
         "deployment": {
             "dynamic": False,
@@ -252,34 +247,29 @@ DOMAIN_MAPPING = {
                 "city": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
-                    "type": "string"
+                    "type": "text"
                 },
                 "countries": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "description": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
-                    "type": "string"
+                    "type": "text"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "public": {
                     "type": "boolean"
@@ -287,20 +277,21 @@ DOMAIN_MAPPING = {
                 "region": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
-                    "type": "string"
+                    "type": "text"
                 }
             }
         },
         "description": {
-            "type": "string"
+            "type": "text"
+        },
+        "doc_id": {
+            "type": "keyword"
         },
         "doc_type": {
-            "index": "not_analyzed",
-            "type": "string"
+            "type": "keyword"
         },
         "downloads": {
             "type": "long"
@@ -312,7 +303,7 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "hr_name": {
-            "type": "string"
+            "type": "text"
         },
         "internal": {
             "dynamic": False,
@@ -321,17 +312,16 @@ DOMAIN_MAPPING = {
                 "area": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
-                    "type": "string"
+                    "type": "text"
                 },
                 "can_use_data": {
                     "type": "boolean"
                 },
                 "commcare_edition": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "commconnect_domain": {
                     "type": "boolean"
@@ -343,8 +333,7 @@ DOMAIN_MAPPING = {
                     "type": "boolean"
                 },
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "goal_followup_rate": {
                     "type": "double"
@@ -355,59 +344,55 @@ DOMAIN_MAPPING = {
                 "initiative": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
-                    "type": "string"
+                    "type": "text"
                 },
                 "notes": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "organization_name": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
-                    "type": "string"
+                    "type": "text"
                 },
                 "phone_model": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
-                    "type": "string"
+                    "type": "text"
                 },
                 "platform": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "project_manager": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "project_state": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "self_started": {
                     "type": "boolean"
                 },
                 "sf_account_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "sf_contract_id": {
-                    "type": "string"
+                    "type": "text"
                 },
                 "sub_area": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
-                    "type": "string"
+                    "type": "text"
                 },
                 "using_adm": {
                     "type": "boolean"
@@ -418,11 +403,10 @@ DOMAIN_MAPPING = {
                 "workshop_region": {
                     "fields": {
                         "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
+                            "type": "keyword"
                         }
                     },
-                    "type": "string"
+                    "type": "text"
                 }
             }
         },
@@ -445,22 +429,21 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "is_test": {
-            "type": "string"
+            "type": "text"
         },
         "last_modified": {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "license": {
-            "type": "string"
+            "type": "text"
         },
         "migrations": {
             "dynamic": False,
             "type": "object",
             "properties": {
                 "doc_type": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 },
                 "has_migrated_permissions": {
                     "type": "boolean"
@@ -473,27 +456,26 @@ DOMAIN_MAPPING = {
         "name": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         "organization": {
-            "type": "string"
+            "type": "text"
         },
         "phone_model": {
-            "type": "string"
+            "type": "text"
         },
         "project_type": {
             "analyzer": "comma",
-            "type": "string"
+            "type": "text"
         },
         "published": {
             "type": "boolean"
         },
         "publisher": {
-            "type": "string"
+            "type": "text"
         },
         "restrict_superusers": {
             "type": "boolean"
@@ -504,23 +486,22 @@ DOMAIN_MAPPING = {
         "short_description": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         "sms_case_registration_enabled": {
             "type": "boolean"
         },
         "sms_case_registration_owner_id": {
-            "type": "string"
+            "type": "text"
         },
         "sms_case_registration_type": {
-            "type": "string"
+            "type": "text"
         },
         "sms_case_registration_user_id": {
-            "type": "string"
+            "type": "text"
         },
         "sms_mobile_worker_registration_enabled": {
             "type": "boolean"
@@ -533,31 +514,30 @@ DOMAIN_MAPPING = {
             "type": "date"
         },
         "sub_area": {
-            "type": "string"
+            "type": "text"
         },
         "subscription": {
-            "type": "string"
+            "type": "text"
         },
         "survey_management_enabled": {
             "type": "boolean"
         },
         "tags": {
-            "type": "string"
+            "type": "text"
         },
         "title": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
+                    "type": "keyword"
                 }
             },
-            "type": "string"
+            "type": "text"
         },
         "use_sql_backend": {
             "type": "boolean"
         },
         "yt_id": {
-            "type": "string"
+            "type": "text"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"

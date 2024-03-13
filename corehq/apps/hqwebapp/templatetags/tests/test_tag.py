@@ -44,12 +44,13 @@ class TagTest(SimpleTestCase):
         with open(_make_path(*args)) as f:
             return f.read()
 
-    def _test(self, filename, context):
+    def _test(self, filename, context, rendered_filename=None):
         template = self._get_file('templates', '{}.html'.format(filename))
         actual = self._render_template(template, context)
 
         # Expected template shouldn't include the tag being rendered but may require other template tags
-        expected_template = self._get_file('rendered', '{}.html'.format(filename))
+        rendered_filename = rendered_filename or filename
+        expected_template = self._get_file('rendered', '{}.html'.format(rendered_filename))
         expected = self._render_template(expected_template)
 
         # Removed when Django 2.x is no longer supported
@@ -88,6 +89,16 @@ class TagTest(SimpleTestCase):
         self._test('javascript_libraries_hq', {
             'hq': True,
         })
+
+    def test_javascript_libraries_hq_bootstrap5(self):
+        self._test(
+            'javascript_libraries_hq',
+            {
+                'hq': True,
+                'use_bootstrap5': True,
+            },
+            rendered_filename='javascript_libraries_hq_bootstrap5'
+        )
 
     def test_requirejs_main(self):
         self.assertEqual(

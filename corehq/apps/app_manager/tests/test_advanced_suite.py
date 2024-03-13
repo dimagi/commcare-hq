@@ -1,11 +1,13 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.models import (
+from corehq.apps.app_manager.const import (
     AUTO_SELECT_CASE,
     AUTO_SELECT_FIXTURE,
     AUTO_SELECT_RAW,
     AUTO_SELECT_USER,
     AUTO_SELECT_USERCASE,
+)
+from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     ArbitraryDatum,
@@ -144,7 +146,8 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
             <text>
               <locale id="modules.m1"/>
             </text>
-            <command id="m1-f0" relevant="instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id_case_clinic]/edd = '123'"/>
+            <command id="m1-f0" relevant="instance('casedb')/casedb/""" +\
+            """case[@case_id=instance('commcaresession')/session/data/case_id_case_clinic]/edd = '123'"/>
             <command id="m1-f1"/>
             <command id="m1-f2"/>
             <command id="m1-case-list"/>
@@ -159,7 +162,8 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
             case_tag="adherence",
             case_type="clinic",
             load_case_from_fixture=LoadCaseFromFixture(
-                fixture_nodeset="instance('item-list:table_tag')/calendar/year/month/day[@date > 735992 and @date < 736000]",
+                fixture_nodeset="instance('item-list:table_tag')/calendar/year/month"
+                                "/day[@date > 735992 and @date < 736000]",
                 fixture_tag="selected_date",
                 fixture_variable="./@date",
                 case_property="adherence_event_date",
@@ -176,7 +180,8 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
             case_tag="adherence",
             case_type="clinic",
             load_case_from_fixture=LoadCaseFromFixture(
-                fixture_nodeset="instance('item-list:table_tag')/calendar/year/month/day[@date > 735992 and @date < 736000]",
+                fixture_nodeset="instance('item-list:table_tag')/calendar/year/month/"
+                                "day[@date > 735992 and @date < 736000]",
                 fixture_tag="selected_date",
                 fixture_variable="./@date",
                 case_property="adherence_event_date",
@@ -226,8 +231,10 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
             )
         ))
         suite = app.create_suite()
-        self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_session'), suite, './entry[2]/session')
-        self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_instance'), suite, './entry[2]/instance')
+        self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_session'), suite,
+                                   './entry[2]/session')
+        self.assertXmlPartialEqual(self.get_xml('load_case_from_report_fixture_instance'), suite,
+                                   './entry[2]/instance')
 
     def test_advanced_suite_load_from_fixture(self, *args):
         nodeset = "instance('item-list:table_tag')/calendar/year/month/day[@date > 735992 and @date < 736000]"
@@ -373,7 +380,8 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
         <partial>
           <remote-request>
             <post url="http://localhost:8000/a/domain/phone/claim-case/"
-                relevant="count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0">
+                relevant="count(instance('casedb')/casedb/""" +\
+            """case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0">
               <data key="case_id" ref="instance('commcaresession')/session/data/search_case_id"/>
             </post>
             <command id="search_command.m0">
@@ -388,7 +396,7 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
             <instance id="results" src="jr://instance/remote/results"/>
             <session>
               <query url="http://localhost:8000/a/domain/phone/search/123/"
-                storage-instance="results" template="case" default_search="false">
+                storage-instance="results" template="case" default_search="false" dynamic_search="false">
                 <title>
                     <text>
                         <locale id="case_search.m0.inputs"/>

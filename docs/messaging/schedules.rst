@@ -136,6 +136,7 @@ be configured to send includes:
 * SMS
 * SMS Survey
 * Emails
+* Push Notifications
 
 In the case of SMS SurveysSessions, the survey content is defined using a form in an app which is then
 played to the recipients over SMS or Whatsapp.

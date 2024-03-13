@@ -88,10 +88,25 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         # Update the translations
         for lang in self.langs:
             translation_node = self.itext.find("./{f}translation[@lang='%s']" % lang)
-            assert(translation_node.exists())
+            assert translation_node.exists()
 
             for row in rows:
                 if row['label'] in label_ids_to_skip:
+                    continue
+                if row['label'] == 'submit_label':
+                    try:
+                        self.form.submit_label[lang] = row[self._get_col_key('default', lang)]
+                    except KeyError:
+                        pass
+                    continue
+                if row['label'] == 'submit_notification_label':
+                    notification_value = ''
+                    try:
+                        notification_value = row[self._get_col_key('default', lang)]
+                    except KeyError:
+                        pass
+                    if notification_value:
+                        self.form.submit_notification_label[lang] = notification_value
                     continue
                 try:
                     self._add_or_remove_translations(lang, row)
@@ -156,6 +171,8 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                 if not self._has_translation(row):
                     label_ids_to_skip.add(row['label'])
             for label in label_ids_to_skip:
+                if label == 'submit_notification_label':
+                    continue
                 self.msgs.append((
                     messages.error,
                     _("You must provide at least one translation for the label '{}'.").format(label)))
@@ -178,8 +195,8 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             if self.is_multi_sheet and not new_translation:
                 # If the cell corresponding to the label for this question
                 # in this language is empty, fall back to another language
-                for l in self.langs:
-                    key = self._get_col_key(trans_type, l)
+                for language in self.langs:
+                    key = self._get_col_key(trans_type, language)
                     if key not in row:
                         continue
                     fallback = row[key]

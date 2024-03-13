@@ -14,6 +14,10 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
+from corehq.apps.users.dbaccessors import (
+    get_all_commcare_users_by_domain,
+    get_mobile_users_by_filters
+)
 from .exceptions import AttendeeTrackedException
 from soil.util import expose_cached_download, get_download_context
 from soil.exceptions import TaskFailedError
@@ -472,7 +476,7 @@ class MobileWorkerAttendeeSatusView(BaseEventView):
             'next_url': reverse(AttendeesListView.urlname, args=[self.domain]),
             'next_url_text': _("Go back to view attendees"),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -525,4 +529,32 @@ def paginated_attendees(request, domain):
     return JsonResponse({
         'attendees': [{'case_id': c.case_id, 'name': c.name} for c in cases],
         'total': total,
+    })
+
+
+@require_GET
+@login_and_domain_required
+@require_permission(HqPermissions.manage_attendance_tracking)
+def get_attendees_and_attendance_takers(request, domain):
+    location_id = request.GET.get('location_id', None)
+    attendance_takers_filters = {'user_active_status': True}
+    if location_id:
+        attendees = AttendeeModel.objects.by_location_id(domain=domain, location_id=location_id)
+        attendance_takers_filters['location_id'] = location_id
+    else:
+        attendees = AttendeeModel.objects.by_domain(domain=domain)
+
+    attendance_takers = get_mobile_users_by_filters(domain, attendance_takers_filters)
+    attendees_list = [
+        {'id': attendee.case_id, 'name': attendee.name}
+        for attendee in attendees
+    ]
+    attendance_takers_list = [
+        {'id': attendance_taker.user_id, 'name': attendance_taker.raw_username}
+        for attendance_taker in attendance_takers
+    ]
+
+    return JsonResponse({
+        'attendees': attendees_list,
+        'attendance_takers': attendance_takers_list
     })

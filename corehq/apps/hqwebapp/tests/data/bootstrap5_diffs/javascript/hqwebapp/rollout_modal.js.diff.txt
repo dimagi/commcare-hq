@@ -1,0 +1,15 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+ /*
+-    To use, include this file on a page that also includes hqwebapp/bootstrap3/rollout_modal.html
++    To use, include this file on a page that also includes hqwebapp/bootstrap5/rollout_modal.html
+ */
+-hqDefine("hqwebapp/js/bootstrap3/rollout_modal", [
++hqDefine("hqwebapp/js/bootstrap5/rollout_modal", [
+     'jquery',
+-    'hqwebapp/js/bootstrap3/alert_user',
++    'hqwebapp/js/bootstrap5/alert_user',
+     'hqwebapp/js/initial_page_data',
+     'analytix/js/google',
+     'analytix/js/kissmetrix',

@@ -71,60 +71,73 @@
         {% endif %}
       </th>
       <th class="col-sm-1">{% trans "Delete" %}</th>
+      {% if is_managed_by_upstream_domain %}
+      <th class="col-sm-1"></th> {# Linked #}
+      {% endif %}
     </tr>
     </thead>
     <tbody data-bind="sortable: data_fields">
     <tr data-bind="attr: {'data-order': _sortableOrder}">
       <td>
-        <i class="fa fa-arrows-v sortable-handle"></i>
+        <i class="fa-solid fa-up-down sortable-handle"></i>
       </td>
       <td>
-        <input class="form-control" type="text" data-bind="value: slug"/>
+        <input class="form-control" type="text" data-bind="value: slug, attr: { 'readonly': !isEditable() }"/>
       </td>
       <td>
-        <input class="form-control" type="text" data-bind="value: label"/>
+        <input class="form-control" type="text" data-bind="value: label, attr: { 'readonly': !isEditable() }"/>
       </td>
       <td>
-        <input type="checkbox" data-bind="checked: is_required"/>
+        <input type="checkbox" data-bind="checked: is_required, attr: { 'disabled': !isEditable() }"/>
       </td>
       <td>
 
         {% if request|request_has_privilege:"REGEX_FIELD_VALIDATION" or couch_user.is_superuser %}
           <div class="btn-group btn-group-separated validation-options">
-            <div data-bind="css: {active: !validationMode()},
+            <button data-bind="css: {active: !validationMode()},
+                            attr: { 'disabled': !isEditable() },
                             click: function () {validationMode(undefined)}"
                  class="btn btn-default btn-xs">
               {% trans "None" %}
-            </div>
-            <div data-bind="css: {active: validationMode() === 'choice'},
+            </button>
+            <button data-bind="css: {active: validationMode() === 'choice'},
+                            attr: { 'disabled': !isEditable() },
                             click: function () {validationMode('choice')}"
                  class="btn btn-default btn-xs">
               {% trans "Choices" %}
-            </div>
-            <div data-bind="css: {active: validationMode() === 'regex'},
+            </button>
+            <button data-bind="css: {active: validationMode() === 'regex'},
+                            attr: { 'disabled': !isEditable() },
                             click: function () {validationMode('regex')}"
                  class="btn btn-default btn-xs">
               {% trans "Regex" %}
-            </div>
+            </button>
           </div>
         {% endif %}
 
         <div data-bind="visible: validationMode() === 'choice'">
-          <button data-bind="click: addChoice"
+          <button data-bind="click: addChoice, attr: { 'disabled': !isEditable() }"
                   type="button" class="btn btn-default btn-xs">
             <i class="fa fa-plus"></i> {% trans "Add Choice" %}
           </button>
           <ul data-bind="sortable: choices" class="list-unstyled validation-list">
             <li data-bind="attr: {'data-order': _sortableOrder}">
               <div class="input-group">
-                <span class="input-group-addon"><i class="fa fa-arrows-v sortable-handle"></i></span>
-                <input class="form-control" type="text" data-bind="value: value"/>
+                <span class="input-group-addon">
+                  <span data-bind="if: $parent.isEditable">
+                    <i class="fa-solid fa-up-down sortable-handle"></i>
+                  </span>
+                  <span data-bind="ifnot: $parent.isEditable">
+                    <i class="fa-solid fa-up-down"></i>
+                  </span>
+                </span>
+                <input class="form-control" type="text" data-bind="value: value, attr: { 'disabled': !$parent.isEditable() }"/>
                 <div class="input-group-btn">
-                  <a type="button"
+                  <button type="button"
                      class="btn btn-danger"
-                     data-bind="click: $parent.removeChoice">
+                     data-bind="click: $parent.removeChoice, attr: { 'disabled': !$parent.isEditable() }">
                     <i class="fa fa-times"></i>
-                  </a>
+                  </button>
                 </div>
               </div>
             </li>
@@ -134,9 +147,9 @@
         {% if request|request_has_privilege:"REGEX_FIELD_VALIDATION" or couch_user.is_superuser %}
           <ul data-bind="visible: validationMode() === 'regex'"
               class="list-unstyled validation-list">
-            <li><input data-bind="value: regex" class="form-control" type="text"
+            <li><input data-bind="value: regex, attr: { 'disabled': !isEditable() }" class="form-control" type="text"
                        placeholder="{% trans "Regular Expression" %}"/></li>
-            <li><input data-bind="value: regex_msg" class="form-control" type="text"
+            <li><input data-bind="value: regex_msg, attr: { 'disabled': !isEditable() }" class="form-control" type="text"
                        placeholder="{% trans "Validation Message" %}"/></li>
           </ul>
         {% endif %}
@@ -146,12 +159,16 @@
         <a type="button"
            class="btn btn-danger"
            data-toggle="modal"
-           href="#delete-confirm-modal"
-           data-bind="click: $root.setModalModel"
+           data-bind="click: $root.setModalModel, attr: { 'href': deleteLink, 'disabled': !isEditable() }"
         >
           <i class="fa fa-times"></i> {% trans "Delete" %}
         </a>
       </td>
+      <!-- ko if: $root.hasLinkedData -->
+      <td>
+        <span data-bind="if: upstream_id"><i class="fa fa-link"></i></span>
+      </td>
+      <!-- /ko -->
     </tr>
     </tbody>
   </table>

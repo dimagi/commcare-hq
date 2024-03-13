@@ -1,5 +1,4 @@
 import re
-import uuid
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
@@ -218,7 +217,6 @@ class SlowApiVersionTest(TestCase):
         self.repeater = Dhis2Repeater(
             domain="test-domain",
             connection_settings=self.conn,
-            repeater_id=uuid.uuid4().hex
         )
 
     def test_none_fetches_metadata(self):

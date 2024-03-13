@@ -31,3 +31,13 @@
     }
   }
 }
+
+.btn-outline-danger:hover {
+  color: #ffffff;
+}
+
+input::file-selector-button {
+  @extend .btn;
+  @extend .btn-sm;
+  @extend .btn-outline-primary;
+}

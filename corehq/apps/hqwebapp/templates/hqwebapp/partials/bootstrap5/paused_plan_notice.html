@@ -1,0 +1,42 @@
+{% load i18n %}
+
+<div class="paused-plan card">
+  <div class="row">
+    <div class="col-sm-3 column-icon">
+      <i class="fa-regular fa-circle-pause"></i>
+    </div>
+    <div class="col-sm-9 column-text">
+      <h3>
+        {% if is_trial %}
+          {% blocktrans %}
+            Your CommCare trial ended on {{ paused_date }}.
+          {% endblocktrans %}
+        {% else %}
+          {% blocktrans %}
+            Your previous <strong>{{ previous_edition }} Edition</strong> subscription was paused
+            on {{ paused_date }}.
+          {% endblocktrans %}
+        {% endif %}
+      </h3>
+      {% if can_edit_billing_info %}
+        <p class="lead">
+          {% blocktrans %}
+            Subscribe to a plan to gain access to your project space.
+          {% endblocktrans %}
+        </p>
+        <p>
+          <a href="{{ change_plan_url }}" class="btn btn-primary">
+            {% trans "Subscribe to Plan" %}
+          </a>
+        </p>
+      {% else %}
+        <p class="lead">
+          {% blocktrans %}
+            Please contact your project's billing administrator about re-subscribing to a paid plan.
+            Once your project is re-subscribed, you will re-gain access to your project space and its data.
+          {% endblocktrans %}
+        </p>
+      {% endif %}
+    </div>
+  </div>
+</div>

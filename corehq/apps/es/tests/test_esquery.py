@@ -156,8 +156,8 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             "size": SIZE_LIMIT
         }
         query = forms.FormES()\
-                .filter(filters.domain("zombocom"))\
-                .xmlns('banana')
+            .filter(filters.domain("zombocom"))\
+            .xmlns('banana')
         raw_query = query.raw_query
         self.checkQuery(raw_query, json_output, is_raw_query=True)
 
@@ -177,34 +177,36 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
     def test_values_list(self):
         example_response = {
             '_shards': {'failed': 0, 'successful': 5, 'total': 5},
-            'hits': {'hits': [{
-                '_id': '8063dff5-460b-46f2-b4d0-5871abfd97d4',
-                '_index': 'xforms_1cce1f049a1b4d864c9c25dc42648a45',
-                '_score': 1.0,
-                '_type': 'xform',
-                '_source': {
-                    'app_id': 'fe8481a39c3738749e6a4766fca99efd',
-                    'doc_type': 'xforminstance',
-                    'domain': 'mikesproject',
-                    'xmlns': 'http://openrosa.org/formdesigner/3a7cc07c-551c-4651-ab1a-d60be3017485'
-                    }
-                },
-                {
-                    '_id': 'dc1376cd-0869-4c13-a267-365dfc2fa754',
-                    '_index': 'xforms_1cce1f049a1b4d864c9c25dc42648a45',
-                    '_score': 1.0,
-                    '_type': 'xform',
-                    '_source': {
-                        'app_id': '3d622620ca00d7709625220751a7b1f9',
-                        'doc_type': 'xforminstance',
-                        'domain': 'jacksproject',
-                        'xmlns': 'http://openrosa.org/formdesigner/54db1962-b938-4e2b-b00e-08414163ead4'
+            'hits': {
+                'hits': [
+                    {
+                        '_id': '8063dff5-460b-46f2-b4d0-5871abfd97d4',
+                        '_index': 'xforms_1cce1f049a1b4d864c9c25dc42648a45',
+                        '_score': 1.0,
+                        '_type': 'xform',
+                        '_source': {
+                            'app_id': 'fe8481a39c3738749e6a4766fca99efd',
+                            'doc_type': 'xforminstance',
+                            'domain': 'mikesproject',
+                            'xmlns': 'http://openrosa.org/formdesigner/3a7cc07c-551c-4651-ab1a-d60be3017485'
+                        }
+                    },
+                    {
+                        '_id': 'dc1376cd-0869-4c13-a267-365dfc2fa754',
+                        '_index': 'xforms_1cce1f049a1b4d864c9c25dc42648a45',
+                        '_score': 1.0,
+                        '_type': 'xform',
+                        '_source': {
+                            'app_id': '3d622620ca00d7709625220751a7b1f9',
+                            'doc_type': 'xforminstance',
+                            'domain': 'jacksproject',
+                            'xmlns': 'http://openrosa.org/formdesigner/54db1962-b938-4e2b-b00e-08414163ead4'
                         }
                     }
                 ],
                 'max_score': 1.0,
                 'total': 5247
-                },
+            },
             'timed_out': False,
             'took': 4
         }
@@ -260,6 +262,10 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             {"timeStart": {"order": "asc"}},
         ]
         self.checkQuery(query.sort('timeStart', reset_sort=False), json_output)
+
+    def test_sort_raises_on__id_field(self):
+        with self.assertRaisesMessage(AssertionError, "Cannot sort on reserved _id field"):
+            HQESQuery('forms').sort('_id')
 
     def test_exclude_source(self):
         json_output = {
@@ -334,6 +340,8 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         query = users.UserES().remove_default_filters()
         # add extra keys added in transformation
         doc.update({
+            '_id': 'test',
+            'doc_id': 'test',
             'base_username': 'u1',
             'user_data_es': [],
             '__group_ids': [],
@@ -357,6 +365,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         # add extra keys added in transformation
         doc1.update({
             'base_username': 'u1',
+            'doc_id': 'test',
             'user_data_es': [],
             '__group_ids': [],
             '__group_names': []

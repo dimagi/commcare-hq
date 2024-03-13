@@ -259,7 +259,8 @@ def user_location_data(location_ids):
     return ' '.join(location_ids)
 
 
-def update_device_meta(user, device_id, commcare_version=None, device_app_meta=None, save=True):
+def update_device_meta(user, device_id, commcare_version=None, device_app_meta=None, fcm_token=None,
+                       fcm_token_timestamp=None, save=True):
     from corehq.apps.users.models import CommCareUser
 
     updated = False
@@ -270,6 +271,8 @@ def update_device_meta(user, device_id, commcare_version=None, device_app_meta=N
                 device_id,
                 commcare_version=commcare_version,
                 device_app_meta=device_app_meta,
+                fcm_token=fcm_token,
+                fcm_token_timestamp=fcm_token_timestamp
             )
             if save and updated:
                 user.save(fire_signals=False)

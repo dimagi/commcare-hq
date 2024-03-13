@@ -1,6 +1,14 @@
+@import "../../../../../../node_modules/bootstrap/less/buttons.less";
+
 .btn-primary {
   .button-variant(#ffffff; @call-to-action-mid; @call-to-action-mid);
   font-weight: bold;
+}
+
+input::file-selector-button {
+  .btn;
+  .btn-xs;
+  .btn-default;
 }
 
 .btn-default {

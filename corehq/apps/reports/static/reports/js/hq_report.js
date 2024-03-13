@@ -2,16 +2,18 @@ hqDefine("reports/js/hq_report", [
     'jquery',
     'knockout',
     'underscore',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/bootstrap3/widgets', //multi-emails
 ], function (
     $,
     ko,
     _,
     alertUser,
     kissmetrics,
-    initialPageData
+    initialPageData,
+    widgets  // eslint-disable-line no-unused-vars
 ) {
     var hqReport = function (options) {
         'use strict';
@@ -98,8 +100,13 @@ hqDefine("reports/js/hq_report", [
         self.handleTabularReportCookies = function (reportDatatable) {
             var defaultRowsCookieName = 'hqreport.tabularSetting.defaultRows',
                 savedPath = window.location.pathname;
-            var defaultRowsCookie = '' + $.cookie(defaultRowsCookieName);
-            reportDatatable.defaultRows = parseInt(defaultRowsCookie) || reportDatatable.defaultRows;
+
+            if (!reportDatatable.forcePageSize) {
+                // set the current pagination page size to be equal to page size
+                // used by the user last time for any report on HQ
+                var defaultRowsCookie = '' + $.cookie(defaultRowsCookieName);
+                reportDatatable.defaultRows = parseInt(defaultRowsCookie) || reportDatatable.defaultRows;
+            }
 
             $(reportDatatable.dataTableElem).on('hqreport.tabular.lengthChange', function (event, value) {
                 $.cookie(defaultRowsCookieName, value, {
@@ -128,17 +135,17 @@ hqDefine("reports/js/hq_report", [
 
         self.loadDatespanFromCookie = function () {
             if (self.datespan) {
-                var cookie_startdate = $.cookie(self.cookieDatespanStart),
-                    cookie_enddate = $.cookie(self.cookieDatespanEnd),
-                    load_success = false;
+                var cookieStartDate = $.cookie(self.cookieDatespanStart),
+                    cookieEndDate = $.cookie(self.cookieDatespanEnd),
+                    loadSuccess = false;
 
-                if (cookie_enddate && cookie_startdate) {
-                    load_success = true;
-                    self.datespan.startdate = cookie_startdate;
-                    self.datespan.enddate = cookie_enddate;
+                if (cookieEndDate && cookieStartDate) {
+                    loadSuccess = true;
+                    self.datespan.startdate = cookieStartDate;
+                    self.datespan.enddate = cookieEndDate;
                 }
             }
-            return load_success;
+            return loadSuccess;
         };
 
         var checkFilterAccordionToggleState = function () {
@@ -228,17 +235,20 @@ hqDefine("reports/js/hq_report", [
 
             self.send_to_owner = ko.observable(true);
             self.subject = ko.observable(hqReport.emailDefaultSubject);
-            self.recipient_emails = ko.observable();
+            self.recipient_emails = ko.observableArray();
             self.notes = ko.observable();
             self.getReportRenderUrl = hqReport.getReportRenderUrl;
+            self.params = hqReport.getReportParams;
 
             self.unwrap = function () {
                 var data = ko.mapping.toJS(self, {
-                    ignore: ['sendEmail', 'unwrap', 'resetModal'],
+                    ignore: ['sendEmail', 'unwrap', 'resetModal', 'getReportRenderUrl'],
                 });
 
                 for (var i in data) {
-                    if (data[i] === null || data[i] === undefined) delete data[i];
+                    if (data[i] === null || data[i] === undefined) {
+                        delete data[i];
+                    }
                 }
                 return data;
             };
@@ -253,10 +263,13 @@ hqDefine("reports/js/hq_report", [
                         self.resetModal();
                         alertUser.alert_user(hqReport.emailSuccessMessage, "success");
                     })
-                    .fail(function () {
+                    .fail(function (response) {
                         $(hqReport.emailReportModal).modal('hide');
                         self.resetModal();
-                        alertUser.alert_user(hqReport.emailErrorMessage, "error");
+                        const errors = JSON.parse(response.responseText);
+                        let messages = [hqReport.emailErrorMessage].concat(errors);
+                        const message = messages.join('<br/>');
+                        alertUser.alert_user(message, "error");
                     });
             };
 

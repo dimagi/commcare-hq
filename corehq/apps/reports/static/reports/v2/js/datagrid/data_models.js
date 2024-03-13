@@ -8,7 +8,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
     'underscore',
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/components.ko',  // pagination widget
+    'hqwebapp/js/bootstrap3/components.ko',  // pagination widget
 ], function (
     $,
     ko,
@@ -33,7 +33,9 @@ hqDefine('reports/v2/js/datagrid/data_models', [
         self.showTimeoutError = ko.observable(false);
 
         self.isDataLoading.subscribe(function (isLoading) {
-            if (!isLoading) return;
+            if (!isLoading) {
+                return;
+            }
 
             // vertically center the loading text within the table body rows,
             // and make sure the width and height of the element wrapping the
@@ -44,7 +46,9 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 position = $rows.position(),
                 marginTop = Math.max(0, $rows.height() / 2 - 50); // 50 is half the line height of the loading text
 
-            if (position.top === 0) return;
+            if (position.top === 0) {
+                return;
+            }
 
             $loading
                 .height(Math.max(100, $rows.height()))
@@ -112,7 +116,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
 
         self.sendThresholdAnalytics = setInterval(function () {
             self.thresholdTimer += self.thresholdInterval;
-            if (self.thresholds.hasOwnProperty(self.thresholdTimer)) {
+            if (_.has(self.thresholds, self.thresholdTimer)) {
                 var eventTitle = "ECD Initial Load Threshold - " + self.thresholds[self.thresholdTimer];
                 kissmetrics.track.event(eventTitle, {
                     "Domain": initialPageData.get('domain'),
@@ -129,11 +133,17 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 self.ajaxPromise.abort();
             }
 
-            if (self.isDataLoading()) return;
+            if (self.isDataLoading()) {
+                return;
+            }
 
             // wait for pagination widget to kick in
-            if (self.currentPage() === undefined) return;
-            if (self.limit() === undefined) return;
+            if (self.currentPage() === undefined) {
+                return;
+            }
+            if (self.limit() === undefined) {
+                return;
+            }
 
             self.isLoadingError(false);
             self.isDataLoading(true);

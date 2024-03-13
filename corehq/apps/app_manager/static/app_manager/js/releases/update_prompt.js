@@ -3,7 +3,7 @@ hqDefine('app_manager/js/releases/update_prompt', function () {
         var self = {};
         var url = form[0].action,
             method = form[0].method;
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your prompt setting"),
             save: function () {
                 self.saveButton.ajax({

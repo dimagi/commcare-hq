@@ -1,12 +1,89 @@
-
+from django.test import TestCase
+from corehq.apps.domain.shortcuts import create_domain
 
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
     ClosedParentDefinition, CustomActionDefinition, CustomMatchDefinition,
     MatchPropertyDefinition, UpdateCaseDefinition
 )
+from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.updates import update_auto_update_rules
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
+
+
+# NOTE: The logic being tested is likely duplicating logic elsewhere.
+# When you submit a form to create an update rule, that is text translated into a rule
+# stored in the database. We are re-inventing the wheel here to turn text into a rule
+# to be stored in the database. Ideally, we have a single factory function capable of
+# inserting/deleting, and then we can test that factory method.
+class TestSyncAutoUpdateRules(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.upstream_domain = 'upstream_domain'
+        cls.downstream_domain = 'downstream_domain'
+
+        cls.upstream_domain_obj = create_domain(cls.upstream_domain)
+        cls.addClassCleanup(cls.upstream_domain_obj.delete)
+
+        cls.downstream_domain_obj = create_domain(cls.downstream_domain)
+        cls.addClassCleanup(cls.downstream_domain_obj.delete)
+
+    def setUp(self):
+        super().setUp()
+        self.domain_link = DomainLink(master_domain=self.upstream_domain, linked_domain=self.downstream_domain)
+
+    def test_syncs_rule_with_action(self):
+        upstream_rule = self._create_rule(domain=self.upstream_domain,
+            close_case=True, name='Upstream Rule')
+
+        update_auto_update_rules(self.domain_link)
+
+        downstream_rule = AutomaticUpdateRule.objects.get(upstream_id=upstream_rule.id)
+        downstream_action = downstream_rule.caseruleaction_set.all()[0]
+        self.assertTrue(downstream_action.definition.close_case)
+
+    def test_can_overwrite_previously_synced_data(self):
+        upstream_rule = self._create_rule(domain=self.upstream_domain, name='Upstream Rule')
+        downstream_rule = self._create_rule(
+            domain=self.downstream_domain, name='Downstream Rule', upstream_id=upstream_rule.id)
+
+        update_auto_update_rules(self.domain_link)
+
+        downstream_rule = AutomaticUpdateRule.objects.get(upstream_id=upstream_rule.id)
+        self.assertEqual(downstream_rule.name, 'Upstream Rule')
+
+    def test_does_not_overwrite_based_on_name(self):
+        upstream_rule = self._create_rule(domain=self.upstream_domain, name='Upstream Rule')
+        # Create Downstream Rule
+        self._create_rule(domain=self.downstream_domain, name='Upstream Rule')
+
+        update_auto_update_rules(self.domain_link)
+
+        downstream_rules = AutomaticUpdateRule.objects.filter(
+            domain=self.downstream_domain, name='Upstream Rule')
+        upstream_ids = [rule.upstream_id for rule in downstream_rules]
+        self.assertSetEqual(set(upstream_ids), {None, str(upstream_rule.id)})
+
+    def _create_rule(self, domain='test-domain', name='Test Rule', close_case=True, upstream_id=None):
+        rule = AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name=name,
+            active=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+            case_type='person',
+            filter_on_server_modified=True,
+            server_modified_boundary=None,
+            upstream_id=upstream_id
+        )
+
+        if close_case:
+            close_case_definition = UpdateCaseDefinition.objects.create(close_case=True)
+            action = CaseRuleAction(rule=rule)
+            action.definition = close_case_definition
+            action.save()
+
+        return rule
 
 
 class TestUpdateAutoUpdateRules(BaseLinkedDomainTest):

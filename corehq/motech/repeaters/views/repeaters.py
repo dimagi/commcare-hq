@@ -1,5 +1,4 @@
 import re
-import uuid
 from collections import namedtuple
 
 from django.contrib import messages
@@ -70,9 +69,9 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
             'repeater_types_info': self.repeater_types_info,
             'pending_record_count': RepeatRecord.count(self.domain),
             'user_can_configure': (
-                self.request.couch_user.is_superuser or
-                self.request.couch_user.can_edit_motech() or
-                toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
+                self.request.couch_user.is_superuser
+                or self.request.couch_user.can_edit_motech()
+                or toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
             )
         }
 
@@ -137,8 +136,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
         return self.set_repeater_attr(repeater, self.add_repeater_form.cleaned_data)
 
     def set_repeater_attr(self, repeater, cleaned_data):
-        if not repeater.repeater_id:
-            repeater.repeater_id = uuid.uuid4().hex
+        assert repeater.repeater_id, repeater
         repeater.domain = self.domain
         repeater.connection_settings_id = int(cleaned_data['connection_settings_id'])
         repeater.request_method = cleaned_data['request_method']
@@ -216,7 +214,7 @@ class EditRepeaterView(BaseRepeaterView):
             )
         else:
             repeater_id = self.kwargs['repeater_id']
-            repeater = Repeater.objects.get(repeater_id=repeater_id)
+            repeater = Repeater.objects.get(id=repeater_id)
             data = repeater.to_json()
             data['password'] = PASSWORD_PLACEHOLDER
             return self.repeater_form_class(
@@ -233,7 +231,7 @@ class EditRepeaterView(BaseRepeaterView):
         return super(EditRepeaterView, self).dispatch(request, *args, **kwargs)
 
     def initialize_repeater(self):
-        return Repeater.objects.get(repeater_id=self.kwargs['repeater_id'])
+        return Repeater.objects.get(id=self.kwargs['repeater_id'])
 
     def post_save(self, request, repeater):
         messages.success(request, _("Forwarder Successfully Updated"))
@@ -312,7 +310,7 @@ class EditDataRegistryCaseUpdateRepeater(EditCaseRepeaterView):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def drop_repeater(request, domain, repeater_id):
-    rep = Repeater.objects.get(repeater_id=repeater_id)
+    rep = Repeater.objects.get(id=repeater_id)
     rep.retire()
     messages.success(request, "Forwarding stopped!")
     return HttpResponseRedirect(
@@ -324,7 +322,7 @@ def drop_repeater(request, domain, repeater_id):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def pause_repeater(request, domain, repeater_id):
-    rep = Repeater.objects.get(repeater_id=repeater_id)
+    rep = Repeater.objects.get(id=repeater_id)
     rep.pause()
     messages.success(request, "Forwarding paused!")
     return HttpResponseRedirect(
@@ -336,7 +334,7 @@ def pause_repeater(request, domain, repeater_id):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def resume_repeater(request, domain, repeater_id):
-    rep = Repeater.objects.get(repeater_id=repeater_id)
+    rep = Repeater.objects.get(id=repeater_id)
     rep.resume()
     messages.success(request, "Forwarding resumed!")
     return HttpResponseRedirect(

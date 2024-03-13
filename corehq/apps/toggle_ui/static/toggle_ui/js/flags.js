@@ -2,9 +2,9 @@ hqDefine('toggle_ui/js/flags', [
     'jquery',
     'knockout',
     'underscore',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
     'reports/js/config.dataTables.bootstrap',
-    'hqwebapp/js/components.ko',    // select toggle widget
+    'hqwebapp/js/bootstrap3/components.ko',    // select toggle widget
 ], function (
     $,
     ko,
@@ -80,7 +80,7 @@ hqDefine('toggle_ui/js/flags', [
 
     let viewModel = buildViewModel();
     $.fn.dataTableExt.afnFiltering.push(
-        function (oSettings, aData, iDataIndex) {
+        function (oSettings, aData) {
             if (viewModel.tagFilter() === 'all') {
                 return true;
             }
@@ -99,7 +99,7 @@ hqDefine('toggle_ui/js/flags', [
     });
     table.render();
 
-    viewModel.tagFilter.subscribe(function (value) {
+    viewModel.tagFilter.subscribe(function () {
         table.datatable.fnDraw();
     });
 });

@@ -88,6 +88,7 @@ Language
 import json
 from collections import namedtuple
 from copy import deepcopy
+import textwrap
 
 from memoized import memoized
 
@@ -181,6 +182,7 @@ class ESQuery(object):
             filters.doc_id,
             filters.nested,
             filters.regexp,
+            filters.wildcard,
         ]
 
     def __getattr__(self, attr):
@@ -382,7 +384,7 @@ class ESQuery(object):
         elif self._source is not None:
             self.es_query['_source'] = self._source
         if self.uses_aggregations():
-            self.es_query['size'] = 0
+            self.es_query['size'] = 0  # Just return the aggs, not the hits
             self.es_query['aggs'] = {
                 agg.name: agg.assemble()
                 for agg in self._aggregations
@@ -410,12 +412,13 @@ class ESQuery(object):
 
     def sort(self, field, desc=False, reset_sort=True):
         """Order the results by field."""
+        assert field != '_id', "Cannot sort on reserved _id field"
         sort_field = {
             field: {'order': 'desc' if desc else 'asc'}
         }
         return self._sort(sort_field, reset_sort)
 
-    def nested_sort(self, path, field_name, nested_filter, desc=False, reset_sort=True):
+    def nested_sort(self, path, field_name, nested_filter, desc=False, reset_sort=True, sort_missing=None):
         """Order results by the value of a nested field
         """
         sort_field = {
@@ -423,6 +426,7 @@ class ESQuery(object):
                 'order': 'desc' if desc else 'asc',
                 'nested_path': path,
                 'nested_filter': nested_filter,
+                'missing': sort_missing,
             }
         }
         return self._sort(sort_field, reset_sort)
@@ -533,12 +537,12 @@ class ESQuerySet(object):
 
     def __init__(self, raw, query):
         if 'error' in raw:
-            msg = ("ElasticSearch Error\n{error}\nIndex: {index}"
-                   "\nQuery: {query}").format(
-                       error=raw['error'],
-                       index=query.index,
-                       query=query.dumps(pretty=True),
-                    )
+            msg = textwrap.dedent(f"""
+                ElasticSearch Error
+                {raw['error']}
+                Index: {query.index}
+                Query: {query.dumps(pretty=True)}""").lstrip()
+
             raise ESError(msg)
         self.raw = raw
         self.query = query

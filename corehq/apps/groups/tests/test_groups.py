@@ -2,6 +2,7 @@ from django.test import SimpleTestCase, TestCase
 
 from couchdbkit import BadValueError
 
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.groups.dbaccessors import group_by_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
@@ -116,6 +117,17 @@ class GroupTest(TestCase):
         self.assertEqual({self.active_user.get_id}, users_removed_ids)
         self.assertEqual(set(group.users), {self.inactive_user._id, self.deleted_user._id})
         self.assertEqual(set(group.removed_users), {self.active_user._id})
+
+    def test_undo_delete_group_removes_deleted_couch_doc_record(self):
+        group = Group(domain=DOMAIN, name='group1')
+        group.save()
+        rec = group.soft_delete()
+        assert group.doc_type.endswith("-Deleted")
+        params = {'doc_id': rec._id, 'doc_type': rec.doc_type}
+        assert DeletedCouchDoc.objects.get(**params)
+        rec.undo()
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(**params)
 
 
 class TestDeleteAllGroups(TestCase):

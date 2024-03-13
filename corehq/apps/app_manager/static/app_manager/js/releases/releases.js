@@ -111,14 +111,20 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
         };
 
-        self.get_short_odk_url = function () {
-            var urlType;
+        self.get_odk_url_type = function () {
             if (self.include_media()) {
-                urlType = savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL;
+                return savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL;
             } else {
-                urlType = savedAppModel.URL_TYPES.SHORT_ODK_URL;
+                return savedAppModel.URL_TYPES.SHORT_ODK_URL;
             }
-            if (!(ko.utils.unwrapObservable(self[urlType])) || self.build_profile()) {
+        };
+        self.short_odk_url_is_available = function () {
+            var urlType = self.get_odk_url_type();
+            return ko.utils.unwrapObservable(self[urlType]) && !self.build_profile();
+        };
+        self.get_short_odk_url = function () {
+            var urlType = self.get_odk_url_type();
+            if (!self.short_odk_url_is_available()) {
                 return self.generate_short_url(urlType);
             } else {
                 var data = ko.utils.unwrapObservable(self[urlType]);
@@ -193,7 +199,9 @@ hqDefine('app_manager/js/releases/releases', function () {
             hqImport('analytix/js/google').track.event('App Manager', 'Deploy Button', self.id());
             hqImport('analytix/js/kissmetrix').track.event('Clicked Deploy');
             $.post(releasesMain.reverse('hubspot_click_deploy'));
-            self.get_short_odk_url();
+            if (self.short_odk_url_is_available()) {
+                self.get_short_odk_url();
+            }
         };
 
         self.clickScan = function () {
@@ -245,6 +253,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.upstreamBriefsById = _.indexBy(self.options.upstreamBriefs, '_id');
         self.upstreamUrl = self.options.upstreamUrl;
         self.showReleaseOperations = ko.observable(true);
+        self.depCaseTypes = ko.observableArray();
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
@@ -263,12 +272,12 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
         });
 
-        self.download_application_zip = function (appId, multimediaOnly, buildProfile, download_targeted_version) {
+        self.download_application_zip = function (appId, multimediaOnly, buildProfile, downloadTargetedVersion) {
             var urlSlug = multimediaOnly ? 'download_multimedia_zip' : 'download_ccz';
             var url = self.reverse(urlSlug, appId);
             var params = {};
             params.message = "Your application download is ready";
-            params.download_targeted_version = download_targeted_version;
+            params.download_targeted_version = downloadTargetedVersion;
             if (buildProfile) {
                 params.profile = buildProfile;
             }
@@ -442,6 +451,13 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.revertSavedApp = function (savedApp) {
             $.postGo(self.reverse('revert_to_copy'), {build_id: savedApp.id()});
         };
+        self.handleDeprecatedCaseTypesWarning = function (depCaseTypes) {
+            if (depCaseTypes && depCaseTypes.length) {
+                self.depCaseTypes(depCaseTypes);
+            } else {
+                self.depCaseTypes([]);
+            }
+        };
         self.makeNewBuild = function () {
             if (self.buildState() === 'pending') {
                 return false;
@@ -480,6 +496,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                 url: self.reverse('save_copy'),
                 success: function (data) {
                     $('#build-errors-wrapper').html(data.error_html);
+                    self.handleDeprecatedCaseTypesWarning(data.deprecated_case_types);
                     if (data.saved_app) {
                         var app = savedAppModel(data.saved_app, self);
                         self.savedApps.unshift(app);

@@ -1,0 +1,57 @@
+{% load i18n %}
+{% if request.show_trial_notice %}
+    <div class="modal fade" id="modalTrial30Day">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+                    <h4 class="modal-title">{% trans 'Important Message' %}</h4>
+                </div>
+                <div class="modal-body">
+                    {% with request.trial_info.feature_name as feat_name %}
+                    {% with request.trial_info.required_plan as req_plan %}
+                    {% with request.trial_info.current_plan as current_plan %}
+                    {% with request.trial_info.date_end as date_end %}
+                        <p class="lead">
+                        {% blocktrans %}
+                            <strong>{{ feat_name }}</strong> is only available for the {{ req_plan }}
+                            Plan and higher. Your subscription to {{ current_plan }} Plan is under a
+                            trial period.
+                        {% endblocktrans %}
+                        </p>
+                        <p>
+                        {% blocktrans %}
+                            We want you to have a chance to use and evaluate our
+                            pay-only features before deciding which plan to subscribe to.
+                            You will have access to <strong>{{ feat_name }}</strong> during
+                            this trial period, ending on {{ date_end }}.
+                            After {{ date_end }}, you will no longer have access to {{ feat_name }}.
+                        {% endblocktrans %}
+                        </p>
+                        <p>
+                        {% blocktrans %}
+                            To continue accessing {{ feat_name }} after the trial period,
+                            subscribe to the {{ req_plan }} Plan.
+                        {% endblocktrans %}
+                        </p>
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% if request.is_domain_admin %}
+                        <p>
+                            <a class="btn btn-primary" href="{% url 'domain_select_plan' request.domain %}">
+                                {% blocktrans %}
+                                    Change my project's plan
+                                {% endblocktrans %}
+                            </a>
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans 'Close' %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}

@@ -2,6 +2,8 @@ from django.test import SimpleTestCase, TestCase
 
 from eulxml.xpath import parse as parse_xpath
 from freezegun import freeze_time
+import pytz
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from couchforms.geopoint import GeoPoint
@@ -58,6 +60,78 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
             }
         }
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    @patch("corehq.apps.case_search.xpath_functions.comparison.get_timezone_for_domain",
+           return_value=pytz.timezone('America/Los_Angeles'))
+    def test_simple_filter_with_date(self, mock_get_timezone):
+        parsed = parse_xpath("dob = '2023-06-03'")
+
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "bool": {
+                                    "filter": (
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "dob"
+                                            }
+                                        },
+                                        {
+                                            "term": {
+                                                "case_properties.value.exact": "2023-06-03"
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        }
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        mock_get_timezone.assert_not_called()
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    @patch("corehq.apps.case_search.xpath_functions.comparison.get_timezone_for_domain",
+           return_value=pytz.timezone('America/Los_Angeles'))
+    def test_datetime_special_case_property_equality_comparison(self, mock_get_timezone):
+        parsed = parse_xpath("last_modified='2023-01-10'")
+
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "last_modified"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "range": {
+                                "case_properties.value.date": {
+                                    "gte": "2023-01-10T08:00:00",
+                                    "lt": "2023-01-11T08:00:00"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        mock_get_timezone.assert_called_once()
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_not_filter(self):
@@ -154,7 +228,6 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         }
         query = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(expected_filter, query, is_raw_query=True)
-
 
     @freeze_time('2021-08-02')
     def test_date_comparison__today(self):
@@ -664,6 +737,22 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         built_filter = build_filter_from_ast(parsed, context)
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
+    def test_match_all(self):
+        parsed = parse_xpath("match-all()")
+        expected_filter = {
+            "match_all": {}
+        }
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_match_none(self):
+        parsed = parse_xpath("match-none()")
+        expected_filter = {
+            "match_none": {}
+        }
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
 
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestFilterDslLookups(ElasticTestMixin, TestCase):
@@ -790,7 +879,8 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         }
         built_filter = build_filter_from_ast(parsed, SearchFilterContext(self.domain))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
-        self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+        self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(
+            built_filter).values_list('_id', flat=True))
 
     def test_nested_parent_lookups(self):
         parsed = parse_xpath("father/mother/house = 'Tyrell'")
@@ -827,7 +917,8 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         }
         built_filter = build_filter_from_ast(parsed, SearchFilterContext(self.domain))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
-        self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+        self.assertEqual([self.child_case1_id, self.child_case2_id], CaseSearchES().filter(
+            built_filter).values_list('_id', flat=True))
 
     def test_subcase_exists(self):
         parsed = parse_xpath("subcase-exists('father', name='Margaery')")

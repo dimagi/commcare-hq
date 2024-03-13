@@ -112,7 +112,6 @@ class RegistryLoggingTests(TestCase):
         repeater = FormRepeater(
             domain=self.domain,
             connection_settings=connx,
-            repeater_id=uuid.uuid4().hex
         )
         repeater.save()
         self.registry.logger.data_accessed(self.user, self.domain, repeater)

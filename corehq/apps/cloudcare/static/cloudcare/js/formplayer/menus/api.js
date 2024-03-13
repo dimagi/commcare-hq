@@ -1,16 +1,22 @@
+'use strict';
 /* global Sentry */
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
 
 hqDefine("cloudcare/js/formplayer/menus/api", function () {
+    'use strict';
+
     var Collections = hqImport("cloudcare/js/formplayer/menus/collections"),
         constants = hqImport("cloudcare/js/formplayer/constants"),
         errors = hqImport("cloudcare/js/form_entry/errors"),
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar");
+        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        currentSelections = null,
+        ongoingRequests = [];
 
     var API = {
         queryFormplayer: function (params, route) {
@@ -54,22 +60,26 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             }, gettext('Waiting for server progress'));
                         } else if (_.has(response, 'exception')) {
                             FormplayerFrontend.trigger('clearProgress');
-                            FormplayerFrontend.trigger(
-                                'showError',
-                                response.exception,
-                                response.type === 'html'
-                            );
-
-                            var currentUrl = FormplayerFrontend.getCurrentRoute();
-                            if (FormplayerFrontend.lastError === currentUrl) {
-                                FormplayerFrontend.lastError = null;
-                                FormplayerFrontend.trigger('navigateHome');
+                            if (params.clickedIcon && response.statusCode === 404) {
+                                parsedMenus.removeCaseRow = true;
+                                defer.resolve(parsedMenus);
                             } else {
-                                FormplayerFrontend.lastError = currentUrl;
-                                FormplayerFrontend.trigger('navigation:back');
-                            }
-                            defer.reject();
+                                FormplayerFrontend.trigger(
+                                    'showError',
+                                    response.exception,
+                                    response.type === 'html'
+                                );
 
+                                var currentUrl = FormplayerFrontend.getCurrentRoute();
+                                if (FormplayerFrontend.lastError === currentUrl) {
+                                    FormplayerFrontend.lastError = null;
+                                    FormplayerFrontend.trigger('navigateHome');
+                                } else {
+                                    FormplayerFrontend.lastError = currentUrl;
+                                    FormplayerFrontend.trigger('navigation:back');
+                                }
+                                defer.reject();
+                            }
                         } else {
                             if (response.smartLinkRedirect) {
                                 if (user.environment === constants.PREVIEW_APP_ENVIRONMENT) {
@@ -108,6 +118,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 formEntryUtils.reloginErrorHtml(),
                                 true
                             );
+                        } else if (response.statusText === 'abort') {
+                            // do nothing
                         } else {
                             FormplayerFrontend.trigger(
                                 'showError',
@@ -123,7 +135,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         defer.reject();
                     },
                 };
-                var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
+                var casesPerPage = parseInt($.cookie("cases-per-page-limit"))
+                    || (window.innerWidth <= constants.SMALL_SCREEN_WIDTH_PX ? 5 : 10);
                 const data = {
                     "username": user.username,
                     "restoreAs": user.restoreAs,
@@ -146,6 +159,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "tz_offset_millis": timezoneOffsetMillis,
                     "tz_from_browser": tzFromBrowser,
                     "selected_values": params.selectedValues,
+                    "isShortDetail": params.isShortDetail,
+                    "isRefreshCaseSearch": params.isRefreshCaseSearch,
                 };
                 options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;
@@ -161,7 +176,37 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     message: "[request] " + route,
                     data: _.pick(sentryData, _.identity),
                 });
-                menus.fetch($.extend(true, {}, options));
+
+                var callStartTime = performance.now();
+                const updateRequest = menus.fetch($.extend(true, {}, options));
+
+                if (route.startsWith("navigate_menu")) {
+                    if (!_.isEqual(params.selections, currentSelections)) {
+                        currentSelections = params.selections;
+                        while (ongoingRequests.length > 0) {
+                            const ongoingRequest = ongoingRequests.pop();
+                            if (ongoingRequest.readyState !== 4) {
+                                ongoingRequest.abort();
+                            }
+                        }
+                    }
+                    ongoingRequests.push(updateRequest);
+                }
+
+
+                updateRequest.always(function () {
+                    if (data.query_data && data.query_data.results && data.query_data.results.initiatedBy === constants.queryInitiatedBy.DYNAMIC_SEARCH) {
+                        var callEndTime = performance.now();
+                        var callResponseTime = callEndTime - callStartTime;
+                        $.ajax(initialPageData.reverse('api_histogram_metrics'), {
+                            method: 'POST',
+                            data: {responseTime: callResponseTime, metrics: "commcare.dynamic_search.response_time"},
+                            error: function () {
+                                console.log("API call failed to record metrics");
+                            },
+                        });
+                    }
+                });
             });
 
             return defer.promise();
@@ -178,7 +223,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         }
 
         var progressView = ProgressBar({
-            progressMessage: gettext("Switching project spaces..."),
+            progressMessage: gettext("Loading..."),
         });
         FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
 
@@ -198,9 +243,15 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         return API.queryFormplayer(options, "get_endpoint");
     });
 
-    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent) {
+    FormplayerFrontend.getChannel().reply("icon:click", function (options) {
+        return API.queryFormplayer(options, "get_endpoint");
+    });
+
+    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent, isShortDetail, isRefreshCaseSearch) {
         options.isPersistent = isPersistent;
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+        options.isShortDetail = isShortDetail;
+        options.isRefreshCaseSearch = isRefreshCaseSearch;
         return API.queryFormplayer(options, 'get_details');
     });
 

@@ -1,3 +1,4 @@
+'use strict';
 /* globals ace, Clipboard */
 hqDefine('cloudcare/js/debugger/debugger', function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
@@ -174,7 +175,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             this.options.baseUrl,
             {
                 selections: this.options.selections,
-                query_data: self.options.queryData,
+                query_data: this.options.queryData,
                 username: this.options.username,
                 restoreAs: this.options.restoreAs,
                 domain: this.options.domain,
@@ -208,7 +209,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         });
 
         RegExp.escape = function (s) {
-            return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            return s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
         };
 
         self.debugTraceOptions = ko.observableArray([
@@ -445,11 +446,11 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             'Image': 'fa fa-camera',
             'Video': 'fa fa-video-camera',
             'Signature': 'fcc fcc-fd-signature',
-            'Geopoint': 'fa fa-map-marker',
+            'Geopoint': 'fa-solid fa-location-dot',
             'Barcode Scan': 'fa fa-barcode',
-            'Date': 'fa fa-calendar',
+            'Date': 'fa-solid fa-calendar-days',
             'Date and Time': 'fcc fcc-fd-datetime',
-            'Time': 'fcc fcc-fa-clock-o',
+            'Time': 'fa-regular fa-clock',
             'Select': 'fcc fcc-fd-single-select',
             'Double': 'fcc fcc-fd-decimal',
             'Label': 'fa fa-tag',

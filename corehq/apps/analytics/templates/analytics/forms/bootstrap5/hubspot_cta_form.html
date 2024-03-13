@@ -1,0 +1,125 @@
+{% load i18n %}
+
+<form class="form-ko-validation" method="post">
+  {% csrf_token %}
+  <div class="modal-body">
+    <!-- ko if: showErrorMessage -->
+      <div class="alert alert-warning">
+        <p data-bind="text: errorMessage"></p>
+      </div>
+    <!-- /ko -->
+    <div class="row mb-3">
+      <div class="col-sm-6">
+        <label class="form-label">
+          {% trans "First name" %}<span class="asteriskField">*</span>
+        </label>
+        <input type="text"
+               name="firstname"
+               data-bind="textInput: firstname"
+               class="form-control">
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label">
+          {% trans "Last name" %}<span class="asteriskField">*</span>
+        </label>
+        <input type="text"
+               name="lastname"
+               data-bind="textInput: lastname"
+               class="form-control">
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        {% trans "Organization" %}<span class="asteriskField">*</span>
+      </label>
+      <input type="text"
+             name="company"
+             data-bind="textInput: company"
+             class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        {% trans "Professional email address" %}<span class="asteriskField">*</span>
+      </label>
+      <input type="email"
+             name="email"
+             data-bind="textInput: email"
+             class="form-control">
+    </div>
+    <div class="mb-3"
+         data-bind="visible: showContactMethod">
+      <label class="form-label">
+          {% trans "How should we contact you?" %}<span class="asteriskField">*</span>
+      </label>
+      <select name="preferred_method_of_contact"
+              data-bind="value: preferred_method_of_contact"
+              class="form-select">
+        <option value="">{% trans "Please Select" %}</option>
+        <option value="Phone">{% trans "Phone" %}</option>
+        <option value="Skype">{% trans "Skype" %}</option>
+        <!-- ko if: useWhatsApp -->
+          <option value="WhatsApp">{% trans "WhatsApp" %}</option>
+        <!-- /ko -->
+        <!-- ko if: useGoogleHangouts -->
+          <option value="Google hangouts">{% trans "Google hangouts" %}</option>
+        <!-- /ko -->
+      </select>
+    </div>
+    <div class="mb-3"
+         data-bind="visible: showPhoneNumber">
+      <label class="form-label">
+          {% trans "Preferred phone number" %}<span class="asteriskField">*</span>
+      </label>
+      <input type="text"
+             name="phone"
+             data-bind="textInput: phone"
+             class="form-control">
+    </div>
+    <div class="mb-3"
+         data-bind="visible: showSkype">
+      <label class="form-label">
+          {% trans "Skype username" %}<span class="asteriskField">*</span>
+      </label>
+      <input type="text"
+             name="skype__c"
+             data-bind="textInput: skype__c"
+             class="form-control">
+    </div>
+    <div class="mb-3"
+         data-bind="visible: showWhatsApp">
+      <label class="form-label">
+          {% trans "Preferred WhatsApp number" %}<span class="asteriskField">*</span>
+      </label>
+      <input type="text"
+             name="preferred_whatsapp_number"
+             data-bind="textInput: preferred_whatsapp_number"
+             class="form-control">
+    </div>
+    <div class="mb-3"
+         data-bind="visible: showPreferredLanguage">
+      <label class="form-label">
+        {% trans "Preferred Language" %}<span class="asteriskField">*</span>
+      </label>
+      <select name="language__c"
+              data-bind="value: language__c"
+              class="form-select">
+        <option value="">{% trans "Please Select" %}</option>
+        <option value="English">{% trans "English" %}</option>
+        <option value="French">{% trans "French" %}</option>
+        <option value="Spanish">{% trans "Spanish" %}</option>
+      </select>
+    </div>
+    {% blocktrans %}
+      By clicking this button, you agree to Dimagi's
+      <a href="http://www.dimagi.com/terms/latest/tos/" target="_blank">Terms of Service</a> and
+      <a href="http://www.dimagi.com/terms/latest/privacy/" target="_blank">Privacy Policy</a>.
+    {% endblocktrans %}
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn btn-primary"
+            data-bind="click: submitForm, disable: isSubmitDisabled"
+            type="button">
+      <!-- ko text: nextButtonText --><!-- /ko -->
+    </button>
+  </div>
+</form>

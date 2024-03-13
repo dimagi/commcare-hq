@@ -10,7 +10,9 @@ from corehq.apps.app_manager.models import (
     MappingItem,
     Module,
 )
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, patch_get_xform_resource_overrides
+from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
@@ -241,4 +243,196 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(
             app_strings['m0.case_short.case_age_1.enum.k{key1_varname}'.format(key1_varname=key1_varname,)],
             'jr://icons/10-year-old.png'
+        )
+
+    def test_case_detail_alt_text_mapping(self, *args):
+        factory = AppFactory(domain='domain', name='Case list field actions', build_version='2.54.0')
+        m0, f0 = factory.new_basic_module("module1", "case")
+        factory.form_requires_case(f0)
+
+        f1 = factory.new_form(m0)
+        factory.form_requires_case(f1)
+
+        m0.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Starred'},
+                model='case',
+                field='starred',
+                format='enum-image',
+                enum=[
+                    MappingItem(key='1', value={'en': 'jr://icons/star-gold.png'}, alt_text={'en': 'gold star'}),
+                    MappingItem(key='0', value={'en': 'jr://icons/star-grey.png'}, alt_text={'en': 'grey star'}),
+                ],
+            ),
+        ]
+
+        key1 = '1'
+        key2 = '0'
+
+        alt_text_spec = """
+            <partial>
+              <alt_text>
+                <text>
+                  <xpath function="if(starred = '{key1}', $k{key1}, if(starred = '{key2}', $k{key2}, ''))">
+                    <variable name="k{key1}">
+                        <locale id="m0.case_short.case_starred_1.alt_text.k{key1}"/>
+                    </variable>
+                    <variable name="k{key2}">
+                        <locale id="m0.case_short.case_starred_1.alt_text.k{key2}"/>
+                    </variable>
+                  </xpath>
+                </text>
+              </alt_text>
+            </partial>
+        """.format(  # noqa: #501
+            key1=key1,
+            key2=key2
+        )
+        # check correct suite is generated
+        self.assertXmlPartialEqual(
+            alt_text_spec,
+            factory.app.create_suite(),
+            './detail[@id="m0_case_short"]/field[1]/alt_text'
+        )
+
+    def test_case_detail_address_popup(self, *args):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Unititled Module', None))
+        module.case_type = 'patient'
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Address'},
+                model='case',
+                field="address",
+                format='address',
+            ),
+            DetailColumn(
+                header={'en': 'Address Popup'},
+                model='case',
+                field="address",
+                format='address-popup',
+            ),
+        ]
+
+        suite = app.create_suite()
+
+        address_template = """
+            <partial>
+              <template form="address">
+                <text>
+                  <xpath function="address"/>
+                </text>
+              </template>
+            </partial>
+            """
+        # check correct suite is generated
+        self.assertXmlPartialEqual(
+            address_template,
+            suite,
+            './detail[@id="m0_case_short"]/field[1]/template'
+        )
+
+        address_popup_template = """
+            <partial>
+              <template form="address-popup">
+                <text>
+                  <xpath function="address"/>
+                </text>
+              </template>
+            </partial>
+            """
+        # check correct suite is generated
+        self.assertXmlPartialEqual(
+            address_popup_template,
+            suite,
+            './detail[@id="m0_case_short"]/field[2]/template'
+        )
+
+    @flag_enabled('CASE_LIST_CLICKABLE_ICON')
+    def test_case_detail_icon_mapping_with_action(self, *args):
+        factory = AppFactory(domain='domain', name='Case list field actions', build_version='2.54.0')
+        m0, f0 = factory.new_basic_module("module1", "case")
+        factory.form_requires_case(f0)
+
+        f1 = factory.new_form(m0)
+        factory.form_requires_case(f1)
+
+        m0.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Starred'},
+                model='case',
+                field='starred',
+                format='clickable-icon',
+                enum=[
+                    MappingItem(key='1', value={'en': 'jr://icons/star-gold.png'}),
+                    MappingItem(key='0', value={'en': 'jr://icons/star-grey.png'}),
+                ],
+                endpoint_action_id="auto_submit_form_endpoint",
+            ),
+        ]
+
+        action_spec = """
+        <partial>
+          <endpoint_action endpoint_id="auto_submit_form_endpoint" background="true"/>
+        </partial>
+        """
+        # check correct suite is generated
+        self.assertXmlPartialEqual(
+            action_spec,
+            factory.app.create_suite(),
+            './detail[@id="m0_case_short"]/field/endpoint_action'
+        )
+
+    @flag_enabled('CASE_LIST_CLICKABLE_ICON')
+    def test_case_detail_clickable_icon(self, *args):
+        factory = AppFactory(domain='domain', name='Case list field actions', build_version='2.54.0')
+        m0, f0 = factory.new_basic_module("module1", "case")
+        factory.form_requires_case(f0)
+
+        m1, f1 = factory.new_basic_module("module2", "child_case")
+        m1.parent_select.active = True
+        m1.parent_select.module_id = m0.unique_id
+
+        factory.form_requires_case(f1)
+
+        f2 = factory.new_form(m1)
+        factory.form_requires_case(f2)
+
+        m1.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Starred'},
+                model='case',
+                field='starred',
+                format='enum-image',
+                enum=[
+                    MappingItem(key='1', value={'en': 'jr://icons/star-gold.png'}),
+                    MappingItem(key='0', value={'en': 'jr://icons/star-grey.png'}),
+                ],
+                endpoint_action_id="auto_submit_form_endpoint",
+            ),
+        ]
+
+        action_spec = """
+            <partial>
+                <template form="image" width="13%">
+                    <text>
+                        <xpath function="if(starred = '1', $k1, if(starred = '0', $k0, ''))">
+                            <variable name="k0">
+                                <locale id="m1.case_short.case_starred_1.enum.k0"/>
+                            </variable>
+                            <variable name="k1">
+                                <locale id="m1.case_short.case_starred_1.enum.k1"/>
+                            </variable>
+                        </xpath>
+                    </text>
+                </template>
+            </partial>
+            """
+
+        self.assertXmlPartialEqual(
+            action_spec,
+            factory.app.create_suite(),
+            './detail[3]/field/template'
         )

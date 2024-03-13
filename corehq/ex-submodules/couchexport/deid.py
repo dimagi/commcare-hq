@@ -23,8 +23,9 @@ class JSONPath(object):
                 pass
 
 
-def deid_date(val, doc, key_path='form/case/@case_id|form/case/case_id|_id'):
-    key = JSONPath(key_path).search(doc)
+def deid_date(val, doc, key_path='form/case/@case_id|form/case/case_id|_id', key=None):
+    if key is None:
+        key = JSONPath(key_path).search(doc)
     if not key or not val:
         return None
     offset = DeidGenerator(key, 'date').random_number(-31, 32)

@@ -68,6 +68,13 @@ class SlidingWindowRateCounter(AbstractRateCounter):
         contribution_from_earliest = earliest_grain_count * (1 - progress_in_current_grain)
         return sum(counts) + contribution_from_earliest
 
+    def retry_after(self):
+        """Calculates the time (in seconds) left in the current grain"""
+        timestamp = time.time()
+        progress_in_current_grain = (timestamp % self.grain_duration) / self.grain_duration
+        progress_left_in_grain = 1 - progress_in_current_grain
+        return progress_left_in_grain * self.grain_duration
+
     def increment(self, scope, delta=1, timestamp=None):
         # this intentionally doesn't return because this is the active grain count,
         # not the total that would be returned by get

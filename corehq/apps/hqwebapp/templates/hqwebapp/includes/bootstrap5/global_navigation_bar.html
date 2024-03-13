@@ -58,7 +58,15 @@
           <li>
             <a href="{% url "domain_subscription_view" domain %}" class="dropdown-item track-usage-link"
                data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
-              <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
+              <i class="fa-solid fa-gauge icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
+            </a>
+          </li>
+          {% endif %}
+          {% if user.is_superuser %}
+          <li>
+            <a href="{% url "feature_flags_and_privileges" domain %}" class="dropdown-item track-usage-link"
+               data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
+              <i class="fa fa-flag dropdown-icon"></i> {% trans "Feature Flags and Privileges" %}
             </a>
           </li>
           {% endif %}
@@ -145,11 +153,24 @@
                  data-category="Nav Bar"
                  data-action="Question Mark"
                  data-label="Report an Issue">
-                  <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i>
+                  <i class="fa-solid fa-triangle-exclamation icon-warning-sign dropdown-icon"></i>
                   {% trans "Report an Issue" %}
               </a>
             </li>
           {% endif %}
+          {% if request.couch_user and request.couch_user.is_dimagi and is_dimagi_environment %}
+                <li>
+                    <a href="#modalSolutionsFeatureRequest"
+                       data-bs-toggle="modal"
+                       class="dropdown-item track-usage-link"
+                       data-category="Nav Bar"
+                       data-action="Question Mark"
+                       data-label="Solutions Feature Request">
+                        <i class="fa fa-wrench dropdown-icon"></i>
+                        {% trans "Solutions Feature Request" %}
+                    </a>
+                </li>
+            {% endif %}
           {% if not enterprise_mode %}
             <li>
               <a href="https://status.commcarehq.org/"

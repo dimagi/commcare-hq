@@ -7,6 +7,8 @@
 {% block page_content %}
   {% initial_page_data 'location_types' location_types %}
   {% initial_page_data 'commtrack_enabled' commtrack_enabled %}
+  {% initial_page_data 'suggest_orphan_case_alerts_setting' suggest_orphan_case_alerts_setting %}
+  {% initial_page_data 'project_settings_url' project_settings_url %}
   <div class="row">
     <div class="col-sm-8">
       <h2>{% trans "Organization Levels" %}</h2>
@@ -23,6 +25,16 @@
       </p>
     </div>
   </div>
+  {% if suggest_orphan_case_alerts_setting %}
+    <div class="alert alert-info">
+      {% blocktrans %}
+        If you have organization levels that can own cases, consider enabling the
+        <a href="{{ project_settings_url }}"> Show Orphan Case Alerts on Mobile Worker Edit Page </a>
+        project setting to alert users about potentially creating orphan cases when modifying cases or locations.
+      {% endblocktrans %}
+    </div>
+
+  {% endif %}
   <form id="settings" class="form form-horizontal" method="post">
     {% csrf_token %}
     <fieldset>
@@ -224,7 +236,7 @@
               </td>
               <td>
                 <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
-                  <i class="fa fa-trash"></i> {% trans "Remove" %}
+                  <i class="fa-regular fa-trash-can"></i> {% trans "Remove" %}
                 </button>
               </td>
             </tr>

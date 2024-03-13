@@ -67,6 +67,7 @@ class TestCustomDataFieldsProfile(TestCase):
         self.assertEqual(data, {
             "id": self.profile3.id,
             "name": "three",
+            "upstream_id": None,
             "fields": {
                 "corners": 3,
                 "prefix": "tri",
@@ -78,6 +79,7 @@ class TestCustomDataFieldsProfile(TestCase):
         self.assertEqual(profiles, [{
             "id": self.profile5.id,
             "name": "five",
+            "upstream_id": None,
             "fields": {
                 "corners": 5,
                 "prefix": "penta",
@@ -85,6 +87,7 @@ class TestCustomDataFieldsProfile(TestCase):
         }, {
             "id": self.profile3.id,
             "name": "three",
+            "upstream_id": None,
             "fields": {
                 "corners": 3,
                 "prefix": "tri",
@@ -94,9 +97,9 @@ class TestCustomDataFieldsProfile(TestCase):
     @es_test(requires=[user_adapter])
     @sync_users_to_es()
     def test_users_assigned(self):
-        user = CommCareUser.create(self.domain, 'pentagon', '*****', None, None, metadata={
-            PROFILE_SLUG: self.profile5.id,
-        })
+        user = CommCareUser.create(self.domain, 'pentagon', '*****', None, None)
+        user.get_user_data(self.domain).profile_id = self.profile5.id
+        user.save()
         manager.index_refresh(user_adapter.index_name)
         self.addCleanup(user.delete, self.domain, deleted_by=None)
 

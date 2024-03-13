@@ -1,20 +1,24 @@
 """
-EntryInstances
---------------
+InstancesHelper
+---------------
 
-Every instance referenced in an xpath expression needs to be added to the relevant entry,
-so that CommCare knows what data to load when.  This includes case list calculations,
-form display conditions, etc.
+Every instance referenced in an xpath expression needs to be added to the
+relevant entry or menu node, so that CommCare knows what data to load when.
+This includes case list calculations, form/menu display conditions, assertions,
+etc.
 
 HQ knows about a particular set of instances (locations, reports, etc.).
-There's factory-based code dealing with these "known" instances
-When a new feature involves any kind of XPath calculation, it needs to be scanned for instances.
+There's factory-based code dealing with these "known" instances. When a new
+feature involves any kind of XPath calculation, it needs to be scanned for
+instances.
 
-Instances are used to reference data beyond the scope of the current XML document.
-Examples are the commcare session, casedb, lookup tables, mobile reports, case search data etc.
+Instances are used to reference data beyond the scope of the current XML
+document. Examples are the commcare session, casedb, lookup tables, mobile
+reports, case search data etc.
 
-Instances are added into the suite file in ``<entry>`` elements and directly in the form XML. This is
-done in post processing of the suite file in ``corehq.apps.app_manager.suite_xml.post_process.instances``.
+Instances are added into the suite file in ``<entry>`` or ``<menu>`` elements
+and directly in the form XML. This is done in post processing of the suite file
+in ``corehq.apps.app_manager.suite_xml.post_process.instances``.
 
 How instances work
 ------------------
@@ -52,16 +56,13 @@ Other instances use a namespaced convention: "type:sub-type". For example:
 
 Custom instances
 ----------------
-There are two places in app builder where users can define custom instances:
-
-* in a form using the 'CUSTOM_INSTANCES' plugin
-* in 'Lookup Table Selection' case search properties under 'Advanced Lookup Table Options'
-
+App builders can define custom instances in a form using the 'CUSTOM_INSTANCES' plugin
 """
 import html
 import re
 from collections import defaultdict
 
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
 from memoized import memoized
@@ -74,18 +75,16 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
+from corehq.apps.app_manager.suite_xml.utils import is_valid_results_instance_name
 from corehq.apps.app_manager.util import (
     module_offers_search,
     module_uses_inline_search,
 )
+
 from corehq.util.timer import time_method
 
 
-class EntryInstances(PostProcessor):
-    """Adds instance declarations to the suite file
-
-    See docs/apps/instances.rst"""
-
+class InstancesHelper(PostProcessor):
     IGNORED_INSTANCES = {
         'jr://instance/remote',
         'jr://instance/search-input',
@@ -97,6 +96,9 @@ class EntryInstances(PostProcessor):
             self.add_entry_instances(entry)
         for remote_request in self.suite.remote_requests:
             self.add_entry_instances(remote_request)
+        if self.app.supports_menu_instances:
+            for menu in self.suite.localized_menus:
+                self._add_menu_instances(menu)
 
     def add_entry_instances(self, entry):
         xpaths = self._get_all_xpaths_for_entry(entry)
@@ -107,10 +109,9 @@ class EntryInstances(PostProcessor):
             unknown_instance_ids
         )
         all_instances = known_instances | custom_instances
-        self.require_instances(entry, instances=all_instances, instance_ids=unknown_instance_ids)
+        self.require_instances(entry, all_instances, unknown_instance_ids)
 
     def _get_all_xpaths_for_entry(self, entry):
-        xpaths_by_menu, menu_by_command = self._get_menu_xpaths()
         details_by_id = self._get_detail_mapping()
         detail_ids = set()
         xpaths = set()
@@ -143,11 +144,16 @@ class EntryInstances(PostProcessor):
 
         details = [details_by_id[detail_id] for detail_id in detail_ids if detail_id]
 
-        entry_id = entry.command.id
-        if entry_id in menu_by_command:
-            menu_id = menu_by_command[entry_id]
-            menu_xpaths = xpaths_by_menu[menu_id]
-            xpaths.update(menu_xpaths)
+        if not self.app.supports_menu_instances:
+            xpaths.update(self._menu_xpaths_by_command[entry.command.id])
+
+        if self.app.enable_localized_menu_media and hasattr(entry, 'localized_command'):
+            xpaths.update(entry.localized_command.get_all_xpaths())
+        else:
+            xpaths.update(entry.command.get_all_xpaths())
+
+        if entry.command.id in self._relevancy_xpaths_by_command:
+            xpaths.add(self._relevancy_xpaths_by_command[entry.command.id])
 
         for detail in details:
             xpaths.update(detail.get_all_xpaths())
@@ -163,23 +169,37 @@ class EntryInstances(PostProcessor):
     def _get_detail_mapping(self):
         return {detail.id: detail for detail in self.suite.details}
 
-    @memoized
-    def _get_menu_xpaths(self):
-        xpaths_by_menu = defaultdict(list)
-        menu_by_command = {}
+    @cached_property
+    def _menu_xpaths_by_command(self):
+        # multiple menus can have the same ID - merge them first
+        xpaths_by_menu_id = defaultdict(set)
         for menu in self.suite.menus:
-            for command in menu.commands:
-                menu_by_command[command.id] = menu.id
-                if command.relevant:
-                    xpaths_by_menu[menu.id].append(command.relevant)
-            if menu.relevant:
-                xpaths_by_menu[menu.id].append(menu.relevant)
-            for assertion in menu.assertions:
-                xpaths_by_menu[menu.id].append(assertion.test)
+            xpaths_by_menu_id[menu.id].update(menu.get_all_xpaths())
 
-        return xpaths_by_menu, menu_by_command
+        return defaultdict(set, {
+            command.id: xpaths_by_menu_id[menu.id]
+            for menu in self.suite.menus
+            for command in menu.commands
+        })
+
+    @cached_property
+    def _relevancy_xpaths_by_command(self):
+        return {
+            command.id: command.relevant
+            for menu in self.suite.menus for command in menu.commands
+            if command.relevant
+        }
 
     def _get_custom_instances(self, entry, known_instances, required_instances):
+        """Lookup custom instance declarations defined in the form or module
+
+        :param known_instances: instances for which we already have declarations
+        :param required_instances: unrecognized instances that we need to find references for
+        :return: (custom_instances, required_instances) where
+            custom_instances - instances defined in the form or in the module's
+                search config lookup table setup
+            required_instances - remaining unrecognized instances
+        """
         if entry.command.id not in self._form_module_by_command_id:
             return set(), required_instances
 
@@ -191,12 +211,6 @@ class EntryInstances(PostProcessor):
                 Instance(id=instance.instance_id, src=instance.instance_path)
                 for instance in form.custom_instances
             )
-        if entry.queries:
-            custom_instances.extend([
-                Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
-                for prop in module.search_config.properties
-                if prop.itemset.instance_id
-            ])
 
         # sorted list to prevent intermittent test failures
         custom_instances = set(sorted(custom_instances, key=lambda i: i.id))
@@ -206,7 +220,12 @@ class EntryInstances(PostProcessor):
             if existing:
                 if existing.src != instance.src:
                     raise DuplicateInstanceIdError(
-                        _("Duplicate custom instance in {}: {}").format(entry.command.id, instance.id))
+                        _("Conflicting instance declarations in {entry_id} for {instance_id}: "
+                          "{src_1} != {src_2}").format(
+                              entry_id=entry.command.id,
+                              instance_id=instance.id,
+                              src_1=instance.src,
+                              src_2=existing.src))
 
                 # we already have this one, so we can ignore it
                 custom_instances.discard(instance)
@@ -233,11 +252,11 @@ class EntryInstances(PostProcessor):
         return by_command
 
     @staticmethod
-    def require_instances(entry, instances=(), instance_ids=()):
+    def require_instances(entry, instances, unknown_instance_ids):
         used = {(instance.id, instance.src) for instance in entry.instances}
-        instance_order_updated = EntryInstances.update_instance_order(entry)
+        instance_order_updated = InstancesHelper.update_instance_order(entry)
         for instance in instances:
-            if instance.src in EntryInstances.IGNORED_INSTANCES:  # ignore legacy instances
+            if instance.src in InstancesHelper.IGNORED_INSTANCES:  # ignore legacy instances
                 continue
             if (instance.id, instance.src) not in used:
                 entry.instances.append(
@@ -246,15 +265,9 @@ class EntryInstances(PostProcessor):
                     Instance(id=instance.id, src=instance.src)
                 )
                 if not instance_order_updated:
-                    instance_order_updated = EntryInstances.update_instance_order(entry)
+                    instance_order_updated = InstancesHelper.update_instance_order(entry)
         covered_ids = {instance_id for instance_id, _ in used}
-        for instance_id in instance_ids:
-            if instance_id not in covered_ids:
-                raise UnknownInstanceError(
-                    "Instance reference not recognized: {} in XPath \"{}\""
-                    # to get xpath context to show in this error message
-                    # make instance_id a unicode subclass with an xpath property
-                    .format(instance_id, getattr(instance_id, 'xpath', "(XPath Unknown)")))
+        assert_no_unknown_instances(unknown_instance_ids - covered_ids)
 
         sorted_instances = sorted(entry.instances, key=lambda instance: instance.id)
         if sorted_instances != entry.instances:
@@ -271,6 +284,15 @@ class EntryInstances(PostProcessor):
             entry.node.remove(instance_node)
             entry.node.insert(entry.node.index(command_node) + 1, instance_node)
             return True
+
+    def _add_menu_instances(self, menu):
+        # 2.54 and later only (supports_menu_instances)
+        # Prior to that, instances are added to entries
+        xpaths = menu.get_all_xpaths()
+        known_instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app, xpaths)
+        assert_no_unknown_instances(unknown_instance_ids)
+        for instance in known_instances:
+            menu.instances.append(instance)
 
 
 _factory_map = {}
@@ -331,12 +353,14 @@ def generic_fixture_instances(app, instance_name):
 
 @register_factory('search-input')
 def search_input_instances(app, instance_name):
-    try:
-        _, query_datum_id = instance_name.split(':', 1)
+    if ":" not in instance_name:
+        return Instance(id=instance_name, src='jr://instance/search-input')  # legacy instance
+
+    _, query_datum_id = instance_name.split(':', 1)
+    if is_valid_results_instance_name(app, query_datum_id):
         src = f'jr://instance/search-input/{query_datum_id}'
-    except ValueError:
-        src = 'jr://instance/search-input'  # legacy instance
-    return Instance(id=instance_name, src=src)
+        return Instance(id=instance_name, src=src)
+    return None
 
 
 @register_factory('selected_cases')
@@ -346,7 +370,9 @@ def selected_cases_instances(app, instance_name):
 
 @register_factory('results')
 def remote_instances(app, instance_name):
-    return Instance(id=instance_name, src=f'jr://instance/remote/{instance_name}')
+    if is_valid_results_instance_name(app, instance_name):
+        return Instance(id=instance_name, src=f'jr://instance/remote/{instance_name}')
+    return None
 
 
 @register_factory('commcare')
@@ -404,6 +430,16 @@ def get_all_instances_referenced_in_xpaths(app, xpaths):
                 instance_name.xpath = xpath
                 unknown_instance_ids.add(instance_name)
     return instances, unknown_instance_ids
+
+
+def assert_no_unknown_instances(instance_ids):
+    for instance_id in instance_ids:
+        # instance_id should be a UnicodeWithContext instance
+        # to get xpath context to show in this error message
+        raise UnknownInstanceError(
+            "Instance reference not recognized: {} in XPath \"{}\""
+            .format(instance_id, getattr(instance_id, 'xpath', "(XPath Unknown)"))
+        )
 
 
 instance_re = re.compile(r"""instance\(\s*['"]([\w\-:]+)['"]\s*\)""", re.UNICODE)

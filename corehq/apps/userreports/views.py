@@ -2,10 +2,11 @@ import datetime
 import functools
 import json
 import os
-import re
 import tempfile
 from collections import OrderedDict, namedtuple
+from urllib.parse import unquote, urlparse
 
+from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.contrib import messages
 from django.db import IntegrityError
@@ -20,9 +21,6 @@ from django.views.decorators.http import require_POST
 from django.views.generic import View
 from django.utils.html import format_html
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 from sqlalchemy import exc, types
@@ -32,6 +30,7 @@ from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
+
 from dimagi.utils.couch.undo import (
     get_deleted_doc_type,
     is_deleted,
@@ -52,6 +51,7 @@ from corehq.apps.analytics.tasks import (
     update_hubspot_properties,
 )
 from corehq.apps.api.decorators import api_throttle
+from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.change_feed.data_sources import (
@@ -93,6 +93,7 @@ from corehq.apps.userreports.app_manager.helpers import (
 from corehq.apps.userreports.const import (
     DATA_SOURCE_MISSING_APP_ERROR_MESSAGE,
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
+    FORM_NOT_FOUND_ERROR_MESSAGE,
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
     REPORT_BUILDER_EVENTS_KEY,
@@ -178,6 +179,9 @@ from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
+from corehq.motech.repeaters.models import DataSourceRepeater
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.const import OAUTH2_CLIENT
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -431,7 +435,6 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
                 domain,
                 self.plan_name
             ),
-            settings.DEFAULT_FROM_EMAIL,
             [settings.SALES_EMAIL],
         )
         update_hubspot_properties.delay(request.couch_user.get_id, {'report_builder_subscription_request': 'yes'})
@@ -559,11 +562,19 @@ class ConfigureReport(ReportBuilderView):
             )
         except ResourceNotFound:
             return self.render_error_response(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
+        except FormNotFoundException:
+            return self.render_error_response(
+                FORM_NOT_FOUND_ERROR_MESSAGE,
+                allow_delete=True,
+                # when this error is thrown, the report_id in the template context is still not set
+                # this ensures the correct id is set so that the delete action is functional
+                report_id=self.existing_report.get_id
+            )
 
         self._populate_data_source_properties_from_interface(data_source_interface)
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
-    def render_error_response(self, message, allow_delete=None):
+    def render_error_response(self, message, allow_delete=None, report_id=None):
         if self.existing_report:
             context = {
                 'allow_delete': self.existing_report.get_id and not self.existing_report.is_static
@@ -574,6 +585,8 @@ class ConfigureReport(ReportBuilderView):
             context['allow_delete'] = allow_delete
         context['error_message'] = message
         context.update(self.main_context)
+        if report_id:
+            context['report_id'] = report_id
         return render(self.request, 'userreports/report_error.html', context)
 
     @property
@@ -653,7 +666,8 @@ class ConfigureReport(ReportBuilderView):
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
         report_form = form_type(
-            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report, self.registry_slug,
+            self.domain, self.page_name, self.app_id, self.source_type, self.source_id,
+            self.existing_report, self.registry_slug,
         )
         temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
         return {
@@ -748,8 +762,8 @@ class ConfigureReport(ReportBuilderView):
         is necessary in case they navigated directly to this view either
         maliciously or with a bookmark perhaps.
         """
-        if (number_of_report_builder_reports(self.domain) >=
-                allowed_report_builder_reports(self.request)):
+        if (number_of_report_builder_reports(self.domain)
+                >= allowed_report_builder_reports(self.request)):
             raise Http404()
 
 
@@ -787,7 +801,7 @@ class ReportPreview(BaseDomainView):
     urlname = 'report_preview'
 
     def post(self, request, domain, data_source):
-        report_data = json.loads(six.moves.urllib.parse.unquote(request.body.decode('utf-8')))
+        report_data = json.loads(unquote(request.body.decode('utf-8')))
         form_class = _get_form_type(report_data['report_type'])
 
         # ignore user filters
@@ -986,7 +1000,7 @@ def evaluate_expression(request, domain):
         result = parsed_expression(doc, EvaluationContext(doc))
         return JsonResponse({"result": result})
     except HttpException as e:
-        return JsonResponse({'message': e.message}, status=e.status)
+        return JsonResponse({'error': e.message}, status=e.status)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
@@ -1538,6 +1552,51 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
         return export_response(Temp(path), params.format, adapter.display_name)
 
 
+@csrf_exempt
+@require_POST
+@api_auth()
+@require_permission(HqPermissions.view_reports)
+@toggles.SUPERSET_ANALYTICS.required_decorator()
+@api_throttle
+def subscribe_to_data_source_changes(request, domain, config_id):
+    reqd_params = {'webhook_url', 'client_id', 'client_secret', 'token_url'}
+    missing_params = reqd_params - set(request.POST)
+    if missing_params:
+        return HttpResponse(
+            status=422,
+            content=f"Missing parameters: {', '.join(sorted(missing_params))}",
+        )
+
+    webhook_url = request.POST['webhook_url']
+    client_hostname = urlparse(webhook_url).hostname
+    conn_name = gettext_lazy('CommCare Analytics on {server}').format(
+        server=client_hostname,
+    )
+    conn_settings, __ = ConnectionSettings.objects.update_or_create(
+        client_id=request.POST['client_id'],
+        defaults={
+            'domain': domain,
+            'name': conn_name,
+            'auth_type': OAUTH2_CLIENT,
+            'client_secret': request.POST['client_secret'],
+            'url': webhook_url,
+            'token_url': request.POST['token_url'],
+        }
+    )
+
+    repeater_name = gettext_lazy('Data source {ds} on {server}').format(
+        ds=config_id,
+        server=client_hostname,
+    )
+    DataSourceRepeater.objects.create(
+        name=repeater_name,
+        domain=domain,
+        data_source_id=config_id,
+        connection_settings_id=conn_settings.id,
+    )
+    return HttpResponse(status=201)
+
+
 def _get_report_filter(domain, report_id, filter_id):
     report = get_report_config_or_404(report_id, domain)[0]
     report_filter = report.get_ui_filter(filter_id)
@@ -1697,7 +1756,7 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for expression in self.base_query.all():
+        for expression in self.base_query[self.skip:self.skip + self.limit]:
             yield {
                 "itemData": self._item_data(expression),
                 "template": "base-ucr-statement-template",

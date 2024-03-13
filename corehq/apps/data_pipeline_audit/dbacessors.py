@@ -100,7 +100,7 @@ def get_primary_db_form_counts(domain, startdate=None, enddate=None):
         for doc_type, state in doc_type_to_state.items():
             counter[doc_type] += queryset.filter(state=state).count()
 
-        where_clause = 'state & {0} = {0}'.format(XFormInstance.DELETED)
+        where_clause = 'deleted_on IS NOT NULL'
         counter['XFormInstance-Deleted'] += queryset.extra(where=[where_clause]).count()
 
     return counter

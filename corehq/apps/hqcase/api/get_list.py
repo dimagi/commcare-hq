@@ -1,18 +1,19 @@
 from base64 import b64decode, b64encode
 
 from django.http import QueryDict
-from django.utils.http import urlencode
 
 from corehq.apps.api.util import make_date_filter
+from corehq.apps.case_search.const import CASE_PROPERTIES_PATH
 from corehq.apps.case_search.filter_dsl import (
     build_filter_from_xpath,
 )
 from corehq.apps.case_search.exceptions import CaseFilterError
-from corehq.apps.es import case_search, filters
+from corehq.apps.es import case_search, filters, queries
 from corehq.apps.es import cases as case_es
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
 )
+from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
 from dimagi.utils.parsing import FALSE_STRINGS
 from .core import UserError, serialize_es_case
 
@@ -20,6 +21,19 @@ DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 5000
 INDEXED_AFTER = 'indexed_on.gte'
 LAST_CASE_ID = 'last_case_id'
+INCLUDE_DEPRECATED = 'include_deprecated'
+
+# This is not how sorting is typically done - sorting by the _id field causes
+# timeouts for reasons we don't quite understand. Until that's resolved,
+# sorting by case_properties.@case_id seems to work fine.
+_SORTING_BLOCK = [{
+    '@indexed_on': {'order': 'asc'},
+    'case_properties.value.exact': {
+        'order': 'asc',
+        'nested_path': 'case_properties',
+        'nested_filter': {'term': {"case_properties.key.exact": "@case_id"}},
+    }
+}]
 
 
 def _to_boolean(val):
@@ -46,6 +60,13 @@ def _make_date_filter(date_filter):
     return _exception_converter
 
 
+def _include_deprecated_filter(domain, include_deprecated):
+    if _to_boolean(include_deprecated):
+        return filters.match_all()
+    deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+    return filters.NOT(filters.term('type.exact', deprecated_case_types))
+
+
 def _index_filter(identifier, case_id):
     return case_search.reverse_index_case_query(case_id, identifier)
 
@@ -56,6 +77,7 @@ SIMPLE_FILTERS = {
     'owner_id': case_es.owner,
     'case_name': case_es.case_name,
     'closed': lambda val: case_es.is_closed(_to_boolean(val)),
+    INCLUDE_DEPRECATED: _include_deprecated_filter,
 }
 
 # Compound filters take the form `prefix.qualifier=value`
@@ -107,11 +129,18 @@ def get_list(domain, couch_user, params):
 
 def _get_cursor_query(domain, params, last_date, last_id):
     query = _get_query(domain, params)
+    id_filter = queries.nested(
+        CASE_PROPERTIES_PATH,
+        filters.AND(
+            filters.term(case_search.PROPERTY_KEY, '@case_id'),
+            filters.range_filter(case_search.PROPERTY_VALUE_EXACT, gt=last_id),
+        )
+    )
     return query.filter(
         filters.OR(
             filters.AND(
                 filters.term('@indexed_on', last_date),
-                filters.range_filter('_id', gt=last_id),
+                id_filter,
             ),
             case_search.indexed_on(gt=last_date),
         )
@@ -124,9 +153,8 @@ def _get_query(domain, params):
         raise UserError(f"You cannot request more than {MAX_PAGE_SIZE} cases per request.")
     query = (case_search.CaseSearchES()
              .domain(domain)
-             .size(page_size)
-             .sort("@indexed_on")
-             .sort("_id", reset_sort=False))
+             .size(page_size))
+    query.es_query['sort'] = _SORTING_BLOCK  # unorthodox, see comment above
     for key, val in params.lists():
         if len(val) == 1:
             query = query.filter(_get_filter(domain, key, val[0]))
@@ -139,10 +167,12 @@ def _get_query(domain, params):
 
 def _get_filter(domain, key, val):
     if key == 'limit':
-        pass
+        return filters.match_all()
     elif key == 'query':
         return _get_query_filter(domain, val)
     elif key in SIMPLE_FILTERS:
+        if key == INCLUDE_DEPRECATED:
+            return SIMPLE_FILTERS[key](domain, val)
         return SIMPLE_FILTERS[key](val)
     elif '.' in key and key.split(".")[0] in COMPOUND_FILTERS:
         prefix, qualifier = key.split(".", maxsplit=1)

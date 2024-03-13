@@ -17,12 +17,13 @@
         </div>
         <div class="modal-body">
           <div class="form form-horizontal">
+            <fieldset data-bind="enable: isEditable">
             <div class="form-group">
               <label class="col-sm-4 control-label" for="role-name">
                 {% trans "Role Name" %}<span class="asteriskField">*</span>
               </label>
               <div class="col-sm-8 controls">
-                <input data-bind="value: name, disable: !$root.allowEdit"
+                <input data-bind="value: name"
                        type="text"
                        id="role-name"
                        class="form-control"
@@ -48,7 +49,7 @@
                 <div class="col-sm-2 controls" data-bind="visible: showEditCheckbox">
                   <div class="form-check">
                     <input type="checkbox"
-                           data-bind="attr: {id: editCheckboxLabel}, checked: editPermission, disable: !$root.allowEdit" />
+                           data-bind="attr: {id: editCheckboxLabel}, checked: editPermission" />
                     <label data-bind="attr: {for: editCheckboxLabel}">
                       <span class="sr-only" data-bind="text: screenReaderEditAndViewText">
                       </span>
@@ -73,8 +74,7 @@
                   {# REAL checkbox that controls viewPermission when editPermission() is false #}
                   <div class="form-check" data-bind="visible: !editPermission()">
                     <input type="checkbox"
-                           data-bind="attr: {id: viewCheckboxLabel}, checked: viewPermission,
-                                      disable: !$root.allowEdit" />
+                           data-bind="attr: {id: viewCheckboxLabel}, checked: viewPermission" />
                     <label data-bind="attr: {for: viewCheckboxLabel}">
                       <span class="sr-only" data-bind="text: screenReaderViewOnlyText">
                       </span>
@@ -98,7 +98,7 @@
                   {# REAL checkbox for allowCheckboxPermission #}
                   <div class="form-check" data-bind="visible: !$parent.permissions.edit_commcare_users() && editPermission() && showAllowCheckbox">
                     <input type="checkbox"
-                           data-bind="attr: {id: allowCheckboxId}, checked: allowCheckboxPermission, disable: !$root.allowEdit" />
+                           data-bind="attr: {id: allowCheckboxId}, checked: allowCheckboxPermission" />
                     <label data-bind="attr:{for: allowCheckboxId}, text: allowCheckboxText"></label>
                   </div>
                   {# end REAL #}
@@ -112,6 +112,35 @@
               </div>
             </div>
 
+            <div data-bind="if: erm.visible">
+              <legend data-bind="text: erm.title"></legend>
+
+              <div class="form-group" data-bind="using: erm.access_release_management">
+                <label class="col-sm-4 control-label" data-bind="text: text"></label>
+                <div class="col-sm-8 controls">
+                  <div class="form-check">
+                    <input type="checkbox" data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />
+                    <label data-bind="attr:{for: checkboxLabel}, text: checkboxText"></label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group" data-bind="using: erm.edit_linked_configs">
+                <label class="col-sm-4 control-label" data-bind="text: text"></label>
+                <div class="col-sm-8 controls">
+                  <div class="form-check">
+                    <!-- ko if: $parent.erm.access_release_management.checkboxPermission -->
+                    <input type="checkbox" checked disabled />
+                    <!-- /ko -->
+                    <!-- ko ifnot: $parent.erm.access_release_management.checkboxPermission -->
+                    <input type="checkbox" data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />
+                    <!-- /ko -->
+                    <label data-bind="attr:{for: checkboxLabel}, text: checkboxText"></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <legend>
               {% trans "Reports" %}
             </legend>
@@ -122,7 +151,7 @@
                 <div class="col-sm-8 controls">
                   <div class="form-check">
                     <input type="checkbox"
-                           data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission, disable: !$root.allowEdit" />
+                           data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission" />
                     <label data-bind="attr:{for: checkboxLabel}, text: checkboxText">
                     </label>
                   </div>
@@ -142,8 +171,7 @@
                        data-bind="foreach: reportPermissions.specific, slideVisible: !reportPermissions.all()">
                     <div class="form-check">
                       <input type="checkbox"
-                             data-bind="checked: value, attr: { 'id': slug() + '-checkbox' },
-                                        disable: !$root.allowEdit" />
+                             data-bind="checked: value, attr: { 'id': slug() + '-checkbox' }" />
                       <label data-bind="attr: { 'for': slug() + '-checkbox' }">
                         <span data-bind="text: name"></span>
                       </label>
@@ -167,8 +195,7 @@
                          data-bind="foreach: tableauPermissions.specific, slideVisible: !tableauPermissions.all()">
                       <div class="form-check">
                         <input type="checkbox"
-                               data-bind="checked: value, attr: { 'id': 'tableau-' + slug() + '-checkbox' },
-                                          disable: !$root.allowEdit" />
+                               data-bind="checked: value, attr: { 'id': 'tableau-' + slug() + '-checkbox' }" />
                         <label data-bind="attr: { 'for': 'tableau-' + slug() + '-checkbox' }">
                           <span data-bind="text: name"></span>
                         </label>
@@ -193,8 +220,7 @@
                     options: options,
                     optionsText: 'text',
                     optionsValue: 'value',
-                    value: selection,
-                    disable: !$root.allowEdit">
+                    value: selection">
                     <option value="none" data-bind="text: accessNoneText"></option>
                     <option value="all" data-bind="text: accessAllText"></option>
                     <option value="selected" data-bind="text: accessSelectedText"></option>
@@ -255,7 +281,7 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="edit-billing-checkbox"
-                         data-bind="checked: permissions.edit_billing, disable: !$root.allowEdit" />
+                         data-bind="checked: permissions.edit_billing" />
                   <label for="edit-billing-checkbox">
                     {% trans "Allow role to manage subscription information." %}
                   </label>
@@ -273,7 +299,7 @@
                   <input type="checkbox"
                          id="allow-data-all-access-checkbox"
                          data-bind="checked: permissions.access_all_locations,
-                                    disable: hasUnpermittedLocationRestriction || !$root.allowEdit" />
+                                    disable: hasUnpermittedLocationRestriction" />
                   <label for="allow-data-all-access-checkbox">
                     {% trans "Allow role to access data from all locations." %}
                   </label>
@@ -302,8 +328,7 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="login-as-all-users-checkbox"
-                         data-bind="checked: permissions.login_as_all_users,
-                                    disable: !$root.allowEdit" />
+                         data-bind="checked: permissions.login_as_all_users" />
                   <label for="login-as-all-users-checkbox">
                     {% trans "Allow the user to log in as any mobile worker in Web Apps." %}
                   </label>
@@ -327,8 +352,7 @@
                 <div class="form-check" data-bind="visible: !permissions.login_as_all_users()">
                   <input type="checkbox"
                          id="limited-login-as-checkbox"
-                         data-bind="checked: permissions.limited_login_as,
-                                    disable: !$root.allowEdit" />
+                         data-bind="checked: permissions.limited_login_as" />
                   <label for="limited-login-as-checkbox">
                     {% trans "Allow the user to log in as only specified users in Web Apps." %}
                   </label>
@@ -351,8 +375,7 @@
                 <div class="form-check" data-bind="visible: !permissions.login_as_all_users() && permissions.limited_login_as()">
                   <input type="checkbox"
                          id="default-login-as-checkbox"
-                         data-bind="checked: permissions.access_default_login_as_user,
-                                    disable: !$root.allowEdit" />
+                         data-bind="checked: permissions.access_default_login_as_user" />
                   <label for="default-login-as-checkbox">
                     {% trans "Allow the user to log in as the default user in Web Apps." %}
                   </label>
@@ -368,8 +391,7 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="edit-mobile-checkbox"
-                         data-bind="checked: permissions.access_mobile_endpoints,
-                                    disable: !$root.allowEdit" />
+                         data-bind="checked: permissions.access_mobile_endpoints" />
                   <label for="edit-mobile-checkbox">
                     {% trans "Allow mobile users access to offline mobile application" %}
                   </label>
@@ -386,8 +408,7 @@
                         data-bind="options: $root.landingPageChoices,
                                   optionsText: 'name',
                                   optionsValue: 'id',
-                                  value: default_landing_page,
-                                  disable: !$root.allowEdit">
+                                  value: default_landing_page">
                 </select>
               </div>
             </div>
@@ -399,7 +420,7 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="report-issue-checkbox"
-                         data-bind="checked: permissions.report_an_issue, disable: !$root.allowEdit" />
+                         data-bind="checked: permissions.report_an_issue" />
                   <label for="report-issue-checkbox">
                     {% trans "Allow this role to report issues." %}
                   </label>
@@ -414,7 +435,7 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="non-admin-edit-checkbox"
-                         data-bind="checked: manageRoleAssignments.all, disable: !$root.allowEdit" />
+                         data-bind="checked: manageRoleAssignments.all" />
                   <label for="non-admin-edit-checkbox">
                     {% trans "Allow all non-admins to assign this role to other users." %}
                   </label>
@@ -435,8 +456,7 @@
                        data-bind="foreach: manageRoleAssignments.specific, slideVisible: !manageRoleAssignments.all()">
                     <div class="form-check">
                       <input type="checkbox"
-                             data-bind="checked: value, attr: { 'id': 'role-' + path() + '-checkbox' },
-                                        disable: !$root.allowEdit" />
+                             data-bind="checked: value, attr: { 'id': 'role-' + path() + '-checkbox' }" />
                       <label data-bind="attr: { 'for': 'role-' + path() + '-checkbox' }">
                         <span data-bind="text: name"></span>
                       </label>
@@ -446,10 +466,27 @@
               </div>
             </div>
           </div>
+          {% if request|request_has_privilege:"CUSTOM_DOMAIN_ALERTS" %}
+            <div class="form-group">
+              <label class="col-sm-4 control-label">
+                {% trans "Manage Project Alerts" %}
+              </label>
+              <div class="col-sm-8 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="manage-domain-alerts-checkbox"
+                         data-bind="checked: permissions.manage_domain_alerts" />
+                  <label for="manage-domain-alerts-checkbox">
+                    {% trans "Allow this role to manage project alerts." %}
+                  </label>
+                </div>
+              </div>
+            </div>
+          {% endif %}
         </div>
 
         <div class="modal-footer" data-bind="css: {'has-error': $root.roleError }">
-          {% if can_edit_roles %}
+          <div data-bind="if: isEditable">
             <button type="button"
                     class="btn btn-default"
                     data-bind="click: $root.clearRoleForm">
@@ -460,13 +497,14 @@
               {% trans "Save" %}
             </button>
             <span class='help-block' data-bind="text: $root.roleError"></span>
-          {% else %}
+          </div>
+          <div data-bind="ifnot: isEditable">
             <button type="button"
                     class="btn btn-default"
                     data-bind="click: $root.unsetRoleBeingEdited">
               {% trans "Close" %}
             </button>
-          {% endif %}
+          </div>
         </div>
       </div>
     </form>

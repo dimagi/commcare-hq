@@ -29,4 +29,6 @@ def default_logging(logfile):
         handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(message)s'))
         root.addHandler(handler)
 
-from dimagi.utils.repo import get_revision
+
+# Fetch repo revision info
+from dimagi.utils.repo import get_revision  # noqa: E402, F401

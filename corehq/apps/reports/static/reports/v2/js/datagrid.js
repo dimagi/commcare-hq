@@ -13,7 +13,7 @@ hqDefine('reports/v2/js/datagrid', [
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
     'reports/v2/js/datagrid/binding_handlers',  // for custom ko bindingHandlers
-    'hqwebapp/js/knockout_bindings.ko',  // for modal bindings
+    'hqwebapp/js/bootstrap3/knockout_bindings.ko',  // for modal bindings
 ], function (
     $,
     ko,
@@ -156,7 +156,9 @@ hqDefine('reports/v2/js/datagrid', [
         };
 
         self.isSortableColumn = function (columnName) {
-            if (!options.unsortableColumnNames) return true;
+            if (!options.unsortableColumnNames) {
+                return true;
+            }
             return (options.unsortableColumnNames.indexOf(columnName) === -1);
         };
 

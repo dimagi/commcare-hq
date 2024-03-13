@@ -1,0 +1,11 @@
+{% extends "error_base.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block title %}
+  {% trans "Blocked" %}
+{% endblock %}
+
+{% block page_name %}{% trans "You are currently blocked from using Web Apps" %}{% endblock %}
+{% block page_content %}
+<p class="error">{{ error_message }}</p>
+{% endblock %}

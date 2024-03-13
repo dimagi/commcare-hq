@@ -23,6 +23,19 @@ class BaseElasticOperation(RunPython):
     def reverse_run(self, *args, **kw):
         raise NotImplementedError(type(self).__name__)
 
+    def _should_skip_operation(self, mapping_es_major_versions):
+        """
+        The mappings should be applied on ES if running version of ES is same as the targetted es versions.
+        :param mapping_es_major_version: an list consisting of all major versions that the mapping support
+        """
+        from corehq.apps.es.client import manager
+        current_es_major_version = manager.elastic_major_version
+        if current_es_major_version in mapping_es_major_versions:
+            return False
+        log.info(f"The mappings were created for Elasticsearch version/s {mapping_es_major_versions}")
+        log.info(f"Current Elasticsearch version in {current_es_major_version}. Skipping the operation.")
+        return True
+
     def __repr__(self):
         return f"<{type(self).__name__} index={self.name!r}>"
 
@@ -32,7 +45,7 @@ class CreateIndex(BaseElasticOperation):
 
     serialization_expand_args = ["mapping", "analysis"]
 
-    def __init__(self, name, type_, mapping, analysis, settings_key, comment=None):
+    def __init__(self, name, type_, mapping, analysis, settings_key, comment=None, es_versions=[]):
         """CreateIndex operation.
 
         :param name: the name of the index to be created.
@@ -43,6 +56,8 @@ class CreateIndex(BaseElasticOperation):
             tuning settings.
         :param comment: Optional value to set on the index's
             ``mapping._meta.comment`` property.
+        :param es_versions: Optional (default []) list of supported ES versions.
+            If specified, the mappings will only be applied on those ES versions.
         """
         super().__init__(self.run, self.reverse_run)
         self.name = name
@@ -51,11 +66,13 @@ class CreateIndex(BaseElasticOperation):
         self.analysis = analysis
         self.settings_key = settings_key
         self.comment = comment
+        self.es_versions = es_versions
 
     def deconstruct(self):
         kwargs = {}
         if self.comment is not None:
             kwargs["comment"] = self.comment
+        kwargs['es_versions'] = self.es_versions
         mapping = {k: v for k, v in self.mapping.items() if k != "_meta"}
         return (
             self.__class__.__qualname__,
@@ -64,6 +81,11 @@ class CreateIndex(BaseElasticOperation):
         )
 
     def run(self, *args, **kw):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
+            # skip running the operation if compatible ES versions are provided
+            # and mapping is created for a differnt es version
+            return
+
         from corehq.apps.es.client import manager
         log.info("Creating Elasticsearch index: %s" % self.name)
         manager.index_create(self.name, self.render_index_metadata(
@@ -76,6 +98,8 @@ class CreateIndex(BaseElasticOperation):
         manager.index_configure_for_standard_ops(self.name)
 
     def reverse_run(self, *args, **kw):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
+            return
         DeleteIndex(self.name).run(*args, **kw)
 
     def describe(self):
@@ -115,16 +139,19 @@ class DeleteIndex(BaseElasticOperation):
 
     serialization_expand_args = ["reverse_params"]
 
-    def __init__(self, name, reverse_params=None):
+    def __init__(self, name, reverse_params=None, es_versions=[]):
         """DeleteIndex operation.
 
         :param name: the name of the index to be deleted.
         :param reverse_params: an iterable of four items containing ``(type,
             mapping, analysis, settings_key)`` for reversing the migration. If
             ``None`` (the default), the operation is irreversible.
+        :param es_versions: Optional (default []) list of supported ES versions.
+            If specified, the mappings will only be applied on those ES versions.
         """
         super().__init__(self.run, self.reverse_run if reverse_params else None)
         self.name = name
+        self.es_versions = es_versions
         if reverse_params:
             type_, mapping, analysis, settings_key = reverse_params
             self.reverse_type = type_
@@ -134,6 +161,7 @@ class DeleteIndex(BaseElasticOperation):
 
     def deconstruct(self):
         kwargs = {}
+        kwargs['es_versions'] = self.es_versions
         if self.reversible:
             kwargs["reverse_params"] = (
                 self.reverse_type,
@@ -148,11 +176,15 @@ class DeleteIndex(BaseElasticOperation):
         )
 
     def run(self, *args, **kw):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
+            return
         from corehq.apps.es.client import manager
         log.info("Deleting Elasticsearch index: %s" % self.name)
         manager.index_delete(self.name)
 
     def reverse_run(self, *args, **kw):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
+            return
         create_kw = {
             "name": self.name,
             "type_": self.reverse_type,
@@ -197,7 +229,7 @@ class UpdateIndexMapping(BaseElasticOperation):
 
     serialization_expand_args = ["properties"]
 
-    def __init__(self, name, type_, properties, comment=None, print_diff=True):
+    def __init__(self, name, type_, properties, comment=None, print_diff=True, es_versions=[]):
         """UpdateIndexMapping operation.
 
         :param name: the name of the index.
@@ -210,6 +242,8 @@ class UpdateIndexMapping(BaseElasticOperation):
             retained.
         :param print_diff: Optional (default ``True``) set to ``False`` to
             disable printing the mapping diff.
+        :param es_versions: Optional (default []) list of supported ES versions.
+            If specified, the mappings will only be applied on those ES versions.
         """
         super().__init__(self.run)
         self.name = name
@@ -218,6 +252,7 @@ class UpdateIndexMapping(BaseElasticOperation):
         self.comment = comment
         self.print_diff = print_diff
         self.stream = sys.stdout  # stream where the diff is printed
+        self.es_versions = es_versions
 
     def deconstruct(self):
         kwargs = {}
@@ -225,6 +260,7 @@ class UpdateIndexMapping(BaseElasticOperation):
             kwargs["comment"] = self.comment
         if not self.print_diff:
             kwargs["print_diff"] = False
+        kwargs['es_versions'] = self.es_versions
         return (
             self.__class__.__qualname__,
             [self.name, self.type, self.properties],
@@ -232,6 +268,8 @@ class UpdateIndexMapping(BaseElasticOperation):
         )
 
     def run(self, *args, **kw):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
+            return
         from corehq.apps.es.client import manager
         mapping = manager.index_get_mapping(self.name, self.type) or {}
         mapping.setdefault("_meta", {}).update(make_mapping_meta(self.comment))
@@ -294,6 +332,44 @@ def make_mapping_meta(comment=None):
     if comment is not None:
         meta["comment"] = comment
     return meta
+
+
+class CreateIndexIfNotExists(CreateIndex):
+    """
+    The class will skip creating indexes if they already exists and would setup indexes if they don't exist.
+    The utility of this class is in initializing the elasticsearch migrations
+    for the environments that already have live HQ indexes.
+
+    Because of the nature of the operation, this class is not integrated into `make_elastic_migration` command.
+    This class should to be manually added to the bootstrap migrations and
+    it should be ensured that the index names are identical to live indexes.
+
+    Lets take an example of bootstrapping a running groups index
+
+        - Generate boilerplate migrations with `make_elastic_migration`
+
+            ```
+            ./manage.py make_elastic_migration --name init_groups -c groups
+            ```
+
+        - The above command will generate a migration file let say 0001_init_groups.py
+
+        - Replace the index name passed into CreateIndex in operations with the one that is running on HQ.
+
+        - Replace `corehq.apps.es.migration_operations.CreateIndex` with
+        `CreateIndexIfNotExists`
+
+    """
+    def run(self, *args, **kwargs):
+        if self.es_versions and self._should_skip_operation(self.es_versions):
+            return
+        from corehq.apps.es.client import manager
+        if not manager.index_exists(self.name):
+            return super().run(*args, **kwargs)
+        log.info(f"ElasticSearch index {self.name} already exists. Skipping create index operation.")
+
+    def reverse_run(self, *args, **kw):
+        return None
 
 
 class MappingUpdateFailed(Exception):

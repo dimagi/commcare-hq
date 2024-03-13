@@ -3,7 +3,6 @@ from itertools import groupby
 
 import itertools
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
-from casexml.apps.case.signals import cases_received
 from casexml.apps.case.util import validate_phone_datetime, prune_previous_log
 from corehq import toggles
 from corehq.apps.users.util import SYSTEM_USER_ID
@@ -15,7 +14,6 @@ from casexml.apps.case.exceptions import InvalidCaseIndex, IllegalCaseId
 from casexml.apps.case import const
 from casexml.apps.case.xml.parser import case_id_from_block, case_update_from_block
 from custom.covid.casesync import get_ush_extension_cases_to_close
-from dimagi.utils.logging import notify_exception
 
 _soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
 
@@ -39,16 +37,6 @@ def process_cases_with_casedb(xforms, case_db):
     xform = xforms[0]
 
     _update_sync_logs(xform, cases)
-
-    try:
-        cases_received.send(sender=None, xform=xform, cases=cases)
-    except Exception as e:
-        # don't let the exceptions in signals prevent standard case processing
-        notify_exception(
-            None,
-            'something went wrong sending the cases_received signal '
-            'for form %s: %s' % (xform.form_id, e)
-        )
 
     for case in cases:
         case_db.post_process_case(case, xform)
@@ -238,14 +226,22 @@ def _extract_case_blocks(data, path=None, form_id=Ellipsis):
                 yield from _extract_case_blocks(value, new_path, form_id=form_id)
 
 
-def get_case_updates(xform):
+def get_case_updates(xform, for_case=None):
     if not xform:
         return []
-    updates = sorted(
-        [case_update_from_block(cb) for cb in extract_case_blocks(xform)],
-        key=lambda update: update.id
-    )
-    by_case_id = groupby(updates, lambda update: update.id)
+
+    updates = [case_update_from_block(cb) for cb in extract_case_blocks(xform)]
+
+    if for_case:
+        updates = [update for update in updates if update.id == for_case]
+        by_case_id = [(for_case, updates)]
+    else:
+        updates = sorted(
+            updates,
+            key=lambda update: update.id
+        )
+        by_case_id = groupby(updates, lambda update: update.id)
+
     return list(itertools.chain(
         *[order_updates(updates) for case_id, updates in by_case_id]
     ))

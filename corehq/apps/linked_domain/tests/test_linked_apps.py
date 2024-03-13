@@ -15,6 +15,7 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     ReportModule,
     import_app,
+    FormLink,
 )
 from corehq.apps.app_manager.suite_xml.post_process.resources import (
     ResourceOverride,
@@ -23,7 +24,6 @@ from corehq.apps.app_manager.suite_xml.post_process.resources import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, get_simple_form, patch_validate_xform
 from corehq.apps.app_manager.views.utils import (
-    get_blank_form_xml,
     overwrite_app,
     update_linked_app,
 )
@@ -226,6 +226,12 @@ class TestLinkedApps(BaseLinkedAppsTest):
         master_form = list(self.master1.get_forms(bare=True))[0]
 
         add_xform_resource_overrides(self.linked_domain, self.linked_app.get_id, {master_form.unique_id: '123'})
+        self.addCleanup(
+            lambda: ResourceOverride.objects.filter(
+                domain=self.linked_domain, app_id=self.linked_app.get_id
+            ).delete()
+        )
+
         overwrite_app(self.linked_app, self.master1)
 
         self.assertEqual(
@@ -233,7 +239,33 @@ class TestLinkedApps(BaseLinkedAppsTest):
             self._get_form_ids_by_xmlns(LinkedApplication.get(self.linked_app._id))
         )
 
-        ResourceOverride.objects.filter(domain=self.linked_domain, app_id=self.linked_app.get_id).delete()
+    def test_overwrite_app_override_form_unique_ids_references(self):
+        m0 = self.master1.get_module(0)
+        master_form = list(self.master1.get_forms(bare=True))[0]
+        f1 = m0.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
+        f1.form_links = [
+            FormLink(xpath="true()", form_id=master_form.unique_id, form_module_id=m0.unique_id),
+        ]
+
+        add_xform_resource_overrides(self.linked_domain, self.linked_app.get_id, {
+            master_form.unique_id: '123',
+            f1.unique_id: '456'
+        })
+        self.addCleanup(
+            lambda: ResourceOverride.objects.filter(
+                domain=self.linked_domain, app_id=self.linked_app.get_id
+            ).delete()
+        )
+
+        overwrite_app(self.linked_app, self.master1)
+
+        linked_app = LinkedApplication.get(self.linked_app._id)
+        self.assertEqual(
+            {master_form.xmlns: '123', f1.xmlns: '456'},
+            self._get_form_ids_by_xmlns(linked_app)
+        )
+
+        self.assertEqual(linked_app.get_module(0).get_form(1).form_links[0].form_id, '123')
 
     def test_multi_master_form_attributes_and_media_versions(self, *args):
         '''
@@ -493,7 +525,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         logo_refs = {
             "hq_logo_android_home": {
                 "humanized_content_length": "45.4 KB",
-                "icon_class": "fa fa-picture-o",
+                "icon_class": "fa-regular fa-image",
                 "image_size": "448 X 332 Pixels",
                 "m_id": image._id,
                 "media_type": "Image",
@@ -623,7 +655,6 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
             missing_media = _get_missing_multimedia(self.master_app_with_report_modules, old_multimedia_ids)
         self.assertEqual(missing_media, [])
 
-
     def test_add_domain_to_media(self):
         self.image.valid_domains.remove(self.master_app_with_report_modules.domain)
         self.image.save()
@@ -650,7 +681,8 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         remote_details = RemoteLinkDetails(
             'http://localhost:8000', 'user', 'key'
         )
-        data = b'this is a test: \255'  # Real data will be a binary multimedia file, so mock it with bytes, not unicode
+        # Real data will be a binary multimedia file, so mock it with bytes, not unicode
+        data = b'this is a test: \255'
         media_details = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         media_details['multimedia_id'] = uuid.uuid4().hex
         media_details['media_type'] = 'CommCareMultimedia'
@@ -694,6 +726,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         self.assertEqual(media_map_item.upstream_media_id, upstream_media_id)
         # multimedia_id matches local multimedia for local app references
         self.assertEqual(media_map_item.multimedia_id, local_media._id)
+
 
 def _mock_pull_remote_master(master_app, linked_app, report_map=None):
     master_source = convert_app_for_remote_linking(master_app)

@@ -13,6 +13,7 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
 from corehq.apps.domain.utils import silence_during_tests
+from corehq.apps.es import CaseES, CaseSearchES, FormES
 from corehq.apps.userreports.dbaccessors import (
     delete_all_ucr_tables_for_domain,
 )
@@ -188,7 +189,9 @@ def delete_all_cases(domain_name):
     logger.info('Deleting cases...')
     case_ids = iter_ids(CommCareCase, 'case_id', domain_name)
     for chunk in chunked(case_ids, 1000, list):
-        CommCareCase.objects.hard_delete_cases(domain_name, chunk)
+        CommCareCase.objects.hard_delete_cases(domain_name, chunk, publish_changes=False)
+    _delete_es_docs(CaseES, domain_name)
+    _delete_es_docs(CaseSearchES, domain_name)
     logger.info('Deleting cases complete.')
 
 
@@ -196,7 +199,8 @@ def delete_all_forms(domain_name):
     logger.info('Deleting forms...')
     form_ids = iter_ids(XFormInstance, 'form_id', domain_name)
     for chunk in chunked(form_ids, 1000, list):
-        XFormInstance.objects.hard_delete_forms(domain_name, chunk)
+        XFormInstance.objects.hard_delete_forms(domain_name, chunk, publish_changes=False)
+    _delete_es_docs(FormES, domain_name)
     logger.info('Deleting forms complete.')
 
 
@@ -219,6 +223,20 @@ def iter_ids(model_class, field, domain, chunk_size=1000):
         )
 
 
+def _delete_es_docs(es_query, domain_name):
+    query = es_query().domain(domain_name)
+    with silence_during_tests() as stream:
+        doc_ids = with_progress_bar(
+            query.scroll_ids(),
+            query.count(),
+            prefix=es_query.__name__,
+            oneline="concise",
+            stream=stream,
+        )
+        for chunk in chunked(doc_ids, 1000, list):
+            query.adapter.bulk_delete(chunk)
+
+
 def _delete_data_files(domain_name):
     get_blob_db().bulk_delete(metas=list(BlobMeta.objects.partitioned_query(domain_name).filter(
         parent_id=domain_name,
@@ -229,7 +247,8 @@ def _delete_data_files(domain_name):
 def _delete_sms_content_events_schedules(domain_name):
     models = [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
-        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent'
+        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent',
+        'FCMNotificationContent'
     ]
     filters = [
         'alertevent__schedule__domain',
@@ -330,6 +349,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'StockLevelsConfig', 'StockRestoreConfig',
     ]),
     ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
+    ModelDeletion('users', 'SQLUserData', 'domain'),
     ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain', [
         'CustomDataFieldsProfile', 'Field',
     ]),
@@ -351,6 +371,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_interfaces', 'CustomActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'UpdateCaseDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CaseDuplicate', 'action__caseruleaction__rule__domain'),
+    ModelDeletion('data_interfaces', 'CaseDuplicateNew', 'action__caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CaseDeduplicationActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CreateScheduleInstanceActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleAction', 'rule__domain'),
@@ -366,7 +387,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('linked_domain', 'DomainLink', 'linked_domain', ['DomainLinkHistory']),
     CustomDeletion('scheduling', _delete_sms_content_events_schedules, [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
-        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent'
+        'IVRSurveyContent', 'SMSCallbackContent', 'CustomContent', 'FCMNotificationContent'
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'broadcast__domain'),
     ModelDeletion('scheduling', 'AlertEvent', 'schedule__domain'),
@@ -385,6 +406,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     ModelDeletion('export', 'LedgerSectionEntry', 'domain'),
     CustomDeletion('export', _delete_data_files, []),
+    ModelDeletion('geospatial', 'GeoPolygon', 'domain'),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
@@ -419,6 +441,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('userreports', 'DataSourceActionLog', 'domain'),
     ModelDeletion('userreports', 'InvalidUCRData', 'domain'),
     ModelDeletion('userreports', 'UCRExpression', 'domain'),
+    ModelDeletion('users', 'ConnectIDUserLink', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('users', 'DeactivateMobileWorkerTrigger', 'domain'),
     ModelDeletion('users', 'Invitation', 'domain'),
@@ -437,8 +460,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ]),
     ModelDeletion('repeaters', 'Repeater', 'domain'),
     ModelDeletion('motech', 'ConnectionSettings', 'domain'),
-    ModelDeletion('repeaters', 'SQLRepeatRecord', 'domain'),
-    ModelDeletion('repeaters', 'SQLRepeatRecordAttempt', 'repeat_record__domain'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedArchiveStub', 'domain'),
     ModelDeletion('fixtures', 'LookupTable', 'domain'),
@@ -448,6 +469,9 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
     ModelDeletion('events', 'Event', 'domain'),
     ModelDeletion('events', 'AttendanceTrackingConfig', 'domain'),
+    ModelDeletion('geospatial', 'GeoConfig', 'domain'),
+    ModelDeletion('email', 'EmailSettings', 'domain'),
+    ModelDeletion('hqmedia', 'LogoForSystemEmailsReference', 'domain'),
 ]
 
 

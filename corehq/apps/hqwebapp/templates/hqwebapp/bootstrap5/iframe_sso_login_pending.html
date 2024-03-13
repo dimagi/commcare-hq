@@ -1,0 +1,26 @@
+{% extends "hqwebapp/base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block title %}{% trans "Please login again with Single Sign-On" %}{% endblock %}
+
+{% block container_class %}container-fluid{% endblock %}
+
+{% block content %}
+  <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+  <div class="page-header">
+    <h1>{% trans "Please login again with Single Sign-On" %}</h1>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <p>
+        {% blocktrans %}
+          We opened a new window for you to log in again with
+          Single Sign-On. If you've finished logging in there, you
+          may close this popup. Thank you!
+        {% endblocktrans %}
+      </p>
+    </div>
+  </div>
+{% endblock content %}

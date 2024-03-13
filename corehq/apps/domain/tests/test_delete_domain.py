@@ -4,6 +4,7 @@ from contextlib import ExitStack
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from io import BytesIO
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core.management import call_command
@@ -11,7 +12,6 @@ from django.db.transaction import TransactionManagementError
 from django.test import TestCase
 
 from dateutil.relativedelta import relativedelta
-from unittest.mock import patch
 
 from casexml.apps.phone.models import SyncLogSQL
 from couchforms.models import UnfinishedSubmissionStub
@@ -51,9 +51,16 @@ from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.consumption.models import DefaultConsumption
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+)
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
-from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
+from corehq.apps.data_dictionary.models import (
+    CaseProperty,
+    CasePropertyAllowedValue,
+    CaseType,
+)
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseRuleAction,
@@ -63,6 +70,8 @@ from corehq.apps.data_interfaces.models import (
 )
 from corehq.apps.domain.deletion import DOMAIN_DELETE_OPERATIONS
 from corehq.apps.domain.models import Domain, TransferDomainRequest
+from corehq.apps.es import case_adapter, case_search_adapter, form_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
 from corehq.apps.fixtures.models import (
     LookupTable,
@@ -107,25 +116,23 @@ from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import (
     DomainRequest,
+    HqPermissions,
     Invitation,
     PermissionInfo,
-    HqPermissions,
     RoleAssignableBy,
     RolePermission,
-    UserRole,
     UserHistory,
+    UserRole,
     WebUser,
 )
+from corehq.apps.users.user_data import SQLUserData
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import CODES, NotFound, get_blob_db
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.form_processor.tests.utils import (
-    create_case,
-    create_form_for_test,
-)
+from corehq.form_processor.tests.utils import create_case, create_form_for_test
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.models import (
@@ -135,6 +142,9 @@ from corehq.motech.repeaters.models import (
     SQLRepeatRecordAttempt,
 )
 from settings import HQ_ACCOUNT_ROOT
+
+from .. import deletion as mod
+from .test_utils import delete_es_docs_patch, suspend
 
 
 class TestDeleteDomain(TestCase):
@@ -339,7 +349,7 @@ class TestDeleteDomain(TestCase):
 
     def _assert_queryset_count(self, queryset_list, count):
         for queryset in queryset_list:
-            self.assertEqual(queryset.count(), count)
+            self.assertEqual(queryset.count(), count, queryset.query)
 
     def _assert_aggregate_ucr_count(self, domain_name, count):
         self._assert_queryset_count([
@@ -493,19 +503,22 @@ class TestDeleteDomain(TestCase):
         self._assert_consumption_counts(self.domain.name, 0)
         self._assert_consumption_counts(self.domain2.name, 1)
 
-    def _assert_custom_data_fields_counts(self, domain_name, count):
-        self._assert_queryset_count([
-            CustomDataFieldsDefinition.objects.filter(domain=domain_name),
-        ], count)
-
-    def test_custom_data_fields(self):
+    def test_user_data_cascading(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            CustomDataFieldsDefinition.get_or_create(domain_name, 'UserFields')
+            user = User.objects.create(username=f'mobileuser@{domain_name}.{HQ_ACCOUNT_ROOT}')
+            definition = CustomDataFieldsDefinition.get_or_create(domain_name, 'UserFields')
+            profile = CustomDataFieldsProfile.objects.create(name='myprofile', definition=definition)
+            SQLUserData.objects.create(domain=domain_name, user_id='123', django_user=user,
+                                       profile=profile, data={})
+
+        models = [User, CustomDataFieldsDefinition, CustomDataFieldsProfile, SQLUserData]
+        for model in models:
+            self.assertEqual(model.objects.count(), 2)
 
         self.domain.delete()
 
-        self._assert_custom_data_fields_counts(self.domain.name, 0)
-        self._assert_custom_data_fields_counts(self.domain2.name, 1)
+        for model in models:
+            self.assertEqual(model.objects.count(), 1)
 
     def _assert_data_analytics_counts(self, domain_name, count):
         self._assert_queryset_count([
@@ -979,9 +992,7 @@ class TestDeleteDomain(TestCase):
                 domain=domain_name,
                 registered_at=datetime.utcnow(),
             )
-            record.sqlrepeatrecordattempt_set.create(
-                state=RECORD_SUCCESS_STATE,
-            )
+            record.attempt_set.create(state=RECORD_SUCCESS_STATE)
             self._assert_repeaters_count(domain_name, 1)
             self.addCleanup(repeater.delete)
 
@@ -1058,7 +1069,7 @@ class HardDeleteFormsAndCasesInDomainTests(TestCase):
         self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.deleted_domain.name)), 0)
 
     def test_soft_deleted_forms_are_deleted(self):
-        create_form_for_test(self.deleted_domain.name, state=XFormInstance.DELETED)
+        create_form_for_test(self.deleted_domain.name, deleted_on=datetime.now())
         call_command('hard_delete_forms_and_cases_in_domain', self.deleted_domain.name, noinput=True)
         self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.deleted_domain.name)), 0)
 
@@ -1131,6 +1142,55 @@ class HardDeleteFormsAndCasesInDomainTests(TestCase):
         for domain in [self.deleted_domain, self.extra_deleted_domain, self.domain_in_use]:
             self._cleanup_forms_and_cases(domain.name)
         super().tearDown()
+
+
+class TestDeleteElasticFormsAndCases(TestCase):
+
+    @es_test(requires=[form_adapter])
+    @suspend(delete_es_docs_patch)
+    def test_delete_all_forms_deletes_es_documents(self):
+        forms = [create_form_for_test(self.domain.name) for i in range(3)]
+        form_ids = [f.form_id for f in forms]
+        other_form = create_form_for_test(self.other_domain.name)
+        self.addCleanup(XFormInstance.objects.hard_delete_forms, self.domain.name, form_ids)
+        self.addCleanup(XFormInstance.objects.hard_delete_forms, self.other_domain.name, [other_form.form_id])
+        form_adapter.bulk_index(forms + [other_form], refresh=True)
+
+        mod.delete_all_forms(self.domain.name)
+
+        self.assertFalse(form_adapter.exists(form_ids[0]))
+        self.assertFalse(form_adapter.exists(form_ids[1]))
+        self.assertFalse(form_adapter.exists(form_ids[2]))
+        self.assertTrue(form_adapter.exists(other_form.form_id))
+
+    @es_test(requires=[case_adapter, case_search_adapter])
+    @suspend(delete_es_docs_patch)
+    def test_delete_all_cases_deletes_es_documents(self):
+        case1 = create_case(self.domain.name, save=True)
+        case2 = create_case(self.other_domain.name, save=True)
+        self.addCleanup(CommCareCase.objects.hard_delete_cases, self.domain.name, [case1.case_id])
+        self.addCleanup(CommCareCase.objects.hard_delete_cases, self.other_domain.name, [case2.case_id])
+        case_adapter.bulk_index([case1, case2], refresh=True)
+        case_search_adapter.bulk_index([case1, case2], refresh=True)
+
+        mod.delete_all_cases(self.domain.name)
+
+        self.assertFalse(case_adapter.exists(case1.case_id))
+        self.assertFalse(case_search_adapter.exists(case1.case_id))
+        self.assertTrue(case_adapter.exists(case2.case_id))
+        self.assertTrue(case_search_adapter.exists(case2.case_id))
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.domain = Domain(name='test')
+        cls.domain.save()
+        cls.addClassCleanup(ensure_deleted, cls.domain)
+
+        cls.other_domain = Domain(name='other')
+        cls.other_domain.save()
+        cls.addClassCleanup(ensure_deleted, cls.other_domain)
 
 
 def ensure_deleted(domain):

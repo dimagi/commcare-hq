@@ -18,6 +18,7 @@ services:
       JS_TEST_EXTENSIONS: "${JS_TEST_EXTENSIONS}"
       NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
       REUSE_DB: "${REUSE_DB}"
+      STRIPE_PRIVATE_KEY: "${STRIPE_PRIVATE_KEY}"
       TRAVIS: "${TRAVIS}"
       TRAVIS_BRANCH: "${TRAVIS_BRANCH}"
       TRAVIS_BUILD_ID: "${TRAVIS_BUILD_ID}"
@@ -38,7 +39,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      elasticsearch2:
+      elasticsearch5:
         condition: service_healthy
       kafka:
         condition: service_healthy
@@ -51,7 +52,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-lib:}/mnt/lib
 
   formplayer:
-    image: dimagi/formplayer
+    image: docker.io/dimagi/formplayer
     environment:
       COMMCARE_HOST: "http://host.docker.internal:8000"
       COMMCARE_ALTERNATE_ORIGINS: "http://localhost:8000,http://127.0.0.1:8000"
@@ -95,7 +96,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-couchdb2:}/opt/couchdb/data
 
   redis:
-    image: redis:7
+    image: docker.io/redis:7
     expose:
       - "6379"
     healthcheck:
@@ -104,22 +105,6 @@ services:
       retries: 10
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-redis:}/data
-
-  elasticsearch2:
-    build:
-      context: .
-      dockerfile: ./files/Dockerfile.es.2
-    environment:
-      ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
-    expose:
-      - "9200"
-    healthcheck:
-      test: bash -c 'exec 6<>/dev/tcp/elasticsearch2/9200'
-      interval: 10s
-      retries: 10
-    volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch2:}/usr/share/elasticsearch/data
-      - ./files/elasticsearch_2.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   elasticsearch5:
     build:
@@ -138,20 +123,21 @@ services:
       - ./files/elasticsearch_5.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   zookeeper:
-    image: zookeeper:3.7
+    image: docker.io/zookeeper:3.7
+    environment:
+      ZOO_4LW_COMMANDS_WHITELIST: "ruok"
     expose:
       - "2181"
-    # No healthcheck:
-    #   * Polling the port causes "EndOfStreamException: Unable to read
-    #     additional data from client, it probably closed the socket"
-    #   * Using the "ruok" command returns "ruok is not executed because it is
-    #     not in the whitelist."
-    #     See https://zookeeper.apache.org/doc/r3.7.1/zookeeperAdmin.html#sc_4lw
+    healthcheck:
+      test: echo ruok | nc localhost 2181
+      start_period: 15s
+      interval: 10s
+      retries: 10
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/opt/zookeeper-3.7/data
 
   kafka:
-    image: confluentinc/cp-kafka:7.2.2 # kafka v3.2.2
+    image: docker.io/confluentinc/cp-kafka:7.2.2 # kafka v3.2.2
     expose:
       - "9092"
     environment:
@@ -179,14 +165,16 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka:}/kafka/kafka-logs-1
 
   minio:
-    image: minio/minio
+    image: docker.io/minio/minio
     command: server --address :9980 --console-address :9981 /data
     expose:
       - "9980"
       - "9981"
     healthcheck:
-      # https://min.io/docs/minio/linux/operations/monitoring/healthcheck-probe.html#node-liveness
-      test: curl -I http://minio:9980/minio/health/live
+      # The docker image ships with the expectation that minio runs on port 9000.
+      # If we ran on port 9000, we wouldn't need to update the local alias,
+      # but we felt it was less disruptive to use this workaround
+      test: mc alias set local http://localhost:9980 "" "" >/dev/null && mc ready local
       start_period: 15s
       interval: 10s
       retries: 10

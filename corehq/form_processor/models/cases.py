@@ -28,6 +28,7 @@ from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
+    create_unique_index_name,
 )
 from corehq.util.json import CommCareJSONEncoder
 
@@ -277,9 +278,11 @@ class CommCareCaseManager(RequireDBManager):
             publish_case_saved(case)
         return undeleted_count
 
-    def hard_delete_cases(self, domain, case_ids):
+    def hard_delete_cases(self, domain, case_ids, *, publish_changes=True):
         """Permanently delete cases in domain
 
+        :param publish_changes: Flag for change feed publication.
+            Documents in Elasticsearch will not be deleted if this is false.
         :returns: Number of deleted cases.
         """
         assert isinstance(case_ids, list), type(case_ids)
@@ -287,7 +290,8 @@ class CommCareCaseManager(RequireDBManager):
             cursor.execute('SELECT hard_delete_cases(%s, %s)', [domain, case_ids])
             deleted_count = sum(row[0] for row in cursor)
 
-        self.publish_deleted_cases(domain, case_ids)
+        if publish_changes:
+            self.publish_deleted_cases(domain, case_ids)
 
         return deleted_count
 
@@ -339,6 +343,13 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         super().__init__(*args, **kwargs)
 
     def natural_key(self):
+        """
+        Django requires returning a tuple in natural_key methods:
+        https://docs.djangoproject.com/en/3.2/topics/serialization/#serialization-of-natural-keys
+        We intentionally do not follow this to optimize corehq.apps.dump_reload.sql.load.SqlDataLoader when other
+        models reference CommCareCase or XFormInstance via a foreign key. This means our loader code may break in
+        future Django upgrades.
+        """
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
         return self.case_id
@@ -504,7 +515,7 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
         """Includes non-live indices"""
         found = [i for i in self.indices if i.identifier == index_id]
         if found:
-            assert(len(found) == 1)
+            assert len(found) == 1
             return found[0]
         return None
 
@@ -817,18 +828,25 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
             ["domain", "external_id", "type"],
             ["domain", "type"],
         ]
+        indexes = [
+            models.Index(fields=['deleted_on'],
+                         name=create_unique_index_name('form_processor',
+                                                       'commcarecase',
+                                                       ['deleted_on']),
+                         condition=models.Q(deleted_on__isnull=False))
+        ]
         app_label = "form_processor"
         db_table = 'form_processor_commcarecasesql'
 
 
 def get_index_map(indices):
-    return dict([
-        (index.identifier, {
+    return {
+        index.identifier: {
             "case_type": index.referenced_type,
             "case_id": index.referenced_id,
             "relationship": index.relationship,
-        }) for index in indices
-    ])
+        } for index in indices
+    }
 
 
 class CaseAttachmentManager(RequireDBManager):
@@ -900,7 +918,7 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.attachment_id
+        return self.case_id, self.attachment_id
 
     def from_form_attachment(self, attachment, attachment_src):
         """
@@ -1101,7 +1119,7 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.domain, self.case, self.identifier
+        return self.domain, self.case_id, self.identifier
 
     @property
     def is_deleted(self):
@@ -1152,14 +1170,14 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
 
     def __str__(self):
         return (
-            "CaseIndex("
-            "case_id='{i.case_id}', "
-            "domain='{i.domain}', "
-            "identifier='{i.identifier}', "
-            "referenced_type='{i.referenced_type}', "
-            "referenced_id='{i.referenced_id}', "
-            "relationship='{i.relationship})"
-        ).format(i=self)
+            'CaseIndex('
+            f'case_id={self.case_id!r}, '
+            f'domain={self.domain!r}, '
+            f'identifier={self.identifier!r}, '
+            f'referenced_type={self.referenced_type!r}, '
+            f'referenced_id={self.referenced_id!r}, '
+            f'relationship={self.relationship!r})'
+        )
 
     class Meta(object):
         index_together = [
@@ -1304,7 +1322,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
-        return self.case, self.form_id, self.type
+        return self.case_id, self.form_id, self.type
 
     @staticmethod
     def _should_process(transaction_type):

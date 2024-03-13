@@ -12,7 +12,6 @@ from phonelog.models import DeviceReportEntry
 from phonelog.reports import BaseDeviceLogReport
 
 from corehq.apps.auditcare.utils.export import navigation_events_by_user
-from corehq.apps.es import users as user_es
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
@@ -21,6 +20,7 @@ from corehq.apps.reports.standard.sms import PhoneNumberReport
 from corehq.apps.sms.filters import RequiredPhoneNumberFilter
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import PhoneNumber
+from corehq.apps.users.dbaccessors import get_all_user_search_query
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.apps.hqadmin.models import HqDeploy
 
@@ -240,15 +240,8 @@ class UserListReport(GetParamsMixin, AdminReport):
             ]
 
     def _users_query(self):
-        query = (user_es.UserES()
-                 .remove_default_filters()
-                 .OR(user_es.web_users(), user_es.mobile_users()))
-        if 'search_string' in self.request.GET:
-            search_string = self.request.GET['search_string']
-            fields = ['username', 'first_name', 'last_name', 'phone_numbers',
-                      'domain_membership.domain', 'domain_memberships.domain']
-            query = query.search_string_query(search_string, fields)
-        return query
+        search_string = self.request.GET.get('search_string', None)
+        return get_all_user_search_query(search_string)
 
     def _get_page(self, query):
         return (query

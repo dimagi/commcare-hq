@@ -40,7 +40,7 @@ from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.dhis2.parse_response import get_errors, get_diagnosis_message
 from corehq.motech.models import RequestLog
 
-from ..const import RECORD_CANCELLED_STATE
+from ..const import State, RECORD_CANCELLED_STATE
 from ..dbaccessors import (
     get_cancelled_repeat_record_count,
     get_paged_repeat_records,
@@ -67,6 +67,9 @@ class BaseRepeatRecordReport(GenericTabularReport):
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
         'corehq.apps.reports.filters.simple.RepeaterPayloadIdFilter',
     ]
+
+    # Keys match RepeatRecordStateFilter.options[*][0]
+    _state_map = {s.name.upper(): s for s in State}
 
     def _make_cancel_payload_button(self, record_id):
         return format_html('''
@@ -142,7 +145,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
         return [
             r for r in get_repeat_records_by_payload_id(self.domain, self.payload_id)
             if (not self.repeater_id or r.repeater_id == self.repeater_id)
-               and (not self.state or r.state == self.state)
+            and (not self.state or r.state == self.state)
         ]
 
     @property
@@ -155,7 +158,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
 
     @property
     def rows(self):
-        self.state = self.request.GET.get('record_state', None)
+        self.state = self._state_map.get(self.request.GET.get('record_state'))
         if self.payload_id:
             end = self.pagination.start + self.pagination.count
             records = self._get_all_records_by_payload()[self.pagination.start:end]
@@ -306,7 +309,13 @@ class RepeatRecordView(View):
     def get(self, request, domain):
         record_id = request.GET.get('record_id')
         record = self.get_record_or_404(domain, record_id)
-        content_type = record.repeater.generator.content_type
+        repeater = record.repeater
+        if not repeater:
+            return JsonResponse({
+                'error': 'Repeater with id {} could not be found'.format(
+                    record.repeater_id)
+            }, status=404)
+        content_type = repeater.generator.content_type
         try:
             payload = record.get_payload()
         except XFormNotFound:

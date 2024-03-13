@@ -1,4 +1,4 @@
-/* globals hqDefine moment */
+/* globals moment */
 hqDefine('app_manager/js/forms/app_notifications', function () {
     var getMessage = function (redisMessage, userId) {
         var msgObj = JSON.parse(redisMessage);
@@ -11,7 +11,7 @@ hqDefine('app_manager/js/forms/app_notifications', function () {
 
     var alertUser = function (userId, callback, context) {
         if (!callback) {
-            callback = hqImport("hqwebapp/js/alert_user").alert_user;
+            callback = hqImport("hqwebapp/js/bootstrap3/alert_user").alert_user;
         }
         return function (redisMessage) {
             var message = getMessage(redisMessage, userId);

@@ -1,0 +1,99 @@
+<detail id="{detail_id}">
+  <title>
+    <text>
+      <locale id="{title_text_id}"/>
+    </text>
+  </title>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+      <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{header[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{header[format]}">
+      <text>
+        <xpath function="{header[xpath_function]}">
+          {header[variables]}
+        </xpath>
+      </text>
+    </template>
+    {header[endpoint_action]}
+  </field>
+
+  <field>
+    <header>
+      <text>
+        <locale id="{map[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{map[format]}" width="0">
+      <text>
+        <xpath function="concat({map[xpath_function]}, if(here(), '', ''))"> <!-- Without the here() call sessionStorage.locationLat will not be populated -->
+          {map[variables]}
+        </xpath>
+      </text>
+    </template>
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+      <grid grid-height="1" grid-width="7" grid-x="0" grid-y="1"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{top_left[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{top_left[format]}">
+      <text>
+        <xpath function="{top_left[xpath_function]}">
+          {top_left[variables]}
+        </xpath>
+      </text>
+    </template>
+    {top_left[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+      <grid grid-height="1" grid-width="4" grid-x="8" grid-y="1"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{top_right[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{top_right[format]}">
+      <text>
+        <xpath function="{top_right[xpath_function]}">
+          {top_right[variables]}
+        </xpath>
+      </text>
+    </template>
+    {top_right[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+      <grid grid-height="1" grid-width="12" grid-x="0" grid-y="2"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{bottom[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{bottom[format]}">
+      <text>
+        <xpath function="{bottom[xpath_function]}">
+          {bottom[variables]}
+        </xpath>
+      </text>
+    </template>
+    {bottom[endpoint_action]}
+  </field>
+
+</detail>

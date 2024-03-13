@@ -979,6 +979,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     CONTENT_API_SMS = 'API'
     CONTENT_CHAT_SMS = 'CHT'
     CONTENT_EMAIL = 'EML'
+    CONTENT_FCM_Notification = 'FCM'
 
     CONTENT_CHOICES = (
         (CONTENT_NONE, gettext_noop('None')),
@@ -991,6 +992,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         (CONTENT_API_SMS, gettext_noop('Message Sent Via API')),
         (CONTENT_CHAT_SMS, gettext_noop('Message Sent Via Chat')),
         (CONTENT_EMAIL, gettext_noop('Email')),
+        (CONTENT_FCM_Notification, gettext_noop('FCM Push Notification')),
     )
 
     CONTENT_TYPE_SLUGS = {
@@ -1004,6 +1006,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         CONTENT_API_SMS: "api-sms",
         CONTENT_CHAT_SMS: "chat-sms",
         CONTENT_EMAIL: "email",
+        CONTENT_FCM_Notification: 'fcm-notification',
     }
 
     RECIPIENT_CASE = 'CAS'
@@ -1060,6 +1063,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_TRIAL_EMAIL_LIMIT_REACHED = 'TRIAL_EMAIL_LIMIT_REACHED'
     ERROR_EMAIL_BOUNCED = 'EMAIL_BOUNCED'
     ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
+    ERROR_NO_FCM_TOKENS = 'NO_FCM_TOKENS'
+    ERROR_FCM_NOT_AVAILABLE = 'FCM_NOT_AVAILABLE'
+    ERROR_FCM_UNSUPPORTED_RECIPIENT = 'FCM_UNSUPPORTED_RECIPIENT'
+    ERROR_FCM_NO_ACTION = "FCM_NO_ACTION"
+    ERROR_FCM_NOTIFICATION_FAILURE = "FCM_NOTIFICATION_FAILURE"
+    ERROR_FCM_DOMAIN_NOT_ENABLED = 'FCM_DOMAIN_NOT_ENABLED'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -1115,6 +1124,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
                 "sending reminder emails on a Trial plan has been reached."),
         ERROR_EMAIL_BOUNCED: gettext_noop("Email Bounced"),
         ERROR_EMAIL_GATEWAY: gettext_noop("Email Gateway Error"),
+        ERROR_NO_FCM_TOKENS: gettext_noop("No FCM tokens found for recipient."),
+        ERROR_FCM_NOT_AVAILABLE: gettext_noop("FCM not available on this environment."),
+        ERROR_FCM_UNSUPPORTED_RECIPIENT: gettext_noop("FCM is supported for Mobile Workers only."),
+        ERROR_FCM_NO_ACTION: gettext_noop("No action selected for the FCM Data message type."),
+        ERROR_FCM_NOTIFICATION_FAILURE: gettext_noop("Failure while sending FCM notifications to the devices."),
+        ERROR_FCM_DOMAIN_NOT_ENABLED: gettext_noop("Domain is not enabled for FCM Push Notifications"),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
@@ -1302,7 +1317,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             SMSContent,
             SMSSurveyContent,
             EmailContent,
-            CustomContent
+            CustomContent,
+            FCMNotificationContent,
         )
 
         if isinstance(content, (SMSContent, CustomContent)):
@@ -1313,6 +1329,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             return cls.CONTENT_SMS_SURVEY, content.app_id, content.form_unique_id, form_name
         elif isinstance(content, EmailContent):
             return cls.CONTENT_EMAIL, None, None, None
+        elif isinstance(content, FCMNotificationContent):
+            return cls.CONTENT_FCM_Notification, None, None, None
         else:
             return cls.CONTENT_NONE, None, None, None
 
@@ -2660,3 +2678,4 @@ class Email(models.Model):
     recipient_address = models.CharField(max_length=255, db_index=True)
     subject = models.TextField(null=True)
     body = models.TextField(null=True)
+    html_body = models.TextField(null=True)

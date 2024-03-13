@@ -12,12 +12,13 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         var self = {};
         self.dataTableElem = options.dataTableElem || '.datatable';
         self.paginationType = options.paginationType || 'bs_normal';
+        self.forcePageSize = options.forcePageSize || false;
         self.defaultRows = options.defaultRows || 10;
         self.startAtRowNum = options.startAtRowNum || 0;
         self.showAllRowsOption = options.showAllRowsOption || false;
         self.aoColumns = options.aoColumns;
-        self.autoWidth = (options.autoWidth != undefined) ? options.autoWidth : true;
-        self.defaultSort = (options.defaultSort != undefined) ? options.defaultSort : true;
+        self.autoWidth = (options.autoWidth !== undefined) ? options.autoWidth : true;
+        self.defaultSort = (options.defaultSort !== undefined) ? options.defaultSort : true;
         self.customSort = options.customSort || null;
         self.ajaxParams = options.ajaxParams || {};
         self.ajaxSource = options.ajaxSource;
@@ -53,7 +54,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
             return function (id, row) {
                 if ($dataTableElem.find('tfoot').length === 0) {
                     var $row = $dataTableElem.find('#' + id);
-                    if ($row.length == 0) {
+                    if ($row.length === 0) {
                         $row = $('<tfoot />');
                         $dataTableElem.append($row);
                     }
@@ -120,7 +121,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                     self.fmtParams = function (defParams) {
                         var ajaxParams = $.isFunction(self.ajaxParams) ? self.ajaxParams() : self.ajaxParams;
                         for (var p in ajaxParams) {
-                            if (ajaxParams.hasOwnProperty(p)) {
+                            if (_.has(ajaxParams, p)) {
                                 var currentParam = ajaxParams[p];
                                 if (_.isObject(currentParam.value)) {
                                     for (var j = 0; j < currentParam.value.length; j++) {
@@ -137,7 +138,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                         return defParams;
                     };
                     params.fnServerData = function (sSource, aoData, fnCallback, oSettings) {
-                        var custom_callback = function (data) {
+                        var customCallback = function (data) {
                             if (data.warning) {
                                 throw new Error(data.warning);
                             }
@@ -169,7 +170,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                             "url": sSource.url,
                             "method": sSource.method,
                             "data": self.fmtParams(aoData),
-                            "success": custom_callback,
+                            "success": customCallback,
                             "error": function (jqXHR, textStatus, errorThrown) {
                                 $(".dataTables_processing").hide();
                                 if (jqXHR.status === 400) {
@@ -183,7 +184,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                                 }
                                 $(".dataTables_empty").show();
                                 if (self.errorCallbacks) {
-                                    for (i = 0; i < self.errorCallbacks.length; i++) {
+                                    for (var i = 0; i < self.errorCallbacks.length; i++) {
                                         self.errorCallbacks[i](jqXHR, textStatus, errorThrown);
                                     }
                                 }
@@ -204,12 +205,18 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                     }
                 };
 
-                if (self.aoColumns)
+                if (self.aoColumns) {
                     params.aoColumns = self.aoColumns;
+                }
 
+                if (self.forcePageSize) {
+                    // limit the page size option to just the default size
+                    params.lengthMenu = [self.defaultRows];
+                }
                 var datatable = $(this).dataTable(params);
-                if (!self.datatable)
+                if (!self.datatable) {
                     self.datatable = datatable;
+                }
 
                 if (self.fixColumns) {
                     new $.fn.dataTable.FixedColumns(datatable, {
@@ -217,12 +224,6 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                         iLeftWidth: self.fixColsWidth,
                     });
                 }
-                // only resize the window once every 5 seconds to avoid making
-                // tons of requests when the size of the window is dragged.
-                // http://manage.dimagi.com/default.asp?221237
-                var throttledResize = _.throttle(function () {
-                    datatable.fnAdjustColumnSizing();
-                }, 5000);
 
                 // This fixes a display bug in some browsers where the pagination
                 // overlaps the footer when resizing from 10 to 100 or 10 to 50 rows
@@ -267,12 +268,13 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                     $dataTablesLength.append($selectField);
                     $selectLabel.remove();
                     $selectField.children().append(" per page");
-                    if (self.showAllRowsOption)
+                    if (self.showAllRowsOption) {
                         $selectField.append($('<option value="-1" />').text("All Rows"));
+                    }
                     $selectField.addClass('form-control');
                     $selectField.on("change", function () {
-                        var selected_value = $selectField.find('option:selected').val();
-                        googleAnalytics.track.event("Reports", "Changed number of items shown", selected_value);
+                        var selectedValue = $selectField.find('option:selected').val();
+                        googleAnalytics.track.event("Reports", "Changed number of items shown", selectedValue);
                     });
                 }
                 $(".dataTables_length select").change(function () {
@@ -297,9 +299,15 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         var y = convert(b);
 
         // sort nulls at end regardless of current sort direction
-        if (x === null && y === null) return 0;
-        if (x === null) return 1;
-        if (y === null) return -1;
+        if (x === null && y === null) {
+            return 0;
+        }
+        if (x === null) {
+            return 1;
+        }
+        if (y === null) {
+            return -1;
+        }
 
         return (asc ? 1 : -1) * ((x < y) ? -1 : ((x > y) ?  1 : 0));
     }
@@ -317,6 +325,9 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
 
     function convertDate(k) {
         var m = k.match(/title="*(.+)"/);
+        if (m[1] === "None") {
+            return null;
+        }
         return new Date(m[1]);
     }
 

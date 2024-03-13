@@ -160,6 +160,12 @@ class BillingAccountBasicForm(forms.Form):
         help_text="Users in any projects connected to this account will not "
                   "have data sent to Hubspot",
     )
+    bill_web_user = forms.BooleanField(
+        label="Bill Web User",
+        required=False,
+        initial=False,
+        help_text="Include Web Users in invoice (requires a subscription with Web User Feature)"
+    )
 
     def __init__(self, account, *args, **kwargs):
         self.account = account
@@ -181,6 +187,7 @@ class BillingAccountBasicForm(forms.Form):
                 'last_payment_method': account.last_payment_method,
                 'pre_or_post_pay': account.pre_or_post_pay,
                 'block_hubspot_data_for_all_users': account.block_hubspot_data_for_all_users,
+                'bill_web_user': account.bill_web_user,
             }
         else:
             kwargs['initial'] = {
@@ -262,6 +269,10 @@ class BillingAccountBasicForm(forms.Form):
                     hqcrispy.MultiInlineField(
                         'block_hubspot_data_for_all_users',
                     ),
+                ),
+                hqcrispy.B3MultiField(
+                    "Bill Web Users",
+                    hqcrispy.MultiInlineField('bill_web_user'),
                 ),
             ])
         self.helper.layout = crispy.Layout(
@@ -403,6 +414,7 @@ class BillingAccountBasicForm(forms.Form):
         account.enterprise_restricted_signup_domains = self.cleaned_data['enterprise_restricted_signup_domains']
         account.invoicing_plan = self.cleaned_data['invoicing_plan']
         account.block_hubspot_data_for_all_users = self.cleaned_data['block_hubspot_data_for_all_users']
+        account.bill_web_user = self.cleaned_data['bill_web_user']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
@@ -503,6 +515,14 @@ class SubscriptionForm(forms.Form):
         label=gettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
+    plan_visibility = forms.ChoiceField(
+        label=gettext_lazy("Visibility"), initial=SoftwarePlanVisibility.PUBLIC,
+        choices=SoftwarePlanVisibility.CHOICES,
+    )
+    most_recent_version = forms.ChoiceField(
+        label=gettext_lazy("Version"), initial="True",
+        choices=(("True", "Show Most Recent Version"), ("False", "Show All Versions"))
+    )
     plan_version = forms.IntegerField(
         label=gettext_lazy("Software Plan"),
         widget=forms.Select(choices=[]),
@@ -597,7 +617,19 @@ class SubscriptionForm(forms.Form):
                 'plan_edition',
                 self.fields['plan_edition'].initial
             )
-
+            self.fields['plan_visibility'].initial = subscription.plan_version.plan.visibility
+            plan_visibility_field = hqcrispy.B3TextField(
+                'plan_visibility',
+                self.fields['plan_visibility'].initial
+            )
+            is_most_recent_version = subscription.plan_version.plan.get_version() == subscription.plan_version
+            most_recent_version_text = ("is most recent version" if is_most_recent_version
+                                        else "not most recent version")
+            self.fields['most_recent_version'].initial = is_most_recent_version
+            most_recent_version_field = hqcrispy.B3TextField(
+                'most_recent_version',
+                most_recent_version_text
+            )
             self.fields['domain'].choices = [
                 (subscription.subscriber.domain, subscription.subscriber.domain)
             ]
@@ -654,6 +686,8 @@ class SubscriptionForm(forms.Form):
                 placeholder="Search for Project Space"
             )
             plan_edition_field = crispy.Field('plan_edition')
+            plan_visibility_field = crispy.Field('plan_visibility')
+            most_recent_version_field = crispy.Field('most_recent_version')
             plan_version_field = crispy.Field(
                 'plan_version', css_class="input-xxlarge",
                 placeholder="Search for Software Plan"
@@ -680,8 +714,15 @@ class SubscriptionForm(forms.Form):
                 crispy.Div(*transfer_fields),
                 start_date_field,
                 end_date_field,
-                plan_edition_field,
-                plan_version_field,
+                crispy.Div(
+                    crispy.HTML('<h4 style="margin-bottom: 20px;">%s</h4>'
+                            % _("Software Plan"),),
+                    plan_edition_field,
+                    plan_visibility_field,
+                    most_recent_version_field,
+                    plan_version_field,
+                    css_class="well",
+                ),
                 domain_field,
                 'salesforce_contract_id',
                 hqcrispy.B3MultiField(
@@ -840,6 +881,14 @@ class ChangeSubscriptionForm(forms.Form):
         label=gettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
     )
+    new_plan_visibility = forms.ChoiceField(
+        label=gettext_lazy("Visibility"), initial=SoftwarePlanVisibility.PUBLIC,
+        choices=SoftwarePlanVisibility.CHOICES,
+    )
+    new_plan_most_recent_version = forms.ChoiceField(
+        label=gettext_lazy("Version"), initial="True",
+        choices=(("True", "Show Most Recent Version"), ("False", "Show All Versions"))
+    )
     new_plan_version = forms.CharField(
         label=gettext_lazy("New Software Plan"),
         widget=forms.Select(choices=[]),
@@ -879,11 +928,18 @@ class ChangeSubscriptionForm(forms.Form):
             crispy.Fieldset(
                 "Change Subscription",
                 crispy.Field('new_date_end', css_class="date-picker"),
-                'new_plan_edition',
-                crispy.Field(
-                    'new_plan_version', css_class="input-xxlarge",
-                    placeholder="Search for Software Plan",
-                    style="width: 100%;"
+                crispy.Div(
+                    crispy.HTML('<h4 style="margin-bottom: 20px;">%s</h4>'
+                            % _("Software Plan"),),
+                    'new_plan_edition',
+                    'new_plan_visibility',
+                    'new_plan_most_recent_version',
+                    crispy.Field(
+                        'new_plan_version', css_class="input-xxlarge",
+                        placeholder="Search for Software Plan",
+                        style="width: 100%;"
+                    ),
+                    css_class="well",
                 ),
                 'service_type',
                 'pro_bono_status',
@@ -1642,11 +1698,16 @@ class SoftwarePlanVersionForm(forms.Form):
         if errors:
             self._errors.setdefault('feature_rates', errors)
 
-        required_types = list(dict(FeatureType.CHOICES))
+        required_types = [FeatureType.USER, FeatureType.SMS]
+        all_types = list(dict(FeatureType.CHOICES))
         feature_types = [r.feature.feature_type for r in rate_instances]
-        if any([feature_types.count(t) != 1 for t in required_types]):
+        if any([feature_types.count(t) == 0 for t in required_types]):
             raise ValidationError(_(
-                "You must specify exactly one rate per feature type "
+                "You must specify a rate for SMS and USER feature type"
+            ))
+        if any([feature_types.count(t) > 1 for t in all_types]):
+            raise ValidationError(_(
+                "You can only specify one rate per feature type "
                 "(SMS, USER, etc.)"
             ))
 

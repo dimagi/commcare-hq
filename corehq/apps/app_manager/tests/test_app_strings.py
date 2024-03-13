@@ -15,6 +15,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchAgainLabel,
     CaseSearchLabel,
     CaseSearchProperty,
+    MappingItem,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import SuiteMixin
@@ -72,9 +73,11 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             ('क्लिक', '<value>क्लिक</value>'),
             ('&#39', '<value>&amp;#39</value>'),
             ('question1 is <output value="/data/question1" vellum:value="#form/question1"/> !',
-             '<value>question1 is &lt;output value="/data/question1" vellum:value="#form/question1"/&gt; !</value>'),
+             '<value>question1 is &lt;output value="/data/question1" '
+             'vellum:value="#form/question1"/&gt; !</value>'),
             ('Here is a ref <output value="/data/no_media"/> with some "trailing" text & that\'s some bad < xml.',
-             '<value>Here is a ref &lt;output value="/data/no_media"/&gt; with some "trailing" text &amp; that\'s some bad &lt; xml.</value>')
+             '<value>Here is a ref &lt;output value="/data/no_media"/&gt; with some "trailing" text &amp; that\'s'
+             ' some bad &lt; xml.</value>')
 
         ]
         for input, expected_output in test_cases:
@@ -174,6 +177,8 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
                 label={'en': 'Get them all'}
             ),
             properties=[
+                CaseSearchProperty(is_group=True, name='group_header_0',
+                                   group_key='group_header_0', label={'en': 'Personal Information'}),
                 CaseSearchProperty(name="name", label={'en': 'Name'})
             ]
         )
@@ -201,6 +206,8 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             self.assertEqual(en_app_strings['case_search.m0.icon'], 'jr://file/commcare/image/1.png')
             self.assertEqual(en_app_strings['case_search.m0.audio'], 'jr://file/commcare/image/2.mp3')
             self.assertEqual(en_app_strings['case_search.m0.again'], 'Get them all')
+            self.assertEqual(en_app_strings['search_property.m0.name'], 'Name')
+            self.assertEqual(en_app_strings['search_property.m0.group_header_0'], 'Personal Information')
 
             # non-default language
             es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
@@ -256,3 +263,82 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
                 en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
             except AttributeError:
                 self.fail("_generate_app_strings raised AttributeError unexpectedly")
+
+    def test_form_submit_label(self):
+        factory = AppFactory(build_version='2.40.0')
+        factory.app.langs = ['en', 'es']
+        module, form = factory.new_basic_module('my_module', 'cases')
+        form.submit_label = {
+            'en': 'Submit Button',
+            'es': 'Botón de Enviar',
+        }
+        form.submit_notification_label = {
+            'en': 'You submitted the form!',
+            'es': '¡Enviaste el formulario!',
+        }
+        en_strings = self._generate_app_strings(factory.app, 'en')
+        self.assertEqual(en_strings['forms.m0f0.submit_label'], form.submit_label['en'])
+        self.assertEqual(en_strings['forms.m0f0.submit_notification_label'], form.submit_notification_label['en'])
+
+        es_strings = self._generate_app_strings(factory.app, 'es')
+        self.assertEqual(es_strings['forms.m0f0.submit_label'], form.submit_label['es'])
+        self.assertEqual(es_strings['forms.m0f0.submit_notification_label'], form.submit_notification_label['es'])
+
+        default_strings = self._generate_app_strings(factory.app, 'default')
+        self.assertEqual(default_strings['forms.m0f0.submit_label'], form.submit_label['en'])
+        self.assertEqual(default_strings['forms.m0f0.submit_notification_label'],
+                         form.submit_notification_label['en'])
+
+    def test_select_text_app_strings(self):
+        factory = AppFactory(build_version='2.54.0')
+        factory.app.langs = ['en', 'fra']
+        factory.app.build_profiles = OrderedDict({
+            'en': BuildProfile(langs=['en'], name='en-profile'),
+            'fra': BuildProfile(langs=['fra'], name='fra-profile'),
+        })
+        module, form = factory.new_basic_module('my_module', 'cases')
+        module.case_details.short.select_text = {'en': 'Continue with case', 'fra': 'Continuer avec le cas'}
+
+        app = Application.wrap(factory.app.to_json())
+
+        en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
+        self.assertEqual(en_app_strings['m0_select_text'], 'Continue with case')
+
+        es_app_strings = self._generate_app_strings(app, 'fra', build_profile_id='fra')
+        self.assertEqual(es_app_strings['m0_select_text'], 'Continuer avec le cas')
+
+    def test_alt_text_app_strings(self):
+        factory = AppFactory(build_version='2.54.0')
+        factory.app.langs = ['en', 'fra']
+        factory.app.build_profiles = OrderedDict({
+            'en': BuildProfile(langs=['en'], name='en-profile'),
+            'fra': BuildProfile(langs=['fra'], name='fra-profile'),
+        })
+        module, form = factory.new_basic_module('my_module', 'cases')
+
+        short_column = module.case_details.short.get_column(0)
+        short_column.format = 'clickable-icon'
+        short_column.model = 'case'
+        short_column.field = 'is_favorite'
+        short_column.enum = [
+            MappingItem(
+                key='true',
+                value={
+                    'en': 'jr://image_is_favorite.png',
+                    'fra': 'jr://image_is_favorite.png',
+                },
+                alt_text={
+                    'en': 'filled yellow star',
+                    'fra': 'étoile jaune remplie',
+                }
+            ),
+        ]
+
+        app = Application.wrap(factory.app.to_json())
+
+        en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
+        self.assertEqual(en_app_strings['m0.case_short.case_is_favorite_1.alt_text.ktrue'], 'filled yellow star')
+
+        fra_app_strings = self._generate_app_strings(app, 'fra', build_profile_id='fra')
+        self.assertEqual(fra_app_strings['m0.case_short.case_is_favorite_1.alt_text.ktrue'],
+                         'étoile jaune remplie')

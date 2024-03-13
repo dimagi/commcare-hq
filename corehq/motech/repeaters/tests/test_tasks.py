@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
-import uuid
 
 from django.test import TestCase
 from django.utils import timezone
@@ -14,14 +13,14 @@ from corehq.form_processor.utils.xform import (
     TestFormMetadata,
 )
 from corehq.motech.models import ConnectionSettings, RequestLog
-
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
+from corehq.motech.repeaters.models import FormRepeater, RepeatRecord, Repeater
+from corehq.motech.repeaters.tasks import delete_old_request_logs, process_repeater, _process_repeat_record
 from ..const import (
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
 )
-from ..models import FormRepeater
-from ..tasks import process_repeater, delete_old_request_logs
 
 DOMAIN = 'gaidhlig'
 PAYLOAD_IDS = ['aon', 'dha', 'trì', 'ceithir', 'coig', 'sia', 'seachd', 'ochd',
@@ -29,9 +28,6 @@ PAYLOAD_IDS = ['aon', 'dha', 'trì', 'ceithir', 'coig', 'sia', 'seachd', 'ochd',
 
 
 class TestDeleteOldRequestLogs(TestCase):
-
-    def tearDown(self):
-        RequestLog.objects.filter(domain=DOMAIN).delete()
 
     def test_raw_delete_logs_old(self):
         log = RequestLog.objects.create(domain=DOMAIN)
@@ -79,16 +75,17 @@ class TestProcessRepeater(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = create_domain(DOMAIN)
+        cls.addClassCleanup(cls.domain.delete)
         cls.connection_settings = ConnectionSettings.objects.create(
             domain=DOMAIN,
             name='Test API',
             url="http://localhost/api/"
         )
+        cls.addClassCleanup(delete_all_repeat_records)
 
     def setUp(self):
         self.repeater = FormRepeater.objects.create(
             domain=DOMAIN,
-            repeater_id=uuid.uuid4().hex,
             format='form_xml',
             connection_settings=self.connection_settings
         )
@@ -100,15 +97,6 @@ class TestProcessRepeater(TestCase):
                 registered_at=just_now,
             )
             just_now += timedelta(seconds=1)
-
-    def tearDown(self):
-        self.repeater.delete()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.connection_settings.delete()
-        cls.domain.delete()
-        super().tearDownClass()
 
     def test_get_payload_fails(self):
         # If the payload of a repeat record is missing, it should be
@@ -154,3 +142,168 @@ def form_context(form_ids):
         yield
     finally:
         XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids)
+
+
+class TestProcessRepeatRecord(TestCase):
+
+    def test_returns_if_record_is_cancelled(self):
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=self.repeater.repeater_id,
+            next_check=None,
+            cancelled=True,
+        )
+
+        _process_repeat_record(repeat_record)
+
+        self.assertEqual(self.mock_fire.call_count, 0)
+        self.assertEqual(self.mock_postpone_by.call_count, 0)
+
+    def test_cancels_and_returns_if_domain_cannot_forward(self):
+        self.mock_domain_can_forward.return_value = False
+
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=self.repeater.repeater_id,
+        )
+
+        _process_repeat_record(repeat_record)
+
+        fetched_repeat_record = RepeatRecord.get(repeat_record._id)
+        self.assertTrue(fetched_repeat_record.cancelled)
+        self.assertEqual(self.mock_fire.call_count, 0)
+        self.assertEqual(self.mock_postpone_by.call_count, 0)
+
+    def test_cancels_and_returns_if_repeat_record_exceeds_max_retries(self):
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=self.repeater.repeater_id,
+            failure_reason='test',
+            overall_tries=1,
+            max_possible_tries=1
+        )
+
+        _process_repeat_record(repeat_record)
+
+        fetched_repeat_record = RepeatRecord.get(repeat_record._id)
+        self.assertTrue(fetched_repeat_record.cancelled)
+        self.assertEqual(self.mock_fire.call_count, 0)
+        self.assertEqual(self.mock_postpone_by.call_count, 0)
+
+    def test_deletes_repeat_record_cancels_and_returns_if_repeater_deleted(self):
+        deleted_repeater = Repeater.objects.create(
+            domain=self.domain,
+            connection_settings=self.conn_settings,
+            is_deleted=True
+        )
+
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=deleted_repeater.repeater_id,
+        )
+
+        _process_repeat_record(repeat_record)
+
+        fetched_repeat_record = RepeatRecord.get(repeat_record._id)
+        self.assertEqual(fetched_repeat_record.doc_type, 'RepeatRecord-Deleted')
+        self.assertTrue(fetched_repeat_record.cancelled)
+        self.assertEqual(self.mock_fire.call_count, 0)
+        self.assertEqual(self.mock_postpone_by.call_count, 0)
+
+    def test_postpones_record_if_repeater_is_paused(self):
+        paused_repeater = Repeater.objects.create(
+            domain=self.domain,
+            connection_settings=self.conn_settings,
+            is_paused=True
+        )
+
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=paused_repeater.repeater_id,
+        )
+
+        _process_repeat_record(repeat_record)
+
+        self.assertEqual(self.mock_fire.call_count, 0)
+        self.assertEqual(self.mock_postpone_by.call_count, 1)
+
+    def test_fires_record_if_repeater_is_not_paused(self):
+        paused_repeater = Repeater.objects.create(
+            domain=self.domain,
+            connection_settings=self.conn_settings,
+            is_paused=False
+        )
+
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=paused_repeater.repeater_id,
+        )
+
+        _process_repeat_record(repeat_record)
+
+        self.assertEqual(self.mock_fire.call_count, 1)
+        self.assertEqual(self.mock_postpone_by.call_count, 0)
+
+    def test_paused_and_deleted_repeater_does_not_fire_or_postpone(self):
+        paused_and_deleted_repeater = Repeater.objects.create(
+            domain=self.domain,
+            connection_settings=self.conn_settings,
+            is_paused=True,
+            is_deleted=True,
+        )
+
+        repeat_record = RepeatRecord(
+            domain=self.domain,
+            payload_id='abc123',
+            registered_at=datetime.utcnow(),
+            repeater_id=paused_and_deleted_repeater.repeater_id,
+        )
+
+        _process_repeat_record(repeat_record)
+
+        self.assertEqual(self.mock_fire.call_count, 0)
+        self.assertEqual(self.mock_postpone_by.call_count, 0)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'process-repeat-record-tests'
+        cls.conn_settings = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            name='To Be Deleted',
+            url="http://localhost/api/"
+        )
+        cls.repeater = Repeater.objects.create(
+            domain=cls.domain,
+            connection_settings=cls.conn_settings,
+        )
+        cls.addClassCleanup(delete_all_repeat_records)
+
+    def setUp(self):
+        self.patch()
+
+    def patch(self):
+        patch_fire = patch.object(RepeatRecord, 'fire')
+        self.mock_fire = patch_fire.start()
+        self.addCleanup(patch_fire.stop)
+
+        patch_postpone_by = patch.object(RepeatRecord, 'postpone_by')
+        self.mock_postpone_by = patch_postpone_by.start()
+        self.addCleanup(patch_postpone_by.stop)
+
+        patch_domain_can_forward = patch('corehq.motech.repeaters.tasks.domain_can_forward')
+        self.mock_domain_can_forward = patch_domain_can_forward.start()
+        self.mock_domain_can_forward.return_value = True
+        self.addCleanup(patch_domain_can_forward.stop)

@@ -1,9 +1,0 @@
-{% load hq_shared_tags %}
-
-{% maintenance_alerts request as alerts %}
-{% for alert in alerts %}
-  <div class="alert alert-warning alert-maintenance hide" data-id="{{ alert.id }}">
-      <button class="close" data-dismiss="alert" aria-label="close">&times;</button>
-      {{ alert.html }}
-  </div>
-{% endfor %}

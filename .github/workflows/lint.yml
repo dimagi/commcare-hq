@@ -1,0 +1,71 @@
+name: Lint
+
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  checks: write
+  contents: write
+
+jobs:
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Check changed py files
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            **/*.py
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        if: ${{ steps.changed-files.outputs.all_changed_files }}
+        with:
+          python-version: 3.9
+
+      - name: Install Python dependencies
+        if: ${{ steps.changed-files.outputs.all_changed_files }}
+        run: pip install flake8
+
+      - name: Run flake8 linter
+        if: ${{ steps.changed-files.outputs.all_changed_files }}
+        uses: wearerequired/lint-action@v2
+        with:
+          flake8: true
+          flake8_auto_fix: false
+          flake8_args: ${{ steps.changed-files.outputs.all_changed_files }}
+          continue_on_error: false
+
+  # If this is in the same step as python linting the annotations don't show up
+  lint-javascript:
+    name: Lint Javascript
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 14
+
+      - name: Install Node.js dependencies
+        run: yarn install --frozen-lockfile
+
+      - uses: sibiraj-s/action-eslint@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          annotations: true

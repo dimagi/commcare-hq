@@ -12,13 +12,12 @@ from django.http.response import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-from django.utils.safestring import mark_safe
 from django.views.decorators.cache import cache_control
 from django.views.generic import View
 
-import ghdiff
 from couchdbkit import NoResultFound, ResourceNotFound
 from django_prbac.decorators import requires_privilege
 from django_prbac.utils import has_privilege
@@ -54,7 +53,6 @@ from corehq.apps.app_manager.decorators import (
 from corehq.apps.app_manager.exceptions import (
     AppValidationError,
     BuildConflictException,
-    ModuleIdMissingException,
     PracticeUserException,
     XFormValidationFailed,
 )
@@ -78,7 +76,6 @@ from corehq.apps.app_manager.views.utils import (
     get_langs,
     report_build_time,
 )
-from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -96,9 +93,13 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import cached_user_id_to_user_display
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.toggles import toggles_enabled_for_request
+from corehq.util import ghdiff
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
+from corehq.apps.app_manager.dbaccessors import get_case_types_for_app_build
+from corehq.apps.data_dictionary.util import get_data_dict_deprecated_case_types
+from corehq.apps.reports.standard.deployments import ApplicationErrorReport
 
 
 def _get_error_counts(domain, app_id, version_numbers):
@@ -174,7 +175,7 @@ def paginate_releases(request, domain, app_id):
             for app in apps
         ]
 
-    if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
+    if ApplicationErrorReport.has_access(domain, request.couch_user):
         versions = [app['version'] for app in saved_apps]
         num_errors_dict = _get_error_counts(domain, app_id, versions)
         for app in saved_apps:
@@ -217,7 +218,7 @@ def get_releases_context(request, domain, app_id):
         'full_name': request.couch_user.full_name,
         'can_edit_apps': request.couch_user.can_edit_apps(),
         'can_view_app_diff': (domain_has_privilege(domain, privileges.VIEW_APP_DIFF)
-                              or request.user.is_superuser)
+                              or request.user.is_superuser),
     }
     if not app.is_remote_app():
         context.update({
@@ -263,8 +264,10 @@ def current_app_version(request, domain, app_id):
 def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     if not is_released:
-        if (LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id, active=True).exists() or
-                AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()):
+        if (
+            LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id, active=True).exists()
+            or AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()
+        ):
             return json_response({'error': _('Please disable any enabled profiles/location restriction '
                                              'to un-release this build.')})
     ajax = request.POST.get('ajax') == 'true'
@@ -356,8 +359,13 @@ def save_copy(request, domain, app_id):
         get_timezone_for_user(request.couch_user, domain)
     )
 
+    # Check if build is using any deprecated case types
+    case_types = get_case_types_for_app_build(domain, app_id)
+    deprecated_case_types = get_data_dict_deprecated_case_types(domain)
+    used_deprecated_case_types = case_types.intersection(deprecated_case_types)
     return JsonResponse({
         "saved_app": copy_json,
+        "deprecated_case_types": list(used_deprecated_case_types),
         "error_html": "",
     })
 
@@ -648,6 +656,7 @@ class LanguageProfilesView(View):
                 id = profile.get('id')
                 if not id:
                     id = uuid.uuid4().hex
+
                 def practice_user_id():
                     if not app.enable_practice_users:
                         return ''

@@ -1,3 +1,4 @@
+
 hqDefine("data_interfaces/js/case_management",[
     'jquery',
     'underscore',
@@ -5,7 +6,8 @@ hqDefine("data_interfaces/js/case_management",[
     'case/js/casexml',
     'hqwebapp/js/initial_page_data',
     'reports/js/standard_hq_report',
-], function ($, _, ko, casexmlModule, initialPageData, standardHqReport) {
+    'hqwebapp/js/bootstrap3/alert_user',
+], function ($, _, ko, casexmlModule, initialPageData, standardHqReport, alertUser) {
     var caseManagement = function (o) {
         'use strict';
         var self = {};
@@ -47,27 +49,44 @@ hqDefine("data_interfaces/js/case_management",[
             }
         };
 
-        var updateCaseRow = function (caseId, ownerId, ownerType) {
+        var updateCaseRowReassign = function (caseId, ownerId, ownerType) {
             return function () {
-                var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case'),
-                    username = $('#reassign_owner_select').data().select2.data().text,
+                var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case');
+                var $row = $checkbox.closest("tr");
+                var labelMessage = gettext("Out of range of filter. Will not appear on page refresh.");
+                var username = $('#reassign_owner_select').data().select2.data().text,
                     dateMessage = (self.onToday) ? '<span title="0"></span>' :
-                        '<span class="label label-warning" title="0">Out of range of filter. Will ' +
-                                        'not appear on page refresh.</span>';
+                        '<span class="label label-warning" title="0">' + labelMessage + '</span>';
                 $checkbox.data('owner', ownerId);
                 $checkbox.data('ownertype', ownerType);
 
-                var $row = $checkbox.closest("tr"),
-                    groupLabel = '';
+                var groupLabel = '';
 
                 if (ownerType === 'group') {
                     groupLabel = ' <span class="label label-inverse" title="' + username + '">group</span>';
                 }
 
+                var labelText = gettext("updated");
                 $row.find('td:nth-child(4)').html(username + groupLabel + ' <span class="label label-info" title="' + username +
-                                                '">updated</span>');
+                                                '">' + labelText + '</span>');
                 $row.find('td:nth-child(5)').html('Today ' + dateMessage);
                 $checkbox.prop("checked", false).change();
+            };
+        };
+
+        var updateCaseRowCopy = function (caseIds) {
+            return function () {
+                var caseIdsArr = caseIds.slice();
+                for (var i = 0 ; i < caseIdsArr.length ; i++) {
+                    var caseId = caseIdsArr[i];
+                    var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case');
+                    var $row = $checkbox.closest("tr");
+                    var labelMessage = gettext("Case copied");
+                    var dateMessage = (self.onToday) ? '<span title="0"></span>' :
+                        '<span class="label label-info" title="0">' + labelMessage + '</span>';
+                    $row.find('td:nth-child(5)').html('Today ' + dateMessage);
+                    $checkbox.prop("checked", false).change();
+                }
             };
         };
 
@@ -106,15 +125,63 @@ hqDefine("data_interfaces/js/case_management",[
         };
 
         self.updateAllMatches = function (ownerId) {
-            var report = standardHqReport.getStandardHQReport();
-            var params = new URLSearchParams(report.getReportParams());
-            var paramsObject = Object.fromEntries(params.entries());
+            var paramsObject = self.getReportParamsObject();
             paramsObject['new_owner_id'] = ownerId;
             var bulkReassignUrl = window.location.href.replace("data/edit", "data/edit/bulk");
             $.postGo(
                 bulkReassignUrl,
                 paramsObject
             );
+        };
+
+        self.onSubmit = function (form) {
+            if (initialPageData.get("action") === "copy") {
+                self.copyCases(form);
+            } else {
+                self.updateCaseOwners(form);
+            }
+        };
+
+        self.copyCases = function (form) {
+            var newOwner = $(form).find('#reassign_owner_select').val(),
+                $modal = $('#caseManagementStatusModal');
+
+            if (newOwner.includes('__')) {
+                // groups and users have different number of characters before the id
+                // users are u__id and groups are sg__id
+                newOwner = newOwner.slice(newOwner.indexOf('__') + 2);
+            }
+            if (_.isEmpty(newOwner)) {
+                $modal.find('.modal-body').text("Please select an owner");
+                $modal.modal('show');
+            } else {
+                if (self.selectAllMatches()) {
+                    self.updateAllMatches(newOwner);
+                    return;
+                }
+                $(form).find("[type='submit']").disableButton();
+                var sensitiveProperties = JSON.parse(self.getReportParamsObject().sensitive_properties);
+
+                $.ajax({
+                    url: initialPageData.reverse("copy_cases"),
+                    type: 'POST',
+                    data: JSON.stringify({
+                        case_ids: self.selectedCases(),
+                        owner_id: newOwner,
+                        sensitive_properties: sensitiveProperties,
+                    }),
+                    contentType: "application/json",
+                    success: function (response) {
+                        updateCaseRowCopy(self.selectedCases())();
+                        var message = gettext("Cases copied") + ": " + response.copied_cases;
+                        alertUser.alert_user(message, "success");
+                    },
+                    error: function (response) {
+                        self.clearCaseSelection();
+                        alertUser.alert_user(response.responseJSON.error, "danger");
+                    },
+                });
+            }
         };
 
         self.updateCaseOwners = function (form) {
@@ -153,17 +220,23 @@ hqDefine("data_interfaces/js/case_management",[
                         url: self.receiverUrl,
                         type: 'post',
                         data: xform,
-                        success: updateCaseRow(caseId, newOwner, ownerType),
+                        success: updateCaseRowReassign(caseId, newOwner, ownerType),
                     });
 
                 }
             }
         };
 
+        self.getReportParamsObject = function () {
+            var report = standardHqReport.getStandardHQReport();
+            var params = new URLSearchParams(report.getReportParams());
+            return Object.fromEntries(params.entries());
+        };
+
         return self;
     };
 
-    ko.bindingHandlers.caseReassignmentForm = {
+    ko.bindingHandlers.caseActionForm = {
         update: function (element, valueAccessor) {
             var value = valueAccessor()();
             var $element = $(element);
@@ -199,15 +272,25 @@ hqDefine("data_interfaces/js/case_management",[
                 $(interfaceSelector).koApplyBindings(caseManagementModel);
             }
 
+            var caseAction = initialPageData.get('action');
+            var placeholderText = "";
+
+            if (caseAction === 'copy') {
+                placeholderText = gettext("Search for users");
+            } else {
+                placeholderText = gettext("Search for users or groups");
+            }
+
             var $select = $('#reassign_owner_select');
             if ($select.length) {
                 $select.select2({
-                    placeholder: gettext("Search for users or groups"),
+                    placeholder: placeholderText,
                     ajax: {
-                        url: initialPageData.reverse("reassign_case_options"),
+                        url: initialPageData.reverse("case_action_options"),
                         data: function (params) {
                             return {
                                 q: params.term,
+                                action: caseAction,
                             };
                         },
                         dataType: 'json',

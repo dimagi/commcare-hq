@@ -390,8 +390,6 @@ def register_sms_user(
     username, cleaned_phone_number, domain, send_welcome_sms=False, admin_alert_emails=None
 ):
     try:
-        user_data = {}
-
         username = process_username(username, domain)
         password = random_password()
         new_user = CommCareUser.create(
@@ -400,7 +398,6 @@ def register_sms_user(
             password,
             created_by=None,
             created_via=USER_CHANGE_VIA_SMS,
-            metadata=user_data
         )
         new_user.add_phone_number(cleaned_phone_number)
         new_user.save()
@@ -457,7 +454,8 @@ def send_admin_registration_alert(domain, recipients, user):
         "domain": domain,
         "url": absolute_reverse(EditCommCareUserView.urlname, args=[domain, user.get_id])
     })
-    send_html_email_async.delay(subject, recipients, html_content, domain=domain)
+    send_html_email_async.delay(subject, recipients, html_content,
+                                domain=domain, use_domain_gateway=True)
 
 
 def is_registration_text(text):
@@ -487,9 +485,10 @@ def process_sms_registration(msg):
 
         1) Select "Enable Mobile Worker Registration via SMS" in project settings.
 
-        2) Text in "join <domain> worker <username>", where <domain> is the domain to join and <username> is the
-        requested username.  If the username doesn't exist it will be created, otherwise the registration will error.
-        If the username argument is not specified, the username will be the mobile number
+        2) Text in "join <domain> worker <username>", where <domain> is the domain to join
+        and <username> is the requested username. If the username doesn't exist it will be
+        created, otherwise the registration will error. If the username argument is not specified,
+        the username will be the mobile number
 
         The "join" and "worker" keywords can be any keyword in REGISTRATION_KEYWORDS and
         REGISTRATION_MOBILE_WORKER_KEYWORDS, respectively. This is meant to support multiple
@@ -784,9 +783,9 @@ def _process_incoming(msg):
 
     # If the sms queue is enabled, then the billable gets created in remove_from_queue()
     if (
-        not settings.SMS_QUEUE_ENABLED and
-        msg.domain and
-        domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
+        not settings.SMS_QUEUE_ENABLED
+        and msg.domain
+        and domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
     ):
         create_billable_for_sms(msg)
 

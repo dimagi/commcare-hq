@@ -1,4 +1,3 @@
-/* globals window, hbspt */
 /**
  * Instatiates the Hubspot analytics platform.
  */
@@ -47,7 +46,7 @@ hqDefine('analytix/js/hubspot', [
      */
     _utils.loadDemoForm = function () {
         let isTrial = _get('isDemoTrial'),
-            isVariant = _get('demoABv2').version === 'variant',
+            isVariant = _get('demoABv2') && _get('demoABv2').version === 'variant',
             $modal = $('#cta-form-get-demo'),
             $form = $('#get-demo-cta-form-content'),
             hasInteractedWithForm = false,
@@ -70,7 +69,7 @@ hqDefine('analytix/js/hubspot', [
             phoneNumberSelector: $form.find('input[name="phone"]'),
             submitCallbackFn: function () {
                 $('#get-demo-cta-success').fadeIn();
-                $('#get-demo-cta-form-content').addClass('hidden');
+                $('#get-demo-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration
 
                 kissmetrics.track.event("Demo Workflow - Contact Info Received");
             },
@@ -118,8 +117,8 @@ hqDefine('analytix/js/hubspot', [
             submitCallbackFn: function () {
                 kissmetrics.track.event("Get Trial Workflow - Contact Info Received");
 
-                $('#choose-callback-options').toggleClass('hidden');
-                $('#get-trial-cta-form-content').addClass('hidden');
+                $('#choose-callback-options').toggleClass('hidden').toggleClass('d-none'); // todo after bootstrap 5 migration
+                $('#get-trial-cta-form-content').addClass('hidden').addClass('d-none'); // todo after bootstrap 5 migration
                 $('#start-trial-modal-header').text(gettext("Your trial request has been received!"));
             },
         });

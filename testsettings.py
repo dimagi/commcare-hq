@@ -4,11 +4,49 @@ from warnings import filterwarnings
 import settingshelper as helper
 from settings import *  # noqa: F403
 
-if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
-    ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
+# Commenting out temporarily for tests
+# if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
+#     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
+
+ELASTICSEARCH_MAJOR_VERSION = 5
 
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
+
+# Default multiplexed value for_test adapter
+ES_FOR_TEST_INDEX_MULTIPLEXED = False
+ES_FOR_TEST_INDEX_SWAPPED = False
+
+
+# Set multiplexed settings to false for test runs
+
+ES_APPS_INDEX_MULTIPLEXED = False
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
+ES_CASES_INDEX_MULTIPLEXED = False
+ES_DOMAINS_INDEX_MULTIPLEXED = False
+ES_FORMS_INDEX_MULTIPLEXED = False
+ES_GROUPS_INDEX_MULTIPLEXED = False
+ES_SMS_INDEX_MULTIPLEXED = False
+ES_USERS_INDEX_MULTIPLEXED = False
+
+
+ES_APPS_INDEX_SWAPPED = False
+ES_CASE_SEARCH_INDEX_SWAPPED = False
+ES_CASES_INDEX_SWAPPED = False
+ES_DOMAINS_INDEX_SWAPPED = False
+ES_FORMS_INDEX_SWAPPED = False
+ES_GROUPS_INDEX_SWAPPED = False
+ES_SMS_INDEX_SWAPPED = False
+ES_USERS_INDEX_SWAPPED = False
+
+# This should be updated when a new value is added to ES_REINDEX_LOG else test will fail
+ES_MULTIPLEX_TO_VERSION = '6'
+ES_SETTINGS = {
+    'default': {
+        'number_of_replicas': 0,
+        'number_of_shards': 1,
+    },
+}
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
 # a weird travis issue with kafka. if for any reason this order causes problems
@@ -28,6 +66,7 @@ NOSE_ARGS = [
 NOSE_PLUGINS = [
     'corehq.tests.nose.HqTestFinderPlugin',
     'corehq.tests.noseplugins.classcleanup.ClassCleanupPlugin',
+    'corehq.tests.noseplugins.dbtransaction.DatabaseTransactionPlugin',
     'corehq.tests.noseplugins.dividedwerun.DividedWeRunPlugin',
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
     'corehq.tests.noseplugins.cmdline_params.CmdLineParametersPlugin',
@@ -64,7 +103,7 @@ if "SKIP_TESTS_REQUIRING_EXTRA_SETUP" not in globals():
 
 CELERY_TASK_ALWAYS_EAGER = True
 # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
-_PILLOWTOPS = PILLOWTOPS
+_PILLOWTOPS = PILLOWTOPS # noqa F405
 PILLOWTOPS = {}
 
 PHONE_TIMEZONES_HAVE_BEEN_PROCESSED = True
@@ -77,6 +116,7 @@ CACHE_REPORTS = True
 
 # Hide couchdb 'unclosed socket' warnings
 filterwarnings("ignore", r"unclosed.*socket.*raddr=\([^) ]* 5984\)", ResourceWarning)
+
 
 def _set_logging_levels(levels):
     import logging
@@ -127,3 +167,9 @@ METRICS_PROVIDERS = [
 ]
 
 FORMPLAYER_INTERNAL_AUTH_KEY = "abc123"
+
+# A workaround to test the messaging framework. See: https://stackoverflow.com/a/60218100
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+
+if os.environ.get("STRIPE_PRIVATE_KEY"):
+    STRIPE_PRIVATE_KEY = os.environ.get("STRIPE_PRIVATE_KEY")

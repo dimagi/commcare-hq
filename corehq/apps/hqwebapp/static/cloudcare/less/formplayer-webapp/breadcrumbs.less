@@ -6,14 +6,16 @@
   padding-bottom: 1rem;
   margin-top: -1px;
   .breadcrumb-text {
+    &.js-home {
+      margin-right: -5px;
+    }
     &:before {
       padding: 0 6px 0 12px;
-      color: #cccccc;
+      color: #ffffff;
       font-size: 12px;
       vertical-align: top;
       line-height: 28px;
     }
-    max-width: 300px;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden
@@ -25,6 +27,7 @@
   box-shadow: 0 0 5px 2px rgba(0,0,0,.3);
   display: flex;
   align-items: center;
+  height: @breadcrumb-height-cloudcare;
 
   .breadcrumb {
     box-shadow: none;

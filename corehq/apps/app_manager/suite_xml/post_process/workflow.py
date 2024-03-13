@@ -58,11 +58,17 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Stack,
     StackDatum,
     SessionDatum,
+    InstanceDatum,
     RemoteRequestQuery,
     StackQuery,
     QueryData,
 )
-from corehq.apps.app_manager.xpath import CaseIDXPath, XPath, session_var
+from corehq.apps.app_manager.xpath import (
+    CaseIDXPath,
+    XPath,
+    session_var,
+    SearchSelectedCasesInstanceXpath
+)
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
 from corehq.util.timer import time_method
 
@@ -110,6 +116,20 @@ class WorkflowHelper(PostProcessor):
         for frame in frames:
             entry.stack.add_frame(frame)
 
+    @staticmethod
+    def _get_id_suffix(module):
+        from corehq.apps.app_manager.models import ShadowModule
+
+        root_module = None
+        if not module.put_in_root:
+            if module.root_module:
+                root_module = module.root_module
+            elif module.module_type == 'shadow' and module.source_module.root_module:
+                root_module = module.source_module.root_module
+
+        suffix = id_strings.menu_id(root_module) if isinstance(root_module, ShadowModule) else ""
+        return suffix
+
     def get_frame_children(self, module, form=None, include_root_module=False):
         """
         For a form or module return the list of stack frame children that are required
@@ -138,7 +158,7 @@ class WorkflowHelper(PostProcessor):
         :returns:   list of strings and DatumMeta objects. String represent stack commands
                     and DatumMeta's represent stack datums.
         """
-        module_command = id_strings.menu_id(module)
+        module_command = id_strings.menu_id(module, WorkflowHelper._get_id_suffix(module))
         if form is None and module.module_type == "shadow":
             module_datums = self.get_module_datums(f'm{module.source_module.id}')
         else:
@@ -252,16 +272,14 @@ def _get_datums_matched_to_manual_values(target_frame_elements, manual_values, f
     """
     manual_values_by_name = {datum.name: datum.xpath for datum in manual_values}
     for child in target_frame_elements:
-        if not isinstance(child, WorkflowSessionMeta) or not child.requires_selection:
+        if child.id in manual_values_by_name:
+            yield StackDatum(id=child.id, value=manual_values_by_name.get(child.id))
+        elif not isinstance(child, WorkflowSessionMeta) or not child.requires_selection:
             yield child
         else:
-            manual_value = manual_values_by_name.get(child.id)
-            if manual_value:
-                yield StackDatum(id=child.id, value=manual_value)
-            else:
-                raise SuiteValidationError("Unable to link form '{}', missing variable '{}'".format(
-                    form.default_name(), child.id
-                ))
+            raise SuiteValidationError("Unable to link form '{}', missing variable '{}'".format(
+                form.default_name(), child.id
+            ))
 
 
 def _get_datums_matched_to_source(target_frame_elements, source_datums):
@@ -387,7 +405,7 @@ class EndOfFormNavigationWorkflow(object):
                 if child not in frame_children:
                     frame_children.append(child)
         else:
-            module_command = id_strings.menu_id(module)
+            module_command = id_strings.menu_id(module, WorkflowHelper._get_id_suffix(module))
             if module_command != id_strings.ROOT:
                 frame_children.append(CommandId(module_command))
 
@@ -418,7 +436,8 @@ class EndOfFormNavigationWorkflow(object):
 
         if target_module.root_module_id:
             root_module = self.helper.app.get_module_by_unique_id(target_module.root_module_id)
-            frame_children = prepend_parent_frame_children(self.helper, frame_children, root_module, link.datums, form)
+            frame_children = prepend_parent_frame_children(
+                self.helper, frame_children, root_module, link.datums, form)
 
         return StackFrameMeta(link.xpath, list(frame_children), current_session=source_form_datums)
 
@@ -578,7 +597,8 @@ class CaseListFormWorkflow(object):
         except ValueError:
             # This either means that the source module (with the registration form) requires datums that the
             # target module (the module which called the reg form).
-            # OR it could mean that not all the forms in the target module have the same case management configuration.
+            # OR it could mean that not all the forms in the target module have the same case management
+            # configuration.
             return
         return target_dm
 
@@ -677,7 +697,8 @@ class CommandId(object):
 
 def workflow_meta_from_session_datum(session_datum, next_datum):
     if isinstance(session_datum, SessionDatum):
-        return WorkflowDatumMeta(session_datum.id, session_datum.nodeset, session_datum.function)
+        is_instance = isinstance(session_datum, InstanceDatum)
+        return WorkflowDatumMeta(session_datum.id, session_datum.nodeset, session_datum.function, is_instance)
     if isinstance(session_datum, RemoteRequestQuery):
         return WorkflowQueryMeta(session_datum, next_datum)
     raise ValueError
@@ -713,7 +734,7 @@ class WorkflowSessionMeta:
     def clone_to_match(self, source_id=None):
         raise NotImplementedError
 
-    def to_stack_datum(self):
+    def to_stack_datum(self, is_endpoint=False):
         raise NotImplementedError
 
 
@@ -724,11 +745,12 @@ class WorkflowDatumMeta(WorkflowSessionMeta):
     """
     type_regex = re.compile(r"\[@case_type='([\w-]+)'\]")
 
-    def __init__(self, datum_id, nodeset, function):
+    def __init__(self, datum_id, nodeset, function, is_instance):
         super().__init__(datum_id)
 
         self.nodeset = nodeset
         self.function = function
+        self.is_instance = is_instance
 
     @property
     def requires_selection(self):
@@ -760,11 +782,11 @@ class WorkflowDatumMeta(WorkflowSessionMeta):
         self._case_type = case_type
 
     def clone_to_match(self, source_id=None):
-        new_meta = WorkflowDatumMeta(self.id, self.nodeset, self.function)
+        new_meta = WorkflowDatumMeta(self.id, self.nodeset, self.function, self.is_instance)
         new_meta.source_id = source_id or self.id
         return new_meta
 
-    def to_stack_datum(self):
+    def to_stack_datum(self, is_endpoint=False):
         value = session_var(self.source_id) if self.requires_selection else self.function
         return StackDatum(id=self.id, value=value)
 
@@ -813,17 +835,24 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
         new_meta.source_id = source_id or self.id
         return new_meta
 
-    def to_stack_datum(self):
+    def to_stack_datum(self, is_endpoint=False):
         wanted = (CASE_SEARCH_REGISTRY_ID_KEY, "case_type", "case_id")
         keys = {el.key for el in self.query.data}
         data = [QueryData(key=el.key, ref=el.ref) for el in self.query.data if el.key in wanted]
         if "case_id" not in keys and self.next_datum:
-            data.append(QueryData(key="case_id", ref=session_var(self.source_id)))
+            if getattr(self.next_datum, "is_instance", False):
+                data.append(QueryData(key="case_id", ref=".", nodeset=self._get_multi_select_nodeset()))
+            else:
+                ref_val = "$case_id" if is_endpoint else session_var(self.source_id)
+                data.append(QueryData(key="case_id", ref=ref_val))
         url = self.query.url
         if self.is_case_search:
             # we don't need the full search results, just the case that's been selected
             url = url.replace('/phone/search/', '/phone/case_fixture/')
         return StackQuery(id=self.query.storage_instance, value=url, data=data)
+
+    def _get_multi_select_nodeset(self):
+        return SearchSelectedCasesInstanceXpath(self.source_id).instance()
 
     def __repr__(self):
         return (f"WorkflowQueryMeta("

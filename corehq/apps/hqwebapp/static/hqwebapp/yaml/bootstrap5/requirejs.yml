@@ -1,0 +1,21 @@
+mainConfigFile: ../corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/requirejs_config.js
+bundlesConfigOutFile: hqwebapp/js/bootstrap5/requirejs_config.js
+baseUrl: ./
+dir: ./
+allowSourceOverwrites: true
+keepBuildDir: true
+findNestedDependencies: true
+skipDirOptimize: true   # could turn this off to minify everything
+generateSourceMaps: false
+optimize: none
+fileExclusionRegExp: ^\.|\.css$
+paths:
+  sentry_browser: "empty:"
+  sentry_captureconsole: "empty:"
+modules:
+  # These two modules are referenced in hqwebapp/base.html, not in a requirejs_main tag,
+  # so they won't get picked up by build_requirejs.py and instead need to be specified here
+  - name: hqwebapp/js/bootstrap5/common
+  - name: hqwebapp/js/bootstrap5/base_main
+    exclude:
+      - hqwebapp/js/bootstrap5/common

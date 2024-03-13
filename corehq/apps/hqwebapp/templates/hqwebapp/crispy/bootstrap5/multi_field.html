@@ -1,0 +1,23 @@
+<div class="form-group {{ multifield.css_class }}" {{ multifield.flat_attrs|safe }}>
+    <label class="control-label {{ label_class }} {% if multifield.required %}requiredField{% endif %}">
+        <label class="inner-control-label">
+            {{ label_html }}{% if multifield.required %}<span class="asteriskField">*</span>{% endif %}
+        </label>
+        {% if help_bubble_text and multifield.css_id %}
+            <span class="hq-help-template"
+                data-title="{{ multifield.label_html }}"
+                data-content="{{ help_bubble_text }}"
+            ></span>
+        {% endif %}
+    </label>
+    <div class="controls {{ field_class }} controls-multiple">
+        {% if show_row_class %}<div class="row">{% endif %}
+            {{ field_html }}
+        {% if show_row_class %}</div>{% endif %}
+        {% for error in error_list %}
+            <span class="help-block">
+                <strong>{{ error }}</strong>
+            </span>
+        {% endfor %}
+    </div>
+</div>

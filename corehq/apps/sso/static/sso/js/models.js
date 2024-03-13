@@ -42,7 +42,7 @@ hqDefine('sso/js/models', [
         });
 
         self.init = function () {
-             $.post({
+            $.post({
                 url: '',
                 data: {
                     handler: self.asyncHandler,

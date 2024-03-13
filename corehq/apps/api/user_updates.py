@@ -4,6 +4,7 @@ from django.utils.translation import gettext as _
 from dimagi.utils.couch.bulk import get_docs
 
 from corehq.apps.api.exceptions import UpdateUserException
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -11,6 +12,7 @@ from corehq.apps.sms.util import strip_plus
 from corehq.apps.user_importer.helpers import find_differences_in_list
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models_role import UserRole
+from corehq.apps.users.user_data import UserDataError
 
 
 def update(user, field, value, user_change_logger=None):
@@ -107,15 +109,17 @@ def _update_groups(user, group_ids, user_change_logger):
         user_change_logger.add_info(UserChangeMessage.groups_info(groups))
 
 
-def _update_user_data(user, user_data, user_change_logger):
-    original_user_data = user.metadata.copy()
+def _update_user_data(user, new_user_data, user_change_logger):
     try:
-        user.update_metadata(user_data)
-    except ValueError as e:
+        profile_id = new_user_data.pop(PROFILE_SLUG, ...)
+        changed = user.get_user_data(user.domain).update(new_user_data, profile_id=profile_id)
+    except UserDataError as e:
         raise UpdateUserException(str(e))
 
-    if user_change_logger and original_user_data != user.user_data:
-        user_change_logger.add_changes({'user_data': user.user_data})
+    if user_change_logger and changed:
+        user_change_logger.add_changes({
+            'user_data': user.get_user_data(user.domain).raw
+        })
 
 
 def _update_user_role(user, role, user_change_logger):

@@ -5,7 +5,7 @@ hqDefine('app_manager/js/manage_releases_by_location', [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
     'locations/js/search',
-    'hqwebapp/js/widgets', // using select2/dist/js/select2.full.min for ko-select2 on location select
+    'hqwebapp/js/bootstrap3/widgets', // using select2/dist/js/select2.full.min for ko-select2 on location select
     'translations/js/app_translations',
 ], function (
     $,

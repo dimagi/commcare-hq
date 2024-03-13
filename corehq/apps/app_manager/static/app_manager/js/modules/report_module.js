@@ -1,4 +1,3 @@
-/* globals hqDefine _ */
 hqDefine('app_manager/js/modules/report_module', function () {
     var graphConfigModel = function (reportId, reportName, availableReportIds, reportCharts, graphConfigs,
         columnXpathTemplate, dataPathPlaceholders, lang, langs, changeSaveButton) {
@@ -98,7 +97,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         _.each(self.reportFilters, function (filtersInReport, id) {
             for (var i = 0; i < filtersInReport.length; i++) {
                 var filter = filtersInReport[i];
-                if (id === savedReportId && filterValues.hasOwnProperty(filter.slug)) {
+                if (id === savedReportId && _.has(filterValues, filter.slug)) {
                     filter.selectedValue = filterValues[filter.slug];
                     filter.selectedValue.doc_type = ko.observable(filter.selectedValue.doc_type);
                 } else {
@@ -200,7 +199,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         return self;
     };
 
-    var reportConfigModel = function(reportId, display,
+    var reportConfigModel = function (reportId, display,
         localizedDescription, xpathDescription, useXpathDescription,
         showDataTable, syncDelay, reportSlug, uuid, availableReportIds,
         reportCharts, graphConfigs, columnXpathTemplate, dataPathPlaceholders,
@@ -273,7 +272,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         return self;
     };
 
-    var staticFilterDataModel = function(options) {
+    var staticFilterDataModel = function (options) {
         var self = {};
         self.filterChoices = options.filterChoices;
         // support "unselected"
@@ -285,7 +284,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         return self;
     };
 
-    var reportModuleModel = function(options) {
+    var reportModuleModel = function (options) {
         var self = {};
         var currentReports = options.currentReports || [];
         var availableReports = options.availableReports || [];
@@ -337,7 +336,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
             return multimedia;
         };
 
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes in your report list module"),
             save: function () {
 

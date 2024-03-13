@@ -2,7 +2,7 @@ from datetime import date
 
 from django.test import SimpleTestCase
 
-from corehq.apps.es import filters
+from corehq.apps.es import CaseSearchES, filters
 from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.es.forms import FormES, form_adapter
@@ -170,6 +170,123 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
         )
 
         self.checkQuery(query, json_output)
+
+    def test_geo_bounding_box(self):
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "term": {
+                                "domain.exact": "test-domain"
+                            }
+                        },
+                        {
+                            "geo_bounding_box": {
+                                "location": {
+                                    "top_left": "40.73 -74.1",
+                                    "bottom_right": "40.01 -71.12",
+                                }
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        query = CaseSearchES().domain('test-domain').filter(
+            filters.geo_bounding_box('location', '40.73 -74.1', '40.01 -71.12')
+        )
+        self.checkQuery(
+            query,
+            json_output,
+            validate_query=False,  # Avoid creating an index just for this test
+        )
+
+    def test_geo_shape(self):
+        points_list = [
+            {"lat": 40.73, "lon": -74.1},
+            {"lat": 40.01, "lon": -71.12},
+        ]
+
+        query = CaseSearchES().filter(
+            filters.geo_shape('case_gps', points_list)
+        )
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "geo_shape": {
+                                "case_gps": {
+                                    "shape": [
+                                        {
+                                            "lat": 40.73,
+                                            "lon": -74.1
+                                        },
+                                        {
+                                            "lat": 40.01,
+                                            "lon": -71.12
+                                        }
+                                    ],
+                                    "relation": "intersects"
+                                }
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        self.checkQuery(
+            query,
+            json_output,
+            validate_query=False,
+        )
+
+    def test_geo_grid(self):
+        query = CaseSearchES().filter(
+            filters.geo_grid('location', 'u0')
+        )
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "geo_grid": {
+                                "location": {
+                                    "geohash": "u0"
+                                }
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        self.checkQuery(
+            query,
+            json_output,
+            validate_query=False,
+        )
 
 
 @es_test

@@ -1,6 +1,8 @@
 import datetime
 import json
 import re
+import secrets
+import string
 
 from django import forms
 from django.conf import settings
@@ -21,16 +23,14 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
-from casexml.apps.phone.models import loadtest_users_enabled
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.custom_data_fields.models import (
-    PROFILE_SLUG,
-    CustomDataFieldsProfile,
-)
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
@@ -48,7 +48,9 @@ from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import TableauUser
 from corehq.apps.reports.util import (
+    TableauGroupTuple,
     get_all_tableau_groups,
+    get_allowed_tableau_groups_for_domain,
     get_tableau_groups_for_user,
     update_tableau_user,
 )
@@ -57,15 +59,19 @@ from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING, TWO_STAGE_USER_PROVISIONING_BY_SMS
+from corehq.toggles import (
+    TWO_STAGE_USER_PROVISIONING,
+    TWO_STAGE_USER_PROVISIONING_BY_SMS,
+)
 
+from ..hqwebapp.signals import clear_login_attempts
 from .audit.change_messages import UserChangeMessage
 from .dbaccessors import user_exists
-from .models import DeactivateMobileWorkerTrigger, UserRole, CouchUser
+from .models import CouchUser, DeactivateMobileWorkerTrigger, UserRole
 from .util import cc_user_domain, format_username, log_user_change
-from ..hqwebapp.signals import clear_login_attempts
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
+STRONG_PASSWORD_LEN = 12
 
 
 def get_mobile_worker_max_username_length(domain):
@@ -78,20 +84,31 @@ def get_mobile_worker_max_username_length(domain):
     return min(128 - len(cc_user_domain(domain)) - 1, 80)
 
 
-def clean_mobile_worker_username(domain, username, name_too_long_message=None,
-        name_reserved_message=None, name_exists_message=None):
+def clean_mobile_worker_username(
+    domain,
+    username,
+    name_too_long_message=None,
+    name_reserved_message=None,
+    name_exists_message=None,
+):
 
     max_username_length = get_mobile_worker_max_username_length(domain)
 
     if len(username) > max_username_length:
-        raise forms.ValidationError(name_too_long_message
-            or _('Username %(username)s is too long.  Must be under %(max_length)s characters.')
-            % {'username': username, 'max_length': max_username_length})
+        raise forms.ValidationError(
+            name_too_long_message
+            or _(
+                'Username %(username)s is too long.  Must be under '
+                '%(max_length)s characters.'
+            ) % {'username': username, 'max_length': max_username_length}
+        )
 
     if username in UNALLOWED_MOBILE_WORKER_NAMES:
-        raise forms.ValidationError(name_reserved_message
+        raise forms.ValidationError(
+            name_reserved_message
             or _('The username "%(username)s" is reserved for CommCare.')
-            % {'username': username})
+            % {'username': username}
+        )
 
     username = format_username(username, domain)
     validate_username(username)
@@ -100,8 +117,9 @@ def clean_mobile_worker_username(domain, username, name_too_long_message=None,
     if exists.exists:
         if exists.is_deleted:
             raise forms.ValidationError(_('This username was used previously.'))
-        raise forms.ValidationError(name_exists_message
-            or _('This Mobile Worker already exists.'))
+        raise forms.ValidationError(
+            name_exists_message or _('This Mobile Worker already exists.')
+        )
 
     return username
 
@@ -121,22 +139,26 @@ def wrapped_language_validation(value):
     try:
         validate_lang(value)
     except ValueError:
-        raise forms.ValidationError("%s is not a valid language code! Please "
-                                    "enter a valid two or three digit code." % value)
+        raise forms.ValidationError(_(
+            "{code} is not a valid language code. Please enter a valid "
+            "ISO-639 two- or three-digit code."
+        ).format({'code': value}))
 
 
 def generate_strong_password():
-    import random
-    import string
-    possible = string.punctuation + string.ascii_lowercase + string.ascii_uppercase + string.digits
-    password = ''
-    password += random.choice(string.punctuation)
-    password += random.choice(string.ascii_lowercase)
-    password += random.choice(string.ascii_uppercase)
-    password += random.choice(string.digits)
-    password += ''.join(random.choice(possible) for i in range(random.randrange(6, 11)))
-
-    return ''.join(random.sample(password, len(password)))
+    # https://docs.python.org/3/library/secrets.html#recipes-and-best-practices
+    possible = string.punctuation + string.ascii_letters + string.digits
+    while True:
+        password = ''.join(secrets.choice(possible)
+                           for __ in range(STRONG_PASSWORD_LEN))
+        if (
+            any(c.islower() for c in password)
+            and any(c.isupper() for c in password)
+            and any(c.isdigit() for c in password)
+            and any(c in string.punctuation for c in password)
+        ):
+            break
+    return password
 
 
 class LanguageField(forms.CharField):
@@ -243,11 +265,12 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
         if is_update_successful and (props_updated or role_updated or metadata_updated):
             change_messages = {}
-            profile_id = self.existing_user.user_data.get(PROFILE_SLUG)
+            user_data = self.existing_user.get_user_data(self.domain)
+            profile_id = user_data.profile_id
             if role_updated:
                 change_messages.update(UserChangeMessage.role_change(user_new_role))
             if metadata_updated:
-                props_updated['user_data'] = self.existing_user.user_data
+                props_updated['user_data'] = user_data.raw
             if profile_updated:
                 profile_name = None
                 if profile_id:
@@ -342,8 +365,8 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
         basic_fields = [
             crispy.Div(*username_controls),
-            hqcrispy.Field('first_name'),
-            hqcrispy.Field('last_name'),
+            'first_name',
+            'last_name',
         ]
 
         if self.is_using_sso:
@@ -357,9 +380,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
             # It is the presence of the "readonly" attribute that determines
             # whether an input is readonly. Its value does not matter.
-            basic_fields.append(hqcrispy.Field('email', readonly="readonly"))
+            basic_fields.append(crispy.Field('email', readonly="readonly"))
         else:
-            basic_fields.append(hqcrispy.Field('email'))
+            basic_fields.append('email')
 
         if self.set_analytics_enabled:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
@@ -371,7 +394,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             ),
             (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else crispy.Fieldset)(
                 gettext_lazy("Other Options"),
-                hqcrispy.Field('language'),
+                'language',
                 crispy.Div(hqcrispy.StaticField(
                     gettext_lazy('API Key'),
                     format_html_lazy(
@@ -662,11 +685,11 @@ class NewMobileWorkerForm(forms.Form):
         required=True,
         help_text="""
             <span data-bind="visible: $root.usernameAvailabilityStatus() !== $root.STATUS.NONE">
-                <i class="fa fa-circle-o-notch fa-spin"
+                <i class="fa fa-circle-notch fa-spin"
                    data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.PENDING"></i>
                 <i class="fa fa-check"
                    data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.SUCCESS"></i>
-                <i class="fa fa-exclamation-triangle"
+                <i class="fa-solid fa-triangle-exclamation"
                    data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.WARNING ||
                                        $root.usernameAvailabilityStatus() === $root.STATUS.ERROR"></i>
                 <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
@@ -701,7 +724,7 @@ class NewMobileWorkerForm(forms.Form):
         required=False,
         help_text="""
             <span data-bind="visible: $root.emailStatus() !== $root.STATUS.NONE">
-                <i class="fa fa-exclamation-triangle"
+                <i class="fa-solid fa-triangle-exclamation"
                    data-bind="visible: $root.emailStatus() === $root.STATUS.ERROR"></i>
                 <!-- ko text: $root.emailStatusMessage --><!-- /ko -->
             </span>
@@ -746,7 +769,7 @@ class NewMobileWorkerForm(forms.Form):
             </div>
             <div id="phone-error">
                 <span data-bind="visible: $root.phoneStatus() !== $root.STATUS.NONE">
-                    <i class="fa fa-exclamation-triangle"
+                    <i class="fa-solid fa-triangle-exclamation"
                     data-bind="visible: $root.phoneStatus() === $root.STATUS.ERROR"></i>
                     <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->
                 </span>
@@ -939,18 +962,25 @@ class NewMobileWorkerForm(forms.Form):
                                 <!-- /ko -->
                             </p>
                         '''.format(
-                            suggested=_("This password is automatically generated. Please copy it or create "
-                                "your own. It will not be shown again."),
+                            suggested=_(
+                                "This password is automatically generated. "
+                                "Please copy it or create your own. It will "
+                                "not be shown again."
+                            ),
                             strong=_("Good Job! Your password is strong!"),
                             almost=_("Your password is almost strong enough! Try adding numbers or symbols!"),
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
                             custom_warning=_(settings.CUSTOM_PASSWORD_STRENGTH_MESSAGE),
-                            disabled_email=_("Setting a password is disabled. "
-                                            "The user will set their own password on "
-                                            "confirming their account email."),
-                            disabled_phone=_("Setting a password is disabled. "
-                                            "The user will set their own password on confirming "
-                                            "their account phone number."),
+                            disabled_email=_(
+                                "Setting a password is disabled. The user "
+                                "will set their own password on confirming "
+                                "their account email."
+                            ),
+                            disabled_phone=_(
+                                "Setting a password is disabled. The user "
+                                "will set their own password on confirming "
+                                "their account phone number."
+                            ),
                             short=_("Password must have at least {password_length} characters."
                                     ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH)
                         )),
@@ -1032,7 +1062,7 @@ class GroupMembershipForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 fieldset_title,
-                crispy.Field('selected_ids'),
+                'selected_ids',
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
@@ -1398,9 +1428,9 @@ class DomainRequestForm(forms.Form):
         self.helper.field_class = 'col-sm-6 col-md-5 col-lg-3'
         self.helper.show_form_errors = True
         self.helper.layout = crispy.Layout(
-            hqcrispy.Field('full_name'),
-            hqcrispy.Field('email'),
-            hqcrispy.Field('domain'),
+            'full_name',
+            'email',
+            'domain',
             self.form_actions,
         )
 
@@ -1502,7 +1532,10 @@ class CommCareUserFormSet(object):
         self.request_user = request_user
         self.request = request
         self.data = data
-        self.loadtest_users_enabled = loadtest_users_enabled(domain)
+        self.loadtest_users_enabled = domain_has_privilege(
+            domain,
+            privileges.LOADTEST_USERS,
+        )
 
     @property
     @memoized
@@ -1529,7 +1562,7 @@ class CommCareUserFormSet(object):
         return CustomDataEditor(
             domain=self.domain,
             field_view=UserFieldsView,
-            existing_custom_data=self.editable_user.metadata,
+            existing_custom_data=self.editable_user.get_user_data(self.domain).to_dict(),
             post_dict=self.data,
             ko_model="custom_fields",
         )
@@ -1539,9 +1572,15 @@ class CommCareUserFormSet(object):
                 and all([self.user_form.is_valid(), self.custom_data.is_valid()]))
 
     def update_user(self):
-        metadata_updated, profile_updated = self.user_form.existing_user.update_metadata(
-            self.custom_data.get_data_to_save())
-        return self.user_form.update_user(metadata_updated=metadata_updated, profile_updated=profile_updated)
+        user_data = self.user_form.existing_user.get_user_data(self.domain)
+        old_profile_id = user_data.profile_id
+        new_user_data = self.custom_data.get_data_to_save()
+        new_profile_id = new_user_data.pop(PROFILE_SLUG, ...)
+        changed = user_data.update(new_user_data, new_profile_id)
+        return self.user_form.update_user(
+            metadata_updated=changed,
+            profile_updated=old_profile_id != new_profile_id
+        )
 
 
 class UserFilterForm(forms.Form):
@@ -1647,24 +1686,24 @@ class UserFilterForm(forms.Form):
                 data_bind="slideVisible: !isCrossDomain()",
             ),
             crispy.Field("search_string", data_bind="value: search_string"),
+            crispy.Div(
+                "location_id",
+                data_bind="slideVisible: !isCrossDomain()",
+            ),
+            crispy.Div(
+                crispy.Field(
+                    "selected_location_only",
+                    data_bind="checked: selected_location_only"
+                ),
+                data_bind="slideVisible: !isCrossDomain() && location_id",
+            )
         ]
 
         fieldset_label = _('Filter and Download Users')
         if self.user_type == MOBILE_USER_TYPE:
             fieldset_label = _('Filter and Download Mobile Workers')
             fields += [
-                crispy.Div(
-                    crispy.Field("location_id",),
-                    data_bind="slideVisible: !isCrossDomain()",
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        "selected_location_only",
-                        data_bind="checked: selected_location_only"
-                    ),
-                    data_bind="slideVisible: !isCrossDomain() && location_id",
-                ),
-                crispy.Field("user_active_status",),
+                "user_active_status",
                 crispy.Field("columns", data_bind="value: columns"),
             ]
 
@@ -1756,15 +1795,21 @@ class TableauUserForm(forms.Form):
         self.domain = kwargs.pop('domain', None)
         self.username = kwargs.pop('username', None)
         super(TableauUserForm, self).__init__(*args, **kwargs)
-        self.all_tableau_groups = get_all_tableau_groups(self.domain)
+
+        self.allowed_tableau_groups = [
+            TableauGroupTuple(group.name, group.id) for group in get_all_tableau_groups(self.domain)
+            if group.name in get_allowed_tableau_groups_for_domain(self.domain)]
         user_group_names = [group.name for group in get_tableau_groups_for_user(self.domain, self.username)]
+        self.fields['groups'].choices = []
         self.fields['groups'].initial = []
-        for i, group in enumerate(self.all_tableau_groups):
+        for i, group in enumerate(self.allowed_tableau_groups):
             # Add a choice for each tableau group on the server
             self.fields['groups'].choices.append((i, group.name))
             if group.name in user_group_names:
                 # Pre-choose groups that the user already belongs to
                 self.fields['groups'].initial.append(i)
+        if not self.fields['groups'].choices:
+            del self.fields['groups']
 
         self.helper = FormHelper()
 
@@ -1776,5 +1821,5 @@ class TableauUserForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def save(self, username, commit=True):
-        groups = [self.all_tableau_groups[int(i)] for i in self.cleaned_data['groups']]
+        groups = [self.allowed_tableau_groups[int(i)] for i in self.cleaned_data['groups']]
         update_tableau_user(self.domain, username, self.cleaned_data['role'], groups)

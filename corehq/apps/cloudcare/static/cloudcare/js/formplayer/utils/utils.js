@@ -1,3 +1,4 @@
+'use strict';
 /*global Backbone, DOMPurify */
 hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
@@ -52,7 +53,12 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     Utils.currentUrlToObject = function () {
         var url = Backbone.history.getFragment();
         try {
-            return Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
+            const cloudcareUrl = Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
+            for (const queryKey in cloudcareUrl.queryData) {
+                // retrieve query inputs from Utils object
+                cloudcareUrl.queryData[queryKey].inputs = Utils.getCurrentQueryInputs(queryKey);
+            }
+            return cloudcareUrl;
         } catch (e) {
             // This means that we're on the homepage
             return new Utils.CloudcareUrl({});
@@ -61,6 +67,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
 
     Utils.setUrlToObject = function (urlObject, replace) {
         replace = replace || false;
+        for (const queryKey in urlObject.queryData) {
+            // don't store query inputs in url
+            delete urlObject.queryData[queryKey].inputs;
+        }
         var encodedUrl = Utils.objectToEncodedUrl(urlObject.toJson());
         hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
             FormplayerFrontend.navigate(encodedUrl, { replace: replace });
@@ -127,9 +137,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         return defer.promise();
     };
 
-    // this method takes current page number on which user has clicked and total possible pages
+    // This method takes current page number on which user has clicked and total possible pages
     // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.
-    Utils.paginateOptions = function (currentPage, totalPages) {
+    // totalItems can be either the total on the current page or across all pages.
+    Utils.paginateOptions = function (currentPage, totalPages, totalItems) {
         var maxPages = 5;
         // ensure current page isn't out of range
         if (currentPage < 1) {
@@ -160,10 +171,19 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 endPage = currentPage + maxPagesAfterCurrentPage;
             }
         }
+
+        const rowRange = [5, 10, 25, 50, 100],
+            hasMultiplePages = totalPages > 1,
+            hasAtLeastMinimumItemsPerPage = totalItems > rowRange[0],
+            showPagination = hasMultiplePages || hasAtLeastMinimumItemsPerPage;
+
         return {
             startPage: startPage,
             endPage: endPage,
             pageCount: totalPages,
+            rowRange: rowRange,
+            showPagination: showPagination,
+            pageNumLabel: _.template(gettext("Page <%- num %>")),
         };
     };
 
@@ -175,29 +195,33 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         }
     };
 
-    Utils.getCurrentQueryInputs = function () {
-        var queryData = Utils.currentUrlToObject().queryData[sessionStorage.queryKey];
-        if (queryData) {
-            return queryData.inputs || {};
+    Utils.getCurrentQueryInputs = function (queryKey) {
+        queryKey = queryKey || sessionStorage.queryKey;
+        const queryInputs = this.queryInputs || {};
+        return queryInputs[queryKey];
+    };
+
+    Utils.setCurrentQueryInputs = function (inputs, queryKey) {
+        queryKey = queryKey || sessionStorage.queryKey;
+        if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
+            this.queryInputs = this.queryInputs || {};
+            this.queryInputs[queryKey] = inputs;
+        }
+    };
+
+    Utils.getStickyQueryInputs = function () {
+        if (toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH') && this.stickyQueryInputs) {
+            return this.stickyQueryInputs[sessionStorage.queryKey] || {};
         }
         return {};
     };
 
-    Utils.getStickyQueryInputs = function () {
-        if (!toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH')) {
-            return {};
-        }
-        if (!this.stickyQueryInputs) {
-            return {};
-        }
-        return this.stickyQueryInputs[sessionStorage.queryKey] || {};
-    };
-
     Utils.setStickyQueryInputs = function (inputs) {
-        if (!this.stickyQueryInputs) {
-            this.stickyQueryInputs = {};
+        const queryKey = sessionStorage.queryKey;
+        if (queryKey && queryKey !== "null" && queryKey !== "undefined") {
+            this.stickyQueryInputs = this.stickyQueryInputs || {};
+            this.stickyQueryInputs[queryKey] = inputs;
         }
-        this.stickyQueryInputs[sessionStorage.queryKey] = inputs;
     };
 
     Utils.setSelectedValues = function (selections) {
@@ -264,18 +288,24 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
         };
 
-        this.setQueryData = function ({ inputs, execute, forceManualSearch, selectValuesByKeys = false }) {
+        this.setQueryData = function ({ inputs, execute, forceManualSearch, initiatedBy}) {
             var selections = Utils.currentUrlToObject().selections;
+            var queryKey = sessionStorage.queryKey;
             this.queryData = this.queryData || {};
-            this.queryData[sessionStorage.queryKey] = _.defaults({
+
+            const queryDataEntry = _.defaults({
                 inputs: inputs,
-                // only here to maintain backward compatibility and can be removed
-                // once web apps fully transition using keys to convey select prompt selection.
-                select_values_by_key: selectValuesByKeys,
                 execute: execute,
                 force_manual_search: forceManualSearch,
                 selections: selections,
-            }, this.queryData[sessionStorage.queryKey]);
+            }, this.queryData[queryKey]);
+
+            if (initiatedBy !== null && initiatedBy !== undefined) {
+                queryDataEntry.initiatedBy = initiatedBy;
+            }
+            Utils.setCurrentQueryInputs(inputs, queryKey);
+            this.queryData[queryKey] = queryDataEntry;
+
             this.page = null;
             this.search = null;
         };
@@ -297,10 +327,15 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.search = null;
             this.queryData = null;
             this.sessionId = null;
+            sessionStorage.removeItem('submitPerformed');
+            sessionStorage.removeItem('geocoderValues');
+            sessionStorage.removeItem('validationInProgress');
+            sessionStorage.removeItem('answerQuestionInProgress');
         };
 
         this.onSubmit = function () {
             sessionStorage.removeItem('selectedValues');
+            sessionStorage.removeItem('geocoderValues');
             this.page = null;
             this.sortIndex = null;
             this.search = null;
@@ -328,8 +363,10 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.search = null;
             this.sortIndex = null;
             sessionStorage.removeItem('selectedValues');
+            sessionStorage.removeItem('geocoderValues');
             this.sessionId = null;
         };
+
     };
 
     Utils.CloudcareUrl.prototype.toJson = function () {
@@ -391,7 +428,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
 
     if (!String.prototype.includes) {
         String.prototype.includes = function (search, start) {
-            'use strict';
             if (typeof start !== 'number') {
                 start = 0;
             }

@@ -52,7 +52,6 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.app_manager.dbaccessors import get_app_languages
 from corehq.apps.cloudcare.esaccessors import login_as_user_filter
-from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -352,7 +351,6 @@ class BaseEditUserView(BaseUserSettingsView):
                 'exception_type': type(e),
             })
 
-
     def post(self, request, *args, **kwargs):
         saved = False
         if self.request.POST['form_type'] == "commtrack":
@@ -551,7 +549,6 @@ class ListWebUsersView(BaseRoleAccessView):
     page_title = gettext_lazy("Web Users")
     urlname = 'web_users'
 
-
     @property
     @memoized
     def role_labels(self):
@@ -626,7 +623,7 @@ class DownloadWebUsersStatusView(BaseUserSettingsView):
             'next_url': reverse(ListWebUsersView.urlname, args=[self.domain]),
             'next_url_text': _("Go back to Web Users"),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -662,6 +659,9 @@ class ListRolesView(BaseRoleAccessView):
             [role for role in UserRole.objects.get_by_domain(self.domain) if not role.is_commcare_user_default],
             key=lambda role: role.name if role.name else '\uFFFF'
         )) + [UserRole.commcare_user_default(self.domain)]  # mobile worker default listed last
+
+    def can_edit_linked_roles(self):
+        return self.request.couch_user.can_edit_linked_data(self.domain)
 
     def get_roles_for_display(self):
         show_es_issue = False
@@ -700,6 +700,7 @@ class ListRolesView(BaseRoleAccessView):
 
     @property
     def page_context(self):
+        from corehq.apps.linked_domain.dbaccessors import is_active_downstream_domain
         if (not self.can_restrict_access_by_location
                 and any(not role.permissions.access_all_locations
                         for role in self.non_admin_roles)):
@@ -718,6 +719,8 @@ class ListRolesView(BaseRoleAccessView):
             } for viz in TableauVisualization.objects.filter(domain=self.domain)]
 
         return {
+            'is_managed_by_upstream_domain': is_active_downstream_domain(self.domain),
+            'can_edit_linked_data': self.can_edit_linked_roles(),
             'user_roles': self.get_roles_for_display(),
             'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
@@ -785,7 +788,7 @@ def paginate_enterprise_users(request, domain):
             'inactiveMobileCount': len(mobile_users[web_user.username]) - loginAsUserCount,
         })
         for mobile_user in sorted(mobile_users[web_user.username], key=lambda x: x.username):
-            profile = mobile_user.get_user_data_profile(mobile_user.metadata.get(PROFILE_SLUG))
+            profile = mobile_user.get_user_data(domain).profile
             users.append({
                 **_format_enterprise_user(mobile_user.domain, mobile_user),
                 'profile': profile.name if profile else None,
@@ -944,6 +947,12 @@ def _update_role_from_view(domain, role_data):
         # This shouldn't be possible through the UI, but as a safeguard...
         role_data['permissions']['access_all_locations'] = True
 
+    if (
+        not domain_has_privilege(domain, privileges.CUSTOM_DOMAIN_ALERTS)
+        and 'manage_domain_alerts' in role_data['permissions']
+    ):
+        raise ValueError(_("Update subscription to set access for custom domain alerts"))
+
     if "_id" in role_data:
         try:
             role = UserRole.objects.by_couch_id(role_data["_id"])
@@ -967,7 +976,7 @@ def _update_role_from_view(domain, role_data):
     role.save()
 
     permissions = HqPermissions.wrap(role_data["permissions"])
-    permissions.normalize()
+    permissions.normalize(previous=role.permissions)
     role.set_permissions(permissions.to_list())
 
     assignable_by = role_data["assignable_by"]
@@ -1269,7 +1278,7 @@ class WebUserUploadStatusView(BaseManageWebUserView):
             'next_url': reverse(ListWebUsersView.urlname, args=[self.domain]),
             'next_url_text': _("Return to manage web users"),
         })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        return render(request, 'hqwebapp/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

@@ -2,7 +2,10 @@ from unittest import mock
 
 from django.test import SimpleTestCase
 
-from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
+from corehq.apps.app_manager.exceptions import (
+    DuplicateInstanceIdError,
+    UnknownInstanceError,
+)
 from corehq.apps.app_manager.models import (
     CaseSearch,
     CaseSearchProperty,
@@ -11,7 +14,9 @@ from corehq.apps.app_manager.models import (
     Itemset,
     ShadowModule,
 )
-from corehq.apps.app_manager.suite_xml.post_process.instances import get_instance_names
+from corehq.apps.app_manager.suite_xml.post_process.instances import (
+    get_instance_names,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -30,7 +35,7 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
         self.factory = AppFactory(include_xmlns=True)
         self.module, self.form = self.factory.new_basic_module('m0', 'case1')
 
-    def test_custom_instances(self, *args):
+    def test_custom_instances(self):
         instance_id = "foo"
         instance_path = "jr://foo/bar"
         self.form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
@@ -44,7 +49,14 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
             "entry/instance"
         )
 
-    def test_duplicate_custom_instances(self, *args):
+    def test_unknown_instances(self):
+        xpath = "instance('unknown')/thing/val = 1"
+        self.form.form_filter = xpath
+        with self.assertRaises(UnknownInstanceError) as e:
+            self.factory.app.create_suite()
+        self.assertIn(xpath, str(e.exception))
+
+    def test_duplicate_custom_instances(self):
         self.factory.form_requires_case(self.form)
         instance_id = "casedb"
         instance_path = "jr://casedb/bar"
@@ -54,7 +66,7 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
         with self.assertRaises(DuplicateInstanceIdError):
             self.factory.app.create_suite()
 
-    def test_duplicate_regular_instances(self, *args):
+    def test_duplicate_regular_instances(self):
         """Make sure instances aren't getting added multiple times if they are referenced multiple times
         """
         self.factory.form_requires_case(self.form)
@@ -70,17 +82,20 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
             "entry/instance"
         )
 
-    def test_location_instances(self, *args):
+    def test_location_instances(self):
         self.form.form_filter = "instance('locations')/locations/"
+        self.factory.new_form(self.module)
+        suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
             <partial>
                 <instance id='locations' src='jr://fixture/locations' />
             </partial>
             """,
-            self.factory.app.create_suite(),
-            "entry/instance"
+            suite,
+            "entry[1]/instance"
         )
+        self.assertXmlPartialEqual("<partial />", suite, "entry[2]/instance")
 
     @mock.patch.object(LocationFixtureConfiguration, 'for_domain')
     def test_location_instance_during_migration(self, sync_patch):
@@ -113,13 +128,16 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
                                        self.factory.app.create_suite(), "entry/instance")
 
             configuration_mock_obj.sync_hierarchical_fixture = False
-            self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+            self.assertXmlPartialEqual(flat_fixture_format_xml,
+                                       self.factory.app.create_suite(), "entry/instance")
 
             configuration_mock_obj.sync_flat_fixture = False
-            self.assertXmlPartialEqual(hierarchical_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+            self.assertXmlPartialEqual(hierarchical_fixture_format_xml,
+                                       self.factory.app.create_suite(), "entry/instance")
 
             configuration_mock_obj.sync_hierarchical_fixture = True
-            self.assertXmlPartialEqual(hierarchical_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+            self.assertXmlPartialEqual(hierarchical_fixture_format_xml,
+                                       self.factory.app.create_suite(), "entry/instance")
 
         # To ensure for new domains or domains adding locations now come on flat fixture
         configuration_mock_obj.sync_hierarchical_fixture = True  # default value
@@ -131,7 +149,7 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
         configuration_mock_obj.sync_hierarchical_fixture = False
         self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
 
-    def test_unicode_lookup_table_instance(self, *args):
+    def test_unicode_lookup_table_instance(self):
         self.form.form_filter = "instance('item-list:província')/província/"
         self.assertXmlPartialEqual(
             """
@@ -143,7 +161,7 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
             "entry/instance"
         )
 
-    def test_search_input_instance(self, *args):
+    def test_search_input_instance(self):
         # instance is not added and no errors
         self.form.form_filter = "instance('search-input:results')/values/"
         self.assertXmlPartialEqual(
@@ -156,7 +174,7 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
             "entry/instance"
         )
 
-    def test_search_input_instance_remote_request(self, *args):
+    def test_search_input_instance_remote_request(self):
         self.form.requires = 'case'
         self.module.case_type = 'case'
 
@@ -210,12 +228,11 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
         self._test_search_prompt_itemset_instance(shadow_module)
 
     def _test_search_prompt_itemset_instance(self, module):
-        instance_id = "123"
+        instance_id = "item-list:123"
         module.search_config = CaseSearch(
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}, input_="select1", itemset=Itemset(
                     instance_id=instance_id,
-                    instance_uri="jr://fixture/custom_fixture",
                     nodeset=f"instance('{instance_id}')/rows/row",
                     label='name',
                     value='id',
@@ -228,7 +245,7 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
 
         expected_instance = f"""
                 <partial>
-                  <instance id="{instance_id}" src="jr://fixture/custom_fixture"/>
+                  <instance id="{instance_id}" src="jr://fixture/item-list:123"/>
                 </partial>
                 """
         self.assertXmlPartialEqual(
@@ -236,6 +253,38 @@ class SuiteInstanceTests(SimpleTestCase, SuiteMixin):
             suite,
             f"./remote-request[1]/instance[@id='{instance_id}']",
         )
+
+    def test_module_filter_instances_on_all_forms(self):
+        # instances from module filters result in instance declarations in all forms in the module
+        factory = AppFactory(build_version='2.20.0')  # enable_module_filtering
+        self.module, self.form = factory.new_basic_module('m0', 'case1')
+        self.module.module_filter = "instance('locations')/locations/"
+        factory.new_form(self.module)
+
+        suite = factory.app.create_suite()
+        instance_xml = "<partial><instance id='locations' src='jr://fixture/locations' /></partial>"
+        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m0-f0']/../instance")
+        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m0-f1']/../instance")
+
+    def test_module_filter_instances_on_all_forms_merged_modules(self):
+        # instances from module filters result in instance declarations in all forms in the module
+        # and if two modules are display_in_root, then on forms in the other module too
+        factory = AppFactory(build_version='2.20.0')  # enable_module_filtering
+        self.m0, self.m0f0 = factory.new_basic_module('m0', 'case1')
+        self.m0.module_filter = "instance('groups')/groups/"
+        self.m0.put_in_root = True
+
+        self.m1, self.m1f0 = factory.new_basic_module('m1', 'case1')
+        self.m1.module_filter = "instance('locations')/locations/"
+        self.m1.put_in_root = True
+
+        suite = factory.app.create_suite()
+        instance_xml = """<partial>
+            <instance id='groups' src='jr://fixture/user-groups' />
+            <instance id='locations' src='jr://fixture/locations' />
+        </partial>"""
+        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m0-f0']/../instance")
+        self.assertXmlPartialEqual(instance_xml, suite, "entry/command[@id='m1-f0']/../instance")
 
 
 @generate_cases([

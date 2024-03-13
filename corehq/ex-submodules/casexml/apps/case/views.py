@@ -55,6 +55,8 @@ class CaseDisplayWrapper(object):
         if self.case.location_id:
             dynamic_data['location_id'] = self.case.location_id
 
+        dynamic_data['case_name'] = self.case.name
+
         return dynamic_data
 
     @property

@@ -48,7 +48,6 @@ nav.appmanager-content {
   top: 6px;
   position: absolute;
   margin-right: 5px;
-
 }
 
 .appnav-primary-icon-lg {
@@ -56,7 +55,7 @@ nav.appmanager-content {
 }
 
 .appnav-menu .appnav-primary-icon-lg  {
-  top: 2px;
+  top: 3px;
 }
 
 .appnav-menu > li > .appnav-item a.appnav-delete {
@@ -139,7 +138,7 @@ nav.appmanager-content {
 .appnav-menu > li > .appnav-item a.appnav-add {
   width: @appnav-width;
   padding-left: @appnav-trash-width;
-  > .fa {
+  > [class*='fa-'] {
     .transition(all .2s);
     margin-right: 8px;
     margin-left: 5px;
@@ -148,7 +147,7 @@ nav.appmanager-content {
   &:hover, &:focus {
     text-decoration: none;
 
-    > .fa {
+    > [class*='fa-'] {
       color: @call-to-action-mid;
     }
   }
@@ -199,9 +198,12 @@ nav.appmanager-content {
 
   > li:last-child > .appnav-item > a.appnav-title {
     border: none;
+    padding-left: 11px;
+
     &:before {
       content: @l-shaped-line;
       left: -14px;
+      margin-right: 1px;
     }
   }
   > .appnav-primary-icon {
@@ -310,6 +312,18 @@ nav.appmanager-content {
 	margin-left: -10px;
 	margin-top: -10px;
   }
+}
+
+.appnav-name-linked {
+  padding: 5px 15px;
+  text-transform: uppercase;
+  color: white;
+  font-size: 10px;
+  line-height: 15px;
+  background-color: @call-to-action-mid;
+  display: block;
+  font-weight: bold;
+  position: relative;
 }
 
 .appnav-name-settings {

@@ -89,12 +89,13 @@ from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access, get_ucr_datasource_config_by_id
 from corehq.toggles import (
     SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER,
-    SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
     OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER,
     SHOW_IDS_IN_REPORT_BUILDER,
     DATA_REGISTRY_UCR
 )
 from dimagi.utils.couch.undo import undo_delete
+from corehq.toggles import SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE
+
 
 STATIC_CASE_PROPS = [
     "closed",
@@ -183,10 +184,10 @@ class DataSourceProperty(object):
             return FormMetaColumnOption(self._id, self._data_types, self._text, self._source)
         elif self._type == PROPERTY_TYPE_CASE_PROP:
             if self._id in (
-                    COMPUTED_OWNER_NAME_PROPERTY_ID,
-                    COMPUTED_OWNER_LOCATION_PROPERTY_ID,
-                    COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
-                    COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID
+                COMPUTED_OWNER_NAME_PROPERTY_ID,
+                COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+                COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
+                COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID
             ):
                 return OwnernameComputedCasePropertyOption(self._id, self._data_types, self._text)
             elif self._id == COMPUTED_USER_NAME_PROPERTY_ID:
@@ -249,10 +250,24 @@ class DataSourceProperty(object):
             filter.update({"choice_provider": {"type": "user"}})
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
             filter.update({"choice_provider": {"type": "location"}})
-        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID:
+        if (
+            filter_format == 'dynamic_choice_list'
+            and self._id == COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID
+        ):
             filter.update({"choice_provider": {"type": "location", "include_descendants": True}})
-        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID:
-            filter.update({"choice_provider": {"type": "location", "include_descendants": True, "show_all_locations": True}})
+        if (
+            filter_format == 'dynamic_choice_list'
+            and self._id == COMPUTED_OWNER_LOCATION_ARCHIVED_WITH_DESCENDANTS_PROPERTY_ID
+        ):
+            filter.update(
+                {
+                    "choice_provider": {
+                        "type": "location",
+                        "include_descendants": True,
+                        "show_all_locations": True
+                    }
+                }
+            )
         if filter_format == 'dynamic_choice_list' and self._id == COMMCARE_PROJECT:
             filter.update({"choice_provider": {"type": COMMCARE_PROJECT}})
         if configuration.get('pre_value') or configuration.get('pre_operator'):
@@ -297,6 +312,7 @@ class ReportBuilderDataSourceInterface(metaclass=ABCMeta):
     A data source could be an (app, form), (app, case_type), or (registry, case_type) pair (see
     ManagedReportBuilderDataSourceHelper), or it can be a real UCR data source (see UnmanagedDataSourceHelper)
     """
+
     @property
     @abstractmethod
     def report_config_class(self):
@@ -792,7 +808,7 @@ class CaseDataSourceHelper(ManagedReportBuilderDataSourceHelper):
         if SHOW_IDS_IN_REPORT_BUILDER.enabled(self.domain):
             properties['case_id'] = self._get_case_id_pseudo_property()
 
-        if SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER.enabled(self.domain):
+        if SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE.enabled(self.domain):
             properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID] = self._get_owner_location_pseudo_property()
             properties[COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID] = \
                 self._get_owner_location_with_descendants_pseudo_property()
@@ -1046,7 +1062,10 @@ class DataSourceForm(forms.Form):
                                 'for="many_projects" class="project_data-label">%s</label>'
                                 % _("Data From My Project Space And Others")),
                     crispy.Div(
-                        hqcrispy.FieldWithHelpBubble('registry_slug', help_bubble_text=help_texts['registry_slug']),
+                        hqcrispy.FieldWithHelpBubble(
+                            'registry_slug',
+                            help_bubble_text=help_texts['registry_slug']
+                        ),
                         style="padding-left: 50px;"
                     ),
                 ),
@@ -1100,7 +1119,8 @@ class ConfigureNewReportBase(forms.Form):
     report_title = forms.CharField(widget=forms.HiddenInput, required=False)
     report_description = forms.CharField(widget=forms.HiddenInput, required=False)
 
-    def __init__(self, domain, report_name, app_id, source_type, report_source_id, existing_report=None, registry_slug=None,
+    def __init__(self, domain, report_name, app_id, source_type, report_source_id, existing_report=None,
+                 registry_slug=None,
                  *args, **kwargs):
         """
         This form can be used to create a new ReportConfiguration, or to modify
@@ -1190,7 +1210,8 @@ class ConfigureNewReportBase(forms.Form):
         )
         data_source_config.validate()
         data_source_config.save()
-        tasks.rebuild_indicators.delay(data_source_config._id, source="report_builder", domain=data_source_config.domain)
+        tasks.rebuild_indicators.delay(data_source_config._id, source="report_builder",
+                                       domain=data_source_config.domain)
         return data_source_config._id
 
     def update_report(self):
@@ -1522,10 +1543,9 @@ class ConfigureNewReportBase(forms.Form):
         :param column_field: The "field" property of a report column
         :return: a data source indicator id
         """
-        indicator_id = "_".join(column_field.split("_")[:-1])
         for indicator in indicators:
-            if indicator['column_id'] == indicator_id and indicator['type'] == 'choice_list':
-                return indicator_id
+            if column_field.startswith(indicator['column_id']) and indicator['type'] == 'choice_list':
+                return indicator['column_id']
         return None
 
     @property
@@ -1561,6 +1581,7 @@ class ConfigureNewReportBase(forms.Form):
         Return the dict filter configurations to be used by the
         ReportConfiguration that this form produces.
         """
+
         def _make_report_filter(conf, index):
             property = self.data_source_properties[conf["property"]]
             return property.to_report_filter(conf, index)
@@ -1661,8 +1682,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             property="name",
             data_source_field=(
                 self.data_source_properties['name']
-                    .to_report_column_option()
-                    .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
+                .to_report_column_option()
+                .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
             calculation=UI_AGG_COUNT_PER_CHOICE
         ))
         cols.append(ColumnViewModel(
@@ -1671,8 +1692,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             property=COMPUTED_OWNER_NAME_PROPERTY_ID,
             data_source_field=(
                 self.data_source_properties[COMPUTED_OWNER_NAME_PROPERTY_ID]
-                    .to_report_column_option()
-                    .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
+                .to_report_column_option()
+                .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
             calculation=UI_AGG_COUNT_PER_CHOICE
         ))
         case_props_found = 0
@@ -1687,7 +1708,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     property=prop.get_id(),
                     data_source_field=(
                         prop.to_report_column_option()
-                            .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
+                        .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
                     calculation=UI_AGG_COUNT_PER_CHOICE,
                 ))
                 if case_props_found == 3:
@@ -1703,7 +1724,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             property=prop.get_id(),
             data_source_field=(
                 prop.to_report_column_option()
-                    .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
+                .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
             calculation=UI_AGG_COUNT_PER_CHOICE
         ))
         questions = [p for p in self.data_source_properties.values()
@@ -1735,7 +1756,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 property=prop.get_id(),
                 data_source_field=(
                     prop.to_report_column_option()
-                        .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
+                    .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
                 calculation=UI_AGG_COUNT_PER_CHOICE,
             ))
         return cols

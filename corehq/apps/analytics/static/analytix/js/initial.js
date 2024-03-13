@@ -46,6 +46,24 @@ hqDefine('analytix/js/initial', [
         return _initData[slug];
     };
 
+    var getNamespacedProperties = function (apiName) {
+        if (_.isEmpty(_initData)) {
+            _initData = _gather(_selector, _initData);
+        }
+
+        const prefix = `${apiName}.`;
+        const filteredValues = _.pick(_initData, function (value, key) {
+            return key.startsWith(prefix);
+        });
+
+        const namespacedValues = {};
+        _.each(filteredValues, function (value, key) {
+            namespacedValues[key.substring(prefix.length)] = value;
+        });
+
+        return namespacedValues;
+    };
+
     /**
      * Returns a get function namespaced to the specified API.
      * @param apiName
@@ -97,6 +115,7 @@ hqDefine('analytix/js/initial', [
 
     return {
         getFn: getFn,
+        getNamespacedProperties: getNamespacedProperties,
         getAbTests: getAbTests,
     };
 });

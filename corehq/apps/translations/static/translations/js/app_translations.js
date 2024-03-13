@@ -3,7 +3,7 @@ hqDefine("translations/js/app_translations", [
     "underscore",
     "hqwebapp/js/initial_page_data",
     "app_manager/js/widgets",
-    "hqwebapp/js/widgets",   // .hqwebapp-select2
+    "hqwebapp/js/bootstrap3/widgets",   // .hqwebapp-select2
 ], function (
     $,
     _,

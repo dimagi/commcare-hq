@@ -126,7 +126,7 @@ hqDefine("reports/js/report_config_models", [
             $.ajax({
                 type: "DELETE",
                 url: options.saveUrl + '/' + config._id(),
-                success: function (data) {
+                success: function () {
                     window.location.reload();
                 },
             });
@@ -145,18 +145,18 @@ hqDefine("reports/js/report_config_models", [
             self.configBeingViewed(config);
 
             var filters = config.filters;
-            update_filters = function () {
-                for (var filter_name in filters) {
-                    var val = filters[filter_name];
-                    $('[name="' + filter_name + '"]').val(val);
+            var updateFilters = function () {
+                for (var filterName in filters) {
+                    var val = filters[filterName];
+                    $('[name="' + filterName + '"]').val(val);
                 }
             };
 
             if (self.initialLoad) {
                 self.initialLoad = false;
-                update_filters();
+                updateFilters();
             } else {
-                update_filters();
+                updateFilters();
                 window.location.href = "?config_id=" + config._id();
             }
         };
@@ -174,7 +174,7 @@ hqDefine("reports/js/report_config_models", [
 
                     if (type === 'checkbox') {
                         if (el.prop('checked') === true) {
-                            if (!filters.hasOwnProperty(name)) {
+                            if (!_.has(filters, name)) {
                                 filters[name] = [];
                             }
 
@@ -256,7 +256,7 @@ hqDefine("reports/js/report_config_models", [
 
                 for (var key in configData.filters) {
                     // remove null filters
-                    if (configData.filters.hasOwnProperty(key)) {
+                    if (_.has(configData.filters, key)) {
                         if (configData.filters[key] === null) {
                             delete configData.filters[key];
                         }
@@ -272,7 +272,7 @@ hqDefine("reports/js/report_config_models", [
                         var newConfig = reportConfig(data);
                         self.addOrReplaceConfig(newConfig);
                         self.unsetConfigBeingEdited();
-                        if (newConfig.report_slug == 'configurable') {
+                        if (newConfig.report_slug === 'configurable') {
                             self.setUserConfigurableConfigBeingViewed(newConfig);
                         } else {
                             self.setConfigBeingViewed(newConfig);

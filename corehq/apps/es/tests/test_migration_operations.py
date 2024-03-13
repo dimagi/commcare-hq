@@ -14,12 +14,15 @@ from corehq.apps.es.client import manager
 from corehq.apps.es.index.settings import render_index_tuning_settings
 from corehq.apps.es.migration_operations import (
     CreateIndex,
+    CreateIndexIfNotExists,
     DeleteIndex,
     MappingUpdateFailed,
     UpdateIndexMapping,
     make_mapping_meta,
 )
+from corehq.apps.es.tests.test_client import patch_elastic_version
 from corehq.apps.es.tests.utils import es_test
+from corehq.pillows.management.commands.print_elastic_mappings import transform_string_to_text_and_keyword
 from corehq.util.es.elasticsearch import NotFoundError, RequestError
 
 
@@ -78,7 +81,7 @@ class TestCreateIndex(BaseCase):
     mapping = {
         "_meta": {},
         "properties": {
-            "value": {"type": "string"},
+            "value": {"type": "text"},
         },
     }
     analysis = {"analyzer": {"default": {
@@ -111,6 +114,24 @@ class TestCreateIndex(BaseCase):
         self.assertIndexMappingMatches(self.index, self.type, expected)
         self.assertIndexHasAnalysis(self.index, self.analysis)
         self.assertIndexHasTuningSettings(self.index, self.settings_key)
+
+    def test_index_creation_is_skipped_if_es_version_not_targetted(self):
+        migration = TestMigration(
+            CreateIndex(*self.create_index_args, es_versions=[5])
+        )
+        self.assertIndexDoesNotExist(self.index)
+        with patch_elastic_version(manager, "2.4.6"):
+            migration.apply()
+        self.assertIndexDoesNotExist(self.index)
+
+    def test_index_creation_if_es_version_is_targetted(self):
+        migration = TestMigration(
+            CreateIndex(*self.create_index_args, es_versions=[2, 5])
+        )
+        self.assertIndexDoesNotExist(self.index)
+        with patch_elastic_version(manager, "2.4.6"):
+            migration.apply()
+        self.assertIndexExists(self.index)
 
     def test_fails_if_index_exists(self):
         manager.index_create(self.index)
@@ -243,7 +264,7 @@ class TestCreateIndex(BaseCase):
         operation = CreateIndex(*args)
         self.assertEqual(
             operation.deconstruct(),
-            (CreateIndex.__qualname__, args, {}),
+            (CreateIndex.__qualname__, args, {'es_versions': []}),
         )
 
     def test_deconstruct_omits_mapping__meta(self):
@@ -264,7 +285,7 @@ class TestCreateIndex(BaseCase):
                     analysis,
                     settings_key,
                 ],
-                {},
+                {'es_versions': []},
             ),
         )
 
@@ -276,7 +297,20 @@ class TestCreateIndex(BaseCase):
             (
                 CreateIndex.__qualname__,
                 args[:-1],
-                {"comment": "this is the comment"},
+                {"comment": "this is the comment", "es_versions": []},
+            ),
+        )
+
+    def test_deconstruct_with_es_versions(self):
+        args = ["test", "test", {}, {}, "test", "this is the comment", [5, 6]]
+
+        operation = CreateIndex(*args)
+        self.assertEqual(
+            operation.deconstruct(),
+            (
+                CreateIndex.__qualname__,
+                args[:-2],
+                {"comment": "this is the comment", "es_versions": [5, 6]},
             ),
         )
 
@@ -288,7 +322,7 @@ class TestCreateIndexIfNotExists(BaseCase):
     mapping = {
         "_meta": {},
         "properties": {
-            "value": {"type": "string"},
+            "value": {"type": "text"},
         },
     }
     analysis = {"analyzer": {"default": {
@@ -302,14 +336,16 @@ class TestCreateIndexIfNotExists(BaseCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        # It's not possible to import files starting with number
-        # Therefore using import_module to import migration file
-        from importlib import import_module
-        migration_module = import_module("corehq.apps.es.migrations.0001_bootstrap_es_indexes")
-        cls.CreateIndexIfNotExists = migration_module.CreateIndexIfNotExists
+        cls.CreateIndexIfNotExists = CreateIndexIfNotExists
 
     def test_does_not_fail_if_index_exists(self):
         manager.index_create(self.index)
+        new_mapping = {
+            "properties": {
+                "some_other_val": {"type": "text"},
+            },
+        }
+        manager.index_put_mapping(self.index, self.type, new_mapping)
         self.assertIndexExists(self.index)
 
         migration = TestMigration(self.CreateIndexIfNotExists(*self.create_index_args))
@@ -320,7 +356,7 @@ class TestCreateIndexIfNotExists(BaseCase):
 
         fetched_mapping = manager.index_get_mapping(self.index, self.type)
         # existing mapping is not changed
-        self.assertIsNone(fetched_mapping)
+        self.assertEqual(fetched_mapping, new_mapping)
 
     def test_creates_index_if_not_exists(self):
         self.assertIndexDoesNotExist(self.index)
@@ -346,6 +382,22 @@ class TestDeleteIndex(BaseCase):
         manager.index_create(self.index)
         self.assertIndexExists(self.index)
         migration.apply()
+        self.assertIndexDoesNotExist(self.index)
+
+    def test_deletes_index_skipped_if_targetted_es_version_not_match(self):
+        migration = TestMigration(DeleteIndex(self.index, es_versions=[5]))
+        manager.index_create(self.index)
+        self.assertIndexExists(self.index)
+        with patch_elastic_version(manager, "2.4.6"):
+            migration.apply()
+        self.assertIndexExists(self.index)
+
+    def test_deletes_index_when_target_es_version_matches(self):
+        migration = TestMigration(DeleteIndex(self.index, es_versions=[2, 5]))
+        manager.index_create(self.index)
+        self.assertIndexExists(self.index)
+        with patch_elastic_version(manager, "2.4.6"):
+            migration.apply()
         self.assertIndexDoesNotExist(self.index)
 
     def test_fails_if_index_does_not_exist(self):
@@ -402,7 +454,7 @@ class TestDeleteIndex(BaseCase):
         operation = DeleteIndex(name)
         self.assertEqual(
             operation.deconstruct(),
-            (DeleteIndex.__qualname__, [name], {}),
+            (DeleteIndex.__qualname__, [name], {'es_versions': []}),
         )
 
     def test_deconstruct_with_reverse_params(self):
@@ -414,7 +466,7 @@ class TestDeleteIndex(BaseCase):
             (
                 DeleteIndex.__qualname__,
                 [name],
-                {"reverse_params": reverse_params},
+                {"reverse_params": reverse_params, "es_versions": []},
             ),
         )
 
@@ -431,7 +483,7 @@ class TestUpdateIndexMapping(BaseCase):
             "date_detection": False,
             "dynamic": True,
             "dynamic_date_formats": ["yyyy-MM-dd"],
-            "properties": {"prop": {"type": "string"}},
+            "properties": {"prop": {"type": "text"}},
         }
         CreateIndex(self.index, self.type, self.mapping, {}, "test").run()
 
@@ -460,12 +512,43 @@ class TestUpdateIndexMapping(BaseCase):
     def test_adds_new_properties(self):
         properties = manager.index_get_mapping(self.index, self.type)["properties"]
         new_properties = {
-            "new_str_prop": {"type": "string"},
+            "new_str_prop": {"type": "text"},
             "new_int_prop": {"type": "integer"},
         }
         self.assertNotEqual(properties, new_properties)
         TestMigration(UpdateIndexMapping(self.index, self.type, new_properties)).apply()
         properties.update(new_properties)
+        self.assertEqual(
+            properties,
+            manager.index_get_mapping(self.index, self.type)["properties"],
+        )
+
+    def test_adds_new_properties_if_targeted_es_version_matches(self):
+        properties = manager.index_get_mapping(self.index, self.type)["properties"]
+        new_properties = {
+            "new_str_prop": {"type": "text"},
+            "new_int_prop": {"type": "integer"},
+        }
+        self.assertNotEqual(properties, new_properties)
+        with patch_elastic_version(manager, "2.4.6"):
+            TestMigration(UpdateIndexMapping(self.index, self.type, new_properties, es_versions=[2])).apply()
+        properties.update(new_properties)
+        self.assertEqual(
+            properties,
+            manager.index_get_mapping(self.index, self.type)["properties"],
+        )
+
+    def test_new_properties_not_added_if_targeted_es_version_not_matches(self):
+        properties = manager.index_get_mapping(self.index, self.type)["properties"]
+        new_properties = {
+            "new_str_prop": {"type": "text"},
+            "new_int_prop": {"type": "integer"},
+        }
+
+        self.assertNotEqual(properties, new_properties)
+        with patch_elastic_version(manager, "2.4.6"):
+            TestMigration(UpdateIndexMapping(self.index, self.type, new_properties, es_versions=[5])).apply()
+
         self.assertEqual(
             properties,
             manager.index_get_mapping(self.index, self.type)["properties"],
@@ -488,10 +571,9 @@ class TestUpdateIndexMapping(BaseCase):
     def test_extends_existing_property_fields(self):
         properties = manager.index_get_mapping(self.index, self.type)["properties"]
         property_update = {"prop": {
-            "type": "string",
+            "type": "text",
             "fields": {"raw_value": {
-                "index": "not_analyzed",
-                "type": "string",
+                "type": "keyword",
             }},
         }}
         self.assertNotEqual(properties, property_update)
@@ -515,7 +597,7 @@ class TestUpdateIndexMapping(BaseCase):
     def test_fails_for_existing_property_type_change(self):
         self.assertEqual(
             manager.index_get_mapping(self.index, self.type)["properties"]["prop"],
-            {"type": "string"},
+            {"type": "text"},
         )
         migration = TestMigration(UpdateIndexMapping(
             self.index,
@@ -524,7 +606,7 @@ class TestUpdateIndexMapping(BaseCase):
         ))
         literal = (
             "TransportError(400, 'illegal_argument_exception', 'mapper [prop] "
-            "of different type, current_type [string], merged_type [integer]')"
+            "of different type, current_type [text], merged_type [integer]')"
         )
         with self.assertRaisesRegex(RequestError, f"^{re.escape(literal)}$"):
             migration.apply()
@@ -532,19 +614,16 @@ class TestUpdateIndexMapping(BaseCase):
     def test_fails_for_changing_existing_property_index_values(self):
         self.assertEqual(
             manager.index_get_mapping(self.index, self.type)["properties"]["prop"],
-            {"type": "string"},
+            {"type": "text"},
         )
         migration = TestMigration(UpdateIndexMapping(
             self.index,
             self.type,
-            {"prop": {"type": "string", "index": "not_analyzed"}},
+            {"prop": {"type": "keyword"}},
         ))
         literal = (
             "TransportError(400, 'illegal_argument_exception', "
-            "'Mapper for [prop] conflicts with existing mapping in other "
-            "types:\\n[mapper [prop] has different [index] values, mapper "
-            "[prop] has different [doc_values] values, cannot change from "
-            "disabled to enabled, mapper [prop] has different [analyzer]]')"
+            "'mapper [prop] of different type, current_type [text], merged_type [keyword]')"
         )
         with self.assertRaisesRegex(RequestError, f"^{re.escape(literal)}$"):
             migration.apply()
@@ -584,7 +663,7 @@ class TestUpdateIndexMapping(BaseCase):
                 +            "type": "integer"
                 +        },
                          "prop": {
-                             "type": "string"
+                             "type": "text"
                          }
             """),
             stream.getvalue(),
@@ -634,7 +713,7 @@ class TestUpdateIndexMapping(BaseCase):
         operation = UpdateIndexMapping(*args)
         self.assertEqual(
             operation.deconstruct(),
-            (UpdateIndexMapping.__qualname__, args, {}),
+            (UpdateIndexMapping.__qualname__, args, {'es_versions': []}),
         )
 
     def test_deconstruct_with_comment(self):
@@ -645,7 +724,10 @@ class TestUpdateIndexMapping(BaseCase):
             (
                 UpdateIndexMapping.__qualname__,
                 args[:-1],
-                {"comment": "this is the comment"},
+                {
+                    "comment": "this is the comment",
+                    "es_versions": [],
+                }
             ),
         )
 
@@ -654,7 +736,7 @@ class TestUpdateIndexMapping(BaseCase):
         operation = UpdateIndexMapping(*args, print_diff=False)
         self.assertEqual(
             operation.deconstruct(),
-            (UpdateIndexMapping.__qualname__, args, {"print_diff": False}),
+            (UpdateIndexMapping.__qualname__, args, {"print_diff": False, 'es_versions': []}),
         )
 
 
@@ -681,6 +763,35 @@ class TestMakeMappingMeta(SimpleTestCase):
     def test_make_mapping_meta_adds_comment_if_provided(self):
         comment = object()
         self.assertEqual(comment, make_mapping_meta(comment)["comment"])
+
+
+class TestMappingTransformFunctions(SimpleTestCase):
+
+    def test_transform_string_to_text_and_keyword(self):
+        old_mapping = {
+            "_meta": {"created": "now"},
+            "properties": {
+                "value": {"type": "text"},
+                "dict_val": {
+                    "properties": {"nested_val": {"type": "keyword"}}
+                }
+
+            },
+        }
+
+        transformed_mappings = transform_string_to_text_and_keyword(old_mapping)
+
+        expected_mappings = {
+            "_meta": {"created": "now"},
+            "properties": {
+                "value": {"type": "text"},
+                "dict_val": {
+                    "properties": {"nested_val": {"type": "keyword"}}
+                }
+
+            },
+        }
+        self.assertEqual(transformed_mappings, expected_mappings)
 
 
 def get_datetime_mock(created):

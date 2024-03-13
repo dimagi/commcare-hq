@@ -3,7 +3,7 @@
 {% get_current_language as LANGUAGE_CODE %}
 <ul class="nav navbar-nav mainmenu-tabs collapse" id="hq-main-tabs" role="menu">
   {% for tab in tabs %}
-    {% cache 500 header_tab tab.class_name tab.domain tab.is_active_tab tab.couch_user.get_id role_version LANGUAGE_CODE %}
+    {% cache 500 header_tab tab.frag_value %}
       {% with tab.filtered_dropdown_items as items %}
         <li class="mainmenu-tab {% if items %}dropdown{% endif %}{% if tab.is_active_tab %} active{% endif %}"
             id="{{ tab.class_name }}"

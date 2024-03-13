@@ -1,11 +1,10 @@
 import hashlib
-import json
-import logging
 import mimetypes
 from copy import copy
 from datetime import datetime
 from io import BytesIO
 
+from django.db import models
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -17,7 +16,6 @@ from memoized import memoized
 from PIL import Image
 
 from dimagi.ext.couchdbkit import (
-    BooleanProperty,
     DateTimeProperty,
     DictProperty,
     Document,
@@ -41,6 +39,7 @@ from corehq.apps.domain import SHARED_DOMAIN
 from corehq.apps.domain.models import LICENSE_LINKS, LICENSES
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.blobs.mixin import CODES, BlobMixin
+from corehq.util.view_utils import absolute_reverse
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -126,8 +125,8 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
                 license.attribution_notes = attribution_notes or license.attribution_notes
                 break
         else:
-            license = HQMediaLicense(   domain=domain, type=type, author=author,
-                                        attribution_notes=attribution_notes, organization=org)
+            license = HQMediaLicense(domain=domain, type=type, author=author,
+                                     attribution_notes=attribution_notes, organization=org)
             self.licenses.append(license)
 
         if should_save:
@@ -172,8 +171,8 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
     def add_domain(self, domain, owner=None, **kwargs):
         if len(self.owners) == 0:
             # this is intended to simulate migration--if it happens that a media file somehow gets no more owners
-            # (which should be impossible) it will transfer ownership to all copiers... not necessarily a bad thing,
-            # just something to be aware of
+            # (which should be impossible) it will transfer ownership to all copiers... not necessarily a bad
+            # thing, just something to be aware of
             self.owners = self.valid_domains
 
         if owner and domain not in self.owners:
@@ -314,7 +313,7 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
         if isinstance(data.get('licenses', ''), dict):
             # need to migrate licncses from old format to new format
             # old: {"mydomain": "public", "yourdomain": "cc"}
-            migrated = [HQMediaLicense(domain=domain, type=type)._doc \
+            migrated = [HQMediaLicense(domain=domain, type=type)._doc
                         for domain, type in data["licenses"].items()]
             data['licenses'] = migrated
 
@@ -411,7 +410,7 @@ class CommCareImage(CommCareMultimedia):
 
     @classmethod
     def get_icon_class(cls):
-        return "fa fa-picture-o"
+        return "fa-regular fa-image"
 
 
 class CommCareAudio(CommCareMultimedia):
@@ -449,7 +448,8 @@ class HQMediaMapItem(DocumentSchema):
 
     @property
     def url(self):
-        return reverse("hqmedia_download", args=[self.media_type, self.multimedia_id]) if self.multimedia_id else ""
+        return reverse("hqmedia_download", args=[self.media_type, self.multimedia_id]) \
+            if self.multimedia_id else ""
 
     @classmethod
     def gen_unique_id(cls, m_id, path):
@@ -651,7 +651,7 @@ class ModuleMediaMixin(MediaMixin):
 
             # Icon-formatted columns
             for column in details.get_columns():
-                if column.format == 'enum-image':
+                if column.format == 'enum-image' or column.format == 'clickable-icon':
                     for map_item in column.enum:
                         icon = clean_trans(map_item.value, [lang] + self.get_app().langs)
                         if icon:
@@ -771,7 +771,9 @@ class ApplicationMediaMixin(Document, MediaMixin):
     # paths to custom logos
     logo_refs = DictProperty()
 
-    archived_media = DictProperty()  # where we store references to the old logos (or other multimedia) on a downgrade, so that information is not lost
+    # where we store references to the old logos (or other multimedia) on a downgrade,
+    # so that information is not lost
+    archived_media = DictProperty()
 
     @memoized
     def all_media(self, lang=None):
@@ -909,7 +911,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
         permitted_paths = self.all_media_paths() | self.logo_paths
         for path in paths:
             if path not in permitted_paths:
-                map_item = self.multimedia_map[path]
                 map_changed = True
                 del self.multimedia_map[path]
 
@@ -918,7 +919,8 @@ class ApplicationMediaMixin(Document, MediaMixin):
 
     def create_mapping(self, multimedia, path, save=True):
         """
-            This creates the mapping of a path to the multimedia in an application to the media object stored in couch.
+            This creates the mapping of a path to the multimedia in an application
+            to the media object stored in couch.
         """
         path = path.strip()
         map_item = HQMediaMapItem()
@@ -944,7 +946,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
             Returns a generator of tuples, where the first item in the tuple is
             the path (jr://...) and the second is the object (CommCareMultimedia or a subclass)
         """
-        found_missing_mm = False
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
         build_profile = self.build_profiles[build_profile_id] if build_profile_id else None
@@ -1031,3 +1032,14 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 has_restored = True
                 del self.archived_media[LOGO_ARCHIVE_KEY][slug]
         return has_restored
+
+
+class LogoForSystemEmailsReference(models.Model):
+    domain = models.CharField(max_length=255, unique=True, null=False)
+    # Doc ID of the CommCareImage the object references
+    image_id = models.CharField(max_length=255, null=False)
+
+    def full_url_to_image(self):
+        from corehq.apps.hqmedia.views import ViewMultimediaFile
+        image = CommCareImage.get(self.image_id)
+        return absolute_reverse(ViewMultimediaFile.urlname, args=[image.doc_type, image._id])

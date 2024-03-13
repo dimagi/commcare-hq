@@ -10,6 +10,7 @@ from corehq.apps.hqwebapp.session_details_endpoint.views import (
 )
 from corehq.apps.hqwebapp.views import (
     BugReportView,
+    SolutionsFeatureRequestView,
     MaintenanceAlertsView,
     create_alert,
     debug_notify,
@@ -60,6 +61,8 @@ urlpatterns = [
     url(r'^accounts/logout/$', logout, name="logout"),
     url(r'^reports/$', redirect_to_default),
     url(r'^bug_report/$', BugReportView.as_view(), name='bug_report'),
+    url(r'^solutions_feature_request/$', SolutionsFeatureRequestView.as_view(),
+        name=SolutionsFeatureRequestView.urlname),
     url(r'^debug/notify/$', debug_notify, name='debug_notify'),
     url(r'^search/$', quick_find, name="global_quick_find"),
     url(r'^searchDescription.xml$', osdd, name="osdd"),
@@ -91,6 +94,8 @@ urlpatterns = [
     url(r'^relogin/iframe/$', domain_login_new_window, name='domain_login_new_window'),
     url(r'^relogin/sso/$', iframe_sso_login_pending, name='iframe_sso_login_pending'),
     url(r'^log_email_event/(?P<secret>[\w]+)/?$', log_email_event, name='log_email_event'),
+    url(r'^log_email_event/(?P<secret>[\w]+)/(?P<domain>[\w\.:-]+)/?$', log_email_event,
+        name='log_domain_email_event'),
     url(
         r'^oauth/applications/register/',
         OauthApplicationRegistration.as_view(),
@@ -105,9 +110,10 @@ domain_specific = [
     url(r'^login/$', domain_login, name='domain_login'),
     url(r'^login/iframe/$', iframe_domain_login, name='iframe_domain_login'),
     url(r'^retreive_download/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
-        retrieve_download, {'template': 'hqwebapp/includes/file_download.html'},
+        retrieve_download, {'template': 'hqwebapp/includes/bootstrap3/file_download.html'},
         name='hq_soil_download'),
     url(r'^app/v1/(?P<app_id>[\w-]+)/(?P<endpoint_id>[\w_-]+)/$', session_endpoint, name='session_endpoint'),
+    url(r'^app/v1/(?P<app_id>[\w-]+)/$', session_endpoint, name='session_endpoint'),
 ]
 
 prelogin_root = [

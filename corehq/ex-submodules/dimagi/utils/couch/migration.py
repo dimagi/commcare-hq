@@ -150,40 +150,29 @@ class SyncCouchToSQLMixin(object):
         if save:
             sql_object.save(sync_to_couch=False)
 
-    @classmethod
-    def _migration_bulk_sync_to_sql(cls, couch_docs, **kw):
-        sql_class = cls._migration_get_sql_model_class()
-        id_name = sql_class._migration_couch_id_name
-        new_sql_docs = []
-        for doc in couch_docs:
-            assert doc._id, doc
-            obj = sql_class(**{id_name: doc._id})
-            doc._migration_sync_to_sql(obj, save=False)
-            new_sql_docs.append(obj)
-        sql_class.objects.bulk_create(new_sql_docs, **kw)
-
     def _migration_sync_submodels_to_sql(self, sql_object):
         """Migrate submodels from the Couch model to the SQL model. This is called
         as part of ``_migration_sync_to_sql``"""
+        new_submodels = sql_object._new_submodels = {}
         for spec in self._migration_get_submodels():
+            manager = getattr(sql_object, spec.sql_attr)
+            parent_attr = manager.field.name
             sql_submodels = []
             for couch_submodel in getattr(self, spec.couch_attr):
-                sql_fields = {
+                obj = spec.sql_class(**{
                     sql_field: getattr(couch_submodel, couch_field)
                     for couch_field, sql_field in zip(spec.couch_fields, spec.sql_fields)
-                }
-                sql_submodels.append(spec.sql_class(**sql_fields))
-            sql_attr = getattr(sql_object, spec.sql_attr)
-            sql_attr.all().delete()
-            sql_attr.set(sql_submodels, bulk=False)
+                })
+                setattr(obj, parent_attr, sql_object)
+                sql_submodels.append(obj)
+            new_submodels[spec.sql_class] = sql_submodels, manager
 
     def _migration_do_sync(self):
         sql_object = self._migration_get_or_create_sql_object()
         self._migration_sync_to_sql(sql_object)
         return sql_object
 
-    def save(self, *args, **kwargs):
-        sync_to_sql = kwargs.pop('sync_to_sql', True)
+    def save(self, *args, sync_to_sql=True, **kwargs):
         super(SyncCouchToSQLMixin, self).save(*args, **kwargs)
         if sync_to_sql:
             try:
@@ -197,8 +186,7 @@ class SyncCouchToSQLMixin(object):
                     message='Could not sync %s SQL object from %s %s' % (sql_class_name,
                         couch_class_name, self._id))
 
-    def delete(self, *args, **kwargs):
-        sync_to_sql = kwargs.pop('sync_to_sql', True)
+    def delete(self, sync_to_sql=True, *args, **kwargs):
         if sync_to_sql:
             sql_object = self._migration_get_sql_object()
             if sql_object is not None:
@@ -236,7 +224,7 @@ class SyncSQLToCouchMixin(object):
         Should return a list of SubModelSpec tuples, one for each SchemaListProperty
         in the couch class. Should be identical in the couch and sql mixins.
         """
-        return []
+        return cls._migration_get_couch_model_class()._migration_get_submodels()
 
     @classmethod
     def _migration_get_custom_sql_to_couch_functions(cls):
@@ -300,9 +288,10 @@ class SyncSQLToCouchMixin(object):
         couch_object = self._migration_get_or_create_couch_object()
         self._migration_sync_to_couch(couch_object)
 
-    def save(self, *args, **kwargs):
-        sync_to_couch = kwargs.pop('sync_to_couch', True)
+    def save(self, *args, sync_to_couch=True, **kwargs):
+        is_update = not self._state.adding
         super(SyncSQLToCouchMixin, self).save(*args, **kwargs)
+        self._save_submodels(is_update)
         if sync_to_couch and sync_to_couch_enabled(self.__class__):
             try:
                 self._migration_do_sync()
@@ -315,8 +304,13 @@ class SyncSQLToCouchMixin(object):
                     message='Could not sync %s Couch object from %s %s' % (couch_class_name,
                         sql_class_name, self.pk))
 
-    def delete(self, *args, **kwargs):
-        sync_to_couch = kwargs.pop('sync_to_couch', True)
+    def _save_submodels(self, is_update):
+        for sql_class, (objs, manager) in self.__dict__.pop("_new_submodels", {}).items():
+            if is_update:
+                manager.all().delete()
+            sql_class.objects.bulk_create(objs)
+
+    def delete(self, *args, sync_to_couch=True, **kwargs):
         if sync_to_couch and sync_to_couch_enabled(self.__class__):
             couch_object = self._migration_get_couch_object()
             if couch_object is not None:

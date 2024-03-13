@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("cloudcare/js/form_entry/web_form_session", function () {
     var cloudcareUtils = hqImport("cloudcare/js/utils"),
         constants = hqImport("cloudcare/js/form_entry/const"),
@@ -90,6 +91,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
          * @param {function} errorResponseCallback - function to be called on a "success" response with .status = 'error'
          *      this function should return true to also run default behavior afterwards, or false to prevent it
          */
+        // eslint-disable-next-line no-unused-vars
         self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
             if (self.blockingStatus === constants.BLOCK_ALL) {
                 return;
@@ -249,6 +251,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             var self = this;
             $.unsubscribe([
                 'formplayer.' + constants.ANSWER,
+                'formplayer.' + constants.CLEAR_ANSWER,
                 'formplayer.' + constants.DELETE_REPEAT,
                 'formplayer.' + constants.NEW_REPEAT,
                 'formplayer.' + constants.EVALUATE_XPATH,
@@ -263,6 +266,9 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 self.submitForm(form);
             });
             $.subscribe('formplayer.' + constants.ANSWER, function (e, question) {
+                self.answerQuestion(question);
+            });
+            $.subscribe('formplayer.' + constants.CLEAR_ANSWER, function (e, question) {
                 self.answerQuestion(question);
             });
             $.subscribe('formplayer.' + constants.DELETE_REPEAT, function (e, group) {
@@ -320,13 +326,13 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         self.answerQuestion = function (q) {
             var self = this;
             var ix = formUI.getIx(q);
-            var answer = q.answer();
+            var answer = q.entry.xformAction === constants.CLEAR_ANSWER ? constants.NO_ANSWER : q.answer();
             var oneQuestionPerScreen = self.isOneQuestionPerScreen();
             var form = q.form();
 
             // We revalidate any errored labels while answering any of the questions
             var erroredLabels = form.erroredLabels();
-
+            sessionStorage.answerQuestionInProgress = true;
             this.serverRequest(
                 _.extend({
                     'action': q.entry.xformAction,
@@ -336,6 +342,8 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                     'oneQuestionPerScreen': oneQuestionPerScreen,
                 }, q.entry.xformParams()),
                 function (resp) {
+                    sessionStorage.answerQuestionInProgress = false;
+                    self.updateXformAction(q);
                     q.formplayerProcessed = true;
                     $.publish('session.reconcile', [resp, q]);
                     if (self.answerCallback !== undefined) {
@@ -347,11 +355,19 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 },
                 constants.BLOCK_SUBMIT,
                 function () {
+                    self.updateXformAction(q);
                     q.formplayerProcessed = false;
                     q.serverError(
                         gettext("We were unable to save this answer. Please try again later."));
                     q.pendingAnswer(constants.NO_PENDING_ANSWER);
                 });
+        };
+
+        self.updateXformAction = function (q) {
+            if (q.entry.xformAction === constants.CLEAR_ANSWER) {
+                q.entry.xformAction = (q.entry.templateType === "file" || q.entry.templateType === "signature")
+                    ? constants.ANSWER_MEDIA : constants.ANSWER;
+            }
         };
 
         self.nextQuestion = function (opts) {
@@ -423,7 +439,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         };
 
         self.deleteRepeat = function (repetition) {
-            var juncture = formUI.getIx(repetition.parent);
+            var juncture = formUI.getIx(repetition.parent.parent);
             var repIx = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
             this.serverRequest(
                 {

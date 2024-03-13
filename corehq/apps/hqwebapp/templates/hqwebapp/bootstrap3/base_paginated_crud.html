@@ -1,0 +1,177 @@
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block js %}
+  {% if not requirejs_main %}
+    {{ block.super }}
+    <script src="{% static 'hqwebapp/js/bootstrap3/crud_paginated_list.js' %}"></script>
+  {% endif %}
+{% endblock %}
+
+{% block page_content %}
+  {% initial_page_data 'total' pagination.total %}
+  {% initial_page_data 'limit' pagination.limit %}
+  {% initial_page_data 'page' pagination.page %}
+  {% initial_page_data 'status_codes' pagination.status_codes %}
+  {% initial_page_data 'allow_item_creation' pagination.create.is_allowed %}
+  {% initial_page_data 'create_item_form' pagination.create_item_form %}
+  {% initial_page_data 'create_item_form_class' pagination.create_item_form_class %}
+
+  {% block pagination_header %}{% endblock %}
+  {% block pagination_structure %}
+    <div id="editable-paginated-list">
+      {% block paginated_list_top %}{% endblock %}
+
+      <div class="row"
+           data-bind="visible: isLoadingVisible">
+        <div class="col-md-12">
+          <i class="fa fa-spin fa-spinner"></i>
+          {{ pagination.text.loading }}
+        </div>
+      </div>
+
+      <div class="hide"
+           data-bind="fadeVisible: isAlertVisible,
+                      css: {
+                        hide: !isAlertVisible()
+                      }">
+        <div class="col-md-12">
+          <div class="alert alert-danger"
+               data-bind="html: alertHtml"></div>
+        </div>
+      </div>
+
+      <div class="hide"
+           data-bind="fadeVisible: hasInitialLoadFinished,
+                      css: {
+                        hide: isLoadingVisible
+                      }">
+
+        <div class="row"
+             data-bind="visible: isPaginationActive">
+          <div class="col-md-12">
+            {% include 'hqwebapp/partials/bootstrap3/pagination.html' %}
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12">
+            <table class="table table-striped table-bordered"
+                   style="margin-bottom: 0;">
+              <thead>
+                <tr>
+                  {% for col in pagination.column_names %}
+                    <th>{{ col }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-bind="visible: isPaginatedListEmpty">
+                  <td colspan="{{ pagination.num_columns }}">
+                    <div id="pagination-empty-notification"
+                         class="alert alert-info"
+                         style="margin: 0;">
+                      {{ pagination.text.empty }}
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- ko foreach: paginatedList -->
+                  <tr data-bind="template: {
+                                   name: template(),
+                                   data: itemData,
+                                   afterRender: initTemplate
+                                 },
+                                 attr: {
+                                   id: itemRowId,
+                                   class: rowClass
+                                 },
+                                 event: {
+                                   deleteItem: $parent.deleteItem,
+                                   refreshList: $parent.refreshList
+                                 }"></tr>
+                <!-- /ko -->
+                <tr data-bind="visible: isCreateItemVisible">
+                  <td colspan="{{ pagination.num_columns }}">
+                    <form id="create-item-form"
+                          data-bind="html: createItemForm, attr: { class: createItemFormClass }">
+                    </form>
+                  </td>
+                </tr>
+              </tbody>
+
+              <tbody>
+                <tr data-bind="visible: isNewListVisible">
+                  <th colspan="{{ pagination.num_columns }}">
+                    {{ pagination.text.new_items }}
+                  </th>
+                </tr>
+                <!-- ko foreach: newList -->
+                  <tr data-bind="template: {
+                                   name: template(),
+                                   data: itemData,
+                                   afterRender: initTemplate
+                                 },
+                                 attr: {
+                                   id: itemRowId,
+                                   class: rowClass
+                                 }"></tr>
+                <!-- /ko -->
+              </tbody>
+
+              <tbody>
+                <tr data-bind="visible: isDeletedListVisible">
+                  <th colspan="{{ pagination.num_columns }}">
+                    {{ pagination.text.deleted_items }}
+                  </th>
+                </tr>
+                <!-- ko foreach: deletedList -->
+                <tr data-bind="template: {
+                                 name: template(),
+                                 data: itemData,
+                                 afterRender: initTemplate
+                               },
+                               attr: {
+                                 id: itemRowId,
+                                 class: rowClass
+                               }"></tr>
+                <!-- /ko -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="row"
+           data-bind="visible: isPaginationActive">
+        <div class="col-md-4">
+          <div class="form-inline"
+               style="margin: 1.6em 0;">
+            <label for="pagination-limit">
+              {% trans 'Show' %}
+            </label>
+            <select class="form-control" id="pagination-limit" data-bind="event: {change: updateListLimit}">
+              {% for limit in pagination.limit_options %}
+                <option value="{{ limit }}">
+                  {{ limit }} {{ pagination.text.limit }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="col-md-8">
+          {% include 'hqwebapp/partials/bootstrap3/pagination.html' %}
+        </div>
+      </div>
+
+    </div>
+  {% endblock %}
+
+  {% block pagination_footer %}{% endblock %}
+
+  {% block pagination_templates %}{% endblock %}
+
+{% endblock %}

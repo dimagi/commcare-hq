@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from pillowtop.checkpoints.manager import (
     PillowCheckpoint,
     PillowCheckpointEventHandler,
@@ -9,6 +10,7 @@ from pillowtop.processors import PillowProcessor
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import ChangeProducer
 from corehq.apps.change_feed.topics import get_topic_for_doc_type
+from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couchdb_management import couch_config
@@ -22,6 +24,7 @@ class KafkaProcessor(PillowProcessor):
 
     Writes to:
       - Specified kafka topic
+      - DeletedCouchDoc SQL table
     """
 
     def __init__(self, data_source_type, data_source_name, default_topic):
@@ -38,6 +41,11 @@ class KafkaProcessor(PillowProcessor):
             # in a missing doc_type)
             topic = get_topic_for_doc_type(doc_type, self._data_source_type, self._default_topic)
             self._producer.send_change(topic, change.metadata)
+
+            # soft deletion
+            if change.metadata.is_deletion and doc_type is not None:
+                deleted_on = change.metadata.original_publication_datetime
+                _create_deleted_couch_doc(change.id, doc_type, deleted_on)
 
 
 def get_default_couch_db_change_feed_pillow(pillow_id, **kwargs):
@@ -98,3 +106,13 @@ def _get_doc_type_from_change(change):
         return change['doc']['doc_type']
     except KeyError:
         return None
+
+
+def _create_deleted_couch_doc(doc_id, doc_type, deleted_on):
+    try:
+        DeletedCouchDoc.objects.create(doc_id=doc_id,
+                                       doc_type=doc_type,
+                                       deleted_on=deleted_on)
+    except IntegrityError:
+        # if it already exists, ignore it
+        pass

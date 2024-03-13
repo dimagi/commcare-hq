@@ -14,6 +14,8 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
+from django.contrib import messages
+from django.core.cache import cache
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
@@ -83,8 +85,8 @@ from corehq.apps.users.permissions import (
 from corehq.privileges import DAILY_SAVED_EXPORT, EXPORT_OWNERSHIP, EXCEL_DASHBOARD, ODATA_FEED
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
-from django.contrib import messages
-from django.core.cache import cache
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
+
 
 mark_safe_lazy = lazy(mark_safe, str)  # TODO: replace with library function
 
@@ -164,6 +166,13 @@ class ExportListHelper(object):
             return CreateExportTagForm(self.permissions.has_form_export_permissions,
                                        self.permissions.has_case_export_permissions)
 
+    def _can_view_export(self, export):
+        if 'owner_id' not in export:
+            return True
+        is_not_private = export['sharing'] != SharingOption.PRIVATE
+        is_owner = export['owner_id'] == self.request.couch_user.user_id
+        return is_not_private or is_owner
+
     def get_exports_page(self, page, limit, my_exports=False):
         if not self._priv_check():
             raise Http404
@@ -171,14 +180,9 @@ class ExportListHelper(object):
         # Calls self.get_saved_exports and formats each item using self.fmt_export_data
         brief_exports = sorted(self.get_saved_exports(), key=lambda x: x['name'])
         if domain_has_privilege(self.domain, EXPORT_OWNERSHIP):
-            def _can_view(e, user_id):
-                if not hasattr(e, 'owner_id'):
-                    return True
-                return e['sharing'] != SharingOption.PRIVATE or e['owner_id'] == user_id
-
             brief_exports = [
                 export for export in brief_exports
-                if _can_view(export, self.request.couch_user.user_id)
+                if self._can_view_export(export)
                 and ('owner_id' in export and export['owner_id'] == self.request.couch_user.user_id) == my_exports
             ]
 
@@ -323,16 +327,13 @@ class ExportListHelper(object):
         Return a dictionary containing details about an emailed export file.
         This will eventually be passed to an Angular controller.
         """
+        cutoff_datetime = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
         return {
             'fileId': fileId,
             'size': filesizeformat(size),
             'lastUpdated': naturaltime(last_updated),
             'lastAccessed': naturaltime(last_accessed),
-            'showExpiredWarning': (
-                last_accessed and
-                last_accessed <
-                (datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF))
-            ),
+            'showExpiredWarning': (last_accessed and last_accessed < cutoff_datetime),
             'downloadUrl': download_url,
         }
 
@@ -431,6 +432,7 @@ class CaseExportListHelper(ExportListHelper):
         data = super(CaseExportListHelper, self).fmt_export_data(export)
         data.update({
             'case_type': export.case_type,
+            'is_case_type_deprecated': is_case_type_deprecated(export.domain, export.case_type)
         })
         return data
 
@@ -570,7 +572,6 @@ def get_exports_page(request, domain):
         is_deid=json.loads(request.GET.get('is_deid')),
         is_odata=json.loads(request.GET.get('is_odata'))
     )
-
     helper = ExportListHelper.from_request(request)
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 5))
@@ -787,9 +788,7 @@ class DeIdDashboardFeedListView(DashboardFeedListView, DeIdDashboardFeedListHelp
 
 
 def can_download_daily_saved_export(export, domain, couch_user):
-    if (export.is_deidentified
-        and user_can_view_deid_exports(domain, couch_user)
-    ):
+    if (export.is_deidentified and user_can_view_deid_exports(domain, couch_user)):
         return True
     elif export.type == FORM_EXPORT and has_permission_to_view_report(
             couch_user, domain, FORM_EXPORT_PERMISSION):

@@ -1,9 +1,7 @@
 from datetime import datetime
-from django.http import HttpRequest, HttpResponseBadRequest
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.django.request import request_from_args_or_kwargs
 from dimagi.utils.parsing import ISO_DATE_FORMAT
-import six
 
 
 def datespan_in_request(from_param="from", to_param="to",
@@ -17,9 +15,8 @@ def datespan_in_request(from_param="from", to_param="to",
     # if you don't it will pull the value from the last default_days
     # in. If you override default_function, default_days is ignored.
     if default_function is None:
-        default_function = lambda: DateSpan.since(default_days,
-                                                  format=format_string,
-                                                  inclusive=inclusive)
+        def default_function():
+            return DateSpan.since(default_days, format=format_string, inclusive=inclusive)
 
     # this is loosely modeled after example number 4 of decorator
     # usage here: http://www.python.org/dev/peps/pep-0318/

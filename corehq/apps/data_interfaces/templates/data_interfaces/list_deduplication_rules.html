@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_paginated_crud.html' %}
+{% extends 'hqwebapp/bootstrap3/base_paginated_crud.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -13,7 +13,7 @@
     <div class="col-sm-8">
       <p>
         {% blocktrans %}
-          Create rules for finding and updating duplicate cases.
+          Create rules for finding duplicate cases.
           Rules are run on each form submission.
           When rules are created or edited the rule will be locked for further changes and a backfill process will be run.
         {% endblocktrans %}
@@ -37,7 +37,10 @@
         <strong data-bind="text: name"></strong>
       </a>
     </td>
-    <td data-bind="text: case_type"></td>
+    <td>
+      <span data-bind="text: case_type" style="display: inline-block;"></span>
+      <span class="label label-warning" data-bind="visible: is_case_type_deprecated" style="display: inline-block;">{% trans "deprecated" %}</span>
+    </td>
     <td>
       <span class="label label-success" data-bind="visible: active">{% trans "Active" %}</span>
       <span class="label label-danger" data-bind="visible: !active">{% trans "Inactive" %}</span>
@@ -87,7 +90,7 @@
         </div>
       </div>
       <p class="help-block" data-bind="visible: action_error">
-        <i class="fa fa-exclamation-triangle"></i>
+        <i class="fa-solid fa-triangle-exclamation"></i>
         <span data-bind="text: action_error"></span>
       </p>
     </td>

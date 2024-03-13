@@ -4,7 +4,6 @@ import pytz
 from functools import reduce
 from memoized import memoized
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from corehq.apps.domain.models import Domain

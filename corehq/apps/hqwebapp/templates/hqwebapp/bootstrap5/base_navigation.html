@@ -8,7 +8,7 @@
 
 
 {% block pre_navigation_content %}
-  {% include "hqwebapp/partials/maintenance_alerts.html" %}
+  {% include "hqwebapp/partials/bootstrap5/maintenance_alerts.html" %}
   {% if show_trial_banner %}
     {% include "hqwebapp/partials/trial_banner.html" %}
   {% endif %}
@@ -22,22 +22,6 @@
   <nav id="hq-navigation"
        class="navbar navbar-expand-lg bg-light border-bottom-1 navbar-hq-main-menu">
     <div class="container-fluid">
-
-      {% if not request.user.is_authenticated %}
-        <nav class="navbar-menus navbar-signin" role="navigation">
-          <div class="nav-settings-bar p-2">
-            <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
-            {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
-              <a href="#cta-form-get-demo"
-                 data-toggle="modal"
-                 id="cta-form-get-demo-button-header"
-                 class="btn btn-purple navbar-btn">
-                {% trans 'Schedule a Demo' %}
-              </a>
-            {% endif %}
-          </div>
-        </nav>
-      {% endif %}
 
       <div class="navbar-header hq-header">
         <a href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}" class="navbar-brand">
@@ -64,7 +48,6 @@
       {% endif %}
 
       {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
-
         <div class="collapse navbar-collapse ms-2" id="hq-full-menu">
           <div class="nav-settings-bar">
             {% include 'hqwebapp/includes/bootstrap5/global_navigation_bar.html' %}
@@ -73,6 +56,22 @@
             {% format_main_menu %}
           {% endblock %}
         </div>
+      {% endif %}
+
+      {% if not request.user.is_authenticated %}
+        <nav class="navbar-signin ms-2" role="navigation">
+          <div class="nav-settings-bar">
+            <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
+            {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+              <a href="#cta-form-get-demo"
+                 data-bs-toggle="modal"
+                 id="cta-form-get-demo-button-header"
+                 class="btn btn-purple navbar-btn">
+                {% trans 'Schedule a Demo' %}
+              </a>
+            {% endif %}
+          </div>
+        </nav>
       {% endif %}
 
     </div>
@@ -128,9 +127,9 @@
 {% block modals %}
   {% if domain and not enterprise_mode %}
     {% if show_overdue_invoice_modal %}
-      {% include 'hqwebapp/downgrade_modal.html' %}
+      {% include 'hqwebapp/bootstrap5/downgrade_modal.html' %}
     {% elif show_prepaid_modal %}
-      {% include 'hqwebapp/prepaid_modal.html' %}
+      {% include 'hqwebapp/bootstrap5/prepaid_modal.html' %}
     {% endif %}
   {% endif %}
 {% endblock modals %}

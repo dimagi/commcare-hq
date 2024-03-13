@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ {% commcarehq_alerts request as alerts %}
+ {% for alert in alerts %}
+   <div class="alert alert-warning alert-maintenance hide" data-id="{{ alert.id }}" data-created-by-domain="{{ alert.created_by_domain|BOOL }}">
+-      <button class="close" data-dismiss="alert" aria-label="close">&times;</button>
++      <button class="btn-close" data-bs-dismiss="alert" aria-label="btn-close">&times;</button>
+       {{ alert.html }}
+   </div>
+ {% endfor %}

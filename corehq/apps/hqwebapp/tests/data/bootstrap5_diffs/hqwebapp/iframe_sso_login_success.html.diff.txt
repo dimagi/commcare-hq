@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -15,7 +15,7 @@
+     <h1>{% trans "Thank you for logging in with Single Sign-On!" %}</h1>
+   </div>
+   <div class="row">
+-    <div class="col-sm-12">
++    <div class="col-md-12">
+       <p>
+         {% blocktrans %}
+           You may close this window and return to your work. Thank you.

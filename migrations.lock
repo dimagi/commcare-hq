@@ -94,6 +94,23 @@ accounting
  0072_export_multisort_priv
  0073_export_ownership_priv
  0074_filtered_bulk_user_download_priv
+ 0075_application_error_report_priv
+ 0076_location_owner_in_report_builder_priv
+ 0077_case_list_explorer_priv
+ 0078_revert_location_owner_in_report_builder_priv
+ 0079_add_web_user_feature
+ 0080_add_web_user_feature_in_other_models
+ 0081_billingaccount_bill_web_user
+ 0082_application_error_report_priv
+ 0083_data_dictionary_priv
+ 0084_copy_cases_priv
+ 0085_remove_free_50_sms
+ 0086_add_duplicate_invoice_id_to_invoice_model
+ 0087_invoice_unique_constraints
+ 0088_add_new_softwareplan_visibility
+ 0089_dedupe_priv
+ 0090_custom_domain_alerts_priv
+ 0091_remove_custom_banner_alerts_feature_flag
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -140,6 +157,9 @@ app_manager
  0024_applicationreleaselog_info
  0025_migrate_to_search_filter_flag
  0026_conditional_case_update_deleted_apps
+ 0027_add_case_tile_template_field
+ 0028_case_list_custom_variable_xml_to_dict
+ 0029_delete_case_list_custom_variable_xml
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -218,6 +238,7 @@ cleanup
  0013_migrate_kafka_checkpoint_format
  0014_deletedcouchdoc
  0015_deletedcouchdoc_unique_id_and_type
+ 0016_add_deletedsqldoc
 cloudcare
  0001_initial
  0002_sqlapplicationaccess
@@ -255,6 +276,8 @@ custom_data_fields
  0004_rename_tables
  0005_customdatafieldsprofile
  0006_auto_20200924_1753
+ 0007_custom_data_fields_erm_support
+ 0008_custom_data_fields_upstream_ids
 data_analytics
  0001_squashed_0004_auto_20150810_1710
  0002_maltrow_threshold
@@ -279,6 +302,10 @@ data_dictionary
  0010_caseproperty_index
  0011_casepropertygroup
  0012_populate_case_property_groups
+ 0013_auto_20230529_1614
+ 0014_auto_20230705_2007
+ 0015_casetype_is_deprecated
+ 0016_remove_case_property_group_and_rename_group_obj_caseproperty_group
 data_interfaces
  0001_initial
  0002_remove_exists_option
@@ -313,6 +340,10 @@ data_interfaces
  0031_add_domaincaserulerun_status_choices
  0032_bootstrap_audit_events_for_update_rules
  0033_automaticupdaterule_deleted_on
+ 0034_case_name_actions
+ 0035_add_case_duplicate_new
+ 0036_backfill_dedupe_match_values
+ 0037_add_dedupe_update_toggle
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -363,6 +394,9 @@ domain_migration_flags
  0003_add_migration_dates
 dropbox
  0001_initial
+email
+ 0001_initial
+ 0002_emailsettings_return_path_email
 enterprise
  0001_initial
  0002_enterprisepermissions_account_unique
@@ -372,6 +406,12 @@ es
  0001_bootstrap_es_indexes
  0002_add_tombstones
  0003_add_assigned_location_ids
+ 0004_make_new_indexes
+ 0005_add_epoch_as_valid_date_to_forms
+ 0006_verify_es2_indices_reindexed
+ 0007_init_indices_for_fresh_es_5
+ 0008_add_doc_id_to_all_mappings
+ 0009_add_indices_for_reindex_in_es5
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -420,6 +460,7 @@ fixtures
  0005_sqllookuptablemodels (3 squashed migrations)
  0008_sqllookuptables
  0009_remove_lookuptablerowowner_couch_id
+ 0010_lookuptable_is_synced
 form_processor
  0001_initial
  0002_xformattachmentsql
@@ -517,6 +558,9 @@ form_processor
  0091_auto_20190603_2023
  0092_auto_20200924_1753
  0093_rename_models (5 squashed migrations)
+ 0094_add_partial_index_xforms
+ 0095_remove_xforminstance_deleted_state
+ 0096_add_partial_index_cases
 formplayer_api
  0001_drop_old_tables
 generic_inbound
@@ -527,7 +571,11 @@ generic_inbound
  0005_remove_requestlog_unused_fields
  0006_backend_external_response
 geospatial
- (no migrations)
+ 0001_create_geopolygon
+ 0002_geoconfig
+ 0003_auto_20230908_0927
+ 0004_auto_20230920_0821
+ 0005_auto_20240202_0807
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -549,6 +597,8 @@ hqadmin
  0018_back_populate_deploy_commit
  0019_celery_taskmeta_sequence
  0020_celery_results_sequence
+hqmedia
+ 0001_initial
 hqwebapp
  0001_initial
  0002_auto_20171121_1803
@@ -560,6 +610,7 @@ hqwebapp
  0008_hqoauthapplication
  0009_truncate_authtoken_table
  0010_maintenancealert_scheduling
+ 0011_add_new_columns_and_rename_model
 integration
  0001_initial
  0002_dialersettings
@@ -592,6 +643,9 @@ linked_domain
  0019_update_remote_base_url_help_text
  0020_auto_20211102_1501
  0021_alter_domainlinkhistory_model
+ 0022_alter_domainlinkhistory_model
+ 0023_alter_domainlinkhistory_model
+ 0024_alter_domainlinkhistory_model
 locations
  0001_initial
  0002_auto_20160420_2105
@@ -646,6 +700,9 @@ oauth2_provider
  0002_auto_20190406_1805
  0003_auto_20201211_1314
  0004_auto_20200902_2022
+ 0005_auto_20211222_2352
+ 0006_alter_application_client_secret
+ 0007_application_post_logout_redirect_uris
 oauth_integrations
  0001_initial
  0002_livegooglesheetschedule
@@ -713,6 +770,7 @@ pillowtop
  0007_copy_xforms_checkpoint
 preindex
  0001_initial
+ 0002_initial
 products
  0001_initial
 project_limits
@@ -735,7 +793,13 @@ registry
 reminders
  0001_initial
 repeaters
- 0001_adjust_auth_field_format_squashed_0015_drop_connection_settings_fk (15 squashed migrations)
+ 0001_adjust_auth_field_format_squashed_0015_drop_connection_settings_fk
+ 0002_repeaters_db
+ 0003_id_fields
+ 0004_fix_whitelist_bug_repeaters
+ 0005_datasourcerepeater
+ 0006_int_state_add_next_check_rm_repeater_id
+ 0007_lengthen_payload_id
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -751,6 +815,7 @@ reports
  0012_tableaugroup_tableauuser
  0013_tableau_various_20221205
  0014_querystringhash
+ 0015_tableauserver_allowed_tableau_groups
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -780,6 +845,8 @@ scheduling
  0023_add_remaining_content_models
  0024_app_id
  0025_schedule_and_broadcast_deleted_on
+ 0026_add_model_fcm_notification_content
+ 0027_emailcontent_html_message
 scheduling_partitioned
  0001_initial
  0002_case_schedule_instances
@@ -851,6 +918,8 @@ sms
  0054_messagingsubevent_domain
  0055_messagingsubevent_index_domain_date_id
  0056_backfill_sms_event_date
+ 0057_fcm_content_type_messaging_events
+ 0058_email_html_body
 smsbillables
  0001_initial
  0002_bootstrap
@@ -952,6 +1021,8 @@ sql_accessors
  0066_drop_unused_function
  0067_livequery_sql
  0067_livequery_sql_include_deleted_indices
+ 0068_remove_deleted_state
+ 0069_drop_DELETED_references_fn
 sql_proxy_accessors
  0001_initial
  0002_add_sync_functions
@@ -1002,6 +1073,8 @@ sql_proxy_accessors
  0047_remove_get_case_models_functions
  0048_get_ledger_values_for_cases_3
  0049_drop_unused_function
+ 0050_remove_deleted_state
+ 0051_drop_DELETED_references_fn
 sql_proxy_standby_accessors
  0001_initial
 sso
@@ -1010,6 +1083,8 @@ sso
  0003_oidc_onelogin_idp_update
  0004_login_enforcement_type_sso_test_user
  0005_alter_identityprovider_idp_type
+ 0006_add_new_fields_in_identityprovider
+ 0007_add_multi_view_api_fields
 start_enterprise
  0001_initial
 stock
@@ -1066,6 +1141,7 @@ userreports
  0017_index_cleanup
  0018_ucrexpression
  0019_ucrexpression_upstream_id
+ 0020_delete_ucr_comparison_models
 users
  0001_add_location_permission
  0002_domainrequest
@@ -1124,6 +1200,11 @@ users
  0050_add_manage_attendance_tracking_permission
  0051_add_attendance_tracking_privilege
  0052_hqapikey_last_used
+ 0053_userreportingmetadatastaging_fcm_token
+ 0054_connectiduserlink
+ 0055_add_user_data
+ 0056_add_manage_domain_alerts_permission
+ 0057_populate_sql_user_data
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

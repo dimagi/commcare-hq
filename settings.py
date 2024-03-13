@@ -190,6 +190,7 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'corehq.apps.domain.auth.ApiKeyFallbackBackend',
     'corehq.apps.sso.backends.SsoBackend',
+    'corehq.apps.domain.auth.ConnectIDAuthBackend'
 ]
 
 PASSWORD_HASHERS = (
@@ -221,6 +222,7 @@ DEFAULT_APPS = (
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
+    'crispy_bootstrap3to5',
     'field_audit',
     'gunicorn',
     'compressor',
@@ -232,7 +234,6 @@ DEFAULT_APPS = (
     'ws4redis',
     'statici18n',
     'django_user_agents',
-    'logentry_admin',
     'oauth2_provider',
 )
 
@@ -240,11 +241,8 @@ SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
 
-CRISPY_TEMPLATE_PACK = 'bootstrap3'
-CRISPY_ALLOWED_TEMPLATE_PACKS = (
-    'bootstrap',
-    'bootstrap3',
-)
+CRISPY_TEMPLATE_PACK = 'bootstrap3to5'
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3to5"
 
 FIELD_AUDIT_AUDITORS = [
     "corehq.apps.users.auditors.HQAuditor",
@@ -313,6 +311,7 @@ HQ_APPS = (
     'corehq.apps.groups',
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
+    'corehq.apps.email',
     'corehq.apps.events',
     'corehq.apps.geospatial',
     'corehq.apps.smsforms',
@@ -478,7 +477,7 @@ DATA_EMAIL = 'datatree@example.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@example.com'
 BILLING_EMAIL = 'billing-comm@example.com'
-INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
+INVOICING_CONTACT_EMAIL = 'accounts@example.com'
 GROWTH_EMAIL = 'growth@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
 SALES_EMAIL = 'sales@example.com'
@@ -766,6 +765,7 @@ AVAILABLE_CUSTOM_RULE_ACTIONS = {
         'custom.covid.rules.custom_actions.set_all_activity_complete_date_to_today',
     'GCC_SANGATH_SANITIZE_SESSIONS_PEER_RATING':
         'custom.gcc_sangath.rules.custom_actions.sanitize_session_peer_rating',
+    'DFCI_SWASTH_UPDATE_COUNSELLOR_LOAD': 'custom.dfci_swasth.rules.custom_actions.update_counsellor_load',
 }
 
 ####### auditcare parameters #######
@@ -820,6 +820,7 @@ REPEATER_CLASSES = [
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
+    'corehq.motech.repeaters.models.DataSourceRepeater',
     'corehq.motech.fhir.repeaters.FHIRRepeater',
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
@@ -852,7 +853,7 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_MAJOR_VERSION = 2
+ELASTICSEARCH_MAJOR_VERSION = 5
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
@@ -876,6 +877,8 @@ OAUTH2_PROVIDER = {
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
         'reports:view': 'Allow users to view and download all report data',
+        'mobile_access': 'Allow access to mobile sync and submit endpoints',
+        'sync': '(Deprecated, do not use) Allow access to mobile endpoints',
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
@@ -921,6 +924,8 @@ LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
+
+BOOTSTRAP_MIGRATION_LOGS_DIR = None
 
 USER_AGENTS_CACHE = 'default'
 
@@ -1012,6 +1017,8 @@ COMMCARE_HQ_NAME = {
 COMMCARE_NAME = {
     "default": "CommCare",
 }
+
+ALLOW_MAKE_SUPERUSER_COMMAND = True
 
 ENTERPRISE_MODE = False
 
@@ -1117,6 +1124,23 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 USE_PHONE_ENTRIES = True
 COMMCARE_ANALYTICS_HOST = ""
 
+# FCM Server creds used for sending FCM Push Notifications
+FCM_CREDS = None
+
+CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
+
+MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
+
+# used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
+PERMANENT_DELETION_WINDOW = 30  # days
+
+# GSheets related work that was dropped, but should be picked up in the near future
+GOOGLE_OATH_CONFIG = {}
+GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+GOOGLE_SHEETS_API_NAME = "sheets"
+GOOGLE_SHEETS_API_VERSION = "v4"
+DAYS_KEEP_GSHEET_STATUS = 14
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -1162,6 +1186,12 @@ if callable(COMPRESS_OFFLINE):
 SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = SECURE_COOKIES = not DEBUG
 SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
+# This is commented because it is not required now. We don't need to instrument all the services rn on staging.
+# The below lines can be uncommented when we need to turn on app level tracing on any env.
+# if SERVER_ENVIRONMENT == 'staging':
+#     from ddtrace import patch_all
+#     patch_all()
+
 
 if UNIT_TESTING:
     # COMPRESS_COMPILERS overrides COMPRESS_ENABLED = False, so must be
@@ -1189,8 +1219,6 @@ for database in DATABASES.values():
 _location = lambda x: os.path.join(FILEPATH, x)
 
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
-
-ALLOW_MAKE_SUPERUSER_COMMAND = True
 
 if 'KAFKA_URL' in globals():
     import warnings
@@ -1640,7 +1668,6 @@ MESSAGE_TAGS = {
     messages.ERROR: 'alert-danger',
 }
 
-COMMCARE_USER_TERM = "Mobile Worker"
 WEB_USER_TERM = "Web User"
 
 DEFAULT_CURRENCY = "USD"
@@ -1899,10 +1926,6 @@ for k, v in LOCAL_PILLOWTOPS.items():
     PILLOWTOPS[k] = plist
 
 COUCH_CACHE_BACKENDS = [
-    'corehq.apps.cachehq.cachemodels.DomainGenerationCache',
-    'corehq.apps.cachehq.cachemodels.UserGenerationCache',
-    'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
-    'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
@@ -1939,6 +1962,15 @@ DOMAIN_MODULE_MAP = {
     'airszambia': 'custom.abt',
     'airszimbabwe': 'custom.abt',
     'kenya-vca': 'custom.abt',
+    'pmievolve-ethiopia-1': 'custom.abt',
+    'pmievolve-ghana': 'custom.abt',
+    'pmievolve-madagascar': 'custom.abt',
+    'pmievolve-malawi': 'custom.abt',
+    'pmievolve-mozambique': 'custom.abt',
+    'pmievolve-rwanda': 'custom.abt',
+    'pmievolve-sierra-leone': 'custom.abt',
+    'pmievolve-uganda': 'custom.abt',
+    'pmievolve-zambia': 'custom.abt',
     'vectorlink-benin': 'custom.abt',
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',
@@ -1991,15 +2023,6 @@ if 'locmem' not in CACHES:
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
 
-# Make django_redis use pickle.DEFAULT_PROTOCOL by default.
-# Remove after upgrading django_redis to a version that does that.
-# See also corehq.tests.test_pickle.test_django_redis_protocol
-from pickle import DEFAULT_PROTOCOL as _protocol
-for _value in CACHES.values():
-    if _value.get("BACKEND", "").startswith("django_redis"):
-        _value.setdefault("OPTIONS", {}).setdefault("PICKLE_VERSION", _protocol)
-del _value, _protocol
-
 
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
@@ -2048,13 +2071,5 @@ os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'F
 
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
-# Config settings for the google oauth handshake to get a user token
-# Google Cloud Platform secret settings config file
-GOOGLE_OATH_CONFIG = {}
-# Scopes to give read/write access to the code that generates the spreadsheets
-GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-
-GOOGLE_SHEETS_API_NAME = "sheets"
-GOOGLE_SHEETS_API_VERSION = "v4"
-
-DAYS_KEEP_GSHEET_STATUS = 14
+# NOTE: if you are adding a new setting that you intend to have other environments override,
+# make sure you add it before localsettings are imported (from localsettings import *)

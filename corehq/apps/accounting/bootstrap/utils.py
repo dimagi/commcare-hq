@@ -8,10 +8,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
 )
 
-FEATURE_TYPES = [
-    FeatureType.USER,
-    FeatureType.SMS,
-]
+FEATURE_TYPES = list(dict(FeatureType.CHOICES))
 
 
 def ensure_plans(config, verbose, apps):
@@ -165,9 +162,13 @@ def _ensure_features(edition, verbose, apps):
 
     features = []
     for feature_type in FEATURE_TYPES:
-        feature = Feature(name='%s %s' % (feature_type, edition), feature_type=feature_type)
-        if edition == SoftwarePlanEdition.ENTERPRISE:
-            feature.name = "Dimagi Only %s" % feature.name
+        # Don't prefix web user feature name with edition
+        if feature_type == FeatureType.WEB_USER:
+            feature = Feature(name=feature_type, feature_type=feature_type)
+        else:
+            feature = Feature(name='%s %s' % (feature_type, edition), feature_type=feature_type)
+            if edition == SoftwarePlanEdition.ENTERPRISE:
+                feature.name = "Dimagi Only %s" % feature.name
         try:
             feature = Feature.objects.get(name=feature.name)
             if verbose:
@@ -194,7 +195,12 @@ def _ensure_feature_rates(feature_rates, features, edition, verbose, apps):
 
     db_feature_rates = []
     for feature in features:
-        feature_rate = FeatureRate(**feature_rates[feature.feature_type])
+        # web user feature rate is not included in all plans
+        # if current plan doesn't have web user feature rate, skip
+        try:
+            feature_rate = FeatureRate(**feature_rates[feature.feature_type])
+        except KeyError:
+            continue
         feature_rate.feature = feature
         if verbose:
             log_accounting_info("Creating rate for feature '%s': %s" % (feature.name, feature_rate))

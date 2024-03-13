@@ -91,35 +91,37 @@
                             Open the app on your Android and use one of the following installation methods:
                           {% endblocktrans %}
                         </p>
-                        <p>
-                          <a href="#" data-bind="
-                                                        openRemoteModal: full_odk_install_url,
-                                                        click: clickScan
-                                                    ">
-                            {% trans "Scan Application Barcode" %}
-                          </a>
-                        </p>
-                        <p>
-                          <a href="#" data-bind="
-                                                        click: click_app_code,
-                                                        visible: !app_code() && !failed_url_generation() && !generating_url()
-                                                        ">
-                            {% trans "Enter App Code" %}
-                          </a>
-                          <span data-bind="visible: app_code">
-                                                        {% trans "Enter app code on installation screen: " %}
-                                                        <code class="bitly" data-bind="text: app_code"></code>
-                                                    </span>
-                          <i data-bind="visible: generating_url()" class='fa fa-spin fa-spinner'></i>
-                          <span class="text-warning" data-bind="
-                                                        visible: failed_url_generation() && !generating_url()
-                                                        ">
-                                                        {% blocktrans %}
-                                                          (No app code available. If you would like to use an app code instead
-                                                          of scanning the application barcode, try making another version.)
-                                                        {% endblocktrans %}
-                                                    </span>
-                        </p>
+                        <ul>
+                          <li>
+                            <a href="#" data-bind="
+                                                          openRemoteModal: full_odk_install_url,
+                                                          click: clickScan
+                                                      ">
+                              {% trans "Scan Application Barcode" %}
+                            </a>
+                          </li>
+                          <li>
+                            <a href="#" data-bind="
+                                                          click: click_app_code,
+                                                          visible: !app_code() && !failed_url_generation() && !generating_url()
+                                                          ">
+                              {% trans "Enter App Code" %}
+                            </a>
+                            <span data-bind="visible: app_code">
+                                                          {% trans "Enter app code on installation screen: " %}
+                                                          <code class="bitly" data-bind="text: app_code"></code>
+                                                      </span>
+                            <i data-bind="visible: generating_url()" class='fa fa-spin fa-spinner'></i>
+                            <span class="text-warning" data-bind="
+                                                          visible: failed_url_generation() && !generating_url()
+                                                          ">
+                                                          {% blocktrans %}
+                                                            (No app code available. If you would like to use an app code instead
+                                                            of scanning the application barcode, try making another version.)
+                                                          {% endblocktrans %}
+                                                      </span>
+                          </li>
+                        </ul>
                       </div>
                       <div class="tab-pane" id="offline-install-tab">
                         <div data-bind="ifnot: hqImport('app_manager/js/app_manager').versionGE(build_spec.version(), '2.13.0')">
@@ -260,7 +262,7 @@
                      data-action="Deploy Type"
                      data-label="View Source Files"
                      data-bind="attr: {href: $root.reverse('download_index', id)}">
-                    <i class="fa fa-file-text-o"></i>
+                    <i class="fa-regular fa-file-lines"></i>
                     {% trans 'View Source Files' %}
                   </a>
                 </h4>

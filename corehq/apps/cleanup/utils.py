@@ -1,6 +1,6 @@
 import sys
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.management import color_style
@@ -97,3 +97,8 @@ def hard_delete_couch_docs_before_cutoff(cutoff):
         sql_objs.delete()
 
     return counts
+
+
+def get_cutoff_date_for_data_deletion():
+    return datetime.utcnow() - timedelta(days=settings.PERMANENT_DELETION_WINDOW)
+

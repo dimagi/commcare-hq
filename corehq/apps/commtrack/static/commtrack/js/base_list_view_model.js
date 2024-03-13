@@ -44,10 +44,12 @@ hqDefine("commtrack/js/base_list_view_model", [
 
         self.all_pages = ko.computed(function () {
             var lastInd = self.max_page() + 1;
-            if (self.max_page() <= 5 || self.current_page() <= 3)
+            if (self.max_page() <= 5 || self.current_page() <= 3) {
                 return _.range(1, Math.min(lastInd, 6));
-            if (self.current_page() >= self.max_page() - 2)
+            }
+            if (self.current_page() >= self.max_page() - 2) {
                 return _.range(self.max_page() - 4, lastInd);
+            }
             return _.range(self.current_page() - 2, Math.min(lastInd, self.current_page() + 3));
         });
 

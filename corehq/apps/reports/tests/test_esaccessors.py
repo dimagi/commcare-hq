@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
@@ -988,7 +988,7 @@ class TestUserESAccessors(TestCase):
             first_name='clark',
             last_name='kent',
             is_active=True,
-            metadata={PROFILE_SLUG: cls.profile.id, 'office': 'phone_booth'},
+            user_data={PROFILE_SLUG: cls.profile.id, 'office': 'phone_booth'},
         )
         cls.user.save()
 

@@ -1,9 +1,0 @@
-{% extends 'styleguide/example.html' %}
-
-{% block demo %}
-  {{ content|safe }}
-{% endblock demo %}
-
-{% block code %}
-  <pre>{% autoescape on %}{{ content }}{% endautoescape %}</pre>
-{% endblock code %}

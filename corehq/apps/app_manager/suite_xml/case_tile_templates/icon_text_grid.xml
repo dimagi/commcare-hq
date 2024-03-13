@@ -1,0 +1,192 @@
+<detail id="{detail_id}">
+  <title>
+    <text>
+      <locale id="{title_text_id}"/>
+    </text>
+  </title>
+
+  <field>
+    <style horz-align="center" vert-align="top" font-size="small">
+      <grid grid-height="1" grid-width="1" grid-x="0" grid-y="0" />
+    </style>
+    <header>
+      <text/>
+    </header>
+    <template form="{top_left_image[format]}">
+      <text>
+        <xpath function="{top_left_image[xpath_function]}">
+          {top_left_image[variables]}
+        </xpath>
+      </text>
+    </template>
+    {top_left_image[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+      <grid grid-height="1" grid-width="5" grid-x="1" grid-y="0"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{top_left_text[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{top_left_text[format]}">
+      <text>
+        <locale id="{top_left_text[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
+        <xpath function="{top_left_text[xpath_function]}">
+          {top_left_text[variables]}
+        </xpath>
+      </text>
+    </template>
+    {top_left_text[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="center" vert-align="top" font-size="small">
+      <grid grid-height="1" grid-width="1" grid-x="6" grid-y="0" />
+    </style>
+    <header>
+      <text/>
+    </header>
+    <template form="{top_right_image[format]}">
+      <text>
+        <xpath function="{top_right_image[xpath_function]}">
+          {top_right_image[variables]}
+        </xpath>
+      </text>
+    </template>
+    {top_right_image[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+      <grid grid-height="1" grid-width="5" grid-x="7" grid-y="0"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{top_right_text[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{top_right_text[format]}">
+      <text>
+        <locale id="{top_right_text[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
+        <xpath function="{top_right_text[xpath_function]}">
+          {top_right_text[variables]}
+        </xpath>
+      </text>
+    </template>
+    {top_right_text[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="center" vert-align="top" font-size="small">
+      <grid grid-height="1" grid-width="1" grid-x="0" grid-y="1" />
+    </style>
+    <header>
+      <text/>
+    </header>
+    <template form="{middle_left_image[format]}">
+      <text>
+        <xpath function="{middle_left_image[xpath_function]}">
+          {middle_left_image[variables]}
+        </xpath>
+      </text>
+    </template>
+    {middle_left_image[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+      <grid grid-height="1" grid-width="5" grid-x="1" grid-y="1"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{middle_left_text[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{middle_left_text[format]}">
+      <text>
+        <locale id="{middle_left_text[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
+        <xpath function="{middle_left_text[xpath_function]}">
+          {middle_left_text[variables]}
+        </xpath>
+      </text>
+    </template>
+    {middle_left_text[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="center" vert-align="top" font-size="small">
+      <grid grid-height="1" grid-width="1" grid-x="6" grid-y="1" />
+    </style>
+    <header>
+      <text/>
+    </header>
+    <template form="{middle_right_image[format]}">
+      <text>
+        <xpath function="{middle_right_image[xpath_function]}">
+          {middle_right_image[variables]}
+        </xpath>
+      </text>
+    </template>
+    {middle_right_image[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+      <grid grid-height="1" grid-width="5" grid-x="7" grid-y="1"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{middle_right_text[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{middle_right_text[format]}">
+      <text>
+        <locale id="{middle_right_text[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
+        <xpath function="{middle_right_text[xpath_function]}">
+          {middle_right_text[variables]}
+        </xpath>
+      </text>
+    </template>
+    {middle_right_text[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="center" vert-align="top" font-size="small">
+      <grid grid-height="1" grid-width="1" grid-x="0" grid-y="2" />
+    </style>
+    <header>
+      <text/>
+    </header>
+    <template form="{bottom_left_image[format]}">
+      <text>
+        <xpath function="{bottom_left_image[xpath_function]}">
+          {bottom_left_image[variables]}
+        </xpath>
+      </text>
+    </template>
+    {bottom_left_image[endpoint_action]}
+  </field>
+
+  <field>
+    <style horz-align="left" vert-align="center" font-size="medium">
+      <grid grid-height="1" grid-width="5" grid-x="1" grid-y="2"/>
+    </style>
+    <header>
+      <text>
+        <locale id="{bottom_left_text[locale_id]}"/>
+      </text>
+    </header>
+    <template form="{bottom_left_text[format]}">
+      <text>
+        <locale id="{bottom_left_text[locale_id]}"/> <!-- This line ends with a FOUR-PER-EM SPACE U+2005 character to replicate a space without being trimmed -->
+        <xpath function="{bottom_left_text[xpath_function]}">
+          {bottom_left_text[variables]}
+        </xpath>
+      </text>
+    </template>
+    {bottom_left_text[endpoint_action]}
+  </field>
+</detail>

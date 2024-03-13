@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_cases
 
-from corehq.apps.callcenter.sync_usercase import sync_call_center_user_case
+from corehq.apps.callcenter.sync_usercase import sync_usercases
 from corehq.apps.domain.models import CallCenterProperties
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType
@@ -61,7 +61,7 @@ class CallCenterLocationOwnerTest(TestCase):
 
     def test_no_location_sync(self):
         self.user.unset_location()
-        sync_call_center_user_case(self.user, self.domain.name)
+        sync_usercases(self.user, self.domain.name)
         self.assertCallCenterCaseOwner("")
 
     def test_location_sync(self):

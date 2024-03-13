@@ -1,0 +1,104 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% requirejs_main "domain/js/manage_alerts" %}
+
+{% block page_content %}
+    {% initial_page_data 'alerts' alerts %}
+    {% registerurl 'domain_edit_alert' domain '---' %}
+
+    <form class="form form-horizontal" method="post">
+      <fieldset>
+        <legend>{% trans 'Add New Alert' %}</legend>
+        {% crispy form %}
+      </fieldset>
+    </form>
+    <div id="ko-alert-container">
+      <h3>
+        {% trans "Available Alerts" %}
+      </h3>
+      <p>
+        {% trans "You can only have 3 alerts activated at any one time" %}
+      </p>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>
+              {% trans "Start Time" %}
+            </th>
+            <th>
+              {% trans "End Time" %}
+            </th>
+            <th>
+              {% trans "Message" %}
+            </th>
+            <th>
+              {% trans "Added By" %}
+            </th>
+            <th>
+              {% trans "Actions" %}
+            </th>
+          </tr>
+        </thead>
+        {% if alerts %}
+        <tbody data-bind="foreach: alerts">
+          <tr>
+            <td data-bind="text: start_time"></td>
+            <td data-bind="text: end_time"></td>
+            <td>
+              <div class="alert alert-warning"
+                   data-bind="html: html"></div>
+            </td>
+            <td data-bind="text: created_by_user">
+            </td>
+            <td>
+              <form action="{% url 'update_domain_alert_status' domain %}" method="post" style="float: left; margin-right: 5px;">
+                {% csrf_token %}
+                <input name="alert_id"
+                       type="hidden"
+                       data-bind="value: id">
+                <button type="submit"
+                        class="btn btn-primary"
+                        name="command"
+                        value="activate"
+                        data-bind="hidden: active">
+                  <span>{% trans "Activate Alert" %}</span>
+                </button>
+                <button type="submit"
+                        class="btn btn-outline-danger"
+                        name="command"
+                        value="deactivate"
+                        data-bind="visible: active">
+                  {% trans "De-activate Alert" %}
+                </button>
+              </form>
+              <a class="btn btn-default" data-bind="attr: {href: editUrl}" style="float: left; margin-right: 5px;">
+                <i class="fa fa-edit"></i>
+                {% trans "Edit" %}
+              </a>
+              <form action="{% url 'delete_domain_alert' domain %}" method="post" style="float: left">
+                {% csrf_token %}
+                <input name="alert_id"
+                       type="hidden"
+                       data-bind="value: id">
+                <button type="submit"
+                      class="btn btn-danger">
+                  <i class="fa fa-trash"></i>
+                  {% trans "Delete" %}
+                </button>
+              </form>
+            </td>
+          </tr>
+        </tbody>
+        {% else %}
+        <tbody>
+          <tr>
+            <td>{% trans "No alerts added yet for the project." %}</td>
+          </tr>
+        </tbody>
+        {% endif %}
+      </table>
+    </div>
+{% endblock %}

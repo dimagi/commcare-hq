@@ -55,7 +55,7 @@
       </p>
       <p data-bind="visible: sample, text: sample">
       </p>
-      <p>
+      <p data-bind="visible: rows.length">
         <span>{% trans "Row(s):" %}</span>
         <span data-bind="text: rows.join(', ')"></span>
       </p>

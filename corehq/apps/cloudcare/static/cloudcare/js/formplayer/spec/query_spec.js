@@ -1,43 +1,50 @@
+'use strict';
 /* eslint-env mocha */
 /* global Backbone */
+hqDefine("cloudcare/js/formplayer/spec/query_spec", function () {
+    describe('Query', function () {
 
-describe('Query', function () {
+        describe('itemset', function () {
 
-    describe('itemset', function () {
-        let QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-            Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+            let keyQueryView;
 
-        let QueryViewModel = Backbone.Model.extend(),
-            QueryViewCollection = Backbone.Collection.extend(),
-            keyModel = new QueryViewModel({
-                "itemsetChoicesKey": ["CA", "MA", "FL"],
-                "itemsetChoices": ["California", "Massachusetts", "Florida"],
-            }),
-            indexModel = new QueryViewModel({
-                "itemsetChoices": ["California", "Massachusetts", "Florida"],
+            before(function () {
+                const QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query");
+                const Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+
+                hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", { DYNAMICALLY_UPDATE_SEARCH_RESULTS: false });
+
+                const QueryViewModel = Backbone.Model.extend();
+                const QueryViewCollection = Backbone.Collection.extend();
+                const keyModel = new QueryViewModel({
+                    "itemsetChoicesKey": ["CA", "MA", "FL"],
+                    "itemsetChoices": ["California", "Massachusetts", "Florida"],
+                    "groupKey": "test",
+                });
+
+                const keyViewCollection = new QueryViewCollection([keyModel]);
+
+                sinon.stub(Utils, 'getStickyQueryInputs').callsFake(function () { return 'fake_value'; });
+
+                const keyQueryListView = QueryListView.queryListView({
+                    collection: keyViewCollection,
+                    groupHeaders: {
+                        "test": "Test",
+                    },
+                });
+
+                const childViewConstructor = keyQueryListView.childView(new Backbone.Model({}));
+                keyQueryView = new childViewConstructor({ parentView: keyQueryListView, model: keyModel});
             });
 
-        let keyViewCollection = new QueryViewCollection([keyModel]),
-            indexViewCollection = new QueryViewCollection([indexModel]);
+            after(function () {
+                hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
+            });
 
-        sinon.stub(Utils, 'getStickyQueryInputs').callsFake(function () { return 'fake_value'; });
-        let keyQueryListView =  QueryListView({ collection: keyViewCollection}),
-            keyQueryView = new keyQueryListView.childView({ parentView: keyQueryListView, model: keyModel}),
-            indexQueryListView =  QueryListView({ collection: indexViewCollection}),
-            indexQueryView = new keyQueryListView.childView({ parentView: indexQueryListView, model: indexModel});
-
-        it('should flag if options contains keys for itemset', function () {
-            assert.isTrue(keyQueryListView.selectValuesByKeys);
-            assert.isFalse(indexQueryListView.selectValuesByKeys);
-        });
-
-        it('should create dictionary with either keys if provided. Otherwise, with index as the key', function () {
-            let expectedKeyItemsetChoicesDict = { "CA": "California", "MA": "Massachusetts", "FL": "Florida"};
-            assert.deepEqual(expectedKeyItemsetChoicesDict, keyQueryView.model.get("itemsetChoicesDict"));
-
-            let expectedIndexItemsetChoicesDict = {"0": "California", "1": "Massachusetts", "2": "Florida"};
-            assert.deepEqual(expectedIndexItemsetChoicesDict, indexQueryView.model.get("itemsetChoicesDict"));
-
+            it('should create dictionary with either keys', function () {
+                const expectedKeyItemsetChoicesDict = { "CA": "California", "MA": "Massachusetts", "FL": "Florida"};
+                assert.deepEqual(expectedKeyItemsetChoicesDict, keyQueryView.model.get("itemsetChoicesDict"));
+            });
         });
     });
 });

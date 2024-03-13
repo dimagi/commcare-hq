@@ -1,6 +1,7 @@
 import copy
 import csv
 import io
+import re
 from collections import defaultdict
 from datetime import datetime
 
@@ -38,10 +39,12 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
 from corehq.apps.data_dictionary.models import CaseProperty
+from corehq.apps.data_dictionary.util import is_case_type_deprecated
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.apps.export.models import CaseExportDataSchema
@@ -235,6 +238,7 @@ class CaseDataView(BaseProjectReportSectionView):
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
             "can_edit_data": can_edit_data,
             "is_usercase": self.case_instance.type == USERCASE_TYPE,
+            "is_case_type_deprecated": is_case_type_deprecated(self.domain, self.case_instance.type),
 
             "default_properties_as_table": default_properties,
             "dynamic_properties": dynamic_data,
@@ -247,38 +251,32 @@ class CaseDataView(BaseProjectReportSectionView):
             "repeat_records": repeat_records,
         }
         if dynamic_data:
-            if toggles.DD_CASE_DATA.enabled_for_request(self.request):
-                dd_properties_tables = _get_dd_tables(self.domain, self.case_instance.type,
-                                                      dynamic_data, timezone)
-                context['dd_properties_tables'] = dd_properties_tables
-                context['show_expand_collapse_buttons'] = len(
-                    [table.get('name') for table in dd_properties_tables if table.get('name') is not None]) > 1
-            else:
-                definition = {
-                    "layout": list(chunked([
-                        DisplayConfig(expr=prop, has_history=True)
-                        for prop in sorted(dynamic_data.keys())
-                    ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
-                }
-                context['dynamic_properties_table'] = get_table_as_rows(dynamic_data, definition, timezone)
+            case_property_tables = _get_case_property_tables(
+                self.domain, self.case_instance.type, dynamic_data, timezone)
+            context['case_property_tables'] = case_property_tables
+            context['show_expand_collapse_buttons'] = len(
+                [table.get('name') for table in case_property_tables if table.get('name') is not None]) > 1
         context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
         return context
 
 
-def _get_dd_tables(domain, case_type, dynamic_data, timezone):
-    dd_props_by_group = list(_get_dd_props_by_group(domain, case_type))
+def _get_case_property_tables(domain, case_type, dynamic_data, timezone):
+    if domain_has_privilege(domain, privileges.DATA_DICTIONARY):
+        dd_props_by_group = list(_get_dd_props_by_group(domain, case_type))
+    else:
+        dd_props_by_group = []
     tables = [
         (group, _table_definition([
             (p.name, p.label, p.description) for p in props
         ]))
         for group, props in dd_props_by_group
     ]
-
     props_in_dd = set(prop.name for _, prop_group in dd_props_by_group
                       for prop in prop_group)
-    unrecognized = set(dynamic_data.keys()) - props_in_dd
+    unrecognized = set(dynamic_data.keys()) - props_in_dd - {'case_name'}
     if unrecognized:
-        tables.append((_('Unrecognized'), _table_definition([
+        header = _('Unrecognized') if tables else None
+        tables.append((header, _table_definition([
             (p, None, None) for p in unrecognized
         ])))
 
@@ -294,15 +292,15 @@ def _get_dd_props_by_group(domain, case_type):
             case_type__domain=domain,
             case_type__name=case_type,
             deprecated=False,
-    ):
-        ret[prop.group_name].append(prop)
+    ).select_related('group').order_by('group__index', 'index'):
+        ret[prop.group_name or None].append(prop)
 
-    uncategorized = ret.pop('', None)
-    for group, props in sorted(ret.items()):
-        yield (group, props)
+    uncategorized = ret.pop(None, None)
+    for group, props in ret.items():
+        yield group, props
 
     if uncategorized:
-        yield (_('Uncategorized') if ret else None, uncategorized)
+        yield _('Uncategorized') if ret else None, uncategorized
 
 
 def _table_definition(props):
@@ -310,12 +308,17 @@ def _table_definition(props):
         "layout": list(chunked([
             DisplayConfig(
                 expr=prop_name,
-                name=label or prop_name,
+                name=_add_line_break_opportunities(label or prop_name),
                 description=description,
                 has_history=True
-            ) for prop_name, label, description in sorted(props)
+            ) for prop_name, label, description in props
         ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
     }
+
+
+def _add_line_break_opportunities(name):
+    # Add zero-width space after dashes and underscores for better looking word breaks
+    return re.sub(r"([_-])", "\\1\u200B", name)
 
 
 def form_to_json(domain, form, timezone):
@@ -460,7 +463,7 @@ def case_property_names(request, domain, case_id):
         item.path[-1].name for item in property_schema.items
         if not is_occurrence_deleted(item.last_occurrences, last_app_ids) and '/' not in item.path[-1].name
     }
-    all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES)
+    all_property_names = all_property_names.difference(KNOWN_CASE_PROPERTIES) | {"case_name"}
     # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
     if case.external_id:
         all_property_names.add('external_id')

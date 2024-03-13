@@ -4,5 +4,3 @@ FIELD_TYPE_LOCATION = 'location'
 FIELD_TYPE_PROPERTY = 'property'
 FIELD_TYPE_LEDGER = 'ledger'
 FIELD_TYPE_SCHEDULE = 'schedule'
-
-CASE_TILE_TEMPLATE_NAME_PERSON_SIMPLE = 'person_simple'

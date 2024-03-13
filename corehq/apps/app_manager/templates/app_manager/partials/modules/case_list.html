@@ -24,7 +24,7 @@
   </div>
 </div>
 
-{% include 'app_manager/partials/modules/custom_detail_variables.html' with screen='shortScreen'%}
+{% include 'app_manager/partials/modules/custom_detail_variables.html' with screen='shortScreen' editorId='custom-variables-editor-short' %}
 
 {% if module.module_type != "shadow" and module.module_type != "advanced" %}
   {% include 'app_manager/partials/modules/case_list_multi_select.html' %}
@@ -39,18 +39,9 @@
   </div>
   <div class="panel-body">
     <div data-bind="with: shortScreen">
-      {% if request|toggle_enabled:'CASE_LIST_TILE' %}
-        <div class="row">
-          <div class="col-sm-6">
-            <select data-bind="value: caseTileTemplate" class="form-control">
-              <option value="no">{% trans "Don't Use Case Tiles" %}</option>
-              <option value="yes">{% trans "Use Case Tiles" %}</option>
-            </select>
-          </div>
-        </div>
-      {% endif %}
+      {% include 'app_manager/partials/modules/case_tile_templates.html' %}
       {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
-        <div data-bind="visible: caseTileTemplate() == 'no'">
+        <div data-bind="visible: !caseTileTemplate()">
           <div class="checkbox">
             <label>
               <input type="checkbox" data-bind="checked: persistCaseContext">
@@ -65,7 +56,35 @@
           </div>
         </div>
       {% endif %}
-      <div data-bind="visible: caseTileTemplate() == 'yes' || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
+      {% if app.supports_grouped_case_tiles %}
+      <div data-bind="visible: caseTileTemplate()">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" data-bind="checked: caseTileGrouped">
+            {% trans "Show case tiles grouped by parent case" %}
+          </label>
+        </div>
+        <div class="form-horizontal" data-bind="visible: caseTileGrouped">
+          <div class="form-group">
+              <label for="id_case_tile_group_by" class="col-xs-6 col-sm-4 col-md-4 col-lg-2 control-label">
+                {% trans "Parent case index name" %}
+              </label>
+              <div class="col-xs-6 col-sm-2 col-md-2 col-lg-2 controls">
+                <input class="form-control" type="text" data-bind="value: caseTileGroupBy" id="id_case_tile_group_by" placeholder="e.g. parent" />
+              </div>
+          </div>
+          <div class="form-group">
+              <label for="id_case_tile_header_rows" class="col-xs-6 col-sm-4 col-md-4 col-lg-2 control-label">
+                {% trans "Case tile header rows" %}
+              </label>
+              <div class="col-xs-6 col-sm-2 col-md-2 col-lg-2 controls">
+                <input class="form-control" type="text" data-bind="value: caseTileGroupHeaderRows" id="id_case_tile_header_rows" placeholder="e.g. 2" />
+              </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      <div data-bind="visible: caseTileTemplate() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
         <div class="checkbox">
           <label>
             <input type="checkbox" data-bind="checked: persistTileOnForms">
@@ -77,7 +96,7 @@
       {% if request|toggle_enabled:'CASE_LIST_TILE' %}
         {% with app|get_available_modules_for_case_tile_configuration:module as available_modules %}
           {% if available_modules %}
-            <div class="row">
+            <div class="row" data-bind="visible: persistTileOnForms">
               <div class="col-sm-6">
                 <label>
                   {% trans "Use persistent case tile from menu" %}
@@ -98,7 +117,7 @@
         {% endwith %}
       {% endif %}
 
-      <div data-bind="visible: caseTileTemplate() == 'yes' || persistentCaseTileFromModule() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
+      <div data-bind="visible: caseTileTemplate() || persistentCaseTileFromModule() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
         <div class="checkbox" data-bind="visible: persistTileOnForms() || persistentCaseTileFromModule">
           <label>
             <input type="checkbox" data-bind="checked: enableTilePullDown">
@@ -111,6 +130,8 @@
           </label>
         </div>
       </div>
+
+      {% include 'app_manager/partials/modules/case_tile_preview.html' %}
       {% include 'app_manager/partials/modules/case_list_properties.html' %}
     </div>
   </div>
@@ -187,7 +208,7 @@
               <tbody data-bind="foreach: sortRows(), sortableList: sortRows">
               <tr>
                 <td>
-                  <i class="grip fa fa-arrows-v icon-blue"></i>
+                  <i class="grip fa-solid fa-up-down icon-blue"></i>
                 </td>
                 <td class="form-group col-sm-2" data-bind="css: {'has-error': showWarning}">
                   <div data-bind="jqueryElement: selectField.ui"></div>

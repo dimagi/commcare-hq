@@ -1,22 +1,90 @@
 #data-dictionary-table {
-  margin-top: 10px;
+  display: flex;
+  flex-flow: column nowrap;
+  background-color: white;
+  width: 100%;
+  margin: 10px auto;
 
-  th {
-    line-height: 25px;
-  }
-
-  td.fhir-path input {
+  .row-item.fhir-path input {
     display: inline-block;
     max-width: 85%;
   }
 
-  button.fa {
+  button[class*='fa-'] {
     border: none;
     background-color: inherit;
   }
 
   .enum-pairs .well {
     margin-bottom: 8px;
+  }
+
+  .table-container {
+    display: flex;
+    flex-flow: column nowrap;
+    background-color: white;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .table-row {
+    display: flex;
+    flex-flow: row nowrap;
+    width: 100%;
+    border-top: 1px solid #dadada;
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .group {
+    background-color: #f5f5f5;
+  }
+
+  .group-deprecated {
+    background-color: #FEAD9A;
+    padding: 8px 4px;
+  }
+
+  .groups .properties {
+    padding-bottom: 1px;
+  }
+
+  .table-header {
+    font-weight: bold;
+    border-top: 0;
+    line-height: 25px;
+  }
+
+  .row-item {
+    display: flex;
+    flex: 1;
+    padding: 8px 4px;
+  }
+
+  .row-item-small {
+    display: flex;
+    flex: 0.1;
+    padding: 8px 4px;
+  }
+
+  .w-100 {
+    width: 100%;
+  }
+
+  .mt-3 {
+    margin-top: 16px;
+  }
+
+  .py-2 {
+    padding: 8px 0;
+  }
+
+  .ms-2 {
+    margin-left: 8px;
+  }
+
+  .m-auto {
+    margin: auto;
   }
 }
 

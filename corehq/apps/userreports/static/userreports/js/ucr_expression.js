@@ -4,16 +4,16 @@ hqDefine("userreports/js/ucr_expression", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/base_ace',
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
 ], function (
     moment,
     ko,
     _,
     initialPageData,
     baseAce,
-    alertUser,
+    alertUser
 ) {
-    let EditModel = function(data) {
+    let EditModel = function (data) {
         const mapping = {
             'copy': ["domain", "definition_raw"],
             'observe': ["name", "description", "expression_type"],
@@ -45,19 +45,19 @@ hqDefine("userreports/js/ucr_expression", [
         self.saveExpression = function (form) {
             $(form).ajaxSubmit({
                 dataType: 'json',
-                success: function (response, status, xhr, form) {
+                success: function (response) {
                     alertUser.alert_user(gettext("Expression saved"), 'success');
                     if (response.warning) {
                         alertUser.alert_user(response.warning, 'warning');
                     }
                 },
-                error: function(response) {
+                error: function (response) {
                     if (response.responseJSON && response.responseJSON.errors) {
                         _.each(response.responseJSON.errors, function (error) {
                             alertUser.alert_user(error, 'danger');
                         });
                     }
-                }
+                },
             });
             return false;
         };

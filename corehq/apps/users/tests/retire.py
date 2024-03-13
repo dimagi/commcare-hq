@@ -301,8 +301,8 @@ class RetireUserTestCase(TestCase):
         self.assertItemsEqual(rebuild_case.call_args_list, expected_call_args)
 
     def test_all_case_forms_deleted(self):
-        from corehq.apps.callcenter.sync_usercase import sync_usercase
-        sync_usercase(self.commcare_user, self.domain)
+        from corehq.apps.callcenter.sync_usercase import sync_usercases
+        sync_usercases(self.commcare_user, self.domain)
 
         usercase_id = self.commcare_user.get_usercase_id()
 

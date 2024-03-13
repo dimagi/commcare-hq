@@ -1,4 +1,3 @@
-/* globals Clipboard */
 /*
     Interactivity for a single form. Used on the list of forms in the Case History tab when viewing a case, and
     also in the single form view page that's accessible from the submit history report or the "View standalone
@@ -9,7 +8,7 @@ hqDefine("reports/js/single_form", [
     "underscore",
     "hqwebapp/js/assert_properties",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/main",
+    "hqwebapp/js/bootstrap3/main",
     "analytix/js/google",
     "analytix/js/kissmetrix",
     "reports/js/readable_form",

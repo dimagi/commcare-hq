@@ -7,7 +7,7 @@ hqDefine('userreports/js/report_config', function () {
             var propertyListItem = hqImport('userreports/js/builder_view_models').propertyListItem;
             var constants = hqImport('userreports/js/constants');
 
-            var _kmq_track_click = function (action) {
+            var _kmqTrackClick = function (action) {
                 hqImport('analytix/js/kissmetrix').track.event("RBv2 - " + action);
             };
 
@@ -126,13 +126,13 @@ hqDefine('userreports/js/report_config', function () {
                         (config['sourceType'] === "form") ? "Form Summary" : "Summary");
                 self.reportType = ko.observable(config['existingReportType'] || constants.REPORT_TYPE_LIST);
                 self.reportType.subscribe(function (newValue) {
-                    _ga_track_config_change('Change Report Type', newValue);
+                    _gaTrackConfigChange('Change Report Type', newValue);
                     self._suspendPreviewRefresh = true;
                     var wasAggregationEnabled = self.isAggregationEnabled();
                     self.isAggregationEnabled(newValue === constants.REPORT_TYPE_TABLE);
                     self.previewChart(newValue === constants.REPORT_TYPE_TABLE && self.selectedChart() !== "none");
                     if (self.reportType() === constants.REPORT_TYPE_LIST) {
-                        self.columnList.columns().forEach(function (val, index) {
+                        self.columnList.columns().forEach(function (val) {
                             val.calculation(constants.GROUP_BY);
                         });
                     }
@@ -158,7 +158,7 @@ hqDefine('userreports/js/report_config', function () {
                         self.previewChart(false);
                     } else {
                         if (self.previewChart()) {
-                            hqImport('userreports/js/report_analytix').track.event('Change Chart Type', hqImport('hqwebapp/js/main').capitalize(newValue));
+                            hqImport('userreports/js/report_analytix').track.event('Change Chart Type', hqImport('hqwebapp/js/bootstrap3/main').capitalize(newValue));
                         }
                         self.previewChart(true);
                         self.refreshPreview();
@@ -177,7 +177,7 @@ hqDefine('userreports/js/report_config', function () {
                 self.addChart = function () {
                     self.selectedChart('bar');
                     hqImport('userreports/js/report_analytix').track.event('Add Chart');
-                    _kmq_track_click('Add Chart');
+                    _kmqTrackClick('Add Chart');
                 };
                 self.removeChart = function () {
                     self.selectedChart('none');
@@ -228,8 +228,8 @@ hqDefine('userreports/js/report_config', function () {
                     }
                 };
 
-                var _ga_track_config_change = function (analyticsAction, optReportType) {
-                    var analyticsLabel = hqImport('hqwebapp/js/main').capitalize(self._sourceType) + "-" + hqImport('hqwebapp/js/main').capitalize(optReportType || self.reportType());
+                var _gaTrackConfigChange = function (analyticsAction, optReportType) {
+                    var analyticsLabel = hqImport('hqwebapp/js/bootstrap3/main').capitalize(self._sourceType) + "-" + hqImport('hqwebapp/js/bootstrap3/main').capitalize(optReportType || self.reportType());
                     hqImport('userreports/js/report_analytix').track.event(analyticsAction, analyticsLabel);
                 };
 
@@ -247,7 +247,7 @@ hqDefine('userreports/js/report_config', function () {
 
                 self.location_field = ko.observable(config['initialLocation']);
                 self.location_field.subscribe(function () {
-                    _kmq_track_click('Select Location (map)');
+                    _kmqTrackClick('Select Location (map)');
                     self.refreshPreview();
                 });
 
@@ -263,15 +263,15 @@ hqDefine('userreports/js/report_config', function () {
                     propertyOptions: self.columnOptions,
                     selectablePropertyOptions: self.selectableReportColumnOptions,
                     addItemCallback: function () {
-                        _ga_track_config_change('Add Column');
-                        _kmq_track_click('Add Column');
+                        _gaTrackConfigChange('Add Column');
+                        _kmqTrackClick('Add Column');
                     },
                     removeItemCallback: function () {
-                        _ga_track_config_change('Remove Column');
-                        _kmq_track_click('Delete Column');
+                        _gaTrackConfigChange('Remove Column');
+                        _kmqTrackClick('Delete Column');
                     },
                     reorderItemCallback: function () {
-                        _ga_track_config_change('Reorder Column');
+                        _gaTrackConfigChange('Reorder Column');
                     },
                     afterRenderCallback: function (elem, col) {
                         col.inputBoundCalculation.subscribe(function (val) {
@@ -292,15 +292,15 @@ hqDefine('userreports/js/report_config', function () {
                     initialCols: config['initialUserFilters'],
                     buttonText: 'Add User Filter',
                     addItemCallback: function () {
-                        _ga_track_config_change('Add User Filter');
-                        _kmq_track_click('Add User Filter');
+                        _gaTrackConfigChange('Add User Filter');
+                        _kmqTrackClick('Add User Filter');
                     },
                     removeItemCallback: function () {
-                        _ga_track_config_change('Remove User Filter');
-                        _kmq_track_click('Delete User Filter');
+                        _gaTrackConfigChange('Remove User Filter');
+                        _kmqTrackClick('Delete User Filter');
                     },
                     reorderItemCallback: function () {
-                        _ga_track_config_change('Reorder User Filter');
+                        _gaTrackConfigChange('Reorder User Filter');
                     },
                     propertyHelpText: gettext('Choose the property you would like to add as a filter to this report.'),
                     displayHelpText: gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
@@ -320,15 +320,15 @@ hqDefine('userreports/js/report_config', function () {
                     initialCols: config['initialDefaultFilters'],
                     buttonText: 'Add Default Filter',
                     addItemCallback: function () {
-                        _ga_track_config_change('Add Default Filter');
-                        _kmq_track_click('Add Default Filter');
+                        _gaTrackConfigChange('Add Default Filter');
+                        _kmqTrackClick('Add Default Filter');
                     },
                     removeItemCallback: function () {
-                        _ga_track_config_change('Remove Default Filter');
-                        _kmq_track_click('Delete Default Filter');
+                        _gaTrackConfigChange('Remove Default Filter');
+                        _kmqTrackClick('Delete Default Filter');
                     },
                     reorderItemCallback: function () {
-                        _ga_track_config_change('Reorder Default Filter');
+                        _gaTrackConfigChange('Reorder Default Filter');
                     },
                     propertyHelpText: gettext('Choose the property you would like to add as a filter to this report.'),
                     formatHelpText: gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this to filter the property by a date range.<br/><strong>Value</strong>: Select this to filter the property by a single value.'),
@@ -475,9 +475,9 @@ hqDefine('userreports/js/report_config', function () {
 
                 self.serialize = function () {
                     // Clear invalid defaullt filters
-                    var default_filters = JSON.parse(self.defaultFilterList.serializedProperties());
-                    default_filters = _.filter(
-                        default_filters,
+                    var defaultFilters = JSON.parse(self.defaultFilterList.serializedProperties());
+                    defaultFilters = _.filter(
+                        defaultFilters,
                         function (c) {
                             return c.property && (
                                 c.pre_value || c.pre_operator ||
@@ -494,18 +494,18 @@ hqDefine('userreports/js/report_config', function () {
                         "chart": self.selectedChart(),
                         "columns": JSON.parse(self.columnList.serializedProperties()),
                         "location": self.location_field(),
-                        "default_filters": default_filters,
+                        "default_filters": defaultFilters,
                         "user_filters": JSON.parse(self.filterList.serializedProperties()),
                     };
                 };
 
-                var button = hqImport("hqwebapp/js/main").SaveButton;
+                var button = hqImport("hqwebapp/js/bootstrap3/main").SaveButton;
                 self.saveButton = button.init({
                     unsavedMessage: "You have unsaved settings.",
                     save: function () {
                         var isValid = self.validate();
-                        _ga_track_config_change('Save Report');
-                        _kmq_track_click('Save Report');
+                        _gaTrackConfigChange('Save Report');
+                        _kmqTrackClick('Save Report');
                         if (isValid) {
                             self.saveButton.ajax({
                                 url: window.location.href,  // POST here; keep URL params
@@ -531,8 +531,8 @@ hqDefine('userreports/js/report_config', function () {
 
                     var isValid = self.validate();
                     if (isValid) {
-                        _ga_track_config_change('Save and View Report');
-                        _kmq_track_click('Save and View Report');
+                        _gaTrackConfigChange('Save and View Report');
+                        _kmqTrackClick('Save and View Report');
                         $.ajax({
                             url: window.location.href,
                             type: "POST",
@@ -555,8 +555,8 @@ hqDefine('userreports/js/report_config', function () {
                 });
 
                 $('#deleteReport').click(function () {
-                    _ga_track_config_change('Delete Report');
-                    _kmq_track_click('Delete Report');
+                    _gaTrackConfigChange('Delete Report');
+                    _kmqTrackClick('Delete Report');
                 });
 
                 if (!self.existingReportId) {

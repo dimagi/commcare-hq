@@ -1,5 +1,5 @@
 hqDefine('generic_inbound/js/copy_data', [
-    'hqwebapp/js/alert_user',
+    'hqwebapp/js/bootstrap3/alert_user',
 ], function (alertUserModule) {
     let alertUser = alertUserModule.alert_user;
 

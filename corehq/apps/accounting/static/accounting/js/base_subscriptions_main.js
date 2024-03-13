@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('accounting/js/base_subscriptions_main', [
     'jquery',
     'knockout',
@@ -10,7 +11,6 @@ hqDefine('accounting/js/base_subscriptions_main', [
     widgets
 ) {
     var subscriptionInfoHandlerModel = function () {
-        'use strict';
         var self = {};
 
         var asyncSelect2Handler = widgets.asyncSelect2Handler;
@@ -25,6 +25,8 @@ hqDefine('accounting/js/base_subscriptions_main', [
             self.plan_version.getAdditionalData = function () {
                 return {
                     'edition': $('#id_plan_edition').val(),
+                    'visibility': $('#id_plan_visibility').val(),
+                    'most_recent_version': $('#id_most_recent_version').val(),
                 };
             };
             $(function () {
@@ -34,6 +36,8 @@ hqDefine('accounting/js/base_subscriptions_main', [
                     $planVer.select2('val', '');
                 };
                 $('#id_plan_edition').change(deselectPlanVersion);
+                $('#id_plan_visibility').change(deselectPlanVersion);
+                $('#id_most_recent_version').change(deselectPlanVersion);
             });
         };
 

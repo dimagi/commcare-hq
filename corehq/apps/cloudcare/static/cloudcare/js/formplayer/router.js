@@ -1,3 +1,4 @@
+'use strict';
 /* global Backbone, Marionette */
 hqDefine("cloudcare/js/formplayer/router", function () {
     var utils = hqImport("cloudcare/js/formplayer/utils/utils");
@@ -46,9 +47,9 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             });
         },
         listMenus: function (sessionObject) {
-            var urlObject = utils.CloudcareUrl.fromJson(
-                utils.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
-            );
+            var urlObject = sessionObject ?
+                utils.CloudcareUrl.fromJson(utils.encodedUrlToObject(sessionObject))
+                : utils.currentUrlToObject();
             if (!urlObject.appId) {
                 // We can't do any menu navigation without an appId
                 FormplayerFrontend.trigger("apps:list");
@@ -98,9 +99,9 @@ hqDefine("cloudcare/js/formplayer/router", function () {
                 response.appId = urlObject.appId;
             }
 
-             if (response.notification) {
+            if (response.notification) {
                 FormplayerFrontend.trigger("handleNotification", response.notification);
-             }
+            }
 
             // When the response gets parsed, it will automatically trigger form
             // entry if it is a form response.
@@ -157,6 +158,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             });
         } else {
             urlObject.addSelection(index);
+            FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
         utils.setUrlToObject(urlObject);
         API.listMenus();
@@ -198,13 +200,18 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:query", function (queryDict, selectValuesByKeys = false) {
+    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiatedBy) {
         var urlObject = utils.currentUrlToObject();
-        urlObject.setQueryData({
-            inputs: queryDict,
-            execute: true,
-            selectValuesByKeys: selectValuesByKeys,
-        });
+        var queryObject = _.extend(
+            {
+                inputs: queryDict,
+                execute: true,
+                initiatedBy: initiatedBy,
+            },
+            // force manual search in split screen case search for workflow compatibility
+            sidebarEnabled ? { forceManualSearch: true } : {}
+        );
+        urlObject.setQueryData(queryObject);
         utils.setUrlToObject(urlObject);
         API.listMenus();
     });

@@ -246,9 +246,7 @@ class RestorePermissionsTestLimitLoginAs(TestCase):
             password='***',
             created_by=None,
             created_via=None,
-            metadata={
-                "login_as_user": cls.restore_user.username
-            },
+            user_data={"login_as_user": cls.restore_user.username},
         )
         cls.commcare_user_login_as_multiple_upper_case = CommCareUser.create(
             username=format_username('cabernet', cls.domain),
@@ -256,7 +254,7 @@ class RestorePermissionsTestLimitLoginAs(TestCase):
             password='***',
             created_by=None,
             created_via=None,
-            metadata={
+            user_data={
                 "login_as_user": f"{format_username('ruby', cls.domain)} {cls.restore_user.username.upper()}"
             },
         )
@@ -266,7 +264,7 @@ class RestorePermissionsTestLimitLoginAs(TestCase):
             password='***',
             created_by=None,
             created_via=None,
-            metadata={
+            user_data={
                 "login_as_user": "someone@else deFAUlt"  # intentionally mixed case to test case sensitivity
             },
         )

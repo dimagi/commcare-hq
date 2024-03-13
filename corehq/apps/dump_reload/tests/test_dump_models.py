@@ -1,6 +1,7 @@
 import itertools
 
 from django.apps import apps
+from django.db.models.fields.related import ForeignKey
 
 from corehq.apps.dump_reload.sql.dump import _get_app_list
 from corehq.apps.dump_reload.util import get_model_label
@@ -46,6 +47,7 @@ IGNORE_MODELS = {
     "auth.Permission",
     "blobs.BlobMigrationState",
     "cleanup.DeletedCouchDoc",
+    "cleanup.DeletedSQLDoc",
     "contenttypes.ContentType",
     "data_analytics.GIRRow",
     "data_analytics.MALTRow",
@@ -66,7 +68,6 @@ IGNORE_MODELS = {
     "hqadmin.HistoricalPillowCheckpoint",
     "hqadmin.HqDeploy",
     "hqwebapp.HQOauthApplication",
-    "hqwebapp.MaintenanceAlert",
     "hqwebapp.UserAccessLog",
     "hqwebapp.UserAgent",
     "notifications.DismissedUINotify",
@@ -94,9 +95,6 @@ IGNORE_MODELS = {
     "tastypie.ApiKey",  # not domain-specific
     "toggle_ui.ToggleAudit",
     "two_factor.PhoneDevice",
-    "userreports.ReportComparisonDiff",
-    "userreports.ReportComparisonException",
-    "userreports.ReportComparisonTiming",
     "users.Permission",
     "util.BouncedEmail",
     "util.ComplaintBounceMeta",
@@ -120,8 +118,8 @@ UNKNOWN_MODELS = {
     "blobs.DeletedBlobMeta",
     "couchforms.UnfinishedArchiveStub",
     "couchforms.UnfinishedSubmissionStub",
-    "data_interfaces.CaseDeduplicationActionDefinition",
     "data_interfaces.CaseDuplicate",
+    "data_interfaces.CaseDuplicateNew",
     "dhis2.SQLDataSetMap",
     "dhis2.SQLDataValueMap",
     "fhir.FHIRImportConfig",
@@ -166,7 +164,6 @@ UNKNOWN_MODELS = {
     "userreports.AsyncIndicator",
     "userreports.DataSourceActionLog",
     "userreports.InvalidUCRData",
-    "userreports.UCRExpression",
     "users.HQApiKey",
     "users.UserHistory",
     "users.UserReportingMetadataStaging",
@@ -199,3 +196,34 @@ def test_domain_dump_sql_models():
     ]
     assert not uncovered_models, ("Not all Django models are covered by domain dump.\n"
         + '\n'.join(sorted(uncovered_models)))
+
+
+def test_foreign_keys_for_dumped_sql_models_are_also_included():
+    IGNORE_FK_MODELS = [
+        "scheduling.SMSCallbackContent",  # Model is no longer supported, so this would only impact old domains
+        "users.Permission",  # Permissions are created on fresh install
+        # -- If you add a model here, be sure to provide justification why it is safe to ignore --
+    ]
+    dump_apps = _get_app_list(set(), set())
+    covered_models = set(itertools.chain.from_iterable(dump_apps.values()))
+
+    uncovered_fks_by_model = {}
+    for model in covered_models:
+        foreign_keys = {field.remote_field.model for field in model._meta.fields if isinstance(field, ForeignKey)}
+        uncovered_fk_models = foreign_keys - covered_models
+        uncovered_foreign_keys = [
+            label
+            for label in [get_model_label(model) for model in uncovered_fk_models]
+            if label not in IGNORE_FK_MODELS
+        ]
+        if uncovered_foreign_keys:
+            uncovered_fks_by_model[get_model_label(model)] = uncovered_foreign_keys
+
+    assert (
+        not uncovered_fks_by_model
+    ), "Not all foreign key relationships will be included in the domain dump.\n\n" + "\n\n".join(
+        [
+            f"{model} foreign keys to these uncovered models:\n\t" + "\n\t".join(fks)
+            for model, fks in sorted(uncovered_fks_by_model.items())
+        ]
+    )

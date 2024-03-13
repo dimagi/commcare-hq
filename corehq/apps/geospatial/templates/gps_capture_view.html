@@ -1,0 +1,56 @@
+{% extends "base_template.html" %}
+{% load compress %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+    {% compress js %}
+        <script src="{% static 'geospatial/js/gps_capture.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
+
+ {% block stylesheets %}
+ {{ block.super }}
+ <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+ {% endblock %}
+
+{% block page_content %}
+{% initial_page_data 'data_type' data_type %}
+{% registerurl 'get_paginated_cases_or_users' domain %}
+{% registerurl 'case_data' domain '---' %}
+{% registerurl 'edit_commcare_user' domain '---' %}
+{% registerurl 'gps_capture' domain %}
+{% registerurl 'paginate_mobile_workers' domain %}
+{% initial_page_data 'case_types_with_gps' case_types_with_gps %}
+{% initial_page_data 'couch_user_username' couch_user_username %}
+
+<ul id="tabs-list" class="nav nav-tabs">
+  <li data-bind="click: onclickAction" class="active"><a data-toggle="tab" href="#tabs-cases">{% trans 'Update Case Data' %}</a></li>
+  <li data-bind="click: onclickAction"><a data-toggle="tab" href="#tabs-users">{% trans 'Update Mobile Worker Data' %}</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade in active" id="tabs-cases">
+    {% include "reports/standard/partials/filter_panel.html" %}
+    {% include 'gps_capture.html' with data_type='case' %}
+  </div>
+
+  <div class="tab-pane fade" id="tabs-users">
+    {% include 'gps_capture.html' with data_type='user' %}
+      <div class="module-banner alert alert-info">
+        <span>
+          {% blocktrans %}
+            To create new Mobile Workers navigate to the Mobile Workers page under the Users tab.
+          {% endblocktrans %}
+          <a href="{% url 'mobile_workers' domain %}">
+            {% blocktrans %}
+            Navigate there.
+            {% endblocktrans %}
+          </a>
+        </span>
+      </div>
+  </div>
+</div>
+<div id="geospatial-map" style="height: 500px"></div>
+{% endblock %}

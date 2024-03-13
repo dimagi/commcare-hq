@@ -6,11 +6,12 @@
 {% block page_content %}
   {% if data_source.meta.build.is_rebuild_in_progress %}
         <div id="built-warning" class="alert alert-warning">
-          <h4><i class="fa fa-exclamation-triangle"></i>
-          {% if data_source.meta.build.is_rebuilding %}
+          <h4><i class="fa-solid fa-triangle-exclamation"></i>
+          {% if data_source.rebuild_failed %}
+            {% trans "Populating your report did not complete successfully." %}
+          {% elif data_source.meta.build.is_rebuilding %}
             {% trans "Please note that this datasource is being rebuilt." %}
-          {% endif %}
-          {% if data_source.meta.build.is_rebuilding_in_place %}
+          {% elif data_source.meta.build.is_rebuilding_in_place %}
             {% trans "Please note that this datasource is being rebuilt in place." %}
           {% endif %}
           </h4>

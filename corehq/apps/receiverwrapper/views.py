@@ -4,6 +4,7 @@ import logging
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.core.cache import cache
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
@@ -23,6 +24,7 @@ from corehq.apps.domain.auth import (
     DIGEST,
     NOAUTH,
     API_KEY,
+    OAUTH2,
     determine_authtype_from_request,
 )
 from corehq.apps.domain.decorators import (
@@ -31,6 +33,7 @@ from corehq.apps.domain.decorators import (
     login_or_basic_ex,
     login_or_digest_ex,
     login_or_api_key_ex,
+    login_or_oauth2_ex,
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
@@ -59,11 +62,27 @@ from tastypie.http import HttpTooManyRequests
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
+CACHE_EXPIRY_7_DAYS_IN_SECS = 7 * 24 * 60 * 60
+
+
+def _verify_access(domain, user_id, request):
+    """Unless going through the API, users should have the access_mobile_endpoints permission"""
+    cache_key = f"form_submission_permissions_audit:{user_id}"
+    if cache.get(cache_key):
+        # User is already logged once in last 7 days for incorrect access, so no need to log again
+        return
+
+    if not request.couch_user.has_permission(domain, 'access_mobile_endpoints'):
+        cache.set(cache_key, True, CACHE_EXPIRY_7_DAYS_IN_SECS)
+        message = f"NoMobileEndpointsAccess: invalid request by {user_id} on {domain}"
+        notify_exception(request, message=message)
 
 
 @profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
-                  auth_cls=AuthContext):
+                  auth_cls=AuthContext, is_api=False):
+    if authenticated and not is_api:
+        _verify_access(domain, user_id, request)
 
     if rate_limit_submission(domain):
         return HttpTooManyRequests()
@@ -221,6 +240,7 @@ def post_api(request, domain):
         app_id=None,
         user_id=request.couch_user.get_id,
         authenticated=True,
+        is_api=True,
     )
 
 
@@ -347,6 +367,21 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 
+@handle_401_response
+@login_or_oauth2_ex(allow_cc_users=True, oauth_scopes=['sync'])
+@two_factor_exempt
+@set_request_duration_reporting_threshold(60)
+def _secure_post_oauth2(request, domain, app_id=None):
+    """only ever called from secure post"""
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=app_id,
+        user_id=request.couch_user.get_id,
+        authenticated=True,
+    )
+
+
 @login_or_api_key_ex()
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
@@ -374,6 +409,7 @@ def secure_post(request, domain, app_id=None):
         BASIC: _secure_post_basic,
         NOAUTH: _noauth_post,
         API_KEY: _secure_post_api_key,
+        OAUTH2: _secure_post_oauth2,
     }
 
     if request.GET.get('authtype'):

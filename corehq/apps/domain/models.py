@@ -302,7 +302,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     name = StringProperty()
     is_active = BooleanProperty()
-    date_created = DateTimeProperty()
+    # date_created is expected to be a naive datetime specified in UTC
+    # Defaulting to a lambda rather than utcnow directly to make freezegun function. Not ideal
+    date_created = DateTimeProperty(default=lambda: datetime.utcnow())
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     default_geocoder_location = DictProperty()
     case_sharing = BooleanProperty(default=False)
@@ -437,6 +439,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
     disable_mobile_login_lockout = BooleanProperty(default=False)
+    allow_invite_email_only = BooleanProperty(default=False)
 
     requested_report_builder_subscription = StringListProperty()
 
@@ -444,6 +447,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     default_mobile_ucr_sync_interval = IntegerProperty()
 
     ga_opt_out = BooleanProperty(default=False)
+    orphan_case_alerts_warning = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -675,16 +679,21 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return name
 
     @classmethod
-    def get_all(cls, include_docs=True):
+    def get_all(cls, include_docs=True, include_snapshots=False):
         domains = Domain.view("domain/not_snapshots", include_docs=False).all()
+        if include_snapshots:
+            snapshots = Domain.get_db().view("domain/snapshots", include_docs=True, reduce=False).all()
+            # make snapshots look like items returned from domains/not_snapshots view
+            snapshots = [{'id': d['id'], 'key': d['doc']['name'], 'value': None} for d in snapshots]
+            domains = domains + snapshots
         if not include_docs:
             return domains
         else:
             return map(cls.wrap, iter_docs(cls.get_db(), [d['id'] for d in domains]))
 
     @classmethod
-    def get_all_names(cls):
-        return sorted({d['key'] for d in cls.get_all(include_docs=False)})
+    def get_all_names(cls, include_snapshots=False):
+        return sorted({d['key'] for d in cls.get_all(include_docs=False, include_snapshots=include_snapshots)})
 
     @classmethod
     def get_deleted_domain_names(cls):
@@ -964,7 +973,10 @@ class TransferDomainRequest(models.Model):
             _('Transfer of ownership for CommCare project space.'),
             self.to_user.get_email(),
             html_content,
-            text_content=text_content)
+            text_content=text_content,
+            domain=self.domain,
+            use_domain_gateway=True,
+        )
 
     def email_from_request(self):
         context = self.as_dict()
@@ -981,7 +993,10 @@ class TransferDomainRequest(models.Model):
             _('Transfer of ownership for CommCare project space.'),
             self.from_user.get_email(),
             html_content,
-            text_content=text_content)
+            text_content=text_content,
+            domain=self.domain,
+            use_domain_gateway=True,
+        )
 
     @requires_active_transfer
     def transfer_domain(self, by_user, *args, transfer_via=None, **kwargs):

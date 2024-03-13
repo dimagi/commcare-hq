@@ -1,10 +1,10 @@
 import uuid
 
 from django.utils.functional import cached_property
+from django.core.exceptions import PermissionDenied
 
 import jsonobject
 from jsonobject.exceptions import BadValueError
-from memoized import memoized
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
@@ -12,6 +12,10 @@ from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.apps.hqcase.utils import CASEBLOCK_CHUNKSIZE, submit_case_blocks
 from corehq.form_processor.models import CommCareCase
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.es.users import UserES
+from corehq.apps.users.models import CouchUser
 
 from .core import SubmissionError, UserError
 
@@ -111,6 +115,10 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
             **get_kwargs('case_type', 'case_name', 'external_id', 'owner_id'),
         ).as_text()
 
+    @property
+    def is_new_case(self):
+        return self._is_case_creation
+
 
 class JsonCaseCreation(BaseJsonCaseChange):
     temporary_id = jsonobject.StringProperty()
@@ -158,6 +166,9 @@ def handle_case_update(domain, data, user, device_id, is_creation):
         updates = [_get_individual_update(domain, data, user, is_creation)]
 
     case_db = CaseIDLookerUpper(domain, updates)
+
+    if isinstance(user, CouchUser):
+        validate_update_permission(domain, updates, user, case_db)
 
     case_blocks = [update.get_caseblock(case_db) for update in updates]
     xform, cases = _submit_case_blocks(case_blocks, domain, user, device_id)
@@ -264,6 +275,19 @@ class CaseIDLookerUpper:
 
         return case_ids_by_external_id
 
+    def get_owner_id(self, key):
+        try:
+            return self._get_owner_id[key]
+        except KeyError:
+            raise UserError(f"Could not find an owner_id with case_id '{key}'")
+
+    @cached_property
+    def _get_owner_id(self):
+        return {
+            update.case_id: update.owner_id
+            for update in self.updates if update.owner_id
+        }
+
 
 def _submit_case_blocks(case_blocks, domain, user, device_id):
     return submit_case_blocks(
@@ -275,3 +299,81 @@ def _submit_case_blocks(case_blocks, domain, user, device_id):
         device_id=device_id,
         max_wait=15
     )
+
+
+def _get_owner_ids(domain, data, case_db):
+    owner_ids = []
+    case_ids = []
+    for data_item in data:
+        if data_item.owner_id:
+            owner_ids.append(data_item.owner_id)
+        if not data_item.is_new_case:
+            case_id = data_item.get_case_id(case_db)
+            case_ids.append(case_id)
+
+        for index in data_item.indices.values():
+            index_case_id = index.get_id(case_db)
+            if index_case_id in case_db.real_case_ids:
+                case_ids.append(index_case_id)
+            else:
+                case_owner_id = case_db.get_owner_id(index_case_id)
+                owner_ids.append(case_owner_id)
+
+    case_owner_ids = (
+        CaseSearchES()
+        .domain(domain)
+        .case_ids(case_ids)
+        .values_list('owner_id', flat=True)
+    )
+    return set(owner_ids + case_owner_ids)
+
+
+def validate_update_permission(domain, data, user, case_db):
+    """
+    Check whether the given `user` has permission to create/update cases and indices from `data`.
+    Also checks whether `user` has access to all case indices, if there are any.
+    """
+    if user.has_permission(domain, 'access_all_locations'):
+        return
+
+    all_owner_ids = _get_owner_ids(domain, data, case_db)
+
+    # List of owner ids can contain either location or user ids, so separate the two
+    location_ids = set(
+        SQLLocation.objects
+        .filter(location_id__in=all_owner_ids)
+        .values_list('location_id', flat=True)
+    )
+    user_ids = all_owner_ids - set(location_ids)
+
+    user_location_ids = set(
+        SQLLocation.objects
+        .accessible_to_user(domain, user)
+        .values_list('location_id', flat=True)
+    )
+
+    inaccessible_location_ids = location_ids - user_location_ids
+    if inaccessible_location_ids:
+        raise PermissionDenied(
+            "No permission to access following location ids "
+            f"from given case/owner ids: {inaccessible_location_ids}"
+        )
+
+    # Get all user_ids that share a location with user
+    users_with_shared_locations = set(
+        UserES()
+        .domain(domain)
+        .user_ids(user_ids)
+        .location(user_location_ids)
+        .values_list('_id', flat=True)
+    )
+    inaccessible_user_ids = user_ids - set(users_with_shared_locations)
+    if inaccessible_user_ids:
+        raise PermissionDenied(
+            "No permission to access following user ids "
+            f"from given case/owner ids: {inaccessible_user_ids}"
+        )
+
+    # Can access all users at this point, so if length is different then some users could not be found
+    if len(user_ids) != len(users_with_shared_locations):
+        raise UserError("Not all owner_ids are real owner_ids in the project")

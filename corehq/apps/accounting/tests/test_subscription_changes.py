@@ -107,7 +107,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             self.web_users.append(web_user)
 
             commcare_user = generator.arbitrary_user(
-                domain=self.domain.name)
+                domain_name=self.domain.name)
             commcare_user.set_role(self.domain.name, role.get_qualified_id())
             commcare_user.save()
             self.commcare_users.append(commcare_user)
@@ -434,9 +434,9 @@ class DeactivateScheduleTest(TransactionTestCase):
         self.assertSchedulesActive(self.domain_2_sms_schedules)
         self.assertSchedulesActive(self.domain_2_survey_schedules)
 
-        with patch('corehq.apps.accounting.subscription_changes.refresh_timed_schedule_instances.delay') as p1,\
-                patch('corehq.apps.accounting.subscription_changes.refresh_alert_schedule_instances.delay') as p2,\
-                patch('corehq.messaging.tasks.initiate_messaging_rule_run') as p3:
+        with patch('corehq.apps.accounting.subscription_changes.refresh_timed_schedule_instances.delay') as p1, \
+             patch('corehq.apps.accounting.subscription_changes.refresh_alert_schedule_instances.delay') as p2, \
+             patch('corehq.messaging.tasks.initiate_messaging_rule_run') as p3:
 
             _deactivate_schedules(self.domain_obj_1)
 
@@ -482,9 +482,9 @@ class DeactivateScheduleTest(TransactionTestCase):
         self.assertSchedulesActive(self.domain_2_sms_schedules)
         self.assertSchedulesActive(self.domain_2_survey_schedules)
 
-        with patch('corehq.apps.accounting.subscription_changes.refresh_timed_schedule_instances.delay') as p1,\
-                patch('corehq.apps.accounting.subscription_changes.refresh_alert_schedule_instances.delay') as p2,\
-                patch('corehq.messaging.tasks.initiate_messaging_rule_run') as p3:
+        with patch('corehq.apps.accounting.subscription_changes.refresh_timed_schedule_instances.delay') as p1, \
+             patch('corehq.apps.accounting.subscription_changes.refresh_alert_schedule_instances.delay') as p2, \
+             patch('corehq.messaging.tasks.initiate_messaging_rule_run') as p3:
 
             _deactivate_schedules(self.domain_obj_1, survey_only=True)
 

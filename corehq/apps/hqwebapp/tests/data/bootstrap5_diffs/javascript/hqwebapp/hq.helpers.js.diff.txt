@@ -1,0 +1,40 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-hqDefine("hqwebapp/js/bootstrap3/hq.helpers", [
++hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
+     'jquery',
+     'knockout',
+     'underscore',
+@@ -59,19 +59,6 @@
+         return false; // let default handler run
+     };
+ 
+-    var oldHide = $.fn.popover.Constructor.prototype.hide;
+-
+-    $.fn.popover.Constructor.prototype.hide = function () {
+-        if (this.options.trigger === "hover" && this.tip().is(":hover")) {
+-            var that = this;
+-            setTimeout(function () {
+-                return that.hide.apply(that, arguments);
+-            }, that.options.delay.hide);
+-            return;
+-        }
+-        oldHide.apply(this, arguments);
+-    };
+-
+     $.fn.hqHelp = function (opts) {
+         var self = this;
+         self.each(function (i) {
+@@ -104,6 +91,11 @@
+                 event.preventDefault();
+             });
+         });
++    };
++
++    $.fn.changeButtonState = function (state) {
++        $(this).text($(this).data(state + '-text'));
++        return this;
+     };
+ 
+     $.fn.addSpinnerToButton = function () {

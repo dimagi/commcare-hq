@@ -1,0 +1,35 @@
+--- 
++++ 
+@@ -12,7 +12,7 @@
+  *
+  */
+ 
+-hqDefine('hqwebapp/js/components/bootstrap3/feedback', [
++hqDefine('hqwebapp/js/components/bootstrap5/feedback', [
+     'knockout',
+     'jquery',
+     'hqwebapp/js/initial_page_data',
+@@ -21,9 +21,10 @@
+     $,
+     initialPageData
+ ) {
++    'use strict';
+     return {
+         viewModel: function (params) {
+-            var self = {};
++            let self = {};
+ 
+             if (!params.featureName) {
+                 throw new Error("Please specify a featureName in params.");
+@@ -61,11 +62,6 @@
+                         if (data.success) {
+                             self.showSuccess(true);
+                         }
+-                    })
+-                    .always(function () {
+-                        setTimeout(function () {
+-                            $('#modal-feedback-form-widget').modal('hide');
+-                        }, 1000);
+                     });
+             };
+ 

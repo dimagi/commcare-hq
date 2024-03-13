@@ -153,10 +153,18 @@ class FixtureEditInterface(FixtureInterface):
     @property
     def report_context(self):
         context = super(FixtureEditInterface, self).report_context
-        context.update(types=self.data_types)
+        is_managed_by_upstream_domain = any(data_type['is_synced'] for data_type in self.data_types)
+        context.update(
+            types=self.data_types,
+            is_managed_by_upstream_domain=is_managed_by_upstream_domain,
+            can_edit_linked_data=self.can_edit_linked_data(),
+        )
         return context
 
     @property
     @memoized
     def data_types(self):
         return [table_json(t) for t in LookupTable.objects.by_domain(self.domain)]
+
+    def can_edit_linked_data(self):
+        return self.request.couch_user.can_edit_linked_data(self.domain)

@@ -1,8 +1,10 @@
 import re
+import os
 import tempfile
 from collections import OrderedDict
 
 from django.db.models import Q
+from django.utils.translation import gettext as _
 
 from memoized import memoized
 
@@ -12,6 +14,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
+from corehq.apps.commtrack.util import generate_code
 from corehq.apps.consumption.shortcuts import (
     build_consumption_dict,
     get_loaded_default_monthly_consumption,
@@ -172,8 +175,7 @@ class LocationExporter(object):
     @memoized
     def include_consumption(self):
         if bool(
-            self.include_consumption_flag and
-            self.domain_obj.commtrack_settings.individual_consumption_defaults
+            self.include_consumption_flag and self.domain_obj.commtrack_settings.individual_consumption_defaults
         ):
             # we'll be needing these, so init 'em:
             self.products = Product.by_domain(self.domain)
@@ -189,9 +191,8 @@ class LocationExporter(object):
 
     def get_consumption(self, loc):
         if (
-            not self.include_consumption or
-            loc.location_type_name in self.administrative_types or
-            not self.consumption_dict
+            not self.include_consumption or loc.location_type_name in self.administrative_types
+            or not self.consumption_dict
         ):
             return {}
         if loc.location_id in self.supply_point_map:
@@ -293,10 +294,12 @@ class LocationExporter(object):
 
 def dump_locations(domain, download_id, include_consumption, headers_only,
                    owner_id, root_location_ids=None, task=None, **kwargs):
-    exporter = LocationExporter(domain, include_consumption=include_consumption, root_location_ids=root_location_ids,
-                                headers_only=headers_only, async_task=task, **kwargs)
+    exporter = LocationExporter(domain, include_consumption=include_consumption,
+                                root_location_ids=root_location_ids, headers_only=headers_only,
+                                async_task=task, **kwargs)
 
     fd, path = tempfile.mkstemp()
+    os.close(fd)
     writer = Excel2007ExportWriter()
     writer.open(header_table=exporter.get_headers(), file=path)
     with writer:
@@ -352,6 +355,77 @@ def get_locations_from_ids(location_ids, domain, base_queryset=None):
     return locations
 
 
-def valid_location_site_code(site_code):
-    slug_regex = re.compile(r'^[-_\w\d]+$')
-    return slug_regex.match(site_code)
+# Validation-related methods ---
+
+def validate_site_code(domain, location_id, site_code, error):
+    def valid_location_site_code(site_code):
+        slug_regex = re.compile(r'^[-_\w\d]+$')
+        return slug_regex.match(site_code)
+
+    site_code = site_code.lower()
+    if not valid_location_site_code(site_code):
+        raise error(_(
+            'The site code cannot contain spaces or special characters.'
+        ))
+    if (SQLLocation.objects
+            .filter(domain=domain,
+                    site_code__iexact=site_code)
+            .exclude(location_id=location_id)
+            .exists()):
+        raise error(_(
+            'another location already uses this site code'
+        ))
+    return site_code
+
+
+def generate_site_code(domain, location_id, name):
+    all_codes = [
+        code.lower() for code in
+        (SQLLocation.objects.exclude(location_id=location_id)
+                            .filter(domain=domain)
+                            .values_list('site_code', flat=True))
+    ]
+    return generate_code(name, all_codes)
+
+
+def has_siblings_with_name(location, name, parent_location_id):
+    qs = SQLLocation.objects.filter(domain=location.domain,
+                                    name=name)
+    if parent_location_id:
+        qs = qs.filter(parent__location_id=parent_location_id)
+    else:  # Top level
+        qs = qs.filter(parent=None)
+    return (qs.exclude(location_id=location.location_id).exists())
+
+
+def get_location_type(domain, location, parent, loc_type_string, exception, is_new_location):
+    from corehq.apps.locations.forms import LocationForm
+    allowed_types = LocationForm.get_allowed_types(domain, parent)
+    if not allowed_types:
+        raise exception(_('The selected parent location cannot have child locations!'))
+
+    if not loc_type_string:
+        if len(allowed_types) == 1:
+            loc_type_obj = allowed_types[0]
+        else:
+            raise exception(_('You must select a location type'))
+    else:
+        try:
+            loc_type_obj = (LocationType.objects
+                            .filter(domain=domain)
+                            .get(Q(code=loc_type_string) | Q(name=loc_type_string)))
+        except LocationType.DoesNotExist:
+            raise exception(_("LocationType '{}' not found").format(loc_type_string))
+        else:
+            if loc_type_obj not in allowed_types:
+                raise exception(_('Location type not valid for the selected parent.'))
+
+    _can_change_location_type = (is_new_location or not location.get_descendants().exists())
+    if not _can_change_location_type and loc_type_obj.pk != location.location_type.pk:
+        raise exception(_(
+            'You cannot change the location type of a location with children'
+        ))
+
+    return loc_type_obj
+
+# ---

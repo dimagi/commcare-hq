@@ -87,6 +87,7 @@
           {% crispy criteria_form %}
         </div>
       </div>
+      {% if update_actions_enabled %}
       <fieldset {% if readonly %} disabled="disabled" {% endif %}>
         <legend>{% trans "Actions" %}</legend>
         <div data-bind="template: {name: 'update-case-property-action', foreach: propertiesToUpdate, as: 'propertyToUpdate'} "></div>
@@ -101,6 +102,7 @@
           <input type="text" hidden name="properties_to_update" data-bind="value: serializedPropertiesToUpdate" />
         </div>
       </fieldset>
+      {%  endif %}
       {% if not readonly %}
         <div class="form-actions">
           <div class="col-xs-1">
@@ -117,7 +119,7 @@
         <div class="row">
           <div class="col-xs-6 text-center">
             <button type="button" class="btn btn-danger" data-bind="click: $parent.removeCaseProperty, visible:$parent.caseProperties().length > 1">
-              <i class="fa fa-close"></i>
+              <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
           <div class="col-xs-6 text-center">
@@ -130,6 +132,7 @@
         <case-property-input params="
          valueObservable: caseProperty.name,
          caseTypeObservable: $root.caseType,
+         allCaseProperties: $root.availablePropertyMap,
         "></case-property-input>
       </div>
     </div>
@@ -138,13 +141,14 @@
   <script type="text/html" id="update-case-property-action">
     <div class="form-group">
       <button type="button" class="btn btn-danger" data-bind="click: $parent.removePropertyToUpdate">
-        <i class="fa fa-close"></i>
+        <i class="fa-solid fa-xmark"></i>
       </button>
       <label class="control-label col-xs-2">{% trans "Set case property" %}</label>
       <div class="controls col-xs-2">
         <case-property-input params="
          valueObservable: name,
          caseTypeObservable: $root.caseType,
+         allCaseProperties: $root.availableActionPropertyMap,
         "></case-property-input>
       </div>
       <div class="controls col-xs-2">

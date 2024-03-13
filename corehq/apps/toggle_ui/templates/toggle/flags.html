@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/base_page.html' %}
+{% extends 'hqwebapp/bootstrap3/base_page.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
@@ -43,7 +43,7 @@
     </a>
   {% endif %}
   <button data-bind="click: downloadFile" class="btn btn-default btn-xs pull-right">
-    <i class="fa fa-cloud-download"></i>
+    <i class="fa-solid fa-cloud-arrow-down"></i>
     {% trans "Export to Excel" %}
   </button>
   <div>

@@ -1,0 +1,18 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% requirejs_main 'geospatial/js/geo_config' %}
+
+{% block page_content %}
+{% initial_page_data 'config' config %}
+{% initial_page_data 'gps_case_props_deprecated_state' gps_case_props_deprecated_state %}
+{% initial_page_data 'target_grouping_name' target_grouping_name %}
+{% initial_page_data 'min_max_grouping_name' min_max_grouping_name %}
+{% initial_page_data 'road_network_algorithm_slug' road_network_algorithm_slug %}
+
+  <form id="geospatial-config-form" class="form-horizontal disable-on-submit ko-template" method="post">
+    {% crispy form %}
+  </form>
+{% endblock %}

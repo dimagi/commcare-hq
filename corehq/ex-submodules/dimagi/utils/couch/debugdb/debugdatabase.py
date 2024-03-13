@@ -1,7 +1,7 @@
 __author__ = 'dmyung'
 from datetime import datetime
 from couchdbkit import Database
-from dimagi.utils.couch.debugdb import tidy_stacktrace, SQL_WARNING_THRESHOLD, process_key, ms_from_timedelta
+from dimagi.utils.couch.debugdb import tidy_stacktrace, SQL_WARNING_THRESHOLD, ms_from_timedelta
 
 #taken from the django debug toolbar sql panel
 import traceback
@@ -104,7 +104,7 @@ class DebugViewResults64(ViewResults):
         for key in self._dynamic_keys:
             try:
                 delattr(self, key)
-            except:
+            except AttributeError:
                 pass
         self._dynamic_keys = []
 
@@ -170,7 +170,7 @@ class DebugViewResults57(ViewResults):
         for key in self._dynamic_keys:
             try:
                 delattr(self, key)
-            except:
+            except AttributeError:
                 pass
         self._dynamic_keys = []
 
@@ -227,8 +227,6 @@ class DebugViewResults57(ViewResults):
 
 if couchdbkit.version_info < (0, 6, 0):
     DebugViewResults = DebugViewResults57
-
-    couchdbkit.client.ViewResults = DebugViewResults57
 else:
     DebugViewResults = DebugViewResults64
 

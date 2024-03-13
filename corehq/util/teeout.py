@@ -23,7 +23,7 @@ def tee_output(stream, sys=sys):
         yield
     except SystemExit:
         raise
-    except:
+    except:  # noqa: E722  # Do not use bare `except`
         etype, exc, tb = sys.exc_info()
         if stream:
             stream.write("".join(traceback.format_exception(etype, exc, tb)))

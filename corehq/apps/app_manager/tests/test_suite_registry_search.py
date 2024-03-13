@@ -21,8 +21,10 @@ from corehq.apps.app_manager.models import (
     ParentSelect,
     ShadowModule,
 )
-from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE, \
-    RESULTS_INSTANCE_INLINE
+from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+    RESULTS_INSTANCE,
+    RESULTS_INSTANCE_INLINE,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -65,7 +67,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Favorite Color'}, itemset=Itemset(
-                    instance_id='item-list:colors', instance_uri='jr://fixture/item-list:colors',
+                    instance_id='item-list:colors',
                     nodeset="instance('item-list:colors')/colors_list/colors",
                     label='name', sort='name', value='value'),
                 )
@@ -101,7 +103,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         <partial>
           <session>
             <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results"
-                template="case" default_search="false">
+                template="case" default_search="false" dynamic_search="false">
                 <title>
                     <text>
                         <locale id="case_search.m0.inputs"/>
@@ -129,7 +131,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 </itemset>
               </prompt>
             </query>
-            <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+            <datum id="case_id"
+                nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
                 value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
             <query url="http://localhost:8000/a/test_domain/phone/case_fixture/123/"
                 storage-instance="registry" template="case" default_search="true">
@@ -139,7 +142,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
             </query>
           </session>
-        </partial>"""
+        </partial>"""  # noqa: E501
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session")
 
         # assert that session instance is added to the entry
@@ -293,10 +296,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     @flag_enabled('MOBILE_UCR')
     def test_prompt_itemset_mobile_report(self):
         self.module.search_config.properties[0].input_ = 'select1'
-        instance_id = "123abc"
+        instance_id = "commcare-reports:123abc"
         self.module.search_config.properties[0].itemset = Itemset(
             instance_id=instance_id,
-            instance_uri="jr://fixture/commcare-reports:abcdef",
             nodeset=f"instance('{instance_id}')/rows/row",
             label='name',
             value='id',
@@ -323,7 +325,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
 
         expected_instance = f"""
                 <partial>
-                  <instance id="{instance_id}" src="jr://fixture/commcare-reports:abcdef"/>
+                  <instance id="{instance_id}" src="jr://fixture/commcare-reports:123abc"/>
                 </partial>
                 """
         self.assertXmlPartialEqual(
@@ -362,7 +364,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Favorite Color'}, itemset=Itemset(
-                    instance_id='item-list:colors', instance_uri='jr://fixture/item-list:colors',
+                    instance_id='item-list:colors',
                     nodeset="instance('item-list:colors')/colors_list/colors",
                     label='name', sort='name', value='value'),
                 )
@@ -388,7 +390,7 @@ class RegistrySuiteShadowModuleTest(SimpleTestCase, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='favorite_color', label={'en': 'Texture'}, itemset=Itemset(
-                    instance_id='item-list:textures', instance_uri='jr://fixture/item-list:textures',
+                    instance_id='item-list:textures',
                     nodeset="instance('item-list:textures')/textures_list/textures",
                     label='name', sort='name', value='value'),
                 )
@@ -549,7 +551,7 @@ class InlineSearchDataRegistryModuleTest(SimpleTestCase, SuiteMixin):
             <instance id="results:inline" src="jr://instance/remote/results:inline"/>
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="{RESULTS_INSTANCE_INLINE}"
-                    template="case" default_search="false">
+                    template="case" default_search="false" dynamic_search="false">
                   <title>
                     <text>
                       <locale id="case_search.m0.inputs"/>

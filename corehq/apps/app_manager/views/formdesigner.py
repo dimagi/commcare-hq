@@ -294,6 +294,8 @@ def _get_vellum_plugins(domain, form, module):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
+    if toggles.COMMCARE_CONNECT.enabled(domain):
+        vellum_plugins.append("commcareConnect")
 
     form_uses_case = (
         (module and module.case_type and form.requires_case())
@@ -348,7 +350,7 @@ def _get_core_context_help_text_context(form):
         form_icon_class = 'fcc fcc-app-updateform'
     else:
         default_help_text_template_id = '#fd-hq-helptext-survey'
-        form_icon_class = 'fa fa-file-o'
+        form_icon_class = 'fa-regular fa-file'
     return {
         'defaultHelpTextTemplateId': default_help_text_template_id,
         'formIconClass': form_icon_class,

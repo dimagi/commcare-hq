@@ -65,7 +65,7 @@ class ProdIndexManagementTest(SimpleTestCase):
 
 EXPECTED_PROD_INDICES = [
     {
-        "index": "test_case_search_2018-05-29",
+        "index": "test_case-search-20230524",
         "type": "case",
         "hq_index_name": "case_search",
         "meta": {
@@ -96,19 +96,19 @@ EXPECTED_PROD_INDICES = [
                         }
                     }
                 },
-                "number_of_replicas": 1,
-                "number_of_shards": 5,
+                "number_of_replicas": 0,
+                "number_of_shards": 1,
             }
         }
     },
     {
         "hq_index_name": "hqapps",
-        "index": "test_hqapps_2020-02-26",
+        "index": "test_apps-20230524",
         "type": "app",
         "meta": {
             "settings": {
                 "number_of_replicas": 0,
-                "number_of_shards": 5,
+                "number_of_shards": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -123,12 +123,12 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "hqcases",
-        "index": "test_hqcases_2016-03-04",
+        "index": "test_cases-20230524",
         "type": "case",
         "meta": {
             "settings": {
                 "number_of_replicas": 0,
-                "number_of_shards": 5,
+                "number_of_shards": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -145,12 +145,12 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "hqdomains",
-        "index": "test_hqdomains_2021-03-08",
+        "index": "test_domains-20230524",
         "type": "hqdomain",
         "meta": {
             "settings": {
                 "number_of_replicas": 0,
-                "number_of_shards": 5,
+                "number_of_shards": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -169,12 +169,12 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "hqgroups",
-        "index": "test_hqgroups_2017-05-29",
+        "index": "test_groups-20230524",
         "type": "group",
         "meta": {
             "settings": {
                 "number_of_replicas": 0,
-                "number_of_shards": 5,
+                "number_of_shards": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -191,11 +191,11 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "hqusers",
-        "index": "test_hqusers_2017-09-07",
+        "index": "test_users-20230524",
         "type": "user",
         "meta": {
             "settings": {
-                "number_of_shards": 2,
+                "number_of_shards": 1,
                 "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
@@ -211,12 +211,12 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "smslogs",
-        "index": "test_smslogs_2020-01-28",
+        "index": "test_sms-20230524",
         "type": "sms",
         "meta": {
             "settings": {
                 "number_of_replicas": 0,
-                "number_of_shards": 5,
+                "number_of_shards": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -233,12 +233,12 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "hq_index_name": "xforms",
-        "index": "test_xforms_2016-07-07",
+        "index": "test_forms-20230524",
         "type": "xform",
         "meta": {
             "settings": {
                 "number_of_replicas": 0,
-                "number_of_shards": 5,
+                "number_of_shards": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {

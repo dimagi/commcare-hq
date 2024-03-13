@@ -80,7 +80,8 @@ def _build_indicators(config, document_store, relevant_ids):
 
 @serial_task('{indicator_config_id}', default_retry_delay=60 * 10, timeout=3 * 60 * 60, max_retries=20,
              queue=UCR_CELERY_QUEUE, ignore_result=True, serializer='pickle')
-def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None, engine_id=None, diffs=None, trigger_time=None, domain=None):
+def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None,
+                       engine_id=None, diffs=None, trigger_time=None, domain=None):
     config = get_ucr_datasource_config_by_id(indicator_config_id)
     if trigger_time is not None and trigger_time < config.last_modified:
         return
@@ -295,7 +296,7 @@ def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
     #   be a chunk of 100
     memoizers = {'configs': {}, 'adapters': {}}
-    assert(len(indicator_doc_ids)) <= ASYNC_INDICATOR_CHUNK_SIZE
+    assert (len(indicator_doc_ids)) <= ASYNC_INDICATOR_CHUNK_SIZE
 
     def handle_exception(exception, config_id, doc, adapter):
         metric = None
@@ -495,7 +496,8 @@ def async_indicators_metrics():
 
     # Don't use ORM summing because it would attempt to get every value in DB
     unsuccessful_attempts = sum(AsyncIndicator.objects.values_list('unsuccessful_attempts', flat=True).all()[:100])
-    metrics_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts, multiprocess_mode='livesum')
+    metrics_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts,
+                  multiprocess_mode='livesum')
 
     oldest_unprocessed = AsyncIndicator.objects.filter(unsuccessful_attempts=0).first()
     if oldest_unprocessed:
@@ -562,4 +564,4 @@ def export_ucr_async(report_export, download_id, user):
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx', owner_ids=[user.get_id])
     link = reverse("retrieve_download", args=[download_id], params={"get_file": '1'}, absolute=True)
 
-    send_report_download_email(report_export.title, user.get_email(), link)
+    send_report_download_email(report_export.title, user.get_email(), link, domain=report_export.domain)

@@ -61,17 +61,22 @@ from corehq.apps.domain.views.releases import (
     toggle_release_restriction_by_app_profile,
 )
 from corehq.apps.domain.views.settings import (
+    delete_domain_alert,
+    update_domain_alert_status,
     CaseSearchConfigView,
     DefaultProjectSettingsView,
     EditBasicProjectInfoView,
+    EditDomainAlertView,
     EditMyProjectSettingsView,
     EditPrivacySecurityView,
     FeaturePreviewsView,
+    ManageDomainAlertsView,
     ManageDomainMobileWorkersView,
     CustomPasswordResetView,
     RecoveryMeasuresHistory,
 )
 from corehq.apps.domain.views.sms import SMSRatesView
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.integration.urls import settings_patterns as integration_settings
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -132,7 +137,8 @@ urlpatterns = [
 domain_settings = [
     url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.urlname),
     url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.urlname),
-    url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.urlname),
+    url(r'^basic/$',
+        waf_allow('XSS_BODY')(EditBasicProjectInfoView.as_view()), name=EditBasicProjectInfoView.urlname),
     url(r'^call_center_owner_options/', CallCenterOwnerOptionsView.as_view(),
         name=CallCenterOwnerOptionsView.url_name),
     url(r'^privacy/$', EditPrivacySecurityView.as_view(), name=EditPrivacySecurityView.urlname),
@@ -189,6 +195,10 @@ domain_settings = [
         name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', calculated_properties, name='calculated_properties'),
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
+    url(r'^alerts/edit/(?P<alert_id>[\w\-]+)/$', EditDomainAlertView.as_view(), name=EditDomainAlertView.urlname),
+    url(r'^alerts/$', ManageDomainAlertsView.as_view(), name=ManageDomainAlertsView.urlname),
+    url(r'^alerts/delete/$', delete_domain_alert, name='delete_domain_alert'),
+    url(r'^alerts/update_status/$', update_domain_alert_status, name='update_domain_alert_status'),
     url(r'^manage_mobile_workers/$', ManageDomainMobileWorkersView.as_view(),
         name=ManageDomainMobileWorkersView.urlname),
     url(r'^flags/$', FlagsAndPrivilegesView.as_view(), name=FlagsAndPrivilegesView.urlname),

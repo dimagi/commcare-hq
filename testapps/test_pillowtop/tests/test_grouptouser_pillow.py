@@ -16,6 +16,7 @@ from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import (
     reindex_and_clean,
 )
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.tests.util import patch_user_data_db_layer
 from corehq.pillows.groups_to_user import (
     get_group_pillow,
     remove_group_from_users,
@@ -133,7 +134,8 @@ def _create_es_user(user_id, domain):
         last_name='Casual',
         is_active=True,
     )
-    user_adapter.index(user, refresh=True)
+    with patch_user_data_db_layer():
+        user_adapter.index(user, refresh=True)
     return user
 
 

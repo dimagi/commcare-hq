@@ -1,0 +1,102 @@
+.full-width {
+  width: 100%;
+}
+
+.sidebar-push {
+  @media (min-width: @screen-md-min) {
+    margin-left: 310px;
+  }
+}
+
+#sidebar-region {
+  background: transparent;
+  @media (min-width: @screen-md-min) {
+    width: 300px;
+    position: absolute;
+  }
+  @media (max-width: @screen-sm-max) {
+    max-width: 600px;
+    margin: auto;
+  }
+
+  table {
+    table-layout: fixed;
+    background: white;
+  }
+
+  .query-input-group {
+    margin-right: 18px;
+    margin-bottom: 10px;
+    margin-left: 18px;
+  }
+  .query-caption {
+    margin-top: 8px;
+    margin-right: 10px;
+    margin-left: 8px;
+  }
+
+  .query-caption > div {
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .mapboxgl-ctrl-geocoder {
+    min-width: 100%;
+    font-size: 1em;
+    > .mapboxgl-ctrl-geocoder--input {
+      height: inherit;
+    }
+  }
+  .select2-container .select2-selection--multiple {
+    min-height: inherit;
+  }
+}
+
+.query-field > .checkbox {
+  &:first-of-type {
+    margin-top: 0;
+  }
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+  input[type="checkbox"] {
+    margin-top: 2.5px;
+  }
+}
+
+.query-description {
+  a {
+    color: @cc-brand-mid;
+  }
+  a:hover {
+    color: @cc-brand-low;
+  }
+}
+
+.query-caption.required .control-label::before, .search-query-group-header.required .search-query-group-header-label::before {
+  content: '*';
+  font-weight: bold;
+  color: #c0392b;
+  margin: 0 3px;
+  float: left;
+}
+
+.search-query-group-header-label {
+  font-size: larger;
+}
+
+.search-query-group {
+  background-color: @cc-bg;
+}
+
+#query-group-content > tr {
+  background-color: white;
+}
+
+#query-properties td {
+  border-top: 0px;
+}
+
+.search-query-group .table {
+  border-collapse: separate; margin-bottom: 0px;
+}

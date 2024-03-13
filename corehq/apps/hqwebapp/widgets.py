@@ -17,12 +17,14 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import html_attr
 
 
 class BootstrapCheckboxInput(CheckboxInput):
+    template_name = "hqwebapp/crispy/checkbox_widget.html"
 
     def __init__(self, attrs=None, check_test=bool, inline_label=""):
-        super(BootstrapCheckboxInput, self).__init__(attrs, check_test)
+        super().__init__(attrs, check_test)
         self.inline_label = inline_label
 
-    def render(self, name, value, attrs=None, renderer=None):
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
         extra_attrs = {'type': 'checkbox', 'name': conditional_escape(name)}
         extra_attrs.update(self.attrs)
         final_attrs = self.build_attrs(attrs, extra_attrs=extra_attrs)
@@ -35,10 +37,21 @@ class BootstrapCheckboxInput(CheckboxInput):
         if value not in ('', True, False, None):
             # Only add the 'value' attribute if a value is non-empty.
             final_attrs['value'] = force_str(value)
-        return format_html(
-            '<label class="checkbox"><input{} /> {}</label>',
-            mark_safe(flatatt(final_attrs)),  # nosec: trusting the user to sanitize attributes
-            self.inline_label)
+        from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
+        use_bootstrap5 = get_bootstrap_version() == BOOTSTRAP_5
+        final_attrs['class'] = 'form-check-input' if use_bootstrap5 else 'bootstrapcheckboxinput'
+        context.update({
+            'use_bootstrap5': use_bootstrap5,
+            'input_id': final_attrs.get('id'),
+            'inline_label': self.inline_label,
+            'attrs': mark_safe(flatatt(final_attrs)),  # nosec: trusting the user to sanitize attributes
+        })
+        return context
+
+
+class BootstrapSwitchInput(BootstrapCheckboxInput):
+    """Only valid for forms using Bootstrap5"""
+    template_name = "hqwebapp/crispy/switch_widget.html"
 
 
 class _Select2AjaxMixin():
@@ -132,7 +145,7 @@ class DateRangePickerWidget(Input):
         output = super(DateRangePickerWidget, self).render(name, value, attrs, renderer)
         return format_html(
             '<div class="input-group hqwebapp-datespan">'
-            '   <span class="input-group-addon"><i class="fa fa-calendar"></i></span>'
+            '   <span class="input-group-addon"><i class="fa-solid fa-calendar-days"></i></span>'
             '   {}'
             '</div>',
             output
@@ -147,6 +160,7 @@ class SelectToggle(forms.Select):
         attrs = attrs or {}
         self.params['value'] = attrs.get('ko_value', '')
         super(SelectToggle, self).__init__(choices=choices, attrs=attrs)
+        self.attrs['disabled'] = attrs.get('disabled', 'false')
 
     def render(self, name, value, attrs=None, renderer=None):
         return '''
@@ -154,12 +168,14 @@ class SelectToggle(forms.Select):
                             params="name: '{name}',
                                     id: '{id}',
                                     value: {value},
+                                    disabled: {disabled},
                                     options: {options}"></select-toggle>
         '''.format(
             apply_bindings="true" if self.apply_bindings else "false",
             name=name,
             id=html_attr(attrs.get('id', '')),
             value=html_attr(self.params['value'] or '"{}"'.format(html_attr(value))),
+            disabled=html_attr(self.attrs['disabled']),
             options=html_attr(json.dumps(
                 [{'id': c[0], 'text': c[1]} for c in self.choices],
                 cls=CommCareJSONEncoder

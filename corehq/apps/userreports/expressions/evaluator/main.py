@@ -5,6 +5,7 @@ import operator
 from datetime import date, datetime
 from decimal import Decimal
 
+from corehq.util import eval_lazy
 from simpleeval import (
     DEFAULT_OPERATORS,
     FeatureNotAvailable,
@@ -72,7 +73,7 @@ def eval_statements(statement, variable_context, execution_context=None):
         variable_context: a dict with variable names as key and assigned values as dict values
     """
     execution_context = execution_context or EvalExecutionContext.empty()
-    var_types = set(type(value) for value in variable_context.values())
+    var_types = set(type(eval_lazy(value)) for value in variable_context.values())
     if not var_types.issubset(SAFE_TYPES):
         raise InvalidExpression('Context contains disallowed types')
 

@@ -5,7 +5,8 @@
 import sys
 import os
 import re
-import hotshot, hotshot.stats
+import hotshot
+import hotshot.stats
 import tempfile
 import StringIO
 
@@ -35,7 +36,8 @@ class ProfileMiddleware(MiddlewareMixin):
     """
     def process_request(self, request):
         if (settings.DEBUG or request.user.is_superuser) and 'prof' in request.GET:
-            self.tmpfile = tempfile.mktemp()
+            fd, self.tmpfile = tempfile.mkstemp()
+            os.close(fd)
             self.prof = hotshot.Profile(self.tmpfile)
 
     def process_view(self, request, callback, callback_args, callback_kwargs):
@@ -68,18 +70,18 @@ class ProfileMiddleware(MiddlewareMixin):
         sum = 0
 
         for s in stats_str:
-            fields = words_re.split(s);
+            fields = words_re.split(s)
             if len(fields) == 7:
                 time = float(fields[2])
                 sum += time
                 file = fields[6].split(":")[0]
 
-                if not file in mystats:
+                if file not in mystats:
                     mystats[file] = 0
                 mystats[file] += time
 
                 group = self.get_group(file)
-                if not group in mygroups:
+                if group not in mygroups:
                     mygroups[ group ] = 0
                 mygroups[ group ] += time
 

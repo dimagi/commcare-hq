@@ -19,8 +19,6 @@ WHITELIST = [
 
     # warnings that may be resolved with a library upgrade
     ("captcha.fields", "ugettext_lazy() is deprecated"),
-    ("compressor.filters.base", "smart_text() is deprecated"),
-    ("compressor.signals", "The providing_args argument is deprecated."),
     ("couchdbkit.schema.properties", "'collections.abc'"),
     ("django.apps", re.compile(r"'(" + "|".join(re.escape(app) for app in [
         "captcha",
@@ -30,7 +28,6 @@ WHITELIST = [
         "two_factor",
     ]) + ")' defines default_app_config"), RemovedInDjango41Warning),
     ("django_celery_results", "ugettext_lazy() is deprecated"),
-    ("logentry_admin.admin", "ugettext_lazy() is deprecated"),
     ("nose.importer", "the imp module is deprecated"),
     ("nose.util", "inspect.getargspec() is deprecated"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
@@ -54,9 +51,11 @@ WHITELIST = [
     ),
     (
         # This should be tested on a newer version(>2.5) of ES.Should be removed if fixed
-        "elasticsearch2.connection.http_urllib3",
+        "elasticsearch5.connection.http_urllib3",
         "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
     ),
+    # Should be removed when Nose is updated
+    ("nose.plugins.manager", "pkg_resources is deprecated as an API."),
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),

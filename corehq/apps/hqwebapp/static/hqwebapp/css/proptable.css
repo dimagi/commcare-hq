@@ -95,12 +95,7 @@
     word-break: break-word;
 }
 
-.case-property-table tbody tr th {
+.case-property-table tbody {
     word-wrap: break-word;
-    word-break: break-all;
-}
-
-.case-property-table tbody tr td {
-    word-wrap: break-word;
-    word-break: break-all;
+    word-break: break-word;
 }

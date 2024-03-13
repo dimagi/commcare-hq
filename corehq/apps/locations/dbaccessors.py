@@ -1,6 +1,5 @@
 from itertools import chain
 
-from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.es import UserES
@@ -94,9 +93,12 @@ def user_ids_at_locations(location_ids):
     return UserES().location(location_ids).get_ids()
 
 
-def mobile_user_ids_at_locations(location_ids):
+def mobile_user_ids_at_locations(location_ids, include_inactive_users=False):
     # this doesn't include web users
-    return UserES().location(location_ids).mobile_users().get_ids()
+    filter = UserES().location(location_ids).mobile_users()
+    if include_inactive_users:
+        filter = filter.show_inactive()
+    return filter.get_ids()
 
 
 def user_ids_at_locations_and_descendants(location_ids):
@@ -107,71 +109,6 @@ def user_ids_at_locations_and_descendants(location_ids):
 def user_ids_at_accessible_locations(domain_name, user):
     accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(domain_name, user)
     return mobile_user_ids_at_locations(accessible_location_ids)
-
-
-def get_user_ids_from_assigned_location_ids(domain, location_ids):
-    """
-    Returns {user_id: [location_id, location_id, ...], ...}
-    """
-    result = (
-        UserES()
-        .domain(domain)
-        .location(location_ids)
-        .non_null('assigned_location_ids')
-        .fields(['assigned_location_ids', '_id'])
-        .run().hits
-    )
-    ret = {}
-    for r in result:
-        if 'assigned_location_ids' in r:
-            locs = r['assigned_location_ids']
-            if not isinstance(locs, list):
-                locs = [r['assigned_location_ids']]
-            ret[r['_id']] = locs
-    return ret
-
-
-def get_user_ids_from_primary_location_ids(domain, location_ids):
-    """
-    Returns {user_id: primary_location_id, ...}
-    """
-    result = (
-        UserES()
-        .domain(domain)
-        .primary_location(location_ids)
-        .non_null('location_id')
-        .fields(['location_id', '_id'])
-        .run().hits
-    )
-    ret = {}
-    for r in result:
-        if 'location_id' in r:
-            loc = r['location_id']
-            ret[r['_id']] = loc
-    return ret
-
-
-def generate_user_ids_from_primary_location_ids(domain, location_ids):
-    """
-    Creates a generator for iterating through the user ids of the all the users in the
-    given domain whose primary location is given in the list of location_ids.
-    """
-    for location_ids_chunk in chunked(location_ids, 50):
-        for user_id in get_user_ids_from_primary_location_ids(domain, location_ids_chunk).keys():
-            yield user_id
-
-
-def generate_user_ids_from_primary_location_ids_from_couch(domain, location_ids):
-    """
-    Creates a generator for iterating through the user ids of the all the
-    mobile workers in the given domain whose primary location is given in
-    the list of location_ids.
-
-    Retrieves the information from couch instead of elasticsearch.
-    """
-    for location_id in location_ids:
-        for user_id in get_user_ids_by_location(domain, location_id):
-            yield user_id
 
 
 def get_location_ids_with_location_type(domain, location_type_code):

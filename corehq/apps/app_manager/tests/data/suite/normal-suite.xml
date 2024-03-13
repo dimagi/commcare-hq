@@ -272,7 +272,7 @@
                 <locale id="m0.case_long.case_address_9.header"/>
             </text>
         </header>
-        <template width="0" form="address">
+        <template form="address">
             <text>
                 <xpath function="address"/>
             </text>

@@ -52,12 +52,21 @@ class Command(makemigrations.Command):
                 "times."
             ),
         )
+        parser.add_argument(
+            "-t", "--target-versions", default=[], dest="target_versions", action="append",
+            type=int, help=(
+                "Target the elasticsearh versions for the mappings updates."
+                "If not specified the mapping changes will be applied on all versions when migrations are run."
+            ),
+        )
 
     def handle(self, creates, updates, deletes, **options):
         # CLI argument values explicitly required by this custom handler
         self.empty = options["empty"]
         # self.migration_name is also required by 'write_migration_files()'
         self.migration_name = options["name"]
+
+        self.target_versions = options['target_versions']
 
         # abort early if a migration name is provided but is invalid
         if self.migration_name and not self.migration_name.isidentifier():
@@ -112,6 +121,7 @@ class Command(makemigrations.Command):
                     adapter.mapping,
                     adapter.analysis,
                     adapter.settings_key,
+                    es_versions=self.target_versions,
                 ))
             # build 'update' operations
             for adapter, properties in updates:
@@ -119,10 +129,11 @@ class Command(makemigrations.Command):
                     adapter.index_name,
                     adapter.type,
                     properties=properties,
+                    es_versions=self.target_versions,
                 ))
             # build 'delete' operations
             for index_name in deletes:
-                verify_and_append_migration_operation(DeleteIndex(index_name))
+                verify_and_append_migration_operation(DeleteIndex(index_name, es_versions=self.target_versions))
         return migration
 
     def arrange_migration_changes(self, migration):

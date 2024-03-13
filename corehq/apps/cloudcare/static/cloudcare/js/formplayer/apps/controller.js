@@ -1,9 +1,11 @@
+'use strict';
 /*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/apps/controller", function () {
     var constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         settingsViews = hqImport("cloudcare/js/formplayer/layout/views/settings"),
+        Toggles = hqImport("hqwebapp/js/toggles"),
         views = hqImport("cloudcare/js/formplayer/apps/views");
 
     return {
@@ -60,6 +62,11 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
             settings.push(
                 new Backbone.Model({ slug: slugs.CLEAR_USER_DATA })
             );
+            if (Toggles.toggleEnabled('HIDE_SYNC_BUTTON')) {
+                settings.push(
+                    new Backbone.Model({ slug: slugs.SYNC })
+                );
+            }
             collection = new Backbone.Collection(settings);
             settingsView = settingsViews.SettingsView({
                 collection: collection,

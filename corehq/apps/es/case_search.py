@@ -11,40 +11,46 @@ from corehq.apps.es import case_search as case_search_es
 """
 
 from copy import deepcopy
-from datetime import datetime
+from datetime import date, datetime
 from warnings import warn
 
-from django.conf import settings
-from django.utils.dateparse import parse_date
+from django.utils.dateparse import parse_date, parse_datetime
+from django.utils.translation import gettext
+
 from memoized import memoized
+
+from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.case_search.const import (
     CASE_PROPERTIES_PATH,
+    GEOPOINT_VALUE,
     IDENTIFIER,
     INDEXED_ON,
     INDICES_PATH,
-    IS_RELATED_CASE,
     REFERENCED_ID,
     RELEVANCE_SCORE,
-    SPECIAL_CASE_PROPERTIES_MAP,
+    SPECIAL_CASE_PROPERTIES,
     SYSTEM_PROPERTIES,
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
 from corehq.util.dates import iso_string_to_datetime
-from dimagi.utils.parsing import json_format_datetime
 
 from . import filters, queries
 from .cases import case_adapter
 from .client import ElasticDocumentAdapter, create_document_adapter
+from .const import (
+    HQ_CASE_SEARCH_INDEX_CANONICAL_NAME,
+    HQ_CASE_SEARCH_INDEX_NAME,
+    HQ_CASE_SEARCH_SECONDARY_INDEX_NAME,
+)
 from .index.analysis import PHONETIC_ANALYSIS
 from .index.settings import IndexSettingsKey
 
-PROPERTY_KEY = "{}.key.exact".format(CASE_PROPERTIES_PATH)
-PROPERTY_VALUE = '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE)
-PROPERTY_VALUE_EXACT = '{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE)
-
-HQ_CASE_SEARCH_INDEX_CANONICAL_NAME = "case_search"
+PROPERTY_KEY = f'{CASE_PROPERTIES_PATH}.key.exact'
+PROPERTY_VALUE = f'{CASE_PROPERTIES_PATH}.{VALUE}'
+PROPERTY_VALUE_EXACT = f'{CASE_PROPERTIES_PATH}.{VALUE}.exact'
+PROPERTY_GEOPOINT_VALUE = f'{CASE_PROPERTIES_PATH}.{GEOPOINT_VALUE}'
 
 
 class CaseSearchES(CaseES):
@@ -58,6 +64,10 @@ class CaseSearchES(CaseES):
             external_id,
             indexed_on,
             case_property_missing,
+            filters.geo_bounding_box,
+            filters.geo_polygon,
+            filters.geo_shape,  # Available in Elasticsearch 8+
+            filters.geo_grid,  # Available in Elasticsearch 8+
         ] + super(CaseSearchES, self).builtin_filters
 
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
@@ -122,8 +132,18 @@ class CaseSearchES(CaseES):
             queries.MUST,
         )
 
-    def sort_by_case_property(self, case_property_name, desc=False):
+    def sort_by_case_property(self, case_property_name, desc=False, sort_type=None):
         sort_filter = filters.term(PROPERTY_KEY, case_property_name)
+        if sort_type:
+            sort_missing = '_last' if desc else '_first'
+            return self.nested_sort(
+                CASE_PROPERTIES_PATH, "{}.{}".format(VALUE, sort_type),
+                sort_filter,
+                desc,
+                reset_sort=False,
+                sort_missing=sort_missing
+            )
+
         return self.nested_sort(
             CASE_PROPERTIES_PATH, "{}.{}".format(VALUE, 'numeric'),
             sort_filter,
@@ -181,8 +201,9 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
 
 case_search_adapter = create_document_adapter(
     ElasticCaseSearch,
-    getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29"),
+    HQ_CASE_SEARCH_INDEX_NAME,
     case_adapter.type,
+    secondary=HQ_CASE_SEARCH_SECONDARY_INDEX_NAME,
 )
 
 
@@ -290,14 +311,15 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
             case_property_name,
             queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
         )
-    except ValueError:
+    except (TypeError, ValueError):
         pass
 
-    # if its a date, use it
+    # if its a date or datetime, use it
     # date range
     kwargs = {
-        key: parse_date(value) for key, value in kwargs.items()
-        if value is not None and parse_date(value) is not None
+        key: value if isinstance(value, (date, datetime)) else _parse_date_or_datetime(value)
+        for key, value in kwargs.items()
+        if value is not None
     }
     if not kwargs:
         raise TypeError()       # Neither a date nor number was passed in
@@ -306,6 +328,30 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
         case_property_name,
         queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
     )
+
+
+def _parse_date_or_datetime(value):
+    parsed_date = _parse_date(value)
+    if parsed_date is not None:
+        return parsed_date
+    parsed_datetime = _parse_datetime(value)
+    if parsed_datetime is not None:
+        return parsed_datetime
+    raise ValueError(gettext(f"{value} is not a correctly formatted date or datetime."))
+
+
+def _parse_date(value):
+    try:
+        return parse_date(value)
+    except ValueError:
+        raise ValueError(gettext(f"{value} is an invalid date."))
+
+
+def _parse_datetime(value):
+    try:
+        return parse_datetime(value)
+    except ValueError:
+        raise ValueError(gettext(f"{value} is an invalid datetime."))
 
 
 def reverse_index_case_query(case_ids, identifier=None):
@@ -357,7 +403,7 @@ def case_property_missing(case_property_name):
 def case_property_geo_distance(geopoint_property_name, geopoint, **kwargs):
     return _base_property_query(
         geopoint_property_name,
-        queries.geo_distance(f"{CASE_PROPERTIES_PATH}.geopoint_value", geopoint, **kwargs)
+        queries.geo_distance(PROPERTY_GEOPOINT_VALUE, geopoint, **kwargs)
     )
 
 
@@ -390,9 +436,10 @@ def wrap_case_search_hit(hit, include_score=False):
     `corehq.apps.es.case_search.ElasticCaseSearch._from_dict`.
 
     The "case_properties" list of key/value pairs is converted to a dict
-    and assigned to `case_json`. 'Secial' case properties are excluded
+    and assigned to `case_json`. 'Special' case properties are excluded
     from `case_json`, even if they were present in the original case's
-    dynamic properties.
+    dynamic properties, except of the COMMCARE_CASE_COPY_PROPERTY_NAME
+    property.
 
     All fields excluding "case_properties" and its contents are assigned
     as attributes on the case object if `CommCareCase` has a field
@@ -405,15 +452,15 @@ def wrap_case_search_hit(hit, include_score=False):
     :returns: A `CommCareCase` instance.
     """
     from corehq.form_processor.models import CommCareCase
+
     data = hit.get("_source", hit)
-    _SPECIAL_PROPERTIES = SPECIAL_CASE_PROPERTIES_MAP
     _VALUE = VALUE
     case = CommCareCase(
         case_id=data.get("_id", None),
         case_json={
             prop["key"]: prop[_VALUE]
             for prop in data.get(CASE_PROPERTIES_PATH, {})
-            if prop["key"] not in _SPECIAL_PROPERTIES
+            if prop["key"] not in SPECIAL_CASE_PROPERTIES
         },
         indices=data.get("indices", []),
     )

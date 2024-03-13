@@ -28,7 +28,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
             self.saveButton.fire('change');
         };
 
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
             unsavedMessage: "You have unchanged schedule settings",
             save: function () {
                 self.saveButton.ajax({
@@ -49,7 +49,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         var phaseModel = function (id, anchor, forms) {
             var self = {};
             self.id = id;
-            self.anchor = hqImport('hqwebapp/js/ui-element').select(params.caseProperties).val(anchor);
+            self.anchor = hqImport('hqwebapp/js/bootstrap3/ui-element').select(params.caseProperties).val(anchor);
             self.anchor.observableVal = ko.observable(self.anchor.val());
             self.anchor.on("change", function () {
                 self.anchor.observableVal(self.anchor.val());
@@ -108,7 +108,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         self.questions = params.questions;
         self.save_url = params.save_url;
 
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
             unsavedMessage: "You have unsaved schedule settings",
             save: function () {
                 var isValid = self.validate();

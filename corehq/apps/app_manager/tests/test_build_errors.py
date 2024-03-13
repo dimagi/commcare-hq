@@ -2,7 +2,7 @@ import json
 import os
 from unittest.mock import patch
 
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 from corehq import privileges
 from corehq.apps.app_manager.const import (
@@ -18,6 +18,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchLabel,
     CaseSearchProperty,
     DetailColumn,
+    DetailTab,
     FormLink,
     Module,
 )
@@ -27,7 +28,7 @@ from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
-class BuildErrorsTest(SimpleTestCase):
+class BuildErrorsTest(TestCase):
 
     @staticmethod
     def _clean_unique_id(errors):
@@ -132,7 +133,7 @@ class BuildErrorsTest(SimpleTestCase):
             self._clean_unique_id(errors)
             self.assertIn(cycle_error, errors)
 
-    def test_case_tile_configuration_errors(self, *args):
+    def test_case_tile_mapping_errors(self, *args):
         case_tile_error = {
             'type': "invalid tile configuration",
             'module': {'id': 0, 'name': {'en': 'View'}},
@@ -146,6 +147,146 @@ class BuildErrorsTest(SimpleTestCase):
             errors = app.validate_app()
             self._clean_unique_id(errors)
             self.assertIn(case_tile_error, errors)
+
+    def test_case_tile_case_detail(self, *args):
+        case_tile_error = {
+            'type': 'invalid tile configuration',
+            'module': {'id': 0, 'name': {'en': 'Add Song module'}},
+            'reason': 'Case tiles on the case detail must be manually configured.',
+        }
+        factory = AppFactory(build_version='2.51.0')
+        app = factory.app
+        module = factory.new_basic_module('Add Song', 'song', with_form=False)
+        module.case_details.long.case_tile_template = "one_3X_two_4X_one_2X"
+        module.case_details.long.columns.append(DetailColumn(
+            format='plain',
+            field='artist',
+            header={'en': 'Artist'},
+        ))
+
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertIn(case_tile_error, errors)
+
+        module.case_details.long.case_tile_template = "custom"
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertNotIn(case_tile_error, errors)
+
+    def test_case_tile_case_detail_tabs(self, *args):
+        case_tile_error = {
+            'type': 'invalid tile configuration',
+            'module': {'id': 0, 'name': {'en': 'Add Song module'}},
+            'reason': 'Each row of the tile may contain fields only from a single tab. '
+                      'Row #1 contains fields from multiple tabs.'
+        }
+        factory = AppFactory(build_version='2.51.0')
+        app = factory.app
+        module = factory.new_basic_module('Add Song', 'song', with_form=False)
+        module.case_details.long.case_tile_template = "custom"
+
+        # Start with a legitimate tab+column layout
+        module.case_details.long.tabs = [
+            DetailTab(starting_index=0),
+            DetailTab(starting_index=2),
+        ]
+        module.case_details.long.columns = []
+        module.case_details.long.columns.append(DetailColumn(
+            format='plain',
+            field='artist', header={'en': 'Artist'},
+            grid_x=0, grid_y=0, width=4, height=1,
+        ))
+        module.case_details.long.columns.append(DetailColumn(
+            format='plain',
+            field='name', header={'en': 'Name'},
+            grid_x=5, grid_y=0, width=4, height=1,
+        ))
+        module.case_details.long.columns.append(DetailColumn(
+            format='plain',
+            field='mood', header={'en': 'Mood'},
+            grid_x=0, grid_y=1, width=4, height=1,
+        ))
+        module.case_details.long.columns.append(DetailColumn(
+            format='plain',
+            field='energy', header={'en': 'Energy'},
+            grid_x=5, grid_y=1, width=4, height=1,
+        ))
+
+        module.case_details.long_case_tile_template = "custom"
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertNotIn(case_tile_error, errors)
+
+        # Move field from second tab into first row of tile
+        module.case_details.long.columns[2].grid_y = 0
+        module.case_details.long.columns[2].grid_x = 9
+
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertIn(case_tile_error, errors)
+
+    def create_app_with_module(self):
+        factory = AppFactory(build_version='2.51.0')
+        app = factory.app
+        module = factory.new_basic_module('first', 'case', with_form=False)
+
+        return app, module
+
+    def test_clickable_icon_configuration_errors(self, *args):
+        case_tile_error = {
+            'type': "invalid clickable icon configuration",
+            'module': {'id': 0, 'name': {'en': 'first module'}},
+            'reason': 'Column/Field "field": Clickable Icons require a form to be configured.'
+        }
+        app, module = self.create_app_with_module()
+
+        module.case_details.short.columns.append(DetailColumn(
+            format='clickable-icon',
+            field='field',
+            header={'en': 'Column'},
+            model='case',
+        ))
+
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertIn(case_tile_error, errors)
+
+    def test_address_popup_defined_in_case_list(self, *args):
+        case_tile_error = {
+            'type': "deprecated popup configuration",
+            'module': {'id': 0, 'name': {'en': 'first module'}},
+            'reason': 'Format "Address Popup" should be used in the Case Detail not Case List.'
+        }
+        app, module = self.create_app_with_module()
+        module.case_details.short.columns.append(DetailColumn(
+            format='address-popup',
+            field='field',
+            header={'en': 'Column'},
+            model='case',
+        ))
+
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertIn(case_tile_error, errors)
+
+    def test_address__defined_twice(self, *args):
+        case_tile_error = {
+            'type': "invalid tile configuration",
+            'module': {'id': 0, 'name': {'en': 'first module'}},
+            'reason': 'Format "Address" can only be used once but is used by multiple properties: "f1", "f2"'
+        }
+        app, module = self.create_app_with_module()
+        for field_id in [1, 2]:
+            module.case_details.short.columns.append(DetailColumn(
+                format='address',
+                field=f'f{field_id}',
+                header={'en': 'Column'},
+                model='case',
+            ))
+
+        errors = app.validate_app()
+        self._clean_unique_id(errors)
+        self.assertIn(case_tile_error, errors)
 
     def test_case_list_form_advanced_module_different_case_config(self, *args):
         case_tile_error = {
@@ -354,4 +495,17 @@ class BuildErrorsTest(SimpleTestCase):
             'form_type': 'module_form',
             'module': {'id': 0, 'name': {'en': 'm0 module'}},
             'form': {'id': 0, 'name': {'en': 'm0 form 0'}},
+        }, errors)
+
+    @patch('corehq.apps.app_manager.models.ModuleBase.is_auto_select', return_value=True)
+    def test_search_on_clear_with_auto_select(self, *args):
+        factory = AppFactory()
+        module = factory.new_basic_module('basic', 'person', with_form=False)
+        module.search_config = CaseSearch(
+            search_on_clear=True,
+        )
+        errors = factory.app.validate_app()
+        self.assertIn({
+            'type': 'search on clear with auto select',
+            'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}},
         }, errors)

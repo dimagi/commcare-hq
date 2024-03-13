@@ -19,6 +19,7 @@ from django.forms.fields import (
     BooleanField,
     CharField,
     ChoiceField,
+    DateTimeField,
     Field,
     ImageField,
     IntegerField,
@@ -109,8 +110,9 @@ from corehq.apps.domain.models import (
     TransferDomainRequest,
     all_restricted_ucr_expressions,
 )
+from corehq.apps.hqmedia.models import CommCareImage, LogoForSystemEmailsReference
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.hqwebapp.crispy import DatetimeLocalWidget, HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.widgets import (
@@ -118,6 +120,7 @@ from corehq.apps.hqwebapp.widgets import (
     GeoCoderInput,
     Select2Ajax,
 )
+from corehq.apps.registration.utils import project_logo_emails_context
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.toggles import (
@@ -125,6 +128,7 @@ from corehq.toggles import (
     MOBILE_UCR,
     SECURE_SESSION_TIMEOUT,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
+    USE_LOGO_IN_SYSTEM_EMAILS
 )
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
@@ -134,6 +138,8 @@ mark_safe_lazy = lazy(mark_safe, str)  # TODO: Use library method
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
+
+upload_size_limit = f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}"
 
 
 def tf_choices(true_txt, false_txt):
@@ -262,8 +268,8 @@ class TransferDomainForm(forms.ModelForm):
 
     def clean_to_username(self):
         username = self.cleaned_data['to_username']
-
-        if not WebUser.get_by_username(username):
+        web_user = WebUser.get_by_username(username)
+        if not (web_user and web_user.is_active):
             raise forms.ValidationError(TransferDomainFormErrors.USER_DNE)
 
         return username
@@ -342,12 +348,20 @@ class DomainGlobalSettingsForm(forms.Form):
             "Upload a custom image to display instead of the "
             "CommCare HQ logo.  It will be automatically resized to "
             "a height of 32 pixels. Upload size limit is {size_limit} MB."
-        ).format(size_limit=f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}")
+        ).format(size_limit=upload_size_limit)
     )
     delete_logo = BooleanField(
         label=gettext_lazy("Delete Logo"),
         required=False,
         help_text=gettext_lazy("Delete your custom logo and use the standard one.")
+    )
+    logo_for_system_emails = ImageField(
+        label=gettext_lazy("Logo to use in systems emails"),
+        required=False,
+        help_text=gettext_lazy(
+            "Upload an image to display in system emails from CommCare. It will be displayed in a square format. "
+            "The upload size limit is {size_limit} MB."
+        ).format(size_limit=upload_size_limit)
     )
     call_center_enabled = BooleanField(
         label=gettext_lazy("Call Center Application"),
@@ -436,6 +450,19 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
+    orphan_case_alerts_warning = BooleanField(
+        label=gettext_lazy("Show Orphan Case Alerts on Mobile Worker Edit Page"),
+        required=False,
+        help_text=gettext_lazy(
+            """
+            Displays a warning message on the mobile worker location edit page
+            about locations that owns cases and only have one assigned mobile worker.
+            This helps prevent situations where cases are being orphaned by moving
+            the only assigned mobile worker out of the location owning that cases.
+            """
+        )
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -443,8 +470,9 @@ class DomainGlobalSettingsForm(forms.Form):
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
-        self.helper[6] = twbscrispy.PrependedText('call_center_enabled', '')
-        self.helper[14] = twbscrispy.PrependedText('release_mode_visibility', '')
+        self.helper[7] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper[15] = twbscrispy.PrependedText('release_mode_visibility', '')
+        self.helper[16] = twbscrispy.PrependedText('orphan_case_alerts_warning', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -460,6 +488,9 @@ class DomainGlobalSettingsForm(forms.Form):
         if not self.can_use_custom_logo:
             del self.fields['logo']
             del self.fields['delete_logo']
+        self.system_emails_logo_enabled = USE_LOGO_IN_SYSTEM_EMAILS.enabled(self.domain)
+        if not self.system_emails_logo_enabled:
+            del self.fields['logo_for_system_emails']
 
         if self.project:
             if not self.project.call_center_config.enabled:
@@ -480,6 +511,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self._handle_call_limit_visibility()
         self._handle_account_confirmation_by_sms_settings()
         self._handle_release_mode_setting_value()
+        self._handle_orphan_case_alerts_setting_value()
 
     def _handle_account_confirmation_by_sms_settings(self):
         if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
@@ -512,6 +544,9 @@ class DomainGlobalSettingsForm(forms.Form):
         self.fields['release_mode_visibility'].initial = AppReleaseModeSetting.get_settings(
             domain=self.domain).is_visible
 
+    def _handle_orphan_case_alerts_setting_value(self):
+        self.fields['orphan_case_alerts_warning'].initial = self.project.orphan_case_alerts_warning
+
     def _add_range_validation_to_integer_input(self, settings_name, min_value, max_value):
         setting = self.fields.get(settings_name)
         min_validator = MinValueValidator(min_value)
@@ -530,16 +565,28 @@ class DomainGlobalSettingsForm(forms.Form):
             return data
         return json.loads(data or '{}')
 
-    def clean_logo(self):
-        logo = self.cleaned_data['logo']
-        if self.can_use_custom_logo and logo:
-            if logo.size > settings.MAX_UPLOAD_SIZE_ATTACHMENT:
+    def _clean_image(self, field_name, permission, error_message):
+        image = self.cleaned_data[field_name]
+        if permission and image:
+            if image.size > settings.MAX_UPLOAD_SIZE_ATTACHMENT:
                 raise ValidationError(
-                    _("Logo exceeds {} MB size limit").format(
-                        f"{settings.MAX_UPLOAD_SIZE_ATTACHMENT/(1024*1024):,.0f}"
-                    )
+                    _(error_message)
                 )
-        return logo
+        return image
+
+    def clean_logo(self):
+        return self._clean_image(
+            'logo',
+            self.can_use_custom_logo,
+            _("Logo exceeds {} MB size limit").format(upload_size_limit)
+        )
+
+    def clean_logo_for_system_emails(self):
+        return self._clean_image(
+            'logo_for_system_emails',
+            self.system_emails_logo_enabled,
+            _("Logo for systems emails exceeds {} MB size limit").format(upload_size_limit)
+        )
 
     def clean_confirmation_link_expiry(self):
         data = self.cleaned_data['confirmation_link_expiry']
@@ -595,6 +642,18 @@ class DomainGlobalSettingsForm(forms.Form):
             elif self.cleaned_data['delete_logo']:
                 domain.delete_attachment(LOGO_ATTACHMENT)
 
+    def _save_logo_for_system_emails(self, domain_obj):
+        logo = self.cleaned_data['logo_for_system_emails']
+        if logo:
+            image_data = logo.read()
+            image = CommCareImage.get_by_data(image_data)
+            image.attach_data(image_data, original_filename='logo_for_systems_emails.png')
+            image.add_domain(domain_obj.name)
+            image.save()
+            ref, created = LogoForSystemEmailsReference.objects.get_or_create(domain=domain_obj.name)
+            ref.image_id = image._id
+            ref.save()
+
     def _save_call_center_configuration(self, domain):
         cc_config = domain.call_center_config
         cc_config.enabled = self.cleaned_data.get('call_center_enabled', False)
@@ -641,6 +700,9 @@ class DomainGlobalSettingsForm(forms.Form):
             setting_obj.is_visible = self.cleaned_data.get("release_mode_visibility")
             setting_obj.save()
 
+    def _save_orphan_case_alerts_setting(self, domain):
+        domain.orphan_case_alerts_warning = self.cleaned_data.get("orphan_case_alerts_warning", False)
+
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
@@ -652,12 +714,15 @@ class DomainGlobalSettingsForm(forms.Form):
             setting_obj.save()
         try:
             self._save_logo_configuration(domain)
+            if self.system_emails_logo_enabled:
+                self._save_logo_for_system_emails(domain)
         except IOError as err:
-            messages.error(request, _('Unable to save custom logo: {}').format(err))
+            messages.error(request, _('Unable to save logo: {}').format(err))
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
         self._save_account_confirmation_settings(domain)
         self._save_release_mode_setting(domain)
+        self._save_orphan_case_alerts_setting(domain)
         domain.save()
         return True
 
@@ -782,6 +847,11 @@ class PrivacySecurityForm(forms.Form):
         help_text=gettext_lazy("Mobile Workers will never be locked out of their account, regardless"
             "of the number of failed attempts")
     )
+    allow_invite_email_only = BooleanField(
+        label=gettext_lazy("During sign up, only allow the email address the invitation was sent to"),
+        required=False,
+        help_text=gettext_lazy("Disables the email field on the sign up page")
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
@@ -839,6 +909,7 @@ class PrivacySecurityForm(forms.Form):
         domain_obj.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
         domain_obj.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
         domain_obj.disable_mobile_login_lockout = self.cleaned_data.get('disable_mobile_login_lockout', False)
+        domain_obj.allow_invite_email_only = self.cleaned_data.get('allow_invite_email_only', False)
 
         domain_obj.save()
 
@@ -1426,6 +1497,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
                 'token': token_generator.make_token(user),
                 'protocol': 'https' if use_https else 'http',
             }
+            c.update(project_logo_emails_context(None, couch_user=couch_user))
             subject = render_to_string(subject_template_name, c)
             # Email subject *must not* contain newlines
             subject = ''.join(subject.splitlines())
@@ -2633,3 +2705,41 @@ class CreateManageReleasesByAppProfileForm(BaseManageReleasesByAppProfileForm):
         if not self.cleaned_data.get('version'):
             self.add_error('version', _("Please select version"))
         return self.cleaned_data.get('version')
+
+
+class DomainAlertForm(forms.Form):
+    text = CharField(
+        label="Text",
+        widget=forms.Textarea,
+        required=True,
+    )
+    start_time = DateTimeField(
+        label="Start Time",
+        widget=DatetimeLocalWidget,
+        required=False
+    )
+    end_time = DateTimeField(
+        label="End Time",
+        widget=DatetimeLocalWidget,
+        required=False
+    )
+
+    def __init__(self, request, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        datetime_local_widget_helptext = _("Using project's timezone: {}").format(
+            request.project.default_timezone
+        )
+        self.fields['start_time'].help_text = datetime_local_widget_helptext
+        self.fields['end_time'].help_text = datetime_local_widget_helptext
+
+        self.helper = hqcrispy.HQFormHelper(self)
+        self.helper.layout.append(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _('Save'),
+                    type='submit',
+                    css_class='btn-primary disable-on-submit'
+                )
+            )
+        )
