@@ -806,7 +806,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                 def _readable_pct_from_total(total_series, index):
                     return '{0:.0f}%'.format(total_series[index - 1]['y'])
 
-                total_days = len(self.data_series)-1
+                total_days = len(self.data_series) - 1
                 intervals = [interval for interval in [3, 7, 30] if interval < total_days]
                 intervals.append(total_days)
 
