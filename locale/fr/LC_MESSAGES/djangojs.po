@@ -2003,6 +2003,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js
 msgid "Loading..."
 msgstr ""
@@ -3458,13 +3459,24 @@ msgid ""
 "will not be exported."
 msgstr ""
 
+#: corehq/apps/geospatial/static/geospatial/js/geo_config.js
+msgid "Token successfully verified!"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geo_config.js
+msgid ""
+"Invalid API token. Please verify that the token matches the one on your "
+"Mapbox account and has the correct scope configured."
+msgstr ""
+
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "Name of the Area"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid ""
-"Oops! Something went wrong! Please contact admin if the problem persists."
+"Oops! Something went wrong! Please check that your geospatial settings are "
+"configured correctly or contact admin if the problem persists."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
