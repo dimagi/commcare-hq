@@ -246,7 +246,7 @@ executing==2.0.0
     # via stack-data
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==22.0.0
+faker==24.1.0
     # via -r test-requirements.in
 firebase-admin==6.1.0
     # via -r base-requirements.in
