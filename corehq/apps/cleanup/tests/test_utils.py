@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.test import TestCase
 
-from corehq.apps.cleanup.models import create_deleted_sql_doc, DeletedSQLDoc
+from corehq.apps.cleanup.models import create_deleted_sql_doc
 from corehq.apps.cleanup.utils import DeletedDomains, migrate_to_deleted_on
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.shortcuts import create_domain
@@ -53,5 +53,13 @@ class TestDeletedSQLDoc(TestCase):
 
     def test_does_not_create_when_attempting_to_create_same_tombstone(self):
         create_deleted_sql_doc('doc_id', 'form_processor.XFormInstance', 'test-domain', datetime.now())
-        create_deleted_sql_doc('doc_id', 'form_processor.XFormInstance', 'another_domain', datetime.now())
-        self.assertEqual(DeletedSQLDoc.objects.all().count(), 1)
+        doc, created = create_deleted_sql_doc('doc_id', 'form_processor.XFormInstance', 'another', datetime.now())
+        self.assertFalse(created)
+
+    def test_updates_existing_tombstone_with_new_deleted_on(self):
+        now = datetime.now()
+        doc, _ = create_deleted_sql_doc('doc_id', 'form_processor.XFormInstance', 'test-domain', now)
+        self.assertEqual(doc.deleted_on, now)
+        new_now = datetime.now()
+        doc, _ = create_deleted_sql_doc('doc_id', 'form_processor.XFormInstance', 'another_domain', new_now)
+        self.assertEqual(doc.deleted_on, new_now)

@@ -1,4 +1,4 @@
-from django.db import models, IntegrityError, transaction
+from django.db import models, transaction
 
 
 class DeletedCouchDoc(models.Model):
@@ -28,10 +28,8 @@ class DeletedSQLDoc(models.Model):
 
 
 def create_deleted_sql_doc(doc_id, class_path, domain, deleted_on, deleted_by=None):
-    try:
-        with transaction.atomic():
-            DeletedSQLDoc.objects.create(doc_id=doc_id, object_class_path=class_path, domain=domain,
-                                         deleted_on=deleted_on, deleted_by=deleted_by)
-    except IntegrityError:
-        # DeletedSQLDoc already exists for this doc
-        pass
+    with transaction.atomic():
+        return DeletedSQLDoc.objects.update_or_create(
+            doc_id=doc_id, object_class_path=class_path,
+            defaults={'deleted_on': deleted_on, 'deleted_by': deleted_by, 'domain': domain}
+        )
