@@ -160,7 +160,8 @@ class BaseExportView(BaseProjectDataView):
     @property
     def _possible_geo_properties(self):
         if self.export_type == FORM_EXPORT:
-            return []
+            # 'location' is the geo-point in the form metadata
+            return ['location']
 
         if self._is_bulk_export:
             return []
