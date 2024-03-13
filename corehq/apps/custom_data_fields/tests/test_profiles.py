@@ -1,7 +1,6 @@
 from django.test import TestCase
 
 from corehq.apps.custom_data_fields.models import (
-    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
@@ -104,6 +103,6 @@ class TestCustomDataFieldsProfile(TestCase):
         self.addCleanup(user.delete, self.domain, deleted_by=None)
 
         self.assertFalse(self.profile3.has_users_assigned)
-        self.assertEqual([], self.profile3.user_ids_assigned())
+        self.assertItemsEqual([], self.profile3.user_ids_assigned())
         self.assertTrue(self.profile5.has_users_assigned)
-        self.assertEqual([user._id], self.profile5.user_ids_assigned())
+        self.assertItemsEqual([user._id], self.profile5.user_ids_assigned())
