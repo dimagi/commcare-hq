@@ -67,6 +67,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
 
             var urlObject = formplayerUtils.currentUrlToObject();
             if (urlObject.endpointId) {
+                menuResponse.breadcrumbs = [];
                 urlObject.replaceEndpoint(menuResponse.selections);
                 formplayerUtils.setUrlToObject(urlObject);
             }

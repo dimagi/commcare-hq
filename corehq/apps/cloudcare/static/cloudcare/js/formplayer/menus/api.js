@@ -31,6 +31,9 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     formplayerUtils,
     ProgressBar
 ) {
+    let currentSelections = null,
+        ongoingRequests = [];
+
     var API = {
         queryFormplayer: function (params, route) {
             var user = UsersModels.getCurrentUser(),
@@ -131,6 +134,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                                 formEntryUtils.reloginErrorHtml(),
                                 true
                             );
+                        } else if (response.statusText === 'abort') {
+                            // do nothing
                         } else {
                             FormplayerFrontend.trigger(
                                 'showError',
@@ -189,7 +194,23 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                 });
 
                 var callStartTime = performance.now();
-                menus.fetch($.extend(true, {}, options)).always(function () {
+                const updateRequest = menus.fetch($.extend(true, {}, options));
+
+                if (route.startsWith("navigate_menu")) {
+                    if (!_.isEqual(params.selections, currentSelections)) {
+                        currentSelections = params.selections;
+                        while (ongoingRequests.length > 0) {
+                            const ongoingRequest = ongoingRequests.pop();
+                            if (ongoingRequest.readyState !== 4) {
+                                ongoingRequest.abort();
+                            }
+                        }
+                    }
+                    ongoingRequests.push(updateRequest);
+                }
+
+
+                updateRequest.always(function () {
                     if (data.query_data && data.query_data.results && data.query_data.results.initiatedBy === constants.queryInitiatedBy.DYNAMIC_SEARCH) {
                         var callEndTime = performance.now();
                         var callResponseTime = callEndTime - callStartTime;
