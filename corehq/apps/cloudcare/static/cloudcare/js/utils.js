@@ -3,11 +3,15 @@
 hqDefine('cloudcare/js/utils', [
     'jquery',
     'hqwebapp/js/initial_page_data',
+    "hqwebapp/js/toggles",
     "cloudcare/js/formplayer/constants",
+    "cloudcare/js/formplayer/layout/views/progress_bar",
 ], function (
     $,
     initialPageData,
-    constants
+    toggles,
+    constants,
+    ProgressBar
 ) {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
@@ -149,15 +153,11 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var showLoading = function () {
-        hqRequire([
-            "cloudcare/js/formplayer/app",
-            "hqwebapp/js/toggles",
-            "cloudcare/js/formplayer/layout/views/progress_bar",
-        ], function (FormplayerFrontend, toggles, ProgressBar) {
-            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
-                const progressView = ProgressBar({
-                    progressMessage: gettext("Loading..."),
-                });
+        if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+            const progressView = ProgressBar({
+                progressMessage: gettext("Loading..."),
+            });
+            hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
                 if (!FormplayerFrontend.regions) {
                     FormplayerFrontend.regions = getRegionContainer();
                 }
@@ -176,10 +176,10 @@ hqDefine('cloudcare/js/utils', [
                         currentProgress += 1;
                     }
                 }, 250);
-            } else {
-                NProgress.start();
-            }
-        });
+            });
+        } else {
+            NProgress.start();
+        }
     };
 
     var formplayerLoading = function () {
@@ -237,10 +237,10 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var hideLoading = function () {
-        hqRequire(["cloudcare/js/formplayer/app", "hqwebapp/js/toggles"], function (FormplayerFrontend, toggles) {
-            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
-                $('#breadcrumb-region').css('z-index', '');
-                clearInterval(sessionStorage.progressIncrementInterval);
+        if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+            $('#breadcrumb-region').css('z-index', '');
+            clearInterval(sessionStorage.progressIncrementInterval);
+            hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
                 const progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
                 if (progressView) {
                     progressView.setProgress(100, 100, 200);
@@ -248,10 +248,10 @@ hqDefine('cloudcare/js/utils', [
                     FormplayerFrontend.regions.getRegion('loadingProgress').empty();
                     }, 250);
                 }
-            } else {
-                NProgress.done();
-            }
-        });
+            });
+        } else {
+            NProgress.done();
+        }
     };
 
     function getSentryMessage(data) {
