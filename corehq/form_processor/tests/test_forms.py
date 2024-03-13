@@ -357,13 +357,13 @@ class XFormInstanceManagerTest(TestCase):
         self.assertEqual(form_ids[0], forms[0].form_id)
 
     @override_settings(UNIT_TESTING=False)
-    def test_hard_delete_with_tombstone(self):
+    def test_delete_creates_tombstone_by_default(self):
         form = create_form_for_test(DOMAIN, deleted_on=datetime.now())
         form.delete()
         self.assertEqual(DeletedSQLDoc.objects.all().count(), 1)
 
     @override_settings(UNIT_TESTING=False)
-    def test_hard_delete_errors_without_tombstone(self):
+    def test_delete_raises_error_if_leave_tombstone_is_false(self):
         form = create_form_for_test(DOMAIN)
         with self.assertRaises(ValueError):
             form.delete(leave_tombstone=False)
@@ -459,12 +459,12 @@ class TestHardDeleteFormsBeforeCutoff(TestCase):
 
         self.assertEqual(DeletedSQLDoc.objects.all().count(), counts['form_processor.XFormInstance'])
 
-    def test_tombstone_is_not_create_if_deleted_on_is_null(self):
+    def test_tombstone_is_not_created_if_deleted_on_is_null(self):
         create_form_for_test(self.domain, deleted_on=None)
 
         XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
 
-        self.assertFalse(list(DeletedSQLDoc.objects.all()))
+        self.assertEqual(DeletedSQLDoc.objects.count(), 0)
 
     def setUp(self):
         self.domain = 'test_hard_delete_forms_before_cutoff'

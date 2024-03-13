@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from corehq.apps.cleanup.tasks import permanently_delete_and_tombstone_eligible_data
+from corehq.apps.cleanup.tasks import permanently_delete_eligible_data
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import create_form_for_test
@@ -19,7 +19,7 @@ class TestPermanentlyDeleteEligibleData(TestCase):
         before_cutoff = datetime(2020, 1, 1, 12, 29)
         form = create_form_for_test(self.domain, deleted_on=before_cutoff)
 
-        permanently_delete_and_tombstone_eligible_data(dry_run=False)
+        permanently_delete_eligible_data(dry_run=False)
 
         with self.assertRaises(XFormNotFound):
             XFormInstance.objects.get_form(form.form_id)
@@ -27,7 +27,7 @@ class TestPermanentlyDeleteEligibleData(TestCase):
     def test_does_not_delete_data(self):
         form = create_form_for_test(self.domain, deleted_on=self.cutoff)
 
-        permanently_delete_and_tombstone_eligible_data(dry_run=False)
+        permanently_delete_eligible_data(dry_run=False)
 
         self.assertIsNotNone(XFormInstance.objects.get_form(form.form_id))
 
@@ -35,7 +35,7 @@ class TestPermanentlyDeleteEligibleData(TestCase):
         before_cutoff = datetime(2020, 1, 1, 12, 29)
         form = create_form_for_test(self.domain, deleted_on=before_cutoff)
 
-        permanently_delete_and_tombstone_eligible_data(dry_run=True)
+        permanently_delete_eligible_data(dry_run=True)
 
         XFormInstance.objects.get_form(form.form_id)
 

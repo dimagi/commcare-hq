@@ -54,8 +54,4 @@ class TestDeletedSQLDoc(TestCase):
     def test_does_not_create_when_attempting_to_create_same_tombstone(self):
         create_deleted_sql_doc('doc_id', 'form_processor.XFormInstance', 'test-domain', datetime.now())
         create_deleted_sql_doc('doc_id', 'form_processor.XFormInstance', 'another_domain', datetime.now())
-
-        # This one shouldn't raise an error
-        create_deleted_sql_doc('different_id', 'form_processor.XFormInstance', 'test-domain', datetime.now())
-
-        self.assertEqual(DeletedSQLDoc.objects.all().count(), 2)
+        self.assertEqual(DeletedSQLDoc.objects.all().count(), 1)

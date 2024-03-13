@@ -508,12 +508,12 @@ class TestHardDeleteCasesBeforeCutoff(TestCase):
 
         self.assertEqual(DeletedSQLDoc.objects.all().count(), counts['form_processor.CommCareCase'])
 
-    def test_tombstone_is_not_create_if_deleted_on_is_null(self):
+    def test_tombstone_is_not_created_if_deleted_on_is_null(self):
         _create_case(self.domain, deleted_on=None)
 
         CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
 
-        self.assertFalse(list(DeletedSQLDoc.objects.all()))
+        self.assertEqual(DeletedSQLDoc.objects.count(), 0)
 
 
 @sharded
@@ -577,13 +577,13 @@ class TestCommCareCase(BaseCaseManagerTest):
             self.assertEqual(index_map, {})  # Nothing indexes `case`
 
     @override_settings(UNIT_TESTING=False)
-    def test_hard_delete_case_with_tombstone(self):
+    def test_delete_creates_tombstone_by_default(self):
         case = _create_case(deleted_on=datetime.now())
         case.delete()
         self.assertEqual(DeletedSQLDoc.objects.all().count(), 1)
 
     @override_settings(UNIT_TESTING=False)
-    def test_hard_delete_case_errors_without_tombstone(self):
+    def test_delete_raises_error_if_leave_tombstone_is_false(self):
         case = _create_case(deleted_on=datetime.now())
         with self.assertRaises(ValueError):
             case.delete(leave_tombstone=False)
