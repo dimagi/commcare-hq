@@ -148,9 +148,33 @@ hqDefine('geospatial/js/models', [
                 });
 
                 self.mapInstance.addLayer({
-                    id: 'landuse_overlay',
+                    id: 'Landuse',
                     source: 'mapbox-streets',
-                    'source-layer': 'landuse_overlay',
+                    'source-layer': 'landuse',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#695447', // brown land color
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'Road',
+                    source: 'mapbox-streets',
+                    'source-layer': 'road',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#000000', // black
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'Admin',
+                    source: 'mapbox-streets',
+                    'source-layer': 'admin',
                     type: 'line',
                     paint: {
                         'line-color': '#800080', // purple
@@ -159,36 +183,16 @@ hqDefine('geospatial/js/models', [
                         'visibility': 'none',
                     },
                 });
-                self.mapInstance.addLayer({
-                    id: 'road',
-                    source: 'mapbox-streets',
-                    'source-layer': 'road',
-                    type: 'line',
-                    paint: {
-                        'line-color': '#000000', // black
-                    },
-                    'layout': {
-                        'visibility': 'none',
-                    },
-                });
-                self.mapInstance.addLayer({
-                    id: 'admin',
-                    source: 'mapbox-streets',
-                    'source-layer': 'admin',
-                    type: 'line',
-                    paint: {
-                        'line-color': '#800080', // purple
-                    },
-                    'layout': {
-                        'visibility': 'none',
-                    },
-                });
             });
         }
 
         function addLayersToPanel() {
             self.mapInstance.on('idle', () => {
-                const toggleableLayerIds = ['landuse_overlay', 'admin', 'road'];
+                const toggleableLayerIds = [
+                    'Landuse',
+                    'Admin',
+                    'Road',
+                ];
                 const menuElement = document.getElementById('layer-toggle-menu');
                 for (const layerId of toggleableLayerIds) {
                     // Skip if layer doesn't exist or button is already present
