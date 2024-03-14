@@ -70,7 +70,6 @@ def update_sprint_data(request):
     })
 
 
-@toggles.SAAS_DESIGN_SPRINT.required_decorator()
 def clear_cached_sprint_data(request):
     # cache.delete(_get_cache_key(request.user.username))
     cache.delete(_get_cache_key(FAKE_USER))
@@ -108,6 +107,7 @@ def get_fake_tabular_data_with_issues(num_entries):
                 FakeData('full_name', get_full_name())._asdict(),
                 FakeData('color', get_color())._asdict(),
                 FakeData('big_cat', get_big_cat())._asdict(),
+                FakeData('planet', get_planet())._asdict(),
                 FakeData('submitted_on', submitted_on)._asdict(),
                 FakeData('app', random.choice(apps))._asdict(),
                 FakeData('status', random.choice(status))._asdict(),
@@ -141,6 +141,11 @@ def get_big_cat():
 
 def get_color():
     colors = ('blue', 'green', 'red', 'purple', 'salmon')
+    return get_text_value_with_issues(random.choice(colors), can_be_missing=True)
+
+
+def get_planet():
+    colors = ('mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune')
     return get_text_value_with_issues(random.choice(colors), can_be_missing=True)
 
 

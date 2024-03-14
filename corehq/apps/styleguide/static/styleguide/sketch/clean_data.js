@@ -5,9 +5,11 @@ hqDefine("styleguide/sketch/clean_data",[
     'hqwebapp/js/initial_page_data',
     "hqwebapp/js/bootstrap5/components.ko", // for pagination
     "hqwebapp/js/bootstrap5/validators.ko", // for validation
+    "hqwebapp/js/bootstrap5/knockout_bindings.ko", // for validation
 ], function ($, ko, _, initialPageData) {
     'use strict';
     $(function () {
+
         let fakeData = function (data) {
             let self = {};
             self.slug = ko.observable(data.slug);
@@ -150,7 +152,12 @@ hqDefine("styleguide/sketch/clean_data",[
             ]);
 
             // we will change this in the UI
-            self.visibleColumns = ko.observableArray(self.availableColumns());
+            self.visibleColumns = ko.observableArray(_.map(self.availableColumns(), function (col) { return col; }));
+            self.removeColumn = function (column) {
+                console.log(column);
+            };
+            self.availableColumns.push(new Column('planet', "Planet", true));
+            self.columnsToAdd = ko.observableArray(_.filter())
             self.selectedRows = ko.computed(function () {
                 return _.filter(self.rows(), function (row) {
                     return row.isSelected();
