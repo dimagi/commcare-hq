@@ -259,7 +259,7 @@ hqDefine('cloudcare/js/utils', [
                 if (progressView) {
                     progressView.setProgress(100, 100, 200);
                     setTimeout(function () {
-                    FormplayerFrontend.regions.getRegion('loadingProgress').empty();
+                        FormplayerFrontend.regions.getRegion('loadingProgress').empty();
                     }, 250);
                 }
             });

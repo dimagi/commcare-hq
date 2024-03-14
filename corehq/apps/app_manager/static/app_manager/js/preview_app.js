@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('app_manager/js/preview_app', [
     'jquery',
     'analytix/js/google',
@@ -11,7 +12,6 @@ hqDefine('app_manager/js/preview_app', [
     appManagerUtils,
     layoutController
 ) {
-    'use strict';
     var module = {};
     var _private = {};
 
