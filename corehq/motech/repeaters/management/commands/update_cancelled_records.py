@@ -5,9 +5,8 @@ import time
 
 from django.core.management.base import BaseCommand
 
-from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
-from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
-from corehq.motech.repeaters.models import RepeatRecordAttempt, Repeater
+from corehq.motech.repeaters.const import State
+from corehq.motech.repeaters.models import Repeater, SQLRepeatRecord
 
 
 class Command(BaseCommand):
@@ -94,7 +93,7 @@ class Command(BaseCommand):
 
         records = list(filter(
             meets_filter,
-            iter_repeat_records_by_domain(domain, repeater_id=repeater_id, state=RECORD_CANCELLED_STATE)
+            SQLRepeatRecord.objects.iterate(domain, repeater_id=repeater_id, state=State.Cancelled)
         ))
 
         if verbose:
@@ -125,21 +124,16 @@ class Command(BaseCommand):
                         self._succeed_record(record, success_message, response_status)
                 except Exception as e:
                     print("{}/{}: {} {}".format(i + 1, total_records, 'EXCEPTION', repr(e)))
-                    writer.writerow((record._id, record.payload_id, record.state, repr(e)))
+                    writer.writerow((record.id, record.payload_id, record.state, repr(e)))
                 else:
                     print("{}/{}: {}, {}".format(i + 1, total_records, record.state, record.attempts[-1].message))
-                    writer.writerow((record._id, record.payload_id, record.state, record.attempts[-1].message))
+                    writer.writerow((record.id, record.payload_id, record.state, record.attempts[-1].message))
                 if sleep_time:
                     time.sleep(float(sleep_time))
 
         print("Wrote log of changes to {}".format(filename))
 
     def _succeed_record(self, record, success_message, response_status):
-        success_attempt = RepeatRecordAttempt(
-            cancelled=False,
-            datetime=datetime.datetime.utcnow(),
-            success_response=success_message,
-            succeeded=True,
-        )
-        record.add_attempt(success_attempt)
+        record.attempt_set.create(state=State.Success, message=success_message)
+        record.state = State.Success
         record.save()
