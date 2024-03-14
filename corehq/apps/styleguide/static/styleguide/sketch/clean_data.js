@@ -100,7 +100,7 @@ hqDefine("styleguide/sketch/clean_data",[
             return self;
         };
 
-        let EditColumnForm = function () {
+        let CleanDataForm = function () {
             let self = {};
             self.selectedColumnSlug = ko.observable().extend({
                 // It's possible to stack validators like this:
@@ -154,6 +154,21 @@ hqDefine("styleguide/sketch/clean_data",[
             return self;
         };
 
+        let AddColumnForm = function () {
+            let self = {};
+            self.columnToAdd = ko.observable().extend({
+                // It's possible to stack validators like this:
+                required: {
+                    message: "Please select a column.",
+                    params: true,
+                },
+            });
+            self.isSubmitDisabled = ko.computed(function () {
+                return !self.columnToAdd.isValid();
+            });
+            return self;
+        };
+
         let paginationExample = function () {
             let self = {};
 
@@ -171,9 +186,25 @@ hqDefine("styleguide/sketch/clean_data",[
             // we will change this in the UI
             self.visibleColumns = ko.observableArray(_.map(self.availableColumns(), function (col) { return col; }));
             self.removeColumn = function (column) {
-                console.log(column);
+                self.visibleColumns.remove(column);
             };
             self.availableColumns.push(new Column('planet', "Planet", true));
+
+
+            self.addColumnForm = ko.observable(new AddColumnForm());
+            self.columnsAvailableToAdd = ko.computed(function () {
+                return _.difference(self.availableColumns(), self.visibleColumns());
+            });
+            self.addColumn = function () {
+                if (self.addColumnForm().isSubmitDisabled()) {
+                    return;
+                }
+                self.visibleColumns.push(self.addColumnForm().columnToAdd());
+                self.addColumnForm(new AddColumnForm());
+            };
+            self.areColumnsAvailableToAdd = ko.computed(function () {
+                return self.columnsAvailableToAdd().length > 0;
+            });
 
             self.selectedRows = ko.computed(function () {
                 return _.filter(self.filteredRows(), function (row) {
@@ -195,39 +226,40 @@ hqDefine("styleguide/sketch/clean_data",[
                     return col.isEditable();
                 });
             });
-            self.editColumnForm = ko.observable(new EditColumnForm());
-            self.resetEditColumnForm = function () {
-                self.editColumnForm(new EditColumnForm());
+            self.cleanDataForm = ko.observable(new CleanDataForm());
+            self.resetCleanDataForm = function () {
+                self.cleanDataForm(new CleanDataForm());
             };
             self.previewEditColumnChanges = function () {
-                if (!self.editColumnForm().isFormValid()) {
+                if (!self.cleanDataForm().isFormValid()) {
                     console.log("form is not valid");
                     return;
                 }
                 _.each(self.selectedRows(), function (row) {
-                    let newValue = self.editColumnForm().selectedAction().transformationFunction(
-                        row.data[self.editColumnForm().selectedColumnSlug()].originalValue(),
-                        self.editColumnForm().selectedAction()
+                    let newValue = self.cleanDataForm().selectedAction().transformationFunction(
+                        row.data[self.cleanDataForm().selectedColumnSlug()].originalValue(),
+                        self.cleanDataForm().selectedAction()
                     );
-                    row.data[self.editColumnForm().selectedColumnSlug()].editedValue(newValue);
+                    row.data[self.cleanDataForm().selectedColumnSlug()].editedValue(newValue);
                 });
                 self.isPreviewing(true);
             };
             self.acceptChanges = function () {
                 _.each(self.selectedRows(), function (row) {
-                    row.data[self.editColumnForm().selectedColumnSlug()].originalValue(
-                        row.data[self.editColumnForm().selectedColumnSlug()].editedValue()
+                    row.data[self.cleanDataForm().selectedColumnSlug()].originalValue(
+                        row.data[self.cleanDataForm().selectedColumnSlug()].editedValue()
                     );
-                    row.isSelected(false);
                 });
                 self.stopPreviewing();
+                // self.deselectAll();
+                // self.showCancelSelectionButton(false);
+                // self.showSelectAllRecordsButton(false);
             };
             self.discardChanges = function () {
                 _.each(self.selectedRows(), function (row) {
-                    row.data[self.editColumnForm().selectedColumnSlug()].editedValue(
-                        row.data[self.editColumnForm().selectedColumnSlug()].originalValue()
+                    row.data[self.cleanDataForm().selectedColumnSlug()].editedValue(
+                        row.data[self.cleanDataForm().selectedColumnSlug()].originalValue()
                     );
-                    row.isSelected(false);
                 });
                 self.stopPreviewing();
             };
@@ -236,11 +268,8 @@ hqDefine("styleguide/sketch/clean_data",[
                 $('#selectAllCheckbox').prop("checked", false).prop("indeterminate", false);
             };
             self.stopPreviewing = function () {
-                self.deselectAll();
                 self.isPreviewing(false);
-                self.selectAllDataMatchingFilter(false);
-                self.showSelectAllTheData(false);
-                self.resetEditColumnForm();
+                self.resetCleanDataForm();
             };
 
             self.applyChangesToAllData = function () {
