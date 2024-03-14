@@ -1,0 +1,33 @@
+<div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="editOffcanvas">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">
+        <i class="fa-solid fa-shower"></i> Clean Data
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    {% include "styleguide/sketch/include/edit_property_form.html" %}
+  </div>
+</div>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="configureColumnsOffcanvas">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">
+      <i class="fa-solid fa-table-columns"></i> Configure Columns
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    {% include "styleguide/sketch/include/configure_columns_form.html" %}
+  </div>
+</div>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="filterDataOffcanvas">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Filter Data</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    {% include "styleguide/sketch/include/filter_data_form.html" %}
+  </div>
+</div>
