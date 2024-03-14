@@ -110,68 +110,76 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
 
 def _get_default_tiles(request):
 
-    def can_edit_users(request):
+    def can_edit_users(req):
         return (
-            request.couch_user.can_edit_commcare_users()
-            or request.couch_user.can_edit_web_users()
+            req.couch_user.can_edit_commcare_users()
+            or req.couch_user.can_edit_web_users()
         )
 
-    def can_view_apps(request):
-        return request.couch_user.can_view_apps() and has_privilege(request, privileges.PROJECT_ACCESS)
+    def can_view_apps(req):
+        return (
+            req.couch_user.can_view_apps()
+            and has_privilege(req, privileges.PROJECT_ACCESS)
+        )
 
-    def can_view_users(request):
+    def can_view_users(req):
         can_do_something = (
-            request.couch_user.can_edit_commcare_users()
-            or request.couch_user.can_view_commcare_users()
-            or request.couch_user.can_edit_groups()
-            or request.couch_user.can_view_groups()
-            or request.couch_user.can_view_roles()
-        ) and has_privilege(request, privileges.PROJECT_ACCESS)
+            req.couch_user.can_edit_commcare_users()
+            or req.couch_user.can_view_commcare_users()
+            or req.couch_user.can_edit_groups()
+            or req.couch_user.can_view_groups()
+            or req.couch_user.can_view_roles()
+        ) and has_privilege(req, privileges.PROJECT_ACCESS)
         return (
             can_do_something
-            or request.couch_user.can_edit_web_users()
-            or request.couch_user.can_view_web_users()
+            or req.couch_user.can_edit_web_users()
+            or req.couch_user.can_view_web_users()
         )
 
-    def can_view_reports(request):
-        return (user_can_view_reports(request.project, request.couch_user)
-                and has_privilege(request, privileges.PROJECT_ACCESS))
-
-    def can_view_data(request):
-        return ((request.couch_user.can_edit_data() or request.couch_user.can_access_any_exports())
-                and has_privilege(request, privileges.PROJECT_ACCESS))
-
-    def can_edit_locations_not_users(request):
-        if not has_privilege(request, privileges.LOCATIONS):
-            return False
-        user = request.couch_user
-        return not can_edit_users(request) and (
-            user.can_edit_locations() or user_can_edit_location_types(user, request.domain)
-        )
-
-    def can_view_commtrack_setup(request):
-        return request.project.commtrack_enabled
-
-    def _can_access_sms(request):
-        return has_privilege(request, privileges.OUTBOUND_SMS)
-
-    def _can_access_reminders(request):
-        return has_privilege(request, privileges.REMINDERS_FRAMEWORK)
-
-    def can_use_messaging(request):
+    def can_view_reports(req):
         return (
-            (_can_access_reminders(request) or _can_access_sms(request))
-            and not request.couch_user.is_commcare_user()
-            and request.couch_user.can_edit_messaging()
+            user_can_view_reports(req.project, req.couch_user)
+            and has_privilege(req, privileges.PROJECT_ACCESS)
         )
 
-    def is_billing_admin(request):
-        return request.couch_user.can_edit_billing()
+    def can_view_data(req):
+        return ((
+            req.couch_user.can_edit_data()
+            or req.couch_user.can_access_any_exports()
+        ) and has_privilege(req, privileges.PROJECT_ACCESS))
+
+    def can_edit_locations_not_users(req):
+        if not has_privilege(req, privileges.LOCATIONS):
+            return False
+        user = req.couch_user
+        return not can_edit_users(req) and (
+            user.can_edit_locations()
+            or user_can_edit_location_types(user, req.domain)
+        )
+
+    def can_view_commtrack_setup(req):
+        return req.project.commtrack_enabled
+
+    def _can_access_sms(req):
+        return has_privilege(req, privileges.OUTBOUND_SMS)
+
+    def _can_access_reminders(req):
+        return has_privilege(req, privileges.REMINDERS_FRAMEWORK)
+
+    def can_use_messaging(req):
+        return (
+            (_can_access_reminders(req) or _can_access_sms(req))
+            and not req.couch_user.is_commcare_user()
+            and req.couch_user.can_edit_messaging()
+        )
+
+    def is_billing_admin(req):
+        return req.couch_user.can_edit_billing()
 
     def apps_link(urlname, req):
         return (
-            '' if domain_has_apps(request.domain)
-            else reverse(urlname, args=[request.domain])
+            '' if domain_has_apps(req.domain)
+            else reverse(urlname, args=[req.domain])
         )
 
     commcare_name = commcare_hq_names(request)['commcare_hq_names']['COMMCARE_NAME']
