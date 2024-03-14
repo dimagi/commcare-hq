@@ -372,14 +372,26 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
-    def hard_delete_forms(self, domain, form_ids, delete_attachments=True, *, publish_changes=True):
+    def hard_delete_forms(self, domain, form_ids, delete_attachments=True, *,
+                          publish_changes=True, leave_tombstone=False):
         """Delete forms permanently. Currently only used for tests, domain deletion and to delete system forms
         and so do not need to leave tombstones.
 
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
+        :param leave_tombstone: Currently unimplemented. Should be set to True if you are using it for any other
+            reason than stated above.
         """
         assert isinstance(form_ids, list)
+
+        if leave_tombstone:
+            raise NotImplementedError(
+                """
+                hard_delete_forms is currently only used for tests, domain deletion and to delete system forms.
+                If you are trying to hard delete forms for any other reason you'll need to implement a way to
+                create tombstones for the forms you're trying to delete.
+                """
+            )
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):

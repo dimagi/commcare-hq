@@ -279,15 +279,27 @@ class CommCareCaseManager(RequireDBManager):
             publish_case_saved(case)
         return undeleted_count
 
-    def hard_delete_cases(self, domain, case_ids, *, publish_changes=True):
+    def hard_delete_cases(self, domain, case_ids, *, publish_changes=True, leave_tombstone=False):
         """Permanently delete cases in domain. Currently only used for tests, domain deletion
         and to delete system cases, and so do not need to leave tombstones.
 
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
+        :param leave_tombstone: Currently unimplemented. Should be set to True if you are using it for any other
+            reason than stated above.
         :returns: Number of deleted cases.
         """
         assert isinstance(case_ids, list), type(case_ids)
+
+        if leave_tombstone:
+            raise NotImplementedError(
+                """
+                hard_delete_forms is currently only used for tests, domain deletion and to delete system cases.
+                If you are trying to hard delete cases for any other reason you'll need to implement a way to
+                create tombstones for the cases you're trying to delete.
+                """
+            )
+
         with self.model.get_plproxy_cursor() as cursor:
             cursor.execute('SELECT hard_delete_cases(%s, %s)', [domain, case_ids])
             deleted_count = sum(row[0] for row in cursor)
