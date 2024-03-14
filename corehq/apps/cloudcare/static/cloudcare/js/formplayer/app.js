@@ -190,6 +190,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     });
 
     FormplayerFrontend.on('startForm', function (data) {
+        FormplayerFrontend.permitIntervalSync = false;
         FormplayerFrontend.getChannel().request("clearMenu");
         hqRequire(["cloudcare/js/formplayer/menus/utils"], function (MenusUtils) {
             MenusUtils.showBreadcrumbs(data.breadcrumbs);
@@ -499,38 +500,59 @@ hqDefine("cloudcare/js/formplayer/app", [
         return FormplayerFrontend.LoginAsNextOptions || null;
     });
 
-    FormplayerFrontend.on("sync", function () {
-        var user = UsersModels.getCurrentUser(),
-            username = user.username,
-            domain = user.domain,
-            formplayerUrl = user.formplayer_url,
+    function makeSyncRequest(route, requestData) {
+        var options,
             complete,
+            user = UsersModels.getCurrentUser(),
+            formplayerUrl = user.formplayer_url,
             data = {
-                "username": username,
-                "domain": domain,
+                "username": user.username,
+                "domain": user.domain,
                 "restoreAs": user.restoreAs,
-            },
-            options;
+            };
+
+        if (requestData) {
+            data = $.extend(data, requestData);
+        }
 
         complete = function (response) {
-            if (response.responseJSON.status === 'retry') {
-                FormplayerFrontend.trigger('retry', response.responseJSON, function () {
-                    // Ensure that when we hit the sync db route we don't use the overwrite_cache param
-                    options.data = JSON.stringify($.extend(true, { preserveCache: true }, data));
-                    $.ajax(options);
-                }, gettext('Waiting for server progress'));
-            } else {
-                FormplayerFrontend.trigger('clearProgress');
-                CloudcareUtils.formplayerSyncComplete(response.responseJSON.status === 'error');
+            if (route === "sync-db") {
+                if (response.responseJSON.status === 'retry') {
+                    FormplayerFrontend.trigger('retry', response.responseJSON, function () {
+                        // Ensure that when we hit the sync db route we don't use the overwrite_cache param
+                        options.data = JSON.stringify($.extend(true, { preserveCache: true }, data));
+                        $.ajax(options);
+                    }, gettext('Waiting for server progress'));
+                } else {
+                    FormplayerFrontend.trigger('clearProgress');
+                    CloudcareUtils.formplayerSyncComplete(response.responseJSON.status === 'error');
+                }
+            } else if (route === "interval_sync-db") {
+                if (response.status === 'retry') {
+                    FormplayerFrontend.trigger('retry', response, function () {
+                        options.data = JSON.stringify($.extend({mustRestore: true}, data));
+                        $.ajax(options);
+                    }, gettext('Waiting for server progress'));
+                } else {
+                    FormplayerFrontend.trigger('clearProgress');
+                }
             }
         };
+
         options = {
-            url: formplayerUrl + "/sync-db",
+            url: formplayerUrl + "/" + route,
             data: JSON.stringify(data),
             complete: complete,
         };
         FormplayerUtils.setCrossDomainAjaxOptions(options);
         $.ajax(options);
+    }
+    FormplayerFrontend.on("sync", function () {
+        makeSyncRequest("sync-db");
+    });
+
+    FormplayerFrontend.on("interval_sync-db", function (appId) {
+        makeSyncRequest("interval_sync-db", {"app_id": appId});
     });
 
     /**

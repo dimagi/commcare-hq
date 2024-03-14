@@ -41,6 +41,9 @@ hqDefine("cloudcare/js/formplayer/middleware", [
             'max-height': maxHeight + 'px',
         });
     };
+    var setLastUserActiviyTime = function () {
+        sessionStorage.setItem("lastUserActivityTime",  Date.now());
+    };
 
     var self = {};
 
@@ -50,6 +53,7 @@ hqDefine("cloudcare/js/formplayer/middleware", [
         clearVersionInfo,
         setScrollableMaxHeight,
         clearBreadcrumbMiddleware,
+        setLastUserActiviyTime,
     ];
 
     self.apply = function (api) {
