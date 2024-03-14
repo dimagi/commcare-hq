@@ -1,0 +1,60 @@
+<!-- ko with: cleanDataForm -->
+<div class="mb-3" >
+  <label for="property" class="form-label">Select property to clean:</label>
+  <select class="form-select"
+          name="property"
+          data-bind="options: $parent.editableColumns,
+                       value: selectedColumnSlug,
+                       optionsCaption: 'Select a property...',
+                       optionsText: 'name',
+                       optionsValue: 'slug'">
+  </select>
+</div>
+<div class="mb-3">
+  <label for="action" class="form-label">Data cleaning action:</label>
+  <select class="form-select"
+          name="action"
+          data-bind="options: availableActions,
+                       value: selectedActionSlug,
+                       optionsCaption: 'Select an action...',
+                       optionsText: 'name',
+                       optionsValue: 'slug'">
+  </select>
+</div>
+
+  <!-- ko if: selectedAction -->
+    <!-- ko with: selectedAction -->
+    <div class="card mb-3" data-bind="visible: showAdditionalFields">
+      <div class="card-body">
+        <div class="mb-3" data-bind="visible: showFind">
+          <label for="findValue" class="form-label">Find:</label>
+          <input class="form-control" type="text" name="findValue" data-bind="textInput: find">
+        </div>
+
+        <div class="mb-3" data-bind="visible: showReplace">
+          <label for="replaceValue" class="form-label">
+            <!-- ko if: showFind -->Replace with:<!-- /ko -->
+            <!-- ko ifnot: showFind -->Replace existing value with:<!-- /ko -->
+          </label>
+          <input class="form-control" type="text" name="replaceValue" data-bind="textInput: replace">
+        </div>
+      </div>
+    </div>
+    <!-- /ko -->
+  <!-- /ko -->
+  <div class="py-3 d-flex flex-row-reverse">
+    <button type="button"
+            data-bs-dismiss="offcanvas"
+            data-bind="click: $parent.previewEditColumnChanges,
+                       disable: isSubmitDisabled"
+            class="btn btn-primary">
+      Preview Changes
+    </button>
+    <button type="button"
+            data-bind="click: $parent.resetCleanDataForm"
+            class="btn btn-outline-primary me-1">
+      Reset
+    </button>
+  </div>
+
+<!-- /ko -->
