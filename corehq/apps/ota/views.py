@@ -136,6 +136,12 @@ def app_aware_search(request, domain, app_id):
 def _log_search_timing(start_time, request, domain):
     request_dict = dict((request.GET if request.method == 'GET' else request.POST).lists())
 
+    for key, value in request_dict.items():
+        if isinstance(value, str):
+            request_dict[key] = value.replace('\t', '')
+        elif isinstance(value, list):
+            request_dict[key] = [item.replace('\t', '') for item in value]
+
     tags = {
         tag_name: value[0]
         for param_name, tag_name in CASE_SEARCH_TAGS_MAPPING.items()
