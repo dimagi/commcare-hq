@@ -47,6 +47,32 @@
       <!-- /ko -->
     </div>
   </div>
+  <div class="mx-3" data-bind="visible: showSelectAllTheData">
+    <div class="alert alert-primary alert-dismissible text-center fade show"
+         data-bind="visible: showSelectAllTheData">
+      <strong class="me-3 fs-5">(<!-- ko text: numRowsSelected --><!-- /ko --> Records Selected)</strong>
+      <button type="button"
+              data-bind="click: confirmSelectAllDataMatchingFilter"
+              class="btn btn-outline-primary">Select All Data Matching Filter</button>
+      <button type="button"
+              class="btn-close"
+              data-bind="click: closeSelectAllTheDataNotice"
+              aria-label="Close"></button>
+    </div>
+  </div>
+  <div class="mx-3" data-bind="visible: selectAllDataMatchingFilter">
+    <div class="alert alert-primary text-center">
+      <strong class="me-3 fs-5">
+        All data matching the filter will be affected by changes.
+        (<!-- ko text: totalItems --><!-- /ko --> Records Selected)
+      </strong>
+      <button type="button"
+              data-bind="click: cancelSelectAllDataMatchingFilter"
+              class="btn btn-outline-danger">
+        Cancel Selection
+      </button>
+    </div>
+  </div>
 
   <div class="mx-3">
     <table class="table table-striped table-hover">
@@ -58,7 +84,7 @@
             <input class="form-check-input"
                    data-bind="checked: selectAll"
                    type="checkbox"
-                   id="flexCheckDefault">
+                   id="selectAllCheckbox">
           </div>
           <!-- /ko -->
           <!-- ko if: isPreviewing -->

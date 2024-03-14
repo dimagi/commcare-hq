@@ -260,11 +260,40 @@ hqDefine("styleguide/sketch/clean_data",[
             self.showLoadingSpinner = ko.observable(true);
             self.error = ko.observable();
 
+            self.showSelectAllTheData = ko.observable(false);
+            self.selectAllDataMatchingFilter = ko.observable(false);
             self.selectAll = ko.observable(false);
             self.selectAll.subscribe(function (value) {
                 _.each(self.rows(), function (row) {
                     row.isSelected(value);
+                    self.showSelectAllTheData(value);
                 });
+            });
+            self.isPartialSelectAll = ko.computed(function () {
+                let isPartial = self.rows().length !== self.selectedRows().length;
+                if (isPartial && self.showSelectAllTheData()) {
+                    self.showSelectAllTheData(false);
+                }
+                if (isPartial && self.selectAllDataMatchingFilter()) {
+                    self.selectAllDataMatchingFilter(false);
+                }
+                return isPartial;
+            });
+            self.isPartialSelectAll.subscribe(function (value) {
+                $('#selectAllCheckbox').prop("indeterminate", value && self.selectAll());
+            });
+            self.confirmSelectAllDataMatchingFilter = function () {
+                self.showSelectAllTheData(false);
+                self.selectAllDataMatchingFilter(true);
+            };
+            self.cancelSelectAllDataMatchingFilter = function () {
+                self.selectAllDataMatchingFilter(false);
+            };
+            self.closeSelectAllTheDataNotice = function () {
+                self.showSelectAllTheData(false);
+            };
+            self.numRowsSelected = ko.computed(function () {
+                return self.selectedRows().length;
             });
 
             self.goToPage = function (page) {
