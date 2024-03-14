@@ -357,7 +357,9 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 function (resp) {
                     sessionStorage.answerQuestionInProgress = false;
                     self.updateXformAction(q);
-                    q.formplayerProcessed = true;
+                    if (q.formplayerMediaRequest) {
+                        q.formplayerMediaRequest.resolve();
+                    }
                     $.publish('session.reconcile', [resp, q]);
                     if (self.answerCallback !== undefined) {
                         self.answerCallback(self.session_id);
@@ -369,7 +371,9 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 constants.BLOCK_SUBMIT,
                 function () {
                     self.updateXformAction(q);
-                    q.formplayerProcessed = false;
+                    if (q.formplayerMediaRequest) {
+                        q.formplayerMediaRequest.reject();
+                    }
                     q.serverError(
                         gettext("We were unable to save this answer. Please try again later."));
                     q.pendingAnswer(constants.NO_PENDING_ANSWER);
