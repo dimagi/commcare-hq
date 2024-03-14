@@ -1,8 +1,37 @@
 'use strict';
-/* global Backbone, Marionette */
-hqDefine("cloudcare/js/formplayer/router", function () {
-    var utils = hqImport("cloudcare/js/formplayer/utils/utils");
-    var Router = Marionette.AppRouter.extend({
+hqDefine("cloudcare/js/formplayer/router", [
+    'underscore',
+    'backbone',
+    'backbone.marionette',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/middleware',
+    'cloudcare/js/formplayer/apps/controller',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/menus/controller',
+    'cloudcare/js/formplayer/sessions/controller',
+    'cloudcare/js/formplayer/users/controller',
+    'cloudcare/js/formplayer/users/models',
+    'marionette.approuter/lib/marionette.approuter.min',    // for Marionette.AppRouter
+    'cloudcare/js/formplayer/sessions/api',     // for getSession
+], function (
+    _,
+    Backbone,
+    Marionette,
+    utils,
+    FormplayerFrontend,
+    formplayerConstants,
+    Middleware,
+    appsController,
+    menusCollections,
+    menusController,
+    sessionsController,
+    usersController,
+    usersModels,
+    AppRouter
+) {
+    var params = {
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
             "single_app/:id": "singleApp", // Show app in phone mode (SingleAppView)
@@ -15,16 +44,9 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             "settings": "listSettings",
             ":session": "listMenus",  // Default route
         },
-    });
+    };
+    var Router = AppRouter.extend(params);
 
-
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Middleware = hqImport("cloudcare/js/formplayer/middleware"),
-        appsController = hqImport("cloudcare/js/formplayer/apps/controller"),
-        menusCollections = hqImport("cloudcare/js/formplayer/menus/collections"),
-        menusController = hqImport("cloudcare/js/formplayer/menus/controller"),
-        sessionsController = hqImport("cloudcare/js/formplayer/sessions/controller"),
-        usersController = hqImport("cloudcare/js/formplayer/users/controller");
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
@@ -32,7 +54,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             appsController.listApps();
         },
         singleApp: function (appId) {
-            var user = FormplayerFrontend.getChannel().request('currentUser');
+            var user = usersModels.getCurrentUser();
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
             user.previewAppId = appId;
             appsController.singleApp(appId);
@@ -113,7 +135,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             currentFragment = Backbone.history.getFragment();
             urlObject = utils.CloudcareUrl.fromJson(utils.encodedUrlToObject(currentFragment));
             encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
-            FormplayerFrontend.navigate(encodedUrl);
+            utils.navigate(encodedUrl);
 
             menusController.showMenu(menuCollection);
         },
@@ -128,7 +150,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("apps:list", function () {
-        FormplayerFrontend.navigate("apps");
+        utils.navigate("apps");
         API.listApps();
     });
 
@@ -139,12 +161,12 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on('app:singleApp', function (appId) {
-        FormplayerFrontend.navigate("/single_app/" + appId);
+        utils.navigate("/single_app/" + appId);
         API.singleApp(appId);
     });
 
     FormplayerFrontend.on('app:landingPageApp', function (appId) {
-        FormplayerFrontend.navigate("/home/" + appId);
+        utils.navigate("/home/" + appId);
         API.landingPageApp(appId);
     });
 
@@ -169,7 +191,11 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         urlObject.setPage(page);
         utils.setSelectedValues(selections);
         utils.setUrlToObject(urlObject);
-        API.listMenus();
+
+        // Tags should not be included in set URL. Otherwise, it persists across menus we will need to handle clearing it.
+        urlObject.addRequestInitiatedByTags(formplayerConstants.requestInitiatedByTagsMapping.PAGINATION);
+        let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
+        API.listMenus(encodedUrl);
     });
 
     FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage, selections) {
@@ -200,29 +226,32 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiatedBy) {
+    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiatedByTag) {
         var urlObject = utils.currentUrlToObject();
         var queryObject = _.extend(
             {
                 inputs: queryDict,
                 execute: true,
-                initiatedBy: initiatedBy,
             },
             // force manual search in split screen case search for workflow compatibility
             sidebarEnabled ? { forceManualSearch: true } : {}
         );
         urlObject.setQueryData(queryObject);
         utils.setUrlToObject(urlObject);
-        API.listMenus();
+
+        // Tags should not be included in set URL. Otherwise, it persists across menus we will need to handle clearing it.
+        urlObject.addRequestInitiatedByTags(initiatedByTag);
+        let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
+        API.listMenus(encodedUrl);
     });
 
     FormplayerFrontend.on('restore_as:list', function () {
-        FormplayerFrontend.navigate("/restore_as");
+        utils.navigate("/restore_as");
         API.listUsers();
     });
 
     FormplayerFrontend.on('settings:list', function () {
-        FormplayerFrontend.navigate("/settings");
+        utils.navigate("/settings");
         API.listSettings();
     });
 
@@ -231,12 +260,12 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("sessions", function (pageNumber, pageSize) {
-        FormplayerFrontend.navigate("/sessions", pageNumber, pageSize);
+        utils.navigate("/sessions", pageNumber, pageSize);
         API.listSessions(pageNumber, pageSize);
     });
 
     FormplayerFrontend.on("getSession", function (sessionId) {
-        FormplayerFrontend.navigate("/sessions/" + sessionId);
+        utils.navigate("/sessions/" + sessionId);
         API.getSession(sessionId);
     });
 
