@@ -12,8 +12,10 @@ hqDefine("styleguide/sketch/clean_data",[
             let self = {};
             self.slug = ko.observable(data.slug);
             self.originalValue = ko.observable(data.value);
-            self.isEdited = ko.observable(false);
             self.editedValue = ko.observable(data.value);
+            self.isEdited = ko.computed(function () {
+                return self.originalValue() !== self.editedValue();
+            });
             return self;
         };
 
@@ -72,6 +74,7 @@ hqDefine("styleguide/sketch/clean_data",[
             self.showAdditionalFields = ko.computed(function () {
                 return self.showFind() || self.showReplace();
             });
+            // takes in value and action
             self.transformationFunction = transformationFunction;
             self.isActionValid = ko.computed(function () {
                 return (self.find.isValid() || !self.showFind()) && (self.replace.isValid() || !self.showReplace());
@@ -149,11 +152,18 @@ hqDefine("styleguide/sketch/clean_data",[
             // we will change this in the UI
             self.visibleColumns = ko.observableArray(self.availableColumns());
             self.selectedRows = ko.computed(function () {
-                _.filter(self.rows(), function (row) {
+                return _.filter(self.rows(), function (row) {
                     return row.isSelected();
                 });
             });
-            self.isPreviewing = ko.observable(true);
+            self.isPreviewing = ko.observable(false);
+
+            self.isCleanDataAllowed = ko.computed(function () {
+                return self.selectedRows().length > 0;
+            });
+            self.isCleanDataButtonDisabled = ko.computed(function () {
+                return !self.isCleanDataAllowed() || self.isPreviewing();
+            });
 
             // edit context
             self.editableColumns = ko.computed(function () {
@@ -166,15 +176,40 @@ hqDefine("styleguide/sketch/clean_data",[
                 self.editColumnForm(new EditColumnForm());
             };
             self.previewEditColumnChanges = function () {
-                if (!self.editColumnForm.isFormValid()) {
+                if (!self.editColumnForm().isFormValid()) {
                     console.log("form is not valid");
                     return;
                 }
                 _.each(self.selectedRows(), function (row) {
-                    self.editColumnForm().selectedAction()
-                })
-                console.log('do something!');
-                console.log(self.editColumnForm());
+                    let newValue = self.editColumnForm().selectedAction().transformationFunction(
+                        row.data[self.editColumnForm().selectedColumnSlug()].originalValue(),
+                        self.editColumnForm().selectedAction()
+                    );
+                    row.data[self.editColumnForm().selectedColumnSlug()].editedValue(newValue);
+                });
+                self.isPreviewing(true);
+            };
+            self.acceptChanges = function () {
+                _.each(self.selectedRows(), function (row) {
+                    row.data[self.editColumnForm().selectedColumnSlug()].originalValue(
+                        row.data[self.editColumnForm().selectedColumnSlug()].editedValue()
+                    );
+                    row.isSelected(false);
+                });
+                self.stopPreviewing();
+            };
+            self.discardChanges = function () {
+                _.each(self.selectedRows(), function (row) {
+                    row.data[self.editColumnForm().selectedColumnSlug()].editedValue(
+                        row.data[self.editColumnForm().selectedColumnSlug()].originalValue()
+                    );
+                    row.isSelected(false);
+                });
+                self.stopPreviewing();
+            };
+            self.stopPreviewing = function () {
+                self.isPreviewing(false);
+                self.resetEditColumnForm();
             };
 
             self.applyChangesToAllData = function () {

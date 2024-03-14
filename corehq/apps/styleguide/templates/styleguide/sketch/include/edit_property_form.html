@@ -1,6 +1,6 @@
 <!-- ko with: editColumnForm -->
 <div class="mb-3" >
-  <label for="property" class="form-label">Edit property:</label>
+  <label for="property" class="form-label">Select property to clean:</label>
   <select class="form-select"
           name="property"
           data-bind="options: $parent.editableColumns,
@@ -44,6 +44,7 @@
   <!-- /ko -->
   <div class="py-3 d-flex flex-row-reverse">
     <button type="button"
+            data-bs-dismiss="offcanvas"
             data-bind="click: $parent.previewEditColumnChanges,
                        disable: isSubmitDisabled"
             class="btn btn-primary">
