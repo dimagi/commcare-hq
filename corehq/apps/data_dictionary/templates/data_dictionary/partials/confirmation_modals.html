@@ -107,7 +107,11 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <h4 class="modal-title">
-                    {% trans 'Delete Case Property' %}
+                    {% blocktrans %}
+                        Delete
+                        '<span id="delete-case-prop-name"></span>'
+                        Case Property
+                    {% endblocktrans %}
                 </h4>
             </div>
             <div class="modal-body">
