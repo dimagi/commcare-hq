@@ -1,5 +1,5 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/constants", function () {
+hqDefine("cloudcare/js/formplayer/constants", [], function () {
     return {
         ALLOWED_SAVED_OPTIONS: ['oneQuestionPerScreen', 'language'],
 
@@ -38,6 +38,9 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
             PAGINATION: "pagination",
             CLICKABLE_ICON: "clickable_icon",
         },
+
+        //Custom Properties
+        POST_FORM_SYNC: "cc-sync-after-form",
 
         SMALL_SCREEN_WIDTH_PX: 992,
 
