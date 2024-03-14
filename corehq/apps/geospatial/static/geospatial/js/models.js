@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('geospatial/js/models', [
     'jquery',
     'knockout',
@@ -29,7 +30,6 @@ hqDefine('geospatial/js/models', [
     };
 
     var MapItem = function (itemId, itemData, marker, markerColors) {
-        'use strict';
         var self = this;
         self.itemId = itemId;
         self.itemData = itemData;
