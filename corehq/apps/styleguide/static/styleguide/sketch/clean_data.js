@@ -108,10 +108,10 @@ hqDefine("styleguide/sketch/clean_data",[
                     showReplace: true,
                     showFind: true,
                 },  function (value, action) {
-                    return value.replace(action.find(), action.replace());
+                    return value.replaceAll(action.find(), action.replace());
                 }),
                 new Action('strip', "Strip Whitespaces", {}, function (value, action) {
-                    return value.strip();
+                    return value.replaceAll('&nbsp;', '');
                 }),
             ]);
             self.selectedAction = ko.computed(function () {
@@ -208,7 +208,11 @@ hqDefine("styleguide/sketch/clean_data",[
                 self.stopPreviewing();
             };
             self.stopPreviewing = function () {
+                self.selectAll(false);
+                $('#selectAllCheckbox').prop("checked", false);
                 self.isPreviewing(false);
+                self.selectAllDataMatchingFilter(false);
+                self.showSelectAllTheData(false);
                 self.resetEditColumnForm();
             };
 

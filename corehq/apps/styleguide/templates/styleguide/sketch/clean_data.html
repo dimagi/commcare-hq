@@ -51,9 +51,11 @@
     <div class="alert alert-primary alert-dismissible text-center fade show"
          data-bind="visible: showSelectAllTheData">
       <strong class="me-3 fs-5">(<!-- ko text: numRowsSelected --><!-- /ko --> Records Selected)</strong>
+      <!-- ko ifnot: isPreviewing -->
       <button type="button"
               data-bind="click: confirmSelectAllDataMatchingFilter"
               class="btn btn-outline-primary">Select All Data Matching Filter</button>
+      <!-- /ko -->
       <button type="button"
               class="btn-close"
               data-bind="click: closeSelectAllTheDataNotice"
@@ -66,11 +68,13 @@
         All data matching the filter will be affected by changes.
         (<!-- ko text: totalItems --><!-- /ko --> Records Selected)
       </strong>
+      <!-- ko ifnot: isPreviewing -->
       <button type="button"
               data-bind="click: cancelSelectAllDataMatchingFilter"
               class="btn btn-outline-danger">
         Cancel Selection
       </button>
+      <!-- /ko -->
     </div>
   </div>
 
@@ -89,7 +93,12 @@
           <!-- /ko -->
           <!-- ko if: isPreviewing -->
             <!-- ko if: selectAll -->
-              <i class="fa-solid fa-check-circle text-primary"></i>
+              <!-- ko if: isPartialSelectAll -->
+                <i class="fa-solid fa-circle-minus text-primary"></i>
+              <!-- /ko -->
+              <!-- ko ifnot: isPartialSelectAll -->
+                <i class="fa-solid fa-check-circle text-primary"></i>
+              <!-- /ko -->
             <!-- /ko -->
             <!-- ko ifnot: selectAll -->
               <i class="fa-regular fa-circle text-primary"></i>
