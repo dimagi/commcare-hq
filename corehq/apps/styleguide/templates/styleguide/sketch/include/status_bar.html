@@ -1,0 +1,26 @@
+<!-- ko if: hasFilter -->
+  <div class="pe-2 d-inline-block">
+    <i class="fa-solid fa-filter"></i>
+    Filter Applied: <!-- ko text: totalItems --><!-- /ko --> Matching Records
+  </div>
+<!-- /ko -->
+
+<div class="d-inline-block">
+  <i class="fa-solid fa-circle-check"></i>
+  <!-- ko text: numRowsSelected --><!-- /ko --> Records Selected
+
+  <!-- ko ifnot: isPreviewing -->
+    <button type="button"
+            data-bind="click: cancelSelectAllDataMatchingFilter,
+                       visible: showCancelSelectionButton"
+            class="btn btn-outline-danger btn-sm">
+      Cancel Selection
+    </button>
+    <button type="button"
+            data-bind="click: selectAllFilteredRows,
+                       visible: showSelectAllRecordsButton"
+            class="btn btn-outline-primary btn-sm">
+      Select All <!-- ko text: totalItems --><!-- /ko --> Records
+    </button>
+  <!-- /ko -->
+</div>

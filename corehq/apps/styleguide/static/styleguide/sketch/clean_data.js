@@ -84,6 +84,22 @@ hqDefine("styleguide/sketch/clean_data",[
             return self;
         };
 
+        let FilterForm = function () {
+            let self = {};
+            self.selectedColumnSlug = ko.observable().extend({
+                // It's possible to stack validators like this:
+                required: {
+                    message: "Please select a column.",
+                    params: true,
+                },
+            });
+            self.filterText = ko.observable();
+            self.isSubmitDisabled = ko.computed(function () {
+                return !self.selectedColumnSlug.isValid();
+            });
+            return self;
+        };
+
         let EditColumnForm = function () {
             let self = {};
             self.selectedColumnSlug = ko.observable().extend({
@@ -142,6 +158,7 @@ hqDefine("styleguide/sketch/clean_data",[
             let self = {};
 
             self.rows = ko.observableArray();
+            self.filteredRows = ko.observableArray();
             self.availableColumns = ko.observableArray([
                 new Column('full_name', "Name", true),
                 new Column('color', "Color", true),
@@ -157,9 +174,9 @@ hqDefine("styleguide/sketch/clean_data",[
                 console.log(column);
             };
             self.availableColumns.push(new Column('planet', "Planet", true));
-            self.columnsToAdd = ko.observableArray(_.filter())
+
             self.selectedRows = ko.computed(function () {
-                return _.filter(self.rows(), function (row) {
+                return _.filter(self.filteredRows(), function (row) {
                     return row.isSelected();
                 });
             });
@@ -214,9 +231,12 @@ hqDefine("styleguide/sketch/clean_data",[
                 });
                 self.stopPreviewing();
             };
-            self.stopPreviewing = function () {
+            self.deselectAll = function () {
                 self.selectAll(false);
-                $('#selectAllCheckbox').prop("checked", false);
+                $('#selectAllCheckbox').prop("checked", false).prop("indeterminate", false);
+            };
+            self.stopPreviewing = function () {
+                self.deselectAll();
                 self.isPreviewing(false);
                 self.selectAllDataMatchingFilter(false);
                 self.showSelectAllTheData(false);
@@ -271,37 +291,39 @@ hqDefine("styleguide/sketch/clean_data",[
             self.showLoadingSpinner = ko.observable(true);
             self.error = ko.observable();
 
-            self.showSelectAllTheData = ko.observable(false);
-            self.selectAllDataMatchingFilter = ko.observable(false);
+            self.showSelectAllRecordsButton = ko.observable(false);
+            self.showCancelSelectionButton = ko.observable(false);
             self.selectAll = ko.observable(false);
             self.selectAll.subscribe(function (value) {
                 _.each(self.rows(), function (row) {
                     row.isSelected(value);
-                    self.showSelectAllTheData(value);
+                    self.showSelectAllRecordsButton(value);
                 });
             });
             self.isPartialSelectAll = ko.computed(function () {
                 let isPartial = self.rows().length !== self.selectedRows().length;
-                if (isPartial && self.showSelectAllTheData()) {
-                    self.showSelectAllTheData(false);
-                }
-                if (isPartial && self.selectAllDataMatchingFilter()) {
-                    self.selectAllDataMatchingFilter(false);
+                if (isPartial && self.showSelectAllRecordsButton()) {
+                    self.showSelectAllRecordsButton(false);
                 }
                 return isPartial;
             });
             self.isPartialSelectAll.subscribe(function (value) {
                 $('#selectAllCheckbox').prop("indeterminate", value && self.selectAll());
             });
-            self.confirmSelectAllDataMatchingFilter = function () {
-                self.showSelectAllTheData(false);
-                self.selectAllDataMatchingFilter(true);
+            self.selectAllFilteredRows = function () {
+                self.showSelectAllRecordsButton(false);
+                self.showCancelSelectionButton(true);
+                _.each(self.filteredRows(), function (row) {
+                    row.isSelected(true);
+                });
             };
             self.cancelSelectAllDataMatchingFilter = function () {
-                self.selectAllDataMatchingFilter(false);
-            };
-            self.closeSelectAllTheDataNotice = function () {
-                self.showSelectAllTheData(false);
+                self.showSelectAllRecordsButton(false);
+                self.showCancelSelectionButton(false);
+                _.each(self.selectedRows(), function (row) {
+                    row.isSelected(false);
+                    self.deselectAll();
+                });
             };
             self.numRowsSelected = ko.computed(function () {
                 return self.selectedRows().length;
@@ -309,6 +331,9 @@ hqDefine("styleguide/sketch/clean_data",[
 
             self.clientSide = ko.observable(true);
             self.allRows = [];
+            self.totalItems = ko.computed(function () {
+                return self.filteredRows().length;
+            });
             self.loadAllDataToMemory = function () {
                 $.ajax({
                     method: 'POST',
@@ -320,7 +345,7 @@ hqDefine("styleguide/sketch/clean_data",[
                         _.each(data.rows, function (row) {
                             self.allRows.push(new rowData(row, self));
                         });
-                        self.totalItems(self.allRows.length);
+                        self.filteredRows(_.map(self.allRows, function (row) {return row;}));
                         self.goToPage(1);
                     },
                     error: function () {
@@ -332,9 +357,39 @@ hqDefine("styleguide/sketch/clean_data",[
                 });
             };
 
+            self.filterForm = ko.observable(new FilterForm());
+            self.hasFilter = ko.observable(false);
+            self.resetFilterForm = function () {
+                self.hasFilter(false);
+                self.filterForm(new FilterForm());
+            };
+
+            self.applyFilterToData = function () {
+                if (self.filterForm().isSubmitDisabled()) {
+                    console.log("filter form is not valid");
+                    return;
+                }
+                self.filteredRows(_.filter(self.allRows, function (row) {
+                    let filterText = self.filterForm().filterText();
+                    if (filterText === undefined) {
+                        filterText = "";
+                    }
+                    return row.data[self.filterForm().selectedColumnSlug()].originalValue() === filterText;
+                }));
+                self.goToPage(1);
+                self.hasFilter(true);
+            };
+
             self.goToPage = function (page) {
                 if (self.clientSide()) {
-                    self.rows(self.allRows.slice(
+                    // self.rows.removeAll();
+                    // let start = self.itemsPerPage() * (page - 1),
+                    //     end = self.itemsPerPage() * page;
+                    // for (let ind = start; ind < end; ind++) {
+                    //     self.rows.push(self.filteredRows()[ind]);
+                    // }
+
+                    self.rows(self.filteredRows().slice(
                         self.itemsPerPage() * (page - 1),
                         self.itemsPerPage() * page
                     ));

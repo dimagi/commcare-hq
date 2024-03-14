@@ -13,68 +13,10 @@
   <div class="d-flex align-items-center m-3">
     <h1 class="fs-3 py-3 pe-3 m-0">Cleaning Data for "child"</h1>
     <div>
-      <button type="button"
-              class="btn btn-outline-primary"
-              data-bs-toggle="offcanvas"
-              data-bs-target="#filterDataOffcanvas">
-        <i class="fa-solid fa-filter"></i> Filter Data
-      </button>
-      <button type="button"
-              class="btn btn-outline-primary"
-              data-bs-toggle="offcanvas"
-              data-bs-target="#configureColumnsOffcanvas">
-        <i class="fa-solid fa-table-columns"></i> Configure Columns
-      </button>
-      <button type="button"
-              class="btn btn-outline-primary"
-              data-bind="disable: isCleanDataButtonDisabled"
-              data-bs-toggle="offcanvas"
-              data-bs-target="#editOffcanvas">
-        <i class="fa-solid fa-shower"></i> Clean Data
-      </button>
-      <!-- ko if: isPreviewing -->
-        <button type="button"
-                data-bind="click: acceptChanges"
-                class="btn btn-primary">
-          <i class="fa-solid fa-check"></i> Accept Changes
-        </button>
-        <button type="button"
-                data-bind="click: discardChanges"
-                class="btn btn-outline-danger">
-          <i class="fa-regular fa-trash-can"></i> Discard Changes
-        </button>
-
-      <!-- /ko -->
+      {% include "styleguide/sketch/include/button_bar.html" %}
     </div>
-  </div>
-  <div class="mx-3" data-bind="visible: showSelectAllTheData">
-    <div class="alert alert-primary alert-dismissible text-center fade show"
-         data-bind="visible: showSelectAllTheData">
-      <strong class="me-3 fs-5">(<!-- ko text: numRowsSelected --><!-- /ko --> Records Selected)</strong>
-      <!-- ko ifnot: isPreviewing -->
-      <button type="button"
-              data-bind="click: confirmSelectAllDataMatchingFilter"
-              class="btn btn-outline-primary">Select All Data Matching Filter</button>
-      <!-- /ko -->
-      <button type="button"
-              class="btn-close"
-              data-bind="click: closeSelectAllTheDataNotice"
-              aria-label="Close"></button>
-    </div>
-  </div>
-  <div class="mx-3" data-bind="visible: selectAllDataMatchingFilter">
-    <div class="alert alert-primary text-center">
-      <strong class="me-3 fs-5">
-        All data matching the filter will be affected by changes.
-        (<!-- ko text: totalItems --><!-- /ko --> Records Selected)
-      </strong>
-      <!-- ko ifnot: isPreviewing -->
-      <button type="button"
-              data-bind="click: cancelSelectAllDataMatchingFilter"
-              class="btn btn-outline-danger">
-        Cancel Selection
-      </button>
-      <!-- /ko -->
+    <div class="ms-auto px-3">
+      {% include "styleguide/sketch/include/status_bar.html" %}
     </div>
   </div>
 
