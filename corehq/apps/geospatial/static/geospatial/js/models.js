@@ -183,6 +183,30 @@ hqDefine('geospatial/js/models', [
                         'visibility': 'none',
                     },
                 });
+                self.mapInstance.addLayer({
+                    id: 'Building',
+                    source: 'mapbox-streets',
+                    'source-layer': 'building',
+                    type: 'fill',
+                    paint: {
+                        'fill-color': '#808080', // grey
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'Waterway',
+                    source: 'mapbox-streets',
+                    'source-layer': 'waterway',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#00008b', // darkblue
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
             });
         }
 
@@ -192,6 +216,8 @@ hqDefine('geospatial/js/models', [
                     'Landuse',
                     'Admin',
                     'Road',
+                    'Building',
+                    'Waterway',
                 ];
                 const menuElement = document.getElementById('layer-toggle-menu');
                 for (const layerId of toggleableLayerIds) {
