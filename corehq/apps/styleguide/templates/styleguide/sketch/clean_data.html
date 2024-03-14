@@ -1,0 +1,88 @@
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main "styleguide/sketch/clean_data" %}
+
+{% block content %}
+{% registerurl "get_data_for_data_cleaning_prototype" %}
+{% registerurl "get_all_data_for_data_cleaning_prototype" %}
+{% registerurl "update_sprint_data" %}
+<div id="clean-data-table-prototype">
+
+  <div class="d-flex align-items-center m-3">
+    <h1 class="fs-3 py-3 pe-3 m-0">Cleaning Data for "child"</h1>
+    <div>
+      <button type="button"
+              class="btn btn-outline-primary"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#filterDataOffcanvas">
+        <i class="fa-solid fa-filter"></i> Filter Data
+      </button>
+      <button type="button"
+              class="btn btn-outline-primary"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#configureColumnsOffcanvas">
+        <i class="fa-solid fa-table-columns"></i> Configure Columns
+      </button>
+      <button type="button"
+              class="btn btn-outline-primary"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#editOffcanvas">
+        <i class="fa-solid fa-pencil"></i> Edit Property
+      </button>
+    </div>
+  </div>
+
+  <div class="mx-3">
+    <table class="table table-striped table-hover">
+      <thead>
+      <tr>
+        <th>
+          <div class="form-check">
+            <input class="form-check-input"
+                   data-bind="checked: selectAll"
+                   type="checkbox"
+                   id="flexCheckDefault">
+          </div>
+        </th>
+        <!-- ko foreach: visibleColumns -->
+          <th>
+            <span data-bind="text: name"></span>
+          </th>
+        <!-- /ko -->
+      </tr>
+      </thead>
+      <tbody>
+      <!-- ko foreach: rows -->
+      <tr data-bind="css: {'table-primary': isSelected}">
+        <td>
+          <div class="form-check">
+            <input class="form-check-input"
+                   data-bind="checked: isSelected"
+                   type="checkbox"
+                   id="flexCheckDefault">
+          </div>
+        </td>
+        <!-- ko foreach: $data.visibleData -->
+        <td>
+          <span data-bind="html: $data.originalValue"></span>
+        </td>
+        <!-- /ko -->
+      </tr>
+      <!-- /ko -->
+      </tbody>
+    </table>
+    <pagination data-apply-bindings="false"
+                params="goToPage: goToPage,
+                      slug: 'style-guide',
+                      perPage: itemsPerPage,
+                      onLoad: onPaginationLoad,
+                      totalItems: totalItems"></pagination>
+  </div>
+  {% include "styleguide/sketch/include/offcanvas.html" %}
+</div>
+
+
+{% endblock %}
+
