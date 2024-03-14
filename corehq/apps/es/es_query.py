@@ -596,7 +596,7 @@ class ESQuerySet(object):
 
 class HQESQuery(ESQuery):
     """
-    Query logic specific to CommCareHQ
+    Query logic specific to CommCare HQ
     """
     @property
     def builtin_filters(self):

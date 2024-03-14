@@ -232,7 +232,7 @@ def _get_default_tiles(request):
             icon='fcc fcc-users',
             urlname=DefaultProjectUserSettingsView.urlname,
             visibility_check=can_view_users,
-            help_text=_('Manage accounts for mobile workers and CommCareHQ users'),
+            help_text=_('Manage accounts for mobile workers and CommCare HQ users'),
         ),
         Tile(
             request,
