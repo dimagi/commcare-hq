@@ -307,7 +307,39 @@ hqDefine("styleguide/sketch/clean_data",[
                 return self.selectedRows().length;
             });
 
+            self.clientSide = ko.observable(true);
+            self.allRows = [];
+            self.loadAllDataToMemory = function () {
+                $.ajax({
+                    method: 'POST',
+                    url: initialPageData.reverse("get_all_data_for_data_cleaning_prototype"),
+                    data: {
+                        all: true,
+                    },
+                    success: function (data) {
+                        _.each(data.rows, function (row) {
+                            self.allRows.push(new rowData(row, self));
+                        });
+                        self.totalItems(self.allRows.length);
+                        self.goToPage(1);
+                    },
+                    error: function () {
+                        self.error(gettext(
+                            "Could not load data. Please try again later or " +
+                            "report an issue if this problem persists."
+                        ));
+                    },
+                });
+            };
+
             self.goToPage = function (page) {
+                if (self.clientSide()) {
+                    self.rows(self.allRows.slice(
+                        self.itemsPerPage() * (page - 1),
+                        self.itemsPerPage() * page
+                    ));
+                    return;
+                }
                 $.ajax({
                     method: 'POST',
                     url: initialPageData.reverse("get_data_for_data_cleaning_prototype"),
@@ -316,7 +348,6 @@ hqDefine("styleguide/sketch/clean_data",[
                         limit: self.itemsPerPage(),
                     },
                     success: function (data) {
-                        self.showLoadingSpinner(false);
                         self.totalItems(data.total);
                         self.rows.removeAll();
                         _.each(data.rows, function (row) {
@@ -325,7 +356,6 @@ hqDefine("styleguide/sketch/clean_data",[
                         self.error(null);
                     },
                     error: function () {
-                        self.showLoadingSpinner(false);
                         self.error(gettext(
                             "Could not load data. Please try again later or " +
                             "report an issue if this problem persists."
@@ -336,7 +366,11 @@ hqDefine("styleguide/sketch/clean_data",[
 
             // Initialize with first page of data
             self.onPaginationLoad = function () {
-                self.goToPage(1);
+                if (self.clientSide()) {
+                    self.loadAllDataToMemory();
+                } else {
+                    self.goToPage(1);
+                }
             };
 
             return self;
