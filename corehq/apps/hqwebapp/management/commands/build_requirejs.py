@@ -148,6 +148,7 @@ def _r_js(local=False, verbose=False, bootstrap_version=None):
     # "<bundle directory>": [<files to exclude from bootstrap 3 build>]
     split_bundles = {
         "hqwebapp/js": ['hqwebapp/js/500'],
+        "styleguide/sketch": ['styleguide/sketch/clean_data'],
     }
 
     # For each directory, add an optimized "module" entry including all of the main modules in that dir.
