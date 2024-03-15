@@ -148,7 +148,7 @@ hqDefine('cloudcare/js/utils', [
         return new RegionContainer();
     };
 
-    var showLoading = function () {
+    var showProminentLoading = function () {
         hqRequire([
             "cloudcare/js/formplayer/app",
             "hqwebapp/js/toggles",
@@ -176,6 +176,14 @@ hqDefine('cloudcare/js/utils', [
                         currentProgress += 1;
                     }
                 }, 250);
+            }
+        });
+    };
+
+    var showLoading = function () {
+        hqRequire(["hqwebapp/js/toggles",], function (toggles) {
+            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+                loadingDurationListener();
             } else {
                 NProgress.start();
             }
