@@ -1,0 +1,244 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load case_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load proptable_tags %}
+{% load timezone_tags %}
+
+{% block head %} {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
+{% endblock %}
+
+{% requirejs_main 'reports/js/case_details' %}
+
+{% block page_content %}
+  <div>
+    <h2>
+      Form Deletion
+    </h2>
+    <h3 class="h4">
+      Please review the affected cases below, before proceeding with the form deletion.
+    </h3>
+    </br>
+    {% blocktrans %}
+        The following cases were created by the form pending deletion (Primary Form) and will be deleted.
+    {% endblocktrans %}
+    {% if has_multiple_forms %}
+      {% blocktrans %}
+        The related forms that updated these cases will also be deleted as a result of deleting the Primary Form.
+      {% endblocktrans %}
+    {% endif %}
+    <ul>
+      {% for case in form_delete_cases %}
+        <li>
+          <h4><i class="fa fa-list-alt"></i><strong><a href="{{ case.url }}"> {{ case.name }} </a></strong></h4>
+          <ul class="list-group">
+            {% for form in case.delete_forms %}
+              <li class="list-group-item">
+                <h5><i class="fa fa-file"></i><a href="{{ form.url }}"> {{ form.name }} </a>
+                  {% if form.is_primary %}
+                    <span class="label label-default">Primary Form</span>
+                  {% endif %}
+                </h5>
+                Actions taken by this form on:
+                <ul>
+                  {% for case in form.affected_cases %}
+                    <li>
+                      {% if case.is_current_case %}
+                        This case: {{ case.actions }}
+                      {% else %}
+                        Related case: <strong>{{ case.case_name }}</strong>: {{ case.actions }}
+                      {% endif %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              </li>
+            {% endfor %}
+          </ul>
+        </li>
+      {% endfor %}
+    </ul>
+    {% if delete_cases %}
+      {% blocktrans %}
+        The following cases and their submission forms belongs to at least one of the above cases
+        and will also be deleted:
+      {% endblocktrans %}
+      <ul>
+        {% for case in delete_cases %}
+          <li>
+            <h4><i class="fa fa-list-alt"></i><strong><a href="{{ case.url }}"> {{ case.name }} </a></strong></h4>
+            <ul class="list-group">
+              {% for form in case.delete_forms %}
+                <li class="list-group-item">
+                  <h5><i class="fa fa-file"></i><a href="{{ form.url }}"> {{ form.name }} </a>
+                    {% if form.is_primary %}
+                      <span class="label label-default">Primary Form</span>
+                    {% endif %}
+                  </h5>
+                  Actions taken by this form on:
+                  <ul>
+                    {% for case in form.affected_cases %}
+                      <li>
+                        {% if case.is_current_case %}
+                          This case: {{ case.actions }}
+                        {% else %}
+                          Related case: <strong>{{ case.case_name }}</strong>: {{ case.actions }}
+                        {% endif %}
+                      </li>
+                    {% endfor %}
+                  </ul>
+                </li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    </br>
+    {% if reopened_cases %}
+      {% blocktrans %}
+        The following cases will have their closing form deleted and will be reopened, unless the form
+        has already been archived, but the case will <strong>not</strong> deleted.
+      {% endblocktrans %}
+      <ul>
+        {% for case in reopened_cases %}
+          <li>
+            <h4><strong><a href="{{ case.url }}"> {{ case.name }} </a></strong></h4>
+            <ul class="list-group">
+              <li class="list-group-item">
+                <i class="fa fa-file"> </i>
+                Closed by: <a href="{{ case.closing_form_url }}"> {{ case.closing_form_name }} </a>
+                {% if case.closing_form_is_primary %}
+                  <span class="label label-default">Primary Form</span>
+                {% endif %}
+              </li>
+            </ul>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    </br>
+    {% if form_affected_cases %}
+      {% blocktrans %}
+        The following cases were directly updated by the form pending deletion (Primary Form),
+        but these cases will <strong>not</strong> be deleted. However, you will not be able to restore
+        the case updates made by the Primary Form after deletion.
+      {% endblocktrans %}
+        <!-- look into adding case updates pulled from form... if it's too difficult its fine -->
+      <ul>
+        {% for case in form_affected_cases %}
+          <li>
+            <h4><strong><a href="{{ case.url }}"> {{ case.name }} </a></strong></h4>
+            <ul class="list-group">
+              {% for form in case.affected_forms %}
+                <li class="list-group-item">
+                  <i class="fa fa-file"> </i>
+                  <a href="{{ form.url }}"> {{ form.name }}
+                    {% if form.is_primary %}
+                      <span class="label label-default">Primary Form</span>
+                    {% endif %}
+                  </a> ({{ form.actions }})
+                </li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    </br>
+    {% if affected_cases %}
+      {% blocktrans %}
+        The following cases have related Form Submissions that will be deleted as a result of one of the above
+        cases being deleted.
+        This will roll back the action taken by that form, if the form is not already archived.
+        These cases will <strong>not</strong> be deleted.
+      {% endblocktrans %}
+      <ul>
+        {% for case in affected_cases %}
+          <li>
+            <h4><strong><a href="{{ case.url }}"> {{ case.name }} </a></strong></h4>
+            <ul class="list-group">
+              {% for form in case.affected_forms %}
+                <li class="list-group-item">
+                  <i class="fa fa-file"> </i>
+                  <a href="{{ form.url }}"> {{ form.name }} </a> ({{ form.actions }})
+                </li>
+              {% endfor %}
+            </ul>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <div class="clearfix form-actions">
+      <div class="col-sm-12">
+        <a class="btn btn-default pull-left" href="{% url 'render_form_data' domain main_xform_id %}">
+          {% trans 'Cancel' %}
+        </a>
+        <button class="btn btn-danger" data-toggle="modal" data-target="#delete_case_confirmation">
+          <i class="fa fa-trash"></i>
+          {% trans "Permanently Delete Form and Related Cases" %}
+        </button>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+
+{% block modals %}
+  <div id="delete_case_confirmation" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">{% blocktrans %}Delete Form?{% endblocktrans %}
+            <small>{% trans "Permanent Action" %}</small>
+          </h4>
+        </div>
+        <form class="form-horizontal"
+              style="margin: 0; padding: 0"
+              method="post">
+          {% csrf_token %}
+          <div class="modal-body">
+            <p class="alert alert-warning">
+              <i class="fa fa-exclamation-triangle"></i>
+              {% blocktrans %}
+                It is important you read the entire message below thoroughly before completing this action.
+              {% endblocktrans %}
+            </p>
+            <p>
+              {% blocktrans with couch_user.human_friendly_name as friendly_name %}
+                Are you sure you want to permanently delete this form?
+                This action will delete all forms and cases shown on this page unless stated otherwise
+                and may potentially roll back changes made to other cases, including reopening them.
+                This is a <strong>permanent</strong> action and cannot be undone.
+              {% endblocktrans %}
+            </p>
+            <p>
+              {% blocktrans with couch_user.username as username %}
+                If even after reading this you decide that you really want
+                to delete this form, type <strong>{{ main_case_name }}</strong> into the box below.
+              {% endblocktrans %}
+            </p>
+            <textarea name='input' class="form-control" cols="100" rows="1"></textarea>
+          </div>
+          <div class="modal-footer">
+            <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
+            <button type="submit" class="btn btn-danger" data-bind="
+                           css: {disabled: disabled()},
+                           attr: {disabled: disabled()}
+                       ">
+              <i id="delete-case-icon" class="fa fa-trash" data-bind="
+                               css: {
+                                   'fa-trash': !formDeleteUserSent(),
+                                   'fa-refresh': formDeleteUserSent,
+                                   'fa-spin': formDeleteUserSent
+                               }
+                           "></i>
+              {% trans "Delete Form and Related Cases" %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
