@@ -266,6 +266,7 @@ class ProjectHealthDashboard(ProjectReport):
     fields = [
         'corehq.apps.reports.filters.location.LocationGroupFilter',
         'corehq.apps.reports.filters.dates.HiddenLastMonthDateFilter',
+        'corehq.apps.reports.filters.select.SelectApplicationFilter',
     ]
 
     exportable = True
