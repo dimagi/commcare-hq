@@ -271,6 +271,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         defaults = [
             self.utils.user_type_tuple(HQUserType.ACTIVE),
             self.utils.user_type_tuple(HQUserType.DEACTIVATED),
+            self.utils.user_type_tuple(HQUserType.WEB),
         ]
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))

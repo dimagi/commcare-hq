@@ -17,6 +17,7 @@ from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.es import UserES
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters
 from corehq.apps.es.aggregations import (
@@ -29,7 +30,6 @@ from corehq.apps.locations.permissions import (
     location_safe,
 )
 from corehq.apps.reports import util
-from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
     get_case_counts_closed_by_user,
@@ -45,6 +45,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
     get_total_case_counts_by_owner,
 )
+from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.datatables import (
     DataTablesColumn,
     DataTablesColumnGroup,
@@ -1386,8 +1387,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             )
             return util.get_simplified_users(user_query)
         elif not self.group_ids:
-            ret = [util._report_user(u) for u in list(CommCareUser.by_domain(self.domain))]
-            return ret
+            user_query = UserES().domain(self.domain)
+            return util.get_simplified_users(user_query)
         else:
             all_users = flatten_list(list(self.users_by_group.values()))
             all_users.extend([user for user in self.get_users_by_mobile_workers().values()])
