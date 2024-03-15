@@ -65,7 +65,7 @@ from corehq.apps.app_manager import (
     remote_app,
 )
 from corehq.apps.app_manager.app_schemas.case_properties import (
-    all_case_properties_by_domain,
+    expire_case_properties_caches,
     get_all_case_properties,
     get_usercase_properties,
 )
@@ -964,6 +964,7 @@ class MappingItem(DocumentSchema):
     key = StringProperty()
     # lang => localized string
     value = DictProperty()
+    alt_text = LabelProperty()
 
     @property
     def treat_as_expression(self):
@@ -4537,10 +4538,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             # expire cache unless new application
             self.global_app_config.clear_version_caches()
         get_all_case_properties.clear(self)
-        all_case_properties_by_domain.clear(self.domain, True, True)
-        all_case_properties_by_domain.clear(self.domain, True, False)
-        all_case_properties_by_domain.clear(self.domain, False, True)
-        all_case_properties_by_domain.clear(self.domain, False, False)
+        expire_case_properties_caches(self.domain)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
         get_apps_in_domain.clear(self.domain, True)

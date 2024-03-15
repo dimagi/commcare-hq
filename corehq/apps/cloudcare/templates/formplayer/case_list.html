@@ -142,11 +142,13 @@
   <% _.each(data, function(datum, index) { %>
     <% if (!(styles[index].widthHint === 0)) { %>
       <% if (styles[index].displayFormat === 'Image') { %>
-        <td class="module-case-list-column"><img class="module-icon" src="<%- resolveUri(datum) %>"/></td>
+        <td class="module-case-list-column"><img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/></td>
       <% } else if (styles[index].displayFormat === 'ClickableIcon') { %>
         <td class="module-case-list-column">
-          <img alt="<%- headers[index] %>" class="module-icon clickable-icon" role="button" src="<%- resolveUri(datum) %>" tabindex="0"/>
-          <i class="fa fa-spin fa-spinner" style="display:none"></i>
+          <button class="clickable-icon">
+            <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
+            <i class="fa fa-spin fa-spinner" style="display:none"></i>
+          </button>
         </td>
       <% } else if (styles[index].displayFormat === 'Markdown') { %>
         <td class="module-case-list-column webapp-markdown-output"><%= renderMarkdown(datum) %></td>
@@ -171,12 +173,14 @@
     <div class="<%- prefix %>-grid-style-<%- index %> box">
       <% if (styles[index].displayFormat === 'Image') {
       if(resolveUri(datum)) { %>
-        <img class="module-icon" src="<%- resolveUri(datum) %>"/>
+        <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
       <% } %>
       <% } else if (styles[index].displayFormat === 'ClickableIcon') {
       if(resolveUri(datum)) { %>
-        <img alt="<%- headers[index] %>" class="module-icon clickable-icon" role="button" src="<%- resolveUri(datum) %>" tabindex="0"/>
-        <i class="fa fa-spin fa-spinner" style="display:none"></i>
+        <button class="clickable-icon">
+          <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
+          <i class="fa fa-spin fa-spinner" style="display:none"></i>
+        </button>
       <% } %>
       <% } else if(styles[index].widthHint === 0) { %>
         <div style="display:none;"><%- datum %></div>
@@ -201,12 +205,14 @@
         <div class="<%- prefix %>-grid-style-<%- index %> box" >
           <% if (styles[index].displayFormat === 'ClickableIcon') {
           if(resolveUri(datum)) { %>
-            <img alt="<%- headers[index] %>" class="module-icon clickable-icon" role="button" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>" tabindex="0"/>
-            <i class="fa fa-spin fa-spinner" style="display:none"></i>
+            <button class="clickable-icon">
+              <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" style="max-width:100%; max-height:100%;"/>
+              <i class="fa fa-spin fa-spinner" style="display:none"></i>
+            </button>
           <% } %>
           <% } else if (styles[index].displayFormat === 'Image') {
           if(resolveUri(datum)) { %>
-            <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+            <img alt="<%- altText[index] %>" class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
           <% } %>
           <% } else if(styles[index].widthHint === 0) { %>
             <div style="display:none;"><%- datum %></div>
@@ -225,12 +231,14 @@
             <div class="<%- prefix %>-grid-style-<%- index %> box">
               <% if (styles[index].displayFormat === 'Image') {
                 if(resolveUri(datum)) { %>
-                  <img class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
+                  <img alt="<%- altText[index] %>" class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
                 <% } %>
               <% } else if (styles[index].displayFormat === 'ClickableIcon') {
                 if(resolveUri(datum)) { %>
-                  <img alt="<%- headers[index] %>" class="module-icon clickable-icon" role="button" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>" tabindex="0"/>
-                  <i class="fa fa-spin fa-spinner" style="display:none"></i>
+                  <button class="clickable-icon">
+                    <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" style="max-width:100%; max-height:100%;"/>
+                    <i class="fa fa-spin fa-spinner" style="display:none"></i>
+                  </button>
                 <% } %>
               <% } else { %>
                   <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>

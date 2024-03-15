@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('geospatial/js/models', [
     'jquery',
     'knockout',
@@ -29,7 +30,6 @@ hqDefine('geospatial/js/models', [
     };
 
     var MapItem = function (itemId, itemData, marker, markerColors) {
-        'use strict';
         var self = this;
         self.itemId = itemId;
         self.itemData = itemData;
@@ -148,6 +148,30 @@ hqDefine('geospatial/js/models', [
                 });
 
                 self.mapInstance.addLayer({
+                    id: 'Landuse',
+                    source: 'mapbox-streets',
+                    'source-layer': 'landuse',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#695447', // brown land color
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'Road',
+                    source: 'mapbox-streets',
+                    'source-layer': 'road',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#000000', // black
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
                     id: 'Admin',
                     source: 'mapbox-streets',
                     'source-layer': 'admin',
@@ -155,7 +179,31 @@ hqDefine('geospatial/js/models', [
                     paint: {
                         'line-color': '#800080', // purple
                     },
-                    'layout': {
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'Building',
+                    source: 'mapbox-streets',
+                    'source-layer': 'building',
+                    type: 'fill',
+                    paint: {
+                        'fill-color': '#808080', // grey
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'Waterway',
+                    source: 'mapbox-streets',
+                    'source-layer': 'waterway',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#00008b', // darkblue
+                    },
+                    layout: {
                         'visibility': 'none',
                     },
                 });
@@ -216,7 +264,17 @@ hqDefine('geospatial/js/models', [
 
         function addLayersToPanel() {
             self.mapInstance.on('idle', () => {
+<<<<<<< HEAD
                 const toggleableLayerIds = ['Admin', 'Building', 'Landuse', 'Road', 'Waterway'];
+=======
+                const toggleableLayerIds = [
+                    'Landuse',
+                    'Admin',
+                    'Road',
+                    'Building',
+                    'Waterway',
+                ];
+>>>>>>> origin
                 const menuElement = document.getElementById('layer-toggle-menu');
                 for (const layerId of toggleableLayerIds) {
                     // Skip if layer doesn't exist or button is already present

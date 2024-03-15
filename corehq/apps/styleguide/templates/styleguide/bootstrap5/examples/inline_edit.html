@@ -1,0 +1,24 @@
+<div id="inline-edit-example">
+  <inline-edit data-apply-bindings="false"
+               params="value: text,
+                       url: url,
+                       rows: 1,
+                       placeholder: gettext('Click here to add a comment'),
+                       errorMessage: gettext('Error updating comment. Please try again.'),"></inline-edit>
+</div>
+
+<script>
+  $(function () {
+    $("#inline-edit-example").koApplyBindings(function () {
+      let self = {};
+
+      self.text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
+
+      // ideally hqwebapp/js/initial_page_data should be in define() of the js module
+      let initialPageData = hqImport("hqwebapp/js/initial_page_data");
+      self.url = initialPageData.reverse("styleguide_inline_edit_demo");
+
+      return self;
+    });
+  });
+</script>

@@ -41,6 +41,11 @@ XFORM_MAPPING = {
             "type": "keyword"
         },
         "doc_type": {
+            "fields": {
+                "exact": {
+                    "type": "keyword"
+                }
+            },
             "type": "text"
         },
         "domain": {

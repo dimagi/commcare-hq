@@ -6,6 +6,7 @@ from django.utils.translation import gettext_noop as _
 
 from dateutil.relativedelta import relativedelta
 
+from corehq.apps.sso.models import IdentityProviderType
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.accounting.async_handlers import (
@@ -74,6 +75,13 @@ class CreditAdjustmentReasonFilter(BaseSingleOptionFilter):
     label = _("Credit Adjustment Reason")
     default_text = _("Any Reason")
     options = CreditAdjustmentReason.CHOICES
+
+
+class IdPServiceTypeFilter(BaseSingleOptionFilter):
+    slug = 'idp_service_type'
+    label = _("Service Type")
+    default_text = _("Any Service")
+    options = IdentityProviderType.CHOICES
 
 
 class CreditAdjustmentLinkFilter(BaseSingleOptionFilter):

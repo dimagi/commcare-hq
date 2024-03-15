@@ -268,8 +268,8 @@ class TransferDomainForm(forms.ModelForm):
 
     def clean_to_username(self):
         username = self.cleaned_data['to_username']
-
-        if not WebUser.get_by_username(username):
+        web_user = WebUser.get_by_username(username)
+        if not (web_user and web_user.is_active):
             raise forms.ValidationError(TransferDomainFormErrors.USER_DNE)
 
         return username
@@ -366,7 +366,7 @@ class DomainGlobalSettingsForm(forms.Form):
     call_center_enabled = BooleanField(
         label=gettext_lazy("Call Center Application"),
         required=False,
-        help_text=gettext_lazy("Call Center mode is a CommCareHQ module for managing "
+        help_text=gettext_lazy("Call Center mode is a CommCare HQ module for managing "
                     "call center workflows. It is still under "
                     "active development. Do not enable for your domain unless "
                     "you're actively piloting it.")
@@ -1035,7 +1035,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             "Please rate the technical competency of the partner on a scale from "
             "1 to 5. 1 means low-competency, and we should expect LOTS of basic "
             "hand-holding. 5 means high-competency, so if they report a bug it's "
-            "probably a real issue with CommCareHQ or a really good idea."
+            "probably a real issue with CommCare HQ or a really good idea."
         ),
     )
     support_prioritization = IntegerField(
@@ -2298,7 +2298,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                         crispy.HTML(
                             _('<p><i class="fa fa-info-circle"></i> '
                               'Clicking "Update" will set up the '
-                              'subscription in CommCareHQ to one of our '
+                              'subscription in CommCare HQ to one of our '
                               'standard contracted plans.<br/> If you '
                               'need to set up a non-standard plan, '
                               'please email {}.</p>').format(settings.ACCOUNTS_EMAIL)

@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/hq_events_spec", function () {
     describe('HQ Events', function () {

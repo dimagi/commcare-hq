@@ -104,7 +104,7 @@ class BulkUploadForm(forms.Form):
                 *self.crispy_form_fields(context)
             ),
             StrictButton(
-                ('<i class="fa fa-cloud-upload"></i> Upload %s' % plural_noun),
+                ('<i class="fa-solid fa-cloud-arrow-up"></i> Upload %s' % plural_noun),
                 css_class='btn-primary disable-on-submit',
                 data_bind='disable: !file()',
                 type='submit',

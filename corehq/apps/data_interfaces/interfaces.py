@@ -195,7 +195,7 @@ class CaseCopyInterface(CaseReassignmentInterface):
     @property
     def fields(self):
         return [
-            'corehq.apps.reports.filters.users.SelectMobileWorkerFilter',
+            'corehq.apps.reports.filters.case_list.CaseListFilter',
             'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
             'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
             'corehq.apps.reports.standard.cases.filters.SensitiveCaseProperties',

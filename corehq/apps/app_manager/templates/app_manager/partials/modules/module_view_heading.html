@@ -10,9 +10,9 @@
     {% if module.is_training_module %}
       {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-book' postSave=postSave disallow_edit=disallow_edit %}
     {% elif module.module_type == "shadow" %}
-      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-folder-open-o' postSave=postSave disallow_edit=disallow_edit %}
+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-regular fa-folder-open' postSave=postSave disallow_edit=disallow_edit %}
     {% elif module.module_type == "report" %}
-      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-bar-chart' postSave=postSave disallow_edit=disallow_edit %}
+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa-regular fa-chart-bar' postSave=postSave disallow_edit=disallow_edit %}
     {% elif module.module_type == "advanced" %}
       {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-flask' postSave=postSave disallow_edit=disallow_edit %}
     {% elif module.is_surveys %}

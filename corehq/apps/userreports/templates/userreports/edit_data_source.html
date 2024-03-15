@@ -6,7 +6,7 @@
 {% block page_content %}
   {% if data_source.meta.build.is_rebuild_in_progress %}
         <div id="built-warning" class="alert alert-warning">
-          <h4><i class="fa fa-exclamation-triangle"></i>
+          <h4><i class="fa-solid fa-triangle-exclamation"></i>
           {% if data_source.rebuild_failed %}
             {% trans "Populating your report did not complete successfully." %}
           {% elif data_source.meta.build.is_rebuilding %}

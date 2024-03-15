@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,26 +1,37 @@
+@@ -2,26 +2,37 @@
  requirejs.config({
      baseUrl: '/static/',
      paths: {
@@ -42,7 +42,7 @@
          "hqwebapp/js/lib/modernizr": {
              exports: 'Modernizr',
          },
-@@ -46,7 +57,7 @@
+@@ -47,7 +58,7 @@
          },
      },
  

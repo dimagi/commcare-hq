@@ -42,6 +42,18 @@
         </text>
       </template>
     </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_dob_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="dob"/>
+        </text>
+      </template>
+    </field>
     <action>
       <display>
         <text>

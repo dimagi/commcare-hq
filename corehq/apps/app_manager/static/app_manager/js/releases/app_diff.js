@@ -247,7 +247,7 @@ hqDefine('app_manager/js/releases/app_diff', function () {
                 self.options.formNameMap[self.id].form_name[self.options.lang]
             );
             var lines = [
-                HtmlUtils.makeLi(sanitize(formName), 'diff-form', 'file-o'),
+                HtmlUtils.makeLi(sanitize(formName), 'diff-form', 'fa-regular fa-file'),
                 HtmlUtils.makeLi(gettext('Save Questions'), 'diff-case-action diff-underline fa-ul', '', true),
                 HtmlUtils.makeUl('diff-questions diff-save-questions fa-ul'),
                 _.map(self.saveQuestions, function (q) { return q.toString(); }).join('\n'),
@@ -319,7 +319,7 @@ hqDefine('app_manager/js/releases/app_diff', function () {
         self.toString = function () {
             var lines = [
                 // We want these to be considered one line
-                (HtmlUtils.makeLi(sanitize(self.name[self.options.lang]), 'diff-form', 'file-o') +
+                (HtmlUtils.makeLi(sanitize(self.name[self.options.lang]), 'diff-form', 'fa-regular fa-file') +
                     HtmlUtils.makeSpan(sanitize(' ' + self.shortComment), 'diff-comment', '', true)),
                 HtmlUtils.makeUl('diff-questions fa-ul'),
                 _.map(self.questions, function (q) { return q.toString(); }).join('\n'),

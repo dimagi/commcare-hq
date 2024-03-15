@@ -35,16 +35,6 @@ services:
     ports:
       - "6379:6379"
 
-  elasticsearch2:
-    extends:
-      file: hq-compose.yml
-      service: elasticsearch2
-    command: elasticsearch --cluster.name=${ES_CLUSTER_NAME}
-    environment:
-      ES_CLUSTER_NAME: ES_CLUSTER_NAME
-    ports:
-      - "9205:9200"
-
   elasticsearch5:
     extends:
       file: hq-compose.yml
