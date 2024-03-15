@@ -29,7 +29,13 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 defer = $.Deferred(),
                 options,
                 menus;
-
+                sessionStorage.formplayerQueryInProgress = true;
+                setTimeout(() => {
+                    if (!$('.duration-to-show-loading-met').length) {
+                        const newdiv1 = $( "<div class='duration-to-show-loading-met' style='display: none;'></div>" );
+                        $('body').append(newdiv1);
+                    }
+                }, constants.MILLIS_BEFORE_SHOW_LOADING);
             $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
                 if (!params.preview) {
                     // Make sure the user has access to the app
@@ -53,6 +59,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
                 options = {
                     success: function (parsedMenus, response) {
+                        sessionStorage.formplayerQueryInProgress = false;
+                        $('.duration-to-show-loading-met').remove();
                         if (response.status === 'retry') {
                             FormplayerFrontend.trigger('retry', response, function () {
                                 var newOptionsData = JSON.stringify($.extend(true, { mustRestore: true }, JSON.parse(options.data)));
