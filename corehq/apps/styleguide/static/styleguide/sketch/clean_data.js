@@ -391,6 +391,8 @@ hqDefine("styleguide/sketch/clean_data",[
             self.resetFilterForm = function () {
                 self.hasFilter(false);
                 self.filterForm(new FilterForm());
+                self.filteredRows(self.allRows);
+                self.goToPage(1);
             };
 
             self.applyFilterToData = function () {
