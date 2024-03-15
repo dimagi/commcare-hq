@@ -246,7 +246,7 @@ class PopulateSQLCommand(BaseCommand):
         if not migrated:
             print(f"""
 A migration must be performed before this environment can be upgraded to the latest version
-of CommCareHQ. This migration is run using the management command {command_name}.
+of CommCare HQ. This migration is run using the management command {command_name}.
             """)
             if cls.commit_adding_migration():
                 print(f"""
