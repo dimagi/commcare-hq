@@ -405,7 +405,7 @@ hqDefine("styleguide/sketch/clean_data",[
                     if (filterText === undefined) {
                         filterText = "";
                     }
-                    return row.data[self.filterForm().selectedColumnSlug()].originalValue() === filterText;
+                    return row.data[self.filterForm().selectedColumnSlug()].originalValue().includes(filterText);
                 }));
                 self.goToPage(1);
                 self.hasFilter(true);
