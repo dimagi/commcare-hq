@@ -264,9 +264,6 @@ hqDefine('geospatial/js/models', [
 
         function addLayersToPanel() {
             self.mapInstance.on('idle', () => {
-<<<<<<< HEAD
-                const toggleableLayerIds = ['Admin', 'Building', 'Landuse', 'Road', 'Waterway'];
-=======
                 const toggleableLayerIds = [
                     'Landuse',
                     'Admin',
@@ -274,7 +271,6 @@ hqDefine('geospatial/js/models', [
                     'Building',
                     'Waterway',
                 ];
->>>>>>> origin
                 const menuElement = document.getElementById('layer-toggle-menu');
                 for (const layerId of toggleableLayerIds) {
                     // Skip if layer doesn't exist or button is already present
