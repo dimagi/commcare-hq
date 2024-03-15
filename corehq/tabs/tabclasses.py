@@ -1478,16 +1478,10 @@ class ProjectUsersTab(UITab):
         )
 
     @property
-    def can_view_cloudcare(self):
-        return (has_privilege(self._request, privileges.CLOUDCARE)
-                and self.couch_user.is_domain_admin())
-
-    @property
     def has_project_access(self):
         return has_privilege(self._request, privileges.PROJECT_ACCESS)
 
-    def _get_mobile_users_menu(self):
-        menu = []
+    def _mobile_workers(self):
         if ((self.couch_user.can_edit_commcare_users()
                 or self.couch_user.can_view_commcare_users())
                 and self.has_project_access):
@@ -1508,7 +1502,7 @@ class ProjectUsersTab(UITab):
                 MobileWorkerListView,
             )
 
-            menu.append({
+            return {
                 'title': _(MobileWorkerListView.page_title),
                 'url': reverse(MobileWorkerListView.urlname,
                                args=[self.domain]),
@@ -1523,8 +1517,6 @@ class ProjectUsersTab(UITab):
                      'urlname': 'delete_commcare_users'},
                     {'title': _('Bulk Lookup'),
                      'urlname': 'commcare_users_lookup'},
-                    {'title': _('Edit User Fields'),
-                     'urlname': 'user_fields_view'},
                     {'title': _('Filter and Download Mobile Workers'),
                      'urlname': 'filter_and_download_commcare_users'},
                     {'title': _(
@@ -1532,13 +1524,21 @@ class ProjectUsersTab(UITab):
                         'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
                 ],
                 'show_in_dropdown': True,
-            })
+            }
 
+    def _user_fields(self):
+        if self.can_access_all_locations and self.couch_user.can_edit_commcare_users():
+            return {
+                'title': _("Edit User Fields"),
+                'url': reverse('user_fields_view', args=[self.domain]),
+            }
+
+    def _groups(self):
         if ((self.couch_user.can_edit_groups() or self.couch_user.can_view_groups())
                 and self.has_project_access):
             is_view_only_subpage = (hasattr(self._request, 'is_view_only')
                                     and self._request.is_view_only)
-            menu.append({
+            return {
                 'title': _('Groups'),
                 'url': reverse('all_groups', args=[self.domain]),
                 'description': _("""Create and manage
@@ -1553,21 +1553,16 @@ class ProjectUsersTab(UITab):
                      'urlname': 'group_membership'}
                 ],
                 'show_in_dropdown': True,
-            })
+            }
 
-        if self.can_view_cloudcare:
-            title = _("Web Apps Permissions")
-            menu.append({
-                'title': title,
-                'url': reverse('cloudcare_app_settings',
-                               args=[self.domain])
-            })
+    def _web_apps_permissions(self):
+        if has_privilege(self._request, privileges.CLOUDCARE) and self.couch_user.is_domain_admin():
+            return {
+                'title': _("Web Apps Permissions"),
+                'url': reverse('cloudcare_app_settings', args=[self.domain]),
+            }
 
-        return menu
-
-    def _get_project_users_menu(self):
-        menu = []
-
+    def _web_users(self):
         if self.couch_user.can_edit_web_users() or self.couch_user.can_view_web_users():
             def _get_web_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id
@@ -1579,23 +1574,12 @@ class ProjectUsersTab(UITab):
                 else:
                     return None
 
-            from corehq.apps.users.views import (
-                EditWebUserView,
-                EnterpriseUsersView,
-                ListWebUsersView,
-            )
+            from corehq.apps.users.views import EditWebUserView, ListWebUsersView
             from corehq.apps.users.views.mobile.users import (
                 FilteredWebUserDownload,
             )
 
-            if toggles.ENTERPRISE_USER_MANAGEMENT.enabled_for_request(self._request):
-                menu.append({
-                    'title': _(EnterpriseUsersView.page_title),
-                    'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
-                    'show_in_dropdown': True,
-                })
-
-            menu = menu + [{
+            return {
                 'title': _(ListWebUsersView.page_title),
                 'url': reverse(ListWebUsersView.urlname,
                                args=[self.domain]),
@@ -1620,22 +1604,28 @@ class ProjectUsersTab(UITab):
                     },
                 ],
                 'show_in_dropdown': True,
-            }]
+            }
 
+    def _enterprise_users(self):
+        from corehq.apps.users.views import EnterpriseUsersView
+        if toggles.ENTERPRISE_USER_MANAGEMENT.enabled_for_request(self._request):
+            return {
+                'title': _(EnterpriseUsersView.page_title),
+                'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
+                'show_in_dropdown': True,
+            }
+
+    def _roles_and_permissions(self):
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
             from corehq.apps.users.views import ListRolesView
-            menu.append({
+            return {
                 'title': _(ListRolesView.page_title),
-                'url': reverse(ListRolesView.urlname,
-                               args=[self.domain]),
-                'description': _(
-                    "View and manage user roles."),
+                'url': reverse(ListRolesView.urlname, args=[self.domain]),
+                'description': _("View and manage user roles."),
                 'subpages': [],
                 'show_in_dropdown': True,
-            })
-
-        return menu
+            }
 
     def _get_locations_menu(self):
         if (not has_privilege(self._request, privileges.LOCATIONS)
@@ -1717,13 +1707,17 @@ class ProjectUsersTab(UITab):
     def sidebar_items(self):
         items = []
 
-        mobile_users_menu = self._get_mobile_users_menu()
-        if mobile_users_menu:
-            items.append((_('Application Users'), mobile_users_menu))
-
-        project_users_menu = self._get_project_users_menu()
-        if project_users_menu:
-            items.append((_('Project Users'), project_users_menu))
+        users_menu = filter(None, [
+            self._enterprise_users(),
+            self._mobile_workers(),
+            self._web_users(),
+            self._roles_and_permissions(),
+            self._user_fields(),
+            self._groups(),
+            self._web_apps_permissions(),
+        ])
+        if users_menu:
+            items.append((_('Users'), users_menu))
 
         locations_menu = self._get_locations_menu()
         if locations_menu:
