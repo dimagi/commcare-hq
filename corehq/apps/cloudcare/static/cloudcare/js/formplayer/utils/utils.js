@@ -1,10 +1,21 @@
 'use strict';
-/*global Backbone, DOMPurify */
-hqDefine("cloudcare/js/formplayer/utils/utils", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        constants = hqImport("cloudcare/js/formplayer/constants");
-
+hqDefine("cloudcare/js/formplayer/utils/utils", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'DOMPurify/dist/purify.min',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    "cloudcare/js/formplayer/constants"
+], function (
+    $,
+    _,
+    Backbone,
+    DOMPurify,
+    initialPageData,
+    toggles,
+    constants
+) {
     var Utils = {};
 
     /**
@@ -54,12 +65,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     Utils.currentUrlToObject = function () {
         var url = Backbone.history.getFragment();
         try {
-            const cloudcareUrl = Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
-            for (const queryKey in cloudcareUrl.queryData) {
-                // retrieve query inputs from Utils object
-                cloudcareUrl.queryData[queryKey].inputs = Utils.getCurrentQueryInputs(queryKey);
-            }
-            return cloudcareUrl;
+            return Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
         } catch (e) {
             // This means that we're on the homepage
             return new Utils.CloudcareUrl({});
@@ -72,10 +78,14 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             // don't store query inputs in url
             delete urlObject.queryData[queryKey].inputs;
         }
+
         var encodedUrl = Utils.objectToEncodedUrl(urlObject.toJson());
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            FormplayerFrontend.navigate(encodedUrl, { replace: replace });
-        });
+        Utils.navigate(encodedUrl, { replace: replace });
+    };
+
+    Utils.navigate = function (route, options) {
+        options || (options = {});
+        Backbone.history.navigate(route, options);
     };
 
     /**
@@ -103,39 +113,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         options.crossDomain = {crossDomain: true};
         options.xhrFields = {withCredentials: true};
         options.contentType = "application/json;charset=UTF-8";
-    };
-
-    Utils.saveDisplayOptions = function (displayOptions) {
-        $.when(Utils.getDisplayOptionsKey()).done(function (displayOptionsKey) {
-            localStorage.setItem(displayOptionsKey, JSON.stringify(displayOptions));
-        });
-    };
-
-    Utils.getSavedDisplayOptions = function () {
-        var defer = $.Deferred();
-        $.when(Utils.getDisplayOptionsKey()).done(function (displayOptionsKey) {
-            try {
-                defer.resolve(JSON.parse(localStorage.getItem(displayOptionsKey)));
-            } catch (e) {
-                window.console.warn('Unabled to parse saved display options');
-                defer.resolve({});
-            }
-        });
-        return defer.promise();
-    };
-
-    Utils.getDisplayOptionsKey = function () {
-        var defer = $.Deferred();
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            var user = FormplayerFrontend.getChannel().request('currentUser');
-            defer.resolve([
-                user.environment,
-                user.domain,
-                user.username,
-                'displayOptions',
-            ].join(':'));
-        });
-        return defer.promise();
     };
 
     // This method takes current page number on which user has clicked and total possible pages
@@ -247,6 +224,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         this.singleApp = options.singleApp;
         this.sortIndex = options.sortIndex;
         this.forceLoginAs = options.forceLoginAs;
+        this.requestInitiatedByTags = options.requestInitiatedByTags;
 
         this.setSelections = function (selections) {
             this.selections = selections;
@@ -289,7 +267,16 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
         };
 
-        this.setQueryData = function ({ inputs, execute, forceManualSearch, initiatedBy}) {
+        this.addRequestInitiatedByTags = function (requestInitiatedByTag) {
+            if (requestInitiatedByTag !== null && requestInitiatedByTag !== undefined) {
+                if (!this.requestInitiatedByTags) {
+                    this.requestInitiatedByTags = [];
+                }
+                this.requestInitiatedByTags.push(String(requestInitiatedByTag));
+            }
+        };
+
+        this.setQueryData = function ({ inputs, execute, forceManualSearch}) {
             var selections = Utils.currentUrlToObject().selections;
             var queryKey = sessionStorage.queryKey;
             this.queryData = this.queryData || {};
@@ -301,9 +288,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
                 selections: selections,
             }, this.queryData[queryKey]);
 
-            if (initiatedBy !== null && initiatedBy !== undefined) {
-                queryDataEntry.initiatedBy = initiatedBy;
-            }
             Utils.setCurrentQueryInputs(inputs, queryKey);
             this.queryData[queryKey] = queryDataEntry;
 
@@ -385,12 +369,17 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
             forceLoginAs: self.forceLoginAs,
+            requestInitiatedByTags: self.requestInitiatedByTags,
         };
         return JSON.stringify(dict);
     };
 
     Utils.CloudcareUrl.fromJson = function (json) {
         var data = JSON.parse(json);
+        for (const queryKey in data.queryData) {
+            // retrieve query inputs from Utils object
+            data.queryData[queryKey].inputs = Utils.getCurrentQueryInputs(queryKey);
+        }
         var options = {
             'appId': data.appId,
             'copyOf': data.copyOf,
@@ -404,6 +393,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             'singleApp': data.singleApp,
             'sortIndex': data.sortIndex,
             'forceLoginAs': data.forceLoginAs,
+            "requestInitiatedByTags": data.requestInitiatedByTags,
         };
         return new Utils.CloudcareUrl(options);
     };
