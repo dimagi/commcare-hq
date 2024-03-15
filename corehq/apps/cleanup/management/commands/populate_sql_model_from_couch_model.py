@@ -30,7 +30,7 @@ from corehq.util.pagination import (
     paginate_function,
 )
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import iter_docs, retry_on_couch_error
 from dimagi.utils.couch.migration import disable_sync_to_couch
 
 
@@ -625,7 +625,8 @@ Run the following commands to run the migration and get up to date:
     @classmethod
     def _resume_iter_couch_view(cls, chunk_size=1000):
         view_name, params = cls.get_couch_view_name_and_parameters()
-        view = partial(cls.couch_db().view, view_name, reduce=False, include_docs=True)
+        view = retry_on_couch_error(partial(
+            cls.couch_db().view, view_name, reduce=False, include_docs=True))
         args_provider = NoSkipArgsProvider(params | {"limit": chunk_size})
         iteration_key = f"{cls.couch_doc_type()}-to-sql"
         rfi = ResumableFunctionIterator(iteration_key, view, args_provider)
