@@ -131,6 +131,18 @@ hqDefine('cloudcare/js/utils', [
         return !answerInProgress && !validationInProgress;
     };
 
+    var loadingDurationListener = function () {
+        const targetNode = $('body')[0];
+        const callback = function () {
+            if ($('body').find('.duration-to-show-loading-met').length && sessionStorage.formplayerQueryInProgress) {
+                showProminentLoading();
+                observer.disconnect();
+            }
+        };
+        const observer = new MutationObserver(callback);
+        observer.observe(targetNode, { childList: true, subtree: true });
+    };
+
     var getRegionContainer = function () {
         const RegionContainer = Marionette.View.extend({
             el: "#menu-container",
