@@ -116,10 +116,7 @@ class BaseExportView(BaseProjectDataView):
     def page_context(self):
         owner_id = self.export_instance.owner_id
         number_of_apps_to_process = 0
-        is_all_case_types_export = (
-            isinstance(self.export_instance, CaseExportInstance)
-            and self._is_bulk_export
-        )
+        is_all_case_types_export = self._is_bulk_export
         table_count = 0
         if not is_all_case_types_export:
             # Case History table is not a selectable table, so exclude it from count
@@ -159,12 +156,12 @@ class BaseExportView(BaseProjectDataView):
 
     @property
     def _possible_geo_properties(self):
+        if self._is_bulk_export:
+            return []
+
         if self.export_type == FORM_EXPORT:
             # 'location' is the geo-point in the form metadata
             return ['location']
-
-        if self._is_bulk_export:
-            return []
 
         return list(CaseProperty.objects.filter(
             case_type__domain=self.domain,
@@ -178,11 +175,7 @@ class BaseExportView(BaseProjectDataView):
 
         should_support_geojson = (
             toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain)
-            and (
-                self.export_type == CASE_EXPORT
-                and not self._is_bulk_export
-                or self.export_type == FORM_EXPORT
-            )
+            and not self._is_bulk_export
         )
         if should_support_geojson:
             format_options.append("geojson")
@@ -314,6 +307,8 @@ class BaseExportView(BaseProjectDataView):
 
     @property
     def _is_bulk_export(self):
+        if self.export_type is not CASE_EXPORT:
+            return False
         return self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
 
 
