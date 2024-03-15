@@ -32,7 +32,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 sessionStorage.formplayerQueryInProgress = true;
                 setTimeout(() => {
                     if (!$('.duration-to-show-loading-met').length) {
-                        const newdiv1 = $( "<div class='duration-to-show-loading-met' style='display: none;'></div>" );
+                        const newdiv1 = $("<div class='duration-to-show-loading-met' style='display: none;'></div>");
                         $('body').append(newdiv1);
                     }
                 }, constants.MILLIS_BEFORE_SHOW_LOADING);
