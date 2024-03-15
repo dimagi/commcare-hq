@@ -1,10 +1,3 @@
-<!-- ko if: hasFilter -->
-  <div class="pe-2 d-inline-block">
-    <i class="fa-solid fa-filter"></i>
-    Filter Applied: <!-- ko text: totalItems --><!-- /ko --> Matching Records
-  </div>
-<!-- /ko -->
-
 <div class="d-inline-block">
   <i class="fa-solid fa-circle-check"></i>
   <!-- ko text: numRowsSelected --><!-- /ko --> Records Selected
@@ -24,3 +17,15 @@
     </button>
   <!-- /ko -->
 </div>
+
+<!-- ko if: hasFilter -->
+  <div class="ps-2 ms-2 d-inline-block border-left">
+    <i class="fa-solid fa-filter"></i>
+    Filter Applied: <!-- ko text: totalItems --><!-- /ko --> Matching Records
+    <button type="button"
+            data-bind="click: resetFilterForm"
+            class="btn btn-primary btn-sm">
+      <i class="fa-solid fa-close"></i>
+    </button>
+  </div>
+<!-- /ko -->
