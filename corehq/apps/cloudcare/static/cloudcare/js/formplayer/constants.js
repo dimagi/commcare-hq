@@ -39,6 +39,9 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
             CLICKABLE_ICON: "clickable_icon",
         },
 
+        //Custom Properties
+        POST_FORM_SYNC: "cc-sync-after-form",
+
         SMALL_SCREEN_WIDTH_PX: 992,
 
         BREADCRUMB_HEIGHT_PX: 46.125,

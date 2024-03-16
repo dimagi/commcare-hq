@@ -2109,6 +2109,7 @@ msgstr "No se encontró la Tabla de búsqueda en el proyecto."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js
 msgid "Loading..."
 msgstr "Cargando..."
@@ -3604,13 +3605,26 @@ msgid ""
 "will not be exported."
 msgstr ""
 
+#: corehq/apps/geospatial/static/geospatial/js/geo_config.js
+#, fuzzy
+#| msgid "Report successfully emailed"
+msgid "Token successfully verified!"
+msgstr "Reporte enviado por correo electrónico exitosamente"
+
+#: corehq/apps/geospatial/static/geospatial/js/geo_config.js
+msgid ""
+"Invalid API token. Please verify that the token matches the one on your "
+"Mapbox account and has the correct scope configured."
+msgstr ""
+
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "Name of the Area"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid ""
-"Oops! Something went wrong! Please contact admin if the problem persists."
+"Oops! Something went wrong! Please check that your geospatial settings are "
+"configured correctly or contact admin if the problem persists."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
@@ -4448,22 +4462,16 @@ msgid "Please Select a Country Code"
 msgstr "Por favor Seleccione un Código de País"
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
-#, fuzzy
-#| msgid "Form"
 msgid "Forms"
-msgstr "Formulario"
+msgstr "Formularios"
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
-#, fuzzy
-#| msgid "Case"
 msgid "Cases"
-msgstr "Caso"
+msgstr "Casos"
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
-#, fuzzy
-#| msgid "Included Reports"
 msgid "Reports"
-msgstr "Reportes Incluidos"
+msgstr "Reportes"
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
 msgid "App Builder"
@@ -4478,26 +4486,20 @@ msgid "Submission has been cancelled."
 msgstr ""
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
-#, fuzzy
-#| msgid "Please specify a project name."
 msgid "Please specify a username."
-msgstr "Por favor especifique un nombre de proyecto."
+msgstr ""
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
 msgid "Username must be at least three characters long."
 msgstr ""
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
-#, fuzzy
-#| msgid "You must have at least one language"
 msgid "Your password must be at least 6 characters long"
-msgstr "Debe tener al menos un idioma"
+msgstr ""
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
-#, fuzzy
-#| msgid "Deleting..."
 msgid "Resetting form..."
-msgstr "Borrando..."
+msgstr ""
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
 msgid "Benched"
@@ -4508,10 +4510,8 @@ msgid "Playing"
 msgstr ""
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
-#, fuzzy
-#| msgid "Search..."
 msgid "Search Team..."
-msgstr "Buscar..."
+msgstr ""
 
 #: corehq/apps/translations/static/translations/js/translations.js
 msgid "Delete Translation"
