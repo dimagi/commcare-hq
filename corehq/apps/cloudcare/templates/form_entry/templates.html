@@ -6,7 +6,6 @@
         class: elementTile,
         css: {
           'gr-no-children': $data.children().length === 0,
-          'gr-has-no-questions': $data.children().every(function(d) { return d.type() !== 'grouped-element-tile-row' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'panel panel-default': collapsible,
           'repetition': isRepetition,
@@ -168,7 +167,7 @@
         <div data-bind="
           css: submitClass,
           style: {
-            'bottom':isAnchoredSubmitStyle && {{ request.couch_user.can_edit_data|yesno:'true,false' }} ? '30px' : '' {# data preview bar #}
+            'bottom':isAnchoredSubmitStyle && {{ request.couch_user.can_edit_data|yesno:'true,false' }} {% if environment != "web-apps" %} && False {% endif %} ? '30px' : '' {# data preview bar #}
           }">
           <button class="submit btn btn-primary"
                   type="submit"
