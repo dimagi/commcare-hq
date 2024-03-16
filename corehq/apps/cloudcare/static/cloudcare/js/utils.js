@@ -209,7 +209,7 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var showLoading = function () {
-        hqRequire(["hqwebapp/js/toggles",], function (toggles) {
+        hqRequire(["hqwebapp/js/toggles"], function (toggles) {
             if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
                 loadingDurationListener();
             } else {
