@@ -432,6 +432,18 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         self.assertEqual([], CaseAttachment.objects.get_attachments(case1.case_id))
         self.assertEqual([], CaseTransaction.objects.get_transactions(case1.case_id))
 
+    @override_settings(UNIT_TESTING=False)
+    def test_bulk_delete_creates_tombstone_if_leave_tombstone_is_true(self):
+        cases = [_create_case(deleted_on=datetime.now()) for i in range(3)]
+        case_ids = [case.case_id for case in cases]
+        CommCareCase.objects.hard_delete_cases(DOMAIN, case_ids, leave_tombstone=True)
+        self.assertEqual(DeletedSQLDoc.objects.all().count(), 3)
+
+    @override_settings(UNIT_TESTING=False)
+    def test_bulk_delete_raises_error_if_leave_tombstone_is_not_specified(self):
+        with self.assertRaises(NotImplementedError):
+            CommCareCase.objects.hard_delete_cases(DOMAIN, [])
+
 
 class TestHardDeleteCasesBeforeCutoff(TestCase):
 

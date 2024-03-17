@@ -368,6 +368,18 @@ class XFormInstanceManagerTest(TestCase):
         with self.assertRaises(ValueError):
             form.delete(leave_tombstone=False)
 
+    @override_settings(UNIT_TESTING=False)
+    def test_bulk_delete_creates_tombstone_if_leave_tombstone_is_true(self):
+        forms = [create_form_for_test(DOMAIN, deleted_on=datetime.now()) for i in range(3)]
+        form_ids = [form.form_id for form in forms]
+        XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids, leave_tombstone=True)
+        self.assertEqual(DeletedSQLDoc.objects.all().count(), 3)
+
+    @override_settings(UNIT_TESTING=False)
+    def test_bulk_delete_raises_error_if_leave_tombstone_is_not_specified(self):
+        with self.assertRaises(NotImplementedError):
+            XFormInstance.objects.hard_delete_forms(DOMAIN, [])
+
     def assert_form_xml_attachment(self, form):
         attachments = XFormInstance.objects.get_attachments(form.form_id)
         self.assertEqual([a.name for a in attachments], ["form.xml"])

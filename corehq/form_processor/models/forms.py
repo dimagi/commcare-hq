@@ -373,24 +373,29 @@ class XFormInstanceManager(RequireDBManager):
         return count
 
     def hard_delete_forms(self, domain, form_ids, delete_attachments=True, *,
-                          publish_changes=True, leave_tombstone=False):
-        """Delete forms permanently. Currently only used for tests, domain deletion and to delete system forms
-        and so do not need to leave tombstones.
+                          publish_changes=True, leave_tombstone=None):
+        """Delete forms permanently. Currently only used for tests, domain deletion and to delete system forms,
+        none of which need to leave tombstones.
 
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
-        :param leave_tombstone: Currently unimplemented. Should be set to True if you are using it for any other
-            reason than stated above.
+        :param leave_tombstone: See below error message for details.
         """
         assert isinstance(form_ids, list)
 
         if leave_tombstone:
+            forms = XFormInstance.objects.get_forms(form_ids)
+            form_tombstones = [DeletedSQLDoc(doc_id=form.form_id, object_class_path='form_processor.XFormInstance',
+                                             domain=domain, deleted_on=form.deleted_on)
+                               for form in forms]
+            for chunk in chunked(form_tombstones, 1000, list):
+                DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True)
+        elif leave_tombstone is None and not settings.UNIT_TESTING:
             raise NotImplementedError(
-                """
-                hard_delete_forms is currently only used for tests, domain deletion and to delete system forms.
-                If you are trying to hard delete forms for any other reason you'll need to implement a way to
-                create tombstones for the forms you're trying to delete.
-                """
+                """You seem to have forgotten to specify the leave_tombstone value.
+                hard_delete_forms is currently only used for tests, domain deletion and to delete specific
+                system forms. If you are trying to hard delete forms for any other reason, please double check
+                whether or not those forms needs to be tombstoned here."""
             )
 
         deleted_count = 0

@@ -279,25 +279,30 @@ class CommCareCaseManager(RequireDBManager):
             publish_case_saved(case)
         return undeleted_count
 
-    def hard_delete_cases(self, domain, case_ids, *, publish_changes=True, leave_tombstone=False):
+    def hard_delete_cases(self, domain, case_ids, *, publish_changes=True, leave_tombstone=None):
         """Permanently delete cases in domain. Currently only used for tests, domain deletion
-        and to delete system cases, and so do not need to leave tombstones.
+        and to delete system cases, none of which need to leave tombstones.
 
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
-        :param leave_tombstone: Currently unimplemented. Should be set to True if you are using it for any other
-            reason than stated above.
+        :param leave_tombstone: See below error message for details.
         :returns: Number of deleted cases.
         """
         assert isinstance(case_ids, list), type(case_ids)
 
         if leave_tombstone:
+            cases = CommCareCase.objects.get_cases(case_ids)
+            case_tombstones = [DeletedSQLDoc(doc_id=case.case_id, object_class_path='form_processor.CommCareCase',
+                                             domain=domain, deleted_on=case.deleted_on)
+                               for case in cases]
+            for chunk in chunked(case_tombstones, 1000, list):
+                DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True)
+        elif leave_tombstone is None and not settings.UNIT_TESTING:
             raise NotImplementedError(
-                """
-                hard_delete_forms is currently only used for tests, domain deletion and to delete system cases.
-                If you are trying to hard delete cases for any other reason you'll need to implement a way to
-                create tombstones for the cases you're trying to delete.
-                """
+                """You seem to have forgotten to specify the leave_tombstone value.
+                hard_delete_cases is currently only used for tests, domain deletion and to delete specific
+                system cases. If you are trying to hard delete cases for any other reason, please double check
+                whether or not those cases needs to be tombstoned here."""
             )
 
         with self.model.get_plproxy_cursor() as cursor:
