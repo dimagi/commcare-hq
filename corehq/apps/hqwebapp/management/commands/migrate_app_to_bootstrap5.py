@@ -22,6 +22,8 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_app_template_folder,
     get_app_static_folder,
     get_short_path,
+    get_all_template_paths_for_app,
+    get_all_javascript_paths_for_app,
 )
 
 COLOR_RED = "91"
@@ -111,13 +113,11 @@ class Command(BaseCommand):
         return files
 
     def get_templates_for_migration(self, app_name, template_name, do_re_check):
-        app_template_folder = get_app_template_folder(app_name)
-        app_templates = [f for f in app_template_folder.glob('**/*') if f.is_file()]
+        app_templates = get_all_template_paths_for_app(app_name)
         return self._get_files_for_migration(app_templates, template_name, do_re_check)
 
     def get_js_files_for_migration(self, app_name, js_name, do_re_check):
-        app_static_folder = get_app_static_folder(app_name)
-        app_js_files = [f for f in app_static_folder.glob('**/*.js') if f.is_file()]
+        app_js_files = get_all_javascript_paths_for_app(app_name)
         return self._get_files_for_migration(app_js_files, js_name, do_re_check)
 
     def migrate_files(self, files, app_name, spec, is_template):

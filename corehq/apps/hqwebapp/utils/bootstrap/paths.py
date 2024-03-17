@@ -22,3 +22,13 @@ def get_short_path(app_name, full_path, is_template):
         str(replace_path) + '/',
         ''
     )
+
+
+def get_all_template_paths_for_app(app_name):
+    app_template_folder = get_app_template_folder(app_name)
+    return [f for f in app_template_folder.glob('**/*') if f.is_file()]
+
+
+def get_all_javascript_paths_for_app(app_name):
+    app_static_folder = get_app_static_folder(app_name)
+    return [f for f in app_static_folder.glob('**/*.js') if f.is_file()]
