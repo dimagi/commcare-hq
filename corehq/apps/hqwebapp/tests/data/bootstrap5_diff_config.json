@@ -1,25 +1,37 @@
 {
   "apps/hqwebapp/templates/hqwebapp": [
     {
-      "directories": ["bootstrap3/", "bootstrap5/"],
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
       "file_type": "template",
       "label": "hqwebapp",
       "compare_all_files": true
     },
     {
-      "directories": ["crispy/bootstrap3/", "crispy/bootstrap5/"],
-      "file_type": "template",
-      "label": "hqwebapp/crispy",
-      "compare_all_files": true
-    },
-    {
-      "directories": ["includes/bootstrap3/", "includes/bootstrap5/"],
+      "directories": [
+        "includes/bootstrap3",
+        "includes/bootstrap5"
+      ],
       "file_type": "template",
       "label": "hqwebapp/includes",
       "compare_all_files": true
     },
     {
-      "directories": ["partials/bootstrap3/", "partials/bootstrap5/"],
+      "directories": [
+        "crispy/bootstrap3",
+        "crispy/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "hqwebapp/crispy",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
       "file_type": "template",
       "label": "hqwebapp/partials",
       "compare_all_files": true
@@ -27,19 +39,28 @@
   ],
   "apps/hqwebapp/static/hqwebapp/js": [
     {
-      "directories": ["bootstrap3/", "bootstrap5/"],
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
       "file_type": "javascript",
       "label": "javascript/hqwebapp",
       "compare_all_files": true
     },
     {
-      "directories": ["components/bootstrap3/", "components/bootstrap5/"],
+      "directories": [
+        "components/bootstrap3",
+        "components/bootstrap5"
+      ],
       "file_type": "javascript",
       "label": "javascript/hqwebapp/components",
       "compare_all_files": true
     },
     {
-      "directories": ["ui_elements/bootstrap3/", "ui_elements/bootstrap5/"],
+      "directories": [
+        "ui_elements/bootstrap3",
+        "ui_elements/bootstrap5"
+      ],
       "file_type": "javascript",
       "label": "javascript/hqwebapp/ui_elements",
       "compare_all_files": true
@@ -241,7 +262,10 @@
   ],
   "apps/builds/templates/builds": [
     {
-      "directories": ["bootstrap3/", "bootstrap5/"],
+      "directories": [
+        "bootstrap3/",
+        "bootstrap5/"
+      ],
       "file_type": "template",
       "label": "builds",
       "compare_all_files": true
@@ -249,7 +273,10 @@
   ],
   "apps/builds/static/builds/js": [
     {
-      "directories": ["bootstrap3/", "bootstrap5/"],
+      "directories": [
+        "bootstrap3/",
+        "bootstrap5/"
+      ],
       "file_type": "javascript",
       "label": "javascript/builds",
       "compare_all_files": true
@@ -257,7 +284,10 @@
   ],
   "apps/notifications/templates/notifications": [
     {
-      "directories": ["partials/bootstrap3/", "partials/bootstrap5/"],
+      "directories": [
+        "partials/bootstrap3/",
+        "partials/bootstrap5/"
+      ],
       "file_type": "template",
       "label": "notifications/partials",
       "compare_all_files": true
@@ -265,7 +295,10 @@
   ],
   "apps/notifications/static/notifications/js": [
     {
-      "directories": ["bootstrap3/", "bootstrap5/"],
+      "directories": [
+        "bootstrap3/",
+        "bootstrap5/"
+      ],
       "file_type": "javascript",
       "label": "javascript/notifications",
       "compare_all_files": true
@@ -273,7 +306,10 @@
   ],
   "apps/analytics/templates/analytics": [
     {
-      "directories": ["forms/bootstrap3/", "forms/bootstrap5/"],
+      "directories": [
+        "forms/bootstrap3/",
+        "forms/bootstrap5/"
+      ],
       "file_type": "template",
       "label": "analytics/forms",
       "compare_all_files": true
