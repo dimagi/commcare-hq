@@ -46,6 +46,13 @@ def get_bootstrap5_diff_config():
         return json.loads(f.read())
 
 
+def update_bootstrap5_diff_config(config):
+    config_file_path = COREHQ_BASE_DIR / DIFF_CONFIG_FILE
+    config_string = json.dumps(config, indent=2)
+    with open(config_file_path, "w") as f:
+        f.writelines(config_string + '\n')
+
+
 def get_bootstrap5_filepaths(full_diff_config):
     for parent_path, directory_diff_config in full_diff_config.items():
         for diff_config in directory_diff_config:
@@ -109,8 +116,70 @@ class Command(BaseCommand):
     Once the two files are brought up to date, this command can be run again to ensure tests pass.
     """
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--update_app',
+            help="Specify the app you would like to update the configuration file for.",
+        )
+
     def handle(self, *args, **options):
+        update_app = options.get('update_app')
+        if update_app:
+            self.update_configuration_file_for_app(update_app)
+            return
+
         full_diff_config = get_bootstrap5_diff_config()
         for bootstrap3_filepath, bootstrap5_filepath, diff_filepath in get_bootstrap5_filepaths(full_diff_config):
             with open(diff_filepath, 'w') as df:
                 df.writelines(get_diff(bootstrap3_filepath, bootstrap5_filepath))
+
+    def update_config(self, config, app_name, js_folder=None):
+        parent_path = get_parent_path(app_name, js_folder)
+        migrated_folders = get_migrated_folders(
+            get_all_javascript_paths_for_app(app_name) if js_folder is not None
+            else get_all_template_paths_for_app(app_name)
+        )
+        folders = get_relative_folder_paths(parent_path, migrated_folders)
+        folder_configs = [
+            get_folder_config(app_name, folder, is_javascript=js_folder is not None)
+            for folder in folders
+        ]
+        if folder_configs:
+            config[parent_path] = folder_configs
+            self.stdout.write(f"Refreshed config for '{parent_path}'")
+        elif parent_path in config:
+            del config[parent_path]
+            self.stdout.write(f"Removed '{parent_path}' from config. No more relevant files.")
+
+    def check_javascript_paths(self, app_name, js_folders):
+        migrated_js_folders = get_migrated_folders(get_all_javascript_paths_for_app(app_name))
+        untracked_folders = [
+            folder for folder in migrated_js_folders
+            if not any([path in folder for path in js_folders])
+        ]
+        if untracked_folders:
+            self.stdout.write("\nThe following javascript folders are untracked:\n")
+            self.stdout.write("\n".join(untracked_folders))
+            self.stdout.write(
+                "\nIf you wish to automatically track them, please update the list of "
+                "of `tracked_js_folders`.\n\n\n"
+            )
+
+    def update_configuration_file_for_app(self, app_name):
+        self.stdout.write(f"\nUpdating configuration file for app '{app_name}'...")
+        config_file = get_bootstrap5_diff_config()
+
+        self.update_config(config_file, app_name)
+        tracked_js_folders = ["js"]
+        for js_folder in tracked_js_folders:
+            self.update_config(config_file, app_name, js_folder)
+        self.check_javascript_paths(app_name, tracked_js_folders)
+        self.stdout.write("Saving config...\n")
+        update_bootstrap5_diff_config(config_file)
+        self.stdout.write(f"{DIFF_CONFIG_FILE} has been updated. "
+                          f"Please review the diff and commit the following:\n\n")
+        self.stdout.write(f"B5 Migration: Updated diff config for '{app_name}'\n\n")
+        self.stdout.write("PLEASE NOTE: This utility only supports automatically generating a "
+                          "diff config for template and javascript files.")
+        self.stdout.write(f"Stylesheets (less, scss) must be added to "
+                          f"{DIFF_CONFIG_FILE} manually.\n\n")
