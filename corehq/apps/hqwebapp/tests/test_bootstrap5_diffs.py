@@ -111,14 +111,14 @@ def test_get_folder_config_for_templates():
 
 def test_get_folder_config_for_javascript():
     folder_config = get_folder_config(
-        "hqwebapp", "components", is_javascript=True
+        "hqwebapp", "components", js_folder="js"
     )
     eq(
         folder_config,
         {
             "directories": ["components/bootstrap3", "components/bootstrap5"],
             "file_type": "javascript",
-            "label": "javascript/hqwebapp/components",
+            "label": "javascript/hqwebapp/js/components",
             "compare_all_files": True,
         }
     )

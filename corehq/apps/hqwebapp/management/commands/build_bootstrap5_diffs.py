@@ -83,19 +83,20 @@ def get_relative_folder_paths(config_path, folders):
     return {path.replace(config_path, '').lstrip('/') for path in relevant_folders}
 
 
-def get_folder_config(app_name, path, is_javascript=False):
+def get_folder_config(app_name, path, js_folder=None):
     """This only supports javascript and template files.
     Stylesheets should be handled separately.
     """
-    label = Path(app_name) / path
-    if is_javascript:
-        label = "javascript" / label
+    if js_folder:
+        label = "javascript" / Path(app_name) / js_folder / path
+    else:
+        label = Path(app_name) / path
     return {
         "directories": [
             str(Path(path) / 'bootstrap3'),
             str(Path(path) / 'bootstrap5')
         ],
-        "file_type": "javascript" if is_javascript else "template",
+        "file_type": "javascript" if js_folder is not None else "template",
         "label": str(label),
         "compare_all_files": True
     }
@@ -141,7 +142,7 @@ class Command(BaseCommand):
         )
         folders = get_relative_folder_paths(parent_path, migrated_folders)
         folder_configs = [
-            get_folder_config(app_name, folder, is_javascript=js_folder is not None)
+            get_folder_config(app_name, folder, js_folder)
             for folder in folders
         ]
         if folder_configs:
