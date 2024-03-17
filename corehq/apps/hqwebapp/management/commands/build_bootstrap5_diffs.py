@@ -4,9 +4,15 @@ from pathlib import Path
 
 from django.core.management import BaseCommand
 
-import corehq
+from corehq.apps.hqwebapp.utils.bootstrap.paths import (
+    COREHQ_BASE_DIR,
+    get_app_template_folder,
+    get_app_static_folder,
+    get_all_template_paths_for_app,
+    get_migrated_folders,
+    get_all_javascript_paths_for_app,
+)
 
-COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
 DIFF_CONFIG_FILE = "apps/hqwebapp/tests/data/bootstrap5_diff_config.json"
 DIFF_STORAGE_FOLDER = "apps/hqwebapp/tests/data/bootstrap5_diffs/"
 
@@ -63,6 +69,34 @@ def get_bootstrap5_filepaths(full_diff_config):
                 bootstrap5_filepath = path_bootstrap5 / filename_bootstrap5
 
                 yield bootstrap3_filepath, bootstrap5_filepath, diff_filepath
+
+
+def get_relative_folder_paths(config_path, folders):
+    relevant_folders = [path for path in folders if config_path in path]
+    return {path.replace(config_path, '').lstrip('/') for path in relevant_folders}
+
+
+def get_folder_config(app_name, path, is_javascript=False):
+    """This only supports javascript and template files.
+    Stylesheets should be handled separately.
+    """
+    label = Path(app_name) / path
+    if is_javascript:
+        label = "javascript" / label
+    return {
+        "directories": [
+            str(Path(path) / 'bootstrap3'),
+            str(Path(path) / 'bootstrap5')
+        ],
+        "file_type": "javascript" if is_javascript else "template",
+        "label": str(label),
+        "compare_all_files": True
+    }
+
+
+def get_parent_path(app_name, js_folder=None):
+    config_path = get_app_static_folder(app_name) / js_folder if js_folder else get_app_template_folder(app_name)
+    return str(config_path).replace(str(COREHQ_BASE_DIR) + '/', '')
 
 
 class Command(BaseCommand):
