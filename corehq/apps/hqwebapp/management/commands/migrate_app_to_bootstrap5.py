@@ -135,9 +135,11 @@ class Command(BaseCommand):
                 self.write_response(f"ok, skipping {short_path}")
                 continue
 
-            self.migrate_single_file(app_name, file_path, spec, is_template)
+            self.stdout.write("\n")
+            review_changes = self.get_confirmation('Do you want to review each change line-by-line here?')
+            self.migrate_single_file(app_name, file_path, spec, is_template, review_changes)
 
-    def migrate_single_file(self, app_name, file_path, spec, is_template):
+    def migrate_single_file(self, app_name, file_path, spec, is_template, review_changes):
         with open(file_path, 'r') as current_file:
             old_lines = current_file.readlines()
             new_lines = []
@@ -152,9 +154,11 @@ class Command(BaseCommand):
                     new_line = old_line  # no replacement changes yet for js files
                     renames = []
                     flags = self.get_flags_in_javascript_line(old_line, spec)
+
                 saved_line, line_changelog = self.confirm_and_get_line_changes(
-                    line_number, old_line, new_line, renames, flags
+                    line_number, old_line, new_line, renames, flags, review_changes
                 )
+
                 new_lines.append(saved_line)
                 if saved_line != old_line or flags:
                     has_changes = True
@@ -178,7 +182,7 @@ class Command(BaseCommand):
             else:
                 self.write_response(f"\nNo changes were needed for {short_path}. Skipping...\n\n")
 
-    def confirm_and_get_line_changes(self, line_number, old_line, new_line, renames, flags):
+    def confirm_and_get_line_changes(self, line_number, old_line, new_line, renames, flags, review_changes):
         changelog = []
         if renames or flags:
             changelog.append(self.format_header(f"Line {line_number}"))
@@ -188,13 +192,14 @@ class Command(BaseCommand):
                 changelog.append("\nFlagged Code:")
                 changelog.append(self.format_code(old_line, break_length=len(old_line) + 5))
                 changelog.append(self.format_guidance(flag))
-                self.display_flag_summary(changelog)
-                self.enter_to_continue()
+                if review_changes:
+                    self.display_flag_summary(changelog)
+                    self.enter_to_continue()
+                    self.clear_screen()
+                    self.stdout.write(self.format_header(
+                        f"Additional changes to line {line_number} will be made..."
+                    ))
                 changelog.append("\n\n")
-                self.clear_screen()
-                self.stdout.write(self.format_header(
-                    f"Additional changes to line {line_number} will be made..."
-                ))
             if renames:
                 changelog.append("\nDiff of changes:")
                 changelog.extend(self.format_code(
@@ -205,12 +210,12 @@ class Command(BaseCommand):
                 changelog.append("Summary:\n  - " + "\n  - ".join(renames))
                 self.display_rename_summary(changelog)
                 changelog.append("\n\n")
-
-                confirm = self.get_confirmation("Keep changes?")
-                if not confirm:
-                    changelog.append("CHANGES DISCARDED\n\n")
-                    self.write_response("ok, discarding changes...")
-                    return old_line, changelog
+                if review_changes:
+                    confirm = self.get_confirmation("Keep changes?")
+                    if not confirm:
+                        changelog.append("CHANGES DISCARDED\n\n")
+                        self.write_response("ok, discarding changes...")
+                        return old_line, changelog
         return new_line, changelog
 
     def display_flag_summary(self, changelog):
