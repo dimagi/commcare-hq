@@ -25,25 +25,27 @@
       "compare_all_files": true
     }
   ],
-  "apps/hqwebapp/static/hqwebapp": [
+  "apps/hqwebapp/static/hqwebapp/js": [
     {
-      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
+      "directories": ["bootstrap3/", "bootstrap5/"],
       "file_type": "javascript",
       "label": "javascript/hqwebapp",
       "compare_all_files": true
     },
     {
-      "directories": ["js/components/bootstrap3/", "js/components/bootstrap5/"],
+      "directories": ["components/bootstrap3/", "components/bootstrap5/"],
       "file_type": "javascript",
       "label": "javascript/hqwebapp/components",
       "compare_all_files": true
     },
     {
-      "directories": ["js/ui_elements/bootstrap3/", "js/ui_elements/bootstrap5/"],
+      "directories": ["ui_elements/bootstrap3/", "ui_elements/bootstrap5/"],
       "file_type": "javascript",
       "label": "javascript/hqwebapp/ui_elements",
       "compare_all_files": true
-    },
+    }
+  ],
+  "apps/hqwebapp/static/hqwebapp": [
     {
       "directories": ["less/", "scss/"],
       "file_type": "stylesheet",
@@ -110,9 +112,9 @@
       "compare_all_files": true
     }
   ],
-  "apps/builds/static/builds": [
+  "apps/builds/static/builds/js": [
     {
-      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
+      "directories": ["bootstrap3/", "bootstrap5/"],
       "file_type": "javascript",
       "label": "javascript/builds",
       "compare_all_files": true
@@ -126,9 +128,9 @@
       "compare_all_files": true
     }
   ],
-  "apps/notifications/static/notifications": [
+  "apps/notifications/static/notifications/js": [
     {
-      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
+      "directories": ["bootstrap3/", "bootstrap5/"],
       "file_type": "javascript",
       "label": "javascript/notifications",
       "compare_all_files": true
