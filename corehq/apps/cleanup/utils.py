@@ -8,10 +8,27 @@ from django.utils.functional import cached_property
 from field_audit.models import AuditAction
 
 from dimagi.utils.couch.database import iter_bulk_delete
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.app_manager.models import (
+    Application, DeleteApplicationRecord,
+    DeleteModuleRecord,
+    DeleteFormRecord,
+)
+from corehq.apps.users.models import DomainRemovalRecord
+from corehq.apps.casegroups.models import CommCareCaseGroup, DeleteCaseGroupRecord
 from corehq.apps.cleanup.models import DeletedCouchDoc
 from corehq.apps.domain.models import Domain
-from corehq.util.couch import get_db_by_doc_type
+from corehq.apps.groups.models import Group, DeleteGroupRecord
+
+delete_record_doc_type_to_class = {
+    'DeleteApplicationRecord': (Application, DeleteApplicationRecord),
+    'DeleteModuleRecord': (None, DeleteModuleRecord),
+    'DeleteFormRecord': (None, DeleteFormRecord),
+    'DomainRemovalRecord': (None, DomainRemovalRecord),
+    'DeleteCaseGroupRecord': (CommCareCaseGroup, DeleteCaseGroupRecord),
+    'DeleteGroupRecord': (Group, DeleteGroupRecord),
+}
 
 
 def abort():
@@ -77,28 +94,52 @@ def migrate_to_deleted_on(db_cls, old_field, should_audit=False):
 def hard_delete_couch_docs_before_cutoff(cutoff):
     """
     Permanently deletes couch objects with deleted_on set to a datetime earlier
-    than the specified cutoff datetime
+    than the specified cutoff datetime. Currently, DeletedCouchDocs only references a deleted couch object's
+    DeleteRecord, which then references the deleted couch object. All 3 docs will be deleted, if eligible.
+
     :param cutoff: datetime used to obtain couch docs to be hard deleted
     :return: dictionary of count of deleted objects per table
     """
     counts = {}
     deleted_docs = DeletedCouchDoc.objects.filter(deleted_on__lt=cutoff)
 
-    doc_ids_by_doc_type = defaultdict(list)
+    delete_record_ids_by_doc_type = defaultdict(list)
     for doc in deleted_docs:
-        doc_ids_by_doc_type[doc.doc_type].append(doc.doc_id)
+        delete_record_ids_by_doc_type[doc.doc_type].append(doc.doc_id)
 
-    for doc_type in doc_ids_by_doc_type.keys():
-        db = get_db_by_doc_type(doc_type)
-        doc_ids = doc_ids_by_doc_type[doc_type]
-        counts[doc_type] = len(doc_ids)
-        iter_bulk_delete(db, doc_ids)
-        sql_objs = DeletedCouchDoc.objects.filter(doc_type=doc_type, doc_id__in=doc_ids)
+    for doc_type in delete_record_ids_by_doc_type.keys():
+        delete_record_ids = delete_record_ids_by_doc_type[doc_type]
+        deleted_doc_class, delete_record_class = _get_object_and_delete_record_class_from_doc_type(doc_type)
+
+        delete_records = [delete_record_class.get(record_id) for record_id in delete_record_ids]
+
+        # Currently only Application, Group, CommCareCaseGroups have soft deleted docs
+        if deleted_doc_class is not None:
+            deleted_docs = [delete_record.get_doc() for delete_record in delete_records]
+            try:
+                deleted_ids = [obj.id for obj in deleted_docs if obj.doc_type.endswith(DELETED_SUFFIX)]
+            except AttributeError:
+                deleted_ids = [obj._id for obj in deleted_docs if obj.doc_type.endswith(DELETED_SUFFIX)]
+            if len(deleted_docs) != len(deleted_ids):
+                delete_record_ids = [record._id for record in delete_records if
+                                     record.get_doc().doc_type.endswith(DELETED_SUFFIX)]
+            counts[deleted_docs[0].doc_type[:-len(DELETED_SUFFIX)]] = len(deleted_ids)
+            iter_bulk_delete(deleted_doc_class.get_db(), deleted_ids)
+        iter_bulk_delete(delete_record_class.get_db(), delete_record_ids)
+        sql_objs = DeletedCouchDoc.objects.filter(doc_type=doc_type, doc_id__in=delete_record_ids)
         sql_objs.delete()
 
     return counts
 
 
+def _get_object_and_delete_record_class_from_doc_type(doc_type):
+    try:
+        return delete_record_doc_type_to_class[doc_type]
+    except KeyError as e:
+        raise KeyError("Unrecognized DeleteRecord of doc type '%s' found. If you are adding adding a "
+                       "new Couch model that creates DeleteRecords, please add a mapping to "
+                       "delete_record_doc_type_to_class to ensure it is picked up by the deletion task. " % e)
+
+
 def get_cutoff_date_for_data_deletion():
     return datetime.utcnow() - timedelta(days=settings.PERMANENT_DELETION_WINDOW)
-

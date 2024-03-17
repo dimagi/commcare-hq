@@ -10,6 +10,8 @@ from dimagi.utils.couch.migration import (
     SyncSQLToCouchMixin,
 )
 
+from corehq.apps.cleanup.models import DeletedCouchDoc
+
 
 class ModelAttrEqualityHelper(SimpleTestCase):
     """
@@ -47,3 +49,8 @@ class ModelAttrEqualityHelper(SimpleTestCase):
 
 def is_monday():
     return datetime.utcnow().isoweekday() == 1
+
+
+def _get_delete_record_ids_by_doc_type(delete_record_type):
+    sql_doc = DeletedCouchDoc.objects.filter(doc_type=delete_record_type)
+    return [doc.doc_id for doc in sql_doc]

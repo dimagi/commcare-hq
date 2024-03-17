@@ -5782,6 +5782,9 @@ class DeleteApplicationRecord(DeleteRecord):
 
     app_id = StringProperty()
 
+    def get_doc(self):
+        return Application.get(self.app_id)
+
     def undo(self):
         app = ApplicationBase.get(self.app_id)
         DeletedCouchDoc.objects.filter(

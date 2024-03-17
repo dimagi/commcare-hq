@@ -64,8 +64,7 @@ def iter_docs(database, ids, chunksize=100, **query_params):
             yield doc
 
 
-def iter_bulk_delete(database, ids, chunksize=100, doc_callback=None, wait_time=None,
-        max_fetch_attempts=1):
+def iter_bulk_delete(database, ids, chunksize=100, doc_callback=None, wait_time=None, max_fetch_attempts=1):
     total_count = 0
     for doc_ids in chunked(ids, chunksize):
         for i in range(max_fetch_attempts):

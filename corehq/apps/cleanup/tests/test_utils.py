@@ -1,11 +1,17 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.test import TestCase
 
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import (
+    Application, DeleteApplicationRecord,
+    Module, DeleteModuleRecord,
+    DeleteFormRecord,
+)
+from corehq.apps.casegroups.models import CommCareCaseGroup, DeleteCaseGroupRecord
 from corehq.apps.cleanup.models import DeletedCouchDoc
+from corehq.apps.cleanup.tests.util import _get_delete_record_ids_by_doc_type
 from corehq.apps.cleanup.utils import (
     DeletedDomains,
     hard_delete_couch_docs_before_cutoff,
@@ -13,7 +19,7 @@ from corehq.apps.cleanup.utils import (
 )
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.groups.models import Group, DeleteGroupRecord
 
 
 class TestDeletedDomains(TestCase):
@@ -59,70 +65,131 @@ class TestMigrateToDeletedOn(TestCase):
 
 class TestHardDeleteCouchDocsBeforeCutoff(TestCase):
 
-    def test_doc_is_hard_deleted_if_deleted_on_is_before_cutoff(self):
-        app = Application(domain=self.domain, name='before-cutoff-app')
+    def create_and_delete_test_app(self, soft_delete_app=False):
+        app = Application.new_app(self.domain, "TestApp")
+        module = app.add_module(Module.new_module("Module", "en"))
+        form = app.new_form(module.id, "Form", "en")
         app.save()
-        sql_obj = DeletedCouchDoc.objects.create(doc_id=app._id,
-                                                 doc_type="Application",
-                                                 deleted_on=datetime(2020, 1, 1, 12, 29))
+        if soft_delete_app:
+            app.delete_app()
+            app.save()
+        return app, module, form
 
-        hard_delete_couch_docs_before_cutoff(self.cutoff)
+    def test_hard_deletion_deletes_doc_delete_record_sql_doc_application(self):
+        app, _, _ = self.create_and_delete_test_app(soft_delete_app=True)
+        delete_record_id = _get_delete_record_ids_by_doc_type('DeleteApplicationRecord')[0]
+
+        hard_delete_couch_docs_before_cutoff(datetime.now())
 
         with self.assertRaises(ResourceNotFound):
-            Application.get_db().get(app._id)
-
+            Application.get(app.id)
+        with self.assertRaises(ResourceNotFound):
+            DeleteApplicationRecord.get(delete_record_id)
         with self.assertRaises(DeletedCouchDoc.DoesNotExist):
-            DeletedCouchDoc.objects.get(id=sql_obj.id)
+            DeletedCouchDoc.objects.get(doc_type=delete_record_id)
+
+    def test_hard_deletion_deletes_doc_delete_record_sql_doc_module(self):
+        # Modules are not saved docs but still create an associated DeleteRecord and DeletedCouchDoc
+        app, module, _ = self.create_and_delete_test_app()
+        app.delete_module(module.unique_id)
+        delete_record_id = _get_delete_record_ids_by_doc_type('DeleteModuleRecord')[0]
+
+        hard_delete_couch_docs_before_cutoff(datetime.now())
+
+        with self.assertRaises(ResourceNotFound):
+            DeleteModuleRecord.get(delete_record_id)
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(doc_id=delete_record_id)
+
+    def test_hard_deletion_deletes_doc_delete_record_sql_doc_form(self):
+        # Forms are not saved docs but still create an associated DeleteRecord and DeletedCouchDoc
+        app, module, form = self.create_and_delete_test_app()
+        app.delete_form(module.unique_id, form.unique_id)
+        delete_record_id = _get_delete_record_ids_by_doc_type('DeleteFormRecord')[0]
+
+        hard_delete_couch_docs_before_cutoff(datetime.now())
+
+        with self.assertRaises(ResourceNotFound):
+            DeleteFormRecord.get(delete_record_id)
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(doc_id=delete_record_id)
+
+    def test_hard_deletion_deletes_doc_delete_record_sql_doc_case_group(self):
+        case_group = CommCareCaseGroup()
+        case_group.save()
+        case_group.soft_delete()
+        delete_record_id = _get_delete_record_ids_by_doc_type('DeleteCaseGroupRecord')[0]
+
+        hard_delete_couch_docs_before_cutoff(datetime.now())
+
+        with self.assertRaises(ResourceNotFound):
+            CommCareCaseGroup.get(case_group._id)
+        with self.assertRaises(ResourceNotFound):
+            DeleteCaseGroupRecord.get(delete_record_id)
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(doc_id=delete_record_id)
+
+    def test_hard_deletion_deletes_doc_delete_record_sql_doc_group(self):
+        group = Group()
+        group.save()
+        group.soft_delete()
+        delete_record_id = _get_delete_record_ids_by_doc_type('DeleteGroupRecord')[0]
+
+        hard_delete_couch_docs_before_cutoff(datetime.now())
+
+        with self.assertRaises(ResourceNotFound):
+            Group.get_db().get(group._id)
+        with self.assertRaises(ResourceNotFound):
+            DeleteGroupRecord.get(delete_record_id)
+        with self.assertRaises(DeletedCouchDoc.DoesNotExist):
+            DeletedCouchDoc.objects.get(doc_id=delete_record_id)
 
     def test_doc_is_not_hard_deleted_if_deleted_on_is_cutoff(self):
-        app = Application(domain=self.domain, name='on-cutoff-app')
-        app.save()
-        sql_obj = DeletedCouchDoc.objects.create(doc_id=app._id,
-                                                 doc_type="Application",
-                                                 deleted_on=self.cutoff)
+        app, _, _ = self.create_and_delete_test_app(soft_delete_app=True)
+        delete_record_id = _get_delete_record_ids_by_doc_type('DeleteApplicationRecord')[0]
+        delete_record = DeleteApplicationRecord.get(delete_record_id)
 
-        hard_delete_couch_docs_before_cutoff(self.cutoff)
+        hard_delete_couch_docs_before_cutoff(delete_record.datetime)
 
-        self.assertIsNotNone(Application.get_db().get(app._id))
-        self.assertIsNotNone(DeletedCouchDoc.objects.get(id=sql_obj.id))
+        self.assertIsNotNone(Application.get_db().get(app.id))
+        self.assertIsNotNone(DeleteApplicationRecord.get(delete_record_id))
+        self.assertIsNotNone(DeletedCouchDoc.objects.get(doc_id=delete_record_id))
 
     def test_doc_is_not_hard_deleted_if_deleted_on_is_after_cutoff(self):
-        app = Application(domain=self.domain, name='after-cutoff-app')
-        app.save()
-        sql_obj = DeletedCouchDoc.objects.create(doc_id=app._id,
-                                                 doc_type="Application",
-                                                 deleted_on=datetime(2020, 1, 1, 12, 31))
+        app, _, _ = self.create_and_delete_test_app(soft_delete_app=True)
+        delete_record_id = _get_delete_record_ids_by_doc_type('DeleteApplicationRecord')[0]
+        delete_record = DeleteApplicationRecord.get(delete_record_id)
 
-        hard_delete_couch_docs_before_cutoff(self.cutoff)
+        hard_delete_couch_docs_before_cutoff(delete_record.datetime - timedelta(days=2))
 
-        self.assertIsNotNone(Application.get_db().get(app._id))
-        self.assertIsNotNone(DeletedCouchDoc.objects.get(id=sql_obj.id))
+        self.assertIsNotNone(Application.get_db().get(app.id))
+        self.assertIsNotNone(DeleteApplicationRecord.get(delete_record_id))
+        self.assertIsNotNone(DeletedCouchDoc.objects.get(doc_id=delete_record_id))
 
     def test_doc_is_not_hard_deleted_if_no_deleted_couch_doc_exists(self):
-        app = Application(domain=self.domain, name='after-cutoff-app')
-        app.save()
+        app, _, _ = self.create_and_delete_test_app()
 
         hard_delete_couch_docs_before_cutoff(self.cutoff)
 
-        self.assertIsNotNone(Application.get_db().get(app._id))
+        self.assertIsNotNone(Application.get_db().get(app.id))
 
     def test_returns_deleted_counts(self):
-        deleted_on = datetime(2020, 1, 1, 12, 29)
-        app = Application(domain=self.domain, name='after-cutoff-app')
+        self.create_and_delete_test_app(soft_delete_app=True)
+
+        counts = hard_delete_couch_docs_before_cutoff(datetime.now())
+        self.assertEqual(counts, {'Application': 1})
+
+    def test_doc_is_not_hard_deleted(self):
+        app, _, _ = self.create_and_delete_test_app(soft_delete_app=True)
+        app.doc_type = app.get_doc_type()
         app.save()
-        DeletedCouchDoc.objects.create(doc_id=app._id,
-                                       doc_type="Application",
-                                       deleted_on=deleted_on)
+        delete_record_id = _get_delete_record_ids_by_doc_type('DeleteApplicationRecord')[0]
 
-        report_config = ReportConfiguration(domain=self.domain, config_id='abc123')
-        report_config.save()
-        DeletedCouchDoc.objects.create(doc_id=report_config._id,
-                                       doc_type="ReportConfiguration",
-                                       deleted_on=deleted_on)
+        hard_delete_couch_docs_before_cutoff(self.cutoff)
 
-        counts = hard_delete_couch_docs_before_cutoff(self.cutoff)
-
-        self.assertEqual(counts, {'Application': 1, 'ReportConfiguration': 1})
+        self.assertIsNotNone(Application.get_db().get(app.id))
+        self.assertIsNotNone(DeleteApplicationRecord.get(delete_record_id))
+        self.assertIsNotNone(DeletedCouchDoc.objects.get(doc_id=delete_record_id))
 
     def setUp(self):
         self.domain = 'test_hard_delete_couch_docs_before_cutoff'
