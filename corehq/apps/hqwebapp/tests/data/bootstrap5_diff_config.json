@@ -47,60 +47,195 @@
   ],
   "apps/hqwebapp/static/hqwebapp": [
     {
-      "directories": ["less/", "scss/"],
+      "directories": [
+        "less/",
+        "scss/"
+      ],
       "file_type": "stylesheet",
       "label": "stylesheets",
       "files": [
-        ["style-imports.less", "commcarehq.scss"]
+        [
+          "style-imports.less",
+          "commcarehq.scss"
+        ]
       ]
     },
     {
-      "directories": ["less/_hq/", "scss/commcarehq/"],
+      "directories": [
+        "less/_hq/",
+        "scss/commcarehq/"
+      ],
       "file_type": "stylesheet",
       "label": "stylesheets/imports",
       "files": [
-        ["includes/variables.less", "_variables.scss"],
-        ["includes/variables.less", "_variables_bootstrap3.scss"],
-        ["includes/mixins.less", "_mixins.scss"],
-        ["ace_cle.less", "_ace_cle.scss"],
-        ["alerts.less", "_alert.scss"],
-        ["appcues.less", "_appcues.scss"],
-        ["backgrounds.less", "_backgrounds.scss"],
-        ["breadcrumbs.less", "_breadcrumb.scss"],
-        ["buttons.less", "_buttons.scss"],
-        ["datagrid.less", "_datagrid.scss"],
-        ["datatables.less", "_datatables.scss"],
-        ["date_range_picker.less", "_date_range_picker.scss"],
-        ["datetimepicker.less", "_datetimepicker.scss"],
-        ["dropdowns.less", "_dropdown.scss"],
-        ["facet.less", "_facet.scss"],
-        ["feedback.less", "_feedback.scss"],
-        ["form_steps.less", "_form_steps.scss"],
-        ["forms.less", "_forms.scss"],
-        ["helpbubble.less", "_helpbubble.scss"],
-        ["hubspot.less", "_hubspot.scss"],
-        ["icons.less", "_icons.scss"],
-        ["inline_edit.less", "_inline_edit.scss"],
-        ["label.less", "_label.scss"],
-        ["layouts.less", "_layouts.scss"],
-        ["layouts.less", "_containers.scss"],
-        ["mapbox.less", "_mapbox.scss"],
-        ["modals.less", "_modal.scss"],
-        ["navs.less", "_nav.scss"],
-        ["notifications.less", "_notifications.scss"],
-        ["pagination.less", "_pagination.scss"],
-        ["panels.less", "_panels.scss"],
-        ["paused.less", "_paused.scss"],
-        ["popovers.less", "_popover.scss"],
-        ["radio_select.less", "_radio_select.scss"],
-        ["readable_forms.less", "_readable_forms.scss"],
-        ["report.less", "_report.scss"],
-        ["select2s.less", "_select2.scss"],
-        ["svg.less", "_svg.scss"],
-        ["tables.less", "_tables.scss"],
-        ["tabs.less", "_tabs.scss"],
-        ["typography.less", "_type.scss"],
-        ["utils.less", "_utils.scss"]
+        [
+          "includes/variables.less",
+          "_variables.scss"
+        ],
+        [
+          "includes/variables.less",
+          "_variables_bootstrap3.scss"
+        ],
+        [
+          "includes/mixins.less",
+          "_mixins.scss"
+        ],
+        [
+          "ace_cle.less",
+          "_ace_cle.scss"
+        ],
+        [
+          "alerts.less",
+          "_alert.scss"
+        ],
+        [
+          "appcues.less",
+          "_appcues.scss"
+        ],
+        [
+          "backgrounds.less",
+          "_backgrounds.scss"
+        ],
+        [
+          "breadcrumbs.less",
+          "_breadcrumb.scss"
+        ],
+        [
+          "buttons.less",
+          "_buttons.scss"
+        ],
+        [
+          "datagrid.less",
+          "_datagrid.scss"
+        ],
+        [
+          "datatables.less",
+          "_datatables.scss"
+        ],
+        [
+          "date_range_picker.less",
+          "_date_range_picker.scss"
+        ],
+        [
+          "datetimepicker.less",
+          "_datetimepicker.scss"
+        ],
+        [
+          "dropdowns.less",
+          "_dropdown.scss"
+        ],
+        [
+          "facet.less",
+          "_facet.scss"
+        ],
+        [
+          "feedback.less",
+          "_feedback.scss"
+        ],
+        [
+          "form_steps.less",
+          "_form_steps.scss"
+        ],
+        [
+          "forms.less",
+          "_forms.scss"
+        ],
+        [
+          "helpbubble.less",
+          "_helpbubble.scss"
+        ],
+        [
+          "hubspot.less",
+          "_hubspot.scss"
+        ],
+        [
+          "icons.less",
+          "_icons.scss"
+        ],
+        [
+          "inline_edit.less",
+          "_inline_edit.scss"
+        ],
+        [
+          "label.less",
+          "_label.scss"
+        ],
+        [
+          "layouts.less",
+          "_layouts.scss"
+        ],
+        [
+          "layouts.less",
+          "_containers.scss"
+        ],
+        [
+          "mapbox.less",
+          "_mapbox.scss"
+        ],
+        [
+          "modals.less",
+          "_modal.scss"
+        ],
+        [
+          "navs.less",
+          "_nav.scss"
+        ],
+        [
+          "notifications.less",
+          "_notifications.scss"
+        ],
+        [
+          "pagination.less",
+          "_pagination.scss"
+        ],
+        [
+          "panels.less",
+          "_panels.scss"
+        ],
+        [
+          "paused.less",
+          "_paused.scss"
+        ],
+        [
+          "popovers.less",
+          "_popover.scss"
+        ],
+        [
+          "radio_select.less",
+          "_radio_select.scss"
+        ],
+        [
+          "readable_forms.less",
+          "_readable_forms.scss"
+        ],
+        [
+          "report.less",
+          "_report.scss"
+        ],
+        [
+          "select2s.less",
+          "_select2.scss"
+        ],
+        [
+          "svg.less",
+          "_svg.scss"
+        ],
+        [
+          "tables.less",
+          "_tables.scss"
+        ],
+        [
+          "tabs.less",
+          "_tabs.scss"
+        ],
+        [
+          "typography.less",
+          "_type.scss"
+        ],
+        [
+          "utils.less",
+          "_utils.scss"
+        ]
       ]
     }
   ],
