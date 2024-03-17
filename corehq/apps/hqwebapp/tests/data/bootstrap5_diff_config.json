@@ -11,20 +11,20 @@
     },
     {
       "directories": [
-        "partials/bootstrap3",
-        "partials/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "hqwebapp/partials",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
         "crispy/bootstrap3",
         "crispy/bootstrap5"
       ],
       "file_type": "template",
       "label": "hqwebapp/crispy",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "hqwebapp/partials",
       "compare_all_files": true
     },
     {
@@ -40,20 +40,20 @@
   "apps/hqwebapp/static/hqwebapp/js": [
     {
       "directories": [
-        "bootstrap3",
-        "bootstrap5"
-      ],
-      "file_type": "javascript",
-      "label": "javascript/hqwebapp",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
         "ui_elements/bootstrap3",
         "ui_elements/bootstrap5"
       ],
       "file_type": "javascript",
-      "label": "javascript/hqwebapp/ui_elements",
+      "label": "javascript/hqwebapp/js/ui_elements",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp/js",
       "compare_all_files": true
     },
     {
@@ -62,7 +62,7 @@
         "components/bootstrap5"
       ],
       "file_type": "javascript",
-      "label": "javascript/hqwebapp/components",
+      "label": "javascript/hqwebapp/js/components",
       "compare_all_files": true
     }
   ],
@@ -322,7 +322,7 @@
         "bootstrap5"
       ],
       "file_type": "javascript",
-      "label": "javascript/hqwebapp",
+      "label": "javascript/hqwebapp/spec",
       "compare_all_files": true
     }
   ]
