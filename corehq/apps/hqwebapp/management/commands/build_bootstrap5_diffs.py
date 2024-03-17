@@ -170,7 +170,7 @@ class Command(BaseCommand):
         config_file = get_bootstrap5_diff_config()
 
         self.update_config(config_file, app_name)
-        tracked_js_folders = ["js"]
+        tracked_js_folders = ["js", "spec"]
         for js_folder in tracked_js_folders:
             self.update_config(config_file, app_name, js_folder)
         self.check_javascript_paths(app_name, tracked_js_folders)
