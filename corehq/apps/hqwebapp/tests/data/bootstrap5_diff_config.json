@@ -11,11 +11,11 @@
     },
     {
       "directories": [
-        "includes/bootstrap3",
-        "includes/bootstrap5"
+        "partials/bootstrap3",
+        "partials/bootstrap5"
       ],
       "file_type": "template",
-      "label": "hqwebapp/includes",
+      "label": "hqwebapp/partials",
       "compare_all_files": true
     },
     {
@@ -29,11 +29,11 @@
     },
     {
       "directories": [
-        "partials/bootstrap3",
-        "partials/bootstrap5"
+        "includes/bootstrap3",
+        "includes/bootstrap5"
       ],
       "file_type": "template",
-      "label": "hqwebapp/partials",
+      "label": "hqwebapp/includes",
       "compare_all_files": true
     }
   ],
@@ -49,20 +49,20 @@
     },
     {
       "directories": [
-        "components/bootstrap3",
-        "components/bootstrap5"
-      ],
-      "file_type": "javascript",
-      "label": "javascript/hqwebapp/components",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
         "ui_elements/bootstrap3",
         "ui_elements/bootstrap5"
       ],
       "file_type": "javascript",
       "label": "javascript/hqwebapp/ui_elements",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "components/bootstrap3",
+        "components/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp/components",
       "compare_all_files": true
     }
   ],
@@ -312,6 +312,17 @@
       ],
       "file_type": "template",
       "label": "analytics/forms",
+      "compare_all_files": true
+    }
+  ],
+  "apps/hqwebapp/static/hqwebapp/spec": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp",
       "compare_all_files": true
     }
   ]
