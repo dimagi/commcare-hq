@@ -32,3 +32,17 @@ def get_all_template_paths_for_app(app_name):
 def get_all_javascript_paths_for_app(app_name):
     app_static_folder = get_app_static_folder(app_name)
     return [f for f in app_static_folder.glob('**/*.js') if f.is_file()]
+
+
+def get_migrated_folders(paths, include_root=False):
+    migrated_files = [
+        path for path in paths if '/bootstrap3/' in str(path)
+    ]
+    migrated_folders = {
+        str(path).split('/bootstrap3/')[0] for path in migrated_files
+    }
+    if not include_root:
+        migrated_folders = {
+            path.replace(str(COREHQ_BASE_DIR), '') for path in migrated_folders
+        }
+    return migrated_folders
