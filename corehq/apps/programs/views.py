@@ -3,6 +3,7 @@ import json
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 from django.views.decorators.http import require_POST
@@ -14,6 +15,7 @@ from dimagi.utils.web import json_response
 
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.forms import ProgramForm
 from corehq.apps.programs.models import Program
@@ -71,10 +73,11 @@ class FetchProgramListView(ProgramListView):
         }), 'text/json')
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class NewProgramView(BaseCommTrackManageView):
     urlname = 'commtrack_program_new'
     page_title = gettext_noop("New Program")
-    template_name = 'programs/manage/bootstrap3/program.html'
+    template_name = 'programs/manage/bootstrap5/program.html'
 
     @property
     @memoized
@@ -110,6 +113,7 @@ class NewProgramView(BaseCommTrackManageView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EditProgramView(NewProgramView):
     urlname = 'commtrack_program_edit'
     page_title = gettext_noop("Edit Program")
