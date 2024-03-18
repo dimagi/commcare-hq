@@ -1083,7 +1083,9 @@ sso
  0004_login_enforcement_type_sso_test_user
  0005_alter_identityprovider_idp_type
  0006_add_new_fields_in_identityprovider
- 0007_alter_identityprovider_idp_type
+ 0007_add_multi_view_api_fields
+ 0008_alter_identityprovider_idp_type
+
 start_enterprise
  0001_initial
 stock
