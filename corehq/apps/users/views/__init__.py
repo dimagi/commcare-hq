@@ -279,12 +279,13 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     def can_change_user_roles(self):
         return (
-            bool(self.editable_role_choices) and
-            self.request.couch_user.user_id != self.editable_user_id and
-            (
-                self.request.couch_user.is_domain_admin(self.domain) or
-                not self.existing_role or
-                self.existing_role in [choice[0] for choice in self.editable_role_choices]
+            bool(self.editable_role_choices)
+            and self.request.couch_user.user_id != self.editable_user_id
+            and (
+                self.request.couch_user.is_domain_admin(self.domain)
+                or not self.existing_role
+                or self.existing_role
+                in [choice[0] for choice in self.editable_role_choices]
             )
         )
 
@@ -428,8 +429,10 @@ class EditWebUserView(BaseEditUserView):
         }
         if self.request.is_view_only:
             make_form_readonly(self.commtrack_form)
-        if (self.request.project.commtrack_enabled or
-                self.request.project.uses_locations):
+        if (
+            self.request.project.commtrack_enabled
+            or self.request.project.uses_locations
+        ):
             ctx.update({'update_form': self.commtrack_form})
         if TABLEAU_USER_SYNCING.enabled(self.domain):
             ctx.update({'tableau_form': self.tableau_form})
@@ -909,8 +912,8 @@ def undo_remove_web_user(request, domain, record_id):
 
 
 # If any permission less than domain admin were allowed here, having that permission would give you the permission
-# to change the permissions of your own role such that you could do anything, and would thus be equivalent to having
-# domain admin permissions.
+# to change the permissions of your own role such that you could do anything, and would thus be equivalent to
+# having domain admin permissions.
 @json_error
 @domain_admin_required
 @require_POST
