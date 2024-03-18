@@ -1,0 +1,16 @@
+--- 
++++ 
+@@ -1,10 +1,10 @@
+-hqDefine('commtrack/js/bootstrap3/products_and_programs_main', [
++hqDefine('commtrack/js/bootstrap5/products_and_programs_main', [
+     'jquery',
+     'knockout',
+     'underscore',
+     'hqwebapp/js/initial_page_data',
+-    'commtrack/js/bootstrap3/base_list_view_model',
+-    'hqwebapp/js/bootstrap3/widgets',   // "Additional Information" on product page uses a .hqwebapp-select2
++    'commtrack/js/bootstrap5/base_list_view_model',
++    'hqwebapp/js/bootstrap5/widgets',   // "Additional Information" on product page uses a .hqwebapp-select2
+ ], function (
+     $,
+     ko,
