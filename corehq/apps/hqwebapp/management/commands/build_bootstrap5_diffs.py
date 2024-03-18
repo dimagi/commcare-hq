@@ -1,6 +1,7 @@
 import difflib
 import json
 from pathlib import Path
+import shutil
 
 from django.core.management import BaseCommand
 
@@ -52,6 +53,11 @@ def update_bootstrap5_diff_config(config):
     config_string = json.dumps(config, indent=2)
     with open(config_file_path, "w") as f:
         f.writelines(config_string + '\n')
+
+
+def clear_diffs_folder():
+    diff_storage = COREHQ_BASE_DIR / DIFF_STORAGE_FOLDER
+    shutil.rmtree(diff_storage)
 
 
 def get_bootstrap5_filepaths(full_diff_config):
@@ -130,6 +136,7 @@ class Command(BaseCommand):
             self.update_configuration_file_for_app(update_app)
             return
 
+        clear_diffs_folder()
         full_diff_config = get_bootstrap5_diff_config()
         for bootstrap3_filepath, bootstrap5_filepath, diff_filepath in get_bootstrap5_filepaths(full_diff_config):
             with open(diff_filepath, 'w') as df:
