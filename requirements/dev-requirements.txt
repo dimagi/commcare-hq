@@ -16,7 +16,7 @@ asgiref==3.7.2
     # via django
 asttokens==2.0.5
     # via stack-data
-async-timeout==4.0.2
+async-timeout==4.0.3
     # via redis
 attrs==23.1.0
     # via
@@ -595,7 +595,7 @@ radon==6.0.1
     # via -r test-requirements.in
 rcssmin==1.1.1
     # via django-compressor
-redis==4.5.4
+redis==5.0.3
     # via
     #   -r base-requirements.in
     #   django-redis
