@@ -59,27 +59,25 @@ class ESSyncUtil:
             source_index, destination_index, requests_per_second=requests_per_second
         )
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
-        task_number = task_id.split(':')[1]
         print("\n\n\n")
         logger.info("-----------------IMPORTANT-----------------")
-        logger.info(f"TASK NUMBER - {task_number}")
+        logger.info(f"TASK ID - {task_id}")
         logger.info("-------------------------------------------")
-        logger.info("Save this Task Number, You will need it later for verifying your reindex process")
+        logger.info("Save this Reindex Task ID, You can use it later to verify reindex status")
         print("\n\n\n")
         # This would display progress untill reindex process is completed
-        check_task_progress(task_id)
+        reindex_complete = check_task_progress(task_id)
 
         print("\n\n")
+
+        if reindex_complete:
+            logger.info(f"Reindex task with id {task_id} completed successfully!\n\n")
 
         self.display_source_destination_doc_count(adapter)
 
-        logger.info(f"Verify this reindex process from elasticsearch logs using task id - {task_id}")
-        print("\n\n")
-        logger.info("You can use commcare-cloud to extract reindex logs from cluster")
-        print("\n\t"
-            + f"cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "
-            + f"\"grep '{task_number}.*ReindexResponse' /opt/data/elasticsearch*/logs/*.log\""
-            + "\n\n")
+        logger.info(
+            f"""You can verify the status using command \n
+            cchq {settings.SERVER_ENVIRONMENT} django-manage elastic_sync_multiplexed status {task_id}""")
 
     def _get_source_destination_indexes(self, adapter):
         return adapter.primary.index_name, adapter.secondary.index_name
