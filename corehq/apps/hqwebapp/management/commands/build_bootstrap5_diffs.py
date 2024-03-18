@@ -15,6 +15,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
 
 DIFF_CONFIG_FILE = "apps/hqwebapp/tests/data/bootstrap5_diff_config.json"
 DIFF_STORAGE_FOLDER = "apps/hqwebapp/tests/data/bootstrap5_diffs/"
+TRACKED_JS_FOLDERS = ["js", "spec"]
 
 
 def get_diff_filename(filename_bootstrap3, filename_bootstrap5, file_type):
@@ -171,10 +172,9 @@ class Command(BaseCommand):
         config_file = get_bootstrap5_diff_config()
 
         self.update_config(config_file, app_name)
-        tracked_js_folders = ["js", "spec"]
-        for js_folder in tracked_js_folders:
+        for js_folder in TRACKED_JS_FOLDERS:
             self.update_config(config_file, app_name, js_folder)
-        self.check_javascript_paths(app_name, tracked_js_folders)
+        self.check_javascript_paths(app_name, TRACKED_JS_FOLDERS)
         self.stdout.write("Saving config...\n")
         update_bootstrap5_diff_config(config_file)
         self.stdout.write(f"{DIFF_CONFIG_FILE} has been updated. "
