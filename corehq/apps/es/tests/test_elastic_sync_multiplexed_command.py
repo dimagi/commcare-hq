@@ -2,7 +2,7 @@ import uuid
 from unittest.mock import patch
 
 from django.core.management import CommandError, call_command
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 
 import corehq.apps.es.const as es_consts
 from corehq.apps.es import app_adapter, case_adapter, case_search_adapter
@@ -30,7 +30,7 @@ INDEX_CNAME = 'test_reindex'
 
 
 def mutiplexed_adapter_with_overriden_settings():
-    with override_settings(ES_FOR_TEST_INDEX_MULTIPLEXED=True):
+    with patch.object(es_consts, 'ES_FOR_TEST_INDEX_MULTIPLEXED', True):
         return create_document_adapter(
             TestDocumentAdapter,
             "test_reindex-primary",
@@ -66,7 +66,10 @@ def _get_patched_adapter(adapter, multiplex_index, swap_index, secondary=None):
         adapter_cls = adapter.primary.__class__
     # strip of test_ from index names because create_document_adapter will append it again for tests
     index_name = adapter.index_name[5:] if adapter.index_name.startswith('test_') else adapter.index_name
-    with override_settings(**{multiplex_setting_key: multiplex_index, swap_setting_key: swap_index}):
+    with (
+        patch.object(es_consts, multiplex_setting_key, multiplex_index),
+        patch.object(es_consts, swap_setting_key, swap_index)
+    ):
         patched_adapter = create_document_adapter(
             adapter_cls, index_name,
             adapter.type, secondary=secondary
@@ -319,7 +322,7 @@ class TestCopyCheckpointsBeforeIndexSwap(TestCase):
             with self.assertRaises(IndexNotMultiplexedException):
                 ESSyncUtil().set_checkpoints_for_new_index('cases')
 
-    @override_settings(ES_CASES_INDEX_SWAPPED=True)
+    @patch.object(es_consts, 'ES_CASES_INDEX_SWAPPED', True)
     def test_set_checkpoints_for_new_index_raises_swapped_multiplexed_index(self):
         patched_case_adapter = _get_patched_adapter(case_adapter, True, True, 'second-index')
         with patch(
@@ -329,7 +332,6 @@ class TestCopyCheckpointsBeforeIndexSwap(TestCase):
             with self.assertRaises(IndexAlreadySwappedException):
                 ESSyncUtil().set_checkpoints_for_new_index('cases')
 
-    @override_settings(ES_CASES_INDEX_MULTIPLEXED=True)
     def test_set_checkpoints_for_new_index(self):
 
         secondary_case_index = 'cases_secondary'
@@ -375,7 +377,9 @@ class TestCopyCheckpointsBeforeIndexSwap(TestCase):
         patched_case_adapter = _get_patched_adapter(case_adapter, True, True, secondary_case_index)
         with (
             patch.object(es_consts, 'HQ_CASES_SECONDARY_INDEX_NAME', secondary_case_index),
-            patch('corehq.pillows.case.case_adapter', patched_case_adapter)
+            patch('corehq.pillows.case.case_adapter', patched_case_adapter),
+            patch.object(es_consts, 'ES_CASES_INDEX_SWAPPED', True),
+
         ):
             case_pillow = get_case_pillow(skip_ucr=True)
 

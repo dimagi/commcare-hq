@@ -132,5 +132,5 @@ def routing_status(poll_id):
 
 class MapboxVRPSolver(DisbursementAlgorithmSolverInterface):
 
-    def solve(self):
+    def solve(self, *args, **kwargs):
         return submit_routing_request(self.request_json), None

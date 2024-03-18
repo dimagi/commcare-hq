@@ -177,7 +177,7 @@ django-crispy-forms==2.0
     # via
     #   -r base-requirements.in
     #   crispy-bootstrap3to5
-django-cte==1.2.0
+django-cte==1.3.2
     # via -r base-requirements.in
 django-extensions==3.1.3
     # via
@@ -197,7 +197,7 @@ django-otp==1.1.3
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
-django-phonenumber-field==6.4.0
+django-phonenumber-field==7.3.0
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -215,7 +215,7 @@ django-tastypie==0.14.6
     # via -r base-requirements.in
 django-transfer==0.4
     # via -r base-requirements.in
-django-two-factor-auth==1.13.2
+django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae
     # via -r base-requirements.in
 django-user-agents==0.4.0
     # via -r base-requirements.in

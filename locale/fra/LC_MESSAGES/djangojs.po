@@ -2043,6 +2043,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js
 msgid "Loading..."
 msgstr "Téléchargement en cours..."
@@ -3498,13 +3499,26 @@ msgid ""
 "will not be exported."
 msgstr ""
 
+#: corehq/apps/geospatial/static/geospatial/js/geo_config.js
+#, fuzzy
+#| msgid "Report successfully emailed"
+msgid "Token successfully verified!"
+msgstr "Le rapport a été envoyé par courrier électronique avec succès"
+
+#: corehq/apps/geospatial/static/geospatial/js/geo_config.js
+msgid ""
+"Invalid API token. Please verify that the token matches the one on your "
+"Mapbox account and has the correct scope configured."
+msgstr ""
+
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "Name of the Area"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid ""
-"Oops! Something went wrong! Please contact admin if the problem persists."
+"Oops! Something went wrong! Please check that your geospatial settings are "
+"configured correctly or contact admin if the problem persists."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
@@ -3873,6 +3887,7 @@ msgid "Please enter your name."
 msgstr "Veuillez saisir votre nom"
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
 #: corehq/apps/users/static/users/js/invite_web_user.js
 msgid "Please specify an email."
 msgstr "Veuillez spécifier une adresse mail."
@@ -3882,6 +3897,7 @@ msgid "Checking email..."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
 msgid "Please specify a password."
 msgstr "Veuillez spécifier un mot de passe."
 
@@ -4316,6 +4332,58 @@ msgstr ""
 #: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js
 msgid "Please Select a Country Code"
 msgstr "Sélectionnez un code pays"
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "Forms"
+msgstr "Formulaires"
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "Cases"
+msgstr "Dossiers"
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "Reports"
+msgstr "Rapports"
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "App Builder"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "Thank you, "
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
+msgid "Submission has been cancelled."
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+msgid "Please specify a username."
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+msgid "Username must be at least three characters long."
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+msgid "Your password must be at least 6 characters long"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
+msgid "Resetting form..."
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
+msgid "Benched"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
+msgid "Playing"
+msgstr ""
+
+#: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
+msgid "Search Team..."
+msgstr ""
 
 #: corehq/apps/translations/static/translations/js/translations.js
 msgid "Delete Translation"

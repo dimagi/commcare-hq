@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.urls import reverse
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.sso import certificates
@@ -66,6 +67,15 @@ class ServiceProviderCertificate:
         self.public_key = certificates.get_public_key(cert)
         self.private_key = certificates.get_private_key(key_pair)
         self.date_expires = certificates.get_expiration_date(cert)
+
+
+VALID_API_EXPIRATION_OPTIONS = [
+    (365, gettext_lazy('1 Year')),
+    (180, gettext_lazy('180 Days')),
+    (120, gettext_lazy('120 Days')),
+    (60, gettext_lazy('60 Days')),
+    (30, gettext_lazy('30 Days'))
+]
 
 
 class IdentityProvider(models.Model):
@@ -148,6 +158,11 @@ class IdentityProvider(models.Model):
     api_id = models.TextField(default="")  # application (client) id in Entra ID
     api_secret = models.TextField(default="")
     date_api_secret_expiration = models.DateField(blank=True, null=True)
+
+    always_show_user_api_keys = models.BooleanField(default=False)
+    max_days_until_user_api_key_expiration = models.IntegerField(
+        default=None, null=True, blank=True, choices=VALID_API_EXPIRATION_OPTIONS
+    )
 
     class Meta:
         app_label = 'sso'

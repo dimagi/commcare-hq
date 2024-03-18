@@ -1,5 +1,5 @@
+"use strict";
 hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
-    'use strict';
 
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
