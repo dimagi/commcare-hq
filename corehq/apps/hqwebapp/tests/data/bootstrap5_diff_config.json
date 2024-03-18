@@ -260,28 +260,6 @@
       ]
     }
   ],
-  "apps/builds/templates/builds": [
-    {
-      "directories": [
-        "bootstrap3/",
-        "bootstrap5/"
-      ],
-      "file_type": "template",
-      "label": "builds",
-      "compare_all_files": true
-    }
-  ],
-  "apps/builds/static/builds/js": [
-    {
-      "directories": [
-        "bootstrap3/",
-        "bootstrap5/"
-      ],
-      "file_type": "javascript",
-      "label": "javascript/builds",
-      "compare_all_files": true
-    }
-  ],
   "apps/notifications/templates/notifications": [
     {
       "directories": [
