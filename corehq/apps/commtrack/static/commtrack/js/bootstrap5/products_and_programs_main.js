@@ -68,7 +68,7 @@ hqDefine('commtrack/js/bootstrap5/products_and_programs_main', [
                     self.initialLoad(true);
                     $('.hide-until-load').removeClass("hide");
                 }
-                self.current_page(data.current_page);
+                self.current_page(parseInt(data.current_page));
                 self.dataList(data.data_list);
                 self.archiveActionItems([]);
             }
