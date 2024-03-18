@@ -83,6 +83,8 @@ class SubmissionErrorReport(DeploymentsReport):
     def paged_result(self):
         doc_types = [filter_.doc_type for filter_ in [filter_ for filter_ in self.submitfilter if filter_.show]]
         sort_col, desc = self.sort_params
+        app_id = self.request.GET.get('app_id', None)
+        xmlns = self.request.GET.get('xmlns', None)
         return get_paged_forms_by_type(
             self.domain,
             doc_types,
@@ -90,6 +92,8 @@ class SubmissionErrorReport(DeploymentsReport):
             desc=desc,
             start=self.pagination.start,
             size=self.pagination.count,
+            app_id=app_id,
+            xmlns=xmlns,
         )
 
     @property

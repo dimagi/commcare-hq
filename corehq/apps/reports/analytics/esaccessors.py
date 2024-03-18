@@ -144,7 +144,9 @@ def get_paged_forms_by_type(
         sort_col=None,
         desc=True,
         start=0,
-        size=10):
+        size=10,
+        app_id=None,
+        xmlns=None):
     sort_col = sort_col or "received_on"
     query = (
         FormES()
@@ -156,6 +158,10 @@ def get_paged_forms_by_type(
         .start(start)
         .size(size)
     )
+    if app_id:
+        query = query.app(app_id)
+    if xmlns:
+        query = query.xmlns(xmlns)
     result = query.run()
     return PagedResult(total=result.total, hits=result.hits)
 
