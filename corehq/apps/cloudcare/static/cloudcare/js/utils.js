@@ -147,6 +147,18 @@ hqDefine('cloudcare/js/utils', [
         return !answerInProgress && !validationInProgress;
     };
 
+    var loadingDurationListener = function () {
+        const targetNode = $('body')[0];
+        const callback = function () {
+            if ($('body').find('.duration-to-show-loading-met').length && sessionStorage.formplayerQueryInProgress) {
+                showProminentLoading();
+                observer.disconnect();
+            }
+        };
+        const observer = new MutationObserver(callback);
+        observer.observe(targetNode, { childList: true, subtree: true });
+    };
+
     var getRegionContainer = function () {
         const RegionContainer = Marionette.View.extend({
             el: "#menu-container",
@@ -164,12 +176,16 @@ hqDefine('cloudcare/js/utils', [
         return new RegionContainer();
     };
 
-    var showLoading = function () {
-        if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
-            const progressView = ProgressBar({
-                progressMessage: gettext("Loading..."),
-            });
-            hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+    var showProminentLoading = function () {
+        hqRequire([
+            "cloudcare/js/formplayer/app",
+            "hqwebapp/js/toggles",
+            "cloudcare/js/formplayer/layout/views/progress_bar",
+        ], function (FormplayerFrontend, toggles, ProgressBar) {
+            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+                const progressView = ProgressBar({
+                    progressMessage: gettext("Loading..."),
+                });
                 if (!FormplayerFrontend.regions) {
                     FormplayerFrontend.regions = getRegionContainer();
                 }
@@ -188,10 +204,18 @@ hqDefine('cloudcare/js/utils', [
                         currentProgress += 1;
                     }
                 }, 250);
-            });
-        } else {
-            NProgress.start();
-        }
+            }
+        });
+    };
+
+    var showLoading = function () {
+        hqRequire(["hqwebapp/js/toggles",], function (toggles) {
+            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+                loadingDurationListener();
+            } else {
+                NProgress.start();
+            }
+        });
     };
 
     var formplayerLoading = function () {
