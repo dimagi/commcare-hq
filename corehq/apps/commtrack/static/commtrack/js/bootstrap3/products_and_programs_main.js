@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('commtrack/js/bootstrap3/products_and_programs_main', [
     'jquery',
     'knockout',

@@ -1,6 +1,7 @@
 --- 
 +++ 
-@@ -1,10 +1,10 @@
+@@ -1,11 +1,11 @@
+ "use strict";
 -hqDefine('commtrack/js/bootstrap3/products_and_programs_main', [
 +hqDefine('commtrack/js/bootstrap5/products_and_programs_main', [
      'jquery',
@@ -14,3 +15,12 @@
  ], function (
      $,
      ko,
+@@ -68,7 +68,7 @@
+                     self.initialLoad(true);
+                     $('.hide-until-load').removeClass("hide");
+                 }
+-                self.current_page(data.current_page);
++                self.current_page(parseInt(data.current_page));
+                 self.dataList(data.data_list);
+                 self.archiveActionItems([]);
+             }
