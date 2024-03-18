@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sso', '0006_add_new_fields_in_identityprovider'),
+        ('sso', '0007_add_multi_view_api_fields'),
     ]
 
     operations = [
