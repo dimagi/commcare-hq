@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -1,18 +1,15 @@
  {% load i18n %}
- 
+
  <div id="unsupported-browser"
 -        class="alert alert-danger hide">
 -    <p>
@@ -18,7 +18,8 @@
 -        or <a href="http://www.mozilla.org/">Firefox</a>.
 -    {% endblocktrans %}
 -    </p>
--</div>+     role="alert"
+-</div>
++     role="alert"
 +     class="alert alert-danger rounded-0 d-none">
 +  <i class="fa-solid fa-triangle-exclamation"></i>
 +  <strong>

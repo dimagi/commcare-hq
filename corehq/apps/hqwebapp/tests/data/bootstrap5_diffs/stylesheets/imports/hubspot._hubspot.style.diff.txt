@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,15 +1,15 @@
  .hs-input {
    display: block;
@@ -23,7 +23,7 @@
 +  border-radius: $input-border-radius; // Note: This has no effect on <select>s in some browsers, due to the limited stylability of <select>s in CSS.
    box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
- 
+
 @@ -26,17 +26,17 @@
    // don't honor that edge case; we style them as disabled anyway.
    &[disabled],
@@ -32,13 +32,13 @@
 +    background-color: $input-disabled-bg;
      opacity: 1; // iOS fix for unreadable disabled content; see https://github.com/twbs/bootstrap/issues/11655
    }
- 
+
    &[disabled],
    fieldset[disabled] & {
 -    cursor: @cursor-disabled;
 +    cursor: $cursor-disabled;
    }
- 
+
    // Reset height for `textarea`s
 -  textarea& {
 +  textarea & {
@@ -61,7 +61,7 @@
 -  .button-size(@padding-base-vertical; @padding-base-horizontal; @font-size-base; @line-height-base; @btn-border-radius-base);
 +  @include button-size($input-btn-padding-y, $input-btn-padding-x, $font-size-base, $btn-border-radius);
  }
- 
+
  .hs-form .actions {
 -  background-color: @cc-bg;
 +  background-color: $cc-bg;
@@ -70,7 +70,7 @@
    border-bottom-left-radius: 5px;
 @@ -76,6 +76,6 @@
    text-align: right;
- 
+
    .hs-button.primary {
 -    .button-variant(white; @cc-brand-mid; darken(@cc-brand-mid, 5));
 +    @include button-variant($white, $cc-brand-mid, darken($cc-brand-mid, 5));

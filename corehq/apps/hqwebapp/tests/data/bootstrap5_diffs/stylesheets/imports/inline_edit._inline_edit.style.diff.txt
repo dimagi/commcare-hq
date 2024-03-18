@@ -1,19 +1,19 @@
---- 
-+++ 
+---
++++
 @@ -15,16 +15,16 @@
- 
+
      .read-only {
          padding: 8px;
 -        .clearfix();
 +        @include clearfix();
- 
+
          &:hover {
              cursor: pointer;
 -            background-color: @cc-bg;
 +            background-color: $light;
              border-radius: 4px;
          }
- 
+
          i {
 -            color: @cc-neutral-hi;
 +            color: $secondary;
@@ -38,7 +38,7 @@
 +        min-width: 350px;
      }
  }
- 
+
  table .ko-inline-edit .read-only:hover {
 -    background-color: @cc-neutral-hi;
 +    background-color: $light;

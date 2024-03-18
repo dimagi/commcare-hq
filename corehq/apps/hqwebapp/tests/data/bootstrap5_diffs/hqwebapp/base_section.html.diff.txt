@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -1,4 +1,4 @@
 -{% extends 'hqwebapp/bootstrap3/two_column.html' %}
 +{% extends 'hqwebapp/bootstrap5/two_column.html' %}
  {% load hq_shared_tags %}
- 
+
  {% block title %}{% if current_page.title %}{{ current_page.title }} : {% endif %}{{ section.page_name }} :: {% endblock %}

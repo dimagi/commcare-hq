@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -3,7 +3,7 @@
  {% commcarehq_alerts request as alerts %}
  {% for alert in alerts %}

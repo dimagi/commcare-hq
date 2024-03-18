@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,52 +1,57 @@
  <script type="text/html" id="ko-inline-edit-template">
 -  <div class="ko-inline-edit inline" data-bind="css: {'has-error': hasError()}">

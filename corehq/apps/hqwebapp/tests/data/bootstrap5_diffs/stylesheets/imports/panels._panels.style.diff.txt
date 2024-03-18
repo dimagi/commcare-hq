@@ -1,11 +1,11 @@
---- 
-+++ 
+---
++++
 @@ -1,6 +1,6 @@
  .panel-modern-gray {
    border: none;
 -  background-color: lighten(@cc-bg, 3);
 +  background-color: lighten($cc-bg, 3);
- 
+
    .panel-heading {
      padding: 0;
 @@ -10,9 +10,9 @@
@@ -21,16 +21,16 @@
      }
      .hq-help {
 @@ -31,7 +31,7 @@
- 
+
    .panel-title-nolink {
      padding: 15px 15px;
 -    border-bottom: 1px solid @cc-bg;
 +    border-bottom: 1px solid $cc-bg;
    }
- 
+
    .collapsing {
 @@ -40,10 +40,10 @@
- 
+
    legend {
      padding: 15px 15px;
 -    border-bottom: 1px solid @cc-bg;
@@ -41,10 +41,10 @@
 +    border-bottom: 1px solid $cc-bg;
      margin-bottom: 20px;
    }
- 
+
 @@ -81,6 +81,5 @@
  }
- 
+
  .panel-group .panel-modern-gray {
 -  .border-top-radius(0);
 -  .border-bottom-radius(0);

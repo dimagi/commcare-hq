@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,34 +1,5 @@
 -@import "../../../../../../node_modules/bootstrap/less/buttons.less";
 -
@@ -34,7 +34,7 @@
 -  .button-variant(white; @cc-dark-cool-accent-mid; darken(@cc-dark-cool-accent-mid, 5));
 +  @include button-variant($white, $cc-dark-cool-accent-mid, darken($cc-dark-cool-accent-mid, 5));
  }
- 
+
  .btn-full-width {
 @@ -38,25 +9,35 @@
  // Separated button groups in toolbars need more space between them,
@@ -43,7 +43,7 @@
 -    margin-left: 20px;
 +  margin-left: 20px;
  }
- 
+
  .btn-group-separated {
 -    > button, > .btn {
 -        // Styled similarly to .btn-default
@@ -63,7 +63,7 @@
 +    color: $call-to-action-mid;
 +    margin-right: 5px;
 +    margin-bottom: 5px;
- 
+
 -        &.active, &.active:focus, &.active:hover {
 -            // Styled similarly to .btn-primary
 -            // Don't bold font because .active often toggles on and off, and we don't want the size to change

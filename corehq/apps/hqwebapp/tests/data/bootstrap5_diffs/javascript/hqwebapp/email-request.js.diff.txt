@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,14 +1,17 @@
 -hqDefine('hqwebapp/js/bootstrap3/email-request', [
 +hqDefine('hqwebapp/js/bootstrap5/email-request', [
@@ -12,17 +12,17 @@
 +    "hqwebapp/js/bootstrap5/hq.helpers",
 +], function ($, ko, bootstrap) {
 +    'use strict';
- 
+
      var EmailRequest = function (modalId, formId) {
          let self = {};
- 
+
          self.$element = $(`#${modalId}`);
 +        self.reportModal = new bootstrap.Modal(self.$element);
          self.$formElement = $(`#${formId}`);
          self.$submitBtn = self.$formElement.find("button[type='submit']");
- 
+
 @@ -56,9 +59,9 @@
- 
+
              if (!self.isRequestReportSubmitting && self.isReportSent) {
                  self.isReportSent = false;
 -                self.$element.modal('hide');
@@ -35,7 +35,7 @@
                      type: "POST",
 @@ -77,10 +80,10 @@
          };
- 
+
          self.resetForm = function () {
 -            self.$formElement.find("button[type='submit']").button('reset');
 +            self.$formElement.find("button[type='submit']").changeButtonState('reset');
@@ -45,7 +45,7 @@
 +            self.$submitBtn.changeButtonState('reset');
              self.hasEmailInputError(false);
          };
- 
+
 @@ -107,12 +110,12 @@
          function hqwebappRequestReportSucccess() {
              self.isRequestReportSubmitting = false;
@@ -53,7 +53,7 @@
 -            self.$submitBtn.button('success');
 +            self.$submitBtn.changeButtonState('success');
          }
- 
+
          function hqwebappRequestReportError() {
              self.isRequestReportSubmitting = false;
 -            self.$submitBtn.button('error');

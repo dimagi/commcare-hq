@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,11 +1,12 @@
 -hqDefine('hqwebapp/js/bootstrap3/main', [
 +hqDefine('hqwebapp/js/bootstrap5/main', [
@@ -28,12 +28,12 @@
 @@ -115,8 +117,6 @@
              $.postGo(action, $.unparam(data));
          });
- 
+
 -        $(".button", $elem).button().wrap('<span />');
 -        $("input[type='submit']", $elem).button();
          $("input[type='text'], input[type='password'], textarea", $elem);
          $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
- 
+
 @@ -129,7 +129,7 @@
          'use strict';
          var key;
@@ -78,7 +78,7 @@
 @@ -384,7 +382,12 @@
          $(window).on('beforeunload', beforeUnloadCallback);
          initBlock($("body"));
- 
+
 -        $('#modalTrial30Day').modal('show');
 +        var trialModalElement = $('#modalTrial30Day'),
 +            trialModal;
@@ -86,7 +86,7 @@
 +            trialModal = new bootstrap.Modal(trialModalElement);
 +            trialModal.show();
 +        }
- 
+
          $(document).on('click', '.track-usage-link', function (e) {
              var $link = $(e.currentTarget),
 @@ -460,8 +463,13 @@
@@ -124,7 +124,7 @@
 -                });
              }
          }
- 
+
          // CDA modal
          _.each($(".remote-modal"), function (modal) {
 -            var $modal = $(modal);

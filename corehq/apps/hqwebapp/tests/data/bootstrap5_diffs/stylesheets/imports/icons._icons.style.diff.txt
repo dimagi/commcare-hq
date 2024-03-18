@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -11,11 +11,11 @@
      }
      &:hover i,
@@ -13,7 +13,7 @@
 +        color: $text-color;
      }
  }
- 
+
 @@ -23,9 +23,9 @@
    width: 100%;
    line-height: 30px;
@@ -25,4 +25,4 @@
 +    color: $cc-brand-low;
    }
  }
- 
+

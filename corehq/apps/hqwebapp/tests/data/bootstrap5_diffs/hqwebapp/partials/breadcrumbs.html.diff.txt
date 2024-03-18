@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,28 +1,30 @@
 -<ol id="hq-breadcrumbs"
 -    class="breadcrumb breadcrumb-hq-section">

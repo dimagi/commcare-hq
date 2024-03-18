@@ -1,19 +1,19 @@
---- 
-+++ 
+---
++++
 @@ -5,12 +5,12 @@
    -o-background-size: cover;
    background-size: cover;
- 
+
 -  background-color: lighten(@cc-text, 10%);
 +  background-color: lighten($cc-text, 10%);
    min-height: 100%;
    width: 100%;
- 
+
    opacity: 0;
 -  .transition(opacity .2s ease-in-out);
 +  transition: opacity .2s ease-in-out;
  }
- 
+
  .bg-full-cover-fixed.b-loaded {
 @@ -30,6 +30,6 @@
  .bg-container {

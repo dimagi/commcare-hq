@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,13 +1,13 @@
 -hqDefine("hqwebapp/js/bootstrap3/base_main", [
 -    'hqwebapp/js/bootstrap3/downgrade_modal',

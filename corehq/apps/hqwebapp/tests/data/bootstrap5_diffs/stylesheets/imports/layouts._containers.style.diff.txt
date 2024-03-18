@@ -1,12 +1,12 @@
---- 
-+++ 
+---
++++
 @@ -1,22 +1,10 @@
 -body, html {
 -    height: 100%;
 +html, body {
 +  height: 100%;
  }
- 
+
  .hq-container {
      min-height: 100%;
      height: auto !important;

@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,102 +1,54 @@
 -.dataTables_info,
 -.dataTables_length {
@@ -11,7 +11,7 @@
 +div.dataTables_wrapper div.dataTables_info {
 +  padding-top: 9px !important;
  }
- 
+
 -.datatable thead th,
 -.dataTable thead th {
 -  background-color: desaturate(@cc-brand-low, 50%);
@@ -22,7 +22,7 @@
 +div.dataTables_wrapper div.dataTables_length label {
 +  padding-top: 6px !important;
  }
- 
+
 -.datatable tfoot td,
 -.datatable tfoot th,
 -.dataTable tfoot td,
@@ -33,7 +33,7 @@
 +table.dataTable.table-hq-report {
 +  margin-top: 0 !important;
  }
- 
+
 -.datatable .header,
 -.dataTable .header {
 -  .dt-sort-icon:before{
@@ -90,7 +90,7 @@
 -    background-color: @cc-brand-mid;
 -  }
 -}
- 
+
 -.datatable .sorting_1,
 -.dataTable .sorting_1 {
 -  background-color: @cc-bg;
@@ -112,7 +112,7 @@
      }
    }
  }
- 
+
 -.dataTable td.text-xs {
 -  font-size: .8em;
 +.dtfc-right-top-blocker:last-child {

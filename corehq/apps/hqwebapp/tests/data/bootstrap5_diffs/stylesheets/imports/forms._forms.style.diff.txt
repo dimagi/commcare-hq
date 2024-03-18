@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,356 +1,7 @@
 -// FORM ACTIONS from TWBS 2
 -// ------------
@@ -358,7 +358,7 @@
 -.controls-text {
 -  padding-top: 7px;
  }
- 
+
  .form-hide-actions .form-actions {
 @@ -361,15 +12,38 @@
    .validationMessage {
@@ -369,14 +369,15 @@
      font-weight: bold;
    }
  }
- 
+
 -.checkboxinput.form-control {
 -  border-radius: 0 !important;
 -  height: 13px;
 -  float: none;
 -  position: initial;
 -  width: 13px;
--}+.help-block,
+-}
++.help-block,
 +p.help-block {
 +  display: block;
 +  margin-top: 5px;

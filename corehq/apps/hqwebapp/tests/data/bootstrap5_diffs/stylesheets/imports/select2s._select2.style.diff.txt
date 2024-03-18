@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -14,20 +14,20 @@
  }
- 
+
  // Static width for select2 widgets, which otherwise grow too large on form view's case management tab
 -.case-config-select2s(@width) {
 +@mixin case-config-select2s($width) {
@@ -10,7 +10,7 @@
 -        width: @width;
 +        width: $width;
      }
- 
+
      // This needs a static width so that text-overflow: ellipsis will work in Firefox.
      // Unusually specific selector to override select2's width: auto rule.
      > .select2-choice > .select2-chosen {
@@ -18,7 +18,7 @@
 +        width: $width - 35px;
      }
  }
- 
+
 -.property-descriptions(@width) {
 -    width: @width;
 +@mixin property-descriptions($width) {
@@ -28,19 +28,19 @@
      text-overflow: ellipsis;
 @@ -35,19 +35,19 @@
  }
- 
+
  #case-config-ko, #usercase-config-ko {
 -    @select2Width: 210px;
 +    $select2Width: 210px;
- 
+
 -    .case-config-select2s(@select2Width);
 +    @include case-config-select2s($select2Width);
- 
+
      .property-description {
 -      .property-descriptions(@select2Width);
 +       @include property-descriptions($select2Width);
      }
- 
+
      .wide-select2s {
 -      @wideWidth: @select2Width * 1.5;
 -      .case-config-select2s(@wideWidth);
@@ -55,7 +55,7 @@
 @@ -57,14 +57,6 @@
  .select2-container {
      width: 100% !important;
- 
+
 -    .select2-selection.select2-selection--single {
 -        height: @input-height-base;
 -    }
@@ -76,12 +76,12 @@
 -        line-height: 21px;
 -    }
  }
- 
+
  .select2-container.select2-container-active > .select2-choice {
 -  .box-shadow(0 0 10px @cc-brand-mid);
 +  box-shadow: 0 0 10px $cc-brand-mid;
  }
- 
+
  .select2-selection__placeholder {
 -  color: @gray-base !important;
 +  color: $gray-base !important;

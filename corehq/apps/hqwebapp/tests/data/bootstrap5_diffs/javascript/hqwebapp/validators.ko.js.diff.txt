@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,4 +1,4 @@
 -hqDefine("hqwebapp/js/bootstrap3/validators.ko", [
 +hqDefine("hqwebapp/js/bootstrap5/validators.ko", [
@@ -23,7 +23,7 @@
          validator: function (val) {
              if (val === undefined || val.length === 0) return true;  // do separate validation for required
 @@ -19,52 +28,71 @@
- 
+
      /**
       * Use this handler to show bootstrap validation states on a form input when
 -     * your input's observable has been extended by KnockoutValidation.
@@ -78,7 +78,7 @@
 +                isValid = false,
 +                isValidating = false,
 +                isDelayedValid;
- 
+
              if (validatorVal === undefined) {
                  return;
              }
@@ -86,7 +86,7 @@
 -                (options.validator.isValid() && options.delayedValidator === undefined) ||
 -                (options.validator.isValid() && options.delayedValidator !== undefined && options.delayedValidator.isValid())
 -            );
- 
+
 -            if (isValid) {
 -                $feedback.addClass("fa-check");
 -                $formGroup.addClass("has-success");

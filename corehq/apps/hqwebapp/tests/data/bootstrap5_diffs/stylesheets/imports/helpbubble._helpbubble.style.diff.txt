@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,12 +1,12 @@
  .helpbubble {
 -  @bubble-radius: 10px;
@@ -19,17 +19,17 @@
    margin-top: 15px;
 @@ -78,72 +78,72 @@
  }
- 
+
  .helpbubble-primary {
 -  background: @cc-brand-mid;
 +  background: $cc-brand-mid;
- 
+
    &.helpbubble-left:after,
    &.helpbubble-right:after {
 -    border-color: transparent @cc-brand-mid;
 +    border-color: transparent $cc-brand-mid;
    }
- 
+
    &.helpbubble-top-left:after,
    &.helpbubble-bottom-left:after,
    &.helpbubble-bottom-center:after {
@@ -54,11 +54,11 @@
      }
    }
  }
- 
+
  .helpbubble-secondary {
 -  background: @cc-light-cool-accent-mid;
 +  background: $cc-light-cool-accent-mid;
- 
+
    &.helpbubble-left:after,
    &.helpbubble-right:after {
 -    border-color: transparent @cc-light-cool-accent-mid;
@@ -71,11 +71,11 @@
 +    border-color: $cc-light-cool-accent-mid transparent ;
    }
  }
- 
+
  .helpbubble-purple {
 -  background: @cc-dark-cool-accent-mid;
 +  background: $cc-dark-cool-accent-mid;
- 
+
    &.helpbubble-left:after,
    &.helpbubble-right:after {
 -    border-color: transparent @cc-dark-cool-accent-mid;

@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -2,11 +2,11 @@
   * Adds URL hash behavior to bootstrap tabs. This enables bookmarking/refreshing and browser back/forward.
   * Lightly modified from https://stackoverflow.com/questions/18999501/bootstrap-3-keep-selected-tab-on-page-refresh
@@ -32,7 +32,7 @@
 +
 +        // make sure we don't treat all anchor tags as a sticky tab
 +        if ($tabFromUrl && $tabFromUrl.parents('.sticky-tabs').length === 0) return;
- 
+
          if ($tabFromUrl && $tabFromUrl.length) {
 -            $tabFromUrl.tab('show');
 -        } else {
@@ -43,7 +43,7 @@
 +            tabController = new bootstrap.Tab($altTabSelector);
 +            tabController.show();
          }
- 
+
          $('body').on('click', tabSelector, function (e) {
 -            var $link = $(this);
 +            var $link = $(this),
@@ -54,12 +54,12 @@
 @@ -42,13 +49,18 @@
                  window.location.hash = tabName;
              }
- 
+
 -            $link.tab('show');
 +            linkTab.show();
              return false;
          });
- 
+
          $(window).on('popstate', function () {
 -            var anchor = getHash() || $(navSelector + ' ' + tabSelector).first().attr('href');
 -            $("a[href='" + anchor + "']").tab('show');

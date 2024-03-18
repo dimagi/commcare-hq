@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,46 +1,53 @@
  {% load i18n %}
  <!-- used by corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js -->

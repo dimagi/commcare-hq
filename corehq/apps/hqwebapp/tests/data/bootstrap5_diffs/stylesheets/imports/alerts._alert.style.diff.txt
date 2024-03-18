@@ -1,13 +1,13 @@
---- 
-+++ 
+---
++++
 @@ -8,19 +8,19 @@
- 
+
  .alert-neutral {
    background-color: #ffffff;
 -  border: 1px solid @cc-neutral-hi;
 +  border: 1px solid $cc-neutral-hi;
  }
- 
+
  .alert-maintenance,
  .alert-trial {
 -  z-index: @zindex-navbar;
@@ -16,13 +16,13 @@
    text-align: center;
    margin-bottom: 0;
  }
- 
+
  .alert-setting {
 -  background-color: @color-purple-dark;
 +  background-color: $color-purple-dark;
    color: #ffffff;
    border: none;
- 
+
 @@ -28,11 +28,11 @@
    a:active,
    a:hover,
@@ -30,16 +30,16 @@
 -    color: @color-purple-dark-inverse;
 +    color: $color-purple-dark-inverse;
    }
- 
+
    .btn-confirm {
 -    .button-variant(#ffffff; @color-purple-dark; darken(@color-purple-dark, 5));
 +    @include button-variant(#ffffff, $color-purple-dark, darken($color-purple-dark, 5));
      border: 1px solid #ffffff;
- 
+
      &:active,
 @@ -47,8 +47,8 @@
  }
- 
+
  .alert-trial {
 -  background-color: @color-purple-dark;
 -  color: @color-purple-dark-inverse;
@@ -49,7 +49,7 @@
    border-radius: 0;
    font-size: 1.1em;
 @@ -60,13 +60,13 @@
- 
+
    .btn-purple,
    .btn-purple:focus {
 -    background-color: @color-purple-dark;
@@ -58,7 +58,7 @@
 +    background-color: $color-purple-dark;
 +    color: $component-active-color;
 +    border: 1px solid $color-purple-dark-inverse;
- 
+
      &:hover {
 -      border: 1px solid @color-purple-dark-inverse;
 -      background-color: lighten(@color-purple-dark, 5);

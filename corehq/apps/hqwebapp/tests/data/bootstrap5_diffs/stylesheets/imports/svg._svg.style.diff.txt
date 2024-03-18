@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -4,6 +4,6 @@
    margin: 0 auto;
    display: block;

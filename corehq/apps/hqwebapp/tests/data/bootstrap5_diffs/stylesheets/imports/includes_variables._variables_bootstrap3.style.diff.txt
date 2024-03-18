@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,124 +1,69 @@
 -@import "@{b3-import-variables}";
 +/*
@@ -8,7 +8,7 @@
 +We should either remove or update to use Bootstrap 5 variables
 +in a future full redesign.
 + */
- 
+
 -// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
 -@font-family-sans-serif: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 +// V3 color references
@@ -17,11 +17,11 @@
 +$brand-info: $info;
 +$brand-warning: $warning;
 +$brand-danger: $danger;
- 
+
 -@font-size-base:  12px;
 -@icon-font-path:  "../../bootstrap/fonts/";
 +$text-color: $body-color;
- 
+
 -// Main background & text
 -@cc-bg:     #f2f2f1;
 -@cc-text:   #1c2126;
@@ -29,7 +29,7 @@
 +$gray: lighten($gray-base, 33.5%); // #555
 +$gray-light: lighten($gray-base, 46.7%); // #777
 +$gray-lighter: lighten($gray-base, 93.5%);
- 
+
 -// Success
 -@cc-att-pos-extra-hi:   #e3f1df;
 -@cc-att-pos-hi:   #bbe5b3;
@@ -39,7 +39,7 @@
 +$btn-default-color:              $cc-text;
 +$btn-default-bg:                 $cc-bg;
 +$btn-default-border:             $cc-neutral-hi;
- 
+
 -// Error
 -@cc-att-neg-extra-hi:   #fbeae6;
 -@cc-att-neg-hi:   #fead9a;
@@ -49,7 +49,7 @@
 +$btn-footer-color:  #ffffff;
 +$btn-footer-bg:     #474747;
 +$btn-footer-border: #cccccc;
- 
+
 -// Warning/Attention
 -@cc-light-warm-accent-extra-hi:   #fcf2cd;
 -@cc-light-warm-accent-hi:   #ffea8a;
@@ -60,7 +60,7 @@
 +$navbar-height:                  60px;
 +$navbar-padding-vertical:        calc(($navbar-height - 20px) / 2);
 +$navbar-default-bg:              $cc-bg;
- 
+
 -// Call to action
 -@call-to-action-extra-hi: #f4f5fa;
 -@call-to-action-hi: #b4bcf5;
@@ -71,17 +71,17 @@
 +$navbar-footer-link-color:        mix(darken(#ffffff, 10), $brand-primary, 90%);
 +$navbar-footer-link-color-hover:  $gray-lighter;
 +$navbar-footer-button-color:      #474747;
- 
+
 -// Accent light blue: buttons on dark backgrounds, occasional secondary buttons (upload/download)
 -@cc-light-cool-accent-hi:   #ccf3f4;
 -@cc-light-cool-accent-mid:  #00bdc5;
 -@cc-light-cool-accent-low:  #00799a;
 +$navbar-mobile-height: 40px;
- 
+
 -// Accent purples used in signup, which uses colors more like dimagi.com than HQ
 -@color-purple-dark: #43467F;
 -@color-purple-dark-inverse: #E3D0FF;
- 
+
 -// Neutrals used as borders/backgrounds
 -@cc-neutral-hi:   #d6d6d4;
 -@cc-neutral-mid:  #685c53;
@@ -91,7 +91,7 @@
 +$line-height-computed: 20px;
 +$border-radius-base: 4px;
 +$legend-border-color: #e5e5e5;
- 
+
 -// Blues used for links and app manager accents
 -@cc-brand-hi:   #bcdeff;
 -@cc-brand-mid:  #004ebc;
@@ -141,7 +141,7 @@
 -
 -@grid-gutter-width: 20px;
 +$checkbox-default-color: $call-to-action-mid;
- 
+
  // Z-index master list
  // -------------------------
  // Also see Bootstrap 3's own master list:
@@ -150,7 +150,7 @@
 -@zindexAccountingPricingTableHeader:  800;
 +$zindexDashboardSpinner:              500;
 +$zindexAccountingPricingTableHeader:  800;
- 
+
  // Other Zindecies
 -@zindex-report-loading:               100;
 -@zindex-app-preview:                  998;
@@ -169,7 +169,7 @@
 +$zindex-cloudcare-debugger:           1005;
 +$zindex-formplayer-scroll-to-bottom:    5;
 +$zindex-formplayer-anchored-submit:     2;
- 
+
 -
 -@input-border-radius-large:       5px;
 -@input-color:                     #000;

@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -1,6 +1,6 @@
  {% load i18n %}
- 
+
 -<div class="pull-right">
 +<div class="float-end">
    <ul class="pagination" data-bind="foreach: allPages">

@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,42 +1,39 @@
  {% load i18n %}
  {% load hq_shared_tags %}
@@ -13,7 +13,7 @@
      {% trans "Give Feedback" %}
      <i class="fa fa-thumbs-up"></i>
    </a>
- 
+
 -  <div class="modal fade"
 +  <div class="modal fade modal-lg"
         id="modal-feedback-form-widget"

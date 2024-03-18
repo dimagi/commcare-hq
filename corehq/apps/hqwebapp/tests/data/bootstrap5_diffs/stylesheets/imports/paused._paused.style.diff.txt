@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -2,7 +2,7 @@
    .column-icon {
      text-align: center;
@@ -8,4 +8,4 @@
 +    color: $cc-brand-low;
      line-height: 200px;
    }
- 
+

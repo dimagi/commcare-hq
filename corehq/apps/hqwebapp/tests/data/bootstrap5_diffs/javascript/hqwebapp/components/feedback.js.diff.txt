@@ -1,9 +1,9 @@
---- 
-+++ 
+---
++++
 @@ -12,7 +12,7 @@
   *
   */
- 
+
 -hqDefine('hqwebapp/js/components/bootstrap3/feedback', [
 +hqDefine('hqwebapp/js/components/bootstrap5/feedback', [
      'knockout',
@@ -18,7 +18,7 @@
          viewModel: function (params) {
 -            var self = {};
 +            let self = {};
- 
+
              if (!params.featureName) {
                  throw new Error("Please specify a featureName in params.");
 @@ -61,11 +62,6 @@
@@ -32,4 +32,4 @@
 -                        }, 1000);
                      });
              };
- 
+

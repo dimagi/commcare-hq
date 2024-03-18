@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -13,10 +13,10 @@
         (success < info < warning < danger).
      fadeOut: Set to 'true' to have the message automatically removed from the UI after 5s.

@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -1,6 +1,6 @@
  {% load i18n %}
- 
+
 -<form class="form form-ko-validation" method="post">
 +<form class="form-ko-validation" method="post">
    {% csrf_token %}

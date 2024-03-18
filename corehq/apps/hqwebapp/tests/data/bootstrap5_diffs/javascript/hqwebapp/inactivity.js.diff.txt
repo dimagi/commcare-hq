@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -2,7 +2,7 @@
   *  Handles inactvitiy timeout UI: a modal containing an iframe with the login screen,
   *  allowing users to re-login without leaving the page and losing their work.

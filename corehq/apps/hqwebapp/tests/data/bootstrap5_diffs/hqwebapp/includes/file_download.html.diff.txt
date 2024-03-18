@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -10,7 +10,7 @@
  {% endblock %}
- 
+
  {% block content %}
 -    <div class="col-sm-12">
 +    <div class="col-md-12">

@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,9 +1,9 @@
  .modal-body {
      legend {
@@ -14,7 +14,7 @@
      }
 @@ -18,22 +18,22 @@
  }
- 
+
  // Modal that takes up virtually the entire screen, with a variable amount of padding around it
 -.absolute-center-modal(@spacing) {
 +@mixin absolute-center-modal($spacing) {
@@ -30,7 +30,7 @@
 +        right: $spacing;
          margin: 0;
          width: auto;
- 
+
          .modal-content {
              position: absolute;
 -            top: @spacing;
@@ -41,35 +41,35 @@
 +            bottom: $spacing;
 +            left: $spacing;
 +            right: $spacing;
- 
+
              // These styles, along with the body/header/footer ones below,
              // allow the body to scroll vertically while the header and footer stay fixed
 @@ -54,11 +54,11 @@
  }
- 
+
  .full-screen-modal {
 -    .absolute-center-modal(20px);
 +    @include absolute-center-modal(20px);
  }
- 
+
  .full-screen-no-background-modal {
 -    .absolute-center-modal(0);
 +    @include absolute-center-modal(0);
- 
+
      .modal-dialog {
          .modal-content {
 @@ -100,12 +100,12 @@
- 
+
  .modal-primary {
      .modal-header {
 -        border-bottom: 4px solid @cc-brand-low;
 +        border-bottom: 4px solid $cc-brand-low;
      }
- 
+
      .modal-content {
          color: white;
 -        background-color: @cc-brand-mid;
 +        background-color: $cc-brand-mid;
      }
- 
+
      .close {

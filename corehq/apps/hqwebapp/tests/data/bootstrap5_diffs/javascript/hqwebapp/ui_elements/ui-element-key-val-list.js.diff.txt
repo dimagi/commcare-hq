@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,8 +1,8 @@
 -hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list', [
 +hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list', [

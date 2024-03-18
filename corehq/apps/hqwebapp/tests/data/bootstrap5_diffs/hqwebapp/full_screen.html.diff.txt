@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -1,4 +1,4 @@
 -{% extends 'hqwebapp/bootstrap3/base_navigation.html' %}
 +{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
  {% load hq_shared_tags %}
  {% load menu_tags %}
- 
+

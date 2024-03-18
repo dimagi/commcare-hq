@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,8 +1,8 @@
 -hqDefine("hqwebapp/js/bootstrap3/crud_paginated_list_init", [
 +hqDefine("hqwebapp/js/bootstrap5/crud_paginated_list_init", [

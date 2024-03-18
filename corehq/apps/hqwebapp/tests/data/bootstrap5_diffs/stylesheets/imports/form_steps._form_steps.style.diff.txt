@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -16,8 +16,7 @@
    text-align: center;
    padding: 40px 0 10px;
@@ -7,7 +7,7 @@
 -  .border-top-radius(5px);
 -  .border-bottom-radius(5px);
 +  border-radius: 5px;
- 
+
    li {
      list-style-type: none;
 @@ -26,7 +25,7 @@
@@ -16,7 +16,7 @@
      position: relative;
 -    .transition(background 500ms ease-out);
 +    transition: background 500ms ease-out;
- 
+
      &:after {
        content: counter(step);
 @@ -35,17 +34,16 @@

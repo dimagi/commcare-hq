@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -9,31 +9,30 @@
  }
- 
+
  .label-plan {
 -  .border-top-radius(5px);
 -  .border-bottom-radius(5px);
@@ -12,30 +12,30 @@
 -  background-color: @cc-dark-cool-accent-low;
 +  background-color: $cc-dark-cool-accent-low;
  }
- 
+
  .label-plan-enterprise {
 -  background-color: @cc-neutral-mid;
 +  background-color: $cc-neutral-mid;
  }
- 
+
  .label-plan-advanced {
 -  background-color: @cc-dark-cool-accent-mid;
 +  background-color: $cc-dark-cool-accent-mid;
  }
- 
+
  .label-plan-pro {
 -  background-color: @cc-light-cool-accent-mid;
 +  background-color: $cc-light-cool-accent-mid;
  }
- 
+
  .label-plan-standard {
 -  background-color: @cc-att-pos-mid;
 +  background-color: $cc-att-pos-mid;
  }
- 
+
  .label-plan-community {
 -  background-color: @cc-dark-cool-accent-mid;
 +  background-color: $cc-dark-cool-accent-mid;
  }
- 
+
  .label-flag {

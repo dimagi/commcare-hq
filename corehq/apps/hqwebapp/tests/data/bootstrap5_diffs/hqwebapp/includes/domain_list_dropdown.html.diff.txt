@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -3,14 +3,14 @@
    {% if domain_links %}
      <li class="dropdown-header nav-header">{% trans 'Change Project' %}</li>
@@ -8,7 +8,7 @@
 +      <li><a href="{{ d.url }}" class="dropdown-item">{{ d.display_name }}</a></li>
      {% endfor %}
    {% endif %}
- 
+
    {% if show_all_projects_link %}
 -    <li class="divider" />
 +    <li><hr class="dropdown-divider"></li>
@@ -20,7 +20,7 @@
        </a>
 @@ -18,9 +18,9 @@
    {% endif %}
- 
+
    {% if not restrict_domain_creation or request.user.is_superuser %}
 -    <li class="divider" />
 +    <li><hr class="dropdown-divider"></li>

@@ -1,31 +1,31 @@
---- 
-+++ 
+---
++++
 @@ -2,7 +2,7 @@
   * Extra styling for the eonasdan-bootstrap-datetimepicker widget.
   */
- 
+
 -@bootstrap-datetimepicker-width: 245px;
 +$bootstrap-datetimepicker-width: 245px;
- 
+
  .bootstrap-datetimepicker-widget.dropdown-menu {
    text-align: center;
 @@ -20,7 +20,7 @@
- 
+
    .datepicker,
    .timepicker {
 -    width: @bootstrap-datetimepicker-width;
 +    width: $bootstrap-datetimepicker-width;
    }
- 
+
    .day,
 @@ -39,11 +39,11 @@
      border-radius: 4px;
- 
+
      &:hover {
 -      background-color: @cc-bg;
 +      background-color: $cc-bg;
      }
- 
+
      &.active {
 -      background-color: @cc-brand-mid;
 +      background-color: $cc-brand-mid;
@@ -39,7 +39,7 @@
 -    width: @bootstrap-datetimepicker-width/3 - 4;
 +    width: calc($bootstrap-datetimepicker-width/3) - 4;
    }
- 
+
    .minute,
    .hour {
      font-size: 15px;
@@ -47,17 +47,17 @@
 -    width: @bootstrap-datetimepicker-width/4 - 4;
 +    width: calc($bootstrap-datetimepicker-width/4) - 4;
    }
- 
+
    .datepicker {
 @@ -76,12 +76,12 @@
        border-radius: 4px;
- 
+
        &:hover {
 -        background-color: @cc-bg;
 +        background-color: $cc-bg;
        }
      }
- 
+
      .btn-primary {
 -      background-color: @cc-brand-mid;
 +      background-color: $cc-brand-mid;

@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,8 +1,8 @@
 -{% extends 'hqwebapp/bootstrap3/base_page.html' %}
 +{% extends 'hqwebapp/bootstrap5/base_page.html' %}

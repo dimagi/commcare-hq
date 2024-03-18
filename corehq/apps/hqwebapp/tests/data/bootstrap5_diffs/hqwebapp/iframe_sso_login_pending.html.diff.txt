@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -13,7 +13,7 @@
      <h1>{% trans "Please login again with Single Sign-On" %}</h1>
    </div>

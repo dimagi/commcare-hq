@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,4 +1,4 @@
 -{% extends 'hqwebapp/bootstrap3/base_section.html' %}
 +{% extends 'hqwebapp/bootstrap5/base_section.html' %}
@@ -14,9 +14,9 @@
 +    <script src="{% static 'hqwebapp/js/bootstrap5/crud_paginated_list.js' %}"></script>
    {% endif %}
  {% endblock %}
- 
+
 @@ -26,7 +26,7 @@
- 
+
        <div class="row"
             data-bind="visible: isLoadingVisible">
 -        <div class="col-md-12">
@@ -34,7 +34,7 @@
                 data-bind="html: alertHtml"></div>
          </div>
 @@ -51,13 +51,13 @@
- 
+
          <div class="row"
               data-bind="visible: isPaginationActive">
 -          <div class="col-md-12">
@@ -43,7 +43,7 @@
 +            {% include 'hqwebapp/partials/bootstrap5/pagination.html' %}
            </div>
          </div>
- 
+
          <div class="row">
 -          <div class="col-md-12">
 +          <div class="col-lg-12">
@@ -51,7 +51,7 @@
                     style="margin-bottom: 0;">
                <thead>
 @@ -147,7 +147,7 @@
- 
+
        <div class="row"
             data-bind="visible: isPaginationActive">
 -        <div class="col-md-4">
@@ -69,4 +69,4 @@
 +          {% include 'hqwebapp/partials/bootstrap5/pagination.html' %}
          </div>
        </div>
- 
+

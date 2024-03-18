@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -8,7 +8,7 @@
- 
- 
+
+
  {% block pre_navigation_content %}
 -  {% include "hqwebapp/partials/bootstrap3/maintenance_alerts.html" %}
 +  {% include "hqwebapp/partials/bootstrap5/maintenance_alerts.html" %}
@@ -10,15 +10,15 @@
      {% include "hqwebapp/partials/trial_banner.html" %}
    {% endif %}
 @@ -19,28 +19,52 @@
- 
- 
+
+
  {% block navigation %}
 -  <div id="hq-navigation"
 -       class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
 +  <nav id="hq-navigation"
 +       class="navbar navbar-expand-lg bg-light border-bottom-1 navbar-hq-main-menu">
      <div class="container-fluid">
- 
+
 +      <div class="navbar-header hq-header">
 +        <a href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}" class="navbar-brand">
 +          {% if CUSTOM_LOGO_URL %}
@@ -61,7 +61,7 @@
 +          {% endblock %}
 +        </div>
        {% endif %}
- 
+
        {% if not request.user.is_authenticated %}
 -        <nav class="navbar-menus navbar-signin" role="navigation">
 -          <div class="nav-settings-bar pull-right">
@@ -78,7 +78,7 @@
 @@ -50,49 +74,18 @@
          </nav>
        {% endif %}
- 
+
 -      <div class="navbar-header hq-header">
 -        <a href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}" class="navbar-brand">
 -          {% if CUSTOM_LOGO_URL %}
@@ -114,8 +114,8 @@
 -  </div>
 +  </nav>
  {% endblock navigation %}
- 
- 
+
+
  {% block post_navigation_content %}
    {% if request.project.is_snapshot %}
 -    <div class="alert alert-info">
@@ -126,17 +126,17 @@
 -  {% include "hqwebapp/partials/bootstrap3/unsupported_browser.html" %}
 +  {% include "hqwebapp/partials/bootstrap5/unsupported_browser.html" %}
  {% endblock post_navigation_content %}
- 
- 
+
+
 @@ -126,7 +119,7 @@
- 
+
  {% block footer %}
    {% if not enterprise_mode %}
 -    {% include 'hqwebapp/partials/bootstrap3/footer.html' %}
 +    {% include 'hqwebapp/partials/bootstrap5/footer.html' %}
    {% endif %}
  {% endblock footer %}
- 
+
 @@ -134,9 +127,9 @@
  {% block modals %}
    {% if domain and not enterprise_mode %}

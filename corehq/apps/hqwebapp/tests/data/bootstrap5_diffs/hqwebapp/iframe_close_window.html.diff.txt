@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -13,7 +13,7 @@
      <h1>{% trans "Thank you for logging in!" %}</h1>
    </div>

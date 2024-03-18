@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -3,46 +3,40 @@
  <footer>
    <nav id="hq-footer"
@@ -38,12 +38,12 @@
 +          is copyright &copy;
 +        {% endblocktrans %}{% now "Y" %}
 +        <a href="https://www.dimagi.com/">Dimagi, Inc.</a>
- 
+
 -          <div class="visible-sm-inline visible-md-inline visible-lg-inline">&nbsp;|&nbsp;</div>
 -          <br class="hidden-sm hidden-md hidden-lg" />
 +        <span class="d-inline-md d-inline-lg">&nbsp;|&nbsp;</span>
 +        <a href="https://dimagi.com/commcare/">{% trans 'Learn more about CommCare HQ' %}</a>
- 
+
 -          <a href="https://dimagi.com/commcare/">{% trans 'Learn more about CommCare HQ' %}</a>
 -
 -          <div class="visible-md-inline visible-lg-inline">&nbsp;|&nbsp;</div>

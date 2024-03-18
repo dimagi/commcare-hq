@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -11,7 +11,7 @@
    width: 100%;
    cursor: pointer;
@@ -8,15 +8,15 @@
 +  border-radius: $input-border-radius;
    position: relative;
  }
- 
+
 @@ -36,7 +36,7 @@
- 
+
  .radio-select_options {
    background-color: white;
 -  border-radius: @input-border-radius;
 +  border-radius: $input-border-radius;
  }
- 
+
  .radio-select {
 @@ -54,10 +54,10 @@
        font-family: FontAwesome;
@@ -63,7 +63,7 @@
          padding-bottom: 5px;
          border-top-left-radius: 0;
          border-top-right-radius: 0;
- 
+
          .radio-select_label {
 -          height:  @input-height-base;
 +          height:  $input-height;
@@ -89,7 +89,7 @@
 +    height:  $input-height;
    }
  }
- 
+
 @@ -169,5 +169,5 @@
  .radio-select_expand,
  .radio-select_expandLabel,

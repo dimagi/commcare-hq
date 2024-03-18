@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,124 +1,225 @@
 -@import "@{b3-import-variables}";
 -
@@ -54,13 +54,13 @@
 +
 +// Badges
 +$badge-border-radius: .25em;
- 
+
  // Main background & text
 -@cc-bg:     #f2f2f1;
 -@cc-text:   #1c2126;
 +$cc-bg:     #f2f2f1;
 +$cc-text:   #1c2126;
- 
+
  // Success
 -@cc-att-pos-extra-hi:   #e3f1df;
 -@cc-att-pos-hi:   #bbe5b3;
@@ -72,7 +72,7 @@
 +$cc-att-pos-mid:  #4aba32;
 +$cc-att-pos-low:  #118043;
 +$cc-att-pos-extra-low:  #173630;
- 
+
  // Error
 -@cc-att-neg-extra-hi:   #fbeae6;
 -@cc-att-neg-hi:   #fead9a;
@@ -84,7 +84,7 @@
 +$cc-att-neg-mid:  #e73c27;
 +$cc-att-neg-low:  #bf0712;
 +$cc-att-neg-extra-low:  #340101;
- 
+
  // Warning/Attention
 -@cc-light-warm-accent-extra-hi:   #fcf2cd;
 -@cc-light-warm-accent-hi:   #ffea8a;
@@ -96,7 +96,7 @@
 +$cc-light-warm-accent-mid:  #eec200;
 +$cc-light-warm-accent-low:  #9c6f19;
 +$cc-light-warm-accent-extra-low:  #573b00;
- 
+
  // Call to action
 -@call-to-action-extra-hi: #f4f5fa;
 -@call-to-action-hi: #b4bcf5;
@@ -108,7 +108,7 @@
 +$call-to-action-mid: #5c6ac5;
 +$call-to-action-low: #212f78;
 +$call-to-action-extra-low: #000639;
- 
+
  // Accent light blue: buttons on dark backgrounds, occasional secondary buttons (upload/download)
 -@cc-light-cool-accent-hi:   #ccf3f4;
 -@cc-light-cool-accent-mid:  #00bdc5;
@@ -116,13 +116,13 @@
 +$cc-light-cool-accent-hi:   #ccf3f4;
 +$cc-light-cool-accent-mid:  #00bdc5;
 +$cc-light-cool-accent-low:  #00799a;
- 
+
  // Accent purples used in signup, which uses colors more like dimagi.com than HQ
 -@color-purple-dark: #43467F;
 -@color-purple-dark-inverse: #E3D0FF;
 +$color-purple-dark: #43467F;
 +$color-purple-dark-inverse: #E3D0FF;
- 
+
  // Neutrals used as borders/backgrounds
 -@cc-neutral-hi:   #d6d6d4;
 -@cc-neutral-mid:  #685c53;
@@ -130,7 +130,7 @@
 +$cc-neutral-hi:   #d6d6d4;
 +$cc-neutral-mid:  #685c53;
 +$cc-neutral-low:  #373534;
- 
+
  // Blues used for links and app manager accents
 -@cc-brand-hi:   #bcdeff;
 -@cc-brand-mid:  #004ebc;
@@ -138,7 +138,7 @@
 +$cc-brand-hi:   #bcdeff;
 +$cc-brand-mid:  #004ebc;
 +$cc-brand-low:  #002c5f;
- 
+
  // Accent colors used in few places (billing, web apps, one-offs). Minimize usage.
 -@cc-dark-cool-accent-hi:  #d6c5ea;
 -@cc-dark-cool-accent-mid: #9060c8;

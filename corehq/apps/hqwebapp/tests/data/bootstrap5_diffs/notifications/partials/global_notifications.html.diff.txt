@@ -1,9 +1,9 @@
---- 
-+++ 
+---
++++
 @@ -1,14 +1,19 @@
  {% load i18n %}
  {% load hq_shared_tags %}
- 
+
 -<li id="js-settingsmenu-notifications" class="dropdown">
 -  <a href="#" data-bind="click: bellClickHandler" class="dropdown-toggle dropdown-toggle-with-icon"
 -     data-toggle="dropdown" id="notification-icon" aria-label='{% trans_html_attr "Notifications" %}'>

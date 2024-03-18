@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -1,11 +1,11 @@
  {% load i18n %}
- 
+
 -<div class="paused-plan well">
 +<div class="paused-plan card">
    <div class="row">

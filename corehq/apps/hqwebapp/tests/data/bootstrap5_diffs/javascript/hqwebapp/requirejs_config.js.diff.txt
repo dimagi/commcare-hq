@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -2,26 +2,37 @@
  requirejs.config({
      baseUrl: '/static/',
@@ -45,7 +45,7 @@
 @@ -47,7 +58,7 @@
          },
      },
- 
+
 -    // This is really build config, but it's easier to define a js function here than in bootstrap3/requirejs.yml
 +    // This is really build config, but it's easier to define a js function here than in bootstrap5/requirejs.yml
      // The purpose of this is to replace hqDefine and hqRequire calls, which in a requirejs context are

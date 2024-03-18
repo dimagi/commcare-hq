@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -3,185 +3,228 @@
  {% load hq_shared_tags %}
- 
+
  {% if request.couch_user %}
 -<ul class="nav navbar-nav" role="menu">
 -    <li class="dropdown">

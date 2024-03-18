@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,4 +1,4 @@
 -hqDefine("hqwebapp/js/bootstrap3/hq.helpers", [
 +hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
@@ -9,7 +9,7 @@
 @@ -59,19 +59,6 @@
          return false; // let default handler run
      };
- 
+
 -    var oldHide = $.fn.popover.Constructor.prototype.hide;
 -
 -    $.fn.popover.Constructor.prototype.hide = function () {
@@ -36,5 +36,5 @@
 +        $(this).text($(this).data(state + '-text'));
 +        return this;
      };
- 
+
      $.fn.addSpinnerToButton = function () {

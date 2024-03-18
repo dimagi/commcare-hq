@@ -1,13 +1,13 @@
---- 
-+++ 
+---
++++
 @@ -1,4 +1,4 @@
 -{% extends "hqwebapp/bootstrap3/base_section.html" %}
 +{% extends "hqwebapp/bootstrap5/base_section.html" %}
  {% load i18n %}
  {% load hq_shared_tags %}
- 
+
 @@ -11,7 +11,7 @@
- 
+
    <header>
      <div class="row">
 -      <div class="col-sm-8">

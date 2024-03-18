@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -3,14 +3,12 @@
      <form class="input-group" data-bind="submit: clickAction">
        <input type="text" class="form-control"

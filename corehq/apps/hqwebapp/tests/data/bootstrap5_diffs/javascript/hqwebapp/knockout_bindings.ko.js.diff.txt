@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,12 +1,14 @@
 -hqDefine("hqwebapp/js/bootstrap3/knockout_bindings.ko", [
 +hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
@@ -18,7 +18,7 @@
      // Need this due to https://github.com/knockout/knockout/pull/2324
      // so that ko.bindingHandlers.foreach.update works properly
 @@ -344,19 +346,15 @@
- 
+
      ko.bindingHandlers.modal = {
          init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
 -            $(element).addClass('modal fade').modal({
@@ -69,7 +69,7 @@
                      return clickAction;
                  };
 @@ -405,11 +405,13 @@
- 
+
      ko.bindingHandlers.openRemoteModal = {
          init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
 -            var modal = $('<div></div>').addClass('modal fade').appendTo('body'),

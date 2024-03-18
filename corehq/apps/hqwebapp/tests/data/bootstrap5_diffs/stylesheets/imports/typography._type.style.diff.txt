@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -5,11 +5,12 @@
  }
- 
+
  .text-hq-nav-header {
 +  margin-top: 17px;
    padding: 9px 20px 0;
@@ -13,11 +13,11 @@
 -  color: @brand-primary;
 +  color: $cc-brand-mid;
  }
- 
+
  /*
 @@ -44,9 +45,9 @@
  }
- 
+
  code {
 -  color: @cc-text;
 -  background: @cc-bg;
@@ -26,10 +26,10 @@
 +  background: $cc-bg;
 +  border: 1px solid darken($cc-bg, 30%);
  }
- 
+
  .no-border {
 @@ -88,4 +89,4 @@
- 
+
  a {
      cursor: pointer;
 -}

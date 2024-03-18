@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,9 +1,9 @@
 -hqDefine("hqwebapp/js/bootstrap3/common", [
 +hqDefine("hqwebapp/js/bootstrap5/common", [

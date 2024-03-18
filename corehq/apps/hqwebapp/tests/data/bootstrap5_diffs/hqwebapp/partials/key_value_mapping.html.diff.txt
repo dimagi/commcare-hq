@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -3,15 +3,15 @@
  <div id="key_value_mapping_editable_template" class="hide">
    <form class="form-horizontal hq-enum-editor" action="">
@@ -13,7 +13,7 @@
 +          <div class="col-md-1">
              <i class="sortable-handle fa-solid fa-up-down"></i>
            </div>
- 
+
 -          <div class="col-sm-3">
 +          <div class="col-md-3">
              <input type="text"
@@ -22,7 +22,7 @@
 @@ -21,10 +21,10 @@
                                                                 text: $parent.labels().badXML'></div>
            </div>
- 
+
 -          <div class="col-sm-1 text-center" style="width: 3px">
 +          <div class="col-md-1 text-center" style="width: 3px">
              &rarr;
@@ -82,7 +82,7 @@
      <span data-bind="text: $data.buttonText"></span>
    </button>
  </div>
- 
+
  <div id="value_icon_uploader" class="hide">
 -  <div class="col-sm-1" style="margin-right: 7px">
 +  <div class="col-md-1" style="margin-right: 7px">
@@ -109,7 +109,7 @@
                      visible: !$parent.editing(),
                      click: function(){if (!useCustomPath()) setCustomPath(); $parent.toggleEditMode()}">
 @@ -155,7 +155,7 @@
- 
+
  <div id="icon_alt_text" class="hide">
    <label class="control-label col-sm-1">{% trans 'Alt Text' %}</label>
 -  <div class="col-sm-4">
@@ -119,7 +119,7 @@
             data-bind="value: altText,
 @@ -164,25 +164,25 @@
  </div>
- 
+
  <div id="icon_uploader_path" class="hide">
 -  <div class="col-sm-1 btn" data-bind="visible: !_([$parents[1].lang, null]).contains($parents[1].backup($parent.value()).lang)">
 -    <a href="#" class="btn btn-info btn-xs lang-text"
@@ -129,7 +129,7 @@
              text: $parents[1].backup($parent.value()).lang
          "></a>
    </div>
- 
+
    <div data-bind="visible: $parent.editing">
 -    <label class="control-label col-sm-1">Path</label>
 -    <div class="col-sm-4">

@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -28,7 +28,7 @@
        </div>
- 
+
        <div class="modal-footer">
 -        <button class="btn btn-default" id="prepaid-snooze">
 +        <button class="btn btn-outline-primary" id="prepaid-snooze">

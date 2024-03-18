@@ -1,8 +1,8 @@
---- 
-+++ 
+---
++++
 @@ -1,23 +1,26 @@
  {% load i18n %}
- 
+
  <div class="modal fade"
 +     tabindex="-1"
 +     aria-labelledby="requestDemoModal"
@@ -24,13 +24,13 @@
 +        </h1>
 +        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
        </div>
- 
+
        {# Hubspot Form #}
        <div id="get-demo-cta-form-content">
 -        {% include "analytics/forms/bootstrap3/hubspot_cta_form.html" %}
 +        {% include "analytics/forms/bootstrap5/hubspot_cta_form.html" %}
        </div>
- 
+
        <div id="get-demo-cta-success" style="display: none;">
 @@ -29,10 +32,9 @@
            </p>

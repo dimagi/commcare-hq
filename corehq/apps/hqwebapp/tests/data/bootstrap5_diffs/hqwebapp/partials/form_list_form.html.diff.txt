@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -13,7 +13,7 @@
          {% trans "Form has errors" %}
        </div>
@@ -7,7 +7,7 @@
 -    <div class="panel panel-default">
 +    <div class="card card-default">
        <table class="table table-striped table-bordered">
- 
+
          <thead>
 @@ -32,7 +32,7 @@
                  {% if spec.type == "RAW" %}

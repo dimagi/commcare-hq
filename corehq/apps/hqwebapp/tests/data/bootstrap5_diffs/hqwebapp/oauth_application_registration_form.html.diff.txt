@@ -1,10 +1,10 @@
---- 
-+++ 
+---
++++
 @@ -1,4 +1,4 @@
 -{% extends "hqwebapp/bootstrap3/full_screen.html" %}
 +{% extends "hqwebapp/bootstrap5/full_screen.html" %}
  {% load i18n %}
- 
+
  {% block page_content %}
 @@ -31,7 +31,7 @@
      <div class="form-actions">

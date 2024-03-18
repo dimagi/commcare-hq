@@ -1,5 +1,5 @@
---- 
-+++ 
+---
++++
 @@ -1,9 +1,9 @@
  /*
 -    To use, include this file on a page that also includes hqwebapp/bootstrap3/rollout_modal.html
