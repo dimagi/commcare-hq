@@ -1,26 +1,43 @@
 'use strict';
-/* global affix */
 /* eslint-env mocha */
-hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
+hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", [
+    "sinon/pkg/sinon",
+    "hqwebapp/js/initial_page_data",
+    "cloudcare/js/form_entry/const",
+    "cloudcare/js/form_entry/errors",
+    "cloudcare/js/form_entry/form_ui",
+    "cloudcare/js/form_entry/spec/fixtures",
+    "cloudcare/js/form_entry/task_queue",
+    "cloudcare/js/form_entry/utils",
+    "cloudcare/js/form_entry/web_form_session",
+    //"jasmine-fixture/dist/jasmine-fixture",     // affix - TODO: this errors in a try
+], function (
+    sinon,
+    initialPageData,
+    constants,
+    errors,
+    formUI,
+    Fixtures,
+    taskQueue,
+    Utils,
+    webFormSession
+) {
     describe('WebForm', function () {
-        var constants = hqImport("cloudcare/js/form_entry/const"),
-            formUI = hqImport("cloudcare/js/form_entry/form_ui");
-
         before(function () {
-            hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", {
+            initialPageData.register("toggles_dict", {
                 WEB_APPS_ANCHORED_SUBMIT: false,
                 USE_PROMINENT_PROGRESS_BAR: false,
             });
         });
 
         after(function () {
-            hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
+            initialPageData.unregister("toggles_dict");
         });
 
         describe('TaskQueue', function () {
             var callCount,
                 flag,
-                queue = hqImport("cloudcare/js/form_entry/task_queue").TaskQueue(),
+                queue = taskQueue.TaskQueue(),
                 promise1,
                 promise2,
                 updateFlag = function (newValue, promise) {
@@ -74,24 +91,14 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
         describe('WebFormSession', function () {
             var server,
                 params,
-                Utils = hqImport("cloudcare/js/form_entry/utils"),
-                WebFormSession = hqImport("cloudcare/js/form_entry/web_form_session").WebFormSession;
+                WebFormSession = webFormSession.WebFormSession;
 
-            hqImport("hqwebapp/js/initial_page_data").registerUrl(
+            initialPageData.registerUrl(
                 "report_formplayer_error",
                 "/a/domain/cloudcare/apps/report_formplayer_error"
             );
 
             beforeEach(function () {
-                // Setup HTML
-                try {
-                    affix('input#submit');
-                    affix('#content');
-                } catch (e) {
-                    // temporarily catch this error while we work out issues running
-                    // mocha tests with grunt-mocha. this passes fine in browser
-                }
-
                 // Setup Params object
                 params = {
                     form_url: window.location.host,
@@ -251,7 +258,7 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
 
                 assert.isTrue(sess.onerror.calledOnce);
                 assert.isTrue(sess.onerror.calledWith({
-                    human_readable_message: hqImport("cloudcare/js/form_entry/errors").TIMEOUT_ERROR,
+                    human_readable_message: errors.TIMEOUT_ERROR,
                     is_html: false,
                     reportToHq: false,
                 }));
@@ -270,25 +277,14 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
         describe('Question Validation', function () {
             let server,
                 formJSON,
-                Utils = hqImport("cloudcare/js/form_entry/utils"),
-                WebFormSession = hqImport("cloudcare/js/form_entry/web_form_session").WebFormSession,
-                Fixtures = hqImport("cloudcare/js/form_entry/spec/fixtures");
+                WebFormSession = webFormSession.WebFormSession;
 
-            hqImport("hqwebapp/js/initial_page_data").registerUrl(
+            initialPageData.registerUrl(
                 "report_formplayer_error",
                 "/a/domain/cloudcare/apps/report_formplayer_error"
             );
 
             beforeEach(function () {
-                // Setup HTML
-                try {
-                    affix('input#submit');
-                    affix('#content');
-                } catch (e) {
-                    // temporarily catch this error while we work out issues running
-                    // mocha tests with grunt-mocha. this passes fine in browser
-                }
-
                 formJSON = {
                     form_url: window.location.host,
                     onerror: sinon.spy(),

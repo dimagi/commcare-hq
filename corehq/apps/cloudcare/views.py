@@ -70,7 +70,6 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
-    use_jquery_ui,
     waf_allow,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
@@ -100,7 +99,6 @@ class FormplayerMain(View):
 
     @xframe_options_sameorigin
     @use_daterangepicker
-    @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
@@ -252,7 +250,6 @@ class FormplayerPreviewSingleApp(View):
 
     urlname = 'formplayer_single_app'
 
-    @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
@@ -555,7 +552,7 @@ def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + string
     >>> _message_to_tag_value(
     ... 'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@1f984e3c, '
     ... 'selection=null] could not select case 8854f3583f6f46e69af59fddc9f9428d. '
-    ... 'If this error persists please report a bug to CommCareHQ.')
+    ... 'If this error persists please report a bug to CommCare HQ.')
     'entityscreen_entityscreen_detail_org'
     """
     message_tag = unidecode(message)
@@ -569,8 +566,8 @@ def _message_to_sentry_thread_topic(message):
     >>> _message_to_sentry_thread_topic(
     ... 'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@1f984e3c, '
     ... 'selection=null] could not select case 8854f3583f6f46e69af59fddc9f9428d. '
-    ... 'If this error persists please report a bug to CommCareHQ.')
-    'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@[...], selection=null] could not select case [...]. If this error persists please report a bug to CommCareHQ.'
+    ... 'If this error persists please report a bug to CommCare HQ.')
+    'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@[...], selection=null] could not select case [...]. If this error persists please report a bug to CommCare HQ.'
     """  # noqa: E501
     return re.sub(r'[a-f0-9-]{7,}', '[...]', message)
 

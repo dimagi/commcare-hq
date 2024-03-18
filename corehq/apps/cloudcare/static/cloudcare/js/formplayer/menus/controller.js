@@ -1,19 +1,41 @@
 'use strict';
-/*global Backbone */
-
-hqDefine("cloudcare/js/formplayer/menus/controller", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        markdown = hqImport("cloudcare/js/markdown"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
-        views = hqImport("cloudcare/js/formplayer/menus/views"),
-        queryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
+hqDefine("cloudcare/js/formplayer/menus/controller", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'DOMPurify/dist/purify.min',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'cloudcare/js/markdown',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/menus/utils',
+    'cloudcare/js/formplayer/menus/views/query',
+    'cloudcare/js/formplayer/menus/views',
+    'cloudcare/js/formplayer/menus/api',    // app:select:menus and entity:get:details
+], function (
+    $,
+    _,
+    Backbone,
+    DOMPurify,
+    initialPageData,
+    toggles,
+    markdown,
+    constants,
+    FormplayerFrontend,
+    UsersModels,
+    formplayerUtils,
+    Collection,
+    menusUtils,
+    queryView,
+    views
+) {
     var selectMenu = function (options) {
 
-        options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+        options.preview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
 
         var fetchingNextMenu = FormplayerFrontend.getChannel().request("app:select:menus", options);
 
@@ -68,7 +90,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             if (urlObject.appId === undefined || urlObject.appId === null) {
                 if (menuResponse.appId === null || menuResponse.appId === undefined) {
                     FormplayerFrontend.trigger('showError', "Response did not contain appId even though it was" +
-                        "required. If this persists, please report an issue to CommCareHQ");
+                        "required. If this persists, please report an issue to CommCare HQ");
                     FormplayerFrontend.trigger("apps:list");
                     return;
                 }
@@ -107,7 +129,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
-        var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+        var appPreview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
         var sidebarEnabled = !appPreview && menusUtils.isSidebarEnabled(menuResponse);
         if (menuListView && !sidebarEnabled) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
