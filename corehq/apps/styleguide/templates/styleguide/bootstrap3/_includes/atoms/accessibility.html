@@ -1,17 +1,32 @@
-<section class="hq-styleguide-article">
-  <h1 id="atoms-accessibility">Accessibility</h1>
+{% extends 'styleguide/bootstrap5/base.html' %}
 
-  <p class="lead">
-    Dimagi’s product design team firmly believes that web and software experiences should be accessible for everyone,
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Accessibility</h1>
+  <p class="sg-lead">
+    Dimagi’s product design team firmly believes that web and
+    software experiences should be accessible for everyone,
     regardless of abilities or impairments.
   </p>
+{% endblock intro %}
 
-  <p>
-    This guide will help ensure that our experiences meet the standards for
-    accessibility required by law (WCAG AA, Section 508, European Standards). Patterns should be perceivable, operable,
-    and understandable to users, even when using assistive technology.
-  </p>
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#a11y">Color Blindness and A11y</a></li>
+      <li><a href="#testing">Tools for testing for Accessibility</a></li>
+      <li><a href="#focusability">Focusability, Tabability, and Visibility</a></li>
+      <li><a href="#common-mistakes">Common Mistakes (and how to fix them)</a></li>
+    </ul>
+  </nav>
+{% endblock toc %}
 
+{% block content %}
+  <h2 id="overview" class="pt-4">
+    Overview
+  </h2>
   <p>
     Accessible products give every user the same benefits regardless of ability and can adapt to any user in any
     context. Disabilities can be situational (an end user with typical vision may struggle to view their screen in a
@@ -20,9 +35,9 @@
     some may not consider themselves to have disabilities even if they experience functional limitations). We design
     and build products for everyone.
   </p>
-
   <p>
     "Everyone" includes
+  </p>
   <ul>
     <li>
       18% of adults with vision impairment
@@ -45,10 +60,9 @@
       (<a href="https://www.cdc.gov/nchs/fastats/disability.htm">source</a>)
     </li>
   </ul>
-  </p>
-
   <p>
     Consider the following barriers when designing and coding
+  </p>
   <ul>
     <li>
       Blindness (may use screen reader, lack access to mouse, rely on text over visual information
@@ -70,62 +84,156 @@
       sensitivity to flashing content; try to design linearly and focus on heuristics that have to do with cognitive load and memory)
     </li>
   </ul>
-  </p>
-
-  <div class="pull-right well" style="margin-left: 10px; background-color: #f4f5fa;">
-    A11y check
-    <br><br>
-    <span class="label label-default" style="background-color: #5c6ac5; color: #ffffff;">AA CONTRAST 4.86:1</span>
-    <span class="label label-default" style="background-color: #ffffff; color: #5c6ac5;">AAA Contrast 7.01:1</span>
-    <br><br>
-    <span class="label label-default" style="background-color: #212f78; color: #ffffff;">AAA Contrast 12.05:1</span>
-    <span class="label label-default" style="background-color: #f4f5fa; color: #212f78;">AAA Contrast 11.07:1</span>
+  <h2 id="a11y" class="pt-4">
+    Color-blindness: A11y Color Contrast Standards
+  </h2>
+  <div class="card float-end my-2">
+    <div class="card-body">
+      <h5>A11y check</h5>
+    <span class="badge text-white"
+          style="background-color: #5c6ac5;">AA CONTRAST 4.86:1</span>
+    <span class="badge bg-white"
+          style="color: #5c6ac5;">AAA Contrast 7.01:1</span>
+    <br/>
+    <span class="badge text-white"
+          style="background-color: #212f78;">AAA Contrast 12.05:1</span>
+    <span class="badge"
+          style="background-color: #f4f5fa; color: #212f78;">AAA Contrast 11.07:1</span>
+    </div>
   </div>
-
-  <p>
-    Throughout the documentation, when possible, we will call out A11y. For example, checking color contrast in
-    the buttons. We aim for AA compliant color contrast. You can check color contrast in tools such as
-    <a href="https://webaim.org/resources/contrastchecker/">https://webaim.org/resources/contrastchecker/</a>.
-  </p>
-
-  <p>
-    Try Chrome extension Funkify to experience some common barriers.
-  </p>
-
-  <p>
-    Read more about a11y at
+  <h2 id="testing">Quick ways to test web accessibility</h2>
   <ul>
-    <li><a href="https://a11yproject.com/">https://a11yproject.com/</a></li>
-    <li><a href="http://www.carbondesignsystem.com/guidelines/accessibility">http://www.carbondesignsystem.com/guidelines/accessibility</a></li>
-    <li><a href="https://www.w3.org/WAI/tutorials">https://www.w3.org/WAI/tutorials</a></li>
-    <li><a href="https://www.youtube.com/playlist?list=PLNYkxOF6rcICWx0C9LVWWVqvHlYJyqw7g">A11ycast videos</a></li>
+      <li><strong>Keyboard Navigation:</strong> Test if modified code is navigable by keyboard, an effective way
+        to ensure page navigability and screen reader visibility. More information and tips
+        <a href="https://webaim.org/techniques/keyboard/#testing">here</a>.</li>
+      <li><strong>Explore the Accessibility Tree:</strong> Use Chrome DevTools' accessibility feature to view the
+        accessibility tree of a page under development, understanding how page elements are included, visible, and
+        organized. This is especially helpful for understanding what a specific element is, how it’s labeled, and
+        how it’s defined in relation to other elements on the screen.</li>
+      <li><strong>Use a Screen Reader:</strong> Free options like VoiceOver for Mac, ORCA for Linux, and NVDA for
+        Windows can assist in testing accessibility. Warning: different screen readers can read the same webpage
+        differently so using one is a good launching point but it is also recommended to utilize different screen
+        readers in final testing.</li>
+      <li><strong>Check color contrast:</strong>We aim for AA compliant color contrast. You can check color
+        contrast in tools such as
+        <a href="https://webaim.org/resources/contrastchecker/">https://webaim.org/resources/contrastchecker/</a>.
+      <li><strong>WAVE Browser Extension:</strong> <a href="https://wave.webaim.org/">WAVE</a> which identifies Web
+      Content Accessibility Guideline (WCAG) errors</p></li>
+      <li>Keep in mind that this list is not exhaustive and covers only a portion of what makes a site accessible to
+        all users. Ensuring accessibility is an ongoing commitment to creating inclusive digital experiences for
+        everyone.</li>
   </ul>
-  </p>
-    <p>
-    In 2020, USH began a web accessibility improvement effort, specifically surrounding screen readers.
-    <a href="https://docs.google.com/document/d/1fHNaVlaFl1xrbtPbMqj0YpByss1e0_hzCRlAUbVLboM/edit?usp=sharing">This document</a> details
-    an overview of the effort, deficiencies found by an outside agency of CommCare, recommendations, and resources.
-  </p>
 
-  <p>
-    Quick ways to test for web accessibility*
-  <ul>
-    <li>
-      Keyboard Navigation: Testing if modified code is navigable by keyboard is an effective way to
-      test for accessibility. Many users rely on keyboard navigation that are otherwise unable to use a mouse and it’s
-      also a good indicator if it will be visible to a screen reader. Read more about potential barriers to effective
-      keyboard navigation and keyboard testing <a href="https://webaim.org/techniques/keyboard/">here</a>.
-    </li>
-    <li>
-      Explore the accessibility tree: An accessibility tree is a part of your website's DOM. All
-      accessible objects are created in the accessibility tree for each DOM element that needs to be exposed to
-      assistive technologies. From it, you can see how the page elements are included and organized. To view the
-      accessibility tree of a page under development, we can use
-      <a href="https://developers.google.com/web/tools/chrome-devtools/accessibility/reference">Chrome DevTools' accessibility feature</a>.
-    </li>
-    <li>
-      <em>*this is by no means a complete list and covers only a portion of what makes a site accessible to all users</em>
-    </li>
-  </ul>
-  </p>
-</section>
+  <h2 id="focusability" class="pt-4">
+    Focusability, Tabability, and Visibility
+  </h2>
+  <h5>tabindex Attribute</h5>
+    <p>The tabindex attribute specifies the tab order of an element and determines whether an element can receive
+      keyboard focus. Here are some scenarios where you might use tabindex:</p>
+    <ul>
+        <li>Focusable but Not Natively Focusable Elements: Some elements like &lt;div&gt; or &lt;span&gt; are not
+          natively focusable, but you might want them to receive focus for user interaction. In such cases, you can
+          add tabindex="0" to make them focusable. Note: we avoid using custom focus order using tab index with values
+          above 0. Instead, make sure DOM elements are ordered correctly for navigability, then modify visual
+          positioning with CSS if needed.</li>
+        <li>Remove Focusability: to explicitly remove an item</li>
+        <li>Dynamic Focus Control: If you have dynamically generated or hidden elements that need to become focusable
+          under certain conditions, you can dynamically add or remove the tabindex attribute.</li>
+    </ul>
+    <h5>aria-hidden Attribute</h5>
+    <p>The aria-hidden attribute indicates whether an element is visible or hidden to assistive technologies. It does
+      not affect the visual rendering of the page. Here are some scenarios where you might use aria-hidden:</p>
+    <ul>
+        <li>Hiding Decorative Elements: If you have decorative or presentational elements that should be hidden from
+          screen readers, you can use aria-hidden="true".</li>
+        <li>Dynamic Content Updates: When dynamically updating content, you may want to temporarily hide or show
+          certain elements from assistive technologies without altering their visual display.</li>
+        <li>Modal Dialogs or Popovers: When displaying modal dialogs or popovers, you may want to hide the underlying
+          content from screen readers to prevent confusion.</li>
+    </ul>
+    <h5>When to Use Each</h5>
+    <p>Use tabindex when you need to control the tab order or make non-focusable elements focusable.</p>
+    <p>Use aria-hidden when you need to hide elements from assistive technologies while keeping them visible on the
+      page or dynamically toggle their visibility.</p>
+  <h2 id="common-mistakes" class="pt-4">
+    Common Mistakes (and how to fix them)
+  </h2>
+    <ol>
+        <li>
+            <strong>Using Non-Semantic HTML Elements for Interactive Components</strong>
+            <p><strong>Error:</strong> Using &lt;div&gt; or &lt;span&gt; elements for interactive components like
+              buttons or links instead of using native HTML elements.</p>
+            <div class="row">
+                <div>
+                    <pre>&lt;!-- Incorrect: Using &lt;div&gt; for button --&gt;</pre>
+                    <pre><code>&lt;div onclick="handleClick()"&gt;Click me&lt;/div&gt;</code></pre>
+                </div>
+                <div>
+                    <pre>&lt;!-- Correct: Using &lt;button&gt; for button --&gt;</pre>
+                    <pre><code>&lt;button onclick="handleClick()"&gt;Click me&lt;/button&gt;</code></pre>
+                </div>
+            </div>
+            <p><strong>Fix:</strong> Replace non-semantic elements with appropriate semantic HTML elements like
+              &lt;button&gt; for buttons and &lt;a&gt; for links.
+              This fix also ensure that by creating interactive elements that cannot be accessed or operated using
+              the keyboard.</p>
+        </li>
+        <li>
+            <strong>Missing or Incomplete ARIA Attributes</strong>
+            <p><strong>Error:</strong> Failing to provide necessary ARIA attributes or providing incomplete
+              information, which can result in screen readers not conveying the correct information to users.</p>
+            <div class="row">
+                <div>
+                    <pre>&lt;!-- Incorrect: Missing aria-label attribute for button with no text --&gt;</pre>
+                    <pre><code>&lt;button&gt;&times&lt;/button&gt;</code></pre>
+                </div>
+                <div>
+                    <pre>&lt;!-- Correct: Button with aria-label to convey visual information --&gt;</pre>
+                    <pre><code>&lt;button aria-label="Close"&gt;&times&lt;/button&gt;</code></pre>
+                </div>
+            </div>
+            <p><strong>Fix:</strong> Include essential ARIA attributes like aria-label or aria-labelledby to provide
+              meaningful information to assistive technologies when symbols or other visual information covey
+              information that is otherwise not present.</p>
+        </li>
+        <li>
+            <strong> Inconsistent Use of ARIA Attributes</strong>
+            <p><strong>Error:</strong> Inconsistently using ARIA attributes across similar UI components,
+              leading to confusion for users relying on assistive technologies.</p>
+            <div class="row">
+                <div>
+                    <pre>&lt;!-- Incorrect: Inconsistent use of aria-hidden --&gt;</pre>
+                    <pre><code>&lt;div id="modal1" aria-hidden="true"&gt;Modal 1 Content&lt;/div&gt;</code></pre>
+                    <pre><code>&lt;div id="modal2"&gt;Modal 2 Content&lt;/div&gt;</code></pre>
+                </div>
+                <div>
+                    <pre>&lt;!-- Correct: Consistent use of aria-hidden --&gt;</pre>
+                    <pre><code>&lt;div id="modal1" aria-hidden="true"&gt;Modal 1 Content&lt;/div&gt;</code></pre>
+                    <pre><code>&lt;div id="modal2" aria-hidden="true"&gt;Modal 2 Content&lt;/div&gt;</code></pre>
+                </div>
+            </div>
+        </li>
+        <li>
+            <strong>Overusing ARIA attributes </strong>
+            <p><strong>Error:</strong> Using ARIA attributes unnecessarily can clutter the code and potentially
+              confuse users or interfere with native accessibility features. This is often a crutch needed when
+              not using semantic HTML (Semantic means "relating to meaning". Writing semantic HTML means using
+              HTML elements to structure content based on each element's meaning, not its appearance.)</p>
+            <div class="row">
+                <div>
+                  <pre>&lt;!-- Incorrect: Using a clickable div rather than button element --&gt;</pre>
+                  <pre><code>&lt;div role="button" tabindex="0" aria-label="Click me" aria-describedby="button-description"&gt;Click me&lt;/div&gt;</code></pre>
+                </div>
+                <div>
+                  <pre>&lt;!-- Correct: Minimal use of ARIA attributes --&gt;</pre>
+                  <pre><code>&lt;button&gt;Click me&lt;/button&gt;</code></pre>
+                </div>
+            </div>
+            <p><strong>Fix:</strong> Use ARIA attributes only when necessary to supplement or enhance the
+              accessibility of UI components, avoiding unnecessary or redundant attributes.</p>
+        </li>
+    </ol>
+    <p>By avoiding these common coding errors and following best practices for ARIA implementation, you
+      can ensure that your front-end code adheres to ARIA guidelines and provides a more accessible user
+      experience for all users.</p>
+{% endblock content %}
