@@ -26,7 +26,7 @@ TEST_ES_MAPPING = {
     },
     "properties": {
         "doc_type": {
-            "index": "not_analyzed", "type": "string"
+            "type": "keyword"
         },
     }
 }
@@ -341,8 +341,7 @@ class TestDocumentAdapter(ElasticDocumentAdapter):
     mapping = {
         "properties": {
             "value": {
-                "index": "not_analyzed",
-                "type": "string"
+                "type": "keyword"
             },
             "entropy": {
                 "type": "integer"
