@@ -12,11 +12,11 @@ from corehq.util.quickcache import quickcache
 
 
 class IdentityProviderType:
-    AZURE_AD = 'azure_ad'  # Azure AD was the original name
+    ENTRA_ID = 'azure_ad'  # Microsoft renamed Entra ID to Azure ID after implementing this feature
     ONE_LOGIN = 'one_login'
     OKTA = 'okta'
     CHOICES = (
-        (AZURE_AD, "Entra ID"),
+        (ENTRA_ID, "Entra ID"),
         (ONE_LOGIN, "One Login"),
         (OKTA, "Okta"),
     )
@@ -34,7 +34,7 @@ class IdentityProviderProtocol:
     def get_supported_types(cls):
         return {
             cls.SAML: (
-                (IdentityProviderType.AZURE_AD, "Entra ID"),
+                (IdentityProviderType.ENTRA_ID, "Entra ID"),
             ),
             cls.OIDC: (
                 (IdentityProviderType.ONE_LOGIN, "One Login"),
@@ -88,7 +88,7 @@ class IdentityProvider(models.Model):
     slug = models.CharField(max_length=256, db_index=True, unique=True)
     idp_type = models.CharField(
         max_length=50,
-        default=IdentityProviderType.AZURE_AD,
+        default=IdentityProviderType.ENTRA_ID,
         choices=IdentityProviderType.CHOICES,
     )
     protocol = models.CharField(

@@ -274,7 +274,7 @@ class ServiceProviderDetailsForm(forms.Form):
 
     @property
     def token_encryption_help_block(self):
-        if self.idp.idp_type == IdentityProviderType.AZURE_AD:
+        if self.idp.idp_type == IdentityProviderType.ENTRA_ID:
             help_text = _(
                 'This is a high security feature that ensures Assertions are '
                 'fully encrypted. This feature requires a Premium Entra ID '

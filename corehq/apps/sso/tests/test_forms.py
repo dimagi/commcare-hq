@@ -58,7 +58,7 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
             'owner': owner,
             'name': name,
             'slug': slug,
-            'idp_type': idp_type or IdentityProviderType.AZURE_AD,
+            'idp_type': idp_type or IdentityProviderType.ENTRA_ID,
             'protocol': protocol or IdentityProviderProtocol.SAML,
         }
 
