@@ -1,4 +1,4 @@
-hqDefine('commtrack/js/products_and_programs_main', [
+hqDefine('commtrack/js/bootstrap5/products_and_programs_main', [
     'jquery',
     'knockout',
     'underscore',
