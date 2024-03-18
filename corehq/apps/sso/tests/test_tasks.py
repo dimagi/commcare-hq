@@ -223,6 +223,17 @@ class EnforceKeyExpirationTaskTests(TestCase):
 
         self.assertEqual(num_updates, 0)
 
+    def test_only_matches_exact_domain_matches(self):
+        idp = self._create_idp_for_domains(['test.com'], max_days_until_user_api_key_expiration=30)
+        user = self._create_user('test-user@sometest.com')
+        self._create_key_for_user(user, expiration_date=None)
+
+        current_time = datetime.datetime(year=2024, month=8, day=1)
+        with freeze_time(current_time):
+            num_updates = enforce_key_expiration_for_idp(idp)
+
+        self.assertEqual(num_updates, 0)
+
     def test_integration_test(self):
         idp = self._create_idp_for_domains(['test.com'], max_days_until_user_api_key_expiration=30)
         user = self._create_user('test-user@test.com')
@@ -239,8 +250,6 @@ class EnforceKeyExpirationTaskTests(TestCase):
         idp = generator.create_idp('test-idp', account=self.account)
         idp.max_days_until_user_api_key_expiration = max_days_until_user_api_key_expiration
         idp.save()
-        if not domains:
-            domains = []
         for domain in domains:
             AuthenticatedEmailDomain.objects.create(email_domain=domain, identity_provider=idp)
 

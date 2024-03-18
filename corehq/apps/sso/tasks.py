@@ -140,15 +140,12 @@ def get_users_for_email_domains(domains):
     user_batch_size = 500
 
     for domain in domains:
-        query = Q(username__endswith=domain)
-        for user in paginate_query(user_db, User, query, query_size=user_batch_size):
-            yield user
+        query = Q(username__endswith=f'@{domain}')
+        yield from paginate_query(user_db, User, query, query_size=user_batch_size)
 
 
 def get_keys_expiring_after(users, expiration_date):
     has_noncompliant_expiration = Q(expiration_date=None) | Q(expiration_date__gt=expiration_date)
 
     for user in users:
-        keys = user.api_keys(manager='all_objects').filter(has_noncompliant_expiration)
-        for key in keys:
-            yield key
+        yield from user.api_keys(manager='all_objects').filter(has_noncompliant_expiration)
