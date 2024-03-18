@@ -954,7 +954,7 @@ def _update_role_from_view(domain, role_data):
         not domain_has_privilege(domain, privileges.CUSTOM_DOMAIN_ALERTS)
         and 'manage_domain_alerts' in role_data['permissions']
     ):
-        raise ValueError(_("Update subscription to set access for custom domain alerts"))
+        role_data['permissions']['manage_domain_alerts'] = False
 
     if "_id" in role_data:
         try:
