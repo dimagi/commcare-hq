@@ -1,12 +1,10 @@
-# pylint: disable=unused-import,F401
-from .repeat_records import (
+from .repeat_records import (  # noqa: F401
     DomainForwardingRepeatRecords,
     RepeatRecordView,
-    SQLRepeatRecordReport,
     cancel_repeat_record,
     requeue_repeat_record,
 )
-from .repeaters import (
+from .repeaters import (  # noqa: F401
     AddCaseRepeaterView,
     AddFormRepeaterView,
     AddRepeaterView,
@@ -18,4 +16,3 @@ from .repeaters import (
     pause_repeater,
     resume_repeater,
 )
-# pylint: enable=unused-import,F401
