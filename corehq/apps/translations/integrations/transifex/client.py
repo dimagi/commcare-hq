@@ -15,8 +15,8 @@ class TransifexApiClient(object):
     def __init__(self, token, organization, project, use_version_postfix=True):
         self.use_version_postfix = use_version_postfix
         self.api = TransifexApi(auth=token)
-        self.organization = self.api.Organization.get(slug=organization)
-        self.project = self.api.Project.get(slug=project, organization=self.organization)
+        self.organization = self._get_organization(organization)
+        self.project = self._get_project(project)
 
     @property
     def _i18n_format(self):
@@ -47,12 +47,9 @@ class TransifexApiClient(object):
         return resource
 
     @staticmethod
-    def _upload_content(cls, content, resource_id, language_id=None):
+    def _upload_content(cls, content, **kwargs):
         # TransifexApi.upload() waits for async upload which we don't need, so create the upload manually
-        data = {"resource": resource_id}
-        if language_id is not None:
-            data["language"] = language_id
-        upload = cls.create_with_form(data=data, files={"content": content})
+        upload = cls.create_with_form(data=kwargs, files={"content": content})
 
         # mirror TransifexApi error handling
         if hasattr(upload, "errors") and len(upload.errors) > 0:
@@ -60,44 +57,52 @@ class TransifexApiClient(object):
 
     def _upload_resource_strings(self, content, resource_id):
         cls = self.api.ResourceStringsAsyncUpload
-        self._upload_content(cls, content, resource_id)
+        self._upload_content(cls, content, resource=resource_id)
 
     def _upload_resource_translations(self, content, resource_id, language_id):
         cls = self.api.ResourceTranslationsAsyncUpload
-        self._upload_content(cls, content, resource_id, language_id=language_id)
-
-    def _list_language_stats(self, resource_id=None, language_id=None):
-        try:
-            language_stats_list = self.api.ResourceLanguageStats.filter(project=self.project)
-            if resource_id:
-                language_stats_list.filter(resource=resource_id)
-            if language_id:
-                language_stats_list.filter(language=language_id)
-        except JsonApiException as e:
-            raise TransifexApiException(e)
-        return language_stats_list
-
-    def _get_resource(self, resource_slug):
-        try:
-            resource = self.api.Resource.get(slug=resource_slug, project=self.project)
-        except (DoesNotExist, JsonApiException) as e:
-            raise TransifexApiException(e)
-        return resource
-
-    def _list_resources(self):
-        try:
-            resources = self.api.Resource.filter(project=self.project)
-        except JsonApiException as e:
-            raise TransifexApiException(e)
-        return resources
+        self._upload_content(cls, content, resource=resource_id, language=language_id)
 
     @staticmethod
-    def _download_content(cls, resource_id, language_id=None):
+    def _get_object(cls, **kwargs):
         try:
-            if language_id is None:
-                download = cls.download(resource=resource_id)
-            else:
-                download = cls.download(resource=resource_id, language=language_id)
+            object = cls.get(**kwargs)
+        except (DoesNotExist, JsonApiException) as e:
+            raise TransifexApiException(e)
+        return object
+
+    def _get_organization(self, organization_slug):
+        cls = self.api.Organization
+        return self._get_object(cls, slug=organization_slug)
+
+    def _get_project(self, project_slug):
+        cls = self.api.Project
+        return self._get_object(cls, slug=project_slug, organization=self.organization)
+
+    def _get_resource(self, resource_slug):
+        cls = self.api.Resource
+        return self._get_object(cls, slug=resource_slug, project=self.project)
+
+    @staticmethod
+    def _list_objects(cls, **kwargs):
+        try:
+            objects = cls.filter(**kwargs)
+        except JsonApiException as e:
+            raise TransifexApiException(e)
+        return objects
+
+    def _list_resources(self):
+        cls = self.api.Resource
+        return self._list_objects(cls, project=self.project)
+
+    def _list_language_stats(self, **kwargs):
+        cls = self.api.ResourceLanguageStats
+        return self._list_objects(cls, project=self.project, **kwargs)
+
+    @staticmethod
+    def _download_content(cls, **kwargs):
+        try:
+            download = cls.download(**kwargs)
         except (DownloadException, JsonApiException) as e:
             raise TransifexApiException(e)
         response = requests.get(download, stream=True)
@@ -105,11 +110,11 @@ class TransifexApiClient(object):
 
     def _download_resource_strings(self, resource_id):
         cls = self.api.ResourceStringsAsyncDownload
-        return self._download_content(cls, resource_id)
+        return self._download_content(cls, resource=resource_id)
 
     def _download_resource_translations(self, resource_id, language_id):
         cls = self.api.ResourceTranslationsAsyncDownload
-        return self._download_content(cls, resource_id, language_id=language_id)
+        return self._download_content(cls, resource=resource_id, language_id=language_id)
 
     def delete_resource(self, resource_slug):
         resource = self._get_resource(resource_slug)
