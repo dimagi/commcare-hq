@@ -3,7 +3,7 @@ hqDefine('commtrack/js/bootstrap5/products_and_programs_main', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'commtrack/js/base_list_view_model',
+    'commtrack/js/bootstrap5/base_list_view_model',
     'hqwebapp/js/bootstrap3/widgets',   // "Additional Information" on product page uses a .hqwebapp-select2
 ], function (
     $,
