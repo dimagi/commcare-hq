@@ -285,8 +285,8 @@
   "apps/notifications/templates/notifications": [
     {
       "directories": [
-        "partials/bootstrap3/",
-        "partials/bootstrap5/"
+        "partials/bootstrap3",
+        "partials/bootstrap5"
       ],
       "file_type": "template",
       "label": "notifications/partials",
@@ -296,11 +296,11 @@
   "apps/notifications/static/notifications/js": [
     {
       "directories": [
-        "bootstrap3/",
-        "bootstrap5/"
+        "bootstrap3",
+        "bootstrap5"
       ],
       "file_type": "javascript",
-      "label": "javascript/notifications",
+      "label": "javascript/notifications/js",
       "compare_all_files": true
     }
   ],
