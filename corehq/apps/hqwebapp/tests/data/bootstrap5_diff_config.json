@@ -20,33 +20,24 @@
     },
     {
       "directories": [
-        "partials/bootstrap3",
-        "partials/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "hqwebapp/partials",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
         "includes/bootstrap3",
         "includes/bootstrap5"
       ],
       "file_type": "template",
       "label": "hqwebapp/includes",
       "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "hqwebapp/partials",
+      "compare_all_files": true
     }
   ],
   "apps/hqwebapp/static/hqwebapp/js": [
-    {
-      "directories": [
-        "ui_elements/bootstrap3",
-        "ui_elements/bootstrap5"
-      ],
-      "file_type": "javascript",
-      "label": "javascript/hqwebapp/js/ui_elements",
-      "compare_all_files": true
-    },
     {
       "directories": [
         "bootstrap3",
@@ -63,6 +54,15 @@
       ],
       "file_type": "javascript",
       "label": "javascript/hqwebapp/js/components",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "ui_elements/bootstrap3",
+        "ui_elements/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp/js/ui_elements",
       "compare_all_files": true
     }
   ],
