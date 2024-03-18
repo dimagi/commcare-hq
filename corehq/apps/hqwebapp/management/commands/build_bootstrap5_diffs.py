@@ -53,7 +53,10 @@ def get_bootstrap5_filepaths(full_diff_config):
             path_bootstrap5 = COREHQ_BASE_DIR / parent_path / directory_bootstrap5
 
             if compare_all_files:
-                migrated_files = [[x.name, x.name] for x in path_bootstrap3.glob('**/*') if x.is_file()]
+                migrated_files = [
+                    [x.name, x.name] for x in path_bootstrap3.glob('**/*')
+                    if x.is_file() and not x.name.startswith(".")
+                ]
 
             for filename_bootstrap3, filename_bootstrap5 in migrated_files:
                 diff_filename = get_diff_filename(filename_bootstrap3, filename_bootstrap5, file_type)
