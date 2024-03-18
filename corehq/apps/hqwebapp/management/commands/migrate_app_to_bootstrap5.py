@@ -93,9 +93,14 @@ class Command(BaseCommand):
                           "it's recommended to re-run the command\nat least one more "
                           "time in the event of nested dependencies / inheritance "
                           "in split files.\n\n")
+        self.stdout.write("After this, please update `bootstrap5_diff_config.json` "
+                          "using:\n\n")
+        self.stdout.write(f"./mmanage.py build_bootstrap5_diffs --update_app {app_name}\n")
+        self.stdout.write("Once the changes to that file are committed, you can run:\n")
+        self.stdout.write("./mmanage.py build_bootstrap5_diffs\n\n")
         self.stdout.write("Thank you for your dedication to this migration! <3\n\n")
-        self.stdout.write("Please review the next steps here:"
-                          "\tcommcarehq.org/styleguide/b5/migration/#update-stylesheets\n\n\n")
+        self.stdout.write("You can also review the next steps here:"
+                          "\tcommcarehq.org/styleguide/b5/migration/#update-diffs\n\n\n")
 
     def _get_files_for_migration(self, files, file_name, do_re_check):
         if file_name is not None:
