@@ -1,13 +1,29 @@
 'use strict';
-/* global Marionette, moment, NProgress, Sentry */
 hqDefine('cloudcare/js/utils', [
     'jquery',
+    'underscore',
+    'backbone.marionette',
+    'moment',
     'hqwebapp/js/initial_page_data',
+    "hqwebapp/js/toggles",
     "cloudcare/js/formplayer/constants",
+    "cloudcare/js/formplayer/layout/views/progress_bar",
+    'nprogress/nprogress',
+    'sentry_browser',
+    "cloudcare/js/formplayer/users/models",
+    'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',  // for $.datetimepicker
 ], function (
     $,
+    _,
+    Marionette,
+    moment,
     initialPageData,
-    constants
+    toggles,
+    constants,
+    ProgressBar,
+    NProgress,
+    Sentry,
+    UsersModels
 ) {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
@@ -149,15 +165,11 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var showLoading = function () {
-        hqRequire([
-            "cloudcare/js/formplayer/app",
-            "hqwebapp/js/toggles",
-            "cloudcare/js/formplayer/layout/views/progress_bar",
-        ], function (FormplayerFrontend, toggles, ProgressBar) {
-            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
-                const progressView = ProgressBar({
-                    progressMessage: gettext("Loading..."),
-                });
+        if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+            const progressView = ProgressBar({
+                progressMessage: gettext("Loading..."),
+            });
+            hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
                 if (!FormplayerFrontend.regions) {
                     FormplayerFrontend.regions = getRegionContainer();
                 }
@@ -176,10 +188,10 @@ hqDefine('cloudcare/js/utils', [
                         currentProgress += 1;
                     }
                 }, 250);
-            } else {
-                NProgress.start();
-            }
-        });
+            });
+        } else {
+            NProgress.start();
+        }
     };
 
     var formplayerLoading = function () {
@@ -237,10 +249,10 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var hideLoading = function () {
-        hqRequire(["cloudcare/js/formplayer/app", "hqwebapp/js/toggles"], function (FormplayerFrontend, toggles) {
-            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
-                $('#breadcrumb-region').css('z-index', '');
-                clearInterval(sessionStorage.progressIncrementInterval);
+        if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+            $('#breadcrumb-region').css('z-index', '');
+            clearInterval(sessionStorage.progressIncrementInterval);
+            hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
                 const progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
                 if (progressView) {
                     progressView.setProgress(100, 100, 200);
@@ -248,10 +260,10 @@ hqDefine('cloudcare/js/utils', [
                         FormplayerFrontend.regions.getRegion('loadingProgress').empty();
                     }, 250);
                 }
-            } else {
-                NProgress.done();
-            }
-        });
+            });
+        } else {
+            NProgress.done();
+        }
     };
 
     function getSentryMessage(data) {
@@ -266,43 +278,41 @@ hqDefine('cloudcare/js/utils', [
     }
 
     var reportFormplayerErrorToHQ = function (data) {
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            try {
-                var cloudcareEnv = FormplayerFrontend.getChannel().request('currentUser').environment;
-                if (!data.cloudcareEnv) {
-                    data.cloudcareEnv = cloudcareEnv || 'unknown';
-                }
-
-                const sentryData = _.omit(data, "type", "htmlMessage");
-                Sentry.captureMessage(getSentryMessage(data), {
-                    tags: {
-                        errorType: data.type,
-                    },
-                    extra: sentryData,
-                    level: "error",
-                });
-
-                $.ajax({
-                    type: 'POST',
-                    url: initialPageData.reverse('report_formplayer_error'),
-                    data: JSON.stringify(data),
-                    contentType: "application/json",
-                    dataType: "json",
-                    success: function () {
-                        window.console.info('Successfully reported error: ' + JSON.stringify(data));
-                    },
-                    error: function () {
-                        window.console.error('Failed to report error: ' + JSON.stringify(data));
-                    },
-                });
-            } catch (e) {
-                window.console.error(
-                    "reportFormplayerErrorToHQ failed hard and there is nowhere " +
-                    "else to report this error: " + JSON.stringify(data),
-                    e
-                );
+        try {
+            var cloudcareEnv = UsersModels.getCurrentUser().environment;
+            if (!data.cloudcareEnv) {
+                data.cloudcareEnv = cloudcareEnv || 'unknown';
             }
-        });
+
+            const sentryData = _.omit(data, "type", "htmlMessage");
+            Sentry.captureMessage(getSentryMessage(data), {
+                tags: {
+                    errorType: data.type,
+                },
+                extra: sentryData,
+                level: "error",
+            });
+
+            $.ajax({
+                type: 'POST',
+                url: initialPageData.reverse('report_formplayer_error'),
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                dataType: "json",
+                success: function () {
+                    window.console.info('Successfully reported error: ' + JSON.stringify(data));
+                },
+                error: function () {
+                    window.console.error('Failed to report error: ' + JSON.stringify(data));
+                },
+            });
+        } catch (e) {
+            window.console.error(
+                "reportFormplayerErrorToHQ failed hard and there is nowhere " +
+                "else to report this error: " + JSON.stringify(data),
+                e
+            );
+        }
     };
 
     var dateTimePickerTooltips = {     // use default text, but enable translations
