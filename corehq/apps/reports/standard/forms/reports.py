@@ -13,6 +13,7 @@ from corehq import toggles
 from corehq.apps.reports.analytics.esaccessors import get_paged_forms_by_type
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.standard.forms.filters import SubmissionTypeFilter
 from corehq.apps.users.util import cached_user_id_to_username
@@ -34,7 +35,8 @@ class SubmissionErrorReport(DeploymentsReport):
     asynchronous = False
     base_template = 'reports/standard/submission_error_report.html'
 
-    fields = ['corehq.apps.reports.standard.forms.filters.SubmissionTypeFilter']
+    fields = ['corehq.apps.reports.standard.forms.filters.SubmissionTypeFilter',
+              'corehq.apps.reports.filters.forms.FormsByApplicationFilter']
 
     @property
     @memoized
@@ -59,6 +61,16 @@ class SubmissionErrorReport(DeploymentsReport):
         return self._submitfilter
 
     @property
+    @memoized
+    def selected_form_data(self):
+        forms = list(FormsByApplicationFilter.get_value(self.request, self.domain).values())
+        if len(forms) == 1 and forms[0]['xmlns']:
+            return forms[0]
+        non_fuzzy_forms = [form for form in forms if not form['is_fuzzy']]
+        if len(non_fuzzy_forms) == 1:
+            return non_fuzzy_forms[0]
+
+    @property
     def sort_params(self):
         sort_col_idx = int(self.request.GET['iSortCol_0'])
         col = self.headers.header[sort_col_idx]
@@ -71,6 +83,8 @@ class SubmissionErrorReport(DeploymentsReport):
     def paged_result(self):
         doc_types = [filter_.doc_type for filter_ in [filter_ for filter_ in self.submitfilter if filter_.show]]
         sort_col, desc = self.sort_params
+        app_id = self.request.GET.get('app_id', None)
+        xmlns = self.request.GET.get('xmlns', None)
         return get_paged_forms_by_type(
             self.domain,
             doc_types,
@@ -78,6 +92,8 @@ class SubmissionErrorReport(DeploymentsReport):
             desc=desc,
             start=self.pagination.start,
             size=self.pagination.count,
+            app_id=app_id,
+            xmlns=xmlns,
         )
 
     @property
@@ -87,6 +103,8 @@ class SubmissionErrorReport(DeploymentsReport):
             name=SubmissionTypeFilter.slug,
             value=[f.type for f in self.submitfilter if f.show]
         ))
+        if self.selected_form_data:
+            shared_params += [dict(name=k, value=v) for k, v in self.selected_form_data.items()]
         return shared_params
 
     @property
