@@ -3012,11 +3012,6 @@ isstream@~0.1.2:
   resolved "https://registry.yarnpkg.com/isstream/-/isstream-0.1.2.tgz#47e63f7af55afa6f92e1500e690eb8b8529c099a"
   integrity sha1-R+Y/evVa+m+S4VAOaQ64uFKcCZo=
 
-jasmine-fixture@2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/jasmine-fixture/-/jasmine-fixture-2.0.0.tgz#b6d0c5a3bb4834d23dd137464ef96f04f93bbd60"
-  integrity sha1-ttDFo7tINNI90TdGTvlvBPk7vWA=
-
 jquery-color@2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/jquery-color/-/jquery-color-2.2.0.tgz#2596bb782b69d9368b7840e6b3fe1e70fdd821c3"
