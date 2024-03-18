@@ -87,7 +87,7 @@ def get_bootstrap5_filepaths(full_diff_config):
 
 def get_relative_folder_paths(config_path, folders):
     relevant_folders = [path for path in folders if config_path in path]
-    return {path.replace(config_path, '').lstrip('/') for path in relevant_folders}
+    return sorted([path.replace(config_path, '').lstrip('/') for path in relevant_folders])
 
 
 def get_folder_config(app_name, path, js_folder=None):

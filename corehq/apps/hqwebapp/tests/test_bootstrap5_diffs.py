@@ -78,7 +78,7 @@ def test_get_relative_folder_paths():
     }
     eq(
         get_relative_folder_paths(config_path, migrated_paths),
-        {'partials', '', 'crispy', 'includes'}
+        ['', 'crispy', 'includes', 'partials']
     )
 
 
@@ -92,7 +92,7 @@ def test_get_relative_folder_paths_gets_relevant_paths_only():
     }
     eq(
         get_relative_folder_paths(config_path, migrated_paths),
-        {'components', '', 'ui_elements'}
+        ['', 'components', 'ui_elements']
     )
 
 
