@@ -134,7 +134,8 @@ hqDefine('cloudcare/js/utils', [
     var loadingDurationListener = function () {
         const targetNode = $('body')[0];
         const callback = function () {
-            if ($('body').find('.duration-to-show-loading-met').length && sessionStorage.formplayerQueryInProgress) {
+            const formplayerQueryInProgress = sessionStorage.formplayerQueryInProgress && JSON.parse(sessionStorage.formplayerQueryInProgress);
+            if ($('body').find('.duration-to-show-loading-met').length && formplayerQueryInProgress) {
                 showProminentLoading();
                 observer.disconnect();
             }
