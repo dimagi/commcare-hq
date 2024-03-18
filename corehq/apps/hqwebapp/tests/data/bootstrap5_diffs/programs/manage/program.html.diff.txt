@@ -1,5 +1,14 @@
 --- 
 +++ 
+@@ -4,7 +4,7 @@
+ {% load i18n %}
+ {% load compress %}
+ 
+-{% requirejs_main 'commtrack/js/bootstrap3/products_and_programs_main' %}
++{% requirejs_main 'commtrack/js/bootstrap5/products_and_programs_main' %}
+ 
+ {% block page_content %}
+   {% initial_page_data 'program_product_options' program_product_options %}
 @@ -13,7 +13,7 @@
      <legend>{% trans "Program Information" %}</legend>
      {% crispy form %}
