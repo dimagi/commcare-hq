@@ -28,6 +28,9 @@ class Command(PopulateSQLCommand):
 
     def handle(self, *args, **kw):
         couch_model_class = self.sql_class()._migration_get_couch_model_class()
+        couch_model_class._migration_get_custom_couch_to_sql_functions = staticmethod(
+            lambda: [_attempt_to_preserve_failure_reason]
+        )
         with enable_attempts_sync_to_sql(couch_model_class, True):
             return super().handle(*args, **kw)
 
@@ -76,7 +79,7 @@ class Command(PopulateSQLCommand):
                 sql.failure_reason,
             ))
 
-        if "attempts" not in couch:
+        if not couch.get("attempts"):
             if len(sql.attempts) > 1:
                 diffs.append(f"attempts: not in couch, {len(sql.attempts)} in sql")
         else:
@@ -205,3 +208,15 @@ ATTEMPT_TRANSFORMS = {
     ) or ''),
     "created_at": (lambda doc: string_to_utc_datetime(doc["datetime"])),
 }
+
+
+def _attempt_to_preserve_failure_reason(doc, obj):
+    if not doc.attempts and not doc.succeeded and doc.failure_reason:
+        attempt = SQLRepeatRecordAttempt(
+            repeat_record=obj,
+            state=doc.state,
+            message=doc.failure_reason,
+            created_at=doc.registered_on or doc.next_check,
+        )
+        assert not obj._new_submodels[SQLRepeatRecordAttempt][0], 'unexpected attempts'
+        obj._new_submodels[SQLRepeatRecordAttempt][0].append(attempt)

@@ -1,7 +1,3 @@
-import math
-
-from django.conf import settings
-from django.http import HttpResponseRedirect
 from django.http.response import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -10,23 +6,23 @@ from django.utils.translation import gettext_noop
 
 from django_prbac.utils import has_privilege
 
-from corehq.apps.accounting.decorators import always_allow_project_access
-from corehq.apps.accounting.utils import get_paused_plan_context
 from dimagi.utils.web import json_response
 
 from corehq import privileges
+from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.mixins import BillingModalsMixin
-from corehq.apps.app_manager.dbaccessors import (
-    domain_has_apps,
-    get_brief_apps_in_domain,
-)
+from corehq.apps.accounting.utils import get_paused_plan_context
+from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.dashboard.models import (
     AppsPaginator,
     DataPaginator,
     ReportsPaginator,
     Tile,
 )
-from corehq.apps.domain.decorators import login_and_domain_required, LoginAndDomainMixin
+from corehq.apps.domain.decorators import (
+    LoginAndDomainMixin,
+    login_and_domain_required,
+)
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import DefaultProjectSettingsView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
@@ -113,61 +109,78 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
 
 
 def _get_default_tiles(request):
-    can_edit_users = lambda request: (request.couch_user.can_edit_commcare_users()
-                                      or request.couch_user.can_edit_web_users())
 
-    def can_view_apps(request):
-        return request.couch_user.can_view_apps() and has_privilege(request, privileges.PROJECT_ACCESS)
+    def can_edit_users(req):
+        return (
+            req.couch_user.can_edit_commcare_users()
+            or req.couch_user.can_edit_web_users()
+        )
 
-    def can_view_users(request):
+    def can_view_apps(req):
+        return (
+            req.couch_user.can_view_apps()
+            and has_privilege(req, privileges.PROJECT_ACCESS)
+        )
+
+    def can_view_users(req):
         can_do_something = (
-            request.couch_user.can_edit_commcare_users()
-            or request.couch_user.can_view_commcare_users()
-            or request.couch_user.can_edit_groups()
-            or request.couch_user.can_view_groups()
-            or request.couch_user.can_view_roles()
-        ) and has_privilege(request, privileges.PROJECT_ACCESS)
+            req.couch_user.can_edit_commcare_users()
+            or req.couch_user.can_view_commcare_users()
+            or req.couch_user.can_edit_groups()
+            or req.couch_user.can_view_groups()
+            or req.couch_user.can_view_roles()
+        ) and has_privilege(req, privileges.PROJECT_ACCESS)
         return (
             can_do_something
-            or request.couch_user.can_edit_web_users()
-            or request.couch_user.can_view_web_users()
+            or req.couch_user.can_edit_web_users()
+            or req.couch_user.can_view_web_users()
         )
 
-    def can_view_reports(request):
-        return (user_can_view_reports(request.project, request.couch_user)
-                and has_privilege(request, privileges.PROJECT_ACCESS))
+    def can_view_reports(req):
+        return (
+            user_can_view_reports(req.project, req.couch_user)
+            and has_privilege(req, privileges.PROJECT_ACCESS)
+        )
 
-    def can_view_data(request):
-        return ((request.couch_user.can_edit_data() or request.couch_user.can_access_any_exports())
-                and has_privilege(request, privileges.PROJECT_ACCESS))
+    def can_view_data(req):
+        return ((
+            req.couch_user.can_edit_data()
+            or req.couch_user.can_access_any_exports()
+        ) and has_privilege(req, privileges.PROJECT_ACCESS))
 
-    def can_edit_locations_not_users(request):
-        if not has_privilege(request, privileges.LOCATIONS):
+    def can_edit_locations_not_users(req):
+        if not has_privilege(req, privileges.LOCATIONS):
             return False
-        user = request.couch_user
-        return not can_edit_users(request) and (
-            user.can_edit_locations() or user_can_edit_location_types(user, request.domain)
+        user = req.couch_user
+        return not can_edit_users(req) and (
+            user.can_edit_locations()
+            or user_can_edit_location_types(user, req.domain)
         )
 
-    can_view_commtrack_setup = lambda request: (request.project.commtrack_enabled)
+    def can_view_commtrack_setup(req):
+        return req.project.commtrack_enabled
 
-    def _can_access_sms(request):
-        return has_privilege(request, privileges.OUTBOUND_SMS)
+    def _can_access_sms(req):
+        return has_privilege(req, privileges.OUTBOUND_SMS)
 
-    def _can_access_reminders(request):
-        return has_privilege(request, privileges.REMINDERS_FRAMEWORK)
+    def _can_access_reminders(req):
+        return has_privilege(req, privileges.REMINDERS_FRAMEWORK)
 
-    can_use_messaging = lambda request: (
-        (_can_access_reminders(request) or _can_access_sms(request))
-        and not request.couch_user.is_commcare_user()
-        and request.couch_user.can_edit_messaging()
-    )
+    def can_use_messaging(req):
+        return (
+            (_can_access_reminders(req) or _can_access_sms(req))
+            and not req.couch_user.is_commcare_user()
+            and req.couch_user.can_edit_messaging()
+        )
 
-    is_billing_admin = lambda request: request.couch_user.can_edit_billing()
-    apps_link = lambda urlname, req: (
-        '' if domain_has_apps(request.domain)
-        else reverse(urlname, args=[request.domain])
-    )
+    def is_billing_admin(req):
+        return req.couch_user.can_edit_billing()
+
+    def apps_link(urlname, req):
+        return (
+            '' if domain_has_apps(req.domain)
+            else reverse(urlname, args=[req.domain])
+        )
 
     commcare_name = commcare_hq_names(request)['commcare_hq_names']['COMMCARE_NAME']
 
@@ -219,7 +232,7 @@ def _get_default_tiles(request):
             icon='fcc fcc-users',
             urlname=DefaultProjectUserSettingsView.urlname,
             visibility_check=can_view_users,
-            help_text=_('Manage accounts for mobile workers and CommCareHQ users'),
+            help_text=_('Manage accounts for mobile workers and CommCare HQ users'),
         ),
         Tile(
             request,
