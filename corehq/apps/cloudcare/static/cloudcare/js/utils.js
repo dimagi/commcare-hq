@@ -171,7 +171,7 @@ hqDefine('cloudcare/js/utils', [
         ], function (FormplayerFrontend, ProgressBar) {
             setTimeout(function () {
                 const formplayerQueryInProgress = sessionStorage.formplayerQueryInProgress && JSON.parse(sessionStorage.formplayerQueryInProgress);
-                if(formplayerQueryInProgress) {
+                if (formplayerQueryInProgress) {
                     const progressView = ProgressBar({
                         progressMessage: gettext("Loading..."),
                     });
