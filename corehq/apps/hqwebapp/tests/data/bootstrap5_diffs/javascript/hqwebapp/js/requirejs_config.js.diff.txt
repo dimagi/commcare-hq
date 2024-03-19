@@ -1,5 +1,5 @@
---- 
-+++ 
+---  
++++  
 @@ -2,26 +2,37 @@
  requirejs.config({
      baseUrl: '/static/',
