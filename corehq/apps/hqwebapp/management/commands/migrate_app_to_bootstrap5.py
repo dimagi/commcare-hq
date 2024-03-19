@@ -13,7 +13,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_changed_css_classes,
     flag_stateful_button_changes_bootstrap5,
     flag_changed_javascript_plugins,
-    flag_path_references_to_migrated_javascript_files,
+    flag_path_references_to_split_javascript_files,
     file_contains_reference_to_path,
     replace_path_references,
 )
@@ -38,11 +38,11 @@ class Command(BaseCommand):
         parser.add_argument('app_name')
         parser.add_argument(
             '--template_name',
-            help="Specify the exact template name(s) you would like to migrate",
+            help="Specify the exact template name(s) you would like to split and migrate",
         )
         parser.add_argument(
             '--js_name',
-            help="Specify the exact javascript name(s) you would like to migrate",
+            help="Specify the exact javascript name(s) you would like to split and migrate",
         )
         parser.add_argument(
             '--re-check',
@@ -54,7 +54,7 @@ class Command(BaseCommand):
             '--verify-references',
             action='store_true',
             default=False,
-            help="Verify that all references to migrated files have been updated"
+            help="Verify that all references to split files have been updated"
         )
 
     def handle(self, app_name, **options):
@@ -70,7 +70,7 @@ class Command(BaseCommand):
         verify_references = options.get('verify_references')
 
         if verify_references:
-            self.verify_migrated_references(app_name)
+            self.verify_split_references(app_name)
             return
 
         if not js_name:
@@ -106,12 +106,12 @@ class Command(BaseCommand):
         if file_name is not None:
             files = [t for t in files if file_name in str(t)]
 
-        # filter out already migrated bootstrap3 templates
+        # filter out already split bootstrap3 templates
         files = [t for t in files if '/bootstrap3/' not in str(t)]
 
         if do_re_check:
             self.clear_screen()
-            self.write_response("\n\nRe-checking migrated Bootstrap 5 templates only.\n\n")
+            self.write_response("\n\nRe-checking split Bootstrap 5 templates only.\n\n")
             files = [t for t in files if '/bootstrap5/' in str(t)]
         else:
             files = [t for t in files if '/bootstrap5/' not in str(t)]
@@ -310,25 +310,25 @@ class Command(BaseCommand):
         with open(bootstrap5_path, 'w') as file:
             file.writelines(bootstrap5_lines)
 
-    def _get_migrated_files(self, app_name):
+    def _get_split_files(self, app_name):
         app_template_folder = get_app_template_folder(app_name)
-        migrated_files = [f for f in app_template_folder.glob('**/*')
-                          if f.is_file() and '/bootstrap3/' in str(f) and '/crispy/' not in str(f)]
+        split_files = [f for f in app_template_folder.glob('**/*')
+                       if f.is_file() and '/bootstrap3/' in str(f) and '/crispy/' not in str(f)]
         app_static_folder = get_app_static_folder(app_name)
-        migrated_files.extend(
+        split_files.extend(
             f for f in app_static_folder.glob('**/*.js')
             if f.is_file() and '/bootstrap3/' in str(f)
         )
-        return migrated_files
+        return split_files
 
-    def verify_migrated_references(self, app_name):
+    def verify_split_references(self, app_name):
         self.clear_screen()
         self.stdout.write(self.format_header(f"Verifying references for {app_name}"))
-        self.stdout.write(f"\n\nVerifying that references to migrated files "
+        self.stdout.write(f"\n\nVerifying that references to split files "
                           f"in {app_name} have been updated...")
-        migrated_files = self._get_migrated_files(app_name)
+        split_files = self._get_split_files(app_name)
         template_path = get_app_template_folder(app_name)
-        for file_path in migrated_files:
+        for file_path in split_files:
             is_template = file_path.is_relative_to(template_path)
             new_reference = get_short_path(app_name, file_path, is_template)
             old_reference = new_reference.replace("/bootstrap3/", "/")
@@ -392,7 +392,7 @@ class Command(BaseCommand):
     @staticmethod
     def get_flags_in_javascript_line(javascript_line, spec):
         flags = flag_changed_javascript_plugins(javascript_line, spec)
-        reference_flags = flag_path_references_to_migrated_javascript_files(javascript_line, "bootstrap3")
+        reference_flags = flag_path_references_to_split_javascript_files(javascript_line, "bootstrap3")
         flags.extend(reference_flags)
         return flags
 

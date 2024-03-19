@@ -10,7 +10,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_app_template_folder,
     get_app_static_folder,
     get_all_template_paths_for_app,
-    get_migrated_folders,
+    get_split_folders,
     get_all_javascript_paths_for_app,
 )
 
@@ -147,11 +147,11 @@ class Command(BaseCommand):
 
     def update_config(self, config, app_name, js_folder=None):
         parent_path = get_parent_path(app_name, js_folder)
-        migrated_folders = get_migrated_folders(
+        split_folders = get_split_folders(
             get_all_javascript_paths_for_app(app_name) if js_folder is not None
             else get_all_template_paths_for_app(app_name)
         )
-        folders = get_relative_folder_paths(parent_path, migrated_folders)
+        folders = get_relative_folder_paths(parent_path, split_folders)
         folder_configs = [
             get_folder_config(app_name, folder, js_folder)
             for folder in folders
@@ -164,9 +164,9 @@ class Command(BaseCommand):
             self.stdout.write(f"Removed '{parent_path}' from config. No more relevant files.")
 
     def check_javascript_paths(self, app_name, js_folders):
-        migrated_js_folders = get_migrated_folders(get_all_javascript_paths_for_app(app_name))
+        split_js_folders = get_split_folders(get_all_javascript_paths_for_app(app_name))
         untracked_folders = [
-            folder for folder in migrated_js_folders
+            folder for folder in split_js_folders
             if not any([path in folder for path in js_folders])
         ]
         if untracked_folders:

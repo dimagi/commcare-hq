@@ -7,7 +7,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_changed_css_classes,
     flag_stateful_button_changes_bootstrap5,
     flag_changed_javascript_plugins,
-    flag_path_references_to_migrated_javascript_files,
+    flag_path_references_to_split_javascript_files,
     file_contains_reference_to_path,
     replace_path_references,
 )
@@ -89,9 +89,9 @@ def test_flag_extended_changed_javascript_plugins_bootstrap5():
                'components/popovers/\n'])
 
 
-def test_flag_path_references_to_migrated_javascript_files_bootstrap5():
+def test_flag_path_references_to_split_javascript_files_bootstrap5():
     line = """    'hqwebapp/js/bootstrap3/crud_paginated_list',\n"""
-    flags = flag_path_references_to_migrated_javascript_files(
+    flags = flag_path_references_to_split_javascript_files(
         line, "bootstrap3"
     )
     eq(flags, ['Found reference to a migrated file (bootstrap3)'])

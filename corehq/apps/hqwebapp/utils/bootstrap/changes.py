@@ -115,10 +115,10 @@ def flag_changed_javascript_plugins(line, spec):
     return flags
 
 
-def flag_path_references_to_migrated_javascript_files(line, reference):
+def flag_path_references_to_split_javascript_files(line, reference):
     flags = []
     if "/" + reference + "/" in line:
-        flags.append(f"Found reference to a migrated file ({reference})")
+        flags.append(f"Found reference to a split file ({reference})")
     return flags
 
 
