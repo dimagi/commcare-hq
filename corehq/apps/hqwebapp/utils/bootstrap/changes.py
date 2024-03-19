@@ -1,9 +1,7 @@
 import json
 import re
 
-from pathlib import Path
-
-import corehq
+from corehq.apps.hqwebapp.utils.bootstrap.paths import COREHQ_BASE_DIR
 
 """These are a set of utilities intended to assist with the migration of Bootstrap 3 to 5.
 
@@ -22,7 +20,6 @@ https://getbootstrap.com/docs/5.3/migration/
 https://nodebb.org/blog/nodebb-specific-bootstrap-3-to-5-migration-guide/
 """
 
-COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
 PATH_TO_SPEC = 'apps/hqwebapp/utils/bootstrap/spec'
 PATH_TO_CHANGES_GUIDE = 'apps/hqwebapp/utils/bootstrap/changes_guide'
 
