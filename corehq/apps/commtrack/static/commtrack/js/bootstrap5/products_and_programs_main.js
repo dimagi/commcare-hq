@@ -38,7 +38,7 @@ hqDefine('commtrack/js/bootstrap5/products_and_programs_main', [
                     dataType: 'json',
                     error: function () {
                         self.initialLoad(true);
-                        $('.hide-until-load').removeClass("hide");
+                        $('.hide-until-load').removeClass("d-none");
                         $('#user-list-notification').text(gettext('Sorry, there was an problem contacting the server ' +
                             'to fetch the data. Please, try again in a little bit.'));
                         self.currentlySearching(false);
@@ -66,7 +66,7 @@ hqDefine('commtrack/js/bootstrap5/products_and_programs_main', [
             if (data.success) {
                 if (!self.initialLoad()) {
                     self.initialLoad(true);
-                    $('.hide-until-load').removeClass("hide");
+                    $('.hide-until-load').removeClass("d-none");
                 }
                 self.current_page(parseInt(data.current_page));
                 self.dataList(data.data_list);
