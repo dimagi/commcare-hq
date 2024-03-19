@@ -224,7 +224,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
         this.singleApp = options.singleApp;
         this.sortIndex = options.sortIndex;
         this.forceLoginAs = options.forceLoginAs;
-        this.requestInitiatedByTags = options.requestInitiatedByTags;
+        this.requestInitiatedByTag = options.requestInitiatedByTag;
 
         this.setSelections = function (selections) {
             this.selections = selections;
@@ -267,13 +267,8 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
             this.sortIndex = null;
         };
 
-        this.addRequestInitiatedByTags = function (requestInitiatedByTag) {
-            if (requestInitiatedByTag !== null && requestInitiatedByTag !== undefined) {
-                if (!this.requestInitiatedByTags) {
-                    this.requestInitiatedByTags = [];
-                }
-                this.requestInitiatedByTags.push(String(requestInitiatedByTag));
-            }
+        this.setRequestInitiatedByTag = function (requestInitiatedByTag) {
+            this.requestInitiatedByTag = requestInitiatedByTag;
         };
 
         this.setQueryData = function ({ inputs, execute, forceManualSearch}) {
@@ -369,7 +364,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
             singleApp: self.singleApp,
             sortIndex: self.sortIndex,
             forceLoginAs: self.forceLoginAs,
-            requestInitiatedByTags: self.requestInitiatedByTags,
+            requestInitiatedByTag: self.requestInitiatedByTag,
         };
         return JSON.stringify(dict);
     };
@@ -393,7 +388,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
             'singleApp': data.singleApp,
             'sortIndex': data.sortIndex,
             'forceLoginAs': data.forceLoginAs,
-            "requestInitiatedByTags": data.requestInitiatedByTags,
+            "requestInitiatedByTag": data.requestInitiatedByTag,
         };
         return new Utils.CloudcareUrl(options);
     };

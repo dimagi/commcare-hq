@@ -839,7 +839,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 execute: false,
                 forceManualSearch: true,
             });
-            urlObject.addRequestInitiatedByTags(initiatedByTag);
+            urlObject.setRequestInitiatedByTag(initiatedByTag);
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
                 // Update models based on response
