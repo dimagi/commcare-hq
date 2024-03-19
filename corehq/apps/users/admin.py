@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django_digest.models import PartialDigest, UserNonce
 
 from .models import HQApiKey, UserHistory
+from .user_data import SQLUserData
 
 
 class DDUserNonceAdmin(admin.ModelAdmin):
@@ -93,3 +94,11 @@ class UserHistoryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(UserHistory, UserHistoryAdmin)
+
+
+class UserDataAdmin(admin.ModelAdmin):
+    list_display = ['django_user', 'domain', 'profile', 'modified_on']
+    search_fields = ('django_user', 'domain')
+
+
+admin.site.register(SQLUserData, UserDataAdmin)

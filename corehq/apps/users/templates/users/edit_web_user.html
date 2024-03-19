@@ -4,9 +4,13 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main "locations/js/widgets" %}
+{% requirejs_main 'users/js/edit_web_user' %}
 
 {% block page_content %}
+  {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
+  {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
+  {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}
+  {% initial_page_data "user_data" user_data %}
   {% if has_untrusted_identity_provider %}
     <div class="alert alert-setting">
       <p class="lead">
@@ -65,11 +69,14 @@
       <input type="hidden" name="form_type" value="update-user" />
       <fieldset>
         <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Role{% endblocktrans %}</legend>
-        {% crispy form_user_update %}
+        {% crispy form_user_update.user_form %}
 
+        {% if form_user_update.custom_data.form.fields or form_user_update.custom_data.form.data %}
+          {% crispy form_user_update.custom_data.form %}
+        {% endif %}
         <div class="form-actions">
           <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-            <button type="submit" class="btn btn-primary">{% trans 'Update Role' %}</button>
+            <button type="submit" class="btn btn-primary">{% trans 'Update Information' %}</button>
           </div>
         </div>
       </fieldset>

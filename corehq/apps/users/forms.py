@@ -12,6 +12,7 @@ from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
@@ -21,12 +22,9 @@ from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
-from memoized import memoized
 
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
-from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
@@ -531,17 +529,6 @@ class CommCareUserActionForm(BaseUpdateUserForm):
                 )
             )
         )
-
-
-class RoleForm(forms.Form):
-
-    def __init__(self, *args, **kwargs):
-        if 'role_choices' in kwargs:
-            role_choices = kwargs.pop('role_choices')
-        else:
-            role_choices = ()
-        super(RoleForm, self).__init__(*args, **kwargs)
-        self.fields['role'].choices = role_choices
 
 
 class SetUserPasswordForm(SetPasswordForm):
@@ -1078,8 +1065,7 @@ class MultipleSelectionForm(forms.Form):
     Usage::
 
         # views.py
-        @property
-        @memoized
+        @cached_property
         def users_form(self):
             form = MultipleSelectionForm(
                 initial={'selected_ids': self.users_at_location},
@@ -1225,8 +1211,7 @@ class CommtrackUserForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
-    @property
-    @memoized
+    @cached_property
     def commtrack_enabled(self):
         return Domain.get_by_name(self.domain).commtrack_enabled
 
@@ -1523,38 +1508,20 @@ class AddPhoneNumberForm(forms.Form):
         self.fields['phone_number'].label = gettext_lazy('Phone number')
 
 
-class CommCareUserFormSet(object):
-    """Combines the CommCareUser form and the Custom Data form"""
+class _UserFormSet(object):
 
-    def __init__(self, domain, editable_user, request_user, request, data=None, *args, **kwargs):
+    def __init__(self, domain, editable_user, request_user, request, data=None):
         self.domain = domain
         self.editable_user = editable_user
         self.request_user = request_user
         self.request = request
         self.data = data
-        self.loadtest_users_enabled = domain_has_privilege(
-            domain,
-            privileges.LOADTEST_USERS,
-        )
 
     @property
-    @memoized
     def user_form(self):
-        return UpdateCommCareUserInfoForm(
-            data=self.data, domain=self.domain, existing_user=self.editable_user, request=self.request)
+        raise NotImplementedError()
 
-    @property
-    @memoized
-    def action_form(self):
-        return CommCareUserActionForm(
-            data=self.data,
-            domain=self.domain,
-            existing_user=self.editable_user,
-            request=self.request,
-        )
-
-    @property
-    @memoized
+    @cached_property
     def custom_data(self):
         from corehq.apps.users.views.mobile.custom_data_fields import (
             UserFieldsView,
@@ -1577,10 +1544,39 @@ class CommCareUserFormSet(object):
         new_user_data = self.custom_data.get_data_to_save()
         new_profile_id = new_user_data.pop(PROFILE_SLUG, ...)
         changed = user_data.update(new_user_data, new_profile_id)
+        changed |= user_data.remove_unrecognized(
+            {f.slug for f in self.custom_data.model.get_fields()})
         return self.user_form.update_user(
             metadata_updated=changed,
             profile_updated=old_profile_id != new_profile_id
         )
+
+
+class CommCareUserFormSet(_UserFormSet):
+    """Combines the CommCareUser form and the Custom Data form"""
+
+    @cached_property
+    def user_form(self):
+        return UpdateCommCareUserInfoForm(
+            data=self.data, domain=self.domain, existing_user=self.editable_user, request=self.request)
+
+    @cached_property
+    def action_form(self):
+        return CommCareUserActionForm(
+            data=self.data,
+            domain=self.domain,
+            existing_user=self.editable_user,
+            request=self.request,
+        )
+
+
+class WebUserFormSet(_UserFormSet):
+    """Combines UpdateUserRoleForm and the Custom Data form"""
+
+    @cached_property
+    def user_form(self):
+        return UpdateUserRoleForm(data=self.data, domain=self.domain,
+                                  existing_user=self.editable_user, request=self.request)
 
 
 class UserFilterForm(forms.Form):
