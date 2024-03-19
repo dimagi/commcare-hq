@@ -59,7 +59,7 @@
       </div>
     </div>
 
-    <div class="hide hide-until-load">
+    <div class="d-none hide-until-load">
       <div class="row" data-bind="visible: dataList().length">
         <div class="col-md-12">
           {% include 'commtrack/manage/partials/bootstrap5/pagination.html' %}
@@ -120,7 +120,7 @@
                       </div>
                       <div class="modal-body">
                         <p data-bind="text: archive_action_desc"></p>
-                        <div class="hide alert" data-bind="attr: {id: 'alert_' + product_id}"></div>
+                        <div class="d-none alert" data-bind="attr: {id: 'alert_' + product_id}"></div>
                       </div>
                       <div class="modal-footer">
                         <a href="#" class="btn btn-outline-danger"
