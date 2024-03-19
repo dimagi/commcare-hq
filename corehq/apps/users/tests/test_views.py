@@ -268,10 +268,6 @@ class TestUpdateRoleFromView(TestCase):
         role_data['permissions']['manage_domain_alerts'] = True
         self.assertFalse(self.role.permissions.to_json()['manage_domain_alerts'])
 
-        _update_role_from_view(self.domain, role_data)
-        self.role.refresh_from_db()
-        self.assertFalse(self.role.permissions.to_json()['manage_domain_alerts'])
-
         role_data['permissions']['manage_domain_alerts'] = True
         with patch('corehq.apps.users.views.domain_has_privilege', side_effect=patch_privilege_check):
             _update_role_from_view(self.domain, role_data)

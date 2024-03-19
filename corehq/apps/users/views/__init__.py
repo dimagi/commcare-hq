@@ -950,12 +950,6 @@ def _update_role_from_view(domain, role_data):
         # This shouldn't be possible through the UI, but as a safeguard...
         role_data['permissions']['access_all_locations'] = True
 
-    if (
-        not domain_has_privilege(domain, privileges.CUSTOM_DOMAIN_ALERTS)
-        and 'manage_domain_alerts' in role_data['permissions']
-    ):
-        role_data['permissions']['manage_domain_alerts'] = False
-
     if "_id" in role_data:
         try:
             role = UserRole.objects.by_couch_id(role_data["_id"])
