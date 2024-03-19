@@ -52,6 +52,7 @@ class BaseCommTrackManageView(BaseDomainView):
         return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class CommTrackSettingsView(BaseCommTrackManageView):
     urlname = 'commtrack_settings'
     page_title = gettext_noop("Advanced Settings")
