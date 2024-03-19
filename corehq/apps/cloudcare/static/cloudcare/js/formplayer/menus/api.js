@@ -183,7 +183,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                     "selected_values": params.selectedValues,
                     "isShortDetail": params.isShortDetail,
                     "isRefreshCaseSearch": params.isRefreshCaseSearch,
-                    "requestInitiatedByTags": params.requestInitiatedByTags,
+                    "requestInitiatedByTag": params.requestInitiatedByTag,
                 };
                 options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;
@@ -218,7 +218,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
 
 
                 updateRequest.always(function () {
-                    if (data.requestInitiatedByTags && data.requestInitiatedByTags.includes(constants.requestInitiatedByTagsMapping.DYNAMIC_SEARCH)) {
+                    if (data.requestInitiatedByTag && data.requestInitiatedByTag === constants.requestInitiatedByTagsMapping.DYNAMIC_SEARCH) {
                         var callEndTime = performance.now();
                         var callResponseTime = callEndTime - callStartTime;
                         $.ajax(initialPageData.reverse('api_histogram_metrics'), {
