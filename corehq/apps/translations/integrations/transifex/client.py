@@ -36,7 +36,7 @@ class TransifexApiClient(object):
 
     def _create_resource(self, resource_slug, resource_name):
         try:
-            resource = self.api.Resource.create(
+            return self.api.Resource.create(
                 name=resource_name,
                 slug=resource_slug,
                 project=self.project,
@@ -44,7 +44,6 @@ class TransifexApiClient(object):
             )
         except JsonApiException as e:
             raise TransifexApiException(e)
-        return resource
 
     @staticmethod
     def _upload_content(cls, content, **kwargs):
@@ -66,10 +65,9 @@ class TransifexApiClient(object):
     @staticmethod
     def _get_object(cls, **kwargs):
         try:
-            object = cls.get(**kwargs)
+            return cls.get(**kwargs)
         except (DoesNotExist, JsonApiException) as e:
             raise TransifexApiException(e)
-        return object
 
     def _get_organization(self, organization_slug):
         cls = self.api.Organization
@@ -86,10 +84,9 @@ class TransifexApiClient(object):
     @staticmethod
     def _list_objects(cls, **kwargs):
         try:
-            objects = cls.filter(**kwargs)
+            return cls.filter(**kwargs)
         except JsonApiException as e:
             raise TransifexApiException(e)
-        return objects
 
     def _list_resources(self):
         cls = self.api.Resource
@@ -205,7 +202,7 @@ class TransifexApiClient(object):
         """
         return self.transifex_lang_code(hq_lang_code) == self.source_lang_code
 
-    def translation_completed(self, resource_slug, hq_lang_code=None):
+    def is_translation_completed(self, resource_slug, hq_lang_code=None):
         """
         check if a resource has been completely translated for
         all langs or a specific target lang
