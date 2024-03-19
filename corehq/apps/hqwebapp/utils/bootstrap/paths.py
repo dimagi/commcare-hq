@@ -3,6 +3,7 @@ from pathlib import Path
 import corehq
 
 COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
+TRACKED_JS_FOLDERS = ["js", "spec"]
 
 
 def get_app_template_folder(app_name):

@@ -12,11 +12,11 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_template_paths_for_app,
     get_split_folders,
     get_all_javascript_paths_for_app,
+    TRACKED_JS_FOLDERS,
 )
 
 DIFF_CONFIG_FILE = "apps/hqwebapp/tests/data/bootstrap5_diff_config.json"
 DIFF_STORAGE_FOLDER = "apps/hqwebapp/tests/data/bootstrap5_diffs/"
-TRACKED_JS_FOLDERS = ["js", "spec"]
 
 
 def get_diff_filename(filename_bootstrap3, filename_bootstrap5, file_type):
