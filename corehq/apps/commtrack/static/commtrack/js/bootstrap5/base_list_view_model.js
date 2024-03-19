@@ -66,7 +66,7 @@ hqDefine("commtrack/js/bootstrap5/base_list_view_model", [
         };
 
         self.takeArchiveAction = function (actionUrl, button, dataIndex) {
-            $(button).button('loading');
+            $(button).disableButton();
             dataIndex = ko.utils.unwrapObservable(dataIndex);
             $.ajax({
                 type: 'POST',
@@ -80,6 +80,7 @@ hqDefine("commtrack/js/bootstrap5/base_list_view_model", [
         self.successfulArchiveAction = function (button, index) {
             return function (data) {
                 if (data.success) {
+                    $(button).enableButton();
                     var $modal = $(button).closest(".modal"),
                         modal = bootstrap.Modal.getOrCreateInstance($modal);
                     modal.hide();
@@ -100,7 +101,7 @@ hqDefine("commtrack/js/bootstrap5/base_list_view_model", [
 
         self.unsuccessfulArchiveAction = function (button) {
             return function () {
-                $(button).button('unsuccessful');
+                $(button).enableButton();
             };
         };
 
