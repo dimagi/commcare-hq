@@ -226,6 +226,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
 
     def tearDown(self):
         delete_all_repeat_records()
+        Command.discard_resume_state()
         super().tearDown()
 
     def test_sync_to_couch(self):
@@ -460,6 +461,42 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
             self.assertNotIn('has differences:', log.content)
         obj = SQLRepeatRecord.objects.get(couch_id=doc_id)
         self.assertFalse(obj.attempts)
+
+    def test_fixup_failed_record_with_no_attempts(self):
+        when = datetime.utcnow().replace(year=2017, microsecond=0)
+        doc, _ = self.create_repeat_record()
+        doc.pop("attempts")
+        doc.pop("registered_on")
+        doc["succeeded"] = False
+        doc["next_check"] = json_format_datetime(when)
+        doc["failure_reason"] = "A tree fell in the forest"
+        doc_id = self.db.save_doc(doc)["id"]
+
+        with templog() as log:
+            from ..management.commands import populate_repeatrecords as mod
+            with patch.object(mod, "_attempt_to_preserve_failure_reason"):  # produces diff
+                call_command('populate_repeatrecords', log_path=log.path)
+            self.assertIn(f'Doc "{doc_id}" has differences:\n', log.content)
+            self.assertIn("failure_reason: couch value 'A tree fell", log.content)
+
+            fixup_log = log.path.parent / "fixup.log"
+            call_command('populate_repeatrecords', log_path=fixup_log, fixup_diffs=log.path)
+            with open(fixup_log) as fh:
+                self.assertNotIn("has differences:", fh.read())
+
+        obj = SQLRepeatRecord.objects.get(couch_id=doc_id)
+        attempt, = obj.attempts
+        self.assertEqual(attempt.created_at, when)
+
+    def test_migrate_record_erroneous_next_check(self):
+        doc, _ = self.create_repeat_record()
+        doc.update(succeeded=True, next_check=datetime.utcnow().isoformat() + 'Z')
+        doc_id = self.db.save_doc(doc)["id"]
+        with templog() as log, patch.object(transaction, "atomic", atomic_check):
+            call_command('populate_repeatrecords', log_path=log.path)
+            self.assertNotIn('has differences:', log.content)
+        obj = SQLRepeatRecord.objects.get(couch_id=doc_id)
+        self.assertIsNone(obj.next_check)
 
     def test_migration_with_repeater_added_after_start(self):
         doc, obj = self.create_repeat_record(unwrap_doc=False)

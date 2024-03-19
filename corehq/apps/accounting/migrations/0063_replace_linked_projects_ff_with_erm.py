@@ -12,6 +12,7 @@ def _migrate_linked_projects_ff_to_erm(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ('accounting', '0062_add_release_management_to_enterprise'),
+        ('linked_domain', '0001_initial'),
     ]
 
     operations = [

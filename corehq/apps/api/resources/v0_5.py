@@ -34,7 +34,7 @@ from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
-from tastypie.resources import ModelResource, Resource, convert_post_to_patch
+from tastypie.resources import ModelResource, Resource
 
 
 from phonelog.models import DeviceReportEntry
@@ -348,7 +348,8 @@ class AdminWebUserResource(v0_1.UserResource):
 
     def obj_get_list(self, bundle, **kwargs):
         if 'username' in bundle.request.GET:
-            return [WebUser.get_by_username(bundle.request.GET['username'])]
+            web_user = WebUser.get_by_username(bundle.request.GET['username'])
+            return [web_user] if web_user.is_active else []
         return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
 
     class Meta(AdminResourceMeta):
@@ -374,37 +375,7 @@ class GroupResource(v0_4.GroupResource):
         return self._meta.serializer.serialize(data, format, options)
 
     def patch_list(self, request=None, **kwargs):
-        """
-        Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1466
-        (BSD licensed) and modified to pass the kwargs to `obj_create` and support only create method
-        """
-        request = convert_post_to_patch(request)
-        deserialized = self.deserialize(request, request.body,
-                                        format=request.META.get('CONTENT_TYPE', 'application/json'))
-
-        collection_name = self._meta.collection_name
-        if collection_name not in deserialized:
-            raise BadRequest("Invalid data sent: missing '%s'" % collection_name)
-
-        if len(deserialized[collection_name]) and 'put' not in self._meta.detail_allowed_methods:
-            raise ImmediateHttpResponse(response=http.HttpMethodNotAllowed())
-
-        bundles_seen = []
-        status = http.HttpAccepted
-        for data in deserialized[collection_name]:
-
-            data = self.alter_deserialized_detail_data(request, data)
-            bundle = self.build_bundle(data=data, request=request)
-            try:
-
-                self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
-            except AssertionError as e:
-                status = http.HttpBadRequest
-                bundle.data['_id'] = str(e)
-            bundles_seen.append(bundle)
-
-        to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
-        return self.create_response(request, to_be_serialized, response_class=status)
+        return super().patch_list_replica(self.obj_create, request, **kwargs)
 
     def post_list(self, request, **kwargs):
         """

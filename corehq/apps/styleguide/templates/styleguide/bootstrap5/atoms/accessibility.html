@@ -1,0 +1,157 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Accessibility</h1>
+  <p class="sg-lead">
+    Dimagi’s product design team firmly believes that web and
+    software experiences should be accessible for everyone,
+    regardless of abilities or impairments.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#audience">Audience</a></li>
+      <li><a href="#a11y">Color Blindness and A11y</a></li>
+      <li><a href="#screen-readers">Designing for Screen Readers</a></li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">
+    Overview
+  </h2>
+  <p>
+    This guide will help ensure that our experiences meet the standards for
+    accessibility required by law (WCAG AA, Section 508, European Standards). Patterns should be perceivable, operable,
+    and understandable to users, even when using assistive technology.
+  </p>
+  <h2 id="audience" class="pt-4">
+    Audience
+  </h2>
+  <p>
+    Accessible products give every user the same benefits regardless of ability and can adapt to any user in any
+    context. Disabilities can be situational (an end user with typical vision may struggle to view their screen in a
+    bright or sunny environment), temporary (a person with a broken wrist may not be able to type in HQ but will regain
+    ability when healed), and long-lasting (barriers from birth, an illness, disease, accident, or developed over age;
+    some may not consider themselves to have disabilities even if they experience functional limitations). We design
+    and build products for everyone.
+  </p>
+  <p>
+    "Everyone" includes
+  </p>
+  <ul>
+    <li>
+      18% of adults with vision impairment
+      (<a href="http://www.who.int/news-room/fact-sheets/detail/blindness-and-visual-impairment">source</a>)
+    </li>
+    <li>
+      8.6% of adults with hearing trouble (16.8% of U.S. adults!)
+      (<a href="https://www.who.int/deafness/en/">source</a>
+      and
+      <a href="https://www.cdc.gov/nchs/fastats/disability.htm">source</a>)
+    </li>
+    <li>
+      15% of adults with physical functioning difficulty
+      (<a href="http://www.who.int/news-room/fact-sheets/detail/disability-and-health">source</a>
+      and
+      <a href="https://www.cdc.gov/nchs/fastats/disability.htm">source</a>)
+    </li>
+    <li>
+      4.4% of adults with cognitive disabilities
+      (<a href="https://www.cdc.gov/nchs/fastats/disability.htm">source</a>)
+    </li>
+  </ul>
+  <p>
+    Consider the following barriers when designing and coding
+  </p>
+  <ul>
+    <li>
+      Blindness (may use screen reader, lack access to mouse, rely on text over visual information
+    </li>
+    <li>
+      Low-Vision (may use screen readers/magnifiers, high contrast or monochrome displays; maximize readability and visual clarity; try NoCoffee plugin
+    </li>
+    <li>
+      Color-blindness (may not be able to differentiate between some colors; test designs in a color-blind simulator)
+    </li>
+    <li>
+      Deaf and Hard-of-Hearing (may rely on captioning and alternative representations of audio
+    </li>
+    <li>
+      Physical Disabilities (may rely on keyboards, trackballs, voice recognition or assistive tech, may lack mouse access
+    </li>
+    <li>
+      Cognitive Disabilities (may have limited working memory, problem solving, attention, reading/linguistic/visual comprehension,
+      sensitivity to flashing content; try to design linearly and focus on heuristics that have to do with cognitive load and memory)
+    </li>
+  </ul>
+  <h2 id="a11y" class="pt-4">
+    Color-blindness: A11y Color Contrast Standards
+  </h2>
+  <div class="card float-end my-2">
+    <div class="card-body">
+      <h5>A11y check</h5>
+    <span class="badge text-white"
+          style="background-color: #5c6ac5;">AA CONTRAST 4.86:1</span>
+    <span class="badge bg-white"
+          style="color: #5c6ac5;">AAA Contrast 7.01:1</span>
+    <br/>
+    <span class="badge text-white"
+          style="background-color: #212f78;">AAA Contrast 12.05:1</span>
+    <span class="badge"
+          style="background-color: #f4f5fa; color: #212f78;">AAA Contrast 11.07:1</span>
+    </div>
+  </div>
+  <p>
+    Throughout the documentation, when possible, we will call out A11y. For example, checking color contrast in
+    the buttons. We aim for AA compliant color contrast. You can check color contrast in tools such as
+    <a href="https://webaim.org/resources/contrastchecker/">https://webaim.org/resources/contrastchecker/</a>.
+  </p>
+  <p>
+    Try Chrome extension Funkify to experience some common barriers.
+  </p>
+  <p>
+    Read more about a11y at
+  </p>
+  <ul>
+    <li><a href="https://a11yproject.com/">https://a11yproject.com/</a></li>
+    <li><a href="http://www.carbondesignsystem.com/guidelines/accessibility">http://www.carbondesignsystem.com/guidelines/accessibility</a></li>
+    <li><a href="https://www.w3.org/WAI/tutorials">https://www.w3.org/WAI/tutorials</a></li>
+    <li><a href="https://www.youtube.com/playlist?list=PLNYkxOF6rcICWx0C9LVWWVqvHlYJyqw7g">A11ycast videos</a></li>
+  </ul>
+  <h2 id="screen-readers" class="pt-4">
+    Designing for Screen Readers
+  </h2>
+  <p>
+    In 2020, USH began a web accessibility improvement effort, specifically surrounding screen readers.
+    <a href="https://docs.google.com/document/d/1fHNaVlaFl1xrbtPbMqj0YpByss1e0_hzCRlAUbVLboM/edit?usp=sharing">This document</a> details
+    an overview of the effort, deficiencies found by an outside agency of CommCare, recommendations, and resources.
+  </p>
+  <p>
+    Quick ways to test for web accessibility*
+  </p>
+  <ul>
+    <li>
+      Keyboard Navigation: Testing if modified code is navigable by keyboard is an effective way to
+      test for accessibility. Many users rely on keyboard navigation that are otherwise unable to use a mouse and it’s
+      also a good indicator if it will be visible to a screen reader. Read more about potential barriers to effective
+      keyboard navigation and keyboard testing <a href="https://webaim.org/techniques/keyboard/">here</a>.
+    </li>
+    <li>
+      Explore the accessibility tree: An accessibility tree is a part of your website's DOM. All
+      accessible objects are created in the accessibility tree for each DOM element that needs to be exposed to
+      assistive technologies. From it, you can see how the page elements are included and organized. To view the
+      accessibility tree of a page under development, we can use
+      <a href="https://developers.google.com/web/tools/chrome-devtools/accessibility/reference">Chrome DevTools' accessibility feature</a>.
+    </li>
+    <li>
+      <em>*this is by no means a complete list and covers only a portion of what makes a site accessible to all users</em>
+    </li>
+  </ul>
+{% endblock content %}

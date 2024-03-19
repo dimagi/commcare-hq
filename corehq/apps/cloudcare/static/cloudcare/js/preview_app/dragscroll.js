@@ -1,3 +1,4 @@
+'use strict';
 /**
  * NOTE: MONKEYPATCHED to support form clicks and other actions
  *
