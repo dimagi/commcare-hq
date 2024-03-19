@@ -30,10 +30,11 @@ from corehq.apps.hqwebapp.utils.bootstrap.status import (
     get_completed_javascript_for_app,
     get_completed_status,
 )
-
-COLOR_RED = "91"
-COLOR_GREEN = "92"
-COLOR_YELLOW = "93"
+from corehq.apps.hqwebapp.utils.management_command_styling import (
+    get_break_line,
+    get_style_func,
+    Color,
+)
 
 
 class Command(BaseCommand):
@@ -96,7 +97,7 @@ class Command(BaseCommand):
         self.clear_screen()
         self.stdout.write(
             self.format_header(f"All done with Step 2 of migrating {app_name}!"),
-            style_func=get_style_func(COLOR_GREEN)
+            style_func=get_style_func(Color.GREEN)
         )
         self.stdout.write("If this is the first time running this command, "
                           "it's recommended to re-run the command\nat least one more "
@@ -115,7 +116,7 @@ class Command(BaseCommand):
         self.clear_screen()
         self.stdout.write(
             self.format_header(f"Bootstrap 5 Migration of '{app_name}' is already complete!"),
-            style_func=get_style_func(COLOR_GREEN)
+            style_func=get_style_func(Color.GREEN)
         )
         self.stdout.write(f"It appears that '{app_name}' has already been fully migrated to Bootstrap 5!\n\n")
         self.stdout.write("If you feel this is in error, "
@@ -195,7 +196,7 @@ class Command(BaseCommand):
                 self.clear_screen()
                 self.stdout.write(
                     self.format_header(f"Finalizing changes for {short_path}..."),
-                    style_func=get_style_func(COLOR_YELLOW)
+                    style_func=get_style_func(Color.YELLOW)
                 )
                 self.record_file_changes(file_path, app_name, file_changelog, is_template)
                 if '/bootstrap5/' in str(file_path):
@@ -245,7 +246,7 @@ class Command(BaseCommand):
 
     def display_flag_summary(self, changelog):
         self.stdout.write(changelog[-3])
-        self.stdout.write(changelog[-2], style_func=get_style_func(COLOR_YELLOW))
+        self.stdout.write(changelog[-2], style_func=get_style_func(Color.YELLOW))
         self.stdout.write(changelog[-1])
         self.stdout.write("\nThis change requires manual intervention and is not made automatically. "
                           "\nThis guidance will be saved to migration logs for reference later. \n\n")
@@ -253,8 +254,8 @@ class Command(BaseCommand):
     def display_rename_summary(self, changelog):
         self.stdout.write("".join(changelog[-5:-3]))
         changes = changelog[-3].split('\n')
-        self.stdout.write(changes[0], style_func=get_style_func(COLOR_RED))
-        self.stdout.write(changes[1], style_func=get_style_func(COLOR_GREEN))
+        self.stdout.write(changes[0], style_func=get_style_func(Color.RED))
+        self.stdout.write(changes[1], style_func=get_style_func(Color.GREEN))
         self.stdout.write("".join(changelog[-2:]))
         changelog.append("\n\n")
         self.stdout.write("\n\n\nAnswering 'y' below will automatically make this change "
@@ -484,11 +485,3 @@ class Command(BaseCommand):
         self.stdout.write(f"git commit --no-verify -m \"Bootstrap 5 Migration - {message}\"")
         self.stdout.write("\n")
         self.enter_to_continue()
-
-
-def get_break_line(character, break_length):
-    return character * int(break_length / len(character))
-
-
-def get_style_func(color_code):
-    return lambda x: f"\033[{color_code}m{x}\033[00m"
