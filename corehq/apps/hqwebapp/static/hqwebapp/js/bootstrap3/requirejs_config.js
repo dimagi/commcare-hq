@@ -2,10 +2,13 @@
 requirejs.config({
     baseUrl: '/static/',
     paths: {
+        "babel": "@babel/standalone/babel.min",
+        "babel-plugin-transform-modules-requirejs-babel": "babel-plugin-transform-modules-requirejs-babel/index",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
         "datatables": "datatables.net/js/jquery.dataTables.min",
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
         "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
+        "es6": "requirejs-babel7/es6",
         "jquery": "jquery/dist/jquery.min",
         "knockout": "knockout/build/output/knockout-latest.debug",
         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
