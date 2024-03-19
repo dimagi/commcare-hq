@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 from unittest.mock import patch, Mock
 from uuid import uuid4
 
+from dateutil.parser import isoparse
+
 from django.conf import settings
 from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
@@ -23,11 +25,13 @@ from ..const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
+    State,
 )
 from ..models import (
     FormRepeater,
     Repeater,
     RepeatRecord,
+    SQLRepeatRecord,
     format_response,
     get_all_repeater_types,
     is_response,
@@ -54,6 +58,13 @@ class RepeaterTestCase(TestCase):
             connection_settings=self.conn,
         )
         self.repeater.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        # TODO remove when RepeatRecords are no longer in Couch
+        super().tearDownClass()
+        from ..dbaccessors import delete_all_repeat_records
+        delete_all_repeat_records()
 
 
 class TestSoftDeleteRepeaters(RepeaterTestCase):
@@ -100,7 +111,7 @@ class TestSQLRepeatRecordOrdering(RepeaterTestCase):
         self.repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id='eve',
-            registered_at='1970-02-01',
+            registered_at=isoparse('1970-02-01'),
         )
 
     def test_earlier_record_created_later(self):
@@ -111,7 +122,7 @@ class TestSQLRepeatRecordOrdering(RepeaterTestCase):
             # is Unix Rosh Hashanah, the sixth day of Creation, the day
             # [Lilith][1] and Adam were created from clay.
             # [1] https://en.wikipedia.org/wiki/Lilith
-            registered_at='1970-01-06',
+            registered_at=isoparse('1970-01-06'),
         )
         repeat_records = self.repeater.repeat_records.all()
         self.assertEqual(repeat_records[0].payload_id, 'lilith')
@@ -121,7 +132,7 @@ class TestSQLRepeatRecordOrdering(RepeaterTestCase):
         self.repeater.repeat_records.create(
             domain=self.repeater.domain,
             payload_id='cain',
-            registered_at='1995-01-06',
+            registered_at=isoparse('1995-01-06'),
         )
         repeat_records = self.repeater.repeat_records.all()
         self.assertEqual(repeat_records[0].payload_id, 'eve')
@@ -619,3 +630,26 @@ class TestCouchRepeatRecordMethods(TestCase):
             domain=cls.domain,
             connection_settings=cls.conn_settings,
         )
+
+
+class TestRepeatRecordMethods(RepeaterTestCase):
+    # TODO combine with TestCouchRepeatRecordMethods after SQL migration
+    model_class = RepeatRecord
+
+    def test_requeue(self):
+        now = datetime.utcnow()
+        record = self.model_class(
+            domain="test",
+            repeater_id=self.repeater.id.hex,
+            payload_id="abc123",
+            state=State.Empty,
+            registered_at=now - timedelta(hours=1),
+        )
+        record.requeue()
+
+        self.assertEqual(record.state, State.Pending)
+        self.assertLessEqual(record.next_check, datetime.utcnow())
+
+
+class TestSQLRepeatRecordMethods(TestRepeatRecordMethods):
+    model_class = SQLRepeatRecord

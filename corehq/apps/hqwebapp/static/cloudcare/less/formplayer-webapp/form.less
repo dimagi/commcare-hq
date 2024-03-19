@@ -1,5 +1,6 @@
-@form-text-indent: 20px;
+@form-text-indent: 23px;
 @form-text-size: 16px;
+@group-indent: 15px;
 
 .form-container {
   background-color: white;
@@ -7,12 +8,8 @@
   margin-bottom: 2rem;
   font-size: @form-text-size;   // Don't overshadow inputs
 
-  .page-header {
-    padding-bottom: 30px;
-
-    h1 {
-      padding-left: @form-text-indent - 5px;
-    }
+  .page-header h1 {
+    padding-left: @form-text-indent - 8px;
   }
 
   .controls {
@@ -26,6 +23,11 @@
 
   .form-actions {
     margin: 30px 0 0 0;
+    &.form-group {
+      margin-left: -@form-text-indent;
+      margin-right: -@form-text-indent;
+    }
+
     background-color: lighten(@cc-brand-hi, 10);
     .border-bottom-radius(0);
 
@@ -47,12 +49,27 @@
     z-index: @zindex-formplayer-anchored-submit;
   }
 
+  // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
+  .row {
+    margin-left: 0px;
+    margin-right: 0px;
+  }
+  .question-container {
+    padding-left: @form-text-indent;
+    padding-right: @form-text-indent;
+  }
+
   .form-group {
-    padding-left: 25px;
-    padding-right: 20px;
+    margin-left: 0px;
+    margin-right: 0px;
     .caption.control-label {
       display: block;
     }
+  }
+
+  .group-body {
+    margin-left: @group-indent;
+    margin-right: @group-indent;
   }
 
   .gr.panel {
@@ -63,14 +80,27 @@
     border-radius: 0px;
   }
 
-  .panel-body {
-    padding-left: 5px;
-    padding-right: 5px;
-    // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
-    .row {
-      margin-left: 0px;
-      margin-right: 0px;
+  .col-sm-12,
+  .col-sm-11,
+  .col-sm-10,
+  .col-sm-9,
+  .col-sm-8,
+  .col-sm-7,
+  .col-sm-6,
+  .col-sm-5,
+  .col-sm-4,
+  .col-sm-3,
+  .col-sm-2,
+  .col-sm-1 {
+    &:first-child {
+      padding-left: 0;
     }
+    &:last-child {
+      padding-right: 0;
+    }
+  }
+
+  .panel-body {
     @media (max-width: @screen-xs-max) {
       padding-left: 0px;
       padding-right: 0px;
@@ -108,9 +138,9 @@
       float: left;
       margin-right: 10px;
     }
-
-    legend {
-      padding-left: @form-text-indent + 3px;
+    .webapp-markdown-output img {
+      height: 1em;
+      vertical-align: baseline;
     }
   }
 
@@ -177,40 +207,6 @@
 
 }
 
-.case-tile-container {
-  background: transparent !important;
-  > div {
-    background: white;
-    margin-bottom: 20px;
-    display: grid;
-    container-type: inline-size;
-  }
-
-  #persistent-case-tile .persistent-sticky .webapp-markdown-output {
-    img {
-      max-height: 100%;
-      max-width: 100%;
-    }
-
-    h1,h2,h3 {
-      margin-top: 0px
-    }
-  }
-}
-
-@media screen {
-    .case-tile-container {
-        position: sticky;
-        top: @breadcrumb-height-cloudcare;
-        z-index: @zindex-persistent-tile-cloudcare;
-
-        #persistent-case-tile .persistent-sticky {
-            box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
-            border-bottom: 1px solid @cc-neutral-hi;
-        }
-    }
-}
-
 @media print {
   .form-container.print-container {
     margin: 0px;
@@ -239,15 +235,6 @@
     color: #52616f !important;
     font-size: 14px;
   }
-
-  .case-tile-container {
-    > div {
-      margin-bottom: 0px;
-    }
-    > div:not(:empty) {
-      border-bottom: 1px dashed black;
-    }
-  }
 }
 
 .question-tile-row:has(div.q) {
@@ -258,8 +245,6 @@
 .question-tile-row {
   display: flex;
   align-items: start;
-  margin-left: 10px;
-  margin-right: 10px;
   * .form-group, * p, * .control-label {
     padding-top: 0px !important;
     padding-bottom: 0px !important;
@@ -273,4 +258,10 @@
     padding-right: 0px !important;
     padding-left: 0px !important;
   }
+}
+
+.question-tile-row .gr-no-children.gr-has-no-questions.gr-has-no-nested-questions {
+  // Prevents a priority issue that's happened three times where
+  // a group with hidden values creates whitespace.
+  display: none;
 }

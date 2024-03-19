@@ -11,6 +11,7 @@ from memoized import memoized
 
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.es import const
 from corehq.apps.es.filters import term
 from corehq.util.es.elasticsearch import (
     BulkIndexError,
@@ -110,8 +111,7 @@ class ElasticManageAdapter(BaseAdapter):
         :returns: ``dict`` with format ``{<alias>: [<index>, ...], ...}``
         """
         aliases = {}
-        aliases_obj = (self._es.indices.get_aliases()
-                       if self.elastic_major_version == 2 else self._es.indices.get_alias())
+        aliases_obj = self._es.indices.get_alias()
         for index, alias_info in aliases_obj.items():
             for alias in alias_info.get("aliases", {}):
                 aliases.setdefault(alias, []).append(index)
@@ -151,17 +151,14 @@ class ElasticManageAdapter(BaseAdapter):
         :returns: ``dict`` of task details
         :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)
         """
-        if self.elastic_major_version == 5:
-            try:
-                task_details = self._es.tasks.get(task_id=task_id)
-                task_info = task_details['task']
-                task_info['completed'] = task_details['completed']
-            except NotFoundError as e:
-                # unknown task id provided
-                raise TaskMissing(e)
-            return task_info
-        return self._parse_task_result(self._es.tasks.list(task_id=task_id,
-                                                           detailed=True))
+        try:
+            task_details = self._es.tasks.get(task_id=task_id)
+            task_info = task_details['task']
+            task_info['completed'] = task_details['completed']
+        except NotFoundError as e:
+            # unknown task id provided
+            raise TaskMissing(e)
+        return task_info
 
     def cancel_task(self, task_id):
         """
@@ -337,7 +334,7 @@ class ElasticManageAdapter(BaseAdapter):
         :param mapping: ``dict`` mapping for the provided doc type
         """
         self._validate_single_index(index)
-        return self._es.indices.put_mapping(type_, mapping, index,
+        return self._es.indices.put_mapping(doc_type=type_, body=mapping, index=index,
                                             expand_wildcards="none")
 
     def index_get_mapping(self, index, type_):
@@ -404,8 +401,7 @@ class ElasticManageAdapter(BaseAdapter):
 
     def reindex(
             self, source, dest, wait_for_completion=False,
-            refresh=False, batch_size=1000, purge_ids=False,
-            requests_per_second=None,
+            refresh=False, batch_size=1000, requests_per_second=None, copy_doc_ids=True
     ):
         """
         Starts the reindex process in elastic search cluster
@@ -420,16 +416,11 @@ class ElasticManageAdapter(BaseAdapter):
                            batches may process more quickly but risk errors if the documents are too
                            large. 1000 is the recommended maximum and elasticsearch default,
                            and can be reduced if you encounter scroll timeouts.
-        :param purge_ids: ``bool`` adds an inline script to remove the _id field from documents source.
-                          these cause errors on reindexing the doc, but the script slows down the reindex
-                          substantially, so it is only recommended to enable this if you have run into
-                          the specific error it is designed to resolve.
-
         :returns: None if wait_for_completion is True else would return task_id of reindex task
         """
 
         # More info on "op_type" and "version_type"
-        # https://www.elastic.co/guide/en/elasticsearch/reference/2.4/docs-reindex.html
+        # https://www.elastic.co/guide/en/elasticsearch/reference/5.6/docs-reindex.html
 
         reindex_body = {
             "source": {
@@ -443,8 +434,17 @@ class ElasticManageAdapter(BaseAdapter):
             },
             "conflicts": "proceed"
         }
-        if purge_ids:
-            reindex_body["script"] = {"inline": "if (ctx._source._id) {ctx._source.remove('_id')}"}
+
+        # Should be removed after ES 5-6 migration
+        if copy_doc_ids:
+            reindex_body["script"] = {
+                "lang": "painless",
+                "source": """
+                if (!ctx._source.containsKey('doc_id')) {
+                    ctx._source['doc_id'] = ctx._id;
+                }
+                """
+            }
 
         reindex_kwargs = {
             "wait_for_completion": wait_for_completion,
@@ -802,10 +802,8 @@ class ElasticDocumentAdapter(BaseAdapter):
         """Perform the low-level (3rd party library) update operation."""
         if return_doc:
             major_version = self.elastic_major_version
-            assert major_version in {2, 5, 6, 7, 8}, self.elastic_version
-            if major_version == 2:
-                kw["fields"] = "_source"
-            elif major_version in {5, 6, 7}:
+            assert major_version in {5, 6, 7, 8}, self.elastic_version
+            if major_version in {5, 6, 7}:
                 # this changed in elasticsearch-py v5.x
                 kw["_source"] = "true"
             else:
@@ -1407,11 +1405,11 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
 
     def index_multiplexed(cls):
         key = f"ES_{cls.canonical_name.upper()}_INDEX_MULTIPLEXED"
-        return getattr(settings, key)
+        return getattr(const, key)
 
     def index_swapped(cls):
         key = f"ES_{cls.canonical_name.upper()}_INDEX_SWAPPED"
-        return getattr(settings, key)
+        return getattr(const, key)
 
     doc_adapter = cls(index_runtime_name(index_name), type_)
 

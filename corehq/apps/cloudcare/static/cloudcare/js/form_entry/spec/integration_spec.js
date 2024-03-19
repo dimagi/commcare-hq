@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/form_entry/spec/integration_spec", function () {
     describe('Integration', function () {

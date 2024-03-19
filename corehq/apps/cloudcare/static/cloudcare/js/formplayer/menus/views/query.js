@@ -1,3 +1,4 @@
+'use strict';
 /*global Backbone, DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {

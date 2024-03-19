@@ -82,7 +82,7 @@
             <button id="submit-verification"
                     type="submit"
                     data-html="true"
-                    data-title="<div class='alert alert-warning'><i class='fa fa-exclamation-triangle'></i> <strong>{% trans 'SMS charges will incur.' %}</strong></div>{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
+                    data-title="<div class='alert alert-warning'><i class='fa-solid fa-triangle-exclamation'></i> <strong>{% trans 'SMS charges will incur.' %}</strong></div>{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
                     class="btn btn-default verify-button">
               <i class="fa fa-signal"></i> {% trans 'Verify Phone Numbers' %}
             </button>
@@ -96,7 +96,7 @@
                         will happen. If the phone number is pending verification, the verification SMS
                         will be resent.
                         {% endblocktrans %}
-                        <div class='alert alert-warning text-center'><i class='fa fa-exclamation-triangle'></i> <strong>{% trans 'SMS charges will incur.' %}</strong></div>">
+                        <div class='alert alert-warning text-center'><i class='fa-solid fa-triangle-exclamation'></i> <strong>{% trans 'SMS charges will incur.' %}</strong></div>">
                 </span>
           </form>
         {% endif %}

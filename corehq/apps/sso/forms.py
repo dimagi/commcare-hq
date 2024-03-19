@@ -263,7 +263,7 @@ class ServiceProviderDetailsForm(forms.Form):
     def __init__(self, identity_provider, show_help_block=True, *args, **kwargs):
         self.idp = identity_provider
         # todo eventually have a setting for IdentityProvider toggles based on
-        #  whether SP signing is enforced (dependent on client's Azure tier)
+        #  whether SP signing is enforced (dependent on client's Entra ID tier)
         self.show_help_block = show_help_block
 
         super().__init__(*args, **kwargs)
@@ -274,10 +274,10 @@ class ServiceProviderDetailsForm(forms.Form):
 
     @property
     def token_encryption_help_block(self):
-        if self.idp.idp_type == IdentityProviderType.AZURE_AD:
+        if self.idp.idp_type == IdentityProviderType.ENTRA_ID:
             help_text = _(
                 'This is a high security feature that ensures Assertions are '
-                'fully encrypted. This feature requires a Premium Azure AD '
+                'fully encrypted. This feature requires a Premium Entra ID '
                 'subscription.'
             )
         else:
@@ -430,10 +430,21 @@ class EditIdentityProviderAdminForm(forms.Form):
         )
 
         if self.idp.is_editable:
+            dashboard_link = url_helpers.get_dashboard_link(self.idp)
             self.fields['is_editable'].help_text = format_html(
                 '<a href="{}">{}</a>',
-                url_helpers.get_dashboard_link(self.idp),
+                dashboard_link,
                 _("Edit Enterprise Settings")
+            ) if dashboard_link else format_html(
+                '<div class="alert alert-warning">'
+                '   <i class="fa-solid fa-warning-sign"></i> {}'
+                '   <a href="{}">{}</a>'
+                '</div>',
+                _("This account has no active Enterprise subscription! Please fix the "
+                  "Billing Account configuration in order to complete the Identity "
+                  "Provider setup."),
+                account_link,
+                _("Manage Billing Account"),
             )
 
         self.helper = FormHelper()
@@ -761,14 +772,15 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         if idp_cert_file:
             try:
                 cert = certificates.get_certificate_from_file(idp_cert_file)
-                public_key = certificates.get_public_key(cert)
-                date_expiration = certificates.get_expiration_date(cert)
-            except certificates.crypto.Error:
+            except ValueError:
                 log.exception("Error uploading certificate: bad cert file.")
                 raise forms.ValidationError(
                     _("File type not accepted. Please ensure you have "
                       "uploaded a Base64 x509 certificate.")
                 )
+            else:
+                public_key = certificates.get_public_key(cert)
+                date_expiration = certificates.get_expiration_date(cert)
             if date_expiration <= datetime.datetime.now(tz=date_expiration.tzinfo):
                 raise forms.ValidationError(
                     _("This certificate has already expired!")

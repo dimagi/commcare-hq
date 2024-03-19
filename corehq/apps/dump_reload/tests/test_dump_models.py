@@ -47,6 +47,7 @@ IGNORE_MODELS = {
     "auth.Permission",
     "blobs.BlobMigrationState",
     "cleanup.DeletedCouchDoc",
+    "cleanup.DeletedSQLDoc",
     "contenttypes.ContentType",
     "data_analytics.GIRRow",
     "data_analytics.MALTRow",
@@ -93,7 +94,7 @@ IGNORE_MODELS = {
     "tastypie.ApiAccess",  # not tagged by domain
     "tastypie.ApiKey",  # not domain-specific
     "toggle_ui.ToggleAudit",
-    "two_factor.PhoneDevice",
+    "phonenumber.PhoneDevice",
     "users.Permission",
     "util.BouncedEmail",
     "util.ComplaintBounceMeta",

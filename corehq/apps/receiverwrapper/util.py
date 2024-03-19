@@ -8,12 +8,12 @@ from django.http import Http404
 from couchdbkit import ResourceNotFound
 
 import couchforms
-from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from couchforms.models import DefaultAuthContext
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
+from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
@@ -74,7 +74,7 @@ def get_meta_appversion_text(form_metadata):
         return None
 
 
-@quickcache(['domain', 'build_id'], timeout=24*60*60)
+@quickcache(["domain", "build_id"], timeout=24 * 60 * 60)
 def get_version_from_build_id(domain, build_id):
     """
     fast lookup of app version number given build_id
@@ -140,7 +140,9 @@ def get_commcare_version_from_appversion_text(appversion_text):
     '2.4.1'
     >>> get_commcare_version_from_appversion_text(u'संस्करण "2.27.8" (414593)')
     '2.27.8'
-    >>> get_commcare_version_from_appversion_text(u'CommCare Android, आवृत्ती" 2.44.5"(452680). ॲप वि.29635 कॉमर्स आवृत्ती2.44. बिल्ड452680, रोजी तयार केले:2019-01-17')
+    >>> get_commcare_version_from_appversion_text(
+            ...     u'CommCare Android, आवृत्ती" 2.44.5"(452680). ॲप वि.29635 कॉमर्स आवृत्ती2.44. बिल्ड452680, रोजी तयार केले:2019-01-17'  # noqa: E501
+    ... )
     '2.44.3'
     """
     patterns = [
@@ -191,7 +193,7 @@ def get_app_version_info(domain, build_id, xform_version, xform_metadata):
     return AppVersionInfo(None, commcare_version, BuildVersionSource.NONE)
 
 
-@quickcache(['domain', 'build_or_app_id'], timeout=24*60*60)
+@quickcache(["domain", "build_or_app_id"], timeout=24 * 60 * 60)
 def get_app_and_build_ids(domain, build_or_app_id):
     if not build_or_app_id:
         return build_or_app_id, None
@@ -240,7 +242,7 @@ def _notify_ignored_form_submission(request, form_meta):
                           exponential_backoff=False, send_to_ops=False)
     _assert(False, "Unexpected practice mobile user submission received", {
         'Method': request.method,
-        'URL': request.get_raw_uri(),
+        'URL': request.build_absolute_uri(),
         'GET Params': json.dumps(request.GET),
         'Form Meta': json.dumps(form_meta),
     })

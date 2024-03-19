@@ -1,3 +1,4 @@
+'use strict';
 /* globals moment, SignaturePad, DOMPurify */
 hqDefine("cloudcare/js/form_entry/entries", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
@@ -460,7 +461,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             self.placeholderText = gettext('Please choose an item');
         }
         self.afterRender = function () {
-            select2ify(self, {});
+            select2ify(self, {}, true);
         };
     }
     MultiDropdownEntry.prototype = Object.create(MultiSelectEntry.prototype);
@@ -606,7 +607,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.afterRender = function () {
-            select2ify(self, self.additionalSelect2Options());
+            select2ify(self, self.additionalSelect2Options(), false);
         };
     }
     DropdownEntry.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -1065,6 +1066,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         EntryArrayAnswer.call(self, question, options);
         self.templateType = 'geo';
         self.map = null;
+        self.hasMap = () => !!self.map;
         self.control_width = constants.CONTROL_WIDTH;
 
         self.DEFAULT = {
@@ -1371,7 +1373,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      * Utility to render question as select2
      * additionalOptions is passed as object to select2 constructor
      */
-    function select2ify(entry, additionalOptions) {
+    function select2ify(entry, additionalOptions, isMulti) {
         var $input = $('#' + entry.entryId);
         $input.select2(_.extend({
             allowClear: true,
@@ -1379,6 +1381,19 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
         }, additionalOptions));
 
+        applySelect2Labelledby(entry.entryId, isMulti);
+    }
+
+    /**
+     * Select2 ignores labelling from original `<select>` element.
+     * Fix that by applying `aria-labelledby` to the element getting keyboard focus.
+     */
+    function applySelect2Labelledby(entryId, isMulti) {
+        const $input = $('#' + entryId);
+        const $focusElement = isMulti
+            ? $input.parent().find('textarea.select2-search__field')
+            : $input.parent().find('span.select2-selection--single');
+        $focusElement.attr('aria-labelledby', entryId + '-label');
     }
 
     /**

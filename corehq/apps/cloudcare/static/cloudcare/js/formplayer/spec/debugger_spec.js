@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/debugger_spec", function () {
     describe('Debugger', function () {

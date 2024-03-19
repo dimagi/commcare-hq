@@ -25,13 +25,13 @@
   <div class="form-actions form-actions-exports" data-bind="visible: !downloadInProgress()">
     <div class="col-sm-9 col-sm-offset-3">
       <div class="alert alert-warning" data-bind="visible: prepareExportError()">
-        <i class="fa fa-exclamation-triangle"></i>
+        <i class="fa-solid fa-triangle-exclamation"></i>
         <span data-bind="text: prepareExportError"></span>
       </div>
       <div class="row">
         <div class="col-xs-6 col-sm-4 col-md-3">
           <button type="submit" class="btn btn-primary btn-full-width" data-bind="disable: disablePrepareExport">
-            <i data-bind="visible: !preparingExport()" class="fa fa-cloud-download"></i>
+            <i data-bind="visible: !preparingExport()" class="fa-solid fa-cloud-arrow-down"></i>
             <span data-bind="visible: !preparingExport()">{% trans "Prepare Export" %}</span>
 
             <i data-bind="visible: preparingExport()" class="fa-spin fa fa-spinner"></i>
@@ -44,7 +44,7 @@
                                 click: prepareMultimediaExport,
                                 disable: disablePrepareMultimediaExport,
                             ">
-            <i data-bind="visible: !preparingMultimediaExport()" class="fa fa-cloud-download"></i>
+            <i data-bind="visible: !preparingMultimediaExport()" class="fa-solid fa-cloud-arrow-down"></i>
             <span data-bind="visible: !preparingMultimediaExport()">{% trans "Prepare Multimedia" %}</span>
 
             <i data-bind="visible: preparingMultimediaExport()" class="fa-spin fa fa-spinner"></i>

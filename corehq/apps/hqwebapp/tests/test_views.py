@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
@@ -279,24 +281,32 @@ class TestSolutionsFeatureRequestView(TestCase):
             'sentry_event_id': '',
         }
 
-    def _post_request(self, payload):
-        return self.client.post(
-            self.url,
-            payload,
-            HTTP_USER_AGENT='firefox'
-        )
+    def _post_request(self, payload, is_dimagi_env):
+        with patch('corehq.apps.hqwebapp.views.settings.IS_DIMAGI_ENVIRONMENT', is_dimagi_env):
+            return self.client.post(
+                self.url,
+                payload,
+                HTTP_USER_AGENT='firefox'
+            )
 
     def test_non_staff_email_submission(self):
         self.client.login(username=self.web_user.username, password='123')
         payload = self._default_payload(self.web_user.username)
-        response = self._post_request(payload)
+        response = self._post_request(payload, True)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_non_dimagi_env_submission(self):
+        self.client.login(username=self.web_user.username, password='123')
+        payload = self._default_payload(self.staff_web_user.username)
+        response = self._post_request(payload, False)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(len(mail.outbox), 0)
 
     def test_email_submission(self):
         self.client.login(username=self.staff_web_user.username, password='123')
         payload = self._default_payload(self.staff_web_user.username)
-        response = self._post_request(payload)
+        response = self._post_request(payload, True)
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(len(mail.outbox), 1)

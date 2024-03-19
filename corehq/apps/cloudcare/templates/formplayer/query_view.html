@@ -63,12 +63,12 @@
     class="<% if (contentTag === 'td') { %>col-sm-6 <% } %>query-caption
            <% if (required) { %> required<% } %>
            <% if (errorMessage) { %> has-error<% } %>">
-    <div>
+    <div class="d-flex justify-content-between">
       <label class="control-label" for="<%- text ? text : "" %>">
         <%- text ? text : "" %>
       </label>
       <% if (typeof hint !== "undefined" && hint !== null) { %>
-      <div class="hq-help pull-right">
+      <div class="hq-help">
         <a href="#" tabindex="-1"  data-title="<%- text ? text : "" %>" data-content="<%- hint ? hint : "" %>">
           <i class="fa fa-question-circle icon-question-sign"></i>
         </a>
@@ -106,7 +106,7 @@
              class="date query-field form-control"
              value="<%- value %>"
              <% if (required) { %> aria-required="true"<% } %>>
-      <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+      <span class="input-group-addon"><i class="fa-solid fa-calendar-days"></i></span>
     </div>
 
     <% } else if (input === "daterange") { %>

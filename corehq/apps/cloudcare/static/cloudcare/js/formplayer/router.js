@@ -1,3 +1,4 @@
+'use strict';
 /* global Backbone, Marionette */
 hqDefine("cloudcare/js/formplayer/router", function () {
     var utils = hqImport("cloudcare/js/formplayer/utils/utils");
