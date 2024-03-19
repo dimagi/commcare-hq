@@ -263,7 +263,7 @@ class ServiceProviderDetailsForm(forms.Form):
     def __init__(self, identity_provider, show_help_block=True, *args, **kwargs):
         self.idp = identity_provider
         # todo eventually have a setting for IdentityProvider toggles based on
-        #  whether SP signing is enforced (dependent on client's Azure tier)
+        #  whether SP signing is enforced (dependent on client's Entra ID tier)
         self.show_help_block = show_help_block
 
         super().__init__(*args, **kwargs)
@@ -274,10 +274,10 @@ class ServiceProviderDetailsForm(forms.Form):
 
     @property
     def token_encryption_help_block(self):
-        if self.idp.idp_type == IdentityProviderType.AZURE_AD:
+        if self.idp.idp_type == IdentityProviderType.ENTRA_ID:
             help_text = _(
                 'This is a high security feature that ensures Assertions are '
-                'fully encrypted. This feature requires a Premium Azure AD '
+                'fully encrypted. This feature requires a Premium Entra ID '
                 'subscription.'
             )
         else:

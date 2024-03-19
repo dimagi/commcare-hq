@@ -22,7 +22,7 @@ from corehq.apps.sso.models import (
 @unit_testing_only
 def create_idp(slug, account, include_certs=False):
     idp = IdentityProvider(
-        name=f"Azure AD for {account.name}",
+        name=f"Entra ID for {account.name}",
         slug=slug,
         owner=account,
     )
