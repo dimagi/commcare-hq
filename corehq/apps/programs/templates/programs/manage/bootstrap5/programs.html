@@ -1,17 +1,9 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
 
 {% requirejs_main 'commtrack/js/bootstrap5/products_and_programs_main' %}
-
-{% block stylesheets %}
-  <style>
-    .btn-toolbar {
-      margin-bottom: 10px;
-    }
-  </style>
-{% endblock %}
 
 {% block page_content %}
   {% initial_page_data 'program_product_options' program_product_options %}
@@ -29,7 +21,7 @@
 
     <div class="row">
       <div class="col-md-12">
-        <div class="btn-toolbar">
+        <div class="btn-toolbar mb-3">
           <a class="btn btn-primary" href="{% url "commtrack_program_new" domain %}">
             <i class="fa fa-plus"></i> {% trans 'Add Program' %}
           </a>
@@ -70,15 +62,15 @@
                     {% trans "Delete Program" %}
                   </a>
 
-                  <div class="modal fade" data-bind="attr: {id: _id}">
+                  <div class="modal fade" data-bind="attr: {id: _id}" aria-labelledby="modalTitle">
                     <div class="modal-dialog">
                       <div class="modal-content">
                         <div class="modal-header">
-                          <button type="button" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
-                          <h4 class="modal-title">
+                          <h4 class="modal-title" id="modalTitle">
                             {% trans "Are you sure you want to" %}
-                            <strong>{% trans "Delete " %}</strong>
+                            <strong>{% trans "delete " %}</strong>
                             '<span data-bind="text: name"></span>'?</h4>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
                         </div>
                         <div class="modal-body">
                           <p>{% trans "This will delete the program. All of the programs products will be assigned to the default program instead. BE CAREFUL, as this action is irreversible." %}</p>

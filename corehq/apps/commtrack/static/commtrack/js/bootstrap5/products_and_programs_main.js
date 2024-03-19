@@ -4,6 +4,7 @@ hqDefine('commtrack/js/bootstrap5/products_and_programs_main', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'commtrack/js/bootstrap5/base_list_view_model',
     'hqwebapp/js/bootstrap5/widgets',   // "Additional Information" on product page uses a .hqwebapp-select2
 ], function (
@@ -11,6 +12,7 @@ hqDefine('commtrack/js/bootstrap5/products_and_programs_main', [
     ko,
     _,
     initialPageData,
+    bootstrap,
     models
 ) {
     var commtrackProductsProgramsViewModel = function (o) {
@@ -38,7 +40,7 @@ hqDefine('commtrack/js/bootstrap5/products_and_programs_main', [
                     dataType: 'json',
                     error: function () {
                         self.initialLoad(true);
-                        $('.hide-until-load').removeClass("hide");
+                        $('.hide-until-load').removeClass("d-none");
                         $('#user-list-notification').text(gettext('Sorry, there was an problem contacting the server ' +
                             'to fetch the data. Please, try again in a little bit.'));
                         self.currentlySearching(false);
@@ -52,12 +54,18 @@ hqDefine('commtrack/js/bootstrap5/products_and_programs_main', [
 
         self.unsuccessfulArchiveAction = function (button) {
             return function (data) {
-                if (data.message && data.product_id) {
-                    var alertContainer = $('#alert_' + data.product_id);
-                    alertContainer.text(data.message);
-                    alertContainer.show();
+                if (data.product_id) {
+                    var alertContainer = $('#alert_' + data.product_id),
+                        message = data.message || _.template(gettext("Could not <%= action %> product. Please try again later."))({action: $(button).text().toLowerCase()});
+                    alertContainer.text(message);
+                    alertContainer.removeClass("d-none");
+                    var $modal = $(button).closest(".modal"),
+                        modal = bootstrap.Modal.getOrCreateInstance($modal);
+                    $modal.one('hidden.bs.modal', function () {
+                        alertContainer.addClass("d-none");
+                    });
                 }
-                $(button).button('unsuccessful');
+                $(button).enableButton();
             };
         };
 
@@ -66,9 +74,9 @@ hqDefine('commtrack/js/bootstrap5/products_and_programs_main', [
             if (data.success) {
                 if (!self.initialLoad()) {
                     self.initialLoad(true);
-                    $('.hide-until-load').removeClass("hide");
+                    $('.hide-until-load').removeClass("d-none");
                 }
-                self.current_page(data.current_page);
+                self.current_page(parseInt(data.current_page));
                 self.dataList(data.data_list);
                 self.archiveActionItems([]);
             }
