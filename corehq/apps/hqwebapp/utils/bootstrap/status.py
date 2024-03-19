@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     COREHQ_BASE_DIR,
@@ -41,13 +42,13 @@ def get_completed_templates_for_app(app_name, use_full_paths=True):
 def get_completed_javascript_for_app(app_name, use_full_paths=True):
     completed_javascript = []
     app_status_summary = get_app_status_summary(app_name)
-    app_static_folder = get_app_static_folder(app_name)
     for folder_name in TRACKED_JS_FOLDERS:
-        completed_filenames = app_status_summary.get(folder_name, [])
-        if use_full_paths:
-            completed_filenames = _get_full_paths(
-                app_static_folder / folder_name,
-                completed_filenames
-            )
+        completed_filenames = [str(Path(folder_name) / path)
+                               for path in app_status_summary.get(folder_name, [])]
         completed_javascript.extend(completed_filenames)
+    if use_full_paths:
+        completed_javascript = _get_full_paths(
+            get_app_static_folder(app_name),
+            completed_javascript
+        )
     return completed_javascript
