@@ -315,10 +315,15 @@
   <!-- ko if: isLabel -->
   <div class="form-group">
     {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
-    <div class="info col-sm-12" data-bind="css: {
-        'text-center': stylesContains('text-align-center'),
-        'text-right': stylesContains('text-align-right'),
-      }">
+    <div class="info col-sm-12" data-bind="
+        css: {
+            'text-center': stylesContains('text-align-center'),
+            'text-right': stylesContains('text-align-right'),
+        },
+        attr: {
+            id: entry.entryId + '-label',
+        },
+    ">
       <span class="ix" data-bind="text: ixInfo($data)">></span>
       <span class="caption webapp-markdown-output" data-bind="
           html: ko.utils.unwrapObservable($data.caption_markdown) || caption()
