@@ -140,7 +140,7 @@ def _log_search_timing(start_time, request, domain):
         if isinstance(value, str):
             request_dict[key] = value.replace('\t', '')
         elif isinstance(value, list):
-            request_dict[key] = [item.replace('\t', '') for item in value]
+            request_dict[key] = [item.replace('\t', '') for item in value if isinstance(item, str)]
 
     tags = {
         tag_name: value[0]
