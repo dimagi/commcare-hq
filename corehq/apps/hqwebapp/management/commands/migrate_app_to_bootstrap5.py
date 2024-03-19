@@ -30,10 +30,11 @@ from corehq.apps.hqwebapp.utils.bootstrap.status import (
     get_completed_javascript_for_app,
     get_completed_status,
 )
-from corehq.apps.hqwebapp.utils.management_command_styling import (
+from corehq.apps.hqwebapp.utils.management_commands import (
     get_break_line,
     get_style_func,
     Color,
+    get_confirmation,
 )
 
 
@@ -156,13 +157,13 @@ class Command(BaseCommand):
             self.clear_screen()
             file_type = "templates" if is_template else "javascript"
             self.stdout.write(self.format_header(f"Migrating {app_name} {file_type}..."))
-            confirm = self.get_confirmation(f'Ready to migrate "{short_path}"?')
+            confirm = get_confirmation(f'Ready to migrate "{short_path}"?')
             if not confirm:
                 self.write_response(f"ok, skipping {short_path}")
                 continue
 
             self.stdout.write("\n")
-            review_changes = self.get_confirmation('Do you want to review each change line-by-line here?')
+            review_changes = get_confirmation('Do you want to review each change line-by-line here?')
             self.migrate_single_file(app_name, file_path, spec, is_template, review_changes)
 
     def migrate_single_file(self, app_name, file_path, spec, is_template, review_changes):
@@ -237,7 +238,7 @@ class Command(BaseCommand):
                 self.display_rename_summary(changelog)
                 changelog.append("\n\n")
                 if review_changes:
-                    confirm = self.get_confirmation("Keep changes?")
+                    confirm = get_confirmation("Keep changes?")
                     if not confirm:
                         changelog.append("CHANGES DISCARDED\n\n")
                         self.write_response("ok, discarding changes...")
@@ -281,7 +282,7 @@ class Command(BaseCommand):
     def save_re_checked_file_changes(self, app_name, file_path, changed_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
 
-        confirm = self.get_confirmation(f"\nSave changes to {short_path}?")
+        confirm = get_confirmation(f"\nSave changes to {short_path}?")
 
         if not confirm:
             self.write_response("ok, skipping save...")
@@ -295,7 +296,7 @@ class Command(BaseCommand):
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
 
-        confirm = self.get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
+        confirm = get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
                                         f'and update references?')
         if not confirm:
             self.write_response("ok, canceling split and rolling back changes...")
@@ -429,22 +430,7 @@ class Command(BaseCommand):
         bootstrap5_folder.mkdir(parents=True, exist_ok=True)
         return bootstrap3_folder / file_path.name, bootstrap5_folder / file_path.name
 
-    @staticmethod
-    def select_option_from_prompt(prompt, options):
-        formatted_options = '/'.join(options)
-        prompt_with_options = f"{prompt} [{formatted_options}] "
-        while True:
-            option = input(prompt_with_options).lower()
-            if option in options:
-                break
-            else:
-                prompt_with_options = f'Sorry, "{option}" is not an option. ' \
-                                      f'Please choose from [{formatted_options}]: '
-        return option
 
-    def get_confirmation(self, prompt):
-        option = self.select_option_from_prompt(prompt, ['y', 'n'])
-        return option == 'y'
 
     def clear_screen(self):
         self.stdout.write("\033c")  # clear terminal screen
