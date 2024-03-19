@@ -15,7 +15,7 @@ from memoized import memoized
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui
 from corehq.apps.locations.models import LocationType
 
 from .forms import CommTrackSettingsForm, ConsumptionForm
@@ -151,6 +151,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class DefaultConsumptionView(BaseCommTrackManageView):
     urlname = 'update_default_consumption'
     template_name = 'commtrack/manage/default_consumption.html'

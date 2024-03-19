@@ -56,8 +56,8 @@ class CommTrackSettingsForm(forms.Form):
             for key in consumption_keys:
                 if not cleaned_data.get(key):
                     self._errors[key] = self.error_class([_(
-                        "You must use automatic consumption calculation or " +
-                        " specify a value for all consumption settings."
+                        "You must use automatic consumption calculation or "
+                        + " specify a value for all consumption settings."
                     )])
 
         return cleaned_data
@@ -114,8 +114,7 @@ class ConsumptionForm(forms.Form):
         super(ConsumptionForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+        self.helper.label_class = 'form-label'
 
         layout = []
         products = SQLProduct.active_objects.filter(domain=domain)
@@ -134,11 +133,6 @@ class ConsumptionForm(forms.Form):
                 )
             )
 
-        layout.append(hqcrispy.FormActions(
-            ButtonHolder(
-                Submit('submit', gettext_lazy('Update Default Consumption Info'))
-            )
-        ))
         self.helper.layout = Layout(*layout)
 
     def save(self):
