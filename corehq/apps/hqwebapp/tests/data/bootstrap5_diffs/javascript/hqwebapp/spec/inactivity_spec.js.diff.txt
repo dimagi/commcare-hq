@@ -1,0 +1,9 @@
+---
++++
+@@ -1,5 +1,5 @@
+ /* eslint-env mocha */
+-hqDefine("hqwebapp/spec/bootstrap3/inactivity_spec", [
++hqDefine("hqwebapp/spec/bootstrap5/inactivity_spec", [
+     'hqwebapp/js/bootstrap3/inactivity',
+ ], function (
+     module

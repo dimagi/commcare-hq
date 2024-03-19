@@ -12,11 +12,11 @@ from corehq.util.quickcache import quickcache
 
 
 class IdentityProviderType:
-    AZURE_AD = 'azure_ad'
+    ENTRA_ID = 'azure_ad'  # Microsoft renamed Entra ID to Azure ID after implementing this feature
     ONE_LOGIN = 'one_login'
     OKTA = 'okta'
     CHOICES = (
-        (AZURE_AD, "Azure AD"),
+        (ENTRA_ID, "Entra ID"),
         (ONE_LOGIN, "One Login"),
         (OKTA, "Okta"),
     )
@@ -34,7 +34,7 @@ class IdentityProviderProtocol:
     def get_supported_types(cls):
         return {
             cls.SAML: (
-                (IdentityProviderType.AZURE_AD, "Azure AD"),
+                (IdentityProviderType.ENTRA_ID, "Entra ID"),
             ),
             cls.OIDC: (
                 (IdentityProviderType.ONE_LOGIN, "One Login"),
@@ -81,15 +81,14 @@ VALID_API_EXPIRATION_OPTIONS = [
 class IdentityProvider(models.Model):
     """
     This stores the information necessary to make a SAML request to an external
-    IdP. Right now this process supports Azure AD and the plan is to add
-    support for other identity provider types in the future.
+    IdP.
     """
     # these three fields must only ever be editable by Accounting admins
     name = models.CharField(max_length=128)
     slug = models.CharField(max_length=256, db_index=True, unique=True)
     idp_type = models.CharField(
         max_length=50,
-        default=IdentityProviderType.AZURE_AD,
+        default=IdentityProviderType.ENTRA_ID,
         choices=IdentityProviderType.CHOICES,
     )
     protocol = models.CharField(
@@ -132,7 +131,7 @@ class IdentityProvider(models.Model):
     date_idp_cert_expiration = models.DateTimeField(blank=True, null=True)
 
     # Requires that <saml:Assertion> elements received by the SP are encrypted.
-    # In Azure AD this requires that Token Encryption is enabled, a premium feature
+    # In Entra ID this requires that Token Encryption is enabled, a premium feature
     require_encrypted_assertions = models.BooleanField(default=False)
 
     # as the service provider, this will store our x509 certificates and
@@ -156,7 +155,7 @@ class IdentityProvider(models.Model):
     # for auto-deactivation web user purposes
     enable_user_deactivation = models.BooleanField(default=False)
     api_host = models.TextField(default="")  # tenant id
-    api_id = models.TextField(default="")  # application (client) id in Azure AD
+    api_id = models.TextField(default="")  # application (client) id in Entra ID
     api_secret = models.TextField(default="")
     date_api_secret_expiration = models.DateField(blank=True, null=True)
 

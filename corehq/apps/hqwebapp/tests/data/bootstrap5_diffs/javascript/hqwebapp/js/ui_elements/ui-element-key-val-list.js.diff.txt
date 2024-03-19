@@ -1,7 +1,9 @@
 ---
 +++
-@@ -1,8 +1,8 @@
+@@ -1,9 +1,9 @@
+-"use strict";
 -hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list', [
++'use strict';
 +hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list', [
      'jquery',
      'underscore',

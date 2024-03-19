@@ -58,7 +58,7 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
             'owner': owner,
             'name': name,
             'slug': slug,
-            'idp_type': idp_type or IdentityProviderType.AZURE_AD,
+            'idp_type': idp_type or IdentityProviderType.ENTRA_ID,
             'protocol': protocol or IdentityProviderProtocol.SAML,
         }
 
@@ -85,7 +85,7 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
         """
         post_data = self._get_post_data(
             self.account.id,
-            'Azure AD for Vault Wax',
+            'Entra ID for Vault Wax',
             'vaultwax',
             idp_type=IdentityProviderType.ONE_LOGIN
         )
@@ -101,7 +101,7 @@ class TestCreateIdentityProviderForm(BaseSSOFormTest):
         """
         post_data = self._get_post_data(
             self.account.id,
-            'Azure AD for Vault Wax',
+            'Entra ID for Vault Wax',
             'vaultwax',
         )
         create_idp_form = CreateIdentityProviderForm(post_data)
@@ -152,7 +152,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         super().setUp()
         self.idp = IdentityProvider.objects.create(
             owner=self.account,
-            name='Azure AD for Vault Wax',
+            name='Entra ID for Vault Wax',
             slug='vaultwax',
             created_by='otheradmin@dimagi.com',
             last_modified_by='otheradmin@dimagi.com',
@@ -211,7 +211,7 @@ class TestEditIdentityProviderAdminForm(BaseSSOFormTest):
         """
         second_idp = IdentityProvider.objects.create(
             owner=self.account,
-            name='Azure AD for VWX',
+            name='Entra ID for VWX',
             slug='vwx',
             created_by='otheradmin@dimagi.com',
             last_modified_by='otheradmin@dimagi.com',
@@ -399,7 +399,7 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
         super().setUp()
         self.idp = IdentityProvider.objects.create(
             owner=self.account,
-            name='Azure AD for Vault Wax',
+            name='Entra ID for Vault Wax',
             slug='vaultwax',
             created_by='otheradmin@dimagi.com',
             last_modified_by='otheradmin@dimagi.com',
