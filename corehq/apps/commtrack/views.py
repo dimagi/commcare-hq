@@ -180,6 +180,7 @@ class DefaultConsumptionView(BaseCommTrackManageView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class SMSSettingsView(BaseCommTrackManageView):
     urlname = 'commtrack_sms_settings'
     page_title = gettext_noop("SMS")
