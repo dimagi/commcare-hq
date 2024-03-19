@@ -173,6 +173,8 @@ class BaseExportView(BaseProjectDataView):
 
         for column in export_table.columns:
             if column.item.doc_type == 'GeopointItem':
+                # show the path to the geo properties, not the column headers, because the
+                # paths do not change.
                 path_str = '.'.join([f"{node.name}" for node in column.item.path])
                 geo_props.append(path_str)
 
