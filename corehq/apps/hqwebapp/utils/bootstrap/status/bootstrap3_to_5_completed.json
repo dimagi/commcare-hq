@@ -1,0 +1,11 @@
+{
+  "builds": {
+    "is_complete": true,
+    "templates": [
+      "edit_menu.html"
+    ],
+    "js": [
+      "edit_builds.js"
+    ]
+  }
+}

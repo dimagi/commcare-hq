@@ -25,6 +25,11 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_template_paths_for_app,
     get_all_javascript_paths_for_app,
 )
+from corehq.apps.hqwebapp.utils.bootstrap.status import (
+    get_completed_templates_for_app,
+    get_completed_javascript_for_app,
+    get_completed_status,
+)
 
 COLOR_RED = "91"
 COLOR_GREEN = "92"
@@ -61,6 +66,10 @@ class Command(BaseCommand):
         if not settings.BOOTSTRAP_MIGRATION_LOGS_DIR:
             self.stderr.write("\nPlease make sure BOOTSTRAP_MIGRATION_LOGS_DIR is "
                               "set in your localsettings.py before continuing...\n\n")
+            return
+
+        if get_completed_status(app_name):
+            self.show_completed_message(app_name)
             return
 
         spec = get_spec('bootstrap_3_to_5')
@@ -102,6 +111,17 @@ class Command(BaseCommand):
         self.stdout.write("You can also review the next steps here:"
                           "\tcommcarehq.org/styleguide/b5/migration/#update-diffs\n\n\n")
 
+    def show_completed_message(self, app_name):
+        self.clear_screen()
+        self.stdout.write(
+            self.format_header(f"Bootstrap 5 Migration of '{app_name}' is already complete!"),
+            style_func=get_style_func(COLOR_GREEN)
+        )
+        self.stdout.write(f"It appears that '{app_name}' has already been fully migrated to Bootstrap 5!\n\n")
+        self.stdout.write("If you feel this is in error, "
+                          "please consult the table referenced in the migration guide\n"
+                          "and `bootstrap3_to_5_completed.json`.\n\n")
+
     def _get_files_for_migration(self, files, file_name, do_re_check):
         if file_name is not None:
             files = [t for t in files if file_name in str(t)]
@@ -119,11 +139,15 @@ class Command(BaseCommand):
 
     def get_templates_for_migration(self, app_name, template_name, do_re_check):
         app_templates = get_all_template_paths_for_app(app_name)
-        return self._get_files_for_migration(app_templates, template_name, do_re_check)
+        available_templates = self._get_files_for_migration(app_templates, template_name, do_re_check)
+        completed_templates = get_completed_templates_for_app(app_name)
+        return set(available_templates).difference(completed_templates)
 
     def get_js_files_for_migration(self, app_name, js_name, do_re_check):
         app_js_files = get_all_javascript_paths_for_app(app_name)
-        return self._get_files_for_migration(app_js_files, js_name, do_re_check)
+        available_js_files = self._get_files_for_migration(app_js_files, js_name, do_re_check)
+        completed_js_files = get_completed_javascript_for_app(app_name)
+        return set(available_js_files).difference(completed_js_files)
 
     def migrate_files(self, files, app_name, spec, is_template):
         for file_path in files:
