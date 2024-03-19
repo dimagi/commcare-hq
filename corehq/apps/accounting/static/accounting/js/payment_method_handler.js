@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('accounting/js/payment_method_handler', [
     'jquery',
     'knockout',
@@ -10,7 +11,6 @@ hqDefine('accounting/js/payment_method_handler', [
     Stripe
 ) {
     var billingHandler = function (formId, opts) {
-        'use strict';
         var self = {};
         self.CREDIT_CARD = 'cc';
         self.WIRE = 'wire';
@@ -72,7 +72,6 @@ hqDefine('accounting/js/payment_method_handler', [
     };
 
     var wireInvoiceHandler = function (formId, opts) {
-        'use strict';
         var self = {};
         opts = opts ? opts : {};
 
@@ -102,7 +101,6 @@ hqDefine('accounting/js/payment_method_handler', [
     };
 
     var paymentMethodHandler = function (formId, opts) {
-        'use strict';
         var self = {};
         opts = opts ? opts : {};
 
@@ -273,7 +271,6 @@ hqDefine('accounting/js/payment_method_handler', [
     wireInvoiceHandler.prototype.constructor = wireInvoiceHandler;
 
     var baseCostItem = function () {
-        'use strict';
         var self = {};
 
         self.reset = function () {
@@ -287,7 +284,6 @@ hqDefine('accounting/js/payment_method_handler', [
     };
 
     var chargedCostItem = function (initData) {
-        'use strict';
         var self = {};
         self = baseCostItem.call(self, initData);
 
@@ -357,7 +353,6 @@ hqDefine('accounting/js/payment_method_handler', [
 
 
     var invoice = function (initData) {
-        'use strict';
         var self = {};
         self = chargedCostItem.call(self, initData);
 
@@ -388,7 +383,6 @@ hqDefine('accounting/js/payment_method_handler', [
 
     /* initData contains totalBalance and paginatedListModel */
     var totalCostItem = function (initData) {
-        'use strict';
         var self = {};
         self = chargedCostItem.call(self, initData);
 
@@ -408,7 +402,6 @@ hqDefine('accounting/js/payment_method_handler', [
     totalCostItem.prototype.constructor = totalCostItem;
 
     var prepaymentItems = function (data) {
-        'use strict';
         var self = {};
         self = baseCostItem.call(self, data);
 
@@ -447,7 +440,6 @@ hqDefine('accounting/js/payment_method_handler', [
     };
 
     var creditCostItem = function (initData) {
-        'use strict';
         var self = {};
         self = baseCostItem.call(self, initData);
 
@@ -482,7 +474,6 @@ hqDefine('accounting/js/payment_method_handler', [
     creditCostItem.prototype.constructor = creditCostItem;
 
     var stripeCardModel = function () {
-        'use strict';
         var self = {};
 
         self.number = ko.observable();

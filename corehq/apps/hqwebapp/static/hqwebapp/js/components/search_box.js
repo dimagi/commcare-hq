@@ -1,3 +1,4 @@
+'use strict';
 /*
  * Component for displaying a search box. Almost certainly included within a a larger knockout template.
  *

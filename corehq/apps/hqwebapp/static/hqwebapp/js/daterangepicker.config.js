@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("hqwebapp/js/daterangepicker.config", [
     'jquery',
     'underscore',
@@ -10,7 +11,6 @@ hqDefine("hqwebapp/js/daterangepicker.config", [
     initialPageData,
     moment
 ) {
-    'use strict';
 
     $.fn.getDateRangeSeparator = function () {
         return ' to ';

@@ -1,3 +1,4 @@
+'use strict';
 /**
     Key-value mapping UI element.
 
@@ -28,7 +29,6 @@
             buttonText: Text for button that opens modal. Defaults to "Edit".
  */
 hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', function () {
-    'use strict';
     var module = {};
 
     // To autogenerate cssid from random string

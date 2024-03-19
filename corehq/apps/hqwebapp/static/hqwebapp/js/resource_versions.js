@@ -1,3 +1,4 @@
+'use strict';
 requirejs.config({
     paths: {
         // This file gets auto-generated during deploy.

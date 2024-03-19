@@ -285,7 +285,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/builds/templates/builds/all.html
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
@@ -5586,7 +5587,8 @@ msgid "Value"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/data_dictionary/views.py
 #: corehq/apps/reports/templates/reports/filters/explorer_columns.html
@@ -10855,51 +10857,64 @@ msgstr ""
 msgid "Build Number"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Editing CommCare Builds"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html corehq/tabs/tabclasses.py
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/tabs/tabclasses.py
 msgid "Editing"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Menu Options"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Superuser Only"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Add a Version"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Default 1.x Build"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Default 2.x Build"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Import a new build from the build server"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Browse versions"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Paste the latest version in the box above in the format x.y.z"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Click Import Build"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid ""
 "\n"
 "              You can also automatically fetch the latest build from GitHub "
@@ -10908,7 +10923,8 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Import Build"
 msgstr ""
 
@@ -21631,6 +21647,14 @@ msgstr ""
 msgid "User's assigned location"
 msgstr ""
 
+#: corehq/apps/geospatial/forms.py corehq/apps/geospatial/models.py
+msgid "Radial Algorithm"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py corehq/apps/geospatial/models.py
+msgid "Road Network Algorithm"
+msgstr ""
+
 #: corehq/apps/geospatial/forms.py
 msgid "Fetch mobile worker location data from custom field"
 msgstr ""
@@ -21684,6 +21708,16 @@ msgstr ""
 msgid "Disbursement algorithm"
 msgstr ""
 
+#: corehq/apps/geospatial/forms.py
+msgid "Enter mapbox token"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"Enter your Mapbox API token here. Make sure your token has the correct scope "
+"configured for use of the Mapbox Matrix API."
+msgstr ""
+
 #: corehq/apps/geospatial/forms.py corehq/tabs/tabclasses.py
 msgid "Configure Geospatial Settings"
 msgstr ""
@@ -21714,6 +21748,10 @@ msgid "Algorithms"
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
+msgid "Test API Key"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
 msgid "Value for maximum group size required"
 msgstr ""
 
@@ -21730,12 +21768,8 @@ msgstr ""
 msgid "Value for target group count required"
 msgstr ""
 
-#: corehq/apps/geospatial/models.py
-msgid "Radial Algorithm"
-msgstr ""
-
-#: corehq/apps/geospatial/models.py
-msgid "Road Network Algorithm"
+#: corehq/apps/geospatial/forms.py
+msgid "Mapbox API token required"
 msgstr ""
 
 #: corehq/apps/geospatial/models.py
@@ -33805,7 +33839,7 @@ msgstr ""
 msgid "1 Week"
 msgstr ""
 
-#: corehq/apps/sms/views.py
+#: corehq/apps/sms/views.py corehq/apps/sso/models.py
 msgid "30 Days"
 msgstr ""
 
@@ -34414,6 +34448,22 @@ msgstr ""
 
 #: corehq/apps/sso/forms.py
 msgid "OpenID Provider Configuration"
+msgstr ""
+
+#: corehq/apps/sso/models.py
+msgid "1 Year"
+msgstr ""
+
+#: corehq/apps/sso/models.py
+msgid "180 Days"
+msgstr ""
+
+#: corehq/apps/sso/models.py
+msgid "120 Days"
+msgstr ""
+
+#: corehq/apps/sso/models.py
+msgid "60 Days"
 msgstr ""
 
 #: corehq/apps/sso/templates/sso/accounting_admin/edit_identity_provider.html

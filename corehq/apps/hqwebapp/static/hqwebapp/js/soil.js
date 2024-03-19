@@ -1,3 +1,4 @@
+"use strict";
 hqDefine("hqwebapp/js/soil", [
     "jquery",
     "hqwebapp/js/initial_page_data",

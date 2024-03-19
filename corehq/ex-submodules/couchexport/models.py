@@ -45,7 +45,7 @@ class Format(object):
                                   "download": True},
                    GEOJSON: {"mimetype": "application/geo+json",
                           "extension": "geojson",
-                          "download": False},
+                          "download": True},
                    }
 
     VALID_FORMATS = list(FORMAT_DICT)

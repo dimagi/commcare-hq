@@ -1,0 +1,25 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="page-header menu-header clearfix" id="case-list-menu-header">
+  <div class="pull-right">
+    <% if (showMap) { %>
+      <button id="hide-map-button" class="btn btn-primary pull-right" type="button"
+         aria-expanded="true" aria-controls="module-case-list-map">
+        {% trans "Hide Map" %}
+      </button>
+    <% } %>
+    <% if (sidebarEnabled) { %>
+      <button id="search-more" class="btn btn-primary visible-xs visible-sm pull-right" type="button"
+        data-toggle="collapse" data-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
+        {% trans "Refine search" %}
+      </button>
+    <% } %>
+  </div>
+  <% if (title.length > 0) { %>
+    <h1  aria-label="<%- title %>" tabindex="0" class="page-title"><%- title %></h1>
+  <% } %>
+  <% if (sidebarEnabled && description.length > 0) { %>
+    <div aria-label="<%- description %>" tabindex="0" class="query-description"><%= description %></div>
+  <% } %>
+</div>

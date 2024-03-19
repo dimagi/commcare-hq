@@ -18,7 +18,7 @@ class TestCacheCleanup(TestCase):
         cls.account = generator.get_billing_account_for_idp()
         cls.idp = IdentityProvider.objects.create(
             owner=cls.account,
-            name='Azure AD for Vault Wax',
+            name='Entra ID for Vault Wax',
             slug='vaultwax',
             created_by='someadmin@dimagi.com',
             last_modified_by='someadmin@dimagi.com',

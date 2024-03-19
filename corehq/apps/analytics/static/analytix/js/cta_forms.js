@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('analytix/js/cta_forms', [
     'jquery',
     'knockout',
@@ -13,8 +14,6 @@ hqDefine('analytix/js/cta_forms', [
     initialPageData,
     assertProperties
 ) {
-    'use strict';
-
     let hubspotCtaForm = function (config) {
         let self = {};
         assertProperties.assertRequired(config, [

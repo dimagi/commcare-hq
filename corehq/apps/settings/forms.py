@@ -15,11 +15,13 @@ from crispy_forms.layout import Layout
 from two_factor.forms import (
     DeviceValidationForm,
     MethodForm,
-    PhoneNumberForm,
-    PhoneNumberMethodForm,
     TOTPDeviceForm,
 )
-from two_factor.models import get_available_phone_methods
+from two_factor.plugins.phonenumber.forms import (
+    PhoneNumberForm,
+    PhoneNumberMethodForm,
+)
+from two_factor.plugins.phonenumber.utils import get_available_phone_methods
 from two_factor.utils import totp_digits
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -103,8 +105,8 @@ class HQPhoneNumberMethodForm(PhoneNumberMethodForm):
 class HQDeviceValidationForm(DeviceValidationForm):
     token = forms.IntegerField(required=False, label=_("Token"), min_value=1, max_value=int('9' * totp_digits()))
 
-    def __init__(self, **kwargs):
-        super(HQDeviceValidationForm, self).__init__(**kwargs)
+    def __init__(self, device, **kwargs):
+        super(HQDeviceValidationForm, self).__init__(device, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
@@ -139,17 +141,17 @@ class HQDeviceValidationForm(DeviceValidationForm):
 
 
 class HQTwoFactorMethodForm(MethodForm):
-
     def __init__(self, *, allow_phone_2fa, **kwargs):
         super().__init__(**kwargs)
         if not allow_phone_2fa:
             # Block people from setting up the phone method as their default
-            phone_methods = [method for method, _ in get_available_phone_methods()]
+            phone_methods = [method.code for method in get_available_phone_methods()]
             self.fields['method'].choices = [
                 (method, display_name)
                 for method, display_name in self.fields['method'].choices
                 if method not in phone_methods
             ]
+
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
@@ -170,7 +172,7 @@ class HQTwoFactorMethodForm(MethodForm):
                     _("Back"),
                     css_class='btn-default',
                     type='submit',
-                    value='welcome_setup',
+                    value='welcome',
                     name="wizard_goto_step",
                 ),
             )
@@ -180,8 +182,8 @@ class HQTwoFactorMethodForm(MethodForm):
 class HQTOTPDeviceForm(TOTPDeviceForm):
     token = forms.IntegerField(required=False, label=_("Token"), min_value=1, max_value=int('9' * totp_digits()))
 
-    def __init__(self, **kwargs):
-        super(HQTOTPDeviceForm, self).__init__(**kwargs)
+    def __init__(self, key, user, **kwargs):
+        super(HQTOTPDeviceForm, self).__init__(key, user, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'

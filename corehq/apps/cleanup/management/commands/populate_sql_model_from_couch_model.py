@@ -11,25 +11,26 @@ from time import sleep
 
 from attrs import define, field
 
-from couchdbkit.exceptions import ResourceNotFound
-
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from django.utils.functional import classproperty
 
-from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
 from corehq.dbaccessors.couchapps.all_docs import (
-    get_all_docs_with_doc_types,
     get_doc_count_by_type,
     get_doc_count_by_domain_type
 )
+from corehq.util.couch_helpers import NoSkipArgsProvider
 from corehq.util.couchdb_management import couch_config
 from corehq.util.django_migrations import skip_on_fresh_install
 from corehq.util.log import with_progress_bar
+from corehq.util.pagination import (
+    PaginationEventHandler,
+    ResumableFunctionIterator,
+    paginate_function,
+)
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import iter_docs, retry_on_couch_error
 from dimagi.utils.couch.migration import disable_sync_to_couch
 
 
@@ -146,6 +147,8 @@ class PopulateSQLCommand(BaseCommand):
             self._set_migration_completed()
         elif override_is_completed == "no":
             self._override_migration_status(is_completed=False)
+        elif override_is_completed == "discard":
+            self.discard_resume_state()
         else:
             self._avg_items_to_be_migrated()
         print(f"status={self.get_migration_status()}")
@@ -164,14 +167,12 @@ class PopulateSQLCommand(BaseCommand):
         status = self.get_migration_status()
         if is_completed == bool(status.get("is_completed")):
             return
-        if "ignored_count" not in status:
+        if not status.get("is_completed"):
             print("WARNING The command may not have run to completion.")
             if input("Override anyway? [yN] ").lower() != "y":
                 print("Aborted.")
                 return
-        extra = {"is_completed": True} if is_completed else {}
-        self.ignored_count = status.get("ignored_count", 0)
-        self.save_migration_status(**extra)
+        self._resume_iter_couch_view().set_iterator_detail("is_completed", is_completed)
 
     def _avg_items_to_be_migrated(self):
         def get_count():
@@ -192,30 +193,16 @@ class PopulateSQLCommand(BaseCommand):
         sql_count = cls.sql_class().objects.count()
         return couch_count - ignored_count - sql_count
 
-    @classproperty
-    def _migration_status_slug(cls):
-        return f"{cls.couch_doc_type()}-sql-migration-status"
-
-    def save_migration_status(self, fixup_diffs=False, **extra):
-        ignored_count = self.ignored_count
-        if fixup_diffs:
-            status = self.get_migration_status()
-            if "ignored_count" not in status:
-                return
-            ignored_count += status["ignored_count"]
-        self.couch_db().save_doc({
-            "_id": self._migration_status_slug,
-            "doc_type": "PopulateSQLCommandStatus",
-            "ignored_count": ignored_count,
-            **extra
-        }, force_update=True)
-
     @classmethod
     def get_migration_status(cls):
-        try:
-            return cls.couch_db().get(cls._migration_status_slug)
-        except ResourceNotFound:
-            return {}
+        return cls._resume_iter_couch_view().state.progress
+
+    @classmethod
+    def discard_resume_state(cls):
+        resume = cls._resume_iter_couch_view()
+        if hasattr(resume.state, "_rev"):
+            print(f"Discarding resume state: {resume.state}")
+            resume.discard_state()
 
     @classmethod
     def commit_adding_migration(cls):
@@ -259,7 +246,7 @@ class PopulateSQLCommand(BaseCommand):
         if not migrated:
             print(f"""
 A migration must be performed before this environment can be upgraded to the latest version
-of CommCareHQ. This migration is run using the management command {command_name}.
+of CommCare HQ. This migration is run using the management command {command_name}.
             """)
             if cls.commit_adding_migration():
                 print(f"""
@@ -310,7 +297,8 @@ Run the following commands to run the migration and get up to date:
         parser.add_argument(
             '--domains',
             nargs='+',
-            help="Only migrate documents in the specified domains",
+            help="Only migrate documents in the specified domains. "
+                 "NOTE: domain migrations are not resumable.",
         )
         parser.add_argument(
             '--chunk-size',
@@ -325,16 +313,16 @@ Run the following commands to run the migration and get up to date:
         )
         parser.add_argument(
             '--override-is-migration-completed',
-            choices=["check", "yes", "no"],
+            choices=["check", "yes", "no", "discard"],
             dest="override_is_completed",
             help="""
                 Check or set migration completion status. Use to override
                 the check performed by `migrate_from_migration` when the number
-                of items to be migrated is volatile. Note that the override will
-                be removed if the command is run again without this option after
-                the override is set. Accepted values: check: check and print
-                status, yes: override `count_items_to_be_migrated` to zero, no:
-                remove override.
+                of items to be migrated is volatile. Accepted values:
+                check: check and print status,
+                yes: set `count_items_to_be_migrated` to zero,
+                no: remove override,
+                discard: discard all migration state.
             """
         )
         parser.add_argument(
@@ -345,6 +333,8 @@ Run the following commands to run the migration and get up to date:
 
     def handle(self, chunk_size, fixup_diffs, override_is_completed, debug, **options):
         if override_is_completed:
+            if options["domains"]:
+                raise CommandError("Cannot override status with --domains")
             return self.handle_override_is_completed(override_is_completed)
 
         log_path = options.get("log_path")
@@ -363,10 +353,10 @@ Run the following commands to run the migration and get up to date:
         if verify_only and skip_verify:
             raise CommandError("verify_only and skip_verify are mutually exclusive")
 
-        self.log_path = log_path
         self.diff_count = 0
         self.ignored_count = 0
         doc_index = 0
+        offset = 0
 
         if fixup_diffs:
             if not os.path.exists(fixup_diffs):
@@ -385,9 +375,24 @@ Run the following commands to run the migration and get up to date:
         else:
             doc_count = self._get_couch_doc_count_for_type()
             sql_doc_count = self.sql_class().objects.count()
-            docs = self._get_all_couch_docs_for_model(chunk_size)
+            results = self._resume_iter_couch_view(chunk_size)
+            if verify_only:
+                # non-resumable iteration
+                results = paginate_function(results.data_function, results.args_provider)
+            else:
+                # resumable iteration
+                state = results.state.progress
+                offset = state.get("doc_count", 0)
+                if state.get("is_completed"):
+                    print(f"Migration is complete. Previously migrated {offset} documents.")
+                    print("Use --override-is-migration-completed to inspect or reset.")
+                    return
+                log_path = state.setdefault("log_path", str(log_path))
+            should = self.should_process
+            docs = (r['doc'] for r in results if should(r))
+        docs = with_progress_bar(docs, doc_count, oneline=False, offset=offset)
 
-        print(f"\n\nDetailed log output file: {log_path}")
+        print("Detailed log output file:", log_path)
         print("Found {} {} docs and {} {} models".format(
             doc_count,
             self.couch_doc_type(),
@@ -410,8 +415,9 @@ Run the following commands to run the migration and get up to date:
 
         aborted = False
         with self.open_log(log_path) as logfile:
+            self.logfile = logfile
             try:
-                for item in iter_items(with_progress_bar(docs, length=doc_count, oneline=False)):
+                for item in iter_items(docs):
                     if not verify_only:
                         migrate(item, logfile)
                     if not skip_verify:
@@ -420,7 +426,6 @@ Run the following commands to run the migration and get up to date:
                         doc_index += 1
                         if doc_index % 1000 == 0:
                             print(f"Diff count: {self.diff_count}")
-                self.save_migration_status(fixup_diffs)
             except KeyboardInterrupt:
                 traceback.print_exc(file=logfile)
                 aborted = True
@@ -430,6 +435,7 @@ Run the following commands to run the migration and get up to date:
                     raise
                 traceback.print_exception(type(exc), exc, exc.__traceback__)
                 pdb.post_mortem(exc.__traceback__)
+                aborted = True
 
         if not is_bulk:
             print(f"Processed {doc_index} documents")
@@ -606,30 +612,86 @@ Run the following commands to run the migration and get up to date:
         return self.sql_class().objects.filter(domain__in=domains).count()
 
     def _iter_couch_docs_for_domains(self, domains, chunk_size):
-        for domain in domains:
+        view_name, domains_params = self.get_couch_view_name_and_parameters_for_domains(domains)
+        assert len(domains) == len(domains_params), (domains, domains_params)
+        view = partial(self.couch_db().view, view_name, reduce=False, include_docs=True)
+        should = self.should_process
+        for domain, params in zip(domains, domains_params):
             print(f"Processing data for domain: {domain}")
-            doc_id_iter = iterate_doc_ids_in_domain_by_type(
-                domain, self.couch_doc_type(), database=self.couch_db()
-            )
-            for doc in iter_docs(self.couch_db(), doc_id_iter, chunk_size):
-                yield doc
+            args_provider = NoSkipArgsProvider(params | {"limit": chunk_size})
+            results = paginate_function(view, args_provider)
+            yield from (r['doc'] for r in results if should(r))
 
-    def _get_all_couch_docs_for_model(self, chunk_size):
-        return get_all_docs_with_doc_types(
-            self.couch_db(), [self.couch_doc_type()], chunk_size)
+    @classmethod
+    def _resume_iter_couch_view(cls, chunk_size=1000):
+        view_name, params = cls.get_couch_view_name_and_parameters()
+        view = retry_on_couch_error(partial(
+            cls.couch_db().view, view_name, reduce=False, include_docs=True))
+        args_provider = NoSkipArgsProvider(params | {"limit": chunk_size})
+        iteration_key = f"{cls.couch_doc_type()}-to-sql"
+        rfi = ResumableFunctionIterator(iteration_key, view, args_provider)
+        assert rfi.event_handler is None, rfi
+        rfi.event_handler = IterDocsEvents(rfi)
+        return rfi
+
+    def should_process(self, result):
+        """Return true if Couch result should be processed
+
+        Can be used to filter out results with null document, for example.
+        """
+        return True
+
+    @classmethod
+    def get_couch_view_name_and_parameters(cls):
+        """Get view name and parameters for all docs iteration
+
+        Override if the all_docs/by_doc_type view does not exist in the
+        target database.
+        """
+        doc_type = cls.couch_doc_type()
+        return 'all_docs/by_doc_type', {
+            'startkey': [doc_type],
+            'endkey': [doc_type, {}],
+        }
+
+    @classmethod
+    def get_couch_view_name_and_parameters_for_domains(cls, domains=None):
+        """Get view name and parameters for all docs iteration
+
+        Override if by_domain_doc_type_date/view does not exist or does
+        not index the relevant documents in the target database.
+        """
+        doc_type = cls.couch_doc_type()
+        return 'by_domain_doc_type_date/view', [{
+            'startkey': [domain, doc_type],
+            'endkey': [domain, doc_type, {}],
+        } for domain in domains]
 
     @classmethod
     def _get_couch_doc_count_for_type(cls):
         return get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
 
     @staticmethod
-    def open_log(log_path, mode="w"):
+    def open_log(log_path, mode="a"):
         if log_path == "-":
             return nullcontext(sys.stdout)
         return open(log_path, mode)
 
 
 DIFF_HEADER = "Doc {} has differences:\n"
+
+
+class IterDocsEvents(PaginationEventHandler):
+
+    def __init__(self, iterator):
+        self.iterator = iterator
+        self.initial_count = iterator.state.progress.get("doc_count", 0)
+
+    def page_start(self, total_emitted, *args, **kwargs):
+        self.iterator.state.progress["doc_count"] = self.initial_count + total_emitted
+
+    def stop(self):
+        self.iterator.set_iterator_detail("is_completed", True)
 
 
 @define

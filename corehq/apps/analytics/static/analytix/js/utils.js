@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('analytix/js/utils', [
     'jquery',
     'underscore',
@@ -7,7 +8,6 @@ hqDefine('analytix/js/utils', [
     _,
     initialAnalytics
 ) {
-    'use strict';
 
     /**
      * A helper function for for tracking google analytics events after a click

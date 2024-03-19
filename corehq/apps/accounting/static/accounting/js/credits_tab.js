@@ -1,3 +1,4 @@
+"use strict";
 hqDefine("accounting/js/credits_tab", [
     'jquery',
     'knockout',

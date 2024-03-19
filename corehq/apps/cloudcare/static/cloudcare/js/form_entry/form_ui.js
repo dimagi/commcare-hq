@@ -913,7 +913,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 }
                 currentNode = parent;
             }
-            var el = $("[for='" + self.entry.entryId + "']");
+            var el = $("#" + self.entry.entryId + "-label");
             $('html, body').animate({
                 scrollTop: $(el).offset().top - 60,
             });

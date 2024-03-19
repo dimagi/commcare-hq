@@ -344,7 +344,7 @@ When there isn't enough space to accomodate duplicate data for all the indices, 
 ```
 cchq <env> django-manage elastic_sync_multiplexed remove_residual_indices
 ```
-These indices are safe to delete and are not used in any functionality of CommCareHQ.
+These indices are safe to delete and are not used in any functionality of CommCare HQ.
 
 3. Congratulations :tada: You have successfully created new indexes that are active on CommcareHQ.
 

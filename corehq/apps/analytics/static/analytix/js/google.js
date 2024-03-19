@@ -1,3 +1,4 @@
+"use strict";
 /**
  *  Handles communication with the google analytics API. gtag is the replacement
  *  for Google's old analytics.js (ga).
@@ -15,7 +16,6 @@ hqDefine('analytix/js/google', [
     logging,
     utils
 ) {
-    'use strict';
     var _get = initialAnalytics.getFn('google'),
         _logger = logging.getLoggerForApi('Google Analytics'),
         _ready = $.Deferred();

@@ -1,0 +1,8 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-hqDefine("commtrack/js/bootstrap3/base_list_view_model", [
++hqDefine("commtrack/js/bootstrap5/base_list_view_model", [
+     'jquery',
+     'knockout',
+     'underscore',

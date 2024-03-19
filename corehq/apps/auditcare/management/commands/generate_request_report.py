@@ -37,7 +37,8 @@ class Command(BaseCommand):
         parser.add_argument('filename', help="Output file path")
         parser.add_argument('-z', '--gzip', action="store_true", default=False,
             help="gzip-compress the output")
-        parser.add_argument('-d', '--domain', dest='domain', help="Limit logs to only this domain")
+        parser.add_argument('-d', '--domain', dest='domain',
+                            help="Limit logs to only this domain (can be multiple separated by commas)")
         parser.add_argument('-u', '--user', dest='user', help="Limit logs to only this user")
         parser.add_argument(
             '-s',
@@ -74,14 +75,19 @@ class Command(BaseCommand):
             raise CommandError("Please provide one of 'domain' or 'username'")
 
         if domain:
-            domain_object = Domain.get_by_name(domain)
-            if not domain_object:
-                raise CommandError("Domain not found")
+            domains = domain.split(',')
+            for domain in domains:
+                domain_object = Domain.get_by_name(domain)
+                if not domain_object:
+                    raise CommandError("Domain not found")
 
-        if username:
-            users = [username]
-        else:
-            users, removed_users, super_users = get_users_for_domain(domain)
+        user_lists_by_domain = {}
+        for domain in domains:
+            if username:
+                users, removed_users, super_users = [username], [], []
+            else:
+                users, removed_users, super_users = get_users_for_domain(domain)
+            user_lists_by_domain[domain] = (users, removed_users, super_users)
 
         if options["gzip"]:
             opener = gzip.open
@@ -91,28 +97,26 @@ class Command(BaseCommand):
         with opener(filename, "wt") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['Date', 'User', 'Domain', 'IP Address', 'Request Method', 'Request Path'])
-            for user in users:
-                write_log_events(writer, user, domain, start_date=options['start'], end_date=options['end'])
-            if username:
-                # no `removed_users` or `super_users` when `username` is provided
-                return
+            for domain, (users, removed_users, super_users) in user_lists_by_domain.items():
+                for user in users:
+                    write_log_events(writer, user, domain, start_date=options['start'], end_date=options['end'])
 
-            for user in removed_users:
-                write_log_events(
-                    writer,
-                    user,
-                    domain,
-                    override_user=f"{user} [REMOVED]",
-                    start_date=options['start'],
-                    end_date=options['end']
-                )
+                for user in removed_users:
+                    write_log_events(
+                        writer,
+                        user,
+                        domain,
+                        override_user=f"{user} [REMOVED]",
+                        start_date=options['start'],
+                        end_date=options['end']
+                    )
 
-            for user in super_users:
-                write_log_events(
-                    writer,
-                    user,
-                    domain,
-                    override_user=dimagi_username,
-                    start_date=options['start'],
-                    end_date=options['end']
-                )
+                for user in super_users:
+                    write_log_events(
+                        writer,
+                        user,
+                        domain,
+                        override_user=dimagi_username,
+                        start_date=options['start'],
+                        end_date=options['end']
+                    )

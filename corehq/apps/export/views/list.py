@@ -751,7 +751,7 @@ class DashboardFeedListView(DailySavedExportListView, DashboardFeedListHelper):
     page_title = gettext_lazy("Excel Dashboard Integration")
 
     lead_text = gettext_lazy('''
-        Excel dashboard feeds allow Excel to directly connect to CommCareHQ to download data.
+        Excel dashboard feeds allow Excel to directly connect to CommCare HQ to download data.
         Data is updated daily.
     ''')
 

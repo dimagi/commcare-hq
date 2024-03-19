@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('app_manager/js/case_config_utils', function () {
     return {
         getQuestions: function (questions, filter, excludeHidden, includeRepeat, excludeTrigger) {

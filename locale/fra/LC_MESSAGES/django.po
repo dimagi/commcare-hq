@@ -94,16 +94,12 @@ msgid "Any Reason"
 msgstr ""
 
 #: corehq/apps/accounting/filters.py
-#, fuzzy
-#| msgid "Source Type"
 msgid "Service Type"
-msgstr "Type de source"
+msgstr "Type de service"
 
 #: corehq/apps/accounting/filters.py
-#, fuzzy
-#| msgid "Service"
 msgid "Any Service"
-msgstr "Service"
+msgstr ""
 
 #: corehq/apps/accounting/filters.py
 msgid "Linked to Any Transaction"
@@ -323,7 +319,8 @@ msgstr "Compte de facturation"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/builds/templates/builds/all.html
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
@@ -5916,7 +5913,8 @@ msgid "Value"
 msgstr "Valeur"
 
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/data_dictionary/views.py
 #: corehq/apps/reports/templates/reports/filters/explorer_columns.html
@@ -11354,51 +11352,64 @@ msgstr "Vérifié modifications de modèle"
 msgid "Build Number"
 msgstr "Numéro de construction"
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Editing CommCare Builds"
 msgstr "Edition des versions CommCare"
 
-#: corehq/apps/builds/templates/builds/edit_menu.html corehq/tabs/tabclasses.py
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/tabs/tabclasses.py
 msgid "Editing"
 msgstr "Modification"
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Menu Options"
 msgstr "Options de menu"
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Superuser Only"
 msgstr "Super-utilisateur uniquement"
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Add a Version"
 msgstr "Ajouter une version"
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Default 1.x Build"
 msgstr "Version 1.x par défaut"
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Default 2.x Build"
 msgstr "Version 2.x par défaut"
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Import a new build from the build server"
 msgstr "Importer une nouvelle version du serveur des versions"
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Browse versions"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Paste the latest version in the box above in the format x.y.z"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Click Import Build"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid ""
 "\n"
 "              You can also automatically fetch the latest build from GitHub "
@@ -11407,7 +11418,8 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
+#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
 msgid "Import Build"
 msgstr "Importer Version"
 
@@ -22377,6 +22389,14 @@ msgstr ""
 msgid "User's assigned location"
 msgstr ""
 
+#: corehq/apps/geospatial/forms.py corehq/apps/geospatial/models.py
+msgid "Radial Algorithm"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py corehq/apps/geospatial/models.py
+msgid "Road Network Algorithm"
+msgstr ""
+
 #: corehq/apps/geospatial/forms.py
 msgid "Fetch mobile worker location data from custom field"
 msgstr ""
@@ -22430,6 +22450,18 @@ msgstr ""
 msgid "Disbursement algorithm"
 msgstr ""
 
+#: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "Enter App Code"
+msgid "Enter mapbox token"
+msgstr "Entrez le code de l'application"
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"Enter your Mapbox API token here. Make sure your token has the correct scope "
+"configured for use of the Mapbox Matrix API."
+msgstr ""
+
 #: corehq/apps/geospatial/forms.py corehq/tabs/tabclasses.py
 msgid "Configure Geospatial Settings"
 msgstr ""
@@ -22460,6 +22492,12 @@ msgid "Algorithms"
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "API Key"
+msgid "Test API Key"
+msgstr "Clé API"
+
+#: corehq/apps/geospatial/forms.py
 msgid "Value for maximum group size required"
 msgstr ""
 
@@ -22476,12 +22514,8 @@ msgstr ""
 msgid "Value for target group count required"
 msgstr ""
 
-#: corehq/apps/geospatial/models.py
-msgid "Radial Algorithm"
-msgstr ""
-
-#: corehq/apps/geospatial/models.py
-msgid "Road Network Algorithm"
+#: corehq/apps/geospatial/forms.py
+msgid "Mapbox API token required"
 msgstr ""
 
 #: corehq/apps/geospatial/models.py
@@ -25489,17 +25523,13 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
-#, fuzzy
-#| msgid "Text"
 msgid "Alt Text"
-msgstr "Texte"
+msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/key_value_mapping.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/key_value_mapping.html
-#, fuzzy
-#| msgid "Click here to add a description"
 msgid "Alternative text description"
-msgstr "Cliquez ici pour ajouter une description"
+msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/ko_feedback.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_feedback.html
@@ -30949,10 +30979,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/reports/standard/cases/filters.py
-#, fuzzy
-#| msgid "View Tables"
 msgid "View Rules"
-msgstr "Voir les tables"
+msgstr ""
 
 #: corehq/apps/reports/standard/cases/filters.py
 msgid " (Inactive)"
@@ -35055,7 +35083,7 @@ msgstr "Hier"
 msgid "1 Week"
 msgstr "1 semaine"
 
-#: corehq/apps/sms/views.py
+#: corehq/apps/sms/views.py corehq/apps/sso/models.py
 msgid "30 Days"
 msgstr "30 jours"
 
@@ -35328,10 +35356,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/backends.py
-#, fuzzy
-#| msgid "User account for %s created!"
 msgid "User account for {} has been re-activated."
-msgstr "Compte utilisateur pour %s créé ! "
+msgstr ""
 
 #: corehq/apps/sso/backends.py
 msgid "User account for {} created."
@@ -35522,10 +35548,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-#, fuzzy
-#| msgid "Billing Account"
 msgid "Manage Billing Account"
-msgstr "Compte de facturation"
+msgstr ""
 
 #: corehq/apps/sso/forms.py
 msgid "Update Configuration"
@@ -35670,6 +35694,30 @@ msgstr ""
 #: corehq/apps/sso/forms.py
 msgid "OpenID Provider Configuration"
 msgstr ""
+
+#: corehq/apps/sso/models.py
+#, fuzzy
+#| msgid "Year"
+msgid "1 Year"
+msgstr "Année"
+
+#: corehq/apps/sso/models.py
+#, fuzzy
+#| msgid "30 Days"
+msgid "180 Days"
+msgstr "30 jours"
+
+#: corehq/apps/sso/models.py
+#, fuzzy
+#| msgid "30 Days"
+msgid "120 Days"
+msgstr "30 jours"
+
+#: corehq/apps/sso/models.py
+#, fuzzy
+#| msgid "30 Days"
+msgid "60 Days"
+msgstr "30 jours"
 
 #: corehq/apps/sso/templates/sso/accounting_admin/edit_identity_provider.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/edit_identity_provider.html
@@ -36231,10 +36279,8 @@ msgid "Height (cm)"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
-#, fuzzy
-#| msgid "Stock Status"
 msgid "Smoking Status"
-msgstr "Niveau de stock"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
 msgid "Patient has smoked on a habitual basis in the past 5 years"
@@ -36260,18 +36306,14 @@ msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/class_view.py
 #: corehq/apps/styleguide/examples/bootstrap5/functional_view.py
-#, fuzzy
-#| msgid "Examples"
 msgid "Example Views"
-msgstr "Exemples"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/class_view.py
 #: corehq/apps/styleguide/examples/bootstrap5/functional_view.py
 #: corehq/apps/styleguide/examples/bootstrap5/tabs.py
-#, fuzzy
-#| msgid "Live Example"
 msgid "Section Page Example"
-msgstr "Exemple live"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/class_view.py
 #: corehq/apps/styleguide/examples/bootstrap5/functional_view.py
@@ -36280,10 +36322,8 @@ msgid "A Detail Page (Section Example)"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
-#, fuzzy
-#| msgid "Forwarded Message"
 msgid "Forward Message"
-msgstr "Message transmis"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
 msgid "Yes, forward this message to me."
@@ -36303,44 +36343,32 @@ msgid "Advanced Information"
 msgstr "Information Avancée"
 
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
-#, fuzzy
-#| msgid "This field is required."
 msgid "This field will always error."
-msgstr "Ce champ est requis."
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
-#, fuzzy
-#| msgid "Error details"
 msgid "Error State Test"
-msgstr "Détails de l'erreur"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
-#, fuzzy
-#| msgid "Submit Report"
 msgid "Submit Form"
-msgstr "Soumettre le rapport."
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_errors.py
-#, fuzzy
-#| msgid "This is not an allowed value for this field"
 msgid "This is a field-level error for the field 'note'."
-msgstr "Cette valeur n'est pas autorisée pour ce champ"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout.py
 msgid "Area"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout.py
-#, fuzzy
-#| msgid "Menu Options"
 msgid "Options"
-msgstr "Options de menu"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout.py
-#, fuzzy
-#| msgid "Send Message"
 msgid "include message"
-msgstr "Envoyer message"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
 msgid "Hint: 'jon' is taken. Try typing that in to trigger an error."
@@ -36352,10 +36380,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
-#, fuzzy
-#| msgid "Create User"
 msgid "Create New User"
-msgstr "Crééz un Utilisateur"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_knockout_validation.py
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
@@ -36379,60 +36405,44 @@ msgid "Make your team selection"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/multiselect_form.py
-#, fuzzy
-#| msgid "Report Builder"
 msgid "Team Builder"
-msgstr "Éditeur de Rapports"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/multiselect_form.py
-#, fuzzy
-#| msgid "Save"
 msgid "Save Team"
-msgstr "Enregistrer"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/placeholder_help_text.py
 msgid "We'll never share your email with anyone else."
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_ajax_form.py
-#, fuzzy
-#| msgid "Users"
 msgid "Users(s)"
-msgstr "Utilisateurs"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_ajax_form.py
-#, fuzzy
-#| msgid "Choose the fields you want to export."
 msgid "Select the users you want to view data for"
-msgstr "Choisir les champs que vous souhaitez télécharger."
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_ajax_form.py
-#, fuzzy
-#| msgid "Case Filters"
 msgid "Choose Filters"
-msgstr "Filtres de dossiers"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_autocomplete_ko_form.py
-#, fuzzy
-#| msgid "View Table"
 msgid "Vegetable"
-msgstr "Afficher Table"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_autocomplete_ko_form.py
 msgid "Select your favorite vegetable you want recipe suggestions for"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_autocomplete_ko_form.py
-#, fuzzy
-#| msgid "Invoice Recipients"
 msgid "Veggie Recipes"
-msgstr "Destinataires de la facture"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_autocomplete_ko_form.py
-#, fuzzy
-#| msgid "Suggestions"
 msgid "Suggest Recipes"
-msgstr "Suggestions "
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_css_class_form.py
 msgid "Lake"
@@ -36443,10 +36453,8 @@ msgid "Select a lake you would like to visit"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_css_class_form.py
-#, fuzzy
-#| msgid "Activate"
 msgid "Activities"
-msgstr "Activer"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_css_class_form.py
 msgid "Kayak"
@@ -36477,10 +36485,8 @@ msgid "Activity Planner"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_css_class_form.py
-#, fuzzy
-#| msgid "Visit Schedule"
 msgid "Create Schedule"
-msgstr "Horaire de visites"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_dynamic_ko_form.py
 msgid "Genre"
@@ -36495,20 +36501,16 @@ msgid "Playlist Creator"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_dynamic_ko_form.py
-#, fuzzy
-#| msgid "Create Password"
 msgid "Create Playlist"
-msgstr "Créer un mot de passe"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_manual_form.py
 msgid "Select the location you would like to see recommendations for."
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_manual_form.py
-#, fuzzy
-#| msgid "References"
 msgid "Experiences"
-msgstr "Références"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_manual_form.py
 msgid "Select the experiences you would like to have"
@@ -36528,16 +36530,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_static_ko_form.py
-#, fuzzy
-#| msgid "Case Generation Error"
 msgid "Menu Generator"
-msgstr "Erreur de génération de dossier"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select2_static_ko_form.py
-#, fuzzy
-#| msgid "Created On"
 msgid "Create Menu"
-msgstr "Créé le"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/select_toggle_form.py
 msgid "Color"
@@ -36576,32 +36574,24 @@ msgid "Class-Based Examples"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/tabs.py
-#, fuzzy
-#| msgid "Basic"
 msgid "Basic Page"
-msgstr "De base"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/tabs.py
-#, fuzzy
-#| msgid "Action Name"
 msgid "Section Page"
-msgstr "Nom d'action"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/tabs.py
-#, fuzzy
-#| msgid "Functionality Score"
 msgid "Functional Examples"
-msgstr "Le Score à la Fonctionnalité"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/tabs.py
 msgid "Class-Based Views"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/tabs.py
-#, fuzzy
-#| msgid "Functionality Score"
 msgid "Functional Views"
-msgstr "Le Score à la Fonctionnalité"
+msgstr ""
 
 #: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
 msgid "Password (Repeat)"
@@ -36644,10 +36634,8 @@ msgid "Examples"
 msgstr "Exemples"
 
 #: corehq/apps/styleguide/views/bootstrap5_data.py
-#, fuzzy
-#| msgid "Project name already taken - please try another"
 msgid "This username is already taken. Please try another one."
-msgstr "Le nom de projet est déjà utilisé - Veuillez choisir un autre."
+msgstr ""
 
 #: corehq/apps/styleguide/views/bootstrap5_data.py
 msgid "This email is already assigned to a user. Please use another email."

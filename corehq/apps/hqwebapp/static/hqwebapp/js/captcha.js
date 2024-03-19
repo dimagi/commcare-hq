@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("hqwebapp/js/captcha", [
     'jquery',
 ],function (

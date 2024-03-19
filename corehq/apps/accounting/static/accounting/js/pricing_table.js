@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('accounting/js/pricing_table', [
     'jquery',
     'knockout',
@@ -27,7 +28,6 @@ hqDefine('accounting/js/pricing_table', [
             'currentPrice',
         ]);
 
-        'use strict';
         var self = {};
 
         self.oCurrentPlan = ko.observable(options.currentPlan);

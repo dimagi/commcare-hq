@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("hqwebapp/js/bootstrap3/widgets",[
     'jquery',
     'underscore',
