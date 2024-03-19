@@ -146,7 +146,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 const geocoderValues = JSON.parse(sessionStorage.geocoderValues);
                 geocoderValues[model.id] = item.place_name;
                 sessionStorage.geocoderValues = JSON.stringify(geocoderValues);
-                var broadcastObj = formEntryUtils.getBroadcastObject(item);
+                var broadcastObj = formEntryUtils.getAddressBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
             };
