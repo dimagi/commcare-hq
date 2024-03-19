@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("reports/js/report_config_models", [
     'jquery',
     'knockout',
