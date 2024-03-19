@@ -14,7 +14,7 @@
  ], function ($, _, MapboxGeocoder, initialPageData) {
      var init = function () {
          var MAPBOX_ACCESS_TOKEN = initialPageData.get(
-@@ -109,7 +109,18 @@
+@@ -109,7 +109,19 @@
          });
  
          _.each($(".date-picker"), function (input) {
