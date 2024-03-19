@@ -751,10 +751,10 @@ class LocationTreeValidator(object):
         """Do model validation"""
         errors = []
         for location in self.locations:
-            exclude_fields = ["location_type"]  # Skip foreign key validation
+            exclude_fields = {"location_type"}  # Skip foreign key validation
             if not location.db_object.location_id:
                 # Don't validate location_id if its blank because SQLLocation.save() will add it
-                exclude_fields.append("location_id")
+                exclude_fields.add("location_id")
             try:
                 location.db_object.full_clean(exclude=exclude_fields)
             except ValidationError as e:
