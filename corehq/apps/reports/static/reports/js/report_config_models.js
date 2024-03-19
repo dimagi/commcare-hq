@@ -164,7 +164,7 @@ hqDefine("reports/js/report_config_models", [
         // edit the config currently being viewed
         self.setConfigBeingEdited = function (config) {
             var filters = {},
-                excludeFilters = ['startdate', 'enddate', 'format', 'date'];
+                excludeFilters = ['startdate', 'enddate', 'format'];
             if (self.filterForm) {
                 self.filterForm.find(":input").each(function () {
                     var el = $(this),
