@@ -172,7 +172,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         utils.setUrlToObject(urlObject);
 
         // Tags should not be included in set URL. Otherwise, it persists across menus we will need to handle clearing it.
-        urlObject.addRequestInitiatedByTags(formplayerConstants.requestInitiatedByTagsMapping.PAGINATION);
+        urlObject.setRequestInitiatedByTag(formplayerConstants.requestInitiatedByTagsMapping.PAGINATION);
         let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
         API.listMenus(encodedUrl);
     });
@@ -219,7 +219,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         utils.setUrlToObject(urlObject);
 
         // Tags should not be included in set URL. Otherwise, it persists across menus we will need to handle clearing it.
-        urlObject.addRequestInitiatedByTags(initiatedByTag);
+        urlObject.setRequestInitiatedByTag(initiatedByTag);
         let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
         API.listMenus(encodedUrl);
     });
