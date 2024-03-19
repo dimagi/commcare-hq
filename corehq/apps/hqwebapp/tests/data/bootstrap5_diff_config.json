@@ -1,144 +1,306 @@
 {
   "apps/hqwebapp/templates/hqwebapp": [
     {
-      "directories": ["bootstrap3/", "bootstrap5/"],
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
       "file_type": "template",
       "label": "hqwebapp",
       "compare_all_files": true
     },
     {
-      "directories": ["crispy/bootstrap3/", "crispy/bootstrap5/"],
+      "directories": [
+        "crispy/bootstrap3",
+        "crispy/bootstrap5"
+      ],
       "file_type": "template",
       "label": "hqwebapp/crispy",
       "compare_all_files": true
     },
     {
-      "directories": ["includes/bootstrap3/", "includes/bootstrap5/"],
+      "directories": [
+        "includes/bootstrap3",
+        "includes/bootstrap5"
+      ],
       "file_type": "template",
       "label": "hqwebapp/includes",
       "compare_all_files": true
     },
     {
-      "directories": ["partials/bootstrap3/", "partials/bootstrap5/"],
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
       "file_type": "template",
       "label": "hqwebapp/partials",
       "compare_all_files": true
     }
   ],
+  "apps/hqwebapp/static/hqwebapp/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp/js",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "components/bootstrap3",
+        "components/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp/js/components",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "ui_elements/bootstrap3",
+        "ui_elements/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp/js/ui_elements",
+      "compare_all_files": true
+    }
+  ],
   "apps/hqwebapp/static/hqwebapp": [
     {
-      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
-      "file_type": "javascript",
-      "label": "javascript/hqwebapp",
-      "compare_all_files": true
-    },
-    {
-      "directories": ["js/components/bootstrap3/", "js/components/bootstrap5/"],
-      "file_type": "javascript",
-      "label": "javascript/hqwebapp/components",
-      "compare_all_files": true
-    },
-    {
-      "directories": ["js/ui_elements/bootstrap3/", "js/ui_elements/bootstrap5/"],
-      "file_type": "javascript",
-      "label": "javascript/hqwebapp/ui_elements",
-      "compare_all_files": true
-    },
-    {
-      "directories": ["less/", "scss/"],
+      "directories": [
+        "less/",
+        "scss/"
+      ],
       "file_type": "stylesheet",
       "label": "stylesheets",
       "files": [
-        ["style-imports.less", "commcarehq.scss"]
+        [
+          "style-imports.less",
+          "commcarehq.scss"
+        ]
       ]
     },
     {
-      "directories": ["less/_hq/", "scss/commcarehq/"],
+      "directories": [
+        "less/_hq/",
+        "scss/commcarehq/"
+      ],
       "file_type": "stylesheet",
       "label": "stylesheets/imports",
       "files": [
-        ["includes/variables.less", "_variables.scss"],
-        ["includes/variables.less", "_variables_bootstrap3.scss"],
-        ["includes/mixins.less", "_mixins.scss"],
-        ["ace_cle.less", "_ace_cle.scss"],
-        ["alerts.less", "_alert.scss"],
-        ["appcues.less", "_appcues.scss"],
-        ["backgrounds.less", "_backgrounds.scss"],
-        ["breadcrumbs.less", "_breadcrumb.scss"],
-        ["buttons.less", "_buttons.scss"],
-        ["datagrid.less", "_datagrid.scss"],
-        ["datatables.less", "_datatables.scss"],
-        ["date_range_picker.less", "_date_range_picker.scss"],
-        ["datetimepicker.less", "_datetimepicker.scss"],
-        ["dropdowns.less", "_dropdown.scss"],
-        ["facet.less", "_facet.scss"],
-        ["feedback.less", "_feedback.scss"],
-        ["form_steps.less", "_form_steps.scss"],
-        ["forms.less", "_forms.scss"],
-        ["helpbubble.less", "_helpbubble.scss"],
-        ["hubspot.less", "_hubspot.scss"],
-        ["icons.less", "_icons.scss"],
-        ["inline_edit.less", "_inline_edit.scss"],
-        ["label.less", "_label.scss"],
-        ["layouts.less", "_layouts.scss"],
-        ["layouts.less", "_containers.scss"],
-        ["mapbox.less", "_mapbox.scss"],
-        ["modals.less", "_modal.scss"],
-        ["navs.less", "_nav.scss"],
-        ["notifications.less", "_notifications.scss"],
-        ["pagination.less", "_pagination.scss"],
-        ["panels.less", "_panels.scss"],
-        ["paused.less", "_paused.scss"],
-        ["popovers.less", "_popover.scss"],
-        ["radio_select.less", "_radio_select.scss"],
-        ["readable_forms.less", "_readable_forms.scss"],
-        ["report.less", "_report.scss"],
-        ["select2s.less", "_select2.scss"],
-        ["svg.less", "_svg.scss"],
-        ["tables.less", "_tables.scss"],
-        ["tabs.less", "_tabs.scss"],
-        ["typography.less", "_type.scss"],
-        ["utils.less", "_utils.scss"]
+        [
+          "includes/variables.less",
+          "_variables.scss"
+        ],
+        [
+          "includes/variables.less",
+          "_variables_bootstrap3.scss"
+        ],
+        [
+          "includes/mixins.less",
+          "_mixins.scss"
+        ],
+        [
+          "ace_cle.less",
+          "_ace_cle.scss"
+        ],
+        [
+          "alerts.less",
+          "_alert.scss"
+        ],
+        [
+          "appcues.less",
+          "_appcues.scss"
+        ],
+        [
+          "backgrounds.less",
+          "_backgrounds.scss"
+        ],
+        [
+          "breadcrumbs.less",
+          "_breadcrumb.scss"
+        ],
+        [
+          "buttons.less",
+          "_buttons.scss"
+        ],
+        [
+          "datagrid.less",
+          "_datagrid.scss"
+        ],
+        [
+          "datatables.less",
+          "_datatables.scss"
+        ],
+        [
+          "date_range_picker.less",
+          "_date_range_picker.scss"
+        ],
+        [
+          "datetimepicker.less",
+          "_datetimepicker.scss"
+        ],
+        [
+          "dropdowns.less",
+          "_dropdown.scss"
+        ],
+        [
+          "facet.less",
+          "_facet.scss"
+        ],
+        [
+          "feedback.less",
+          "_feedback.scss"
+        ],
+        [
+          "form_steps.less",
+          "_form_steps.scss"
+        ],
+        [
+          "forms.less",
+          "_forms.scss"
+        ],
+        [
+          "helpbubble.less",
+          "_helpbubble.scss"
+        ],
+        [
+          "hubspot.less",
+          "_hubspot.scss"
+        ],
+        [
+          "icons.less",
+          "_icons.scss"
+        ],
+        [
+          "inline_edit.less",
+          "_inline_edit.scss"
+        ],
+        [
+          "label.less",
+          "_label.scss"
+        ],
+        [
+          "layouts.less",
+          "_layouts.scss"
+        ],
+        [
+          "layouts.less",
+          "_containers.scss"
+        ],
+        [
+          "mapbox.less",
+          "_mapbox.scss"
+        ],
+        [
+          "modals.less",
+          "_modal.scss"
+        ],
+        [
+          "navs.less",
+          "_nav.scss"
+        ],
+        [
+          "notifications.less",
+          "_notifications.scss"
+        ],
+        [
+          "pagination.less",
+          "_pagination.scss"
+        ],
+        [
+          "panels.less",
+          "_panels.scss"
+        ],
+        [
+          "paused.less",
+          "_paused.scss"
+        ],
+        [
+          "popovers.less",
+          "_popover.scss"
+        ],
+        [
+          "radio_select.less",
+          "_radio_select.scss"
+        ],
+        [
+          "readable_forms.less",
+          "_readable_forms.scss"
+        ],
+        [
+          "report.less",
+          "_report.scss"
+        ],
+        [
+          "select2s.less",
+          "_select2.scss"
+        ],
+        [
+          "svg.less",
+          "_svg.scss"
+        ],
+        [
+          "tables.less",
+          "_tables.scss"
+        ],
+        [
+          "tabs.less",
+          "_tabs.scss"
+        ],
+        [
+          "typography.less",
+          "_type.scss"
+        ],
+        [
+          "utils.less",
+          "_utils.scss"
+        ]
       ]
-    }
-  ],
-  "apps/builds/templates/builds": [
-    {
-      "directories": ["bootstrap3/", "bootstrap5/"],
-      "file_type": "template",
-      "label": "builds",
-      "compare_all_files": true
-    }
-  ],
-  "apps/builds/static/builds": [
-    {
-      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
-      "file_type": "javascript",
-      "label": "javascript/builds",
-      "compare_all_files": true
     }
   ],
   "apps/notifications/templates/notifications": [
     {
-      "directories": ["partials/bootstrap3/", "partials/bootstrap5/"],
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
       "file_type": "template",
       "label": "notifications/partials",
       "compare_all_files": true
     }
   ],
-  "apps/notifications/static/notifications": [
+  "apps/notifications/static/notifications/js": [
     {
-      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
       "file_type": "javascript",
-      "label": "javascript/notifications",
+      "label": "javascript/notifications/js",
       "compare_all_files": true
     }
   ],
   "apps/analytics/templates/analytics": [
     {
-      "directories": ["forms/bootstrap3/", "forms/bootstrap5/"],
+      "directories": [
+        "forms/bootstrap3/",
+        "forms/bootstrap5/"
+      ],
       "file_type": "template",
       "label": "analytics/forms",
+      "compare_all_files": true
+    }
+  ],
+  "apps/hqwebapp/static/hqwebapp/spec": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/hqwebapp/spec",
       "compare_all_files": true
     }
   ]
