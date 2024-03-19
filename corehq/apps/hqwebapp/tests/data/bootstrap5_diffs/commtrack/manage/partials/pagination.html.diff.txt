@@ -1,8 +1,0 @@
---- 
-+++ 
-@@ -1,4 +1,4 @@
--<div class="pull-right">
-+<div class="float-end">
-   <ul class="pagination" data-bind="foreach: all_pages">
-     <li data-bind="visible: ($data == $parent.all_pages()[0])">
-       <a href="#"

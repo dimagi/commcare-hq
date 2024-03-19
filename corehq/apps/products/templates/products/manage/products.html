@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% requirejs_main 'commtrack/js/bootstrap3/products_and_programs_main' %}
+{% requirejs_main 'commtrack/js/products_and_programs_main' %}
 
 {% block stylesheets %}
   <style>
@@ -80,7 +80,7 @@
           </div>
         </div>
         <div class="col-sm-8">
-          {% include 'commtrack/manage/partials/bootstrap3/pagination.html' %}
+          {% include 'commtrack/manage/partials/pagination.html' %}
         </div>
       </div>
 
@@ -179,7 +179,7 @@
               </tbody>
             </table>
           </div>
-          {% include 'commtrack/manage/partials/bootstrap3/pagination.html' %}
+          {% include 'commtrack/manage/partials/pagination.html' %}
         </div>
       </div>
     </div>
