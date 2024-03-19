@@ -297,7 +297,7 @@ class BaseExportView(BaseProjectDataView):
 
     @memoized
     def get_export_schema(self, domain, app_id, identifier):
-        return self.export_schema_cls.generate_schema_from_builds(
+        return self.export_schema_cls.generate_schema(
             domain,
             app_id,
             identifier,
