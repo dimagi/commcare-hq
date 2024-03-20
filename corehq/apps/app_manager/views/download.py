@@ -407,14 +407,15 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
 
 
 def download_index_files(app, build_profile_id=None):
-    def needed_for_ccz(path):
-        if profiles:
-            return path.startswith(prefix) and path.split('/')[1] not in profiles
-        else:
-            return path.startswith(prefix)
-
     if app.copy_of:
+        def needed_for_ccz(path):
+            if profiles:
+                return path.startswith(prefix) and path.split('/')[1] not in profiles
+            else:
+                return path.startswith(prefix)
+
         prefix = 'files/'
+        profiles = None
         if build_profile_id is not None:
             prefix += build_profile_id + '/'
         else:
