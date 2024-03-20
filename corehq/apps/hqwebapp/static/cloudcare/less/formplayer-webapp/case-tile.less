@@ -1,0 +1,212 @@
+#case-list-menu-header{
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  background-color: white;
+  @media (max-width: @screen-sm-max) {
+    min-height: 70px;
+  }
+  h1 {
+    padding-left: 0px;
+  }
+
+  div button {
+    margin-left: 12px;
+  }
+}
+
+#case-list-search-controls {
+  background-color: @cc-bg;
+  margin: 0 5px 5px 5px;
+  display: flex;
+  justify-content: space-between;
+    #case-list-sort-by-btn {
+      background-color: transparent;
+    }
+}
+
+#select-all-tile-checkbox {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#select-all-tile-checkbox-label {
+  font-weight: normal;
+}
+
+.select-row-checkbox-div {
+  margin: 10px 10px 10px 10px;
+  float: left;
+}
+
+.collapsed-tile-content {
+  height: 100px;
+  overflow-y: clip;
+  -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent);
+}
+
+.show-more {
+  text-align: center;
+  font-size: large;
+}
+
+.sticky {
+  position: sticky !important;
+  z-index: 1; // keep sticky elements on top of case list
+  &-header {
+    top: 32px; // header scrolls excess padding under breadcrumbs
+  }
+  &-map {
+    top: 46px; // map sits directly against breadcrumbs
+  }
+}
+
+// todo should this be a re-usable class? only used for case list right now
+.btn-circle {
+  border-radius: 50%;
+  aspect-ratio: 1;
+}
+
+#scroll-to-bottom {
+  position: fixed;
+  z-index: @zindex-formplayer-scroll-to-bottom;
+  bottom: 45px;
+  left: calc(100vw - 80px);
+}
+
+.case-tile-container {
+  background: transparent !important;
+  > div {
+    background: white;
+    margin-bottom: 20px;
+    display: grid;
+    container-type: inline-size;
+  }
+
+  #persistent-case-tile .persistent-sticky .webapp-markdown-output {
+    img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+
+    h1,h2,h3 {
+      margin-top: 0px
+    }
+  }
+}
+
+@media screen {
+  .case-tile-container {
+    position: sticky;
+    top: @breadcrumb-height-cloudcare;
+    z-index: @zindex-persistent-tile-cloudcare;
+
+    #persistent-case-tile .persistent-sticky {
+      box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
+      border-bottom: 1px solid @cc-neutral-hi;
+    }
+  }
+}
+
+@media print {
+  .case-tile-container {
+    > div {
+      margin-bottom: 0px;
+    }
+    > div:not(:empty) {
+      border-bottom: 1px dashed black;
+    }
+  }
+}
+
+#menu-region .module-menu-container,
+#menu-region .module-case-list-container {
+
+  .white-border {
+    border-right-color: transparent;
+    border-right-style: solid;
+    border-right-width: 5px;
+  }
+
+  // todo: determine appropriate nesting
+  #module-case-list-map {
+    height: calc(~"100vh - 65px");
+
+    @media (max-width: @screen-sm-max) {
+      height: 25vh;
+    }
+
+    .marker-pin {
+      text-align: center;
+      /* Horizontally center the text (icon) */
+      line-height: 12px;
+      /* Vertically center the text (icon) */
+      color: @call-to-action-hi;
+      text-shadow: -1px 0 @call-to-action-low, 0 1px @call-to-action-low, 1px 0 @call-to-action-low, 0 -1px @call-to-action-low;
+    }
+  }
+
+  .list-cell-wrapper-style {
+    margin: 10px 5px 0 5px;
+    border-collapse: collapse;
+    vertical-align: top;
+    background-color: @cc-bg;
+    container-type: inline-size;
+
+    a {
+      color: @cc-brand-mid;
+    }
+
+    .module-icon,
+    .webapp-markdown-output img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+
+    &:hover {
+      background-color: darken(@cc-bg, 5);
+      transition: background 0.6s;
+    }
+  }
+
+  .highlighted-case {
+    border-style: solid;
+    border-color: @cc-brand-mid;
+  }
+
+  .case-tile-group{
+    margin: 10px;
+    padding: 10px 0;
+
+    .group-data{
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .group-rows{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    .group-row{
+      background-color: white;
+      width: 95%;
+    }
+  }
+}
+
+@media print {
+  #menu-region .module-menu-container,
+  #menu-region .module-case-list-container {
+    #module-case-list-container__results-container {
+      grid-template-columns: [tiles] 1fr !important;
+    }
+
+    .list-cell-wrapper-style {
+      border: 1px solid @cc-bg;
+      break-inside: avoid;
+    }
+  }
+}

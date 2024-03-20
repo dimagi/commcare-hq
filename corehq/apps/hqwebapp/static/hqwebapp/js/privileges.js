@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('hqwebapp/js/privileges', [
     'underscore',
     'hqwebapp/js/initial_page_data',
