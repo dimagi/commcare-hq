@@ -7,6 +7,7 @@ hqDefine('cloudcare/js/debugger/debugger', [
     'ace-builds/src-min-noconflict/ace',
     'analytix/js/kissmetrix',
     'reports/js/readable_form',
+    'tributejs/dist/tribute',   // .min
     'hqwebapp/js/atwho',    // $.atwho
     'ace-builds/src-min-noconflict/mode-json',
     'ace-builds/src-min-noconflict/mode-xml',
@@ -18,7 +19,8 @@ hqDefine('cloudcare/js/debugger/debugger', [
     Clipboard,
     ace,
     kissmetrics,
-    readableForm
+    readableForm,
+    Tribute
 ) {
     /**
      * These define tabs that are availabe in the debugger.
@@ -419,10 +421,10 @@ hqDefine('cloudcare/js/debugger/debugger', [
          *
          * @param {Array} autocompleteData - List of questions to be autocompleted for the xpath input
          */
+        self.tribute = null;
         self.autocomplete = function (autocompleteData) {
             self.$xpath = $('#xpath');
-            self.$xpath.atwho('destroy');
-            self.$xpath.atwho('setIframe', window.frameElement, true);
+            /*
             self.$xpath.off('inserted.atwho');
             self.$xpath.on('inserted.atwho', function (atwhoEvent, $li) {
                 var input = atwhoEvent.currentTarget;
@@ -433,20 +435,38 @@ hqDefine('cloudcare/js/debugger/debugger', [
                 }
             });
             self.$xpath.atwho({
-                at: '',
                 suffix: '',
-                data: autocompleteData,
-                searchKey: 'value',
-                maxLen: Infinity,
                 highlightFirst: false,
-                displayTpl: function (d) {
-                    var icon = getIconFromType(d.type);
-                    return '<li><i class="' + icon + '"></i> ${value}</li>';
-                },
                 insertTpl: '${value}',
                 callbacks: {
                     matcher: self.matcher,
                 },
+            });*/
+
+            // TODO: style: white background, little bit more space, maybe blue highlight
+            // TODO: matching function
+            if (self.tribute) {
+                self.tribute.detach(self.$xpath.get(0));
+            }
+            self.tribute = new Tribute({
+                autocompleteMode: true,
+                iframe: window.frameElement,
+                lookup: 'value',
+                menuItemLimit: Infinity,
+                menuItemTemplate: function (item) {
+                    var icon = getIconFromType(item.original.type);
+                    return '<i class="' + icon + '"></i> ' + item.string;
+                },
+                menuShowMinLength: 2,
+                noMatchTemplate: function () {
+                    return '<span style:"visibility: hidden;"></span>';
+                },
+                trigger: '',
+                values: autocompleteData,
+            });
+            self.tribute.attach(self.$xpath.get(0));
+            self.$xpath.on("tribute-active-false", function(e) {
+                console.log("Menu closed!");
             });
         };
     };
