@@ -1,5 +1,5 @@
+'use strict';
 hqDefine('hqwebapp/js/utils/email', [], function () {
-    'use strict';
     return {
         validateEmail: function (email) {
             // from http://stackoverflow.com/questions/46155/validate-email-address-in-javascript

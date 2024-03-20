@@ -1,5 +1,5 @@
 {% extends "hqwebapp/bootstrap3/base_section.html" %}
-{% load i18n two_factor %}
+{% load i18n phonenumber %}
 
 {% block page_content %}
   {% if is_using_sso %}
@@ -59,8 +59,8 @@
 
       <fieldset>
         <legend>{% trans "Remove Two-Factor Authentication" %}</legend>
-        <p>{% blocktrans %}However strongly we discourage you to do so, you can
-          also <strong>remove</strong> two-factor authentication for your account.{% endblocktrans %}</p>
+        <p>{% blocktrans %}We <strong>strongly discourage</strong> this, but if absolutely necessary you can
+          remove two-factor authentication from your account.{% endblocktrans %}</p>
         <p><a class="btn btn-danger" href="{% url 'two_factor:disable' %}">
           {% trans "Remove Two-Factor Authentication" %}</a></p>
         <br/>
@@ -68,8 +68,9 @@
       <fieldset>
         <legend>{% trans "Reset Two-Factor Authentication" %}</legend>
         <p>{% blocktrans %}
-          Clicking below will disable your current two-factor authentication and rerun Two-Factor Authentication setup,
-          so make sure you have a backup device or tokens available in case you are unable to complete the process.
+          This will remove your current two-factor authentication, and prompt you to run through the entire setup again.
+          If you need to do this, please make sure you complete the entire process once you begin, otherwise your account will
+          not be protected by two-factor authentication.
         {% endblocktrans %}</p>
         <p><a class="btn btn-default" href="{% url 'reset' %}">
           {% trans "Reset Two-Factor Authentication" %}</a></p>
