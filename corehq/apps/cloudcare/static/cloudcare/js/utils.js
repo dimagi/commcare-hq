@@ -199,13 +199,11 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var showLoading = function () {
-        hqRequire(["hqwebapp/js/toggles"], function (toggles) {
-            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
-                showProminentLoading();
-            } else {
-                NProgress.start();
-            }
-        });
+        if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+            showProminentLoading();
+        } else {
+            NProgress.start();
+        }
     };
 
     var formplayerLoading = function () {
