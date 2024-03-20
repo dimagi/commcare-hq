@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load compress %}
 
-{% requirejs_main 'commtrack/js/products_and_programs_main' %}
+{% requirejs_main 'commtrack/js/bootstrap3/products_and_programs_main' %}
 
 {% block page_content %}
   {% initial_page_data 'program_product_options' program_product_options %}
@@ -48,7 +48,7 @@
             </div>
           </div>
           <div class="col-sm-8">
-            {% include 'commtrack/manage/partials/pagination.html' %}
+            {% include 'commtrack/manage/partials/bootstrap3/pagination.html' %}
           </div>
         </div>
 
@@ -76,7 +76,7 @@
                   </tr>
                 </tbody>
               </table>
-              {% include 'commtrack/manage/partials/pagination.html' %}
+              {% include 'commtrack/manage/partials/bootstrap3/pagination.html' %}
             </div>
           </div>
         </div>
