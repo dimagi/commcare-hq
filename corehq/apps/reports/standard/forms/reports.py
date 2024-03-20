@@ -62,6 +62,18 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
         return self._submitfilter
 
     @property
+    def form_filter_params(self):
+        form_filter = FormsByApplicationFilter(self.request, self.domain)
+        params = []
+        for label in form_filter.rendered_labels:
+            param_name = f'{form_filter.slug}_{label[2]}'
+            params.append(dict(
+                name=param_name,
+                value=self.request.GET.get(param_name, None)
+            ))
+        return params
+
+    @property
     def sort_params(self):
         sort_col_idx = int(self.request.GET['iSortCol_0'])
         col = self.headers.header[sort_col_idx]
@@ -94,8 +106,8 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
             name=SubmissionTypeFilter.slug,
             value=[f.type for f in self.submitfilter if f.show]
         ))
-        if self.selected_form_data:
-            shared_params += [dict(name=k, value=v) for k, v in self.selected_form_data.items()]
+        if FormsByApplicationFilter.has_selections(self.request):
+            shared_params.extend(self.form_filter_params)
         return shared_params
 
     @property
