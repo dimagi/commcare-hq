@@ -117,11 +117,11 @@ class TransifexApiClient(object):
         resource = self._get_resource(resource_slug)
         resource.delete()
 
-    def upload_resource(self, path_to_pofile, resource_slug, resource_name, update_resource):
+    def upload_resource(self, path_to_po_file, resource_slug, resource_name, update_resource=False):
         """
         Upload source language file
 
-        :param path_to_pofile: path to pofile
+        :param path_to_po_file: path to po file
         :param resource_slug: resource slug
         :param resource_name: resource name, mostly same as resource slug itself
         :param update_resource: update resource
@@ -131,23 +131,25 @@ class TransifexApiClient(object):
         else:
             # must create the new resource first
             if resource_name is None:
-                __, filename = os.path.split(path_to_pofile)
+                __, filename = os.path.split(path_to_po_file)
                 resource_name = filename
-            resource = self._create_resource(name=resource_name, slug=resource_slug)
-        content = open(path_to_pofile, 'r', encoding="utf-8").read()
+            resource = self._create_resource(resource_slug, resource_name)
+        with open(path_to_po_file, 'r', encoding="utf-8") as po_file:
+            content = po_file.read()
         self._upload_resource_strings(content, resource.id)
 
-    def upload_translation(self, path_to_pofile, resource_slug, hq_lang_code):
+    def upload_translation(self, path_to_po_file, resource_slug, hq_lang_code):
         """
         Upload translated files
 
-        :param path_to_pofile: path to pofile
+        :param path_to_po_file: path to po file
         :param resource_slug: resource slug
         :param hq_lang_code: lang code on hq
         """
         language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
         resource = self._get_resource(resource_slug)
-        content = open(path_to_pofile, 'r', encoding="utf-8").read()
+        with open(path_to_po_file, 'r', encoding="utf-8") as po_file:
+            content = po_file.read()
         self._upload_resource_translations(content, resource.id, language_id)
 
     def get_resource_slugs(self, version):
