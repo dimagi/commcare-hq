@@ -12,10 +12,10 @@
     <fieldset>
       <legend>{% trans 'Stock Actions' %}</legend>
       <div class="{% css_field_class %}">
-        <button type="button" class="btn btn-outline-primary float-end mb-3" data-bind="click: new_action">
+        {% include "domain/admin/commtrack_action_table.html" %}
+        <button type="button" class="btn btn-outline-primary float-end" data-bind="click: new_action">
           <i class="fa fa-plus"></i> {% trans "New Action" %}
         </button>
-        {% include "domain/admin/commtrack_action_table.html" %}
       </div>
     </fieldset>
 
