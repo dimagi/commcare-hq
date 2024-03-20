@@ -2704,8 +2704,8 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid ""
-"CommCareHQ has detected a possible network connectivity problem. Please make "
-"sure you are connected to the Internet in order to submit your form."
+"CommCare HQ has detected a possible network connectivity problem. Please "
+"make sure you are connected to the Internet in order to submit your form."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
@@ -3031,7 +3031,8 @@ msgstr ""
 msgid "Select Time"
 msgstr ""
 
-#: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js
+#: corehq/apps/commtrack/static/commtrack/js/bootstrap3/products_and_programs_main.js
+#: corehq/apps/commtrack/static/commtrack/js/bootstrap5/products_and_programs_main.js
 msgid ""
 "Sorry, there was an problem contacting the server to fetch the data. Please, "
 "try again in a little bit."
