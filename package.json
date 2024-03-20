@@ -83,6 +83,7 @@
         "select2": "4.1.0-rc.0",
         "signature_pad": "^4.1.6",
         "topojson": "3.0.2",
+        "tributejs": "5.1.3",
         "uglify-js": "3",
         "ui-select": "npm:ui-select#0.13.2",
         "underscore": "1.13.1",
