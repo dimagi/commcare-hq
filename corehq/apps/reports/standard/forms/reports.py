@@ -62,16 +62,6 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
         return self._submitfilter
 
     @property
-    @memoized
-    def selected_form_data(self):
-        forms = list(FormsByApplicationFilter.get_value(self.request, self.domain).values())
-        if len(forms) == 1 and forms[0]['xmlns']:
-            return forms[0]
-        non_fuzzy_forms = [form for form in forms if not form['is_fuzzy']]
-        if len(non_fuzzy_forms) == 1:
-            return non_fuzzy_forms[0]
-
-    @property
     def sort_params(self):
         sort_col_idx = int(self.request.GET['iSortCol_0'])
         col = self.headers.header[sort_col_idx]
