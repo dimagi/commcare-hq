@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% requirejs_main 'commtrack/js/bootstrap5/products_and_programs_main' %}
+{% requirejs_main 'commtrack/js/products_and_programs_main' %}
 
 {% block page_content %}
   <form class="form form-horizontal" name="product" method="post">
@@ -15,7 +15,7 @@
     {% endif %}
 
     <div class="form-actions">
-      <div class="col-md-12">
+      <div class="col-sm-12">
         <button type="submit" class="btn btn-primary">
           {% if product.get_id %}
             {% trans 'Update Product' %}
