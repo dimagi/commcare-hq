@@ -13,7 +13,9 @@ from corehq import toggles
 from corehq.apps.reports.analytics.esaccessors import get_paged_forms_by_type
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.apps.reports.standard.deployments import DeploymentsReport
+from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.apps.reports.standard.forms.filters import SubmissionTypeFilter
 from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -27,14 +29,15 @@ def _compare_submissions(x, y):
     return cmp(y.received_on, x.received_on)
 
 
-class SubmissionErrorReport(DeploymentsReport):
+class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
     name = gettext_noop("Raw Forms, Errors & Duplicates")
     slug = "submit_errors"
     ajax_pagination = True
     asynchronous = False
     base_template = 'reports/standard/submission_error_report.html'
 
-    fields = ['corehq.apps.reports.standard.forms.filters.SubmissionTypeFilter']
+    fields = ['corehq.apps.reports.standard.forms.filters.SubmissionTypeFilter',
+              'corehq.apps.reports.filters.forms.FormsByApplicationFilter']
 
     @property
     @memoized
@@ -59,6 +62,30 @@ class SubmissionErrorReport(DeploymentsReport):
         return self._submitfilter
 
     @property
+    def form_filter_params(self):
+        form_filter = FormsByApplicationFilter(self.request, self.domain)
+        params = []
+        for label in form_filter.rendered_labels:
+            param_name = f'{form_filter.slug}_{label[2]}'
+            params.append(dict(
+                name=param_name,
+                value=self.request.GET.get(param_name, None)
+            ))
+        return params
+
+    def _get_app_ids_and_xmlns(self, forms):
+        app_ids = []
+        xmlns_list = []
+        for form in forms:
+            if form['is_fuzzy']:
+                continue
+            if form['app_id']:
+                app_ids.append(form['app_id'])
+            if form['xmlns']:
+                xmlns_list.append(form['xmlns'])
+        return app_ids, xmlns_list
+
+    @property
     def sort_params(self):
         sort_col_idx = int(self.request.GET['iSortCol_0'])
         col = self.headers.header[sort_col_idx]
@@ -71,6 +98,9 @@ class SubmissionErrorReport(DeploymentsReport):
     def paged_result(self):
         doc_types = [filter_.doc_type for filter_ in [filter_ for filter_ in self.submitfilter if filter_.show]]
         sort_col, desc = self.sort_params
+        app_ids = []
+        xmlns_list = []
+        app_ids, xmlns_list = self._get_app_ids_and_xmlns(list(self.all_relevant_forms.values()))
         return get_paged_forms_by_type(
             self.domain,
             doc_types,
@@ -78,6 +108,8 @@ class SubmissionErrorReport(DeploymentsReport):
             desc=desc,
             start=self.pagination.start,
             size=self.pagination.count,
+            app_ids=app_ids,
+            xmlns=xmlns_list,
         )
 
     @property
@@ -87,6 +119,8 @@ class SubmissionErrorReport(DeploymentsReport):
             name=SubmissionTypeFilter.slug,
             value=[f.type for f in self.submitfilter if f.show]
         ))
+        if FormsByApplicationFilter.has_selections(self.request):
+            shared_params.extend(self.form_filter_params)
         return shared_params
 
     @property
