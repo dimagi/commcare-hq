@@ -564,7 +564,7 @@ class TestFormESAccessors(TestCase):
         self.assertEqual(len(paged_result.hits), 1)
         self.assertEqual(paged_result.total, 3)
 
-        paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], app_id=app2, xmlns=xmlns)
+        paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], app_ids=[app2], xmlns=[xmlns])
         self.assertEqual(len(paged_result.hits), 1)
         form_dict = paged_result.hits[0]['form']
         self.assertEqual(form_dict['@name'], 'test_b')
