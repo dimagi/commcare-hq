@@ -73,6 +73,18 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
             ))
         return params
 
+    def _get_app_ids_and_xmlns(self, forms):
+        app_ids = []
+        xmlns_list = []
+        for form in forms:
+            if form['is_fuzzy']:
+                continue
+            if form['app_id']:
+                app_ids.append(form['app_id'])
+            if form['xmlns']:
+                xmlns_list.append(form['xmlns'])
+        return app_ids, xmlns_list
+
     @property
     def sort_params(self):
         sort_col_idx = int(self.request.GET['iSortCol_0'])
@@ -86,8 +98,9 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
     def paged_result(self):
         doc_types = [filter_.doc_type for filter_ in [filter_ for filter_ in self.submitfilter if filter_.show]]
         sort_col, desc = self.sort_params
-        app_id = self.request.GET.get('app_id', None)
-        xmlns = self.request.GET.get('xmlns', None)
+        app_ids = []
+        xmlns_list = []
+        app_ids, xmlns_list = self._get_app_ids_and_xmlns(list(self.all_relevant_forms.values()))
         return get_paged_forms_by_type(
             self.domain,
             doc_types,
@@ -95,8 +108,8 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
             desc=desc,
             start=self.pagination.start,
             size=self.pagination.count,
-            app_id=app_id,
-            xmlns=xmlns,
+            app_ids=app_ids,
+            xmlns=xmlns_list,
         )
 
     @property
