@@ -28,7 +28,7 @@ class TransifexApiClient(object):
 
     @property
     def source_language_id(self):
-        return self.project.related["source_language"].id
+        return self.project.source_language.id
 
     @property
     def source_lang_code(self):
@@ -100,6 +100,9 @@ class TransifexApiClient(object):
         cls = self.api.ResourceLanguageStats
         return self._list_objects(cls, project=self.project, **kwargs)
 
+    def _fetch_related(self, obj, key):
+        return obj.fetch(key)
+
     @staticmethod
     def _download_content(cls, **kwargs):
         try:
@@ -116,6 +119,9 @@ class TransifexApiClient(object):
     def _download_resource_translations(self, resource_id, language_id):
         cls = self.api.ResourceTranslationsAsyncDownload
         return self._download_content(cls, resource=resource_id, language_id=language_id)
+
+    def _lock_resource(self, resource):
+        return resource.save(accept_translations=False)
 
     def delete_resource(self, resource_slug):
         resource = self._get_resource(resource_slug)
@@ -190,7 +196,7 @@ class TransifexApiClient(object):
         with open(temp_file.name, 'w', encoding='utf-8') as f:
             f.write(content.decode(encoding="utf-8"))
         if lock_resource:
-            resource.save(accept_translations=False)
+            self._lock_resource(resource)
         return polib.pofile(temp_file.name)
 
     def move_resource(self, old_resource_slug, new_resource_slug):
@@ -199,8 +205,9 @@ class TransifexApiClient(object):
         self.delete_resource(old_resource_slug)
 
     def get_project_langcodes(self):
-        language_stats_list = self._list_language_stats()
-        return [self._to_lang_code(stats.language.id) for stats in language_stats_list]
+        languages = self._fetch_related(self.project, 'languages')
+        languages.append(self.project.source_language)
+        return [self._to_lang_code(language.id) for language in languages]
 
     def source_lang_is(self, hq_lang_code):
         """
