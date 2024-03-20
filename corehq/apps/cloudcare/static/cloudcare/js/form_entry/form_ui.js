@@ -1,10 +1,28 @@
 'use strict';
-/* global DOMPurify */
-hqDefine("cloudcare/js/form_entry/form_ui", function () {
-    var markdown = hqImport("cloudcare/js/markdown"),
-        constants = hqImport("cloudcare/js/form_entry/const"),
-        entries = hqImport("cloudcare/js/form_entry/entries"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils");
+hqDefine("cloudcare/js/form_entry/form_ui", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'DOMPurify/dist/purify.min',
+    'hqwebapp/js/toggles',
+    'cloudcare/js/markdown',
+    'cloudcare/js/utils',
+    'cloudcare/js/form_entry/const',
+    'cloudcare/js/form_entry/entries',
+    'cloudcare/js/form_entry/utils',
+    'jquery-tiny-pubsub/dist/ba-tiny-pubsub',       // $.pubsub
+], function (
+    $,
+    ko,
+    _,
+    DOMPurify,
+    toggles,
+    markdown,
+    cloudcareUtils,
+    constants,
+    entries,
+    formEntryUtils
+) {
     var groupNum = 0;
 
     _.delay(function () {
@@ -391,7 +409,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.blockSubmit = ko.observable(false);
         self.hasSubmitAttempted = ko.observable(false);
         self.isSubmitting = ko.observable(false);
-        self.isAnchoredSubmitStyle = hqImport('hqwebapp/js/toggles').toggleEnabled('WEB_APPS_ANCHORED_SUBMIT');
+        self.isAnchoredSubmitStyle = toggles.toggleEnabled('WEB_APPS_ANCHORED_SUBMIT');
         self.submitClass = constants.FULL_WIDTH + ' text-center' +
           (self.isAnchoredSubmitStyle ? ' anchored-submit' : ' nonanchored-submit');
 

@@ -1,13 +1,29 @@
 'use strict';
-/* global Marionette, moment, NProgress, Sentry */
 hqDefine('cloudcare/js/utils', [
     'jquery',
+    'underscore',
+    'backbone.marionette',
+    'moment',
     'hqwebapp/js/initial_page_data',
+    "hqwebapp/js/toggles",
     "cloudcare/js/formplayer/constants",
+    "cloudcare/js/formplayer/layout/views/progress_bar",
+    'nprogress/nprogress',
+    'sentry_browser',
+    "cloudcare/js/formplayer/users/models",
+    'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',  // for $.datetimepicker
 ], function (
     $,
+    _,
+    Marionette,
+    moment,
     initialPageData,
-    constants
+    toggles,
+    constants,
+    ProgressBar,
+    NProgress,
+    Sentry,
+    UsersModels
 ) {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
@@ -148,34 +164,44 @@ hqDefine('cloudcare/js/utils', [
         return new RegionContainer();
     };
 
-    var showLoading = function () {
+    var showProminentLoading = function () {
         hqRequire([
             "cloudcare/js/formplayer/app",
-            "hqwebapp/js/toggles",
             "cloudcare/js/formplayer/layout/views/progress_bar",
-        ], function (FormplayerFrontend, toggles, ProgressBar) {
-            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
-                const progressView = ProgressBar({
-                    progressMessage: gettext("Loading..."),
-                });
-                if (!FormplayerFrontend.regions) {
-                    FormplayerFrontend.regions = getRegionContainer();
-                }
-                $('#breadcrumb-region').css('z-index', '0');
-                const loadingElement = FormplayerFrontend.regions.getRegion('loadingProgress');
-                loadingElement.show(progressView);
-                let currentProgress = 10;
-                progressView.progressEl.find('.progress').css("height", "12px");
-                progressView.progressEl.find('.progress-container').css("width", "50%");
-                progressView.progressEl.find('.progress-title h1').css("font-size", "25px");
-                progressView.progressEl.find('#formplayer-progress ').css("background-color", "rgba(255, 255, 255, 0.7)");
-                progressView.setProgress(currentProgress, 100, 200);
-                sessionStorage.progressIncrementInterval = setInterval(function () {
-                    if (currentProgress <= 100) {
-                        progressView.setProgress(currentProgress, 100, 200);
-                        currentProgress += 1;
+        ], function (FormplayerFrontend, ProgressBar) {
+            setTimeout(function () {
+                const formplayerQueryInProgress = sessionStorage.formplayerQueryInProgress && JSON.parse(sessionStorage.formplayerQueryInProgress);
+                if(formplayerQueryInProgress) {
+                    const progressView = ProgressBar({
+                        progressMessage: gettext("Loading..."),
+                    });
+                    if (!FormplayerFrontend.regions) {
+                        FormplayerFrontend.regions = getRegionContainer();
                     }
-                }, 250);
+                    $('#breadcrumb-region').css('z-index', '0');
+                    const loadingElement = FormplayerFrontend.regions.getRegion('loadingProgress');
+                    loadingElement.show(progressView);
+                    let currentProgress = 10;
+                    progressView.progressEl.find('.progress').css("height", "12px");
+                    progressView.progressEl.find('.progress-container').css("width", "50%");
+                    progressView.progressEl.find('.progress-title h1').css("font-size", "25px");
+                    progressView.progressEl.find('#formplayer-progress ').css("background-color", "rgba(255, 255, 255, 0.7)");
+                    progressView.setProgress(currentProgress, 100, 200);
+                    sessionStorage.progressIncrementInterval = setInterval(function () {
+                        if (currentProgress <= 100) {
+                            progressView.setProgress(currentProgress, 100, 200);
+                            currentProgress += 1;
+                        }
+                    }, 250);
+                }
+            }, constants.MILLIS_BEFORE_SHOW_LOADING);
+        });
+    };
+
+    var showLoading = function () {
+        hqRequire(["hqwebapp/js/toggles"], function (toggles) {
+            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+                showProminentLoading();
             } else {
                 NProgress.start();
             }
@@ -183,12 +209,14 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var formplayerLoading = function () {
+        sessionStorage.formplayerQueryInProgress = true;
         if (shouldShowLoading()) {
             showLoading();
         }
     };
 
     var formplayerLoadingComplete = function (isError, message) {
+        sessionStorage.formplayerQueryInProgress = false;
         hideLoading();
         if (isError) {
             showError(message || gettext('Error saving!'), $('#cloudcare-notifications'));
@@ -237,10 +265,10 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var hideLoading = function () {
-        hqRequire(["cloudcare/js/formplayer/app", "hqwebapp/js/toggles"], function (FormplayerFrontend, toggles) {
-            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
-                $('#breadcrumb-region').css('z-index', '');
-                clearInterval(sessionStorage.progressIncrementInterval);
+        if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+            $('#breadcrumb-region').css('z-index', '');
+            clearInterval(sessionStorage.progressIncrementInterval);
+            hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
                 const progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView;
                 if (progressView) {
                     progressView.setProgress(100, 100, 200);
@@ -248,10 +276,10 @@ hqDefine('cloudcare/js/utils', [
                         FormplayerFrontend.regions.getRegion('loadingProgress').empty();
                     }, 250);
                 }
-            } else {
-                NProgress.done();
-            }
-        });
+            });
+        } else {
+            NProgress.done();
+        }
     };
 
     function getSentryMessage(data) {
@@ -266,43 +294,41 @@ hqDefine('cloudcare/js/utils', [
     }
 
     var reportFormplayerErrorToHQ = function (data) {
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            try {
-                var cloudcareEnv = FormplayerFrontend.getChannel().request('currentUser').environment;
-                if (!data.cloudcareEnv) {
-                    data.cloudcareEnv = cloudcareEnv || 'unknown';
-                }
-
-                const sentryData = _.omit(data, "type", "htmlMessage");
-                Sentry.captureMessage(getSentryMessage(data), {
-                    tags: {
-                        errorType: data.type,
-                    },
-                    extra: sentryData,
-                    level: "error",
-                });
-
-                $.ajax({
-                    type: 'POST',
-                    url: initialPageData.reverse('report_formplayer_error'),
-                    data: JSON.stringify(data),
-                    contentType: "application/json",
-                    dataType: "json",
-                    success: function () {
-                        window.console.info('Successfully reported error: ' + JSON.stringify(data));
-                    },
-                    error: function () {
-                        window.console.error('Failed to report error: ' + JSON.stringify(data));
-                    },
-                });
-            } catch (e) {
-                window.console.error(
-                    "reportFormplayerErrorToHQ failed hard and there is nowhere " +
-                    "else to report this error: " + JSON.stringify(data),
-                    e
-                );
+        try {
+            var cloudcareEnv = UsersModels.getCurrentUser().environment;
+            if (!data.cloudcareEnv) {
+                data.cloudcareEnv = cloudcareEnv || 'unknown';
             }
-        });
+
+            const sentryData = _.omit(data, "type", "htmlMessage");
+            Sentry.captureMessage(getSentryMessage(data), {
+                tags: {
+                    errorType: data.type,
+                },
+                extra: sentryData,
+                level: "error",
+            });
+
+            $.ajax({
+                type: 'POST',
+                url: initialPageData.reverse('report_formplayer_error'),
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                dataType: "json",
+                success: function () {
+                    window.console.info('Successfully reported error: ' + JSON.stringify(data));
+                },
+                error: function () {
+                    window.console.error('Failed to report error: ' + JSON.stringify(data));
+                },
+            });
+        } catch (e) {
+            window.console.error(
+                "reportFormplayerErrorToHQ failed hard and there is nowhere " +
+                "else to report this error: " + JSON.stringify(data),
+                e
+            );
+        }
     };
 
     var dateTimePickerTooltips = {     // use default text, but enable translations
