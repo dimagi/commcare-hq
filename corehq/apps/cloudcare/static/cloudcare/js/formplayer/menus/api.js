@@ -29,7 +29,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 defer = $.Deferred(),
                 options,
                 menus;
-
             $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
                 if (!params.preview) {
                     // Make sure the user has access to the app
