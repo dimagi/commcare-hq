@@ -11,6 +11,7 @@ TOKEN = "1234"
 ORGANIZATION_SLUG = "test-organization"
 PROJECT_SLUG = "test-project"
 RESOURCE_SLUG = "test-resource"
+RESOURCE_NAME = "Test Resource"
 
 DATA_PATH = 'corehq/apps/translations/tests/data/transifex/'
 
@@ -60,42 +61,65 @@ class TestTransifexApiClient(TestFileMixin, SimpleTestCase):
         expected_headers = {'Authorization': 'Bearer ' + TOKEN}
         self.assertEqual(self.tfx_client.api.make_auth_headers(), expected_headers)
 
-    def test_get_object_by_slug(self):
+    def test_request_get_object_by_slug(self):
         cls = self.tfx_client.api.Resource
         key = 'slug'
         value = RESOURCE_SLUG
         with self.mocker as mocker:
-            self.tfx_client._get_object(cls, **{key: value})
+            obj = self.tfx_client._get_object(cls, **{key: value})
             request = mocker.last_request
 
         expected_filter = f"filter[{key}]"
         self.assertEqual(request.method, 'GET')
         self.assertEqual(request.qs[expected_filter], [value])
+        self.assertIsInstance(obj, cls)
 
-    def test_list_objects(self):
+    def test_request_list_objects(self):
         cls = self.tfx_client.api.Resource
         key = 'project'
         value = self.tfx_client.project.id
         with self.mocker as mocker:
-            self.tfx_client._list_objects(cls, **{key: value}).get()
+            objects = [o for o in self.tfx_client._list_objects(cls, **{key: value})]
             request = mocker.last_request
 
         expected_filter = f"filter[{key}]"
         self.assertEqual(request.method, 'GET')
         self.assertEqual(request.qs[expected_filter], [value])
+        self.assertIsInstance(objects[0], cls)
 
-    def test_create_resource(self):
-        resource_name = "Test Resource"
+    def test_request_fetch_related(self):
+        obj = self.tfx_client.project
+        relative = 'languages'
         with self.mocker as mocker:
-            self.tfx_client._create_resource(RESOURCE_SLUG, resource_name)
+            [r for r in self.tfx_client._fetch_related(obj, 'languages')]
+            request = mocker.last_request
+
+        self.assertEqual(request.method, 'GET')
+        self.assertIn(obj.id, request.path)
+        self.assertIn(relative, request.path)
+
+    def test_request_create_resource(self):
+        with self.mocker as mocker:
+            self.tfx_client._create_resource(RESOURCE_SLUG, RESOURCE_NAME)
             request = mocker.last_request
 
         data = request.json()['data']
         self.assertEqual(request.method, 'POST')
         self.assertEqual(data['attributes']['slug'], RESOURCE_SLUG)
-        self.assertEqual(data['attributes']['name'], resource_name)
+        self.assertEqual(data['attributes']['name'], RESOURCE_NAME)
 
-    def test_delete_resource(self):
+    def test_request_lock_resource(self):
+        with self.mocker as mocker:
+            resource = self.tfx_client._get_resource(RESOURCE_SLUG)
+            self.tfx_client._lock_resource(resource)
+            request = mocker.last_request
+
+        data = request.json()['data']
+        self.assertEqual(request.method, 'PATCH')
+        self.assertEqual(data['id'], resource.id)
+        self.assertEqual(data['attributes']['accept_translations'], False)
+
+    def test_request_delete_resource(self):
         with self.mocker as mocker:
             resource = self.tfx_client._get_resource(RESOURCE_SLUG)
             self.tfx_client.delete_resource(RESOURCE_SLUG)
@@ -104,7 +128,7 @@ class TestTransifexApiClient(TestFileMixin, SimpleTestCase):
         self.assertEqual(request.method, 'DELETE')
         self.assertTrue(request.path.endswith(resource.id))
 
-    def test_upload_content_for_resource(self):
+    def test_request_upload_content_for_resource(self):
         cls = self.tfx_client.api.ResourceStringsAsyncUpload
         content = "Here is some content"
         key = 'resource'
@@ -119,7 +143,7 @@ class TestTransifexApiClient(TestFileMixin, SimpleTestCase):
         self.assertIn(key, text)
         self.assertIn(value, text)
 
-    def test_download_content_for_resource(self):
+    def test_request_download_content_for_resource(self):
         cls = self.tfx_client.api.ResourceStringsAsyncDownload
         key = 'resource'
         with self.mocker as mocker:
@@ -135,7 +159,7 @@ class TestTransifexApiClient(TestFileMixin, SimpleTestCase):
         # checks status of download
         self.assertEqual(get_download_status.method, 'GET')
 
-        # returns expected content
+        # finally, gets content
         expected_content = self.get_file(DATA_PATH + '/get_resource_strings_async_downloads_content', 'json')
         self.assertEqual(get_content.method, 'GET')
         self.assertEqual(content.decode('utf-8'), expected_content)
