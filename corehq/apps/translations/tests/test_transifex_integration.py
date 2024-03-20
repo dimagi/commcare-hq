@@ -12,7 +12,7 @@ ORGANIZATION_SLUG = "test-organization"
 PROJECT_SLUG = "test-project"
 RESOURCE_SLUG = "test-resource"
 
-DATA_PATH = 'corehq/apps/translations/tests/data/transifex_api/'
+DATA_PATH = 'corehq/apps/translations/tests/data/transifex/'
 
 
 class TestTransifexApiClient(TestFileMixin, SimpleTestCase):
@@ -22,7 +22,7 @@ class TestTransifexApiClient(TestFileMixin, SimpleTestCase):
     def setUpClass(cls, mocker):
         super().setUpClass()
         cls.mocker = mocker
-        cls.mocker.register_uri(requests_mock.ANY, requests_mock.ANY, json=cls._route_request)
+        cls.mocker.register_uri(requests_mock.ANY, requests_mock.ANY, text=cls.route_request)
         cls.tfx_client = TransifexApiClient(TOKEN, ORGANIZATION_SLUG, PROJECT_SLUG)
 
     def tearDown(self):
@@ -30,18 +30,18 @@ class TestTransifexApiClient(TestFileMixin, SimpleTestCase):
         self.mocker.reset_mock()
 
     @classmethod
-    def _route_request(cls, request, context):
+    def route_request(cls, request, context):
         if request.method == 'DELETE':
             context.status_code = 204
             return
         if request.method == 'GET' and 'downloads/' in request.path:
             return cls._handle_download_redirect(request, context)
-        return cls._get_json(request)
+        return cls._get_file(request, 'json')
 
     @classmethod
     def _handle_download_redirect(cls, request, context):
         if request.path.endswith('content'):
-            return cls._get_json(request)
+            return cls._get_file(request, 'txt')
 
         # Set redirect to our predefined content irrespective of ID
         url_pieces = request.url.split('/')
@@ -51,10 +51,10 @@ class TestTransifexApiClient(TestFileMixin, SimpleTestCase):
         return
 
     @classmethod
-    def _get_json(cls, request):
+    def _get_file(cls, request, ext):
         path_text = request.path.replace('/', '_')
-        file_path = DATA_PATH + request.method.lower() + path_text
-        return cls.get_json(file_path)
+        file_path = DATA_PATH + '/api/' + request.method.lower() + path_text
+        return cls.get_file(file_path, ext)
 
     def test_auth_setup(self):
         expected_headers = {'Authorization': 'Bearer ' + TOKEN}
