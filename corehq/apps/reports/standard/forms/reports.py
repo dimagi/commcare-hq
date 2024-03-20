@@ -15,6 +15,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.apps.reports.standard.deployments import DeploymentsReport
+from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from corehq.apps.reports.standard.forms.filters import SubmissionTypeFilter
 from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -28,7 +29,7 @@ def _compare_submissions(x, y):
     return cmp(y.received_on, x.received_on)
 
 
-class SubmissionErrorReport(DeploymentsReport):
+class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
     name = gettext_noop("Raw Forms, Errors & Duplicates")
     slug = "submit_errors"
     ajax_pagination = True
