@@ -1,5 +1,5 @@
 @form-text-indent: 23px;
-@form-text-size: 16px;
+@form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fit
 @group-indent: 15px;
 
 .form-container {
@@ -260,8 +260,15 @@
   }
 }
 
-.question-tile-row .gr-no-children.gr-has-no-questions.gr-has-no-nested-questions {
-  // Prevents a priority issue that's happened three times where
-  // a group with hidden values creates whitespace.
+.gr-has-no-nested-questions {
   display: none;
+}
+
+.checkbox, .radio {
+  input[type="checkbox"], input[type="radio"] {
+    margin-top: 3.15px;
+  }
+  // Overrides Bootstrap defaults
+  padding-top: 0px !important;
+  padding-bottom: 7px;
 }
