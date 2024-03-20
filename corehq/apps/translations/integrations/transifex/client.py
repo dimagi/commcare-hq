@@ -81,6 +81,10 @@ class TransifexApiClient(object):
         cls = self.api.Resource
         return self._get_object(cls, slug=resource_slug, project=self.project)
 
+    def _get_language_stats(self, resource_id, language_id):
+        cls = self.api.ResourceLanguageStats
+        return self._get_object(cls, id=language_id, resource=resource_id)
+
     @staticmethod
     def _list_objects(cls, **kwargs):
         try:
@@ -215,7 +219,7 @@ class TransifexApiClient(object):
         resource = self._get_resource(resource_slug)
         if hq_lang_code:
             language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
-            language_stats = self._list_language_stats(resource_id=resource.id, language_id=language_id)[0]
+            language_stats = self._get_language_stats(resource.id, language_id)
             return completed(language_stats)
         else:
             language_stats_list = self._list_language_stats(resource_id=resource.id)
