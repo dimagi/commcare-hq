@@ -199,7 +199,7 @@ class TestAutoDeactivationTask(TestCase):
 
         cls.idp = generator.create_idp('vaultwax', cls.account)
         cls.idp.enable_user_deactivation = True
-        cls.idp.idp_type = IdentityProviderType.AZURE_AD
+        cls.idp.idp_type = IdentityProviderType.ENTRA_ID
         cls.idp.save()
         cls.email_domain = AuthenticatedEmailDomain.objects.create(
             email_domain='vaultwax.com',
@@ -242,7 +242,7 @@ class TestAutoDeactivationTask(TestCase):
         self.assertTrue(web_user.is_active)
 
     @patch('corehq.apps.sso.tasks.send_html_email_async.delay')
-    def test_deactivation_skipped_if_azure_return_empty_sso_user(self, mock_send):
+    def test_deactivation_skipped_if_entra_return_empty_sso_user(self, mock_send):
         self.mock_get_all_members_of_the_idp.return_value = []
 
         auto_deactivate_removed_sso_users()

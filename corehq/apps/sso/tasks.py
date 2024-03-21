@@ -117,7 +117,7 @@ def send_idp_cert_expires_reminder_emails(num_days):
 def auto_deactivate_removed_sso_users():
     for idp in IdentityProvider.objects.filter(
         enable_user_deactivation=True,
-        idp_type=IdentityProviderType.AZURE_AD
+        idp_type=IdentityProviderType.ENTRA_ID
     ).all():
         idp_users = idp.get_all_members_of_the_idp()
         usernames_in_account = idp.owner.get_web_users(info_type='username')
