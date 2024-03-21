@@ -17,7 +17,8 @@ from corehq.apps.sso.tasks import (
     get_users_for_email_domains,
     get_keys_expiring_after,
     enforce_key_expiration_for_idp,
-    update_sso_user_api_key_expiration_dates
+    update_sso_user_api_key_expiration_dates,
+    send_api_token_expiration_reminder,
 )
 from corehq.apps.sso.tests import generator
 
@@ -132,6 +133,40 @@ class TestSSOTasks(TestCase):
     def test_idp_cert_expires_reminder_inactive(self):
         self.set_idp_active(False)
         self.assert_idp_cert_expires_reminder(False)
+
+    def _assert_idp_secret_expires_reminder(self, assert_reminder, remind_days=IDP_CERT_EXPIRES_REMINDER_DAYS):
+        # setup account attrs
+        recipient = "admin@example.com"
+        self.account.enterprise_admin_emails = [recipient]
+        self.account.save()
+        # configure idp expiration date
+        expires = datetime.datetime.utcnow()
+        self.idp.date_api_secret_expiration = expires
+        # configure idp auto-deactivation
+        self.idp.enable_user_deactivation = True
+        self.idp.save()
+        # test alerts
+        for num_days in remind_days:
+            with freeze_time(expires - datetime.timedelta(days=num_days)):
+                with patch("corehq.apps.sso.tasks.send_html_email_async.delay") as mock_send:
+                    send_api_token_expiration_reminder()
+                    if assert_reminder:
+                        mock_send.assert_called_once_with(ANY, recipient, ANY,
+                            text_content=ANY, email_from=ANY, bcc=ANY)
+                    else:
+                        mock_send.assert_not_called()
+
+    def test_idp_secret_expires_reminder(self):
+        self.set_idp_active(True)
+        self._assert_idp_secret_expires_reminder(True)
+
+    def test_idp_secret_expires_reminder_60(self):
+        self.set_idp_active(True)
+        self._assert_idp_secret_expires_reminder(False, [60])
+
+    def test_idp_secret_expires_reminder_inactive(self):
+        self.set_idp_active(False)
+        self._assert_idp_secret_expires_reminder(False)
 
     def tearDown(self):
         self.idp.delete()

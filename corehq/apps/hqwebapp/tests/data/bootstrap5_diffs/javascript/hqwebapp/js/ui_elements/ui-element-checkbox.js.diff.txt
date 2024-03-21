@@ -1,7 +1,9 @@
 --- 
 +++ 
-@@ -1,6 +1,6 @@
+@@ -1,7 +1,7 @@
+-"use strict";
 -hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-checkbox', [
++'use strict';
 +hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-checkbox', [
      'jquery',
 -    'hqwebapp/js/bootstrap3/main',

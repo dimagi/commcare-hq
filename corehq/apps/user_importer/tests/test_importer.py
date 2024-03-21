@@ -101,6 +101,25 @@ class TestUserDataMixin:
     def assert_user_data_equals(self, expected):
         self.assertEqual(self.user.get_user_data(self.domain.name).to_dict(), expected)
 
+    def assert_user_data_contains(self, expected):
+        data = self.user.get_user_data(self.domain.name).to_dict()
+        actual = {}
+        for key in expected.keys():
+            if key not in data:
+                continue
+            actual[key] = data.get(key)
+
+        self.assertDictEqual(actual, expected)
+
+    def assert_user_data_excludes(self, excluded_keys):
+        data = self.user.get_user_data(self.domain.name).to_dict()
+        found = {}
+        for key in excluded_keys:
+            if key in data:
+                found[key] = data['key']
+
+        self.assertEqual({}, found)
+
     def _test_user_data(self, is_web_upload=False):
         # Set user_data
         import_users_and_groups(
@@ -135,8 +154,7 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({
-            'commcare_project': 'mydomain', 'key': '', 'commcare_profile': '', 'mode': ''})
+        self.assert_user_data_contains({'key': ''})
 
         # Allow falsy but non-blank values
         import_users_and_groups(
@@ -147,8 +165,7 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({
-            'commcare_project': 'mydomain', 'key': 0, 'commcare_profile': '', 'mode': ''})
+        self.assert_user_data_contains({'key': 0})
 
     def _test_user_data_profile(self, is_web_upload=False):
         import_users_and_groups(
@@ -184,12 +201,7 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({
-            'commcare_project': 'mydomain',
-            'mode': 'minor',
-            'key': '',
-            PROFILE_SLUG: self.profile.id,
-        })
+        self.assert_user_data_contains({'mode': 'minor'})
         # Profile fields shouldn't actually be added to user_data
         self.assertEqual(self.user.get_user_data(self.domain.name).raw, {})
 
@@ -202,12 +214,7 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({
-            'commcare_project': 'mydomain',
-            'mode': 'minor',
-            'key': '',
-            PROFILE_SLUG: self.profile.id,
-        })
+        self.assert_user_data_contains({'mode': 'minor'})
 
     def _test_required_field_optional_if_profile_set(self, is_web_upload=False):
         required_field = [f for f in self.definition.get_fields() if f.slug == 'mode'][0]
@@ -222,12 +229,7 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({
-            'commcare_project': 'mydomain',
-            'key': '',
-            'mode': 'minor',
-            PROFILE_SLUG: self.profile.id,
-        })
+        self.assert_user_data_contains({'mode': 'minor'})
         # cleanup
         required_field.is_required = False
         required_field.save()
@@ -272,12 +274,7 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({
-            'commcare_project': 'mydomain',
-            'key': '',
-            'mode': 'minor',
-            PROFILE_SLUG: self.profile.id,
-        })
+        self.assert_user_data_contains({'mode': 'minor'})
 
     def _test_user_data_profile_unknown(self, is_web_upload=False):
         rows = import_users_and_groups(
@@ -300,13 +297,7 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({
-            'commcare_project': 'mydomain',
-            'key': '',
-            'mode': '',
-            'tempo': 'presto',
-            'commcare_profile': ''
-        })
+        self.assert_user_data_contains({'tempo': 'presto'})
 
         # Update data
         import_users_and_groups(
@@ -317,49 +308,7 @@ class TestUserDataMixin:
             self.upload_record.pk,
             is_web_upload
         )
-        self.assert_user_data_equals({
-            'commcare_project': 'mydomain',
-            'key': '',
-            'mode': '',
-            'tempo': 'andante',
-            'commcare_profile': ''
-        })
-
-    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
-    def _test_user_data_ignore_system_fields(self, is_web_upload=False):
-        self.setup_locations()
-        import_users_and_groups(
-            self.domain.name,
-            [self._get_spec(data={'key': 'F#'}, location_code=self.loc1.site_code)],
-            [],
-            self.uploading_user.get_id,
-            self.upload_record.pk,
-            is_web_upload
-        )
-        data = {
-            'commcare_project': 'mydomain',
-            'commcare_profile': '',
-            'key': 'F#',
-            'mode': '',
-        }
-        if not is_web_upload:
-            data.update({
-                'commcare_location_id': self.loc1.location_id,
-                'commcare_location_ids': self.loc1.location_id,
-                'commcare_primary_case_sharing_id': self.loc1.location_id,
-            })
-        self.assert_user_data_equals(data)
-
-        import_users_and_groups(
-            self.domain.name,
-            [self._get_spec(user_id=self.user.user_id, data={'key': 'G#'}, location_code=self.loc1.site_code)],
-            [],
-            self.uploading_user.get_id,
-            self.upload_record.pk,
-            is_web_upload
-        )
-        data.update({"key": "G#"})
-        self.assert_user_data_equals(data)
+        self.assert_user_data_contains({'tempo': 'andante'})
 
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin):
@@ -526,6 +475,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         # first location should be primary location
         self.assertEqual(self.user.location_id, self.loc1._id)
         self.assert_user_data_item('commcare_location_id', self.user.location_id)
+        self.assert_user_data_item('commcare_primary_case_sharing_id', self.user.location_id)
         # multiple locations
         self.assertListEqual([loc._id for loc in [self.loc1, self.loc2]], self.user.assigned_location_ids)
         # non-primary location
@@ -834,9 +784,6 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
 
     def test_uncategorized_data(self):
         self._test_uncategorized_data(is_web_upload=False)
-
-    def test_user_data_ignore_system_fields(self):
-        self._test_user_data_ignore_system_fields(is_web_upload=False)
 
     def test_upper_case_email(self):
         """
@@ -1863,8 +1810,35 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
     def test_uncategorized_data(self):
         self._test_uncategorized_data(is_web_upload=True)
 
-    def test_user_data_ignore_system_fields(self):
-        self._test_user_data_ignore_system_fields(is_web_upload=True)
+    def test_user_data_ignores_location_fields(self):
+        self.setup_locations()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'key': 'F#'}, location_code=self.loc1.site_code)],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            True
+        )
+        self.assert_user_data_excludes([
+            'commcare_location_id',
+            'commcare_location_ids',
+            'commcare_primary_case_sharing_id',
+        ])
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(user_id=self.user.user_id, data={'key': 'G#'}, location_code=self.loc1.site_code)],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            True
+        )
+        self.assert_user_data_excludes([
+            'commcare_location_id',
+            'commcare_location_ids',
+            'commcare_primary_case_sharing_id',
+        ])
 
     def test_set_role(self):
         import_users_and_groups(

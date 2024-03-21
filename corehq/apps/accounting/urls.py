@@ -1,4 +1,4 @@
-from django.conf.urls import re_path as url
+from django.urls import re_path as url
 
 from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher,
@@ -57,7 +57,8 @@ urlpatterns = [
     url(r'^accounts/new_subscription/(\d+)/$', NewSubscriptionView.as_view(), name=NewSubscriptionView.urlname),
     url(r'^software_plans/new/$', NewSoftwarePlanView.as_view(), name=NewSoftwarePlanView.urlname),
     url(r'^software_plans/(\d+)/$', EditSoftwarePlanView.as_view(), name=EditSoftwarePlanView.urlname),
-    url(r'^software_plan_versions/(\d+)/(\d+)/$', SoftwarePlanVersionView.as_view(), name=SoftwarePlanVersionView.urlname),
+    url(r'^software_plan_versions/(\d+)/(\d+)/$', SoftwarePlanVersionView.as_view(),
+        name=SoftwarePlanVersionView.urlname),
     url(r'^invoices/(\d+)/$', InvoiceSummaryView.as_view(), name=InvoiceSummaryView.urlname),
     url(r'^wire_invoices/(\d+)/$', WireInvoiceSummaryView.as_view(), name=WireInvoiceSummaryView.urlname),
     url(r'^customer_invoices/(\d+)/$', CustomerInvoiceSummaryView.as_view(),
@@ -71,4 +72,3 @@ urlpatterns = [
     url(AccountingAdminInterfaceDispatcher.pattern(), AccountingAdminInterfaceDispatcher.as_view(),
         name=AccountingAdminInterfaceDispatcher.name()),
 ]
-
