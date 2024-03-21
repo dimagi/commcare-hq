@@ -67,13 +67,13 @@ def update_calculated_properties_for_domains(domains):
             continue
         try:
             props = calced_props(domain_obj, domain['_id'], all_stats)
+            for key, value in props.items():
+                if value is None:
+                    raise ValueError(f"Null value detected for {key} in domain {domain['name']}")
             active_users_by_domain[domain['name']] = props['cp_n_active_cc_users']
-            if props['cp_first_form'] is None:
-                del props['cp_first_form']
-            if props['cp_last_form'] is None:
-                del props['cp_last_form']
-            if props['cp_300th_form'] is None:
-                del props['cp_300th_form']
+            for key in ['cp_first_form', 'cp_last_form', 'cp_300th_form']:
+                if props.get(key) is None:
+                    del props[key]
             domain_adapter.update(domain['_id'], props)
         except Exception as e:
             notify_exception(
