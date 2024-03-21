@@ -1,15 +1,24 @@
 --- 
 +++ 
-@@ -3,7 +3,7 @@
+@@ -1,23 +1,15 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load i18n %}
  {% load hq_shared_tags %}
  {% load compress %}
  
 -{% requirejs_main 'commtrack/js/bootstrap3/products_and_programs_main' %}
+-
+-{% block stylesheets %}
+-  <style>
+-    .btn-toolbar {
+-      margin-bottom: 10px;
+-    }
+-  </style>
+-{% endblock %}
 +{% requirejs_main 'commtrack/js/bootstrap5/products_and_programs_main' %}
  
- {% block stylesheets %}
-   <style>
-@@ -17,7 +17,7 @@
+ {% block page_content %}
    {% initial_page_data 'program_product_options' program_product_options %}
    <header>
      <div class="row">
@@ -18,16 +27,18 @@
          <h2>
            {% trans 'Available Programs' %}
          </h2>
-@@ -28,7 +28,7 @@
+@@ -28,8 +20,8 @@
    <div class="ko-program-product-list">
  
      <div class="row">
 -      <div class="col-sm-12">
+-        <div class="btn-toolbar">
 +      <div class="col-md-12">
-         <div class="btn-toolbar">
++        <div class="btn-toolbar mb-3">
            <a class="btn btn-primary" href="{% url "commtrack_program_new" domain %}">
              <i class="fa fa-plus"></i> {% trans 'Add Program' %}
-@@ -38,14 +38,14 @@
+           </a>
+@@ -38,14 +30,14 @@
      </div>
  
      <div class="row" data-bind="visible: !initialLoad()">
@@ -44,7 +55,7 @@
          <div id="user-list-notification" data-bind="visible: !dataList().length" class="alert alert-info">
            {% trans 'There are no programs for this project yet.' %}
          </div>
-@@ -64,8 +64,8 @@
+@@ -64,33 +56,33 @@
                    {% trans "This program is the default and cannot be deleted." %}
                  </div>
                  <div data-bind="visible: !is_default">
@@ -55,16 +66,22 @@
                      <i class="fa-regular fa-trash-can"></i>
                      {% trans "Delete Program" %}
                    </a>
-@@ -74,7 +74,7 @@
+ 
+-                  <div class="modal fade" data-bind="attr: {id: _id}">
++                  <div class="modal fade" data-bind="attr: {id: _id}" aria-labelledby="modalTitle">
                      <div class="modal-dialog">
                        <div class="modal-content">
                          <div class="modal-header">
 -                          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
-+                          <button type="button" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
-                           <h4 class="modal-title">
+-                          <h4 class="modal-title">
++                          <h4 class="modal-title" id="modalTitle">
                              {% trans "Are you sure you want to" %}
-                             <strong>{% trans "Delete " %}</strong>
-@@ -84,13 +84,13 @@
+-                            <strong>{% trans "Delete " %}</strong>
++                            <strong>{% trans "delete " %}</strong>
+                             '<span data-bind="text: name"></span>'?</h4>
++                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
+                         </div>
+                         <div class="modal-body">
                            <p>{% trans "This will delete the program. All of the programs products will be assigned to the default program instead. BE CAREFUL, as this action is irreversible." %}</p>
                          </div>
                          <div class="modal-footer">
