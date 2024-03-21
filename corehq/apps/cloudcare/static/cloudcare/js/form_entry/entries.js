@@ -976,6 +976,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.rawAnswer(constants.NO_ANSWER);
         self.xformAction = constants.CLEAR_ANSWER;
         self.question.onClear();
+        self.broadcastMessages(self.question, constants.NO_ANSWER);
     };
 
     /**
