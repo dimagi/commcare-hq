@@ -1,9 +1,8 @@
-import json
 import pytz
 import re
 from collections import OrderedDict, defaultdict
 
-from django.conf.urls import re_path as url, include
+from django.urls import re_path as url, include
 from django.contrib import messages
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
@@ -409,20 +408,24 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
 
 def download_index_files(app, build_profile_id=None):
     if app.copy_of:
+        def needed_for_ccz(path):
+            if profiles:
+                return path.startswith(prefix) and path.split('/')[1] not in profiles
+            else:
+                return path.startswith(prefix)
+
         prefix = 'files/'
+        profiles = None
         if build_profile_id is not None:
             prefix += build_profile_id + '/'
-            needed_for_CCZ = lambda path: path.startswith(prefix)
         else:
             profiles = set(app.build_profiles)
-            needed_for_CCZ = lambda path: (path.startswith(prefix) and
-                                           path.split('/')[1] not in profiles)
         if not (prefix + 'profile.ccpr') in app.blobs:
             # profile hasnt been built yet
             app.create_build_files(build_profile_id=build_profile_id)
             app.save()
         files = [(path[len(prefix):], app.fetch_attachment(path))
-                 for path in app.blobs if needed_for_CCZ(path)]
+                 for path in app.blobs if needed_for_ccz(path)]
     else:
         files = list(app.create_all_files().items())
     files = [
@@ -434,14 +437,10 @@ def download_index_files(app, build_profile_id=None):
 
 def source_files(app):
     """
-    Return the app's source files, including the app json.
+    Return the app's source files
     Return format is a list of tuples where the first item in the tuple is a
     file name and the second is the file contents.
     """
     if not app.copy_of:
         app.set_media_versions()
-    files = download_index_files(app)
-    app_json = json.dumps(
-        app.to_json(), sort_keys=True, indent=4, separators=(',', ': ')
-    )
-    return sorted(files)
+    return download_index_files(app)
