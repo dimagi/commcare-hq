@@ -56,6 +56,9 @@ MANAGERS = ADMINS
 
 # default to the system's timezone settings
 TIME_ZONE = "UTC"
+# this preserves current behavior prior to Django 5.0,
+# where timezone support will be enabled by default
+USE_TZ = False
 
 
 # Language code for this installation. All choices can be found here:
