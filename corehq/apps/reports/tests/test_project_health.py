@@ -1,9 +1,8 @@
 import datetime
 import uuid
+from unittest import mock
 
 from django.test import RequestFactory, TestCase
-
-from unittest import mock
 
 from dimagi.utils.dates import add_months
 
