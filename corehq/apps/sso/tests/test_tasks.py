@@ -256,7 +256,7 @@ class EnforceKeyExpirationTaskTests(TestCase):
         return idp
 
     def _create_user(self, username):
-        user = WebUser.create('test-domain', username, 'test123', None, None)
+        user = WebUser.create(None, username, 'test123', None, None)
         self.addCleanup(user.delete, None, None)
         return user
 
