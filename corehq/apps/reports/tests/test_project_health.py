@@ -168,6 +168,18 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
         self.assertEqual(month_summary.number_of_active_users, 1)
         self.assertEqual(month_summary.number_of_performing_users, 1)
 
+    def test_filter_by_app_id(self):
+        prev_month_summary, month_summary = self.get_summary_for_two_months(
+            self.users_in_group,
+            self.active_not_deleted_users,
+            self.APP_ID,
+        )
+
+        self.assertEqual(prev_month_summary.number_of_active_users, 1)
+        self.assertEqual(prev_month_summary.number_of_performing_users, 1)
+        self.assertEqual(month_summary.number_of_active_users, 1)
+        self.assertEqual(month_summary.number_of_performing_users, 1)
+
 
 @mock.patch('corehq.apps.reports.standard.project_health.GroupES', GroupESFake)
 class ProjectHealthDashboardTest(SetupProjectPerformanceMixin, TestCase):
