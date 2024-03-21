@@ -1,6 +1,7 @@
 --- 
 +++ 
-@@ -1,10 +1,10 @@
+@@ -1,11 +1,11 @@
+ 'use strict';
 -hqDefine("hqwebapp/js/bootstrap3/widgets",[
 +hqDefine("hqwebapp/js/bootstrap5/widgets",[
      'jquery',
@@ -13,7 +14,7 @@
  ], function ($, _, MapboxGeocoder, initialPageData) {
      var init = function () {
          var MAPBOX_ACCESS_TOKEN = initialPageData.get(
-@@ -108,7 +108,18 @@
+@@ -109,7 +109,18 @@
          });
  
          _.each($(".date-picker"), function (input) {

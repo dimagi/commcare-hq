@@ -217,11 +217,24 @@
     <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/tests/data/bootstrap5_diff_config.json" target="_blank">
       bootstrap5_diff_config.json
     </a> and commit those changes.
-    To confirm which directories to add, check your app for directories with "bootstrap" in the name:
+  </p>
+  <p>
+    For most applications, you can just run the following command to automatically update <code>bootstrap5_diff_config.json</code>:
+  </p>
+
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">./manage.py build_bootstrap5_diffs --update_app &lt;app_name&gt;</pre>
+    </div>
+  </div>
+  <p>
+    However, if your migration includes stylesheet files (<code>less</code>/<code>scss</code>), you will have to update
+    <code>bootstrap5_diff_config.json</code> manually.
+    To confirm which directories to add, check your app for directories with "bootstrap3" in the name:
   </p>
   <div class="card text-bg-light mb-3">
     <div class="card-body">
-      <pre class="m-0">find corehq/apps/&lt;app_name&gt; -type d | grep bootstrap</pre>
+      <pre class="m-0">find corehq/apps/&lt;app_name&gt; -type d | grep bootstrap3</pre>
     </div>
   </div>
   <p>

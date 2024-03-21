@@ -24,7 +24,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         menusCollections = hqImport("cloudcare/js/formplayer/menus/collections"),
         menusController = hqImport("cloudcare/js/formplayer/menus/controller"),
         sessionsController = hqImport("cloudcare/js/formplayer/sessions/controller"),
-        usersController = hqImport("cloudcare/js/formplayer/users/controller");
+        usersController = hqImport("cloudcare/js/formplayer/users/controller"),
+        formplayerConstants = hqImport("cloudcare/js/formplayer/constants");
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
@@ -169,7 +170,11 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         urlObject.setPage(page);
         utils.setSelectedValues(selections);
         utils.setUrlToObject(urlObject);
-        API.listMenus();
+
+        // Tags should not be included in set URL. Otherwise, it persists across menus we will need to handle clearing it.
+        urlObject.setRequestInitiatedByTag(formplayerConstants.requestInitiatedByTagsMapping.PAGINATION);
+        let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
+        API.listMenus(encodedUrl);
     });
 
     FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage, selections) {
@@ -200,20 +205,23 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiatedBy) {
+    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiatedByTag) {
         var urlObject = utils.currentUrlToObject();
         var queryObject = _.extend(
             {
                 inputs: queryDict,
                 execute: true,
-                initiatedBy: initiatedBy,
             },
             // force manual search in split screen case search for workflow compatibility
             sidebarEnabled ? { forceManualSearch: true } : {}
         );
         urlObject.setQueryData(queryObject);
         utils.setUrlToObject(urlObject);
-        API.listMenus();
+
+        // Tags should not be included in set URL. Otherwise, it persists across menus we will need to handle clearing it.
+        urlObject.setRequestInitiatedByTag(initiatedByTag);
+        let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
+        API.listMenus(encodedUrl);
     });
 
     FormplayerFrontend.on('restore_as:list', function () {

@@ -1,3 +1,4 @@
+"use strict";
 /*
  * Handles communication about the status of SSO login after the inactivity
  * timer has requested a re-login
