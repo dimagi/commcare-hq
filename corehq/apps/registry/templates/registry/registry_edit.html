@@ -243,7 +243,7 @@
                   <td data-bind="text: responseDate"></td>
                   <td>
                     <button type="button" class="btn btn-default btn-xs" data-bind="openModal: 'remove-project-space-modal'" title="{% trans_html_attr "Remove Project" %}">
-                      <i class="fa fa-trash"></i>
+                      <i class="fa-regular fa-trash-can"></i>
                     </button>
                   </td>
                 </tr>
@@ -293,7 +293,7 @@
                   </td>
                   <td>
                     <button type="button" class="btn btn-default btn-xs" data-bind="visible: canDelete, openModal: 'remove-grant-modal'" title="{% trans_html_attr "Remove Grant" %}">
-                      <i class="fa fa-trash"></i>
+                      <i class="fa-regular fa-trash-can"></i>
                     </button>
                   </td>
                 </tr>
@@ -314,10 +314,10 @@
                 <fieldset>
                   <legend>{% trans 'Delete Data Registry' %}</legend>
                   <div class="alert alert-danger">
-                    <p><i class="fa fa-exclamation-triangle"></i> {% trans 'The following action is permanent!' %}</p>
+                    <p><i class="fa-solid fa-triangle-exclamation"></i> {% trans 'The following action is permanent!' %}</p>
                     <p>
                       <button type="button" class="btn btn-danger btn-xs" data-bind="openModal: 'delete-registry-modal'">
-                        <i class="fa fa-trash"></i> {% trans "Delete Data Registry" %}
+                        <i class="fa-regular fa-trash-can"></i> {% trans "Delete Data Registry" %}
                       </button>
                     </p>
                   </div>
@@ -567,7 +567,7 @@
             {% csrf_token %}
             <div class="modal-body">
               <p class="alert alert-warning">
-                <i class="fa fa-exclamation-triangle"></i>
+                <i class="fa-solid fa-triangle-exclamation"></i>
                 {% blocktrans trimmed %}
                   It is important you read the entire message below thoroughly before completing this action.
                 {% endblocktrans %}
@@ -607,9 +607,11 @@
                              css: {disabled: deleteDisabled()},
                              attr: {disabled: deleteDisabled()}
                          ">
-                <i class="fa fa-trash" data-bind="
+                <i class="fa-regular fa-trash-can" data-bind="
                                  css: {
-                                     'fa-trash': !formDeleteRegistrySent(),
+                                     'fa-trash-can': !formDeleteRegistrySent(),
+                                     'fa-regular': !formDeleteRegistrySent(),
+                                     'fa': formDeleteRegistrySent,
                                      'fa-refresh': formDeleteRegistrySent,
                                      'fa-spin': formDeleteRegistrySent
                                  }

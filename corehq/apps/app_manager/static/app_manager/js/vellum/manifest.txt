@@ -981,10 +981,8 @@
 ├─ ws@5.2.3
 │  └─ async-limiter@~1.0.0
 ├─ XMLWriter@1.1.0
-├─ xpath@0.0.7
-│  ├─ biginteger@^1.0.3
-│  ├─ yarn@1.22.10
-│  └─ yarn@1.22.10
+├─ xpath@0.0.8
+│  └─ biginteger@^1.0.3
 ├─ xrayquire@0.1.1
 ├─ xtend@4.0.2
 ├─ y18n@5.0.8
@@ -1004,9 +1002,8 @@
 │  ├─ y18n@^5.0.5
 │  ├─ yargs-parser@^20.2.2
 │  └─ yargs-parser@20.2.9
-├─ yarn@1.22.19
 ├─ yauzl@2.10.0
 │  ├─ buffer-crc32@~0.2.3
 │  └─ fd-slicer@~1.1.0
 └─ yocto-queue@0.1.0
-Done in 0.17s.
+Done in 0.10s.

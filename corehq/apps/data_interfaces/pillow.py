@@ -12,6 +12,8 @@ from corehq.form_processor.models.forms import XFormInstance
 from corehq.apps.hqcase.constants import UPDATE_REASON_RESAVE
 from corehq.util.soft_assert import soft_assert
 
+from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
+
 
 class CaseDeduplicationProcessor(PillowProcessor):
     """Runs Case Deduplication actions whenever a user submits a form
@@ -32,6 +34,10 @@ class CaseDeduplicationProcessor(PillowProcessor):
             # TODO: If a case gets deleted, we don't remove the duplicates for this case?
             return
 
+        if self._is_system_change(change):
+            # Duplicates are meant to surface user duplicates, not system ones
+            return
+
         rules = self._get_applicable_rules(change)
         if not rules:
             return
@@ -39,17 +45,31 @@ class CaseDeduplicationProcessor(PillowProcessor):
         case = CommCareCase.objects.get_case(change.id, domain)
         return run_rules_for_case(case, rules, datetime.utcnow())
 
+    @staticmethod
+    def _is_system_change(change):
+        # This is an incomplete list of system changes.
+        # USER_LOCATION_OWNER_MAP_TYPE was important to exclude because the associated form
+        # is often not present. Other types can be freely added to make processing more efficient
+        if change.metadata.document_subtype == USER_LOCATION_OWNER_MAP_TYPE:
+            case = CommCareCase.objects.get_case(change.id, change.metadata.domain)
+            # Nothing prevents a user from creating a USER_LOCATION_OWNER_MAP_TYPE. However, these
+            # user-created cases will have their opened_by property set, whereas authentic CommTrack ones will not
+            if not case.opened_by:
+                return True
+
+        return False
+
     def _get_applicable_rules(self, change):
         domain = change.metadata.domain
         associated_form_id = change.metadata.associated_document_id
 
-        if not associated_form_id:
-            return []
-
         # TODO: feels like there should be some enforced order for running through rules?
         rules = self._get_rules(domain)
 
-        if associated_form_id == UPDATE_REASON_RESAVE:
+        if not associated_form_id or associated_form_id == UPDATE_REASON_RESAVE:
+            # no associated form occurs whenever a form is rebuilt. Forms can be rebuilt
+            # when a deletion is being undone or a form is being restored. In either case,
+            # all rules may be interested in these changes
             applicable_rules = rules
         else:
             associated_form = self._get_associated_form(change)

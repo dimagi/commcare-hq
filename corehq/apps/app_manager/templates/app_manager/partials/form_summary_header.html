@@ -5,7 +5,7 @@
 <div class="page-header ko-template" style="margin-top: 0;" id="form-summary-header">
 
   <h3>
-    <i class="fa fa-file-text-o"></i>
+    <i class="fa-regular fa-file-lines"></i>
     {% if page_type == 'form_summary' %}
       {% trans "Form Summary" %} - {% trans "Version" %} <select id="version-selector" class="form-control" data-bind="value: firstAppId"></select>
     {% elif page_type == 'form_diff' %}
@@ -28,7 +28,7 @@
           <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleCalculations, activeObs: showCalculations,
                          icon: 'fa fa-calculator', text: '{% trans "Calculations"|escapejs %}' } }--><!-- /ko -->
           <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleRelevance, activeObs: showRelevance,
-                         icon: 'fa fa-code-fork', text: '{% trans "Display"|escapejs %}' } }--><!-- /ko -->
+                         icon: 'fa-solid fa-code-branch', text: '{% trans "Display"|escapejs %}' } }--><!-- /ko -->
           <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleConstraints, activeObs: showConstraints,
                          icon: 'fa fa-ban', text: '{% trans "Validation"|escapejs %}' } }--><!-- /ko -->
           <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleComments, activeObs: showComments,

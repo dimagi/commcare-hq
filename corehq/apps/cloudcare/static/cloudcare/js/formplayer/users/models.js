@@ -1,3 +1,4 @@
+'use strict';
 /*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/users/models", function () {

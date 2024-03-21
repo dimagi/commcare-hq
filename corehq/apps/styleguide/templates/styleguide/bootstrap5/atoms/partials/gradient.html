@@ -1,0 +1,14 @@
+<div class="card mb-3">
+  <div class="card-body">
+    {% for color in gradient %}
+      <div class="sg-bg-{{ color.slug }} p-4">
+        ${{ color.slug }}: #<span class="text-uppercase">{{ color.hex }}</span>
+        {% if color.theme_equivalent %}
+          <div class="float-end">
+            equivalent to <span class="badge text-bg-light">${{ color.theme_equivalent }}</span>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>

@@ -1,0 +1,155 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Using Views</h1>
+  <p class="sg-lead">
+    Views with any sort of UI on HQ are mostly class-based, while functional views are largely used for data.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#templates">Templates</a>
+        <ul>
+          <li><a href="#templates-centered-page">Centered Page</a></li>
+          <li><a href="#templates-section-page">Section (Two-Column) Page</a></li>
+          <li><a href="#template-context">Template Context</a></li>
+        </ul>
+      </li>
+      <li><a href="#class-based-views">Class-Based Views</a></li>
+      <li><a href="#functional-views">Functional Views</a></li>
+      <li><a href="#mapping-urls-to-views">Mapping Urls to Views</a></li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">Overview</h2>
+  <p>
+    In Django there are two approaches to creating a view: class-based views and functional views.
+  </p>
+  <p>
+    Class-based views (CBV) are the most commonly chosen view for rendering a user-facing UIs on HQ.
+    This is due to the ease of setting up the template context in the view inheritance, as well as the application of
+    permissions-related decorators that cover an entire section or subclass of pages.
+    Very rarely are class-based views chosen for returning data.
+  </p>
+  <p>
+    Functional views are used mainly for data views (for instance returning a <code>JsonResponse</code>),
+    POSTing data, or as redirect views. Sometimes functional views are used to render templates,
+    but this is not very common on CommCare HQ and is not recommended unless the use case requires it.
+  </p>
+  <h2 id="templates" class="pt-4">
+    Templates
+  </h2>
+  <p>
+    Regardless of whether a view is class-based or functional, if the view returns a template it <strong>must</strong>
+    extend one of the two types of templates below.
+  </p>
+  <h3 id="templates-centered-page" class="pt-3">
+    Centered Page
+  </h3>
+  <p>
+    A <a href="{% url "example_centered_page_b5" %}">Centered Page</a> is generally a very simple single-page UI.
+    This is usually reserved for login and registration, error pages, or a user's list of projects. These are one-off
+    pages that don't fit into a collection of views or navigational area.
+  </p>
+  <p>
+    All templates that form a centered page extend the <code>hqwebapp/bootstrap5/base_page.html</code> template,
+    or extends a template that eventually extends the <code>base_page.html</code> template.
+  </p>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.simple_centered_page %}
+  <h3 id="templates-section-page" class="pt-3">
+    Section (Two-Column) Page
+  </h3>
+  <p>
+    A <a href="{% url "example_section_b5" %}">Section Page</a> is a page that has left-hand side navigation
+    and breadcrumbs. There is an overall "section" that ties all the pages shown in the left-hand navigation together.
+    Examples are Reports and Project Settings sections of a project space.
+  </p>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.simple_section %}
+  <h3 id="template-context" class="pt-3">
+    Template Context
+  </h3>
+  <p>
+    The template context is a dictionary passed to the template that defines all the variables the template needs
+    to render that page. In class-based views, there is a lot of guidance
+    built into the CBV structure that ensures no important pieces of the template context are missed.
+  </p>
+  <p>
+    If you see views where the breadcrumbs are partially rendered or the page header looks a bit different
+    from the other pages, it's likely that view did not have its template context properly set up.
+  </p>
+  <p>
+    With functional views, it is very easy to return a poorly formatted template context that causes the resulting
+    page to look a bit strange. The developer might be tempted to override <code>page_header</code> or navigation
+    blocks from the extending templates. Please do not rush to do this! First, explore whether the template context is
+    missing any information. We've created some helper methods <code>corehq.apps.hqwebapp.context</code> to help
+    structure the template context if you are working with a functional view. This usage is shown in the functional
+    view examples below.
+  </p>
+  <div class="alert alert-primary">
+    It's always recommended that you use a class-based view to render a template,
+    unless you have a very good reason for using a functional view.
+  </div>
+
+  <h2 id="class-based-views" class="pt-4">
+    Class-Based Views
+  </h2>
+  <p>
+    In comparison with functional views, class-based views help keep the UI standardized. As you will see in the
+    examples below, the template context is conveniently taken care of by the class structure. This template context
+    helps make sure that all the necessary pieces of information are provided to render breadcrumbs, navigation,
+    page titles, and <code>title</code> tags properly in the <code>base_page.html</code> and
+    <code>base_section.html</code> templates.
+  </p>
+
+  <p>
+    Below is an example of a
+    <a href="{% url "example_centered_page_b5" %}">centered page</a> and a
+    <a href="{% url "example_section_b5" %}">section page</a>. The templates are covered in the Templates section above.
+  </p>
+
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.class_view %}
+
+  <p>
+    We won't dive into great detail about the implementation here, as there is a lot of information about
+    <a href="https://commcare-hq.readthedocs.io/class_views.html#a-basic-centered-page"
+       target="_blank">using Class-based views on CommCare HQ</a> in our Read-the-docs.
+  </p>
+  <p>
+    This page serves as a quick reference and a way to see
+    a working example. It's also a good place to start to inspect any front end changes to templates in the event
+    of another Bootstrap upgrade.
+  </p>
+
+  <h2 id="functional-views" class="pt-4">
+    Functional Views
+  </h2>
+  <p>
+    Below are several examples of functional views. The views rendering templates make use of the context helper
+    <code>get_page_context</code> found in <code>corehq.apps.hqwebapp.context</code> to help structure the template
+    context needed to correctly render templates extending the <code>base_page.html</code> and
+    <code>base_section.html</code> templates.
+  </p>
+  <p>
+    You can also see working examples of a
+    <a href="{% url "example_centered_page_functional_b5" %}">Function-Based Centered Page</a> and a
+    <a href="{% url "example_section_functional_b5" %}">Function-Based Section Page</a>.
+  </p>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.functional_view %}
+
+  <h3 id="mapping-urls-to-views" class="pt-4">
+    Mapping Urls to Views
+  </h3>
+  <p>
+    Below is an example of how the class-based and functional-view examples above are specified in a
+    <code>urlpattern</code>.
+  </p>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.example_urls %}
+{% endblock content %}

@@ -1,4 +1,2 @@
-pyOpenSSL>=23.2.0  # for cryptography>=41
-cryptography>=41   # for security vulnerability
 python3-saml
 msal

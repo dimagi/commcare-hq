@@ -350,7 +350,7 @@ def _get_core_context_help_text_context(form):
         form_icon_class = 'fcc fcc-app-updateform'
     else:
         default_help_text_template_id = '#fd-hq-helptext-survey'
-        form_icon_class = 'fa fa-file-o'
+        form_icon_class = 'fa-regular fa-file'
     return {
         'defaultHelpTextTemplateId': default_help_text_template_id,
         'formIconClass': form_icon_class,

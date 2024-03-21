@@ -145,7 +145,7 @@ class DateRangePickerWidget(Input):
         output = super(DateRangePickerWidget, self).render(name, value, attrs, renderer)
         return format_html(
             '<div class="input-group hqwebapp-datespan">'
-            '   <span class="input-group-addon"><i class="fa fa-calendar"></i></span>'
+            '   <span class="input-group-addon"><i class="fa-solid fa-calendar-days"></i></span>'
             '   {}'
             '</div>',
             output

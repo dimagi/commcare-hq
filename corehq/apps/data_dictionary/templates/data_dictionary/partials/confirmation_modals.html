@@ -107,18 +107,32 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <h4 class="modal-title">
-                    {% trans 'Delete Case Property' %}
+                    {% blocktrans %}
+                        Delete
+                        '<span id="delete-case-prop-name"></span>'
+                        Case Property
+                    {% endblocktrans %}
                 </h4>
             </div>
             <div class="modal-body">
                 <p>
                     {% blocktrans %}
-                        There are currently no cases that store data with this case property, and so it is safe to delete.
+                        There are currently no cases that store data with this case property, so it is safe to delete.
                     {% endblocktrans %}
                 </p>
                 <p>
                     {% blocktrans %}
-                        Would you like to proceed with deleting this case property?
+                    Please note that if a new form or case was updated to the server recently that makes this property
+                    unsafe to delete, this will only be reflected in the Data Dictionary after a short while. This is not
+                    a blocking action and the case property can be created again if needed in the future. Please refer to
+                    <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary" target="_blank">the documentation</a>
+                    for additional information about this action.
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                        Would you like to mark this case property as deleted? Once confirmed the case
+                        property will be deleted upon clicking the "Save" button.
                     {% endblocktrans %}
                 </p>
             </div>
@@ -128,7 +142,7 @@
                 </button>
                 <button id="delete-case-prop-btn" type="button" class="btn btn-danger">
                     <i class="fa fa-trash"></i>
-                    {% trans 'Delete' %}
+                    {% trans 'Confirm' %}
                 </button>
             </div>
         </div>
@@ -160,7 +174,12 @@
                 </p>
                 <p>
                     {% blocktrans %}
-                    Please note however, that all case properties for this case type will also be deleted.
+                    Please note that all case properties for this case type will also be deleted.
+                    Furthermore, if a new form or case was updated to the server recently that makes this case type
+                    unsafe to delete, this will only be reflected in the Data Dictionary after a short while. This is not
+                    a blocking action and the case type can be created again if needed in the future. Please refer to
+                    <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143944977/Data+Dictionary" target="_blank">the documentation</a>
+                    for additional information about this action.
                     {% endblocktrans %}
                 </p>
                 <p>

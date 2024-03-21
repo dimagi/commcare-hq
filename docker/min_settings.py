@@ -56,9 +56,9 @@ WS4REDIS_CONNECTION = {
     'host': redis_host,
 }
 
-ELASTICSEARCH_HOST = 'elasticsearch2'
-ELASTICSEARCH_PORT = 9200  # ES 2 port
-ELASTICSEARCH_MAJOR_VERSION = 2
+ELASTICSEARCH_HOST = 'elasticsearch5'
+ELASTICSEARCH_PORT = 9200  # ES 5 port
+ELASTICSEARCH_MAJOR_VERSION = 5
 
 if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
     ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
@@ -87,7 +87,7 @@ INACTIVITY_TIMEOUT = 60 * 24 * 365
 
 BASE_ADDRESS = '{}:8000'.format(os.environ.get('HQ_PORT_8000_TCP_ADDR', 'localhost'))
 
-######## Email setup ########
+# ####### Email setup ########
 
 EMAIL_LOGIN = "notifications@example.com"
 EMAIL_PASSWORD = "******"
@@ -95,7 +95,7 @@ EMAIL_SMTP_HOST = "smtp.example.com"
 EMAIL_SMTP_PORT = 587
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-####### Bitly ########
+# ###### Bitly ########
 
 BITLY_OAUTH_TOKEN = None
 

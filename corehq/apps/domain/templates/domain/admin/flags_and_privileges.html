@@ -122,15 +122,15 @@
 
           <td class="text-center">
             <div data-bind="visible: hasDomainNamespace">
-              <i class="fa fa-spin fa-refresh" data-bind="visible: setTogglePending"></i>
               <button type="button"
                       class="btn btn-default"
                       data-bind="click: toggleEnabledState,
-                                                   css: {
-                                                       'active': domainEnabled(),
-                                                       'disabled': setTogglePending,
-                                                   }">
-                <i class="fa" data-bind="css: domainEnabled() ? 'fa-rocket' : 'fa-ban'"></i>
+                                 disable: setTogglePending,
+                                 css: {
+                                    'active': domainEnabled(),
+                                 }">
+                <i class="fa" data-bind="css: domainEnabled() ? 'fa-rocket' : 'fa-ban', hidden: setTogglePending"></i>
+                <i class="fa fa-spin fa-refresh" data-bind="visible: setTogglePending"></i>
                 <!--ko text: domainEnabled() ? 'Enabled' : 'Not Enabled' --><!--/ko-->
               </button>
             </div>

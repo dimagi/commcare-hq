@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/session_middleware_spec", function () {
     describe('SessionMiddle', function () {

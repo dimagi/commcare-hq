@@ -22,5 +22,6 @@ def repair_repeaters_with_whitelist_bug():
         repeater.save()
         fixed_repeater_ids.append(repeater.repeater_id)
 
-    log.info(f"[repair_repeaters] The following repeaters were fixed:\n{fixed_repeater_ids}")
+    if fixed_repeater_ids:
+        log.info(f"[repair_repeaters] The following repeaters were fixed:\n{fixed_repeater_ids}")
     return fixed_repeater_ids

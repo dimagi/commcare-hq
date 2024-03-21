@@ -4,9 +4,8 @@ from django.http import HttpResponse
 from django.urls import NoReverseMatch
 
 from tastypie import http
-from tastypie.exceptions import ImmediateHttpResponse, InvalidSortError
-from tastypie.resources import Resource
-
+from tastypie.exceptions import BadRequest, ImmediateHttpResponse, InvalidSortError
+from tastypie.resources import Resource, convert_post_to_patch
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
@@ -46,7 +45,8 @@ class JsonResourceMixin(object):
         # http://stackoverflow.com/questions/17280513/tastypie-json-header-to-use-utf-8
         desired_format = self.determine_format(request)
         serialized = self.serialize(request, data, desired_format)
-        return response_class(content=serialized, content_type=build_content_type(desired_format), **response_kwargs)
+        return response_class(content=serialized, content_type=build_content_type(desired_format),
+                              **response_kwargs)
 
     def determine_format(self, request):
         format = super(JsonResourceMixin, self).determine_format(request)
@@ -117,6 +117,41 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
     def get_required_privilege(self):
         return privileges.API_ACCESS
 
+    def patch_list_replica(self, create_or_update_object, request=None, obj_limit=None, **kwargs):
+        """
+        Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1466
+        (BSD licensed) and modified to call custom method `create_or_update_object` on each bundle
+        """
+        request = convert_post_to_patch(request)
+        deserialized = self.deserialize(request, request.body,
+                                        format=request.META.get('CONTENT_TYPE', 'application/json'))
+
+        collection_name = self._meta.collection_name
+        if collection_name not in deserialized:
+            raise BadRequest("Invalid data sent: missing '%s'" % collection_name)
+
+        if len(deserialized[collection_name]) and 'put' not in self._meta.detail_allowed_methods:
+            raise ImmediateHttpResponse(response=http.HttpMethodNotAllowed())
+
+        bundles_seen = []
+        status = http.HttpAccepted
+
+        if obj_limit and obj_limit < len(deserialized[collection_name]):
+            raise BadRequest("Object count exceeds limit for PATCH method.")
+
+        for data in deserialized[collection_name]:
+            data = self.alter_deserialized_detail_data(request, data)
+            bundle = self.build_bundle(data=data, request=request)
+            try:
+                create_or_update_object(bundle=bundle, **self.remove_api_resource_names(kwargs))
+            except AssertionError as e:
+                status = http.HttpBadRequest
+                bundle.data['_id'] = str(e)
+            bundles_seen.append(bundle)
+
+        to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
+        return self.create_response(request, to_be_serialized, response_class=status)
+
 
 class SimpleSortableResourceMixin(object):
     '''
@@ -131,7 +166,7 @@ class SimpleSortableResourceMixin(object):
     and should also have a meta field `ordering` that specifies the allowed fields
 
       _meta :: [str]
-    
+
     '''
 
     def apply_sorting(self, obj_list, options=None):
@@ -152,10 +187,10 @@ class SimpleSortableResourceMixin(object):
                 field_name = field
 
             # Map the field back to the actual attribute
-            if not field_name in self.fields:
+            if field_name not in self.fields:
                 raise InvalidSortError("No matching '%s' field for ordering on." % field_name)
 
-            if not field_name in self._meta.ordering:
+            if field_name not in self._meta.ordering:
                 raise InvalidSortError("The '%s' field does not allow ordering." % field_name)
 
             if self.fields[field_name].attribute is None:
@@ -179,8 +214,11 @@ class DomainSpecificResourceMixin(object):
         base_bundle = self.build_bundle(request=request)
         objects = self.obj_get_list(bundle=base_bundle, **self.remove_api_resource_names(kwargs))
         sorted_objects = self.apply_sorting(objects, options=request.GET)
-        
-        paginator = self._meta.paginator_class(request.GET, sorted_objects, resource_uri=self.get_resource_list_uri(request, kwargs), limit=self._meta.limit, max_limit=self._meta.max_limit, collection_name=self._meta.collection_name)
+
+        paginator = self._meta.paginator_class(request.GET, sorted_objects,
+                                               resource_uri=self.get_resource_list_uri(request, kwargs),
+                                               limit=self._meta.limit, max_limit=self._meta.max_limit,
+                                               collection_name=self._meta.collection_name)
         to_be_serialized = paginator.page()
 
         # Dehydrate the bundles in preparation for serialization.
@@ -199,14 +237,15 @@ class DomainSpecificResourceMixin(object):
         Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.11/tastypie/resources.py#L601
         (BSD licensed) and modified to use the kwargs.
 
-        (v0.9.14 combines get_resource_list_uri and get_resource_uri; this re-separates them to keep things simpler)
+        (v0.9.14 combines get_resource_list_uri and get_resource_uri; this re-separates them to keep
+        things simpler)
         """
         kwargs = dict(kwargs)
         kwargs['resource_name'] = self._meta.resource_name
 
         if self._meta.api_name is not None:
             kwargs['api_name'] = self._meta.api_name
-            
+
         try:
             return self._build_reverse_url("api_dispatch_list", kwargs=kwargs)
         except NoReverseMatch:

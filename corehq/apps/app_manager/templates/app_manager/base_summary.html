@@ -56,7 +56,7 @@
               <div class="appnav-item{% if page_type == 'form_summary' %} active{% endif %}">
                 <a href="{% url 'app_form_summary' domain app_id %}"
                    class="appnav-title appnav-title-secondary appnav-responsive">
-                  <i class="fa fa-file-text-o appnav-primary-icon"></i>
+                  <i class="fa-regular fa-file-lines appnav-primary-icon"></i>
                   <span>{% trans "Form Summary" %}</span>
                 </a>
                 <a class="appnav-secondary track-usage-link"
@@ -106,7 +106,7 @@
                 <a class="appnav-link-full">
                   <i data-bind="attr: { 'class': $data.icon }"></i>
                   <span data-bind="text: name"></span>
-                  <i class="fa fa-exclamation-triangle text-danger" data-bind="visible: has_errors"></i>
+                  <i class="fa-solid fa-triangle-exclamation text-danger" data-bind="visible: has_errors"></i>
                 </a>
               </div>
               <!-- ko foreach: subitems -->

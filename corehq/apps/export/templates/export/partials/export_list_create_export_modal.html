@@ -17,7 +17,7 @@
         </div>
         <div class="modal-body" data-bind="visible: showDrilldown">
           <div class="alert alert-warning" data-bind="visible: drilldownSubmissionError">
-            <i class="fa fa-exclamation-triangle"></i>
+            <i class="fa-solid fa-triangle-exclamation"></i>
             <strong data-bind="text: drilldownSubmissionError"></strong>
             <p>
               {% blocktrans %}If this problem persists, please <a href="#modalReportIssue" data-toggle="modal">Report an Issue</a>.{% endblocktrans %}
@@ -35,7 +35,7 @@
             <span data-bind="text: submissionCountText"></span>
           </div>
           <div class="alert alert-warning" data-bind="visible: showMislabeled">
-            <i class="fa fa-exclamation-triangle"></i>
+            <i class="fa-solid fa-triangle-exclamation"></i>
             {% trans "Mislabeled" %}
           </div>
           <div class="well" data-bind="visible: showSuggestions">
@@ -73,7 +73,7 @@
         </div>
         <div class="modal-body" data-bind="visible: drilldownLoadError">
           <div class="alert alert-warning">
-            <i class="fa fa-exclamation-triangle"></i>
+            <i class="fa-solid fa-triangle-exclamation"></i>
             <span data-bind="text: drilldownLoadError"></span>
           </div>
           <p>

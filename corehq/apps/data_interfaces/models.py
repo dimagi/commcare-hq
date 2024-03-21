@@ -42,7 +42,7 @@ from corehq.apps.data_interfaces.deduplication import (
     reset_deduplicate_rule,
 )
 from corehq.apps.data_interfaces.utils import property_references_parent
-from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS, is_copied_case
+from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS, is_copied_case, resave_case
 from corehq.apps.users.util import SYSTEM_USER_ID, cached_owner_id_to_display
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
@@ -1078,18 +1078,20 @@ class CaseDeduplicationMatchTypeChoices:
     )
 
 
-def case_matching_rule_exists_in_es(case, rule):
+def case_matching_rule_criteria_exists_in_es(case, rule):
     """Returns whether or not the current case, according to the properties
-    that the given rule cares about, is present in elasticsearch
+    that the given rule cares about, is present in elasticsearch.
+    Note that this only matches the filter criteria, not the closed status.
     """
     action = CaseDeduplicationActionDefinition.from_rule(rule)
     return _case_exists_in_es(
         case.domain,
         case,
         action.case_properties,
-        action.include_closed,
-        action.match_type,
-        case_filter_criteria=rule.memoized_criteria)
+        match_type=action.match_type,
+        case_filter_criteria=rule.memoized_criteria,
+        include_closed=True
+    )
 
 
 def find_matching_case_ids_in_es(case, rule, limit=0):
@@ -1143,18 +1145,15 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         raise ValueError(f"Unknown match type: {self.match_type}")
 
     def when_case_matches(self, case, rule):
+        return self._handle_case_duplicate(case, rule)
+
+    def _handle_case_duplicate(self, case, rule):
         if is_copied_case(case):
             return CaseRuleActionResult()
 
-        result = self._handle_case_duplicate_new(case, rule)
-        self._handle_case_duplicate(case, rule)
-
-        return result
-
-    def _handle_case_duplicate_new(self, case, rule):
-        if not case_matching_rule_exists_in_es(case, rule):
+        if not case_matching_rule_criteria_exists_in_es(case, rule):
             ALLOWED_ES_DELAY = timedelta(hours=1)
-            if datetime.utcnow() - case.modified_on > ALLOWED_ES_DELAY:
+            if datetime.utcnow() - case.server_modified_on > ALLOWED_ES_DELAY:
                 # If old data was found that is not present in ElasticSearch, the data is unreliable.
                 # We've decided skipping this record and recording an error is likely the safest way to handle this
                 # Hopefully, these errors allow us to track down the underlying bug or infrastructure issue
@@ -1165,6 +1164,12 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
                 # it arrives in ElasticSearch. If this case was modified within the acceptable latency window,
                 # we can skip it now, with the expectation that the CaseDeduplicationProcessor will correctly
                 # handle it when it arrives in ElasticSearch
+
+                # HACK: it was discovered that, because this processor uses results from Kafka, and because
+                # inserts into ElasticSearch are asychronous, we can receive cases here that will not yet be
+                # present in ElasticSearch but will never be processed later. In the short-term, we're avoiding
+                # this by resaving the case, with the intention to use a more stable approach in the future
+                resave_case(rule.domain, case, send_post_save_signal=False)
                 return CaseRuleActionResult(num_updates=0)
 
         try:
@@ -1260,73 +1265,6 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             num_updates = self._update_cases(case.domain, rule, duplicate_ids)
 
         return num_updates
-
-    # OLD APPROACH -- remove when _handle_case_duplicate_new has been proven safe
-    def _handle_case_duplicate(self, case, rule):
-        if case.closed and not self.include_closed:
-            # The pillow previously ignored these cases, so continue to ignore them here
-            # until we can remove this old logic
-            return CaseRuleActionResult(0)
-
-        domain = case.domain
-        new_duplicate_case_ids = set(_find_duplicate_case_ids(
-            domain,
-            case,
-            self.case_properties,
-            self.include_closed,
-            self.match_type,
-            case_filter_criteria=rule.memoized_criteria,
-        ))
-        # If the case being searched isn't in the case search index
-        # (e.g. if this is a case create, and the pillows are racing each other.)
-        # Add it to the list
-        new_duplicate_case_ids.add(case.case_id)
-
-        with transaction.atomic():
-            # Compare the list of the elastic search duplicates with those
-            # stored in CaseDuplicate. If the lists are the same or no other duplicates exist,
-            # no work is required. If the lists differ, then delete all the existing entries
-            # then recreate all the duplicates again
-            # all of this seem unnecessary with the new model
-            if self._handle_existing_duplicates(case.case_id, new_duplicate_case_ids):
-                return CaseRuleActionResult(num_updates=0)
-            CaseDuplicate.bulk_create_duplicate_relationships(self, case, new_duplicate_case_ids)
-
-        return CaseRuleActionResult(0)
-
-    def _handle_existing_duplicates(self, case_id, new_duplicate_case_ids):
-        """Handles existing duplicate objects.
-
-        Returns True if there is nothing else to be done
-        """
-        try:
-            existing_duplicate_case_ids = set(
-                CaseDuplicate.objects
-                .prefetch_related('potential_duplicates')
-                .get(action=self, case_id=case_id)
-                .potential_duplicates
-                .all()
-                .values_list('case_id', flat=True)
-            ) | set([case_id])  # The duplicates we currently have for this case tracked in the system
-        except CaseDuplicate.DoesNotExist:
-            # There are no duplicate cases currently in the system.
-            # We continue on to create duplicates only if there are duplicates to create.
-            return new_duplicate_case_ids == {case_id}
-
-        if new_duplicate_case_ids == {case_id}:
-            # This is no longer a duplicate, so check that there aren't any
-            # other cases that are no longer duplicates
-            CaseDuplicate.remove_unique_cases(action=self, case_id=case_id)
-            CaseDuplicate.remove_duplicates_for_action(action=self, case_id=case_id)
-            return True
-
-        if new_duplicate_case_ids == existing_duplicate_case_ids:
-            # If the list of duplicates hasn't changed, we don't need to do anything more
-            return True
-
-        # Delete all CaseDuplicates with this case_id, we'll recreate them later
-        CaseDuplicate.remove_duplicates_for_action(action=self, case_id=case_id)
-        return False
 
     def _update_cases(self, domain, rule, duplicate_case_ids):
         """Updates all the duplicate cases according to the rule
