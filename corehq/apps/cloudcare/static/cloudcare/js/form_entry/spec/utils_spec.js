@@ -25,18 +25,12 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
         it('Should get root form for questions', function () {
             /**
              *  Form's question tree:
-             *      grouped-element-tile-row
-             *          text
-             *      grouped-element-tile-row
-             *          group
-             *              grouped-element-tile-row
-             *                  textInGroup
-             *      grouped-element-tile-row
-             *          repeat
-             *              grouped-element-tile-row
-             *                  groupInRepeat
-             *                      grouped-element-tile-row
-             *                          textInRepeat
+             *     text
+             *     group
+             *         textInGroup
+             *     repeat
+             *         groupInRepeat
+             *             textInRepeat
              */
             hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", { WEB_APPS_ANCHORED_SUBMIT: false });
             var text = fixtures.textJSON({ix: "0"}),
@@ -49,10 +43,11 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
                     tree: [text, group, repeat],
                 });
 
-            [text, group, repeat] = form.children().map(child => child.children()[0]);
-            [groupInRepeat] = repeat.children()[0].children();
-            [textInRepeat] = groupInRepeat.children()[0].children();
-            assert.equal(groupInRepeat.caption(), null);
+            [text, group, repeat] = form.children();
+            [groupInRepeat] = repeat.children();
+            [textInRepeat] = groupInRepeat.children();
+
+            assert.equal(groupInRepeat.children()[0].caption(), null);
             assert.equal(utils.getRootForm(text), form);
             assert.equal(utils.getRootForm(groupInRepeat), form);
             assert.equal(utils.getRootForm(textInRepeat), form);
