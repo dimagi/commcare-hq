@@ -152,6 +152,8 @@ def get_keys_expiring_after(users, expiration_date):
 
     for user in users:
         yield from user.api_keys(manager='all_objects').filter(has_noncompliant_expiration)
+
+
 @periodic_task(run_every=crontab(minute=0, hour=14), acks_late=True)
 def send_api_token_expiration_reminder():
     """
