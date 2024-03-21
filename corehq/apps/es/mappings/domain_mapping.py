@@ -39,7 +39,7 @@ DOMAIN_MAPPING = {
             "type": "object",
             "properties": {
                 "case_owner_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "case_type": {
                     "type": "text"
@@ -93,7 +93,7 @@ DOMAIN_MAPPING = {
                     "type": "keyword"
                 },
                 "user_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "user_ip": {
                     "type": "text"
@@ -381,10 +381,10 @@ DOMAIN_MAPPING = {
                     "type": "boolean"
                 },
                 "sf_account_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "sf_contract_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "sub_area": {
                     "fields": {
@@ -495,13 +495,13 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "sms_case_registration_owner_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "sms_case_registration_type": {
             "type": "text"
         },
         "sms_case_registration_user_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "sms_mobile_worker_registration_enabled": {
             "type": "boolean"
@@ -537,7 +537,7 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "yt_id": {
-            "type": "text"
+            "type": "keyword"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"
