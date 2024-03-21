@@ -56,7 +56,7 @@ class TestTransifexApiClient(TestFileMixin, SimpleTestCase):
     @classmethod
     def _get_file(cls, request, ext):
         path_text = request.path.replace('/', '_')
-        file_path = DATA_PATH + '/api/' + request.method.lower() + path_text
+        file_path = DATA_PATH + 'api/' + request.method.lower() + path_text
         return cls.get_file(file_path, ext)
 
     def test_auth_setup(self):
@@ -162,7 +162,7 @@ class TestTransifexApiClient(TestFileMixin, SimpleTestCase):
         self.assertEqual(get_download_status.method, 'GET')
 
         # finally, gets content
-        expected_content = self.get_file(DATA_PATH + '/get_resource_strings_async_downloads_content', 'json')
+        expected_content = self.get_file(DATA_PATH + 'api/get_resource_strings_async_downloads_content', 'txt')
         self.assertEqual(get_content.method, 'GET')
         self.assertEqual(content.decode('utf-8'), expected_content)
 
