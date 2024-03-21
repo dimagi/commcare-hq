@@ -18,7 +18,7 @@ SMS_MAPPING = {
             "type": "text"
         },
         "backend_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "base_doc": {
             "type": "text"
@@ -60,7 +60,7 @@ SMS_MAPPING = {
             "type": "boolean"
         },
         "reminder_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "text": {
             "type": "text"
@@ -69,7 +69,7 @@ SMS_MAPPING = {
             "type": "text"
         },
         "xforms_session_couch_id": {
-            "type": "text"
+            "type": "keyword"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"
