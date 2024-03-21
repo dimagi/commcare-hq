@@ -1,6 +1,10 @@
 --- 
 +++ 
-@@ -4,7 +4,7 @@
+@@ -1,64 +1,50 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load hq_shared_tags %}
+ {% load crispy_forms_tags %}
  {% load i18n %}
  {% load compress %}
  
@@ -9,16 +13,32 @@
  
  {% block page_content %}
    {% initial_page_data 'program_product_options' program_product_options %}
-@@ -13,7 +13,7 @@
+-  <form class="form form-horizontal" name="program" method="post">
++  <form class="form mb-3" name="program" method="post">
+     {% csrf_token %}
      <legend>{% trans "Program Information" %}</legend>
      {% crispy form %}
-     <div class="form-actions">
+-    <div class="form-actions">
 -      <div class="col-sm-4 col-md-5 col-lg-3 col-sm-offset-3 col-md-offset-4 col-lg-offset-2">
-+      <div class="col-md-4 col-lg-5 col-xl-3 col-sm-offset-3 col-md-offset-4 col-lg-offset-2">
-         <button type="submit" class="btn btn-primary">
-           {% if program.get_id %}
-             {% trans 'Update Program' %}
-@@ -29,7 +29,7 @@
+-        <button type="submit" class="btn btn-primary">
+-          {% if program.get_id %}
+-            {% trans 'Update Program' %}
+-          {% else %}
+-            {% trans 'Create Program' %}
+-          {% endif %}
+-        </button>
+-      </div>
+-    </div>
++    <button type="submit" class="btn btn-primary">
++      {% if program.get_id %}
++        {% trans 'Update Program' %}
++      {% else %}
++        {% trans 'Create Program' %}
++      {% endif %}
++    </button>
+   </form>
+ 
+   {% if has_data_list %}
      <div class="ko-program-product-list">
  
        <div class="row" data-bind="visible: !initialLoad()">
@@ -27,22 +47,25 @@
            <i class="fa fa-spin fa-spinner"></i>
            {% trans 'Loading products...' %}
          </div>
-@@ -37,7 +37,7 @@
+       </div>
  
-       <div class="hide hide-until-load">
-         <div class="row" data-bind="visible: dataList().length">
+-      <div class="hide hide-until-load">
+-        <div class="row" data-bind="visible: dataList().length">
 -          <div class="col-sm-4">
-+          <div class="col-md-4">
-             <div class="form-inline" style="margin: 1.6em 0;">
-               <label for="pagination-limit">{% trans 'Show' %}</label>
-               <select id="pagination-limit" data-bind="event: {change: update_limit}" class="form-control">
-@@ -47,13 +47,13 @@
-               </select>
-             </div>
-           </div>
+-            <div class="form-inline" style="margin: 1.6em 0;">
+-              <label for="pagination-limit">{% trans 'Show' %}</label>
+-              <select id="pagination-limit" data-bind="event: {change: update_limit}" class="form-control">
+-                {% for limit in pagination_limit_options %}
+-                  <option value="{{ limit }}">{% blocktrans %}{{ limit }} products per page{% endblocktrans %}</option>
+-                {% endfor %}
+-              </select>
+-            </div>
+-          </div>
 -          <div class="col-sm-8">
 -            {% include 'commtrack/manage/partials/bootstrap3/pagination.html' %}
-+          <div class="col-md-8">
++      <div class="d-none hide-until-load">
++        <div class="row mb-1" data-bind="visible: dataList().length">
++          <div class="col-md-12">
 +            {% include 'commtrack/manage/partials/bootstrap5/pagination.html' %}
            </div>
          </div>
@@ -53,12 +76,34 @@
              <div id="user-list-notification" data-bind="visible: !dataList().length" class="alert alert-info">
                {% blocktrans %}There are no products for this program yet.{% endblocktrans %}
              </div>
-@@ -76,7 +76,7 @@
+             <div data-bind="visible: dataList().length">
+-              <table class="table table-striped table-bordered" style="margin-bottom:0">
++              <table class="table table-striped table-bordered">
+                 <thead>
+                   <tr>
+                     <th>{% trans "Product" %}</th>
+@@ -76,10 +62,23 @@
                    </tr>
                  </tbody>
                </table>
 -              {% include 'commtrack/manage/partials/bootstrap3/pagination.html' %}
-+              {% include 'commtrack/manage/partials/bootstrap5/pagination.html' %}
              </div>
            </div>
          </div>
++
++        <div class="row" data-bind="visible: dataList().length">
++          <div class="col-md-4">
++            <select id="pagination-limit" data-bind="event: {change: update_limit}" class="form-control">
++              {% for limit in pagination_limit_options %}
++                <option value="{{ limit }}">{% blocktrans %}{{ limit }} products per page{% endblocktrans %}</option>
++              {% endfor %}
++            </select>
++          </div>
++          <div class="col-md-8">
++            {% include 'commtrack/manage/partials/bootstrap5/pagination.html' %}
++          </div>
++        </div>
++
+       </div>
+     </div>
+   {% endif %}
