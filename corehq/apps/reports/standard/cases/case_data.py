@@ -665,7 +665,7 @@ class DeleteCaseView(BaseProjectReportSectionView):
                                           "of the cases it created before attempting to delete this form."))
             else:
                 messages.error(request, _("Deleting this case would delete too many related cases. "
-                                          "Please delete some of this cases' subcases before attempting"
+                                          "Please delete some of this cases' subcases before attempting "
                                           "to delete this case."))
             return {'redirect': True}
 
