@@ -125,7 +125,6 @@ class SubmissionErrorReport(DeploymentsReport):
                     view_name = 'render_form_data'
                 else:
                     view_name = 'download_form'
-                view_name = 'download_form'
                 try:
                     url = reverse(view_name, args=[self.domain, doc_id])
                     if tab_link:
