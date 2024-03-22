@@ -44,7 +44,8 @@ class SubmissionErrorReport(DeploymentsReport):
                                    DataTablesColumn(_("Submit Time"), prop_name="received_on"),
                                    DataTablesColumn(_("Form Type"), sortable=False),
                                    DataTablesColumn(_("Error Type"), sortable=False),
-                                   DataTablesColumn(_("Error Message"), sortable=False))
+                                   DataTablesColumn(_("Error Message"), sortable=False),
+                                   DataTablesColumn(_("View Cases"), sortable=False))
         if self.support_toggle_enabled:
             headers.add_column(DataTablesColumn(_("Re-process Form")))
         headers.custom_sort = [[2, "desc"]]
