@@ -161,6 +161,7 @@ urlpatterns = [
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
     url(r'^oauth/', include('corehq.apps.oauth_integrations.urls')),
+    url(r'^abdm/', include('custom.abdm.urls')),
 ] + LOCAL_APP_URLS
 
 if settings.ENABLE_PRELOGIN_SITE:

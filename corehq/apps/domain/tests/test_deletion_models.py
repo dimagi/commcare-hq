@@ -39,6 +39,8 @@ IGNORE_APPS = {
     'toggle_ui',
     'sso',
     'oauth_integrations',
+    'abdm_hip',
+    'abdm_hiu',
 }
 
 IGNORE_MODELS = {

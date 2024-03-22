@@ -472,6 +472,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('geospatial', 'GeoConfig', 'domain'),
     ModelDeletion('email', 'EmailSettings', 'domain'),
     ModelDeletion('hqmedia', 'LogoForSystemEmailsReference', 'domain'),
+    ModelDeletion('abdm', 'ABDMUser', 'domain'),
 ]
 
 

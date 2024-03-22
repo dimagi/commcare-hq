@@ -16,6 +16,10 @@
 # feature added by commcare-hq.
 # See: ./hqscripts/management/commands/makemigrations.py
 #
+abdm
+ 0001_abdm_user
+ 0002_abdmuser_token_created_at
+ 0003_alter_abdmuser_token_created_at
 accounting
  0001_squashed_0052_ensure_report_builder_plans
  0002_auto_20170222_2008
