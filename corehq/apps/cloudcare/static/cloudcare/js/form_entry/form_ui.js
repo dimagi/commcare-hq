@@ -830,8 +830,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         // If the question has ever been answered, set this to true.
         self.hasAnswered = false;
 
-        // if media question has been processed in FP successfully set to true
-        self.formplayerProcessed = false;
+        // Media questions use a Deferred object that is resolved on successful Formplayer processing
+        self.formplayerMediaRequest = null;
 
         // pendingAnswer is a copy of an answer being submitted, so that we know not to reconcile a new answer
         // until the question has received a response from the server.
