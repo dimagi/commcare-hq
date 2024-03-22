@@ -1,0 +1,16 @@
+<div class="float-end">
+  <ul class="pagination" data-bind="foreach: all_pages">
+    <li class="page-item" data-bind="visible: ($data == $parent.all_pages()[0])">
+      <a class="page-link" href="#"
+         data-bind="click: function (data, event) { $parent.change_page($parent.previous_page) }, isPrevNextDisabled: $parent.previous_page">Prev</a>
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="#"
+         data-bind="click: $parent.change_page.bind($data), text: $data, isPaginationActive: $parent.current_page"></a>
+    </li>
+    <li class="page-item" data-bind="visible: ($data == $parent.all_pages()[$parent.all_pages().length-1])">
+      <a class="page-link" href="#"
+         data-bind="click: function (data, event) { $parent.change_page($parent.next_page) }, isPrevNextDisabled: $parent.next_page">Next</a>
+    </li>
+  </ul>
+</div>

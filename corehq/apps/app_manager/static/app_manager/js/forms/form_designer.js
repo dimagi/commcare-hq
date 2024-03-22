@@ -99,7 +99,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
             },
         });
 
-        CKEDITOR_BASEPATH = initialPageData('CKEDITOR_BASEPATH');     // eslint-disable-line no-unused-vars, no-undef
+        window.CKEDITOR_BASEPATH = initialPageData('CKEDITOR_BASEPATH');     // eslint-disable-line no-unused-vars, no-undef
 
         // This unfortunate chain of import callbacks was required because
         // appcues appears to make an attempt to use the same requirejs

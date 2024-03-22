@@ -1,6 +1,5 @@
 hqDefine("fixtures/js/view-table", [
     "jquery",
-    "hqwebapp/js/django",
     "hqwebapp/js/initial_page_data",
     "reports/js/standard_hq_report",
     "reports/js/config.dataTables.bootstrap",
@@ -8,7 +7,6 @@ hqDefine("fixtures/js/view-table", [
     "datatables.fixedColumns",
 ], function (
     $,
-    django,
     initialPageData,
     standardHQReportModule,
     datatablesConfig,

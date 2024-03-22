@@ -35,7 +35,7 @@ if you have questions or need feedback.
 
 Useful Tools
 ------------
-Here are some tools widely used by CommCareHQ developers
+Here are some tools widely used by CommCare HQ developers
 
 flake8
     Flake8 is run on all PRs automatically. You can run it locally to ensure your

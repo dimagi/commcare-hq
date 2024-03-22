@@ -45,6 +45,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
             var urlObject = formplayerUtils.currentUrlToObject();
             if (urlObject.endpointId) {
+                menuResponse.breadcrumbs = [];
                 urlObject.replaceEndpoint(menuResponse.selections);
                 formplayerUtils.setUrlToObject(urlObject);
             }
@@ -67,7 +68,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             if (urlObject.appId === undefined || urlObject.appId === null) {
                 if (menuResponse.appId === null || menuResponse.appId === undefined) {
                     FormplayerFrontend.trigger('showError', "Response did not contain appId even though it was" +
-                        "required. If this persists, please report an issue to CommCareHQ");
+                        "required. If this persists, please report an issue to CommCare HQ");
                     FormplayerFrontend.trigger("apps:list");
                     return;
                 }

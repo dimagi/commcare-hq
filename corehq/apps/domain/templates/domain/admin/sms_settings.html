@@ -1,4 +1,4 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -7,28 +7,21 @@
 {% block page_content %}
   {% initial_page_data "settings" settings %}
   {% initial_page_data "other_sms_codes" other_sms_codes %}
-  <form id="settings" class="form form-horizontal" method="post">
+  <form id="settings" method="post">
     {% csrf_token %}
     <fieldset>
       <legend>{% trans 'Stock Actions' %}</legend>
-      <div class="form-group">
-        <label class="{% css_label_class %} control-label">{% trans 'Edit Actions' %}</label>
-        <div class="{% css_field_class %}">
-          {% include "domain/admin/commtrack_action_table.html" %}
-          <button type="button" class="btn btn-default" data-bind="click: new_action">
-            <i class="fa fa-plus"></i> {% trans "New Action" %}
-          </button>
-        </div>
+      <div class="{% css_field_class %}">
+        {% include "domain/admin/commtrack_action_table.html" %}
+        <button type="button" class="btn btn-outline-primary float-end" data-bind="click: new_action">
+          <i class="fa fa-plus"></i> {% trans "New Action" %}
+        </button>
       </div>
     </fieldset>
 
-    <div class="form-actions">
-      <div class="{% css_action_class %}">
-        <button type="submit" class="btn btn-primary">
-          {% trans "Save Settings" %}
-        </button>
-      </div>
-    </div>
+    <button type="submit" class="btn btn-primary">
+      {% trans "Save Settings" %}
+    </button>
 
     <input name="json" type="hidden" data-bind="value: json_payload" />
   </form>

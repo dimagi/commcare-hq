@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('app_manager/js/download_index_main',[
     'jquery',
     'underscore',
