@@ -29,7 +29,6 @@ class AppES(HQESQuery):
             uses_case_sharing,
             cloudcare_enabled,
             app_id,
-            not_deleted,
         ] + super(AppES, self).builtin_filters
 
 
@@ -97,7 +96,3 @@ def cloudcare_enabled(cloudcare_enabled):
 
 def app_id(app_id):
     return filters.term('copy_of', app_id)
-
-
-def not_deleted():
-    return filters.term("doc_type", "Application")
