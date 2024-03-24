@@ -422,11 +422,10 @@ class ApplicationDataRMIHelper(object):
     def _all_forms(self):
         forms = []
         unknown_forms = []
-        for f in get_exports_by_form(self.domain):
+
+        for f in get_exports_by_form(self.domain, use_es=self.domain_object.show_deleted_apps_exports):
             form = f['value']
             if form.get('app_deleted') and not form.get('submissions'):
-                continue
-            if form.get('app_deleted') and not self.domain_object.show_deleted_apps_exports:
                 continue
             if 'app' in form:
                 form['has_app'] = True
