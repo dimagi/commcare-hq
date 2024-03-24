@@ -111,6 +111,8 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
 
     @flaky_slow
     def test_get_exports_by_form(self):
+        # Call this twice, since the couchdb `update_after` to force couchdb to return the right results
+        get_exports_by_form(self.domain)
         self.assertEqual(get_exports_by_form(self.domain), [{
             'value': {'xmlns': 'my://crazy.xmlns/', 'submissions': 2},
             'key': ['exports_forms_analytics_domain', self.app_id_1,
