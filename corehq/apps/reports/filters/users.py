@@ -1,7 +1,5 @@
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
-from django.utils.functional import lazy
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
@@ -12,6 +10,7 @@ from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.reports.extension_points import customize_user_query
@@ -32,9 +31,6 @@ from .base import (
     BaseReportFilter,
     BaseSingleOptionFilter,
 )
-
-#TODO: replace with common code
-mark_safe_lazy = lazy(mark_safe, str)
 
 
 class UserOrGroupFilter(BaseSingleOptionFilter):
