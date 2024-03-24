@@ -144,10 +144,10 @@ def get_form_analytics_metadata(domain, app_id, xmlns):
         return None
 
 
-def get_exports_by_form(domain, use_es=False):
+def get_exports_by_form(domain, use_es=False, exclude_deleted_apps=False):
     from corehq.apps.app_manager.models import Application
     if use_es:
-        rows = _get_export_forms_by_app_es(domain)
+        rows = _get_export_forms_by_app_es(domain, exclude_deleted_apps=exclude_deleted_apps)
     else:
         rows = Application.get_db().view(
             'exports_forms_by_app/view',
@@ -169,9 +169,12 @@ def get_exports_by_form(domain, use_es=False):
     rows.sort(key=lambda row: row['key'])
     return rows
 
-def _get_export_forms_by_app_es(domain):
+def _get_export_forms_by_app_es(domain, exclude_deleted_apps=False):
     rows = []
-    apps = AppES().domain(domain).run().hits
+    app_es = AppES().domain(domain)
+    if exclude_deleted_apps:
+        app_es = app_es.not_deleted()
+    apps = app_es.run().hits
     for app in apps:
         for module_id, module in enumerate(app["modules"]):
             for form_id, form in enumerate(module["forms"]):

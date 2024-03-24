@@ -165,6 +165,29 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
                     'my://crazy.xmlns/deleted-app']
         }])
 
+        # We still get the form counts when excluding deleted apps
+        self.assertEqual(get_exports_by_form(self.domain, use_es=True, exclude_deleted_apps=True), [{
+            'value': {'xmlns': 'my://crazy.xmlns/', 'submissions': 2},
+            'key': ['exports_forms_analytics_domain', self.app_id_1,
+                    'my://crazy.xmlns/']
+        }, {
+            'value': {
+                'xmlns': 'my://crazy.xmlns/app',
+                'form': {'name': {}, 'id': 0},
+                'app': {'langs': [], 'name': None, 'id': self.app_id_2},
+                'module': {'name': {}, 'id': 0},
+                'app_deleted': False, 'submissions': 1},
+            'key': ['exports_forms_analytics_domain', self.app_id_2,
+                    'my://crazy.xmlns/app']
+        }, {
+            'value': {
+                'xmlns': 'my://crazy.xmlns/deleted-app',
+                'submissions': 1,
+            },
+            'key': ['exports_forms_analytics_domain', self.app_id_3,
+                    'my://crazy.xmlns/deleted-app']
+        }])
+
 
 @es_test(requires=[form_adapter, user_adapter], setup_class=True)
 @disable_quickcache
