@@ -169,6 +169,7 @@ def get_exports_by_form(domain, use_es=False):
     rows.sort(key=lambda row: row['key'])
     return rows
 
+
 def _get_export_forms_by_app_es(domain):
     rows = []
     apps = AppES().domain(domain).run().hits

@@ -124,7 +124,7 @@ from corehq.apps.registration.utils import project_logo_emails_context
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.toggles import (
-    EXPORT_HIDE_DELETED_APPLICATIONS,
+    EXPORTS_APPS_USE_ELASTICSEARCH,
     HIPAA_COMPLIANCE_CHECKBOX,
     MOBILE_UCR,
     SECURE_SESSION_TIMEOUT,
@@ -464,12 +464,12 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
-    show_deleted_apps_exports = BooleanField(
-        label=gettext_lazy("Show deleted apps when creating exports"),
+    exports_use_elasticsearch = BooleanField(
+        label=gettext_lazy("Use elasticsearch when fetching apps for exports"),
         required=False,
         help_text=gettext_lazy(
             """
-            Shows deleted apps under "Unknown Applications" when creating exports
+            (Internal) Fetches apps using elasticsearch instead of couch in exports
             """
         )
     )
@@ -484,7 +484,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self.helper[7] = twbscrispy.PrependedText('call_center_enabled', '')
         self.helper[15] = twbscrispy.PrependedText('release_mode_visibility', '')
         self.helper[16] = twbscrispy.PrependedText('orphan_case_alerts_warning', '')
-        self.helper[17] = twbscrispy.PrependedText('show_deleted_apps_exports', '')
+        self.helper[17] = twbscrispy.PrependedText('exports_use_elasticsearch', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -525,11 +525,10 @@ class DomainGlobalSettingsForm(forms.Form):
         self._handle_release_mode_setting_value()
         self._handle_orphan_case_alerts_setting_value()
 
-        if not EXPORT_HIDE_DELETED_APPLICATIONS.enabled(self.domain):
-            del self.fields['show_deleted_apps_exports']
+        if not EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
+            del self.fields['exports_use_elasticsearch']
         else:
-            self._handle_show_deleted_apps_exports_setting_value()
-
+            self._handle_exports_use_elasticsearch_setting_value()
 
     def _handle_account_confirmation_by_sms_settings(self):
         if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
@@ -565,8 +564,8 @@ class DomainGlobalSettingsForm(forms.Form):
     def _handle_orphan_case_alerts_setting_value(self):
         self.fields['orphan_case_alerts_warning'].initial = self.project.orphan_case_alerts_warning
 
-    def _handle_show_deleted_apps_exports_setting_value(self):
-        self.fields['show_deleted_apps_exports'].initial = self.project.show_deleted_apps_exports
+    def _handle_exports_use_elasticsearch_setting_value(self):
+        self.fields['exports_use_elasticsearch'].initial = self.project.exports_use_elasticsearch
 
     def _add_range_validation_to_integer_input(self, settings_name, min_value, max_value):
         setting = self.fields.get(settings_name)
@@ -724,8 +723,8 @@ class DomainGlobalSettingsForm(forms.Form):
     def _save_orphan_case_alerts_setting(self, domain):
         domain.orphan_case_alerts_warning = self.cleaned_data.get("orphan_case_alerts_warning", False)
 
-    def _save_show_deleted_apps_exports(self, domain):
-        domain.show_deleted_apps_exports = self.cleaned_data.get("show_deleted_apps_exports", True)
+    def _save_exports_use_elasticsearch(self, domain):
+        domain.exports_use_elasticsearch = self.cleaned_data.get("exports_use_elasticsearch", True)
 
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
@@ -747,8 +746,8 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_account_confirmation_settings(domain)
         self._save_release_mode_setting(domain)
         self._save_orphan_case_alerts_setting(domain)
-        if EXPORT_HIDE_DELETED_APPLICATIONS.enabled(self.domain):
-            self._save_show_deleted_apps_exports(domain)
+        if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
+            self._save_exports_use_elasticsearch(domain)
         domain.save()
         return True
 

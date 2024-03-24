@@ -1557,9 +1557,9 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
 )
 
 
-EXPORT_HIDE_DELETED_APPLICATIONS = StaticToggle(
-    'hide_deleted_apps_exports',
-    'Allow hiding of deleted applications in exports',
+EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
+    'export_apps_use_elasticsearch',
+    'Use elasticsearch when fetching apps for exports',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
 )

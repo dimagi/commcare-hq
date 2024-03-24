@@ -26,7 +26,7 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_RAW,
 )
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
-from corehq.toggles import AGGREGATE_UCRS, EXPORT_HIDE_DELETED_APPLICATIONS
+from corehq.toggles import AGGREGATE_UCRS
 
 DataSource = collections.namedtuple('DataSource', ['application', 'source_type', 'source', 'registry_slug'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
@@ -423,7 +423,7 @@ class ApplicationDataRMIHelper(object):
         forms = []
         unknown_forms = []
 
-        for f in get_exports_by_form(self.domain, use_es=self.domain_object.show_deleted_apps_exports):
+        for f in get_exports_by_form(self.domain, use_es=self.domain_object.exports_use_elasticsearch):
             form = f['value']
             if form.get('app_deleted') and not form.get('submissions'):
                 continue
