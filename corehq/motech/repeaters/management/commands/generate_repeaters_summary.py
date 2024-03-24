@@ -19,6 +19,7 @@ class Command(BaseCommand):
         repeat_records_summary = dict(
             SQLRepeatRecord.objects
             .values("repeater__domain")
+            .order_by()
             .annotate(record_count=Count("id"))
             .values_list("repeater__domain", "record_count")
         )
