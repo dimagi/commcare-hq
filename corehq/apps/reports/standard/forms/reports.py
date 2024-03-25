@@ -13,6 +13,7 @@ from corehq import toggles
 from corehq.apps.reports.analytics.esaccessors import get_paged_forms_by_type
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.standard.forms.filters import SubmissionTypeFilter
 from corehq.apps.users.util import cached_user_id_to_username
@@ -87,6 +88,10 @@ class SubmissionErrorReport(DeploymentsReport):
         shared_params.append(dict(
             name=SubmissionTypeFilter.slug,
             value=[f.type for f in self.submitfilter if f.show]
+        ))
+        shared_params.append(dict(
+            name=EMWF.slug,
+            value=EMWF.get_value(self.request, self.domain),
         ))
         return shared_params
 
