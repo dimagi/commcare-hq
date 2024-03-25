@@ -1,10 +1,8 @@
 import json
-from pathlib import Path
 
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     COREHQ_BASE_DIR,
     get_app_template_folder,
-    TRACKED_JS_FOLDERS,
     get_app_static_folder,
 )
 
