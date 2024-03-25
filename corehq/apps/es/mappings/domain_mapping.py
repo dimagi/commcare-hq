@@ -42,7 +42,7 @@ DOMAIN_MAPPING = {
                     "type": "keyword"
                 },
                 "case_type": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "doc_type": {
                     "type": "keyword"
@@ -99,7 +99,7 @@ DOMAIN_MAPPING = {
                     "type": "text"
                 },
                 "version": {
-                    "type": "text"
+                    "type": "keyword"
                 }
             }
         },
@@ -231,7 +231,7 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "creating_user": {
-            "type": "text"
+            "type": "keyword"
         },
         "date_created": {
             "format": DATE_FORMATS_STRING,
@@ -429,14 +429,14 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "is_test": {
-            "type": "text"
+            "type": "keyword"
         },
         "last_modified": {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "license": {
-            "type": "text"
+            "type": "keyword"
         },
         "migrations": {
             "dynamic": False,
@@ -498,7 +498,7 @@ DOMAIN_MAPPING = {
             "type": "keyword"
         },
         "sms_case_registration_type": {
-            "type": "text"
+            "type": "keyword"
         },
         "sms_case_registration_user_id": {
             "type": "keyword"
