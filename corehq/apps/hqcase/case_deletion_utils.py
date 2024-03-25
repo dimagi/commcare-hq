@@ -98,11 +98,11 @@ def _get_deleted_case_name(case, form_cache, case_block_cache):
     create_form = ''
     for t in case.transactions:
         if t.is_case_create:
-            create_form = form_cache.get_forms([t.form_id])[0]
+            create_form = form_cache.get_forms([t.form_id])
             break
     if not create_form:
         return '[Unknown Case]'
-    case_blocks = case_block_cache.get_case_blocks(create_form)
+    case_blocks = case_block_cache.get_case_blocks(create_form[0])
     for case_block in case_blocks:
         if 'create' in case_block and case_block['@case_id'] == case.case_id:
             return case_block['create']['case_name']
