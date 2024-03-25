@@ -81,7 +81,7 @@ contextlib2==21.6.0
     # via schema
 crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165
     # via -r base-requirements.in
-cryptography==42.0.3
+cryptography==42.0.4
     # via
     #   -r base-requirements.in
     #   jwcrypto
