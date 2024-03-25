@@ -245,10 +245,10 @@ class Command(BaseCommand):
         self.stdout.write("\n")
 
     def show_next_steps(self, app_name):
-        self.stdout.write("\n\nDone!\n", style_func=get_style_func(Color.GREEN))
+        self.stdout.write("\nDone!\n\n", style_func=get_style_func(Color.GREEN))
         self.stdout.write("After reviewing and committing changes, please run:\n")
-        self.stdout.write(f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n")
-        self.stdout.write("Commit those changes, if any.\n"
+        self.stdout.write(f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n")
+        self.stdout.write("Commit those changes, if any.\n\n"
                           "Then run the full command and commit those changes:\n")
-        self.stdout.write("./manage.py build_bootstrap5_diffs\n")
+        self.stdout.write("./manage.py build_bootstrap5_diffs\n\n")
         self.stdout.write("Thank you! <3\n\n")
