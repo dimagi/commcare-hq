@@ -49,7 +49,8 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
                                    DataTablesColumn(_("Submit Time"), prop_name="received_on"),
                                    DataTablesColumn(_("Form Type"), sortable=False),
                                    DataTablesColumn(_("Error Type"), sortable=False),
-                                   DataTablesColumn(_("Error Message"), sortable=False))
+                                   DataTablesColumn(_("Error Message"), sortable=False),
+                                   DataTablesColumn(_("View Cases"), sortable=False))
         if self.support_toggle_enabled:
             headers.add_column(DataTablesColumn(_("Re-process Form")))
         headers.custom_sort = [[2, "desc"]]
@@ -176,7 +177,7 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
         EMPTY_FORM = _("Unknown Form")
 
         def _to_row(xform_dict):
-            def _fmt_url(doc_id):
+            def _fmt_url(doc_id, link_text, tab_link=None):
                 if xform_dict['doc_type'] in [
                         "XFormInstance",
                         "XFormArchived",
@@ -186,10 +187,13 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
                 else:
                     view_name = 'download_form'
                 try:
+                    url = reverse(view_name, args=[self.domain, doc_id])
+                    if tab_link:
+                        url += tab_link
                     return format_html(
                         "<a class='ajax_dialog' href='{url}'>{text}</a>",
-                        url=reverse(view_name, args=[self.domain, doc_id]),
-                        text=_("View Form")
+                        url=url,
+                        text=link_text,
                     )
                 except NoReverseMatch:
                     return 'unable to view form'
@@ -221,12 +225,13 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
                         date=_fmt_date(string_to_utc_datetime(archive_operations[-1].get('date'))),
                     )
             return [
-                _fmt_url(xform_dict['_id']),
+                _fmt_url(xform_dict['_id'], link_text=_("View Form")),
                 form_username,
                 _fmt_date(string_to_utc_datetime(xform_dict['received_on'])),
                 form_name,
                 error_type,
                 xform_dict.get('problem', EMPTY_ERROR),
+                _fmt_url(xform_dict['_id'], link_text=_("View Cases"), tab_link='#form-case-data'),
                 self._make_reproces_button(xform_dict) if self.support_toggle_enabled else '',
             ]
 
