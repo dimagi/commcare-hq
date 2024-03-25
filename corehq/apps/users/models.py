@@ -1132,7 +1132,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         })
         return session_data
 
-    def get_case_owning_locations(self, domain):
+    def _get_case_owning_locations(self, domain):
         """
         :return: queryset of case-owning locations either directly assigned to the
         user or descendant from an assigned location that views descendants
@@ -1927,7 +1927,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         # get faked location group objects
         groups = [
             location.case_sharing_group_object(self._id)
-            for location in self.get_case_owning_locations(self.domain)
+            for location in self._get_case_owning_locations(self.domain)
         ]
         groups += [group for group in Group.by_user_id(self._id) if group.case_sharing]
 
@@ -2425,7 +2425,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def get_owner_ids(self, domain):
         owner_ids = [self.user_id]
-        owner_ids.extend(loc.location_id for loc in self.get_case_owning_locations(domain))
+        owner_ids.extend(loc.location_id for loc in self._get_case_owning_locations(domain))
         return owner_ids
 
     @quickcache(['self._id', 'domain'], lambda _: settings.UNIT_TESTING)
