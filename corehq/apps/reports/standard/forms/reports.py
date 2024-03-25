@@ -10,7 +10,7 @@ from dimagi.utils.parsing import string_to_utc_datetime
 from dimagi.utils.web import json_response
 
 from corehq import toggles
-from corehq.apps.reports.analytics.esaccessors import get_paged_forms_by_type
+from corehq.apps.reports.analytics.esaccessors import get_paged_forms_by_type, PagedResult
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
@@ -90,6 +90,9 @@ class SubmissionErrorReport(DeploymentsReport):
         user_ids = []
         if self.has_user_filters:
             user_ids = self.selected_user_ids
+            if not user_ids:
+                # We have valid user filters but no results
+                return PagedResult(total=0, hits=[])
         return get_paged_forms_by_type(
             self.domain,
             doc_types,
