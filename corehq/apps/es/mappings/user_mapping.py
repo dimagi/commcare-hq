@@ -93,7 +93,7 @@ USER_MAPPING = {
                     }
                 },
                 "commcare_version": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "device_id": {
                     "type": "keyword"
@@ -123,7 +123,7 @@ USER_MAPPING = {
             "type": "object",
             "properties": {
                 "assigned_location_ids": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "doc_type": {
                     "type": "keyword"
