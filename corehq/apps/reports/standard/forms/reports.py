@@ -97,6 +97,7 @@ class SubmissionErrorReport(DeploymentsReport):
             desc=desc,
             start=self.pagination.start,
             size=self.pagination.count,
+            user_ids=user_ids,
         )
 
     @property
