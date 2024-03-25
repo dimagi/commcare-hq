@@ -35,9 +35,10 @@ def get_all_javascript_paths_for_app(app_name):
     return [f for f in app_static_folder.glob('**/*.js') if f.is_file()]
 
 
-def get_split_paths(paths):
+def get_split_paths(paths, split_folder=None):
+    split_folder = f'/{split_folder}/' or '/bootstrap3/'
     return [
-        path for path in paths if '/bootstrap3/' in str(path)
+        path for path in paths if split_folder in str(path)
     ]
 
 
