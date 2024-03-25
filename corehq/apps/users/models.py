@@ -1932,23 +1932,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.groups.models import Group
         return [group for group in Group.by_user_id(self._id) if group.reporting]
 
-    @classmethod
-    def cannot_share(cls, domain, limit=None, skip=0):
-        users_checked = list(cls.by_domain(domain, limit=limit, skip=skip))
-        if not users_checked:
-            # stop fetching when you come back with none
-            return []
-        users = [user for user in users_checked if len(user.get_case_sharing_groups()) != 1]
-        if limit is not None:
-            total = cls.total_by_domain(domain)
-            max_limit = min(total - skip, limit)
-            if len(users) < max_limit:
-                new_limit = max_limit - len(users_checked)
-                new_skip = skip + len(users_checked)
-                users.extend(cls.cannot_share(domain, new_limit, new_skip))
-                return users
-        return users
-
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
         return Group.by_user_id(self._id, wrap=False)
