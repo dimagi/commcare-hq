@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 hqDefine("cloudcare/js/formplayer/spec/menu_utils_spec", function () {
     describe('Menu Utils', function () {

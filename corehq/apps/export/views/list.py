@@ -7,9 +7,7 @@ from django.http import Http404
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
-from django.utils.functional import lazy
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
@@ -69,6 +67,7 @@ from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     user_can_view_deid_exports,
 )
+from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
     location_restricted_response,
@@ -86,9 +85,6 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXPORT_OWNERSHIP, EXCEL_DASHBO
 from corehq.util.download import get_download_response
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.data_dictionary.util import is_case_type_deprecated
-
-
-mark_safe_lazy = lazy(mark_safe, str)  # TODO: replace with library function
 
 
 class ExportListHelper(object):
@@ -751,7 +747,7 @@ class DashboardFeedListView(DailySavedExportListView, DashboardFeedListHelper):
     page_title = gettext_lazy("Excel Dashboard Integration")
 
     lead_text = gettext_lazy('''
-        Excel dashboard feeds allow Excel to directly connect to CommCareHQ to download data.
+        Excel dashboard feeds allow Excel to directly connect to CommCare HQ to download data.
         Data is updated daily.
     ''')
 

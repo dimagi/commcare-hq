@@ -559,6 +559,7 @@ form_processor
  0093_rename_models (5 squashed migrations)
  0094_add_partial_index_xforms
  0095_remove_xforminstance_deleted_state
+ 0096_add_partial_index_cases
 formplayer_api
  0001_drop_old_tables
 generic_inbound
@@ -573,6 +574,7 @@ geospatial
  0002_geoconfig
  0003_auto_20230908_0927
  0004_auto_20230920_0821
+ 0005_auto_20240202_0807
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -747,6 +749,8 @@ phonelog
  0012_server_date_not_null
  0013_delete_olddevicereportentry
  0014_auto_20170718_2039
+phonenumber
+ 0001_squashed_0001_initial (10 squashed migrations)
 pillow_retry
  0001_initial
  0002_pillowerror_queued
@@ -796,6 +800,7 @@ repeaters
  0004_fix_whitelist_bug_repeaters
  0005_datasourcerepeater
  0006_int_state_add_next_check_rm_repeater_id
+ 0007_lengthen_payload_id
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -1080,6 +1085,8 @@ sso
  0004_login_enforcement_type_sso_test_user
  0005_alter_identityprovider_idp_type
  0006_add_new_fields_in_identityprovider
+ 0007_add_multi_view_api_fields
+ 0008_alter_identityprovider_idp_type
 start_enterprise
  0001_initial
 stock
@@ -1107,13 +1114,7 @@ translations
  0008_remove_couch_id
  0009_auto_20200924_1753
 two_factor
- 0001_initial
- 0002_auto_20150110_0810
- 0003_auto_20150817_1733
- 0004_auto_20160205_1827
- 0005_auto_20160224_0450
- 0006_phonedevice_key_default
- 0007_auto_20201201_1019
+ (no migrations)
 user_importer
  0001_initial
 userreports
@@ -1199,6 +1200,7 @@ users
  0054_connectiduserlink
  0055_add_user_data
  0056_add_manage_domain_alerts_permission
+ 0057_populate_sql_user_data
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

@@ -771,9 +771,9 @@ class TestMappingTransformFunctions(SimpleTestCase):
         old_mapping = {
             "_meta": {"created": "now"},
             "properties": {
-                "value": {"type": "string"},
+                "value": {"type": "text"},
                 "dict_val": {
-                    "properties": {"nested_val": {"type": "string", "index": "not_analyzed"}}
+                    "properties": {"nested_val": {"type": "keyword"}}
                 }
 
             },

@@ -2,8 +2,9 @@ import json
 from collections import Counter
 
 from django.utils.safestring import mark_safe
+from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy, gettext
-from django.utils.functional import lazy
 
 from corehq.apps.export.const import DEID_ID_TRANSFORM, DEID_DATE_TRANSFORM
 
@@ -23,9 +24,6 @@ from corehq.apps.reports.filters.base import (
     BaseSingleOptionFilter,
 )
 from corehq import privileges
-
-
-mark_safe_lazy = lazy(mark_safe, str)  # TODO: Replace with library method
 
 
 class CaseSearchFilter(BaseSimpleFilter):
@@ -51,10 +49,23 @@ class CaseSearchFilter(BaseSimpleFilter):
 class DuplicateCaseRuleFilter(BaseSingleOptionFilter):
     slug = 'duplicate_case_rule'
     label = gettext_lazy("Duplicate Case Rule")
-    help_text = gettext_lazy(
-        """Show cases that are determined to be duplicates based on this rule.
-        You can further filter them with a targeted search below."""
-    )
+
+    @property
+    def help_text(self):
+        from corehq.apps.data_interfaces.views import DeduplicationRuleListView
+
+        description = gettext(
+            "Show cases that are determined to be duplicates based on this rule. "
+            "You can further filter them with a targeted search below."
+        )
+
+        link = format_html(
+            '<a href="{}" target="_blank">{}</a>',
+            reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
+            gettext('View Rules')
+        )
+
+        return format_html('{} {}', description, link)
 
     @property
     def options(self):

@@ -1,3 +1,4 @@
+'use strict';
 /**
  * Backbone model for listing and selecting FormEntrySessions
  */

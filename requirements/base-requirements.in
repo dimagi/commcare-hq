@@ -7,6 +7,7 @@ bleach[css]  # USH - used for rich text messaging emails
 boto3
 celery
 CommcareTranslationChecker>=0.9.7
+cryptography>=42.0
 csiphash
 css_inline  # USH - used for rich text messaging emails
 datadog
@@ -26,7 +27,6 @@ crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@77
 django-cte
 django-field-audit
 django-formtools
-django-logentry-admin
 django-oauth-toolkit
 django-otp
 django-phonenumber-field
@@ -37,14 +37,13 @@ django-recaptcha
 django-statici18n
 django-tastypie
 django-transfer
-django-two-factor-auth
+django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae  # waiting for next release after 1.16.0
 django-user-agents
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
 django>=3.2.18,<4.0
 djangorestframework
 dropbox
-elasticsearch2>=2.0.0,<3.0.0  # we will be deprecating support for ES2 soon
-elasticsearch5>=5.0.0,<6.0.0  # ES5 support is currently in development
+elasticsearch5>=5.0.0,<6.0.0
 ethiopian-date-converter
 eulxml
 firebase-admin  # India Division - used for FCM Push Notifications

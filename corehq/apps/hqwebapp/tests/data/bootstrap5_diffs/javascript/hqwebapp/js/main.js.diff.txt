@@ -1,0 +1,161 @@
+--- 
++++ 
+@@ -1,11 +1,12 @@
+-hqDefine('hqwebapp/js/bootstrap3/main', [
++hqDefine('hqwebapp/js/bootstrap5/main', [
+     "jquery",
+     "knockout",
+     "underscore",
+     "hqwebapp/js/lib/modernizr",
+     "hqwebapp/js/initial_page_data",
+-    "hqwebapp/js/bootstrap3/alert_user",
++    "hqwebapp/js/bootstrap5/alert_user",
+     "analytix/js/google",
++    "es6!hqwebapp/js/bootstrap5_loader",
+     "hqwebapp/js/hq_extensions.jquery",
+     "jquery.cookie/jquery.cookie",
+ ], function (
+@@ -15,7 +16,8 @@
+     modernizr,
+     initialPageData,
+     alertUser,
+-    googleAnalytics
++    googleAnalytics,
++    bootstrap
+ ) {
+     var eventize = function (that) {
+         'use strict';
+@@ -44,11 +46,11 @@
+         wrap = wrap === undefined ? true : wrap;
+         var el = $(
+             '<div class="hq-help">' +
+-                '<a href="#" tabindex="-1">' +
++                '<a href="#" tabindex="-1" data-bs-toggle="popover">' +
+                     '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
+         );
+         _.each(['content', 'title', 'html', 'placement', 'container'], function (attr) {
+-            $('a', el).data(attr, opts[attr]);
++            $('a', el).attr('data-bs-' + attr, opts[attr]);
+         });
+         if (wrap) {
+             el.hqHelp();
+@@ -115,8 +117,6 @@
+             $.postGo(action, $.unparam(data));
+         });
+ 
+-        $(".button", $elem).button().wrap('<span />');
+-        $("input[type='submit']", $elem).button();
+         $("input[type='text'], input[type='password'], textarea", $elem);
+         $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
+ 
+@@ -129,7 +129,7 @@
+         'use strict';
+         var key;
+         for (key in update) {
+-            if (_.has(update, key)) {
++            if (update.hasOwnProperty(key)) {
+                 $(key).text(update[key]).val(update[key]);
+             }
+         }
+@@ -179,7 +179,7 @@
+                         this.$saved.detach();
+                         this.$retry.detach();
+                         var buttonUi = this.ui;
+-                        _.each(BAR_STATE, function (v) {
++                        _.each(BAR_STATE, function (v, k) {
+                             buttonUi.removeClass(v);
+                         });
+                         if (state === 'save') {
+@@ -207,7 +207,7 @@
+                             $.ajaxSettings.beforeSend(jqXHR, settings);
+                             beforeSend.apply(this, arguments);
+                         };
+-                        options.success = function () {
++                        options.success = function (data) {
+                             that.setState(that.nextState);
+                             success.apply(this, arguments);
+                         };
+@@ -255,11 +255,9 @@
+                 $(window).on('beforeunload', function () {
+                     var lastParent = button.ui.parents()[button.ui.parents().length - 1];
+                     if (lastParent) {
+-                        var stillAttached = lastParent.tagName.toLowerCase() === 'html';
++                        var stillAttached = lastParent.tagName.toLowerCase() == 'html';
+                         if (button.state !== 'saved' && stillAttached) {
+-                            if ($('.js-unhide-on-unsaved').length > 0) {
+-                                $('.js-unhide-on-unsaved').removeClass('hide');
+-                            }
++                            if ($('.js-unhide-on-unsaved').length > 0) $('.js-unhide-on-unsaved').removeClass('hide');
+                             return options.unsavedMessage || "";
+                         }
+                     }
+@@ -384,7 +382,12 @@
+         $(window).on('beforeunload', beforeUnloadCallback);
+         initBlock($("body"));
+ 
+-        $('#modalTrial30Day').modal('show');
++        var trialModalElement = $('#modalTrial30Day'),
++            trialModal;
++        if (trialModalElement.length) {
++            trialModal = new bootstrap.Modal(trialModalElement);
++            trialModal.show();
++        }
+ 
+         $(document).on('click', '.track-usage-link', function (e) {
+             var $link = $(e.currentTarget),
+@@ -460,8 +463,13 @@
+         // EULA modal
+         var eulaCookie = "gdpr_rollout";
+         if (!$.cookie(eulaCookie)) {
+-            var $modal = $("#eulaModal");
+-            if ($modal.length) {
++            var eulaModalElement = $("#eulaModal"),
++                eulaModal;
++            if (eulaModalElement.length) {
++                eulaModal = new bootstrap.Modal(eulaModalElement, {
++                    keyboard: false,
++                    backdrop: 'static',
++                });
+                 $("body").addClass("has-eula");
+                 $("#eula-agree").click(function () {
+                     $(this).disableButton();
+@@ -469,7 +477,7 @@
+                         url: initialPageData.reverse("agree_to_eula"),
+                         method: "POST",
+                         success: function () {
+-                            $("#eulaModal").modal('hide');
++                            eulaModal.hide();
+                             $("body").removeClass("has-eula");
+                         },
+                         error: function (xhr) {
+@@ -485,21 +493,22 @@
+                         },
+                     });
+                 });
+-                $modal.modal({
+-                    keyboard: false,
+-                    backdrop: 'static',
+-                });
+             }
+         }
+ 
+         // CDA modal
+         _.each($(".remote-modal"), function (modal) {
+-            var $modal = $(modal);
+-            $modal.on("show show.bs.modal", function () {
++            var remoteModalElement = $(modal),
++                remoteModal;
++            if (remoteModalElement.length === 0) {
++                return;
++            }
++            remoteModal = new bootstrap.Modal(remoteModalElement);
++            remoteModal.on("show.bs.modal", function () {
+                 $(this).find(".fetched-data").load($(this).data("url"));
+             });
+-            if ($modal.data("showOnPageLoad")) {
+-                $modal.modal('show');
++            if (remoteModalElement.data("showOnPageLoad")) {
++                remoteModal.show();
+             }
+         });
+     });

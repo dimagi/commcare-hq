@@ -1,3 +1,4 @@
+'use strict';
 /*global MapboxGeocoder*/
 hqDefine("cloudcare/js/form_entry/utils", function () {
     var errors = hqImport("cloudcare/js/form_entry/errors"),
@@ -147,7 +148,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * Composes a broadcast object from mapbox result to be used by receivers
      * @param {Object} mapboxResult - Mapbox query result object
      */
-    module.getBroadcastObject = function (mapboxResult) {
+    module.getAddressBroadcastObject = function (mapboxResult) {
         var broadcastObj = {
             full: mapboxResult.place_name,
             geopoint: mapboxResult.geometry.coordinates[1] + ' ' + mapboxResult.geometry.coordinates[0],

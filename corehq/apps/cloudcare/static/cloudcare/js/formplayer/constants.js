@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("cloudcare/js/formplayer/constants", function () {
     return {
         ALLOWED_SAVED_OPTIONS: ['oneQuestionPerScreen', 'language'],
@@ -31,10 +32,15 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
         QUERY: "query",
 
         // values are snake case as recommended for Datadog tags
-        queryInitiatedBy: {
+        requestInitiatedByTagsMapping: {
             DYNAMIC_SEARCH: 'dynamic_search',
             FIELD_CHANGE: "field_change",
+            PAGINATION: "pagination",
+            CLICKABLE_ICON: "clickable_icon",
         },
+
+        //Custom Properties
+        POST_FORM_SYNC: "cc-sync-after-form",
 
         SMALL_SCREEN_WIDTH_PX: 992,
 
@@ -42,5 +48,7 @@ hqDefine("cloudcare/js/formplayer/constants", function () {
         BREADCRUMB_WIDTH_OFFSET_PX: 120.41, // unavailable breadcrumb space i.e. padding, home and hamburger icons
 
         COLLAPSIBLE_TILE_MAX_HEIGHT: 150,
+
+        MILLIS_BEFORE_SHOW_LOADING: 1000,
     };
 });

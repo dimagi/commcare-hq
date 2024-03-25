@@ -2,7 +2,6 @@ import os
 import re
 import warnings
 
-from django.utils.deprecation import RemovedInDjango41Warning
 from sqlalchemy.exc import SAWarning
 
 
@@ -18,24 +17,10 @@ WHITELIST = [
     # (module_path, message_substring_or_regex, optional_warning_class, override_action)
 
     # warnings that may be resolved with a library upgrade
-    ("captcha.fields", "ugettext_lazy() is deprecated"),
-    ("compressor.filters.base", "smart_text() is deprecated"),
-    ("compressor.signals", "The providing_args argument is deprecated."),
     ("couchdbkit.schema.properties", "'collections.abc'"),
-    ("django.apps", re.compile(r"'(" + "|".join(re.escape(app) for app in [
-        "captcha",
-        "django_celery_results",
-        "oauth2_provider",
-        "statici18n",
-        "two_factor",
-    ]) + ")' defines default_app_config"), RemovedInDjango41Warning),
-    ("django_celery_results", "ugettext_lazy() is deprecated"),
-    ("logentry_admin.admin", "ugettext_lazy() is deprecated"),
     ("nose.importer", "the imp module is deprecated"),
     ("nose.util", "inspect.getargspec() is deprecated"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
-    ("tastypie", "django.conf.urls.url() is deprecated"),
-    ("tastypie", "request.is_ajax() is deprecated"),
     ("nose.suite", "'collections.abc'"),
     ("nose.plugins.collect", "'collections.abc'"),
 

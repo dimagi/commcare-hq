@@ -1,0 +1,30 @@
+<div id="search-box-example">
+  <search-box data-apply-bindings="false"
+              params="value: query,
+                        action: search,
+                        immediate: true,
+                        placeholder: 'Search...'"></search-box>
+  <ul class="list-group pt-3" data-bind="foreach: items">
+    <li class="list-group-item" data-bind="text: $data"></li>
+  </ul>
+</div>
+
+<script>
+  $(function () {
+    var searchBoxExample = function () {
+      var self = {};
+
+      self.allItems = "alpha beta delta gamma epsilon omega chi".split(" ");
+      self.items = ko.observableArray(self.allItems);
+
+      self.query = ko.observable('');
+      self.search = function (page) {
+        self.items(_.filter(self.allItems, function (item) { return item.indexOf(self.query()) !== -1; }));
+      };
+
+      return self;
+    };
+
+    $("#search-box-example").koApplyBindings(searchBoxExample());
+  });
+</script>

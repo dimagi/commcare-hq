@@ -12,6 +12,7 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
     CASE_SEARCH_SORT_KEY,
+    CASE_SEARCH_MODULE_NAME_TAG_KEY,
     CaseSearchRequestConfig,
     disable_case_search,
     enable_case_search,
@@ -65,6 +66,7 @@ def test_extract_criteria_config(self, case_type, data_registry, custom_related_
             CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY: custom_related_case_property,
             CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY: include_all_related_cases,
             CASE_SEARCH_SORT_KEY: commcare_sort,
+            CASE_SEARCH_MODULE_NAME_TAG_KEY: "module_name",
             "other_key": "jim",
         })
         config = extract_search_request_config(request_dict)

@@ -30,6 +30,7 @@ from corehq.sql_db.models import PartitionedModel, RequireDBManager
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
+    create_unique_index_name,
 )
 from corehq.util.json import CommCareJSONEncoder
 
@@ -881,6 +882,13 @@ class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
             ["domain", "owner_id", "closed"],
             ["domain", "external_id", "type"],
             ["domain", "type"],
+        ]
+        indexes = [
+            models.Index(fields=['deleted_on'],
+                         name=create_unique_index_name('form_processor',
+                                                       'commcarecase',
+                                                       ['deleted_on']),
+                         condition=models.Q(deleted_on__isnull=False))
         ]
         app_label = "form_processor"
         db_table = 'form_processor_commcarecasesql'

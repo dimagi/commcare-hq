@@ -1,3 +1,4 @@
+'use strict';
 (function ($) {
     // English
     $.calendarsPicker.regionalOptions[''] = { // Default regional settings - English/US
