@@ -136,10 +136,12 @@ def get_case_or_404(domain, case_id):
     try:
         case = CommCareCase.objects.get_case(case_id, domain)
         if case.domain != domain or case.is_deleted:
-            raise Http404()
+            # raise Http404()
+            raise Exception("{} isn't equal to {} or something else was off".format(case.domain, domain))
         return case
     except CaseNotFound:
-        raise Http404()
+        # raise Http404()
+        raise Exception("Case was simply not found?")
 
 
 def get_form_or_404(domain, id):
