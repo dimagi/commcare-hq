@@ -37,14 +37,17 @@ hqDefine('export/js/customize_export_new', [
             const exportFormat = initialPageData.get('export_instance').export_format;
             if (exportFormat === constants.EXPORT_FORMATS.GEOJSON) {
                 $("#select-geo-property").show();
+                $("#split-multiselects-checkbox-div").hide()
             }
 
             $('#format-select').change(function () {
                 const selectedValue = $(this).val();
                 if (selectedValue === constants.EXPORT_FORMATS.GEOJSON) {
                     $("#select-geo-property").show();
+                    $("#split-multiselects-checkbox-div").hide();
                 } else {
                     $("#select-geo-property").hide();
+                    $("#split-multiselects-checkbox-div").show();
                 }
             });
         }
