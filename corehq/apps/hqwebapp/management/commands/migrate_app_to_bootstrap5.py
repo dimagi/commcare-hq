@@ -14,16 +14,17 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_stateful_button_changes_bootstrap5,
     flag_changed_javascript_plugins,
     flag_path_references_to_split_javascript_files,
-    file_contains_reference_to_path,
-    replace_path_references,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
-    COREHQ_BASE_DIR,
     get_app_template_folder,
     get_app_static_folder,
     get_short_path,
     get_all_template_paths_for_app,
     get_all_javascript_paths_for_app,
+)
+from corehq.apps.hqwebapp.utils.bootstrap.references import (
+    update_and_get_references,
+    get_requirejs_reference,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.status import (
     get_completed_templates_for_app,
@@ -313,12 +314,12 @@ class Command(BaseCommand):
                 file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
             )
             self.stdout.write("\nUpdating references...")
-            references = self.update_and_get_references(short_path, bootstrap3_short_path, is_template)
+            references = update_and_get_references(short_path, bootstrap3_short_path, is_template)
             if not is_template:
                 # also check extension-less references for javascript files
-                references.extend(self.update_and_get_references(
-                    short_path.replace('.js', ''),
-                    bootstrap3_short_path.replace('.js', ''),
+                references.extend(update_and_get_references(
+                    get_requirejs_reference(short_path),
+                    get_requirejs_reference(bootstrap3_short_path),
                     is_template=False
                 ))
             if references:
@@ -358,15 +359,15 @@ class Command(BaseCommand):
             is_template = file_path.is_relative_to(template_path)
             new_reference = get_short_path(app_name, file_path, is_template)
             old_reference = new_reference.replace("/bootstrap3/", "/")
-            references = self.update_and_get_references(
+            references = update_and_get_references(
                 old_reference,
                 new_reference,
                 is_template
             )
             if not is_template:
-                references.extend(self.update_and_get_references(
-                    old_reference.replace(".js", ""),
-                    new_reference.replace(".js", ""),
+                references.extend(update_and_get_references(
+                    get_requirejs_reference(old_reference),
+                    get_requirejs_reference(new_reference),
                     is_template=False
                 ))
             if references:
@@ -374,30 +375,6 @@ class Command(BaseCommand):
                 self.stdout.write("\n".join(references))
                 self.suggest_commit_message(f"updated path references to '{references}'")
         self.stdout.write("\n\nDone.\n\n")
-
-    @staticmethod
-    def update_and_get_references(old_reference, new_reference, is_template):
-        references = []
-        bootstrap5_reference = new_reference.replace("/bootstrap3/", "/bootstrap5/")
-        file_types = ["**/*.py", "**/*.html", "**/*.md"]
-        if not is_template:
-            file_types.append("**/*.js")
-        for file_type in file_types:
-            for file_path in COREHQ_BASE_DIR.glob(file_type):
-                if not file_path.is_file():
-                    continue
-                with open(file_path, 'r') as file:
-                    filedata = file.read()
-                use_bootstrap5_reference = "/bootstrap5/" in str(file_path)
-                if file_contains_reference_to_path(filedata, old_reference):
-                    references.append(str(file_path))
-                    with open(file_path, 'w') as file:
-                        file.write(replace_path_references(
-                            filedata,
-                            old_reference,
-                            bootstrap5_reference if use_bootstrap5_reference else new_reference
-                        ))
-        return references
 
     @staticmethod
     def make_template_line_changes(old_line, spec):
@@ -429,8 +406,6 @@ class Command(BaseCommand):
         bootstrap3_folder.mkdir(parents=True, exist_ok=True)
         bootstrap5_folder.mkdir(parents=True, exist_ok=True)
         return bootstrap3_folder / file_path.name, bootstrap5_folder / file_path.name
-
-
 
     def clear_screen(self):
         self.stdout.write("\033c")  # clear terminal screen
