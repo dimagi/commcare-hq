@@ -113,7 +113,8 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
     date_field = 'opened_on' if is_opened else 'closed_on'
     user_field = 'opened_by' if is_opened else 'closed_by'
 
-    case_query = (CaseES(for_export=export)
+    case_query = (
+        CaseES(for_export=export)
         .domain(domain)
         .filter(
             filters.date_range(
@@ -123,7 +124,8 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
             )
         )
         .terms_aggregation(user_field, 'by_user')
-        .size(0))
+        .size(0)
+    )
 
     if case_types:
         case_query = case_query.case_type(case_types)
@@ -203,8 +205,8 @@ def get_last_forms_by_app(user_id):
     """
     query = (
         FormES()
-            .user_id(user_id)
-            .aggregation(
+        .user_id(user_id)
+        .aggregation(
             TermsAggregation('app_id', 'app_id').aggregation(
                 TopHitsAggregation(
                     'top_hits_last_form_submissions',
@@ -355,17 +357,18 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
     missing_users = False
 
     date_filter_fn = submitted_filter if by_submission_time else completed_filter
-    query = (FormES(for_export=export)
-             .domain(domain)
-             .filter(date_filter_fn(gte=startdate, lt=enddate))
-             .aggregation(
-                 TermsAggregation('user_id', 'form.meta.userID').aggregation(
-                     TermsAggregation('app_id', 'app_id').aggregation(
-                         TermsAggregation('xmlns', 'xmlns.exact')
-                     )
-                 )
-             )
-             .size(0)
+    query = (
+        FormES(for_export=export)
+        .domain(domain)
+        .filter(date_filter_fn(gte=startdate, lt=enddate))
+        .aggregation(
+            TermsAggregation('user_id', 'form.meta.userID').aggregation(
+                TermsAggregation('app_id', 'app_id').aggregation(
+                    TermsAggregation('xmlns', 'xmlns.exact')
+                )
+            )
+        )
+        .size(0)
     )
 
     if user_ids:
