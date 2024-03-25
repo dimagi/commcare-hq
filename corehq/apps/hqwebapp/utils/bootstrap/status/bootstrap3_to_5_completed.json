@@ -4,8 +4,8 @@
     "templates": [
       "edit_menu.html"
     ],
-    "js": [
-      "edit_builds.js"
+    "javascript": [
+      "js/edit_builds.js"
     ]
   }
 }
