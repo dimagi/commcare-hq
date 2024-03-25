@@ -62,13 +62,6 @@ def _check_required_when_active(is_active, value):
         )
 
 
-def _check_required_when_enabled(is_enabled, value):
-    if is_enabled and not value:
-        raise forms.ValidationError(
-            _("This is required when Auto-Deactivation is enabled.")
-        )
-
-
 def _ensure_entity_id_matches_expected_provider(entity_id, identity_provider):
     if (identity_provider.idp_type == IdentityProviderType.ONE_LOGIN
             and not re.match(r'^https:\/\/[A-za-z\d-]*.onelogin.com\/', entity_id)):
@@ -704,6 +697,13 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
             ),
             css_class="panel panel-modern-gray panel-form-only")]
 
+    @staticmethod
+    def _check_required_when_enabled(is_enabled, value):
+        if is_enabled and not value:
+            raise forms.ValidationError(
+                _("This is required when Auto-Deactivation is enabled.")
+            )
+
     def clean_is_active(self):
         is_active = self.cleaned_data['is_active']
         if is_active:
@@ -729,19 +729,19 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
     def clean_api_id(self):
         api_id = self.cleaned_data['api_id']
         is_enabled = self.cleaned_data['enable_user_deactivation']
-        _check_required_when_enabled(is_enabled, api_id)
+        BaseSsoEnterpriseSettingsForm._check_required_when_enabled(is_enabled, api_id)
         return api_id
 
     def clean_api_host(self):
         api_host = self.cleaned_data['api_host']
         is_enabled = self.cleaned_data['enable_user_deactivation']
-        _check_required_when_enabled(is_enabled, api_host)
+        BaseSsoEnterpriseSettingsForm._check_required_when_enabled(is_enabled, api_host)
         return api_host
 
     def clean_date_api_secret_expiration(self):
         date_expiration = self.cleaned_data['date_api_secret_expiration']
         is_enabled = self.cleaned_data['enable_user_deactivation']
-        _check_required_when_enabled(is_enabled, date_expiration)
+        BaseSsoEnterpriseSettingsForm._check_required_when_enabled(is_enabled, date_expiration)
         if date_expiration and date_expiration <= datetime.datetime.now(tz=date_expiration.tzinfo):
             raise forms.ValidationError(
                 _("This certificate has already expired!")
