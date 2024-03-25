@@ -55,6 +55,20 @@ class SubmissionErrorReport(DeploymentsReport):
     _submitfilter = None
 
     @property
+    @memoized
+    def selected_user_ids(self):
+        return EMWF.user_es_query(
+            self.domain,
+            self.request.GET.getlist(EMWF.slug),
+            self.request.couch_user,
+        ).get_ids()
+
+    @property
+    def has_user_filters(self):
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        return len(mobile_user_and_group_slugs) > 0
+
+    @property
     def submitfilter(self):
         if self._submitfilter is None:
             self._submitfilter = SubmissionTypeFilter.get_filter_toggle(self.request)
@@ -73,6 +87,9 @@ class SubmissionErrorReport(DeploymentsReport):
     def paged_result(self):
         doc_types = [filter_.doc_type for filter_ in [filter_ for filter_ in self.submitfilter if filter_.show]]
         sort_col, desc = self.sort_params
+        user_ids = []
+        if self.has_user_filters:
+            user_ids = self.selected_user_ids
         return get_paged_forms_by_type(
             self.domain,
             doc_types,
