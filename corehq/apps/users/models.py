@@ -104,9 +104,6 @@ from .models_role import (  # noqa
 from .user_data import SQLUserData  # noqa
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.locations.models import (
-    get_case_sharing_groups_for_locations,
-)
 
 WEB_USER = 'web'
 COMMCARE_USER = 'commcare'
@@ -1135,6 +1132,19 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         })
         return session_data
 
+    def get_case_owning_locations(self, domain):
+        """
+        :return: queryset of case-owning locations either directly assigned to the
+        user or descendant from an assigned location that views descendants
+        """
+        from corehq.apps.locations.models import SQLLocation
+
+        yield from self.get_sql_locations(domain).filter(location_type__shares_cases=True)
+
+        yield from SQLLocation.objects.get_queryset_descendants(
+            self.get_sql_locations(domain).filter(location_type__view_descendants=True)
+        ).filter(location_type__shares_cases=True, is_archived=False)
+
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.users.model_log import UserModelAction
 
@@ -1915,10 +1925,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         )
 
         # get faked location group objects
-        groups = list(get_case_sharing_groups_for_locations(
-            self.get_sql_locations(self.domain),
-            self._id
-        ))
+        groups = [
+            location.case_sharing_group_object(self._id)
+            for location in self.get_case_owning_locations(self.domain)
+        ]
         groups += [group for group in Group.by_user_id(self._id) if group.case_sharing]
 
         has_at_privilege = domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
