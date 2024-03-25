@@ -1805,9 +1805,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def _get_deleted_case_ids(self):
         return CommCareCase.objects.get_deleted_case_ids_by_owner(self.domain, self.user_id)
 
-    def get_owner_ids(self, domain=None):
+    def get_owner_ids(self, domain):
         owner_ids = [self.user_id]
-        owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
+        owner_ids.extend(g._id for g in self.get_case_sharing_groups())
         return owner_ids
 
     def unretire(self, unretired_by_domain, unretired_by, unretired_via=None):
