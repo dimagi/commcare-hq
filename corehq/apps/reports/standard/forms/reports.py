@@ -34,7 +34,8 @@ class SubmissionErrorReport(DeploymentsReport):
     asynchronous = False
     base_template = 'reports/standard/submission_error_report.html'
 
-    fields = ['corehq.apps.reports.standard.forms.filters.SubmissionTypeFilter']
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+              'corehq.apps.reports.standard.forms.filters.SubmissionTypeFilter']
 
     @property
     @memoized
