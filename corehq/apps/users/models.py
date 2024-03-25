@@ -2423,6 +2423,11 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             request_user=request_user
         )
 
+    def get_owner_ids(self, domain):
+        owner_ids = [self.user_id]
+        owner_ids.extend(loc.location_id for loc in self.get_case_owning_locations(domain))
+        return owner_ids
+
     @quickcache(['self._id', 'domain'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self, domain):
         case = self.get_usercase_by_domain(domain)
