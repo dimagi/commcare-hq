@@ -37,7 +37,7 @@ def delete_program(request, domain, prog_id):
 @method_decorator(use_bootstrap5, name='dispatch')
 class ProgramListView(BaseCommTrackManageView):
     urlname = 'commtrack_program_list'
-    template_name = 'programs/manage/programs.html'
+    template_name = 'programs/manage/bootstrap5/programs.html'
     page_title = gettext_noop("Programs")
 
     @property
@@ -78,7 +78,7 @@ class FetchProgramListView(ProgramListView):
 class NewProgramView(BaseCommTrackManageView):
     urlname = 'commtrack_program_new'
     page_title = gettext_noop("New Program")
-    template_name = 'programs/manage/program.html'
+    template_name = 'programs/manage/bootstrap5/program.html'
 
     @property
     @memoized

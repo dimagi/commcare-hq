@@ -90,7 +90,7 @@ def unarchive_product(request, domain, prod_id, archive=True):
 @method_decorator(use_bootstrap5, name='dispatch')
 class ProductListView(BaseCommTrackManageView):
     urlname = 'commtrack_product_list'
-    template_name = 'products/manage/products.html'
+    template_name = 'products/manage/bootstrap5/products.html'
     page_title = gettext_noop("Products")
 
     DEFAULT_LIMIT = 10
@@ -218,7 +218,7 @@ class FetchProductListView(ProductListView):
 class NewProductView(BaseCommTrackManageView):
     urlname = 'commtrack_product_new'
     page_title = gettext_noop("New Product")
-    template_name = 'products/manage/product.html'
+    template_name = 'products/manage/bootstrap5/product.html'
 
     @property
     @memoized
