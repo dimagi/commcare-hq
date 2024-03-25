@@ -662,11 +662,14 @@ class DeleteCaseView(BaseProjectReportSectionView):
             if form_id:
                 messages.error(request, _("Deleting this form would delete too many related cases. "
                                           "Please navigate to the form's Case Changes and delete some "
-                                          "of the cases it created before attempting to delete this form."))
+                                          "of the cases it created before attempting to delete this form. "
+                                          "Please note that there is a limit of {} cases you can delete "
+                                          "at once.").format(self.MAX_CASE_COUNT))
             else:
                 messages.error(request, _("Deleting this case would delete too many related cases. "
                                           "Please delete some of this cases' subcases before attempting "
-                                          "to delete this case."))
+                                          "to delete this case. Please note that there is a limit of {} cases "
+                                          "you can delete at once.").format(self.MAX_CASE_COUNT))
             return {'redirect': True}
 
         if not case_data:
