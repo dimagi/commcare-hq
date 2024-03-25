@@ -147,7 +147,7 @@ def _r_js(local=False, verbose=False, bootstrap_version=None):
     # These pages depend on bootstrap 5 and must be skipped by the bootstrap3 run of this command.
     # "<bundle directory>": [<js main modules that depend on bootstrap 5>]
     split_bundles = {
-        "commtrack/js": ['commtrack/js/bootstrap5/products_and_programs_main'],
+        "commtrack/js": ['commtrack/js/products_and_programs_main'],
         "hqwebapp/js": ['hqwebapp/js/500'],
     }
 
