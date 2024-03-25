@@ -29,7 +29,7 @@ from django.forms.widgets import Select
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes, smart_str
-from django.utils.functional import cached_property, lazy
+from django.utils.functional import cached_property
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
@@ -115,6 +115,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import DatetimeLocalWidget, HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.hqwebapp.widgets import (
     BootstrapCheckboxInput,
     GeoCoderInput,
@@ -133,8 +134,6 @@ from corehq.toggles import (
 )
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-
-mark_safe_lazy = lazy(mark_safe, str)  # TODO: Use library method
 
 
 # used to resize uploaded custom logos, aspect ratio is preserved
