@@ -21,6 +21,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.xformAction = constants.ANSWER;
         self.xformParams = function () { return {}; };
         self.placeholderText = '';
+        self.broadcastTopics = [];
         // Returns true if the rawAnswer is valid, false otherwise
         self.isValid = function (rawAnswer) {
             return self.getErrorMessage(rawAnswer) === null;
@@ -69,6 +70,25 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         if (hasPlaceHolder) {
             self.placeholderText = ko.utils.unwrapObservable(self.question.hint);
         }
+    };
+
+    Entry.prototype.buildBroadcastTopics = function (options) {
+        var self = this;
+        if (options.broadcastStyles) {
+            options.broadcastStyles.forEach(function (broadcast) {
+                var match = broadcast.match(/broadcast-(.*)/);
+                if (match) {
+                    self.broadcastTopics.push(match[1]);
+                }
+            });
+        }
+    };
+
+    Entry.prototype.broadcastMessages = function (question, broadcastObj) {
+        var self = this;
+        self.broadcastTopics.forEach(function (broadcastTopic) {
+            question.broadcastPubSub.notifySubscribers(broadcastObj, broadcastTopic);
+        });
     };
 
     /**
@@ -151,6 +171,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             if (match) {
                 var receiveTopic = match[1];
                 var receiveTopicField = match[2];
+                if (receiveTopicField === constants.RECEIVER_FIELD_INDEXED) {
+                    var ixMatch = question.ix().match(/_(\d+)/g);
+                    receiveTopicField = ixMatch ? ixMatch.pop().replace('_', '') : '0';
+                }
                 question.broadcastPubSub.subscribe(function (message) {
                     if (message === constants.NO_ANSWER) {
                         self.rawAnswer(constants.NO_ANSWER);
@@ -248,7 +272,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var self = this;
         FreeTextEntry.call(self, question, options);
         self.templateType = 'address';
-        self.broadcastTopics = [];
         self.editing = true;
         let isRequired = self.question.required() ? "Yes" : "No";
         $(function () {
@@ -265,10 +288,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.geocoderItemCallback = function (item) {
             self.rawAnswer(item.place_name);
             self.editing = false;
-            var broadcastObj = formEntryUtils.getBroadcastObject(item);
-            self.broadcastTopics.forEach(function (broadcastTopic) {
-                question.broadcastPubSub.notifySubscribers(broadcastObj, broadcastTopic);
-            });
+            var broadcastObj = formEntryUtils.getAddressBroadcastObject(item);
+            self.broadcastMessages(question, broadcastObj);
             if (_.isEmpty(broadcastObj)) {
                 question.answer(constants.NO_ANSWER);
             } else {
@@ -283,20 +304,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             self.rawAnswer(constants.NO_ANSWER);
             self.question.error(null);
             self.editing = true;
-            self.broadcastTopics.forEach(function (broadcastTopic) {
-                question.broadcastPubSub.notifySubscribers(constants.NO_ANSWER, broadcastTopic);
-            });
+            self.broadcastMessages(question, constants.NO_ANSWER);
         };
 
         self.afterRender = function () {
-            if (options.broadcastStyles) {
-                options.broadcastStyles.forEach(function (broadcast) {
-                    var match = broadcast.match(/broadcast-(.*)/);
-                    if (match) {
-                        self.broadcastTopics.push(match[1]);
-                    }
-                });
-            }
+            self.buildBroadcastTopics(options);
 
             formEntryUtils.renderMapboxInput({
                 divId: self.entryId,
@@ -892,6 +904,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.extensionsMap = initialPageData.get("valid_multimedia_extensions_map");
         // Tracks whether file entry has already been cleared, preventing an additional failing request to Formplayer
         self.cleared = false;
+        self.buildBroadcastTopics(options);
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     FileEntry.prototype.constructor = EntrySingleAnswer;
@@ -900,7 +913,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
             // Input has changed and validation will be checked
             if (newValue !== self.answer()) {
-                self.question.formplayerProcessed = false;
+                self.question.formplayerMediaRequest = $.Deferred();
                 self.cleared = false;
             }
             self.answer(newValue.replace(constants.FILE_PREFIX, ""));
@@ -911,7 +924,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     FileEntry.prototype.onAnswerChange = function (newValue) {
         var self = this;
         // file has already been validated and assigned a unique id. another request should not be sent to formplayer
-        if (self.question.formplayerProcessed) {
+        if (self.question.formplayerMediaRequest.state() === "resolved") {
             return;
         }
         if (newValue !== constants.NO_ANSWER && newValue !== "") {
@@ -943,6 +956,14 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             }
             self.question.error(null);
             self.question.onchange();
+
+            if (self.broadcastTopics.length) {
+                // allow support for broadcasting multiple filenames
+                var broadcastObj = Object.fromEntries([self.file()].map((file, i) => [i, file.name]));
+                self.question.formplayerMediaRequest.then(function () {
+                    self.broadcastMessages(self.question, broadcastObj);
+                });
+            }
         }
     };
     FileEntry.prototype.onClear = function () {
@@ -955,6 +976,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.rawAnswer(constants.NO_ANSWER);
         self.xformAction = constants.CLEAR_ANSWER;
         self.question.onClear();
+        self.broadcastMessages(self.question, constants.NO_ANSWER);
     };
 
     /**
@@ -1156,6 +1178,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var displayOptions = _getDisplayOptions(question);
         var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
         var receiveStyle = (question.stylesContains(/receive-*/)) ? question.stylesContaining(/receive-*/)[0] : null;
+        var broadcastStyles = question.stylesContaining(/broadcast-*/);
 
         switch (question.datatype()) {
             case constants.STRING:
@@ -1171,7 +1194,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 if (question.stylesContains(constants.ADDRESS)) {
                     if (hasGeocoderPrivs) {
                         entry = new AddressEntry(question, {
-                            broadcastStyles: question.stylesContaining(/broadcast-*/),
+                            broadcastStyles: broadcastStyles,
                         });
                     } else {
                         window.console.warn('No active entry for: ' + question.datatype());
@@ -1303,13 +1326,19 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                                 entry = new SignatureEntry(question, {});
                                 break;
                             }
-                            entry = new ImageEntry(question, {});
+                            entry = new ImageEntry(question, {
+                                broadcastStyles: broadcastStyles,
+                            });
                             break;
                         case constants.CONTROL_AUDIO_CAPTURE:
-                            entry = new AudioEntry(question, {});
+                            entry = new AudioEntry(question, {
+                                broadcastStyles: broadcastStyles,
+                            });
                             break;
                         case constants.CONTROL_VIDEO_CAPTURE:
-                            entry = new VideoEntry(question, {});
+                            entry = new VideoEntry(question, {
+                                broadcastStyles: broadcastStyles,
+                            });
                             break;
                         // any other control types are unsupported
                     }

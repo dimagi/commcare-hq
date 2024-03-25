@@ -294,8 +294,7 @@ msgstr "Cuenta de Facturación"
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/builds/templates/builds/all.html
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
@@ -1088,8 +1087,10 @@ msgstr ""
 #: corehq/apps/linked_domain/templates/linked_domain/partials/push_warning_dialog.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
 #: corehq/apps/notifications/forms.py
-#: corehq/apps/products/templates/products/manage/products.html
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
@@ -2002,6 +2003,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
+#: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 #, python-format
 msgid ""
@@ -2025,6 +2027,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 msgid ""
 "\n"
@@ -2035,6 +2038,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/subscription_ending_reminder.html
 #: corehq/apps/accounting/templates/accounting/email/trial_ending_reminder.html
+#: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 msgid "The CommCare HQ Team"
 msgstr "El Equipo CommCare HQ"
@@ -4247,9 +4251,11 @@ msgid "You can't have more than one phase with the anchor {}"
 msgstr "No puede tener más de una fase con el anclaje {}"
 
 #: corehq/apps/app_manager/models.py
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 #: corehq/apps/products/views.py
-#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/program.html
 #: corehq/apps/reports/commtrack/standard.py
 #: corehq/apps/reports/templates/reports/reportdata/case_data.html
 msgid "Product"
@@ -6000,8 +6006,7 @@ msgid "Value"
 msgstr "Valor"
 
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/data_dictionary/views.py
 #: corehq/apps/reports/templates/reports/filters/explorer_columns.html
@@ -7251,7 +7256,8 @@ msgstr ""
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 #: corehq/apps/reminders/templates/reminders/keyword_list.html
 #: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
@@ -7939,8 +7945,10 @@ msgstr "Cargar"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_paginated_crud.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_paginated_crud.html
-#: corehq/apps/products/templates/products/manage/products.html
-#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/program.html
 #: corehq/apps/smsbillables/filters.py
 #: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html
 msgid "Show"
@@ -8172,7 +8180,7 @@ msgstr "Actualizar"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 #: corehq/apps/cloudcare/templates/formplayer/case_detail.html
-#: corehq/apps/cloudcare/templates/formplayer/multi_select_continue_button.html
+#: corehq/apps/cloudcare/templates/formplayer/case_list/multi_select_continue_button.html
 #: corehq/apps/domain/templates/domain/confirm_plan.html
 #: corehq/apps/domain/templates/domain/select_plan.html
 #: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_continue.html
@@ -9564,8 +9572,10 @@ msgstr "Reporte"
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/download_data_files.html
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/products/templates/products/manage/products.html
-#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/program.html
 #: corehq/apps/registry/templates/registry/registry_list.html
 #: corehq/apps/reminders/forms.py corehq/apps/reminders/views.py
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
@@ -10677,7 +10687,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
-#: corehq/apps/cloudcare/templates/formplayer/case_list.html
+#: corehq/apps/cloudcare/templates/formplayer/case_list/search_controls.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Select All"
 msgstr "Seleccionar Todos"
@@ -11441,64 +11451,57 @@ msgstr "Cambios de modelo de auditoría"
 msgid "Build Number"
 msgstr "Nombre de Desarrollo"
 
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Editing CommCare Builds"
 msgstr "Edición de Desarrollo de CommCare"
 
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
-#: corehq/tabs/tabclasses.py
+#: corehq/apps/builds/templates/builds/edit_menu.html corehq/tabs/tabclasses.py
 msgid "Editing"
 msgstr "Edición"
 
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Menu Options"
 msgstr "Opciones de Menú"
 
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Superuser Only"
 msgstr "Solo Superusuario"
 
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Add a Version"
 msgstr "Agregar una Versión"
 
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Default 1.x Build"
 msgstr "Desarrollo Default 1.x"
 
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Default 2.x Build"
 msgstr "Desarrollo Default 2.x"
 
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
+#, fuzzy
+#| msgid "Menu Options"
+msgid "Update Menu Options"
+msgstr "Opciones de Menú"
+
+#: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Import a new build from the build server"
 msgstr "Importar un nuevo desarrollo del servidor de desarrollo"
 
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Browse versions"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Paste the latest version in the box above in the format x.y.z"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Click Import Build"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
 msgid ""
 "\n"
 "              You can also automatically fetch the latest build from GitHub "
@@ -11507,8 +11510,7 @@ msgid ""
 "              "
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/bootstrap3/edit_menu.html
-#: corehq/apps/builds/templates/builds/bootstrap5/edit_menu.html
+#: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Import Build"
 msgstr "Importar Desarrollo"
 
@@ -11718,8 +11720,8 @@ msgstr ""
 
 #: corehq/apps/case_importer/exceptions.py
 msgid ""
-"Could not process case. If this persists, Please report an issue to "
-"CommCareHQ"
+"Could not process case. If this persists, please report an issue to CommCare "
+"HQ"
 msgstr ""
 
 #: corehq/apps/case_importer/suggested_fields.py
@@ -12706,21 +12708,21 @@ msgid "Scroll to bottom"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html
+#: corehq/apps/cloudcare/templates/formplayer/case_list/no_items_text.html
+msgid "List is empty."
+msgstr "La lista está vacía."
+
+#: corehq/apps/cloudcare/templates/formplayer/case_list/menu_header.html
 msgid "Hide Map"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/formplayer/case_list.html
+#: corehq/apps/cloudcare/templates/formplayer/case_list/menu_header.html
 msgid "Refine search"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/formplayer/case_list.html
+#: corehq/apps/cloudcare/templates/formplayer/case_list/search_controls.html
 msgid "Sort By"
 msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/case_list.html
-#: corehq/apps/cloudcare/templates/formplayer/no_items_text.html
-msgid "List is empty."
-msgstr "La lista está vacía."
 
 #: corehq/apps/cloudcare/templates/formplayer/debugger.html
 msgid "Expand Data Preview Section."
@@ -13489,7 +13491,9 @@ msgid "Users"
 msgstr "Usuarios"
 
 #: corehq/apps/dashboard/views.py
-msgid "Manage accounts for mobile workers and CommCareHQ users"
+#, fuzzy
+#| msgid "Manage accounts for mobile workers and CommCareHQ users"
+msgid "Manage accounts for mobile workers and CommCare HQ users"
 msgstr "Administre cuentas para usuarios móviles y usuarios CommCareHQ"
 
 #: corehq/apps/dashboard/views.py
@@ -13831,14 +13835,51 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
-msgid "Delete Case Property"
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                    Change my project's plan\n"
+#| "                                "
+msgid ""
+"\n"
+"                        Delete\n"
+"                        '<span id=\"delete-case-prop-name\"></span>'\n"
+"                        Case Property\n"
+"                    "
 msgstr ""
+"\n"
+"Cambiar el plan de mi proyecto"
+
+#: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                    These filters are not displayed to report viewers and "
+#| "are always applied to the data.\n"
+#| "                  "
+msgid ""
+"\n"
+"                        There are currently no cases that store data with "
+"this case property, so it is safe to delete.\n"
+"                    "
+msgstr ""
+"\n"
+"Estos filtros no se muestran a los que ven el reporte y siempre son "
+"aplicados a los datos."
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"                        There are currently no cases that store data with "
-"this case property, and so it is safe to delete.\n"
+"                    Please note that if a new form or case was updated to "
+"the server recently that makes this property\n"
+"                    unsafe to delete, this will only be reflected in the "
+"Data Dictionary after a short while. This is not\n"
+"                    a blocking action and the case property can be created "
+"again if needed in the future. Please refer to\n"
+"                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the "
+"documentation</a>\n"
+"                    for additional information about this action.\n"
 "                    "
 msgstr ""
 
@@ -13874,8 +13915,18 @@ msgstr ""
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 msgid ""
 "\n"
-"                    Please note however, that all case properties for this "
-"case type will also be deleted.\n"
+"                    Please note that all case properties for this case type "
+"will also be deleted.\n"
+"                    Furthermore, if a new form or case was updated to the "
+"server recently that makes this case type\n"
+"                    unsafe to delete, this will only be reflected in the "
+"Data Dictionary after a short while. This is not\n"
+"                    a blocking action and the case type can be created again "
+"if needed in the future. Please refer to\n"
+"                    <a href=\"https://dimagi.atlassian.net/wiki/spaces/"
+"commcarepublic/pages/2143944977/Data+Dictionary\" target=\"_blank\">the "
+"documentation</a>\n"
+"                    for additional information about this action.\n"
 "                    "
 msgstr ""
 
@@ -15527,8 +15578,13 @@ msgid "Call Center Application"
 msgstr "Aplicación de Centro de Llamadas"
 
 #: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid ""
+#| "Call Center mode is a CommCareHQ module for managing call center "
+#| "workflows. It is still under active development. Do not enable for your "
+#| "domain unless you're actively piloting it."
 msgid ""
-"Call Center mode is a CommCareHQ module for managing call center workflows. "
+"Call Center mode is a CommCare HQ module for managing call center workflows. "
 "It is still under active development. Do not enable for your domain unless "
 "you're actively piloting it."
 msgstr ""
@@ -16075,9 +16131,14 @@ msgstr ""
 "para solicitar cambios.</p>"
 
 #: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid ""
+#| "<p><i class=\"fa fa-info-circle\"></i> Clicking \"Update\" will set up "
+#| "the subscription in CommCareHQ to one of our standard contracted plans."
+#| "<br/> If you need to set up a non-standard plan, please email {}.</p>"
 msgid ""
 "<p><i class=\"fa fa-info-circle\"></i> Clicking \"Update\" will set up the "
-"subscription in CommCareHQ to one of our standard contracted plans.<br/> If "
+"subscription in CommCare HQ to one of our standard contracted plans.<br/> If "
 "you need to set up a non-standard plan, please email {}.</p>"
 msgstr ""
 "<p><i class=\"fa fa-info-circle\"></i> Al hacer clic en \"Actualizar\" la "
@@ -18162,78 +18223,94 @@ msgstr "Agregar Teléfono de Respaldo"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/phone_register.html
 msgid ""
-"Your backup phone number will be used if your primary method of\n"
-"      registration is not available. Please enter a valid phone number."
+"Your backup phone number will be used if your primary method of registration "
+"is not available. Please enter a valid phone number."
 msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/phone_register.html
 msgid ""
-"We've sent a token to your phone number. Please\n"
-"      enter the token you've received."
+"We've sent a token to your phone number. Please enter the token you've "
+"received."
 msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/setup.html
-msgid ""
-"Follow the steps in this wizard to enable two-factor\n"
-"      authentication."
+msgid "Follow the steps in this wizard to enable two-factor authentication."
 msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/setup.html
-msgid ""
-"Follow the steps in this wizard to reset two-factor\n"
-"      authentication."
-msgstr ""
+#, fuzzy
+#| msgid "Please select an autoselection mode."
+msgid "Please select which authentication method you would like to use."
+msgstr "Por favor seleccione un modo de autoselección"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/setup.html
 msgid ""
-"Please select which authentication method you would\n"
-"      like to use."
+"To start using a token generator, please use your smartphone to scan the QR "
+"code below. For example, use Google Authenticator. Then, enter the token "
+"generated by the app."
 msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/setup.html
+#, fuzzy
+#| msgid ""
+#| "Please enter the phone number you wish to be called on.\n"
+#| "      This number will be validated in the next step. "
 msgid ""
-"To start using a token generator, please use your\n"
-"      smartphone to scan the QR code below. For example, use Google\n"
-"      Authenticator. Then, enter the token generated by the app.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/setup.html
-msgid ""
-"Please enter the phone number you wish to receive the\n"
-"      text messages on. This number will be validated in the next step.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/domain/templates/login_and_password/two_factor/core/setup.html
-msgid ""
-"Please enter the phone number you wish to be called on.\n"
-"      This number will be validated in the next step. "
+"Please enter the phone number you wish to receive the text messages on. This "
+"number will be validated in the next step."
 msgstr ""
 "Por favor ingrese el número de teléfono al que quiere que se le llame. Este "
 "número de teléfono será validado en el siguiente paso."
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/setup.html
+#, fuzzy
+#| msgid ""
+#| "Please enter the phone number you wish to be called on.\n"
+#| "      This number will be validated in the next step. "
 msgid ""
-"We are calling your phone right now, please enter the\n"
-"        digits you hear."
+"Please enter the phone number you wish to be called on. This number will be "
+"validated in the next step."
+msgstr ""
+"Por favor ingrese el número de teléfono al que quiere que se le llame. Este "
+"número de teléfono será validado en el siguiente paso."
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/setup.html
+#, fuzzy
+#| msgid ""
+#| "We are calling your phone right now, please enter the\n"
+#| "        digits you hear."
+msgid "We are calling your phone right now, please enter the digits you hear."
 msgstr ""
 "Estamos llamándolo a su teléfono ahora mismo, por favor ingrese los dígitos "
 "que escucha."
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/setup.html
-msgid ""
-"We sent you a text message, please enter the tokens we\n"
-"        sent."
+#, fuzzy
+#| msgid ""
+#| "We sent you a text message, please enter the tokens we\n"
+#| "        sent."
+msgid "We sent you a text message, please enter the tokens we sent."
 msgstr ""
 "Le hemos enviado un mensaje de texto, por favor ingrese los identificadores "
 "que le enviamos."
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/setup.html
 msgid ""
-"To identify and verify your YubiKey, please insert a\n"
-"      token in the field below. Your YubiKey will be linked to your\n"
-"      account."
+"We've encountered an issue with the selected authentication method. Please "
+"go back and verify that you entered your information correctly, try again, "
+"or use a different authentication method instead. If the issue persists, "
+"contact the site administrator."
+msgstr ""
+
+#: corehq/apps/domain/templates/login_and_password/two_factor/core/setup.html
+#, fuzzy
+#| msgid ""
+#| "To identify and verify your YubiKey, please insert a\n"
+#| "      token in the field below. Your YubiKey will be linked to your\n"
+#| "      account."
+msgid ""
+"To identify and verify your YubiKey, please insert a token in the field "
+"below. Your YubiKey will be linked to your account."
 msgstr ""
 "Para identificar y verificar su YubiKey, por favor ingrese un identificador "
 "en el campo de abajo. Su YubiKey será enlazado a su cuenta."
@@ -18333,9 +18410,9 @@ msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html
 msgid ""
-"However strongly we discourage you to do so, you can\n"
-"          also <strong>remove</strong> two-factor authentication for your "
-"account."
+"We <strong>strongly discourage</strong> this, but if absolutely necessary "
+"you can\n"
+"          remove two-factor authentication from your account."
 msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html
@@ -18345,10 +18422,11 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/profile.html
 msgid ""
 "\n"
-"          Clicking below will disable your current two-factor authentication "
-"and rerun Two-Factor Authentication setup,\n"
-"          so make sure you have a backup device or tokens available in case "
-"you are unable to complete the process.\n"
+"          This will remove your current two-factor authentication, and "
+"prompt you to run through the entire setup again.\n"
+"          If you need to do this, please make sure you complete the entire "
+"process once you begin, otherwise your account will\n"
+"          not be protected by two-factor authentication.\n"
 "        "
 msgstr ""
 
@@ -21671,7 +21749,7 @@ msgstr "Integración de Tablero de Excel"
 #: corehq/apps/export/views/list.py
 msgid ""
 "\n"
-"        Excel dashboard feeds allow Excel to directly connect to CommCareHQ "
+"        Excel dashboard feeds allow Excel to directly connect to CommCare HQ "
 "to download data.\n"
 "        Data is updated daily.\n"
 "    "
@@ -22532,10 +22610,8 @@ msgid "Disbursement algorithm"
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
-#, fuzzy
-#| msgid "Enter App Code"
 msgid "Enter mapbox token"
-msgstr "Ingresar Código de Aplicación"
+msgstr ""
 
 #: corehq/apps/geospatial/forms.py
 msgid ""
@@ -22573,10 +22649,8 @@ msgid "Algorithms"
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
-#, fuzzy
-#| msgid "API Key"
 msgid "Test API Key"
-msgstr "Clave API"
+msgstr ""
 
 #: corehq/apps/geospatial/forms.py
 msgid "Value for maximum group size required"
@@ -26346,7 +26420,8 @@ msgid "Lookup Table"
 msgstr "Tabla de Búsqueda"
 
 #: corehq/apps/linked_domain/const.py
-#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/program.html
 #: corehq/apps/reminders/forms.py corehq/apps/reminders/views.py
 #: corehq/apps/sms/filters.py corehq/apps/sms/models.py
 msgid "Keyword"
@@ -27653,7 +27728,8 @@ msgid "Unarchive"
 msgstr "Desarchivar"
 
 #: corehq/apps/locations/templates/locations/manage/location_template.html
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 #: corehq/apps/products/views.py corehq/apps/reports/views.py
 msgid "Archive"
 msgstr "Archivar"
@@ -28089,19 +28165,24 @@ msgstr ""
 "errores. "
 
 #: corehq/apps/products/forms.py
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 msgid "Product ID"
 msgstr "ID del Producto"
 
 #: corehq/apps/products/forms.py
-#: corehq/apps/products/templates/products/manage/products.html
-#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/program.html
 msgid "Units"
 msgstr "Unidades"
 
 #: corehq/apps/products/forms.py
-#: corehq/apps/products/templates/products/manage/products.html
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 #: corehq/apps/reports/filters/commtrack.py corehq/apps/users/forms.py
 msgid "Program"
 msgstr "Programa"
@@ -28128,86 +28209,107 @@ msgstr ""
 "¡Lo sentimos, algo salió mal! Por favor intente de nuevo y reporte un "
 "problema si este problema continúa."
 
-#: corehq/apps/products/templates/products/manage/partials/product_upload_status.html
-msgid "The following errors were encountered"
-msgstr "Se encontraron los siguientes errores"
-
-#: corehq/apps/products/templates/products/manage/product.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/product.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/product.html
 msgid "Product Information"
 msgstr "Información del Producto"
 
-#: corehq/apps/products/templates/products/manage/product.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/product.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/product.html
 msgid "Update Product"
 msgstr "Actualizar el Producto"
 
-#: corehq/apps/products/templates/products/manage/product.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/product.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/product.html
 msgid "Create Product"
 msgstr "Crear el Producto"
 
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 msgid "Available Products"
 msgstr "Productos Disponibles"
 
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 msgid "Showing the Inactive Product List."
 msgstr "Mostrando la Lista de Productos Inactivos."
 
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 msgid "Show Archived Products"
 msgstr "Mostrar Productos Archivados"
 
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 msgid "Show Active Products"
 msgstr "Mostrar Productos Activos"
 
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 #: corehq/apps/products/views.py
 msgid "New Product"
 msgstr "Nuevo Producto"
 
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 msgid "Bulk Import Products"
 msgstr "Productos de Importación General"
 
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 msgid "Edit Product Fields"
 msgstr "Editar Campos de Producto"
 
-#: corehq/apps/products/templates/products/manage/products.html
-#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/program.html
 msgid "Loading products..."
 msgstr "Cargando productos..."
 
-#: corehq/apps/products/templates/products/manage/products.html
-#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/program.html
 #, python-format
 msgid "%(limit)s products per page"
 msgstr "%(limit)s productos por página"
 
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 msgid "There are no inactive products for this project."
 msgstr "No hay productos inactivos para este proyecto."
 
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 msgid "There are no products for this project yet."
 msgstr "Aún no hay productos para este proyecto.  "
 
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 msgid "Archive Product"
 msgstr "Producto Archivado"
 
-#: corehq/apps/products/templates/products/manage/products.html
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 msgid "Are you sure you want to"
 msgstr "Está seguro de que quiere"
 
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 msgid "Re-Activated / Un-Archived Products"
 msgstr "Re-activar / No-archivar Productos"
 
-#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap3/products.html
+#: corehq/apps/products/templates/products/manage/bootstrap5/products.html
 msgid "Archived Products"
 msgstr "Productos Archivados"
+
+#: corehq/apps/products/templates/products/manage/partials/product_upload_status.html
+msgid "The following errors were encountered"
+msgstr "Se encontraron los siguientes errores"
 
 #: corehq/apps/products/views.py
 #, python-brace-format
@@ -28299,51 +28401,63 @@ msgstr "El formulario no se valida"
 msgid "You cannot delete the default program"
 msgstr "Usted no puede borrar el programa predeterminado"
 
-#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/program.html
 msgid "Program Information"
 msgstr "Información del Programa"
 
-#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/program.html
 msgid "Update Program"
 msgstr "Actualizar Programa"
 
-#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/program.html
 msgid "Create Program"
 msgstr "Crear Programa"
 
-#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/program.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/program.html
 msgid "There are no products for this program yet."
 msgstr "Aún no hay productos para este programa. "
 
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 msgid "Available Programs"
 msgstr "Programas Disponibles"
 
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 msgid "Add Program"
 msgstr ""
 
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 msgid "Loading programs..."
 msgstr "Cargando programas..."
 
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 msgid "There are no programs for this project yet."
 msgstr "Aún no hay programas para este proyecto."
 
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 msgid "This program is the default and cannot be deleted."
 msgstr "Este programa es el predeterminado y no puede ser eliminado."
 
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 msgid "Delete Program"
 msgstr "Eliminar Programa"
 
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 msgid "Delete "
 msgstr "Eliminar"
 
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 msgid ""
 "This will delete the program. All of the programs products will be assigned "
 "to the default program instead. BE CAREFUL, as this action is irreversible."
@@ -28351,11 +28465,13 @@ msgstr ""
 "Esto eliminará el programa. Todos los productos del programa serán asignados "
 "al programa preconfigurado. TENGA CUIDADO, esta acción es irreversible. "
 
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 msgid "Delete unsuccessful. Try Again?"
 msgstr "Eliminar no tuvo éxito. ¿Desea intentar de nuevo?"
 
-#: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap3/programs.html
+#: corehq/apps/programs/templates/programs/manage/bootstrap5/programs.html
 msgid "Deleting Program..."
 msgstr "Eliminando el programa..."
 
@@ -35519,7 +35635,7 @@ msgstr ""
 #: corehq/apps/sso/forms.py
 msgid ""
 "This is a high security feature that ensures Assertions are fully encrypted. "
-"This feature requires a Premium Azure AD subscription."
+"This feature requires a Premium Entra ID subscription."
 msgstr ""
 
 #: corehq/apps/sso/forms.py
@@ -35721,28 +35837,20 @@ msgid "OpenID Provider Configuration"
 msgstr ""
 
 #: corehq/apps/sso/models.py
-#, fuzzy
-#| msgid "Year"
 msgid "1 Year"
-msgstr "Año"
+msgstr ""
 
 #: corehq/apps/sso/models.py
-#, fuzzy
-#| msgid "30 Days"
 msgid "180 Days"
-msgstr "30 Días"
+msgstr ""
 
 #: corehq/apps/sso/models.py
-#, fuzzy
-#| msgid "30 Days"
 msgid "120 Days"
-msgstr "30 Días"
+msgstr ""
 
 #: corehq/apps/sso/models.py
-#, fuzzy
-#| msgid "30 Days"
 msgid "60 Days"
-msgstr "30 Días"
+msgstr ""
 
 #: corehq/apps/sso/templates/sso/accounting_admin/edit_identity_provider.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/edit_identity_provider.html
@@ -35997,8 +36105,50 @@ msgid ""
 "                  "
 msgstr ""
 
+#: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 msgid "Dear enterprise administrator,"
+msgstr ""
+
+#: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
+#, python-format
+msgid ""
+"\n"
+"  The API Secret for your Identity Provider \"%(idp_name)s\" expires soon!\n"
+"  If a new API Secret is not created, the Remote User Management "
+"functionality for your Identity Provider will stop working on: "
+"%(expires_on)s\n"
+"  "
+msgstr ""
+
+#: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
+#: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
+#, python-format
+msgid ""
+"\n"
+"    If you have any questions, please don’t hesitate to contact\n"
+"    %(contact_email)s. Thank you for your use and support of CommCare.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.txt
+#, python-format
+msgid ""
+"\n"
+"Dear enterprise administrator,\n"
+"\n"
+"The API Secret for your Identity Provider \"%(idp_name)s\" expires soon!\n"
+"If a new API Secret is not created, the Remote User Management functionality "
+"for your Identity Provider will stop working on: %(expires_on)s\n"
+"\n"
+"If you have any questions, please don’t hesitate to contact "
+"%(contact_email)s.\n"
+"Thank you for your use and support of CommCare.\n"
+"\n"
+"Best regards,\n"
+"\n"
+"The CommCare HQ Team\n"
+"%(base_url)s\n"
 msgstr ""
 
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
@@ -36009,15 +36159,6 @@ msgid ""
 "    If the certificate is not renewed, any single sign-on authentication "
 "using\n"
 "    this IdP will stop working %(expires_on)s\n"
-"  "
-msgstr ""
-
-#: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
-#, python-format
-msgid ""
-"\n"
-"    If you have any questions, please don’t hesitate to contact\n"
-"    %(contact_email)s. Thank you for your use and support of CommCare.\n"
 "  "
 msgstr ""
 
@@ -36216,6 +36357,13 @@ msgstr ""
 #: corehq/apps/sso/utils/context_helpers.py
 #, python-brace-format
 msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
+msgstr ""
+
+#: corehq/apps/sso/utils/context_helpers.py
+#, python-format
+msgid ""
+"CommCare Alert: API Secret for Identity Provider %(idp_name)s expires "
+"%(expires_on)s"
 msgstr ""
 
 #: corehq/apps/sso/utils/login_helpers.py
@@ -40993,10 +41141,6 @@ msgstr ""
 #: corehq/apps/users/views/__init__.py
 #, python-brace-format
 msgid "It appears {username} has already been removed from your project space."
-msgstr ""
-
-#: corehq/apps/users/views/__init__.py
-msgid "Update subscription to set access for custom domain alerts"
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py

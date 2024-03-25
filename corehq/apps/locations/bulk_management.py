@@ -256,17 +256,17 @@ class LocationCollection(object):
     @property
     @memoized
     def locations_by_pk(self):
-        return {l.id: l for l in self.locations}
+        return {loc.id: loc for loc in self.locations}
 
     @property
     @memoized
     def locations_by_id(self):
-        return {l.location_id: l for l in self.locations}
+        return {loc.location_id: loc for loc in self.locations}
 
     @property
     @memoized
     def locations_by_site_code(self):
-        return {l.site_code: l for l in self.locations}
+        return {loc.site_code: loc for loc in self.locations}
 
     @property
     @memoized
@@ -437,9 +437,15 @@ class NewLocationImporter(object):
                     # supply_points would have been synced while SQLLocation.save() already
                     obj.sync_administrative_status(sync_supply_points=False)
 
-        update_count = lambda items: sum(l.needs_save and not l.do_delete and not l.is_new for l in items)
-        delete_count = lambda items: sum(l.do_delete for l in items)
-        new_count = lambda items: sum(l.is_new for l in items)
+        def update_count(locations):
+            return sum(loc.needs_save and not loc.do_delete and not loc.is_new for loc in locations)
+
+        def delete_count(locations):
+            return sum(loc.do_delete for loc in locations)
+
+        def new_count(locations):
+            return sum(loc.is_new for loc in locations)
+
         self.result.messages.extend([
             _("Created {} new location types").format(new_count(type_stubs)),
             _("Updated {} existing location types").format(update_count(type_stubs)),
@@ -464,23 +470,26 @@ class LocationTreeValidator(object):
 
     def __init__(self, type_stubs, location_stubs, old_collection, user):
 
-        _to_be_deleted = lambda items: [i for i in items if i.do_delete]
-        _not_to_be_deleted = lambda items: [i for i in items if not i.do_delete]
+        def to_be_deleted(stubs):
+            return [stub for stub in stubs if stub.do_delete]
+
+        def not_to_be_deleted(stubs):
+            return [stub for stub in stubs if not stub.do_delete]
 
         self.user = user
         self.domain = old_collection.domain_name
         self.all_listed_types = type_stubs
-        self.location_types = _not_to_be_deleted(type_stubs)
-        self.types_to_be_deleted = _to_be_deleted(type_stubs)
+        self.location_types = not_to_be_deleted(type_stubs)
+        self.types_to_be_deleted = to_be_deleted(type_stubs)
 
         self.all_listed_locations = location_stubs
-        self.locations = _not_to_be_deleted(location_stubs)
-        self.locations_to_be_deleted = _to_be_deleted(location_stubs)
+        self.locations = not_to_be_deleted(location_stubs)
+        self.locations_to_be_deleted = to_be_deleted(location_stubs)
 
         self.old_collection = old_collection
 
         self.types_by_code = {lt.code: lt for lt in self.location_types}
-        self.locations_by_code = {l.site_code: l for l in location_stubs}
+        self.locations_by_code = {loc.site_code: loc for loc in location_stubs}
 
         self.errors = self._get_errors()
         self.warnings = self._get_warnings()
@@ -499,14 +508,14 @@ class LocationTreeValidator(object):
         # level errors make it unrealistic to keep validating
 
         basic_errors = (
-            self._check_location_restriction() +
-            self._check_unique_type_codes() +
-            self._check_unique_location_codes() +
-            self._check_unique_location_ids() +
-            self._check_new_site_codes_available() +
-            self._check_unlisted_type_codes() +
-            self._check_unknown_location_ids() +
-            self._validate_geodata()
+            self._check_location_restriction()
+            + self._check_unique_type_codes()
+            + self._check_unique_location_codes()
+            + self._check_unique_location_ids()
+            + self._check_new_site_codes_available()
+            + self._check_unlisted_type_codes()
+            + self._check_unknown_location_ids()
+            + self._validate_geodata()
         )
 
         if basic_errors:
@@ -567,17 +576,17 @@ class LocationTreeValidator(object):
         return errors
 
     def _validate_geodata(self):
-        errors = []
+        bad_locs = []
         for loc_stub in self.all_listed_locations:
-            l = loc_stub.new_data
-            if (l.latitude and not isinstance(l.latitude, Decimal)
-                    or l.longitude and not isinstance(l.longitude, Decimal)):
-                errors.append(l)
+            loc = loc_stub.new_data
+            if (loc.latitude and not isinstance(loc.latitude, Decimal)
+                    or loc.longitude and not isinstance(loc.longitude, Decimal)):
+                bad_locs.append(loc)
         return [
             _("latitude/longitude 'lat-{lat}, lng-{lng}' for location in sheet '{type}' "
               "at index {index} should be valid decimal numbers.")
-            .format(type=l.location_type, index=l.index, lat=l.latitude, lng=l.longitude)
-            for l in errors
+            .format(type=bad_loc.location_type, index=bad_loc.index, lat=bad_loc.latitude, lng=bad_loc.longitude)
+            for bad_loc in bad_locs
         ]
 
     def _check_required_locations_missing(self):
@@ -588,12 +597,12 @@ class LocationTreeValidator(object):
         old_locs_by_parent = self.old_collection.locations_by_parent_code
 
         missing_locs = []
-        listed_sites = {l.site_code for l in self.all_listed_locations}
-        for loc in self.locations_to_be_deleted:
-            required_locs = old_locs_by_parent[loc.site_code]
-            missing = set([l.site_code for l in required_locs]) - listed_sites
+        listed_sites = {loc.site_code for loc in self.all_listed_locations}
+        for location_to_be_deleted in self.locations_to_be_deleted:
+            required_locs = old_locs_by_parent[location_to_be_deleted.site_code]
+            missing = set([loc.site_code for loc in required_locs]) - listed_sites
             if missing:
-                missing_locs.append((missing, loc))
+                missing_locs.append((missing, location_to_be_deleted))
 
         return [
             _("Location '{code}' in sheet '{type}' at index {index} is being deleted, so all its "
@@ -611,7 +620,7 @@ class LocationTreeValidator(object):
         ]
 
     def _check_unique_location_codes(self):
-        counts = list(Counter(l.site_code for l in self.all_listed_locations).items())
+        counts = list(Counter(loc.site_code for loc in self.all_listed_locations).items())
         return [
             _("Location site_code '{}' is used {} times - they should be unique")
             .format(code, count)
@@ -619,7 +628,7 @@ class LocationTreeValidator(object):
         ]
 
     def _check_unique_location_ids(self):
-        counts = list(Counter(l.location_id for l in self.all_listed_locations if l.location_id).items())
+        counts = list(Counter(loc.location_id for loc in self.all_listed_locations if loc.location_id).items())
         return [
             _("Location location_id '{}' is listed {} times - they should be listed once")
             .format(location_id, count)
@@ -627,16 +636,16 @@ class LocationTreeValidator(object):
         ]
 
     def _check_new_site_codes_available(self):
-        updated_location_ids = {l.location_id for l in self.all_listed_locations
-                                if l.location_id}
+        updated_location_ids = {loc.location_id for loc in self.all_listed_locations
+                                if loc.location_id}
         # These site codes belong to locations in the db, but not the upload
-        unavailable_site_codes = {l.site_code for l in self.old_collection.locations
-                                  if l.location_id not in updated_location_ids}
+        unavailable_site_codes = {loc.site_code for loc in self.old_collection.locations
+                                  if loc.location_id not in updated_location_ids}
         return [
             _("Location site_code '{code}' is in use by another location. "
-              "All site_codes must be unique").format(code=l.site_code)
-            for l in self.all_listed_locations
-            if l.site_code in unavailable_site_codes
+              "All site_codes must be unique").format(code=loc.site_code)
+            for loc in self.all_listed_locations
+            if loc.site_code in unavailable_site_codes
         ]
 
     def _check_unlisted_type_codes(self):
@@ -654,7 +663,7 @@ class LocationTreeValidator(object):
     def _check_unknown_location_ids(self):
         # count location_ids listed in the excel that are not found in the domain
         old = self.old_collection.locations_by_id
-        listed = {l.location_id: l for l in self.all_listed_locations if l.location_id}
+        listed = {loc.location_id: loc for loc in self.all_listed_locations if loc.location_id}
         unknown = set(listed.keys()) - set(old.keys())
 
         return [
@@ -667,9 +676,9 @@ class LocationTreeValidator(object):
         validator = self.old_collection.custom_data_validator
         return [
             _("Problem with custom data for location '{site_code}', in sheet '{type}', at index '{i}' - '{er}'")
-            .format(site_code=l.site_code, type=l.location_type, i=l.index, er=validator(l.custom_data))
-            for l in self.all_listed_locations
-            if l.custom_data is not LocationStub.NOT_PROVIDED and validator(l.custom_data)
+            .format(site_code=loc.site_code, type=loc.location_type, i=loc.index, er=validator(loc.custom_data))
+            for loc in self.all_listed_locations
+            if loc.custom_data is not LocationStub.NOT_PROVIDED and validator(loc.custom_data)
         ]
 
     def _validate_types_tree(self):
@@ -738,7 +747,7 @@ class LocationTreeValidator(object):
             locs_by_parent[loc.parent_code].append(loc)
         errors = []
         for parent, siblings in locs_by_parent.items():
-            counts = list(Counter(l.new_data.name for l in siblings).items())
+            counts = list(Counter(loc.new_data.name for loc in siblings).items())
             for name, count in counts:
                 if count > 1:
                     errors.append(
@@ -751,10 +760,10 @@ class LocationTreeValidator(object):
         """Do model validation"""
         errors = []
         for location in self.locations:
-            exclude_fields = ["location_type"]  # Skip foreign key validation
+            exclude_fields = {"location_type"}  # Skip foreign key validation
             if not location.db_object.location_id:
                 # Don't validate location_id if its blank because SQLLocation.save() will add it
-                exclude_fields.append("location_id")
+                exclude_fields.add("location_id")
             try:
                 location.db_object.full_clean(exclude=exclude_fields)
             except ValidationError as e:
@@ -855,8 +864,8 @@ def save_locations(location_stubs, types_by_code, old_collection,
             types_by_parent[key].append(_type)
 
         location_stubs_by_type = defaultdict(list)
-        for l in location_stubs:
-            location_stubs_by_type[l.location_type].append(l)
+        for loc in location_stubs:
+            location_stubs_by_type[loc.location_type].append(loc)
 
         top_to_bottom_locations = []
 
