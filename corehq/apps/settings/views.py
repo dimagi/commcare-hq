@@ -13,6 +13,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
@@ -688,7 +689,29 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     @property
     def page_context(self):
-        return self.pagination_context
+        pagination_context = self.pagination_context
+        context = {
+            'always_show_user_api_keys': self.allow_viewable_API_keys,
+            'maximum_key_expiration_window': self.maximum_key_expiration_window,
+        }
+        context.update(pagination_context)
+
+        return context
+
+    @property
+    def allow_viewable_API_keys(self):
+        return self.managing_idp.always_show_user_api_keys if self.managing_idp else False
+
+    @property
+    def maximum_key_expiration_window(self):
+        if not self.managing_idp:
+            return None
+
+        return self.managing_idp.max_days_until_user_api_key_expiration
+
+    @cached_property
+    def managing_idp(self):
+        return IdentityProvider.get_active_identity_provider_by_username(self.request.user.username)
 
     @property
     def paginated_list(self):
@@ -701,9 +724,14 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     def _to_json(self, api_key, redacted=True):
         if redacted:
             key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
+            full_key = api_key.key
         else:
-            copy_msg = _("Copy this in a secure place. It will not be shown again.")
-            key = f"{api_key.key} ({copy_msg})",
+            if self.allow_viewable_API_keys:
+                key = api_key.key
+            else:
+                copy_msg = _("Copy this in a secure place. It will not be shown again.")
+                key = f"{api_key.key} ({copy_msg})",
+            full_key = api_key.key
 
         if api_key.expiration_date and api_key.expiration_date < datetime.now():
             status = "expired"
@@ -711,7 +739,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             status = "active"
         else:
             status = "inactive"
-        return {
+        key_json = {
             "id": api_key.id,
             "name": api_key.name,
             "key": key,
@@ -728,15 +756,36 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             "is_active": api_key.is_active,
         }
 
+        if self.allow_viewable_API_keys:
+            key_json['full_key'] = full_key
+
+        return key_json
+
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
 
     create_item_form_class = "form form-horizontal"
 
     def get_create_form(self, is_blank=False):
+        if self.managing_idp:
+            max_expiration_window = self.managing_idp.max_days_until_user_api_key_expiration
+        else:
+            max_expiration_window = None
+
+        user_domains = self.request.couch_user.get_domains()
+
         if self.request.method == 'POST' and not is_blank:
-            return HQApiKeyForm(self.request.POST, couch_user=self.request.couch_user)
-        return HQApiKeyForm(couch_user=self.request.couch_user)
+            return HQApiKeyForm(
+                self.request.POST,
+                user_domains=user_domains,
+                max_allowed_expiration_days=max_expiration_window,
+                timezone=pytz.timezone(self.request.couch_user.get_time_zone())
+            )
+        return HQApiKeyForm(
+            user_domains=user_domains,
+            max_allowed_expiration_days=max_expiration_window,
+            timezone=pytz.timezone(self.request.couch_user.get_time_zone())
+        )
 
     def get_create_item_data(self, create_form):
         try:

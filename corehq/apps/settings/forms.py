@@ -1,11 +1,14 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.postgres.forms import SimpleArrayField
+from django.core.exceptions import ValidationError
 from django.utils.html import format_html
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+import pytz
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -27,6 +30,7 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.settings.exceptions import DuplicateApiKeyName
 from corehq.apps.settings.validators import validate_international_phonenumber
 from corehq.apps.users.models import CouchUser, HQApiKey
+from corehq.const import USER_DATE_FORMAT
 
 
 class HQPasswordChangeForm(PasswordChangeForm):
@@ -272,13 +276,29 @@ class HQApiKeyForm(forms.Form):
         help_text=gettext_lazy("Date and time the API key should expire on")
     )
 
-    def __init__(self, *args, **kwargs):
-        self.couch_user = kwargs.pop('couch_user')
+    def __init__(self, *args, user_domains=None, max_allowed_expiration_days=None, timezone=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        user_domains = self.couch_user.get_domains()
+        user_domains = user_domains or []
         all_domains = (self.ALL_DOMAINS, _('All Projects'))
         self.fields['domain'].choices = [all_domains] + [(d, d) for d in user_domains]
+
+        self.maximum_expiration_date = None
+        self.timezone = timezone or pytz.timezone('UTC')
+
+        if max_allowed_expiration_days is not None:
+
+            self.fields['expiration_date'].required = max_allowed_expiration_days is not None
+            today = datetime.now(tz=self.timezone)
+            self.maximum_expiration_date = today + timedelta(days=max_allowed_expiration_days)
+
+            num_days_displayed = self.get_expiration_window_display_string(max_allowed_expiration_days)
+            appended = _('Must be no later than {} from today: {}').format(
+                num_days_displayed.lower(), self.maximum_expiration_date.strftime(USER_DATE_FORMAT)
+            )
+            self.fields['expiration_date'].initial = datetime.date(self.maximum_expiration_date).isoformat()
+            self.fields['expiration_date'].help_text += '. ' + appended
+
         self.helper = HQFormHelper()
         self.helper.layout = Layout(
             crispy.Fieldset(
@@ -297,6 +317,17 @@ class HQApiKeyForm(forms.Form):
             )
         )
 
+    def get_expiration_window_display_string(self, num_days):
+        from corehq.apps.sso.models import VALID_API_EXPIRATION_OPTIONS
+        INDEX_NUM_DAYS = 0
+        INDEX_DISPLAY_STRING = 1
+        display_string = next(
+            (item[INDEX_DISPLAY_STRING] for item in
+             VALID_API_EXPIRATION_OPTIONS if item[INDEX_NUM_DAYS] == num_days),
+            None
+        )
+        return display_string
+
     def create_key(self, user):
         try:
             HQApiKey.all_objects.get(name=self.cleaned_data['name'], user=user)
@@ -310,6 +341,21 @@ class HQApiKeyForm(forms.Form):
                 expiration_date=self.cleaned_data['expiration_date'],
             )
             return new_key
+
+    def clean_expiration_date(self):
+        if not self.cleaned_data['expiration_date']:
+            return self.cleaned_data['expiration_date']
+
+        expiration_date = self.timezone.localize(self.cleaned_data['expiration_date'])
+        if expiration_date < datetime.now(tz=self.timezone):
+            raise ValidationError(_('Expiration Date must be in the future'))
+
+        if self.maximum_expiration_date:
+            if expiration_date > self.maximum_expiration_date:
+                raise ValidationError(_('Your Identity Provider does not allow expiration dates beyond {}')
+                                      .format(self.maximum_expiration_date.strftime(USER_DATE_FORMAT)))
+
+        return timezone.make_naive(expiration_date)
 
 
 class HQEmptyForm(forms.Form):
