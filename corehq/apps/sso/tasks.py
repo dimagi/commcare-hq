@@ -3,7 +3,7 @@ import logging
 
 from celery.schedules import crontab
 
-from corehq.apps.celery import periodic_task
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sso.models import (
     AuthenticatedEmailDomain,
@@ -19,6 +19,12 @@ from corehq.apps.sso.utils.context_helpers import (
 )
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import HQApiKey
+from django.contrib.auth.models import User
+from corehq.sql_db.util import paginate_query
+from django.db import router
+from django.db.models import Q
+from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 
 log = logging.getLogger(__name__)
@@ -170,6 +176,50 @@ def auto_deactivate_removed_sso_users():
             if user and user.is_active:
                 user.is_active = False
                 user.save()
+
+
+@task(bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
+def update_sso_user_api_key_expiration_dates(self, identity_provider_id):
+    idp = IdentityProvider.objects.get(id=identity_provider_id)
+    enforce_key_expiration_for_idp(idp)
+
+
+def enforce_key_expiration_for_idp(idp):
+    num_updated = 0
+
+    if idp.max_days_until_user_api_key_expiration is None:
+        return num_updated
+
+    user_iter = get_users_for_email_domains(idp.get_email_domains())
+    max_expiration_date = datetime.datetime.utcnow() + datetime.timedelta(
+        days=idp.max_days_until_user_api_key_expiration)
+    key_iter = get_keys_expiring_after(user_iter, max_expiration_date)
+
+    for key_chunk in chunked(key_iter, 500):
+        batch = []
+        for key in key_chunk:
+            key.expiration_date = max_expiration_date
+            batch.append(key)
+        HQApiKey.objects.bulk_update(batch, ['expiration_date'])
+        num_updated += len(batch)
+
+    return num_updated
+
+
+def get_users_for_email_domains(domains):
+    user_db = router.db_for_read(User)
+    user_batch_size = 500
+
+    for domain in domains:
+        query = Q(username__endswith=f'@{domain}')
+        yield from paginate_query(user_db, User, query, query_size=user_batch_size)
+
+
+def get_keys_expiring_after(users, expiration_date):
+    has_noncompliant_expiration = Q(expiration_date=None) | Q(expiration_date__gt=expiration_date)
+
+    for user in users:
+        yield from user.api_keys(manager='all_objects').filter(has_noncompliant_expiration)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=14), acks_late=True)

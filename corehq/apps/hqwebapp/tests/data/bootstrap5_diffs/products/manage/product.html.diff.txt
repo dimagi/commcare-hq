@@ -1,0 +1,43 @@
+--- 
++++ 
+@@ -1,12 +1,12 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load hq_shared_tags %}
+ {% load crispy_forms_tags %}
+ {% load i18n %}
+ 
+-{% requirejs_main 'commtrack/js/bootstrap3/products_and_programs_main' %}
++{% requirejs_main 'commtrack/js/bootstrap5/products_and_programs_main' %}
+ 
+ {% block page_content %}
+-  <form class="form form-horizontal" name="product" method="post">
++  <form class="form" name="product" method="post">
+     <legend>{% trans "Product Information" %}</legend>
+     {% crispy form %}
+ 
+@@ -14,17 +14,13 @@
+       {% crispy data_fields_form %}
+     {% endif %}
+ 
+-    <div class="form-actions">
+-      <div class="col-sm-12">
+-        <button type="submit" class="btn btn-primary">
+-          {% if product.get_id %}
+-            {% trans 'Update Product' %}
+-          {% else %}
+-            {% trans 'Create Product' %}
+-          {% endif %}
+-        </button>
+-      </div>
+-    </div>
++    <button type="submit" class="btn btn-primary">
++      {% if product.get_id %}
++        {% trans 'Update Product' %}
++      {% else %}
++        {% trans 'Create Product' %}
++      {% endif %}
++    </button>
+   </form>
+ {% endblock %}
+ 

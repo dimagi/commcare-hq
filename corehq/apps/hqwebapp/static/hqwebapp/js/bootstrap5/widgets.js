@@ -5,7 +5,6 @@ hqDefine("hqwebapp/js/bootstrap5/widgets",[
     '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
     'hqwebapp/js/initial_page_data',
     'select2/dist/js/select2.full.min',
-    'datetimepicker',  // jquery plugin for tempusDominus
 ], function ($, _, MapboxGeocoder, initialPageData) {
     var init = function () {
         var MAPBOX_ACCESS_TOKEN = initialPageData.get(
@@ -110,16 +109,20 @@ hqDefine("hqwebapp/js/bootstrap5/widgets",[
 
         _.each($(".date-picker"), function (input) {
             // datepicker / tempus dominus
-            $(input).tempusDominus({
-                display: {
-                    theme: 'light',
-                    components: {
-                        clock: false,
+            // This is imported using hqRequire because tempus dominus is not currently working.
+            // This protects other modules that use this module but don't use datepickers.
+            hqRequire(['datetimepicker'], function () {
+                $(input).tempusDominus({
+                    display: {
+                        theme: 'light',
+                        components: {
+                            clock: false,
+                        },
                     },
-                },
-                localization: {
-                    format: 'yyyy-MM-dd',
-                },
+                    localization: {
+                        format: 'yyyy-MM-dd',
+                    },
+                });
             });
         });
     };
