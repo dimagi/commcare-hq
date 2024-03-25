@@ -79,8 +79,18 @@
             <thead data-bind="visible: dataList().length > 0">
             <tr>
               <th></th>
-              <th>{% trans "Product" %}</th>
-              <th>{% trans "Product ID" %}</th>
+              <th>{% trans "Product" %}
+                <span class="hq-help-template"
+                      data-content="this is some content with no title"
+                      data-placement="left"
+                ></span>
+              </th>
+              <th>{% trans "Product ID" %}
+                <span class="hq-help-template"
+                      data-title="this is a title with no content"
+                      data-placement="left"
+                ></span>
+              </th>
               <th>{% trans "Program" %}</th>
               <th>{% trans "Description" %}</th>
               <th>{% trans "Units" %}</th>
