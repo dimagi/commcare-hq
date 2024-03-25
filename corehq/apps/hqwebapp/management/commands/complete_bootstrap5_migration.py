@@ -87,7 +87,7 @@ class Command(BaseCommand):
 
         if bootstrap5_path:
             split_status = self.un_split_files(app_name, bootstrap3_path, bootstrap5_path,
-                                               destination_path, is_template=True)
+                                               destination_path, is_template)
             if not split_status:
                 self.stdout.write("Cancelling operation.\n\n")
                 return
