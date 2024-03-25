@@ -197,9 +197,15 @@ class Command(BaseCommand):
         bootstrap5_path.rename(destination_path)
 
     def do_bootstrap3_references_exist(self, app_name, bootstrap3_short_path, is_template):
-        bootstrap3_references = get_references(bootstrap3_short_path)
+        bootstrap3_references = get_references(bootstrap3_short_path, is_template=True)
         if not is_template:
-            bootstrap3_references.extend(get_references(get_requirejs_reference(bootstrap3_short_path)))
+            requirejs_reference = get_requirejs_reference(bootstrap3_short_path)
+            bootstrap3_references.extend(get_references(requirejs_reference, is_template=True))
+            js_refs = get_references(requirejs_reference, is_template=False)
+            # make sure the bootstrap3 version of the file isn't a reference
+            js_refs = [r for r in js_refs if not str(r).endswith(bootstrap3_short_path)]
+            bootstrap3_references.extend(js_refs)
+
         if len(bootstrap3_references) == 0:
             return False
         self.stdout.write(
