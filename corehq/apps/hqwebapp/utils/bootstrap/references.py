@@ -42,7 +42,7 @@ def get_references_data(reference, is_template=True):
                 yield file_path, filedata
 
 
-def get_references(reference, is_template=True):
+def get_references(reference, is_template):
     references = []
     for file_path, filedata in get_references_data(reference, is_template):
         references.append(str(file_path))
