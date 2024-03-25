@@ -1,6 +1,4 @@
-def get_masked_string(value, mask_character=None, reveal_length=3):
-    mask_character = mask_character or '*'
-
+def get_masked_string(value, mask_character='*', reveal_length=3):
     if len(value) <= reveal_length:
         return value
 
