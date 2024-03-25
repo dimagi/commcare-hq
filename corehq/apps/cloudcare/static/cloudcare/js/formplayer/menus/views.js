@@ -1055,6 +1055,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 isMultiSelect: false,
                 showMap: this.showMap,
                 sidebarEnabled: this.options.sidebarEnabled,
+                splitScreenToggleEnabled: toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 smallScreenEnabled: this.smallScreenEnabled,
                 triggerEmptyCaseList: this.options.triggerEmptyCaseList,
 
