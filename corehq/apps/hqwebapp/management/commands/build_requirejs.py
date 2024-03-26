@@ -55,7 +55,7 @@ class Command(ResourceStaticCommand):
         self._check_prereqs()
 
         for bootstrap_version in BOOTSTRAP_VERSIONS:
-            config, local_js_dirs = _r_js(local=self.local, verbose=self.verbose, bootstrap_version=bootstrap_version)
+            config, local_js_dirs = self._r_js(bootstrap_version=bootstrap_version)
             self._minify(config)
 
             if self.local:
@@ -102,6 +102,57 @@ class Command(ResourceStaticCommand):
         self.resource_versions = get_resource_versions()
         if (not self.resource_versions):
             raise ResourceVersionsNotFoundException()
+
+    def _r_js(self, bootstrap_version='bootstrap3'):
+        '''
+        Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
+        and the bundle config output by the build.
+        '''
+        is_bootstrap5 = bootstrap_version == 'bootstrap5'
+        with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml',
+                               bootstrap_version, 'requirejs.yml'), 'r') as f:
+            config = yaml.safe_load(f)
+
+        config['logLevel'] = 0 if self.verbose else 2  # TRACE or WARN
+        if not self.verbose:
+            print("Compiling Javascript bundles")
+
+        html_files, local_js_dirs = _get_html_files_and_local_js_dirs(self.local)
+
+        # These pages depend on bootstrap 5 and must be skipped by the bootstrap3 run of this command.
+        # "<bundle directory>": [<js main modules that depend on bootstrap 5>]
+        split_bundles = {
+            "commtrack/js": ['commtrack/js/products_and_programs_main'],
+            "hqwebapp/js": ['hqwebapp/js/500'],
+        }
+
+        # For each directory, add an optimized "module" entry including all of the main modules in that dir.
+        # For each of these entries, r.js will create an optimized bundle of these main modules and all their
+        # dependencies
+        dirs_to_js_modules = _get_main_js_modules_by_dir(html_files)
+        for directory, mains in dirs_to_js_modules.items():
+            if is_bootstrap5 and directory not in split_bundles:
+                continue
+            if not is_bootstrap5 and directory in split_bundles:
+                mains = mains.difference(split_bundles[directory])
+            config['modules'].append({
+                'name': (os.path.join(directory, "bootstrap5.bundle") if is_bootstrap5
+                         else os.path.join(directory, "bundle")),
+                'exclude': [
+                    f'hqwebapp/js/{bootstrap_version}/common',
+                    f'hqwebapp/js/{bootstrap_version}/base_main',
+                ],
+                'include': sorted(mains),
+                'create': True,
+            })
+
+        _save_r_js_config(config)
+
+        ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", BUILD_JS_FILENAME])
+        if ret:
+            raise CommandError("Failed to build JS bundles")
+
+        return config, local_js_dirs
 
     def _minify(self, config):
         if not self.optimize:
@@ -153,58 +204,6 @@ class Command(ResourceStaticCommand):
         self._update_resource_hash("hqwebapp/js/resource_versions.js", filename)
 
         self.output_resources(self.resource_versions, overwrite=False)
-
-
-def _r_js(local=False, verbose=False, bootstrap_version='bootstrap3'):
-    '''
-    Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
-    and the bundle config output by the build.
-    '''
-    is_bootstrap5 = bootstrap_version == 'bootstrap5'
-    with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml',
-                           bootstrap_version, 'requirejs.yml'), 'r') as f:
-        config = yaml.safe_load(f)
-
-    config['logLevel'] = 0 if verbose else 2  # TRACE or WARN
-    if not verbose:
-        print("Compiling Javascript bundles")
-
-    html_files, local_js_dirs = _get_html_files_and_local_js_dirs(local)
-
-    # These pages depend on bootstrap 5 and must be skipped by the bootstrap3 run of this command.
-    # "<bundle directory>": [<js main modules that depend on bootstrap 5>]
-    split_bundles = {
-        "commtrack/js": ['commtrack/js/products_and_programs_main'],
-        "hqwebapp/js": ['hqwebapp/js/500'],
-    }
-
-    # For each directory, add an optimized "module" entry including all of the main modules in that dir.
-    # For each of these entries, r.js will create an optimized bundle of these main modules and all their
-    # dependencies
-    dirs_to_js_modules = _get_main_js_modules_by_dir(html_files)
-    for directory, mains in dirs_to_js_modules.items():
-        if is_bootstrap5 and directory not in split_bundles:
-            continue
-        if not is_bootstrap5 and directory in split_bundles:
-            mains = mains.difference(split_bundles[directory])
-        config['modules'].append({
-            'name': (os.path.join(directory, "bootstrap5.bundle") if is_bootstrap5
-                     else os.path.join(directory, "bundle")),
-            'exclude': [
-                f'hqwebapp/js/{bootstrap_version}/common',
-                f'hqwebapp/js/{bootstrap_version}/base_main',
-            ],
-            'include': sorted(mains),
-            'create': True,
-        })
-
-    _save_r_js_config(config)
-
-    ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", BUILD_JS_FILENAME])
-    if ret:
-        raise CommandError("Failed to build JS bundles")
-
-    return config, local_js_dirs
 
 
 def _get_html_files_and_local_js_dirs(local):
