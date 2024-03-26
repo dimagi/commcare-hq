@@ -58,7 +58,8 @@ class Command(ResourceStaticCommand):
             filename = self._staticfiles_path('hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
             self._update_resource_hash(f"hqwebapp/js/{bootstrap_version}/requirejs_config.js", filename)
             if self.local:
-                dest = self._apps_path('hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
+                dest = os.path.join(settings.BASE_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
+                                    'hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
                 logger.info(f"Copying {bootstrap_version}/requirejs_config.js back into {os.path.relpath(dest)}")
                 copyfile(filename, dest)
 
@@ -93,9 +94,6 @@ class Command(ResourceStaticCommand):
 
     def _staticfiles_path(self, *parts):
         return os.path.join(settings.BASE_DIR, 'staticfiles', *parts)
-
-    def _apps_path(self, app_name, *parts):
-        return os.path.join(settings.BASE_DIR, 'corehq', 'apps', app_name, 'static', app_name, *parts)
 
     def _get_html_files_and_local_js_dirs(self):
         """
@@ -227,7 +225,7 @@ class Command(ResourceStaticCommand):
             # Most of the time, the module is .../staticfiles/appName/js/moduleName and
             # should be copied to .../corehq/apps/appName/static/appName/js/moduleName.js
             app = re.sub(r'/.*', '', module['name'])
-            dest = self._apps_path(app, module['name'], '.js')
+            dest = os.path.join(settings.BASE_DIR, 'corehq', 'apps', app, 'static', module['name'] + '.js')
             if os.path.exists(os.path.dirname(dest)):
                 copyfile(src, dest)
             else:
