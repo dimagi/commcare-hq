@@ -116,26 +116,24 @@ class SubmissionErrorReport(DeploymentsReport):
         EMPTY_FORM = _("Unknown Form")
 
         def _to_row(xform_dict):
-            def _fmt_url(doc_id, link_text, tab_link=None):
-                if xform_dict['doc_type'] in [
-                        "XFormInstance",
-                        "XFormArchived",
-                        "XFormError",
-                        "XFormDeprecated"]:
-                    view_name = 'render_form_data'
+            def _get_url(doc_type, doc_id):
+                if doc_type in [
+                    "XFormInstance",
+                    "XFormArchived",
+                    "XFormError",
+                    "XFormDeprecated",
+                ]:
+                    view_name = "render_form_data"
                 else:
-                    view_name = 'download_form'
-                try:
-                    url = reverse(view_name, args=[self.domain, doc_id])
-                    if tab_link:
-                        url += tab_link
-                    return format_html(
-                        "<a class='ajax_dialog' href='{url}'>{text}</a>",
-                        url=url,
-                        text=link_text,
-                    )
-                except NoReverseMatch:
-                    return 'unable to view form'
+                    view_name = "download_form"
+                return reverse(view_name, args=[self.domain, doc_id])
+
+            def _fmt_url(url, link_text):
+                return format_html(
+                    "<a class='ajax_dialog' href='{url}'>{text}</a>",
+                    url=url,
+                    text=link_text,
+                )
 
             def _fmt_date(somedate):
                 time = ServerTime(somedate).user_time(self.timezone).done()
@@ -163,14 +161,23 @@ class SubmissionErrorReport(DeploymentsReport):
                         archived_form=SubmissionTypeFilter.display_name_by_doc_type(xform_dict['doc_type']),
                         date=_fmt_date(string_to_utc_datetime(archive_operations[-1].get('date'))),
                     )
+
+            try:
+                url = _get_url(xform_dict['doc_type'], xform_dict['_id'])
+            except NoReverseMatch:
+                view_form_link = _("Unable to view form")
+                view_case_link = _("Unable to view case")
+            else:
+                view_form_link = _fmt_url(url, _("View Form"))
+                view_case_link = _fmt_url(f'{url}#form-case-data', _("View Cases"))
             return [
-                _fmt_url(xform_dict['_id'], link_text=_("View Form")),
+                view_form_link,
                 form_username,
                 _fmt_date(string_to_utc_datetime(xform_dict['received_on'])),
                 form_name,
                 error_type,
                 xform_dict.get('problem', EMPTY_ERROR),
-                _fmt_url(xform_dict['_id'], link_text=_("View Cases"), tab_link='#form-case-data'),
+                view_case_link,
                 self._make_reproces_button(xform_dict) if self.support_toggle_enabled else '',
             ]
 
