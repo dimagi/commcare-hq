@@ -55,18 +55,16 @@ class Command(ResourceStaticCommand):
             if self.local:
                 _copy_modules_back_into_corehq(config, local_js_dirs)
 
-            filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js',
-                                    bootstrap_version, 'requirejs_config.js')
+            filename = self._staticfiles_path('hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
             self._update_resource_hash(f"hqwebapp/js/{bootstrap_version}/requirejs_config.js", filename)
             if self.local:
-                dest = os.path.join(ROOT_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
-                                    'hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
+                dest = self._apps_path('hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
                 copyfile(filename, dest)
                 logger.info(f"Copied updated {bootstrap_version}/requirejs_config.js back into {_relative(dest)}")
 
             # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
             for module in config['modules']:
-                filename = os.path.join(ROOT_DIR, 'staticfiles', module['name'] + ".js")
+                filename = self._staticfiles_path(module['name'] + ".js")
                 file_hash = self._update_resource_hash(module['name'] + ".js", filename)
                 self._update_source_map_hash(filename, file_hash)
 
@@ -97,14 +95,19 @@ class Command(ResourceStaticCommand):
         if (not self.resource_versions):
             raise ResourceVersionsNotFoundException()
 
+    def _staticfiles_path(self, *parts):
+        return os.path.join(settings.BASE_DIR, 'staticfiles', *parts)
+
+    def _apps_path(self, app_name, *parts):
+        return os.path.join(settings.BASE_DIR, 'corehq', 'apps', app_name, 'static', app_name, *parts)
+
     def _r_js(self, bootstrap_version='bootstrap3'):
         '''
         Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
         and the bundle config output by the build.
         '''
         is_bootstrap5 = bootstrap_version == 'bootstrap5'
-        with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml',
-                               bootstrap_version, 'requirejs.yml'), 'r') as f:
+        with open(self._staticfiles_path('hqwebapp', 'yaml', bootstrap_version, 'requirejs.yml'), 'r') as f:
             config = yaml.safe_load(f)
 
         config['logLevel'] = 0 if self.verbose else 2  # TRACE or WARN
@@ -129,9 +132,9 @@ class Command(ResourceStaticCommand):
                 continue
             if not is_bootstrap5 and directory in split_bundles:
                 mains = mains.difference(split_bundles[directory])
+            basename = "bootstrap5.bundle" if is_bootstrap5 else "bundle"
             config['modules'].append({
-                'name': (os.path.join(directory, "bootstrap5.bundle") if is_bootstrap5
-                         else os.path.join(directory, "bundle")),
+                'name': os.path.join(directory, basename),
                 'exclude': [
                     f'hqwebapp/js/{bootstrap_version}/common',
                     f'hqwebapp/js/{bootstrap_version}/base_main',
@@ -159,7 +162,7 @@ class Command(ResourceStaticCommand):
             print("Minifying Javascript bundles (estimated wait time: 5min)")
         for module in modules:
             rel_path = Path(module['name'] + ".js")
-            path = os.path.join(ROOT_DIR, 'staticfiles', rel_path)
+            path = self._staticfiles_path(rel_path)
             ret = call([
                 "node", "node_modules/uglify-js/bin/uglifyjs", path, "--compress", "--mangle", "--output", path,
                 "--source-map", f"url={rel_path.name}.map"
@@ -186,7 +189,7 @@ class Command(ResourceStaticCommand):
                 fout.write(line)
 
     def _write_resource_versions(self):
-        filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js', 'resource_versions.js')
+        filename = self._staticfiles_path('hqwebapp', 'js', 'resource_versions.js')
         with open(filename, 'w') as fout:
             fout.write("requirejs.config({ paths: %s });" % json.dumps({
                 file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3],
