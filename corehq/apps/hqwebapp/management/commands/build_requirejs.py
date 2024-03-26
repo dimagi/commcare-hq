@@ -128,7 +128,7 @@ class Command(ResourceStaticCommand):
                 continue
             if not is_bootstrap5 and directory in split_bundles:
                 mains = mains.difference(split_bundles[directory])
-            basename = "bootstrap5.bundle" if is_bootstrap5 else "bundle"
+            basename = "bundle.b5" if is_bootstrap5 else "bundle.b3"
             config['modules'].append({
                 'name': os.path.join(directory, basename),
                 'exclude': [
