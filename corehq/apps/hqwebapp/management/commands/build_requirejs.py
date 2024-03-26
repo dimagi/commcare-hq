@@ -97,24 +97,26 @@ class Command(ResourceStaticCommand):
                                 line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
                             fout.write(line)
 
-        # Write out resource_versions.js for all js files in resource_versions
-        # Exclude formdesigner directory, which contains a ton of files, none of which are required by HQ
+        self._write_resource_versions()
+
+    def _update_resource_hash(self, name, filename):
+        file_hash = self.get_hash(filename)
+        self.resource_versions[name] = file_hash
+        return file_hash
+
+    def _write_resource_versions(self):
         filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js', 'resource_versions.js')
         with open(filename, 'w') as fout:
             fout.write("requirejs.config({ paths: %s });" % json.dumps({
                 file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3],
                                              ".js?version=%s" % version if version else "")
                 for file, version in self.resource_versions.items()
+                # Exclude formdesigner directory, which contains a ton of files, none of which are required by HQ
                 if file.endswith(".js") and not file.startswith("formdesigner")
             }, indent=2))
         self._update_resource_hash("hqwebapp/js/resource_versions.js", filename)
 
         self.output_resources(self.resource_versions, overwrite=False)
-
-    def _update_resource_hash(self, name, filename):
-        file_hash = self.get_hash(filename)
-        self.resource_versions[name] = file_hash
-        return file_hash
 
 
 def _confirm_or_exit():
