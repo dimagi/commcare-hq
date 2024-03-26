@@ -199,6 +199,13 @@ class Command(ResourceStaticCommand):
             logger.info(f"{log_prefix}Copying {bootstrap_dir}/requirejs_config.js back to {os.path.relpath(dest)}")
             copyfile(filename, dest)
 
+        # Copy build files for later troubleshooting, since the B5 run of this function will overwrite the B3 files
+        for basename in ("build.js", "build.txt"):
+            src = self._staticfiles_path(basename)
+            dest = src.replace("build", f"build.b{bootstrap_version}")
+            logger.info(f"{log_prefix}Copying {os.path.relpath(src)} to {os.path.relpath(dest)}")
+            copyfile(filename, dest)
+
     def _minify(self, config):
         if not self.optimize:
             return
