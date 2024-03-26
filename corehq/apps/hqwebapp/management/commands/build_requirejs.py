@@ -107,6 +107,25 @@ class Command(ResourceStaticCommand):
     def _apps_path(self, app_name, *parts):
         return os.path.join(settings.BASE_DIR, 'corehq', 'apps', app_name, 'static', app_name, *parts)
 
+    def _get_html_files_and_local_js_dirs(self):
+        """
+        Returns
+        - all HTML files in corehq, excluding partials
+        - a reference of js directories, for use when copying optimized bundles back into corehq
+        """
+        html_files = []
+        local_js_dirs = set()
+        for root, dirs, files in os.walk(os.path.join(settings.BASE_DIR, 'corehq')):
+            for name in files:
+                if name.endswith(".html"):
+                    filename = filename = os.path.join(root, name)
+                    if '/partials/' not in filename:
+                        if '/includes/' not in filename and '/_includes/' not in filename:
+                            html_files.append(filename)
+                elif self.local and name.endswith(".js"):
+                    local_js_dirs.add(os.path.relpath(root))
+        return html_files, local_js_dirs
+
     def _add_bundles(self, html_files, bootstrap_version='bootstrap3'):
         is_bootstrap5 = bootstrap_version == 'bootstrap5'
         with open(self._staticfiles_path('hqwebapp', 'yaml', bootstrap_version, 'requirejs.yml'), 'r') as f:
@@ -144,26 +163,6 @@ class Command(ResourceStaticCommand):
             })
 
         return config
-
-    # TODO: move up
-    def _get_html_files_and_local_js_dirs(self):
-        """
-        Returns
-        - all HTML files in corehq, excluding partials
-        - a reference of js directories, for use when copying optimized bundles back into corehq
-        """
-        html_files = []
-        local_js_dirs = set()
-        for root, dirs, files in os.walk(os.path.join(settings.BASE_DIR, 'corehq')):
-            for name in files:
-                if name.endswith(".html"):
-                    filename = filename = os.path.join(root, name)
-                    if '/partials/' not in filename:
-                        if '/includes/' not in filename and '/_includes/' not in filename:
-                            html_files.append(filename)
-                elif self.local and name.endswith(".js"):
-                    local_js_dirs.add(os.path.relpath(root))
-        return html_files, local_js_dirs
 
     def _get_main_js_modules_by_dir(self, html_files):
         """
