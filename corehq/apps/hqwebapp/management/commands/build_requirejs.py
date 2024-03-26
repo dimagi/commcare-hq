@@ -51,8 +51,8 @@ class Command(ResourceStaticCommand):
 
         # During deploy, resource_static should already have run and populated resource_versions
         from get_resource_versions import get_resource_versions
-        resource_versions = get_resource_versions()
-        if (not resource_versions):
+        self.resource_versions = get_resource_versions()
+        if (not self.resource_versions):
             raise ResourceVersionsNotFoundException()
 
         for bootstrap_version in BOOTSTRAP_VERSIONS:
@@ -65,7 +65,7 @@ class Command(ResourceStaticCommand):
 
             filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js',
                                     bootstrap_version, 'requirejs_config.js')
-            resource_versions[f"hqwebapp/js/{bootstrap_version}/requirejs_config.js"] = self.get_hash(filename)
+            self._update_resource_hash(f"hqwebapp/js/{bootstrap_version}/requirejs_config.js", filename)
             if local:
                 dest = os.path.join(ROOT_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
                                     'hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
@@ -78,7 +78,7 @@ class Command(ResourceStaticCommand):
 
                 # TODO: it'd be a performance improvement to do this after the `open` below
                 # and pass in the file contents, since get_hash does another read.
-                file_hash = self.get_hash(filename)
+                file_hash = self._update_resource_hash(module['name'] + ".js", filename)
 
                 if optimize:
                     # Overwrite source map reference. Source maps are accessed on the CDN,
@@ -90,7 +90,6 @@ class Command(ResourceStaticCommand):
                             if re.search(r'sourceMappingURL=bundle.js.map$', line):
                                 line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
                             fout.write(line)
-                resource_versions[module['name'] + ".js"] = file_hash
 
         # Write out resource_versions.js for all js files in resource_versions
         # Exclude formdesigner directory, which contains a ton of files, none of which are required by HQ
@@ -99,12 +98,17 @@ class Command(ResourceStaticCommand):
             fout.write("requirejs.config({ paths: %s });" % json.dumps({
                 file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3],
                                              ".js?version=%s" % version if version else "")
-                for file, version in resource_versions.items()
+                for file, version in self.resource_versions.items()
                 if file.endswith(".js") and not file.startswith("formdesigner")
             }, indent=2))
-        resource_versions["hqwebapp/js/resource_versions.js"] = self.get_hash(filename)
+        self._update_resource_hash("hqwebapp/js/resource_versions.js", filename)
 
-        self.output_resources(resource_versions, overwrite=False)
+        self.output_resources(self.resource_versions, overwrite=False)
+
+    def _update_resource_hash(self, name, filename):
+        file_hash = self.get_hash(filename)
+        self.resource_versions[name] = file_hash
+        return file_hash
 
 
 def _confirm_or_exit():
