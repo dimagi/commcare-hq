@@ -48,7 +48,7 @@ class Command(ResourceStaticCommand):
         html_files, local_js_dirs = self._get_html_files_and_local_js_dirs()
         main_module_map = self._get_main_js_modules_by_dir(html_files)
         for bootstrap_version in BOOTSTRAP_VERSIONS:
-            config = self._add_bundles(main_module_map, bootstrap_version)
+            config = self._add_bundles(main_module_map[bootstrap_version], bootstrap_version)
 
             self._run_r_js(config, bootstrap_version)
 
@@ -110,34 +110,41 @@ class Command(ResourceStaticCommand):
 
     def _get_main_js_modules_by_dir(self, html_files):
         """
-        Returns a dict of all main js modules, grouped by directory:
+        Returns a dict of all main js modules, grouped by bootstrap version and then by directory:
         {
-            'locations/js': set(['locations/js/import', 'locations/js/location', ...  ]),
-            'linked_domain/js': set(['linked_domain/js/domain_links']),
-            ...
+            3: {
+                'linked_domain/js': set(['linked_domain/js/domain_links']),
+                'locations/js': set(['locations/js/import', ...  ]),
+                ...
+            },
+            5: {
+                'data_dictionary/js': set(['data_dictionary/js/data_dictionary']),
+                'locations/js': set(['locations/js/location', ...  ]),
+                ...
+            }
         }
         """
         logger.info("Mapping main modules to django apps")
-        dirs = defaultdict(set)
+        dirs = {v: defaultdict(set) for v in BOOTSTRAP_VERSIONS}
         for filename in html_files:
             proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
                                     stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
             out = out.decode('utf-8')
             if out:
-                match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
+                match = re.search(r"{% requirejs_main(_b([35]))? .(([^%]*)/[^/%]*). %}", out)
                 if match:
-                    main = match.group(1)
-                    directory = match.group(2)
-                    if os.path.exists(self._staticfiles_path(main + '.js')):
-                        if '/spec/' not in main:  # ignore tests
-                            dirs[directory].add(main)
+                    bootstrap_version = int(match.group(2) or '3')
+                    main = match.group(3)
+                    directory = match.group(4)
+                    if '/spec/' not in main:  # ignore tests
+                        if os.path.exists(self._staticfiles_path(main + '.js')):
+                            dirs[bootstrap_version][directory].add(main)
         return dirs
 
     def _add_bundles(self, main_module_map, bootstrap_version=3):
         log_prefix = f"[B{bootstrap_version}] "
         logger.info(f"{log_prefix}Adding bundle configuration")
-        is_bootstrap5 = bootstrap_version == 5
         bootstrap_dir = f'bootstrap{bootstrap_version}'
         with open(self._staticfiles_path('hqwebapp', 'yaml', bootstrap_dir, 'requirejs.yml'), 'r') as f:
             config = yaml.safe_load(f)
@@ -146,21 +153,10 @@ class Command(ResourceStaticCommand):
         if not self.verbose:
             logger.info(f"{log_prefix}Compiling Javascript bundles")
 
-        # These pages depend on bootstrap 5 and must be skipped by the bootstrap3 run of this command.
-        # "<bundle directory>": [<js main modules that depend on bootstrap 5>]
-        split_bundles = {
-            "commtrack/js": ['commtrack/js/products_and_programs_main'],
-            "hqwebapp/js": ['hqwebapp/js/500'],
-        }
-
         # For each directory, add an optimized "module" entry including all of the main modules in that dir.
         # For each of these entries, r.js will create an optimized bundle of these main modules and all their
         # dependencies
         for directory, mains in main_module_map.items():
-            if is_bootstrap5 and directory not in split_bundles:
-                continue
-            if not is_bootstrap5 and directory in split_bundles:
-                mains = mains.difference(split_bundles[directory])
             basename = f"bundle.b{bootstrap_version}"
             config['modules'].append({
                 'name': os.path.join(directory, basename),
