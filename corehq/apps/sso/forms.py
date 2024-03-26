@@ -584,6 +584,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         label=gettext_lazy("Entity ID"),
         required=False,
     )
+    #this field should always be defined before the api_host, api_id, api_secret and date_api_secret_expiration.
     enable_user_deactivation = forms.BooleanField(
         required=False,
         label=gettext_lazy("Auto-Deactivation"),
