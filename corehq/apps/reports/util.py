@@ -542,8 +542,12 @@ def delete_tableau_user(domain, username, session=None):
     Deletes the TableauUser object with the given username and removes it from the Tableau instance.
     '''
     session = session or TableauAPISession.create_session_for_domain(domain)
-    if get_matching_tableau_users_from_other_domains(
-            TableauUser.objects.get(username=username, server__domain=domain)):
+    try:
+        tableau_user = TableauUser.objects.get(username=username, server__domain=domain)
+    except TableauUser.DoesNotExist:
+        notify_exception(None, f"TableauUser not found for {username} on {domain}")
+        return
+    if get_matching_tableau_users_from_other_domains(tableau_user):
         _delete_user_local(session, username)
     else:
         deleted_user_id = _delete_user_local(session, username)
