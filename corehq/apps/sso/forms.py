@@ -655,7 +655,8 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         api_secret_toggles = crispy.Div(
             crispy.HTML(
                 format_html(
-                    '<p class="form-control-text" data-bind="hidden: isAPISecretVisible">{} '
+                    '<p class="form-control-text" data-bind="hidden: isAPISecretVisible">'
+                    '<span id="masked-api-value">{}</span> '
                     '<a href="#" data-bind="click: showAPISecret">{}</a></p>',
                     masked_api,
                     gettext("Update Secret")

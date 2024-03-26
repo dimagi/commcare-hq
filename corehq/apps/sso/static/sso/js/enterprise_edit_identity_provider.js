@@ -62,7 +62,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
             self.apiExpirationDate = "";
 
             self.dateApiSecretExpiration = ko.observable($('#id_date_api_secret_expiration').val());
-            self.isAPISecretVisible =  ko.observable(!initialPageData.get('api_secret_exists'));
+            self.isAPISecretVisible = ko.observable($('#masked-api-value').text() === '');
             self.apiSecret = ko.observable();
 
             self.showAPISecret = function () {

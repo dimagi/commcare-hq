@@ -75,7 +75,6 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
                 and self.identity_provider.client_secret
             ),
             'toggle_api_secret': self.identity_provider.protocol == IdentityProviderProtocol.SAML,
-            'api_secret_exists': bool(self.identity_provider.api_secret),
         }
 
     @property
