@@ -50,7 +50,7 @@ class Command(ResourceStaticCommand):
 
         local = options['local']
         verbose = options['verbosity'] > 1
-        optimize = not options['no_optimize']
+        self.optimize = not options['no_optimize']
 
         if local:
             _confirm_or_exit()
@@ -63,7 +63,7 @@ class Command(ResourceStaticCommand):
 
         for bootstrap_version in BOOTSTRAP_VERSIONS:
             config, local_js_dirs = _r_js(local=local, verbose=verbose, bootstrap_version=bootstrap_version)
-            if optimize:
+            if self.optimize:
                 _minify(config, verbose=verbose)
 
             if local:
@@ -85,9 +85,7 @@ class Command(ResourceStaticCommand):
                 # TODO: it'd be a performance improvement to do this after the `open` below
                 # and pass in the file contents, since get_hash does another read.
                 file_hash = self._update_resource_hash(module['name'] + ".js", filename)
-
-                if optimize:
-                    self._update_source_map_hash(filename, file_hash)
+                self._update_source_map_hash(filename, file_hash)
 
         self._write_resource_versions()
 
@@ -98,6 +96,9 @@ class Command(ResourceStaticCommand):
 
     # Overwrite source map reference. Source maps are accessed on the CDN, so they need the version hash
     def _update_source_map_hash(self, filename, file_hash):
+        if not self.optimize:
+            return
+
         with open(filename, 'r') as fin:
             lines = fin.readlines()
         with open(filename, 'w') as fout:
