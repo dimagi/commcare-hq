@@ -2052,7 +2052,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             self.upload_record.pk,
             True
         )
-        self.assertEqual(self.user_invite.supply_point, self.loc1._id)
+        self.assertEqual(self.user_invite.location_id, self.loc1._id)
 
     def setup_locations(self):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
