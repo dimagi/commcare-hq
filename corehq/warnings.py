@@ -2,6 +2,8 @@ import os
 import re
 import warnings
 
+from django.utils.deprecation import RemovedInDjango50Warning, RemovedInDjango51Warning
+
 from sqlalchemy.exc import SAWarning
 
 
@@ -23,6 +25,8 @@ WHITELIST = [
     ("pkg_resources", "pkg_resources.declare_namespace"),
     ("nose.suite", "'collections.abc'"),
     ("nose.plugins.collect", "'collections.abc'"),
+    ("", "", RemovedInDjango50Warning),
+    ("", "", RemovedInDjango51Warning),
 
     # warnings that can be resolved with HQ code changes
     ("", "json_response is deprecated.  Use django.http.JsonResponse instead."),

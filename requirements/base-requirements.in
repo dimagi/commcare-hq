@@ -40,7 +40,7 @@ django-transfer
 django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae  # waiting for next release after 1.16.0
 django-user-agents
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
-django>=3.2.18,<4.0
+django>=4.2.11,<5.0
 djangorestframework
 dropbox
 elasticsearch5>=5.0.0,<6.0.0
