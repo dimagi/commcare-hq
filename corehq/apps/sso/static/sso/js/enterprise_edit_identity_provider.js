@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('sso/js/enterprise_edit_identity_provider', [
     'jquery',
     'knockout',
@@ -14,7 +15,6 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
     initialPageData,
     models
 ) {
-    'use strict';
     $(function () {
         let ssoExemptUserManager = models.linkedObjectListModel({
             asyncHandler: 'sso_exempt_users_admin',
