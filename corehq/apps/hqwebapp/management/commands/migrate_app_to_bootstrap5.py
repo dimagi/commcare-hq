@@ -15,6 +15,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_changed_javascript_plugins,
     flag_path_references_to_split_javascript_files,
     flag_bootstrap3_references_in_template,
+    flag_crispy_forms_in_template,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_app_template_folder,
@@ -391,6 +392,7 @@ class Command(BaseCommand):
         flags = flag_changed_css_classes(template_line, spec)
         flags.extend(flag_stateful_button_changes_bootstrap5(template_line))
         flags.extend(flag_bootstrap3_references_in_template(template_line))
+        flags.extend(flag_crispy_forms_in_template(template_line))
         return flags
 
     @staticmethod

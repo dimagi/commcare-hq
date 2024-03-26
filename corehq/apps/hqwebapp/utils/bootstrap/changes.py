@@ -140,6 +140,16 @@ def flag_bootstrap3_references_in_template(line):
     return flags
 
 
+def flag_crispy_forms_in_template(line):
+    flags = []
+    regex = r"\{% crispy"
+    if re.search(regex, line):
+        flags.append("This template uses crispy forms. "
+                     "Please ensure the form looks good after migration, and refer to "
+                     "the updated Style Guide for current best practices, especially with checkbox fields.")
+    return flags
+
+
 def file_contains_reference_to_path(filedata, path_reference):
     regex = _get_path_reference_regex(path_reference)
     return re.search(regex, filedata) is not None

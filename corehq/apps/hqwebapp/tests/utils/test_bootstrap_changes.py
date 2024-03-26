@@ -11,6 +11,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     file_contains_reference_to_path,
     replace_path_references,
     flag_bootstrap3_references_in_template,
+    flag_crispy_forms_in_template,
 )
 
 
@@ -70,6 +71,14 @@ def test_flag_bootstrap3_references_in_template_requirejs():
     line = """    {% requirejs_main 'hqwebapp/bootstrap3/foo' %}\n"""
     flags = flag_bootstrap3_references_in_template(line)
     eq(flags, ['This template references a bootstrap 3 requirejs file.'])
+
+
+def test_flag_crispy_forms_in_template():
+    line = """    {% crispy form %}\n"""
+    flags = flag_crispy_forms_in_template(line)
+    eq(flags, ["This template uses crispy forms. "
+               "Please ensure the form looks good after migration, and refer to "
+               "the updated Style Guide for current best practices, especially with checkbox fields."])
 
 
 def test_flag_changed_javascript_plugins_bootstrap5():
