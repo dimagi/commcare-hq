@@ -41,6 +41,10 @@ class Command(ResourceStaticCommand):
     def handle(self, **options):
         logger.setLevel('DEBUG')
 
+        if options.get('bootstrap_version') == "bootstrap5":
+            logger.warning("Running with bootstrap5 is no longer necessary")
+            exit()
+
         self.local = options['local']
         self.verbose = options['verbosity'] > 1
         self.optimize = not options['no_optimize']
