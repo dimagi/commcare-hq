@@ -46,14 +46,7 @@ class Command(ResourceStaticCommand):
         self.verbose = options['verbosity'] > 1
         self.optimize = not options['no_optimize']
 
-        if self.local:
-            _confirm_or_exit()
-
-        # During deploy, resource_static should already have run and populated resource_versions
-        from get_resource_versions import get_resource_versions
-        self.resource_versions = get_resource_versions()
-        if (not self.resource_versions):
-            raise ResourceVersionsNotFoundException()
+        self._check_prereqs()
 
         for bootstrap_version in BOOTSTRAP_VERSIONS:
             config, local_js_dirs = _r_js(local=self.local, verbose=self.verbose, bootstrap_version=bootstrap_version)
@@ -81,6 +74,31 @@ class Command(ResourceStaticCommand):
                 self._update_source_map_hash(filename, file_hash)
 
         self._write_resource_versions()
+
+    def _check_prereqs(self):
+        if self.local:
+            proc = subprocess.Popen(["git", "diff-files", "--ignore-submodules", "--name-only"],
+                                    stdout=subprocess.PIPE)
+            (out, err) = proc.communicate()
+            out = out.decode('utf-8')
+            if out:
+                confirm = input("You have unstaged changes to the following files: \n{} "
+                                "This script overwrites some static files. "
+                                "Are you sure you want to continue (y/n)? ".format(out))
+                if confirm[0].lower() != 'y':
+                    exit()
+
+            confirm = input("You are running locally. Have you already run "
+                            "`./manage.py resource_static && ./manage.py collectstatic "
+                            "--noinput && ./manage.py compilejsi18n` (y/n)? ")
+            if confirm[0].lower() != 'y':
+                exit()
+
+        # During deploy, resource_static should already have run and populated resource_versions
+        from get_resource_versions import get_resource_versions
+        self.resource_versions = get_resource_versions()
+        if (not self.resource_versions):
+            raise ResourceVersionsNotFoundException()
 
     def _minify(self, config):
         if not self.optimize:
@@ -132,24 +150,6 @@ class Command(ResourceStaticCommand):
         self._update_resource_hash("hqwebapp/js/resource_versions.js", filename)
 
         self.output_resources(self.resource_versions, overwrite=False)
-
-
-def _confirm_or_exit():
-    proc = subprocess.Popen(["git", "diff-files", "--ignore-submodules", "--name-only"],
-                            stdout=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    out = out.decode('utf-8')
-    if out:
-        confirm = input("You have unstaged changes to the following files: \n{} "
-                        "This script overwrites some static files. "
-                        "Are you sure you want to continue (y/n)? ".format(out))
-        if confirm[0].lower() != 'y':
-            exit()
-    confirm = input("You are running locally. Have you already run "
-                    "`./manage.py resource_static && ./manage.py collectstatic "
-                    "--noinput && ./manage.py compilejsi18n` (y/n)? ")
-    if confirm[0].lower() != 'y':
-        exit()
 
 
 def _r_js(local=False, verbose=False, bootstrap_version='bootstrap3'):
