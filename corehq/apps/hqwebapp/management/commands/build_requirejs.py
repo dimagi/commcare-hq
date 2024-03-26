@@ -42,11 +42,11 @@ class Command(ResourceStaticCommand):
     def handle(self, **options):
         logger.setLevel('DEBUG')
 
-        local = options['local']
-        verbose = options['verbosity'] > 1
+        self.local = options['local']
+        self.verbose = options['verbosity'] > 1
         self.optimize = not options['no_optimize']
 
-        if local:
+        if self.local:
             _confirm_or_exit()
 
         # During deploy, resource_static should already have run and populated resource_versions
@@ -56,16 +56,16 @@ class Command(ResourceStaticCommand):
             raise ResourceVersionsNotFoundException()
 
         for bootstrap_version in BOOTSTRAP_VERSIONS:
-            config, local_js_dirs = _r_js(local=local, verbose=verbose, bootstrap_version=bootstrap_version)
-            self._minify(config, verbose=verbose)
+            config, local_js_dirs = _r_js(local=self.local, verbose=self.verbose, bootstrap_version=bootstrap_version)
+            self._minify(config)
 
-            if local:
+            if self.local:
                 _copy_modules_back_into_corehq(config, local_js_dirs)
 
             filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js',
                                     bootstrap_version, 'requirejs_config.js')
             self._update_resource_hash(f"hqwebapp/js/{bootstrap_version}/requirejs_config.js", filename)
-            if local:
+            if self.local:
                 dest = os.path.join(ROOT_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
                                     'hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
                 copyfile(filename, dest)
@@ -82,12 +82,12 @@ class Command(ResourceStaticCommand):
 
         self._write_resource_versions()
 
-    def _minify(self, config, verbose=False):
+    def _minify(self, config):
         if not self.optimize:
             return
 
         modules = config['modules']
-        if verbose:
+        if self.verbose:
             modules = with_progress_bar(modules, prefix="Minifying", oneline=False)
         else:
             print("Minifying Javascript bundles (estimated wait time: 5min)")
