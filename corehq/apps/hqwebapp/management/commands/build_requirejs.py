@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 ROOT_DIR = settings.FILEPATH
 BUILD_JS_FILENAME = "staticfiles/build.js"
 BUILD_TXT_FILENAME = "staticfiles/build.txt"
+BOOTSTRAP_VERSIONS = ['bootstrap3', 'bootstrap5']
 
 
 class Command(ResourceStaticCommand):
@@ -37,12 +38,8 @@ class Command(ResourceStaticCommand):
                  'Does not allow you to mimic CDN.')
         parser.add_argument('--no_optimize', action='store_true',
             help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
-        parser.add_argument('--bootstrap_version',
-                            default="bootstrap3",
-                            help="Specify bootstrap3 or bootstrap5 (bootstrap3 is default)")
 
     def handle(self, **options):
-        bootstrap_version = options.get('bootstrap_version')
         logger.setLevel('DEBUG')
 
         local = options['local']
@@ -58,41 +55,42 @@ class Command(ResourceStaticCommand):
         if (not resource_versions):
             raise ResourceVersionsNotFoundException()
 
-        config, local_js_dirs = _r_js(local=local, verbose=verbose, bootstrap_version=bootstrap_version)
-        if optimize:
-            _minify(config, verbose=verbose)
-
-        if local:
-            _copy_modules_back_into_corehq(config, local_js_dirs)
-
-        filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js',
-                                bootstrap_version, 'requirejs_config.js')
-        resource_versions[f"hqwebapp/js/{bootstrap_version}/requirejs_config.js"] = self.get_hash(filename)
-        if local:
-            dest = os.path.join(ROOT_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
-                                'hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
-            copyfile(filename, dest)
-            logger.info(f"Copied updated {bootstrap_version}/requirejs_config.js back into {_relative(dest)}")
-
-        # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
-        for module in config['modules']:
-            filename = os.path.join(ROOT_DIR, 'staticfiles', module['name'] + ".js")
-
-            # TODO: it'd be a performance improvement to do this after the `open` below
-            # and pass in the file contents, since get_hash does another read.
-            file_hash = self.get_hash(filename)
-
+        for bootstrap_version in BOOTSTRAP_VERSIONS:
+            config, local_js_dirs = _r_js(local=local, verbose=verbose, bootstrap_version=bootstrap_version)
             if optimize:
-                # Overwrite source map reference. Source maps are accessed on the CDN,
-                # so they need to have the version hash appended.
-                with open(filename, 'r') as fin:
-                    lines = fin.readlines()
-                with open(filename, 'w') as fout:
-                    for line in lines:
-                        if re.search(r'sourceMappingURL=bundle.js.map$', line):
-                            line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
-                        fout.write(line)
-            resource_versions[module['name'] + ".js"] = file_hash
+                _minify(config, verbose=verbose)
+
+            if local:
+                _copy_modules_back_into_corehq(config, local_js_dirs)
+
+            filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js',
+                                    bootstrap_version, 'requirejs_config.js')
+            resource_versions[f"hqwebapp/js/{bootstrap_version}/requirejs_config.js"] = self.get_hash(filename)
+            if local:
+                dest = os.path.join(ROOT_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
+                                    'hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
+                copyfile(filename, dest)
+                logger.info(f"Copied updated {bootstrap_version}/requirejs_config.js back into {_relative(dest)}")
+
+            # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
+            for module in config['modules']:
+                filename = os.path.join(ROOT_DIR, 'staticfiles', module['name'] + ".js")
+
+                # TODO: it'd be a performance improvement to do this after the `open` below
+                # and pass in the file contents, since get_hash does another read.
+                file_hash = self.get_hash(filename)
+
+                if optimize:
+                    # Overwrite source map reference. Source maps are accessed on the CDN,
+                    # so they need to have the version hash appended.
+                    with open(filename, 'r') as fin:
+                        lines = fin.readlines()
+                    with open(filename, 'w') as fout:
+                        for line in lines:
+                            if re.search(r'sourceMappingURL=bundle.js.map$', line):
+                                line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
+                            fout.write(line)
+                resource_versions[module['name'] + ".js"] = file_hash
 
         # Write out resource_versions.js for all js files in resource_versions
         # Exclude formdesigner directory, which contains a ton of files, none of which are required by HQ
