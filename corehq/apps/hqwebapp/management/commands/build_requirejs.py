@@ -132,7 +132,7 @@ class Command(ResourceStaticCommand):
         # For each directory, add an optimized "module" entry including all of the main modules in that dir.
         # For each of these entries, r.js will create an optimized bundle of these main modules and all their
         # dependencies
-        dirs_to_js_modules = _get_main_js_modules_by_dir(html_files)
+        dirs_to_js_modules = self._get_main_js_modules_by_dir(html_files)
         for directory, mains in dirs_to_js_modules.items():
             if is_bootstrap5 and directory not in split_bundles:
                 continue
@@ -175,6 +175,31 @@ class Command(ResourceStaticCommand):
                 elif self.local and name.endswith(".js"):
                     local_js_dirs.add(_relative(root))
         return html_files, local_js_dirs
+
+    def _get_main_js_modules_by_dir(self, html_files):
+        """
+        Returns a dict of all main js modules, grouped by directory:
+        {
+            'locations/js': set(['locations/js/import', 'locations/js/location', ...  ]),
+            'linked_domain/js': set(['linked_domain/js/domain_links']),
+            ...
+        }
+        """
+        dirs = defaultdict(set)
+        for filename in html_files:
+            proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
+                                    stdout=subprocess.PIPE)
+            (out, err) = proc.communicate()
+            out = out.decode('utf-8')
+            if out:
+                match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
+                if match:
+                    main = match.group(1)
+                    directory = match.group(2)
+                    if os.path.exists(self._staticfiles_path(main + '.js')):
+                        if '/spec/' not in main:  # ignore tests
+                            dirs[directory].add(main)
+        return dirs
 
     def _minify(self, config):
         if not self.optimize:
@@ -226,32 +251,6 @@ class Command(ResourceStaticCommand):
         self._update_resource_hash("hqwebapp/js/resource_versions.js", filename)
 
         self.output_resources(self.resource_versions, overwrite=False)
-
-
-def _get_main_js_modules_by_dir(html_files):
-    """
-    Returns a dict of all main js modules, grouped by directory:
-    {
-        'locations/js': set(['locations/js/import', 'locations/js/location', ...  ]),
-        'linked_domain/js': set(['linked_domain/js/domain_links']),
-        ...
-    }
-    """
-    dirs = defaultdict(set)
-    for filename in html_files:
-        proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
-                                stdout=subprocess.PIPE)
-        (out, err) = proc.communicate()
-        out = out.decode('utf-8')
-        if out:
-            match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
-            if match:
-                main = match.group(1)
-                directory = match.group(2)
-                if os.path.exists(os.path.join(ROOT_DIR, 'staticfiles', main + '.js')):
-                    if '/spec/' not in main:
-                        dirs[directory].add(main)
-    return dirs
 
 
 def _save_r_js_config(config):
