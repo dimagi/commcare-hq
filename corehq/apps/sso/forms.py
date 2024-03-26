@@ -657,7 +657,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
                 format_html(
                     '<p class="form-control-text" data-bind="hidden: isAPISecretVisible">'
                     '<span id="masked-api-value">{}</span> '
-                    '<a href="#" data-bind="click: showAPISecret">{}</a></p>',
+                    '<a href="#" data-bind="click: startEditingAPISecret">{}</a></p>',
                     masked_api,
                     gettext("Update Secret")
                 ),
@@ -665,7 +665,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
             crispy.HTML(
                 format_html(
                     '<p class="form-control-text" data-bind="visible: isCancelUpdateVisible">'
-                    '<a href="#" data-bind="click: hideAPISecret">{}</a></p>',
+                    '<a href="#" data-bind="click: cancelEditingAPISecret">{}</a></p>',
                     gettext("Cancel Update")
                 ),
             ),

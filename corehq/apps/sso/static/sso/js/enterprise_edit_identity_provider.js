@@ -65,7 +65,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
             self.isAPISecretVisible = ko.observable($('#masked-api-value').text() === '');
             self.apiSecret = ko.observable();
 
-            self.showAPISecret = function () {
+            self.startEditingAPISecret = function () {
                 self.isAPISecretVisible(true);
                 self.isCancelUpdateVisible(true);
                 // Store the current expiration date before clearing them for editing.
@@ -73,7 +73,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
                 self.dateApiSecretExpiration('');
             };
 
-            self.hideAPISecret = function () {
+            self.cancelEditingAPISecret = function () {
                 self.isAPISecretVisible(false);
                 self.isCancelUpdateVisible(false);
                 // Reset the api secret to blank if user cancel editing
