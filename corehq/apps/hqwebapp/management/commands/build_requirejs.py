@@ -56,7 +56,7 @@ class Command(ResourceStaticCommand):
             if self.local:
                 dest = self._apps_path('hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
                 copyfile(filename, dest)
-                logger.info(f"Copied {bootstrap_version}/requirejs_config.js back into {self._relative(dest)}")
+                logger.info(f"Copied {bootstrap_version}/requirejs_config.js back into {os.path.relpath(dest)}")
 
             # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
             for module in config['modules']:
@@ -96,14 +96,6 @@ class Command(ResourceStaticCommand):
 
     def _apps_path(self, app_name, *parts):
         return os.path.join(settings.BASE_DIR, 'corehq', 'apps', app_name, 'static', app_name, *parts)
-
-    def _relative(self, path, root=None):
-        if not root:
-            root = settings.BASE_DIR
-        rel = path.replace(root, '')
-        if rel.startswith("/"):
-            rel = rel[1:]
-        return rel
 
     def _r_js(self, bootstrap_version='bootstrap3'):
         '''
@@ -171,7 +163,7 @@ class Command(ResourceStaticCommand):
                         if '/includes/' not in filename and '/_includes/' not in filename:
                             html_files.append(filename)
                 elif self.local and name.endswith(".js"):
-                    local_js_dirs.add(self._relative(root))
+                    local_js_dirs.add(os.path.relpath(root))
         return html_files, local_js_dirs
 
     def _get_main_js_modules_by_dir(self, html_files):
@@ -246,13 +238,13 @@ class Command(ResourceStaticCommand):
                 # If that didn't work, look for a js directory that matches the module name
                 # src is something like .../staticfiles/foo/baz/bar.js, so search local_js_dirs
                 # for something ending in foo/baz
-                common_dir = self._relative(os.path.dirname(src), self._staticfiles_path())
+                common_dir = os.path.relpath(os.path.dirname(src), self._staticfiles_path())
                 options = [d for d in local_js_dirs if d.endswith(common_dir)]
                 if len(options) == 1:
                     dest_stem = options[0][:-len(common_dir)]   # trim the common foo/baz off the destination
                     copyfile(src, os.path.join(settings.BASE_DIR, dest_stem, module['name'] + '.js'))
                 else:
-                    logger.warning("Could not copy {} to {}".format(self._relative(src), self._relative(dest)))
+                    logger.warning("Could not copy {} to {}".format(os.path.relpath(src), os.path.relpath(dest)))
         logger.info("Final build config written to staticfiles/build.js")
         logger.info("Bundle config output written to staticfiles/build.txt")
 
