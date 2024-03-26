@@ -63,8 +63,7 @@ class Command(ResourceStaticCommand):
 
         for bootstrap_version in BOOTSTRAP_VERSIONS:
             config, local_js_dirs = _r_js(local=local, verbose=verbose, bootstrap_version=bootstrap_version)
-            if self.optimize:
-                _minify(config, verbose=verbose)
+            self._minify(config, verbose=verbose)
 
             if local:
                 _copy_modules_back_into_corehq(config, local_js_dirs)
@@ -88,6 +87,25 @@ class Command(ResourceStaticCommand):
                 self._update_source_map_hash(filename, file_hash)
 
         self._write_resource_versions()
+
+    def _minify(self, config, verbose=False):
+        if not self.optimize:
+            return
+
+        modules = config['modules']
+        if verbose:
+            modules = with_progress_bar(modules, prefix="Minifying", oneline=False)
+        else:
+            print("Minifying Javascript bundles (estimated wait time: 5min)")
+        for module in modules:
+            rel_path = Path(module['name'] + ".js")
+            path = os.path.join(ROOT_DIR, 'staticfiles', rel_path)
+            ret = call([
+                "node", "node_modules/uglify-js/bin/uglifyjs", path, "--compress", "--mangle", "--output", path,
+                "--source-map", f"url={rel_path.name}.map"
+            ])
+            if ret:
+                raise CommandError(f"Failed to minify {rel_path}")
 
     def _update_resource_hash(self, name, filename):
         file_hash = self.get_hash(filename)
@@ -190,23 +208,6 @@ def _r_js(local=False, verbose=False, bootstrap_version='bootstrap3'):
         raise CommandError("Failed to build JS bundles")
 
     return config, local_js_dirs
-
-
-def _minify(config, verbose=False):
-    modules = config['modules']
-    if verbose:
-        modules = with_progress_bar(modules, prefix="Minifying", oneline=False)
-    else:
-        print("Minifying Javascript bundles (estimated wait time: 5min)")
-    for module in modules:
-        rel_path = Path(module['name'] + ".js")
-        path = os.path.join(ROOT_DIR, 'staticfiles', rel_path)
-        ret = call([
-            "node", "node_modules/uglify-js/bin/uglifyjs", path, "--compress", "--mangle", "--output", path,
-            "--source-map", f"url={rel_path.name}.map"
-        ])
-        if ret:
-            raise CommandError(f"Failed to minify {rel_path}")
 
 
 def _get_html_files_and_local_js_dirs(local):
