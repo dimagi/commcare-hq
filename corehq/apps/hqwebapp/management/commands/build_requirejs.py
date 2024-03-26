@@ -149,7 +149,7 @@ class Command(ResourceStaticCommand):
                 'create': True,
             })
 
-        _save_r_js_config(config)
+        self._save_r_js_config(config)
 
         ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", BUILD_JS_FILENAME])
         if ret:
@@ -201,6 +201,14 @@ class Command(ResourceStaticCommand):
                             dirs[directory].add(main)
         return dirs
 
+    def _save_r_js_config(self, config):
+        """
+        Writes final r.js config out as a .js file
+        """
+        r_js_config = "({});".format(json.dumps(config, indent=4))
+        with open(self._staticfiles_path('build.js'), 'w') as fout:
+            fout.write(r_js_config)
+
     def _minify(self, config):
         if not self.optimize:
             return
@@ -251,15 +259,6 @@ class Command(ResourceStaticCommand):
         self._update_resource_hash("hqwebapp/js/resource_versions.js", filename)
 
         self.output_resources(self.resource_versions, overwrite=False)
-
-
-def _save_r_js_config(config):
-    """
-    Writes final r.js config out as a .js file
-    """
-    r_js_config = "({});".format(json.dumps(config, indent=4))
-    with open(os.path.join(ROOT_DIR, 'staticfiles', 'build.js'), 'w') as fout:
-        fout.write(r_js_config)
 
 
 def _relative(path, root=None):
