@@ -1,11 +1,14 @@
-hqDefine("commtrack/js/bootstrap3/base_list_view_model", [
+"use strict";
+hqDefine("commtrack/js/base_list_view_model", [
     'jquery',
     'knockout',
     'underscore',
+    'es6!hqwebapp/js/bootstrap5_loader',
 ], function (
     $,
     ko,
-    _
+    _,
+    bootstrap
 ) {
     var BaseListViewModel = function (o) {
         'use strict';
@@ -64,7 +67,7 @@ hqDefine("commtrack/js/bootstrap3/base_list_view_model", [
         };
 
         self.takeArchiveAction = function (actionUrl, button, dataIndex) {
-            $(button).button('loading');
+            $(button).disableButton();
             dataIndex = ko.utils.unwrapObservable(dataIndex);
             $.ajax({
                 type: 'POST',
@@ -78,9 +81,11 @@ hqDefine("commtrack/js/bootstrap3/base_list_view_model", [
         self.successfulArchiveAction = function (button, index) {
             return function (data) {
                 if (data.success) {
-                    var $modal = $(button).parent().parent().parent().parent();
-                    $modal.modal('hide');
-                    $modal.on('hidden.bs.modal', function () {
+                    $(button).enableButton();
+                    var $modal = $(button).closest(".modal"),
+                        modal = bootstrap.Modal.getOrCreateInstance($modal);
+                    modal.hide();
+                    $modal.one('hidden.bs.modal', function () {
                         var dataList = self.dataList(),
                             actioned = self.archiveActionItems();
                         actioned.push(dataList[index]);
@@ -97,7 +102,7 @@ hqDefine("commtrack/js/bootstrap3/base_list_view_model", [
 
         self.unsuccessfulArchiveAction = function (button) {
             return function () {
-                $(button).button('unsuccessful');
+                $(button).enableButton();
             };
         };
 
