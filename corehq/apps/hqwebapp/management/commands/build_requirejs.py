@@ -18,7 +18,7 @@ from corehq.apps.hqwebapp.management.commands.resource_static import \
     Command as ResourceStaticCommand
 from corehq.util.log import with_progress_bar
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('build_requirejs')
 BOOTSTRAP_VERSIONS = ['bootstrap3', 'bootstrap5']
 
 
@@ -59,10 +59,10 @@ class Command(ResourceStaticCommand):
             self._update_resource_hash(f"hqwebapp/js/{bootstrap_version}/requirejs_config.js", filename)
             if self.local:
                 dest = self._apps_path('hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
+                logger.info(f"Copying {bootstrap_version}/requirejs_config.js back into {os.path.relpath(dest)}")
                 copyfile(filename, dest)
-                logger.info(f"Copied {bootstrap_version}/requirejs_config.js back into {os.path.relpath(dest)}")
 
-            # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
+            logger.info("Updating resource_versions with hashes from newly minified bundles")
             for module in config['modules']:
                 filename = self._staticfiles_path(module['name'] + ".js")
                 file_hash = self._update_resource_hash(module['name'] + ".js", filename)
@@ -107,6 +107,7 @@ class Command(ResourceStaticCommand):
         - all HTML files in corehq, excluding partials
         - a reference of js directories, for use when copying optimized bundles back into corehq
         """
+        logger.info("Gathering HTML templates and JS directories")
         html_files = []
         local_js_dirs = set()
         for root, dirs, files in os.walk(os.path.join(settings.BASE_DIR, 'corehq')):
@@ -121,6 +122,7 @@ class Command(ResourceStaticCommand):
         return html_files, local_js_dirs
 
     def _add_bundles(self, html_files, bootstrap_version='bootstrap3'):
+        logger.info("Adding bundle configuration")
         is_bootstrap5 = bootstrap_version == 'bootstrap5'
         with open(self._staticfiles_path('hqwebapp', 'yaml', bootstrap_version, 'requirejs.yml'), 'r') as f:
             config = yaml.safe_load(f)
@@ -167,6 +169,7 @@ class Command(ResourceStaticCommand):
             ...
         }
         """
+        logger.info("Mapping main modules to django apps")
         dirs = defaultdict(set)
         for filename in html_files:
             proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
@@ -185,24 +188,25 @@ class Command(ResourceStaticCommand):
 
     def _run_r_js(self, config):
         filename = self._staticfiles_path('build.js')
+        logger.info("Writing final build config to staticfiles/build.js")
         with open(filename, 'w') as fout:  # add bootstrap prefix, same for build.txt
             fout.write("({});".format(json.dumps(config, indent=4)))
-        logger.info("Final build config written to staticfiles/build.js")
 
+        logger.info("Running r.js")
         ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", filename])
         if ret:
             raise CommandError("Failed to build JS bundles")
-        logger.info("Bundle config output written to staticfiles/build.txt")
+        logger.info("r.js complete, bundle config output written to staticfiles/build.txt")
 
     def _minify(self, config):
         if not self.optimize:
             return
 
         modules = config['modules']
+        logger.info("Minifying Javascript bundles (estimated wait time: 5min)")
         if self.verbose:
             modules = with_progress_bar(modules, prefix="Minifying", oneline=False)
-        else:
-            print("Minifying Javascript bundles (estimated wait time: 5min)")
+
         for module in modules:
             rel_path = Path(module['name'] + ".js")
             path = self._staticfiles_path(rel_path)
@@ -220,6 +224,7 @@ class Command(ResourceStaticCommand):
         if not self.local:
             return
 
+        logger.info("Copying bundle files back into corehq")
         for module in config['modules']:
             src = self._staticfiles_path(module['name'] + '.js')
 
@@ -260,6 +265,7 @@ class Command(ResourceStaticCommand):
                 fout.write(line)
 
     def _write_resource_versions(self):
+        logger.info("Writing out resource_versions.js")
         filename = self._staticfiles_path('hqwebapp', 'js', 'resource_versions.js')
         with open(filename, 'w') as fout:
             fout.write("requirejs.config({ paths: %s });" % json.dumps({
