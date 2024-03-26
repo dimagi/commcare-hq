@@ -47,8 +47,12 @@ class Command(ResourceStaticCommand):
 
         self._check_prereqs()
 
+        html_files, local_js_dirs = self._get_html_files_and_local_js_dirs()
         for bootstrap_version in BOOTSTRAP_VERSIONS:
-            config, local_js_dirs = self._r_js(bootstrap_version=bootstrap_version)
+            config = self._add_bundles(html_files, bootstrap_version=bootstrap_version)
+
+            self._run_r_js(config)
+
             self._minify(config)
 
             self._copy_modules_back_into_corehq(config, local_js_dirs)
@@ -99,11 +103,7 @@ class Command(ResourceStaticCommand):
     def _apps_path(self, app_name, *parts):
         return os.path.join(settings.BASE_DIR, 'corehq', 'apps', app_name, 'static', app_name, *parts)
 
-    def _r_js(self, bootstrap_version='bootstrap3'):
-        '''
-        Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
-        and the bundle config output by the build.
-        '''
+    def _add_bundles(self, html_files, bootstrap_version='bootstrap3'):
         is_bootstrap5 = bootstrap_version == 'bootstrap5'
         with open(self._staticfiles_path('hqwebapp', 'yaml', bootstrap_version, 'requirejs.yml'), 'r') as f:
             config = yaml.safe_load(f)
@@ -111,8 +111,6 @@ class Command(ResourceStaticCommand):
         config['logLevel'] = 0 if self.verbose else 2  # TRACE or WARN
         if not self.verbose:
             print("Compiling Javascript bundles")
-
-        html_files, local_js_dirs = self._get_html_files_and_local_js_dirs()
 
         # These pages depend on bootstrap 5 and must be skipped by the bootstrap3 run of this command.
         # "<bundle directory>": [<js main modules that depend on bootstrap 5>]
@@ -141,14 +139,9 @@ class Command(ResourceStaticCommand):
                 'create': True,
             })
 
-        self._save_r_js_config(config)
+        return config
 
-        ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", self._staticfiles_path('build.js')])
-        if ret:
-            raise CommandError("Failed to build JS bundles")
-
-        return config, local_js_dirs
-
+    # TODO: move up
     def _get_html_files_and_local_js_dirs(self):
         """
         Returns
@@ -193,13 +186,14 @@ class Command(ResourceStaticCommand):
                             dirs[directory].add(main)
         return dirs
 
-    def _save_r_js_config(self, config):
-        """
-        Writes final r.js config out as a .js file
-        """
-        r_js_config = "({});".format(json.dumps(config, indent=4))
-        with open(self._staticfiles_path('build.js'), 'w') as fout:
-            fout.write(r_js_config)
+    def _run_r_js(self, config):
+        filename = self._staticfiles_path('build.js')
+        with open(filename, 'w') as fout:  # add bootstrap prefix, same for build.txt
+            fout.write("({});".format(json.dumps(config, indent=4)))
+
+        ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", filename])
+        if ret:
+            raise CommandError("Failed to build JS bundles")
 
     def _minify(self, config):
         if not self.optimize:
