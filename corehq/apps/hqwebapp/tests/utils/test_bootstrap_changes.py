@@ -3,6 +3,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     get_spec,
     make_direct_css_renames,
     make_numbered_css_renames,
+    make_template_tag_renames,
     make_data_attribute_renames,
     flag_changed_css_classes,
     flag_stateful_button_changes_bootstrap5,
@@ -14,7 +15,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
 
 
 def test_make_direct_css_renames_bootstrap5():
-    line = """        <button class="btn-xs btn btn-default context-right btn-xs" id="prepaid-snooze"></button>\n"""
+    line = """        <button class="btn-xs btn btn-default context-right btn-xs" id="prepaid-snooze"></button>\n"""  # noqa: E501
     final_line, renames = make_direct_css_renames(
         line, get_spec('bootstrap_3_to_5')
     )
@@ -30,6 +31,15 @@ def test_make_numbered_css_renames_bootstrap5():
     )
     eq(final_line, """        <div class="col-sm-6">\n""")
     eq(renames, ['renamed col-xs-<num> to col-sm-<num>'])
+
+
+def test_make_template_tag_renames_bootstrap5():
+    line = """        {% requirejs_main "data_dictionary/js/data_dictionary" %}\n"""
+    final_line, renames = make_template_tag_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """        {% requirejs_main_b5 "data_dictionary/js/data_dictionary" %}\n""")
+    eq(renames, ['renamed requirejs_main to requirejs_main_b5'])
 
 
 def test_make_data_attribute_renames_bootstrap5():

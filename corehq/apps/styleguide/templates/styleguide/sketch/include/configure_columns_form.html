@@ -1,0 +1,54 @@
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">
+      Visible Columns
+    </h5>
+    <table class="table table-condensed ">
+      <tbody data-bind="foreach: visibleColumns, sortableList: visibleColumns">
+      <tr>
+        <td>
+          <i class="grip fa-solid fa-up-down"></i>
+        </td>
+        <td data-bind="text: name"></td>
+        <td>
+          <i style="cursor: pointer;"
+             data-bind="click: $parent.removeColumn"
+             class="fa-solid fa-remove"></i>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<!-- ko if: areColumnsAvailableToAdd -->
+<div class="card mb-3" data-bind="with: addColumnForm, visible: columnsAvailableToAdd">
+  <div class="card-body">
+    <div class="mb-3" >
+      <label for="property" class="form-label">Select property to add:</label>
+      <select class="form-select"
+              name="property"
+              data-bind="options: $parent.columnsAvailableToAdd,
+                         value: columnToAdd,
+                         optionsCaption: 'Select a property...',
+                         optionsText: 'name'">
+      </select>
+    </div>
+    <div class="mb-3" >
+      <button type="button"
+              data-bind="click: $parent.addColumn,
+                         disable: isSubmitDisabled"
+              class="btn btn-outline-primary">
+        <i class="fa-solid fa-plus"></i> Add Column
+      </button>
+    </div>
+  </div>
+</div>
+<!-- /ko -->
+
+<!-- ko ifnot: areColumnsAvailableToAdd -->
+<div class="card mb-3">
+  <div class="card-body">
+    No more columns available!
+  </div>
+</div>
+<!-- /ko -->
