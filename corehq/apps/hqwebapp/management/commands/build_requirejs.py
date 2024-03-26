@@ -238,7 +238,7 @@ class Command(ResourceStaticCommand):
                 # src is something like .../staticfiles/foo/baz/bar.js, so search local_js_dirs
                 # for something ending in foo/baz
                 common_dir = os.path.relpath(os.path.dirname(src), self._staticfiles_path())
-                options = [d for d in local_js_dirs if d.endswith(common_dir)]
+                options = [d for d in local_js_dirs if re.search(r'\b' + re.escape(common_dir), d)]
                 if len(options) == 1:
                     dest_stem = options[0][:-len(common_dir)]   # trim the common foo/baz off the destination
                     copyfile(src, os.path.join(settings.BASE_DIR, dest_stem, module['name'] + '.js'))
