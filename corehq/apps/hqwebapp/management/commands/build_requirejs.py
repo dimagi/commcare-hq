@@ -19,9 +19,6 @@ from corehq.apps.hqwebapp.management.commands.resource_static import \
 from corehq.util.log import with_progress_bar
 
 logger = logging.getLogger(__name__)
-ROOT_DIR = settings.FILEPATH
-BUILD_JS_FILENAME = "staticfiles/build.js"
-BUILD_TXT_FILENAME = "staticfiles/build.txt"
 BOOTSTRAP_VERSIONS = ['bootstrap3', 'bootstrap5']
 
 
@@ -104,7 +101,7 @@ class Command(ResourceStaticCommand):
 
     def _relative(self, path, root=None):
         if not root:
-            root = ROOT_DIR
+            root = settings.BASE_DIR
         rel = path.replace(root, '')
         if rel.startswith("/"):
             rel = rel[1:]
@@ -154,7 +151,7 @@ class Command(ResourceStaticCommand):
 
         self._save_r_js_config(config)
 
-        ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", BUILD_JS_FILENAME])
+        ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", self._staticfiles_path('build.js')])
         if ret:
             raise CommandError("Failed to build JS bundles")
 
@@ -166,10 +163,9 @@ class Command(ResourceStaticCommand):
         - all HTML files in corehq, excluding partials
         - a reference of js directories, for use when copying optimized bundles back into corehq
         """
-        prefix = os.path.join(ROOT_DIR, 'corehq')
         html_files = []
         local_js_dirs = set()
-        for root, dirs, files in os.walk(prefix):
+        for root, dirs, files in os.walk(os.path.join(settings.BASE_DIR, 'corehq')):
             for name in files:
                 if name.endswith(".html"):
                     filename = filename = os.path.join(root, name)
@@ -245,22 +241,22 @@ class Command(ResourceStaticCommand):
             # Most of the time, the module is .../staticfiles/appName/js/moduleName and
             # should be copied to .../corehq/apps/appName/static/appName/js/moduleName.js
             app = re.sub(r'/.*', '', module['name'])
-            dest = os.path.join(ROOT_DIR, 'corehq', 'apps', app, 'static', module['name'] + '.js')
+            dest = self._apps_path(app, module['name'], '.js')
             if os.path.exists(os.path.dirname(dest)):
                 copyfile(src, dest)
             else:
                 # If that didn't work, look for a js directory that matches the module name
                 # src is something like .../staticfiles/foo/baz/bar.js, so search local_js_dirs
                 # for something ending in foo/baz
-                common_dir = self._relative(os.path.dirname(src), os.path.join(ROOT_DIR, 'staticfiles'))
-                options = [d for d in local_js_dirs if self._relative(d).endswith(common_dir)]
+                common_dir = self._relative(os.path.dirname(src), self._staticfiles_path())
+                options = [d for d in local_js_dirs if d.endswith(common_dir)]
                 if len(options) == 1:
                     dest_stem = options[0][:-len(common_dir)]   # trim the common foo/baz off the destination
-                    copyfile(src, os.path.join(ROOT_DIR, dest_stem, module['name'] + '.js'))
+                    copyfile(src, os.path.join(settings.BASE_DIR, dest_stem, module['name'] + '.js'))
                 else:
                     logger.warning("Could not copy {} to {}".format(self._relative(src), self._relative(dest)))
-        logger.info("Final build config written to {}".format(BUILD_JS_FILENAME))
-        logger.info("Bundle config output written to {}".format(BUILD_TXT_FILENAME))
+        logger.info("Final build config written to staticfiles/build.js")
+        logger.info("Bundle config output written to staticfiles/build.txt")
 
     def _update_resource_hash(self, name, filename):
         file_hash = self.get_hash(filename)
