@@ -189,10 +189,12 @@ class Command(ResourceStaticCommand):
         filename = self._staticfiles_path('build.js')
         with open(filename, 'w') as fout:  # add bootstrap prefix, same for build.txt
             fout.write("({});".format(json.dumps(config, indent=4)))
+        logger.info("Final build config written to staticfiles/build.js")
 
         ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", filename])
         if ret:
             raise CommandError("Failed to build JS bundles")
+        logger.info("Bundle config output written to staticfiles/build.txt")
 
     def _minify(self, config):
         if not self.optimize:
@@ -240,8 +242,6 @@ class Command(ResourceStaticCommand):
                     copyfile(src, os.path.join(settings.BASE_DIR, dest_stem, module['name'] + '.js'))
                 else:
                     logger.warning("Could not copy {} to {}".format(os.path.relpath(src), os.path.relpath(dest)))
-        logger.info("Final build config written to staticfiles/build.js")
-        logger.info("Bundle config output written to staticfiles/build.txt")
 
     def _update_resource_hash(self, name, filename):
         file_hash = self.get_hash(filename)
