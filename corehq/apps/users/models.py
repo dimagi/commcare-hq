@@ -2683,6 +2683,8 @@ class Invitation(models.Model):
     role = models.CharField(max_length=100, null=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
+    profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
+                                on_delete=models.CASCADE, null=True)
 
     def __repr__(self):
         return f"Invitation(domain='{self.domain}', email='{self.email})"
