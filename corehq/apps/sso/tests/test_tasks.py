@@ -342,8 +342,6 @@ class TestAutoDeactivationTask(TestCase):
         self.web_user_a = self._create_web_user('a@vaultwax.com')
         self.web_user_b = self._create_web_user('b@vaultwax.com')
         self.web_user_c = self._create_web_user('c@vaultwax.com')
-        # web_user_d is required so the total number of IdP user meet the threshold for auto-deactivation
-        self.web_user_d = self._create_web_user('d@vaultwax.com')
 
     def test_user_is_deactivated_if_not_member_of_idp(self):
         self.assertTrue(self.web_user_c.is_active)

@@ -133,9 +133,8 @@ def auto_deactivate_removed_sso_users():
         exempt_usernames = UserExemptFromSingleSignOn.objects.filter(email_domain__in=authenticated_domains
                                                                      ).values_list('username', flat=True)
 
-        # if the Graph Users API returns an empty list of users and the account still have active web users
-        MIN_ACTIVE_USERS_THRESHOLD = 3
-        if len(idp_users) == 0 and len(usernames_in_account) - len(exempt_usernames) > MIN_ACTIVE_USERS_THRESHOLD:
+        # if the Graph Users API returns an empty list of users we will skip auto deactivation
+        if len(idp_users) == 0:
             context = get_sso_deactivation_skip_email_context(idp)
             if not context["to"]:
                 notify_exception(None, f"no admin email addresses for IdP: {idp}")
