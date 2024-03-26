@@ -64,11 +64,7 @@ class Command(ResourceStaticCommand):
                 logger.info(f"Copying {bootstrap_version}/requirejs_config.js back into {os.path.relpath(dest)}")
                 copyfile(filename, dest)
 
-            logger.info("Updating resource_versions with hashes from newly minified bundles")
-            for module in config['modules']:
-                filename = self._staticfiles_path(module['name'] + ".js")
-                file_hash = self._update_resource_hash(module['name'] + ".js", filename)
-                self._update_source_map_hash(filename, file_hash)
+            self._update_source_maps(config)
 
         self._write_resource_versions()
 
@@ -253,18 +249,23 @@ class Command(ResourceStaticCommand):
         self.resource_versions[name] = file_hash
         return file_hash
 
-    # Overwrite source map reference. Source maps are accessed on the CDN, so they need the version hash
-    def _update_source_map_hash(self, filename, file_hash):
+    # Overwrite source map references. Source maps are accessed on the CDN, so they need the version hash
+    def _update_source_maps(self, config):
         if not self.optimize:
             return
 
-        with open(filename, 'r') as fin:
-            lines = fin.readlines()
-        with open(filename, 'w') as fout:
-            for line in lines:
-                if re.search(r'sourceMappingURL=bundle.js.map$', line):
-                    line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
-                fout.write(line)
+        logger.info("Updating resource_versions with hashes from newly minified bundles")
+
+        for module in config['modules']:
+            filename = self._staticfiles_path(module['name'] + ".js")
+            with open(filename, 'r') as fin:
+                lines = fin.readlines()
+            with open(filename, 'w') as fout:
+                for line in lines:
+                    if re.search(r'sourceMappingURL=bundle.js.map$', line):
+                        file_hash = self._update_resource_hash(module['name'] + ".js", filename)
+                        line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
+                    fout.write(line)
 
     def _write_resource_versions(self):
         logger.info("Writing out resource_versions.js")
