@@ -25,6 +25,9 @@ from corehq.apps.translations.models import TransifexProject
 
 
 class ProjectMigrator(object):
+    # TODO: rework ProjectMigrator to be compatible with Transifex API v3, or remove this functionality
+    # v3 makes 'slug' an immutable attribute
+    # meaning we can no longer simply change the path to a resource while retaining its history
     def __init__(self, domain, project_slug, source_app_id, target_app_id, resource_ids_mapping):
         """
         Migrate a transifex project from one app to another by

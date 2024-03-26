@@ -200,9 +200,10 @@ class TransifexApiClient(object):
         return polib.pofile(temp_file.name)
 
     def move_resource(self, old_resource_slug, new_resource_slug):
-        old_resource = self._get_resource(slug=old_resource_slug)
-        self._create_resource(new_resource_slug, old_resource.name)
-        self.delete_resource(old_resource_slug)
+        # TODO: rework ProjectMigrator to be compatible with Transifex API v3, or remove this functionality
+        # v3 makes 'slug' an immutable attribute
+        # meaning we can no longer simply change the path to a resource while retaining its history
+        pass
 
     def get_project_langcodes(self):
         languages = self._fetch_related(self.project, 'languages')
