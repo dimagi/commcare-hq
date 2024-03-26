@@ -264,9 +264,11 @@ class Command(ResourceStaticCommand):
                 lines = fin.readlines()
             with open(filename, 'w') as fout:
                 for line in lines:
-                    if re.search(r'sourceMappingURL=bundle.js.map$', line):
+                    match = re.search(r'sourceMappingURL=(.*)$', line)
+                    if match:
+                        basename = match.group(1)
                         file_hash = self._update_resource_hash(module['name'] + ".js", filename)
-                        line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
+                        line = line.replace(basename, f'{basename}?version={file_hash}')
                     fout.write(line)
 
     def _write_resource_versions(self):
