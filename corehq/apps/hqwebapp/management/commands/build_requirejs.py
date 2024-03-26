@@ -114,7 +114,7 @@ class Command(ResourceStaticCommand):
         if not self.verbose:
             print("Compiling Javascript bundles")
 
-        html_files, local_js_dirs = _get_html_files_and_local_js_dirs(self.local)
+        html_files, local_js_dirs = self._get_html_files_and_local_js_dirs()
 
         # These pages depend on bootstrap 5 and must be skipped by the bootstrap3 run of this command.
         # "<bundle directory>": [<js main modules that depend on bootstrap 5>]
@@ -150,6 +150,25 @@ class Command(ResourceStaticCommand):
             raise CommandError("Failed to build JS bundles")
 
         return config, local_js_dirs
+
+    def _get_html_files_and_local_js_dirs(self):
+        """
+        Returns
+        - all HTML files in corehq, excluding partials
+        - a reference of js directories, for use when copying optimized bundles back into corehq
+        """
+        prefix = os.path.join(ROOT_DIR, 'corehq')
+        html_files = []
+        local_js_dirs = set()
+        for root, dirs, files in os.walk(prefix):
+            for name in files:
+                if name.endswith(".html"):
+                    filename = os.path.join(root, name)
+                    if not re.search(r'/partials/', filename):
+                        html_files.append(filename)
+                elif self.local and name.endswith(".js"):
+                    local_js_dirs.add(_relative(root))
+        return html_files, local_js_dirs
 
     def _minify(self, config):
         if not self.optimize:
@@ -201,24 +220,6 @@ class Command(ResourceStaticCommand):
         self._update_resource_hash("hqwebapp/js/resource_versions.js", filename)
 
         self.output_resources(self.resource_versions, overwrite=False)
-
-
-def _get_html_files_and_local_js_dirs(local):
-    """
-    Returns all HTML files in corehq, excluding partials
-    """
-    prefix = os.path.join(ROOT_DIR, 'corehq')
-    html_files = []
-    local_js_dirs = set()  # a reference of js filenames, for use when copying optimized bundles back into corehq
-    for root, dirs, files in os.walk(prefix):
-        for name in files:
-            if name.endswith(".html"):
-                filename = os.path.join(root, name)
-                if not re.search(r'/partials/', filename):
-                    html_files.append(filename)
-            elif local and name.endswith(".js"):
-                local_js_dirs.add(_relative(root))
-    return html_files, local_js_dirs
 
 
 def _get_main_js_modules_by_dir(html_files):
