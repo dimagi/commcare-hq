@@ -1,4 +1,4 @@
-from corehq.apps.es import UserES, filters, queries
+from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 
 
@@ -39,26 +39,11 @@ def login_as_user_query(
         user_es = user_es.location(list(loc_ids))
 
     if _limit_login_as(couch_user, domain):
-        user_filters = [login_as_user_filter(couch_user.username)]
+        login_as_users = [couch_user.username]
         if couch_user.has_permission(domain, 'access_default_login_as_user'):
-            user_filters.append(login_as_user_filter('default'))
-        user_es = user_es.filter(
-            queries.nested(
-                'user_data_es',
-                filters.OR(
-                    *user_filters
-                )
-            )
-        )
+            login_as_users.append('default')
+        user_es = user_es.login_as_user(login_as_users)
     return user_es.mobile_users()
-
-
-# value may be either a single username or a list of username
-def login_as_user_filter(value):
-    return filters.AND(
-        filters.term('user_data_es.key', 'login_as_user'),
-        filters.term('user_data_es.value', value),
-    )
 
 
 def _limit_login_as(couch_user, domain):
