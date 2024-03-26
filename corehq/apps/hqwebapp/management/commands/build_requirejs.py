@@ -176,9 +176,10 @@ class Command(ResourceStaticCommand):
         for root, dirs, files in os.walk(prefix):
             for name in files:
                 if name.endswith(".html"):
-                    filename = os.path.join(root, name)
-                    if not re.search(r'/partials/', filename):
-                        html_files.append(filename)
+                    filename = filename = os.path.join(root, name)
+                    if '/partials/' not in filename:
+                        if '/includes/' not in filename and '/_includes/' not in filename:
+                            html_files.append(filename)
                 elif self.local and name.endswith(".js"):
                     local_js_dirs.add(self._relative(root))
         return html_files, local_js_dirs
