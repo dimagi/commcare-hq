@@ -149,6 +149,7 @@ def _r_js(local=False, verbose=False, bootstrap_version=None):
     split_bundles = {
         "commtrack/js": ['commtrack/js/products_and_programs_main'],
         "hqwebapp/js": ['hqwebapp/js/500'],
+        "styleguide/sketch": ['styleguide/sketch/clean_data'],
     }
 
     # For each directory, add an optimized "module" entry including all of the main modules in that dir.

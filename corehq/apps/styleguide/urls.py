@@ -12,6 +12,7 @@ from corehq.apps.styleguide.views.docs import default
 
 from corehq.apps.styleguide.views import bootstrap5
 from corehq.apps.styleguide.views import bootstrap5_data
+from corehq.apps.styleguide.views import sketch
 
 doc_urlpatterns = [
     url(r'^$', default, name='sg_examples_default'),
@@ -30,6 +31,16 @@ urlpatterns = [
     url(r'^pages/$', PagesStyleGuideView.as_view(),
         name=PagesStyleGuideView.urlname),
     url(r'^docs/', include(doc_urlpatterns)),
+    url(r'^sketch/$', sketch.clean_data_prototype,
+        name="clean_data_prototype"),
+    url(r'^sketch/data/$', sketch.get_data_for_data_cleaning_prototype,
+        name="get_data_for_data_cleaning_prototype"),
+    url(r'^sketch/clear/$', sketch.clear_cached_sprint_data,
+        name="clear_cached_sprint_data"),
+    url(r'^sketch/all/$', sketch.get_all_data_for_data_cleaning_prototype,
+        name="get_all_data_for_data_cleaning_prototype"),
+    url(r'^sketch/update/$', sketch.update_sprint_data,
+        name="update_sprint_data"),
     url(r'^b5/$', bootstrap5.styleguide_home, name="styleguide_home_b5"),
     url(r'^b5/data/select2_ajax_demo$', bootstrap5_data.select2_ajax_demo,
         name="styleguide_data_select2_ajax_demo"),
