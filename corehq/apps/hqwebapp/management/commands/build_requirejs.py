@@ -131,12 +131,11 @@ def _confirm_or_exit():
         exit()
 
 
-def _r_js(local=False, verbose=False, bootstrap_version=None):
+def _r_js(local=False, verbose=False, bootstrap_version='bootstrap3'):
     '''
     Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
     and the bundle config output by the build.
     '''
-    bootstrap_version = bootstrap_version or 'bootstrap3'
     is_bootstrap5 = bootstrap_version == 'bootstrap5'
     with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml',
                            bootstrap_version, 'requirejs.yml'), 'r') as f:
