@@ -649,55 +649,6 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
             ),
         ]
 
-    def get_remote_user_management_fields(self):
-        masked_api = get_masked_string(self.idp.api_secret)
-
-        api_secret_toggles = crispy.Div(
-            crispy.HTML(
-                format_html(
-                    '<p class="form-control-text" data-bind="hidden: isAPISecretVisible">'
-                    '<span id="masked-api-value">{}</span> '
-                    '<a href="#" data-bind="click: startEditingAPISecret">{}</a></p>',
-                    masked_api,
-                    gettext("Update Secret")
-                ),
-            ),
-            crispy.HTML(
-                format_html(
-                    '<p class="form-control-text" data-bind="visible: isCancelUpdateVisible">'
-                    '<a href="#" data-bind="click: cancelEditingAPISecret">{}</a></p>',
-                    gettext("Cancel Update")
-                ),
-            ),
-            style="display: none;",  # prevent html showing before knockout is executed, will set visible to false
-            data_bind="visible: true",
-        )
-        return [crispy.Div(
-            crispy.Div(
-                crispy.Fieldset(
-                    _('Remote User Management'),
-                    twbscrispy.PrependedText('enable_user_deactivation', ''),
-                    'api_host',
-                    'api_id',
-                    hqcrispy.B3MultiField(
-                        gettext("Client Secret"),
-                        crispy.Div(
-                            hqcrispy.InlineField(
-                                'api_secret',
-                                data_bind="visible: isAPISecretVisible, "
-                                          "textInput: apiSecret"
-                            ),
-                            api_secret_toggles,
-                        ),
-                        show_row_class=False,
-                    ),
-                    crispy.Field('date_api_secret_expiration', css_class='date-picker',
-                                 data_bind="textInput: dateApiSecretExpiration"),
-                ),
-                css_class="panel-body"
-            ),
-            css_class="panel panel-modern-gray panel-form-only")]
-
     @staticmethod
     def _check_required_when_enabled(is_enabled, value):
         if is_enabled and not value:
@@ -864,6 +815,55 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         layout.append(crispy.Div(*self.get_primary_fields()))
 
         self.helper.layout = layout
+
+    def get_remote_user_management_fields(self):
+        masked_api = get_masked_string(self.idp.api_secret)
+
+        api_secret_toggles = crispy.Div(
+            crispy.HTML(
+                format_html(
+                    '<p class="form-control-text" data-bind="hidden: isAPISecretVisible">'
+                    '<span id="masked-api-value">{}</span> '
+                    '<a href="#" data-bind="click: startEditingAPISecret">{}</a></p>',
+                    masked_api,
+                    gettext("Update Secret")
+                ),
+            ),
+            crispy.HTML(
+                format_html(
+                    '<p class="form-control-text" data-bind="visible: isCancelUpdateVisible">'
+                    '<a href="#" data-bind="click: cancelEditingAPISecret">{}</a></p>',
+                    gettext("Cancel Update")
+                ),
+            ),
+            style="display: none;",  # prevent html showing before knockout is executed, will set visible to false
+            data_bind="visible: true",
+        )
+        return [crispy.Div(
+            crispy.Div(
+                crispy.Fieldset(
+                    _('Remote User Management'),
+                    twbscrispy.PrependedText('enable_user_deactivation', ''),
+                    'api_host',
+                    'api_id',
+                    hqcrispy.B3MultiField(
+                        gettext("Client Secret"),
+                        crispy.Div(
+                            hqcrispy.InlineField(
+                                'api_secret',
+                                data_bind="visible: isAPISecretVisible, "
+                                          "textInput: apiSecret"
+                            ),
+                            api_secret_toggles,
+                        ),
+                        show_row_class=False,
+                    ),
+                    crispy.Field('date_api_secret_expiration', css_class='date-picker',
+                                 data_bind="textInput: dateApiSecretExpiration"),
+                ),
+                css_class="panel-body"
+            ),
+            css_class="panel panel-modern-gray panel-form-only")]
 
     def clean_login_url(self):
         is_active = bool(self.data.get('is_active'))
