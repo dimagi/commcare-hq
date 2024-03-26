@@ -95,16 +95,11 @@ def prepare_case_for_deletion(case, form_cache, case_block_cache):
 def _get_deleted_case_name(case, form_cache, case_block_cache):
     """When a case's create form is archived, its name is reset to '', so this process sets it again
     to properly display on the case deletion page, but does not save it to the case object"""
-    for t in case.transactions:
-        if t.is_case_create:
-            form_list = form_cache.get_forms([t.form_id])
-            if form_list:
-                create_form = form_list[0]
-                break
-            continue
-    else:
+    form_ids = [t.form_id for t in case.transactions if t.is_case_create]
+    forms = form_cache.get_forms(form_ids)
+    if not forms:
         return '[Unknown Case]'
-    case_blocks = case_block_cache.get_case_blocks(create_form)
+    case_blocks = case_block_cache.get_case_blocks(forms[0])
     for case_block in case_blocks:
         if 'create' in case_block and case_block['@case_id'] == case.case_id:
             return case_block['create']['case_name']

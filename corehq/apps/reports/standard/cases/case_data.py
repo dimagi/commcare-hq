@@ -825,7 +825,6 @@ def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_l
     msg = _("{}, its related subcases and submission forms were deleted successfully.").format(main_case_name)
     for form in form_delete_list:
         if archive_form(request, domain, form, is_case_delete=True):
-            # caching here.....
             form_instance = XFormInstance.objects.get_form(form, domain)
             form_instance.soft_delete()
         else:
