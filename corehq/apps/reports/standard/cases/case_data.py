@@ -777,7 +777,10 @@ class DeleteCaseView(BaseProjectReportSectionView):
                 case_actions.append(FormAffectedCases(is_current_case=True, actions=', '.join(actions)))
             elif case_obj.case_id not in self.delete_cases:
                 if const.CASE_ACTION_CREATE in actions and case_obj.case_id != current_case_id:
-                    self.walk_through_case_forms(case_obj, subcase_count + 1)
+                    depth = subcase_count
+                    if const.CASE_ACTION_INDEX in actions:
+                        depth += 1
+                    self.walk_through_case_forms(case_obj, depth)
                 if const.CASE_ACTION_CLOSE in actions:
                     self.reopened_cases_display.append(
                         ReopenedCase(name=case_obj.name, url=get_case_url(self.domain, case_obj.case_id),
