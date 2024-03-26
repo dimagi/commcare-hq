@@ -128,6 +128,18 @@ def flag_stateful_button_changes_bootstrap5(line):
     return flags
 
 
+def flag_bootstrap3_references_in_template(line):
+    flags = []
+    for template_tag in ["extends", "requirejs_main"]:
+        regex = r"(\{% " + template_tag + r" [\"\'][\w]+)(\/bootstrap3\/)"
+        if re.search(regex, line):
+            if template_tag == "extends":
+                flags.append("This template extends a bootstrap 3 template.")
+            if template_tag == "requirejs_main":
+                flags.append("This template references a bootstrap 3 requirejs file.")
+    return flags
+
+
 def file_contains_reference_to_path(filedata, path_reference):
     regex = _get_path_reference_regex(path_reference)
     return re.search(regex, filedata) is not None

@@ -10,6 +10,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_path_references_to_split_javascript_files,
     file_contains_reference_to_path,
     replace_path_references,
+    flag_bootstrap3_references_in_template,
 )
 
 
@@ -57,6 +58,18 @@ def test_flag_stateful_button_changes_bootstrap5():
     line = """        <button data-loading-text="foo>\n"""
     flags = flag_stateful_button_changes_bootstrap5(line)
     eq(flags, ['You are using stateful buttons here, which are no longer supported in Bootstrap 5.'])
+
+
+def test_flag_bootstrap3_references_in_template_extends():
+    line = """{% extends "hqwebapp/bootstrap3/base_section.html" %}\n"""
+    flags = flag_bootstrap3_references_in_template(line)
+    eq(flags, ['This template extends a bootstrap 3 template.'])
+
+
+def test_flag_bootstrap3_references_in_template_requirejs():
+    line = """    {% requirejs_main 'hqwebapp/bootstrap3/foo' %}\n"""
+    flags = flag_bootstrap3_references_in_template(line)
+    eq(flags, ['This template references a bootstrap 3 requirejs file.'])
 
 
 def test_flag_changed_javascript_plugins_bootstrap5():
