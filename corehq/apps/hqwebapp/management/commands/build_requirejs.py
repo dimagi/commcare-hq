@@ -35,6 +35,8 @@ class Command(ResourceStaticCommand):
                  'Does not allow you to mimic CDN.')
         parser.add_argument('--no_optimize', action='store_true',
             help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
+        parser.add_argument('--bootstrap_version', default="bootstrap3",
+            help="Specify bootstrap3 or bootstrap5 (bootstrap3 is default)")
 
     def handle(self, **options):
         logger.setLevel('DEBUG')
