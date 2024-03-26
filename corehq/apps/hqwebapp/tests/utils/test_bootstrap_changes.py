@@ -94,7 +94,7 @@ def test_flag_path_references_to_split_javascript_files_bootstrap5():
     flags = flag_path_references_to_split_javascript_files(
         line, "bootstrap3"
     )
-    eq(flags, ['Found reference to a migrated file (bootstrap3)'])
+    eq(flags, ['Found reference to a split file (bootstrap3)'])
 
 
 def test_file_contains_reference_to_path():
