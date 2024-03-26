@@ -319,6 +319,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         doc.save(sync_attempts=True)
         obj = SQLRepeatRecord.objects.get(couch_id=doc._id)
         initial_attempt_ids = [a.id for a in obj.attempts]
+        obj.attempts._result_cache = None
 
         attempt = RepeatRecordAttempt(
             datetime=datetime.utcnow(),
