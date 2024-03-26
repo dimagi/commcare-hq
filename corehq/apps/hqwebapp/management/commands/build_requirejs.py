@@ -87,15 +87,7 @@ class Command(ResourceStaticCommand):
                 file_hash = self._update_resource_hash(module['name'] + ".js", filename)
 
                 if optimize:
-                    # Overwrite source map reference. Source maps are accessed on the CDN,
-                    # so they need to have the version hash appended.
-                    with open(filename, 'r') as fin:
-                        lines = fin.readlines()
-                    with open(filename, 'w') as fout:
-                        for line in lines:
-                            if re.search(r'sourceMappingURL=bundle.js.map$', line):
-                                line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
-                            fout.write(line)
+                    self._update_source_map_hash(filename, file_hash)
 
         self._write_resource_versions()
 
@@ -103,6 +95,16 @@ class Command(ResourceStaticCommand):
         file_hash = self.get_hash(filename)
         self.resource_versions[name] = file_hash
         return file_hash
+
+    # Overwrite source map reference. Source maps are accessed on the CDN, so they need the version hash
+    def _update_source_map_hash(self, filename, file_hash):
+        with open(filename, 'r') as fin:
+            lines = fin.readlines()
+        with open(filename, 'w') as fout:
+            for line in lines:
+                if re.search(r'sourceMappingURL=bundle.js.map$', line):
+                    line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
+                fout.write(line)
 
     def _write_resource_versions(self):
         filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js', 'resource_versions.js')
