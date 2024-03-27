@@ -601,7 +601,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         help_text=gettext_lazy(
             "This option ensures any authorization provided by CommCare "
             "HQ to Web Users using SSO is removed when those users are removed "
-            "from Azure AD (Entra ID). This includes automatic deactivation of any "
+            "from Entra ID. This includes automatic deactivation of any "
             "API keys associated with these users."
         ),
         widget=BootstrapCheckboxInput(
