@@ -1,5 +1,5 @@
 "use strict";
-hqDefine("case_importer/js/main", [
+hqDefine("case_importer/js/bootstrap5/main", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
