@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("cloudcare/js/form_entry/const", function () {
     return {
         GROUP_TYPE: 'sub-group',
@@ -36,6 +37,8 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         ETHIOPIAN: 'ethiopian',
         SIGNATURE: 'signature',
         PER_ROW: '-per-row',
+        PER_ROW_PATTERN: new RegExp(`\\d+-per-row(\\s|$)`),
+        PER_ROW_REPEAT_PATTERN: new RegExp(`\\d+-per-row-repeat(\\s|$)`),
         TEXT_ALIGN_CENTER: 'text-align-center',
         TEXT_ALIGN_RIGHT: 'text-align-right',
         BUTTON_SELECT: 'button-select',
@@ -44,6 +47,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         STRIPE_REPEATS: 'stripe-repeats',
         GROUP_BORDER: 'group-border',
         HINT_AS_PLACEHOLDER: 'hint-as-placeholder',
+        RECEIVER_FIELD_INDEXED: 'indexed',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,

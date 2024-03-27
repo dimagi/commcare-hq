@@ -1,3 +1,4 @@
+'use strict';
 /**
  * Backbone model and functions for listing and selecting CommCare apps
  */

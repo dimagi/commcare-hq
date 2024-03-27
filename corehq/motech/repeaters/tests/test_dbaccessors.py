@@ -17,18 +17,35 @@ from corehq.motech.repeaters.dbaccessors import (
     iter_repeat_records_by_domain,
     iterate_repeat_record_ids,
 )
-from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.models import ConnectionSettings, FormRepeater, RepeatRecord
 
 
 class TestRepeatRecordDBAccessors(TestCase):
-    repeater_id = '1234'
-    other_id = '5678'
+    repeater_id = '1234a764a9a0b37ef8254e121ea4b46d'
+    other_id = '56789e3a6eb641f8b0313e5a14d4b02f'
     domain = 'test-domain-2'
 
     @classmethod
     def setUpClass(cls):
         super(TestRepeatRecordDBAccessors, cls).setUpClass()
         before = datetime.utcnow() - timedelta(minutes=5)
+        cnx = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            name='Test API',
+            url="http://localhost/api/"
+        )
+        FormRepeater.objects.create(
+            id=uuid.UUID(cls.repeater_id),
+            domain=cls.domain,
+            format='form_xml',
+            connection_settings=cnx,
+        )
+        FormRepeater.objects.create(
+            id=uuid.UUID(cls.other_id),
+            domain=cls.domain,
+            format='form_xml',
+            connection_settings=cnx,
+        )
         cls.payload_id_1 = uuid.uuid4().hex
         cls.payload_id_2 = uuid.uuid4().hex
         failed = RepeatRecord(
@@ -50,7 +67,6 @@ class TestRepeatRecordDBAccessors(TestCase):
             domain=cls.domain,
             succeeded=True,
             repeater_id=cls.repeater_id,
-            next_check=before,
             payload_id=cls.payload_id_2,
         )
         pending = RepeatRecord(
@@ -72,7 +88,6 @@ class TestRepeatRecordDBAccessors(TestCase):
             succeeded=False,
             cancelled=True,
             repeater_id=cls.repeater_id,
-            next_check=before,
             payload_id=cls.payload_id_2,
         )
         empty = RepeatRecord(
@@ -80,7 +95,6 @@ class TestRepeatRecordDBAccessors(TestCase):
             succeeded=True,
             cancelled=True,
             repeater_id=cls.repeater_id,
-            next_check=before,
             payload_id=cls.payload_id_2,
         )
         other_id = RepeatRecord(
@@ -104,6 +118,7 @@ class TestRepeatRecordDBAccessors(TestCase):
         cls.addClassCleanup(RepeatRecord.bulk_delete, cls.records)
 
         for record in cls.records:
+            record.registered_on = before
             record.save()
 
     def test_get_pending_repeat_record_count(self):

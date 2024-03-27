@@ -731,7 +731,7 @@ class ProjectDataTab(UITab):
                         'url': reverse(FormExportListView.urlname,
                                        args=(self.domain,)),
                         'show_in_dropdown': True,
-                        'icon': 'icon icon-list-alt fa fa-list-alt',
+                        'icon': 'icon icon-list-alt fa-regular fa-rectangle-list',
                         'subpages': [_f for _f in [
                             {
                                 'title': _(CreateNewCustomFormExportView.page_title),
@@ -759,7 +759,7 @@ class ProjectDataTab(UITab):
                         'url': reverse(CaseExportListView.urlname,
                                        args=(self.domain,)),
                         'show_in_dropdown': True,
-                        'icon': 'icon icon-share fa fa-share-square-o',
+                        'icon': 'icon icon-share fa-solid fa-share-square',
                         'subpages': [_f for _f in [
                             {
                                 'title': _(CreateNewCustomCaseExportView.page_title),
@@ -792,7 +792,7 @@ class ProjectDataTab(UITab):
                         'title': _(DownloadNewSmsExportView.page_title),
                         'url': reverse(DownloadNewSmsExportView.urlname, args=(self.domain,)),
                         'show_in_dropdown': True,
-                        'icon': 'icon icon-share fa fa-commenting-o',
+                        'icon': 'icon icon-share fa-regular fa-comment-dots',
                         'subpages': []
                     })
 
@@ -807,7 +807,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     "title": _(DailySavedExportListView.page_title),
                     "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-calendar',
+                    'icon': 'fa-solid fa-calendar-days',
                     "show_in_dropdown": True,
                     "subpages": [_f for _f in [
                         {
@@ -832,7 +832,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DailySavedExportListView.page_title),
                     'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-calendar',
+                    'icon': 'fa-solid fa-calendar-days',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
@@ -860,7 +860,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-dashboard',
+                    'icon': 'fa-solid fa-gauge',
                     'show_in_dropdown': True,
                     'subpages': subpages
                 })
@@ -868,7 +868,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-dashboard',
+                    'icon': 'fa-solid fa-gauge',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
@@ -906,7 +906,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': CommCareAnalyticsListView.page_title,
                     'url': reverse(CommCareAnalyticsListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-bar-chart',
+                    'icon': 'fa-regular fa-chart-bar',
                     'show_in_dropdown': False,
                     'subpages': []
                 })
@@ -917,7 +917,7 @@ class ProjectDataTab(UITab):
             export_data_views.append({
                 'title': _(DataFileDownloadList.page_title),
                 'url': reverse(DataFileDownloadList.urlname, args=(self.domain,)),
-                'icon': 'fa fa-file-text-o',
+                'icon': 'fa-regular fa-file-lines',
                 'show_in_dropdown': True,
                 'subpages': []
             })
@@ -964,7 +964,7 @@ class ProjectDataTab(UITab):
                 'title': _(ExploreCaseDataView.page_title),
                 'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
                 'show_in_dropdown': False,
-                'icon': 'fa fa-map-marker',
+                'icon': 'fa-solid fa-location-dot',
                 'subpages': [],
             })
         if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):

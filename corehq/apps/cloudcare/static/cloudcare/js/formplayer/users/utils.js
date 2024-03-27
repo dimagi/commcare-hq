@@ -1,3 +1,4 @@
+'use strict';
 /* global Sentry */
 hqDefine("cloudcare/js/formplayer/users/utils", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),

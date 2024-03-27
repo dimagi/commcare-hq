@@ -144,9 +144,10 @@ def _r_js(local=False, verbose=False, bootstrap_version=None):
 
     html_files, local_js_dirs = _get_html_files_and_local_js_dirs(local)
 
-    # These applications are in the process of undergoing a Bootstrap 5 migration. The format is as follows...
-    # "<bundle directory>": [<files to exclude from bootstrap 3 build>]
+    # These pages depend on bootstrap 5 and must be skipped by the bootstrap3 run of this command.
+    # "<bundle directory>": [<js main modules that depend on bootstrap 5>]
     split_bundles = {
+        "commtrack/js": ['commtrack/js/products_and_programs_main'],
         "hqwebapp/js": ['hqwebapp/js/500'],
     }
 

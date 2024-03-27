@@ -685,11 +685,11 @@ class NewMobileWorkerForm(forms.Form):
         required=True,
         help_text="""
             <span data-bind="visible: $root.usernameAvailabilityStatus() !== $root.STATUS.NONE">
-                <i class="fa fa-circle-o-notch fa-spin"
+                <i class="fa fa-circle-notch fa-spin"
                    data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.PENDING"></i>
                 <i class="fa fa-check"
                    data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.SUCCESS"></i>
-                <i class="fa fa-exclamation-triangle"
+                <i class="fa-solid fa-triangle-exclamation"
                    data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.WARNING ||
                                        $root.usernameAvailabilityStatus() === $root.STATUS.ERROR"></i>
                 <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
@@ -724,7 +724,7 @@ class NewMobileWorkerForm(forms.Form):
         required=False,
         help_text="""
             <span data-bind="visible: $root.emailStatus() !== $root.STATUS.NONE">
-                <i class="fa fa-exclamation-triangle"
+                <i class="fa-solid fa-triangle-exclamation"
                    data-bind="visible: $root.emailStatus() === $root.STATUS.ERROR"></i>
                 <!-- ko text: $root.emailStatusMessage --><!-- /ko -->
             </span>
@@ -769,7 +769,7 @@ class NewMobileWorkerForm(forms.Form):
             </div>
             <div id="phone-error">
                 <span data-bind="visible: $root.phoneStatus() !== $root.STATUS.NONE">
-                    <i class="fa fa-exclamation-triangle"
+                    <i class="fa-solid fa-triangle-exclamation"
                     data-bind="visible: $root.phoneStatus() === $root.STATUS.ERROR"></i>
                     <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->
                 </span>

@@ -1,3 +1,4 @@
+'use strict';
 /*globals Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
@@ -237,7 +238,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
-            clickIcon: ".module-icon.clickable-icon",
+            clickIcon: "button.clickable-icon",
             selectRow: ".select-row-checkbox",
             showMore: ".show-more",
         },
@@ -293,12 +294,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const temp = urlTemplate.substring(0, urlTemplate.indexOf('?') - 1);
             const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
             const endpointArg = urlTemplate.substring(urlTemplate.indexOf('?') + 1, urlTemplate.lastIndexOf('='));
-            e.target.className += " disabled";
+            $(e.target).closest('button.clickable-icon').addClass('disabled');
             this.clickableIconRequest(e, endpointId, caseId, endpointArg, isBackground);
         },
 
         iconKeyAction: function (e) {
-            if (e.keyCode === 13) {
+            if (e.keyCode === 13 || e.keyCode === 32) {
+                e.preventDefault();
                 this.iconClick(e);
             }
         },
@@ -309,25 +311,28 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         clickableIconRequest: function (e, endpointId, caseId, endpointArg, isBackground) {
             const self = this;
-            const clickedIcon = e.target;
-            clickedIcon.classList.add("disabled");
-            clickedIcon.style.display = 'none';
-            const spinnerElement = $(clickedIcon).siblings('i');
-            spinnerElement[0].style.display = '';
+            const $moduleIcon = $(e.target).find('img.module-icon').addBack('img.module-icon');
+            const $iconButton = $(e.target).closest('button.clickable-icon');
+            const $spinnerElement = $iconButton.find('i');
+            $moduleIcon.css('display', 'none');
+            $iconButton.addClass('disabled');
+            $spinnerElement.css('display', '');
+
             const currentUrlToObject = formplayerUtils.currentUrlToObject();
             currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
             currentUrlToObject.endpointId = endpointId;
             currentUrlToObject.isBackground = isBackground;
-
+            currentUrlToObject.setRequestInitiatedByTag(constants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
             function resetIcon() {
-                clickedIcon.classList.remove("disabled");
-                clickedIcon.style.display = '';
-                spinnerElement[0].style.display = 'none';
+                $moduleIcon.css('display', '');
+                $iconButton.removeClass('disabled');
+                $spinnerElement.css('display', 'none');
             }
 
             $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
-                self.reloadCase(self.model.get('id'));
-                resetIcon();
+                self.reloadCase(self.model.get('id')).then(function () {
+                    resetIcon();
+                });
             }).fail(function () {
                 resetIcon();
             });
@@ -337,6 +342,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const self = this;
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
+            urlObject.setRequestInitiatedByTag(constants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
             urlObject.clickedIcon = true;
             const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
@@ -344,6 +350,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }).fail(function () {
                 console.log('could not get case details');
             });
+            return fetchingDetails;
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
@@ -351,6 +358,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 this.destroy();
             } else {
                 this.model.set("data", detailResponse.models[0].attributes.details);
+                this.model.set("altText", detailResponse.models[0].attributes.altText);
             }
         },
 
@@ -419,8 +427,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
+                altText: this.options.model.get('altText'),
                 styles: this.options.styles,
-                headers: this.options.headers,
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: markdown.render,
                 resolveUri: function (uri) {
@@ -624,7 +632,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
-                headers: this.options.headers,
                 endpointActions: this.options.endpointActions,
             };
         },
@@ -833,7 +840,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         fontAwesomeIcon: function (iconName) {
             return L.divIcon({
-                html: `<i class='fa ${iconName} fa-4x'></i>`,
+                html: `<i class='${iconName} fa-4x'></i>`,
                 iconSize: [12, 12],
                 className: 'marker-pin',
             });
@@ -843,9 +850,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const token = initialPageData.get("mapbox_access_token");
 
             try {
-                const locationIcon = this.fontAwesomeIcon("fa-map-marker");
-                const selectedLocationIcon = this.fontAwesomeIcon("fa-star");
-                const homeLocationIcon = this.fontAwesomeIcon("fa-street-view");
+                const locationIcon = this.fontAwesomeIcon("fa-solid fa-location-dot");
+                const selectedLocationIcon = this.fontAwesomeIcon("fa fa-star");
+                const homeLocationIcon = this.fontAwesomeIcon("fa fa-street-view");
 
                 const lat = 30;
                 const lon = 15;
@@ -1028,6 +1035,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 isMultiSelect: false,
                 showMap: this.showMap,
                 sidebarEnabled: this.options.sidebarEnabled,
+                splitScreenToggleEnabled: toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 smallScreenEnabled: this.smallScreenEnabled,
                 triggerEmptyCaseList: this.options.triggerEmptyCaseList,
 

@@ -1,0 +1,169 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Navigation</h1>
+  <p class="sg-lead">
+    Users should always know where they are and how to get back where they came from.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a>
+        <ul>
+          <li><a href="#top-navigation">Top Navigation</a></li>
+          <li><a href="#side-navigation">Side Navigation</a></li>
+          <li><a href="#breadcrumbs">Breadcrumbs</a></li>
+        </ul>
+      </li>
+      <li><a href="#page-headers">Page Headers</a></li>
+      <li><a href="#in-page-nav">In-page Navigation</a>
+        <ul>
+          <li><a href="#nav-tabs">Tabs</a></li>
+          <li><a href="#nav-cards">Cards</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">Overview</h2>
+  <p>
+    These standard navigation elements should be present on almost every page. The following assumes
+    that the page descends from <code>hqwebapp/bootstrap5/base_section.html</code>, which virtually all pages should.
+  </p>
+
+  <h3 id="top-navigation" class="pt-3">
+    Top Navigation
+  </h3>
+  <div class="card mb-3">
+    <div class="p-1">
+      <img src="{% static "styleguide/images/navigation/top_navigation.png" %}" width="100%" alt="top navigation example" />
+    </div>
+  </div>
+  <p>
+    The top navigation should <strong>always</strong> be visible to users. Individual tabs are defined in
+    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/tabs/tabclasses.py" target="_blank">tabclasses.py</a>.
+    Which tab is highlighted depends on the <code>url_prefix_formats</code> defined for each tab. Which items
+    appear in a tab's dropdown is determined by <code>dropdown_items</code>.
+  </p>
+  <p>
+    Below is an example of how tabs are structured to create the navigation for the example views covered in
+    the <a hre="{% url 'styleguide_pages_views_b5' %}">Views</a> section of this styleguide.
+  </p>
+  {% include 'styleguide/bootstrap5/code_display.html' with content=examples.tabs %}
+
+  <h3 id="side-navigation" class="pt-3">
+    Side Navigation
+  </h3>
+  <div class="card mb-3">
+    <div class="p-1">
+      <img src="{% static "styleguide/images/navigation/side_navigation.png" %}" width="100%" alt="top navigation example" />
+    </div>
+  </div>
+  <p>
+    The side navigation appears almost everywhere. Major exceptions are the dashboard,
+    which has no navigation, and app manager, which has a custom sidebar corresponding to the app's structure.
+    Other pages should almost certainly have a sidebar.
+  </p>
+  <p>
+    The sidebar is also defined in
+    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/tabs/tabclasses.py" target="_blank">tabclasses.py</a>,
+    controlled by the <code>sidebar_items</code> class methods.
+  </p>
+  <p>
+    Temporary sub-items that appear only when on a specific page, such as the "Create Form Data Export" item that
+    appears under the main "Export Form Data" item only when you're creating a new export, can be added using
+    the <code>subpages</code> property.
+  </p>
+  <p>
+    Dynamic item names, such as displaying the username when editing a web user, can be enabled by passing a
+    function to the menu item's <code>title</code>.
+  </p>
+
+  <h3 id="breadcrumbs" class="pt-3">
+    Breadcrumbs
+  </h3>
+  <div class="card mb-3">
+    <div class="p-1">
+      <img src="{% static "styleguide/images/navigation/breadcrumbs.png" %}" width="100%" alt="top navigation example" />
+    </div>
+  </div>
+  <p>
+    Breadcrumbs are defined by the <code>parent_pages</code> class method in a class-based view.
+    Standard pages should have a breadcrumb for the top nav section (e.g., "Data"), for the left sidebar section
+    if there is one (e.g., "Edit Data"), and for the page itself. Multi-step workflows such as case import should
+    also be reflected in breadcrumbs. All items in the breadcrumbs should be links, except for the last
+    (the current page).
+  </p>
+  <p>
+    A few pages override the page_breadcrumbs block defined in the template:
+    <code>hqwebapp/bootstrap5/base_section.html</code>. This should only be done in exceptional circumstances.
+  </p>
+  <div class="alert alert-primary">
+    <strong>Usage Notes:</strong> See <a href="https://commcare-hq.readthedocs.io/class_views.html#hierarchy" target="_blank">this example</a> for
+    how to implement breadcrumbs on a class-based view.
+  </div>
+
+  <h2 id="page-headers" class="pt-4">
+    Page Headers
+  </h2>
+  <p>
+    A page header at the top of the page's main content helps the user stay oriented, and this is a good place to
+    briefly introduce the user to the page and link to documentation.
+  </p>
+  <p>
+    This is an area where the technical implementation isn't well-standardized. When possible, make sure you
+    <code>page_title</code> attribute is defined if using a class-based view
+    (<a href="https://commcare-hq.readthedocs.io/class_views.html#a-basic-centered-page" target="_blank">see this example</a>)
+    or passed into the template context if using a functional view.
+  </p>
+  <p>
+    For a class-based view, you would then (ideally) set the <code>page_title</code> block this way:
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.page_title_block %}
+  </p>
+  <p>
+    Otherwise, you can set the page header manually with the following bit of HTML at the beginning of
+    <code>{% verbatim %}{% block page_content %}{% endverbatim %}</code>:
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.page_header %}
+
+  <h2 id="in-page-nav" class="pt-4">
+    In-page Navigation
+  </h2>
+  <p>
+    If a page has multiple sections, you have a few options to visually separate them:
+  </p>
+  <ul>
+    <li>
+      Split into multiple pages.
+    </li>
+    <li>
+      Set each section up as a <code>tab</code> (<a href="https://getbootstrap.com/docs/5.3/components/navs-tabs/#tabs" target="_blank">see docs</a>).
+      Please avoid using <code>pill</code>s for navigation as they look similar to
+      <a href="{% url "styleguide_molecules_selections_b5" %}#select-toggle">select toggles</a> used in forms.
+    </li>
+    <li>
+      Enclose each section in a <code>card</code> (<a href="https://getbootstrap.com/docs/5.3/components/card/" target="_blank">see docs</a>).
+    </li>
+  </ul>
+  <h3 id="nav-tabs" class="pt-3">
+    Tabs
+  </h3>
+  <p>
+    Below is an example of sectioning a page with tabs. This is the most preferred method of sectioning a page in HQ.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.navs_tabs %}
+  <h3 id="nav-cards" class="pt-3">
+    Cards
+  </h3>
+  <p>
+    Below is an example of sectioning a page with cards.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.navs_cards %}
+{% endblock content %}

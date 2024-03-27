@@ -118,7 +118,7 @@
           <tbody data-bind="foreach: custom_sort_properties, sortableList: custom_sort_properties" class="ui-sortable">
             <tr>
               <td>
-                <i class="grip fa fa-arrows-v icon-blue"></i>
+                <i class="grip fa-solid fa-up-down icon-blue"></i>
               </td>
               <td class="form-group">
                 <input class="form-control" type="text" data-bind="value: property_name"/>
@@ -315,7 +315,7 @@
               ></textarea>
               <p class="help-block">
                 <button class="pull-right btn-xs btn btn-default" data-bind="visible: setSearchFilterVisible, enable: setSearchFilterEnabled, click: setSearchFilter">
-                  <i class="fa fa-mail-reply"></i>
+                  <i class="fa-solid fa-reply"></i>
                   {% trans "Copy case list filter" %}
                 </button>
                 {% trans "Example: age > 5" %}

@@ -1,3 +1,4 @@
+"use strict";
 hqDefine("app_manager/js/details/case_claim", function () {
     var get = hqImport('hqwebapp/js/initial_page_data').get,
         generateSemiRandomId = function () {

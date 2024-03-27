@@ -18,7 +18,7 @@
   <p>
     {% if request.can_access_all_locations %}
       <a class="btn btn-primary" id="download_link" href="{{ bulk_upload.download_url }}?download_type=full">
-        <i class="fa fa-cloud-download"></i>
+        <i class="fa-solid fa-cloud-arrow-down"></i>
         {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
           Download {{ plural_noun }}
         {% endblocktrans %}

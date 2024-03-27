@@ -83,14 +83,12 @@ contextlib2==21.6.0
     # via schema
 crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165
     # via -r base-requirements.in
-cryptography==41.0.6
+cryptography==42.0.4
     # via
-    #   -r prod-requirements.in
-    #   -r sso-requirements.in
+    #   -r base-requirements.in
     #   jwcrypto
     #   oic
     #   pyjwt
-    #   pyopenssl
 csiphash==0.0.5
     # via -r base-requirements.in
 css-inline==0.11.0
@@ -113,14 +111,13 @@ defusedxml==0.7.1
     #   oic
 deprecated==1.2.10
     # via
-    #   jwcrypto
     #   opentelemetry-api
     #   pygithub
 diff-match-patch==20230430
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.24
+django==3.2.25
     # via
     #   -r base-requirements.in
     #   crispy-bootstrap3to5
@@ -129,7 +126,6 @@ django==3.2.24
     #   django-bulk-update
     #   django-crispy-forms
     #   django-formtools
-    #   django-logentry-admin
     #   django-oauth-toolkit
     #   django-otp
     #   django-phonenumber-field
@@ -153,7 +149,7 @@ django-bulk-update==2.2.0
     # via -r base-requirements.in
 django-celery-results==2.4.0
     # via -r base-requirements.in
-django-compressor==4.1
+django-compressor==4.4
     # via -r base-requirements.in
 django-countries==7.3.2
     # via -r base-requirements.in
@@ -161,7 +157,7 @@ django-crispy-forms==2.0
     # via
     #   -r base-requirements.in
     #   crispy-bootstrap3to5
-django-cte==1.2.0
+django-cte==1.3.2
     # via -r base-requirements.in
 django-field-audit==1.2.6
     # via -r base-requirements.in
@@ -169,15 +165,13 @@ django-formtools==2.3
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
-django-logentry-admin==1.0.6
-    # via -r base-requirements.in
 django-oauth-toolkit==2.3.0
     # via -r base-requirements.in
 django-otp==1.1.3
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
-django-phonenumber-field==6.4.0
+django-phonenumber-field==7.3.0
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -191,11 +185,11 @@ django-redis-sessions==0.6.2
     # via -r base-requirements.in
 django-statici18n==2.4.0
     # via -r base-requirements.in
-django-tastypie==0.14.4
+django-tastypie==0.14.6
     # via -r base-requirements.in
 django-transfer==0.4
     # via -r base-requirements.in
-django-two-factor-auth==1.13.2
+django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae
     # via -r base-requirements.in
 django-user-agents==0.4.0
     # via -r base-requirements.in
@@ -204,8 +198,6 @@ django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websock
 djangorestframework==3.13.1
     # via -r base-requirements.in
 dropbox==11.36.0
-    # via -r base-requirements.in
-elasticsearch2==2.5.1
     # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
@@ -337,7 +329,7 @@ jsonschema==4.17.3
     # via
     #   -r base-requirements.in
     #   ddtrace
-jwcrypto==1.5.1
+jwcrypto==1.5.6
     # via django-oauth-toolkit
 kafka-python==1.4.7
     # via -r base-requirements.in
@@ -366,8 +358,6 @@ matplotlib-inline==0.1.3
     # via ipython
 msgpack==1.0.5
     # via cachecontrol
-ndg-httpsclient==0.5.1
-    # via -r prod-requirements.in
 oauthlib==3.1.0
     # via
     #   django-oauth-toolkit
@@ -438,8 +428,6 @@ py-kissmetrics==1.1.0
     # via -r base-requirements.in
 pyasn1==0.4.8
     # via
-    #   -r prod-requirements.in
-    #   ndg-httpsclient
     #   pyasn1-modules
     #   rsa
 pyasn1-modules==0.2.8
@@ -466,11 +454,6 @@ pyjwt[crypto]==2.7.0
     #   twilio
 pynacl==1.5.0
     # via pygithub
-pyopenssl==23.2.0
-    # via
-    #   -r prod-requirements.in
-    #   -r sso-requirements.in
-    #   ndg-httpsclient
 pyparsing==3.0.7
     # via httplib2
 pyphonetics==0.5.3
@@ -510,7 +493,7 @@ qrcode==7.4.2
     #   django-two-factor-auth
 quickcache==0.5.4
     # via -r base-requirements.in
-rcssmin==1.1.0
+rcssmin==1.1.1
     # via django-compressor
 redis==4.5.4
     # via
@@ -543,7 +526,7 @@ requests-oauthlib==1.3.1
     #   google-auth-oauthlib
 requests-toolbelt==1.0.0
     # via -r base-requirements.in
-rjsmin==1.2.0
+rjsmin==1.2.1
     # via django-compressor
 rsa==4.8
     # via google-auth
@@ -636,6 +619,7 @@ typing-extensions==4.8.0
     #   cattrs
     #   ddtrace
     #   django-countries
+    #   jwcrypto
     #   oic
     #   qrcode
     #   stripe
@@ -648,7 +632,6 @@ uritemplate==4.1.1
 urllib3==1.26.18
     # via
     #   botocore
-    #   elasticsearch2
     #   elasticsearch5
     #   google-auth
     #   py-kissmetrics

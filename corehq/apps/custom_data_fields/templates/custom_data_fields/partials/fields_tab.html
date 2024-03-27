@@ -79,7 +79,7 @@
     <tbody data-bind="sortable: data_fields">
     <tr data-bind="attr: {'data-order': _sortableOrder}">
       <td>
-        <i class="fa fa-arrows-v sortable-handle"></i>
+        <i class="fa-solid fa-up-down sortable-handle"></i>
       </td>
       <td>
         <input class="form-control" type="text" data-bind="value: slug, attr: { 'readonly': !isEditable() }"/>
@@ -125,10 +125,10 @@
               <div class="input-group">
                 <span class="input-group-addon">
                   <span data-bind="if: $parent.isEditable">
-                    <i class="fa fa-arrows-v sortable-handle"></i>
+                    <i class="fa-solid fa-up-down sortable-handle"></i>
                   </span>
                   <span data-bind="ifnot: $parent.isEditable">
-                    <i class="fa fa-arrows-v"></i>
+                    <i class="fa-solid fa-up-down"></i>
                   </span>
                 </span>
                 <input class="form-control" type="text" data-bind="value: value, attr: { 'disabled': !$parent.isEditable() }"/>

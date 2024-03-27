@@ -50,6 +50,7 @@ IGNORE_MODELS = {
     'blobs.BlobMigrationState',
     'blobs.DeletedBlobMeta',
     'cleanup.DeletedCouchDoc',
+    'cleanup.DeletedSQLDoc',
     'domain.DomainAuditRecordEntry',
     'domain.ProjectLimit',
     'domain.SuperuserProjectEntryRecord',

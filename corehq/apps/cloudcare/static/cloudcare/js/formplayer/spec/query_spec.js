@@ -1,3 +1,4 @@
+'use strict';
 /* eslint-env mocha */
 /* global Backbone */
 hqDefine("cloudcare/js/formplayer/spec/query_spec", function () {
@@ -28,7 +29,7 @@ hqDefine("cloudcare/js/formplayer/spec/query_spec", function () {
                 const keyQueryListView = QueryListView.queryListView({
                     collection: keyViewCollection,
                     groupHeaders: {
-                        "test": "Test"
+                        "test": "Test",
                     },
                 });
 

@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,27 +1,31 @@
+@@ -1,27 +1,35 @@
  <nav>
    {% for section_title, navs in sections %}
      <h2 class="text-hq-nav-header">{{ section_title }}</h2>
@@ -39,9 +39,14 @@
            </a>
 -
            {% if nav.subpage and nav.subpage.title %}
-             <ul class="nav">
+-            <ul class="nav">
 -              <li class="active"><a href="#">{{ nav.subpage.title }}</a></li>
-+              <li class="nav-item"><a href="#" class="nav-link active">{{ nav.subpage.title }}</a></li>
++            <ul class="nav flex-column">
++              <li class="nav-item">
++                <a href="#" class="nav-link active" aria-current="page">
++                  {{ nav.subpage.title }}
++                </a>
++              </li>
              </ul>
            {% endif %}
          </li>

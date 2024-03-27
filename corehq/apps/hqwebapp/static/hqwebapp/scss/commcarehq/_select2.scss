@@ -78,6 +78,7 @@
 .select2-container--default .select2-selection--multiple {
   border-color: $border-color !important;
   height: 32px !important;
+  border-radius: $input-border-radius !important;
 }
 
 .select2-container--default .select2-selection--single {
@@ -155,4 +156,15 @@
     box-shadow: 0 0 $input-btn-focus-blur $input-focus-width rgba(var(--#{$prefix}success-rgb), $input-btn-focus-color-opacity);
     outline: 0;
   }
+}
+
+.select2-container--default {
+  .select2-selection--single .select2-selection__clear {
+    margin-right: 30px;
+  }
+}
+
+.select2-container--default.select2-container--disabled .select2-selection--single {
+  border-color: $input-disabled-bg !important;
+  background-color: $input-disabled-bg !important;
 }

@@ -31,7 +31,6 @@ def get_oidc_logout_url(identity_provider):
 
 
 def get_documentation_url(identity_provider):
-    # todo we are only supporting docs for Azure AD here. OneLogin, etc to come later
     return 'https://confluence.dimagi.com/display/commcarepublic/Set+up+SSO+for+CommCare+HQ'
 
 
@@ -43,9 +42,13 @@ def get_dashboard_link(identity_provider):
         is_active=True,
         account__is_active=True,
     ).first()
+    try:
+        enterprise_domain = linked_subscription.subscriber.domain
+    except AttributeError:
+        return None
     return reverse(
         EditIdentityProviderEnterpriseView.urlname,
-        args=(linked_subscription.subscriber.domain, identity_provider.slug,)
+        args=(enterprise_domain, identity_provider.slug,)
     )
 
 

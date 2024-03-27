@@ -44,8 +44,7 @@ class ProductForm(forms.Form):
         super(ProductForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+        self.helper.label_class = 'form-label'
 
         programs = Program.by_domain(self.product.domain)
         self.fields['program_id'].choices = tuple((prog.get_id, prog.name) for prog in programs)
@@ -94,7 +93,8 @@ class ProductForm(forms.Form):
                 'action': lambda o: o.caption,
                 'command': lambda o: o['caption'],
             }[conflict[0]](conflict[1])
-            raise forms.ValidationError('product id not unique (conflicts with %s "%s")' % (conflict[0], conflict_name))
+            raise forms.ValidationError('Product id is not unique (conflicts with %s "%s")'
+                                        % (conflict[0], conflict_name))
 
         return code.lower()
 

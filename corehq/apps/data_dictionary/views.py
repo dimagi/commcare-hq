@@ -29,6 +29,7 @@ from corehq.apps.data_dictionary.util import (
     save_case_property_group,
     delete_case_property,
     get_used_props_by_case_type,
+    get_data_dict_props_by_case_type,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
@@ -488,6 +489,7 @@ class UploadDataDictionaryView(BaseProjectDataView):
                 "<ul>{}</ul>".format("".join([f"<li>{e}</li>" for e in errors]))
             ), extra_tags="html")
         else:
+            get_data_dict_props_by_case_type.clear(self.domain)
             messages.success(request, _('Data dictionary import complete'))
             if warnings:
                 messages.warning(request, _("Warnings in upload: {}").format(

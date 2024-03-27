@@ -4,6 +4,7 @@ import json
 
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from corehq import toggles
 
 from dimagi.utils.logging import notify_exception
 
@@ -182,11 +183,14 @@ class CaseSearchQueryBuilder:
         return search_es
 
     def _get_initial_search_es(self):
+        max_results = CASE_SEARCH_MAX_RESULTS
+        if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
+            max_results = 1500
         return (CaseSearchES()
                 .domain(self.query_domains)
                 .case_type(self.case_types)
                 .is_closed(False)
-                .size(CASE_SEARCH_MAX_RESULTS))
+                .size(max_results))
 
     def _apply_sort(self, search_es, commcare_sort=None):
         if commcare_sort:
