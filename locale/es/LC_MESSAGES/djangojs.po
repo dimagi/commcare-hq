@@ -2109,6 +2109,7 @@ msgstr "No se encontró la Tabla de búsqueda en el proyecto."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js
 msgid "Loading..."
 msgstr "Cargando..."
@@ -2841,8 +2842,8 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid ""
-"CommCareHQ has detected a possible network connectivity problem. Please make "
-"sure you are connected to the Internet in order to submit your form."
+"CommCare HQ has detected a possible network connectivity problem. Please "
+"make sure you are connected to the Internet in order to submit your form."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
@@ -3180,6 +3181,12 @@ msgid ""
 msgstr ""
 "Lo sentimos, ocurrió un problema al contactar el servidor para recuperar los "
 "datos. Por favor, intente otra vez más tarde."
+
+#: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js
+#, fuzzy
+#| msgid "We could not turn off the new feature. Please try again later."
+msgid "Could not <%= action %> product. Please try again later."
+msgstr "No pudimos apagar la nueva función. Por favor intente más tarde."
 
 #: corehq/apps/custom_data_fields/static/custom_data_fields/js/custom_data_fields.js
 msgid "Edit Profile"
@@ -3604,13 +3611,24 @@ msgid ""
 "will not be exported."
 msgstr ""
 
+#: corehq/apps/geospatial/static/geospatial/js/geo_config.js
+msgid "Token successfully verified!"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geo_config.js
+msgid ""
+"Invalid API token. Please verify that the token matches the one on your "
+"Mapbox account and has the correct scope configured."
+msgstr ""
+
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "Name of the Area"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid ""
-"Oops! Something went wrong! Please contact admin if the problem persists."
+"Oops! Something went wrong! Please check that your geospatial settings are "
+"configured correctly or contact admin if the problem persists."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
@@ -4448,22 +4466,16 @@ msgid "Please Select a Country Code"
 msgstr "Por favor Seleccione un Código de País"
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
-#, fuzzy
-#| msgid "Form"
 msgid "Forms"
-msgstr "Formulario"
+msgstr "Formularios"
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
-#, fuzzy
-#| msgid "Case"
 msgid "Cases"
-msgstr "Caso"
+msgstr "Casos"
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
-#, fuzzy
-#| msgid "Included Reports"
 msgid "Reports"
-msgstr "Reportes Incluidos"
+msgstr "Reportes"
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout.js
 msgid "App Builder"
@@ -4478,26 +4490,20 @@ msgid "Submission has been cancelled."
 msgstr ""
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
-#, fuzzy
-#| msgid "Please specify a project name."
 msgid "Please specify a username."
-msgstr "Por favor especifique un nombre de proyecto."
+msgstr ""
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
 msgid "Username must be at least three characters long."
 msgstr ""
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
-#, fuzzy
-#| msgid "You must have at least one language"
 msgid "Your password must be at least 6 characters long"
-msgstr "Debe tener al menos un idioma"
+msgstr ""
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/crispy_forms_knockout_validation.js
-#, fuzzy
-#| msgid "Deleting..."
 msgid "Resetting form..."
-msgstr "Borrando..."
+msgstr ""
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
 msgid "Benched"
@@ -4508,10 +4514,8 @@ msgid "Playing"
 msgstr ""
 
 #: corehq/apps/styleguide/static/styleguide/js_examples/multiselect_crispy.js
-#, fuzzy
-#| msgid "Search..."
 msgid "Search Team..."
-msgstr "Buscar..."
+msgstr ""
 
 #: corehq/apps/translations/static/translations/js/translations.js
 msgid "Delete Translation"

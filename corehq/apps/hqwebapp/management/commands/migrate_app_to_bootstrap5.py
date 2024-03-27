@@ -4,7 +4,6 @@ from pathlib import Path
 from django.conf import settings
 from django.core.management import BaseCommand
 
-import corehq
 from corehq.apps.hqwebapp.utils.bootstrap import BOOTSTRAP_3, BOOTSTRAP_5
 from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     get_spec,
@@ -18,8 +17,15 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     file_contains_reference_to_path,
     replace_path_references,
 )
+from corehq.apps.hqwebapp.utils.bootstrap.paths import (
+    COREHQ_BASE_DIR,
+    get_app_template_folder,
+    get_app_static_folder,
+    get_short_path,
+    get_all_template_paths_for_app,
+    get_all_javascript_paths_for_app,
+)
 
-COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
 COLOR_RED = "91"
 COLOR_GREEN = "92"
 COLOR_YELLOW = "93"
@@ -87,17 +93,14 @@ class Command(BaseCommand):
                           "it's recommended to re-run the command\nat least one more "
                           "time in the event of nested dependencies / inheritance "
                           "in split files.\n\n")
+        self.stdout.write("After this, please update `bootstrap5_diff_config.json` "
+                          "using:\n\n")
+        self.stdout.write(f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n")
+        self.stdout.write("Once the changes to that file are committed, you can run:\n")
+        self.stdout.write("./mmanage.py build_bootstrap5_diffs\n\n")
         self.stdout.write("Thank you for your dedication to this migration! <3\n\n")
-        self.stdout.write("Please review the next steps here:"
-                          "\tcommcarehq.org/styleguide/b5/migration/#update-stylesheets\n\n\n")
-
-    @staticmethod
-    def _get_app_template_folder(app_name):
-        return COREHQ_BASE_DIR / "apps" / app_name / "templates" / app_name
-
-    @staticmethod
-    def _get_app_static_folder(app_name):
-        return COREHQ_BASE_DIR / "apps" / app_name / "static" / app_name
+        self.stdout.write("You can also review the next steps here:"
+                          "\tcommcarehq.org/styleguide/b5/migration/#update-diffs\n\n\n")
 
     def _get_files_for_migration(self, files, file_name, do_re_check):
         if file_name is not None:
@@ -115,18 +118,16 @@ class Command(BaseCommand):
         return files
 
     def get_templates_for_migration(self, app_name, template_name, do_re_check):
-        app_template_folder = self._get_app_template_folder(app_name)
-        app_templates = [f for f in app_template_folder.glob('**/*') if f.is_file()]
+        app_templates = get_all_template_paths_for_app(app_name)
         return self._get_files_for_migration(app_templates, template_name, do_re_check)
 
     def get_js_files_for_migration(self, app_name, js_name, do_re_check):
-        app_static_folder = self._get_app_static_folder(app_name)
-        app_js_files = [f for f in app_static_folder.glob('**/*.js') if f.is_file()]
+        app_js_files = get_all_javascript_paths_for_app(app_name)
         return self._get_files_for_migration(app_js_files, js_name, do_re_check)
 
     def migrate_files(self, files, app_name, spec, is_template):
         for file_path in files:
-            short_path = self.get_short_path(app_name, file_path, is_template)
+            short_path = get_short_path(app_name, file_path, is_template)
             self.clear_screen()
             file_type = "templates" if is_template else "javascript"
             self.stdout.write(self.format_header(f"Migrating {app_name} {file_type}..."))
@@ -135,9 +136,11 @@ class Command(BaseCommand):
                 self.write_response(f"ok, skipping {short_path}")
                 continue
 
-            self.migrate_single_file(app_name, file_path, spec, is_template)
+            self.stdout.write("\n")
+            review_changes = self.get_confirmation('Do you want to review each change line-by-line here?')
+            self.migrate_single_file(app_name, file_path, spec, is_template, review_changes)
 
-    def migrate_single_file(self, app_name, file_path, spec, is_template):
+    def migrate_single_file(self, app_name, file_path, spec, is_template, review_changes):
         with open(file_path, 'r') as current_file:
             old_lines = current_file.readlines()
             new_lines = []
@@ -152,16 +155,18 @@ class Command(BaseCommand):
                     new_line = old_line  # no replacement changes yet for js files
                     renames = []
                     flags = self.get_flags_in_javascript_line(old_line, spec)
+
                 saved_line, line_changelog = self.confirm_and_get_line_changes(
-                    line_number, old_line, new_line, renames, flags
+                    line_number, old_line, new_line, renames, flags, review_changes
                 )
+
                 new_lines.append(saved_line)
                 if saved_line != old_line or flags:
                     has_changes = True
                 if line_changelog:
                     file_changelog.extend(line_changelog)
 
-            short_path = self.get_short_path(app_name, file_path, is_template)
+            short_path = get_short_path(app_name, file_path, is_template)
             if has_changes:
                 self.clear_screen()
                 self.stdout.write(
@@ -178,7 +183,7 @@ class Command(BaseCommand):
             else:
                 self.write_response(f"\nNo changes were needed for {short_path}. Skipping...\n\n")
 
-    def confirm_and_get_line_changes(self, line_number, old_line, new_line, renames, flags):
+    def confirm_and_get_line_changes(self, line_number, old_line, new_line, renames, flags, review_changes):
         changelog = []
         if renames or flags:
             changelog.append(self.format_header(f"Line {line_number}"))
@@ -188,13 +193,14 @@ class Command(BaseCommand):
                 changelog.append("\nFlagged Code:")
                 changelog.append(self.format_code(old_line, break_length=len(old_line) + 5))
                 changelog.append(self.format_guidance(flag))
-                self.display_flag_summary(changelog)
-                self.enter_to_continue()
+                if review_changes:
+                    self.display_flag_summary(changelog)
+                    self.enter_to_continue()
+                    self.clear_screen()
+                    self.stdout.write(self.format_header(
+                        f"Additional changes to line {line_number} will be made..."
+                    ))
                 changelog.append("\n\n")
-                self.clear_screen()
-                self.stdout.write(self.format_header(
-                    f"Additional changes to line {line_number} will be made..."
-                ))
             if renames:
                 changelog.append("\nDiff of changes:")
                 changelog.extend(self.format_code(
@@ -205,12 +211,12 @@ class Command(BaseCommand):
                 changelog.append("Summary:\n  - " + "\n  - ".join(renames))
                 self.display_rename_summary(changelog)
                 changelog.append("\n\n")
-
-                confirm = self.get_confirmation("Keep changes?")
-                if not confirm:
-                    changelog.append("CHANGES DISCARDED\n\n")
-                    self.write_response("ok, discarding changes...")
-                    return old_line, changelog
+                if review_changes:
+                    confirm = self.get_confirmation("Keep changes?")
+                    if not confirm:
+                        changelog.append("CHANGES DISCARDED\n\n")
+                        self.write_response("ok, discarding changes...")
+                        return old_line, changelog
         return new_line, changelog
 
     def display_flag_summary(self, changelog):
@@ -231,7 +237,7 @@ class Command(BaseCommand):
                           "in the Bootstrap 5 version of this file.\n\n")
 
     def record_file_changes(self, template_path, app_name, changelog, is_template):
-        short_path = self.get_short_path(app_name, template_path.parent, is_template)
+        short_path = get_short_path(app_name, template_path.parent, is_template)
         readme_directory = Path(settings.BOOTSTRAP_MIGRATION_LOGS_DIR) / short_path
         readme_directory.mkdir(parents=True, exist_ok=True)
         extension = '.html' if is_template else '.js'
@@ -248,7 +254,7 @@ class Command(BaseCommand):
         self.stdout.write("** Please make a note of this for reviewing later.\n\n\n")
 
     def save_re_checked_file_changes(self, app_name, file_path, changed_lines, is_template):
-        short_path = self.get_short_path(app_name, file_path, is_template)
+        short_path = get_short_path(app_name, file_path, is_template)
 
         confirm = self.get_confirmation(f"\nSave changes to {short_path}?")
 
@@ -262,7 +268,7 @@ class Command(BaseCommand):
         self.suggest_commit_message(f"re-ran migration for {short_path}")
 
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
-        short_path = self.get_short_path(app_name, file_path, is_template)
+        short_path = get_short_path(app_name, file_path, is_template)
 
         confirm = self.get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
                                         f'and update references?')
@@ -271,8 +277,8 @@ class Command(BaseCommand):
             return
 
         bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
-        bootstrap3_short_path = self.get_short_path(app_name, bootstrap3_path, is_template)
-        bootstrap5_short_path = self.get_short_path(app_name, bootstrap5_path, is_template)
+        bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
+        bootstrap5_short_path = get_short_path(app_name, bootstrap5_path, is_template)
         self.stdout.write(f"\n\nSplitting files:\n"
                           f"\n\t{bootstrap3_short_path}"
                           f"\n\t{bootstrap5_short_path}\n\n")
@@ -305,10 +311,10 @@ class Command(BaseCommand):
             file.writelines(bootstrap5_lines)
 
     def _get_migrated_files(self, app_name):
-        app_template_folder = self._get_app_template_folder(app_name)
+        app_template_folder = get_app_template_folder(app_name)
         migrated_files = [f for f in app_template_folder.glob('**/*')
                           if f.is_file() and '/bootstrap3/' in str(f) and '/crispy/' not in str(f)]
-        app_static_folder = self._get_app_static_folder(app_name)
+        app_static_folder = get_app_static_folder(app_name)
         migrated_files.extend(
             f for f in app_static_folder.glob('**/*.js')
             if f.is_file() and '/bootstrap3/' in str(f)
@@ -321,10 +327,10 @@ class Command(BaseCommand):
         self.stdout.write(f"\n\nVerifying that references to migrated files "
                           f"in {app_name} have been updated...")
         migrated_files = self._get_migrated_files(app_name)
-        template_path = self._get_app_template_folder(app_name)
+        template_path = get_app_template_folder(app_name)
         for file_path in migrated_files:
             is_template = file_path.is_relative_to(template_path)
-            new_reference = self.get_short_path(app_name, file_path, is_template)
+            new_reference = get_short_path(app_name, file_path, is_template)
             old_reference = new_reference.replace("/bootstrap3/", "/")
             references = self.update_and_get_references(
                 old_reference,
@@ -399,17 +405,6 @@ class Command(BaseCommand):
         return bootstrap3_folder / file_path.name, bootstrap5_folder / file_path.name
 
     @staticmethod
-    def get_short_path(app_name, full_path, is_template):
-        if is_template:
-            replace_path = COREHQ_BASE_DIR / "apps" / app_name / "templates"
-        else:
-            replace_path = COREHQ_BASE_DIR / "apps" / app_name / "static"
-        return str(full_path).replace(
-            str(replace_path) + '/',
-            ''
-        )
-
-    @staticmethod
     def select_option_from_prompt(prompt, options):
         formatted_options = '/'.join(options)
         prompt_with_options = f"{prompt} [{formatted_options}] "
@@ -461,8 +456,8 @@ class Command(BaseCommand):
     def suggest_commit_message(self, message):
         self.stdout.write("\nNow would be a good time to review changes with git and "
                           "commit before moving on to the next template.")
-        self.stdout.write("\nSuggested commit message:")
-        self.stdout.write(f"Bootstrap 5 Migration - {message}")
+        self.stdout.write("\nSuggested command:")
+        self.stdout.write(f"git commit --no-verify -m \"Bootstrap 5 Migration - {message}\"")
         self.stdout.write("\n")
         self.enter_to_continue()
 

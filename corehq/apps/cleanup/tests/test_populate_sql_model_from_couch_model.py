@@ -40,7 +40,6 @@ class TestPopulateSQLCommand(TestCase):
             output = call_command(log_path=log.path.parent)
             self.assertIn(f"log output file: {log.path}\n", output)
             self.assertIn(" 5/5 100%", output)
-            self.assertIn("Created model for TestDoc with id 3", log.content)
             self.assertIn("Ignored model for TestDoc with id 4", log.content)
             self.assertEqual(log.content.count("Created model for TestDoc with id 1"), 1)
             resume = Command._resume_iter_couch_view()

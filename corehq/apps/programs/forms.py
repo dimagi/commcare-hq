@@ -17,8 +17,7 @@ class ProgramForm(forms.Form):
         super(ProgramForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
+        self.helper.label_class = 'form-label'
 
         # don't let users rename the uncategorized
         # program

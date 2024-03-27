@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,26 +1,37 @@
+@@ -2,26 +2,37 @@
  requirejs.config({
      baseUrl: '/static/',
      paths: {
@@ -22,7 +22,7 @@
 +        "popper": "@popperjs/core/dist/umd/popper.min",
          "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
          "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
-+        "tempus-dominus": "eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
++        "tempus-dominus": "@eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
          "underscore": "underscore/underscore",
      },
      shim: {
@@ -42,7 +42,7 @@
          "hqwebapp/js/lib/modernizr": {
              exports: 'Modernizr',
          },
-@@ -46,7 +57,7 @@
+@@ -47,7 +58,7 @@
          },
      },
  

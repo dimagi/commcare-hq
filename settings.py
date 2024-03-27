@@ -56,6 +56,9 @@ MANAGERS = ADMINS
 
 # default to the system's timezone settings
 TIME_ZONE = "UTC"
+# this preserves current behavior prior to Django 5.0,
+# where timezone support will be enabled by default
+USE_TZ = False
 
 
 # Language code for this installation. All choices can be found here:
@@ -231,6 +234,7 @@ DEFAULT_APPS = (
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'two_factor',
+    'two_factor.plugins.phonenumber',
     'ws4redis',
     'statici18n',
     'django_user_agents',
@@ -1090,9 +1094,10 @@ SESSION_BYPASS_URLS = [
     r'^/a/{domain}/apps/download/',
 ]
 
-# Disable builtin throttling for two factor backup tokens, since we have our own
-# See corehq.apps.hqwebapp.signals and corehq.apps.hqwebapp.forms for details
-OTP_STATIC_THROTTLE_FACTOR = 0
+# Preserves behavior after upgrading past version 1.15.4 of django-two-factor-auth, which changed the factor to 10
+OTP_STATIC_THROTTLE_FACTOR = 1
+OTP_TOTP_THROTTLE_FACTOR = 1
+TWO_FACTOR_PHONE_THROTTLE_FACTOR = 1
 
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
 RATE_LIMIT_SUBMISSIONS = False

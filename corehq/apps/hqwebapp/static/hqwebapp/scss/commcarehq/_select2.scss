@@ -158,6 +158,12 @@
   }
 }
 
+.select2-container--default {
+  .select2-selection--single .select2-selection__clear {
+    margin-right: 30px;
+  }
+}
+
 .select2-container--default.select2-container--disabled .select2-selection--single {
   border-color: $input-disabled-bg !important;
   background-color: $input-disabled-bg !important;

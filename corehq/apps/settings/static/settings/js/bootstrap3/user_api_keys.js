@@ -1,6 +1,6 @@
 'use strict';
 
-hqDefine("settings/js/user_api_keys", [
+hqDefine("settings/js/bootstrap3/user_api_keys", [
     "jquery",
     "knockout",
     'underscore',

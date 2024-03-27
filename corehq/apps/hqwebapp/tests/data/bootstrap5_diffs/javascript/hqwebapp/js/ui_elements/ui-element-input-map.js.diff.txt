@@ -1,7 +1,9 @@
 --- 
 +++ 
-@@ -1,7 +1,7 @@
+@@ -1,8 +1,8 @@
+-"use strict";
 -hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-input-map', [
++'use strict';
 +hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map', [
      'jquery',
      'underscore',
