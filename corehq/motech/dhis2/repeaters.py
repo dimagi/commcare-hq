@@ -249,9 +249,8 @@ def get_api_version(dhis2_version):
         example, the API version for DHIS 2.25 is 25.
 
 
-    .. _DHIS 2 Developer guide:
-    .. https://docs.dhis2.org/master/en/developer/html/webapi_browsing_the_web_api.html#webapi_api_versions
-    """
+    .. _DHIS 2 Developer guide: https://docs.dhis2.org/master/en/developer/html/webapi_browsing_the_web_api.html#webapi_api_versions
+    """  # noqa: E501
     try:
         api_version = LooseVersion(dhis2_version).version[1]
     except (AttributeError, IndexError):
