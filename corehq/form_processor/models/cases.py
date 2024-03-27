@@ -3,7 +3,7 @@ import json
 import mimetypes
 import os
 import uuid
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict, namedtuple, defaultdict
 from datetime import datetime
 
 from django.conf import settings
@@ -324,13 +324,12 @@ class CommCareCaseManager(RequireDBManager):
         and this method is effectively read-only
         :return: dictionary of count of deleted objects per table
         """
-        counts = {}
+        counts = defaultdict(lambda: 0)
         class_path = 'form_processor.CommCareCase'
         for db_name in get_db_aliases_for_partitioned_query():
             queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
             if dry_run:
-                deleted_counts = {class_path: queryset.count()}
-                counts.update(deleted_counts)
+                counts[class_path] += queryset.count()
             else:
                 case_tombstones = [DeletedSQLDoc(doc_id=case.case_id, object_class_path=class_path,
                                                  domain=case.domain, deleted_on=case.deleted_on)
@@ -338,7 +337,8 @@ class CommCareCaseManager(RequireDBManager):
                 for chunk in chunked(case_tombstones, 1000, list):
                     DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True)
                 deleted_counts = queryset.delete()[1]
-                counts.update(deleted_counts)
+                for obj_class, count in deleted_counts.items():
+                    counts[obj_class] += count
         return counts
 
     @staticmethod

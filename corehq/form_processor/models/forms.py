@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO
@@ -433,13 +434,12 @@ class XFormInstanceManager(RequireDBManager):
         and this method is effectively read-only
         :return: dictionary of count of deleted objects per table
         """
-        counts = {}
+        counts = defaultdict(lambda: 0)
         class_path = 'form_processor.XFormInstance'
         for db_name in get_db_aliases_for_partitioned_query():
             queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
             if dry_run:
-                deleted_counts = {class_path: queryset.count()}
-                counts.update(deleted_counts)
+                counts[class_path] += queryset.count()
             else:
                 form_tombstones = [DeletedSQLDoc(doc_id=form.form_id, object_class_path=class_path,
                                                  domain=form.domain, deleted_on=form.deleted_on)
@@ -447,7 +447,8 @@ class XFormInstanceManager(RequireDBManager):
                 for chunk in chunked(form_tombstones, 1000, list):
                     DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True)
                 deleted_counts = queryset.delete()[1]
-                counts.update(deleted_counts)
+                for obj_class, count in deleted_counts.items():
+                    counts[obj_class] += count
         return counts
 
     @staticmethod
