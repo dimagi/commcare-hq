@@ -1,0 +1,46 @@
+<!-- ko with: filterForm -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="mb-3" >
+        <label for="property" class="form-label">
+          Select property to filter on:
+        </label>
+        <select class="form-select"
+                name="property"
+                data-bind="options: $parent.visibleColumns,
+                           value: selectedColumnSlug,
+                           optionsCaption: 'Select a property...',
+                           optionsText: 'name',
+                           optionsValue: 'slug'">
+        </select>
+      </div>
+      <div class="mb-3" >
+        <label for="filterText" class="form-label">
+          Value to filter by:
+        </label>
+        <input class="form-control" type="text" name="replaceValue" data-bind="textInput: filterText">
+      </div>
+    </div>
+  </div>
+  <div class="mb-3">
+    <button type="button"
+            class="btn btn-outline-primary">
+      <i class="fa-solid fa-plus"></i> Add Property Filter
+    </button>
+  </div>
+
+  <div class="py-3 d-flex flex-row-reverse">
+    <button type="button"
+            data-bs-dismiss="offcanvas"
+            data-bind="click: $parent.applyFilterToData,
+                       disable: isSubmitDisabled"
+            class="btn btn-primary">
+      Filter Data
+    </button>
+    <button type="button"
+            data-bind="click: $parent.resetFilterForm"
+            class="btn btn-outline-primary me-1">
+      Reset Filters
+    </button>
+  </div>
+<!-- /ko -->
