@@ -565,7 +565,7 @@ def get_qrcode(data):
 class EnableMobilePrivilegesView(BaseMyAccountView):
     urlname = 'enable_mobile_privs'
     page_title = gettext_lazy("Enable Privileges on Mobile")
-    template_name = 'settings/enable_superuser.html'
+    template_name = 'settings/bootstrap3/enable_superuser.html'
 
     def dispatch(self, request, *args, **kwargs):
         # raises a 404 if a user tries to access this page without the right authorizations
