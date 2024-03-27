@@ -37,7 +37,7 @@ SMS_MAPPING = {
             "type": "date"
         },
         "direction": {
-            "type": "keyword"
+            "type": "text"
         },
         "doc_id": {
             "type": "keyword"
