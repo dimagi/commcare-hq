@@ -1,19 +1,29 @@
 'use strict';
 /* eslint-env mocha */
-hqDefine("cloudcare/js/form_entry/spec/integration_spec", function () {
+hqDefine("cloudcare/js/form_entry/spec/integration_spec", [
+    "underscore",
+    "hqwebapp/js/initial_page_data",
+    "sinon/pkg/sinon",
+    "cloudcare/js/form_entry/const",
+    "cloudcare/js/form_entry/form_ui",
+], function (
+    _,
+    initialPageData,
+    sinon,
+    constants,
+    formUI
+) {
     describe('Integration', function () {
-        var constants = hqImport("cloudcare/js/form_entry/const"),
-            formUI = hqImport("cloudcare/js/form_entry/form_ui"),
-            formJSON,
+        var formJSON,
             questionJSONMulti,
             questionJSONString;
 
         before(function () {
-            hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", { WEB_APPS_ANCHORED_SUBMIT: false });
+            initialPageData.register("toggles_dict", { WEB_APPS_ANCHORED_SUBMIT: false });
         });
 
         after(function () {
-            hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
+            initialPageData.unregister("toggles_dict");
         });
 
         beforeEach(function () {
@@ -73,7 +83,6 @@ hqDefine("cloudcare/js/form_entry/spec/integration_spec", function () {
             $.unsubscribe();
             this.clock.restore();
         });
-
 
         it('Should reconcile questions answered at the same time for strings', function () {
             var questionJSONString2 = {};
