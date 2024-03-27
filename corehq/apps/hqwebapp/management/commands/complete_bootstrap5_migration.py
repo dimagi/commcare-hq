@@ -53,7 +53,7 @@ class Command(BaseCommand):
                        for path in get_split_paths(get_all_template_paths_for_app(app_name))]
         split_paths.extend([get_short_path(app_name, path, False)
                             for path in get_split_paths(get_all_javascript_paths_for_app(app_name))])
-        if len(split_paths) > 0:
+        if split_paths:
             self.stdout.write(
                 f"\nCannot mark '{app_name}' as complete as there are "
                 f"{len(split_paths)} file(s) left to migrate.\n",
@@ -104,14 +104,14 @@ class Command(BaseCommand):
 
     def verify_filename_and_get_paths(self, app_name, filename, relevant_paths, is_template):
         filename = self.sanitize_bootstrap3_from_filename(filename)
-        if filename is False:
+        if not filename:
             return False
 
-        destination = filename.replace('bootstrap5/', '')
+        destination = filename.replace('/bootstrap5/', '/')
         bootstrap3_path = self.get_valid_path(app_name, destination, get_split_paths(relevant_paths, 'bootstrap3'),
                                               is_template, 'bootstrap3')
         if bootstrap3_path:
-            destination = get_short_path(app_name, bootstrap3_path, is_template).replace('bootstrap3/', '')
+            destination = get_short_path(app_name, bootstrap3_path, is_template).replace('/bootstrap3/', '/')
         bootstrap5_path = self.get_valid_path(app_name, destination, get_split_paths(relevant_paths, 'bootstrap5'),
                                               is_template, 'bootstrap5')
         if bootstrap5_path:
@@ -129,11 +129,11 @@ class Command(BaseCommand):
                 f"This file cannot be marked as complete with this tool.\n\n",
                 style_func=get_style_func(Color.RED)
             )
-            filename = filename.replace('bootstrap3/', 'bootstrap5/')
-            confirm = get_confirmation(f"Did you mean, '{filename}?")
+            filename = filename.replace('/bootstrap3/', '/bootstrap5/')
+            confirm = get_confirmation(f"Did you mean '{filename}'?")
             if not confirm:
                 self.stdout.write("Ok, aborting operation.\n\n")
-                return False
+                return None
         return filename
 
     def get_valid_path(self, app_name, destination_filename, relevant_paths, is_template, split_folder=None):
@@ -142,13 +142,13 @@ class Command(BaseCommand):
             p for p in relevant_paths
             if str(p).replace(split_folder_path, '').endswith(destination_filename)
         ]
-        if len(matching_paths) == 0:
+        if not matching_paths:
             return None
         return self.select_path(app_name, matching_paths, is_template)
 
     def select_path(self, app_name, matching_paths, is_template):
         selected_path = matching_paths[0]
-        if len(matching_paths) > 1:
+        if matching_paths:
             file_type = "templates" if is_template else "js files"
             self.stdout.write(f"\nFound {len(matching_paths)} "
                               f"{file_type} matching that name...\n")
