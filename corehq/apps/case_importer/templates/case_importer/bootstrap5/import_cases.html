@@ -1,0 +1,53 @@
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% requirejs_main "case_importer/js/main" %}
+
+{% block page_title %}
+  {{ current_page.title }}
+{% endblock %}
+
+{% block page_content %}
+  {% registerurl 'case_importer_uploads' domain %}
+  {% registerurl 'case_importer_upload_file_download' domain '---' %}
+  {% registerurl 'case_importer_upload_form_ids' domain '---' %}
+  {% registerurl 'case_importer_upload_case_ids' domain '---' %}
+  {% registerurl 'case_importer_update_upload_comment' domain '---' %}
+  {% initial_page_data 'record_count' record_count %}
+
+  {% include 'case_importer/partials/help_message.html' %}
+
+  <form class="form-horizontal form-report"
+        action="{% url "excel_config" domain %}"
+        method="post"
+        enctype="multipart/form-data">
+    {% csrf_token %}
+    <fieldset>
+      <legend>
+        {% trans "Upload an Excel File From Your Computer to Import From" %}
+      </legend>
+
+      <div class="form-group">
+        <label class="form-label col-md-3" for="file">
+          {% trans "Select a file to upload" %}
+        </label>
+        <!-- unorthodox use of .control-label to vertically align the file input with the actual badge -->
+        <div class="col-md-6 form-label">
+          <input name="file" id="file" type="file" />
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <div class="col-sm-offset-3">
+        <button type="submit" class="btn btn-primary disabled" disabled="disabled">
+          <i class="fa fa-forward"></i> {% trans "Next step" %}
+        </button>
+      </div>
+    </div>
+  </form>
+
+
+  {% include 'case_importer/partials/ko_import_history.html' %}
+{% endblock %}
