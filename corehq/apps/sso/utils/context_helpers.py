@@ -67,7 +67,7 @@ def get_idp_cert_expiration_email_context(idp):
 
 
 def get_graph_api_connection_issue_email_context(idp, error):
-    subject = _("CommCare HQ Alert: SSO Remote User Management, Issue Connecting to Microsoft Graph API")
+    subject = _("CommCare HQ Alert: SSO Remote User Management - Issue Connecting to Microsoft Graph API")
     template_context = {
         "error": error,
         "contact_email": settings.ACCOUNTS_EMAIL,
