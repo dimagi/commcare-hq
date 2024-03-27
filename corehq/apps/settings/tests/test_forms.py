@@ -82,6 +82,16 @@ class HQApiKeyTests(SimpleTestCase):
                 'Must be no later than 1 year from today: Jan 01, 2024'
             )
 
+    def test_expiration_supports_unofficial_expiration_windows(self):
+        current_time = datetime(year=2023, month=1, day=1)
+        with freeze_time(current_time):
+            form = HQApiKeyForm(max_allowed_expiration_days=22)
+            self.assertEqual(
+                form.fields['expiration_date'].help_text,
+                'Date and time the API key should expire on. '
+                'Must be no later than 22 days from today: Jan 23, 2023'
+            )
+
     def test_no_expiration_date_is_valid(self):
         form = HQApiKeyForm(self._form_data(expiration_date=None))
         self.assertTrue(form.is_valid())

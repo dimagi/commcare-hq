@@ -324,7 +324,7 @@ class HQApiKeyForm(forms.Form):
         display_string = next(
             (item[INDEX_DISPLAY_STRING] for item in
              VALID_API_EXPIRATION_OPTIONS if item[INDEX_NUM_DAYS] == num_days),
-            None
+            _('{} Days').format(num_days)
         )
         return display_string
 
