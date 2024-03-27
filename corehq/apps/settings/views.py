@@ -271,7 +271,7 @@ class MyAccountSettingsView(BaseMyAccountView):
 class MyProjectsList(BaseMyAccountView):
     urlname = 'my_projects'
     page_title = gettext_lazy("My Projects")
-    template_name = 'settings/my_projects.html'
+    template_name = 'settings/bootstrap3/my_projects.html'
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
