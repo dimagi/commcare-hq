@@ -43,7 +43,7 @@ from corehq.apps.data_dictionary.util import (
     get_data_dict_deprecated_case_types,
 )
 from corehq.apps.domain.decorators import api_auth
-from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
@@ -94,6 +94,7 @@ def _case_importer_breadcrumb_context(page_name, domain):
 @waf_allow('XSS_BODY')
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
+@use_bootstrap5
 def excel_config(request, domain):
     """
     Step one of three.
@@ -121,7 +122,7 @@ def excel_config(request, domain):
         return render_error(request, domain, _("Please upload file with extension .xls or .xlsx"))
 
     context.update(_case_importer_breadcrumb_context(_('Case Options'), domain))
-    return render(request, "case_importer/bootstrap3/excel_config.html", context)
+    return render(request, "case_importer/bootstrap5/excel_config.html", context)
 
 
 def _get_workbook_sheet_names(case_upload):
