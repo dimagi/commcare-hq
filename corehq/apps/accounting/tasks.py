@@ -832,8 +832,7 @@ def calculate_web_users_in_all_billing_accounts(today=None):
     today = today or datetime.date.today()
     for account in BillingAccount.objects.all():
         record_date = today - relativedelta(days=1)
-        web_user_in_account = account.get_web_users()
-        num_users = len(web_user_in_account)
+        num_users = account.get_web_user_count()
         try:
             BillingAccountWebUserHistory.objects.create(
                 billing_account=account,

@@ -126,7 +126,7 @@ def auto_deactivate_removed_sso_users():
         idp_type=IdentityProviderType.ENTRA_ID
     ).all():
         idp_users = idp.get_all_members_of_the_idp()
-        usernames_in_account = idp.owner.get_web_users(info_type='username')
+        usernames_in_account = idp.owner.get_web_user_usernames()
 
         # Get criteria for exempting usernames and email domains from the deactivation list
         authenticated_domains = AuthenticatedEmailDomain.objects.filter(identity_provider=idp)

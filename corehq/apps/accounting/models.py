@@ -22,6 +22,7 @@ from memoized import memoized
 from corehq.apps.accounting.utils.stripe import charge_through_stripe
 
 from corehq.apps.domain.shortcuts import publish_domain_saved
+from corehq.apps.users.dbaccessors import get_active_web_usernames_by_domain, get_web_user_count
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -603,24 +604,21 @@ class BillingAccount(ValidateModelMixin, models.Model):
             use_domain_gateway=True,
         )
 
-    def get_web_users(self, info_type='id'):
-        """
-        Get a set of web user information in the billing account.
-
-        :param info_type: Specify 'id' to get user IDs, or 'username' to get user usernames.
-        :return: A set of user IDs or usernames, based on the info_type parameter.
-        """
+    def get_web_user_usernames(self):
         domains = self.get_domains()
         web_users = set()
 
-        if info_type == 'id':
-            for domain in domains:
-                web_users.update(WebUser.ids_by_domain(domain))
-        elif info_type == 'username':
-            for domain in domains:
-                web_users.update(user.username for user in WebUser.by_domain(domain))
+        for domain in domains:
+            web_users.update(get_active_web_usernames_by_domain(domain))
 
         return web_users
+
+    def get_web_user_count(self):
+        domains = self.get_domains()
+        count = 0
+        for domain in domains:
+            count += get_web_user_count(domain, include_inactive=False)
+        return count
 
     @staticmethod
     def should_show_sms_billable_report(domain):
