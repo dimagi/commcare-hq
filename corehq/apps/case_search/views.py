@@ -53,7 +53,7 @@ class CaseSearchView(BaseDomainView):
         case_type = query.get('type')
         owner_id = query.get('owner_id')
         search_params = query.get('parameters', [])
-        xpath = query.get("xpath")
+        xpath_expressions = query.get("xpath_expressions", [])
         search = CaseSearchES()
         search = search.domain(self.domain).size(10)
         if case_type:
@@ -73,7 +73,7 @@ class CaseSearchView(BaseDomainView):
                     fuzzy=param.get('fuzzy'),
                 )
 
-        if xpath:
+        for xpath in filter(None, xpath_expressions):
             search = search.xpath_query(self.domain, xpath)
 
         include_profile = request.POST.get("include_profile", False)
