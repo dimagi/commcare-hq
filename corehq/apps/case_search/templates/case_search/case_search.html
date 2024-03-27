@@ -92,21 +92,6 @@
                 </div>
               </div>
             </div>
-            {% if query_additions %}
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <strong>{% trans "Custom Query Addition" %}</strong>
-                </div>
-                <div class="panel-body">
-                  <select data-bind="value: customQueryAddition">
-                    <option></option>
-                    {% for query_addition in query_additions %}
-                      <option value="{{ query_addition.id }}">{{ query_addition.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-            {% endif %}
             <button type="button" class="btn btn-primary" data-bind="click: search">
               <i data-bind="attr: {class: searchButtonIcon}"></i> {% trans "Search" %}
             </button>
