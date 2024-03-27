@@ -585,7 +585,7 @@ class GeoJSONWriter(JsonExportWriter):
         geo_property_name = table.selected_geo_property
         table_headers = data[0]
         if geo_property_name not in table_headers:
-            # This might happen for form exports where we store the path to the geo property
+            # This might happen for some form export metadata columns
             geo_property_name = self._find_geo_property_by_path(table)
             if geo_property_name not in table_headers:
                 return []
