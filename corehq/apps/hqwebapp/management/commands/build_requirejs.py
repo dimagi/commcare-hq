@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 ROOT_DIR = settings.FILEPATH
 BUILD_JS_FILENAME = "staticfiles/build.js"
 BUILD_TXT_FILENAME = "staticfiles/build.txt"
+BOOTSTRAP_VERSIONS = ['bootstrap3', 'bootstrap5']
 
 
 class Command(ResourceStaticCommand):
@@ -37,102 +38,128 @@ class Command(ResourceStaticCommand):
                  'Does not allow you to mimic CDN.')
         parser.add_argument('--no_optimize', action='store_true',
             help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
-        parser.add_argument('--bootstrap_version',
-                            default="bootstrap3",
-                            help="Specify bootstrap3 or bootstrap5 (bootstrap3 is default)")
+        parser.add_argument('--bootstrap_version', default="bootstrap3",
+            help="Specify bootstrap3 or bootstrap5 (bootstrap3 is default)")
 
     def handle(self, **options):
-        bootstrap_version = options.get('bootstrap_version')
         logger.setLevel('DEBUG')
 
-        local = options['local']
-        verbose = options['verbosity'] > 1
-        optimize = not options['no_optimize']
+        if options.get('bootstrap_version') == "bootstrap5":
+            logger.warning("Running with bootstrap5 is no longer necessary")
+            exit()
 
-        if local:
-            _confirm_or_exit()
+        self.local = options['local']
+        self.verbose = options['verbosity'] > 1
+        self.optimize = not options['no_optimize']
+
+        self._check_prereqs()
+
+        for bootstrap_version in BOOTSTRAP_VERSIONS:
+            config, local_js_dirs = _r_js(local=self.local, verbose=self.verbose, bootstrap_version=bootstrap_version)
+            self._minify(config)
+
+            if self.local:
+                _copy_modules_back_into_corehq(config, local_js_dirs)
+
+            filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js',
+                                    bootstrap_version, 'requirejs_config.js')
+            self._update_resource_hash(f"hqwebapp/js/{bootstrap_version}/requirejs_config.js", filename)
+            if self.local:
+                dest = os.path.join(ROOT_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
+                                    'hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
+                copyfile(filename, dest)
+                logger.info(f"Copied updated {bootstrap_version}/requirejs_config.js back into {_relative(dest)}")
+
+            # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
+            for module in config['modules']:
+                filename = os.path.join(ROOT_DIR, 'staticfiles', module['name'] + ".js")
+                file_hash = self._update_resource_hash(module['name'] + ".js", filename)
+                self._update_source_map_hash(filename, file_hash)
+
+        self._write_resource_versions()
+
+    def _check_prereqs(self):
+        if self.local:
+            proc = subprocess.Popen(["git", "diff-files", "--ignore-submodules", "--name-only"],
+                                    stdout=subprocess.PIPE)
+            (out, err) = proc.communicate()
+            out = out.decode('utf-8')
+            if out:
+                confirm = input("You have unstaged changes to the following files: \n{} "
+                                "This script overwrites some static files. "
+                                "Are you sure you want to continue (y/n)? ".format(out))
+                if confirm[0].lower() != 'y':
+                    exit()
+
+            confirm = input("You are running locally. Have you already run "
+                            "`./manage.py resource_static && ./manage.py collectstatic "
+                            "--noinput && ./manage.py compilejsi18n` (y/n)? ")
+            if confirm[0].lower() != 'y':
+                exit()
 
         # During deploy, resource_static should already have run and populated resource_versions
         from get_resource_versions import get_resource_versions
-        resource_versions = get_resource_versions()
-        if (not resource_versions):
+        self.resource_versions = get_resource_versions()
+        if (not self.resource_versions):
             raise ResourceVersionsNotFoundException()
 
-        config, local_js_dirs = _r_js(local=local, verbose=verbose, bootstrap_version=bootstrap_version)
-        if optimize:
-            _minify(config, verbose=verbose)
+    def _minify(self, config):
+        if not self.optimize:
+            return
 
-        if local:
-            _copy_modules_back_into_corehq(config, local_js_dirs)
+        modules = config['modules']
+        if self.verbose:
+            modules = with_progress_bar(modules, prefix="Minifying", oneline=False)
+        else:
+            print("Minifying Javascript bundles (estimated wait time: 5min)")
+        for module in modules:
+            rel_path = Path(module['name'] + ".js")
+            path = os.path.join(ROOT_DIR, 'staticfiles', rel_path)
+            ret = call([
+                "node", "node_modules/uglify-js/bin/uglifyjs", path, "--compress", "--mangle", "--output", path,
+                "--source-map", f"url={rel_path.name}.map"
+            ])
+            if ret:
+                raise CommandError(f"Failed to minify {rel_path}")
 
-        filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js',
-                                bootstrap_version, 'requirejs_config.js')
-        resource_versions[f"hqwebapp/js/{bootstrap_version}/requirejs_config.js"] = self.get_hash(filename)
-        if local:
-            dest = os.path.join(ROOT_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
-                                'hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
-            copyfile(filename, dest)
-            logger.info(f"Copied updated {bootstrap_version}/requirejs_config.js back into {_relative(dest)}")
+    def _update_resource_hash(self, name, filename):
+        file_hash = self.get_hash(filename)
+        self.resource_versions[name] = file_hash
+        return file_hash
 
-        # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
-        for module in config['modules']:
-            filename = os.path.join(ROOT_DIR, 'staticfiles', module['name'] + ".js")
+    # Overwrite source map reference. Source maps are accessed on the CDN, so they need the version hash
+    def _update_source_map_hash(self, filename, file_hash):
+        if not self.optimize:
+            return
 
-            # TODO: it'd be a performance improvement to do this after the `open` below
-            # and pass in the file contents, since get_hash does another read.
-            file_hash = self.get_hash(filename)
+        with open(filename, 'r') as fin:
+            lines = fin.readlines()
+        with open(filename, 'w') as fout:
+            for line in lines:
+                if re.search(r'sourceMappingURL=bundle.js.map$', line):
+                    line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
+                fout.write(line)
 
-            if optimize:
-                # Overwrite source map reference. Source maps are accessed on the CDN,
-                # so they need to have the version hash appended.
-                with open(filename, 'r') as fin:
-                    lines = fin.readlines()
-                with open(filename, 'w') as fout:
-                    for line in lines:
-                        if re.search(r'sourceMappingURL=bundle.js.map$', line):
-                            line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
-                        fout.write(line)
-            resource_versions[module['name'] + ".js"] = file_hash
-
-        # Write out resource_versions.js for all js files in resource_versions
-        # Exclude formdesigner directory, which contains a ton of files, none of which are required by HQ
+    def _write_resource_versions(self):
         filename = os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'js', 'resource_versions.js')
         with open(filename, 'w') as fout:
             fout.write("requirejs.config({ paths: %s });" % json.dumps({
                 file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3],
                                              ".js?version=%s" % version if version else "")
-                for file, version in resource_versions.items()
+                for file, version in self.resource_versions.items()
+                # Exclude formdesigner directory, which contains a ton of files, none of which are required by HQ
                 if file.endswith(".js") and not file.startswith("formdesigner")
             }, indent=2))
-        resource_versions["hqwebapp/js/resource_versions.js"] = self.get_hash(filename)
+        self._update_resource_hash("hqwebapp/js/resource_versions.js", filename)
 
-        self.output_resources(resource_versions, overwrite=False)
-
-
-def _confirm_or_exit():
-    proc = subprocess.Popen(["git", "diff-files", "--ignore-submodules", "--name-only"],
-                            stdout=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    out = out.decode('utf-8')
-    if out:
-        confirm = input("You have unstaged changes to the following files: \n{} "
-                        "This script overwrites some static files. "
-                        "Are you sure you want to continue (y/n)? ".format(out))
-        if confirm[0].lower() != 'y':
-            exit()
-    confirm = input("You are running locally. Have you already run "
-                    "`./manage.py resource_static && ./manage.py collectstatic "
-                    "--noinput && ./manage.py compilejsi18n` (y/n)? ")
-    if confirm[0].lower() != 'y':
-        exit()
+        self.output_resources(self.resource_versions, overwrite=False)
 
 
-def _r_js(local=False, verbose=False, bootstrap_version=None):
+def _r_js(local=False, verbose=False, bootstrap_version='bootstrap3'):
     '''
     Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
     and the bundle config output by the build.
     '''
-    bootstrap_version = bootstrap_version or 'bootstrap3'
     is_bootstrap5 = bootstrap_version == 'bootstrap5'
     with open(os.path.join(ROOT_DIR, 'staticfiles', 'hqwebapp', 'yaml',
                            bootstrap_version, 'requirejs.yml'), 'r') as f:
@@ -179,23 +206,6 @@ def _r_js(local=False, verbose=False, bootstrap_version=None):
         raise CommandError("Failed to build JS bundles")
 
     return config, local_js_dirs
-
-
-def _minify(config, verbose=False):
-    modules = config['modules']
-    if verbose:
-        modules = with_progress_bar(modules, prefix="Minifying", oneline=False)
-    else:
-        print("Minifying Javascript bundles (estimated wait time: 5min)")
-    for module in modules:
-        rel_path = Path(module['name'] + ".js")
-        path = os.path.join(ROOT_DIR, 'staticfiles', rel_path)
-        ret = call([
-            "node", "node_modules/uglify-js/bin/uglifyjs", path, "--compress", "--mangle", "--output", path,
-            "--source-map", f"url={rel_path.name}.map"
-        ])
-        if ret:
-            raise CommandError(f"Failed to minify {rel_path}")
 
 
 def _get_html_files_and_local_js_dirs(local):
