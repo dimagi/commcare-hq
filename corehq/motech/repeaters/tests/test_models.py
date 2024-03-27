@@ -614,10 +614,10 @@ class TestRepeatRecordManager(RepeaterTestCase):
 
     def test_count_pending_records_for_domain(self):
         now = datetime.utcnow()
-        self.new_record(next_check=now - timedelta(hours=2))
         self.new_record(next_check=now - timedelta(hours=1))
         self.new_record(next_check=now - timedelta(minutes=15))
         self.new_record(next_check=now - timedelta(minutes=5))
+        self.new_record(next_check=now + timedelta(minutes=5))
         self.new_record(next_check=None, state=State.Success)
         self.new_record(next_check=now - timedelta(hours=1), domain="other")
         pending = SQLRepeatRecord.objects.count_pending_records_for_domain("test")
@@ -644,35 +644,15 @@ class TestRepeatRecordManager(RepeaterTestCase):
 
     def test_four_partitions(self):
         iter_partition = type(self).iter_partition
-        all_ids = self.make_records(16)
+        all_ids = sorted(self.make_records(16))
         start = datetime.utcnow()
-        ids0 = {r.id for r in iter_partition(start, 0, 4)}
-        ids1 = {r.id for r in iter_partition(start, 1, 4)}
-        ids2 = {r.id for r in iter_partition(start, 2, 4)}
-        ids3 = {r.id for r in iter_partition(start, 3, 4)}
+        ids0 = [r.id for r in iter_partition(start, 0, 4)]
+        ids1 = [r.id for r in iter_partition(start, 1, 4)]
+        ids2 = [r.id for r in iter_partition(start, 2, 4)]
+        ids3 = [r.id for r in iter_partition(start, 3, 4)]
 
-        self.assertEqual(ids0 | ids1 | ids2 | ids3, all_ids)
-
-        self.assertTrue(ids0)
-        self.assertTrue(ids1)
-        self.assertTrue(ids2)
-        self.assertTrue(ids3)
-
-        self.assertFalse(ids0 & ids1)
-        self.assertFalse(ids0 & ids2)
-        self.assertFalse(ids0 & ids3)
-
-        self.assertFalse(ids1 & ids0)
-        self.assertFalse(ids1 & ids2)
-        self.assertFalse(ids1 & ids3)
-
-        self.assertFalse(ids2 & ids0)
-        self.assertFalse(ids2 & ids1)
-        self.assertFalse(ids2 & ids3)
-
-        self.assertFalse(ids3 & ids0)
-        self.assertFalse(ids3 & ids1)
-        self.assertFalse(ids3 & ids2)
+        self.assertEqual(sorted(ids0 + ids1 + ids2 + ids3), all_ids)
+        self.assertTrue(all([ids0, ids1, ids2, ids3]), [ids0, ids1, ids2, ids3])
 
     def test_partition_start(self):
         iter_partition = type(self).iter_partition
@@ -682,21 +662,21 @@ class TestRepeatRecordManager(RepeaterTestCase):
         ids = {r.id for r in iter_partition(start, 0, 1)}
         self.assertEqual(ids, all_ids)
 
-    def test_get_domains_having_records(self):
+    def test_get_domains_with_records(self):
         self.new_record(domain='a')
         self.new_record(domain='b')
         self.new_record(domain='c')
         self.assertEqual(
-            set(SQLRepeatRecord.objects.get_domains_having_records()),
+            set(SQLRepeatRecord.objects.get_domains_with_records()),
             {'a', 'b', 'c'},
         )
 
-    def test_get_domains_having_records_with_filter(self):
+    def test_get_domains_with_records_with_filter(self):
         self.new_record(domain='alex')
         self.new_record(domain='alice')
         self.new_record(domain='carl')
         self.assertEqual(
-            set(SQLRepeatRecord.objects.get_domains_having_records().filter(domain__startswith="al")),
+            set(SQLRepeatRecord.objects.get_domains_with_records().filter(domain__startswith="al")),
             {'alex', 'alice'},
         )
 
