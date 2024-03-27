@@ -2,7 +2,7 @@ from django.test import SimpleTestCase, override_settings
 from ..forms import HQTwoFactorMethodForm, HQApiKeyForm
 from freezegun import freeze_time
 from datetime import datetime
-import pytz
+from zoneinfo import ZoneInfo
 
 
 @override_settings(TWO_FACTOR_CALL_GATEWAY=True, TWO_FACTOR_SMS_GATEWAY=True)
@@ -120,8 +120,8 @@ class HQApiKeyTests(SimpleTestCase):
             )
 
     def test_expiration_date_is_localized(self):
-        tz = pytz.timezone('US/Eastern')
-        current_time = tz.localize(datetime(year=2023, month=1, day=2, hour=23))
+        tz = ZoneInfo('US/Eastern')
+        current_time = datetime(year=2023, month=1, day=2, hour=23, tzinfo=tz)
         with freeze_time(current_time):
             form = HQApiKeyForm(max_allowed_expiration_days=30, timezone=tz)
             # 11 PM Eastern time will wrap over to the next day in UTC

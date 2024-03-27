@@ -4,7 +4,7 @@ from base64 import b64encode
 from io import BytesIO
 from datetime import datetime
 
-import pytz
+from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -683,7 +683,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     def _to_user_time(self, value):
         return (ServerTime(value)
-                .user_time(pytz.timezone(self.request.couch_user.get_time_zone()))
+                .user_time(ZoneInfo(self.request.couch_user.get_time_zone()))
                 .done()
                 .strftime(USER_DATETIME_FORMAT)) if value else '-'
 
@@ -779,12 +779,12 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 self.request.POST,
                 user_domains=user_domains,
                 max_allowed_expiration_days=max_expiration_window,
-                timezone=pytz.timezone(self.request.couch_user.get_time_zone())
+                timezone=ZoneInfo(self.request.couch_user.get_time_zone())
             )
         return HQApiKeyForm(
             user_domains=user_domains,
             max_allowed_expiration_days=max_expiration_window,
-            timezone=pytz.timezone(self.request.couch_user.get_time_zone())
+            timezone=ZoneInfo(self.request.couch_user.get_time_zone())
         )
 
     def get_create_item_data(self, create_form):

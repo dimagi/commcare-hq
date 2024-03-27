@@ -8,7 +8,7 @@ from django.utils.html import format_html
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-import pytz
+from zoneinfo import ZoneInfo
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -284,7 +284,7 @@ class HQApiKeyForm(forms.Form):
         self.fields['domain'].choices = [all_domains] + [(d, d) for d in user_domains]
 
         self.maximum_expiration_date = None
-        self.timezone = timezone or pytz.timezone('UTC')
+        self.timezone = timezone or ZoneInfo('UTC')
 
         if max_allowed_expiration_days is not None:
 
@@ -346,7 +346,7 @@ class HQApiKeyForm(forms.Form):
         if not self.cleaned_data['expiration_date']:
             return self.cleaned_data['expiration_date']
 
-        expiration_date = self.timezone.localize(self.cleaned_data['expiration_date'])
+        expiration_date = self.cleaned_data['expiration_date'].replace(tzinfo=self.timezone)
         if expiration_date < datetime.now(tz=self.timezone):
             raise ValidationError(_('Expiration Date must be in the future'))
 
