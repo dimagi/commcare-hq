@@ -16,6 +16,8 @@ from corehq.apps.sso.forms import (
 )
 from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
 
+from corehq.toggles import MULTI_VIEW_API_KEYS
+
 
 class ManageSSOEnterpriseView(BaseEnterpriseAdminView):
     page_title = gettext_lazy("Manage Single Sign-On")
@@ -64,11 +66,15 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         return {
             'edit_idp_form': self.edit_enterprise_idp_form,
             'idp_slug': self.idp_slug,
+            'show_api_fields': self.show_api_fields(),
             'toggle_client_secret': (
                 self.identity_provider.protocol == IdentityProviderProtocol.OIDC
                 and self.identity_provider.client_secret
             ),
         }
+
+    def show_api_fields(self):
+        return MULTI_VIEW_API_KEYS.enabled_for_request(self.request)
 
     @property
     @memoized
@@ -109,7 +115,9 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             return form_class(
                 self.identity_provider, self.request.POST, self.request.FILES
             )
-        return form_class(self.identity_provider)
+
+        api_fields_enabled = self.show_api_fields()
+        return form_class(self.identity_provider, allow_multi_view_api_keys=api_fields_enabled)
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:

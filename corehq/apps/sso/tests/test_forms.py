@@ -416,8 +416,8 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
     @staticmethod
     def _get_post_data(no_entity_id=False, no_login_url=False, no_logout_url=False,
                        is_active=False, login_enforcement_type=None,
-                       require_encrypted_assertions=False, certificate=None):
-        return {
+                       require_encrypted_assertions=False, certificate=None, **kwargs):
+        base = {
             'is_active': is_active,
             'login_enforcement_type': login_enforcement_type or LoginEnforcementType.GLOBAL,
             'entity_id': '' if no_entity_id else 'https://test.org/metadata',
@@ -426,6 +426,9 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
             'require_encrypted_assertions': require_encrypted_assertions,
             'idp_cert_public': certificate,
         }
+
+        base.update(kwargs)
+        return base
 
     @staticmethod
     def _get_request_files(cert_file):
@@ -608,6 +611,82 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
         edit_sso_idp_form.update_identity_provider(self.accounting_admin)
         self.idp.refresh_from_db()
         self.assertEqual(self.idp.login_enforcement_type, LoginEnforcementType.TEST)
+
+    def test_valid_key_expiration_values(self):
+        post_data = self._get_post_data(
+            enforce_user_api_key_expiration=True,
+            max_days_until_user_api_key_expiration=180
+        )
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+
+        form.full_clean()
+
+        self.assertTrue(form.cleaned_data['enforce_user_api_key_expiration'])
+        self.assertEqual(form.cleaned_data['max_days_until_user_api_key_expiration'], 180)
+
+    def test_when_enforce_api_key_expiration_is_false_expiration_window_is_null(self):
+        post_data = self._get_post_data(
+            enforce_user_api_key_expiration=False,
+            max_days_until_user_api_key_expiration=180
+        )
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+
+        form.full_clean()
+
+        self.assertIsNone(form.cleaned_data['max_days_until_user_api_key_expiration'])
+
+    def test_when_enforce_api_key_expiration_is_true_expiration_window_must_be_set(self):
+        post_data = self._get_post_data(
+            enforce_user_api_key_expiration=True,
+            max_days_until_user_api_key_expiration=None
+        )
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['max_days_until_user_api_key_expiration'], ['a value must be specified'])
+
+    def test_empty_string_is_not_a_valid_expiration_window(self):
+        post_data = self._get_post_data(
+            enforce_user_api_key_expiration=True,
+            max_days_until_user_api_key_expiration=''
+        )
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+
+        self.assertFalse(form.is_valid())
+
+    def test_custom_expiration_window_is_invalid(self):
+        post_data = self._get_post_data(
+            enforce_user_api_key_expiration=True,
+            max_days_until_user_api_key_expiration=11
+        )
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+
+        form.full_clean()
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+            form.errors['max_days_until_user_api_key_expiration'],
+            ['Select a valid choice. 11 is not one of the available choices.']
+        )
+
+    def test_expiration_window_is_coerced_to_int(self):
+        post_data = self._get_post_data(
+            enforce_user_api_key_expiration=True,
+            max_days_until_user_api_key_expiration='120'
+        )
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+        form.is_valid()  # Populate cleaned fields
+        self.assertEqual(form.cleaned_data['max_days_until_user_api_key_expiration'], 120)
+
+    def test_form_default_expiration_values_are_empty(self):
+        form = SsoSamlEnterpriseSettingsForm(self.idp)
+        self.assertIsNone(form['always_show_user_api_keys'].value())
+        self.assertIsNone(form['enforce_user_api_key_expiration'].value())
+        self.assertIsNone(form['max_days_until_user_api_key_expiration'].value())
+
+    def test_form_is_valid_without_api_expiration_values(self):
+        post_data = self._get_post_data()
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
+        self.assertTrue(form.is_valid())
 
 
 class TestSsoOidcEnterpriseSettingsForm(BaseSSOFormTest):
