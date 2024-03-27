@@ -50,11 +50,9 @@ def mark_javascript_as_complete(app_name, js_short_path):
 
 def _mark_file_as_complete(app_name, short_path, file_type):
     app_summary = get_app_status_summary(app_name)
-    completed_files = app_summary.get(file_type, [])
-    completed_files.append(
+    app_summary.setdefault(file_type, []).append(
         short_path.lstrip(f"{app_name}/")
     )
-    app_summary[file_type] = completed_files
     full_summary = get_completed_summary()
     full_summary[app_name] = app_summary
     update_completed_summary(full_summary)
