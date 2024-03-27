@@ -61,9 +61,13 @@ class FormProcessorSQL(object):
 
     @classmethod
     def hard_delete_case_and_forms(cls, domain, case, xforms):
+        """Note: this is currently only being used by safe_hard_delete to delete system cases and forms
+        if you need to use this for any other reason, please make sure you know if the cases and forms
+        you are trying to delete need tombstones or not."""
+
         form_ids = [xform.form_id for xform in xforms]
-        XFormInstance.objects.hard_delete_forms(domain, form_ids)
-        CommCareCase.objects.hard_delete_cases(domain, [case.case_id])
+        XFormInstance.objects.hard_delete_forms(domain, form_ids, leave_tombstone=False)
+        CommCareCase.objects.hard_delete_cases(domain, [case.case_id], leave_tombstone=False)
 
     @classmethod
     def new_form_from_old(cls, existing_form, xml, value_responses_map, user_id):
