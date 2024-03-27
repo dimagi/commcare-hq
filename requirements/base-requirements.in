@@ -113,6 +113,7 @@ stripe
 suds-py3
 text-unidecode
 toposort
+transifex-python
 tropo-webapi-python
 turn-python
 twilio
