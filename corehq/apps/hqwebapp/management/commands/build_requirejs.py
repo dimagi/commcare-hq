@@ -18,11 +18,8 @@ from corehq.apps.hqwebapp.management.commands.resource_static import \
     Command as ResourceStaticCommand
 from corehq.util.log import with_progress_bar
 
-logger = logging.getLogger(__name__)
-ROOT_DIR = settings.FILEPATH
-BUILD_JS_FILENAME = "staticfiles/build.js"
-BUILD_TXT_FILENAME = "staticfiles/build.txt"
-BOOTSTRAP_VERSIONS = ['bootstrap3', 'bootstrap5']
+logger = logging.getLogger('build_requirejs')
+BOOTSTRAP_VERSIONS = [3, 5]
 
 
 class Command(ResourceStaticCommand):
@@ -54,24 +51,17 @@ class Command(ResourceStaticCommand):
 
         self._check_prereqs()
 
+        html_files, local_js_dirs = self._get_html_files_and_local_js_dirs()
         for bootstrap_version in BOOTSTRAP_VERSIONS:
-            config, local_js_dirs = self._r_js(bootstrap_version=bootstrap_version)
+            config = self._add_bundles(html_files, bootstrap_version)
+
+            self._run_r_js(config, bootstrap_version)
+
             self._minify(config)
 
             self._copy_modules_back_into_corehq(config, local_js_dirs)
 
-            filename = self._staticfiles_path('hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
-            self._update_resource_hash(f"hqwebapp/js/{bootstrap_version}/requirejs_config.js", filename)
-            if self.local:
-                dest = self._apps_path('hqwebapp', 'js', bootstrap_version, 'requirejs_config.js')
-                copyfile(filename, dest)
-                logger.info(f"Copied {bootstrap_version}/requirejs_config.js back into {self._relative(dest)}")
-
-            # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
-            for module in config['modules']:
-                filename = self._staticfiles_path(module['name'] + ".js")
-                file_hash = self._update_resource_hash(module['name'] + ".js", filename)
-                self._update_source_map_hash(filename, file_hash)
+            self._update_source_maps(config)
 
         self._write_resource_versions()
 
@@ -103,31 +93,37 @@ class Command(ResourceStaticCommand):
     def _staticfiles_path(self, *parts):
         return os.path.join(settings.BASE_DIR, 'staticfiles', *parts)
 
-    def _apps_path(self, app_name, *parts):
-        return os.path.join(settings.BASE_DIR, 'corehq', 'apps', app_name, 'static', app_name, *parts)
+    def _get_html_files_and_local_js_dirs(self):
+        """
+        Returns
+        - all HTML files in corehq, excluding partials
+        - a reference of js directories, for use when copying optimized bundles back into corehq
+        """
+        logger.info("Gathering HTML templates and JS directories")
+        html_files = []
+        local_js_dirs = set()
+        for root, dirs, files in os.walk(os.path.join(settings.BASE_DIR, 'corehq')):
+            for name in files:
+                if name.endswith(".html"):
+                    filename = filename = os.path.join(root, name)
+                    if '/partials/' not in filename:
+                        if '/includes/' not in filename and '/_includes/' not in filename:
+                            html_files.append(filename)
+                elif self.local and name.endswith(".js"):
+                    local_js_dirs.add(os.path.relpath(root))
+        return html_files, local_js_dirs
 
-    def _relative(self, path, root=None):
-        if not root:
-            root = ROOT_DIR
-        rel = path.replace(root, '')
-        if rel.startswith("/"):
-            rel = rel[1:]
-        return rel
-
-    def _r_js(self, bootstrap_version='bootstrap3'):
-        '''
-        Write build.js file to feed to r.js, run r.js, and return filenames of the final build config
-        and the bundle config output by the build.
-        '''
-        is_bootstrap5 = bootstrap_version == 'bootstrap5'
-        with open(self._staticfiles_path('hqwebapp', 'yaml', bootstrap_version, 'requirejs.yml'), 'r') as f:
+    def _add_bundles(self, html_files, bootstrap_version=3):
+        log_prefix = f"[B{bootstrap_version}] "
+        logger.info(f"{log_prefix}Adding bundle configuration")
+        is_bootstrap5 = bootstrap_version == 5
+        bootstrap_dir = f'bootstrap{bootstrap_version}'
+        with open(self._staticfiles_path('hqwebapp', 'yaml', bootstrap_dir, 'requirejs.yml'), 'r') as f:
             config = yaml.safe_load(f)
 
         config['logLevel'] = 0 if self.verbose else 2  # TRACE or WARN
         if not self.verbose:
-            print("Compiling Javascript bundles")
-
-        html_files, local_js_dirs = self._get_html_files_and_local_js_dirs()
+            logger.info(f"{log_prefix}Compiling Javascript bundles")
 
         # These pages depend on bootstrap 5 and must be skipped by the bootstrap3 run of this command.
         # "<bundle directory>": [<js main modules that depend on bootstrap 5>]
@@ -145,43 +141,18 @@ class Command(ResourceStaticCommand):
                 continue
             if not is_bootstrap5 and directory in split_bundles:
                 mains = mains.difference(split_bundles[directory])
-            basename = "bootstrap5.bundle" if is_bootstrap5 else "bundle"
+            basename = f"bundle.b{bootstrap_version}"
             config['modules'].append({
                 'name': os.path.join(directory, basename),
                 'exclude': [
-                    f'hqwebapp/js/{bootstrap_version}/common',
-                    f'hqwebapp/js/{bootstrap_version}/base_main',
+                    f'hqwebapp/js/{bootstrap_dir}/common',
+                    f'hqwebapp/js/{bootstrap_dir}/base_main',
                 ],
                 'include': sorted(mains),
                 'create': True,
             })
 
-        self._save_r_js_config(config)
-
-        ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", BUILD_JS_FILENAME])
-        if ret:
-            raise CommandError("Failed to build JS bundles")
-
-        return config, local_js_dirs
-
-    def _get_html_files_and_local_js_dirs(self):
-        """
-        Returns
-        - all HTML files in corehq, excluding partials
-        - a reference of js directories, for use when copying optimized bundles back into corehq
-        """
-        prefix = os.path.join(ROOT_DIR, 'corehq')
-        html_files = []
-        local_js_dirs = set()
-        for root, dirs, files in os.walk(prefix):
-            for name in files:
-                if name.endswith(".html"):
-                    filename = os.path.join(root, name)
-                    if not re.search(r'/partials/', filename):
-                        html_files.append(filename)
-                elif self.local and name.endswith(".js"):
-                    local_js_dirs.add(self._relative(root))
-        return html_files, local_js_dirs
+        return config
 
     def _get_main_js_modules_by_dir(self, html_files):
         """
@@ -192,6 +163,7 @@ class Command(ResourceStaticCommand):
             ...
         }
         """
+        logger.info("Mapping main modules to django apps")
         dirs = defaultdict(set)
         for filename in html_files:
             proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
@@ -208,23 +180,45 @@ class Command(ResourceStaticCommand):
                             dirs[directory].add(main)
         return dirs
 
-    def _save_r_js_config(self, config):
-        """
-        Writes final r.js config out as a .js file
-        """
-        r_js_config = "({});".format(json.dumps(config, indent=4))
-        with open(self._staticfiles_path('build.js'), 'w') as fout:
-            fout.write(r_js_config)
+    def _run_r_js(self, config, bootstrap_version=3):
+        filename = self._staticfiles_path('build.js')
+        log_prefix = f"[B{bootstrap_version}] "
+        logger.info(f"{log_prefix}Writing final build config to staticfiles/build.js")
+        with open(filename, 'w') as fout:  # add bootstrap prefix, same for build.txt
+            fout.write("({});".format(json.dumps(config, indent=4)))
+
+        logger.info(f"{log_prefix}Running r.js")
+        ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", filename])
+        if ret:
+            raise CommandError("Failed to build JS bundles")
+        logger.info(f"{log_prefix}r.js complete, bundle config output written to staticfiles/build.txt")
+
+        # Copy requirejs_config.js back into corehq, since r.js added all of the bundles to it
+        if self.local:
+            bootstrap_dir = f'bootstrap{bootstrap_version}'
+            filename = self._staticfiles_path('hqwebapp', 'js', bootstrap_dir, 'requirejs_config.js')
+            self._update_resource_hash(f"hqwebapp/js/{bootstrap_dir}/requirejs_config.js", filename)
+            dest = os.path.join(settings.BASE_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
+                                'hqwebapp', 'js', bootstrap_dir, 'requirejs_config.js')
+            logger.info(f"{log_prefix}Copying {bootstrap_dir}/requirejs_config.js back to {os.path.relpath(dest)}")
+            copyfile(filename, dest)
+
+        # Copy build files for later troubleshooting, since the B5 run of this function will overwrite the B3 files
+        for basename in ("build.js", "build.txt"):
+            src = self._staticfiles_path(basename)
+            dest = src.replace("build", f"build.b{bootstrap_version}")
+            logger.info(f"{log_prefix}Copying {os.path.relpath(src)} to {os.path.relpath(dest)}")
+            copyfile(filename, dest)
 
     def _minify(self, config):
         if not self.optimize:
             return
 
         modules = config['modules']
+        logger.info("Minifying Javascript bundles (estimated wait time: 5min)")
         if self.verbose:
             modules = with_progress_bar(modules, prefix="Minifying", oneline=False)
-        else:
-            print("Minifying Javascript bundles (estimated wait time: 5min)")
+
         for module in modules:
             rel_path = Path(module['name'] + ".js")
             path = self._staticfiles_path(rel_path)
@@ -242,48 +236,55 @@ class Command(ResourceStaticCommand):
         if not self.local:
             return
 
+        logger.info("Copying bundle files back into corehq")
         for module in config['modules']:
             src = self._staticfiles_path(module['name'] + '.js')
 
             # Most of the time, the module is .../staticfiles/appName/js/moduleName and
             # should be copied to .../corehq/apps/appName/static/appName/js/moduleName.js
             app = re.sub(r'/.*', '', module['name'])
-            dest = os.path.join(ROOT_DIR, 'corehq', 'apps', app, 'static', module['name'] + '.js')
+            dest = os.path.join(settings.BASE_DIR, 'corehq', 'apps', app, 'static', module['name'] + '.js')
             if os.path.exists(os.path.dirname(dest)):
                 copyfile(src, dest)
             else:
                 # If that didn't work, look for a js directory that matches the module name
                 # src is something like .../staticfiles/foo/baz/bar.js, so search local_js_dirs
                 # for something ending in foo/baz
-                common_dir = self._relative(os.path.dirname(src), os.path.join(ROOT_DIR, 'staticfiles'))
-                options = [d for d in local_js_dirs if self._relative(d).endswith(common_dir)]
+                common_dir = os.path.relpath(os.path.dirname(src), self._staticfiles_path())
+                options = [d for d in local_js_dirs if re.search(r'\b' + re.escape(common_dir), d)]
                 if len(options) == 1:
                     dest_stem = options[0][:-len(common_dir)]   # trim the common foo/baz off the destination
-                    copyfile(src, os.path.join(ROOT_DIR, dest_stem, module['name'] + '.js'))
+                    copyfile(src, os.path.join(settings.BASE_DIR, dest_stem, module['name'] + '.js'))
                 else:
-                    logger.warning("Could not copy {} to {}".format(self._relative(src), self._relative(dest)))
-        logger.info("Final build config written to {}".format(BUILD_JS_FILENAME))
-        logger.info("Bundle config output written to {}".format(BUILD_TXT_FILENAME))
+                    logger.warning("Could not copy {} to {}".format(os.path.relpath(src), os.path.relpath(dest)))
 
     def _update_resource_hash(self, name, filename):
         file_hash = self.get_hash(filename)
         self.resource_versions[name] = file_hash
         return file_hash
 
-    # Overwrite source map reference. Source maps are accessed on the CDN, so they need the version hash
-    def _update_source_map_hash(self, filename, file_hash):
+    # Overwrite source map references. Source maps are accessed on the CDN, so they need the version hash
+    def _update_source_maps(self, config):
         if not self.optimize:
             return
 
-        with open(filename, 'r') as fin:
-            lines = fin.readlines()
-        with open(filename, 'w') as fout:
-            for line in lines:
-                if re.search(r'sourceMappingURL=bundle.js.map$', line):
-                    line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
-                fout.write(line)
+        logger.info("Updating resource_versions with hashes from newly minified bundles")
+
+        for module in config['modules']:
+            filename = self._staticfiles_path(module['name'] + ".js")
+            with open(filename, 'r') as fin:
+                lines = fin.readlines()
+            with open(filename, 'w') as fout:
+                for line in lines:
+                    match = re.search(r'sourceMappingURL=(bundle.b[35].js.map)$', line)
+                    if match:
+                        basename = match.group(1)
+                        file_hash = self._update_resource_hash(module['name'] + ".js", filename)
+                        line = line.replace(basename, f'{basename}?version={file_hash}')
+                    fout.write(line)
 
     def _write_resource_versions(self):
+        logger.info("Writing out resource_versions.js")
         filename = self._staticfiles_path('hqwebapp', 'js', 'resource_versions.js')
         with open(filename, 'w') as fout:
             fout.write("requirejs.config({ paths: %s });" % json.dumps({
