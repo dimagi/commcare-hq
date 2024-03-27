@@ -121,7 +121,7 @@ def excel_config(request, domain):
         return render_error(request, domain, _("Please upload file with extension .xls or .xlsx"))
 
     context.update(_case_importer_breadcrumb_context(_('Case Options'), domain))
-    return render(request, "case_importer/excel_config.html", context)
+    return render(request, "case_importer/bootstrap3/excel_config.html", context)
 
 
 def _get_workbook_sheet_names(case_upload):
