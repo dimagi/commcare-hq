@@ -60,7 +60,6 @@
         "col-md-<num>": "col-lg-<num>",
         "col-sm-<num>": "col-md-<num>",
         "col-xs-<num>": "col-sm-<num>",
-        "col-xs-<num>": "col-sm-<num>",
         "col-xl-offset-<num>": "offset-xxl-<num>",
         "col-lg-offset-<num>": "offset-xl-<num>",
         "col-md-offset-<num>": "offset-lg-<num>",
