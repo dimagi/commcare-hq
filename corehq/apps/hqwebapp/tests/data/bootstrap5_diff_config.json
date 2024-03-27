@@ -303,5 +303,27 @@
       "label": "javascript/hqwebapp/spec",
       "compare_all_files": true
     }
+  ],
+  "apps/settings/templates/settings": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "settings",
+      "compare_all_files": true
+    }
+  ],
+  "apps/settings/static/settings/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/settings/js",
+      "compare_all_files": true
+    }
   ]
 }

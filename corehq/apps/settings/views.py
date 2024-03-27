@@ -144,7 +144,7 @@ class DefaultMySettingsView(BaseMyAccountView):
 class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = gettext_lazy("My Information")
-    template_name = 'settings/edit_my_account.html'
+    template_name = 'settings/bootstrap3/edit_my_account.html'
 
     @two_factor_exempt
     @method_decorator(login_required)
@@ -271,7 +271,7 @@ class MyAccountSettingsView(BaseMyAccountView):
 class MyProjectsList(BaseMyAccountView):
     urlname = 'my_projects'
     page_title = gettext_lazy("My Projects")
-    template_name = 'settings/my_projects.html'
+    template_name = 'settings/bootstrap3/my_projects.html'
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -319,7 +319,7 @@ class MyProjectsList(BaseMyAccountView):
 
 class ChangeMyPasswordView(BaseMyAccountView):
     urlname = 'change_my_password'
-    template_name = 'settings/change_my_password.html'
+    template_name = 'settings/bootstrap3/change_my_password.html'
     page_title = gettext_lazy("Change My Password")
 
     @method_decorator(login_required)
@@ -565,7 +565,7 @@ def get_qrcode(data):
 class EnableMobilePrivilegesView(BaseMyAccountView):
     urlname = 'enable_mobile_privs'
     page_title = gettext_lazy("Enable Privileges on Mobile")
-    template_name = 'settings/enable_superuser.html'
+    template_name = 'settings/bootstrap3/enable_superuser.html'
 
     def dispatch(self, request, *args, **kwargs):
         # raises a 404 if a user tries to access this page without the right authorizations
@@ -614,7 +614,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("API Keys")
     urlname = "user_api_keys"
 
-    template_name = "settings/user_api_keys.html"
+    template_name = "settings/bootstrap3/user_api_keys.html"
 
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):

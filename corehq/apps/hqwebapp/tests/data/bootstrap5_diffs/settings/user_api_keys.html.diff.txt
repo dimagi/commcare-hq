@@ -1,0 +1,77 @@
+--- 
++++ 
+@@ -2,7 +2,7 @@
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% requirejs_main "settings/js/bootstrap3/user_api_keys" %}
++{% requirejs_main "settings/js/bootstrap5/user_api_keys" %}
+ 
+ {% block pagination_templates %}
+   <script type="text/html" id="base-user-api-key-template">
+@@ -14,24 +14,24 @@
+     <td data-bind="text: last_used"></td>
+     <td data-bind="text: expiration_date"></td>
+     <td>
+-      <span class="label label-success" data-bind="visible: status == 'active'">{% trans "Active" %}</span>
+-      <span class="label label-warning" data-bind="visible: status == 'inactive'">{% trans "Inctive" %}</span>
+-      <span class="label label-danger" data-bind="visible: status == 'expired'">{% trans "Expired" %}</span>
++      <span class="badge text-bg-success" data-bind="visible: status == 'active'">{% trans "Active" %}</span>
++      <span class="badge text-bg-warning" data-bind="visible: status == 'inactive'">{% trans "Inctive" %}</span>
++      <span class="badge text-bg-danger" data-bind="visible: status == 'expired'">{% trans "Expired" %}</span>
+       <small class="help-block" data-bind="hidden: is_active, text: deactivated_on" />
+     </td>
+     <td>
+ 
+-      <button class="btn btn-default" data-bind="visible: status == 'active', click: $root.deactivate">
++      <button class="btn btn-outline-primary" data-bind="visible: status == 'active', click: $root.deactivate">
+         <i class="fa fa-pause"></i> {% trans "Deactivate" %}
+       </button>
+-      <button class="btn btn-default" data-bind="visible: status == 'inactive', click: $root.activate">
++      <button class="btn btn-outline-primary" data-bind="visible: status == 'inactive', click: $root.activate">
+         <i class="fa fa-toggle-right"></i> {% trans "Activate" %}
+       </button>
+ 
+       <button type="button"
+-              data-toggle="modal"
++              data-bs-toggle="modal"
+               data-bind="attr: {'data-target': '#delete-key-' + id}, hidden: status == 'active'"
+-              class="btn btn-danger">
++              class="btn btn-outline-danger">
+         <i class="fa fa-remove"></i> {% trans "Delete" %}
+       </button>
+ 
+@@ -40,7 +40,7 @@
+         <div class="modal-dialog">
+           <div class="modal-content">
+             <div class="modal-header">
+-              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
++              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>
+               <h3>
+                 {% trans "Delete Key" %} <strong data-bind="text: name"></strong>?
+               </h3>
+@@ -54,12 +54,12 @@
+             </div>
+               <div class="modal-footer">
+               <button type="button"
+-                      class="btn btn-default"
+-                      data-dismiss="modal">
++                      class="btn btn-outline-primary"
++                      data-bs-dismiss="modal">
+                 Cancel
+               </button>
+               <button type="button"
+-                      class="btn btn-danger delete-item-confirm">
++                      class="btn btn-outline-danger delete-item-confirm">
+                 <i class="fa fa-remove"></i> {% trans "Delete Key" %}
+               </button>
+             </div>
+@@ -82,7 +82,7 @@
+     <td data-bind="text: last_used"></td>
+     <td data-bind="text: expiration_date"></td>
+     <td>
+-      <span class="label label-success">{% trans "Active" %}</span>
++      <span class="badge text-bg-success">{% trans "Active" %}</span>
+     </td>
+     <td></td>
+   </script>
