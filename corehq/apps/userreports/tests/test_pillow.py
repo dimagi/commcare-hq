@@ -9,7 +9,7 @@ from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from pillow_retry.models import PillowError
-from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.models import SQLRepeatRecord
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.data_source_providers import (
     DynamicDataSourceProvider,
@@ -536,7 +536,7 @@ class IndicatorPillowTest(BaseRepeaterTest):
         self._test_process_deleted_doc_from_sql(datetime_mock)
         self.pillow = _get_pillow([self.config])
         later = datetime.utcnow() + timedelta(hours=50)
-        repeat_records = RepeatRecord.all(domain=self.domain, due_before=later)
+        repeat_records = SQLRepeatRecord.objects.filter(domain=self.domain, next_check__lt=later)
         # We expect 2 repeat records for 2 repeaters each
         self.assertEqual(repeat_records.count(), 4)
 

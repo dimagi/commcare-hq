@@ -52,6 +52,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     def setUp(self):
         super().setUp()
+        self.repeater = self.reget_repeater()
         self.repeat_record = self.repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id=self.instance_id,

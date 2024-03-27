@@ -68,10 +68,7 @@ from corehq.apps.userreports.reports.view import (
 )
 from corehq.apps.userreports.const import TEMP_REPORT_PREFIX
 from corehq.motech.generic_inbound.reports import ApiRequestLogReport
-from corehq.motech.repeaters.views import (
-    DomainForwardingRepeatRecords,
-    SQLRepeatRecordReport,
-)
+from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
 from corehq.apps.geospatial.reports import (
     CaseManagementMap,
     CaseGroupingReport,
@@ -339,7 +336,6 @@ ADMIN_REPORTS = (
 DOMAIN_REPORTS = (
     (_('Project Settings'), (
         DomainForwardingRepeatRecords,
-        SQLRepeatRecordReport,
         DomainLinkHistoryReport,
         ApiRequestLogReport,
     )),

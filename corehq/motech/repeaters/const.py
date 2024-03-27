@@ -32,10 +32,3 @@ RECORD_SUCCESS_STATE = State.Success
 RECORD_FAILURE_STATE = State.Fail
 RECORD_CANCELLED_STATE = State.Cancelled
 RECORD_EMPTY_STATE = State.Empty
-COUCH_STATES = {
-    State.Pending: 'PENDING',
-    State.Fail: 'FAIL',
-    State.Success: 'SUCCESS',
-    State.Cancelled: 'CANCELLED',
-    State.Empty: 'EMPTY',  # Not used in Couch, grouped with SUCCESS?
-}
