@@ -272,7 +272,7 @@ class Command(ResourceStaticCommand):
                 lines = fin.readlines()
             with open(filename, 'w') as fout:
                 for line in lines:
-                    match = re.search(r'sourceMappingURL=(.*)$', line)
+                    match = re.search(r'sourceMappingURL=(bundle.b[35].js.map)$', line)
                     if match:
                         basename = match.group(1)
                         file_hash = self._update_resource_hash(module['name'] + ".js", filename)
