@@ -614,7 +614,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("API Keys")
     urlname = "user_api_keys"
 
-    template_name = "settings/user_api_keys.html"
+    template_name = "settings/bootstrap3/user_api_keys.html"
 
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
