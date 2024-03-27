@@ -1,4 +1,4 @@
-hqDefine("settings/js/user_api_keys", [
+hqDefine("settings/js/bootstrap5/user_api_keys", [
     "jquery",
     "knockout",
     'underscore',
