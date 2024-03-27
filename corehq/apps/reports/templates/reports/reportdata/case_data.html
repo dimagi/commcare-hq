@@ -285,6 +285,12 @@
               </button>
             </form>
           {% endif %}
+          {% if not is_usercase %}
+            <a class="btn btn-danger pull-left" href="{% url 'soft_delete_case_view' domain case_id %}">
+              <i class="fa fa-trash"></i>
+              {% trans 'Delete Case' %}
+            </a>
+          {% endif %}
         </div>
       </div>
     {% endif %}

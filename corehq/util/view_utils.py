@@ -130,24 +130,24 @@ def absolute_reverse(*args, **kwargs):
     return reverse(*args, absolute=True, **kwargs)
 
 
-def get_case_or_404(domain, case_id):
+def get_case_or_404(domain, case_id, include_deleted=False):
     from corehq.form_processor.exceptions import CaseNotFound
     from corehq.form_processor.models import CommCareCase
     try:
         case = CommCareCase.objects.get_case(case_id, domain)
-        if case.domain != domain or case.is_deleted:
+        if case.domain != domain or (not include_deleted and case.is_deleted):
             raise Http404()
         return case
     except CaseNotFound:
         raise Http404()
 
 
-def get_form_or_404(domain, id):
+def get_form_or_404(domain, form_id, include_deleted=False):
     from corehq.form_processor.exceptions import XFormNotFound
     from corehq.form_processor.models import XFormInstance
     try:
-        form = XFormInstance.objects.get_form(id, domain)
-        if form.is_deleted:
+        form = XFormInstance.objects.get_form(form_id, domain)
+        if not include_deleted and form.is_deleted:
             raise Http404()
         return form
     except XFormNotFound:

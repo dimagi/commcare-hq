@@ -16,7 +16,7 @@ from corehq.form_processor.models import (
     CommCareCase,
     CommCareCaseIndex,
 )
-from corehq.form_processor.models.cases import CaseIndexInfo
+from corehq.form_processor.models.cases import CaseIndexInfo, TempCaseCache
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_case,
@@ -490,6 +490,31 @@ class TestCommCareCase(BaseCaseManagerTest):
         ) as (case, index1, index2):
             index_map = case.get_index_map(reversed=True)
             self.assertEqual(index_map, {})  # Nothing indexes `case`
+
+
+class TempCaseCacheTests(TestCase):
+    def test_no_db_hit_if_cached(self):
+        cache_obj = TempCaseCache()
+        cache_case = _create_case(name="not_cached_case")
+        self.addCleanup(cache_case.delete)
+        cache_case.name = "cached_case"
+        cache_obj.cache[cache_case.case_id] = cache_case
+        retrieved_case = cache_obj.get_cases([cache_case.case_id])[0]
+        self.assertEqual(retrieved_case.name, "cached_case")
+
+    def test_retrieves_case_if_not_cached(self):
+        cache_obj = TempCaseCache()
+        not_cache_case = _create_case(name="not_cached_case")
+        self.addCleanup(not_cache_case.delete)
+        retrieved_case = cache_obj.get_cases([not_cache_case.case_id])[0]
+        self.assertEqual(retrieved_case.name, "not_cached_case")
+
+    def test_caches_case_if_not_cached(self):
+        cache_obj = TempCaseCache()
+        not_cache_case = _create_case(name="not_cached_case")
+        self.addCleanup(not_cache_case.delete)
+        cache_obj.get_cases([not_cache_case.case_id])
+        self.assertEqual(cache_obj.cache[not_cache_case.case_id], not_cache_case)
 
 
 @sharded
