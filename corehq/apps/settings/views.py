@@ -144,7 +144,7 @@ class DefaultMySettingsView(BaseMyAccountView):
 class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = gettext_lazy("My Information")
-    template_name = 'settings/edit_my_account.html'
+    template_name = 'settings/bootstrap3/edit_my_account.html'
 
     @two_factor_exempt
     @method_decorator(login_required)
