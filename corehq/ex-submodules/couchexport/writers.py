@@ -572,14 +572,12 @@ class GeoJSONWriter(JsonExportWriter):
     def _find_geo_property_by_path(table):
         # For form exports we store the path to the geo property, so this is an
         # attempt to find the header by the path specification
-        is_path = len(table.selected_geo_property.split('.')) > 1
-        if is_path:
-            column = table.get_column_by_path_str(
-                path=table.selected_geo_property,
-                doc_type="GeopointItem",
-            )
-            if column:
-                return column.get_headers()[0]
+        column = table.get_column_by_path_str(
+            path=table.selected_geo_property,
+            doc_type="GeopointItem",
+        )
+        if column:
+            return column.get_headers()[0]
 
         return table.selected_geo_property
 

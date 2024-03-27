@@ -653,9 +653,6 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
 
     def get_column_by_path_str(self, path, doc_type):
         path_nodes = [PathNode(name=node) for node in path.split('.')]
-        if not path_nodes:
-            return None
-
         _, column = self.get_column(item_path=path_nodes, item_doc_type=doc_type, column_transform=None)
         return column
 
