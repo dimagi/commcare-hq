@@ -1,30 +1,10 @@
 {% extends "mocha/base.html" %}
 {% load hq_shared_tags %}
 
+{% requirejs_main "cloudcare/js/formplayer/spec/main" %}
+
 {% block dependencies %}
   {% include "formplayer/dependencies.html" %}
-  <script src="{% static 'cloudcare/js/formplayer/spec/fake_formplayer.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/fixtures/case_list.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/fixtures/case_grid_list.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/fixtures/case_tile_list.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/fixtures/split_screen_case_list.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/fixtures/menu_list.js' %}"></script>
-{% endblock %}
-
-{% block mocha_tests %}
-  <script src="{% static 'cloudcare/js/spec/utils_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/case_list_pagination_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/hq_events_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/menu_list_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/user_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/session_middleware_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/utils_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/integration_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/debugger_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/query_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/split_screen_case_search_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/spec/markdown_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/spec/menu_utils_spec.js' %}"></script>
 {% endblock %}
 
 {% block fixtures %}
