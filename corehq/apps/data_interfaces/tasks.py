@@ -226,7 +226,7 @@ def _get_repeat_record_ids(payload_id, repeater_id, domain):
         queryset = SQLRepeatRecord.objects.filter(
             domain=domain,
             payload_id=payload_id,
-        ).order_by('-registered_at')
+        )
     elif repeater_id:
         queryset = SQLRepeatRecord.objects.filter(
             domain=domain,
@@ -234,7 +234,7 @@ def _get_repeat_record_ids(payload_id, repeater_id, domain):
         )
     else:
         return []
-    return list(queryset.values_list("id", flat=True))
+    return list(queryset.order_by().values_list("id", flat=True))
 
 
 @task
