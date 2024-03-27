@@ -109,7 +109,7 @@ class Command(BaseCommand):
                           "in split files.\n\n")
         self.stdout.write("After this, please update `bootstrap5_diff_config.json` "
                           "using:\n\n")
-        self.stdout.write(f"./mmanage.py build_bootstrap5_diffs --update_app {app_name}\n\n")
+        self.stdout.write(f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n")
         self.stdout.write("Once the changes to that file are committed, you can run:\n")
         self.stdout.write("./mmanage.py build_bootstrap5_diffs\n\n")
         self.stdout.write("Thank you for your dedication to this migration! <3\n\n")
