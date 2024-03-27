@@ -70,11 +70,8 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         return {
             'edit_idp_form': self.edit_enterprise_idp_form,
             'idp_slug': self.idp_slug,
-            'toggle_client_secret': (
-                self.identity_provider.protocol == IdentityProviderProtocol.OIDC
-                and self.identity_provider.client_secret
-            ),
-            'toggle_api_secret': self.identity_provider.protocol == IdentityProviderProtocol.SAML,
+            'is_oidc': self.identity_provider.protocol == IdentityProviderProtocol.OIDC,
+            'show_remote_user_management': self.show_remote_user_management,
         }
 
     @property

@@ -992,7 +992,7 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                             crispy.Div(
                                 hqcrispy.InlineField(
                                     'client_secret',
-                                    data_bind="visible: isClientSecretVisible"
+                                    data_bind="visible: isClientSecretVisible" if self.idp.client_secret else None,
                                 ),
                                 client_secret_toggles,
                             ),
