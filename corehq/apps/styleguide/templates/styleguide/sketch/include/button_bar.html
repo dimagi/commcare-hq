@@ -1,0 +1,31 @@
+<button type="button"
+        class="btn btn-outline-primary"
+        data-bs-toggle="offcanvas"
+        data-bs-target="#filterDataOffcanvas">
+  <i class="fa-solid fa-filter"></i> Filter Data
+</button>
+<button type="button"
+        class="btn btn-outline-primary"
+        data-bs-toggle="offcanvas"
+        data-bs-target="#configureColumnsOffcanvas">
+  <i class="fa-solid fa-table-columns"></i> Configure Columns
+</button>
+<button type="button"
+        class="btn btn-outline-primary"
+        data-bind="disable: isCleanDataButtonDisabled"
+        data-bs-toggle="offcanvas"
+        data-bs-target="#editOffcanvas">
+  <i class="fa-solid fa-shower"></i> Clean Data
+</button>
+<!-- ko if: isPreviewing -->
+  <button type="button"
+          data-bind="click: acceptChanges"
+          class="btn btn-primary">
+    <i class="fa-solid fa-check"></i> Accept Changes
+  </button>
+  <button type="button"
+          data-bind="click: discardChanges"
+          class="btn btn-outline-danger">
+    <i class="fa-regular fa-trash-can"></i> Discard Changes
+  </button>
+<!-- /ko -->
