@@ -584,7 +584,6 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         label=gettext_lazy("Entity ID"),
         required=False,
     )
-    #this field should always be defined before the api_host, api_id, api_secret and date_api_secret_expiration.
     enable_user_deactivation = forms.BooleanField(
         required=False,
         label=gettext_lazy("Auto-Deactivation"),
@@ -650,12 +649,10 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
             ),
         ]
 
-    @staticmethod
-    def _check_required_when_enabled(is_enabled, value):
-        if is_enabled and not value:
-            raise forms.ValidationError(
-                _("This is required when Auto-Deactivation is enabled.")
-            )
+    def _check_required(self, field):
+        value = self.cleaned_data[field]
+        if not value:
+            self.add_error(field, forms.ValidationError(_("This is required when Auto-Deactivation is enabled.")))
 
     def clean_is_active(self):
         is_active = self.cleaned_data['is_active']
@@ -670,36 +667,20 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         _ensure_entity_id_matches_expected_provider(entity_id, self.idp)
         return entity_id
 
-    def clean_api_secret(self):
-        api_secret = self.cleaned_data['api_secret']
+    def clean(self):
         is_enabled = self.cleaned_data['enable_user_deactivation']
-        if is_enabled and not (api_secret or self.idp.api_secret):
-            raise forms.ValidationError(
-                _("This is required when Auto-Deactivation is enabled.")
-            )
-        return api_secret
-
-    def clean_api_id(self):
-        api_id = self.cleaned_data['api_id']
-        is_enabled = self.cleaned_data['enable_user_deactivation']
-        BaseSsoEnterpriseSettingsForm._check_required_when_enabled(is_enabled, api_id)
-        return api_id
-
-    def clean_api_host(self):
-        api_host = self.cleaned_data['api_host']
-        is_enabled = self.cleaned_data['enable_user_deactivation']
-        BaseSsoEnterpriseSettingsForm._check_required_when_enabled(is_enabled, api_host)
-        return api_host
-
-    def clean_date_api_secret_expiration(self):
+        if is_enabled:
+            if not (self.cleaned_data['api_secret'] or self.idp.api_secret):
+                self.add_error('api_secret',
+                               forms.ValidationError(_("This is required when Auto-Deactivation is enabled.")))
+            self._check_required('api_id')
+            self._check_required('api_host')
+            self._check_required('date_api_secret_expiration')
         date_expiration = self.cleaned_data['date_api_secret_expiration']
-        is_enabled = self.cleaned_data['enable_user_deactivation']
-        BaseSsoEnterpriseSettingsForm._check_required_when_enabled(is_enabled, date_expiration)
         if date_expiration and date_expiration <= datetime.datetime.now(tz=date_expiration.tzinfo):
-            raise forms.ValidationError(
+            self.add_error('date_api_secret_expiration', forms.ValidationError(
                 _("This certificate has already expired!")
-            )
-        return date_expiration
+            ))
 
     def update_identity_provider(self, admin_user):
         raise NotImplementedError("please implement update_identity_provider")
