@@ -22,6 +22,7 @@ from memoized import memoized
 from corehq.apps.accounting.utils.stripe import charge_through_stripe
 
 from corehq.apps.domain.shortcuts import publish_domain_saved
+from corehq.apps.users.dbaccessors import get_active_web_usernames_by_domain, get_web_user_count
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -602,6 +603,22 @@ class BillingAccount(ValidateModelMixin, models.Model):
             domain=domain,
             use_domain_gateway=True,
         )
+
+    def get_web_user_usernames(self):
+        domains = self.get_domains()
+        web_users = set()
+
+        for domain in domains:
+            web_users.update(get_active_web_usernames_by_domain(domain))
+
+        return web_users
+
+    def get_web_user_count(self):
+        domains = self.get_domains()
+        count = 0
+        for domain in domains:
+            count += get_web_user_count(domain, include_inactive=False)
+        return count
 
     @staticmethod
     def should_show_sms_billable_report(domain):
