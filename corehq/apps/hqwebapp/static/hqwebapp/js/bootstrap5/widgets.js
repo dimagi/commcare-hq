@@ -4,7 +4,7 @@ hqDefine("hqwebapp/js/bootstrap5/widgets",[
     'underscore',
     '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
     'hqwebapp/js/initial_page_data',
-    'tempusDominus',
+    'es6!hqwebapp/js/tempus_dominus',
     'select2/dist/js/select2.full.min',
 ], function ($, _, MapboxGeocoder, initialPageData, tempusDominus) {
     var init = function () {
