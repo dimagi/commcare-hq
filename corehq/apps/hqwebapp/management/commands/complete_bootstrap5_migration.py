@@ -148,7 +148,7 @@ class Command(BaseCommand):
 
     def select_path(self, app_name, matching_paths, is_template):
         selected_path = matching_paths[0]
-        if matching_paths:
+        if len(matching_paths) > 1:
             file_type = "templates" if is_template else "js files"
             self.stdout.write(f"\nFound {len(matching_paths)} "
                               f"{file_type} matching that name...\n")
