@@ -5,6 +5,7 @@ import re
 from django import forms
 from django.db import transaction
 from django.template.defaultfilters import slugify
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy, gettext
@@ -15,6 +16,7 @@ from crispy_forms import layout as crispy
 
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.sso import certificates
@@ -644,12 +646,12 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         empty_value=None
     )
 
-    expiration_warning_message = gettext_lazy(
+    expiration_warning_message = mark_safe_lazy(gettext_lazy(  # nosec: no user input
         'All existing API keys that do not comply with this expiration date policy will be updated to ensure a '
         'compliant expiration date is present. For keys that do not have an expiration date set, the date of '
         'expiration will be <span data-bind="text: expirationLength"></span> from today after clicking '
         '"Update Configuration" below. This will apply only to SSO users associated with this Identity Provider.'
-    )
+    ))
 
     def __init__(self, identity_provider, *args, uses_api_key_management=False, **kwargs):
         self.idp = identity_provider
@@ -658,6 +660,10 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
 
     def get_primary_fields(self):
         if self.uses_api_key_management:
+            warning_message_div = render_to_string(
+                'sso/enterprise_admin/sso_api_expiration_warning.html',
+                {'warning_message': self.expiration_warning_message}
+            )
             fieldset = crispy.Fieldset(
                 _('API Key Management'),
                 hqcrispy.CheckboxField('always_show_user_api_keys'),
@@ -665,14 +671,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
                 crispy.Div(
                     crispy.Field(
                         'max_days_until_user_api_key_expiration', data_bind="value: expirationLengthValue"),
-                    crispy.HTML(
-                        '<div class="col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2" '
-                        'data-bind="visible: showExpirationWarning">'
-                        '<p class="alert alert-warning">'
-                        '<i class="fa fa-warning"></i> {}'
-                        '</p>'
-                        '</div>'.format(self.expiration_warning_message)
-                    ),
+                    crispy.HTML(warning_message_div),
                     data_bind='visible: enforceExpiration'
                 ),
             )
