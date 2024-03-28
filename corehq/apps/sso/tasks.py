@@ -136,28 +136,22 @@ def auto_deactivate_removed_sso_users():
         # if the Graph Users API returns an empty list of users we will skip auto deactivation
         if len(idp_users) == 0:
             context = get_sso_deactivation_skip_email_context(idp)
-            if not context["to"]:
-                notify_exception(None, f"no admin email addresses for IdP: {idp}")
-            try:
-                for send_to in context["to"]:
-                    send_html_email_async.delay(
-                        context["subject"],
-                        send_to,
-                        context["html"],
-                        text_content=context["plaintext"],
-                        email_from=context["from"],
-                        bcc=context["bcc"],
-                    )
-                    log.info(
-                        "Sent sso user deactivation skipped notification"
-                        "email for %(idp_name)s to %(send_to)s." % {
-                            "idp_name": idp.name,
-                            "send_to": send_to,
-                        }
-                    )
-            except Exception as exc:
-                notify_exception(None, f"Failed to send sso user deactivation skipped notification email for"
-                                       f" IdP {idp}: {exc!s}", exc_info=True)
+            for send_to in context["to"]:
+                send_html_email_async.delay(
+                    context["subject"],
+                    send_to,
+                    context["html"],
+                    text_content=context["plaintext"],
+                    email_from=context["from"],
+                    bcc=context["bcc"],
+                )
+                log.info(
+                    "Sent sso user deactivation skipped notification"
+                    "email for %(idp_name)s to %(send_to)s." % {
+                        "idp_name": idp.name,
+                        "send_to": send_to,
+                    }
+                )
             return
 
         usernames_to_deactivate = []

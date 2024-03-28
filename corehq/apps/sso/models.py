@@ -468,28 +468,22 @@ class IdentityProvider(models.Model):
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
 
             context = get_graph_api_connection_issue_email_context(self, str(e))
-            if not context["to"]:
-                notify_exception(None, f"no admin email addresses for IdP: {self}")
-            try:
-                for send_to in context["to"]:
-                    send_html_email_async.delay(
-                        context["subject"],
-                        send_to,
-                        context["html"],
-                        text_content=context["plaintext"],
-                        email_from=context["from"],
-                        bcc=context["bcc"],
-                    )
-                    log.info(
-                        "Sent Microsoft Graph API connection issue email "
-                        "for %(idp_name)s to %(send_to)s." % {
-                            "idp_name": self.name,
-                            "send_to": send_to,
-                        }
-                    )
-            except Exception as exc:
-                notify_exception(None, f"Failed to send Microsoft Graph API connection issue"
-                                 f" for IdP {self.name}: {exc!s}", exc_info=True)
+            for send_to in context["to"]:
+                send_html_email_async.delay(
+                    context["subject"],
+                    send_to,
+                    context["html"],
+                    text_content=context["plaintext"],
+                    email_from=context["from"],
+                    bcc=context["bcc"],
+                )
+                log.info(
+                    "Sent Microsoft Graph API connection issue email "
+                    "for %(idp_name)s to %(send_to)s." % {
+                        "idp_name": self.name,
+                        "send_to": send_to,
+                    }
+                )
 
 
 @receiver(post_save, sender=Subscription)
