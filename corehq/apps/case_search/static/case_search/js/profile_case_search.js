@@ -13,6 +13,7 @@ hqDefine('case_search/js/profile_case_search', [
 ) {
     var caseSearchModel = function () {
         var self = {};
+        self.appId = ko.observable();
         self.requestDict = ko.observable();
         self.results = ko.observable();
         self.browserTime = ko.observable();
@@ -29,7 +30,7 @@ hqDefine('case_search/js/profile_case_search', [
             let start = Date.now();
             $.post({
                 url: window.location.href,
-                data: {q: self.requestDict()},
+                data: {q: self.requestDict(), app_id: self.appId()},
                 success: function (data) {
                     self.results(data);
                     self.searchButtonIcon("fa fa-search");
