@@ -17,6 +17,7 @@ from corehq.apps.es.groups import GroupES
 from corehq.apps.es.users import UserES
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.users.util import raw_username
 
@@ -79,6 +80,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         previous_summary=None,
         delta_high_performers=0,
         delta_low_performers=0,
+        app_id=None,
     ):
         self._previous_summary = previous_summary
         self._next_summary = None
@@ -93,6 +95,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             base_queryset = base_queryset.filter(
                 user_id__in=selected_users,
             )
+
+        if app_id:
+            base_queryset = base_queryset.filter(app_id=app_id)
 
         self._user_stat_from_malt = (base_queryset
                                      .values('user_id', 'username')
@@ -265,6 +270,7 @@ class ProjectHealthDashboard(ProjectReport):
     fields = [
         'corehq.apps.reports.filters.location.LocationGroupFilter',
         'corehq.apps.reports.filters.dates.HiddenLastMonthDateFilter',
+        'corehq.apps.reports.filters.select.SelectApplicationFilter',
     ]
 
     exportable = True
@@ -280,6 +286,10 @@ class ProjectHealthDashboard(ProjectReport):
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(ProjectHealthDashboard, self).decorator_dispatcher(request, *args, **kwargs)
+
+    @property
+    def selected_app_id(self):
+        return self.request_params.get(SelectApplicationFilter.slug, None)
 
     def get_number_of_months(self):
         try:
@@ -346,6 +356,7 @@ class ProjectHealthDashboard(ProjectReport):
                 previous_summary=last_month_summary,
                 selected_users=filtered_users,
                 active_not_deleted_users=active_not_deleted_users,
+                app_id=self.selected_app_id,
             )
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
