@@ -157,8 +157,11 @@ def xmlns_to_name_for_case_deletion(domain, form):
     """
     form_name = xmlns_to_name(domain, form.xmlns, form.app_id)
     if form_name == form.xmlns:
+        app_name = None
+        if form.app_id:
+            app_name = get_app(domain, form.app_id).name
         extracted_name = [
-            get_app(domain, form.app_id).name or "[Unknown App]",
+            app_name or "[Unknown App]",
             "[Unknown Module]",
             form.name or "[Unknown Form]"
         ]
