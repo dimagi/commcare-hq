@@ -662,7 +662,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
 
     def _check_required(self, field):
         value = self.cleaned_data[field]
-        if not value:
+        if value is (None or ''):
             self.add_error(field, forms.ValidationError(_("This is required when Auto-Deactivation is enabled.")))
 
     def clean_is_active(self):
