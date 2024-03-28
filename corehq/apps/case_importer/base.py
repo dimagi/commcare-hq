@@ -19,7 +19,7 @@ def location_safe_case_imports_enabled(view_func, request, *args, **kwargs):
 class ImportCases(DataInterface):
     name = gettext_lazy("Import Cases from Excel")
     slug = "import_cases"
-    report_template_path = "case_importer/import_cases.html"
+    report_template_path = "case_importer/bootstrap3/import_cases.html"
     hide_filters = True
     asynchronous = False
 
