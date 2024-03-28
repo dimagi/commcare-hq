@@ -42,7 +42,7 @@ class Command(ResourceStaticCommand):
         logger.setLevel('DEBUG')
 
         if options.get('bootstrap_version') == "bootstrap5":
-            logger.warning("Running with bootstrap5 is no longer necessary")
+            logger.info("Running with bootstrap5 is no longer necessary")
             exit()
 
         self.local = options['local']
