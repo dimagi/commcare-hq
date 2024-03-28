@@ -6,6 +6,7 @@ from functools import wraps
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
+from casexml.apps.case.fixtures import CaseDBFixture
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
@@ -92,11 +93,16 @@ def profile_case_search(domain, couch_user, app_id, config):
     with helper.timing_context:
         cases = get_primary_case_search_results(helper, domain, config.case_types,
                                                 config.criteria, config.commcare_sort)
+        primary_count = len(cases)
         if app_id:
             cases.extend(get_and_tag_related_cases(
                 helper, app_id, config.case_types, cases, config.custom_related_case_property,
                 config.include_all_related_cases))
-    return helper.timing_context, len(cases)
+        related_count = len(cases) - primary_count
+
+        with helper.timing_context('CaseDBFixture.fixture'):
+            CaseDBFixture(cases).fixture
+    return helper.timing_context, primary_count, related_count
 
 
 @time_function()
@@ -363,8 +369,9 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
     results = list({
         case.case_id: case for case in unfiltered_results if case.case_id not in initial_case_ids
     }.values())
-    for case in results:
-        _tag_is_related_case(case)
+    with helper.timing_context('_tag_is_related_case'):
+        for case in results:
+            _tag_is_related_case(case)
     return results
 
 
