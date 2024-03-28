@@ -12,6 +12,8 @@ from django.utils.translation import gettext_lazy
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
+from corehq.apps.reports.filters.dates import SingleDateFilter
+from corehq.util.dates import iso_string_to_date
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -216,8 +218,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def user_query(self, pagination=True):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker') +
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.request.GET.getlist('location_restricted_mobile_worker')
+            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -438,8 +440,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def get_user_ids(self):
         mobile_user_and_group_slugs = set(
             # Cater for old ReportConfigs
-            self.request.GET.getlist('location_restricted_mobile_worker') +
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            self.request.GET.getlist('location_restricted_mobile_worker')
+            + self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
         user_ids = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
@@ -647,6 +649,15 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
 @location_safe
 class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
+
+    class FromDateFilter(SingleDateFilter):
+        label = gettext_lazy("Start Date")
+        default_date_delta = -59
+        min_date_delta = -364
+        max_date_delta = -1
+        help_text = gettext_lazy("Choose a start date up to 1 year ago."
+                                 " Report displays data from the selected date to today.")
+
     slug = 'aggregate_user_status'
 
     report_template_path = "reports/async/aggregate_user_status.html"
@@ -655,6 +666,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        FromDateFilter,
     ]
     exportable = False
     emailable = False
@@ -688,6 +700,27 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         ])
         return user_query
 
+    def _sanitize_report_from_date(self, from_date):
+        """resets the date to a valid value if out of range"""
+        today = datetime.today().date()
+        from_date_delta = (from_date - today).days
+        if from_date_delta > self.FromDateFilter.max_date_delta:
+            from_date = today + timedelta(days=self.FromDateFilter.max_date_delta)
+        elif from_date_delta < self.FromDateFilter.min_date_delta:
+            from_date = today + timedelta(days=self.FromDateFilter.min_date_delta)
+        return from_date
+
+    @cached_property
+    def report_from_date(self):
+        from_date = self.request_params.get(self.FromDateFilter.slug)
+        if from_date:
+            try:
+                from_date = iso_string_to_date(from_date)
+                return self._sanitize_report_from_date(from_date)
+            except ValueError:
+                pass
+        return datetime.today().date() + timedelta(days=self.FromDateFilter.default_date_delta)
+
     @property
     def template_context(self):
 
@@ -713,7 +746,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             def get_buckets(self):
                 return self.bucket_series.get_summary_data()
 
-
         class BucketSeries(namedtuple('Bucket', 'data_series total_series total user_count')):
             @property
             @memoized
@@ -731,11 +763,16 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                 def _readable_pct_from_total(total_series, index):
                     return '{0:.0f}%'.format(total_series[index - 1]['y'])
 
+                total_days = len(self.data_series) - 1
+                intervals = [interval for interval in [3, 7, 30] if interval < total_days]
+                intervals.append(total_days)
+
                 return [
-                    [_readable_pct_from_total(self.percent_series, 3), _('in the last 3 days')],
-                    [_readable_pct_from_total(self.percent_series, 7), _('in the last week')],
-                    [_readable_pct_from_total(self.percent_series, 30), _('in the last 30 days')],
-                    [_readable_pct_from_total(self.percent_series, 60), _('in the last 60 days')],
+                    [
+                        _readable_pct_from_total(self.percent_series, interval),
+                        _('in the last {} days').format(interval)
+                    ]
+                    for interval in intervals
                 ]
 
             @property
@@ -757,12 +794,13 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             # start with N days of empty data
             # add bucket info to the data series
             # add last bucket
-            days_of_history = 60
+            today = datetime.today().date()
+            # today and report_from_date both are inclusive
+            days_of_history = (today - self.report_from_date).days + 1
             vals = {
                 i: 0 for i in range(days_of_history)
             }
             extra = total = running_total = 0
-            today = datetime.today().date()
             for bucket_val in buckets:
                 bucket_date = date.fromisoformat(bucket_val['key'])
                 delta_days = (today - bucket_date).days
@@ -809,8 +847,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                 }
             )
             return BucketSeries(daily_series, running_total_series, total, user_count)
-
-
 
         submission_series = SeriesData(
             id='submission',
