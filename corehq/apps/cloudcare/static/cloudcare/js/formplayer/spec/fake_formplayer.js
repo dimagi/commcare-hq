@@ -12,9 +12,14 @@
  *          m1-f0: a form that updates a case
  *  No menus use display-only forms.
  */
-hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
-    let AssertProperties = hqImport("hqwebapp/js/assert_properties"),
-        module = {},
+hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", [
+    "underscore",
+    "hqwebapp/js/assert_properties",
+], function (
+    _,
+    AssertProperties
+) {
+    let module = {},
         apps = {
             'abc123': {
                 title: "My App",

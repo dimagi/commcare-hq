@@ -1,5 +1,9 @@
 'use strict';
-hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
+hqDefine("cloudcare/js/form_entry/spec/fixtures", [
+    "underscore",
+], function (
+    _
+) {
     return {
         textJSON: (options = {}) => (_.defaults(options, {
             "caption_audio": null,

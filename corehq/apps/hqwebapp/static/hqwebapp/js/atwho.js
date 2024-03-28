@@ -1,6 +1,8 @@
 hqDefine('hqwebapp/js/atwho', [
     "knockout",
     "underscore",
+    "Caret.js/dist/jquery.caret",
+    "At.js/dist/js/jquery.atwho",
 ],
 function (
     ko,

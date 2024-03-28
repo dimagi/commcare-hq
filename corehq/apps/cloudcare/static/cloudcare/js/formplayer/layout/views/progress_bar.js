@@ -1,7 +1,15 @@
 'use strict';
-/*global Marionette */
-
-hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", function () {
+hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", [
+    'jquery',
+    'underscore',
+    'backbone.marionette',
+    'hqwebapp/js/toggles',
+], function (
+    $,
+    _,
+    Marionette,
+    toggles
+) {
     var ProgressView = Marionette.View.extend({
         template: _.template($("#progress-view-template").html() || ""),
 
@@ -33,7 +41,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", function () {
             // Due to jQuery bug, can't use .animate() with % until jQuery 3.0
             this.progressEl.find('.js-progress-bar').css('transition', duration + 'ms');
             this.progressEl.find('.js-progress-bar').width(progress * 100 + '%');
-            if (total > 0 && !(hqImport('hqwebapp/js/toggles').toggleEnabled('USE_PROMINENT_PROGRESS_BAR'))) {
+            if (total > 0 && !(toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR'))) {
                 this.progressEl.find('.js-subtext small').text(
                     gettext('Completed: ') + done + '/' + total
                 );

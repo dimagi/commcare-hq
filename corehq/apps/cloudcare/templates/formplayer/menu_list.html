@@ -109,7 +109,7 @@
     <div class="page-header menu-header">
       <h1 class="page-title"><%- title %></h1>
     </div>
-    <div class="<% if (environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) { %>container<% } %>">
+    <div class="<% if (isAppPreview) { %>container<% } %>">
       <div class="row menus-container"></div>
     </div>
   </div>

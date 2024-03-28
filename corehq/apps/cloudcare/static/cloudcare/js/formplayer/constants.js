@@ -1,5 +1,5 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/constants", function () {
+hqDefine("cloudcare/js/formplayer/constants", [], function () {
     return {
         ALLOWED_SAVED_OPTIONS: ['oneQuestionPerScreen', 'language'],
 
