@@ -16,6 +16,10 @@
   <div>
     <form>
       <div class="form-group">
+        <label for="appId">App ID</label>
+        <input data-bind="value: appId" type="text" class="form-control">
+      </div>
+      <div class="form-group">
         <label for="requestDict">request_dict</label>
         <textarea id="requestDict" spellcheck="false" class="form-control vertical-resize" name="request_dict"
           type="json" data-bind="value: requestDict, attr: {placeholder: exampleRequestDict}"></textarea>
