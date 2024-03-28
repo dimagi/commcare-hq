@@ -38,13 +38,16 @@ hqDefine('export/js/customize_export_new', [
             if (exportFormat === constants.EXPORT_FORMATS.GEOJSON) {
                 $("#select-geo-property").show();
                 $("#split-multiselects-checkbox-div").hide();
+                $("#split-multiselects-checkbox").prop("checked", false);
             }
 
             $('#format-select').change(function () {
                 const selectedValue = $(this).val();
                 if (selectedValue === constants.EXPORT_FORMATS.GEOJSON) {
                     $("#select-geo-property").show();
+                    // Hiding and unchecking this checkbox is a temporary measure
                     $("#split-multiselects-checkbox-div").hide();
+                    $("#split-multiselects-checkbox").prop("checked", false);
                 } else {
                     $("#select-geo-property").hide();
                     $("#split-multiselects-checkbox-div").show();
