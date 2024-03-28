@@ -1,0 +1,39 @@
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load i18n %}
+
+{% requirejs_main 'case_search/js/profile_case_search' %}
+
+{% block page_content %}
+
+<div id="profile-case-search">
+  <h3>Profile Slow Case Searches</h3>
+  <p>
+    Paste in a JSON representation of the request dict made to case search, such
+    as that found in 'LongCaseSearchRequest' error logs
+  </p>
+  <div>
+    <form>
+      <div class="form-group">
+        <label for="requestDict">request_dict</label>
+        <textarea id="requestDict" spellcheck="false" class="form-control vertical-resize" name="request_dict"
+          type="json" data-bind="value: requestDict, attr: {placeholder: exampleRequestDict}"></textarea>
+      </div>
+      <button class="btn btn-primary" data-bind="click: search">
+        <i data-bind="attr: {class: searchButtonIcon}"></i> {% trans "Search" %}
+      </button>
+    </form>
+  </div>
+
+  <div class="spacer"></div>
+
+  <div data-bind="if: results">
+    <p>Total number of results: <span data-bind="text: results().count"></span></p>
+    <p>Total browser runtime: <span data-bind="text: browserTime"></span> seconds</p>
+    <p>Total server runtime: <span data-bind="text: results().runtime"></span> seconds</p>
+  </div>
+
+</div>
+
+{% endblock %}

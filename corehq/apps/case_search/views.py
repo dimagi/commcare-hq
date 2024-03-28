@@ -1,23 +1,22 @@
 import json
 import re
+from datetime import datetime
 
 from django.http import Http404
-
 from django.urls import reverse
 from django.utils.translation import gettext_lazy
+
 from dimagi.utils.web import json_response
 
 from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.decorators import cls_require_superuser_or_contractor
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.util.view_utils import BadRequest, json_error
 
 
-class CaseSearchView(BaseDomainView):
+class _BaseCaseSearchView(BaseDomainView):
     section_name = gettext_lazy("Data")
-    template_name = 'case_search/case_search.html'
-    urlname = 'case_search'
-    page_title = gettext_lazy("Case Search")
 
     @property
     def section_url(self):
@@ -27,6 +26,19 @@ class CaseSearchView(BaseDomainView):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
+    @cls_require_superuser_or_contractor
+    def get(self, request, *args, **kwargs):
+        if not case_search_enabled_for_domain(self.domain):
+            raise Http404("Domain does not have case search enabled")
+
+        return self.render_to_response(self.get_context_data())
+
+
+class CaseSearchView(_BaseCaseSearchView):
+    template_name = 'case_search/case_search.html'
+    urlname = 'case_search'
+    page_title = gettext_lazy("Case Search")
+
     @property
     def page_context(self):
         context = super().page_context
@@ -34,13 +46,6 @@ class CaseSearchView(BaseDomainView):
             'settings_url': reverse("case_search_config", args=[self.domain]),
         })
         return context
-
-    @cls_require_superuser_or_contractor
-    def get(self, request, *args, **kwargs):
-        if not case_search_enabled_for_domain(self.domain):
-            raise Http404("Domain does not have case search enabled")
-
-        return self.render_to_response(self.get_context_data())
 
     @json_error
     @cls_require_superuser_or_contractor
@@ -87,4 +92,23 @@ class CaseSearchView(BaseDomainView):
             'took': search_results.raw['took'],
             'query': search_results.query.dumps(pretty=True),
             'profile': json.dumps(search_results.raw.get('profile', {}), indent=2),
+        })
+
+
+class ProfileCaseSearchView(_BaseCaseSearchView):
+    template_name = 'case_search/profile_case_search.html'
+    urlname = 'profile_case_search'
+    page_title = gettext_lazy("Profile Case Search")
+
+    @json_error
+    @cls_require_superuser_or_contractor
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.POST.get('q'))
+        request_dict = data.get('request_dict', data)
+        start = datetime.now()
+        results = get_case_search_results_from_request(self.domain, None, request.couch_user, request_dict)
+        runtime = (datetime.now() - start).total_seconds()
+        return json_response({
+            'count': len(results),
+            'runtime': runtime,
         })
