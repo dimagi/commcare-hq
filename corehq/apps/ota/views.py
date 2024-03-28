@@ -123,19 +123,18 @@ def app_aware_search(request, domain, app_id):
     Returns results as a fixture with the same structure as a casedb instance.
     """
     start_time = datetime.now()
-    request_dict = request.GET if request.method == 'GET' else request.POST
+    request_dict = dict((request.GET if request.method == 'GET' else request.POST).lists())
+
     try:
         cases = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
     fixtures = CaseDBFixture(cases).fixture
-    _log_search_timing(start_time, request, domain)
+    _log_search_timing(start_time, request_dict, domain)
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
-def _log_search_timing(start_time, request, domain):
-    request_dict = dict((request.GET if request.method == 'GET' else request.POST).lists())
-
+def _log_search_timing(start_time, request_dict, domain):
     for key, value in request_dict.items():
         if isinstance(value, str):
             request_dict[key] = value.replace('\t', '')
@@ -157,7 +156,7 @@ def _log_search_timing(start_time, request, domain):
                       bucket_unit='ms',
                       tags=limit_tags(tags, domain))
     if elapsed >= 10 and limit_domains(domain) != "__other__":
-        notify_exception(request, "LongCaseSearchRequest", details={
+        notify_exception(None, "LongCaseSearchRequest", details={
             'request_dict': request_dict,
         })
 
