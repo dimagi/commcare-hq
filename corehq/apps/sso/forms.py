@@ -611,7 +611,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
     api_host = forms.CharField(required=False, label=gettext_lazy("Tenant Id"))
     api_id = forms.CharField(required=False, label=gettext_lazy("Application ID"))
     api_secret = forms.CharField(required=False, label=gettext_lazy("Client Secret"))
-    date_api_secret_expiration = forms.DateTimeField(
+    date_api_secret_expiration = forms.DateField(
         required=False,
         label=gettext_lazy("Secret Expires On")
     )
@@ -688,7 +688,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
             self._check_required('api_host')
             self._check_required('date_api_secret_expiration')
         date_expiration = self.cleaned_data['date_api_secret_expiration']
-        if date_expiration and date_expiration <= datetime.datetime.now(tz=date_expiration.tzinfo):
+        if date_expiration and date_expiration <= datetime.datetime.today().date():
             self.add_error('date_api_secret_expiration', forms.ValidationError(
                 _("This certificate has already expired!")
             ))
