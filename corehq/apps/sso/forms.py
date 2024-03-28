@@ -553,10 +553,6 @@ class EditIdentityProviderAdminForm(forms.Form):
         return self.idp
 
 
-def checkbox_field(field_name, **kwargs):
-    return crispy.Field(field_name, template='bootstrap3to5/layout/prepended_appended_text.html', **kwargs)
-
-
 class BaseSsoEnterpriseSettingsForm(forms.Form):
     """This form manages fields that enterprise admins can update.
     """
@@ -664,8 +660,8 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         if self.uses_api_key_management:
             fieldset = crispy.Fieldset(
                 _('API Key Management'),
-                checkbox_field('always_show_user_api_keys'),
-                checkbox_field('enforce_user_api_key_expiration', data_bind='checked: enforceExpiration'),
+                hqcrispy.CheckboxField('always_show_user_api_keys'),
+                hqcrispy.CheckboxField('enforce_user_api_key_expiration', data_bind='checked: enforceExpiration'),
                 crispy.Div(
                     crispy.Field(
                         'max_days_until_user_api_key_expiration', data_bind="value: expirationLengthValue"),
