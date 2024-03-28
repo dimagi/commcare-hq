@@ -66,12 +66,15 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         return {
             'edit_idp_form': self.edit_enterprise_idp_form,
             'idp_slug': self.idp_slug,
-            'show_api_fields': self.show_api_fields(),
+            'show_api_fields': self.uses_api_key_management(),
             'toggle_client_secret': (
                 self.identity_provider.protocol == IdentityProviderProtocol.OIDC
                 and self.identity_provider.client_secret
             ),
         }
+
+    def uses_api_key_management(self):
+        return MULTI_VIEW_API_KEYS.enabled_for_request(self.request)
 
     @property
     @memoized
@@ -109,7 +112,7 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             else SsoOidcEnterpriseSettingsForm
         )
 
-        uses_api_key_management = MULTI_VIEW_API_KEYS.enabled_for_request(self.request)
+        uses_api_key_management = self.uses_api_key_management()
 
         if self.request.method == 'POST':
             return form_class(
