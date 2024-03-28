@@ -3,11 +3,11 @@ hqDefine("reports/js/aggregate_user_status", function () {
         return '<p><strong>' + key + '</strong></p>' +
            '<p>' + Math.round(e.value) + '% since ' + x + '</p>';
     }
-    function addHorizontalScrollBar(div, width){
-            $('#'+ div).css({
-                    'overflow-x': 'scroll'
+    function addHorizontalScrollBar(div, width) {
+            $('#' + div).css({
+                'overflow-x': 'scroll'
             });
-            $('#'+ div + ' svg').css({
+            $('#' + div + ' svg').css({
                 'width': width + 'px'
             });
     }
@@ -31,12 +31,14 @@ hqDefine("reports/js/aggregate_user_status", function () {
             }
 
             // Add scrollbar for large datasets.
-            // Multiplication factor for chart width is chosen so that chart is readable
-            dataLength = data['values'].length
-            if (dataLength > 120) {
-                chartWidth = dataLength * 15;
+            // Multiplication factor and scroll offset for chart width is chosen so that chart is readable
+            let dataLength = data['values'].length;
+            let scrollOffset = 120;
+            let widthMultiplicationFactor = 15;
+            if (dataLength > scrollOffset) {
+                let chartWidth = dataLength * widthMultiplicationFactor;
                 addHorizontalScrollBar(div, chartWidth);
-                $('#'+ div).scrollLeft(0)
+                $('#' + div).scrollLeft(0);
             }
 
             d3.select('#' + div + ' svg')
