@@ -1,0 +1,24 @@
+<section class="hq-styleguide-article">
+  <header class="page-header">
+    <h1 id="molecules-help">Help</h1>
+  </header>
+  <p class="lead">
+    Add help icons that users can click for contextual help.
+  </p>
+  <p>
+    HQ has JavaScript logic to initialize tooltip-based contextual help.
+    Using help icons requires the Bootstrap javascript library and also <code>hq.helpers.js</code>.
+    The tooltip uses Bootstrap's <a href="https://getbootstrap.com/docs/3.3/javascript/#popovers"
+    target="_blank">popover</a> widget. It supports a variety of <a
+    href="https://getbootstrap.com/docs/3.3/javascript/#popovers-options" target="_blank">options</a>,
+    which can be set using <code>data-</code> attributes. The most
+    commonly used in HQ are:
+    <ul>
+      <li><code>title</code></li>
+      <li><code>content</code></li>
+      <li><code>placement</code> - specify where the popover should appear, relative to the icon (<code>top</code>, etc.)</li>
+      <li><code>html</code> - true if the popover contains HTML markup</li>
+    </ul>
+  </p>
+  {% include 'styleguide/bootstrap3/example_html.html' with slug='help' title='Help' content=examples.help %}
+</section>

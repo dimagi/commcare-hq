@@ -138,7 +138,7 @@ APP_MAPPING = {
             "type": "text"
         },
         "family_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "force_http": {
             "type": "boolean"
@@ -416,7 +416,7 @@ APP_MAPPING = {
                                             "type": "keyword"
                                         },
                                         "external_id": {
-                                            "type": "text"
+                                            "type": "keyword"
                                         },
                                         "name_path": {
                                             "type": "text"
@@ -523,7 +523,7 @@ APP_MAPPING = {
                                             "type": "keyword"
                                         },
                                         "reference_id": {
-                                            "type": "text"
+                                            "type": "keyword"
                                         },
                                         "repeat_context": {
                                             "type": "text"
@@ -638,7 +638,7 @@ APP_MAPPING = {
                             "type": "keyword"
                         },
                         "module_id": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "relationship": {
                             "type": "text"
@@ -684,7 +684,7 @@ APP_MAPPING = {
                     }
                 },
                 "unique_id": {
-                    "type": "text"
+                    "type": "keyword"
                 }
             }
         },
@@ -699,10 +699,10 @@ APP_MAPPING = {
                     "type": "text"
                 },
                 "multimedia_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "unique_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "version": {
                     "type": "long"
@@ -757,7 +757,7 @@ APP_MAPPING = {
             "type": "object"
         },
         "upstream_app_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "upstream_version": {
             "type": "long"

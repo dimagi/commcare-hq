@@ -43,7 +43,7 @@ class BaseAsyncHandlerTest(TestCase):
         # this Identity Provider will be the main subject of the test
         cls.idp = IdentityProvider.objects.create(
             owner=cls.account,
-            name='Azure AD for Vault Wax',
+            name='Entra ID for Vault Wax',
             slug='vaultwax',
             created_by='someadmin@dimagi.com',
             last_modified_by='someadmin@dimagi.com',
@@ -53,7 +53,7 @@ class BaseAsyncHandlerTest(TestCase):
         # secondary Identity Provider to test some edge cases
         cls.other_idp = IdentityProvider.objects.create(
             owner=cls.account,
-            name='Azure AD for VWX',
+            name='Entra ID for VWX',
             slug='vwx',
             created_by='someadmin@dimagi.com',
             last_modified_by='someadmin@dimagi.com',

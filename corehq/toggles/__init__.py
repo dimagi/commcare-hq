@@ -2176,11 +2176,17 @@ EMBEDDED_TABLEAU = StaticToggle(
 
 DETAILED_TAGGING = StaticToggle(
     'detailed_tagging',
-    'Send additional metrics to datadog and sentry. Currently only used in Formplayer.',
+    'Send additional metrics to datadog and sentry.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+HIGH_COUNT_DETAILED_TAGGING = StaticToggle(
+    'HIGH_COUNT_DETAILED_TAGGING',
+    'Send additional metrics to datadog and sentry. These tags have a high number of combinations.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
 
 USER_HISTORY_REPORT = StaticToggle(
     'user_history_report',
@@ -2401,7 +2407,7 @@ EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
 APPLICATION_RELEASE_LOGS = StaticToggle(
     'application_release_logs',
     'Show Application release logs',
-    TAG_PRODUCT,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='This feature provides the release logs for application.'
 )
@@ -2488,7 +2494,7 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
     'Allows access to report scheduling views for location restricted users',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Provides access to views for resport scheduling '
+    description='Provides access to views for report scheduling '
                 'such as schedule creation and deletion.'
 )
 
@@ -2760,4 +2766,13 @@ INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='Temporary increase of the max number of search results.',
+)
+
+
+SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
+    slug='support_road_network_disbursement_algorithm',
+    label='Add Road Network disbursement algorithm on geospatial settings page',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
 )

@@ -1,14 +1,14 @@
+'use strict';
 hqDefine('hqwebapp/js/ui_elements/ui-element-langcode-button', [], function () {
-    'use strict';
     var module = {};
 
-    var LangCodeButton = function ($elem, new_lang) {
+    var LangCodeButton = function ($elem, newLang) {
         this.button = $elem;
         this.button.click(function () {
             return false;
         });
-        this.lang_code = new_lang;
-        this.lang(new_lang);
+        this.lang_code = newLang;
+        this.lang(newLang);
     };
     LangCodeButton.prototype = {
         lang: function (value) {
@@ -31,8 +31,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-langcode-button', [], function () {
 
     module.LANG_DELIN = "{{[[*LANG*]]}}";
 
-    module.new = function ($elem, new_lang) {
-        return new LangCodeButton($elem, new_lang);
+    module.new = function ($elem, newLang) {
+        return new LangCodeButton($elem, newLang);
     };
 
     return module;

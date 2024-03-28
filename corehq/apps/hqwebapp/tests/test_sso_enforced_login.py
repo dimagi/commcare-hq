@@ -41,7 +41,7 @@ class TestHQLoginViewWithSso(TestCase):
         )
         cls.idp = IdentityProvider.objects.create(
             owner=cls.account,
-            name='Azure AD for Helping Earth',
+            name='Entra ID for Helping Earth',
             slug='helpingearth',
             created_by='someadmin@dimagi.com',
             last_modified_by='someadmin@dimagi.com',

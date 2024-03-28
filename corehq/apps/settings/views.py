@@ -19,17 +19,19 @@ from django.views.decorators.debug import sensitive_post_parameters
 
 import langcodes
 import qrcode
+from django_otp import devices_for_user
 from memoized import memoized
-from two_factor.models import PhoneDevice
-from two_factor.utils import backup_phones, default_device
+from two_factor.plugins.phonenumber.utils import backup_phones
 from two_factor.views import (
     BackupTokensView,
     DisableView,
-    PhoneDeleteView,
-    PhoneSetupView,
     ProfileView,
     SetupCompleteView,
     SetupView,
+)
+from two_factor.plugins.phonenumber.views import (
+    PhoneDeleteView,
+    PhoneSetupView
 )
 
 from dimagi.utils.web import json_response
@@ -48,6 +50,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import sign
+from corehq.apps.hqwebapp.utils.two_factor import user_can_use_phone
 from corehq.apps.hqwebapp.views import (
     BaseSectionPageView,
     CRUDPaginatedViewMixin,
@@ -59,9 +62,7 @@ from corehq.apps.settings.forms import (
     HQDeviceValidationForm,
     HQEmptyForm,
     HQPasswordChangeForm,
-    HQPhoneNumberForm,
     HQPhoneNumberMethodForm,
-    HQTOTPDeviceForm,
     HQTwoFactorMethodForm,
 )
 from corehq.apps.sso.models import IdentityProvider
@@ -143,7 +144,7 @@ class DefaultMySettingsView(BaseMyAccountView):
 class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = gettext_lazy("My Information")
-    template_name = 'settings/edit_my_account.html'
+    template_name = 'settings/bootstrap3/edit_my_account.html'
 
     @two_factor_exempt
     @method_decorator(login_required)
@@ -270,7 +271,7 @@ class MyAccountSettingsView(BaseMyAccountView):
 class MyProjectsList(BaseMyAccountView):
     urlname = 'my_projects'
     page_title = gettext_lazy("My Projects")
-    template_name = 'settings/my_projects.html'
+    template_name = 'settings/bootstrap3/my_projects.html'
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -318,7 +319,7 @@ class MyProjectsList(BaseMyAccountView):
 
 class ChangeMyPasswordView(BaseMyAccountView):
     urlname = 'change_my_password'
-    template_name = 'settings/change_my_password.html'
+    template_name = 'settings/bootstrap3/change_my_password.html'
     page_title = gettext_lazy("Change My Password")
 
     @method_decorator(login_required)
@@ -361,13 +362,6 @@ class ChangeMyPasswordView(BaseMyAccountView):
         return self.get(request, *args, **kwargs)
 
 
-def _user_can_use_phone(user):
-    if not settings.ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE:
-        return False
-
-    return user.belongs_to_messaging_domain()
-
-
 class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     urlname = 'two_factor_settings'
     template_name = 'two_factor/profile/profile.html'
@@ -394,7 +388,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
             # Default device means the user has 2FA already enabled
             has_existing_backup_phones = bool(context.get('backup_phones'))
             context.update({
-                'allow_phone_2fa': has_existing_backup_phones or _user_can_use_phone(self.request.couch_user),
+                'allow_phone_2fa': has_existing_backup_phones or user_can_use_phone(self.request.couch_user),
             })
 
         return context
@@ -406,26 +400,32 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     page_title = gettext_lazy("Two Factor Authentication Setup")
 
     form_list = (
-        ('welcome_setup', HQEmptyForm),
+        ('welcome', HQEmptyForm),
         ('method', HQTwoFactorMethodForm),
-        ('generator', HQTOTPDeviceForm),
-        ('sms', HQPhoneNumberForm),
-        ('call', HQPhoneNumberForm),
-        ('validation', HQDeviceValidationForm),
+        # other forms are registered on startup in corehq.apps.hqwebapp.apps.HqWebAppConfig
     )
 
     @method_decorator(active_domains_required)
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        # this is only here to add the login_required decorator
+        # this is only here to add decorators
         return super(TwoFactorSetupView, self).dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         if step == 'method':
-            kwargs.setdefault('allow_phone_2fa', _user_can_use_phone(self.request.couch_user))
+            kwargs['allow_phone_2fa'] = user_can_use_phone(self.request.couch_user)
 
         return kwargs
+
+    def get_form_list(self):
+        # It would be cool if we could specify our custom validation form in the form_list property
+        # but SetupView.get_form_list hard codes the default validation form for 'sms' and 'call' methods.
+        # https://github.com/jazzband/django-two-factor-auth/blob/1.15.5/two_factor/views/core.py#L510-L511
+        form_list = super().get_form_list()
+        if {'sms', 'call'} & set(form_list.keys()):
+            form_list['validation'] = HQDeviceValidationForm
+        return form_list
 
 
 class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
@@ -492,14 +492,14 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     page_title = gettext_lazy("Two Factor Authentication Phone Setup")
 
     form_list = (
-        ('method', HQPhoneNumberMethodForm),
+        ('setup', HQPhoneNumberMethodForm),
         ('validation', HQDeviceValidationForm),
     )
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         has_backup_phones = bool(backup_phones(self.request.user))
-        if not (has_backup_phones or _user_can_use_phone(request.couch_user)):
+        if not (has_backup_phones or user_can_use_phone(request.couch_user)):
             # NOTE: this behavior could be seen as un-intuitive. If a domain is not authorized to use phone/sms,
             # we are still allowing full functionality if they have an existing backup phone. The primary reason
             # is so that a user can delete a backup number if needed. The ability to add in a new number is still
@@ -515,15 +515,6 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         self.get_device(user=self.request.user, name='backup').save()
         messages.add_message(self.request, messages.SUCCESS, _("Phone number added."))
         return redirect(reverse(TwoFactorProfileView.urlname))
-
-    def get_device(self, **kwargs):
-        """
-        Uses the data from the setup step and generated key to recreate device, gets the 'method' step
-        in the form_list.
-        """
-        kwargs = kwargs or {}
-        kwargs.update(self.storage.validated_step_data.get('method', {}))
-        return PhoneDevice(key=self.get_key(), **kwargs)
 
 
 class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
@@ -541,17 +532,14 @@ class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
 class TwoFactorResetView(TwoFactorSetupView):
     urlname = 'reset'
 
-    form_list = (
-        ('welcome_reset', HQEmptyForm),
-        ('method', HQTwoFactorMethodForm),
-        ('generator', HQTOTPDeviceForm),
-        ('sms', HQPhoneNumberForm),
-        ('call', HQPhoneNumberForm),
-        ('validation', HQDeviceValidationForm),
-    )
-
     def get(self, request, *args, **kwargs):
-        default_device(request.user).delete()
+        # avoid using django-two-factor-auth default_devices method because it adds a dynamic attribute
+        # to the user object that we then have to cleanup before calling super
+        # https://github.com/jazzband/django-two-factor-auth/blob/1.15.5/two_factor/utils.py#L9-L17
+        for device in devices_for_user(request.user):
+            if device.name == 'default':
+                device.delete()
+                break
         return super(TwoFactorResetView, self).get(request, *args, **kwargs)
 
 
@@ -577,7 +565,7 @@ def get_qrcode(data):
 class EnableMobilePrivilegesView(BaseMyAccountView):
     urlname = 'enable_mobile_privs'
     page_title = gettext_lazy("Enable Privileges on Mobile")
-    template_name = 'settings/enable_superuser.html'
+    template_name = 'settings/bootstrap3/enable_superuser.html'
 
     def dispatch(self, request, *args, **kwargs):
         # raises a 404 if a user tries to access this page without the right authorizations
@@ -626,7 +614,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("API Keys")
     urlname = "user_api_keys"
 
-    template_name = "settings/user_api_keys.html"
+    template_name = "settings/bootstrap3/user_api_keys.html"
 
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):

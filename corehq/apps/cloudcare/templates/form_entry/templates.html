@@ -6,7 +6,6 @@
         class: elementTile,
         css: {
           'gr-no-children': $data.children().length === 0,
-          'gr-has-no-questions': $data.children().every(function(d) { return d.type() !== 'grouped-element-tile-row' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'panel panel-default': collapsible,
           'repetition': isRepetition,
@@ -168,7 +167,7 @@
         <div data-bind="
           css: submitClass,
           style: {
-            'bottom':isAnchoredSubmitStyle && {{ request.couch_user.can_edit_data|yesno:'true,false' }} ? '30px' : '' {# data preview bar #}
+            'bottom':isAnchoredSubmitStyle && {{ request.couch_user.can_edit_data|yesno:'true,false' }} {% if environment != "web-apps" %} && false {% endif %} ? '30px' : '' {# data preview bar #}
           }">
           <button class="submit btn btn-primary"
                   type="submit"
@@ -315,10 +314,15 @@
   <!-- ko if: isLabel -->
   <div class="form-group">
     {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
-    <div class="info col-sm-12" data-bind="css: {
-        'text-center': stylesContains('text-align-center'),
-        'text-right': stylesContains('text-align-right'),
-      }">
+    <div class="info col-sm-12" data-bind="
+        css: {
+            'text-center': stylesContains('text-align-center'),
+            'text-right': stylesContains('text-align-right'),
+        },
+        attr: {
+            id: entry.entryId + '-label',
+        },
+    ">
       <span class="ix" data-bind="text: ixInfo($data)">></span>
       <span class="caption webapp-markdown-output" data-bind="
           html: ko.utils.unwrapObservable($data.caption_markdown) || caption()
