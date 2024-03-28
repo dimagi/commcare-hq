@@ -1,9 +1,8 @@
 <input type="text" name="timpick" class="form-control" id="id_timepicker">
 
 <script>
-  new tempusDominus.TempusDominus(
-    document.getElementById('id_timepicker'),
-    {
+  $(function () {
+    $('#id_timepicker').tempusDominus({
       display: {
         theme: 'light',
         components: {
@@ -14,4 +13,5 @@
         format: 'LT',
       },
     });
+  });
 </script>
