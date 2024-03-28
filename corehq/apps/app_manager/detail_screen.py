@@ -368,6 +368,12 @@ class TimeAgo(FormattedDetailColumn):
     SORT_XPATH_FUNCTION = "{xpath}"
 
 
+@register_format_type('image')
+class Image(FormattedDetailColumn):
+    template_form = 'image'
+    XPATH_FUNCTION = "cc_case_image"
+
+
 @register_format_type('distance')
 class Distance(FormattedDetailColumn):
     XPATH_FUNCTION = \
