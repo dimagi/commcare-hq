@@ -106,7 +106,7 @@ class Command(ResourceStaticCommand):
         for root, dirs, files in os.walk(os.path.join(settings.BASE_DIR, 'corehq')):
             for name in files:
                 if name.endswith(".html"):
-                    filename = filename = os.path.join(root, name)
+                    filename = os.path.join(root, name)
                     if '/partials/' not in filename:
                         if '/includes/' not in filename and '/_includes/' not in filename:
                             html_files.append(filename)
