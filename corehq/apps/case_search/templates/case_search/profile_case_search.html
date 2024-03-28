@@ -32,8 +32,34 @@
     <p>Total number of results: <span data-bind="text: results().count"></span></p>
     <p>Total browser runtime: <span data-bind="text: browserTime"></span> seconds</p>
     <p>Total server runtime: <span data-bind="text: results().runtime"></span> seconds</p>
+
+    <ul data-bind="template: {name: 'timingRow', foreach: results().timing_data }"
+      class="list-group"></ul>
+
+    <script id="timingRow" type="text/html">
+      <li class="list-group-item">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-xs-3" data-bind="text: name"></div>
+            <div class="col-xs-3">
+              <strong data-bind="text: duration ? duration.toFixed(3) : '-'"></strong> seconds;
+            </div>
+            <div class="col-xs-3">
+              <strong data-bind="text: percent_total ? percent_total.toFixed(3) : '-'"></strong>% of total;
+            </div>
+            <div class="col-xs-3">
+              <strong data-bind="text: percent_parent ? percent_parent.toFixed(3) : '-'"></strong>% of parent
+            </div>
+          </div>
+          <ul data-bind="template: { name: 'timingRow', foreach: subs }"
+          class="list-group"></ul>
+        </div>
+      </li>
+    </script>
+
   </div>
 
 </div>
+
 
 {% endblock %}
