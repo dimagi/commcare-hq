@@ -4,10 +4,10 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     make_direct_css_renames,
     make_numbered_css_renames,
     make_data_attribute_renames,
+    make_javascript_dependency_renames,
     flag_changed_css_classes,
     flag_stateful_button_changes_bootstrap5,
     flag_changed_javascript_plugins,
-    flag_path_references_to_split_javascript_files,
     file_contains_reference_to_path,
     replace_path_references,
     flag_bootstrap3_references_in_template,
@@ -16,7 +16,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
 
 
 def test_make_direct_css_renames_bootstrap5():
-    line = """        <button class="btn-xs btn btn-default context-right btn-xs" id="prepaid-snooze"></button>\n"""
+    line = """        <button class="btn-xs btn btn-default context-right btn-xs" id="prepaid-snooze"></button>\n"""  # noqa E501
     final_line, renames = make_direct_css_renames(
         line, get_spec('bootstrap_3_to_5')
     )
@@ -41,6 +41,15 @@ def test_make_data_attribute_renames_bootstrap5():
     )
     eq(final_line, """        <button data-bs-toggle="modal">\n""")
     eq(renames, ['renamed data-toggle to data-bs-toggle'])
+
+
+def test_make_javascript_dependency_renames():
+    line = """        "hqwebapp/js/bootstrap3/widgets",\n"""
+    final_line, renames = make_javascript_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """        "hqwebapp/js/bootstrap5/widgets",\n""")
+    eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
 def test_flag_changed_css_classes_bootstrap5():
@@ -109,14 +118,6 @@ def test_flag_extended_changed_javascript_plugins_bootstrap5():
                'plugin. Thanks!\n\nOld docs: https://getbootstrap.com/docs/3.4/'
                'javascript/#popovers\nNew docs: https://getbootstrap.com/docs/5.3/'
                'components/popovers/\n'])
-
-
-def test_flag_path_references_to_split_javascript_files_bootstrap5():
-    line = """    'hqwebapp/js/bootstrap3/crud_paginated_list',\n"""
-    flags = flag_path_references_to_split_javascript_files(
-        line, "bootstrap3"
-    )
-    eq(flags, ['Found reference to a split file (bootstrap3)'])
 
 
 def test_file_contains_reference_to_path():
