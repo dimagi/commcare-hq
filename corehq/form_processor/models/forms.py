@@ -445,7 +445,8 @@ class XFormInstanceManager(RequireDBManager):
                                                  domain=form.domain, deleted_on=form.deleted_on)
                                    for form in queryset]
                 for chunk in chunked(form_tombstones, 1000, list):
-                    DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True)
+                    tombstone_count = len(DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True))
+                    counts['tombstone'] += tombstone_count
                 deleted_counts = queryset.delete()[1]
                 for obj_class, count in deleted_counts.items():
                     counts[obj_class] += count

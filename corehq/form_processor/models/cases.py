@@ -335,7 +335,8 @@ class CommCareCaseManager(RequireDBManager):
                                                  domain=case.domain, deleted_on=case.deleted_on)
                                    for case in queryset]
                 for chunk in chunked(case_tombstones, 1000, list):
-                    DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True)
+                    tombstone_count = len(DeletedSQLDoc.objects.bulk_create(chunk, ignore_conflicts=True))
+                    counts['tombstone'] += tombstone_count
                 deleted_counts = queryset.delete()[1]
                 for obj_class, count in deleted_counts.items():
                     counts[obj_class] += count

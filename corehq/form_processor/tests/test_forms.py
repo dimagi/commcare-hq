@@ -452,7 +452,16 @@ class TestHardDeleteFormsBeforeCutoff(TestCase):
 
         counts = XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
 
-        self.assertEqual(counts, {'form_processor.XFormInstance': 5})
+        self.assertEqual(counts['form_processor.XFormInstance'], expected_count)
+
+    def test_returns_tombstone_count(self):
+        expected_count = 5
+        for _ in range(expected_count):
+            create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        counts = XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
+
+        self.assertEqual(counts['tombstone'], expected_count)
 
     def test_nothing_is_deleted_if_dry_run_is_true(self):
         form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))

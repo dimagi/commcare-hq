@@ -501,7 +501,17 @@ class TestHardDeleteCasesBeforeCutoff(TestCase):
 
         counts = CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
 
-        self.assertEqual(counts, {'form_processor.CaseTransaction': 5, 'form_processor.CommCareCase': 5})
+        self.assertEqual(counts['form_processor.CaseTransaction'], expected_count)
+        self.assertEqual(counts['form_processor.CommCareCase'], expected_count)
+
+    def test_returns_tombstone_count(self):
+        expected_count = 5
+        for _ in range(expected_count):
+            _create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+
+        counts = CommCareCase.objects.hard_delete_cases_before_cutoff(self.cutoff, dry_run=False)
+
+        self.assertEqual(counts['tombstone'], expected_count)
 
     def test_nothing_is_deleted_if_dry_run_is_true(self):
         case = _create_case(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))

@@ -40,9 +40,15 @@ def permanently_delete_eligible_data(dry_run=False):
 
     logger.info(f"{dry_run_tag}'permanently_delete_eligible_data' ran with the following results:\n")
     for table, count in form_counts.items():
-        logger.info(f"{dry_run_tag}{count} {table} objects were deleted.")
+        if table == 'tombstone':
+            logger.info(f"{count} XFormInstance {table}s were created.")
+        else:
+            logger.info(f"{dry_run_tag}{count} {table} objects were deleted.")
     for table, count in case_counts.items():
-        logger.info(f"{dry_run_tag}{count} {table} objects were deleted.")
+        if table == 'tombstone':
+            logger.info(f"{count} CommCareCase {table}s were created.")
+        else:
+            logger.info(f"{dry_run_tag}{count} {table} objects were deleted.")
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
