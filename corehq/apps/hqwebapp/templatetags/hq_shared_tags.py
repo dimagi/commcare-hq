@@ -638,7 +638,7 @@ def analytics_ab_test(parser, token):
 def requirejs_main_b5(parser, token):
     """
     Alias for requirejs_main. The build_requirejs step of deploy, which regexes HTML templates
-    for that tag, uses thsi alias to determine which version of Bootstrap a template uses.
+    for that tag, uses this alias to determine which version of Bootstrap a template uses.
     """
     return requirejs_main(parser, token)
 
