@@ -300,7 +300,7 @@ class Command(BaseCommand):
         short_path = get_short_path(app_name, file_path, is_template)
 
         confirm = get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
-                                        f'and update references?')
+                                   f'and update references?')
         if not confirm:
             self.write_response("ok, canceling split and rolling back changes...")
             return
