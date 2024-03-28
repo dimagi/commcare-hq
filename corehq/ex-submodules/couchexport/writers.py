@@ -568,11 +568,27 @@ class GeoJSONWriter(JsonExportWriter):
             "properties": properties,
         }
 
+    @staticmethod
+    def _find_geo_property_by_path(table):
+        # For form exports we store the path to the geo property, so this is an
+        # attempt to find the header by the path specification
+        column = table.get_column_by_path_str(
+            path=table.selected_geo_property,
+            doc_type="GeopointItem",
+        )
+        if column:
+            return column.get_headers()[0]
+
+        return table.selected_geo_property
+
     def get_features(self, table, data):
         geo_property_name = table.selected_geo_property
         table_headers = data[0]
         if geo_property_name not in table_headers:
-            return []
+            # This might happen for some form export metadata columns
+            geo_property_name = self._find_geo_property_by_path(table)
+            if geo_property_name not in table_headers:
+                return []
 
         geo_data_index = table_headers.index(geo_property_name)
         features = []

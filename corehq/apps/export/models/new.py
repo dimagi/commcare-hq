@@ -651,6 +651,11 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
 
         return None, None
 
+    def get_column_by_path_str(self, path, doc_type):
+        path_nodes = [PathNode(name=node) for node in path.split('.')]
+        _, column = self.get_column(item_path=path_nodes, item_doc_type=doc_type, column_transform=None)
+        return column
+
     @memoized
     def get_hyperlink_column_indices(self, split_columns):
         export_column_index = 0
@@ -1277,6 +1282,17 @@ class FormExportInstance(ExportInstance):
                     ):
                         column.label = 'formid'
                         column.selected = True
+
+        if export_instance.export_format == "geojson":
+            for table in export_instance.tables:
+                column = table.get_column_by_path_str(
+                    path=table.selected_geo_property,
+                    doc_type="GeopointItem",
+                )
+                if column and not column.selected:
+                    # ensure the selected_geo_property is selected
+                    column.selected = True
+
         return export_instance
 
     @property

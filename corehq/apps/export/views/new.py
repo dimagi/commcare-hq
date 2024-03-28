@@ -1,5 +1,4 @@
 import json
-
 from django.conf import settings
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect, HttpResponse, JsonResponse
@@ -116,10 +115,7 @@ class BaseExportView(BaseProjectDataView):
     def page_context(self):
         owner_id = self.export_instance.owner_id
         number_of_apps_to_process = 0
-        is_all_case_types_export = (
-            isinstance(self.export_instance, CaseExportInstance)
-            and self._is_bulk_export
-        )
+        is_all_case_types_export = self._is_bulk_case_export
         table_count = 0
         if not is_all_case_types_export:
             # Case History table is not a selectable table, so exclude it from count
@@ -159,12 +155,33 @@ class BaseExportView(BaseProjectDataView):
 
     @property
     def _possible_geo_properties(self):
+        if not toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain):
+            return []
+        if self._is_bulk_case_export:
+            return []
+
         if self.export_type == FORM_EXPORT:
-            return []
+            return self._possible_form_geo_properties
+        elif self.export_type == CASE_EXPORT:
+            return self._possible_case_geo_properties
+        return []
 
-        if self._is_bulk_export:
-            return []
+    @property
+    def _possible_form_geo_properties(self):
+        export_table = self.export_instance.tables[0]
+        geo_props = []
 
+        for column in export_table.columns:
+            if column.item.doc_type == 'GeopointItem':
+                # show the path to the geo properties, not the column headers, because the
+                # paths do not change.
+                path_str = '.'.join([f"{node.name}" for node in column.item.path])
+                geo_props.append(path_str)
+
+        return geo_props
+
+    @property
+    def _possible_case_geo_properties(self):
         return list(CaseProperty.objects.filter(
             case_type__domain=self.domain,
             case_type__name=self.export_instance.case_type,
@@ -176,9 +193,8 @@ class BaseExportView(BaseProjectDataView):
         format_options = ["xls", "xlsx", "csv"]
 
         should_support_geojson = (
-            self.export_type == CASE_EXPORT
-            and toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain)
-            and not self._is_bulk_export
+            toggles.SUPPORT_GEO_JSON_EXPORT.enabled(self.domain)
+            and not self._is_bulk_case_export
         )
         if should_support_geojson:
             format_options.append("geojson")
@@ -309,8 +325,11 @@ class BaseExportView(BaseProjectDataView):
         return self.export_schema_cls.generate_empty_schema(domain, identifier)
 
     @property
-    def _is_bulk_export(self):
-        return self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
+    def _is_bulk_case_export(self):
+        return (
+            self.export_type is CASE_EXPORT
+            and self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
+        )
 
 
 @location_safe
