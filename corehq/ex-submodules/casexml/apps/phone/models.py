@@ -137,7 +137,7 @@ class OTARestoreUser(object):
         raise NotImplementedError()
 
     def get_owner_ids(self):
-        raise NotImplementedError()
+        return self._couch_user.get_owner_ids(self.domain)
 
     def get_call_center_indicators(self, config):
         raise NotImplementedError()
@@ -175,9 +175,6 @@ class OTARestoreWebUser(OTARestoreUser):
     def get_commtrack_location_id(self):
         return None
 
-    def get_owner_ids(self):
-        return [self.user_id]
-
     def get_call_center_indicators(self, config):
         return None
 
@@ -214,9 +211,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
         from corehq.apps.commtrack.util import get_commtrack_location_id
 
         return get_commtrack_location_id(self._couch_user, self.project)
-
-    def get_owner_ids(self):
-        return self._couch_user.get_owner_ids(self.domain)
 
     def get_call_center_indicators(self, config):
         from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
