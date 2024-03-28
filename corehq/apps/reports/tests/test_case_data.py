@@ -451,8 +451,9 @@ class TestCaseDeletion(TestCase):
             submit_case_blocks([
                 CaseBlock(case_id=cases[i], update={}).as_text(),
                 CaseBlock(case_id=cases[i + 1], create=True,
-                          index={'parent': (parent_type + '{}'.format(i), cases[i])}).as_text()
+                          index={'parent': (parent_type + str(i), cases[i])}).as_text()
             ], self.domain)
+        self.addCleanup(_delete_all_cases_and_forms, self.domain)
 
         view = self._create_view(cases[0])
         return_dict = view.get_cases_and_forms_for_deletion(request, self.domain, cases[0])
