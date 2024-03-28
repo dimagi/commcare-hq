@@ -197,7 +197,7 @@ class CaseSearchRequestConfig:
 
 
 def extract_search_request_config(request_dict):
-    params = dict(request_dict.lists())
+    params = request_dict.copy()
     for param_name in CASE_SEARCH_TAGS_MAPPING:
         params.pop(param_name, None)
     kwargs_from_params = {
