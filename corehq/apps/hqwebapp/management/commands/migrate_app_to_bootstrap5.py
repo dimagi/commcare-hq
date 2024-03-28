@@ -160,13 +160,13 @@ class Command(BaseCommand):
             self.clear_screen()
             file_type = "templates" if is_template else "javascript"
             self.stdout.write(self.format_header(f"Migrating {app_name} {file_type}..."))
-            confirm = get_confirmation(f'Ready to migrate "{short_path}"?')
+            confirm = get_confirmation(f'Ready to migrate "{short_path}"?', default='y')
             if not confirm:
                 self.write_response(f"ok, skipping {short_path}")
                 continue
 
             self.stdout.write("\n")
-            review_changes = get_confirmation('Do you want to review each change line-by-line here?')
+            review_changes = get_confirmation('Do you want to review each change line-by-line here?', default='n')
             self.migrate_single_file(app_name, file_path, spec, is_template, review_changes)
 
     def migrate_single_file(self, app_name, file_path, spec, is_template, review_changes):
@@ -300,7 +300,7 @@ class Command(BaseCommand):
         short_path = get_short_path(app_name, file_path, is_template)
 
         confirm = get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
-                                   f'and update references?')
+                                   f'and update references?', default='y')
         if not confirm:
             self.write_response("ok, canceling split and rolling back changes...")
             return
