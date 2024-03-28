@@ -1,7 +1,5 @@
 from django.core.management.base import BaseCommand
 
-from corehq.apps.users.models import WebUser
-
 from corehq.apps.users.models import Invitation, CouchUser
 
 
@@ -27,7 +25,7 @@ class Command(BaseCommand):
         print("Accepting %s's invite to Project Space(%s)" % (username, domain))
 
         user.add_as_web_user(invitation.domain, role=invitation.role,
-                                location_id=invitation.location_id, program_id=invitation.program)
+                            location_id=invitation.location_id, program_id=invitation.program)
         invitation.is_accepted = True
         invitation.save()
         print("Operation completed")
