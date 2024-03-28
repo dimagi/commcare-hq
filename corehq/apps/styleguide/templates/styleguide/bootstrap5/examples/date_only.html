@@ -1,9 +1,8 @@
 <input type="text" name="dateonly" class="form-control" id="id_dateonly">
 
 <script>
-  new tempusDominus.TempusDominus(
-    document.getElementById('id_dateonly'),
-    {
+  $(function () {
+    $('#id_dateonly').tempusDominus({
       display: {
         theme: 'light',
         components: {
@@ -13,6 +12,6 @@
       localization: {
         format: 'L',
       },
-    }
-    );
+    });
+  });
 </script>
