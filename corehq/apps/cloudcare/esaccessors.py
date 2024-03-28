@@ -1,4 +1,5 @@
 from corehq.apps.es import UserES, filters, queries
+from corehq.apps.es.users import web_users, mobile_users
 from corehq.apps.locations.models import SQLLocation
 
 
@@ -50,7 +51,7 @@ def login_as_user_query(
                 )
             )
         )
-    return user_es.mobile_users()
+    return user_es.OR(web_users(), mobile_users())
 
 
 # value may be either a single username or a list of username

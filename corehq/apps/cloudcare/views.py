@@ -378,6 +378,7 @@ class LoginAsUsers(View):
 
     def _format_user(self, user_json):
         user = CouchUser.wrap_correctly(user_json)
+        sql_location = user.get_sql_location(self.domain)
         formatted_user = {
             'username': user.raw_username,
             'customFields': user.get_user_data(self.domain).to_dict(),
@@ -385,7 +386,7 @@ class LoginAsUsers(View):
             'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,
             'user_id': user.user_id,
-            'location': user.sql_location.to_json() if user.sql_location else None,
+            'location': sql_location.to_json() if sql_location else None,
         }
         return formatted_user
 
