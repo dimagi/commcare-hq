@@ -111,10 +111,12 @@ class ProfileCaseSearchView(_BaseCaseSearchView):
         app_id = data.get('app_id', request.POST.get('app_id'))  # may be in either place
         start = datetime.now()
         config = extract_search_request_config(request_dict)
-        timing_context, num_cases = profile_case_search(self.domain, request.couch_user, app_id, config)
+        timing_context, primary_count, related_count = profile_case_search(
+            self.domain, request.couch_user, app_id, config)
         runtime = (datetime.now() - start).total_seconds()
         return json_response({
-            'count': num_cases,
+            'primary_count': primary_count,
+            'related_count': related_count,
             'runtime': runtime,
             'timing_data': timing_context.to_dict(),
         })
