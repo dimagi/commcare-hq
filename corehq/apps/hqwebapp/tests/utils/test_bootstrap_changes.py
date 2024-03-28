@@ -7,9 +7,11 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_changed_css_classes,
     flag_stateful_button_changes_bootstrap5,
     flag_changed_javascript_plugins,
-    flag_path_references_to_migrated_javascript_files,
+    flag_path_references_to_split_javascript_files,
     file_contains_reference_to_path,
     replace_path_references,
+    flag_bootstrap3_references_in_template,
+    flag_crispy_forms_in_template,
 )
 
 
@@ -59,6 +61,26 @@ def test_flag_stateful_button_changes_bootstrap5():
     eq(flags, ['You are using stateful buttons here, which are no longer supported in Bootstrap 5.'])
 
 
+def test_flag_bootstrap3_references_in_template_extends():
+    line = """{% extends "hqwebapp/bootstrap3/base_section.html" %}\n"""
+    flags = flag_bootstrap3_references_in_template(line)
+    eq(flags, ['This template extends a bootstrap 3 template.'])
+
+
+def test_flag_bootstrap3_references_in_template_requirejs():
+    line = """    {% requirejs_main 'hqwebapp/bootstrap3/foo' %}\n"""
+    flags = flag_bootstrap3_references_in_template(line)
+    eq(flags, ['This template references a bootstrap 3 requirejs file.'])
+
+
+def test_flag_crispy_forms_in_template():
+    line = """    {% crispy form %}\n"""
+    flags = flag_crispy_forms_in_template(line)
+    eq(flags, ["This template uses crispy forms. "
+               "Please ensure the form looks good after migration, and refer to "
+               "the updated Style Guide for current best practices, especially with checkbox fields."])
+
+
 def test_flag_changed_javascript_plugins_bootstrap5():
     line = """                        modal.modal('show');\n"""
     flags = flag_changed_javascript_plugins(
@@ -89,12 +111,12 @@ def test_flag_extended_changed_javascript_plugins_bootstrap5():
                'components/popovers/\n'])
 
 
-def test_flag_path_references_to_migrated_javascript_files_bootstrap5():
+def test_flag_path_references_to_split_javascript_files_bootstrap5():
     line = """    'hqwebapp/js/bootstrap3/crud_paginated_list',\n"""
-    flags = flag_path_references_to_migrated_javascript_files(
+    flags = flag_path_references_to_split_javascript_files(
         line, "bootstrap3"
     )
-    eq(flags, ['Found reference to a migrated file (bootstrap3)'])
+    eq(flags, ['Found reference to a split file (bootstrap3)'])
 
 
 def test_file_contains_reference_to_path():

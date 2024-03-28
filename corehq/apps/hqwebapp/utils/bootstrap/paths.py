@@ -3,6 +3,7 @@ from pathlib import Path
 import corehq
 
 COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
+TRACKED_JS_FOLDERS = ["js", "spec"]
 
 
 def get_app_template_folder(app_name):
@@ -34,15 +35,20 @@ def get_all_javascript_paths_for_app(app_name):
     return [f for f in app_static_folder.glob('**/*.js') if f.is_file()]
 
 
-def get_migrated_folders(paths, include_root=False):
-    migrated_files = [
-        path for path in paths if '/bootstrap3/' in str(path)
+def get_split_paths(paths, split_folder='bootstrap3'):
+    split_folder = f'/{split_folder}/'
+    return [
+        path for path in paths if split_folder in str(path)
     ]
-    migrated_folders = {
-        str(path).split('/bootstrap3/')[0] for path in migrated_files
+
+
+def get_split_folders(paths, include_root=False):
+    split_files = get_split_paths(paths)
+    split_folders = {
+        str(path).split('/bootstrap3/')[0] for path in split_files
     }
     if not include_root:
-        migrated_folders = {
-            path.replace(str(COREHQ_BASE_DIR), '') for path in migrated_folders
+        split_folders = {
+            path.replace(str(COREHQ_BASE_DIR), '') for path in split_folders
         }
-    return migrated_folders
+    return split_folders
