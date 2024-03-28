@@ -74,14 +74,12 @@ class TestLocationTypeOwnership(TestCase):
             first_name='Location types',
             last_name='Tester',
         )
+        self.addCleanup(self.user.delete, self.domain, deleted_by=None)
 
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
         super(TestLocationTypeOwnership, cls).tearDownClass()
-
-    def tearDown(self):
-        self.user.delete(self.domain, deleted_by=None)
 
     def test_no_case_sharing(self):
         no_case_sharing_type = make_loc_type('no-case-sharing', domain=self.domain)

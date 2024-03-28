@@ -779,23 +779,5 @@ class LocationFixtureConfiguration(models.Model):
             return cls(domain=domain)
 
 
-def get_case_sharing_groups_for_locations(locations, for_user_id=None):
-    # safety check to make sure all locations belong to same domain
-    assert len({location.domain for location in locations}) <= 1
-
-    for location in locations:
-        if location.location_type.shares_cases:
-            yield location.case_sharing_group_object(for_user_id)
-
-    location_ids = [location.pk for location in locations if location.location_type.view_descendants]
-    descendants = []
-    if location_ids:
-        where = Q(domain=locations[0].domain, parent_id__in=location_ids)
-        descendants = SQLLocation.objects.get_queryset_descendants(where).filter(
-            location_type__shares_cases=True, is_archived=False)
-    for loc in descendants:
-        yield loc.case_sharing_group_object(for_user_id)
-
-
 def get_domain_locations(domain):
     return SQLLocation.active_objects.filter(domain=domain)
