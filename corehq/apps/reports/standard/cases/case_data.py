@@ -661,11 +661,14 @@ class DeleteCaseView(BaseProjectReportSectionView):
             if form_id:
                 messages.error(request, _("Deleting this form would delete too many related cases. "
                                           "Please navigate to the form's Case Changes and delete some "
-                                          "of the cases it created before attempting to delete this form."))
+                                          "of the cases it created before attempting to delete this form. "
+                                          "Please note that there is a limit of {} cases you can delete "
+                                          "at once.").format(self.MAX_CASE_COUNT))
             else:
                 messages.error(request, _("Deleting this case would delete too many related cases. "
-                                          "Please delete some of this cases' subcases before attempting"
-                                          "to delete this case."))
+                                          "Please delete some of this cases' subcases before attempting "
+                                          "to delete this case. Please note that there is a limit of {} cases "
+                                          "you can delete at once.").format(self.MAX_CASE_COUNT))
             return {'redirect': True}
 
         if not case_data:
@@ -773,7 +776,10 @@ class DeleteCaseView(BaseProjectReportSectionView):
                 case_actions.append(FormAffectedCases(is_current_case=True, actions=', '.join(actions)))
             elif case_obj.case_id not in self.delete_cases:
                 if const.CASE_ACTION_CREATE in actions and case_obj.case_id != current_case_id:
-                    self.walk_through_case_forms(case_obj, subcase_count + 1)
+                    depth = subcase_count
+                    if const.CASE_ACTION_INDEX in actions:
+                        depth += 1
+                    self.walk_through_case_forms(case_obj, depth)
                 if const.CASE_ACTION_CLOSE in actions:
                     self.reopened_cases_display.append(
                         ReopenedCase(name=case_obj.name, url=get_case_url(self.domain, case_obj.case_id),
@@ -821,7 +827,6 @@ def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_l
     msg = _("{}, its related subcases and submission forms were deleted successfully.").format(main_case_name)
     for form in form_delete_list:
         if archive_form(request, domain, form, is_case_delete=True):
-            # caching here.....
             form_instance = XFormInstance.objects.get_form(form, domain)
             form_instance.soft_delete()
         else:
