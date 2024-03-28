@@ -304,6 +304,37 @@
       "compare_all_files": true
     }
   ],
+  "apps/case_importer/templates/case_importer": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "case_importer",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "case_importer/partials",
+      "compare_all_files": true
+    }
+  ],
+  "apps/case_importer/static/case_importer/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/case_importer/js",
+      "compare_all_files": true
+    }
+  ],
   "apps/settings/templates/settings": [
     {
       "directories": [

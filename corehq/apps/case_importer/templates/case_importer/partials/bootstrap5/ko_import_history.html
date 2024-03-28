@@ -1,0 +1,139 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div id="recent-uploads" class="ko-template">
+  <h2 class="row">
+    <div class="col-md-9">
+      {% trans "Recent Uploads" %}
+    </div>
+    <div class="col-md-3">
+      <search-box data-apply-bindings="false"
+                  params="
+                    value: query,
+                    action: function() { goToPage(1); },
+                    placeholder: '{% trans_html_attr "Search by filename or comment" %}'
+                  "></search-box>
+    </div>
+  </h2>
+  <!--ko if: state() == states.SUCCESS && !$root._.isEmpty(case_uploads())-->
+  <table class="table table-striped">
+    <tr>
+      <th class="col-lg-1">{% trans "Status" %}</th>
+      <th class="col-lg-1">{% trans "Time" %}</th>
+      <th class="col-lg-1">{% trans "Case Type" %}</th>
+      <th class="col-lg-4">{% trans "Details" %}</th>
+      <th class="col-lg-3">{% trans "Comment" %}</th>
+      <th class="col-lg-2">{% trans "File" %}</th>
+      {% if request|request_has_privilege:"FORM_CASE_IDS_CASE_IMPORTER" or couch_user.is_superuser %}
+        <th>{% trans "Form IDs" %}</th>
+        <th>{% trans "Case IDs" %}</th>
+      {% endif %}
+
+    </tr>
+    <!--ko foreach: case_uploads-->
+    <tr>
+      <td class="col-lg-1">
+        <!--ko if: task_status().state == $root.states.SUCCESS && task_status().result-->
+        <!--ko if: $root._.isEmpty(task_status().result.errors)-->
+        <span class="badge text-bg-success">{% trans "Success" %}</span>
+        <!--/ko-->
+        <!--ko if: !$root._.isEmpty(task_status().result.errors)-->
+        <span class="badge text-bg-warning">{% trans "Success with warnings" %}</span>
+        <!--/ko-->
+        <!--/ko-->
+        <!--ko if: task_status().state == $root.states.SUCCESS && !task_status().result-->
+        <span class="badge text-bg-success">{% trans "Success" %}</span>
+        <!--/ko-->
+        <!--ko if: task_status().state == $root.states.MISSING && isExpiredUpload() || task_status().state == $root.states.FAILED-->
+        <span class="badge text-bg-danger">{% trans "Failed" %}</span>
+        <!--/ko-->
+        <!--ko if: task_status().state == $root.states.MISSING && !isExpiredUpload() || task_status().state == $root.states.NOT_STARTED-->
+        {% trans "Waiting to start" %}
+        <!--/ko-->
+        <!--ko if: task_status().state == $root.states.STARTED-->
+        <div class="progress">
+          <div class="progress-bar bg-info"
+               role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+               data-bind="attr: {style: 'width: ' + task_status().progress.percent + '%;'}">
+                      <span><span data-bind="text: task_status().progress.percent"></span>%
+                        {% trans "Complete" %}</span>
+          </div>
+        </div>
+        <!--/ko-->
+      </td>
+      <td class="col-lg-1" data-bind="text: created_display"></td>
+      <td class="col-lg-1" data-bind="text: case_type">
+      </td>
+      <td class="col-lg-4" data-bind="with: task_status()">
+        {% include 'case_importer/partials/ko_import_status.html' %}
+      </td>
+      <td class="col-lg-3">
+        <strong data-bind="text: user_name"></strong>
+        <!--ko if: upload_comment_edit_allowed-->
+        <inline-edit data-apply-bindings="false" params="
+                  value: comment,
+                  url: commentUrl(),
+                  rows: 1,
+                  placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
+                  saveValueName: 'comment',
+                  errorMessage: '{% trans "Error updating comment.  Please try again."|escapejs %}'
+              "></inline-edit>
+        <!--/ko-->
+        <!--ko if: !upload_comment_edit_allowed-->
+        <span data-bind="text: comment"></span>
+        <!--/ko-->
+      </td>
+      <td class="col-lg-2">
+        <!--ko if: upload_file_name-->
+        <!--ko if: !upload_file_download_allowed-->
+        <a style="cursor: pointer" data-bind="
+                      text: upload_file_name,
+                      popover: {
+                          title: '{% trans_html_attr 'You may not download this file yourself' %}',
+                          content: '{% trans_html_attr 'Please ask an administrator or the user who uploaded the file for their help' %}',
+                          placement: 'top'
+                      }
+                  "></a>
+        <!--/ko-->
+        <!--ko if: upload_file_download_allowed-->
+        <i class="fa fa-download"></i>
+        <a data-bind="attr: {href: downloadUrl()}">
+          <span data-bind="text: upload_file_name"></span>
+        </a>
+        <!--/ko-->
+        <!--/ko-->
+      </td>
+      {% if request|request_has_privilege:"FORM_CASE_IDS_CASE_IMPORTER" or couch_user.is_superuser %}
+        <td>
+          <a data-bind="attr: {href: formIdsUrl()}" target="_blank">
+            <i class="fa fa-download"></i>
+          </a>
+        </td>
+        <td>
+          <a data-bind="attr: {href: caseIdsUrl()}" target="_blank">
+            <i class="fa fa-download"></i>
+          </a>
+        </td>
+      {% endif %}
+    </tr>
+    <!--/ko-->
+  </table>
+  <pagination data-apply-bindings="false"
+              params="goToPage: goToPage,
+                      slug: 'case-import',
+                      perPage: itemsPerPage,
+                      totalItems: totalItems,
+                      showSpinner: showPaginationSpinner"></pagination>
+  <!--/ko-->
+  <!--ko if: state() === states.SUCCESS && $root._.isEmpty(case_uploads())-->
+  <div class="alert alert-info">
+    {% trans "No recent uploads found." %}
+  </div>
+  <!--/ko-->
+  <!--ko if: state() === states.STARTED -->
+  <i class="fa fa-spinner fa-spin"></i>
+  <!--/ko-->
+  <!--ko if: state() === states.FAILED -->
+  <i class="fa fa-warning"></i>
+  <!--/ko-->
+</div>

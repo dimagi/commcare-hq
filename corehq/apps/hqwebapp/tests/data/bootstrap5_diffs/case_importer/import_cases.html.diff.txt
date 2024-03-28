@@ -1,0 +1,33 @@
+--- 
++++ 
+@@ -2,7 +2,7 @@
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+-{% requirejs_main "case_importer/js/bootstrap3/main" %}
++{% requirejs_main "case_importer/js/bootstrap5/main" %}
+ 
+ {% block page_title %}
+   {{ current_page.title }}
+@@ -29,11 +29,11 @@
+       </legend>
+ 
+       <div class="form-group">
+-        <label class="control-label col-sm-3" for="file">
++        <label class="form-label col-md-3" for="file">
+           {% trans "Select a file to upload" %}
+         </label>
+-        <!-- unorthodox use of .control-label to vertically align the file input with the actual label -->
+-        <div class="col-sm-6 control-label">
++        <!-- unorthodox use of .control-label to vertically align the file input with the actual badge -->
++        <div class="col-md-6 form-label">
+           <input name="file" id="file" type="file" />
+         </div>
+       </div>
+@@ -49,5 +49,5 @@
+   </form>
+ 
+ 
+-  {% include 'case_importer/partials/bootstrap3/ko_import_history.html' %}
++  {% include 'case_importer/partials/bootstrap5/ko_import_history.html' %}
+ {% endblock %}

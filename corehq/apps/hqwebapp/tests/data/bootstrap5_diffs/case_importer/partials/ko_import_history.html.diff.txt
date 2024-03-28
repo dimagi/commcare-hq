@@ -1,0 +1,95 @@
+--- 
++++ 
+@@ -3,10 +3,10 @@
+ 
+ <div id="recent-uploads" class="ko-template">
+   <h2 class="row">
+-    <div class="col-sm-9">
++    <div class="col-md-9">
+       {% trans "Recent Uploads" %}
+     </div>
+-    <div class="col-sm-3">
++    <div class="col-md-3">
+       <search-box data-apply-bindings="false"
+                   params="
+                     value: query,
+@@ -18,12 +18,12 @@
+   <!--ko if: state() == states.SUCCESS && !$root._.isEmpty(case_uploads())-->
+   <table class="table table-striped">
+     <tr>
+-      <th class="col-md-1">{% trans "Status" %}</th>
+-      <th class="col-md-1">{% trans "Time" %}</th>
+-      <th class="col-md-1">{% trans "Case Type" %}</th>
+-      <th class="col-md-4">{% trans "Details" %}</th>
+-      <th class="col-md-3">{% trans "Comment" %}</th>
+-      <th class="col-md-2">{% trans "File" %}</th>
++      <th class="col-lg-1">{% trans "Status" %}</th>
++      <th class="col-lg-1">{% trans "Time" %}</th>
++      <th class="col-lg-1">{% trans "Case Type" %}</th>
++      <th class="col-lg-4">{% trans "Details" %}</th>
++      <th class="col-lg-3">{% trans "Comment" %}</th>
++      <th class="col-lg-2">{% trans "File" %}</th>
+       {% if request|request_has_privilege:"FORM_CASE_IDS_CASE_IMPORTER" or couch_user.is_superuser %}
+         <th>{% trans "Form IDs" %}</th>
+         <th>{% trans "Case IDs" %}</th>
+@@ -32,27 +32,27 @@
+     </tr>
+     <!--ko foreach: case_uploads-->
+     <tr>
+-      <td class="col-md-1">
++      <td class="col-lg-1">
+         <!--ko if: task_status().state == $root.states.SUCCESS && task_status().result-->
+         <!--ko if: $root._.isEmpty(task_status().result.errors)-->
+-        <span class="label label-success">{% trans "Success" %}</span>
++        <span class="badge text-bg-success">{% trans "Success" %}</span>
+         <!--/ko-->
+         <!--ko if: !$root._.isEmpty(task_status().result.errors)-->
+-        <span class="label label-warning">{% trans "Success with warnings" %}</span>
++        <span class="badge text-bg-warning">{% trans "Success with warnings" %}</span>
+         <!--/ko-->
+         <!--/ko-->
+         <!--ko if: task_status().state == $root.states.SUCCESS && !task_status().result-->
+-        <span class="label label-success">{% trans "Success" %}</span>
++        <span class="badge text-bg-success">{% trans "Success" %}</span>
+         <!--/ko-->
+         <!--ko if: task_status().state == $root.states.MISSING && isExpiredUpload() || task_status().state == $root.states.FAILED-->
+-        <span class="label label-danger">{% trans "Failed" %}</span>
++        <span class="badge text-bg-danger">{% trans "Failed" %}</span>
+         <!--/ko-->
+         <!--ko if: task_status().state == $root.states.MISSING && !isExpiredUpload() || task_status().state == $root.states.NOT_STARTED-->
+         {% trans "Waiting to start" %}
+         <!--/ko-->
+         <!--ko if: task_status().state == $root.states.STARTED-->
+         <div class="progress">
+-          <div class="progress-bar progress-bar-info"
++          <div class="progress-bar bg-info"
+                role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                data-bind="attr: {style: 'width: ' + task_status().progress.percent + '%;'}">
+                       <span><span data-bind="text: task_status().progress.percent"></span>%
+@@ -61,13 +61,13 @@
+         </div>
+         <!--/ko-->
+       </td>
+-      <td class="col-md-1" data-bind="text: created_display"></td>
+-      <td class="col-md-1" data-bind="text: case_type">
++      <td class="col-lg-1" data-bind="text: created_display"></td>
++      <td class="col-lg-1" data-bind="text: case_type">
+       </td>
+-      <td class="col-md-4" data-bind="with: task_status()">
++      <td class="col-lg-4" data-bind="with: task_status()">
+         {% include 'case_importer/partials/ko_import_status.html' %}
+       </td>
+-      <td class="col-md-3">
++      <td class="col-lg-3">
+         <strong data-bind="text: user_name"></strong>
+         <!--ko if: upload_comment_edit_allowed-->
+         <inline-edit data-apply-bindings="false" params="
+@@ -83,7 +83,7 @@
+         <span data-bind="text: comment"></span>
+         <!--/ko-->
+       </td>
+-      <td class="col-md-2">
++      <td class="col-lg-2">
+         <!--ko if: upload_file_name-->
+         <!--ko if: !upload_file_download_allowed-->
+         <a style="cursor: pointer" data-bind="

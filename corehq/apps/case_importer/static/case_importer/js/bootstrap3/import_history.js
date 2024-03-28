@@ -1,5 +1,5 @@
 "use strict";
-hqDefine('case_importer/js/import_history', [
+hqDefine('case_importer/js/bootstrap3/import_history', [
     'jquery',
     'knockout',
     'underscore',
