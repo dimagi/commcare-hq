@@ -2682,7 +2682,9 @@ class Invitation(models.Model):
     domain = models.CharField(max_length=255)
     role = models.CharField(max_length=100, null=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
-    supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
+    location_id = models.CharField(max_length=126, null=True)  # couch id of a Location
+    profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
+                                on_delete=models.CASCADE, null=True)
 
     def __repr__(self):
         return f"Invitation(domain='{self.domain}', email='{self.email})"
@@ -2782,7 +2784,7 @@ class Invitation(models.Model):
         web_user.add_as_web_user(
             self.domain,
             role=self.role,
-            location_id=self.supply_point,
+            location_id=self.location_id,
             program_id=self.program,
         )
         self.is_accepted = True
