@@ -106,9 +106,9 @@ class ProfileCaseSearchView(_BaseCaseSearchView):
     @json_error
     @cls_require_superuser_or_contractor
     def post(self, request, *args, **kwargs):
-        app_id = request.POST.get('app_id')
         data = json.loads(request.POST.get('q'))
         request_dict = data.get('request_dict', data)
+        app_id = data.get('app_id', request.POST.get('app_id'))  # may be in either place
         start = datetime.now()
         config = extract_search_request_config(request_dict)
         timing_context, num_cases = profile_case_search(self.domain, request.couch_user, app_id, config)

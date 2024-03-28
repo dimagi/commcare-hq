@@ -130,11 +130,11 @@ def app_aware_search(request, domain, app_id):
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
     fixtures = CaseDBFixture(cases).fixture
-    _log_search_timing(start_time, request_dict, domain)
+    _log_search_timing(start_time, request_dict, domain, app_id)
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
-def _log_search_timing(start_time, request_dict, domain):
+def _log_search_timing(start_time, request_dict, domain, app_id):
     for key, value in request_dict.items():
         if isinstance(value, str):
             request_dict[key] = value.replace('\t', '')
@@ -158,6 +158,7 @@ def _log_search_timing(start_time, request_dict, domain):
     if elapsed >= 10 and limit_domains(domain) != "__other__":
         notify_exception(None, "LongCaseSearchRequest", details={
             'request_dict': request_dict,
+            'app_id': app_id,
         })
 
 
