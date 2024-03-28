@@ -9,6 +9,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     get_spec,
     make_direct_css_renames,
     make_numbered_css_renames,
+    make_template_tag_renames,
     make_data_attribute_renames,
     flag_changed_css_classes,
     flag_stateful_button_changes_bootstrap5,
@@ -380,6 +381,8 @@ class Command(BaseCommand):
         renames.extend(numbered_renames)
         new_line, attribute_renames = make_data_attribute_renames(new_line, spec)
         renames.extend(attribute_renames)
+        new_line, template_tag_renames = make_template_tag_renames(new_line, spec)
+        renames.extend(template_tag_renames)
         return new_line, renames
 
     @staticmethod

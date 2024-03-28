@@ -3,13 +3,6 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block js %}
-  {% if not requirejs_main %}
-    {{ block.super }}
-    <script src="{% static 'hqwebapp/js/bootstrap5/crud_paginated_list.js' %}"></script>
-  {% endif %}
-{% endblock %}
-
 {% block page_content %}
   {% initial_page_data 'total' pagination.total %}
   {% initial_page_data 'limit' pagination.limit %}
