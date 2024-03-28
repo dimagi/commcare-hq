@@ -8,8 +8,11 @@ from django.utils.translation import gettext_lazy
 
 from dimagi.utils.web import json_response
 
-from corehq.apps.case_search.models import case_search_enabled_for_domain
-from corehq.apps.case_search.utils import get_case_search_results_from_request
+from corehq.apps.case_search.models import (
+    case_search_enabled_for_domain,
+    extract_search_request_config,
+)
+from corehq.apps.case_search.utils import profile_case_search
 from corehq.apps.domain.decorators import cls_require_superuser_or_contractor
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.util.view_utils import BadRequest, json_error
@@ -106,9 +109,12 @@ class ProfileCaseSearchView(_BaseCaseSearchView):
         data = json.loads(request.POST.get('q'))
         request_dict = data.get('request_dict', data)
         start = datetime.now()
-        results = get_case_search_results_from_request(self.domain, None, request.couch_user, request_dict)
+        config = extract_search_request_config(request_dict)
+        app_id = None  # TODO add to UI
+        timing_context, num_cases = profile_case_search(self.domain, request.couch_user, app_id, config)
         runtime = (datetime.now() - start).total_seconds()
         return json_response({
-            'count': len(results),
+            'count': num_cases,
             'runtime': runtime,
+            'timing_data': timing_context.to_dict(),
         })
