@@ -655,13 +655,13 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         '"Update Configuration" below. This will apply only to SSO users associated with this Identity Provider.'
     )
 
-    def __init__(self, identity_provider, *args, allow_multi_view_api_keys=False, **kwargs):
+    def __init__(self, identity_provider, *args, uses_api_key_management=False, **kwargs):
         self.idp = identity_provider
-        self.allow_multi_view_api_keys = allow_multi_view_api_keys
+        self.uses_api_key_management = uses_api_key_management
         super().__init__(*args, **kwargs)
 
     def get_primary_fields(self):
-        if self.allow_multi_view_api_keys:
+        if self.uses_api_key_management:
             fieldset = crispy.Fieldset(
                 _('API Key Management'),
                 checkbox_field('always_show_user_api_keys'),
@@ -746,7 +746,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         if not self.has_error('max_days_until_user_api_key_expiration'):
             enforces_expiration = bool(self.cleaned_data['enforce_user_api_key_expiration'])
             if enforces_expiration and not self.cleaned_data.get('max_days_until_user_api_key_expiration', None):
-                self.add_error('max_days_until_user_api_key_expiration', gettext('a value must be specified'))
+                self.add_error('max_days_until_user_api_key_expiration', gettext('Please specify a value.'))
 
     def update_identity_provider(self, admin_user):
         raise NotImplementedError("please implement update_identity_provider")

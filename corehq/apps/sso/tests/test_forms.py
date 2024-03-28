@@ -643,7 +643,7 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
         form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
 
         self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['max_days_until_user_api_key_expiration'], ['a value must be specified'])
+        self.assertEqual(form.errors['max_days_until_user_api_key_expiration'], ['Please specify a value.'])
 
     def test_empty_string_is_not_a_valid_expiration_window(self):
         post_data = self._get_post_data(

@@ -73,9 +73,6 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             ),
         }
 
-    def show_api_fields(self):
-        return MULTI_VIEW_API_KEYS.enabled_for_request(self.request)
-
     @property
     @memoized
     def identity_provider(self):
@@ -111,13 +108,18 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             SsoSamlEnterpriseSettingsForm if self.identity_provider.protocol == IdentityProviderProtocol.SAML
             else SsoOidcEnterpriseSettingsForm
         )
+
+        uses_api_key_management = MULTI_VIEW_API_KEYS.enabled_for_request(self.request)
+
         if self.request.method == 'POST':
             return form_class(
-                self.identity_provider, self.request.POST, self.request.FILES
+                self.identity_provider,
+                self.request.POST,
+                self.request.FILES,
+                uses_api_key_management=uses_api_key_management
             )
 
-        api_fields_enabled = self.show_api_fields()
-        return form_class(self.identity_provider, allow_multi_view_api_keys=api_fields_enabled)
+        return form_class(self.identity_provider, uses_api_key_management=uses_api_key_management)
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
