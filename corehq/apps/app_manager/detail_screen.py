@@ -108,7 +108,10 @@ class FormattedDetailColumn(object):
         self.order = order
         self.id_strings = id_strings
         self.parent_tab_nodeset = parent_tab_nodeset
-        self.style = style
+        if style:
+            self.style = style
+        else:
+            self.style = self.get_default_style(column)
         self.entries_helper = entries_helper
 
     def has_sort_node_for_nodeset_column(self):
@@ -328,6 +331,9 @@ class FormattedDetailColumn(object):
                 print_id=print_id,
             )
 
+    def get_default_style(self, column):
+        return None
+
 
 class HideShortHeaderColumn(FormattedDetailColumn):
 
@@ -366,6 +372,23 @@ class Date(FormattedDetailColumn):
 class TimeAgo(FormattedDetailColumn):
     XPATH_FUNCTION = "if({xpath} = '', '', string(int((today() - date({xpath})) div {column.time_ago_interval})))"
     SORT_XPATH_FUNCTION = "{xpath}"
+
+
+@register_format_type('image')
+class Image(FormattedDetailColumn):
+    template_form = 'image'
+    XPATH_FUNCTION = "cc_case_image"
+
+    def get_default_style(self, column):
+        return sx.Style(
+            grid_x=column.grid_x,
+            grid_y=column.grid_y,
+            grid_height=column.height,
+            grid_width=column.width,
+            horz_align=column.horizontal_align,
+            vert_align=column.vertical_align,
+            font_size=column.font_size,
+        )
 
 
 @register_format_type('distance')
