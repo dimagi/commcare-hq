@@ -1,6 +1,6 @@
 import datetime
 
-from corehq.apps.es import FormES
+from corehq.apps.es import AppES, FormES
 from corehq.apps.es.aggregations import TermsAggregation
 from corehq.const import MISSING_APP_ID
 from corehq.util.quickcache import quickcache
@@ -144,15 +144,18 @@ def get_form_analytics_metadata(domain, app_id, xmlns):
         return None
 
 
-def get_exports_by_form(domain):
+def get_exports_by_form(domain, use_es=False):
     from corehq.apps.app_manager.models import Application
-    rows = Application.get_db().view(
-        'exports_forms_by_app/view',
-        startkey=[domain],
-        endkey=[domain, {}],
-        group=True,
-        stale=stale_ok()
-    ).all()
+    if use_es:
+        rows = _get_export_forms_by_app_es(domain)
+    else:
+        rows = Application.get_db().view(
+            'exports_forms_by_app/view',
+            startkey=[domain],
+            endkey=[domain, {}],
+            group=True,
+            stale=stale_ok()
+        ).all()
     form_count_breakdown = get_form_count_breakdown_for_domain(domain)
 
     for row in rows:
@@ -164,6 +167,26 @@ def get_exports_by_form(domain):
         rows.append({'key': list(key), 'value': {'xmlns': key[2], 'submissions': value}})
 
     rows.sort(key=lambda row: row['key'])
+    return rows
+
+
+def _get_export_forms_by_app_es(domain):
+    rows = []
+    apps = AppES().domain(domain).run().hits
+    for app in apps:
+        for module_id, module in enumerate(app["modules"]):
+            for form_id, form in enumerate(module["forms"]):
+                rows.append({
+                    "key": [app['domain'], app['_id'], form["xmlns"]],
+                    "value": {
+                        "xmlns": form["xmlns"],
+                        "app": {"name": app["name"], "langs": app["langs"], "id": app["_id"]},
+                        "module": {"name": module["name"], "id": module_id},
+                        "form": {"name": form["name"], "id": form_id},
+                        "app_deleted": app["doc_type"] in ["Application-Deleted", "LinkedApplication-Deleted"],
+                    }
+                })
+
     return rows
 
 
