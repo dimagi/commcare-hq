@@ -441,17 +441,36 @@ class TestCaseDeletion(TestCase):
         setattr(request, 'session', 'session')
         setattr(request, '_messages', FallbackStorage(request))
 
+        parent_type = 'parent_case_type'
         cases = [uuid.uuid4().hex for i in range(DeleteCaseView.MAX_SUBCASE_DEPTH + 1)]
+        submit_case_blocks(
+            CaseBlock(case_id=cases[0], create=True, case_type=parent_type).as_text(),
+            self.domain
+        )
         for i in range(DeleteCaseView.MAX_SUBCASE_DEPTH):
             submit_case_blocks([
-                CaseBlock(cases[i], create=True).as_text(),
-                CaseBlock(cases[i + 1], create=True).as_text(),
+                CaseBlock(case_id=cases[i], update={}).as_text(),
+                CaseBlock(case_id=cases[i + 1], create=True,
+                          index={'parent': (parent_type + str(i), cases[i])}).as_text()
             ], self.domain)
         self.addCleanup(_delete_all_cases_and_forms, self.domain)
 
         view = self._create_view(cases[0])
         return_dict = view.get_cases_and_forms_for_deletion(request, self.domain, cases[0])
         self.assertTrue(return_dict['redirect'])
+
+    def test_bulk_import_does_not_trigger_too_many_cases_error(self):
+        main_id = uuid.uuid4().hex
+        # submit_case_blocks acts similarly to a bulk case import, creating a System Form
+        xform, _ = submit_case_blocks(
+            [CaseBlock(main_id, case_name="main_case", create=True).as_text()]
+            + [CaseBlock(uuid.uuid4().hex, case_name="case{}".format(i), create=True).as_text() for i in range(3)],
+            self.domain)
+        self.addCleanup(_delete_all_cases_and_forms, self.domain)
+
+        case = CommCareCase.objects.get_case(main_id, self.domain)
+        view = self._create_view(case.case_id)
+        view.walk_through_case_forms(case, subcase_count=0)  # should not raise error
 
     def test_case_deletion_redirect_if_case_is_already_deleted(self):
         """
