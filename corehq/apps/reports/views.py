@@ -1695,7 +1695,7 @@ def _get_case_id_and_redirect_url(domain, request):
 @require_form_view_permission
 @require_permission(HqPermissions.edit_data)
 @location_safe
-def unarchive_form(request, domain, instance_id):
+def unarchive_form(request, domain, instance_id, case_deletion=False):
     instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
     if instance.is_archived:
@@ -1703,6 +1703,8 @@ def unarchive_form(request, domain, instance_id):
     else:
         assert instance.is_normal
     messages.success(request, _("Form was successfully restored."))
+    if case_deletion:
+        return instance.is_archived
 
     redirect = request.META.get('HTTP_REFERER')
     if not redirect:

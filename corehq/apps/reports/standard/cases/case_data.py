@@ -88,6 +88,7 @@ from corehq.apps.reports.views import (
     DATE_FORMAT,
     BaseProjectReportSectionView,
     get_data_cleaning_updates,
+    unarchive_form
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -794,7 +795,8 @@ class DeleteCaseView(BaseProjectReportSectionView):
                                                  url=get_form_url(self.domain, form_id),
                                                  actions=', '.join(actions),
                                                  is_primary=form_id == self.xform_id)
-                    affected_case.affected_forms.append(affected_form)
+                    if affected_form not in affected_case.affected_forms:
+                        affected_case.affected_forms.append(affected_form)
                 case_actions.append(FormAffectedCases(case_name=case_obj.name, actions=', '.join(actions)))
         return case_actions
 
@@ -826,30 +828,34 @@ class DeleteCaseView(BaseProjectReportSectionView):
 def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_list, main_case_name=None):
     error = False
     msg = _("{}, its related subcases and submission forms were deleted successfully.").format(main_case_name)
+    archived_forms = []
 
-    def archive_and_delete_forms(form_list):
+    def archive_forms(form_list):
         for form in form_list:
-            if archive_form(request, domain, form, is_case_delete=True):
-                form_instance = XFormInstance.objects.get_form(form, domain)
-                form_instance.soft_delete()
-            else:
+            if not archive_form(request, domain, form, is_case_delete=True):
                 raise FormArchiveError(form.form_id)
+            archived_forms.append(form)
 
     try:
-        archive_and_delete_forms(form_delete_list)
+        archive_forms(form_delete_list)
     except FormArchiveError:
         # Try sorting all forms first
-        form_obj_list = XFormInstance.objects.get_forms(form_delete_list)
+        form_obj_list = XFormInstance.objects.get_forms(
+            [form for form in form_delete_list if form not in archived_forms]
+        )
         sorted_form_delete_list = sorted(form_obj_list, key=lambda form: form.received_on)
         try:
-            archive_and_delete_forms([form.form_id for form in sorted_form_delete_list])
+            archive_forms([form.form_id for form in sorted_form_delete_list])
         except FormArchiveError as e:
             # I'm fairly certain this will never enter here but this is just in case something does go wrong
+            for form in archived_forms:
+                unarchive_form(request, domain, form, is_case_delete=True)
             error = True
             msg = _("The form {} could not be deleted. Please try manually archiving, then deleting the form, "
                     "before trying to delete this case again.").format(e)
 
-    if not error:
+    if not error and len(archived_forms) == len(form_delete_list):
+        XFormInstance.objects.soft_delete_forms(domain, list(form_delete_list))
         CommCareCase.objects.soft_delete_cases(domain, list(case_delete_list))
 
     return msg, error
