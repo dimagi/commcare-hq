@@ -832,9 +832,14 @@ class ExportInstance(BlobMixin, Document):
     @classmethod
     def wrap(cls, data):
         from corehq.apps.export.views.utils import clean_odata_columns
+        # This is a temporary solution
+        if data.get('export_format', '') == 'geojson':
+            data['split_multiselects'] = False
+
         export_instance = super(ExportInstance, cls).wrap(data)
         if export_instance.is_odata_config:
             clean_odata_columns(export_instance)
+
         return export_instance
 
     @property
