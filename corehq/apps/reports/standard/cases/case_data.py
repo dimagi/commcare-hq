@@ -833,7 +833,7 @@ def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_l
     def archive_forms(form_list):
         for form in form_list:
             if not archive_form(request, domain, form, is_case_delete=True):
-                raise FormArchiveError(form.form_id)
+                raise FormArchiveError(form)
             archived_forms.append(form)
 
     try:
