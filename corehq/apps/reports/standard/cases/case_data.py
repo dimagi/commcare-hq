@@ -81,7 +81,7 @@ from corehq.apps.locations.permissions import (
 )
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.display import xmlns_to_name, xmlns_to_name_for_case_deletion
-from corehq.apps.reports.exceptions import TooManyCases
+from corehq.apps.reports.exceptions import TooManyCasesError, FormArchiveError
 from corehq.apps.reports.view_helpers import case_hierarchy_context
 from corehq.apps.reports.views import (
     archive_form,
@@ -657,15 +657,18 @@ class DeleteCaseView(BaseProjectReportSectionView):
         case_instance = safely_get_case(request, domain, case_id, include_deleted=True)
         try:
             case_data = self.walk_through_case_forms(case_instance, subcase_count=0)
-        except TooManyCases:
+        except TooManyCasesError:
             if form_id:
                 messages.error(request, _("Deleting this form would delete too many related cases. "
                                           "Please navigate to the form's Case Changes and delete some "
-                                          "of the cases it created before attempting to delete this form."))
+                                          "of the cases it created before attempting to delete this form. "
+                                          "Please note that there is a limit of {} cases you can delete "
+                                          "at once.").format(self.MAX_CASE_COUNT))
             else:
                 messages.error(request, _("Deleting this case would delete too many related cases. "
-                                          "Please delete some of this cases' subcases before attempting"
-                                          "to delete this case."))
+                                          "Please delete some of this cases' subcases before attempting "
+                                          "to delete this case. Please note that there is a limit of {} cases "
+                                          "you can delete at once.").format(self.MAX_CASE_COUNT))
             return {'redirect': True}
 
         if not case_data:
@@ -721,7 +724,7 @@ class DeleteCaseView(BaseProjectReportSectionView):
             return {}
         self.delete_cases.append(case.case_id)
         if len(self.delete_cases) > self.MAX_CASE_COUNT or subcase_count >= self.MAX_SUBCASE_DEPTH:
-            raise TooManyCases("Too many cases to delete")
+            raise TooManyCasesError("Too many cases to delete")
         current_case = DeleteCase(id=case.case_id, name=case.name, url=get_case_url(self.domain, case.case_id))
         if len(self.delete_cases) == 1:
             current_case.is_primary = True
@@ -773,7 +776,10 @@ class DeleteCaseView(BaseProjectReportSectionView):
                 case_actions.append(FormAffectedCases(is_current_case=True, actions=', '.join(actions)))
             elif case_obj.case_id not in self.delete_cases:
                 if const.CASE_ACTION_CREATE in actions and case_obj.case_id != current_case_id:
-                    self.walk_through_case_forms(case_obj, subcase_count + 1)
+                    depth = subcase_count
+                    if const.CASE_ACTION_INDEX in actions:
+                        depth += 1
+                    self.walk_through_case_forms(case_obj, depth)
                 if const.CASE_ACTION_CLOSE in actions:
                     self.reopened_cases_display.append(
                         ReopenedCase(name=case_obj.name, url=get_case_url(self.domain, case_obj.case_id),
@@ -819,17 +825,29 @@ class DeleteCaseView(BaseProjectReportSectionView):
 def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_list, main_case_name=None):
     error = False
     msg = _("{}, its related subcases and submission forms were deleted successfully.").format(main_case_name)
-    for form in form_delete_list:
-        if archive_form(request, domain, form, is_case_delete=True):
-            # caching here.....
-            form_instance = XFormInstance.objects.get_form(form, domain)
-            form_instance.soft_delete()
-        else:
+
+    def archive_and_delete_forms(form_list):
+        for form in form_list:
+            if archive_form(request, domain, form, is_case_delete=True):
+                form_instance = XFormInstance.objects.get_form(form, domain)
+                form_instance.soft_delete()
+            else:
+                raise FormArchiveError(form.form_id)
+
+    try:
+        archive_and_delete_forms(form_delete_list)
+    except FormArchiveError:
+        # Try sorting all forms first
+        form_obj_list = XFormInstance.objects.get_forms(form_delete_list)
+        sorted_form_delete_list = sorted(form_obj_list, key=lambda form: form.received_on)
+        try:
+            archive_and_delete_forms([form.form_id for form in sorted_form_delete_list])
+        except FormArchiveError as e:
             # I'm fairly certain this will never enter here but this is just in case something does go wrong
             error = True
             msg = _("The form {} could not be deleted. Please try manually archiving, then deleting the form, "
-                    "before trying to delete this case again.").format(form)
-            break
+                    "before trying to delete this case again.").format(e)
+
     if not error:
         CommCareCase.objects.soft_delete_cases(domain, list(case_delete_list))
 
