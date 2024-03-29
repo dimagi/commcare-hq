@@ -4,10 +4,24 @@
 
 {% requirejs_main "settings/js/bootstrap5/user_api_keys" %}
 
+{% block page_content %}
+  {% initial_page_data 'always_show_user_api_keys' always_show_user_api_keys %}
+  {% initial_page_data 'maximum_key_expiration_window' maximum_key_expiration_window %}
+  {{ block.super }}
+{% endblock %}
+
 {% block pagination_templates %}
   <script type="text/html" id="base-user-api-key-template">
     <td data-bind="text: name"></td>
-    <td data-bind="text: key"></td>
+    <td>
+      <span data-bind="text: key"></span>
+      {% if always_show_user_api_keys %}
+      <button type="button" class="btn btn-default">
+        <i class="fa-regular fa-copy"></i>
+        {% trans "Copy Full Key" %}
+      </button>
+      {% endif %}
+    </td>
     <td data-bind="text: domain"></td>
     <td data-bind="text: ip_allowlist"></td>
     <td data-bind="text: created"></td>
