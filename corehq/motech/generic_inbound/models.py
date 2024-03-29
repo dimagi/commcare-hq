@@ -92,7 +92,12 @@ class ConfigurableAPI(models.Model):
         return reverse("generic_inbound_api", args=[self.domain, self.url_key], absolute=True)
 
     def get_validations(self):
-        return list(self.validations.all())
+        try:
+            return list(self.validations.all())
+        except ValueError:
+            # A ValueError is raised if this instance hasn't been saved yet when attempting to access the reverse
+            # foreign key relationship. Return an empty list in this scenario.
+            return []
 
 
 class ConfigurableApiValidation(models.Model):

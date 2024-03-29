@@ -196,7 +196,12 @@ class UserRole(models.Model):
         _clear_query_cache()
 
     def get_permission_infos(self):
-        return [rp.as_permission_info() for rp in self.rolepermission_set.all()]
+        try:
+            return [rp.as_permission_info() for rp in self.rolepermission_set.all()]
+        except ValueError:
+            # A ValueError is raised if this instance hasn't been saved yet when attempting to access the reverse
+            # foreign key relationship. Return an empty list in this scenario.
+            return []
 
     @property
     def permissions(self):
@@ -249,9 +254,14 @@ class UserRole(models.Model):
 
     @property
     def assignable_by_couch(self):
-        return list(
-            self.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True)
-        )
+        try:
+            return list(
+                self.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True)
+            )
+        except ValueError:
+            # A ValueError is raised if this instance hasn't been saved yet when attempting to access the reverse
+            # foreign key relationship. Return an empty list in this scenario.
+            return []
 
     @property
     def assignable_by(self):
