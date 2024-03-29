@@ -95,8 +95,9 @@ class Command(BaseCommand):
                 cases = CommCareCase.objects.get_cases(case_ids, domain)
                 for case in cases:
                     case_property_value = self._get_location_update_for_case(case, form_xmlns)
-                    case_updates.append((case.case_id, {f'{case_property}': case_property_value}, False))
-                    writer.writerow({'case_id': case.case_id, 'case_property_value': case_property_value})
+                    if case_property_value:
+                        case_updates.append((case.case_id, {f'{case_property}': case_property_value}, False))
+                        writer.writerow({'case_id': case.case_id, 'case_property_value': case_property_value})
 
                 if not dry_run:
                     if case_updates:
