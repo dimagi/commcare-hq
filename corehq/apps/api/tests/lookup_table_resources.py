@@ -240,7 +240,7 @@ class TestLookupTableResource(APIResourceTest):
 
 class TestLookupTableItemResource(APIResourceTest):
     resource = LookupTableItemResource
-    api_name = 'v0.5'
+    api_name = 'v0.6'
 
     @classmethod
     def setUpClass(cls):
@@ -325,6 +325,12 @@ class TestLookupTableItemResource(APIResourceTest):
 
         response = self._assert_auth_post_resource(
             self.list_endpoint, json.dumps(data_item_json), content_type='application/json')
+        response_json = json.loads(response.content.decode('utf-8'))
+        self.assertIn('id', response_json)
+        self.assertEqual(
+            response_json['fields']['state_name']['field_list'][0]['field_value'],
+            'Massachusetts'
+        )
         self.assertEqual(response.status_code, 201)
         data_item = LookupTableRow.objects.filter(domain=self.domain.name).first()
         self.addCleanup(data_item.delete)
@@ -353,8 +359,13 @@ class TestLookupTableItemResource(APIResourceTest):
 
         response = self._assert_auth_post_resource(
             self.single_endpoint(data_item.id.hex), json.dumps(data_item_update), method="PUT")
+        response_json = json.loads(response.content.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response_json['item_attributes']['attribute1'],
+            'cool_attr_value'
+        )
         data_item = LookupTableRow.objects.get(id=data_item.id)
-        self.assertEqual(response.status_code, 204)
         self.assertEqual(data_item.table_id, self.data_type.id)
         self.assertEqual(len(data_item.fields), 1)
         self.assertEqual(data_item.fields['state_name'][0].value, 'Massachusetts')
