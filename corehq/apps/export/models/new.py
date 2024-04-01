@@ -832,7 +832,9 @@ class ExportInstance(BlobMixin, Document):
     @classmethod
     def wrap(cls, data):
         from corehq.apps.export.views.utils import clean_odata_columns
-        # This is a temporary solution
+        # This is a temporary solution to make sure geojson exports have split_multiselects set to false,
+        # otherwise it won't work. Ticket SC-3569 is for making geojson form exports compatible with
+        # the split_multiselects option.
         if data.get('export_format', '') == 'geojson':
             data['split_multiselects'] = False
 
