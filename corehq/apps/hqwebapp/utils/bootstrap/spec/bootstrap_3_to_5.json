@@ -66,10 +66,16 @@
         "col-sm-offset-<num>": "offset-md-<num>",
         "col-xs-offset-<num>": "offset-sm-<num>"
     },
+    "template_tag_renames": {
+        "requirejs_main": "requirejs_main_b5"
+    },
     "data_attribute_renames": {
         "data-toggle": "data-bs-toggle",
         "data-target": "data-bs-target",
         "data-dismiss": "data-bs-dismiss"
+    },
+    "javascript_dependency_renames": {
+        "bootstrap3": "bootstrap5"
     },
     "flagged_css_changes": [
         "breadcrumb",
