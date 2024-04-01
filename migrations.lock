@@ -1203,6 +1203,7 @@ users
  0057_populate_sql_user_data
  0058_invitation_copy_supply_point
  0059_copy_transient_invitation_supply_point
+ 0060_remove_invitation_supply_point
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
