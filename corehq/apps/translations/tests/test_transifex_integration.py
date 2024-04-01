@@ -1,6 +1,8 @@
 from django.test import SimpleTestCase
 
+import polib
 import requests_mock
+from unittest.mock import patch
 
 from corehq.apps.translations.integrations.transifex.client import TransifexApiClient
 from corehq.util.test_utils import TestFileMixin
@@ -160,3 +162,95 @@ class TestTransifexApiClient(TestFileMixin, SimpleTestCase):
 
         # finally, gets content from download
         self.assertEqual(get_content.method, 'GET')
+
+    @patch('corehq.apps.translations.integrations.transifex.client.TransifexApiClient._upload_resource_strings')
+    @patch('corehq.apps.translations.integrations.transifex.client.TransifexApiClient._get_resource')
+    @patch('corehq.apps.translations.integrations.transifex.client.TransifexApiClient._create_resource')
+    def test_upload_resource(self, create_resource, get_resource, upload_resource_strings):
+        filename = 'menus_and_forms.po'
+        path = DATA_PATH + filename
+        with self.mocker:
+            self.tfx_client.upload_resource(path, RESOURCE_SLUG, RESOURCE_NAME, False)
+
+        content = self.get_file(path, '')
+        resource = create_resource.return_value
+        create_resource.assert_called_with(RESOURCE_SLUG, RESOURCE_NAME)
+        upload_resource_strings.assert_called_with(content, resource.id)
+
+        # with update_resource True we should get the existing resource instead of creating
+        with self.mocker:
+            self.tfx_client.upload_resource(path, RESOURCE_SLUG, RESOURCE_NAME, True)
+        get_resource.assert_called_with(RESOURCE_SLUG)
+
+        # with resource_name None we should create the resource using its filename as resource_name
+        with self.mocker:
+            self.tfx_client.upload_resource(path, RESOURCE_SLUG, None, False)
+        create_resource.assert_called_with(RESOURCE_SLUG, filename)
+
+    @patch(
+        'corehq.apps.translations.integrations.transifex.client.TransifexApiClient._upload_resource_translations')
+    @patch('corehq.apps.translations.integrations.transifex.client.TransifexApiClient._get_resource')
+    def test_upload_translation(self, get_resource, upload_resource_translations):
+        path = DATA_PATH + 'menus_and_forms-fr.po'
+        hq_lang_code = 'fra'
+        with self.mocker:
+            self.tfx_client.upload_translation(path, RESOURCE_SLUG, hq_lang_code)
+
+        content = self.get_file(path, '')
+        resource = get_resource.return_value
+        language_id = self.tfx_client._to_language_id(self.tfx_client.transifex_lang_code(hq_lang_code))
+        upload_resource_translations.assert_called_with(content, resource.id, language_id)
+
+    @patch('corehq.apps.translations.integrations.transifex.client.TransifexApiClient._list_resources')
+    def test_get_resource_slugs(self, list_resources):
+        all_slugs = ['test-resource', 'test-resourcev2', 'test-resourcev3']
+        all_resources = [self.tfx_client.api.Resource(slug=slug) for slug in all_slugs]
+        list_resources.return_value = all_resources
+
+        # no version arg returns all slugs
+        actual_slugs = self.tfx_client.get_resource_slugs(None)
+        self.assertEqual(all_slugs, actual_slugs)
+
+        # version arg with "use_version_postfix" returns matching that version
+        actual_slugs = self.tfx_client.get_resource_slugs(2)
+        self.assertEqual(['test-resourcev2'], actual_slugs)
+
+        # version arg without "use_version_postfix" returns those not matching the version
+        self.tfx_client.use_version_postfix = False
+        actual_slugs = self.tfx_client.get_resource_slugs(2)
+        self.assertEqual(['test-resource', 'test-resourcev3'], actual_slugs)
+
+    def test_get_translation(self):
+        hq_lang_code = 'fra'
+        with self.mocker:
+            actual_translation = self.tfx_client.get_translation(RESOURCE_SLUG, hq_lang_code, False)
+
+        path = DATA_PATH + 'menus_and_forms-fr.po'
+        expected_translation = polib.pofile(self.get_file(path, ''))
+        self.assertEqual(expected_translation, actual_translation)
+
+    def test_get_project_langcodes(self):
+        expected_langcodes = ['es', 'fr', 'en']
+        with self.mocker:
+            actual_langcodes = self.tfx_client.get_project_langcodes()
+
+        self.assertEqual(expected_langcodes, actual_langcodes)
+
+    def test_source_lang_is(self):
+        transifex_language_id = 'l:fr'
+        hq_lang_code = 'fra'
+        self.tfx_client.project.source_language.id = transifex_language_id
+        self.assertTrue(self.tfx_client.source_lang_is(hq_lang_code))
+
+    def test_is_translation_completed(self):
+        with self.mocker:
+            # some translations are incomplete in our test data
+            translation_completed = self.tfx_client.is_translation_completed(RESOURCE_SLUG)
+        self.assertFalse(translation_completed)
+
+        with self.mocker:
+            # translations for French ('fra') are complete in our test data
+            hq_lang_code = 'fra'
+            translation_completed = self.tfx_client.is_translation_completed(
+                RESOURCE_SLUG, hq_lang_code=hq_lang_code)
+        self.assertTrue(translation_completed)
