@@ -4,6 +4,7 @@ import tempfile
 
 import polib
 import requests
+from transifex.api import TransifexApi
 from memoized import memoized
 
 from corehq.apps.translations.integrations.transifex.const import (
@@ -17,42 +18,76 @@ from corehq.apps.translations.integrations.transifex.exceptions import (
 
 class TransifexApiClient(object):
     def __init__(self, token, organization, project, use_version_postfix=True):
-        self.username = API_USER
-        self.token = token
-        self.organization = organization
-        self.project = project
         self.use_version_postfix = use_version_postfix
+        self.api = TransifexApi(auth=token)
+        self.organization = self._get_organization(organization)
+        self.project = self._get_project(project)
 
     @property
-    def _auth(self):
-        return self.username, self.token
+    def _i18n_format(self):
+        return self.api.I18nFormat(id="PO")
 
     def _create_resource(self, resource_slug, resource_name):
-        ...
+        return self.api.Resource.create(
+            name=resource_name,
+            slug=resource_slug,
+            project=self.project,
+            i18n_format=self._i18n_format
+        )
+
+    @staticmethod
+    def _upload_content(cls, content, **kwargs):
+        # TransifexApi.upload() waits for async upload which we don't need, so create the upload manually
+        cls.create_with_form(data=kwargs, files={"content": content})
 
     def _upload_resource_strings(self, content, resource_id):
-        ...
+        cls = self.api.ResourceStringsAsyncUpload
+        self._upload_content(cls, content, resource=resource_id)
 
     def _upload_resource_translations(self, content, resource_id, language_id):
-        ...
+        cls = self.api.ResourceTranslationsAsyncUpload
+        self._upload_content(cls, content, resource=resource_id, language=language_id)
+
+    @staticmethod
+    def _get_object(cls, **kwargs):
+        return cls.get(**kwargs)
+
+    def _get_organization(self, organization_slug):
+        cls = self.api.Organization
+        return self._get_object(cls, slug=organization_slug)
 
     def _get_project(self, project_slug):
-        ...
+        cls = self.api.Project
+        return self._get_object(cls, slug=project_slug, organization=self.organization)
 
     def _get_resource(self, resource_slug):
-        ...
+        cls = self.api.Resource
+        return self._get_object(cls, slug=resource_slug, project=self.project)
+
+    @staticmethod
+    def _list_objects(cls, **kwargs):
+        return cls.filter(**kwargs)
 
     def _list_resources(self):
-        ...
+        cls = self.api.Resource
+        return self._list_objects(cls, project=self.project)
+
+    @staticmethod
+    def _download_content(cls, **kwargs):
+        download = cls.download(**kwargs)
+        response = requests.get(download, stream=True)
+        return response.content
 
     def _download_resource_translations(self, resource_id, language_id):
-        ...
+        cls = self.api.ResourceTranslationsAsyncDownload
+        return self._download_content(cls, resource=resource_id, language_id=language_id)
 
     def _lock_resource(self, resource):
-        ...
+        return resource.save(accept_translations=False)
 
     def delete_resource(self, resource_slug):
-        ...
+        resource = self._get_resource(resource_slug)
+        resource.delete()
 
     def list_resources(self):
         return self._list_resources()
@@ -61,20 +96,20 @@ class TransifexApiClient(object):
         """
         :return: list of resource slugs corresponding to version
         """
-        all_resources = self._list_resources().json()
+        all_resources = self._list_resources()
         if version and self.use_version_postfix:
             # get all slugs with version postfix
-            return [r['slug']
+            return [r.slug
                     for r in all_resources
-                    if r['slug'].endswith("v%s" % version)]
+                    if r.slug.endswith("v%s" % version)]
         elif version and not self.use_version_postfix:
             # get all slugs that don't have version postfix
-            return [r['slug']
+            return [r.slug
                     for r in all_resources
-                    if not r['slug'].endswith("v%s" % version)]
+                    if not r.slug.endswith("v%s" % version)]
         else:
             # get all slugs
-            return [r['slug'] for r in all_resources]
+            return [r.slug for r in all_resources]
 
     def update_resource_slug(self, old_resource_slug, new_resource_slug):
         # slug is immutable from Transifex API v3
@@ -159,7 +194,7 @@ class TransifexApiClient(object):
         with open(temp_file.name, 'w', encoding='utf-8') as f:
             f.write(content.decode(encoding='utf-8'))
         if lock_resource:
-            self._lock_resource(resource_slug)
+            self._lock_resource(resource)
         return polib.pofile(temp_file.name)
 
     @staticmethod
