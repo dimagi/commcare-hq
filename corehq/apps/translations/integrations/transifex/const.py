@@ -1,4 +1,3 @@
-API_USER = "api"
 TRANSIFEX_SLUG_PREFIX_MAPPING = {
     'Menu': 'module',
     'Form': 'form',

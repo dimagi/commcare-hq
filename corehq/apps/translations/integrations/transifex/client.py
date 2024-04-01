@@ -1,4 +1,3 @@
-import json
 import os
 import tempfile
 
@@ -7,12 +6,8 @@ import requests
 from transifex.api import TransifexApi
 from transifex.api.exceptions import DownloadException
 from transifex.api.jsonapi.exceptions import DoesNotExist, JsonApiException
-from memoized import memoized
 
-from corehq.apps.translations.integrations.transifex.const import (
-    API_USER,
-    SOURCE_LANGUAGE_MAPPING,
-)
+from corehq.apps.translations.integrations.transifex.const import SOURCE_LANGUAGE_MAPPING
 from corehq.apps.translations.integrations.transifex.exceptions import TransifexApiException
 
 
@@ -128,9 +123,6 @@ class TransifexApiClient(object):
         resource = self._get_resource(resource_slug)
         resource.delete()
 
-    def list_resources(self):
-        return self._list_resources()
-
     def get_resource_slugs(self, version):
         """
         :return: list of resource slugs corresponding to version
@@ -189,15 +181,6 @@ class TransifexApiClient(object):
             content = po_file.read()
         self._upload_resource_translations(content, resource.id, language_id)
 
-    @memoized
-    def _resource_details(self, resource_slug):
-        """
-        get details for a resource corresponding to a lang
-
-        :param resource_slug: resource slug
-        """
-        return self._get_resource(resource_slug)
-
     def is_translation_completed(self, resource_slug, hq_lang_code=None):
         """
         check if a resource has been completely translated for
@@ -255,12 +238,6 @@ class TransifexApiClient(object):
         """
         return self.transifex_lang_code(hq_lang_code) == self.source_lang_code
 
-    def get_source_lang(self):
-        """
-        :return: source lang code on transifex
-        """
-        return self._to_lang_code(self.source_language_id)
-
     @staticmethod
     def _to_language_id(lang_code):
         return f"l:{lang_code}"
@@ -268,7 +245,3 @@ class TransifexApiClient(object):
     @staticmethod
     def _to_lang_code(language_id):
         return language_id.replace("l:", "")
-
-    def move_resources(self, hq_lang_code, target_project, version=None, use_version_postfix=True):
-        # not exposed to UI
-        pass
