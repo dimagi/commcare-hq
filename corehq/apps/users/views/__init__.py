@@ -1146,6 +1146,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
+                # Preparation for location_id to replace supply_point
+                data["location_id"] = data.get("supply_point", None)
                 invite = Invitation(**data)
                 invite.save()
                 invite.send_activation_email()
