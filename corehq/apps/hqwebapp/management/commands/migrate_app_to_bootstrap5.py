@@ -36,8 +36,6 @@ from corehq.apps.hqwebapp.utils.bootstrap.status import (
 )
 from corehq.apps.hqwebapp.utils.management_commands import (
     get_break_line,
-    get_style_func,
-    Color,
     get_confirmation,
 )
 
@@ -100,10 +98,9 @@ class Command(BaseCommand):
 
     def show_next_steps(self, app_name):
         self.clear_screen()
-        self.stdout.write(
-            self.format_header(f"All done with Step 2 of migrating {app_name}!"),
-            style_func=get_style_func(Color.GREEN)
-        )
+        self.stdout.write(self.style.SUCCESS(
+            self.format_header(f"All done with Step 2 of migrating {app_name}!")
+        ))
         self.stdout.write("If this is the first time running this command, "
                           "it's recommended to re-run the command\nat least one more "
                           "time in the event of nested dependencies / inheritance "
@@ -119,10 +116,9 @@ class Command(BaseCommand):
 
     def show_completed_message(self, app_name):
         self.clear_screen()
-        self.stdout.write(
-            self.format_header(f"Bootstrap 5 Migration of '{app_name}' is already complete!"),
-            style_func=get_style_func(Color.GREEN)
-        )
+        self.stdout.write(self.style.SUCCESS(
+            self.format_header(f"Bootstrap 5 Migration of '{app_name}' is already complete!")
+        ))
         self.stdout.write(f"It appears that '{app_name}' has already been fully migrated to Bootstrap 5!\n\n")
         self.stdout.write("If you feel this is in error, "
                           "please consult the table referenced in the migration guide\n"
@@ -198,10 +194,9 @@ class Command(BaseCommand):
             short_path = get_short_path(app_name, file_path, is_template)
             if has_changes:
                 self.clear_screen()
-                self.stdout.write(
-                    self.format_header(f"Finalizing changes for {short_path}..."),
-                    style_func=get_style_func(Color.YELLOW)
-                )
+                self.stdout.write(self.style.WARNING(
+                    self.format_header(f"Finalizing changes for {short_path}...")
+                ))
                 self.record_file_changes(file_path, app_name, file_changelog, is_template)
                 if '/bootstrap5/' in str(file_path):
                     self.save_re_checked_file_changes(app_name, file_path, new_lines, is_template)
@@ -250,7 +245,7 @@ class Command(BaseCommand):
 
     def display_flag_summary(self, changelog):
         self.stdout.write(changelog[-3])
-        self.stdout.write(changelog[-2], style_func=get_style_func(Color.YELLOW))
+        self.stdout.write(self.style.WARNING(changelog[-2]))
         self.stdout.write(changelog[-1])
         self.stdout.write("\nThis change requires manual intervention and is not made automatically. "
                           "\nThis guidance will be saved to migration logs for reference later. \n\n")
@@ -258,8 +253,8 @@ class Command(BaseCommand):
     def display_rename_summary(self, changelog):
         self.stdout.write("".join(changelog[-5:-3]))
         changes = changelog[-3].split('\n')
-        self.stdout.write(changes[0], style_func=get_style_func(Color.RED))
-        self.stdout.write(changes[1], style_func=get_style_func(Color.GREEN))
+        self.stdout.write(self.style.ERROR(changes[0]))
+        self.stdout.write(self.style.SUCCESS(changes[1]))
         self.stdout.write("".join(changelog[-2:]))
         changelog.append("\n\n")
         self.stdout.write("\n\n\nAnswering 'y' below will automatically make this change "
