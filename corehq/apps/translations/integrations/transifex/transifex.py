@@ -158,7 +158,7 @@ class Transifex(object):
         """
         check_for_lang = None if all_langs else self.source_lang
         for resource_slug in self.resource_slugs:
-            if not self.client.translation_completed(resource_slug, check_for_lang):
+            if not self.client.is_translation_completed(resource_slug, check_for_lang):
                 return resource_slug
 
     def generate_excel_file(self):

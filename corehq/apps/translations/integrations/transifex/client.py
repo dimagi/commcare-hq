@@ -72,6 +72,10 @@ class TransifexApiClient(object):
         cls = self.api.Resource
         return self._get_object(cls, slug=resource_slug, project=self.project)
 
+    def _get_language_stats(self, resource_id, language_id):
+        cls = self.api.ResourceLanguageStats
+        return self._get_object(cls, id=language_id, resource=resource_id)
+
     @staticmethod
     def _list_objects(cls, **kwargs):
         return cls.filter(**kwargs)
@@ -79,6 +83,13 @@ class TransifexApiClient(object):
     def _list_resources(self):
         cls = self.api.Resource
         return self._list_objects(cls, project=self.project)
+
+    def _list_language_stats(self, **kwargs):
+        cls = self.api.ResourceLanguageStats
+        return self._list_objects(cls, project=self.project, **kwargs)
+
+    def _fetch_related(self, obj, key):
+        return obj.fetch(key)
 
     @staticmethod
     def _download_content(cls, **kwargs):
@@ -168,22 +179,22 @@ class TransifexApiClient(object):
         """
         return self._get_resource(resource_slug)
 
-    def translation_completed(self, resource_slug, hq_lang_code=None):
+    def is_translation_completed(self, resource_slug, hq_lang_code=None):
         """
         check if a resource has been completely translated for
         all langs or a specific target lang
         """
-        def completed(details):
-            return not bool(details.get('untranslated_words'))
+        def completed(stats):
+            return not bool(stats.untranslated_words)
 
+        resource = self._get_resource(resource_slug)
         if hq_lang_code:
             language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
-            return completed(self._resource_details(resource_slug).get(language_id, {}))
+            language_stats = self._get_language_stats(resource.id, language_id)
+            return completed(language_stats)
         else:
-            for lang, detail in self._resource_details(resource_slug).items():
-                if not completed(detail):
-                    return False
-            return True
+            language_stats_list = self._list_language_stats(resource_id=resource.id)
+            return all(completed(stats) for stats in language_stats_list)
 
     def get_translation(self, resource_slug, hq_lang_code, lock_resource):
         """
@@ -213,6 +224,11 @@ class TransifexApiClient(object):
         :param hq_lang_code: lang code on HQ
         """
         return SOURCE_LANGUAGE_MAPPING.get(hq_lang_code, hq_lang_code)
+
+    def get_project_langcodes(self):
+        languages = self._fetch_related(self.project, 'languages')
+        languages.append(self.project.source_language)
+        return [self._to_lang_code(language.id) for language in languages]
 
     def source_lang_is(self, hq_lang_code):
         """
