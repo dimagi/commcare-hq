@@ -18,9 +18,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(copy_invitation_supply_point, migrations.RunPython.noop),
-        migrations.RemoveField(
-            model_name='invitation',
-            name='supply_point',
-        ),
+        migrations.RunPython(copy_invitation_supply_point, migrations.RunPython.noop)
     ]
