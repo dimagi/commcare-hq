@@ -1,33 +1,55 @@
 --- 
 +++ 
-@@ -2,7 +2,7 @@
+@@ -1,8 +1,8 @@
+-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
++{% extends 'hqwebapp/bootstrap5/base_section.html' %}
  {% load hq_shared_tags %}
  {% load i18n %}
  
 -{% requirejs_main "case_importer/js/bootstrap3/main" %}
-+{% requirejs_main "case_importer/js/bootstrap5/main" %}
++{% requirejs_main_b5 "case_importer/js/bootstrap5/main" %}
  
  {% block page_title %}
    {{ current_page.title }}
-@@ -29,11 +29,11 @@
+@@ -18,8 +18,7 @@
+ 
+   {% include 'case_importer/partials/help_message.html' %}
+ 
+-  <form class="form-horizontal form-report"
+-        action="{% url "excel_config" domain %}"
++  <form action="{% url "excel_config" domain %}"
+         method="post"
+         enctype="multipart/form-data">
+     {% csrf_token %}
+@@ -28,19 +27,18 @@
+         {% trans "Upload an Excel File From Your Computer to Import From" %}
        </legend>
  
-       <div class="form-group">
+-      <div class="form-group">
 -        <label class="control-label col-sm-3" for="file">
++      <div class="row mb-3">
 +        <label class="form-label col-md-3" for="file">
            {% trans "Select a file to upload" %}
          </label>
 -        <!-- unorthodox use of .control-label to vertically align the file input with the actual label -->
 -        <div class="col-sm-6 control-label">
-+        <!-- unorthodox use of .control-label to vertically align the file input with the actual badge -->
 +        <div class="col-md-6 form-label">
            <input name="file" id="file" type="file" />
          </div>
        </div>
-@@ -49,5 +49,5 @@
+     </fieldset>
+ 
+     <div class="form-actions">
+-      <div class="col-sm-offset-3">
++      <div class="offset-md-3">
+         <button type="submit" class="btn btn-primary disabled" disabled="disabled">
+           <i class="fa fa-forward"></i> {% trans "Next step" %}
+         </button>
+@@ -48,6 +46,5 @@
+     </div>
    </form>
  
- 
+-
 -  {% include 'case_importer/partials/bootstrap3/ko_import_history.html' %}
 +  {% include 'case_importer/partials/bootstrap5/ko_import_history.html' %}
  {% endblock %}
