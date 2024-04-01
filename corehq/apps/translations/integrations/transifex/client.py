@@ -123,25 +123,6 @@ class TransifexApiClient(object):
         resource = self._get_resource(resource_slug)
         resource.delete()
 
-    def get_resource_slugs(self, version):
-        """
-        :return: list of resource slugs corresponding to version
-        """
-        all_resources = self._list_resources()
-        if version and self.use_version_postfix:
-            # get all slugs with version postfix
-            return [r.slug
-                    for r in all_resources
-                    if r.slug.endswith("v%s" % version)]
-        elif version and not self.use_version_postfix:
-            # get all slugs that don't have version postfix
-            return [r.slug
-                    for r in all_resources
-                    if not r.slug.endswith("v%s" % version)]
-        else:
-            # get all slugs
-            return [r.slug for r in all_resources]
-
     def update_resource_slug(self, old_resource_slug, new_resource_slug):
         # TODO: rework ProjectMigrator to be compatible with Transifex API v3, or remove this functionality
         # v3 makes 'slug' an immutable attribute
@@ -183,22 +164,24 @@ class TransifexApiClient(object):
             content = po_file.read()
         self._upload_resource_translations(content, resource.id, language_id)
 
-    def is_translation_completed(self, resource_slug, hq_lang_code=None):
+    def get_resource_slugs(self, version):
         """
-        check if a resource has been completely translated for
-        all langs or a specific target lang
+        :return: list of resource slugs corresponding to version
         """
-        def completed(stats):
-            return not bool(stats.untranslated_words)
-
-        resource = self._get_resource(resource_slug)
-        if hq_lang_code:
-            language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
-            language_stats = self._get_language_stats(resource.id, language_id)
-            return completed(language_stats)
+        all_resources = self._list_resources()
+        if version and self.use_version_postfix:
+            # get all slugs with version postfix
+            return [r.slug
+                    for r in all_resources
+                    if r.slug.endswith("v%s" % version)]
+        elif version and not self.use_version_postfix:
+            # get all slugs that don't have version postfix
+            return [r.slug
+                    for r in all_resources
+                    if not r.slug.endswith("v%s" % version)]
         else:
-            language_stats_list = self._list_language_stats(resource_id=resource.id)
-            return all(completed(stats) for stats in language_stats_list)
+            # get all slugs
+            return [r.slug for r in all_resources]
 
     def get_translation(self, resource_slug, hq_lang_code, lock_resource):
         """
@@ -220,15 +203,6 @@ class TransifexApiClient(object):
             self._lock_resource(resource)
         return polib.pofile(temp_file.name)
 
-    @staticmethod
-    def transifex_lang_code(hq_lang_code):
-        """
-        Single place to convert lang codes from HQ to transifex lang code
-
-        :param hq_lang_code: lang code on HQ
-        """
-        return SOURCE_LANGUAGE_MAPPING.get(hq_lang_code, hq_lang_code)
-
     def get_project_langcodes(self):
         languages = self._fetch_related(self.project, 'languages')
         languages.append(self.project.source_language)
@@ -239,6 +213,32 @@ class TransifexApiClient(object):
         confirm is source lang on transifex is same as hq lang code
         """
         return self.transifex_lang_code(hq_lang_code) == self.source_lang_code
+
+    def is_translation_completed(self, resource_slug, hq_lang_code=None):
+        """
+        check if a resource has been completely translated for
+        all langs or a specific target lang
+        """
+        def completed(stats):
+            return not bool(stats.untranslated_words)
+
+        resource = self._get_resource(resource_slug)
+        if hq_lang_code:
+            language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
+            language_stats = self._get_language_stats(resource.id, language_id)
+            return completed(language_stats)
+        else:
+            language_stats_list = self._list_language_stats(resource_id=resource.id)
+            return all(completed(stats) for stats in language_stats_list)
+
+    @staticmethod
+    def transifex_lang_code(hq_lang_code):
+        """
+        Single place to convert lang codes from HQ to transifex lang code
+
+        :param hq_lang_code: lang code on HQ
+        """
+        return SOURCE_LANGUAGE_MAPPING.get(hq_lang_code, hq_lang_code)
 
     @staticmethod
     def _to_language_id(lang_code):
