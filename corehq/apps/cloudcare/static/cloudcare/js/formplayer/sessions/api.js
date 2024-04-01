@@ -2,17 +2,25 @@
 /**
  * Backbone model for listing and selecting FormEntrySessions
  */
-
-hqDefine("cloudcare/js/formplayer/sessions/api", function () {
-    var Collections = hqImport("cloudcare/js/formplayer/sessions/collections"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        MenuCollections = hqImport("cloudcare/js/formplayer/menus/collections");
-
+hqDefine("cloudcare/js/formplayer/sessions/api", [
+    'jquery',
+    'underscore',
+    'cloudcare/js/formplayer/sessions/collections',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/users/models',
+], function (
+    $,
+    _,
+    Collections,
+    FormplayerFrontend,
+    MenuCollections,
+    UsersModels
+) {
     var API = {
 
         getSessions: function (pageNumber, pageSize) {
-
-            var user = FormplayerFrontend.getChannel().request('currentUser');
+            var user = UsersModels.getCurrentUser();
             var domain = user.domain;
             var formplayerUrl = user.formplayer_url;
             var options = {
@@ -48,7 +56,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
 
         getSession: function (sessionId) {
 
-            var user = FormplayerFrontend.getChannel().request('currentUser');
+            var user = UsersModels.getCurrentUser();
             var formplayerUrl = user.formplayer_url;
             var menus = MenuCollections();
             var defer = $.Deferred();
@@ -71,7 +79,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
         },
 
         deleteSession: function (session) {
-            var user = FormplayerFrontend.getChannel().request('currentUser');
+            var user = UsersModels.getCurrentUser();
             var options = {
                 data: JSON.stringify({
                     "sessionId": session.get('sessionId'),
