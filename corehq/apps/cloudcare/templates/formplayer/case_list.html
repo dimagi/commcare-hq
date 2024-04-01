@@ -42,7 +42,7 @@
          class="row row-no-gutters">
       <% if (showMap) { %>
         <div id="module-case-list-map"
-             class="sticky sticky-map col-md-5 col-md-push-9<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
+             class="sticky sticky-map col-md-5 col-md-push-9<% if (useTiles) { %> false-padding-border-right<% } %> noprint-sub-container"></div>
       <% } %>
       <div id="module-case-list" class="col-md<% if (showMap) { %>-7 col-md-pull-5<% } %>">
         <% if (useTiles) { %>
@@ -207,25 +207,19 @@
         align-self: <%- model.verticalAlign %>;
       <% } else { %>
         <% if (model.showBorder || model.showShading) { %>
-          border-radius: 8px;
-          padding-top: 5px;
-          padding-bottom: 0px;
-          padding-left: 5px;
-          padding-right: 5px;
           justify-self: stretch;
-          margin-left: 4px;
-          margin-right: 4px;
-          margin-bottom: 5px;
-          margin-top: 2px;
+          margin: 2px;
+          padding: 4px;
           <% if (model.showBorder) { %>
             border: 1px solid #685c53;
           <% } %>
+          border-radius: 8px;
           <% if (model.showShading) { %>
             background-color: white;
             z-index: -1;
           <% } %>
         <% } else { %>
-          margin: 7px;
+          margin: 14px;
           justify-self: <%- model.horizontalAlign %>;
           align-self: <%- model.verticalAlign %>;
         <% } %>
@@ -247,7 +241,7 @@
   <% } else if (model.isMultiSelect) { %>
     margin: 10px 30px 0 10px;
   <% } else { %>
-    margin: 10px 20px 0 20px;
+    margin: 2px;
   <% } %>
   }
 </script>
