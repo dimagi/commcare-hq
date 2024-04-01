@@ -843,7 +843,7 @@ def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_l
         form_obj_list = XFormInstance.objects.get_forms(
             [form for form in form_delete_list if form not in archived_forms]
         )
-        sorted_form_delete_list = sorted(form_obj_list, key=lambda form: form.received_on)
+        sorted_form_delete_list = sorted(form_obj_list, key=lambda form: form.received_on, reverse=True)
         try:
             archive_forms([form.form_id for form in sorted_form_delete_list])
         except FormArchiveError as e:
