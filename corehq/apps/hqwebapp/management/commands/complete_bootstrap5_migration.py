@@ -237,14 +237,20 @@ class Command(BaseCommand):
     def suggest_commit_message(self, message):
         self.stdout.write("\nNow would be a good time to review changes with git and commit.")
         self.stdout.write("\nSuggested command:")
-        self.stdout.write(f"git commit --no-verify -m \"Bootstrap 5 Migration - {message}\"")
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            f"git commit --no-verify -m \"Bootstrap 5 Migration - {message}\""
+        ))
         self.stdout.write("\n")
 
     def show_next_steps(self, app_name):
         self.stdout.write(self.style.SUCCESS("\nDone!\n\n"))
         self.stdout.write("After reviewing and committing changes, please run:\n")
-        self.stdout.write(f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n")
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n"
+        ))
         self.stdout.write("Commit those changes, if any.\n\n"
                           "Then run the full command and commit those changes:\n")
-        self.stdout.write("./manage.py build_bootstrap5_diffs\n\n")
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            "./manage.py build_bootstrap5_diffs\n\n"
+        ))
         self.stdout.write("Thank you! <3\n\n")

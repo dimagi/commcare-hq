@@ -107,9 +107,13 @@ class Command(BaseCommand):
                           "in split files.\n\n")
         self.stdout.write("After this, please update `bootstrap5_diff_config.json` "
                           "using:\n\n")
-        self.stdout.write(f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n")
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n"
+        ))
         self.stdout.write("Once the changes to that file are committed, you can run:\n")
-        self.stdout.write("./mmanage.py build_bootstrap5_diffs\n\n")
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            "./mmanage.py build_bootstrap5_diffs\n\n"
+        ))
         self.stdout.write("Thank you for your dedication to this migration! <3\n\n")
         self.stdout.write("You can also review the next steps here:"
                           "\tcommcarehq.org/styleguide/b5/migration/#update-diffs\n\n\n")
@@ -373,7 +377,9 @@ class Command(BaseCommand):
                     is_template=False
                 ))
             if references:
-                self.stdout.write(f"\n\nUpdated references to {old_reference} in these files:")
+                self.stdout.write(self.style.MIGRATE_HEADING(
+                    f"\n\nUpdated references to {old_reference} in these files:"
+                ))
                 self.stdout.write("\n".join(references))
                 self.suggest_commit_message(f"updated path references to '{references}'")
         self.stdout.write("\n\nDone.\n\n")
@@ -457,7 +463,7 @@ class Command(BaseCommand):
                           "commit before moving on to the next template.")
         self.stdout.write("\nSuggested command:")
         commit_command = ["git", "commit", "--no-verify", f"--message=\"Bootstrap 5 Migration - {message}\""]
-        self.stdout.write(" ".join(commit_command))
+        self.stdout.write(self.style.MIGRATE_LABEL(" ".join(commit_command)))
         if show_apply_commit:
             confirm = get_confirmation("\nAutomatically apply this commit with the command above?")
             if confirm:
