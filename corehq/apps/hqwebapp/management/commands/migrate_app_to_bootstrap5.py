@@ -1,3 +1,4 @@
+import subprocess
 import time
 from pathlib import Path
 
@@ -304,6 +305,8 @@ class Command(BaseCommand):
             self.write_response("ok, canceling split and rolling back changes...")
             return
 
+        has_no_existing_changes = self.has_no_existing_changes()
+
         bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
         bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
         bootstrap5_short_path = get_short_path(app_name, bootstrap5_path, is_template)
@@ -328,7 +331,10 @@ class Command(BaseCommand):
                 self.stdout.write("\n".join(references))
             else:
                 self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
-        self.suggest_commit_message(f"initial auto-migration for {short_path}, splitting templates")
+        self.suggest_commit_message(
+            f"initial auto-migration for {short_path}, splitting templates",
+            show_apply_commit=has_no_existing_changes
+        )
 
     @staticmethod
     def save_split_templates(original_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines):
@@ -444,10 +450,25 @@ class Command(BaseCommand):
     def enter_to_continue():
         input("\nENTER to continue...")
 
-    def suggest_commit_message(self, message):
+    @staticmethod
+    def has_no_existing_changes():
+        status = subprocess.Popen(
+            ["git", "status"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        return "nothing to commit" in str(status.communicate()[0])
+
+    def suggest_commit_message(self, message, show_apply_commit=False):
         self.stdout.write("\nNow would be a good time to review changes with git and "
                           "commit before moving on to the next template.")
         self.stdout.write("\nSuggested command:")
-        self.stdout.write(f"git commit --no-verify -m \"Bootstrap 5 Migration - {message}\"")
+        commit_command = ["git", "commit", "--no-verify", f"--message=\"Bootstrap 5 Migration - {message}\""]
+        self.stdout.write(" ".join(commit_command))
+        if show_apply_commit:
+            confirm = get_confirmation("\nAutomatically apply this commit with the command above?")
+            if confirm:
+                subprocess.call([
+                    "git", "add", ".",
+                ])
+                subprocess.call(commit_command)
         self.stdout.write("\n")
         self.enter_to_continue()
