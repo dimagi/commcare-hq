@@ -186,7 +186,7 @@ class Command(ResourceStaticCommand):
         logger.info(f"{log_prefix}Running r.js")
         ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", filename])
         if ret:
-            raise CommandError("Failed to build JS bundles")
+            raise CommandError(f"{log_prefix} Failed to build JS bundles")
         logger.info(f"{log_prefix}r.js complete, bundle config output written to staticfiles/build.txt")
 
         # Copy requirejs_config.js back into corehq, since r.js added all of the bundles to it
