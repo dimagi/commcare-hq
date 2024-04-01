@@ -8,7 +8,7 @@
      'underscore',
      '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
      'hqwebapp/js/initial_page_data',
-+    'es6!hqwebapp/js/tempus_dominus',
++    'tempusDominus',
      'select2/dist/js/select2.full.min',
 -    'jquery-ui/ui/widgets/datepicker',
 -], function ($, _, MapboxGeocoder, initialPageData) {
