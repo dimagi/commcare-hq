@@ -84,6 +84,15 @@ def make_numbered_css_renames(line, spec):
     )
 
 
+def make_template_tag_renames(line, spec):
+    return _do_rename(
+        line,
+        spec['template_tag_renames'],
+        lambda x: r"(\{% )(" + x + r")( [^%]* %})",
+        lambda x: r"\1" + spec['template_tag_renames'][x] + r"\3"
+    )
+
+
 def make_data_attribute_renames(line, spec):
     return _do_rename(
         line,
