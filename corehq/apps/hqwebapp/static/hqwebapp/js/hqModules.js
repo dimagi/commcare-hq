@@ -71,7 +71,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
             };
             if (window.USE_BOOTSTRAP5) {
                 thirdPartyGlobals['es6!hqwebapp/js/bootstrap5_loader'] = 'bootstrap';
-                thirdPartyGlobals['es6!hqwebapp/js/tempus_dominus'] = 'tempusDominus';
+                thirdPartyGlobals['tempusDominus'] = 'tempusDominus';
             }
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {

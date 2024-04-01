@@ -5,7 +5,6 @@ hqDefine("hqwebapp/js/bootstrap5/common", [
     'underscore',
     // the es6! loaders below (without the prefix) are necessary to fix build issues with these modules
     'hqwebapp/js/bootstrap5_loader',
-    'hqwebapp/js/tempus_dominus',
 ], function () {
     // nothing to do, this is just to define the major common dependencies for HQ
 });
