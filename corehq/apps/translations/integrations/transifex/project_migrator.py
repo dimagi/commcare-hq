@@ -19,7 +19,7 @@ from corehq.apps.translations.integrations.transifex.const import (
 )
 from corehq.apps.translations.integrations.transifex.exceptions import (
     InvalidProjectMigration,
-    ResourceMissing,
+    TransifexApiException,
 )
 from corehq.apps.translations.models import TransifexProject
 
@@ -46,20 +46,23 @@ class ProjectMigrator(object):
         ProjectMigrationValidator(self).validate()
 
     def migrate(self):
-        slug_update_responses = self._update_slugs()
-        menus_and_forms_sheet_update_responses = self._update_menus_and_forms_sheet()
-        return slug_update_responses, menus_and_forms_sheet_update_responses
+        slug_update_errors = self._update_slugs()
+        menus_and_forms_sheet_update_errors = self._update_menus_and_forms_sheet()
+        return slug_update_errors, menus_and_forms_sheet_update_errors
 
     def _update_slugs(self):
-        responses = {}
+        errors = {}
         for resource_type, old_id, new_id in self.resource_ids_mapping:
             slug_prefix = self._get_slug_prefix(resource_type)
             if not slug_prefix:
                 continue
             resource_slug = "%s_%s" % (slug_prefix, old_id)
             new_resource_slug = "%s_%s" % (slug_prefix, new_id)
-            responses[old_id] = self.client.update_resource_slug(resource_slug, new_resource_slug)
-        return responses
+            try:
+                self.client.update_resource_slug(resource_slug, new_resource_slug)
+            except TransifexApiException as e:
+                errors[old_id] = e
+        return errors
 
     @memoized
     def _get_slug_prefix(self, resource_type):
@@ -71,7 +74,7 @@ class ProjectMigrator(object):
         for lang in langs:
             try:
                 translations[lang] = self.client.get_translation("Menus_and_forms", lang, lock_resource=False)
-            except ResourceMissing:
+            except TransifexApiException:
                 # Probably a lang in app not present on Transifex, so skip
                 pass
         self._update_context(translations)
@@ -106,7 +109,10 @@ class ProjectMigrator(object):
         # HQ keeps the default lang on top and hence it should be the first one here
         assert list(translations.keys())[0] == self.target_app_default_lang
         for lang_code in translations:
-            responses[lang_code] = self._upload_translation(translations[lang_code], lang_code)
+            try:
+                self._upload_translation(translations[lang_code], lang_code)
+            except TransifexApiException as e:
+                responses[lang_code] = e
         return responses
 
     def _upload_translation(self, translations, lang_code):

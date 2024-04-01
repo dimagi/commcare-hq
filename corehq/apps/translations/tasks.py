@@ -201,14 +201,12 @@ def email_project_from_hq(domain, data, email):
 def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, target_app_id, mappings, email):
     def consolidate_errors_messages():
         error_messages = []
-        for old_id, response in slug_update_responses.items():
-            if response.status_code != 200:
-                error_messages.append("Slug update failed for %s with message %s" % (old_id, response.content))
-        for lang_code, response in menus_and_forms_sheet_update_responses.items():
-            if response.status_code != 200:
-                error_messages.append(
-                    "Menus and forms sheet update failed for lang %s with message %s" % (
-                        lang_code, response.content))
+        for old_id, response in slug_update_errors.items():
+            error_messages.append("Slug update failed for %s with message %s" % (old_id, response))
+        for lang_code, response in menus_and_forms_sheet_update_errors.items():
+            error_messages.append(
+                "Menus and forms sheet update failed for lang %s with message %s" % (
+                    lang_code, response))
         return error_messages
 
     def generate_email_body():
@@ -220,7 +218,7 @@ def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, 
                 email_body += error_message + "\n"
         return email_body
 
-    slug_update_responses, menus_and_forms_sheet_update_responses = ProjectMigrator(
+    slug_update_errors, menus_and_forms_sheet_update_errors = ProjectMigrator(
         domain,
         transifex_project_slug,
         source_app_id, target_app_id,

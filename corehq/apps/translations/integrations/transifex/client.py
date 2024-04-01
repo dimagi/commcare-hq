@@ -5,15 +5,15 @@ import tempfile
 import polib
 import requests
 from transifex.api import TransifexApi
+from transifex.api.exceptions import DownloadException
+from transifex.api.jsonapi.exceptions import DoesNotExist, JsonApiException
 from memoized import memoized
 
 from corehq.apps.translations.integrations.transifex.const import (
     API_USER,
     SOURCE_LANGUAGE_MAPPING,
 )
-from corehq.apps.translations.integrations.transifex.exceptions import (
-    ResourceMissing,
-)
+from corehq.apps.translations.integrations.transifex.exceptions import TransifexApiException
 
 
 class TransifexApiClient(object):
@@ -40,17 +40,24 @@ class TransifexApiClient(object):
         return self._to_lang_code(self.source_language_id)
 
     def _create_resource(self, resource_slug, resource_name):
-        return self.api.Resource.create(
-            name=resource_name,
-            slug=resource_slug,
-            project=self.project,
-            i18n_format=self._i18n_format
-        )
+        try:
+            return self.api.Resource.create(
+                name=resource_name,
+                slug=resource_slug,
+                project=self.project,
+                i18n_format=self._i18n_format
+            )
+        except JsonApiException as e:
+            raise TransifexApiException(e)
 
     @staticmethod
     def _upload_content(cls, content, **kwargs):
         # TransifexApi.upload() waits for async upload which we don't need, so create the upload manually
-        cls.create_with_form(data=kwargs, files={"content": content})
+        upload = cls.create_with_form(data=kwargs, files={"content": content})
+
+        # mirror TransifexApi error handling
+        if hasattr(upload, "errors") and len(upload.errors) > 0:
+            raise TransifexApiException(upload.errors[0]["detail"], upload.errors)
 
     def _upload_resource_strings(self, content, resource_id):
         cls = self.api.ResourceStringsAsyncUpload
@@ -62,7 +69,10 @@ class TransifexApiClient(object):
 
     @staticmethod
     def _get_object(cls, **kwargs):
-        return cls.get(**kwargs)
+        try:
+            return cls.get(**kwargs)
+        except (DoesNotExist, JsonApiException) as e:
+            raise TransifexApiException(e)
 
     def _get_organization(self, organization_slug):
         cls = self.api.Organization
@@ -82,7 +92,10 @@ class TransifexApiClient(object):
 
     @staticmethod
     def _list_objects(cls, **kwargs):
-        return cls.filter(**kwargs)
+        try:
+            return cls.filter(**kwargs)
+        except JsonApiException as e:
+            raise TransifexApiException(e)
 
     def _list_resources(self):
         cls = self.api.Resource
@@ -97,7 +110,10 @@ class TransifexApiClient(object):
 
     @staticmethod
     def _download_content(cls, **kwargs):
-        download = cls.download(**kwargs)
+        try:
+            download = cls.download(**kwargs)
+        except (DownloadException, JsonApiException) as e:
+            raise TransifexApiException(e)
         response = requests.get(download, stream=True)
         return response.content
 
