@@ -71,6 +71,9 @@
         "data-target": "data-bs-target",
         "data-dismiss": "data-bs-dismiss"
     },
+    "javascript_dependency_renames": {
+        "bootstrap3": "bootstrap5"
+    },
     "flagged_css_changes": [
         "breadcrumb",
         "close",

@@ -93,6 +93,15 @@ def make_data_attribute_renames(line, spec):
     )
 
 
+def make_javascript_dependency_renames(line, spec):
+    return _do_rename(
+        line,
+        spec['javascript_dependency_renames'],
+        lambda x: r"(['\"][\w/.\-]+/)(" + x + r")(/[\w/.\-]+['\"],?)$",
+        lambda x: r"\1" + spec['javascript_dependency_renames'][x] + r"\3"
+    )
+
+
 def flag_changed_css_classes(line, spec):
     flags = []
     for css_class in spec['flagged_css_changes']:
@@ -109,13 +118,6 @@ def flag_changed_javascript_plugins(line, spec):
         extension_regex = _get_extension_regex(plugin)
         if re.search(plugin_regex, line) or re.search(extension_regex, line):
             flags.append(_get_change_guide(f"js-{plugin}"))
-    return flags
-
-
-def flag_path_references_to_split_javascript_files(line, reference):
-    flags = []
-    if "/" + reference + "/" in line:
-        flags.append(f"Found reference to a split file ({reference})")
     return flags
 
 
