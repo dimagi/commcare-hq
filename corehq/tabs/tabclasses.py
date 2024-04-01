@@ -1854,10 +1854,6 @@ class TranslationsTab(UITab):
                         'url': reverse('download_translations', args=[self.domain]),
                         'title': _('Download Translations')
                     },
-                    {
-                        'url': reverse('migrate_transifex_project', args=[self.domain]),
-                        'title': _('Migrate Project')
-                    },
                 ]))
         return items
 

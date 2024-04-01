@@ -143,7 +143,9 @@ class TransifexApiClient(object):
             return [r.slug for r in all_resources]
 
     def update_resource_slug(self, old_resource_slug, new_resource_slug):
-        # slug is immutable from Transifex API v3
+        # TODO: rework ProjectMigrator to be compatible with Transifex API v3, or remove this functionality
+        # v3 makes 'slug' an immutable attribute
+        # meaning we can no longer simply change the path to a resource while retaining its history
         pass
 
     def upload_resource(self, path_to_po_file, resource_slug, resource_name, update_resource):
