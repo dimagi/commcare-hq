@@ -3,6 +3,14 @@ hqDefine("reports/js/aggregate_user_status", function () {
         return '<p><strong>' + key + '</strong></p>' +
            '<p>' + Math.round(e.value) + '% since ' + x + '</p>';
     }
+    function addHorizontalScrollBar(div, width){
+            $('#'+ div).css({
+                    'overflow-x': 'scroll'
+            });
+            $('#'+ div + ' svg').css({
+                'width': width + 'px'
+            });
+    }
     function setupCharts(data, div, customTooltip) {
         nv.addGraph(function () {
             var chart = nv.models.multiBarChart()
@@ -21,6 +29,16 @@ hqDefine("reports/js/aggregate_user_status", function () {
             if (customTooltip) {
                 chart.tooltipContent(customTooltip);
             }
+
+            // Add scrollbar for large datasets.
+            // Multiplication factor for chart width is chosen so that chart is readable
+            dataLength = data['values'].length
+            if (dataLength > 120) {
+                chartWidth = dataLength * 15;
+                addHorizontalScrollBar(div, chartWidth);
+                $('#'+ div).scrollLeft(0)
+            }
+
             d3.select('#' + div + ' svg')
                 .datum([data])
                 .call(chart);
