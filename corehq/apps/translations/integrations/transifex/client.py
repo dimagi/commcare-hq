@@ -27,6 +27,14 @@ class TransifexApiClient(object):
     def _i18n_format(self):
         return self.api.I18nFormat(id="PO")
 
+    @property
+    def source_language_id(self):
+        return self.project.source_language.id
+
+    @property
+    def source_lang_code(self):
+        return self._to_lang_code(self.source_language_id)
+
     def _create_resource(self, resource_slug, resource_name):
         return self.api.Resource.create(
             name=resource_name,
@@ -143,10 +151,10 @@ class TransifexApiClient(object):
         :param resource_name: resource name, mostly same as resource slug itself
         :param hq_lang_code: lang code on hq
         """
-        target_lang_code = self.transifex_lang_code(hq_lang_code)
+        language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
         content = open(path_to_pofile, 'r', encoding="utf-8").read()
         resource = self._get_resource(resource_slug)
-        self._upload_resource_translations(content, resource.id, target_lang_code)
+        self._upload_resource_translations(content, resource.id, language_id)
 
     def project_details(self):
         return self.project
@@ -169,8 +177,8 @@ class TransifexApiClient(object):
             return not bool(details.get('untranslated_words'))
 
         if hq_lang_code:
-            lang = self.transifex_lang_code(hq_lang_code)
-            return completed(self._resource_details(resource_slug).get(lang, {}))
+            language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
+            return completed(self._resource_details(resource_slug).get(language_id, {}))
         else:
             for lang, detail in self._resource_details(resource_slug).items():
                 if not completed(detail):
@@ -188,8 +196,8 @@ class TransifexApiClient(object):
         :return: list of POEntry objects
         """
         resource = self._get_resource(resource_slug)
-        lang = self.transifex_lang_code(hq_lang_code)
-        content = self._download_resource_translations(resource.id, lang)
+        language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
+        content = self._download_resource_translations(resource.id, language_id)
         temp_file = tempfile.NamedTemporaryFile()
         with open(temp_file.name, 'w', encoding='utf-8') as f:
             f.write(content.decode(encoding='utf-8'))
@@ -210,13 +218,21 @@ class TransifexApiClient(object):
         """
         confirm is source lang on transifex is same as hq lang code
         """
-        return self.transifex_lang_code(hq_lang_code) == self.get_source_lang()
+        return self.transifex_lang_code(hq_lang_code) == self.source_lang_code
 
     def get_source_lang(self):
         """
         :return: source lang code on transifex
         """
-        return self.project_details().json().get('source_language_code')
+        return self._to_lang_code(self.source_language_id)
+
+    @staticmethod
+    def _to_language_id(lang_code):
+        return f"l:{lang_code}"
+
+    @staticmethod
+    def _to_lang_code(language_id):
+        return language_id.replace("l:", "")
 
     def move_resources(self, hq_lang_code, target_project, version=None, use_version_postfix=True):
         # not exposed to UI
