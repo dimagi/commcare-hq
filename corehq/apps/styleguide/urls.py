@@ -74,6 +74,8 @@ urlpatterns = [
         name="styleguide_molecules_searching_b5"),
     url(r'^b5/molecules/inline_editing/$', bootstrap5.styleguide_molecules_inline_editing,
         name="styleguide_molecules_inline_editing_b5"),
+    url(r'^b5/molecules/help/$', bootstrap5.styleguide_molecules_help,
+        name="styleguide_molecules_help_b5"),
     url(r'^b5/molecules/feedback/$', bootstrap5.styleguide_molecules_feedback,
         name="styleguide_molecules_feedback_b5"),
     url(r'^b5/molecules/dates-times/$', bootstrap5.styleguide_molecules_dates_times,

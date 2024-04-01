@@ -44,7 +44,7 @@ class CheckboxDemoForm(forms.Form):
             crispy.Fieldset(
                 _("Basic Information"),
                 'height',  # Functions the same as crispy.Field below
-                twbscrispy.PrependedText('smoking_status', ''),
+                hqcrispy.CheckboxField('smoking_status'),
                 crispy.Field('heart_rate'),
                 'forward_results',
             ),
