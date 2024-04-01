@@ -204,7 +204,7 @@ class Command(ResourceStaticCommand):
             src = self._staticfiles_path(basename)
             dest = src.replace("build", f"build.b{bootstrap_version}")
             logger.info(f"{log_prefix}Copying {os.path.relpath(src)} to {os.path.relpath(dest)}")
-            copyfile(filename, dest)
+            copyfile(src, dest)
 
     def _minify(self, config):
         if not self.optimize:
