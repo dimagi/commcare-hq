@@ -22,5 +22,9 @@ class TableauAPIError(Exception):
         super().__init__(message)
 
 
-class TooManyCases(ValueError):
+class TooManyCasesError(ValueError):
+    pass
+
+
+class FormArchiveError(Exception):
     pass

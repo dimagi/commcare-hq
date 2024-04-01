@@ -1410,9 +1410,9 @@ def _get_display_options(request, domain, user, form, support_enabled):
     }
 
 
-def safely_get_form(request, domain, instance_id):
+def safely_get_form(request, domain, instance_id, include_deleted=False):
     """Fetches a form and verifies that the user can access it."""
-    form = get_form_or_404(domain, instance_id)
+    form = get_form_or_404(domain, instance_id, include_deleted)
     if not can_edit_form_location(domain, request.couch_user, form):
         raise location_restricted_exception(request)
     return form
@@ -1581,7 +1581,7 @@ def restore_edit(request, domain, instance_id):
 @require_POST
 @location_safe
 def archive_form(request, domain, instance_id, is_case_delete=False):
-    instance = safely_get_form(request, domain, instance_id)
+    instance = safely_get_form(request, domain, instance_id, include_deleted=is_case_delete)
     assert instance.domain == domain
     case_id_from_request, redirect = _get_case_id_and_redirect_url(domain, request)
 
@@ -1695,7 +1695,7 @@ def _get_case_id_and_redirect_url(domain, request):
 @require_form_view_permission
 @require_permission(HqPermissions.edit_data)
 @location_safe
-def unarchive_form(request, domain, instance_id):
+def unarchive_form(request, domain, instance_id, is_case_delete=False):
     instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
     if instance.is_archived:
@@ -1703,6 +1703,8 @@ def unarchive_form(request, domain, instance_id):
     else:
         assert instance.is_normal
     messages.success(request, _("Form was successfully restored."))
+    if is_case_delete:
+        return instance.is_archived
 
     redirect = request.META.get('HTTP_REFERER')
     if not redirect:
