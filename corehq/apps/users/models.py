@@ -2682,8 +2682,7 @@ class Invitation(models.Model):
     domain = models.CharField(max_length=255)
     role = models.CharField(max_length=100, null=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
-    supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
-    location_id = models.CharField(max_length=126, null=True)  # couch id of a Location (to replace supply_point)
+    location_id = models.CharField(max_length=126, null=True)  # couch id of a Location
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
                                 on_delete=models.CASCADE, null=True)
 
