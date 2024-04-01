@@ -174,8 +174,8 @@ def _get_export_forms_by_app_es(domain):
     rows = []
     apps = AppES().domain(domain).run().hits
     for app in apps:
-        for module_id, module in enumerate(app["modules"]):
-            for form_id, form in enumerate(module["forms"]):
+        for module_id, module in enumerate(app.get("modules", [])):
+            for form_id, form in enumerate(module.get("forms", [])):
                 rows.append({
                     "key": [app['domain'], app['_id'], form["xmlns"]],
                     "value": {
