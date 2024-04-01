@@ -153,8 +153,8 @@ class OTARestoreUser(object):
 
     @memoized
     def get_locations_to_sync(self):
-        from corehq.apps.locations.fixtures import get_location_fixture_queryset
-        return get_location_fixture_queryset(self)
+        from corehq.apps.locations.fixtures import get_location_fixture_queryset_for_user
+        return get_location_fixture_queryset_for_user(self)
 
 
 class OTARestoreWebUser(OTARestoreUser):

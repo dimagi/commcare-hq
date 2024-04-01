@@ -35,6 +35,7 @@ from ..fixtures import (
     _location_to_fixture,
     get_location_data_fields,
     flat_location_fixture_generator,
+    get_location_fixture_queryset_for_user,
     get_location_fixture_queryset,
     location_fixture_generator,
     should_sync_flat_fixture,
@@ -111,8 +112,14 @@ class FixtureHasLocationsMixin(TestXmlMixin):
         desired_fixture = self._assemble_expected_fixture(xml_name, desired_locations)
         self.assertXmlEqual(desired_fixture, fixture)
 
-    def assert_fixture_queryset_equals_locations(self, desired_locations):
-        actual = get_location_fixture_queryset(self.user).values_list('name', flat=True)
+    def assert_fixture_queryset_equals_locations_for_user(self, desired_locations):
+        actual = get_location_fixture_queryset_for_user(self.user).values_list('name', flat=True)
+        self.assertItemsEqual(actual, desired_locations)
+
+    def assert_fixture_queryset_equals_locations(self, desired_locations, domain, location_pks,
+                                                 case_sync_restriction):
+        actual = get_location_fixture_queryset(domain, location_pks,
+                                               case_sync_restriction).values_list('name', flat=True)
         self.assertItemsEqual(actual, desired_locations)
 
 
@@ -124,6 +131,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     def setUp(self):
         super(LocationFixturesTest, self).setUp()
         self.user = create_restore_user(self.domain, 'user', '123')
+        self.addCleanup(self.user._couch_user.delete, self.domain, deleted_by=None)
 
     def tearDown(self):
         self.user._couch_user.delete(self.domain, deleted_by=None)
@@ -314,7 +322,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_type.include_only.set([self.location_types['state'], self.location_types['county']])
         location_type.save()
         # include county and state
-        self.assert_fixture_queryset_equals_locations(
+        self.assert_fixture_queryset_equals_locations_for_user(
             ['Massachusetts', 'Suffolk', 'Middlesex']
         )
 
@@ -330,6 +338,27 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk', 'Middlesex']
         )
 
+    def test_get_location_fixture_queryset_with_case_sync_restriction(self):
+        # Test default behavior
+        mass = self.locations['Massachusetts']
+        middlesex = self.locations['Middlesex']
+        self.assert_fixture_queryset_equals_locations(
+            ['Massachusetts', 'Middlesex'],
+            self.domain,
+            [middlesex.id],
+            True
+        )
+
+        mass.location_type.restrict_cases_to = middlesex
+        mass.include_without_expanding = self.locations['Cambridge'].location_type # Make sure this has no effect
+        mass.save()
+        self.assert_fixture_queryset_equals_locations(
+            ['Massachusetts', 'Middlesex'],
+            self.domain,
+            [mass.id],
+            True
+        )
+
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
 class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
@@ -340,6 +369,7 @@ class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
         self.addCleanup(self.domain_obj.delete)
 
         self.user = create_restore_user(self.domain, 'user', '123')
+        self.addCleanup(self.user._couch_user.delete, self.domain, deleted_by=None)
 
         location_type_structure = [
             LocationTypeStructure('ctd', [
@@ -441,6 +471,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
     def setUp(self):
         # this works around the fact that get_locations_to_sync is memoized on OTARestoreUser
         self.user = self.user._couch_user.to_ota_restore_user(self.domain)
+        # self.addCleanup(self.user.delete, self.domain, deleted_by=None)
 
     @classmethod
     def tearDownClass(cls):
@@ -586,6 +617,7 @@ class ForkedHierarchyLocationFixturesTest(TestCase, FixtureHasLocationsMixin):
     def setUp(self):
         self.domain_obj = bootstrap_domain(self.domain)
         self.user = create_restore_user(self.domain, 'user', '123')
+        self.addCleanup(self.user._couch_user.delete, self.domain, deleted_by=None)
         self.location_types = setup_location_types_with_structure(self.domain, self.location_type_structure)
         self.locations = setup_locations_with_structure(self.domain, self.location_structure)
 
@@ -612,7 +644,7 @@ class ForkedHierarchyLocationFixturesTest(TestCase, FixtureHasLocationsMixin):
         ])
         location_type.save()
         # include county and state
-        self.assert_fixture_queryset_equals_locations([
+        self.assert_fixture_queryset_equals_locations_for_user([
             'Massachusetts',
             'Middlesex',
             'Cambridge',
