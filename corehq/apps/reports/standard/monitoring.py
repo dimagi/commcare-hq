@@ -155,6 +155,16 @@ class MultiFormDrilldownMixin(object):
     def all_relevant_forms(self):
         return FormsByApplicationFilter.get_value(self.request, self.domain)
 
+    @property
+    @memoized
+    def selected_form_data(self):
+        forms = list(FormsByApplicationFilter.get_value(self.request, self.domain).values())
+        if len(forms) == 1 and forms[0]['xmlns']:
+            return forms[0]
+        non_fuzzy_forms = [form for form in forms if not form['is_fuzzy']]
+        if len(non_fuzzy_forms) == 1:
+            return non_fuzzy_forms[0]
+
 
 class CompletionOrSubmissionTimeMixin(object):
     """
@@ -982,7 +992,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
 @location_safe
 class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,
-                               CompletionOrSubmissionTimeMixin):
+                               CompletionOrSubmissionTimeMixin, MultiFormDrilldownMixin):
     name = gettext_lazy("Form Completion Time")
     slug = "completion_times"
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -992,16 +1002,6 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
 
     description = gettext_lazy("Statistics on time spent on a particular form.")
     is_cacheable = True
-
-    @property
-    @memoized
-    def selected_form_data(self):
-        forms = list(FormsByApplicationFilter.get_value(self.request, self.domain).values())
-        if len(forms) == 1 and forms[0]['xmlns']:
-            return forms[0]
-        non_fuzzy_forms = [form for form in forms if not form['is_fuzzy']]
-        if len(non_fuzzy_forms) == 1:
-            return non_fuzzy_forms[0]
 
     @property
     def headers(self):
