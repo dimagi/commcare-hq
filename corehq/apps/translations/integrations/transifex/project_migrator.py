@@ -118,11 +118,9 @@ class ProjectMigrator(object):
             po.save(temp_file.name)
             temp_file.seek(0)
             if lang_code == self.target_app_default_lang:
-                return self.client.upload_resource(temp_file.name, "Menus_and_forms", "Menus_and_forms",
-                                                   update_resource=True)
+                self.client.upload_resource(temp_file.name, "Menus_and_forms", "Menus_and_forms", True)
             else:
-                return self.client.upload_translation(temp_file.name, "Menus_and_forms", "Menus_and_forms",
-                                                      lang_code)
+                self.client.upload_translation(temp_file.name, "Menus_and_forms", lang_code)
 
     def get_metadata(self):
         now = str(datetime.datetime.now())

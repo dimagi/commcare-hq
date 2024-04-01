@@ -110,8 +110,9 @@ class Transifex(object):
                 )
             else:
                 response = self.client.upload_translation(
-                    path_to_file, resource_slug,
-                    resource_name, self.source_lang
+                    path_to_file,
+                    resource_slug,
+                    self.source_lang
                 )
             if response.status_code in [200, 201]:
                 file_uploads[resource_name] = _("Successfully Uploaded")
