@@ -11,10 +11,10 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     make_numbered_css_renames,
     make_template_tag_renames,
     make_data_attribute_renames,
+    make_javascript_dependency_renames,
     flag_changed_css_classes,
     flag_stateful_button_changes_bootstrap5,
     flag_changed_javascript_plugins,
-    flag_path_references_to_split_javascript_files,
     flag_bootstrap3_references_in_template,
     flag_crispy_forms_in_template,
 )
@@ -182,8 +182,7 @@ class Command(BaseCommand):
                     new_line, renames = self.make_template_line_changes(old_line, spec)
                     flags = self.get_flags_in_template_line(old_line, spec)
                 else:
-                    new_line = old_line  # no replacement changes yet for js files
-                    renames = []
+                    new_line, renames = self.make_javascript_line_changes(old_line, spec)
                     flags = self.get_flags_in_javascript_line(old_line, spec)
 
                 saved_line, line_changelog = self.confirm_and_get_line_changes(
@@ -399,10 +398,13 @@ class Command(BaseCommand):
         return flags
 
     @staticmethod
+    def make_javascript_line_changes(old_line, spec):
+        new_line, renames = make_javascript_dependency_renames(old_line, spec)
+        return new_line, renames
+
+    @staticmethod
     def get_flags_in_javascript_line(javascript_line, spec):
         flags = flag_changed_javascript_plugins(javascript_line, spec)
-        reference_flags = flag_path_references_to_split_javascript_files(javascript_line, "bootstrap3")
-        flags.extend(reference_flags)
         return flags
 
     @staticmethod
