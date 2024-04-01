@@ -98,7 +98,7 @@ datadog==0.39.0
     # via -r base-requirements.in
 ddsketch==2.0.4
     # via ddtrace
-ddtrace==1.13.4
+ddtrace==2.7.5
     # via -r base-requirements.in
 decorator==5.1.1
     # via
@@ -203,7 +203,7 @@ dropbox==11.36.0
     # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
-envier==0.4.0
+envier==0.5.1
     # via ddtrace
 et-xmlfile==1.0.1
     # via openpyxl
@@ -324,9 +324,7 @@ jsonobject-couchdbkit==1.1.0
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
 jsonschema==4.17.3
-    # via
-    #   -r base-requirements.in
-    #   ddtrace
+    # via -r base-requirements.in
 jwcrypto==1.5.6
     # via django-oauth-toolkit
 kafka-python==1.4.7
@@ -379,7 +377,6 @@ packaging==23.0
     # via
     #   -r base-requirements.in
     #   build
-    #   ddtrace
 pep517==0.10.0
     # via build
 phonenumberslite==8.12.48
@@ -588,15 +585,15 @@ sqlalchemy==1.3.19
 sqlalchemy-postgres-copy==0.5.0
     # via -r test-requirements.in
 sqlparse==0.4.4
-    # via django
+    # via
+    #   ddtrace
+    #   django
 stone==3.3.1
     # via dropbox
 stripe==7.2.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in
-tenacity==8.2.2
-    # via ddtrace
 testil==1.1
     # via -r test-requirements.in
 text-unidecode==1.3
