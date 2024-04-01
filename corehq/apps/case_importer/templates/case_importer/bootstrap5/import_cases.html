@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -18,8 +18,7 @@
 
   {% include 'case_importer/partials/help_message.html' %}
 
-  <form class="form-horizontal form-report"
-        action="{% url "excel_config" domain %}"
+  <form action="{% url "excel_config" domain %}"
         method="post"
         enctype="multipart/form-data">
     {% csrf_token %}
@@ -28,11 +27,10 @@
         {% trans "Upload an Excel File From Your Computer to Import From" %}
       </legend>
 
-      <div class="form-group">
+      <div class="row mb-3">
         <label class="form-label col-md-3" for="file">
           {% trans "Select a file to upload" %}
         </label>
-        <!-- unorthodox use of .control-label to vertically align the file input with the actual badge -->
         <div class="col-md-6 form-label">
           <input name="file" id="file" type="file" />
         </div>
@@ -40,14 +38,13 @@
     </fieldset>
 
     <div class="form-actions">
-      <div class="col-sm-offset-3">
+      <div class="offset-md-3">
         <button type="submit" class="btn btn-primary disabled" disabled="disabled">
           <i class="fa fa-forward"></i> {% trans "Next step" %}
         </button>
       </div>
     </div>
   </form>
-
 
   {% include 'case_importer/partials/bootstrap5/ko_import_history.html' %}
 {% endblock %}
