@@ -282,7 +282,7 @@ class Command(ResourceStaticCommand):
                     if match:
                         basename = match.group(1)
                         file_hash = self._update_resource_hash(module['name'] + ".js", filename)
-                        line = line.replace(basename, f'{basename}?version={file_hash}')
+                        line += '?version={file_hash}'
                     fout.write(line)
 
     def _write_resource_versions(self):
