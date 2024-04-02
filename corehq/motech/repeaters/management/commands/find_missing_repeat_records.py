@@ -193,16 +193,19 @@ def find_missing_case_repeat_records_for_domain(domain, startdate, enddate, shou
 def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate, enddate, should_create=False):
     successful_count = missing_all_count = missing_create_count = missing_update_count = 0
 
-    repeat_records = RepeatRecord.objects.filter(domain=domain, payload_id=case.get_id).order_by()
+    repeat_records = RepeatRecord.objects.filter(
+        domain=domain,
+        payload_id=case.get_id,
+        registered_at__gte=startdate,
+    ).order_by()
     # grab repeat records that were registered during the date range
-    records_during_daterange = [record for record in repeat_records
-                                if startdate <= record.registered_at.date() <= enddate]
+    records_during_daterange = [record for record in repeat_records if record.registered_at.date() <= enddate]
     fired_repeater_ids_and_counts_during_daterange = defaultdict(int)
     for record in records_during_daterange:
         fired_repeater_ids_and_counts_during_daterange[record.repeater_id] += 1
 
     # grab repeat records that were registered after the enddate
-    records_after_daterange = [record for record in repeat_records if record.registered_at.date() >= enddate]
+    records_after_daterange = [record for record in repeat_records if record.registered_at.date() > enddate]
     fired_repeater_ids_and_counts_after_enddate = defaultdict(int)
     for record in records_after_daterange:
         fired_repeater_ids_and_counts_after_enddate[record.repeater_id] += 1
