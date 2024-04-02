@@ -158,6 +158,7 @@ def get_paged_forms_by_type(
         .start(start)
         .size(size)
     )
+    # Even if we have form xmlns we still filter by app_id since xmlns may not be unique (e.g. copied apps)
     if app_ids:
         query = query.app(app_ids)
     if xmlns:
