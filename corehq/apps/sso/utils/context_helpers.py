@@ -91,12 +91,13 @@ def get_graph_api_connection_issue_email_context(idp, error):
     return email_context
 
 
-def get_sso_deactivation_skip_email_context(idp):
+def get_sso_deactivation_skip_email_context(idp, failure_reason):
     subject = _("CommCare HQ Alert: Temporarily skipped automatic deactivation of SSO Web Users"
                 " (Remote User Management)")
     template_context = {
         "contact_email": settings.ACCOUNTS_EMAIL,
         "base_url": get_site_domain(),
+        "failure_reason": failure_reason,
     }
     body_html, body_txt = render_multiple_to_strings(
         template_context,

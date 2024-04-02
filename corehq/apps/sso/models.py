@@ -1,5 +1,4 @@
 import logging
-import requests
 
 from django.db import models
 from django.db.models.signals import post_save, post_delete
@@ -8,13 +7,11 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy
 
 from corehq.apps.accounting.models import BillingAccount, Subscription
-from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sso import certificates
 from corehq.apps.sso.exceptions import ServiceProviderCertificateError
-from corehq.apps.sso.utils.context_helpers import get_graph_api_connection_issue_email_context
+from corehq.apps.sso.utils.entra import get_all_members_of_the_idp_from_entra
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.util.quickcache import quickcache
-from dimagi.utils.logging import notify_exception
 
 log = logging.getLogger(__name__)
 
@@ -427,63 +424,10 @@ class IdentityProvider(models.Model):
         return None
 
     def get_all_members_of_the_idp(self):
-        import msal
-        authority_base_url = "https://login.microsoftonline.com/"
-        authority = f"{authority_base_url}{self.api_host}"
-
-        config = {
-            "authority": authority,
-            "client_id": self.api_id,
-            "scope": ["https://graph.microsoft.com/.default"],
-            "secret": self.api_secret,
-            "endpoint": "https://graph.microsoft.com/v1.0/users"
-        }
-
-        try:
-            # Create a preferably long-lived app instance which maintains a token cache.
-            app = msal.ConfidentialClientApplication(
-                config["client_id"], authority=config["authority"],
-                client_credential=config["secret"],
-            )
-            # looks up a token from cache
-            result = app.acquire_token_silent(config["scope"], account=None)
-            if not result:
-                result = app.acquire_token_for_client(scopes=config["scope"])
-            if "access_token" in result:
-                # Calling graph using the access token
-                response = requests.get(
-                    config["endpoint"],
-                    headers={'Authorization': 'Bearer ' + result['access_token']},
-                )
-                response.raise_for_status()  # Raises an error for bad status
-                graph_data = response.json()
-
-                user_principal_names = [user["userPrincipalName"] for user in graph_data["value"]]
-                return user_principal_names
-            else:
-                error_message = f"Error acquiring Microsoft Graph API token: {result.get('error')}, Description: "
-                f"{result.get('error_description')}, Correlation ID: {result.get('correlation_id')}"
-                raise Exception(error_message)
-        except Exception as e:
-            notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
-
-            context = get_graph_api_connection_issue_email_context(self, str(e))
-            for send_to in context["to"]:
-                send_html_email_async.delay(
-                    context["subject"],
-                    send_to,
-                    context["html"],
-                    text_content=context["plaintext"],
-                    email_from=context["from"],
-                    bcc=context["bcc"],
-                )
-                log.info(
-                    "Sent Microsoft Graph API connection issue email "
-                    "for %(idp_name)s to %(send_to)s." % {
-                        "idp_name": self.name,
-                        "send_to": send_to,
-                    }
-                )
+        if self.idp_type == IdentityProviderType.ENTRA_ID:
+            return get_all_members_of_the_idp_from_entra(self)
+        else:
+            raise NotImplementedError("Not implemented")
 
 
 @receiver(post_save, sender=Subscription)
