@@ -205,7 +205,7 @@ class Command(ResourceStaticCommand):
         # Copy build files for later troubleshooting, since the B5 run of this function will overwrite the B3 files
         for basename in ("build.js", "build.txt"):
             src = self._staticfiles_path(basename)
-            dest = src.replace("build", f"build.b{bootstrap_version}")
+            dest = src.replace("/build.", f"/build.b{bootstrap_version}.")
             logger.info(f"{log_prefix}Copying {os.path.relpath(src)} to {os.path.relpath(dest)}")
             copyfile(src, dest)
 
