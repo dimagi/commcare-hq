@@ -801,6 +801,8 @@ repeaters
  0005_datasourcerepeater
  0006_int_state_add_next_check_rm_repeater_id
  0007_lengthen_payload_id
+ 0008_sqlrepeatrecords
+ 0009_rm_couch_artifacts
 reports
  0001_initial
  0002_auto_20171121_1803

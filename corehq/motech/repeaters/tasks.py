@@ -5,9 +5,7 @@ from django.conf import settings
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
-from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection, get_redis_lock
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.celery import periodic_task, task
 from corehq.motech.models import RequestLog
@@ -25,18 +23,12 @@ from .const import (
     CHECK_REPEATERS_KEY,
     CHECK_REPEATERS_PARTITION_COUNT,
     MAX_RETRY_WAIT,
-    RECORD_FAILURE_STATE,
-    RECORD_PENDING_STATE,
     RECORDS_AT_A_TIME,
-)
-from .dbaccessors import (
-    get_overdue_repeat_record_count,
-    iterate_repeat_record_ids,
-    iterate_repeat_records_for_ids,
+    State,
 )
 from .models import (
-    RepeatRecord,
     Repeater,
+    RepeatRecord,
     domain_can_forward,
     get_payload,
     send_request,
@@ -87,18 +79,6 @@ def check_repeaters():
         check_repeaters_in_partition.delay(current_partition)
 
 
-def _iterate_record_ids_for_partition(start, partition, total_partitions):
-    for record_id in iterate_repeat_record_ids(start, chunk_size=10000):
-        if hash(record_id) % total_partitions == partition:
-            yield record_id
-
-
-def _iterate_repeat_records_for_partition(start, partition, total_partitions):
-    # chunk the fetching of documents from couch
-    for chunked_ids in chunked(_iterate_record_ids_for_partition(start, partition, total_partitions), 1000):
-        yield from iterate_repeat_records_for_ids(chunked_ids)
-
-
 @task(queue=settings.CELERY_PERIODIC_QUEUE)
 def check_repeaters_in_partition(partition):
     """
@@ -125,7 +105,8 @@ def check_repeaters_in_partition(partition):
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for record in _iterate_repeat_records_for_partition(start, partition, CHECK_REPEATERS_PARTITION_COUNT):
+            for record in RepeatRecord.objects.iter_partition(
+                    start, partition, CHECK_REPEATERS_PARTITION_COUNT):
                 if not _soft_assert(
                     datetime.utcnow() < twentythree_hours_later,
                     "I've been iterating repeat records for 23 hours. I quit!"
@@ -150,8 +131,7 @@ def process_repeat_record(repeat_record_id, domain):
     NOTE: Keep separate from retry_process_repeat_record for monitoring purposes
     Domain is present here for domain tagging in datadog
     """
-    repeat_record = RepeatRecord.get(repeat_record_id)
-    _process_repeat_record(repeat_record)
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -160,12 +140,11 @@ def retry_process_repeat_record(repeat_record_id, domain):
     NOTE: Keep separate from process_repeat_record for monitoring purposes
     Domain is present here for domain tagging in datadog
     """
-    repeat_record = RepeatRecord.get(repeat_record_id)
-    _process_repeat_record(repeat_record)
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
 def _process_repeat_record(repeat_record):
-    if repeat_record.cancelled:
+    if repeat_record.state == State.Cancelled:
         return
 
     if not domain_can_forward(repeat_record.domain) or repeat_record.exceeded_max_retries:
@@ -176,9 +155,7 @@ def _process_repeat_record(repeat_record):
         repeat_record.save()
         return
 
-    if repeat_record.is_repeater_deleted():
-        if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
-            repeat_record.doc_type += DELETED_SUFFIX
+    if repeat_record.repeater.is_deleted:
         repeat_record.cancel()
         repeat_record.save()
         return
@@ -189,15 +166,15 @@ def _process_repeat_record(repeat_record):
             # in the next check to process repeat records, which helps to avoid
             # clogging the queue
             repeat_record.postpone_by(MAX_RETRY_WAIT)
-        elif repeat_record.state == RECORD_PENDING_STATE or repeat_record.state == RECORD_FAILURE_STATE:
+        elif repeat_record.is_queued():
             repeat_record.fire()
     except Exception:
-        logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
+        logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
 
 
 metrics_gauge_task(
     'commcare.repeaters.overdue',
-    get_overdue_repeat_record_count,
+    RepeatRecord.objects.count_overdue,
     run_every=crontab(),  # every minute
     multiprocess_mode=MPM_MAX
 )
@@ -206,7 +183,7 @@ metrics_gauge_task(
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeater(repeater_id):
     """
-    Worker task to send SQLRepeatRecords in chronological order.
+    Worker task to send RepeatRecords in chronological order.
 
     This function assumes that ``repeater`` checks have already
     been performed. Call via ``models.attempt_forward_now()``.

@@ -13,14 +13,13 @@ from corehq.form_processor.utils.xform import (
     TestFormMetadata,
 )
 from corehq.motech.models import ConnectionSettings, RequestLog
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import FormRepeater, RepeatRecord, Repeater
-from corehq.motech.repeaters.tasks import delete_old_request_logs, process_repeater, _process_repeat_record
-from ..const import (
-    RECORD_CANCELLED_STATE,
-    RECORD_FAILURE_STATE,
-    RECORD_PENDING_STATE,
+from corehq.motech.repeaters.tasks import (
+    _process_repeat_record,
+    delete_old_request_logs,
+    process_repeater,
 )
+from ..const import State
 
 DOMAIN = 'gaidhlig'
 PAYLOAD_IDS = ['aon', 'dha', 'trì', 'ceithir', 'coig', 'sia', 'seachd', 'ochd',
@@ -81,7 +80,6 @@ class TestProcessRepeater(TestCase):
             name='Test API',
             url="http://localhost/api/"
         )
-        cls.addClassCleanup(delete_all_repeat_records)
 
     def setUp(self):
         self.repeater = FormRepeater.objects.create(
@@ -109,11 +107,10 @@ class TestProcessRepeater(TestCase):
         # All records were tried and cancelled
         records = list(self.repeater.repeat_records.all())
         self.assertEqual(len(records), 10)
-        self.assertTrue(all(r.state == RECORD_CANCELLED_STATE for r in records))
+        self.assertTrue(all(r.state == State.Cancelled for r in records))
         # All records have a cancelled Attempt
         self.assertTrue(all(len(r.attempts) == 1 for r in records))
-        self.assertTrue(all(r.attempts[0].state == RECORD_CANCELLED_STATE
-                            for r in records))
+        self.assertTrue(all(r.attempts[0].state == State.Cancelled for r in records))
 
     def test_send_request_fails(self):
         # If send_request() should be retried with the same repeat
@@ -126,8 +123,7 @@ class TestProcessRepeater(TestCase):
 
         # Only the first record was attempted, the rest are still pending
         states = [r.state for r in self.repeater.repeat_records.all()]
-        self.assertListEqual(states, ([RECORD_FAILURE_STATE]
-                                      + [RECORD_PENDING_STATE] * 9))
+        self.assertListEqual(states, ([State.Fail] + [State.Pending] * 9))
 
 
 @contextmanager
@@ -153,7 +149,7 @@ class TestProcessRepeatRecord(TestCase):
             registered_at=datetime.utcnow(),
             repeater_id=self.repeater.repeater_id,
             next_check=None,
-            cancelled=True,
+            state=State.Cancelled,
         )
 
         _process_repeat_record(repeat_record)
@@ -173,8 +169,8 @@ class TestProcessRepeatRecord(TestCase):
 
         _process_repeat_record(repeat_record)
 
-        fetched_repeat_record = RepeatRecord.get(repeat_record._id)
-        self.assertTrue(fetched_repeat_record.cancelled)
+        fetched_repeat_record = RepeatRecord.objects.get(id=repeat_record.id)
+        self.assertEqual(fetched_repeat_record.state, State.Cancelled)
         self.assertEqual(self.mock_fire.call_count, 0)
         self.assertEqual(self.mock_postpone_by.call_count, 0)
 
@@ -184,15 +180,15 @@ class TestProcessRepeatRecord(TestCase):
             payload_id='abc123',
             registered_at=datetime.utcnow(),
             repeater_id=self.repeater.repeater_id,
-            failure_reason='test',
-            overall_tries=1,
-            max_possible_tries=1
+            state=State.Fail,
         )
 
-        _process_repeat_record(repeat_record)
+        with patch.object(RepeatRecord, "num_attempts", 1), \
+                patch.object(repeat_record, "max_possible_tries", 1):
+            _process_repeat_record(repeat_record)
 
-        fetched_repeat_record = RepeatRecord.get(repeat_record._id)
-        self.assertTrue(fetched_repeat_record.cancelled)
+        fetched_repeat_record = RepeatRecord.objects.get(id=repeat_record.id)
+        self.assertEqual(fetched_repeat_record.state, State.Cancelled)
         self.assertEqual(self.mock_fire.call_count, 0)
         self.assertEqual(self.mock_postpone_by.call_count, 0)
 
@@ -212,9 +208,8 @@ class TestProcessRepeatRecord(TestCase):
 
         _process_repeat_record(repeat_record)
 
-        fetched_repeat_record = RepeatRecord.get(repeat_record._id)
-        self.assertEqual(fetched_repeat_record.doc_type, 'RepeatRecord-Deleted')
-        self.assertTrue(fetched_repeat_record.cancelled)
+        repeat_record.refresh_from_db(fields=["state"])
+        self.assertEqual(repeat_record.state, State.Cancelled)
         self.assertEqual(self.mock_fire.call_count, 0)
         self.assertEqual(self.mock_postpone_by.call_count, 0)
 
@@ -289,7 +284,6 @@ class TestProcessRepeatRecord(TestCase):
             domain=cls.domain,
             connection_settings=cls.conn_settings,
         )
-        cls.addClassCleanup(delete_all_repeat_records)
 
     def setUp(self):
         self.patch()

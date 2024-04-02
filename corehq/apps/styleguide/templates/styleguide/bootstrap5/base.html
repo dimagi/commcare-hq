@@ -48,6 +48,12 @@
     {% endblock %}
 
     {% javascript_libraries hq=True use_bootstrap5=True %}
+
+    {% compress js %}
+      <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
+      <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
+    {% endcompress %}
+
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
   </head>
   <body>
@@ -113,6 +119,7 @@
       <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
       <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
       <script src="{% static 'hqwebapp/js/bootstrap5/widgets.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/bootstrap5/main.js' %}"></script>
       <script src="{% static 'hqwebapp/js/select_2_ajax_widget.js' %}"></script>
       <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
       <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
@@ -125,9 +132,6 @@
       <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
       <script src="{% static 'hqwebapp/js/bootstrap5/validators.ko.js' %}"></script>
       <script src="{% static 'hqwebapp/js/password_validators.ko.js' %}"></script>
-      <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
-      <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
-      <script src="{% static '@eonasdan/tempus-dominus/dist/js/jQuery-provider.min.js' %}"></script>
     {% endcompress %}
 
     {% block javascript %}

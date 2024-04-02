@@ -282,30 +282,6 @@
       "compare_all_files": true
     }
   ],
-  "apps/commtrack/templates/commtrack/manage/partials": [
-    {
-      "directories": ["bootstrap3/", "bootstrap5/"],
-      "file_type": "template",
-      "label": "commtrack/manage/partials",
-      "compare_all_files": true
-    }
-  ],
-  "apps/commtrack/static/commtrack": [
-    {
-      "directories": ["js/bootstrap3/", "js/bootstrap5/"],
-      "file_type": "javascript",
-      "label": "javascript/commtrack",
-      "compare_all_files": true
-    }
-  ],
-  "apps/products/templates/products/manage": [
-    {
-      "directories": ["bootstrap3/", "bootstrap5/"],
-      "file_type": "template",
-      "label": "products/manage",
-      "compare_all_files": true
-    }
-  ],
   "apps/analytics/templates/analytics": [
     {
       "directories": [
@@ -317,14 +293,6 @@
       "compare_all_files": true
     }
   ],
-  "apps/programs/templates/programs/manage": [
-    {
-      "directories": ["bootstrap3/", "bootstrap5/"],
-      "file_type": "template",
-      "label": "programs/manage",
-      "compare_all_files": true
-    }
-  ],
   "apps/hqwebapp/static/hqwebapp/spec": [
     {
       "directories": [
@@ -333,6 +301,59 @@
       ],
       "file_type": "javascript",
       "label": "javascript/hqwebapp/spec",
+      "compare_all_files": true
+    }
+  ],
+  "apps/case_importer/templates/case_importer": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "case_importer",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "case_importer/partials",
+      "compare_all_files": true
+    }
+  ],
+  "apps/case_importer/static/case_importer/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/case_importer/js",
+      "compare_all_files": true
+    }
+  ],
+  "apps/settings/templates/settings": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "settings",
+      "compare_all_files": true
+    }
+  ],
+  "apps/settings/static/settings/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/settings/js",
       "compare_all_files": true
     }
   ]

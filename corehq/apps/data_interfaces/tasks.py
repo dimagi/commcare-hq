@@ -19,13 +19,8 @@ from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqcase.utils import AUTO_UPDATE_XMLNS
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import XFormInstance
-from corehq.motech.repeaters.dbaccessors import (
-    get_couch_repeat_record_ids_by_payload_id,
-    get_sql_repeat_records_by_payload_id,
-    iter_repeat_record_ids_by_repeater,
-)
 from corehq.apps.case_importer.do_import import SubmitCaseBlockHandler, RowAndCase
-from corehq.motech.repeaters.models import SQLRepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
@@ -208,10 +203,8 @@ def task_operate_on_payloads(
     record_ids: List[str],
     domain: str,
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    use_sql: bool,
 ):
-    return operate_on_payloads(record_ids, domain, action, use_sql,
-                               task=task_operate_on_payloads)
+    return operate_on_payloads(record_ids, domain, action, task=task_operate_on_payloads)
 
 
 @task(serializer='pickle')
@@ -220,37 +213,26 @@ def task_generate_ids_and_operate_on_payloads(
     repeater_id: Optional[str],
     domain: str,
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    use_sql: bool,
 ) -> dict:
-    repeat_record_ids = _get_repeat_record_ids(payload_id, repeater_id, domain,
-                                               use_sql)
-    return operate_on_payloads(repeat_record_ids, domain, action, use_sql,
+    repeat_record_ids = _get_repeat_record_ids(payload_id, repeater_id, domain)
+    return operate_on_payloads(repeat_record_ids, domain, action,
                                task=task_generate_ids_and_operate_on_payloads)
 
 
-def _get_repeat_record_ids(
-    payload_id: Optional[str],
-    repeater_id: Optional[str],
-    domain: str,
-    use_sql: bool,
-) -> List[str]:
-    if not payload_id and not repeater_id:
-        return []
+def _get_repeat_record_ids(payload_id, repeater_id, domain):
     if payload_id:
-        if use_sql:
-            records = get_sql_repeat_records_by_payload_id(domain, payload_id)
-            return [r.id for r in records]
-        else:
-            return get_couch_repeat_record_ids_by_payload_id(domain, payload_id)
+        queryset = RepeatRecord.objects.filter(
+            domain=domain,
+            payload_id=payload_id,
+        )
+    elif repeater_id:
+        queryset = RepeatRecord.objects.filter(
+            domain=domain,
+            repeater__id=repeater_id,
+        )
     else:
-        if use_sql:
-            queryset = SQLRepeatRecord.objects.filter(
-                domain=domain,
-                repeater__id=repeater_id,
-            )
-            return [r['id'] for r in queryset.values('id')]
-        else:
-            return list(iter_repeat_record_ids_by_repeater(domain, repeater_id))
+        return []
+    return list(queryset.order_by().values_list("id", flat=True))
 
 
 @task

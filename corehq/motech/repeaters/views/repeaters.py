@@ -27,7 +27,6 @@ from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
 from ..models import (
     Repeater,
     RepeatRecord,
-    are_repeat_records_migrated,
     get_all_repeater_types,
 )
 
@@ -60,14 +59,10 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
-        if are_repeat_records_migrated(self.domain):
-            report = 'repeat_record_report'
-        else:
-            report = 'couch_repeat_record_report'
         return {
-            'report': report,
+            'report': 'repeat_record_report',
             'repeater_types_info': self.repeater_types_info,
-            'pending_record_count': RepeatRecord.count(self.domain),
+            'pending_record_count': RepeatRecord.objects.count_pending_records_for_domain(self.domain),
             'user_can_configure': (
                 self.request.couch_user.is_superuser
                 or self.request.couch_user.can_edit_motech()

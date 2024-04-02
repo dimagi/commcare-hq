@@ -1,8 +1,6 @@
-import datetime
-
 from django.core.management.base import BaseCommand
 
-from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord, State
 
 
 class Command(BaseCommand):
@@ -12,8 +10,11 @@ class Command(BaseCommand):
         parser.add_argument('domain')
 
     def handle(self, domain, **options):
-        next_year = datetime.datetime.utcnow() + datetime.timedelta(days=365)
-        records = RepeatRecord.all(domain=domain, due_before=next_year)  # Excludes succeeded and cancelled
+        records = RepeatRecord.objects.filter(
+            domain=domain,
+            next_check__isnull=False,
+            state__in=[State.Pending, State.Fail],
+        )
         for record in records:
             record.fire(force_send=True)
-            print('{} {}'.format(record._id, 'successful' if record.succeeded else 'failed'))
+            print('{} {}'.format(record.id, 'successful' if record.succeeded else 'failed'))

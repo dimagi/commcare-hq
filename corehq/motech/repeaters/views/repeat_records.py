@@ -1,6 +1,7 @@
 import json
 import re
 
+from django.db.models import Q
 from django.http import (
     Http404,
     HttpRequest,
@@ -16,7 +17,6 @@ from django.views.decorators.http import require_POST
 from django.views.generic import View
 from django.template.loader import render_to_string
 
-from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from soil.util import expose_cached_download
@@ -41,19 +41,13 @@ from corehq.motech.dhis2.parse_response import get_errors, get_diagnosis_message
 from corehq.motech.models import RequestLog
 
 from ..const import State, RECORD_CANCELLED_STATE
-from ..dbaccessors import (
-    get_cancelled_repeat_record_count,
-    get_paged_repeat_records,
-    get_pending_repeat_record_count,
-    get_repeat_record_count,
-    get_repeat_records_by_payload_id,
-)
-from ..models import RepeatRecord, are_repeat_records_migrated, is_queued
+from ..models import RepeatRecord
 from .repeat_record_display import RepeatRecordDisplay
 
 
-class BaseRepeatRecordReport(GenericTabularReport):
+class DomainForwardingRepeatRecords(GenericTabularReport):
     name = 'Repeat Records'
+    slug = 'repeat_record_report'
     base_template = 'repeaters/repeat_record_report.html'
     section_name = 'Project Settings'
 
@@ -127,8 +121,12 @@ class BaseRepeatRecordReport(GenericTabularReport):
     def total_records(self):
         if self.payload_id:
             return len(self._get_all_records_by_payload())
-        else:
-            return get_repeat_record_count(self.domain, self.repeater_id, self.state)
+        query = RepeatRecord.objects.filter(domain=self.domain)
+        if self.repeater_id:
+            query = query.filter(repeater_id=self.repeater_id)
+        if self.state:
+            query = query.filter(state=self.state)
+        return query.count()
 
     @property
     def shared_pagination_GET_params(self):
@@ -140,13 +138,15 @@ class BaseRepeatRecordReport(GenericTabularReport):
 
     @memoized
     def _get_all_records_by_payload(self):
-        # It is assumed that there are relatively few repeat records for a given payload,
-        # so this is just filtered in memory.  If that changes, we should filter in the db.
-        return [
-            r for r in get_repeat_records_by_payload_id(self.domain, self.payload_id)
-            if (not self.repeater_id or r.repeater_id == self.repeater_id)
-            and (not self.state or r.state == self.state)
-        ]
+        query = RepeatRecord.objects.filter(
+            domain=self.domain,
+            payload_id=self.payload_id,
+        )
+        if self.repeater_id:
+            query = query.filter(repeater_id=self.repeater_id)
+        if self.state:
+            query = query.filter(state=self.state)
+        return list(query)
 
     @property
     def payload_id(self):
@@ -163,7 +163,7 @@ class BaseRepeatRecordReport(GenericTabularReport):
             end = self.pagination.start + self.pagination.count
             records = self._get_all_records_by_payload()[self.pagination.start:end]
         else:
-            records = get_paged_repeat_records(
+            records = RepeatRecord.objects.page(
                 self.domain,
                 self.pagination.start,
                 self.pagination.count,
@@ -189,21 +189,21 @@ class BaseRepeatRecordReport(GenericTabularReport):
         display = RepeatRecordDisplay(record, self.timezone, date_format='%b %d, %Y %H:%M:%S %Z')
         checkbox = format_html(
             '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
-            record.record_id)
+            record.id)
         row = [
             checkbox,
             display.state,
             display.remote_service,
             display.next_attempt_at,
-            self._make_view_attempts_button(record.record_id),
-            self._make_view_payload_button(record.record_id),
-            self._make_resend_payload_button(record.record_id),
+            self._make_view_attempts_button(record.id),
+            self._make_view_payload_button(record.id),
+            self._make_resend_payload_button(record.id),
         ]
 
-        if self._is_cancelled(record):
-            row.append(self._make_requeue_payload_button(record.record_id))
-        elif self._is_queued(record):
-            row.append(self._make_cancel_payload_button(record.record_id))
+        if record.state == RECORD_CANCELLED_STATE:
+            row.append(self._make_requeue_payload_button(record.id))
+        elif record.is_queued():
+            row.append(self._make_cancel_payload_button(record.id))
         else:
             row.append(None)
 
@@ -241,9 +241,12 @@ class BaseRepeatRecordReport(GenericTabularReport):
     def report_context(self):
         context = super().report_context
 
-        total = get_repeat_record_count(self.domain, self.repeater_id)
-        total_pending = get_pending_repeat_record_count(self.domain, self.repeater_id)
-        total_cancelled = get_cancelled_repeat_record_count(self.domain, self.repeater_id)
+        where = Q(domain=self.domain)
+        if self.repeater_id:
+            where &= Q(repeater_id=self.repeater_id)
+        total = RepeatRecord.objects.filter(where).count()
+        total_pending = RepeatRecord.objects.filter(where, state=State.Pending).count()  # include State.Fail?
+        total_cancelled = RepeatRecord.objects.filter(where, state=State.Cancelled).count()
 
         form_query_string = self.request.GET.urlencode()
         form_query_string_cancelled = _change_record_state(
@@ -261,32 +264,6 @@ class BaseRepeatRecordReport(GenericTabularReport):
         )
         return context
 
-    def _is_cancelled(self, record):
-        raise NotImplementedError
-
-    def _is_queued(self, record):
-        raise NotImplementedError
-
-
-class DomainForwardingRepeatRecords(BaseRepeatRecordReport):
-    slug = 'couch_repeat_record_report'
-
-    def _is_cancelled(self, record):
-        return record.cancelled and not record.succeeded
-
-    def _is_queued(self, record):
-        return not record.cancelled and not record.succeeded
-
-
-class SQLRepeatRecordReport(BaseRepeatRecordReport):
-    slug = 'repeat_record_report'
-
-    def _is_cancelled(self, record):
-        return record.state == RECORD_CANCELLED_STATE
-
-    def _is_queued(self, record):
-        return is_queued(record)
-
 
 @method_decorator(domain_admin_required, name='dispatch')
 @method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING), name='dispatch')
@@ -297,8 +274,8 @@ class RepeatRecordView(View):
     @staticmethod
     def get_record_or_404(domain, record_id):
         try:
-            record = RepeatRecord.get(record_id)
-        except ResourceNotFound:
+            record = RepeatRecord.objects.get(id=record_id)
+        except RepeatRecord.DoesNotExist:
             raise Http404()
 
         if record.domain != domain:
@@ -309,13 +286,7 @@ class RepeatRecordView(View):
     def get(self, request, domain):
         record_id = request.GET.get('record_id')
         record = self.get_record_or_404(domain, record_id)
-        repeater = record.repeater
-        if not repeater:
-            return JsonResponse({
-                'error': 'Repeater with id {} could not be found'.format(
-                    record.repeater_id)
-            }, status=404)
-        content_type = repeater.generator.content_type
+        content_type = record.repeater.generator.content_type
         try:
             payload = record.get_payload()
         except XFormNotFound:
@@ -363,11 +334,10 @@ class RepeatRecordView(View):
 
     def post(self, request, domain):
         # Retriggers a repeat record
-        use_sql = are_repeat_records_migrated(domain)
         if _get_flag(request):
-            _schedule_task_with_flag(request, domain, 'resend', use_sql)
+            _schedule_task_with_flag(request, domain, 'resend')
         else:
-            _schedule_task_without_flag(request, domain, 'resend', use_sql)
+            _schedule_task_without_flag(request, domain, 'resend')
         return JsonResponse({'success': True})
 
 
@@ -375,11 +345,10 @@ class RepeatRecordView(View):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def cancel_repeat_record(request, domain):
-    use_sql = are_repeat_records_migrated(domain)
     if _get_flag(request) == 'cancel_all':
-        _schedule_task_with_flag(request, domain, 'cancel', use_sql)
+        _schedule_task_with_flag(request, domain, 'cancel')
     else:
-        _schedule_task_without_flag(request, domain, 'cancel', use_sql)
+        _schedule_task_without_flag(request, domain, 'cancel')
 
     return HttpResponse('OK')
 
@@ -388,11 +357,10 @@ def cancel_repeat_record(request, domain):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def requeue_repeat_record(request, domain):
-    use_sql = are_repeat_records_migrated(domain)
     if _get_flag(request) == 'requeue_all':
-        _schedule_task_with_flag(request, domain, 'requeue', use_sql)
+        _schedule_task_with_flag(request, domain, 'requeue')
     else:
-        _schedule_task_without_flag(request, domain, 'requeue', use_sql)
+        _schedule_task_without_flag(request, domain, 'requeue')
 
     return HttpResponse('OK')
 
@@ -420,13 +388,12 @@ def _schedule_task_with_flag(
     request: HttpRequest,
     domain: str,
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    use_sql: bool,
 ):
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
     payload_id = request.POST.get('payload_id') or None
     repeater_id = request.POST.get('repeater') or None
     task = task_generate_ids_and_operate_on_payloads.delay(
-        payload_id, repeater_id, domain, action, use_sql)
+        payload_id, repeater_id, domain, action)
     task_ref.set_task(task)
 
 
@@ -434,9 +401,8 @@ def _schedule_task_without_flag(
     request: HttpRequest,
     domain: str,
     action,  # type: Literal['resend', 'cancel', 'requeue']  # 3.8+
-    use_sql: bool,
 ):
     record_ids = _get_record_ids_from_request(request)
     task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-    task = task_operate_on_payloads.delay(record_ids, domain, action, use_sql)
+    task = task_operate_on_payloads.delay(record_ids, domain, action)
     task_ref.set_task(task)

@@ -15,7 +15,7 @@ SMS_MAPPING = {
     "dynamic": False,
     "properties": {
         "backend_api": {
-            "type": "text"
+            "type": "keyword"
         },
         "backend_id": {
             "type": "keyword"
@@ -66,7 +66,7 @@ SMS_MAPPING = {
             "type": "text"
         },
         "workflow": {
-            "type": "text"
+            "type": "keyword"
         },
         "xforms_session_couch_id": {
             "type": "keyword"

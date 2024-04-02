@@ -1,12 +1,17 @@
+from datetime import datetime
+
 from django.http import QueryDict
+from django.test import SimpleTestCase, TestCase
 from nose.tools import assert_equal
-
-from corehq.motech.repeaters.views import repeat_records
 from unittest.mock import Mock
-from unittest.case import TestCase
+
+from corehq.motech.models import ConnectionSettings
+
+from .. import repeat_records
+from ...models import FormRepeater
 
 
-class TestUtilities(TestCase):
+class TestUtilities(SimpleTestCase):
 
     def test__get_records(self):
         mock_request = Mock()
@@ -77,3 +82,44 @@ class TestUtilities(TestCase):
             result = repeat_records._change_record_state(
                 query_dict, str_to_add).urlencode()
             self.assertEqual(result, expected_result)
+
+
+class TestRepeatRecordView(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        conn = ConnectionSettings.objects.create(domain="test", name="test", url="https://test.com/")
+        cls.repeater = FormRepeater.objects.create(
+            domain="test",
+            connection_settings_id=conn.id,
+            include_app_id_param=False,
+        )
+
+    def setUp(self):
+        self.record = self.repeater.repeat_records.create(
+            domain=self.repeater.domain,
+            payload_id="3978e5d2bc2346fe958b933870c5b28a",
+            registered_at=datetime.utcnow(),
+            next_check=datetime.utcnow(),
+        )
+
+    def test_get_record_or_404(self):
+        rec_id = str(self.record.id)
+        record = repeat_records.RepeatRecordView.get_record_or_404("test", rec_id)
+        self.assertEqual(record.id, int(rec_id))
+
+    def test_get_record_or_404_with_int(self):
+        rec_id = self.record.id
+        record = repeat_records.RepeatRecordView.get_record_or_404("test", rec_id)
+        self.assertEqual(record.id, rec_id)
+
+    def test_get_record_or_404_not_found(self):
+        rec_id = 40400000000000000000000000000404
+        with self.assertRaises(repeat_records.Http404):
+            repeat_records.RepeatRecordView.get_record_or_404("test", rec_id)
+
+    def test_get_record_or_404_with_wrong_domain(self):
+        rec_id = self.record.id
+        with self.assertRaises(repeat_records.Http404):
+            repeat_records.RepeatRecordView.get_record_or_404("wrong", rec_id)
