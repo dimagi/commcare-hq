@@ -326,7 +326,7 @@ def get_column_headings(row, valid_values, sheet_name, case_prop_name=None):
     for index, cell in enumerate(row, start=1):
         if not cell.value:
             errors.append(
-                _("Column {} in \"{}\" sheet has an empty header").format(index, sheet_name)
+                _('Column {} in "{}" sheet has an empty header').format(index, sheet_name)
             )
             continue
 
@@ -335,12 +335,12 @@ def get_column_headings(row, valid_values, sheet_name, case_prop_name=None):
             column_headings.append(valid_values[cell_value])
         else:
             formatted_valid_values = ', '.join(list(valid_values.keys())).title()
-            error = _("Invalid column \"{}\" in \"{}\" sheet. Valid column names are: {}").format(
+            error = _('Invalid column "{}" in "{}" sheet. Valid column names are: {}').format(
                 cell.value, sheet_name, formatted_valid_values)
             errors.append(error)
     if case_prop_name and case_prop_name not in column_headings:
         errors.append(
-            _("Missing \"Case Property\" column header in \"{}\" sheet").format(sheet_name)
+            _('Missing "Case Property" column header in "{}" sheet').format(sheet_name)
         )
 
     return column_headings, errors
