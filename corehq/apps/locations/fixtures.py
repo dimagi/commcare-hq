@@ -109,7 +109,7 @@ class LocationFixtureProvider(FixtureProvider):
         if not self.serializer.should_sync(restore_user, restore_state.params.app):
             return []
 
-        # This just calls get_location_fixture_queryset but is memoized to the user
+        # This just calls get_location_fixture_queryset_for_user but is memoized to the user
         locations_queryset = restore_user.get_locations_to_sync()
         if not should_sync_locations(restore_state.last_sync_log, locations_queryset, restore_state):
             return []
@@ -245,7 +245,7 @@ int_field = IntegerField()
 int_array = ArrayField(int_field)
 
 
-def get_location_fixture_queryset(user):
+def get_location_fixture_queryset_for_user(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         return get_domain_locations(user.domain).prefetch_related('location_type')
 
@@ -256,16 +256,16 @@ def get_location_fixture_queryset(user):
 
     user_location_ids = list(user_locations.order_by().values_list("id", flat=True))
 
-    return _location_queryset_helper(user.domain, user_location_ids)
+    return get_location_fixture_queryset(user.domain, user_location_ids)
 
 
-def _location_queryset_helper(domain, location_pks):
+def get_location_fixture_queryset(domain, location_pks, case_sync_restriction=False):
     fixture_ids = With(raw_cte_sql(
         """
         SELECT "id", "path", "depth"
-        FROM get_location_fixture_ids(%s::TEXT, %s)
+        FROM get_location_fixture_ids_2(%s::TEXT, %s, %s)
         """,
-        [domain, location_pks],
+        [domain, location_pks, case_sync_restriction],
         {"id": int_field, "path": int_array, "depth": int_field},
     ))
 
