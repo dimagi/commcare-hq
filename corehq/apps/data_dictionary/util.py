@@ -346,13 +346,17 @@ def get_column_headings(row, valid_values, sheet_name, case_prop_name=None):
     return column_headings, errors
 
 
-def map_row_values_to_column_names(row, column_headings, default_val=None):
+def map_row_values_to_column_names(row, column_headings, sheet_name, default_val=None):
     row_vals = defaultdict(lambda: default_val)
+    error = None
     for index, cell in enumerate(row):
-        column_name = column_headings[index]
+        try:
+            column_name = column_headings[index]
+        except IndexError:
+            error = _('Column {} in "{}" sheet is missing a header').format(index + 1, sheet_name)
         cell_val = '' if cell.value is None else str(cell.value)
         row_vals[column_name] = cell_val
-    return row_vals
+    return row_vals, error
 
 
 def is_case_type_deprecated(domain, case_type):
