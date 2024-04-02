@@ -1,21 +1,8 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "cloudcare/js/config" %}
-
-{% block stylesheets %}
-  <style>
-    #cloudcare-app-settings-form label.radio {
-      padding-left: 2em;
-      width: 20%;
-    }
-
-    #cloudcare-app-settings-form select {
-      width: 20%;
-    }
-  </style>
-{% endblock %}
+{% requirejs_main_b5 "cloudcare/js/config" %}
 
 {% block page_content %}
   {% initial_page_data 'access' access %}
@@ -26,22 +13,25 @@
   <h2>{% trans 'Manage Web Apps Permissions' %}</h2>
   <section id="cloudcare-app-settings" style="display: none">
     <div data-bind="saveButton: saveButton"></div>
-    <div id="cloudcare-app-settings-form" data-bind="with: applicationAccess">
-      <label class="radio">
-        <input type="radio" value="false" data-bind="checked: restrict.JSON"/>
-        {% blocktrans %}Allow all mobile workers to see all Web Apps applications.{% endblocktrans %}
-      </label>
-      <label class="radio">
-        <input type="radio" value="true" data-bind="checked: restrict.JSON"/>
-        {% blocktrans %}Customize each mobile worker's access to Web Apps{% endblocktrans %}
-        <code data-bind="visible: !restrict()">...</code>
-      </label>
+    <div data-bind="with: applicationAccess">
+      <div class="form-check">
+        <input class="form-check-input" type="radio" value="false" data-bind="checked: restrict.JSON" id="radioFalse"/>
+        <label class="form-check-label" for="radioFalse">
+          {% blocktrans %}Allow all mobile workers to see all Web Apps applications.{% endblocktrans %}
+        </label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" value="true" data-bind="checked: restrict.JSON" id="radioTrue"/>
+        <label class="form-check-label" for="radioTrue">
+          {% blocktrans %}Customize each mobile worker's access to Web Apps{% endblocktrans %}
+        </label>
+      </div>
       <div data-bind="visible: restrict">
-        <table class="table table-bordered table-striped" data-bind="if: app_groups().length">
+        <table class="table table-bordered table-striped mt-3" data-bind="if: app_groups().length">
           <thead>
             <tr>
-              <th class="col-sm-6">{% trans 'Application' %}</th>
-              <th class="col-sm-6">{% trans 'Group' %}</th>
+              <th class="col-md-6">{% trans 'Application' %}</th>
+              <th class="col-md-6">{% trans 'Group' %}</th>
             </tr>
           </thead>
           <tbody data-bind="foreach: app_groups">
@@ -61,28 +51,30 @@
           </tr>
           </tbody>
         </table>
-        <div class="well">
-          <h4>{% trans "Here's what this means" %}</h4>
-          <ul data-bind="foreach: $root.appsByGroup">
-            <li>
-              <span></span>
-              <span data-bind="if: group">
-                                {% blocktrans %}Mobile workers in group
-                                  <strong data-bind="text: group.name"></strong>
-                                  have access to{% endblocktrans %}
-                            </span>
-              <span data-bind="if: !group">
-                                {% blocktrans %}<strong>No Mobile Workers</strong> have access to{% endblocktrans %}
-                            </span>
-              <ul data-bind="foreach: apps">
-                <li data-bind="text: name"></li>
-              </ul>
-            </li>
-          </ul>
-          <p>{% blocktrans %}...and all other mobile workers do not have access to any Web Apps applications.{% endblocktrans %}</p>
-        </div>
-        <div data-bind="if: !app_groups().length">
-          {% trans 'No Web Apps applications available' %}
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">{% trans "Here's what this means" %}</h5>
+            <ul data-bind="foreach: $root.appsByGroup">
+              <li>
+                <span></span>
+                <span data-bind="if: group">
+                                  {% blocktrans %}Mobile workers in group
+                                    <strong data-bind="text: group.name"></strong>
+                                    have access to{% endblocktrans %}
+                              </span>
+                <span data-bind="if: !group">
+                                  {% blocktrans %}<strong>No Mobile Workers</strong> have access to{% endblocktrans %}
+                              </span>
+                <ul data-bind="foreach: apps">
+                  <li data-bind="text: name"></li>
+                </ul>
+              </li>
+            </ul>
+            <p>{% blocktrans %}...and all other mobile workers do not have access to any Web Apps applications.{% endblocktrans %}</p>
+          </div>
+          <div data-bind="if: !app_groups().length">
+            {% trans 'No Web Apps applications available' %}
+          </div>
         </div>
       </div>
     </div>

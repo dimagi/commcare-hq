@@ -69,6 +69,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
+    use_bootstrap5,
     use_daterangepicker,
     use_jquery_ui,
     waf_allow,
@@ -442,6 +443,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     def page_title(self):
         return _("Web Apps Permissions")
 
+    @use_bootstrap5
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
