@@ -124,16 +124,20 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         }
 
         if (menuResponse.breadcrumbs) {
-            menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
+            let dropdownOptions = undefined;
             if (!appPreview) {
                 let isFormEntry = !menuResponse.queryKey;
                 if (isFormEntry) {
-                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
+                    dropdownOptions = {
+                        langs: menuResponse.langs,
+                        langCodeNameMapping: initialPageData.get('lang_code_name_mapping'),
+                    };
                 }
                 if (menuResponse.type === constants.ENTITIES) {
-                    menusUtils.showMenuDropdown();
+                    dropdownOptions = {};
                 }
             }
+            menusUtils.showBreadcrumbs(menuResponse.breadcrumbs, dropdownOptions);
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         }

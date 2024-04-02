@@ -9,6 +9,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         toggles = hqImport("hqwebapp/js/toggles"),
         utils = hqImport("cloudcare/js/formplayer/utils/utils"),
         views = hqImport("cloudcare/js/formplayer/menus/views"),
+        assertProperties = hqImport("hqwebapp/js/assert_properties"),
         constants = hqImport("cloudcare/js/formplayer/constants");
 
     var recordPosition = function (position) {
@@ -69,7 +70,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         }
     };
 
-    var showBreadcrumbs = function (breadcrumbs) {
+    var showBreadcrumbs = function (breadcrumbs, dropdownOptions) {
         var detailCollection,
             breadcrumbModels;
 
@@ -87,10 +88,15 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         var breadcrumbView = views.BreadcrumbListView({
             collection: detailCollection,
         });
+
+        showMenuDropdown(dropdownOptions);
+
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
     };
 
-    var showMenuDropdown = function (langs, langCodeNameMapping) {
+    var showMenuDropdown = function (options) {
+        assertProperties.assert(options, ['langs', 'langCodeNameMapping'])
+        const langs = options.langs;
         let langModels,
             langCollection;
 
@@ -100,7 +106,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
 
         if (langs && langs.length > 1) {
             langModels = _.map(langs, function (lang) {
-                let matchingLanguage = langCodeNameMapping[lang];
+                let matchingLanguage = options.langCodeNameMapping[lang];
                 return {
                     lang_code: lang,
                     lang_label: matchingLanguage ? matchingLanguage : lang,
@@ -225,7 +231,6 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         getCaseListView: getCaseListView,
         handleLocationRequest: handleLocationRequest,
         showBreadcrumbs: showBreadcrumbs,
-        showMenuDropdown: showMenuDropdown,
         startOrStopLocationWatching: startOrStopLocationWatching,
         isSidebarEnabled: isSidebarEnabled,
     };
