@@ -1147,7 +1147,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
-                # Preparation for location_id to replace supply_point
+                # Preparation for location to replace supply_point
                 supply_point = data.get("supply_point", None)
                 data["location"] = SQLLocation.by_location_id(supply_point) if supply_point else None
                 invite = Invitation(**data)
