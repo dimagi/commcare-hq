@@ -24,7 +24,7 @@ BOOTSTRAP_VERSIONS = [3, 5]
 REQUIREJS_MAIN_GREP_PATTERN = r'{% requirejs_main\(_b5\)\? .\(\([^%]*\)/[^/%]*\). %}'
 REQUIREJS_MAIN_PYTHON_PATTERN = r'{% requirejs_main(_b(5))? .(([^%]*)/[^/%]*). %}'
 
-_pattern = r"sourceMappingURL=(bundle.b[%s].js.map)$"
+_pattern = r"sourceMappingURL=bundle.b[%s].js.map$"
 BUNDLE_SOURCE_MAP_PATTERN = re.compile(_pattern % "".join(str(v) for v in BOOTSTRAP_VERSIONS))
 
 
@@ -280,9 +280,8 @@ class Command(ResourceStaticCommand):
                 for line in lines:
                     match = re.search(BUNDLE_SOURCE_MAP_PATTERN, line)
                     if match:
-                        basename = match.group(1)
                         file_hash = self._update_resource_hash(module['name'] + ".js", filename)
-                        line = line.replace(basename, f'{basename}?version={file_hash}')
+                        line += f'?version={file_hash}'
                     fout.write(line)
 
     def _write_resource_versions(self):
