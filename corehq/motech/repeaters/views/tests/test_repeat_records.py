@@ -114,17 +114,12 @@ class TestRepeatRecordView(TestCase):
         record = repeat_records.RepeatRecordView.get_record_or_404("test", rec_id)
         self.assertEqual(record.id, rec_id)
 
-    def test_get_record_or_404_with_couch_id(self):
-        rec_id = self.record.couch_id
-        record = repeat_records.RepeatRecordView.get_record_or_404("test", rec_id)
-        self.assertEqual(record.id, self.record.id)
-
     def test_get_record_or_404_not_found(self):
-        rec_id = "404aaaaaaaaaaaaaaaaaaaaaaaaaa404"
+        rec_id = 40400000000000000000000000000404
         with self.assertRaises(repeat_records.Http404):
             repeat_records.RepeatRecordView.get_record_or_404("test", rec_id)
 
     def test_get_record_or_404_with_wrong_domain(self):
-        rec_id = str(self.record.id)
+        rec_id = self.record.id
         with self.assertRaises(repeat_records.Http404):
             repeat_records.RepeatRecordView.get_record_or_404("wrong", rec_id)

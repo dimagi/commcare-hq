@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from corehq.motech.repeaters.models import SQLRepeatRecord, State
+from corehq.motech.repeaters.models import RepeatRecord, State
 
 
 class Command(BaseCommand):
@@ -10,7 +10,7 @@ class Command(BaseCommand):
         parser.add_argument('domain')
 
     def handle(self, domain, **options):
-        records = SQLRepeatRecord.objects.filter(
+        records = RepeatRecord.objects.filter(
             domain=domain,
             next_check__isnull=False,
             state__in=[State.Pending, State.Fail],
