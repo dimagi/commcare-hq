@@ -66,6 +66,7 @@ from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_other_user,
 )
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
 )
@@ -1147,7 +1148,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
                 # Preparation for location_id to replace supply_point
-                data["location_id"] = data.get("supply_point", None)
+                supply_point = data.get("supply_point", None)
+                data["location"] = SQLLocation.by_location_id(supply_point) if supply_point else None
                 invite = Invitation(**data)
                 invite.save()
                 invite.send_activation_email()

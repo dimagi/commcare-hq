@@ -329,7 +329,7 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
             'invited_by': upload_user.user_id,
             'invited_on': datetime.utcnow(),
             'supply_point': location_id,
-            'location_id': location_id,
+            'location': SQLLocation.by_location_id(location_id),
             'role': role_qualified_id
         },
     )
