@@ -380,7 +380,7 @@ class Repeater(RepeaterSuperProxy):
         if not self.allowed_to_forward(payload):
             return
         now = datetime.utcnow()
-        repeat_record = SQLRepeatRecord(
+        repeat_record = RepeatRecord(
             repeater_id=self.id,
             domain=self.domain,
             registered_at=now,
@@ -420,28 +420,28 @@ class Repeater(RepeaterSuperProxy):
         self.save()
 
     def get_pending_record_count(self):
-        return SQLRepeatRecord.objects.filter(
+        return RepeatRecord.objects.filter(
             domain=self.domain,
             repeater_id=self.repeater_id,
             state=State.Pending,
         ).count()
 
     def get_failure_record_count(self):
-        return SQLRepeatRecord.objects.filter(
+        return RepeatRecord.objects.filter(
             domain=self.domain,
             repeater_id=self.repeater_id,
             state=State.Fail,
         ).count()
 
     def get_success_record_count(self):
-        return SQLRepeatRecord.objects.filter(
+        return RepeatRecord.objects.filter(
             models.Q(state=State.Success) | models.Q(state=State.Empty),
             domain=self.domain,
             repeater_id=self.repeater_id,
         ).count()
 
     def get_cancelled_record_count(self):
-        return SQLRepeatRecord.objects.filter(
+        return RepeatRecord.objects.filter(
             domain=self.domain,
             repeater_id=self.repeater_id,
             state=State.Cancelled,
@@ -967,7 +967,7 @@ class RepeatRecordManager(models.Manager):
         return self.order_by().values_list("domain", flat=True).distinct()
 
 
-class SQLRepeatRecord(models.Model):
+class RepeatRecord(models.Model):
     domain = models.CharField(max_length=126)
     payload_id = models.CharField(max_length=255)
     repeater = models.ForeignKey(Repeater,
@@ -982,7 +982,6 @@ class SQLRepeatRecord(models.Model):
     objects = RepeatRecordManager()
 
     class Meta:
-        db_table = 'repeaters_repeatrecord'
         indexes = [
             models.Index(fields=['domain']),
             models.Index(fields=['payload_id']),
@@ -1244,27 +1243,26 @@ class SQLRepeatRecord(models.Model):
         self.save()
 
 
-class SQLRepeatRecordAttempt(models.Model):
+class RepeatRecordAttempt(models.Model):
     repeat_record = models.ForeignKey(
-        SQLRepeatRecord, on_delete=DB_CASCADE, related_name="attempt_set")
+        RepeatRecord, on_delete=DB_CASCADE, related_name="attempt_set")
     state = models.PositiveSmallIntegerField(choices=State.choices)
     message = models.TextField(blank=True, default='')
     traceback = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        db_table = 'repeaters_repeatrecordattempt'
         ordering = ['created_at']
 
 
-@receiver(models.signals.pre_save, sender=SQLRepeatRecordAttempt)
+@receiver(models.signals.pre_save, sender=RepeatRecordAttempt)
 def _register_new_attempt_to_clear_cache(sender, instance, **kwargs):
     record = instance._meta.get_field("repeat_record").get_cached_value(instance, None)
     if instance._state.adding and record is not None:
         instance._record_with_new_attempt = record
 
 
-@receiver(models.signals.post_save, sender=SQLRepeatRecordAttempt)
+@receiver(models.signals.post_save, sender=RepeatRecordAttempt)
 def _clear_attempts_cache_after_save_new_attempt(sender, instance, **kwargs):
     # Clear cache in post_save because it may get populated by save
     # logic before the save is complete. The post_save signal by itself
@@ -1304,7 +1302,7 @@ def attempt_forward_now(repeater: Repeater):  # unused
     process_repeater.delay(repeater.id.hex)
 
 
-def get_payload(repeater: Repeater, repeat_record: SQLRepeatRecord) -> str:
+def get_payload(repeater: Repeater, repeat_record: RepeatRecord) -> str:
     try:
         return repeater.get_payload(repeat_record)
     except Exception as err:
@@ -1322,7 +1320,7 @@ def get_payload(repeater: Repeater, repeat_record: SQLRepeatRecord) -> str:
 
 def send_request(
     repeater: Repeater,
-    repeat_record: SQLRepeatRecord,
+    repeat_record: RepeatRecord,
     payload: Any,
 ) -> bool:
     """

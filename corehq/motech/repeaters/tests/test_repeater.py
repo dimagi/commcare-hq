@@ -48,7 +48,7 @@ from corehq.motech.repeaters.models import (
     LocationRepeater,
     Repeater,
     ShortFormRepeater,
-    SQLRepeatRecord,
+    RepeatRecord,
     UserRepeater,
     _get_retry_interval,
     format_response,
@@ -134,7 +134,7 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
     def repeat_records(cls, domain_name):
         # Enqueued repeat records have next_check set 48 hours in the future.
         later = datetime.utcnow() + timedelta(hours=48 + 1)
-        return SQLRepeatRecord.objects.filter(domain=domain_name, next_check__lt=later)
+        return RepeatRecord.objects.filter(domain=domain_name, next_check__lt=later)
 
 
 class RepeaterTest(BaseRepeaterTest):
@@ -227,13 +227,13 @@ class RepeaterTest(BaseRepeaterTest):
         # Enqueued repeat records have next_check incremented by 48 hours
         next_check_time = now() + timedelta(minutes=60) + timedelta(hours=48)
 
-        repeat_records = SQLRepeatRecord.objects.filter(
+        repeat_records = RepeatRecord.objects.filter(
             domain=self.domain,
             next_check__lt=now() + timedelta(minutes=15),
         )
         self.assertEqual(len(repeat_records), 0)
 
-        repeat_records = SQLRepeatRecord.objects.filter(
+        repeat_records = RepeatRecord.objects.filter(
             domain=self.domain,
             next_check__lt=next_check_time,
         )
@@ -241,7 +241,7 @@ class RepeaterTest(BaseRepeaterTest):
 
     def test_update_failure_next_check(self):
         now = datetime.utcnow()
-        record = SQLRepeatRecord.objects.create(
+        record = RepeatRecord.objects.create(
             domain=self.domain,
             repeater_id=self.case_repeater.repeater_id,
             registered_at=now,
@@ -351,7 +351,7 @@ class RepeaterTest(BaseRepeaterTest):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
         rr = self.case_repeater.register(case)
         # Fetch the revision that was updated:
-        repeat_record = SQLRepeatRecord.objects.get(id=rr.id)
+        repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(1, repeat_record.num_attempts)
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=Exception('Boom!')):
             for __ in range(repeat_record.max_possible_tries - repeat_record.num_attempts):
@@ -684,7 +684,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
         with patch.object(Repeater, "get_payload", side_effect=Exception('Payload error')):
             rr = self.repeater.register(case)
 
-        repeat_record = SQLRepeatRecord.objects.get(id=rr.id)
+        repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.state, State.Cancelled)
         self.assertEqual(repeat_record.failure_reason, "Payload error")
 
@@ -694,7 +694,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             rr = self.repeater.register(case)  # calls repeat_record.fire()
 
         # Fetch the repeat_record revision that was updated
-        repeat_record = SQLRepeatRecord.objects.get(id=rr.id)
+        repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
         self.assertEqual(repeat_record.state, State.Fail)
 
@@ -703,7 +703,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
         with patch('corehq.motech.repeaters.models.simple_request', side_effect=Exception('Boom!')):
             rr = self.repeater.register(case)
 
-        repeat_record = SQLRepeatRecord.objects.get(id=rr.id)
+        repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.failure_reason, 'Internal Server Error')
         self.assertEqual(repeat_record.state, State.Fail)
 
@@ -714,7 +714,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             mock_simple_post.return_value.status_code = 200
             rr = self.repeater.register(case)
 
-        repeat_record = SQLRepeatRecord.objects.get(id=rr.id)
+        repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.state, State.Success)
 
     def test_empty(self):
@@ -724,7 +724,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             mock_simple_post.return_value.status_code = 204
             rr = self.repeater.register(case)
 
-        repeat_record = SQLRepeatRecord.objects.get(id=rr.id)
+        repeat_record = RepeatRecord.objects.get(id=rr.id)
         self.assertEqual(repeat_record.state, State.Empty)
 
 
@@ -764,7 +764,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
         """
         When get_payload raises IgnoreDocument, fire should call update_success
         """
-        repeat_records = SQLRepeatRecord.objects.filter(domain=self.domain)
+        repeat_records = RepeatRecord.objects.filter(domain=self.domain)
         for repeat_record_ in repeat_records:
             repeat_record_.fire()
 
@@ -839,7 +839,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
             mock_manager.return_value = 'MockAuthManager'
             rr = self.repeater.register(case)
 
-            repeat_record = SQLRepeatRecord.objects.get(id=rr.id)
+            repeat_record = RepeatRecord.objects.get(id=rr.id)
             headers = self.repeater.get_headers(repeat_record)
             mock_request.assert_called_with(
                 self.domain,
@@ -895,7 +895,7 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
     def repeat_records(self):
         # Enqueued repeat records have next_check set 48 hours in the future.
         later = datetime.utcnow() + timedelta(hours=48 + 1)
-        return SQLRepeatRecord.objects.filter(domain=self.domain, next_check__lt=later)
+        return RepeatRecord.objects.filter(domain=self.domain, next_check__lt=later)
 
     def make_user(self, username):
         user = CommCareUser.create(
@@ -970,7 +970,7 @@ class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
     def repeat_records(self):
         # Enqueued repeat records have next_check set 48 hours in the future.
         later = datetime.utcnow() + timedelta(hours=48 + 1)
-        return SQLRepeatRecord.objects.filter(domain=self.domain, next_check__lt=later)
+        return RepeatRecord.objects.filter(domain=self.domain, next_check__lt=later)
 
     def make_location(self, name):
         location = SQLLocation.objects.create(
@@ -1036,8 +1036,8 @@ class TestRepeaterPause(BaseRepeaterTest):
 
     def test_trigger_when_paused(self):
         # not paused
-        with patch.object(SQLRepeatRecord, 'fire') as mock_fire:
-            with patch.object(SQLRepeatRecord, 'postpone_by') as mock_postpone_fire:
+        with patch.object(RepeatRecord, 'fire') as mock_fire:
+            with patch.object(RepeatRecord, 'postpone_by') as mock_postpone_fire:
                 # calls _process_repeat_record():
                 self.repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
                 self.assertEqual(mock_fire.call_count, 1)
@@ -1046,7 +1046,7 @@ class TestRepeaterPause(BaseRepeaterTest):
                 # paused
                 self.repeater.pause()
                 # re fetch repeat record
-                self.repeat_record = SQLRepeatRecord.objects.get(id=self.repeat_record.id)
+                self.repeat_record = RepeatRecord.objects.get(id=self.repeat_record.id)
                 _process_repeat_record(self.repeat_record)
                 self.assertEqual(mock_fire.call_count, 1)
                 self.assertEqual(mock_postpone_fire.call_count, 1)
@@ -1054,7 +1054,7 @@ class TestRepeaterPause(BaseRepeaterTest):
                 # resumed
                 self.repeater.resume()
                 # re fetch repeat record
-                self.repeat_record = SQLRepeatRecord.objects.get(id=self.repeat_record.id)
+                self.repeat_record = RepeatRecord.objects.get(id=self.repeat_record.id)
                 _process_repeat_record(self.repeat_record)
                 self.assertEqual(mock_fire.call_count, 2)
                 self.assertEqual(mock_postpone_fire.call_count, 1)
@@ -1084,9 +1084,9 @@ class TestRepeaterDeleted(BaseRepeaterTest):
     def test_trigger_when_deleted(self):
         self.repeater.retire()
 
-        with patch.object(SQLRepeatRecord, 'fire') as mock_fire:
+        with patch.object(RepeatRecord, 'fire') as mock_fire:
             repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
-            repeat_record = SQLRepeatRecord.objects.get(id=repeat_record.id)
+            repeat_record = RepeatRecord.objects.get(id=repeat_record.id)
             _process_repeat_record(repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(repeat_record.state, State.Cancelled)
@@ -1268,7 +1268,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
     def test_payload_format(self):
         sample_doc, expected_indicators = self._create_log_and_repeat_record()
         later = datetime.utcnow() + timedelta(hours=50)
-        repeat_record = SQLRepeatRecord.objects.filter(domain=self.domain, next_check__lt=later).first()
+        repeat_record = RepeatRecord.objects.filter(domain=self.domain, next_check__lt=later).first()
         json_payload = self.repeater.get_payload(repeat_record)
         payload = json.loads(json_payload)
 

@@ -14,7 +14,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation, Grant
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import DataRegistryCaseUpdateRepeater, SQLRepeatRecord
+from corehq.motech.repeaters.models import DataRegistryCaseUpdateRepeater, RepeatRecord
 from corehq.motech.repeaters.repeater_generators import DataRegistryCaseUpdatePayloadGenerator
 from corehq.motech.repeaters.tests.test_data_registry_case_update_payload_generator import IntentCaseBuilder, \
     DataRegistryUpdateForm
@@ -147,4 +147,4 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
     def repeat_records(cls, domain_name):
         # Enqueued repeat records have next_check set 48 hours in the future.
         later = datetime.utcnow() + timedelta(hours=48 + 1)
-        return SQLRepeatRecord.objects.filter(domain=domain_name, next_check__lt=later)
+        return RepeatRecord.objects.filter(domain=domain_name, next_check__lt=later)

@@ -13,7 +13,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.repeaters.models import CreateCaseRepeater, Repeater, UpdateCaseRepeater, SQLRepeatRecord
+from corehq.motech.repeaters.models import CreateCaseRepeater, Repeater, UpdateCaseRepeater, RepeatRecord
 from corehq.util.argparse_types import date_type
 
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -102,7 +102,7 @@ def find_missing_form_repeat_records_for_form(form, domain, repeaters, enddate, 
     missing_count = 0
     successful_count = 0
     triggered_repeater_ids = set(
-        SQLRepeatRecord.objects
+        RepeatRecord.objects
         .filter(domain=domain, payload_id=form.get_id)
         .values_list("repeater_id", flat=True)
         .order_by()
@@ -193,7 +193,7 @@ def find_missing_case_repeat_records_for_domain(domain, startdate, enddate, shou
 def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate, enddate, should_create=False):
     successful_count = missing_all_count = missing_create_count = missing_update_count = 0
 
-    repeat_records = SQLRepeatRecord.objects.filter(domain=domain, payload_id=case.get_id).order_by()
+    repeat_records = RepeatRecord.objects.filter(domain=domain, payload_id=case.get_id).order_by()
     # grab repeat records that were registered during the date range
     records_during_daterange = [record for record in repeat_records
                                 if startdate <= record.registered_at.date() <= enddate]
@@ -399,7 +399,7 @@ def find_missing_repeat_records_in_domain(domain, repeaters, payload, enddate, s
     NOTE: Assumes the payload passed in was modified since the startdate
     """
     missing_count = 0
-    fired_repeater_ids = set(SQLRepeatRecord.objects.filter(
+    fired_repeater_ids = set(RepeatRecord.objects.filter(
         domain=domain,
         payload_id=payload.get_id,
         registered_at__gte=payload.last_modified.date(),
@@ -513,7 +513,7 @@ def create_case_repeater_register(repeater, domain, payload):
         return
 
     now = datetime.utcnow()
-    repeat_record = SQLRepeatRecord.objects.create(
+    repeat_record = RepeatRecord.objects.create(
         repeater_id=repeater.id,
         domain=domain,
         registered_at=now,
@@ -555,11 +555,11 @@ class Command(BaseCommand):
             domains_to_inspect = [domain]
         elif startswith:
             domains_to_inspect = list(
-                SQLRepeatRecord.objects.get_domains_with_records()
+                RepeatRecord.objects.get_domains_with_records()
                 .filter(domain__startswith=startswith)
             )
         else:
-            domains_to_inspect = list(SQLRepeatRecord.objects.get_domains_with_records())
+            domains_to_inspect = list(RepeatRecord.objects.get_domains_with_records())
 
         logger.setLevel(logging.INFO if options["verbose"] else logging.WARNING)
         if command == CASES:

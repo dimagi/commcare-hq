@@ -35,7 +35,7 @@ from corehq.motech.openmrs.repeater_helpers import (
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tasks import import_patients_to_domain
-from corehq.motech.repeaters.models import SQLRepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView, EditRepeaterView
 from corehq.motech.utils import b64_aes_encrypt
 
@@ -125,7 +125,7 @@ def openmrs_raw_api(request, domain, repeater_id, rest_uri):
 @login_and_domain_required
 def openmrs_test_fire(request, domain, repeater_id, record_id):
     repeater = OpenmrsRepeater.objects.get(domain=domain, id=repeater_id)
-    record = SQLRepeatRecord.objects.get(domain=domain, id=record_id)
+    record = RepeatRecord.objects.get(domain=domain, id=record_id)
     assert record.repeater_id == repeater.id
 
     attempt = repeater.fire_for_record(record)

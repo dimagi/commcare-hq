@@ -41,7 +41,7 @@ from corehq.motech.dhis2.parse_response import get_errors, get_diagnosis_message
 from corehq.motech.models import RequestLog
 
 from ..const import State, RECORD_CANCELLED_STATE
-from ..models import SQLRepeatRecord
+from ..models import RepeatRecord
 from .repeat_record_display import RepeatRecordDisplay
 
 
@@ -121,7 +121,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     def total_records(self):
         if self.payload_id:
             return len(self._get_all_records_by_payload())
-        query = SQLRepeatRecord.objects.filter(domain=self.domain)
+        query = RepeatRecord.objects.filter(domain=self.domain)
         if self.repeater_id:
             query = query.filter(repeater_id=self.repeater_id)
         if self.state:
@@ -138,7 +138,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
     @memoized
     def _get_all_records_by_payload(self):
-        query = SQLRepeatRecord.objects.filter(
+        query = RepeatRecord.objects.filter(
             domain=self.domain,
             payload_id=self.payload_id,
         )
@@ -163,7 +163,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             end = self.pagination.start + self.pagination.count
             records = self._get_all_records_by_payload()[self.pagination.start:end]
         else:
-            records = SQLRepeatRecord.objects.page(
+            records = RepeatRecord.objects.page(
                 self.domain,
                 self.pagination.start,
                 self.pagination.count,
@@ -244,9 +244,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         where = Q(domain=self.domain)
         if self.repeater_id:
             where &= Q(repeater_id=self.repeater_id)
-        total = SQLRepeatRecord.objects.filter(where).count()
-        total_pending = SQLRepeatRecord.objects.filter(where, state=State.Pending).count()  # include State.Fail?
-        total_cancelled = SQLRepeatRecord.objects.filter(where, state=State.Cancelled).count()
+        total = RepeatRecord.objects.filter(where).count()
+        total_pending = RepeatRecord.objects.filter(where, state=State.Pending).count()  # include State.Fail?
+        total_cancelled = RepeatRecord.objects.filter(where, state=State.Cancelled).count()
 
         form_query_string = self.request.GET.urlencode()
         form_query_string_cancelled = _change_record_state(
@@ -274,8 +274,8 @@ class RepeatRecordView(View):
     @staticmethod
     def get_record_or_404(domain, record_id):
         try:
-            record = SQLRepeatRecord.objects.get(id=record_id)
-        except SQLRepeatRecord.DoesNotExist:
+            record = RepeatRecord.objects.get(id=record_id)
+        except RepeatRecord.DoesNotExist:
             raise Http404()
 
         if record.domain != domain:

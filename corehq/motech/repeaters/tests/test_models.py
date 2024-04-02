@@ -31,7 +31,7 @@ from ..const import (
 from ..models import (
     FormRepeater,
     Repeater,
-    SQLRepeatRecord,
+    RepeatRecord,
     format_response,
     get_all_repeater_types,
     is_response,
@@ -97,7 +97,7 @@ class TestRepeaterName(RepeaterTestCase):
         self.assertEqual(self.repeater.name, self.conn.name)
 
 
-class TestSQLRepeatRecordOrdering(RepeaterTestCase):
+class TestRepeatRecordOrdering(RepeaterTestCase):
 
     def setUp(self):
         super().setUp()
@@ -454,7 +454,7 @@ class TestRepeaterConnectionSettings(RepeaterTestCase):
 
 
 def test_attempt_forward_now_kwargs():
-    rr = SQLRepeatRecord()
+    rr = RepeatRecord()
     with assert_raises(TypeError):
         rr.attempt_forward_now(True)
 
@@ -506,7 +506,7 @@ class TestAttemptForwardNow(RepeaterTestCase):
     def test_optimistic_lock(self, process, retry_process):
         rec = self.new_record()
 
-        two = SQLRepeatRecord.objects.get(id=rec.id)
+        two = RepeatRecord.objects.get(id=rec.id)
         two.next_check = datetime.utcnow() - timedelta(days=1)
         two.save()
 
@@ -523,7 +523,7 @@ class TestAttemptForwardNow(RepeaterTestCase):
                 raise AssertionError(f"{task} unexpectedly called:\n{err}")
 
     def new_record(self, next_check=before_now, state=RECORD_PENDING_STATE):
-        rec = SQLRepeatRecord(
+        rec = RepeatRecord(
             domain="test",
             repeater_id=self.repeater.repeater_id,
             payload_id="c0ffee",
@@ -544,7 +544,7 @@ class TestRepeaterModelMethods(RepeaterTestCase):
         )
         repeat_record = self.repeater.register(payload, fire_synchronously=True)
         self.assertEqual(repeat_record.payload_id, payload.get_id)
-        all_records = list(SQLRepeatRecord.objects.iterate(DOMAIN))
+        all_records = list(RepeatRecord.objects.iterate(DOMAIN))
         self.assertEqual(len(all_records), 1)
         self.assertEqual(all_records[0].id, repeat_record.id)
 
@@ -597,7 +597,7 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.new_record(next_check=now + timedelta(minutes=5))
         self.new_record(next_check=None, state=State.Success)
         self.new_record(next_check=now - timedelta(hours=1), domain="other")
-        pending = SQLRepeatRecord.objects.count_pending_records_for_domain("test")
+        pending = RepeatRecord.objects.count_pending_records_for_domain("test")
         self.assertEqual(pending, 4)
 
     def test_count_overdue(self):
@@ -607,10 +607,10 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.new_record(next_check=now - timedelta(minutes=15))
         self.new_record(next_check=now - timedelta(minutes=5))
         self.new_record(next_check=None, state=State.Success)
-        overdue = SQLRepeatRecord.objects.count_overdue()
+        overdue = RepeatRecord.objects.count_overdue()
         self.assertEqual(overdue, 3)
 
-    iter_partition = SQLRepeatRecord.objects.iter_partition
+    iter_partition = RepeatRecord.objects.iter_partition
 
     def test_one_partition(self):
         iter_partition = type(self).iter_partition
@@ -644,7 +644,7 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.new_record(domain='b')
         self.new_record(domain='c')
         self.assertEqual(
-            set(SQLRepeatRecord.objects.get_domains_with_records()),
+            set(RepeatRecord.objects.get_domains_with_records()),
             {'a', 'b', 'c'},
         )
 
@@ -653,12 +653,12 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.new_record(domain='alice')
         self.new_record(domain='carl')
         self.assertEqual(
-            set(SQLRepeatRecord.objects.get_domains_with_records().filter(domain__startswith="al")),
+            set(RepeatRecord.objects.get_domains_with_records().filter(domain__startswith="al")),
             {'alex', 'alice'},
         )
 
     def new_record(self, next_check=before_now, state=State.Pending, domain="test"):
-        return SQLRepeatRecord.objects.create(
+        return RepeatRecord.objects.create(
             domain=domain,
             repeater_id=self.repeater.repeater_id,
             payload_id="c0ffee",
@@ -669,7 +669,7 @@ class TestRepeatRecordManager(RepeaterTestCase):
 
     def make_records(self, n):
         now = timezone.now() - timedelta(seconds=10)
-        records = SQLRepeatRecord.objects.bulk_create(SQLRepeatRecord(
+        records = RepeatRecord.objects.bulk_create(RepeatRecord(
             domain="test",
             repeater=self.repeater,
             payload_id="c0ffee",
@@ -687,7 +687,7 @@ class TestRepeatRecordMethods(TestCase):
             connection_settings=self.conn_settings,
             is_deleted=False
         )
-        repeat_record = SQLRepeatRecord.objects.create(
+        repeat_record = RepeatRecord.objects.create(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
@@ -702,7 +702,7 @@ class TestRepeatRecordMethods(TestCase):
             connection_settings=self.conn_settings,
             is_deleted=True
         )
-        repeat_record = SQLRepeatRecord.objects.create(
+        repeat_record = RepeatRecord.objects.create(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
@@ -712,7 +712,7 @@ class TestRepeatRecordMethods(TestCase):
         self.assertTrue(repeat_record.repeater.is_deleted)
 
     def test_repeater_raises_if_not_found(self):
-        repeat_record = SQLRepeatRecord(
+        repeat_record = RepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
@@ -738,7 +738,7 @@ class TestRepeatRecordMethods(TestCase):
 
     def test_requeue(self):
         now = datetime.utcnow()
-        record = SQLRepeatRecord(
+        record = RepeatRecord(
             domain="test",
             repeater_id=self.repeater.id.hex,
             payload_id="abc123",
@@ -751,7 +751,7 @@ class TestRepeatRecordMethods(TestCase):
         self.assertLessEqual(record.next_check, datetime.utcnow())
 
     def test_get_payload(self):
-        record = SQLRepeatRecord(
+        record = RepeatRecord(
             domain="test",
             repeater_id=self.repeater.id.hex,
             payload_id="abc123",
@@ -763,7 +763,7 @@ class TestRepeatRecordMethods(TestCase):
     def test_postpone_by(self):
         now = datetime.utcnow()
         hour = timedelta(hours=1)
-        record = SQLRepeatRecord(
+        record = RepeatRecord(
             domain="test",
             repeater_id=self.repeater.id.hex,
             payload_id="abc123",
@@ -778,50 +778,50 @@ class TestRepeatRecordMethodsNoDB(SimpleTestCase):
     domain = 'repeat-record-tests'
 
     def test_exceeded_max_retries_returns_false_if_fewer_tries_than_possible(self):
-        repeat_record = SQLRepeatRecord(
+        repeat_record = RepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
             state=State.Fail
         )
 
-        with patch.object(SQLRepeatRecord, "num_attempts", 0), \
+        with patch.object(RepeatRecord, "num_attempts", 0), \
                 patch.object(repeat_record, "max_possible_tries", 1):
             self.assertFalse(repeat_record.exceeded_max_retries)
 
     def test_exceeded_max_retries_returns_true_if_equal(self):
-        repeat_record = SQLRepeatRecord(
+        repeat_record = RepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
             state=State.Fail
         )
 
-        with patch.object(SQLRepeatRecord, "num_attempts", 1), \
+        with patch.object(RepeatRecord, "num_attempts", 1), \
                 patch.object(repeat_record, "max_possible_tries", 1):
             self.assertTrue(repeat_record.exceeded_max_retries)
 
     def test_exceeded_max_retries_returns_true_if_more_tries_than_possible(self):
-        repeat_record = SQLRepeatRecord(
+        repeat_record = RepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
             state=State.Fail
         )
 
-        with patch.object(SQLRepeatRecord, "num_attempts", 2), \
+        with patch.object(RepeatRecord, "num_attempts", 2), \
                 patch.object(repeat_record, "max_possible_tries", 1):
             self.assertTrue(repeat_record.exceeded_max_retries)
 
     def test_exceeded_max_retries_returns_false_if_not_failure_state(
             self):
-        repeat_record = SQLRepeatRecord(
+        repeat_record = RepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
             state=State.Success,
         )
 
-        with patch.object(SQLRepeatRecord, "num_attempts", 2), \
+        with patch.object(RepeatRecord, "num_attempts", 2), \
                 patch.object(repeat_record, "max_possible_tries", 1):
             self.assertFalse(repeat_record.exceeded_max_retries)
