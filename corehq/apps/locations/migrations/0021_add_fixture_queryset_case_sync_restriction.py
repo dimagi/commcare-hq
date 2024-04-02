@@ -17,17 +17,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='locationtype',
             name='restrict_cases_to',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, related_name='+', to='locations.locationtype'),
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='+', to='locations.locationtype'),
         ),
         migrations.AlterField(
             model_name='locationtype',
             name='_expand_from',
-            field=models.ForeignKey(db_column='expand_from', null=True, on_delete=django.db.models.deletion.PROTECT, related_name='+', to='locations.locationtype'),
+            field=models.ForeignKey(db_column='expand_from', null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='+', to='locations.locationtype'),
         ),
         migrations.AlterField(
             model_name='locationtype',
             name='expand_to',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, related_name='+', to='locations.locationtype'),
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='+', to='locations.locationtype'),
         ),
         locations_sql_migrator.get_migration('get_location_fixture_ids_2.sql'),
     ]
