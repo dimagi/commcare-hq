@@ -94,15 +94,21 @@ class LocationType(models.Model):
         null=True,
         related_name='+',
         db_column='expand_from',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )  # levels below this location type that we start expanding from
     _expand_from_root = models.BooleanField(default=False, db_column='expand_from_root')
     expand_to = models.ForeignKey(
         "self",
         null=True,
         related_name="+",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )  # levels above this type that are synced
+    restrict_cases_to = models.ForeignKey(
+        "self",
+        null=True,
+        related_name="+",
+        on_delete=models.PROTECT,
+    )
     include_without_expanding = models.ForeignKey(
         'self',
         null=True,
