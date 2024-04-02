@@ -18,8 +18,6 @@ from corehq.apps.sso.forms import (
 )
 from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
 
-from corehq.toggles import MULTI_VIEW_API_KEYS
-
 
 class ManageSSOEnterpriseView(BaseEnterpriseAdminView):
     page_title = gettext_lazy("Manage Single Sign-On")
@@ -135,7 +133,7 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         return toggles.SSO_REMOTE_USER_MANAGEMENT.enabled_for_request(self.request)
 
     def uses_api_key_management(self):
-        return MULTI_VIEW_API_KEYS.enabled_for_request(self.request)
+        return toggles.MULTI_VIEW_API_KEYS.enabled_for_request(self.request)
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
