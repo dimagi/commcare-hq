@@ -7,6 +7,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
     'hqwebapp/js/utils/email',
     "hqwebapp/js/initial_page_data",
     'sso/js/models',
+    'hqwebapp/js/bootstrap3/widgets',
 ], function (
     $,
     ko,
@@ -36,21 +37,49 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
         $('#sso-test-user-manager').koApplyBindings(ssoTestUserManager);
         ssoTestUserManager.init();
 
-        let oidcClientSecretManager = function (showAPIFields) {
+        let editEnterpriseIdPFormManager = function (showAPIFields) {
             let self = {};
 
-            self.isClientSecretVisible = ko.observable(false);
-            self.isClientSecretHidden = ko.computed(function () {
-                return !self.isClientSecretVisible();
-            });
+            if (initialPageData.get('is_oidc')) {
+                self.isClientSecretVisible = ko.observable(false);
+                self.isClientSecretHidden = ko.computed(function () {
+                    return !self.isClientSecretVisible();
+                });
 
-            self.showClientSecret = function () {
-                self.isClientSecretVisible(true);
-            };
+                self.showClientSecret = function () {
+                    self.isClientSecretVisible(true);
+                };
 
-            self.hideClientSecret = function () {
-                self.isClientSecretVisible(false);
-            };
+                self.hideClientSecret = function () {
+                    self.isClientSecretVisible(false);
+                };
+            }
+
+            if (initialPageData.get('show_remote_user_management')) {
+                self.isCancelUpdateVisible = ko.observable(false);
+                self.apiExpirationDate = "";
+
+                self.dateApiSecretExpiration = ko.observable($('#id_date_api_secret_expiration').val());
+                self.isAPISecretVisible = ko.observable($('#masked-api-value').text() === '');
+                self.apiSecret = ko.observable();
+
+                self.startEditingAPISecret = function () {
+                    self.isAPISecretVisible(true);
+                    self.isCancelUpdateVisible(true);
+                    // Store the current expiration date before clearing them for editing.
+                    self.apiExpirationDate = self.dateApiSecretExpiration();
+                    self.dateApiSecretExpiration('');
+                };
+
+                self.cancelEditingAPISecret = function () {
+                    self.isAPISecretVisible(false);
+                    self.isCancelUpdateVisible(false);
+                    // Reset the api secret to blank if user cancel editing
+                    self.apiSecret('');
+                    // Restore the original values of expiration date after canceling editing.
+                    self.dateApiSecretExpiration(self.apiExpirationDate);
+                };
+            }
 
             if (showAPIFields) {
                 const initialEnforce = document.forms['configuration']['enforce_user_api_key_expiration'].checked;
@@ -79,8 +108,8 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
             return self;
 
         };
-
         const showAPIFields = initialPageData.get('show_api_fields');
-        $('#idp').koApplyBindings(oidcClientSecretManager(showAPIFields));
+        let formManager = new editEnterpriseIdPFormManager(showAPIFields);
+        $('#idp').koApplyBindings(formManager);
     });
 });
