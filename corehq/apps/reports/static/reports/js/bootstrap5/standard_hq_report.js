@@ -9,7 +9,7 @@
 
     This file also controls some basic event handling for report pages, such as the "Apply" button.
 */
-hqDefine("reports/js/standard_hq_report", [
+hqDefine("reports/js/bootstrap5/standard_hq_report", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',

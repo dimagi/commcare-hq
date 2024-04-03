@@ -3,7 +3,7 @@ hqDefine("reports/js/tabular", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'reports/js/config.dataTables.bootstrap',
-    'reports/js/standard_hq_report',
+    'reports/js/bootstrap3/standard_hq_report',
 ], function (
     $,
     _,

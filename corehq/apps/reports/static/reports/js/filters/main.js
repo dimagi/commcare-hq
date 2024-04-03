@@ -3,7 +3,7 @@ hqDefine("reports/js/filters/main", [
     'underscore',
     'knockout',
     'hqwebapp/js/bootstrap3/main',
-    'reports/js/standard_hq_report',
+    'reports/js/bootstrap3/standard_hq_report',
     'reports/js/filters/select2s',
     'reports/js/filters/phone_number',
     'reports/js/filters/button_group',
