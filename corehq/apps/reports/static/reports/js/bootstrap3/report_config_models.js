@@ -1,4 +1,4 @@
-hqDefine("reports/js/report_config_models", [
+hqDefine("reports/js/bootstrap3/report_config_models", [
     'jquery',
     'knockout',
     'underscore',

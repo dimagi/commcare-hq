@@ -81,7 +81,7 @@ hqDefine("userreports/js/configurable_report", function () {
             defaultConfig.datespan_slug = null;
         }
 
-        var reportConfigModels = hqImport("reports/js/report_config_models"),
+        var reportConfigModels = hqImport("reports/js/bootstrap3/report_config_models"),
             reportConfigsView = reportConfigModels.reportConfigsViewModel({
                 filterForm: $("#paramSelectorForm"),
                 items: initialPageData.get("report_configs"),

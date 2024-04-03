@@ -15,7 +15,7 @@ hqDefine("reports/js/bootstrap3/base", function () {
 
         var $savedReports = $("#savedReports");
         if ($savedReports.length) {
-            var reportConfigModels = hqImport("reports/js/report_config_models"),
+            var reportConfigModels = hqImport("reports/js/bootstrap3/report_config_models"),
                 reportConfigsView = reportConfigModels.reportConfigsViewModel({
                     filterForm: $("#reportFilters"),
                     items: initialPageData.get('report_configs'),
