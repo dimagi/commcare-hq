@@ -479,6 +479,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 },
             });
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
+            // TODO: move to tempus dominus
             this.ui.dateRange.daterangepicker({
                 locale: {
                     format: dateFormat,

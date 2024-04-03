@@ -399,6 +399,7 @@ hqDefine('cloudcare/js/utils', [
             return;
         }
 
+        // TODO: replace with tempus dominus
         $el.datetimepicker({
             date: selectedDate,
             useCurrent: false,
@@ -427,6 +428,7 @@ hqDefine('cloudcare/js/utils', [
         }
 
         let date = moment(selectedTime, timeFormat);
+        // TODO: replace with tempus dominus
         $el.datetimepicker({
             date: date.isValid() ? date : null,
             format: timeFormat,

@@ -7,7 +7,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
     'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
-    'bootstrap-switch/dist/js/bootstrap-switch', // bootstrapSwitch
+    'bootstrap-switch/dist/js/bootstrap-switch', // bootstrapSwitch: TODO: replace with B5 switch
 ], function (
     $,
     _,

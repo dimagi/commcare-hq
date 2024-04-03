@@ -138,6 +138,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         $('#webforms-nav').html("");
         $('#cloudcare-debugger').html("");
         $('.atwho-container').remove();
+        // TODO: update to use B5 modal
         $('#case-detail-modal').modal('hide');
     });
 
