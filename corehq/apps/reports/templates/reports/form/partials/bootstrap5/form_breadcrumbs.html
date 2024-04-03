@@ -1,0 +1,19 @@
+{% load timezone_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+<ul class="breadcrumb breadcrumb-hq-section">
+  <li>
+    <a href="{% url "reports_home" domain %}"><strong>Reports</strong></a>
+  </li>
+  <li>
+    <a href="{% url "project_report_dispatcher" domain 'submit_history' %}">{% trans "Submit History" %}</a>
+  </li>
+  <li class="active">
+    <a href="#">
+      {{ form_name }}
+      {% if form_received_on %}
+        ({% utc_to_timezone form_received_on timezone %})
+      {% endif %}
+    </a>
+  </li>
+</ul>
