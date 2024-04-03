@@ -599,11 +599,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             $(document).on("click", ".help-text-trigger", function (event) {
                 event.preventDefault();
                 var container = $(event.currentTarget).closest(".caption");
+                // todo B5: update to use B5 modal
                 container.find(".modal").modal('show');
             });
 
             $(document).on("click", ".unsupported-question-type-trigger", function (event) {
                 var container = $(event.currentTarget).closest(".widget");
+                // todo B5: update to use B5 modal
                 container.find(".modal").modal('show');
             });
         };
