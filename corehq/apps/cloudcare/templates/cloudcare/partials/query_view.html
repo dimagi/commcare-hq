@@ -4,12 +4,12 @@
 <script type="text/template" id="query-view-list-template">
   <form>
     <% if (sidebarEnabled) {%>
-      <button type="button" class="close visible-xs visible-sm" aria-label="{% trans "Close" %}"
-        data-toggle="collapse" data-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
+      <button type="button" class="btn-close d-xs-block d-sm-block" aria-label="{% trans "Close" %}"
+        data-bs-toggle="collapse" data-bs-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
         <span aria-hidden="true">&times;</span>
       </button>
       <div class="query-button-container">
-        <button class="btn btn-default" type="button" id="query-clear-button">
+        <button class="btn btn-outline-primary" type="button" id="query-clear-button">
           <div>{% trans "Clear" %}</div>
         </button>
         <button class="btn btn-primary" type="submit" id="query-submit-button">
@@ -30,7 +30,7 @@
       </tbody>
     </table>
     <% if (!sidebarEnabled) {%>
-      <button class="btn btn-default" type="button" id="query-clear-button">
+      <button class="btn btn-outline-primary" type="button" id="query-clear-button">
         <div>{% trans "Clear" %}</div>
       </button>
       <button class="btn btn-primary" type="submit" id="query-submit-button">
@@ -43,9 +43,9 @@
 <script type="text/template" id="query-view-group-template">
   <td class="search-query-group">
     <% if (named) { %>
-    <div class="search-query-group-header <% if (required) { %> required<% } %>" data-toggle="collapse" data-target="#group-<%- groupKey %>" aria-expanded="true" aria-controls="group-<%- groupKey %>">
+    <div class="search-query-group-header <% if (required) { %> required<% } %>" data-bs-toggle="collapse" data-bs-target="#group-<%- groupKey %>" aria-expanded="true" aria-controls="group-<%- groupKey %>">
       <label class="search-query-group-header-label"><%= groupName %></label>
-      <i class="fa fa-angle-double-down pull-right" style="font-size: larger"></i>
+      <i class="fa fa-angle-double-down float-end" style="font-size: larger"></i>
     </div>
     <% } %>
     <div id="group-<%- groupKey %>" class="in">
@@ -64,7 +64,7 @@
            <% if (required) { %> required<% } %>
            <% if (errorMessage) { %> has-error<% } %>">
     <div class="d-flex justify-content-between">
-      <label class="control-label" for="<%- text ? text : "" %>">
+      <label class="form-label" for="<%- text ? text : "" %>">
         <%- text ? text : "" %>
       </label>
       <% if (typeof hint !== "undefined" && hint !== null) { %>
@@ -145,7 +145,7 @@
            <% } %>
            <% if (errorMessage) { %> <div class="help-block has-error"> <%- errorMessage || "" %> </div> <% } %>
            <% if (allow_blank_value) { %>
-            <label class="control-label">
+            <label class="form-label">
               <input type="checkbox" class="search-for-blank" <% if (searchForBlank) { %>checked<% } %>>
               {% trans "Include results where '<%- text %>' is blank" %}
             </label>

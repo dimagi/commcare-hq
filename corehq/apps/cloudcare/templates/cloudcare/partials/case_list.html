@@ -5,7 +5,7 @@
   <div class="module-case-list-container">
 
     <button id="scroll-to-bottom"
-            class="btn btn-lg btn-circle btn-primary hidden-md hidden-lg"
+            class="btn btn-lg btn-circle btn-primary d-md-none d-lg-none"
             type="button"
             aria-label="{% trans 'Scroll to bottom' %}"
             style="display: none;">
@@ -28,7 +28,7 @@
                placeholder="Search"
                id="searchText">
         <div class="input-group-btn">
-          <button class="btn btn-default"
+          <button class="btn btn-outline-primary"
                   type="button"
                   id="case-list-search-button">
             <i class="fa fa-search" aria-hidden="true"></i>
@@ -42,7 +42,7 @@
          class="row row-no-gutters">
       <% if (showMap) { %>
         <div id="module-case-list-map"
-             class="sticky sticky-map col-md-5 col-md-push-9<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
+             class="sticky sticky-map col-lg-5 col-md-push-9<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
       <% } %>
       <div id="module-case-list" class="col-md<% if (showMap) { %>-7 col-md-pull-5<% } %>">
         <% if (useTiles) { %>
@@ -65,7 +65,7 @@
         <% if (actions) { %>
           <% _.each(actions, function(action, index) { %>
             <div class="case-list-action-button btn-group formplayer-request">
-              <button type="button" class="btn btn-default btn-lg " data-index="<%- index %>"><%- action.text %></button>
+              <button type="button" class="btn btn-outline-primary btn-lg " data-index="<%- index %>"><%- action.text %></button>
             </div>
           <% }) %>
         <% } %>

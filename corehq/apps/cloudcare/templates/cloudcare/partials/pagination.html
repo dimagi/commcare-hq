@@ -7,7 +7,7 @@
   <% if (showPagination) { %>
     <div class="container pagination-container">
       <div class="row">
-        <div class="col-xs-6 col-sm-3 module-per-page-container">
+        <div class="col-sm-6 col-md-3 module-per-page-container">
           <div class="form-inline input-group-lg">
             <select class="form-control per-page-limit">
               <% for(var i = 0; i < rowRange.length; i++) { %>
@@ -21,15 +21,15 @@
           </div>
         </div>
         <% if (pageCount > 1) { %>
-          <div class="col-xs-6 col-sm-3 col-sm-push-6 module-go-container">
+          <div class="col-sm-6 col-md-3 col-sm-push-6 module-go-container">
             <div class="input-group input-group-lg">
               <input type="text" class="form-control" placeholder='{% trans_html_attr "Go to page" %}' id="goText">
               <div class="input-group-btn">
-                <button class="btn btn-default" type="button" id="pagination-go-button">{% trans "Go" %}</button>
+                <button class="btn btn-outline-primary" type="button" id="pagination-go-button">{% trans "Go" %}</button>
               </div>
             </div>
           </div>
-          <div class="col-xs-12 col-sm-6 col-sm-pull-3 text-center">
+          <div class="col-sm-12 col-md-6 col-sm-pull-3 text-center">
             <nav class="module-pagination-container">
               <ul class="pagination">
                 <!-- Render Previous button -->
