@@ -1,0 +1,127 @@
+{% extends report_base|default:"reports/async/default.html" %} {# This template is used for both sync and async reports #}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+  {% if charts %}
+    <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
+    <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
+  {% endif %}
+{% endblock %}
+
+{% block reportcontent %}
+
+  {% block pretable %}
+    {% if charts %}
+      <div class="row">
+        {% for chart in charts %}
+          <div id='chart_{{ report.slug }}_{{ forloop.counter }}' class="col-lg-{{ chart_span }} collapse">
+            {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
+            <svg style='height: {{ chart.height }}px'> </svg>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endblock pretable %}
+  <div class="card card-default">
+    <div class="card-header">
+      <h2 class="card-title">
+        {% if not report.needs_filters %}
+          {{ report.report_title }}
+          {% for subtitle in report.report_subtitles %}
+            <small>{{ subtitle }}</small>
+          {% endfor %}
+        {% else %}
+          {% trans "Please apply filters to view:" %} {{ report.report_title }}
+        {% endif %}
+      </h2>
+    </div>
+    <div class="panel-body-datatable">
+      {% block reporttable %}
+        {% if report.needs_filters %}
+          {% include 'reports/partials/description.html' %}
+        {% else %}
+          <table id="report_table_{{ report.slug }}" class="table table-striped datatable" width="100%" {% if pagination.filter %} data-filter="true"{% endif %}>
+            <thead>
+            {%  if report_table.headers.complex %}
+              {{ report_table.headers.render_html }}
+            {% else %}
+              {# This method is depricated and will likely be removed once Legacy Custom Reports are moved over. #}
+              <tr>
+                {% for header in report_table.headers %}
+                  <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+                    <i class="icon-white fa dt-sort-icon"></i>
+                    {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
+                    {% if header.help_text %}
+                      <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
+                    {% endif %}
+                  </th>
+                {% endfor %}
+              </tr>
+            {% endif %}
+            </thead>
+            <tbody>
+            {% block tabular-body %}
+              {% if report_table.pagination.is_on %}
+                <tr>
+                  <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
+                    {% trans "Fetching additional data, please wait..." %}
+                  </td>
+                </tr>
+              {% endif %}
+              {% for row in report_table.rows %}
+                <tr>
+                  {% for col in row %}
+                    {% include 'reports/async/partials/tabular_cell.html' %}
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            {% endblock %}
+            </tbody>
+            {% if report_table.total_row and report_table.rows %}
+              <tfoot>
+              <tr>
+                {% for col in report_table.total_row %}
+                  <td>{% if col.html != None %}{{ col.html }}{% else %}{{ col }}{% endif %}</td>
+                {% endfor %}
+              </tr>
+              </tfoot>
+            {% endif %}
+            {% if report_table.statistics_rows and report_table.rows %}
+              <tfoot>
+              {% for stats in report_table.statistics_rows %}
+                <tr>
+                  {% for col in stats %}
+                    {% if forloop.counter0 == 0 %}<th>{% else %}<td{% if col.css_class %} class="{{ col.css_class }}"{% endif %}>{% endif %}
+                  {% if col.html != None %}{{ col.html }}{% else %}{{ col }}{% endif %}
+                    {% if forloop.counter0 == 0 %}</th>{% else %}</td>{% endif %}
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+              </tfoot>
+
+            {% endif %}
+          </table>
+        {% endif %}
+      {% endblock reporttable %}
+    </div>
+  </div>
+  {% block posttable %}{% endblock posttable %}
+{% endblock reportcontent %}
+
+{% block js-inline %} {{ block.super }}
+  <script type="text/template" id="js-template-loading-report">
+    <div class="report-loading-container">
+      <div class="report-loading">
+        <h4>{% trans "Loading Report" %}</h4>
+        <i class="fa fa-spin fa-spinner"></i>
+      </div>
+    </div>
+  </script>
+  {# For custom reports, template_partial might contain javascript #}
+  {% for chart in charts %}
+    {% with id=forloop.counter|stringformat:"s" slug=report.slug %}
+      {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id %}
+    {% endwith %}
+  {% endfor %}
+{% endblock js-inline %}

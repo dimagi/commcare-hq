@@ -28,7 +28,7 @@ from corehq.apps.hqadmin.models import HqDeploy
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
     base_template = 'reports/base_template.html'
-    report_template_path = "reports/tabular.html"
+    report_template_path = "reports/bootstrap3/tabular.html"
     section_name = gettext_noop("ADMINREPORT")
     default_params = {}
     is_admin_report = True
