@@ -1,0 +1,123 @@
+{% load hq_shared_tags %}
+
+<!-- Data container, similar to initial page data -->
+<div class="base-maps-data"
+     data-icon_path="{{ 'leaflet/dist/images'|static }}"
+     data-context="{% html_attr context %}"></div>
+
+<div class="card card-default">
+  <div class="card-header">
+    <h2 class="card-title">
+      {{ report.title }}
+    </h2>
+  </div>
+  <div class="card-body">
+    <div class="hq-graphic-report">
+      <script type="text/template" id="default_detail_popup">
+        <div class="default-popup">
+          <h3><%- name %></h3>
+          <hr>
+          <table>
+            <% _.each(info, function(field) { %>
+            <tr class="data data-<%- field.slug %>">
+              <td><%- field.label %></td>
+              <td class="detail_data">
+                <%- field.value %>
+              </td>
+            </tr>
+            <% }); %>
+          </table>
+        </div>
+      </script>
+
+      <script type="text/template" id="info_popup">
+        <% if (name) { %><h4><%- name %></h4><% } %>
+        <% _.each(info, function(field) { %>
+        <div><%- field.label %></div>
+        <div class="detail_data"><%- field.value %></div>
+        <% }); %>
+      </script>
+
+      <script type="text/template" id="legend_size">
+        <table class="sizelegend">
+          <% _.each(entries, function(e, i) { %>
+          <tr id="sizerow-<%- i %>">
+            <td class="circle-container">
+              <div class="circle"></div>
+            </td>
+            <td class="vallabel"><%- e.valfmt %></td>
+          </tr>
+          <% }); %>
+        </table>
+      </script>
+
+      <script type="text/template" id="legend_enum">
+        <table class="enumlegend">
+          <% _.each(enums, function(e, i) { %>
+          <tr id="enumrow-<%- i %>"><td class="enum"></td><td class="vallabel"><%- e.label %></td></tr>
+          <% }); %>
+        </table>
+      </script>
+
+      <script type="text/template" id="legend_colorscale">
+        <table class="colorscalelegend">
+          <tr>
+            <td id="scalebar"></td>
+            <td class="tickmarks">
+              <div class="tickmarks-inner">
+                <% _.each(ticks, function(e) { %>
+                <div class="width-spacer"><%- e.label %></div>
+                <div class="ticklabel" style="top: <%- e.coord %>px;">
+                  <div class="ticklabel-inner"><%- e.label %></div>
+                </div>
+                <% }); %>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </script>
+
+      <script type="text/template" id="metrics-group">
+        <div class="choice" data-bind="if: name() != '_root', click: onclick">
+          <i class="fa" data-bind="visible: group, css: { 'fa-caret-right': !expanded(), 'fa-caret-down': expanded }"></i>
+          <span data-bind="text: name, css: { selected: selected }"></span>
+        </div>
+
+        <div data-bind="visible: expanded, foreach: children" class="metric-group">
+          <div data-bind="template: { name: 'metrics-group' }"></div>
+        </div>
+      </script>
+
+      <div id="results-capped" class="alert alert-info" style="display: none;">
+        <button type="button" class="btn-close" data-bs-dismiss="alert">&times;</button>
+        There are <strong id="rows-total"></strong> results for the chosen report filters.
+        However, map display has been capped at the first <strong id="rows-capped"></strong> results.
+      </div>
+
+      <div>
+        <div id="map" style="width: 100%;"></div>
+
+        <div id="metrics" class="control-pane" style="display: none;">
+          <div data-bind="template: { name: 'metrics-group', if: root, data: root }" class="metrics-container"></div>
+        </div>
+
+        <div id="legend" class="control-pane" style="display: none;">
+        </div>
+
+        <div id="info" class="control-pane" style="display: none;">
+        </div>
+
+        <div id="zoomtofit" class="leaflet-control-layers" style="display: none;">
+          <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="Fit all data into view"></div>
+        </div>
+
+        <div id="toggletable" class="leaflet-control-layers" style="display: none;">
+          <div id="toggletable-target" class="toggletable leaflet-control-layers-toggle" title="Show/hide data table">
+            <i class="fa fa-table"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% block content %}{% endblock content %}
+  </div>
+</div>
