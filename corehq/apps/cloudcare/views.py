@@ -625,7 +625,7 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
 class BlockWebAppsView(BaseDomainView):
 
     urlname = 'block_web_apps'
-    template_name = 'block_web_apps.html'
+    template_name = 'cloudcare/block_web_apps.html'
 
     def get(self, request, *args, **kwargs):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
