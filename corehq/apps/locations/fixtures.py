@@ -1,9 +1,9 @@
 from collections import defaultdict
 from itertools import groupby
-from xml.etree.cElementTree import Element, SubElement
+from xml.etree.cElementTree import Element
 
 from django.contrib.postgres.fields.array import ArrayField
-from django.db.models import IntegerField, Q
+from django.db.models import IntegerField
 
 from django_cte import With
 from django_cte.raw import raw_cte_sql
@@ -74,8 +74,7 @@ def _app_has_changed(last_sync, app_id):
 
 
 def _fixture_has_changed(last_sync, restore_user):
-    return (not last_sync or not last_sync.date or
-            restore_user.get_fixture_last_modified() >= last_sync.date)
+    return (not last_sync or not last_sync.date or restore_user.get_fixture_last_modified() >= last_sync.date)
 
 
 def _locations_have_changed(last_sync, locations_queryset, restore_user):
@@ -285,7 +284,8 @@ def _append_children(node, location_db, locations, data_fields):
 
 
 def _group_by_type(locations):
-    key = lambda loc: (loc.location_type.code, loc.location_type)
+    def key(loc):
+        return (loc.location_type.code, loc.location_type)
     for (code, type), locs in groupby(sorted(locations, key=key), key=key):
         yield type, list(locs)
 
