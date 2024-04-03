@@ -5,6 +5,12 @@ import shutil
 
 from django.core.management import BaseCommand
 
+from corehq.apps.hqwebapp.utils.bootstrap.git import (
+    has_no_pending_git_changes,
+    ensure_no_pending_changes_before_continuing,
+    apply_commit,
+    get_commit_string,
+)
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     COREHQ_BASE_DIR,
     get_app_template_folder,
@@ -14,6 +20,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_javascript_paths_for_app,
     TRACKED_JS_FOLDERS,
 )
+from corehq.apps.hqwebapp.utils.management_commands import get_confirmation
 
 DIFF_CONFIG_FILE = "apps/hqwebapp/tests/data/bootstrap5_diff_config.json"
 DIFF_STORAGE_FOLDER = "apps/hqwebapp/tests/data/bootstrap5_diffs/"
@@ -135,6 +142,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         update_app = options.get('update_app')
+
+        if not has_no_pending_git_changes():
+            self.stdout.write(self.style.ERROR(
+                "You have un-committed changes. Please commit these changes before proceeding...\n"
+            ))
+            ensure_no_pending_changes_before_continuing()
+
         if update_app:
             self.update_configuration_file_for_app(update_app)
             return
@@ -144,7 +158,16 @@ class Command(BaseCommand):
         for bootstrap3_filepath, bootstrap5_filepath, diff_filepath in get_bootstrap5_filepaths(full_diff_config):
             with open(diff_filepath, 'w') as df:
                 df.writelines(get_diff(bootstrap3_filepath, bootstrap5_filepath))
-        self.suggest_commit_message("Rebuilt diffs")
+
+        if has_no_pending_git_changes():
+            self.stdout.write(self.style.SUCCESS(
+                "\nDone! Diffs are already up-to-date, no changes needed.\n\n"
+            ))
+        else:
+            self.stdout.write(self.style.SUCCESS(
+                "\n\nDiffs have been rebuilt. Thank you!\n"
+            ))
+            self.make_commit("Rebuilt diffs")
 
     def update_config(self, config, app_name, js_folder=None):
         parent_path = get_parent_path(app_name, js_folder)
@@ -188,23 +211,37 @@ class Command(BaseCommand):
         self.check_javascript_paths(app_name, TRACKED_JS_FOLDERS)
         self.stdout.write("Saving config...\n")
         update_bootstrap5_diff_config(config_file)
-        self.stdout.write(f"{DIFF_CONFIG_FILE} has been updated.")
-        self.suggest_commit_message(f"Updated diff config for '{app_name}'")
+
+        if has_no_pending_git_changes():
+            self.stdout.write("No changes were necessary. Thank you!")
+        else:
+            self.stdout.write(f"{DIFF_CONFIG_FILE} has been updated.")
+            self.make_commit(f"Updated diff config for '{app_name}'")
+
+        self.show_next_steps_after_config_update()
+
+    def show_next_steps_after_config_update(self):
         self.stdout.write("\n\nPLEASE NOTE: This utility only supports automatically generating a "
                           "diff config for template and javascript files.")
-        self.stdout.write(f"Stylesheets (less, scss) must be added to "
-                          f"{DIFF_CONFIG_FILE} manually.\n\n")
-        self.stdout.write("\n\nAfter committing changes, please re-run:\n")
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            f"Stylesheets (less, scss) must be added to {DIFF_CONFIG_FILE} manually.\n\n"
+        ))
+
+        self.stdout.write("\n\nAfter committing changes, please re-run:\n\n")
         self.stdout.write(self.style.MIGRATE_LABEL(
             "./manage.py build_bootstrap5_diffs"
         ))
-        self.stdout.write("to rebuild the diffs.\n\n")
+        self.stdout.write("\nto rebuild the diffs.\n\n")
         self.stdout.write("Thank you! <3\n\n")
 
-    def suggest_commit_message(self, message):
+    def make_commit(self, message):
         self.stdout.write("\nNow would be a good time to review changes with git and commit.")
-        self.stdout.write("\nSuggested command:")
-        self.stdout.write(self.style.MIGRATE_LABEL(
-            f"git commit --no-verify -m \"Bootstrap 5 Migration - {message}\""
-        ))
+        confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
+        if confirm:
+            apply_commit(message)
+            self.stdout.write("\nChanges committed!\n\n")
+            return
+        commit_string = get_commit_string(message)
+        self.stdout.write("\n\nSuggested command:\n")
+        self.stdout.write(self.style.MIGRATE_HEADING(commit_string))
         self.stdout.write("\n")
