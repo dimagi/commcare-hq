@@ -27,7 +27,7 @@ from .dispatcher import EditDataInterfaceDispatcher, BulkEditDataInterfaceDispat
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
     section_name = gettext_noop("Data")
-    base_template = "reports/standard/base_template.html"
+    base_template = "reports/standard/bootstrap3/base_template.html"
     asynchronous = True
     dispatcher = EditDataInterfaceDispatcher
     exportable = False

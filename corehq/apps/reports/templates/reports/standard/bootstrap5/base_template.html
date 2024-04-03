@@ -1,0 +1,154 @@
+{% extends "hqwebapp/bootstrap3/two_column.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block page_sidebar_classes %}sidebar-offcanvas col-sm-12 col-md-3 col-xl-2{% endblock %}
+
+{% block page_row_classes %}row-offcanvas row-offcanvas-left{% endblock %}
+
+{% block page_content_classes %}col-sm-12 col-md-9 col-xl-10{% endblock %}
+
+{% block js %}{{ block.super }}
+  {% compress js %}
+    <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
+    <script src="{% static 'reports/js/datepicker.js' %}"></script>
+    <script src="{% static 'reports/js/hq_report.js' %}"></script>
+    <script src="{% static 'reports/js/reports.util.js' %}"></script>
+    <script src="{% static 'reports/js/reports.async.js' %}"></script>
+    <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
+    <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
+  {% endcompress %}
+  {% include 'reports/partials/filters_js.html' %}
+  {% include 'reports/partials/graphs/charts_js.html' %}
+
+  <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+  {% compress js %}
+    <script src="{% static 'case/js/cheapxml.js' %}"></script>
+    <script src="{% static 'case/js/casexml.js' %}"></script>
+    <script src="{% static 'reports/js/tabular.js' %}"></script>
+
+    <!-- Scripts that are specific to a single report or interface -->
+    <script src="{% static 'data_interfaces/js/case_management.js' %}"></script>
+    <script src="{% static 'data_interfaces/js/archive_forms.js' %}"></script>
+    <script src="{% static 'reports/js/inspect_data.js' %}"></script>
+    <script src="{% static 'reports/js/project_health_dashboard.js' %}"></script>
+    <script src="{% static 'reports/js/aggregate_user_status.js' %}"></script>
+    <script src="{% static 'reports/js/user_history.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/bootstrap3/widgets.js' %}"></script>
+  {% endcompress %}
+{% endblock %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  {% compress css %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'reports/less/reports.less' %}" />
+  {% endcompress %}
+  {% include 'reports/partials/filters_css.html' %}
+
+  {% block reports-css %}{% endblock %}
+{% endblock %}
+
+{% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
+
+{% block page_breadcrumbs %}
+  <a href="#" class="btn btn-link btn-invisible d-xs-block btn-report-menu" data-bs-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
+  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+    <li>
+      <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
+    </li>
+    {% if report.breadcrumbs %}
+      {% for crumb in report.breadcrumbs %}
+        <li>
+          <a href="{{ crumb.link }}">{{ crumb.title }}</a>
+        </li>
+      {% endfor %}
+    {% endif %}
+    <li class="active">
+      {% trans report.title|default:"Untitled Report" %}
+    </li>
+  </ol>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+  {% if request|ui_notify_enabled:"REPORT_BUILDER_V2" %}
+    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+         style="margin-left: 12px"
+         data-bs-target="#create-new-report-left-nav"
+         data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
+         role="alert">
+      {% include 'notifications/partials/report_builder_v2_oct2017.html' %}
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block page_content %}
+  {% initial_page_data 'js_options' report.js_options %}
+  {% initial_page_data 'rendered_as' rendered_as %}
+  {% initial_page_data 'report_table_js_options' report_table_js_options %}
+
+  {# Needed for case reassignment interface #}
+  {% initial_page_data "reassign_cases_enddate" datespan.enddate_param_utc %}
+  {% initial_page_data "web_user_id" request.couch_user.userID %}
+  {% initial_page_data "web_username" request.couch_user.username %}
+  {% initial_page_data 'user_types' user_types %}
+  {% initial_page_data 'action' action %}
+  {% registerurl "case_action_options" domain %}
+  {% registerurl "receiver_secure_post" domain %}
+  {% registerurl "copy_cases" domain %}
+
+  {% if request.datespan %}
+    {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
+    {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
+  {% endif %}
+  {% initial_page_data 'slug' report.slug %}
+
+  {% block filter_panel %}
+    {% include "reports/standard/partials/bootstrap3/filter_panel.html" %}
+  {% endblock %}
+
+  {% if report.is_emailable and request.couch_user.can_download_reports %}
+    <div id="email-report-modal" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                    data-bind="click: resetModal"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">
+              {% trans "Email report:" %}
+              {{ datespan.startdate|date:"Y-m-d" }}
+              {% if datespan.startdate %}
+                {% trans "to" %}
+              {% endif %}
+              {{ datespan.enddate|date:"Y-m-d" }}
+            </h4>
+          </div>
+          {% crispy email_form %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if report.special_notice %}
+    <div class="alert alert-info" style="margin-bottom: 2px">
+      <h4>{% trans 'Notice' %}</h4>
+      <p>{{ report.special_notice }}</p>
+    </div>
+  {% endif %}
+  <div id="report-content">
+    {% if not report.is_async and report.slug %}
+      {% block reportcontent %}
+      {% endblock %}
+    {% else %}
+      {% include "reports/async/default.html" %}
+    {% endif %}
+  </div>
+{% endblock %}
