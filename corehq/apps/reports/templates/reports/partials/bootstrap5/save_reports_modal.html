@@ -1,0 +1,119 @@
+{% load i18n %}
+<div id="report-config-modal"
+     class="modal fade"
+     data-bind="modal: configBeingEdited" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content" data-bind="with: configBeingEdited">
+      <div class="modal-header">
+        <button type="button" data-bind="click: $root.unsetConfigBeingEdited" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" data-bind="text: modalTitle"></h4>
+      </div>
+      <form class="form form-horizontal">
+        <div class="modal-body">
+          <div class="alert alert-danger" data-bind="visible: error, text: errorMessage">
+          </div>
+          <div class="form-group">
+            <label class="form-label col-sm-3" for="name">{% trans "Name" %}</label>
+            <div class="col-sm-9">
+              <input type="text" id="name" data-bind="value: name" class="form-control" />
+              <span class="help-inline">
+                                <small class="badge text-bg-secondary">{% trans "Required" %}</small>
+                            </span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label col-sm-3" for="description">{% trans "Description" %}</label>
+            <div class="col-sm-9">
+              <textarea rows="3" name="description" data-bind="value: description" class="form-control vertical-resize"></textarea>
+            </div>
+          </div>
+
+          <div data-bind="visible: has_ucr_datespan">
+            <div class="form-group">
+              <label class="form-label col-sm-3">{% trans "Date Filter" %}</label>
+              <div class="col-sm-9">
+                <select class="form-control"
+                        data-bind="
+                                    options: datespan_filters,
+                                    optionsText: 'display',
+                                    optionsValue: 'slug',
+                                    value: datespan_slug
+                                "></select>
+              </div>
+            </div>
+          </div>
+
+          <div data-bind="if: ((!has_ucr_datespan()) && date_range()) || (has_ucr_datespan() && datespan_slug())">
+            <div class="form-group">
+              <label class="form-label col-sm-3" for="date_range">{% trans "Default Date Range" %}</label>
+              <div class="col-sm-9">
+                <select name="date_range" data-bind="value: date_range" class="form-control">
+                  <option value="last7">{% trans "Last 7 days" %}</option>
+                  <option value="last30">{% trans "Last 30 days" %}</option>
+                  <option value="lastmonth">{% trans "Last month" %}</option>
+                  {% if not hide_lastyear %}<option value="lastyear">{% trans "Last year" %}</option>{% endif %}
+                  <option value="lastn">{% trans "Days ago" %}</option>
+                  <option value="since">{% trans "Since a date" %}</option>
+                  <option value="range">{% trans "From a date to a date" %}</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" data-bind="visible: date_range() === 'lastn'">
+              <label class="form-label col-sm-3" for="days">{% trans "Number of Days" %}</label>
+              <div class="col-sm-9">
+                <input type="number"
+                       name="days"
+                       min="1"
+                       step="1"
+                       data-bind="value: days"
+                       class="form-control" />
+                <span class="help-inline">
+                  <small class="badge text-bg-secondary">{% trans "Required" %}</small>
+                </span>
+              </div>
+            </div>
+            <div class="form-group" data-bind="visible: date_range() == 'since' || date_range() == 'range'">
+              <label class="form-label col-sm-3" for="start_date">{% trans "Begin Date" %}</label>
+              <div class="col-sm-9">
+                <input type="text"
+                       class="date-picker form-control"
+                       name="start_date"
+                       data-bind="value: start_date"
+                       placeholder="{% trans "YYYY-MM-DD" %}" />
+                <span class="help-inline">
+                  <small class="badge text-bg-secondary">{% trans "YYYY-MM-DD" %}</small>
+                  <small class="badge text-bg-secondary">{% trans "Required" %}</small>
+                </span>
+              </div>
+            </div>
+            <div class="form-group" data-bind="visible: date_range() == 'range'">
+              <label class="form-label col-sm-3" for="end_date">{% trans "End Date" %}</label>
+              <div class="col-sm-9">
+                <input type="text"
+                       class="date-picker form-control"
+                       name="end_date"
+                       data-bind="value: end_date"
+                       placeholder="{% trans "YYYY-MM-DD" %}" />
+                <span class="help-inline">
+                  <small class="badge text-bg-secondary">{% trans "YYYY-MM-DD" %}</small>
+                  <small class="badge text-bg-secondary">{% trans "Required" %}</small>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn btn-outline-primary" data-bind="click: $root.unsetConfigBeingEdited">{% trans 'Cancel' %}</a>
+          <div class="btn-group"
+               data-bind="click: $root.trackConfigBeingEdited({% if report.spec.report_meta.created_by_builder %}'{{ report.spec.report_meta.builder_report_type }}'{% endif %})">
+            <span
+              id="modal-save-button"
+              data-bind="
+                        saveButton2: $root.modalSaveButton.state,
+                        saveOptions: $root.modalSaveButton.saveOptions"></span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
