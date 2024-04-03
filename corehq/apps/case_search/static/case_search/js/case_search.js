@@ -1,3 +1,5 @@
+'use strict';
+
 hqDefine('case_search/js/case_search', [
     'jquery',
     'underscore',
@@ -11,7 +13,6 @@ hqDefine('case_search/js/case_search', [
     alertUser,
     initialPageData
 ) {
-    'use strict';
     var caseSearchModel = function (caseDataUrl) {
         var self = {};
         self.type = ko.observable();
@@ -23,8 +24,8 @@ hqDefine('case_search/js/case_search', [
         self.query = ko.observable();
         self.profile = ko.observable();
         self.case_data_url = caseDataUrl;
-        self.xpath = ko.observable();
         self.parameters = ko.observableArray();
+        self.xpath_expressions = ko.observableArray();
 
         self.addParameter = function () {
             self.parameters.push({
@@ -37,6 +38,13 @@ hqDefine('case_search/js/case_search', [
         };
         self.removeParameter = function () {
             self.parameters.remove(this);
+        };
+
+        self.addXPath = function () {
+            self.xpath_expressions.push({xpath: ""});
+        };
+        self.removeXPath = function () {
+            self.xpath_expressions.remove(this);
         };
 
         self.showResults = ko.computed(function () {
@@ -62,7 +70,7 @@ hqDefine('case_search/js/case_search', [
                     owner_id: self.owner_id(),
                     parameters: self.parameters(),
                     customQueryAddition: self.customQueryAddition(),
-                    xpath: self.xpath(),
+                    xpath_expressions: _.pluck(self.xpath_expressions(), 'xpath'),
                 }
                 )}),
                 success: function (data) {
