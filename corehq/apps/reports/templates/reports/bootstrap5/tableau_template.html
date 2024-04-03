@@ -1,0 +1,29 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load static %}
+
+{% block page_content %}
+
+{% initial_page_data "server_type" server_type %}
+{% initial_page_data "ticket" ticket %}
+{% initial_page_data "validate_hostname" validate_hostname %}
+{% initial_page_data "server_address" server_address %}
+{% initial_page_data "target_site" target_site %}
+{% initial_page_data "view_url" view_url %}
+{% initial_page_data "viz_id" viz_id %}
+{% registerurl 'tableau_visualization_ajax' request.domain %}
+
+<script src="https://{{ validate_hostname }}/javascripts/api/tableau-2.5.0.min.js"></script>
+<script src="{% static 'reports/js/tableau.js' %}"></script>
+
+<body>
+    <div id="loadingDiv" class="fa-5x">
+        <i class="fa fa-spin fa-spinner"></i>
+    </div>
+    <div id="vizContainer"></div>
+    <div id="errorMessage" class="alert alert-danger hide"></div>
+</body>
+
+{% endblock %}
