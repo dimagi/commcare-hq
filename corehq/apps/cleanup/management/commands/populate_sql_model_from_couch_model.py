@@ -481,6 +481,8 @@ Run the following commands to run the migration and get up to date:
             if doc["_id"] in ignored:
                 continue
             if doc["_id"] in objs_by_couch_id:
+                if submodel_specs:
+                    update_sub_creates(self._create_submodels(doc, submodel_specs))
                 if fixup_diffs:
                     obj = objs_by_couch_id[doc["_id"]]
                     if self.get_filtered_diffs(doc, obj):
@@ -488,8 +490,6 @@ Run the following commands to run the migration and get up to date:
                     else:
                         continue  # already migrated
                 else:
-                    if submodel_specs:
-                        update_sub_creates(self._create_submodels(doc, submodel_specs))
                     continue  # already migrated
             else:
                 obj = sql_class()
