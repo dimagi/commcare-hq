@@ -109,7 +109,7 @@
   {% initial_page_data 'slug' report.slug %}
 
   {% block filter_panel %}
-    {% include "reports/standard/partials/filter_panel.html" %}
+    {% include "reports/standard/partials/bootstrap3/filter_panel.html" %}
   {% endblock %}
 
   {% if report.is_emailable and request.couch_user.can_download_reports %}
