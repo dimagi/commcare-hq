@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 
 {% block dependencies %}
-  {% include "formplayer/dependencies.html" %}
+  {% include "cloudcare/partials/dependencies.html" %}
   <script src="{% static 'cloudcare/js/formplayer/spec/fake_formplayer.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/spec/fixtures/case_list.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/spec/fixtures/case_grid_list.js' %}"></script>
@@ -28,7 +28,7 @@
 {% endblock %}
 
 {% block fixtures %}
-  {% include "formplayer/case_list.html" %}
+  {% include "cloudcare/partials/case_list.html" %}
 
   <div id="restore-as-region"></div>
   <div id="phone-mode-navigation"></div>
@@ -38,16 +38,16 @@
   <div id="sidebar-region" class="container"></div>
 
   {% include 'cloudcare/partials/form_entry_templates.html' %}
-  {% include 'formplayer/debugger.html' %}
-  {% include 'formplayer/grid_view.html' %}
-  {% include 'formplayer/settings_view.html' %}
-  {% include 'formplayer/case_detail.html' %}
-  {% include 'formplayer/case_list.html' %}
-  {% include 'formplayer/menu_list.html' %}
-  {% include 'formplayer/users.html' %}
-  {% include 'formplayer/session_list.html' %}
-  {% include 'formplayer/query_view.html' %}
-  {% include 'formplayer/confirmation_modal.html' %}
-  {% include 'formplayer/progress.html' %}
+  {% include 'cloudcare/partials/debugger.html' %}
+  {% include 'cloudcare/partials/grid_view.html' %}
+  {% include 'cloudcare/partials/settings_view.html' %}
+  {% include 'cloudcare/partials/case_detail.html' %}
+  {% include 'cloudcare/partials/case_list.html' %}
+  {% include 'cloudcare/partials/menu_list.html' %}
+  {% include 'cloudcare/partials/users.html' %}
+  {% include 'cloudcare/partials/session_list.html' %}
+  {% include 'cloudcare/partials/query_view.html' %}
+  {% include 'cloudcare/partials/confirmation_modal.html' %}
+  {% include 'cloudcare/partials/progress.html' %}
 
 {% endblock %}

@@ -12,11 +12,11 @@
       <i class="fa fa-lg fa-arrow-down" aria-hidden="true"></i>
     </button>
 
-    {% include "formplayer/case_list/menu_header.html" %}
+    {% include "cloudcare/partials/case_list/menu_header.html" %}
 
     <% if (isMultiSelect) { %>
     <div class="case-list-actions">
-      {% include 'formplayer/case_list/multi_select_continue_button.html' %}
+      {% include 'cloudcare/partials/case_list/multi_select_continue_button.html' %}
     </div>
     <% } %>
 
@@ -47,20 +47,20 @@
       <div id="module-case-list" class="col-md<% if (showMap) { %>-7 col-md-pull-5<% } %>">
         <% if (useTiles) { %>
           <% if (hasNoItems) { %>
-            {% include 'formplayer/case_list/no_items_text.html' %}
+            {% include 'cloudcare/partials/case_list/no_items_text.html' %}
           <% } else { %>
-            {% include 'formplayer/case_list/search_controls.html' %}
+            {% include 'cloudcare/partials/case_list/search_controls.html' %}
           <% } %>
           <section class="js-case-container clearfix list-cell-container-style"></section>
         <% } else { %>
-          {% include 'formplayer/case_list/table_container.html' %}
+          {% include 'cloudcare/partials/case_list/table_container.html' %}
         <% } %>
       </div>
     </div>
     <% if (actions || isMultiSelect) { %>
       <div class="case-list-actions">
         <% if (isMultiSelect) { %>
-          {% include 'formplayer/case_list/multi_select_continue_button.html' %}
+          {% include 'cloudcare/partials/case_list/multi_select_continue_button.html' %}
         <% } %>
         <% if (actions) { %>
           <% _.each(actions, function(action, index) { %>
@@ -74,7 +74,7 @@
 
     <% if (!hasNoItems) { %>
       {% block pagination_templates %}
-        {% include 'formplayer/pagination.html' %}
+        {% include 'cloudcare/partials/pagination.html' %}
       {% endblock %}
     <% } %>
   </div>
