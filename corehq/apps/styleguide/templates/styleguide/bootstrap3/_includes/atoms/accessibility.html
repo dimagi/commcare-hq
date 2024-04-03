@@ -125,7 +125,7 @@
   </ul>
 
   <h2 id="focusability" class="pt-4">
-    Focusability, Tabability, and Visibility
+    Focusability, Tabbability, and Visibility
   </h2>
   <h5>tabindex Attribute</h5>
     <p>The tabindex attribute specifies the tab order of an element and determines whether an element can receive
@@ -136,7 +136,7 @@
           add tabindex="0" to make them focusable. Note: we avoid using custom focus order using tab index with values
           above 0. Instead, make sure DOM elements are ordered correctly for navigability, then modify visual
           positioning with CSS if needed.</li>
-        <li>Remove Focusability: to explicitly remove an item</li>
+        <li>Remove Focusability: to explicitly remove an item set tabindex="-1"</li>
         <li>Dynamic Focus Control: If you have dynamically generated or hidden elements that need to become focusable
           under certain conditions, you can dynamically add or remove the tabindex attribute.</li>
     </ul>
@@ -152,7 +152,7 @@
           content from screen readers to prevent confusion.</li>
     </ul>
     <h5>When to Use Each</h5>
-    <p>Use tabindex when you need to control the tab order or make non-focusable elements focusable.</p>
+    <p>Use tabindex when you need to remove or add tab focusability to an element.</p>
     <p>Use aria-hidden when you need to hide elements from assistive technologies while keeping them visible on the
       page or dynamically toggle their visibility.</p>
   <h2 id="common-mistakes" class="pt-4">
@@ -179,7 +179,7 @@
               the keyboard.</p>
         </li>
         <li>
-            <strong>Missing or Incomplete ARIA Attributes</strong>
+            <strong>Missing or Incomplete ARIA (Accessible Rich Internet Applications) Attributes</strong>
             <p><strong>Error:</strong> Failing to provide necessary ARIA attributes or providing incomplete
               information, which can result in screen readers not conveying the correct information to users.</p>
             <div class="row">
@@ -193,7 +193,7 @@
                 </div>
             </div>
             <p><strong>Fix:</strong> Include essential ARIA attributes like aria-label or aria-labelledby to provide
-              meaningful information to assistive technologies when symbols or other visual information covey
+              meaningful information to assistive technologies when symbols or other visual information convey
               information that is otherwise not present.</p>
         </li>
         <li>
