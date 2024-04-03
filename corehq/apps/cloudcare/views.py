@@ -297,7 +297,7 @@ class FormplayerPreviewSingleApp(View):
 
 
 class PreviewAppView(TemplateView):
-    template_name = 'preview_app/base.html'
+    template_name = 'cloudcare/preview_app.html'
     urlname = 'preview_app'
 
     @use_daterangepicker
@@ -306,7 +306,7 @@ class PreviewAppView(TemplateView):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
         if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
             context = BlockWebAppsView.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
-            return render(request, 'preview_app/block_app_preview.html', context)
+            return render(request, 'cloudcare/block_preview_app.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
