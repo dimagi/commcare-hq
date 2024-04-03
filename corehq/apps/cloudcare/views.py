@@ -421,7 +421,7 @@ class ReadableQuestions(View):
         readable_form = readable.get_readable_form_data(form_data_json, pretty_questions)
 
         rendered_readable_form = render_to_string(
-            'reports/form/partials/readable_form.html',
+            'reports/form/partials/bootstrap3/readable_form.html',
             {'questions': readable_form}
         )
 

@@ -1,0 +1,46 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% if question_list_not_found %}
+  <div class="row">
+    <div class="col-md-6">
+      <div class="alert alert-warning clear-fix">
+        <strong>{{ question_list_not_found.message }}</strong>
+        <br/>
+        {% trans "All data is listed as Unrecognized Data." %}
+      </div>
+    </div>
+  </div>
+{% else %}
+  <ul class="nav nav-pills formDisplayToggle" style="margin: 10px 0;">
+    <!-- hrefs here aren't real but can't be '#' since JQuery crashes-->
+    <li class="active"><a href="#readable-pill" class="showReadable">{% trans "Labels" %}</a></li>
+    <li><a href="#raw-pill" class="showRaw">{% trans "Question IDs" %}</a></li>
+  </ul>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" class="showSkippedToggle"/>
+      {% trans "Show questions in form that were not shown to the user" %}
+      <span class="hq-help-template"
+            data-title="{% trans "Questions not shown to the user" %}"
+            data-content="{% trans "These questions were not shown to the user because their display conditions were not met." %}"
+      ></span>
+    </label>
+  </div>
+{% endif %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="table-responsive">
+      <table class="table table-bordered form-data-table">
+        <tr>
+          <th class="col-md-6">
+            <span class="form-data-readable">{% trans "Question" %}</span>
+            <span class="form-data-raw">{% trans "Question ID" %}</span>
+          </th>
+          <th class="col-md-6">{% trans "Response" %}</th>
+        </tr>
+        {% include 'reports/form/partials/bootstrap3/single_form_tree.html' %}
+      </table>
+    </div>
+  </div>
+</div>
