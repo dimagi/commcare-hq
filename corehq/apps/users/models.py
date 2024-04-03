@@ -2687,6 +2687,7 @@ class Invitation(models.Model):
                                  to_field='location_id', null=True)  # to replace supply_point
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
                                 on_delete=models.CASCADE, null=True)
+    custom_user_data = models.JSONField(default=dict)
 
     def __repr__(self):
         return f"Invitation(domain='{self.domain}', email='{self.email})"

@@ -22,6 +22,11 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='invitation',
+            name='custom_user_data',
+            field=models.JSONField(default=dict),
+        ),
+        migrations.AddField(
+            model_name='invitation',
             name='location',
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='locations.sqllocation', to_field='location_id'),
         ),
