@@ -82,9 +82,9 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
             }
 
             if (showAPIFields) {
-                const initialEnforce = document.forms['configuration']['enforce_user_api_key_expiration'].checked;
+                const initialEnforce = $('#id_enforce_user_api_key_expiration').is(':checked');
                 self.initialExpirationLength =
-                    document.forms['configuration']['max_days_until_user_api_key_expiration'].value;
+                    $('#id_max_days_until_user_api_key_expiration').val();
                 if (self.initialExpirationLength) {
                     self.initialExpirationLength = parseInt(self.initialExpirationLength, 10);
                 }

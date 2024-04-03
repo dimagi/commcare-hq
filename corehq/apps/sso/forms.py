@@ -864,7 +864,6 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
 
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
-        self.helper.attrs['name'] = 'configuration'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         layout = crispy.Layout(
