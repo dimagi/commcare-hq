@@ -32,7 +32,7 @@ class SubmissionErrorReport(DeploymentsReport):
     slug = "submit_errors"
     ajax_pagination = True
     asynchronous = False
-    base_template = 'reports/standard/submission_error_report.html'
+    base_template = 'reports/standard/bootstrap3/submission_error_report.html'
 
     fields = ['corehq.apps.reports.standard.forms.filters.SubmissionTypeFilter']
 
