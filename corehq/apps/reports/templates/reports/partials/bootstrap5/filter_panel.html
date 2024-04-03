@@ -1,0 +1,45 @@
+{% extends "reports/standard/partials/bootstrap3/filter_panel.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block report_filter_actions %}
+  <div id="savedReports"
+       class="{{ report_filter_form_action_css_class }}">
+    <button id="apply-filters" type="submit" class="filters btn disabled"
+            disabled="disabled"
+            data-loading-text="{% trans 'Generating Report...' %}"
+            data-standard-text="{% trans 'Apply' %}">
+      {% trans 'Apply' %}
+    </button>
+    {% if not report.is_admin %}
+      <div class="btn-group">
+        <button type="button" class="btn dropdown-toggle btn-outline-primary" data-bs-toggle="dropdown">
+          {% trans 'Favorites' %} <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li data-bind="ifnot: reportConfigs().length">
+            <a href="#">{% trans "You don't have any favorites" %}</a>
+          </li>
+          <!-- ko foreach: reportConfigs -->
+          <li>
+            <a href="#" tabindex="-1"
+               data-bind="text: name, attr: { title: description }, click: $root.setConfigBeingViewed">
+            </a>
+          </li>
+          <!-- /ko -->
+        </ul>
+      </div>
+
+      <button class="btn btn-outline-primary" data-bind="click: setConfigBeingEdited">
+        {% trans "Save" %}...
+      </button>
+    {% endif %}
+
+    {% if report.is_emailable and request.couch_user.can_download_reports %}
+      <div style="display: inline-block; margin-left:0.5em;" class="badge text-bg-info" id="email-enabled">
+        <i class="fa fa-info-circle"></i> {% trans "Email Supported" %}
+      </div>
+    {% endif %}
+    {% include "reports/partials/save_reports_modal.html" %}
+  </div>
+{% endblock %}
