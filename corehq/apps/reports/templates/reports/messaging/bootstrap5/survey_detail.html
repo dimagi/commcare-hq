@@ -1,0 +1,52 @@
+{% extends "reports/bootstrap3/tabular.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block reporttable %}
+  <table style="width: 30%;" class="table table-bordered">
+    <tbody>
+    <tr>
+      <th>{% trans 'Survey Type' %}</th>
+      <td>
+        {% if xforms_session.session_type == 'SMS' %}
+          {% trans 'SMS' %}
+        {% else %}
+          {% if xforms_session.session_type == 'IVR' %}
+            {% trans 'IVR' %}
+          {% else %}
+            {% trans 'Unknown' %}
+          {% endif %}
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th>{% trans 'Contact' %}</th>
+      <td>
+        <a target="_blank" href="{{ contact.link }}">{{ contact.display }}</a>
+      </td>
+    </tr>
+    <tr>
+      <th>{% trans 'Start Time' %}</th>
+      <td>{{ start_time }}</td>
+    </tr>
+    <tr>
+      <th>{% trans 'Status' %}</th>
+      <td>{% trans xforms_session.status %}</td>
+    </tr>
+    <tr>
+      <th>{% trans 'Form Submission' %}</th>
+      <td>
+        {% if xforms_session.submission_id %}
+          <a target="_blank" href="{% url 'render_form_data' domain xforms_session.submission_id %}">{% trans 'View' %}</a>
+        {% else %}
+          {% trans 'n/a' %}
+        {% endif %}
+      </td>
+    </tr>
+    </tbody>
+  </table>
+  {% if xforms_session.session_type == 'SMS' %}
+    <h4>Survey Message Activity</h4>
+    {{ block.super }}
+  {% endif %}
+{% endblock %}

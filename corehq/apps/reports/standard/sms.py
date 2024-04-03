@@ -1004,7 +1004,7 @@ class SurveyDetailReport(BaseMessagingEventReport):
     emailable = False
     exportable = False
     hide_filters = True
-    report_template_path = "reports/messaging/survey_detail.html"
+    report_template_path = "reports/messaging/bootstrap3/survey_detail.html"
     parent_report_class = MessagingEventsReport
 
     @classmethod
