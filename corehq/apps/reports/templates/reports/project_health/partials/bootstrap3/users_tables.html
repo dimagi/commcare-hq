@@ -8,7 +8,7 @@
     {% endblocktrans %}
   </p>
   {% with last_month.get_unhealthy_users as user_list %}
-    {% include "reports/project_health/partials/user_list.html" %}
+    {% include "reports/project_health/partials/bootstrap3/user_list.html" %}
   {% endwith %}
 </div>
 <div class="col-md-4">
@@ -17,7 +17,7 @@
     {% trans "These are workers who stopped using CommCare last month." %}
   </p>
   {% with last_month.get_dropouts as user_list %}
-    {% include "reports/project_health/partials/user_list.html" %}
+    {% include "reports/project_health/partials/bootstrap3/user_list.html" %}
   {% endwith %}
 </div>
 <div class="col-md-4">
@@ -28,6 +28,6 @@
     {% endblocktrans %}
   </p>
   {% with last_month.get_newly_performing as user_list %}
-    {% include "reports/project_health/partials/user_list.html" %}
+    {% include "reports/project_health/partials/bootstrap3/user_list.html" %}
   {% endwith %}
 </div>
