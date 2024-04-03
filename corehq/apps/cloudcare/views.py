@@ -100,6 +100,7 @@ class FormplayerMain(View):
 
     @xframe_options_sameorigin
     @use_daterangepicker
+    @use_bootstrap5
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
@@ -253,6 +254,7 @@ class FormplayerPreviewSingleApp(View):
 
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         return super(FormplayerPreviewSingleApp, self).dispatch(request, *args, **kwargs)
 
@@ -293,6 +295,7 @@ class FormplayerPreviewSingleApp(View):
         return render(request, "cloudcare/formplayer_home.html", context)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class PreviewAppView(TemplateView):
     template_name = 'cloudcare/preview_app.html'
     urlname = 'preview_app'
@@ -619,6 +622,7 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class BlockWebAppsView(BaseDomainView):
 
     urlname = 'block_web_apps'
