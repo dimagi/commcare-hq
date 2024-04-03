@@ -1,5 +1,5 @@
 /* globals moment */
-hqDefine("reports/js/project_health_dashboard", function () {
+hqDefine("reports/js/bootstrap5/project_health_dashboard", function () {
     // "Performing / Active User Trends" Chart
     function setupCharts(data) {
         var highPerformingSeries = {
