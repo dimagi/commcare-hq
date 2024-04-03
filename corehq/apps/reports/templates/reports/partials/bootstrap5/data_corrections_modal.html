@@ -1,0 +1,143 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% comment %}
+    Modal-based UI for data corrections.
+    Depends on reports/js/data_corrections.js
+{% endcomment %}
+
+<!-- class='hide' keeps modal from showing until knockout initializes & removes the class -->
+<div class="hide modal fade data-corrections-modal"
+     data-bind="css: { 'full-screen-modal': isFullScreenModal(), 'hide': false },
+                event: { 'hidden.bs.modal': function() { $root.init(); }, 'shown.bs.modal': function() { $root.trackOpen(); } }">
+  <div class="modal-dialog" data-bind="css: { 'modal-lg': isLargeModal() }">
+    <div class="modal-content">
+      <div class="modal-header with-controls">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <div class="form-inline float-end" data-bind="visible: !showSpinner()">
+          <!-- ko if: displayProperties.length > 1 -->
+          <ul class="nav nav-pills">
+            <!-- ko foreach: displayProperties -->
+            <li data-bind="click: function() { $root.updateDisplayProperty(property) }, css: { active: $root.displayProperty() === property }">
+              <a data-bind="text: name"></a>
+            </li>
+            <!--/ko-->
+          </ul>
+          <!--/ko-->
+          <search-box data-apply-bindings="false"
+                      params="value: query,
+                              action: filter,
+                              immediate: true,
+                              placeholder: '{% if instance %}{% trans_html_attr "Filter questions" %}{% else %}{% trans_html_attr "Filter properties" %}{% endif %}'"></search-box>
+        </div>
+        <h4 class="modal-title">
+          {% if instance %}{# This is a form, not a case #}
+            {% trans "Clean Form Submission" %}
+          {% else %}
+            {% trans "Clean Case Data" %}
+          {% endif %}
+        </h4>
+      </div>
+      <div class="modal-body" data-bind="css: { 'text-center': showSpinner }">
+        {% if instance %}{# This is a form, not a case #}
+          <div class='alert alert-warning'>
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            {% blocktrans %}
+              This feature will only update the specified questions.
+              It will <strong>not</strong> run any calculations or affect cases.
+              <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Data+Cleaning%3A+Clean+Form+Submission">Read more</a>.
+            {% endblocktrans %}
+          </div>
+        {% endif %}
+        <div class='alert alert-danger' data-bind="visible: showError">
+          {% blocktrans %}
+            Something unexpected happened.
+            Please refresh the page and try again, or report an issue if the problem persists.
+          {% endblocktrans %}
+        </div>
+        <div class='alert alert-danger' data-bind="visible: showRetry">
+          {% blocktrans %}
+            Something unexpected happened.
+            Please try again, or report an issue if the problem persists.
+          {% endblocktrans %}
+        </div>
+        <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
+        <div data-bind="visible: !showSpinner()">
+          <div class="text-body-secondary" data-bind="visible: showNoData">{% trans "No editable properties found" %}</div>
+          <div class="container-fluid">
+            <!-- ko foreach: visibleColumns -->
+            <div data-bind="attr: { 'class': $root.columnClass }">
+              <!-- ko foreach: $data -->
+              <div class="form-group container-fluid" data-bind="css: {'has-success': dirty()}">
+                <label class="col-md-6 form-label">
+                  <i class="fa fa-pencil-square float-start" data-bind="visible: dirty()"></i>
+                  <span data-bind="template: $root.propertyTemplate"></span>
+                </label>
+                <div class="col-md-6">
+                  <!-- ko ifnot: options.length -->
+                  <input type="text" class="form-control"
+                         data-bind="value: value,
+                                    attr: { 'data-name': name },
+                                    event: { change: function() { this.dirty(true); } }" />
+                  <!-- /ko -->
+                  <!-- ko if: options.length -->
+                  <!-- ko ifnot: multiple -->
+                  <select class="form-control"
+                          data-bind="foreach: options,
+                                     value: value,
+                                     attr: { 'data-name': name },
+                                     event: { change: function() { this.dirty(true); } }">
+                    <option data-bind="value: id, text: text"></option>
+                  </select>
+                  <!-- /ko -->
+                  <!-- ko if: multiple -->
+                  {% comment %}
+                     Multiselect values are based on a space-separated string, because
+                     that's how form submissions work. Making this work with select2's
+                     comma-separated multiselect option is non-trivial, so instead we
+                     have a hidden input with a space-separated value that stays in sync
+                     with updates on the select2.
+                  {% endcomment %}
+                  <input type="hidden" class="form-control"
+                         data-bind="value: value,
+                                    attr: { 'data-name': name }" />
+                  <select class="form-control"
+                          multiple="multiple"
+                          data-bind="foreach: options,
+                                     event: { change: updateSpaceSeparatedValue }">
+                    <option data-bind="value: id, text: text"></option>
+                  </select>
+                  <!-- /ko -->
+                  <!-- /ko -->
+                </div>
+              </div>
+              <!-- /ko -->
+            </div>
+            <!-- /ko -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer with-controls">
+        <!-- ko if: showPagination -->
+        <pagination class="float-start" data-apply-bindings="false"
+                    params="goToPage: currentPage,
+                            perPage: itemsPerPage,
+                            maxPagesShown: 10,
+                            totalItems: totalItems,
+                            inlinePageListOnly: true"></pagination>
+        <!-- /ko -->
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <button type="submit" class="btn btn-primary" data-bind="click: submitForm, attr: { disabled: disallowSave }">
+          <span data-bind="visible: !showRetry(), click: trackSave">
+            {% trans "Save" %}
+          </span>
+          <span data-bind="visible: showRetry()">
+            {% trans "Try Again" %}
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
