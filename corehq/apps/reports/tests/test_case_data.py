@@ -487,3 +487,17 @@ class TestCaseDeletion(TestCase):
 
         return_dict = view.get_cases_and_forms_for_deletion(request, self.domain, case.case_id)
         self.assertTrue(return_dict['redirect'])
+
+    def test_forms_unarchived_and_nothing_deleted_if_archive_fails_midway(self):
+        request = deepcopy(self.request)
+        setattr(request, 'session', {'samlSessionIndex': None})
+        setattr(request, '_messages', FallbackStorage(request))
+
+        cases, xforms = self.make_complex_case()
+        _, error = soft_delete_cases_and_forms(request, self.domain,
+                                               list(cases.values()), list(xforms.values())[:-1])
+        self.assertTrue(error)
+        for form in list(xforms.values()):
+            form_obj = XFormInstance.objects.get_form(form)
+            self.assertFalse(form_obj.is_archived)
+            self.assertFalse(form_obj.is_deleted)
