@@ -8,6 +8,7 @@
     <div class="container pagination-container">
       <div class="row">
         <div class="col-sm-6 col-md-3 module-per-page-container">
+          <!-- TODO: replace form-inline -->
           <div class="form-inline input-group-lg">
             <select class="form-control per-page-limit">
               <% for(var i = 0; i < rowRange.length; i++) { %>
@@ -24,6 +25,7 @@
           <div class="col-sm-6 col-md-3 col-sm-push-6 module-go-container">
             <div class="input-group input-group-lg">
               <input type="text" class="form-control" placeholder='{% trans_html_attr "Go to page" %}' id="goText">
+              <!-- TODO: replace input-group-btn -->
               <div class="input-group-btn">
                 <button class="btn btn-outline-primary" type="button" id="pagination-go-button">{% trans "Go" %}</button>
               </div>
@@ -31,6 +33,7 @@
           </div>
           <div class="col-sm-12 col-md-6 col-sm-pull-3 text-center">
             <nav class="module-pagination-container">
+              <!-- TODO: update pagination -->
               <ul class="pagination">
                 <!-- Render Previous button -->
                 <% if (currentPage > 0) { %>

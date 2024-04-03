@@ -4,6 +4,7 @@
 <script type="text/template" id="query-view-list-template">
   <form>
     <% if (sidebarEnabled) {%>
+      <!-- TODO: update close -->
       <button type="button" class="btn-close d-xs-block d-sm-block" aria-label="{% trans "Close" %}"
         data-bs-toggle="collapse" data-bs-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
         <span aria-hidden="true">&times;</span>
@@ -106,6 +107,7 @@
              class="date query-field form-control"
              value="<%- value %>"
              <% if (required) { %> aria-required="true"<% } %>>
+      <!-- TODO: update input-group-addon -->
       <span class="input-group-addon"><i class="fa-solid fa-calendar-days"></i></span>
     </div>
 

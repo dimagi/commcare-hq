@@ -2,6 +2,7 @@
 {% load hq_shared_tags %}
 
 <script type="text/html" id="sub-group-fullform-ko-template">
+  <!-- TODO: verify card classes (which were panel) -->
   <div tabindex="-1" class ="gr" data-bind="
         class: elementTile,
         css: {
@@ -67,6 +68,7 @@
       <div data-bind="visible: showChildren">
         <fieldset>
         <legend aria-hidden="true" class="sr-only">{% trans "Question Group" %}</legend>
+          <!-- TODO: verify card classes (which were panel) -->
           <div class="children" data-bind="
               slideVisible: showChildren(),
               template: {
@@ -132,6 +134,7 @@
           css: { 'form-single-question': showInFormNavigation },
       ">
 
+    <!-- TODO: update page-header -->
     <div class="page-header">
       <h1 class="title" data-bind="text: title, visible: !showInFormNavigation()"></h1>
     </div>
@@ -163,6 +166,7 @@
           </div>
         </div>
       {% endif %}
+      <!-- TODO: update form-group -->
       <div id="submit-button" class="form-actions form-group noprint-sub-container" data-bind="visible: showSubmitButton">
         <div data-bind="
           css: submitClass,
@@ -193,6 +197,7 @@
              style="position: fixed; width: 300px; bottom: 65px;"
              data-slug="{{ "JUMP_TO_INVALID_QUESTIONS_WEBAPPS"|ui_notify_slug }}"
              role="alert">
+          <!-- TODO: update close -->
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -226,6 +231,7 @@
 <script type="text/html" id="question-fullform-ko-template">
   <div data-bind="class:questionTileWidth">
   <!-- ko if: !isLabel && !isButton -->
+  <!-- TODO: update form-group -->
   <div class="q form-group" data-bind="
             css: {
                 error: error,
@@ -305,6 +311,7 @@
     <span class="ix" data-bind="text: ixInfo($data)"></span>
     <div class="eoq"></div>
   </div>
+  <!-- TODO: update form-group -->
   <div class="form-group-required-label"
        aria-hidden="true"
        data-bind="visible: $data.required, css: {
@@ -312,6 +319,7 @@
                     }">{% trans 'Sorry, this response is required!' %}</div>
   <!-- /ko -->
   <!-- ko if: isLabel -->
+  <!-- TODO: update form-group -->
   <div class="form-group">
     {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
     <div class="info col-md-12" data-bind="
@@ -343,6 +351,7 @@
   <!-- /ko -->
   <!-- ko if: isButton -->
   {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
+  <!-- TODO: update form-group -->
   <div class="q form-group" data-bind="
     css: {
       error: error,
@@ -362,6 +371,7 @@
 
 <script type="text/html" id="repeat-juncture-fullform-ko-template">
   <div data-bind="class: elementTile">
+    <!-- TODO: verify card classes (which were panel) -->
     <div class="card card-default rep">
       <div class="card-header" data-bind="style: {
           'background-color': headerBackgroundColor(),
@@ -567,10 +577,12 @@
   </div>
   <div>
     <form data-bind="submit: search">
+      <!-- TODO: update form-group -->
       <div class="form-group">
         <div class="controls" data-bind="css: control_width">
           <div class="input-group">
             <input class="query form-control" type="text" />
+            <!-- TODO: update input-group-btn -->
             <span class="input-group-btn">
               <button class="btn btn-outline-primary search">{% trans "Search" %}</button>
             </span>
@@ -670,6 +682,7 @@
   <div class="input-group">
     <input type="text" class="form-control"
       data-bind="attr: {id: entryId, 'aria-required': $parent.required() ? 'true' : 'false'}"/>
+    <!-- TODO: update input-group-addon -->
     <span class="input-group-addon"><i class="fa-solid fa-calendar-days"></i></span>
   </div>
 </script>
@@ -677,6 +690,7 @@
 <script type="text/html" id="datetime-entry-ko-template">
   <div class="input-group">
     <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
+    <!-- TODO: update input-group-addon -->
     <span class="input-group-addon"><i class="fcc fcc-fd-datetime"></i></span>
   </div>
 </script>
@@ -684,6 +698,7 @@
 <script type="text/html" id="time-entry-ko-template">
   <div class="input-group">
     <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
+    <!-- TODO: update input-group-addon -->
     <span class="input-group-addon"><i class="fa-regular fa-clock"></i></span>
   </div>
 </script>
@@ -691,6 +706,7 @@
 <script type="text/html" id="ethiopian-date-entry-ko-template">
   <div class="input-group">
     <input type="text" class="form-control" autocomplete="off" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
+    <!-- TODO: update input-group-addon -->
     <span class="input-group-addon"><i class="fa-solid fa-calendar-days"></i></span>
   </div>
 </script>

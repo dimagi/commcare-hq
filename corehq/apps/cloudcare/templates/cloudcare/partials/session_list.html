@@ -3,6 +3,7 @@
 
 <script type="text/template" id="session-view-list-template">
   <% if(isPreviewEnv) { %>
+  <!-- TODO: update breadcrumb -->
   <div class="breadcrumb-form-container">
     <ol class="breadcrumb breadcrumb-form">
       <li class="breadcrumb-text">{% trans "Incomplete Forms" %}</li>
@@ -20,6 +21,7 @@
   <% } %>
   <div class="module-menu-container module-menu-bar-offset">
     <% if (!isPreviewEnv) { %>
+    <!-- TODO: replace page-header -->
     <div class="page-header menu-header">
       <h1 class="page-title">{% trans "Incomplete Forms" %}</h1>
     </div>
