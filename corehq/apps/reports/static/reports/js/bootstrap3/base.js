@@ -1,6 +1,6 @@
 hqDefine("reports/js/bootstrap3/base", function () {
     $(function () {
-        hqImport("reports/js/filters/main").init();
+        hqImport("reports/js/filters/bootstrap3/main").init();
 
         var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         var defaultConfig = initialPageData.get('default_config') || {};

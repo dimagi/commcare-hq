@@ -15,7 +15,7 @@ hqDefine('export/js/download_export', [
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
     'analytix/js/kissmetrix',
-    'reports/js/filters/main',
+    'reports/js/filters/bootstrap3/main',
     'reports/js/reports.util',
     'export/js/utils',
     'hqwebapp/js/daterangepicker.config',   // createDateRangePicker
