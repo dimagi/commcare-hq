@@ -1,0 +1,46 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<div class="report-filter-location-async row"
+     data-make-optional='{{ make_optional|JSON }}'
+     data-loc-id='{{ loc_id }}'
+     data-location-url='{{ api_root }}'
+     data-hierarchy='{% html_attr hierarchy %}'
+     data-auto-drill='{{ auto_drill|JSON }}'
+     data-locs='{% html_attr locations %}'>
+  {% if make_optional %}
+    <div class="col-md-12">
+      <div class="form-group">
+        <label class="form-label {{ css_label_class }}">{% trans "Location Filter" %}</label>
+        <div class="{{ css_field_class }}">
+          <select class="form-control"
+                  data-bind="value: show_location_filter">
+            <option value="n">{% trans "Off" %}</option>
+            <option value="y">{% trans "On" %}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="col-md-12">
+    <div class="form-group"
+         data-bind="visible: show_location_filter_bool()">
+      {# this is wrong, see filters/single_option.html for a proper implementation #}
+      <label class="form-label {{ css_label_class }}">{{ control_name }}<br>
+      </label>
+      <div class="{{ css_field_class }}">
+        <div data-bind="foreach: selected_path" style="display: inline-block;">
+          {% block location_select %}
+            <select class="form-control"
+                    data-bind="options: children,
+                               optionsText: 'display_name',
+                               value: selected_child,
+                               disable: !can_edit_children()"></select>
+          {% endblock %}
+        </div>
+        <i id="loc_ajax" class="fa fa-spinner fa-spin hide"></i>
+      </div>
+      <input name="location_id" type="hidden" data-bind="value: selected_locid" />
+    </div>
+  </div>
+</div>
