@@ -1,0 +1,106 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<div data-bind="attr: {id: 'bulk-modal'}" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" style="color:black;">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">
+          <!-- ko if: action() == 'delete' -->
+            <!-- ko if: isMultiple -->
+              {% blocktrans %}
+                Delete <!-- ko text: selectedReportsCount() --><!-- /ko --> Scheduled Reports
+              {% endblocktrans %}
+            <!-- /ko -->
+            <!-- ko if: !isMultiple() -->
+              {% blocktrans %}
+                Delete <!-- ko text: selectedReportsCount() --><!-- /ko --> Scheduled Report
+              {% endblocktrans %}
+            <!-- /ko -->
+          <!-- /ko -->
+          <!-- ko if: action() == 'send' -->
+            <!-- ko if: isMultiple -->
+              {% blocktrans %}
+                Send <!-- ko text: selectedReportsCount() --><!-- /ko --> Scheduled Reports
+              {% endblocktrans %}
+            <!-- /ko -->
+            <!-- ko if: !isMultiple() -->
+              {% blocktrans %}
+                Send <!-- ko text: selectedReportsCount() --><!-- /ko --> Scheduled Report
+              {% endblocktrans %}
+            <!-- /ko -->
+          <!-- /ko -->
+        </h4>
+      </div>
+      <div class="modal-body" style="color:black;">
+        <p>
+          <!-- ko if: action() == 'delete' -->
+            <!-- ko if: isMultiple -->
+              {% trans "Are you sure you want to permanently delete these scheduled reports?" %}
+            <!-- /ko -->
+            <!-- ko if: !isMultiple() -->
+              {% trans "Are you sure you want to permanently delete this scheduled report?" %}
+            <!-- /ko -->
+          <!-- /ko -->
+          <!-- ko if: action() == 'send' -->
+            <!-- ko if: isMultiple -->
+              {% trans "Are you sure you want to send these scheduled reports?" %}
+            <!-- /ko -->
+            <!-- ko if: !isMultiple() -->
+              {% trans "Are you sure you want to send this scheduled report?" %}
+            <!-- /ko -->
+          <!-- /ko -->
+          <br>
+          <ul data-bind="foreach: selectedReports()" style="word-wrap: break-word">
+            <div data-bind="if: !configMany">
+              <li data-bind="with: firstConfig()">
+                <!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)
+              </li>
+            </div>
+            <div data-bind="if: configMany">
+              <li data-bind="with: firstConfig()">
+                <!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)
+                <ul>
+                  <div data-bind="foreach: $parent.configs().slice(1, $parent.configs().length)">
+                    <li><!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)</li>
+                  </div>
+                </ul>
+              </li>
+            </div>
+          </ul>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <!-- ko if: action() == 'delete' -->
+          <button class="btn btn-outline-danger" data-bind="click: bulkDelete" data-bs-dismiss="modal">
+            <!-- ko if: isMultiple -->
+              {% blocktrans %}
+                Delete <!-- ko text: selectedReportsCount() --><!-- /ko --> Scheduled Reports
+              {% endblocktrans %}
+            <!-- /ko -->
+            <!-- ko if: !isMultiple() -->
+              {% blocktrans %}
+                Delete <!-- ko text: selectedReportsCount() --><!-- /ko --> Scheduled Report
+              {% endblocktrans %}
+            <!-- /ko -->
+          </button>
+        <!-- /ko -->
+        <!-- ko if: action() == 'send' -->
+          <button class="btn btn-primary" data-bind="click: bulkSend" data-bs-dismiss="modal">
+            <!-- ko if: isMultiple -->
+              {% blocktrans %}
+                Send <!-- ko text: selectedReportsCount() --><!-- /ko --> Scheduled Reports
+              {% endblocktrans %}
+            <!-- /ko -->
+            <!-- ko if: !isMultiple() -->
+              {% blocktrans %}
+                Send <!-- ko text: selectedReportsCount() --><!-- /ko --> Scheduled Report
+              {% endblocktrans %}
+            <!-- /ko -->
+          </button>
+        <!-- /ko -->
+        <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</a>
+      </div>
+    </div>
+  </div>
+</div>
