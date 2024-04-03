@@ -1,0 +1,86 @@
+{% extends 'reports/filters/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block filter_content %}
+  <div class="panel-group report-filter-case-property-columns"
+       id="case-list-explorer-columns"
+       role="tablist"
+       data-initialvalue="{{ initial_value }}"
+       data-columnsuggestions="{{ column_suggestions }}"
+  >
+    <div class="card card-default">
+      <div class="card-header" role="tab">
+        <h4 class="card-title">
+          <a role="button" data-bs-toggle="collapse" data-parent="#case-list-explorer-columns" href="#columns-editor">
+            <span id="panel-chevron">
+              <i class="fa fa-chevron-down"></i>
+            </span>
+            {% trans "Sensitive Properties" %}
+            <small>(</small><span data-bind="foreach: properties"><!--ko if: $index() != 0 && name() !=='' -->, <!--/ko--><small data-bind="text: name"></small></span><small>)</small>
+          </a>
+
+        </h4>
+      </div>
+      <div id="columns-editor" class="collapse" role="tabpanel">
+        <div class="card-body">
+          <table class="table table-condensed">
+            <thead>
+            <th>&nbsp;</th>
+            <th>{% trans "Property" %}</th>
+            <th>{% trans "Sensitivity" %}</th>
+            <th>&nbsp;</th>
+            </thead>
+            <tbody data-bind="foreach: properties, sortableList: properties">
+            <tr>
+              <td>
+                <i class="grip fa-solid fa-up-down icon-blue"></i>
+              </td>
+              <td>
+                <div class="has-feedback">
+                  <input type="text" class="form-control" data-bind="
+                                                     value: name,
+                                                     explorerColumnsAutocomplete: $parent.suggestedProperties()"
+                  />
+                  <span class="form-control-feedback" data-bind="visible: meta_type">
+                    <span class="badge text-bg-primary" data-bind="text: meta_type"></span>
+                  </span>
+                </div>
+              </td>
+              <td>
+                <div class="has-feedback">
+                  <select class="form-control" data-bind="
+                                                options: {{ property_label_options }},
+                                                optionsText: 'name',
+                                                optionsValue: 'type',
+                                                value: label,
+                                                "/>
+                </div>
+              </td>
+              <td>
+                <i style="cursor: pointer;"
+                   data-bind="click: $parent.removeProperty"
+                   class="fa fa-remove"></i>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+          <button class="btn btn-outline-primary" data-bind="click: addProperty">
+            <i class="fa fa-plus"></i>
+            {% trans "Add Property" %}
+          </button>
+          <input type="hidden" data-bind="value: allProperties" name="{{ slug }}" />
+        </div>
+      </div>
+    </div>
+    <div class="help-block">
+      <span>
+        <i class="fa fa-info-circle" style="display: d-inline-block"></i>
+        <p style="display: d-inline-block">
+          {% blocktrans %}
+          Select the case properties which must be de-identified when copying the cases to the new user.
+          {% endblocktrans %}
+        </p>
+      </span>
+    </div>
+  </div>
+{% endblock %}
