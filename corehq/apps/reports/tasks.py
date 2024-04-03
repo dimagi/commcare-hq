@@ -71,9 +71,8 @@ def update_calculated_properties_for_domains(domains):
             for key in ['cp_first_form', 'cp_last_form', 'cp_300th_form']:
                 if props.get(key) is None:
                     del props[key]
-            for key, value in props.items():
-                if value is None:
-                    raise ValueError(f"Null value detected for {key} in domain {domain['name']}")
+            if props.get('cp_n_forms') is None:
+                raise ValueError(f"Null value detected for {key} in domain {domain['name']}")
             domain_adapter.update(domain['_id'], props)
         except Exception as e:
             notify_exception(
