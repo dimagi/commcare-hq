@@ -1,3 +1,5 @@
+import logging
+
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
@@ -7,8 +9,11 @@ from django.utils.translation import gettext_lazy
 from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.sso import certificates
 from corehq.apps.sso.exceptions import ServiceProviderCertificateError
+from corehq.apps.sso.utils.entra import get_all_members_of_the_idp_from_entra
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.util.quickcache import quickcache
+
+log = logging.getLogger(__name__)
 
 
 class IdentityProviderType:
@@ -417,6 +422,12 @@ class IdentityProvider(models.Model):
                 and SsoTestUser.objects.filter(username=username).exists()):
             return idp
         return None
+
+    def get_all_members_of_the_idp(self):
+        if self.idp_type == IdentityProviderType.ENTRA_ID:
+            return get_all_members_of_the_idp_from_entra(self)
+        else:
+            raise NotImplementedError("Not implemented")
 
 
 @receiver(post_save, sender=Subscription)
