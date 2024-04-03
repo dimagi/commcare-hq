@@ -23,7 +23,6 @@ from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
-from corehq.apps.users.forms import RoleForm
 from corehq.apps.users.models import CouchUser
 
 
@@ -484,38 +483,17 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
         return ""
 
 
-# From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager
-#
-# I'll put this in each app, so they can be standalone, but it should really go in some centralized
-# part of the distro
-
-class _BaseForm(object):
-
-    def clean(self):
-        for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], str):
-                self.cleaned_data[field] = self.cleaned_data[field].strip()
-        return self.cleaned_data
-
-
-class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
-    # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,
-    # and do need to relabel some things.
+class AdminInvitesUserForm(forms.Form):
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
 
-    def __init__(self, data=None, excluded_emails=None, is_add_user=None, *args, **kwargs):
-        domain_obj = None
-        location = None
-        if 'domain' in kwargs:
-            domain_obj = Domain.get_by_name(kwargs['domain'])
-            del kwargs['domain']
-        if 'location' in kwargs:
-            location = kwargs['location']
-            del kwargs['location']
-        super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
-        if domain_obj and domain_obj.commtrack_enabled:
+    def __init__(self, data=None, excluded_emails=None, is_add_user=None, location=None,
+                 role_choices=(), *, domain, **kwargs):
+        super(AdminInvitesUserForm, self).__init__(data=data, **kwargs)
+        domain_obj = Domain.get_by_name(domain)
+        self.fields['role'].choices = role_choices
+        if domain_obj.commtrack_enabled:
             self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
                                                           widget=LocationSelectWidget(domain_obj.name),
                                                           help_text=EMWF.location_search_help,
@@ -575,3 +553,9 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             raise forms.ValidationError(_("A user with this email address is already in "
                                           "this project or has a pending invitation."))
         return email
+
+    def clean(self):
+        for field in self.cleaned_data:
+            if isinstance(self.cleaned_data[field], str):
+                self.cleaned_data[field] = self.cleaned_data[field].strip()
+        return self.cleaned_data
