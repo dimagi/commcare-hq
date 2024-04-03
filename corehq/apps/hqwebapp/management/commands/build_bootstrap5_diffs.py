@@ -209,30 +209,39 @@ class Command(BaseCommand):
         for js_folder in TRACKED_JS_FOLDERS:
             self.update_config(config_file, app_name, js_folder)
         self.check_javascript_paths(app_name, TRACKED_JS_FOLDERS)
-        self.stdout.write("Saving config...\n")
-        update_bootstrap5_diff_config(config_file)
+        self.stdout.write("\nSaving config...\n")
 
-        if has_no_pending_git_changes():
-            self.stdout.write("No changes were necessary. Thank you!")
+        update_bootstrap5_diff_config(config_file)
+        has_no_changes = has_no_pending_git_changes()
+        if has_no_changes:
+            self.stdout.write(self.style.SUCCESS(
+                "No changes were necessary. Thank you!"
+            ))
         else:
-            self.stdout.write(f"{DIFF_CONFIG_FILE} has been updated.")
+            self.stdout.write(self.style.SUCCESS(
+                f"{DIFF_CONFIG_FILE} has been updated."
+            ))
             self.make_commit(f"Updated diff config for '{app_name}'")
 
-        self.show_next_steps_after_config_update()
+        self.show_next_steps_after_config_update(show_build_notice=not has_no_changes)
 
-    def show_next_steps_after_config_update(self):
-        self.stdout.write("\n\nPLEASE NOTE: This utility only supports automatically generating a "
-                          "diff config for template and javascript files.")
+    def show_next_steps_after_config_update(self, show_build_notice=False):
         self.stdout.write(self.style.MIGRATE_LABEL(
-            f"Stylesheets (less, scss) must be added to {DIFF_CONFIG_FILE} manually.\n\n"
+            "\n\nPLEASE NOTE: This utility only supports automatically generating a "
+            "diff config for template and javascript files.\n"
+        ))
+        self.stdout.write(self.style.MIGRATE_HEADING(
+            f"Stylesheets (less, scss) must be added to {DIFF_CONFIG_FILE} manually."
         ))
 
-        self.stdout.write("\n\nAfter committing changes, please re-run:\n\n")
-        self.stdout.write(self.style.MIGRATE_LABEL(
-            "./manage.py build_bootstrap5_diffs"
-        ))
-        self.stdout.write("\nto rebuild the diffs.\n\n")
-        self.stdout.write("Thank you! <3\n\n")
+        if show_build_notice:
+            self.stdout.write("\n\nAfter committing changes, please re-run:\n\n")
+            self.stdout.write(self.style.MIGRATE_HEADING(
+                "./manage.py build_bootstrap5_diffs"
+            ))
+            self.stdout.write("\nto rebuild the diffs.")
+
+        self.stdout.write("\n\nThank you! <3\n\n")
 
     def make_commit(self, message):
         self.stdout.write("\nNow would be a good time to review changes with git and commit.")
