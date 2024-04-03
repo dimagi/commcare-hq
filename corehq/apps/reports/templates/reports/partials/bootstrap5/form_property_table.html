@@ -1,0 +1,23 @@
+{% load i18n %}
+
+<div class="property-table-row">
+  <div class="property-table-container inherit-float">
+    <div class="form-case-changes card well-loner">
+      <dl>
+        {% for prop in properties %}
+          {% if prop.name or prop.value %}
+            <dt title="{{ prop.expr }}">
+              {{ prop.name }}
+            </dt>
+            <dd>
+              {{ prop.value }}
+            </dd>
+          {% else %} {# empty row #}
+            <dt></dt><dd></dd>
+          {% endif %}
+        {% endfor %}
+      </dl>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</div>
