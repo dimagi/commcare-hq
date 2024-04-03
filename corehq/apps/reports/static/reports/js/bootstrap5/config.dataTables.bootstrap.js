@@ -1,4 +1,4 @@
-hqDefine("reports/js/config.dataTables.bootstrap", [
+hqDefine("reports/js/bootstrap5/config.dataTables.bootstrap", [
     'jquery',
     'underscore',
     'analytix/js/google',

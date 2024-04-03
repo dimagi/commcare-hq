@@ -3,7 +3,7 @@ hqDefine('toggle_ui/js/flags', [
     'knockout',
     'underscore',
     'hqwebapp/js/bootstrap3/alert_user',
-    'reports/js/config.dataTables.bootstrap',
+    'reports/js/bootstrap3/config.dataTables.bootstrap',
     'hqwebapp/js/bootstrap3/components.ko',    // select toggle widget
 ], function (
     $,

@@ -64,7 +64,7 @@ hqDefine('reports_core/js/base_template_new', function () {
             }
         };
 
-        var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables({
+        var reportTables = hqImport("reports/js/bootstrap3/config.dataTables.bootstrap").HQReportDataTables({
             dataTableElem: '#report_table_' + initialPageData.get('report_slug'),
             defaultRows: initialPageData.get('table_default_rows'),
             startAtRowNum: initialPageData.get('table_start_at_row'),
