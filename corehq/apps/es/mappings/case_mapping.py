@@ -16,7 +16,7 @@ CASE_MAPPING = {
             "type": "nested",
             "properties": {
                 "action_type": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "date": {
                     "format": DATE_FORMATS_STRING,
@@ -36,7 +36,7 @@ CASE_MAPPING = {
                             "type": "text"
                         },
                         "referenced_id": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "referenced_type": {
                             "type": "text"
@@ -48,19 +48,19 @@ CASE_MAPPING = {
                     "type": "date"
                 },
                 "sync_log_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "user_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "xform_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "xform_name": {
                     "type": "text"
                 },
                 "xform_xmlns": {
-                    "type": "text"
+                    "type": "keyword"
                 }
             }
         },
@@ -103,7 +103,7 @@ CASE_MAPPING = {
             "type": "text"
         },
         "export_tag": {
-            "type": "text"
+            "type": "keyword"
         },
         "external_id": {
             "fields": {
@@ -124,7 +124,7 @@ CASE_MAPPING = {
                     "type": "text"
                 },
                 "referenced_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "referenced_type": {
                     "type": "text"
@@ -139,7 +139,7 @@ CASE_MAPPING = {
             "type": "date"
         },
         "location_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "modified_on": {
             "format": DATE_FORMATS_STRING,
@@ -184,10 +184,10 @@ CASE_MAPPING = {
             "type": "text"
         },
         "user_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "version": {
-            "type": "text"
+            "type": "keyword"
         },
         "xform_ids": {
             "type": "keyword"

@@ -4,9 +4,9 @@ hqDefine("hqwebapp/js/bootstrap5/widgets",[
     'underscore',
     '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
     'hqwebapp/js/initial_page_data',
+    'tempusDominus',
     'select2/dist/js/select2.full.min',
-    'datetimepicker',  // jquery plugin for tempusDominus
-], function ($, _, MapboxGeocoder, initialPageData) {
+], function ($, _, MapboxGeocoder, initialPageData, tempusDominus) {
     var init = function () {
         var MAPBOX_ACCESS_TOKEN = initialPageData.get(
             "mapbox_access_token"
@@ -109,18 +109,19 @@ hqDefine("hqwebapp/js/bootstrap5/widgets",[
         });
 
         _.each($(".date-picker"), function (input) {
-            // datepicker / tempus dominus
-            $(input).tempusDominus({
-                display: {
-                    theme: 'light',
-                    components: {
-                        clock: false,
+            new tempusDominus.TempusDominus(
+                input,
+                {
+                    display: {
+                        theme: 'light',
+                        components: {
+                            clock: false,
+                        },
                     },
-                },
-                localization: {
-                    format: 'yyyy-MM-dd',
-                },
-            });
+                    localization: {
+                        format: 'yyyy-MM-dd',
+                    },
+                });
         });
     };
 

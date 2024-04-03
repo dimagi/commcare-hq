@@ -1,9 +1,7 @@
 import json
 import re
 
-from pathlib import Path
-
-import corehq
+from corehq.apps.hqwebapp.utils.bootstrap.paths import COREHQ_BASE_DIR
 
 """These are a set of utilities intended to assist with the migration of Bootstrap 3 to 5.
 
@@ -22,7 +20,6 @@ https://getbootstrap.com/docs/5.3/migration/
 https://nodebb.org/blog/nodebb-specific-bootstrap-3-to-5-migration-guide/
 """
 
-COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
 PATH_TO_SPEC = 'apps/hqwebapp/utils/bootstrap/spec'
 PATH_TO_CHANGES_GUIDE = 'apps/hqwebapp/utils/bootstrap/changes_guide'
 
@@ -87,12 +84,30 @@ def make_numbered_css_renames(line, spec):
     )
 
 
+def make_template_tag_renames(line, spec):
+    return _do_rename(
+        line,
+        spec['template_tag_renames'],
+        lambda x: r"(\{% )(" + x + r")( [^%]* %})",
+        lambda x: r"\1" + spec['template_tag_renames'][x] + r"\3"
+    )
+
+
 def make_data_attribute_renames(line, spec):
     return _do_rename(
         line,
         spec['data_attribute_renames'],
         lambda x: r"([\n }])(" + x + r")(=[\"\'])",
         lambda x: r"\1" + spec['data_attribute_renames'][x] + r"\3"
+    )
+
+
+def make_javascript_dependency_renames(line, spec):
+    return _do_rename(
+        line,
+        spec['javascript_dependency_renames'],
+        lambda x: r"(['\"][\w/.\-]+/)(" + x + r")(/[\w/.\-]+['\"],?)$",
+        lambda x: r"\1" + spec['javascript_dependency_renames'][x] + r"\3"
     )
 
 
@@ -115,19 +130,34 @@ def flag_changed_javascript_plugins(line, spec):
     return flags
 
 
-def flag_path_references_to_migrated_javascript_files(line, reference):
-    flags = []
-    if "/" + reference + "/" in line:
-        flags.append(f"Found reference to a migrated file ({reference})")
-    return flags
-
-
 def flag_stateful_button_changes_bootstrap5(line):
     flags = []
     regex = r"([\n }])(data-\w*-text)(=[\"\'])"
     if re.search(regex, line):
         flags.append("You are using stateful buttons here, "
                      "which are no longer supported in Bootstrap 5.")
+    return flags
+
+
+def flag_bootstrap3_references_in_template(line):
+    flags = []
+    for template_tag in ["extends", "requirejs_main"]:
+        regex = r"(\{% " + template_tag + r" [\"\'][\w]+)(\/bootstrap3\/)"
+        if re.search(regex, line):
+            if template_tag == "extends":
+                flags.append("This template extends a bootstrap 3 template.")
+            if template_tag == "requirejs_main":
+                flags.append("This template references a bootstrap 3 requirejs file.")
+    return flags
+
+
+def flag_crispy_forms_in_template(line):
+    flags = []
+    regex = r"\{% crispy"
+    if re.search(regex, line):
+        flags.append("This template uses crispy forms. "
+                     "Please ensure the form looks good after migration, and refer to "
+                     "the updated Style Guide for current best practices, especially with checkbox fields.")
     return flags
 
 

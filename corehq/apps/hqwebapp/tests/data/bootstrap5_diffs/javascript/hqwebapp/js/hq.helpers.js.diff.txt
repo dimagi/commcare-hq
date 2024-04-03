@@ -1,12 +1,24 @@
 --- 
 +++ 
-@@ -1,4 +1,4 @@
+@@ -1,13 +1,15 @@
 -hqDefine("hqwebapp/js/bootstrap3/hq.helpers", [
 +hqDefine("hqwebapp/js/bootstrap5/hq.helpers", [
      'jquery',
      'knockout',
      'underscore',
-@@ -59,19 +59,6 @@
+     'analytix/js/google',
++    'es6!hqwebapp/js/bootstrap5_loader',
+ ], function (
+     $,
+     ko,
+     _,
+-    googleAnalytics
++    googleAnalytics,
++    bootstrap
+ ) {
+     // disable-on-submit is a class for form submit buttons so they're automatically disabled when the form is submitted
+     $(document).on('submit', 'form', function (ev) {
+@@ -59,19 +61,6 @@
          return false; // let default handler run
      };
  
@@ -26,7 +38,25 @@
      $.fn.hqHelp = function (opts) {
          var self = this;
          self.each(function (i) {
-@@ -104,6 +91,11 @@
+@@ -88,22 +77,19 @@
+             if (opts) {
+                 options = _.extend(options, opts);
+             }
+-            if (!$link.data('content')) {
+-                options.content = function () {
+-                    return $('#popover_content_wrapper').html();
+-                };
+-            }
+-            if (!$link.data("title")) {
+-                options.template = '<div class="popover"><div class="arrow"></div><div class="popover-inner"><div class="popover-content"><p></p></div></div></div>';
+-            }
+-            $link.popover(options);
++            new bootstrap.Popover($link, options);
+ 
+             // Prevent jumping to the top of the page when link is clicked
+-            $helpElem.find('a').click(function (event) {
++            $link.click(function (event) {
+                 googleAnalytics.track.event("Clicked Help Bubble", $(this).data('title'), '-');
                  event.preventDefault();
              });
          });
