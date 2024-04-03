@@ -1,0 +1,397 @@
+{% load i18n %}
+{% load proptable_tags %}
+{% load xform_tags %}
+{% load hq_shared_tags %}
+{% load humanize %}
+{% comment %}
+    requires proptable.css and single_form.js to be included in the main template
+{% endcomment %}
+<style media="print">
+  header {
+    display: none !important;
+  }
+  .sidebar {
+    display: none !important;
+  }
+  a[href]:after {
+    content: none !important;
+  }
+</style>
+<style>
+  .form-data-raw {
+    display: none;
+  }
+  .hq-help {
+    /* TODO: does .hq-help really need to be width 0 by default? */
+    width: auto;
+  }
+  #form-actions-toolbar form {
+    display: inline-block;
+  }
+  #form-actions-toolbar > * {
+    margin-left: 10px;
+  }
+
+  .form-data-group-table {
+    margin-bottom: 0;
+  }
+  .form-data-group-table tr.form-data-group-spacer th {
+    text-align: center;
+    font-weight: bold;
+    /* same as bootstrap 'success' */
+    background-color: #dff0d8;
+  }
+  .form-data-skipped {
+    /* same as bootstrap 'warning' */
+    background-color: #fcf8e3;
+  }
+  tr.form-data-skipped-spacer th {
+    /* same as bootstrap 'warning' */
+    background-color: #fcf8e3;
+    text-align: center;
+  }
+</style>
+
+{% if is_archived %}
+  <div class="alert alert-info">
+    {% blocktrans %}
+      This form is archived and will not be included in reports.
+    {% endblocktrans %}
+    {% if user.can_edit_data %}
+      {% blocktrans %}
+        To unarchive this form, click the "Restore this form" button.
+        This will also restore case data associated with the form.
+      {% endblocktrans %}
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if edit_info.was_edited %}
+  <div class="alert alert-info">
+    {% url "render_form_data" domain edit_info.latest_version as latest_version_url %}
+    {% blocktrans %}
+      This form has been edited. The latest version can be viewed <a href="{{ latest_version_url }}">here</a>.
+    {% endblocktrans %}
+  </div>
+{% endif %}
+
+{% if edit_info.is_edit %}
+  <div class="alert alert-warning">
+    {% url "render_form_data" domain edit_info.previous_version as previous_version_url %}
+    {% blocktrans with when=edit_info.edited_on|naturaltime %}
+      This submission was edited from a previous version {{ when }}. You can view the previous version <a href="{{ previous_version_url }}">here</a>.
+    {% endblocktrans %}
+  </div>
+{% endif %}
+
+<div class="clearfix">
+  <div class="float-end">
+    {% if auth_context.authenticated %}
+      <i class="fa fa-lock" title="{% trans "Secure submission" %}"></i>
+      {% if user_info.id != auth_user_info.id %}
+        {% blocktrans with auth_user=auth_user_info|pretty_doc_info user=user_info|pretty_doc_info %}
+          Submitted by {{ auth_user }} on behalf of {{ user }}
+        {% endblocktrans %}
+      {% endif %}
+      {% if user_info.id == auth_user_info.id %}
+        {% blocktrans with auth_user=auth_user_info|pretty_doc_info %}
+          Submitted by {{ auth_user }}
+        {% endblocktrans %}
+      {% endif %}
+    {% endif %}
+    {% if not auth_context.authenticated %}
+      <i class="fa fa-unlock" title="{% trans "Insecure submission" %}"></i>
+      {% blocktrans with user=user_info|pretty_doc_info %}
+        Submitted as {{ user }}
+      {% endblocktrans %}
+    {% endif %}
+    <br/>
+    <ul class="list-inline">
+      {% if instance.app_id %}<li><a href="{% url "view_app" domain instance.app_id %}">{% trans "View app" %}</a></li>{% endif %}
+      {% if request|toggle_enabled:"SUPPORT" %}
+        {% if instance.build_id %}
+          <li><a href="{% url "download_index" domain instance.build_id %}">{% trans "View build" %}</a></li>
+        {% endif %}
+        {% if form_source_download_url %}
+          <li><a href="{{ form_source_download_url }}?download=true">{% trans "Download Form Source" %} <i class='fa fa-download'></i></a></li>
+        {% endif %}
+      {% endif %}
+    </ul>
+  </div>
+</div>
+<ul class="nav nav-tabs sticky-tabs">
+  <li>
+    <a href="#form-data" data-bs-toggle="tab">
+      {% trans "Form Properties" %}
+    </a>
+  </li>
+  {% if cases %}
+    <li>
+      <a href="#form-case-data" data-bs-toggle="tab">
+        {% trans "Case Changes" %}
+      </a>
+    </li>
+  {% endif %}
+
+  {% if instance_history %}
+    <li>
+      <a href="#form-history" data-bs-toggle="tab">
+        {% trans "Form History" %}
+      </a>
+    </li>
+  {% endif %}
+
+  {% if form_meta_data %}
+    <li>
+      <a href="#form-metadata" data-bs-toggle="tab">
+        {% trans "Form Metadata" %}
+      </a>
+    </li>
+  {% endif %}
+
+  {% if instance.attachments %}
+    <li>
+      <a href="#form-attachments" data-bs-toggle="tab">
+        {% trans "Attachments" %}
+      </a>
+    </li>
+  {% endif %}
+  <li>
+    <a href="#form-xml" data-bs-toggle="tab">
+      {% trans "Raw XML" %}
+    </a>
+  </li>
+</ul>
+<div class="tab-content form-details" style="overflow:visible; margin-top: 10px;">
+  <div class="tab-pane" id="form-data">
+    <div class="btn-toolbar row" id='form-actions-toolbar'>
+      {% if context_case_id %}
+        <a class="btn btn-outline-primary"
+           href="{% url "render_form_data" instance.domain instance.form_id %}">
+          {% trans "View standalone form" %}
+        </a>
+      {% endif %}
+      {% if show_edit_options %}
+        {% if show_edit_submission %}
+          <button type="button" class="btn btn-outline-primary float-start data-corrections-trigger">
+            <i class="fa fa-shower"></i>
+            {% trans 'Clean Form Submission' %}
+          </button>
+        {% endif %}
+        {% if not is_archived and not edit_info.was_edited %}
+          <form action="{% url "archive_form" domain instance.form_id %}" method="POST" id="archive-form">{% csrf_token %}
+            <span class="hq-help-template"
+                  data-title="{% trans "Archiving Forms" %}"
+                  data-content="{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}"
+                  data-placement="left"
+            ></span>
+            <button type="submit" class="btn btn-outline-danger" id="archive-form-btn">
+              {% trans "Archive this form" %}
+              <i class="fa fa-refresh fa-spin" id="archive-spinner" style="display:none"></i>
+            </button>
+          </form>
+        {% elif edit_info.was_edited %}
+          <form action="{% url "restore_edit" domain instance.form_id %}" method="POST" id="archive-form">{% csrf_token %}
+            <span class="hq-help-template"
+                  data-title="{% trans "Restoring Edited Forms" %}"
+                  data-content="{% trans "Restoring an edited form will undo any later edits made. This operation is reversible." %}"
+                  data-placement="left"
+            ></span>
+            <button type="submit" class="btn btn-outline-danger" id="archive-form-btn">
+              {% trans "Restore this version" %}
+              <i class="fa fa-refresh fa-spin" id="archive-spinner" style="display:none"></i>
+            </button>
+          </form>
+        {% endif %}
+        {% if is_archived %}
+          <form action="{% url "unarchive_form" domain instance.form_id %}" method="POST"
+                id="unarchive-form">{% csrf_token %}
+            <span class="hq-help-template"
+                  data-title="{% trans "Restoring Forms" %}"
+                  data-content="{% trans "Restoring this form will cause it to show up in reports again." %}"
+                  data-placement="left"
+            ></span>
+            <button type="submit" class="btn btn-outline-primary" id="unarchive-form-btn">
+              {% trans "Restore this form" %}
+              <i class="fa fa-refresh fa-spin" id="unarchive-spinner" style="display:none"></i>
+            </button>
+          </form>
+        {% endif %}
+        {% if show_resave %}
+          <form action="{% url "resave_form" domain instance.form_id %}" method="POST"
+                id="resave-form">{% csrf_token %}
+            <span class="hq-help-template"
+                  data-title="{% trans "Resaving Forms" %}"
+                  data-content="{% trans "Resaving a form manually can cause it to be reincluded in reports if something went wrong during initial processing." %}"
+                  data-placement="left"
+            ></span>
+            <button type="submit" class="btn btn-outline-primary" id="resave-form-btn">
+              {% trans "Resave this form" %}
+              <i class="fa fa-refresh fa-spin" id="resave-spinner" style="display:none"></i>
+            </button>
+          </form>
+        {% endif %}
+        {% if is_archived %}
+          <form>
+            <span class="hq-help-template"
+                  data-title="{% trans "Deleting Forms" %}"
+                  data-content="{% trans "This is a permanent action that cannot be undone." %}"
+                  data-placement="left"
+            ></span>
+            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delete-form-modal">
+              <i class="fa-regular fa-trash-can"></i>
+              {% trans 'Delete this form' %}
+            </button>
+          </form>
+        {% endif %}
+
+      {% endif %}
+    </div>
+    {% include 'reports/form/partials/readable_form.html' with questions=form_data %}
+  </div>
+
+  {% if cases %}
+    <div class="tab-pane" id="form-case-data">
+      <div class="accordion">
+        {% for case_data in cases %}
+          <div class="card card-default">
+            <div class="card-header">
+              <h4 class="card-title accordion-toggle">
+                {% if case_data.valid_case and case_data.case_type and cases|length > 1 %}
+                  <span class="badge text-bg-secondary">{{case_data.case_type}}</span>
+                {% endif %}
+                <a data-bs-toggle="collapse"
+                   href="#form-case-acc-{{ forloop.counter }}">
+                  {% if case_data.valid_case and case_data.name %}
+                    {{ case_data.name }}
+                  {% else %}
+                    ({% trans "Unknown/Deleted Case" %})
+                  {% endif %}
+                </a>
+
+                {% if case_data.valid_case %}
+                  <span class="float-end">
+                    {% if case_data.is_current_case %}
+                      <strong class="text-body-secondary">{% trans "(this case)" %}</strong>
+                    {% else %}
+                      <a class="btn btn-sm btn-primary" href="{{ case_data.url }}" style="margin-top: -6px;">
+                        {% trans "View" %}
+                      </a>
+                    {% endif %}
+                  </span>
+                {% endif %}
+              </h4>
+            </div>
+            <div class="card-body collapse
+                    {% if cases|length == 1 %}in{% endif %}"
+                 id="form-case-acc-{{ forloop.counter }}">
+              <div class="accordion-inner">
+                {% include "reports/partials/form_property_table.html" with properties=case_data.properties %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if instance_history %}
+    <div class="tab-pane" id="form-history">
+      <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+          <th>{% trans "Date" %} ({{ tz_abbrev }})</th>
+          <th>{% trans "User" %}</th>
+          <th>{% trans "Action" %}</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for operation in instance_history %}
+          <tr>
+            <td>{{ operation.readable_date }}</td>
+            <td>{{ operation.user_info|pretty_doc_info }}</td>
+            <td>{{ operation.readable_action }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  {% if form_meta_data %}
+    <div class="tab-pane" id="form-metadata">
+      {% include "reports/partials/form_property_table.html" with properties=form_meta_data %}
+    </div>
+  {% endif %}
+
+  {% if instance.attachments %}
+    <div class="tab-pane" id="form-attachments">
+      <table class="table table-striped table-hover">
+        {% for key, attachment in instance.attachments.items %}
+          <tr><td>
+            <dl class="dl-horizontal">
+              {% if not forloop.first %}<br>{% endif %}
+              <dt>{{ key }}</dt>
+              {% if attachment.is_image %}
+                <dd><img src="{% url "api_form_attachment" domain=domain instance_id=instance.form_id attachment_id=key %}"></dd>
+              {% else %}
+                <dd><a href="{% url "api_form_attachment" domain instance.form_id key %}" download="{{ key }}">{% trans "Download" %}</a></dd>
+              {% endif %}
+            </dl>
+          </td></tr>
+        {% endfor %}
+      </table>
+    </div>
+  {% endif %}
+  <div class="tab-pane" id="form-xml">
+    <p class="btn-group">
+      <a class="btn btn-outline-primary" href="{% url "download_form" domain instance.form_id %}" target="_blank">
+        <i class="fa-solid fa-up-right-from-square"></i>&nbsp;{% trans "Open XML in New Window" %}
+      </a>
+      <button class="btn btn-outline-primary copy-xml" data-bs-toggle="tooltip" data-trigger="manual">
+        <i class="fa-regular fa-files"></i>&nbsp;{% trans "Copy XML to clipboard" %}
+      </button>
+    </p>
+    {% render_form_xml instance %}
+  </div>
+</div>
+
+{% if show_edit_options %}
+  {% if show_edit_submission %}
+    {% include 'reports/partials/data_corrections_modal.html' %}
+  {% endif %}
+{% endif %}
+
+<div class="modal fade" id="delete-form-modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">{% trans 'Permanently Delete Form' %}</h4>
+      </div>
+      <div class="modal-body">
+        <form action="{% url "soft_delete_form" domain instance.form_id %}" method="POST">{% csrf_token %}
+          <p class="alert alert-warning">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            {% blocktrans %}
+              It is important you read the entire message below thoroughly before completing this action.
+            {% endblocktrans %}
+          </p>
+          <p>
+            {% blocktrans %}
+              Once deleted, you will not be able to recover this form. Are you sure you want to delete this form?
+            {% endblocktrans %}
+          </p>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-primary disable-on-submit-no-spinner" data-bs-dismiss="modal">
+              {% trans "Cancel" %}
+            </button>
+            <button type="submit" class="btn btn-outline-danger disable-on-submit" id="delete-form-btn">
+              {% trans "Delete" %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
