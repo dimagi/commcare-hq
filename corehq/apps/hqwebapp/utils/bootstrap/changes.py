@@ -35,7 +35,7 @@ def _get_direct_css_regex(css_class):
 
 
 def _get_plugin_regex(js_plugin):
-    return r"(\.)(" + js_plugin + r")(\([\{\"\'])"
+    return r"(\.)(" + js_plugin + r")(\()"
 
 
 def _get_extension_regex(js_plugin):

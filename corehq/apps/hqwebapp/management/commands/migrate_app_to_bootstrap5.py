@@ -157,12 +157,13 @@ class Command(BaseCommand):
         return set(available_js_files).difference(completed_js_files)
 
     def migrate_files(self, files, app_name, spec, is_template):
-        for file_path in files:
+        for index, file_path in enumerate(files):
             short_path = get_short_path(app_name, file_path, is_template)
             self.clear_screen()
             file_type = "templates" if is_template else "javascript"
             self.stdout.write(self.format_header(f"Migrating {app_name} {file_type}..."))
-            confirm = get_confirmation(f'Ready to migrate "{short_path}"?', default='y')
+            confirm = get_confirmation(f'Ready to migrate "{short_path}" ({index + 1} of {len(files)})?',
+                                       default='y')
             if not confirm:
                 self.write_response(f"ok, skipping {short_path}")
                 continue
