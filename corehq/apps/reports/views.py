@@ -682,7 +682,7 @@ def soft_shift_to_server_timezone(report_notification):
 class ScheduledReportsView(BaseProjectReportSectionView):
     urlname = 'edit_scheduled_report'
     page_title = _("Scheduled Report")
-    template_name = 'reports/edit_scheduled_report.html'
+    template_name = 'reports/bootstrap3/edit_scheduled_report.html'
 
     @method_decorator(require_permission(HqPermissions.download_reports))
     @use_multiselect

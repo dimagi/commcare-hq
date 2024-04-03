@@ -1,0 +1,37 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+
+{% requirejs_main_b5 'reports/js/edit_scheduled_report' %}
+
+{% block page_content %}
+  {% initial_page_data 'is_configurable_map' is_configurable_map %}
+  {% initial_page_data 'supports_translations' supports_translations %}
+  {% initial_page_data 'languages_map' languages_map %}
+  {% initial_page_data 'languages_for_select' languages_for_select %}
+  {% initial_page_data 'weekly_day_options' weekly_day_options %}
+  {% initial_page_data 'monthly_day_options' monthly_day_options %}
+  {% initial_page_data 'day_value' day_value %}
+  {% initial_page_data 'is_owner' is_owner %}
+  <div class="row">
+    <div class="col-md-12">
+      {% if form %}
+        {% crispy form %}
+      {% else %}
+        <div class="alert alert-warning">
+          {% blocktrans %}
+            You need a saved report that supports email in order to set up a
+            scheduled email report, but you don't have any.
+          {% endblocktrans %}
+        </div>
+        <div class="alert alert-info">
+          {% blocktrans %}
+            <strong>Note:</strong> Not all built-in reports currently support email delivery.
+          {% endblocktrans %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
