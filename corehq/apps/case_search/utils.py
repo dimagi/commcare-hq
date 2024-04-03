@@ -396,6 +396,7 @@ def get_related_cases_result(helper, app, case_types, source_cases, include_all_
         return results
 
 
+@time_function()
 def _get_all_related_cases(helper, source_cases):
     results = []
     results.extend(helper.get_all_related_live_cases(source_cases))
@@ -416,6 +417,7 @@ def _get_search_detail_path_defined_cases(helper, app, case_types, source_cases)
     return result
 
 
+@time_function()
 def _get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids):
     child_case_types = [
         _type for types in [get_child_case_types(app, case_type) for case_type in case_types]
@@ -446,6 +448,7 @@ def get_search_detail_relationship_paths(app, case_type):
     return paths
 
 
+@time_function()
 def get_path_related_cases_results(helper, cases, paths):
     """
     Given a set of cases and a set of case property paths,
@@ -492,6 +495,7 @@ def get_child_case_types(app, case_type):
     return child_case_types
 
 
+@time_function()
 def get_child_case_results(helper, parent_case_ids, child_case_types=None):
     filter = helper.get_base_queryset().get_child_cases(parent_case_ids, "parent")
     if child_case_types:
@@ -510,6 +514,7 @@ def get_expanded_case_results(helper, custom_related_case_property, cases):
     return _get_case_search_cases(helper, expanded_case_ids)
 
 
+@time_function()
 def _get_case_search_cases(helper, case_ids):
     results = helper.get_base_queryset().case_ids(case_ids).run().hits
     return [helper.wrap_case(result) for result in results]
