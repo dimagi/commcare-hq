@@ -66,6 +66,12 @@ class Command(BaseCommand):
             help="Run migration against already split bootstrap 5 files"
         )
         parser.add_argument(
+            '--skip-all',
+            action='store_true',
+            default=False,
+            help="Skip all confirmation when migrating."
+        )
+        parser.add_argument(
             '--verify-references',
             action='store_true',
             default=False,
@@ -81,6 +87,18 @@ class Command(BaseCommand):
         if get_completed_status(app_name):
             self.show_completed_message(app_name)
             return
+
+        self.skip_all = options.get('skip_all')
+        if self.skip_all:
+            confirm = get_confirmation("You have elected to skip all the confirmation prompts. "
+                                       "Are you sure?")
+            if not confirm:
+                return
+        if self.skip_all and not has_no_pending_git_changes():
+            self.stdout.write(self.style.ERROR(
+                "You have un-committed changes. Please commit these changes before proceeding...\n"
+            ))
+            ensure_no_pending_changes_before_continuing()
 
         spec = get_spec('bootstrap_3_to_5')
         template_name = options.get('template_name')
@@ -167,13 +185,20 @@ class Command(BaseCommand):
             self.clear_screen()
             file_type = "templates" if is_template else "javascript"
             self.stdout.write(self.format_header(f"Migrating {app_name} {file_type}..."))
-            confirm = get_confirmation(f'Ready to migrate "{short_path}"?', default='y')
-            if not confirm:
-                self.write_response(f"ok, skipping {short_path}")
-                continue
+
+            if not self.skip_all:
+                confirm = get_confirmation(f'Ready to migrate "{short_path}"?', default='y')
+                if not confirm:
+                    self.write_response(f"ok, skipping {short_path}")
+                    continue
 
             self.stdout.write("\n")
-            review_changes = get_confirmation('Do you want to review each change line-by-line here?', default='n')
+            if not self.skip_all:
+                review_changes = get_confirmation(
+                    'Do you want to review each change line-by-line here?', default='n'
+                )
+            else:
+                review_changes = False
             self.migrate_single_file(app_name, file_path, spec, is_template, review_changes)
 
     def migrate_single_file(self, app_name, file_path, spec, is_template, review_changes):
@@ -304,11 +329,12 @@ class Command(BaseCommand):
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
 
-        confirm = get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
-                                   f'and update references?', default='y')
-        if not confirm:
-            self.write_response("ok, canceling split and rolling back changes...")
-            return
+        if not self.skip_all:
+            confirm = get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
+                                       f'and update references?', default='y')
+            if not confirm:
+                self.write_response("ok, canceling split and rolling back changes...")
+                return
 
         has_no_existing_changes = has_no_pending_git_changes()
         if not has_no_existing_changes:
@@ -469,6 +495,10 @@ class Command(BaseCommand):
         ensure_no_pending_changes_before_continuing()
 
     def suggest_commit_message(self, message, show_apply_commit=False):
+        if self.skip_all and show_apply_commit:
+            apply_commit(message)
+            return
+
         self.stdout.write("\nNow would be a good time to review changes with git and "
                           "commit before moving on to the next template.")
         if show_apply_commit:
