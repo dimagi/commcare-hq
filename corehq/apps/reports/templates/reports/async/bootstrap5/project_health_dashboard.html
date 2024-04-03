@@ -1,0 +1,41 @@
+{% extends report_base|default:"reports/async/default.html" %}
+
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block reportcontent %}
+  <div id="six-months-reports" class="hide" data-value='{{ six_months_reports|JSON }}'></div>
+  <div class="row">
+    <div class="col-lg-12">
+      {% if request.user.is_superuser %}
+        <p>
+          <a href="{% url 'domain_internal_settings' domain %}">
+            {% trans "Set Performance Threshold" %}
+          </a>
+        </p>
+      {% else %}
+        <p class="text-body-secondary">
+          {% blocktrans %}
+            Please use the "Report an Issue" option from the help menu if you would like to change the performance threshold.
+            It is currently set to {{ threshold }} forms per month.
+          {% endblocktrans %}
+        </p>
+      {% endif %}
+    </div>
+    <div class="col-lg-6">
+      <h2>{% trans "Active Users Trend" %}</h2>
+      <p class="lead">
+        {% trans "Proportion of users that are active (submitting at least one form) over time." %}
+      </p>
+      <div id="active_linechart"><svg height="300px"></svg></div>
+    </div>
+    <div class="col-lg-6">
+      <h2>{% trans "High / Low Performing User Trends" %}</h2>
+      <p class="lead">
+        {% trans "How the counts of high / low performing users have changed in the last six months." %}
+      </p>
+      <div id="perform_chart"><svg height="300px"></svg></div>
+    </div>
+    {% include "reports/project_health/partials/bootstrap3/users_tables.html"%}
+  </div>
+{% endblock reportcontent %}
