@@ -817,7 +817,6 @@ class DeleteCaseView(BaseProjectReportSectionView):
             messages.error(request, msg, extra_tags='html')
             return HttpResponseRedirect(self.get_redirect_url())
         else:
-            msg = self.delete_dict['main_case_name'] + msg
             messages.success(request, msg)
             return HttpResponseRedirect(reverse('project_report_dispatcher',
                                                 args=(self.domain, 'submit_history')))
