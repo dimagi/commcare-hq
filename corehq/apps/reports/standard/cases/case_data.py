@@ -418,7 +418,7 @@ def download_case_history(request, domain, case_id):
 @location_safe
 class CaseAttachmentsView(CaseDataView):
     urlname = 'single_case_attachments'
-    template_name = "reports/reportdata/case_attachments.html"
+    template_name = "reports/reportdata/bootstrap3/case_attachments.html"
     page_title = gettext_lazy("Case Attachments")
     http_method_names = ['get']
 
