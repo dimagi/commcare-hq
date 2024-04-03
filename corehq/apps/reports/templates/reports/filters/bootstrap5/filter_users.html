@@ -1,0 +1,28 @@
+{% extends 'reports/filters/bootstrap3/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block filter_content %}
+  {% if show_user_filter %}
+    <div id="{{ css_id }}"
+         class="btn-group btn-group-separated report-filter-button-group report-filter-user-filter"
+         data-bs-toggle="buttons-checkbox"
+         data-toggle-users="{{ toggle_users }}">
+      {% for user in toggle_users %}
+        <button class="btn {% if user.show %} active{% else %} btn-outline-primary{% endif %} user-type-btn"
+                data-checkfilter="user-filter-{{ user.type }}"
+                data-ufilter="{{ user.type }}"
+                id="btn-user-filter-{{ user.type }}">
+          {{ user.name }}
+        </button>
+      {% endfor %}
+    </div>
+    {% for user in toggle_users %}
+      <input type="checkbox" name="{{ slug }}" value="{{ user.type }}" class="hide" id="user-filter-{{ user.type }}" {% if user.show %}checked="checked"{% endif %}/>
+    {% endfor %}
+  {% else %}
+    <div id="{{ css_id }}" class="btn-group" data-bs-toggle="buttons-checkbox">
+      <button class="btn btn-primary">{% trans "Mobile Workers Only" %}</button>
+    </div>
+  {% endif %}
+{% endblock %}
