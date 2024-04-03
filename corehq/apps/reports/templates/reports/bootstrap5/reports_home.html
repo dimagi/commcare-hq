@@ -206,10 +206,10 @@
               </div>
               <div style="display: none" data-bind="visible: !isLoadingPanel() && !$root.bulkAction()">
                 <div data-bind="if: is_owner">
-                  {% include 'reports/partials/scheduled_reports_table.html' with is_owner=True %}
+                  {% include 'reports/partials/bootstrap5/scheduled_reports_table.html' with is_owner=True %}
                 </div>
                 <div data-bind="if: !is_owner">
-                  {% include 'reports/partials/scheduled_reports_table.html' with is_owner=False %}
+                  {% include 'reports/partials/bootstrap5/scheduled_reports_table.html' with is_owner=False %}
                 </div>
               </div>
               <pagination data-bind="visible: scheduledReports().length && !isLoadingPanel() && !$root.bulkAction()"

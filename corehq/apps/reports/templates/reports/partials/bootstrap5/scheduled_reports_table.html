@@ -1,0 +1,184 @@
+{% load case_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load compress %}
+
+<table class="table table-striped table-bordered"
+       data-bind="visible: scheduledReports().length">
+  <thead>
+    <tr>
+      {% if is_owner or is_admin %}
+        <th class="col-md-1">
+          {% trans "Bulk Actions" %}
+          <button type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  data-bind="click: selectAll">
+            {% trans 'All' %}
+          </button>
+          <button type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  data-bind="click: selectNone">
+            {% trans 'None' %}
+          </button>
+        </th>
+      {% endif %}
+      {% if not is_owner %}
+        <th class="col-md-2">{% trans "Owner" %}</th>
+      {% endif %}
+      <th class="{% if is_owner %}col-md-4{% else %}col-md-2{% endif %}">{% trans "Reports" %}</th>
+      <th class="col-md-2">{% trans "Day and Time" %}</th>
+      <th class="col-md-2">{% trans "Recipients" %}</th>
+      <th class="col-md-4">{% trans "Actions" %}</th>
+    </tr>
+  </thead>
+  <tbody data-bind="foreach: items">
+    <tr>
+
+      {% if is_owner or is_admin %}
+        <td>
+          <div class="checkbox checkbox-table-cell">
+            <label>
+              <input type="checkbox" data-bind="checked: addedToBulk" />
+            </label>
+          </div>
+        </td>
+      {% endif %}
+
+      {% if not is_owner %}
+        <td data-bind="text:owner_email"></td>
+      {% endif %}
+
+      <td>
+        <div data-bind="if: !configMany">
+          <div data-bind="foreach: configs">
+            <a data-bind="attr: {href: url}"><!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)</a>
+          </div>
+        </div>
+        <div data-bind="if: configMany">
+          <ul style="float: left">
+            <div data-bind="foreach: configs">
+              <li ><a data-bind="attr: {href: url}"><!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)</a></li>
+            </div>
+          </ul>
+        </div>
+      </td>
+
+      <td>
+        <!-- ko text: day_name --><!-- /ko -->
+        <!-- ko if: hour -->
+          at <!-- ko text: hour --><!-- /ko -->:00
+        <!-- /ko -->
+      </td>
+
+      <td>
+        {# handles old documents #}
+        <div data-bind="if: is_owner">
+          <div data-bind="if: send_to_owner">
+            {% trans "me" %}<span data-bind="if: recipient_email_count">, </span>
+          </div>
+          <div data-bind="foreach: recipient_emails">
+            <!-- ko text: $data --><!-- /ko --><span data-bind="ifnot: ($index() == ($parent.recipient_emails().length - 1))">, </span>
+          </div>
+        </div>
+        <div data-bind="if: !is_owner">
+          <div data-bind="if: !is_admin">
+            {% trans "me (and others)" %}
+          </div>
+          <div data-bind="if: is_admin">
+            <div data-bind="if: send_to_owner"> <!-- || user_ids"> -->
+              <!-- ko text: owner_email --><!-- /ko --><span data-bind="if: recipient_emails">,</span>
+            </div>
+            <div data-bind="foreach: recipient_emails">
+              <div data-bind="if: user_email = $data">
+                {% trans "me" %}<span data-bind="ifnot: ($index() == ($parent.recipient_emails().length - 1))">, </span>
+              </div>
+              <div data-bind="if: user_email != $data">
+                <!-- ko text: $data --><!-- /ko --><span data-bind="ifnot: ($index() == ($parent.recipient_emails().length - 1))">, </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </td>
+
+      <td>
+        <div class="btn-toolbar">
+          <div class="btn-group">
+            <div data-bind="if: !is_editable || !is_owner && !is_admin">
+              <button type="button" class="btn btn-outline-primary disabled" disabled="disabled">
+                <i class="fa fa-edit"></i> {% trans "Edit" %}
+              </button>
+            </div>
+            <div data-bind="ifnot: !is_editable || !is_owner && !is_admin">
+              <a class="btn btn-outline-primary"
+                 data-bind="attr: {href: editUrl}">
+                <i class="fa fa-edit"></i> {% trans "Edit" %}
+              </a>
+            </div>
+          </div>
+          <div class="btn-group">
+            <a class="btn btn-outline-primary"
+               data-bind="attr: {href: viewUrl}">
+              <i class="fa-solid fa-eye"></i> {% trans "View" %}
+            </a>
+            <a class="btn btn-outline-primary {% if not is_owner and not is_admin %}disabled{% endif %}"
+               data-bind="attr: {href: sendUrl}">
+              <i class="fa fa-envelope"></i> {% trans "Send Now" %}
+            </a>
+          </div>
+
+          <div class="btn-group">
+            <div data-bind="if: !is_owner && !is_admin">
+              <button type="button" class="btn btn-outline-danger disabled" disabled="disabled">
+                <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
+              </button>
+            </div>
+            <div data-bind="if: is_owner || is_admin">
+              <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bind="attr: {href: '#delete-report-modal-' + id() }">
+                <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
+              </button>
+            </div>
+          </div>
+          <div class="btn-group">
+            <div data-bind="if: !is_owner && !is_admin">
+              <a class="btn btn-outline-primary" data-bind="attr: {href: unsubscribeUrl}">
+                <i class="fa fa-ban"></i> {% trans "Unsubscribe me" %}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delete modal -->
+        <div data-bind="attr: {id: 'delete-report-modal-' + id() }" class="modal fade">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">{% trans "Stop sending report?" %}</h4>
+              </div>
+              <form name="delete_scheduled_report" data-bind="attr: {action: deleteUrl}" method="post">
+                {% csrf_token %}
+                <div class="modal-body" style="word-wrap: break-word">
+                  <p>{% trans "Are you sure you want to stop sending this report?" %}</p>
+                  <div data-bind="with: firstConfig()">
+                    <!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)
+                    <ul data-bind="if: $parent.configMany">
+                      <div data-bind="foreach: $parent.configs().slice(1, $parent.configs().length)" >
+                        <li><!-- ko text: name --><!-- /ko --> (<!-- ko text: report_name --><!-- /ko -->)</li>
+                      </div>
+                    </ul>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans "Cancel" %}</button>
+                  <button class="send-stopper btn btn-outline-danger disable-on-submit"
+                          data-bind="click: deleteScheduledReport">{% trans 'Stop Sending' %}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      </td>
+    </tr>
+  </tbody>
+</table>
