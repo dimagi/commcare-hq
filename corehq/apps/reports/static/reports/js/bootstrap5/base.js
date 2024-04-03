@@ -1,4 +1,4 @@
-hqDefine("reports/js/base", function () {
+hqDefine("reports/js/bootstrap5/base", function () {
     $(function () {
         hqImport("reports/js/filters/main").init();
 
