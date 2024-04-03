@@ -1,0 +1,15 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-hqDefine("reports/js/filters/bootstrap3/main", [
++hqDefine("reports/js/filters/bootstrap5/main", [
+     'jquery',
+     'underscore',
+     'knockout',
+-    'hqwebapp/js/bootstrap3/main',
+-    'reports/js/bootstrap3/standard_hq_report',
++    'hqwebapp/js/bootstrap5/main',
++    'reports/js/bootstrap5/standard_hq_report',
+     'reports/js/filters/select2s',
+     'reports/js/filters/phone_number',
+     'reports/js/filters/button_group',

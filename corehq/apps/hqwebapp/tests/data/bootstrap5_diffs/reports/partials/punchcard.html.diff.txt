@@ -1,0 +1,16 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+ {% load i18n %}
+-<div class="panel panel-default">
+-  <div class="panel-heading">
+-    <h2 class="panel-title">{{ report.title }}: {% trans "Hour vs. Weekday" %}</h2>
++<div class="card card-default">
++  <div class="card-header">
++    <h2 class="card-title">{{ report.title }}: {% trans "Hour vs. Weekday" %}</h2>
+   </div>
+-  <div class="panel-body">
++  <div class="card-body">
+     {% if error %}
+       <div class="alert alert-info">{{ error }}</div>
+     {% endif %}

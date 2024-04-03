@@ -1,0 +1,13 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+-hqDefine("reports/js/bootstrap3/hq_report", [
++hqDefine("reports/js/bootstrap5/hq_report", [
+     'jquery',
+     'knockout',
+     'underscore',
+-    'hqwebapp/js/bootstrap3/alert_user',
++    'hqwebapp/js/bootstrap5/alert_user',
+     'analytix/js/kissmetrix',
+     'hqwebapp/js/initial_page_data',
+     'hqwebapp/js/bootstrap3/widgets', //multi-emails

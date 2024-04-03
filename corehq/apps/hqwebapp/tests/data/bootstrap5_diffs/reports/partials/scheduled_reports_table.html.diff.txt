@@ -1,0 +1,109 @@
+--- 
++++ 
+@@ -8,27 +8,27 @@
+   <thead>
+     <tr>
+       {% if is_owner or is_admin %}
+-        <th class="col-sm-1">
++        <th class="col-md-1">
+           {% trans "Bulk Actions" %}
+           <button type="button"
+-                  class="btn btn-xs btn-default"
++                  class="btn btn-sm btn-outline-primary"
+                   data-bind="click: selectAll">
+             {% trans 'All' %}
+           </button>
+           <button type="button"
+-                  class="btn btn-xs btn-default"
++                  class="btn btn-sm btn-outline-primary"
+                   data-bind="click: selectNone">
+             {% trans 'None' %}
+           </button>
+         </th>
+       {% endif %}
+       {% if not is_owner %}
+-        <th class="col-sm-2">{% trans "Owner" %}</th>
++        <th class="col-md-2">{% trans "Owner" %}</th>
+       {% endif %}
+-      <th class="{% if is_owner %}col-sm-4{% else %}col-sm-2{% endif %}">{% trans "Reports" %}</th>
+-      <th class="col-sm-2">{% trans "Day and Time" %}</th>
+-      <th class="col-sm-2">{% trans "Recipients" %}</th>
+-      <th class="col-sm-4">{% trans "Actions" %}</th>
++      <th class="{% if is_owner %}col-md-4{% else %}col-md-2{% endif %}">{% trans "Reports" %}</th>
++      <th class="col-md-2">{% trans "Day and Time" %}</th>
++      <th class="col-md-2">{% trans "Recipients" %}</th>
++      <th class="col-md-4">{% trans "Actions" %}</th>
+     </tr>
+   </thead>
+   <tbody data-bind="foreach: items">
+@@ -104,23 +104,23 @@
+         <div class="btn-toolbar">
+           <div class="btn-group">
+             <div data-bind="if: !is_editable || !is_owner && !is_admin">
+-              <button type="button" class="btn btn-default disabled" disabled="disabled">
++              <button type="button" class="btn btn-outline-primary disabled" disabled="disabled">
+                 <i class="fa fa-edit"></i> {% trans "Edit" %}
+               </button>
+             </div>
+             <div data-bind="ifnot: !is_editable || !is_owner && !is_admin">
+-              <a class="btn btn-default"
++              <a class="btn btn-outline-primary"
+                  data-bind="attr: {href: editUrl}">
+                 <i class="fa fa-edit"></i> {% trans "Edit" %}
+               </a>
+             </div>
+           </div>
+           <div class="btn-group">
+-            <a class="btn btn-default"
++            <a class="btn btn-outline-primary"
+                data-bind="attr: {href: viewUrl}">
+               <i class="fa-solid fa-eye"></i> {% trans "View" %}
+             </a>
+-            <a class="btn btn-default {% if not is_owner and not is_admin %}disabled{% endif %}"
++            <a class="btn btn-outline-primary {% if not is_owner and not is_admin %}disabled{% endif %}"
+                data-bind="attr: {href: sendUrl}">
+               <i class="fa fa-envelope"></i> {% trans "Send Now" %}
+             </a>
+@@ -128,19 +128,19 @@
+ 
+           <div class="btn-group">
+             <div data-bind="if: !is_owner && !is_admin">
+-              <button type="button" class="btn btn-danger disabled" disabled="disabled">
++              <button type="button" class="btn btn-outline-danger disabled" disabled="disabled">
+                 <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
+               </button>
+             </div>
+             <div data-bind="if: is_owner || is_admin">
+-              <button class="btn btn-danger" data-toggle="modal" data-bind="attr: {href: '#delete-report-modal-' + id() }">
++              <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bind="attr: {href: '#delete-report-modal-' + id() }">
+                 <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
+               </button>
+             </div>
+           </div>
+           <div class="btn-group">
+             <div data-bind="if: !is_owner && !is_admin">
+-              <a class="btn btn-default" data-bind="attr: {href: unsubscribeUrl}">
++              <a class="btn btn-outline-primary" data-bind="attr: {href: unsubscribeUrl}">
+                 <i class="fa fa-ban"></i> {% trans "Unsubscribe me" %}
+               </a>
+             </div>
+@@ -152,7 +152,7 @@
+           <div class="modal-dialog">
+             <div class="modal-content">
+               <div class="modal-header">
+-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
++                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                 <h4 class="modal-title">{% trans "Stop sending report?" %}</h4>
+               </div>
+               <form name="delete_scheduled_report" data-bind="attr: {action: deleteUrl}" method="post">
+@@ -169,8 +169,8 @@
+                   </div>
+                 </div>
+                 <div class="modal-footer">
+-                  <button type="button" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>
+-                  <button class="send-stopper btn btn-danger disable-on-submit"
++                  <button type="button" data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans "Cancel" %}</button>
++                  <button class="send-stopper btn btn-outline-danger disable-on-submit"
+                           data-bind="click: deleteScheduledReport">{% trans 'Stop Sending' %}</button>
+                 </div>
+               </form>

@@ -1,0 +1,38 @@
+--- 
++++ 
+@@ -4,7 +4,7 @@
+   <div class="modal-dialog">
+     <div class="modal-content">
+       <div class="modal-header" style="color:black;">
+-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
++        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+         <h4 class="modal-title">
+           <!-- ko if: action() == 'delete' -->
+             <!-- ko if: isMultiple -->
+@@ -72,7 +72,7 @@
+       </div>
+       <div class="modal-footer">
+         <!-- ko if: action() == 'delete' -->
+-          <button class="btn btn-danger" data-bind="click: bulkDelete" data-dismiss="modal">
++          <button class="btn btn-outline-danger" data-bind="click: bulkDelete" data-bs-dismiss="modal">
+             <!-- ko if: isMultiple -->
+               {% blocktrans %}
+                 Delete <!-- ko text: selectedReportsCount() --><!-- /ko --> Scheduled Reports
+@@ -86,7 +86,7 @@
+           </button>
+         <!-- /ko -->
+         <!-- ko if: action() == 'send' -->
+-          <button class="btn btn-primary" data-bind="click: bulkSend" data-dismiss="modal">
++          <button class="btn btn-primary" data-bind="click: bulkSend" data-bs-dismiss="modal">
+             <!-- ko if: isMultiple -->
+               {% blocktrans %}
+                 Send <!-- ko text: selectedReportsCount() --><!-- /ko --> Scheduled Reports
+@@ -99,7 +99,7 @@
+             <!-- /ko -->
+           </button>
+         <!-- /ko -->
+-        <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
++        <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</a>
+       </div>
+     </div>
+   </div>

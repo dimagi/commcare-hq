@@ -1,0 +1,24 @@
+--- 
++++ 
+@@ -6,10 +6,10 @@
+   {% if show_user_filter %}
+     <div id="{{ css_id }}"
+          class="btn-group btn-group-separated report-filter-button-group report-filter-user-filter"
+-         data-toggle="buttons-checkbox"
++         data-bs-toggle="buttons-checkbox"
+          data-toggle-users="{{ toggle_users }}">
+       {% for user in toggle_users %}
+-        <button class="btn {% if user.show %} active{% else %} btn-default{% endif %} user-type-btn"
++        <button class="btn {% if user.show %} active{% else %} btn-outline-primary{% endif %} user-type-btn"
+                 data-checkfilter="user-filter-{{ user.type }}"
+                 data-ufilter="{{ user.type }}"
+                 id="btn-user-filter-{{ user.type }}">
+@@ -21,7 +21,7 @@
+       <input type="checkbox" name="{{ slug }}" value="{{ user.type }}" class="hide" id="user-filter-{{ user.type }}" {% if user.show %}checked="checked"{% endif %}/>
+     {% endfor %}
+   {% else %}
+-    <div id="{{ css_id }}" class="btn-group" data-toggle="buttons-checkbox">
++    <div id="{{ css_id }}" class="btn-group" data-bs-toggle="buttons-checkbox">
+       <button class="btn btn-primary">{% trans "Mobile Workers Only" %}</button>
+     </div>
+   {% endif %}

@@ -1,0 +1,29 @@
+--- 
++++ 
+@@ -5,13 +5,13 @@
+      data-icon_path="{{ 'leaflet/dist/images'|static }}"
+      data-context="{% html_attr context %}"></div>
+ 
+-<div class="panel panel-default">
+-  <div class="panel-heading">
+-    <h2 class="panel-title">
++<div class="card card-default">
++  <div class="card-header">
++    <h2 class="card-title">
+       {{ report.title }}
+     </h2>
+   </div>
+-  <div class="panel-body">
++  <div class="card-body">
+     <div class="hq-graphic-report">
+       <script type="text/template" id="default_detail_popup">
+         <div class="default-popup">
+@@ -89,7 +89,7 @@
+       </script>
+ 
+       <div id="results-capped" class="alert alert-info" style="display: none;">
+-        <button type="button" class="close" data-dismiss="alert">&times;</button>
++        <button type="button" class="btn-close" data-bs-dismiss="alert">&times;</button>
+         There are <strong id="rows-total"></strong> results for the chosen report filters.
+         However, map display has been capped at the first <strong id="rows-capped"></strong> results.
+       </div>

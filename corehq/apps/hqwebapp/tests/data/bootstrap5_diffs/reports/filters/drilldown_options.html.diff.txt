@@ -1,0 +1,38 @@
+--- 
++++ 
+@@ -5,7 +5,7 @@
+   {% if is_empty %}
+     <div class="alert alert-info">{{ empty_text }}</div>
+   {% else %}
+-    <div id="{{ css_id }}" class="well well-sm report-filter-drilldown-options"
++    <div id="{{ css_id }}" class="card well-sm report-filter-drilldown-options"
+          data-drilldown-map='{% html_attr option_map %}'
+          data-controls='{% html_attr controls %}'
+          data-selected='{{ selected|JSON }}'
+@@ -15,9 +15,9 @@
+       <div data-bind="foreach: controls">
+         <div class="form-group"
+              data-bind="visible: is_visible">
+-          <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: label"
+-                 class="control-label col-xs-4 col-md-2"></label>
+-          <div class="col-xs-8 col-md-10">
++          <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: badge"
++                 class="form-label col-sm-4 col-lg-2"></label>
++          <div class="col-sm-8 col-lg-10">
+             <select  class="form-control" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
+                 options: control_options, optionsText: 'text', optionsValue: 'val', optionsCaption: default_text,
+                 value: selected,
+@@ -26,10 +26,10 @@
+         </div>
+         {% if use_last %}
+           <div class="form-group" data-bind="visible: show_next_drilldown">
+-            <label class="control-label col-xs-4 col-md-2">
+-              <div class="label label-default">{% trans 'Next' %}: <strong data-bind="text: label"></strong></div>
++            <label class="form-label col-sm-4 col-lg-2">
++              <div class="badge text-bg-secondary">{% trans 'Next' %}: <strong data-bind="text: badge"></strong></div>
+             </label>
+-            <div class="col-xs-8 col-md-10">
++            <div class="col-sm-8 col-lg-10">
+               <select class="form-control" disabled="disabled"></select>
+             </div>
+           </div>

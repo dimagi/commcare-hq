@@ -1,0 +1,21 @@
+--- 
++++ 
+@@ -3,15 +3,15 @@
+     also in the single form view page that's accessible from the submit history report or the "View standalone
+     form" button when looking at a form in case history.
+ */
+-hqDefine("reports/js/bootstrap3/single_form", [
++hqDefine("reports/js/bootstrap5/single_form", [
+     "jquery",
+     "underscore",
+     "hqwebapp/js/assert_properties",
+     "hqwebapp/js/initial_page_data",
+-    "hqwebapp/js/bootstrap3/main",
++    "hqwebapp/js/bootstrap5/main",
+     "analytix/js/google",
+     "analytix/js/kissmetrix",
+-    "reports/js/bootstrap3/readable_form",
++    "reports/js/bootstrap5/readable_form",
+     "reports/js/data_corrections",
+     "clipboard/dist/clipboard",
+ ], function (

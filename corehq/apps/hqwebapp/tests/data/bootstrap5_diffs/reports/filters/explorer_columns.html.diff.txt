@@ -1,0 +1,51 @@
+--- 
++++ 
+@@ -8,10 +8,10 @@
+        data-initialvalue="{{ initial_value }}"
+        data-columnsuggestions="{{ column_suggestions }}"
+   >
+-    <div class="panel panel-default">
+-      <div class="panel-heading" role="tab">
+-        <h4 class="panel-title">
+-          <a role="button" data-toggle="collapse" data-parent="#case-list-explorer-columns" href="#columns-editor">
++    <div class="card card-default">
++      <div class="card-header" role="tab">
++        <h4 class="card-title">
++          <a role="button" data-bs-toggle="collapse" data-parent="#case-list-explorer-columns" href="#columns-editor">
+             <span id="panel-chevron">
+               <i class="fa fa-chevron-down"></i>
+             </span>
+@@ -22,7 +22,7 @@
+         </h4>
+       </div>
+       <div id="columns-editor" class="collapse" role="tabpanel">
+-        <div class="panel-body">
++        <div class="card-body">
+           <table class="table table-condensed">
+             <thead>
+             <th>&nbsp;</th>
+@@ -42,13 +42,13 @@
+                                                      explorerColumnsAutocomplete: $parent.suggestedProperties()"
+                   />
+                   <span class="form-control-feedback" data-bind="visible: meta_type">
+-                    <span class="label label-primary" data-bind="text: meta_type"></span>
++                    <span class="badge text-bg-primary" data-bind="text: meta_type"></span>
+                   </span>
+                 </div>
+               </td>
+               <td>
+                 <div class="has-feedback">
+-                  <input type="text" class="form-control" data-bind="value: label"/>
++                  <input type="text" class="form-control" data-bind="value: badge"/>
+                 </div>
+               </td>
+               <td>
+@@ -59,7 +59,7 @@
+             </tr>
+             </tbody>
+           </table>
+-          <button class="btn btn-default" data-bind="click: addProperty">
++          <button class="btn btn-outline-primary" data-bind="click: addProperty">
+             <i class="fa fa-plus"></i>
+             {% trans "Add Property" %}
+           </button>

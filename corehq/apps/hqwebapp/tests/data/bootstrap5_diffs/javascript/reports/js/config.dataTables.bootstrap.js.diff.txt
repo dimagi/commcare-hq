@@ -1,0 +1,8 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-hqDefine("reports/js/bootstrap3/config.dataTables.bootstrap", [
++hqDefine("reports/js/bootstrap5/config.dataTables.bootstrap", [
+     'jquery',
+     'underscore',
+     'analytix/js/google',

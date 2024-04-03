@@ -1,0 +1,28 @@
+--- 
++++ 
+@@ -8,9 +8,9 @@
+      data-auto-drill='{{ auto_drill|JSON }}'
+      data-locs='{% html_attr locations %}'>
+   {% if make_optional %}
+-    <div class="col-sm-12">
++    <div class="col-md-12">
+       <div class="form-group">
+-        <label class="control-label {{ css_label_class }}">{% trans "Location Filter" %}</label>
++        <label class="form-label {{ css_label_class }}">{% trans "Location Filter" %}</label>
+         <div class="{{ css_field_class }}">
+           <select class="form-control"
+                   data-bind="value: show_location_filter">
+@@ -22,11 +22,11 @@
+     </div>
+   {% endif %}
+ 
+-  <div class="col-sm-12">
++  <div class="col-md-12">
+     <div class="form-group"
+          data-bind="visible: show_location_filter_bool()">
+       {# this is wrong, see filters/single_option.html for a proper implementation #}
+-      <label class="control-label {{ css_label_class }}">{{ control_name }}<br>
++      <label class="form-label {{ css_label_class }}">{{ control_name }}<br>
+       </label>
+       <div class="{{ css_field_class }}">
+         <div data-bind="foreach: selected_path" style="display: inline-block;">

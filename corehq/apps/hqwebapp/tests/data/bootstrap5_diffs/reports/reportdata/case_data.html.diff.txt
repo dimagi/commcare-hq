@@ -1,0 +1,222 @@
+--- 
++++ 
+@@ -9,7 +9,7 @@
+   <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
+ {% endblock %}
+ 
+-{% requirejs_main 'reports/js/bootstrap3/case_details' %}
++{% requirejs_main_b5 'reports/js/bootstrap5/case_details' %}
+ 
+ {% block page_content %}
+ 
+@@ -30,7 +30,7 @@
+     <div id="report-content">
+       <div id="tabbed-content-container">
+         <div class="row">
+-          <div class="col-sm-12">
++          <div class="col-md-12">
+             {% if is_case_type_deprecated %}
+               <div class="alert alert-warning">
+                 <p>
+@@ -47,25 +47,25 @@
+           </div>
+         </div>
+         <div class="row">
+-          <div class="col-sm-12">
++          <div class="col-md-12">
+             <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
+               <li>
+-                <a href="#properties" data-toggle="tab">
++                <a href="#properties" data-bs-toggle="tab">
+                   {% trans "Case Properties" %}
+                 </a>
+               </li>
+-              <li><a href="#history" data-toggle="tab">{% trans "Case History" %}</a></li>
++              <li><a href="#history" data-bs-toggle="tab">{% trans "Case History" %}</a></li>
+               {% if case.has_indices %}
+-                <li><a href="#related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
++                <li><a href="#related" data-bs-toggle="tab">{% trans "Related Cases" %}</a></li>
+               {% endif %}
+               {% if case.case_attachments %}
+-                <li><a href="#case-attachments" data-toggle="tab">{% trans "Attachments" %} ({{ case.case_attachments|length }})</a></li>
++                <li><a href="#case-attachments" data-bs-toggle="tab">{% trans "Attachments" %} ({{ case.case_attachments|length }})</a></li>
+               {% endif %}
+               {% if ledgers %}
+-                <li><a href="#case-ledgers" data-toggle="tab">{% trans "Ledger Sections" %}</a></li>
++                <li><a href="#case-ledgers" data-bs-toggle="tab">{% trans "Ledger Sections" %}</a></li>
+               {% endif %}
+               {% if repeat_records %}
+-                <li><a href="#repeat-records" data-toggle="tab">{% trans "Forwarded Records" %}</a></li>
++                <li><a href="#repeat-records" data-bs-toggle="tab">{% trans "Forwarded Records" %}</a></li>
+               {% endif %}
+             </ul>
+ 
+@@ -74,18 +74,18 @@
+                 <div class="row-fluid">
+                   {% if case_property_tables %}
+                     {% if show_expand_collapse_buttons %}
+-                      <div class="pull-right btn-grp" role="group">
+-                        <button class="btn btn-sm btn-default" type="button" id="expand-all-accordion-btn">Expand All</button>
+-                        <button class="btn btn-sm btn-default" type="button" id="collapse-all-accordion-btn">Collapse All</button>
++                      <div class="float-end btn-grp" role="group">
++                        <button class="btn btn-sm btn-outline-primary" type="button" id="expand-all-accordion-btn">Expand All</button>
++                        <button class="btn btn-sm btn-outline-primary" type="button" id="collapse-all-accordion-btn">Collapse All</button>
+                       </div>
+                     {% endif %}
+                     <div class="panel-group" id="case-properties-accordion">
+                       {% for table in case_property_tables %}
+-                        <div class="panel panel-appmanager" id="property-table-{{ forloop.counter }}-parent">
++                        <div class="card panel-appmanager" id="property-table-{{ forloop.counter }}-parent">
+                           {% if table.name is not None %}
+-                            <div class="panel-heading">
+-                              <h4 class="panel-title">
+-                                <a data-toggle="collapse"
++                            <div class="card-header">
++                              <h4 class="card-title">
++                                <a data-bs-toggle="collapse"
+                                    data-parent="#property-table-{{ forloop.counter }}-parent"
+                                    href="#property-table-{{ forloop.counter }}"
+                                    class="collapse in">
+@@ -96,7 +96,7 @@
+                             </div>
+                           {% endif %}
+                           <div class="panel-collapse collapse in" id="property-table-{{ forloop.counter }}">
+-                            <div class="panel-body">
++                            <div class="card-body">
+                               {% include "reports/partials/case_property_table.html" with rows=table.rows %}
+                             </div>
+                           </div>
+@@ -104,8 +104,8 @@
+                       {% endfor %}
+                     </div>
+                   {% else %}
+-                    <div class="well clearfix col-lg-10 col-md-12 col-sm-12">
+-                      <a target="_blank" class="pull-right"
++                    <div class="card clearfix col-xl-10 col-lg-12 col-md-12">
++                      <a target="_blank" class="float-end"
+                          href="https://www.youtube.com/watch?v=AVSLmCJxPjY&feature=youtu.be&t=3m34s">
+                         <img src="{% static 'hqwebapp/images/case_properties_video.png' %}"
+                              style="margin-left: 20px; width: 320px; height: 180px" /><!-- have to specify width & height -->
+@@ -145,7 +145,7 @@
+               {% if ledgers %}
+                 <div class="tab-pane" id="case-ledgers">
+                   {% if show_transaction_export %}
+-                    <a href="{% url 'export_case_transactions' case.domain case.case_id %}" class="pull-right">{% trans "download complete transaction history" %}</a>
++                    <a href="{% url 'export_case_transactions' case.domain case.case_id %}" class="float-end">{% trans "download complete transaction history" %}</a>
+                   {% endif %}
+                   {% for section_id, product_map in ledgers.items %}
+                     <h1>{% blocktrans %}Section: {{ section_id }}{% endblocktrans %}</h1>
+@@ -174,7 +174,7 @@
+               {% endif %}
+ 
+               <div class="tab-pane row" id="history">
+-                <div class="col-sm-5 dataTables_wrapper">
++                <div class="col-md-5 dataTables_wrapper">
+                   <ul data-bind="foreach: $root.form_type_facets">
+                     <li>
+                       <strong><span data-bind="text: form_name"></span></strong>:
+@@ -188,10 +188,10 @@
+                   <table class="table table-striped datatable table-hover">
+                     <thead>
+                     <tr>
+-                      <th class="col-sm-2">{% trans "Received" %} ({{ tz_abbrev }})</th>
+-                      <th class="col-sm-2">{% trans "Form" %}</th>
+-                      <th class="col-sm-2">{% trans "User" %}</th>
+-                      <th class="col-sm-2">{% trans "User Type" %}</th>
++                      <th class="col-md-2">{% trans "Received" %} ({{ tz_abbrev }})</th>
++                      <th class="col-md-2">{% trans "Form" %}</th>
++                      <th class="col-md-2">{% trans "User" %}</th>
++                      <th class="col-md-2">{% trans "User Type" %}</th>
+                     </tr>
+                     </thead>
+                     <tbody data-bind="foreach: xforms">
+@@ -206,7 +206,7 @@
+                       </td>
+                       <td>
+                         <span data-bind="text: user_type"></span>
+-                        <div class="pull-right"><i class="fa fa-chevron-right"></i></div>
++                        <div class="float-end"><i class="fa fa-chevron-right"></i></div>
+                       </td>
+                     </tr>
+                     </tbody>
+@@ -219,22 +219,22 @@
+                       <select id="page_size_select" class="form-control" data-bind="options: pagination_options, value: $root.page_size"></select> <span>/ {% trans "page" %}</span>
+                     </div>
+ 
+-                    <div class="pull-right" data-bind="visible: $root.page_count() > 1">
++                    <div class="float-end" data-bind="visible: $root.page_count() > 1">
+                       <ul class="pagination">
+                         <li>
+-                          <button class="btn btn-sm btn-default" type="button" data-bind="enable: $root.disp_page_index() > 1, click: $root.prevPage">«</button>
++                          <button class="btn btn-sm btn-outline-primary" type="button" data-bind="enable: $root.disp_page_index() > 1, click: $root.prevPage">«</button>
+                         </li>
+                         <li class="active">
+                           <select class="form-control" data-bind="options: all_pages(), value: $root.disp_page_index"></select>
+                         </li>
+                         <li>
+-                          <button class="btn btn-sm btn-default" type="button" data-bind="enable: $root.page_end_num() < $root.total_rows(), click: $root.nextPage">»</button>
++                          <button class="btn btn-sm btn-outline-primary" type="button" data-bind="enable: $root.page_end_num() < $root.total_rows(), click: $root.nextPage">»</button>
+                         </li>
+                       </ul>
+                     </div>
+                   </div>
+                 </div>
+-                <div class="col-sm-7">
++                <div class="col-md-7">
+                   <div id="xform_data_panel"></div>
+                 </div>
+               </div> <!-- end case-history tab -->
+@@ -250,36 +250,36 @@
+ 
+     {% if can_edit_data %}
+       <div id="case-actions" class="clearfix form-actions">
+-        <div class="col-sm-12">
+-          <a class="btn btn-default pull-left" href="{% url 'download_case_history' domain case_id %}">
++        <div class="col-md-12">
++          <a class="btn btn-outline-primary float-start" href="{% url 'download_case_history' domain case_id %}">
+             <i class="fa-solid fa-cloud-arrow-down"></i>
+             {% trans 'Download Case History' %}
+           </a>
+           {% if show_properties_edit %}
+-            <button type="button" class="btn btn-default pull-left data-corrections-trigger">
++            <button type="button" class="btn btn-outline-primary float-start data-corrections-trigger">
+               <i class="fa fa-shower"></i>
+               {% trans 'Clean Case Data' %}
+             </button>
+           {% endif %}
+           {% if show_case_rebuild %}
+-            <form action="{% url 'resave_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
+-              <button type="submit" class="btn btn-default disable-on-submit" >
++            <form action="{% url 'resave_case' domain case_id %}" method="post" class="float-start">{% csrf_token %}
++              <button type="submit" class="btn btn-outline-primary disable-on-submit" >
+                 <i class="fa fa-save"></i>
+                 {% trans 'Resave Case' %}
+               </button>
+             </form>
+           {% endif %}
+           {% if show_case_rebuild and not is_usercase %}
+-            <form action="{% url 'rebuild_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
+-              <button type="submit" class="btn btn-default disable-on-submit" >
++            <form action="{% url 'rebuild_case' domain case_id %}" method="post" class="float-start">{% csrf_token %}
++              <button type="submit" class="btn btn-outline-primary disable-on-submit" >
+                 <i class="fa fa-cubes"></i>
+                 {% trans 'Rebuild Case' %}
+               </button>
+             </form>
+           {% endif %}
+           {% if not case.closed and not is_usercase %}
+-            <form action="{% url 'close_case' domain case_id %}" method="post" id="close_case" class="pull-left">{% csrf_token %}
+-              <button type="submit" class="btn btn-danger disable-on-submit" >
++            <form action="{% url 'close_case' domain case_id %}" method="post" id="close_case" class="float-start">{% csrf_token %}
++              <button type="submit" class="btn btn-outline-danger disable-on-submit" >
+                 <i class="fa fa-archive"></i>
+                 {% trans 'Close Case' %}
+               </button>
+@@ -293,6 +293,6 @@
+ 
+ {% block modals %}{{ block.super }}
+   {% if show_properties_edit %}
+-    {% include 'reports/partials/bootstrap3/data_corrections_modal.html' %}
++    {% include 'reports/partials/bootstrap5/data_corrections_modal.html' %}
+   {% endif %}
+ {% endblock %}

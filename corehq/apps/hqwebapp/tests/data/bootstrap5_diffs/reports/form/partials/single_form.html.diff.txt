@@ -1,0 +1,229 @@
+--- 
++++ 
+@@ -85,7 +85,7 @@
+ {% endif %}
+ 
+ <div class="clearfix">
+-  <div class="pull-right">
++  <div class="float-end">
+     {% if auth_context.authenticated %}
+       <i class="fa fa-lock" title="{% trans "Secure submission" %}"></i>
+       {% if user_info.id != auth_user_info.id %}
+@@ -121,13 +121,13 @@
+ </div>
+ <ul class="nav nav-tabs sticky-tabs">
+   <li>
+-    <a href="#form-data" data-toggle="tab">
++    <a href="#form-data" data-bs-toggle="tab">
+       {% trans "Form Properties" %}
+     </a>
+   </li>
+   {% if cases %}
+     <li>
+-      <a href="#form-case-data" data-toggle="tab">
++      <a href="#form-case-data" data-bs-toggle="tab">
+         {% trans "Case Changes" %}
+       </a>
+     </li>
+@@ -135,7 +135,7 @@
+ 
+   {% if instance_history %}
+     <li>
+-      <a href="#form-history" data-toggle="tab">
++      <a href="#form-history" data-bs-toggle="tab">
+         {% trans "Form History" %}
+       </a>
+     </li>
+@@ -143,7 +143,7 @@
+ 
+   {% if form_meta_data %}
+     <li>
+-      <a href="#form-metadata" data-toggle="tab">
++      <a href="#form-metadata" data-bs-toggle="tab">
+         {% trans "Form Metadata" %}
+       </a>
+     </li>
+@@ -151,13 +151,13 @@
+ 
+   {% if instance.attachments %}
+     <li>
+-      <a href="#form-attachments" data-toggle="tab">
++      <a href="#form-attachments" data-bs-toggle="tab">
+         {% trans "Attachments" %}
+       </a>
+     </li>
+   {% endif %}
+   <li>
+-    <a href="#form-xml" data-toggle="tab">
++    <a href="#form-xml" data-bs-toggle="tab">
+       {% trans "Raw XML" %}
+     </a>
+   </li>
+@@ -166,14 +166,14 @@
+   <div class="tab-pane" id="form-data">
+     <div class="btn-toolbar row" id='form-actions-toolbar'>
+       {% if context_case_id %}
+-        <a class="btn btn-default"
++        <a class="btn btn-outline-primary"
+            href="{% url "render_form_data" instance.domain instance.form_id %}">
+           {% trans "View standalone form" %}
+         </a>
+       {% endif %}
+       {% if show_edit_options %}
+         {% if show_edit_submission %}
+-          <button type="button" class="btn btn-default pull-left data-corrections-trigger">
++          <button type="button" class="btn btn-outline-primary float-start data-corrections-trigger">
+             <i class="fa fa-shower"></i>
+             {% trans 'Clean Form Submission' %}
+           </button>
+@@ -185,7 +185,7 @@
+                   data-content="{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}"
+                   data-placement="left"
+             ></span>
+-            <button type="submit" class="btn btn-danger" id="archive-form-btn">
++            <button type="submit" class="btn btn-outline-danger" id="archive-form-btn">
+               {% trans "Archive this form" %}
+               <i class="fa fa-refresh fa-spin" id="archive-spinner" style="display:none"></i>
+             </button>
+@@ -197,7 +197,7 @@
+                   data-content="{% trans "Restoring an edited form will undo any later edits made. This operation is reversible." %}"
+                   data-placement="left"
+             ></span>
+-            <button type="submit" class="btn btn-danger" id="archive-form-btn">
++            <button type="submit" class="btn btn-outline-danger" id="archive-form-btn">
+               {% trans "Restore this version" %}
+               <i class="fa fa-refresh fa-spin" id="archive-spinner" style="display:none"></i>
+             </button>
+@@ -211,7 +211,7 @@
+                   data-content="{% trans "Restoring this form will cause it to show up in reports again." %}"
+                   data-placement="left"
+             ></span>
+-            <button type="submit" class="btn btn-default" id="unarchive-form-btn">
++            <button type="submit" class="btn btn-outline-primary" id="unarchive-form-btn">
+               {% trans "Restore this form" %}
+               <i class="fa fa-refresh fa-spin" id="unarchive-spinner" style="display:none"></i>
+             </button>
+@@ -225,7 +225,7 @@
+                   data-content="{% trans "Resaving a form manually can cause it to be reincluded in reports if something went wrong during initial processing." %}"
+                   data-placement="left"
+             ></span>
+-            <button type="submit" class="btn btn-default" id="resave-form-btn">
++            <button type="submit" class="btn btn-outline-primary" id="resave-form-btn">
+               {% trans "Resave this form" %}
+               <i class="fa fa-refresh fa-spin" id="resave-spinner" style="display:none"></i>
+             </button>
+@@ -238,7 +238,7 @@
+                   data-content="{% trans "This is a permanent action that cannot be undone." %}"
+                   data-placement="left"
+             ></span>
+-            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#delete-form-modal">
++            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delete-form-modal">
+               <i class="fa-regular fa-trash-can"></i>
+               {% trans 'Delete this form' %}
+             </button>
+@@ -247,20 +247,20 @@
+ 
+       {% endif %}
+     </div>
+-    {% include 'reports/form/partials/bootstrap3/readable_form.html' with questions=form_data %}
++    {% include 'reports/form/partials/bootstrap5/readable_form.html' with questions=form_data %}
+   </div>
+ 
+   {% if cases %}
+     <div class="tab-pane" id="form-case-data">
+       <div class="accordion">
+         {% for case_data in cases %}
+-          <div class="panel panel-default">
+-            <div class="panel-heading">
+-              <h4 class="panel-title accordion-toggle">
++          <div class="card card-default">
++            <div class="card-header">
++              <h4 class="card-title accordion-toggle">
+                 {% if case_data.valid_case and case_data.case_type and cases|length > 1 %}
+-                  <span class="label label-default">{{case_data.case_type}}</span>
++                  <span class="badge text-bg-secondary">{{case_data.case_type}}</span>
+                 {% endif %}
+-                <a data-toggle="collapse"
++                <a data-bs-toggle="collapse"
+                    href="#form-case-acc-{{ forloop.counter }}">
+                   {% if case_data.valid_case and case_data.name %}
+                     {{ case_data.name }}
+@@ -270,9 +270,9 @@
+                 </a>
+ 
+                 {% if case_data.valid_case %}
+-                  <span class="pull-right">
++                  <span class="float-end">
+                     {% if case_data.is_current_case %}
+-                      <strong class="text-muted">{% trans "(this case)" %}</strong>
++                      <strong class="text-body-secondary">{% trans "(this case)" %}</strong>
+                     {% else %}
+                       <a class="btn btn-sm btn-primary" href="{{ case_data.url }}" style="margin-top: -6px;">
+                         {% trans "View" %}
+@@ -282,11 +282,11 @@
+                 {% endif %}
+               </h4>
+             </div>
+-            <div class="panel-body collapse
++            <div class="card-body collapse
+                     {% if cases|length == 1 %}in{% endif %}"
+                  id="form-case-acc-{{ forloop.counter }}">
+               <div class="accordion-inner">
+-                {% include "reports/partials/bootstrap3/form_property_table.html" with properties=case_data.properties %}
++                {% include "reports/partials/bootstrap5/form_property_table.html" with properties=case_data.properties %}
+               </div>
+             </div>
+           </div>
+@@ -320,7 +320,7 @@
+ 
+   {% if form_meta_data %}
+     <div class="tab-pane" id="form-metadata">
+-      {% include "reports/partials/bootstrap3/form_property_table.html" with properties=form_meta_data %}
++      {% include "reports/partials/bootstrap5/form_property_table.html" with properties=form_meta_data %}
+     </div>
+   {% endif %}
+ 
+@@ -345,10 +345,10 @@
+   {% endif %}
+   <div class="tab-pane" id="form-xml">
+     <p class="btn-group">
+-      <a class="btn btn-default" href="{% url "download_form" domain instance.form_id %}" target="_blank">
++      <a class="btn btn-outline-primary" href="{% url "download_form" domain instance.form_id %}" target="_blank">
+         <i class="fa-solid fa-up-right-from-square"></i>&nbsp;{% trans "Open XML in New Window" %}
+       </a>
+-      <button class="btn btn-default copy-xml" data-toggle="tooltip" data-trigger="manual">
++      <button class="btn btn-outline-primary copy-xml" data-bs-toggle="tooltip" data-trigger="manual">
+         <i class="fa-regular fa-files"></i>&nbsp;{% trans "Copy XML to clipboard" %}
+       </button>
+     </p>
+@@ -358,7 +358,7 @@
+ 
+ {% if show_edit_options %}
+   {% if show_edit_submission %}
+-    {% include 'reports/partials/bootstrap3/data_corrections_modal.html' %}
++    {% include 'reports/partials/bootstrap5/data_corrections_modal.html' %}
+   {% endif %}
+ {% endif %}
+ 
+@@ -366,7 +366,7 @@
+   <div class="modal-dialog">
+     <div class="modal-content">
+       <div class="modal-header">
+-        <button type="button" class="close" data-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
++        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
+         <h4 class="modal-title">{% trans 'Permanently Delete Form' %}</h4>
+       </div>
+       <div class="modal-body">
+@@ -383,10 +383,10 @@
+             {% endblocktrans %}
+           </p>
+           <div class="modal-footer">
+-            <button type="button" class="btn btn-default disable-on-submit-no-spinner" data-dismiss="modal">
++            <button type="button" class="btn btn-outline-primary disable-on-submit-no-spinner" data-bs-dismiss="modal">
+               {% trans "Cancel" %}
+             </button>
+-            <button type="submit" class="btn btn-danger disable-on-submit" id="delete-form-btn">
++            <button type="submit" class="btn btn-outline-danger disable-on-submit" id="delete-form-btn">
+               {% trans "Delete" %}
+             </button>
+           </div>

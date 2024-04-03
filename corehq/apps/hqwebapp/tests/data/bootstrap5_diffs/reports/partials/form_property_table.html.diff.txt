@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -2,7 +2,7 @@
+ 
+ <div class="property-table-row">
+   <div class="property-table-container inherit-float">
+-    <div class="form-case-changes well well-loner">
++    <div class="form-case-changes card well-loner">
+       <dl>
+         {% for prop in properties %}
+           {% if prop.name or prop.value %}

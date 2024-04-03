@@ -1,0 +1,21 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-hqDefine("reports/js/bootstrap3/case_details", [
++hqDefine("reports/js/bootstrap5/case_details", [
+     'jquery',
+     'knockout',
+     'underscore',
+@@ -8,10 +8,10 @@
+     'analytix/js/kissmetrix',
+     'case/js/case_property_modal',
+     'reports/js/data_corrections',
+-    'reports/js/bootstrap3/single_form',
++    'reports/js/bootstrap5/single_form',
+     'case/js/case_hierarchy',
+     'case/js/repeat_records',
+-    'reports/js/bootstrap3/readable_form',
++    'reports/js/bootstrap5/readable_form',
+     'bootstrap',    // needed for $.tab
+     'jquery-memoized-ajax/jquery.memoized.ajax.min',
+ ], function (

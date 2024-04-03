@@ -1,0 +1,33 @@
+--- 
++++ 
+@@ -21,7 +21,7 @@
+     <tr class="{% cycle "odd" "even" %}">
+       <td class="control-group form-inline">
+         {{ export.name|default:"[blank]" }}
+-        {% if not deid and export.is_safe %}<span class="label label-default">{% trans "de-identified" %}</span>{% endif %}
++        {% if not deid and export.is_safe %}<span class="badge text-bg-secondary">{% trans "de-identified" %}</span>{% endif %}
+         <div><p class="help-inline">{{ export.formname }}</p></div>
+       </td>
+       <td class="cell-vertical-centered">
+@@ -30,7 +30,7 @@
+         </a>
+       </td>
+       <td class="cell-vertical-centered">
+-        <a class="btn btn-default" href='{% url edit_export_view_name domain export.get_id %}'>
++        <a class="btn btn-outline-primary" href='{% url edit_export_view_name domain export.get_id %}'>
+           <i class="icon-pencil icon-white"></i> {% trans "Edit" %}
+         </a>
+       </td>
+@@ -38,10 +38,10 @@
+         {% if export.default_format == bulk_export_format %}
+           <label>
+             <input type="checkbox" class="select-export" data-bind="event: {change: updateSelectedExports}" value="{{ export.get_id }}"/>
+-            <span class="label label-info">+ {% trans "Bulk Export" %}</span>
++            <span class="badge text-bg-info">+ {% trans "Bulk Export" %}</span>
+           </label>
+         {% else %}
+-          <span class="label custom-bulk-format-na">{{ export.default_format }} {% trans "Not Available" %}</span>
++          <span class="badge custom-bulk-format-na">{{ export.default_format }} {% trans "Not Available" %}</span>
+         {% endif %}
+       </td>
+     </tr>

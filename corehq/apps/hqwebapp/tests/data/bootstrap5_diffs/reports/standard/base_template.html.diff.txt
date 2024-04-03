@@ -1,0 +1,84 @@
+--- 
++++ 
+@@ -4,21 +4,21 @@
+ {% load i18n %}
+ {% load crispy_forms_tags %}
+ 
+-{% block page_sidebar_classes %}sidebar-offcanvas col-xs-12 col-sm-3 col-lg-2{% endblock %}
++{% block page_sidebar_classes %}sidebar-offcanvas col-sm-12 col-md-3 col-xl-2{% endblock %}
+ 
+ {% block page_row_classes %}row-offcanvas row-offcanvas-left{% endblock %}
+ 
+-{% block page_content_classes %}col-xs-12 col-sm-9 col-lg-10{% endblock %}
++{% block page_content_classes %}col-sm-12 col-md-9 col-xl-10{% endblock %}
+ 
+ {% block js %}{{ block.super }}
+   {% compress js %}
+     <script src="{% static 'hqwebapp/js/select2_knockout_bindings.ko.js' %}"></script>
+-    <script src="{% static 'reports/js/bootstrap3/config.dataTables.bootstrap.js' %}"></script>
++    <script src="{% static 'reports/js/bootstrap5/config.dataTables.bootstrap.js' %}"></script>
+     <script src="{% static 'reports/js/datepicker.js' %}"></script>
+-    <script src="{% static 'reports/js/bootstrap3/hq_report.js' %}"></script>
++    <script src="{% static 'reports/js/bootstrap5/hq_report.js' %}"></script>
+     <script src="{% static 'reports/js/reports.util.js' %}"></script>
+-    <script src="{% static 'reports/js/bootstrap3/reports.async.js' %}"></script>
+-    <script src="{% static 'reports/js/bootstrap3/standard_hq_report.js' %}"></script>
++    <script src="{% static 'reports/js/bootstrap5/reports.async.js' %}"></script>
++    <script src="{% static 'reports/js/bootstrap5/standard_hq_report.js' %}"></script>
+     <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
+   {% endcompress %}
+   {% include 'reports/partials/filters_js.html' %}
+@@ -28,13 +28,13 @@
+   {% compress js %}
+     <script src="{% static 'case/js/cheapxml.js' %}"></script>
+     <script src="{% static 'case/js/casexml.js' %}"></script>
+-    <script src="{% static 'reports/js/bootstrap3/tabular.js' %}"></script>
++    <script src="{% static 'reports/js/bootstrap5/tabular.js' %}"></script>
+ 
+     <!-- Scripts that are specific to a single report or interface -->
+     <script src="{% static 'data_interfaces/js/case_management.js' %}"></script>
+     <script src="{% static 'data_interfaces/js/archive_forms.js' %}"></script>
+     <script src="{% static 'reports/js/inspect_data.js' %}"></script>
+-    <script src="{% static 'reports/js/bootstrap3/project_health_dashboard.js' %}"></script>
++    <script src="{% static 'reports/js/bootstrap5/project_health_dashboard.js' %}"></script>
+     <script src="{% static 'reports/js/aggregate_user_status.js' %}"></script>
+     <script src="{% static 'reports/js/user_history.js' %}"></script>
+     <script src="{% static 'hqwebapp/js/bootstrap3/widgets.js' %}"></script>
+@@ -57,7 +57,7 @@
+ {% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
+ 
+ {% block page_breadcrumbs %}
+-  <a href="#" class="btn btn-link btn-invisible visible-xs btn-report-menu" data-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
++  <a href="#" class="btn btn-link btn-invisible d-xs-block btn-report-menu" data-bs-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
+   <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+     <li>
+       <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
+@@ -79,7 +79,7 @@
+   {% if request|ui_notify_enabled:"REPORT_BUILDER_V2" %}
+     <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+          style="margin-left: 12px"
+-         data-target="#create-new-report-left-nav"
++         data-bs-target="#create-new-report-left-nav"
+          data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
+          role="alert">
+       {% include 'notifications/partials/report_builder_v2_oct2017.html' %}
+@@ -118,8 +118,8 @@
+         <div class="modal-content">
+           <div class="modal-header">
+             <button type="button"
+-                    class="close"
+-                    data-dismiss="modal"
++                    class="btn-close"
++                    data-bs-dismiss="modal"
+                     aria-label="Close"
+                     data-bind="click: resetModal"><span aria-hidden="true">&times;</span></button>
+             <h4 class="modal-title">
+@@ -148,7 +148,7 @@
+       {% block reportcontent %}
+       {% endblock %}
+     {% else %}
+-      {% include "reports/async/bootstrap3/default.html" %}
++      {% include "reports/async/bootstrap5/default.html" %}
+     {% endif %}
+   </div>
+ {% endblock %}

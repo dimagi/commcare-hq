@@ -1,0 +1,20 @@
+--- 
++++ 
+@@ -6,7 +6,7 @@
+     {% if error or success %}
+       <a href="{% url 'reports_home' domain=report.domain %}"
+          onclick="location.href=this.href+'#scheduled-reports';return false;"
+-         class="btn btn-default">{% trans 'Return to Scheduled Reports' %}</a>
++         class="btn btn-outline-primary">{% trans 'Return to Scheduled Reports' %}</a>
+     {% else %}
+       <form method="POST">
+         {% csrf_token %}
+@@ -26,7 +26,7 @@
+         <input type="submit" value="{% trans 'Confirm' %}" class="btn btn-primary" />
+         <a href="{% url 'reports_home' domain=report.domain %}"
+            onclick="location.href=this.href+'#scheduled-reports';return false;"
+-           class="btn btn-default">{% trans 'Cancel' %}</a>
++           class="btn btn-outline-primary">{% trans 'Cancel' %}</a>
+       </form>
+     {% endif %}
+   </div>

@@ -1,0 +1,41 @@
+--- 
++++ 
+@@ -2,9 +2,9 @@
+ {% load i18n %}
+ <div id="{{ series.id }}-data" class="hide" data-value='{{ series.get_chart_data_series|JSON }}'></div>
+ <div id="{{ series.id }}-percentages" class="hide" data-value='{{ series.get_chart_percent_series|JSON }}'></div>
+-<div class="panel-heading">
+-  <h3 class="panel-title"><strong>{{ series.title }}</strong>
+-    <p class="pull-right">
++<div class="card-header">
++  <h3 class="card-title"><strong>{{ series.title }}</strong>
++    <p class="float-end">
+       <span class="hq-help-template"
+             data-title="{{ series.title }}"
+             data-container="body"
+@@ -14,21 +14,21 @@
+     </p>
+   </h3>
+ </div>
+-<div class="panel-body">
++<div class="card-body">
+ 
+   <div class="row">
+     {% for bucket in series.get_buckets %}
+-      <div class="col-sm-2 text-center">
++      <div class="col-md-2 text-center">
+         <h4>{{ bucket.1 }}</h4>
+         <h2>{{ bucket.0 }}</h2>
+       </div>
+     {% endfor %}
+-    <div class="col-sm-4 text-center">
++    <div class="col-md-4 text-center">
+       <div class="btn-group btn-group-separated">
+         <button type="button" class="btn chart-toggle active"
+                 data-is-aggregate="true"
+                 data-chart-data="{{ series.id }}-percentages" data-chart-div="{{ series.id }}_chart">{% trans "Aggregate Percents" %}</button>
+-        <button type="button" class="btn btn-default chart-toggle"
++        <button type="button" class="btn btn-outline-primary chart-toggle"
+                 data-chart-data="{{ series.id }}-data" data-chart-div="{{ series.id }}_chart">{% trans "Daily Counts" %}</button>
+       </div>
+     </div>

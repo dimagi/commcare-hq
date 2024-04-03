@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends 'reports/filters/bootstrap3/base.html' %}
++{% extends 'reports/filters/bootstrap5/base.html' %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+@@ -9,7 +9,7 @@
+       {% trans "Use Filter" %}
+     </label>
+ 
+-    <div class="well form-inline well-sm" data-bind="visible: showFilterName" style="margin-bottom: 0;">
++    <div class="card form-inline well-sm" data-bind="visible: showFilterName" style="margin-bottom: 0;">
+       <select class="input-large select form-control" name="{{ css_id }}_month">
+         {% for month in months %}
+           <option value="{{ month.value }}"{% if month.value == selected_period.month %} selected="selected"{% endif %}>

@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends 'reports/filters/bootstrap3/base.html' %}
++{% extends 'reports/filters/bootstrap5/base.html' %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ {% block filter_content %}
+   <div class="row">
+-    <div class="col-xs-6">
++    <div class="col-sm-6">
+       <input type="text"
+              id="filter_range"
+              class="date-range-picker form-control report-filter-datespan"
+@@ -25,7 +25,7 @@
+              class="date-picker input-small"
+              value="{{ datespan.enddate|date:"Y-m-d" }}">
+     </div>
+-    <div class="col-xs-6">
++    <div class="col-sm-6">
+       <p class="help-block">
+         {% if timezone %}
+           {% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}

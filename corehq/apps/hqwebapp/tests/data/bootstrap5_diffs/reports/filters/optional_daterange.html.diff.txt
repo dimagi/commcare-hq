@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends 'reports/filters/bootstrap3/daterange.html' %}
++{% extends 'reports/filters/bootstrap5/daterange.html' %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+@@ -9,7 +9,7 @@
+       {% trans "Use Filter" %}
+     </label>
+ 
+-    <div class="well" data-bind="visible: showFilterName">
++    <div class="card" data-bind="visible: showFilterName">
+       {{ block.super }}
+     </div>
+   </div>

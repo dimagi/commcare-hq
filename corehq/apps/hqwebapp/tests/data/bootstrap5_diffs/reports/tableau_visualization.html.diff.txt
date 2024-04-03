@@ -1,0 +1,82 @@
+--- 
++++ 
+@@ -2,7 +2,7 @@
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% requirejs_main "hqwebapp/js/bootstrap3/crud_paginated_list_init" %}
++{% requirejs_main_b5 "hqwebapp/js/bootstrap3/crud_paginated_list_init" %}
+ 
+ {% block pagination_header %}
+   <h2>{% trans "Tableau Visualizations" %}</h2>
+@@ -13,9 +13,9 @@
+     <td data-bind="text: title"></td>
+     <td data-bind="text: server"></td>
+     <td data-bind="text: view_url"></td>
+-    <td class="col-md-1"> <!-- actions -->
++    <td class="col-lg-1"> <!-- actions -->
+       <button type="button"
+-              data-toggle="modal"
++              data-bs-toggle="modal"
+               data-bind="attr: {'data-target': '#update-tableau-visualization-' + id}"
+               class="btn btn-primary btn-block">
+           {% trans "Update" %}
+@@ -26,8 +26,8 @@
+                 <div class="modal-content">
+                     <div class="modal-header">
+                         <button type="button"
+-                                class="close"
+-                                data-dismiss="modal"
++                                class="btn-close"
++                                data-bs-dismiss="modal"
+                                 aria-hidden="true">&times;</button>
+                         <h3>
+                           {% trans "Update Tableau Visualization" %} <strong data-bind="text: name"></strong>:
+@@ -40,11 +40,11 @@
+             </div>
+         </div>
+     </td>
+-    <td class="col-md-1"> <!-- actions -->
++    <td class="col-lg-1"> <!-- actions -->
+       <button type="button"
+-              class="btn btn-danger btn-block"
++              class="btn btn-outline-danger btn-block"
+               data-bind="attr: {'data-target': '#delete-tableau-visualization-' + id}"
+-              data-toggle="modal">
++              data-bs-toggle="modal">
+         <i class="fa fa-remove"></i> {% trans "Delete" %}
+       </button>
+       <div class="modal fade"
+@@ -52,19 +52,19 @@
+         <div class="modal-dialog">
+           <div class="modal-content">
+             <div class="modal-header">
+-              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
++              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>
+               <h3>
+                 {% trans "Delete Tableau Visualization" %} <strong data-bind="text: view_url"></strong>?
+               </h3>
+             </div>
+             <div class="modal-footer">
+               <button type="button"
+-                      class="btn btn-default"
+-                      data-dismiss="modal">
++                      class="btn btn-outline-primary"
++                      data-bs-dismiss="modal">
+                 {% trans "Cancel" %}
+               </button>
+               <button type="button"
+-                      class="btn btn-danger delete-item-confirm"
++                      class="btn btn-outline-danger delete-item-confirm"
+                       data-loading-text="{% trans 'Deleting Tableau Visualization' %}">
+                 <i class="fa fa-remove"></i> {% trans "Delete" %}
+               </button>
+@@ -86,7 +86,7 @@
+ {% block pagination_footer %}
+   <div class="spacer"></div>
+   <div class="row">
+-    <div class="col-sm-12">
++    <div class="col-md-12">
+       <a href="{% url 'tableau_visualization_detail_view' domain %}">
+         <button type="button" class="btn btn-primary">
+           {% trans "Add Tableau Visualization" %}

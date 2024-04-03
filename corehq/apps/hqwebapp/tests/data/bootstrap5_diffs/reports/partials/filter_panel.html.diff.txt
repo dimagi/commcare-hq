@@ -1,0 +1,31 @@
+--- 
++++ 
+@@ -13,7 +13,7 @@
+     </button>
+     {% if not report.is_admin %}
+       <div class="btn-group">
+-        <button type="button" class="btn dropdown-toggle btn-default" data-toggle="dropdown">
++        <button type="button" class="btn dropdown-toggle btn-outline-primary" data-bs-toggle="dropdown">
+           {% trans 'Favorites' %} <span class="caret"></span>
+         </button>
+         <ul class="dropdown-menu">
+@@ -30,16 +30,16 @@
+         </ul>
+       </div>
+ 
+-      <button class="btn btn-default" data-bind="click: setConfigBeingEdited">
++      <button class="btn btn-outline-primary" data-bind="click: setConfigBeingEdited">
+         {% trans "Save" %}...
+       </button>
+     {% endif %}
+ 
+     {% if report.is_emailable and request.couch_user.can_download_reports %}
+-      <div style="display: inline-block; margin-left:0.5em;" class="label label-info" id="email-enabled">
++      <div style="display: inline-block; margin-left:0.5em;" class="badge text-bg-info" id="email-enabled">
+         <i class="fa fa-info-circle"></i> {% trans "Email Supported" %}
+       </div>
+     {% endif %}
+-    {% include "reports/partials/bootstrap3/save_reports_modal.html" %}
++    {% include "reports/partials/bootstrap5/save_reports_modal.html" %}
+   </div>
+ {% endblock %}

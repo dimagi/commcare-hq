@@ -1,0 +1,31 @@
+--- 
++++ 
+@@ -29,7 +29,7 @@
+     <div class="modal-dialog">
+       <div class="modal-content">
+         <div class="modal-header">
+-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
++          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+           <h4 class="modal-title">{% trans 'Problem Loading Report' %} "{{ report.title }}"</h4>
+         </div>
+         <div class="modal-body">
+@@ -40,8 +40,8 @@
+             {% blocktrans %}
+               If this problem persists, we encourage you to
+               <a href="#modalReportIssue"
+-                 data-target="#modalReportIssue"
+-                 data-toggle="modal">Report an Issue</a>.
++                 data-bs-target="#modalReportIssue"
++                 data-bs-toggle="modal">Report an Issue</a>.
+             {% endblocktrans %}
+           </p>
+         </div>
+@@ -51,7 +51,7 @@
+              data-loading-text="{% trans 'Trying Again...' %}"
+              data-fail-text="{% trans 'Loading Failed. Try Again?' %}">{% trans 'Try Again' %}
+           </button>
+-          <button class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
++          <button class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
+         </div>
+       </div>
+     </div>

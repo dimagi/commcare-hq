@@ -1,0 +1,137 @@
+--- 
++++ 
+@@ -4,7 +4,7 @@
+ {% load i18n %}
+ {% load compress %}
+ 
+-{% requirejs_main 'reports/js/saved_reports_main' %}
++{% requirejs_main_b5 'reports/js/saved_reports_main' %}
+ 
+ {% block page_content %}
+   {% initial_page_data 'configs' configs %}
+@@ -16,7 +16,7 @@
+   {% initial_page_data 'shared_saved_reports' shared_saved_reports  %}
+ 
+   <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
+-    <li><a href="#ko-report-config-list" data-toggle="tab">
++    <li><a href="#ko-report-config-list" data-bs-toggle="tab">
+       {% if shared_saved_reports %}
+         {% trans "Saved Reports" %}
+       {% else %}
+@@ -24,7 +24,7 @@
+       {% endif %}
+     </a></li>
+     {% if request.couch_user.can_download_reports %}
+-      <li><a href="#scheduled-reports" data-toggle="tab">
++      <li><a href="#scheduled-reports" data-bs-toggle="tab">
+         {% if others_scheduled_reports %}
+           {% trans "Scheduled Reports" %}
+         {% else %}
+@@ -36,7 +36,7 @@
+   <div class="tab-content">
+     <div class="tab-pane" id="ko-report-config-list">
+       <div class="row">
+-        <div class="col-sm-12">
++        <div class="col-md-12">
+           <div style="display: none"
+                data-bind="visible: !reportConfigs().length && !sharedReportConfigs().length"
+                class="alert alert-info">
+@@ -61,11 +61,11 @@
+                    class="table table-striped table-bordered">
+               <thead>
+               <tr>
+-                <th class="col-sm-2">{% trans "Report" %}</th>
+-                <th class="col-sm-3">{% trans "Saved Report Name" %}</th>
+-                <th class="col-sm-3">{% trans "Description" %}</th>
+-                <th class="col-sm-2">{% trans "Date Range" %}</th>
+-                <th class="col-sm-2"></th>
++                <th class="col-md-2">{% trans "Report" %}</th>
++                <th class="col-md-3">{% trans "Saved Report Name" %}</th>
++                <th class="col-md-3">{% trans "Description" %}</th>
++                <th class="col-md-2">{% trans "Date Range" %}</th>
++                <th class="col-md-2"></th>
+               </tr>
+               </thead>
+               <tbody>
+@@ -76,12 +76,12 @@
+                 <td data-bind="text: description"></td>
+                 <td data-bind="text: date_description"></td>
+                 <td>
+-                  <button class="btn btn-default"
++                  <button class="btn btn-outline-primary"
+                           data-bind="click: $root.setConfigBeingEdited">
+                     <i class="fa fa-edit"></i>
+                     {% trans "Edit" %}
+                   </button>
+-                  <button class="btn btn-danger add-spinner-on-click"
++                  <button class="btn btn-outline-danger add-spinner-on-click"
+                           data-bind="click: $root.deleteConfig">
+                     <i class="fa-regular fa-trash-can"></i>
+                     {% trans "Delete" %}
+@@ -97,12 +97,12 @@
+                    class="table table-striped table-bordered">
+               <thead>
+               <tr>
+-                <th class="col-sm-2">{% trans "Report" %}</th>
+-                <th class="col-sm-2">{% trans "Creator" %}</th>
+-                <th class="col-sm-2">{% trans "Saved Report Name" %}</th>
+-                <th class="col-sm-2">{% trans "Description" %}</th>
+-                <th class="col-sm-2">{% trans "Date Range" %}</th>
+-                <th class="col-sm-2"></th>
++                <th class="col-md-2">{% trans "Report" %}</th>
++                <th class="col-md-2">{% trans "Creator" %}</th>
++                <th class="col-md-2">{% trans "Saved Report Name" %}</th>
++                <th class="col-md-2">{% trans "Description" %}</th>
++                <th class="col-md-2">{% trans "Date Range" %}</th>
++                <th class="col-md-2"></th>
+               </tr>
+               </thead>
+               <tbody>
+@@ -114,12 +114,12 @@
+                 <td data-bind="text: description"></td>
+                 <td data-bind="text: date_description"></td>
+                 <td>
+-                  <button class="btn btn-default"
++                  <button class="btn btn-outline-primary"
+                           data-bind="click: $root.setConfigBeingEdited">
+                     <i class="fa fa-edit"></i>
+                     {% trans "Edit" %}
+                   </button>
+-                  <button class="btn btn-danger add-spinner-on-click"
++                  <button class="btn btn-outline-danger add-spinner-on-click"
+                           data-bind="click: $root.deleteConfig">
+                     <i class="fa-regular fa-trash-can"></i>
+                     {% trans "Delete" %}
+@@ -150,7 +150,7 @@
+               <div style="margin-right: 10px; float: right">
+                 <p>
+                   <a class="btn btn-primary"
+-                     data-toggle="modal"
++                     data-bs-toggle="modal"
+                      data-bind="attr: { href: '#bulk-modal' },
+                                 click: sendModal">
+                     <!-- ko if: isMultiple -->
+@@ -165,8 +165,8 @@
+               </div>
+               <div style="margin-right: 8px; float: right">
+                 <p>
+-                  <a class="btn btn-danger"
+-                     data-toggle="modal"
++                  <a class="btn btn-outline-danger"
++                     data-bs-toggle="modal"
+                      data-bind="attr: { href: '#bulk-modal' },
+                                 click: deleteModal">
+                     <!-- ko if: isMultiple -->
+@@ -206,10 +206,10 @@
+               </div>
+               <div style="display: none" data-bind="visible: !isLoadingPanel() && !$root.bulkAction()">
+                 <div data-bind="if: is_owner">
+-                  {% include 'reports/partials/bootstrap3/scheduled_reports_table.html' with is_owner=True %}
++                  {% include 'reports/partials/bootstrap5/scheduled_reports_table.html' with is_owner=True %}
+                 </div>
+                 <div data-bind="if: !is_owner">
+-                  {% include 'reports/partials/bootstrap3/scheduled_reports_table.html' with is_owner=False %}
++                  {% include 'reports/partials/bootstrap5/scheduled_reports_table.html' with is_owner=False %}
+                 </div>
+               </div>
+               <pagination data-bind="visible: scheduledReports().length && !isLoadingPanel() && !$root.bulkAction()"

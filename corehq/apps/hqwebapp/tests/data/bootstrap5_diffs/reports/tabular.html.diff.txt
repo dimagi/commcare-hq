@@ -1,0 +1,39 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends report_base|default:"reports/async/bootstrap3/default.html" %} {# This template is used for both sync and async reports #}
++{% extends report_base|default:"reports/async/bootstrap5/default.html" %} {# This template is used for both sync and async reports #}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+@@ -15,7 +15,7 @@
+     {% if charts %}
+       <div class="row">
+         {% for chart in charts %}
+-          <div id='chart_{{ report.slug }}_{{ forloop.counter }}' class="col-md-{{ chart_span }} collapse">
++          <div id='chart_{{ report.slug }}_{{ forloop.counter }}' class="col-lg-{{ chart_span }} collapse">
+             {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
+             <svg style='height: {{ chart.height }}px'> </svg>
+           </div>
+@@ -23,9 +23,9 @@
+       </div>
+     {% endif %}
+   {% endblock pretable %}
+-  <div class="panel panel-default">
+-    <div class="panel-heading">
+-      <h2 class="panel-title">
++  <div class="card card-default">
++    <div class="card-header">
++      <h2 class="card-title">
+         {% if not report.needs_filters %}
+           {{ report.report_title }}
+           {% for subtitle in report.report_subtitles %}
+@@ -39,7 +39,7 @@
+     <div class="panel-body-datatable">
+       {% block reporttable %}
+         {% if report.needs_filters %}
+-          {% include 'reports/partials/bootstrap3/description.html' %}
++          {% include 'reports/partials/bootstrap5/description.html' %}
+         {% else %}
+           <table id="report_table_{{ report.slug }}" class="table table-striped datatable" width="100%" {% if pagination.filter %} data-filter="true"{% endif %}>
+             <thead>

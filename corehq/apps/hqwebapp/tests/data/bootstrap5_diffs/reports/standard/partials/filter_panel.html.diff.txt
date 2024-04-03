@@ -1,0 +1,70 @@
+--- 
++++ 
+@@ -1,15 +1,15 @@
+ {% load hq_shared_tags %}
+ {% load i18n %}
+-<div class="panel panel-default{% if report.is_async%} hide{% endif %}" id="reportFiltersAccordion">
++<div class="card card-default{% if report.is_async%} hide{% endif %}" id="reportFiltersAccordion">
+   {% if report.show_filters %}
+-    <div id="reportFilters" class="panel-body collapse">
++    <div id="reportFilters" class="card-body collapse">
+       <div class="accordion-inner">
+         {% block report_description %}{% endblock %}
+         <form method="get" id="paramSelectorForm" class="form form-horizontal">
+           <div id="hq-report-filters">
+             {% block report_filters %}
+               {% if not report.is_async %}
+-                {% include "reports/async/bootstrap3/filters.html" %}
++                {% include "reports/async/bootstrap5/filters.html" %}
+               {% endif %}
+             {% endblock%}
+           </div>
+@@ -33,14 +33,14 @@
+       {% endif %}
+     </div>
+   {% endif %}
+-  <div class="panel-footer">
++  <div class="card-footer">
+     <div class="row">
+-      <div class="col-xs-8">
++      <div class="col-sm-8">
+         {% if report.show_filters %}
+           <a href="#reportFilters"
+-             class="btn btn-default"
++             class="btn btn-outline-primary"
+              id="toggle-report-filters"
+-             data-toggle="collapse"
++             data-bs-toggle="collapse"
+              data-open-text="{% trans "Show Filter Options" %}"
+              data-close-text="{% trans "Hide Filter Options" %}">
+             {% trans "Filter Options" %}
+@@ -48,25 +48,25 @@
+         {% endif %}
+         {% block export %}
+           {% if report.is_exportable and request.couch_user.can_download_reports %}
+-            <a href="#" class="btn btn-default{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
++            <a href="#" class="btn btn-outline-primary{% if report.needs_filters %} hide{% endif %}" id="export-report-excel">
+               <i class="fa fa-share"></i>
+               {% trans "Export to" %} {% if report.export_target %}{{ report.export_target }}{% else %}Excel{% endif %}
+             </a>
+           {% endif %}
+         {% endblock %}
+         {% if report.is_emailable and request.couch_user.can_download_reports %}
+-          <a href="#email-report-modal" class="btn btn-default{% if report.needs_filters %} hide{% endif %}" data-toggle="modal" id="email-report">
++          <a href="#email-report-modal" class="btn btn-outline-primary{% if report.needs_filters %} hide{% endif %}" data-bs-toggle="modal" id="email-report">
+             <i class="fa fa-envelope"></i> {% trans "Email report" %}
+           </a>
+         {% endif %}
+ 
+         {% if report.is_printable %}
+-          <a href="#" class="btn btn-default{% if report.needs_filters %} hide{% endif %}" id="print-report">
++          <a href="#" class="btn btn-outline-primary{% if report.needs_filters %} hide{% endif %}" id="print-report">
+             <i class="fa fa-print"></i> {% trans "Print" %}
+           </a>
+         {% endif %}
+       </div>
+-      <div id="extra-filter-info" class="col-xs-4"></div>
++      <div id="extra-filter-info" class="col-sm-4"></div>
+     </div>
+   </div>
+ </div>
