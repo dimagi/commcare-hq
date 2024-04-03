@@ -195,7 +195,7 @@ def get_state(doc):
         return State.Success
     if doc.get('cancelled'):
         return State.Cancelled
-    if doc['failure_reason']:
+    if doc.get('failure_reason'):
         return State.Fail
     return State.Pending
 
