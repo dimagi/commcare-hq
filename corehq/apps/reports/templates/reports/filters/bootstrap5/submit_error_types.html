@@ -1,0 +1,13 @@
+{% extends 'reports/filters/bootstrap3/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block filter_content %}
+  <div id="{{ css_id }}" class="btn-group btn-group-separated report-filter-button-group" data-bs-toggle="buttons-checkbox">
+    {% for type in submission_types %}
+      <button class="btn {% if type.show %} active{% else %} btn-outline-primary{% endif %}" data-bs-toggle="button" data-checkfilter="submission-filter-{{ forloop.counter }}">{{ type.name }}</button>
+    {% endfor %}
+  </div>
+  {% for type in submission_types %}
+    <input type="checkbox" name="{{ slug }}" value="{{ type.type }}" class="hide" id="submission-filter-{{ forloop.counter }}" {% if type.show %}checked="checked"{% endif %}/>
+  {% endfor %}
+{% endblock %}
