@@ -4,8 +4,8 @@
  {% load i18n %}
  {% load compress %}
  
--{% requirejs_main 'reports/js/saved_reports_main' %}
-+{% requirejs_main_b5 'reports/js/saved_reports_main' %}
+-{% requirejs_main 'reports/js/bootstrap3/saved_reports_main' %}
++{% requirejs_main_b5 'reports/js/bootstrap5/saved_reports_main' %}
  
  {% block page_content %}
    {% initial_page_data 'configs' configs %}

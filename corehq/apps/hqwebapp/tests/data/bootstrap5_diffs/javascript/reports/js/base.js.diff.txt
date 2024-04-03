@@ -9,3 +9,12 @@
  
          var initialPageData = hqImport("hqwebapp/js/initial_page_data");
          var defaultConfig = initialPageData.get('default_config') || {};
+@@ -15,7 +15,7 @@
+ 
+         var $savedReports = $("#savedReports");
+         if ($savedReports.length) {
+-            var reportConfigModels = hqImport("reports/js/bootstrap3/report_config_models"),
++            var reportConfigModels = hqImport("reports/js/bootstrap5/report_config_models"),
+                 reportConfigsView = reportConfigModels.reportConfigsViewModel({
+                     filterForm: $("#reportFilters"),
+                     items: initialPageData.get('report_configs'),
