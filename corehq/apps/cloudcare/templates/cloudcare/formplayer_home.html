@@ -130,7 +130,7 @@
   {% if not request.session.secure_session %}
     {% include 'hqwebapp/includes/inactivity_modal_data.html' %}
   {% endif %}
-  {% include 'form_entry/templates.html' %}
+  {% include 'cloudcare/partials/form_entry_templates.html' %}
   {% include 'formplayer/debugger.html' %}
   {% include 'formplayer/grid_view.html' %}
   {% include 'formplayer/settings_view.html' %}
