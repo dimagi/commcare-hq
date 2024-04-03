@@ -649,7 +649,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     slug = 'aggregate_user_status'
 
-    report_template_path = "reports/async/aggregate_user_status.html"
+    report_template_path = "reports/async/bootstrap3/aggregate_user_status.html"
     name = gettext_lazy("Aggregate User Status")
     description = gettext_lazy("See the last activity of your project's users in aggregate.")
 

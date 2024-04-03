@@ -1,0 +1,33 @@
+{% extends report_base|default:"reports/async/default.html" %}
+
+{% load i18n %}
+
+{% block reportcontent %}
+  <div class="container-fluid">
+    <div class="row text-center">
+      <div class="col-md-4 text-center">
+        <h4>{% trans "Users" %}</h4>
+        <h2>{{ total_users }}</h2>
+      </div>
+      <div class="col-md-4 text-center">
+        <h4>{% trans "Users who have Ever Submitted Data" %}</h4>
+        <h2>{{ submission_series.bucket_series.total_percent }} <small>({{ submission_series.bucket_series.total }} / {{ total_users }})</small></h2>
+      </div>
+      <div class="col-md-4 text-center">
+        <h4>{% trans "Users who have Ever Synced" %}</h4>
+        <h2>{{ sync_series.bucket_series.total_percent }} <small>({{ sync_series.bucket_series.total }} / {{ total_users }})</small></h2>
+      </div>
+    </div>
+    <div class="card card-default">
+      {% with submission_series as series %}
+        {% include "reports/async/partials/aggregate_user_status/chart_panel.html" %}
+      {% endwith %}
+
+    </div>
+    <div class="card card-default">
+      {% with sync_series as series %}
+        {% include "reports/async/partials/aggregate_user_status/chart_panel.html" %}
+      {% endwith %}
+    </div>
+  </div>
+{% endblock reportcontent %}
