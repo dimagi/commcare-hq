@@ -22,6 +22,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.git import (
     has_no_pending_git_changes,
     get_commit_string,
     apply_commit,
+    ensure_no_pending_changes_before_continuing,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_app_template_folder,
@@ -465,7 +466,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.ERROR(
             "\nYou have un-committed changes! Please commit these changes before proceeding. Thank you!"
         ))
-        self.enter_to_continue()
+        ensure_no_pending_changes_before_continuing()
 
     def suggest_commit_message(self, message, show_apply_commit=False):
         self.stdout.write("\nNow would be a good time to review changes with git and "
