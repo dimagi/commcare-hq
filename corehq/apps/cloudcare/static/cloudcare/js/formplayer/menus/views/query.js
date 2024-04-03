@@ -17,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/menus/collections',
     'cloudcare/js/formplayer/utils/utils',
-    'hqwebapp/js/bootstrap3/hq.helpers',   // needed for hqHelp
+    'hqwebapp/js/bootstrap5/hq.helpers',   // needed for hqHelp
     'bootstrap-daterangepicker/daterangepicker',  // needed for $.daterangepicker
     'cloudcare/js/formplayer/menus/api',    // needed for app:select:menus
     'select2/dist/js/select2.full.min',
@@ -476,6 +476,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 this.ui.hqHelp.hqHelp({placement: 'auto ' + fallback});
             }
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
+            // todo B5: move to tempus dominus
             this.ui.dateRange.daterangepicker({
                 locale: {
                     format: dateFormat,

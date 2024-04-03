@@ -51,6 +51,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
         $confirmationButton.on('click.confirmationModal', function (e) {
             options.onConfirm(e);
         });
+        // todo B5: update to use B5 modal
         $modal.modal('show');
     };
 
