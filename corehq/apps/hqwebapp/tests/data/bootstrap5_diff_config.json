@@ -356,5 +356,135 @@
       "label": "javascript/settings/js",
       "compare_all_files": true
     }
+  ],
+  "apps/reports/templates/reports": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "async/bootstrap3",
+        "async/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports/async",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "async/partials/aggregate_user_status/bootstrap3",
+        "async/partials/aggregate_user_status/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports/async/partials/aggregate_user_status",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "filters/bootstrap3",
+        "filters/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports/filters",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "form/partials/bootstrap3",
+        "form/partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports/form/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "messaging/bootstrap3",
+        "messaging/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports/messaging",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "project_health/bootstrap3",
+        "project_health/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports/project_health",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "project_health/partials/bootstrap3",
+        "project_health/partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports/project_health/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "reportdata/bootstrap3",
+        "reportdata/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports/reportdata",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "standard/bootstrap3",
+        "standard/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports/standard",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "standard/partials/bootstrap3",
+        "standard/partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports/standard/partials",
+      "compare_all_files": true
+    }
+  ],
+  "apps/reports/static/reports/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/reports/js",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "filters/bootstrap3",
+        "filters/bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/reports/js/filters",
+      "compare_all_files": true
+    }
   ]
 }
