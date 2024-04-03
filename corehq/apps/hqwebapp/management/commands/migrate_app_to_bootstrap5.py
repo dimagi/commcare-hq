@@ -107,22 +107,22 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             self.format_header(f"All done with Step 2 of migrating {app_name}!")
         ))
-        self.stdout.write("If this is the first time running this command, "
-                          "it's recommended to re-run the command\nat least one more "
-                          "time in the event of nested dependencies / inheritance "
-                          "in split files.\n\n")
+        self.stdout.write(self.style.WARNING(
+            "IMPORTANT: If this is the first time running this command, "
+            "it's recommended to re-run the command\nat least one more "
+            "time in the event of nested dependencies / inheritance "
+            "in split files.\n\n"
+        ))
         self.stdout.write("After this, please update `bootstrap5_diff_config.json` "
-                          "using:\n\n")
+                          "using the command below and follow the next steps after.\n\n")
         self.stdout.write(self.style.MIGRATE_LABEL(
             f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n"
         ))
-        self.stdout.write("Once the changes to that file are committed, you can run:\n")
-        self.stdout.write(self.style.MIGRATE_LABEL(
-            "./mmanage.py build_bootstrap5_diffs\n\n"
-        ))
         self.stdout.write("Thank you for your dedication to this migration! <3\n\n")
-        self.stdout.write("You can also review the next steps here:"
-                          "\tcommcarehq.org/styleguide/b5/migration/#update-diffs\n\n\n")
+        self.stdout.write("You may review the full migration guide here:")
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            "\tcommcarehq.org/styleguide/b5/migration/\n\n\n"
+        ))
 
     def show_completed_message(self, app_name):
         self.clear_screen()
