@@ -1,0 +1,15 @@
+{% load i18n %}
+<div class="card-body">
+  {% if report.description %}
+    <h4>{% trans 'How can I use this report?' %}</h4>
+    <p>
+      {{ report.description }}
+      {% if report.documentation_link %}
+        <a href="{{ report.documentation_link }}" target="_blank">{% trans "Learn More" %}</a>
+      {% endif %}
+    </p>
+  {% endif %}
+
+  <h4>{% trans "Why can't I see any data?" %}</h4>
+  <p>{% trans "Please choose your filters above and click <strong>Apply</strong> to see report data." %}</p>
+</div>
