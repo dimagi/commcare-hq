@@ -1,0 +1,18 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block filter_content %}
+  <div class="row">
+    <div class="col-sm-6">
+      <input type="hidden"
+             id="{{ css_id }}_startdate"
+             name="{% if slug != 'datespan' %}{{ slug }}_{% endif %}startdate"
+             class="date-picker input-small"
+             value="{{ datespan.startdate|date:"Y-m-d" }}">
+      <input type="hidden"
+             id="{{ css_id }}_enddate"
+             name="{% if slug != 'datespan' %}{{ slug }}_{% endif %}enddate"
+             class="date-picker input-small"
+             value="{{ datespan.enddate|date:"Y-m-d" }}">
+    </div>
+  </div>
+{% endblock %}
