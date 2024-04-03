@@ -339,7 +339,7 @@ class EndDateFilter(OptionalDateRangeFilter):
 
 
 class OptionalMonthYearFilter(BaseReportFilter, OptionalFilterMixin):
-    template = 'reports/filters/optional_month_year.html'
+    template = 'reports/filters/bootstrap3/optional_month_year.html'
 
     @property
     def filter_context(self):

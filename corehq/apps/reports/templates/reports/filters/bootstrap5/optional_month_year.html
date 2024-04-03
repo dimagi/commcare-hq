@@ -1,0 +1,27 @@
+{% extends 'reports/filters/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block filter_content %}
+  <div id="{{ css_id }}_container" class="report-filter-optional" data-show-filter-name="{{ showFilterName|BOOL }}">
+    <label class="checkbox">
+      <input name="{{ css_id }}_use_filter" type="checkbox" data-bind="checked: showFilterName" />
+      {% trans "Use Filter" %}
+    </label>
+
+    <div class="card form-inline well-sm" data-bind="visible: showFilterName" style="margin-bottom: 0;">
+      <select class="input-large select form-control" name="{{ css_id }}_month">
+        {% for month in months %}
+          <option value="{{ month.value }}"{% if month.value == selected_period.month %} selected="selected"{% endif %}>
+            {{ month.name }}
+          </option>
+        {% endfor %}
+      </select>
+      <select class="input-large select form-control" name="{{ css_id }}_year">
+        {% for year in years %}
+          <option value="{{ year }}"{% if year == selected_period.year %} selected="selected"{% endif %}>{{ year }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+{% endblock %}
