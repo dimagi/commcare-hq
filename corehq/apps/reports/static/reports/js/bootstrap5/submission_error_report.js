@@ -1,4 +1,4 @@
-hqDefine("reports/js/submission_error_report", function () {
+hqDefine("reports/js/bootstrap5/submission_error_report", function () {
     $(function () {
         $('#report-content').on('click', '.reprocess-error', function () {
             var $btn = $(this),
