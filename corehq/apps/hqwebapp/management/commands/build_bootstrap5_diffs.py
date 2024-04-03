@@ -248,7 +248,7 @@ class Command(BaseCommand):
         confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
         if confirm:
             apply_commit(message)
-            self.stdout.write("\nChanges committed!\n\n")
+            self.stdout.write(self.style.SUCCESS("\nChanges committed!\n\n"))
             return
         commit_string = get_commit_string(message)
         self.stdout.write("\n\nSuggested command:\n")
