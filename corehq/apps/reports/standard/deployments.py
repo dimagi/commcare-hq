@@ -676,12 +676,12 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     class FromDateFilter(SingleDateFilter):
-        label = gettext_lazy("From Date")
+        label = gettext_lazy("Start Date")
         default_date_delta = -59
         min_date_delta = -364
         max_date_delta = -1
-        help_text = gettext_lazy("Select any date in the past up to 1 year. "
-                                 "Report will show results from selected date till today.")
+        help_text = gettext_lazy("Choose a start date up to 1 year ago."
+                                 " Report displays data from the selected date to today.")
 
     slug = 'aggregate_user_status'
 
@@ -806,7 +806,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                 def _readable_pct_from_total(total_series, index):
                     return '{0:.0f}%'.format(total_series[index - 1]['y'])
 
-                total_days = len(self.data_series)-1
+                total_days = len(self.data_series) - 1
                 intervals = [interval for interval in [3, 7, 30] if interval < total_days]
                 intervals.append(total_days)
 
