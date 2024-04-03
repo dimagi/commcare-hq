@@ -40,6 +40,7 @@ from couchexport.shortcuts import export_response
 from dimagi.utils.chunked import chunked
 from dimagi.utils.web import json_response
 
+import settings
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
@@ -81,14 +82,13 @@ from corehq.apps.locations.permissions import (
 )
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.display import xmlns_to_name, xmlns_to_name_for_case_deletion
-from corehq.apps.reports.exceptions import TooManyCasesError, FormArchiveError
+from corehq.apps.reports.exceptions import TooManyCasesError
+from corehq.apps.reports.tasks import _soft_delete_cases_and_forms
 from corehq.apps.reports.view_helpers import case_hierarchy_context
 from corehq.apps.reports.views import (
-    archive_form,
     DATE_FORMAT,
     BaseProjectReportSectionView,
     get_data_cleaning_updates,
-    unarchive_form
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -809,55 +809,27 @@ class DeleteCaseView(BaseProjectReportSectionView):
         if request.POST.get('input') != self.delete_dict['main_case_name']:
             messages.error(request, _("Incorrect name. Please enter the case name as shown into the textbox."))
             return HttpResponseRedirect(self.page_url)
-        msg, error = soft_delete_cases_and_forms(request, self.domain,
-                                                 self.delete_dict['case_delete_list'],
-                                                 self.delete_dict['form_delete_list'],
-                                                 self.delete_dict['main_case_name'])
-        if error:
-            messages.error(request, msg, extra_tags='html')
-            return HttpResponseRedirect(self.get_redirect_url())
-        else:
-            messages.success(request, msg)
-            return HttpResponseRedirect(reverse('project_report_dispatcher',
-                                                args=(self.domain, 'submit_history')))
+        soft_delete_cases_and_forms(request, self.domain, self.delete_dict['case_delete_list'],
+                                    self.delete_dict['form_delete_list'], self.get_redirect_url(),
+                                    self.delete_dict['main_case_name'])
+        msg = _("""We are processing your deletion. If you are deleting a large amount of cases
+                and forms, this process may take awhile. Please check <a href="{}">here</a>
+                periodically to ensure your deletion was successful""").format(self.get_redirect_url())
+        messages.info(request, msg, extra_tags='html')
+        return HttpResponseRedirect(reverse('project_report_dispatcher', args=(self.domain, 'submit_history')))
 
 
 @location_safe
 @require_permission(HqPermissions.edit_data)
-def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_list, main_case_name=None):
-    error = False
-    msg = _("{}, its related subcases and submission forms were deleted successfully.").format(main_case_name)
-    archived_forms = []
-
-    def archive_forms(form_list):
-        for form in form_list:
-            if not archive_form(request, domain, form, is_case_delete=True):
-                raise FormArchiveError(form)
-            archived_forms.append(form)
-
-    try:
-        archive_forms(form_delete_list)
-    except FormArchiveError:
-        # Try sorting all forms first
-        form_obj_list = XFormInstance.objects.get_forms(
-            [form for form in form_delete_list if form not in archived_forms]
-        )
-        sorted_form_delete_list = sorted(form_obj_list, key=lambda form: form.received_on, reverse=True)
-        try:
-            archive_forms([form.form_id for form in sorted_form_delete_list])
-        except FormArchiveError as e:
-            # I'm fairly certain this will never enter here but this is just in case something does go wrong
-            for form in archived_forms:
-                unarchive_form(request, domain, form, is_case_delete=True)
-            error = True
-            msg = _("The form {} could not be deleted. Please try manually archiving, then deleting the form, "
-                    "before trying to delete this case again.").format(e)
-
-    if not error and len(archived_forms) == len(form_delete_list):
-        XFormInstance.objects.soft_delete_forms(domain, list(form_delete_list))
-        CommCareCase.objects.soft_delete_cases(domain, list(case_delete_list))
-
-    return msg, error
+def soft_delete_cases_and_forms(request, domain, case_delete_list, form_delete_list,
+                                redirect_url=None, main_case_name=None):
+    if not settings.UNIT_TESTING:
+        request = {
+            'couch_user': request.couch_user,
+            'user': request.user
+        }
+    _soft_delete_cases_and_forms.delay(request, domain, case_delete_list, form_delete_list,
+                                       redirect_url, main_case_name)
 
 
 @location_safe

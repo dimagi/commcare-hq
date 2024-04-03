@@ -1,7 +1,6 @@
 import uuid
 
 from datetime import datetime
-from copy import deepcopy
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core.management import call_command
 from django.http import HttpRequest
@@ -159,6 +158,8 @@ class TestCaseDeletion(TestCase):
         cls.addClassCleanup(couch_user.delete, None, None)
         couch_user.is_authenticated = True
         cls.request.user = couch_user
+        cls.request.session = {'samlSessionIndex': None}
+        cls.request._messages = FallbackStorage(cls.request)
 
     def _create_view(self, case_id, form_id=None):
         view = DeleteCaseView()
@@ -416,9 +417,6 @@ class TestCaseDeletion(TestCase):
         """
         Ensure that a case with more than 100 related cases throws an error
         """
-        request = deepcopy(self.request)
-        setattr(request, 'session', 'session')
-        setattr(request, '_messages', FallbackStorage(request))
 
         main_case_id = uuid.uuid4().hex
         for i in range(DeleteCaseView.MAX_CASE_COUNT):
@@ -430,16 +428,13 @@ class TestCaseDeletion(TestCase):
         self.addCleanup(_delete_all_cases_and_forms, self.domain)
 
         view = self._create_view(main_case_id)
-        return_dict = view.get_cases_and_forms_for_deletion(request, self.domain, main_case_id)
+        return_dict = view.get_cases_and_forms_for_deletion(self.request, self.domain, main_case_id)
         self.assertTrue(return_dict['redirect'])
 
     def test_case_deletion_errors_if_too_many_subcases(self):
         """
         Ensure that a case with 3 or more nested subcases throws an error
         """
-        request = deepcopy(self.request)
-        setattr(request, 'session', 'session')
-        setattr(request, '_messages', FallbackStorage(request))
 
         parent_type = 'parent_case_type'
         cases = [uuid.uuid4().hex for i in range(DeleteCaseView.MAX_SUBCASE_DEPTH + 1)]
@@ -456,7 +451,7 @@ class TestCaseDeletion(TestCase):
         self.addCleanup(_delete_all_cases_and_forms, self.domain)
 
         view = self._create_view(cases[0])
-        return_dict = view.get_cases_and_forms_for_deletion(request, self.domain, cases[0])
+        return_dict = view.get_cases_and_forms_for_deletion(self.request, self.domain, cases[0])
         self.assertTrue(return_dict['redirect'])
 
     def test_bulk_import_does_not_trigger_too_many_cases_error(self):
@@ -477,27 +472,18 @@ class TestCaseDeletion(TestCase):
         In the event that a user tries to delete a case after the case has already been deleted, they should
         be redirected.
         """
-        request = deepcopy(self.request)
-        setattr(request, 'session', 'session')
-        setattr(request, '_messages', FallbackStorage(request))
 
         case = create_case(domain=self.domain, deleted_on=datetime.now(), save=True)
         self.addCleanup(_delete_all_cases_and_forms, self.domain)
         view = self._create_view(case)
 
-        return_dict = view.get_cases_and_forms_for_deletion(request, self.domain, case.case_id)
+        return_dict = view.get_cases_and_forms_for_deletion(self.request, self.domain, case.case_id)
         self.assertTrue(return_dict['redirect'])
 
     def test_forms_unarchived_and_nothing_deleted_if_archive_fails_midway(self):
-        request = deepcopy(self.request)
-        setattr(request, 'session', {'samlSessionIndex': None})
-        setattr(request, '_messages', FallbackStorage(request))
-
         cases, xforms = self.make_complex_case()
-        _, error = soft_delete_cases_and_forms(request, self.domain,
-                                               list(cases.values()), list(xforms.values())[:-1])
-        self.assertTrue(error)
+        soft_delete_cases_and_forms(self.request, self.domain, list(cases.values()), list(xforms.values())[:-1])
         for form in list(xforms.values()):
             form_obj = XFormInstance.objects.get_form(form)
             self.assertFalse(form_obj.is_archived)
-            self.assertFalse(form_obj.is_deleted)
+            self.assertIsNone(form_obj.deleted_on)
