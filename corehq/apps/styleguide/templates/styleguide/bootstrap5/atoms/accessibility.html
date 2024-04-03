@@ -136,7 +136,7 @@
           add tabindex="0" to make them focusable. Note: we avoid using custom focus order using tab index with values
           above 0. Instead, make sure DOM elements are ordered correctly for navigability, then modify visual
           positioning with CSS if needed.</li>
-        <li>Remove Focusability: to explicitly remove an item</li>
+        <li>Remove Focusability: to explicitly remove an item set tabindex="-1"</li>
         <li>Dynamic Focus Control: If you have dynamically generated or hidden elements that need to become focusable
           under certain conditions, you can dynamically add or remove the tabindex attribute.</li>
     </ul>
@@ -179,7 +179,7 @@
               the keyboard.</p>
         </li>
         <li>
-            <strong>Missing or Incomplete ARIA Attributes</strong>
+            <strong>Missing or Incomplete ARIA (Accessible Rich Internet Applications) Attributes</strong>
             <p><strong>Error:</strong> Failing to provide necessary ARIA attributes or providing incomplete
               information, which can result in screen readers not conveying the correct information to users.</p>
             <div class="row">
