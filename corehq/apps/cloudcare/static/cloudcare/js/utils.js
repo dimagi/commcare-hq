@@ -5,19 +5,20 @@ hqDefine('cloudcare/js/utils', [
     'backbone.marionette',
     'moment',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/tempus_dominus',
     "hqwebapp/js/toggles",
     "cloudcare/js/formplayer/constants",
     "cloudcare/js/formplayer/layout/views/progress_bar",
     'nprogress/nprogress',
     'sentry_browser',
     "cloudcare/js/formplayer/users/models",
-    'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',  // for $.datetimepicker
 ], function (
     $,
     _,
     Marionette,
     moment,
     initialPageData,
+    hqTempusDominus,
     toggles,
     constants,
     ProgressBar,
@@ -389,7 +390,9 @@ hqDefine('cloudcare/js/utils', [
             return;
         }
 
-        $el.datetimepicker({
+        // todo B5: move to tempus dominus
+        //hqTempusDominus.createDatePicker($el);
+        /*$el.datetimepicker({
             date: selectedDate,
             useCurrent: false,
             showClear: true,
@@ -409,6 +412,7 @@ hqDefine('cloudcare/js/utils', [
         $el.on("focusout", $el.data("DateTimePicker").hide);
         $el.attr("placeholder", dateFormat);
         $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
+        */
     };
 
     var initTimePicker = function ($el, selectedTime, timeFormat) {
@@ -417,7 +421,9 @@ hqDefine('cloudcare/js/utils', [
         }
 
         let date = moment(selectedTime, timeFormat);
-        $el.datetimepicker({
+        // todo B5: move to tempus dominus
+        //hqTempusDominus.createTimePicker($el);
+        /*$el.datetimepicker({
             date: date.isValid() ? date : null,
             format: timeFormat,
             useStrict: true,
@@ -428,7 +434,7 @@ hqDefine('cloudcare/js/utils', [
             tooltips: dateTimePickerTooltips,
         });
 
-        $el.on("focusout", $el.data("DateTimePicker").hide);
+        $el.on("focusout", $el.data("DateTimePicker").hide);*/
     };
 
     var smallScreenIsEnabled = function () {
