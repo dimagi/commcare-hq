@@ -1598,7 +1598,6 @@ COUCHDB_APPS = [
 
     # custom reports
     'accounting',
-    ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
     ('export', META_DB),
