@@ -300,7 +300,7 @@ class GenericReportView(object):
     @memoized
     def template_async_base(self):
         if self.asynchronous:
-            return self.base_template_async or "reports/async/default.html"
+            return self.base_template_async or "reports/async/bootstrap3/default.html"
         return self.template_base
 
     @property

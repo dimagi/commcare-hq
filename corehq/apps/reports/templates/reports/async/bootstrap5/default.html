@@ -1,0 +1,59 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+{% if show_time_notice %}{% include "hqwebapp/partials/time_notice.html" with hide=1 %}{% endif %}
+
+{% block reportcontent %}
+  {% if report.slug %}
+    <div class="report-loading-container">
+      <div class="report-loading">
+        <h4>{% trans "Loading Report" %}</h4>
+        <i class="fa fa-spin fa-spinner js-loading-spinner"></i>
+        <h6>{% trans report.title %}</h6>
+      </div>
+    </div>
+  {% else %}
+    <h6 style="text-align: center; margin-top: 200px;">{{ report.title }}</h6>
+  {% endif %}
+{% endblock %}
+
+{% block js %}
+{% endblock %}
+
+{% block js-inline %}
+{% endblock %}
+
+{% block modals %}
+  <div class="loading-backdrop collapse"></div>
+
+  <div class="modal fade" tabindex="-1" role="dialog" id="loadingReportIssueModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">{% trans 'Problem Loading Report' %} "{{ report.title }}"</h4>
+        </div>
+        <div class="modal-body">
+          <p>{% trans 'There seems to be a problem loading data for the report' %}: <strong>{{ report.title }}</strong></p>
+          <p>{% trans 'The report returned the following error' %}:</p>
+          <div class="alert alert-danger report-error-status"></div>
+          <p>
+            {% blocktrans %}
+              If this problem persists, we encourage you to
+              <a href="#modalReportIssue"
+                 data-bs-target="#modalReportIssue"
+                 data-bs-toggle="modal">Report an Issue</a>.
+            {% endblocktrans %}
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button
+             class="btn btn-primary try-again"
+             data-loading-text="{% trans 'Trying Again...' %}"
+             data-fail-text="{% trans 'Loading Failed. Try Again?' %}">{% trans 'Try Again' %}
+          </button>
+          <button class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
