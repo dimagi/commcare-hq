@@ -1,0 +1,106 @@
+{% extends 'reports/filters/drilldown_options.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block filter_content %}
+  {% if unknown_available %}
+    <div class="{{ css_id }}-unknown_controls" data-bind="visible: show" style="margin-bottom:1em;">
+      <div class="radio">
+        <label>
+          <input type="radio"
+                 data-bind="checked: is_unknown_shown, hideKnownForms: is_unknown_shown"
+                 data-known="#{{ css_id }}-known_control"
+                 name="{{ slug }}_{{ unknown.slug }}"
+                 id="{{ css_id }}_{{ unknown.slug }}_hide"
+                 value="">
+          {% trans 'Known Forms' %}
+          <span class="hq-help-template"
+                data-title="{% trans "What are Known Forms?" %}"
+                data-content="{% blocktrans %}
+                  These are forms that can be matched to an existing or deleted CommCare Application
+                  in your project.
+                {% endblocktrans %}">
+          </span>
+        </label>
+      </div>
+      <div class="radio">
+        <label>
+          <input type="radio"
+                 data-bind="checked: is_unknown_shown, hideKnownForms: is_unknown_shown"
+                 data-known="#{{ css_id }}-known_control"
+                 name="{{ slug }}_{{ unknown.slug }}"
+                 id="{{ css_id }}_{{ unknown.slug }}_show"
+                 value="yes">
+          {% trans 'Unknown Forms' %}
+          <span class="hq-help-template"
+                data-title="{% trans "What are Unknown Forms?" %}"
+                data-content="{% blocktrans %}
+                  These forms do not belong to a CommCare Application (existing or deleted) in your project.
+                  It might mean that these forms once belonged to an application but the application form
+                  has since been removed. They may also be 'system forms' or forms from an integration or API.
+                  {% endblocktrans %}">
+          </span>
+        </label>
+      </div>
+    </div>
+    <div class="card well-sm {{ css_id }}-unknown_controls" data-bind="visible: is_unknown_shown">
+      <div class="form-group">
+        <label class="form-label col-sm-4 col-lg-2" for="{{ css_id }}-{{ unknown.slug }}_xmlns">
+          {% trans 'Choose Unknown Form' %}
+        </label>
+        <div class="col-sm-8 col-lg-10">
+          <select class="form-control"
+                  id="{{ css_id }}-{{ unknown.slug }}_xmlns"
+                  name="{{ slug }}_{{ unknown.slug }}_xmlns"
+                  data-bind="options: all_unknown_forms,
+                            optionsText: 'text', optionsValue: 'val',
+                            optionsCaption: caption_text, value: selected_unknown_form"></select>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div id="{{ css_id }}-known_control"
+       class="report-filter-form-drilldown"
+       data-unknown-available='{{ unknown_available|JSON }}'
+       data-is-empty='{{ is_empty|JSON }}'
+       data-drilldown-map='{% html_attr option_map %}'
+       data-controls='{% html_attr controls %}'
+       data-selected='{{ selected|JSON }}'
+       data-notifications='{% html_attr notifications %}'
+       data-display-app-type='{{ display_app_type|JSON }}'
+       data-show-advanced='{{ show_advanced|JSON }}'
+       data-is-unknown-shown='{{ unknown.show|JSON }}'
+       data-selected-unknown-form='{{ unknown.selected }}'
+       data-all-unknown-forms='{% html_attr unknown.options %}'
+       data-caption-text='{{ unknown.default_text }}'
+       data-css-id='{{ css_id }}'
+       data-css-class='{{ css_id }}-unknown_controls'>
+    {{ block.super }}
+  </div>
+
+  {% if unknown_available or display_app_type %}
+    <div id="{{ css_id }}-advanced-options" style="margin-top: -.8em;">
+      <div class="checkbox">
+        <label>
+          <input name="show_advanced" type="checkbox" data-bind="checked: show" />
+          {% trans "Show Advanced Options" %}
+        </label>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if hide_fuzzy.show %}
+    <div class="alert alert-warning {{ css_id }}-unknown_controls"
+         data-bind="visible: show"
+         style="margin-top: 1em;">
+      {% include 'reports/filters/partials/fuzzy_checkbox.html' %}
+    </div>
+  {% endif %}
+
+  {% if all_form_retrieval_failed %}
+    <div class="alert alert-warning" data-bind="visible: show" style="margin-top: 1em;">
+      {% trans "Filtering by unknown forms is currently unavailable for this project." %}
+      {% trans "If the problem persists please report an issue." %}
+    </div>
+  {% endif %}
+{% endblock %}
