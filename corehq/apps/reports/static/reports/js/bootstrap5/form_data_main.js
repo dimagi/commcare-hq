@@ -1,7 +1,7 @@
-hqDefine("reports/js/form_data_main", [
+hqDefine("reports/js/bootstrap5/form_data_main", [
     "jquery",
     "hqwebapp/js/initial_page_data",
-    "reports/js/bootstrap3/single_form",
+    "reports/js/bootstrap5/single_form",
     "analytix/js/kissmetrix",
 ], function (
     $,

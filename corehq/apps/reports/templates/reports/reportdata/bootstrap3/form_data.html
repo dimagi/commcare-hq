@@ -8,7 +8,7 @@
   <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
 {% endblock %}
 
-{% requirejs_main 'reports/js/form_data_main' %}
+{% requirejs_main 'reports/js/bootstrap3/form_data_main' %}
 
 {% block title %}Form: {{ form_name }}{% if form_received_on %} ({% utc_to_timezone form_received_on timezone %}){% endif %}{% endblock %}
 
