@@ -1,0 +1,30 @@
+{% extends 'reports/filters/base.html' %}
+{% load hq_shared_tags %}
+{% block filter_content %}
+  {% if help_title and help_content %}
+    <div class="row">
+      <div class="col-sm-11">
+  {% endif %}
+      <input id="{{ css_id }}"
+             name="{{ slug }}"
+             type="text"
+             {% if required %}required{% endif %}
+             class="form-control {% block input_css_class %}{% endblock %}" value="{{ default }}">
+      {% if help_inline %}
+        <p class="help-block">
+          <i class="fa fa-info-circle"></i>
+          {{ help_inline }}
+        </p>
+      {% endif %}
+  {% if help_title and help_content %}
+      </div>
+      <div class="col-sm-1">
+                <span class="hq-help-template"
+                      data-title="{{ help_title }}"
+                      data-content="{{ help_content }}"
+                      data-placement="left"
+                ></span>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

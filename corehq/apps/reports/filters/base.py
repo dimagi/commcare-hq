@@ -333,7 +333,7 @@ class BaseTagsFilter(BaseReportFilter):
 
 
 class BaseSimpleFilter(BaseReportFilter):
-    template = "reports/filters/simple.html"
+    template = "reports/filters/bootstrap3/simple.html"
     slug = None
 
     # use gettext_lazy for below properties
