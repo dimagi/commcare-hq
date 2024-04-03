@@ -1,4 +1,4 @@
-hqDefine("reports/js/readable_form", ["jquery"], function ($) {
+hqDefine("reports/js/bootstrap5/readable_form", ["jquery"], function ($) {
     function showReadable() {
         $('.form-data-raw').hide();
         $('.form-data-readable').show();

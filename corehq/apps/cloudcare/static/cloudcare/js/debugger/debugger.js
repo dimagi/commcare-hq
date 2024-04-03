@@ -2,7 +2,7 @@
 /* globals ace, Clipboard */
 hqDefine('cloudcare/js/debugger/debugger', function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
-        readableForm = hqImport("reports/js/readable_form");
+        readableForm = hqImport("reports/js/bootstrap3/readable_form");
 
     /**
      * These define tabs that are availabe in the debugger.

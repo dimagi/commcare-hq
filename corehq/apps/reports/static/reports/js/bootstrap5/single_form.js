@@ -11,7 +11,7 @@ hqDefine("reports/js/bootstrap5/single_form", [
     "hqwebapp/js/bootstrap5/main",
     "analytix/js/google",
     "analytix/js/kissmetrix",
-    "reports/js/readable_form",
+    "reports/js/bootstrap5/readable_form",
     "reports/js/data_corrections",
     "clipboard/dist/clipboard",
 ], function (

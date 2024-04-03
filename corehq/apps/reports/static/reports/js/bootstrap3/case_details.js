@@ -11,7 +11,7 @@ hqDefine("reports/js/bootstrap3/case_details", [
     'reports/js/bootstrap3/single_form',
     'case/js/case_hierarchy',
     'case/js/repeat_records',
-    'reports/js/readable_form',
+    'reports/js/bootstrap3/readable_form',
     'bootstrap',    // needed for $.tab
     'jquery-memoized-ajax/jquery.memoized.ajax.min',
 ], function (
