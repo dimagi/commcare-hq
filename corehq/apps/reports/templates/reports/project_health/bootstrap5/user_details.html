@@ -1,0 +1,17 @@
+{% load i18n %}
+<dl class="dl-horizontal">
+  <dt>{% trans "Name" %}</dt>
+  <dd>{{ user.human_friendly_name }}</dd>
+  <dt>{% trans "Phone number" %}</dt>
+  <dd>{{ user.default_phone_number }}</dd>
+  {% if user.sql_location %}
+    <dt>{% trans "Location" %}</dt>
+    <dd>{{ user.sql_location.name }}</dd>
+  {% endif %}
+  {% if groups %}
+    <dt>{% trans "Groups" %}</dt>
+    <dd>{{ groups }}</dd>
+  {% endif %}
+</dl>
+<a href="{% url 'edit_commcare_user' domain user.get_id %}" target="_blank">{% trans "Edit User Information" %}</a> |
+<a href="{{ submission_by_form_link }}" target="_blank">{% trans "View recent submissions" %}</a>
