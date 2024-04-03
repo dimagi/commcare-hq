@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from django.db.models import Count
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
@@ -28,10 +30,7 @@ class Command(PopulateSQLCommand):
 
     def handle(self, *args, **kw):
         couch_model_class = self.sql_class()._migration_get_couch_model_class()
-        couch_model_class._migration_get_custom_couch_to_sql_functions = staticmethod(
-            lambda: [_attempt_to_preserve_failure_reason]
-        )
-        with enable_attempts_sync_to_sql(couch_model_class, True):
+        with patch_couch_to_sql(couch_model_class):
             return super().handle(*args, **kw)
 
     @classmethod
@@ -220,3 +219,16 @@ def _attempt_to_preserve_failure_reason(doc, obj):
         )
         assert not obj._new_submodels[SQLRepeatRecordAttempt][0], 'unexpected attempts'
         obj._new_submodels[SQLRepeatRecordAttempt][0].append(attempt)
+
+
+@contextmanager
+def patch_couch_to_sql(couch_model):
+    original_functions = couch_model._migration_get_custom_couch_to_sql_functions
+    couch_model._migration_get_custom_couch_to_sql_functions = staticmethod(
+        lambda: [_attempt_to_preserve_failure_reason]
+    )
+    try:
+        with enable_attempts_sync_to_sql(couch_model, True):
+            yield
+    finally:
+        couch_model._migration_get_custom_couch_to_sql_functions = original_functions

@@ -59,8 +59,7 @@ class ExampleUserLoginForm(forms.Form):
             crispy.Fieldset(
                 _("Advanced Information"),
                 'is_staff',
-                twbscrispy.PrependedText('phone_number', '+',
-                                         placeholder='15555555555'),
+                hqcrispy.CheckboxField('phone_number', placeholder='15555555555'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(_("Create User"),
