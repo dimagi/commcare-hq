@@ -1,4 +1,3 @@
-import subprocess
 import time
 from pathlib import Path
 
@@ -18,6 +17,11 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_changed_javascript_plugins,
     flag_bootstrap3_references_in_template,
     flag_crispy_forms_in_template,
+)
+from corehq.apps.hqwebapp.utils.bootstrap.git import (
+    has_no_pending_git_changes,
+    get_commit_string,
+    apply_commit,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_app_template_folder,
@@ -305,7 +309,10 @@ class Command(BaseCommand):
             self.write_response("ok, canceling split and rolling back changes...")
             return
 
-        has_no_existing_changes = self.has_no_existing_changes()
+        has_no_existing_changes = has_no_pending_git_changes()
+        if not has_no_existing_changes:
+            self.prompt_user_to_commit_changes()
+            has_no_existing_changes = has_no_pending_git_changes()
 
         bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
         bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
@@ -454,25 +461,22 @@ class Command(BaseCommand):
     def enter_to_continue():
         input("\nENTER to continue...")
 
-    @staticmethod
-    def has_no_existing_changes():
-        status = subprocess.Popen(
-            ["git", "status"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        return "nothing to commit" in str(status.communicate()[0])
+    def prompt_user_to_commit_changes(self):
+        self.stdout.write(self.style.ERROR(
+            "\nYou have un-committed changes! Please commit these changes before proceeding. Thank you!"
+        ))
+        self.enter_to_continue()
 
     def suggest_commit_message(self, message, show_apply_commit=False):
         self.stdout.write("\nNow would be a good time to review changes with git and "
                           "commit before moving on to the next template.")
-        self.stdout.write("\nSuggested command:")
-        commit_command = ["git", "commit", "--no-verify", f"--message=\"Bootstrap 5 Migration - {message}\""]
-        self.stdout.write(self.style.MIGRATE_LABEL(" ".join(commit_command)))
         if show_apply_commit:
-            confirm = get_confirmation("\nAutomatically apply this commit with the command above?")
+            confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
             if confirm:
-                subprocess.call([
-                    "git", "add", ".",
-                ])
-                subprocess.call(commit_command)
+                apply_commit(message)
+                return
+        commit_string = get_commit_string(message)
+        self.stdout.write("\n\nSuggested command:\n")
+        self.stdout.write(self.style.MIGRATE_HEADING(commit_string))
         self.stdout.write("\n")
         self.enter_to_continue()
