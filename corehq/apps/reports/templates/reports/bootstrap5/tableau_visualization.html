@@ -1,0 +1,97 @@
+{% extends 'hqwebapp/bootstrap3/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main_b5 "hqwebapp/js/bootstrap3/crud_paginated_list_init" %}
+
+{% block pagination_header %}
+  <h2>{% trans "Tableau Visualizations" %}</h2>
+{% endblock %}
+
+{% block pagination_templates %}
+  <script type="text/html" id="tableau-visualization-template">
+    <td data-bind="text: title"></td>
+    <td data-bind="text: server"></td>
+    <td data-bind="text: view_url"></td>
+    <td class="col-lg-1"> <!-- actions -->
+      <button type="button"
+              data-bs-toggle="modal"
+              data-bind="attr: {'data-target': '#update-tableau-visualization-' + id}"
+              class="btn btn-primary btn-block">
+          {% trans "Update" %}
+      </button>
+      <div class="modal fade"
+             data-bind="attr: {id: 'update-tableau-visualization-' + id}">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-hidden="true">&times;</button>
+                        <h3>
+                          {% trans "Update Tableau Visualization" %} <strong data-bind="text: name"></strong>:
+                        </h3>
+                    </div>
+                    <div class="modal-body">
+                        <div data-bind="html: updateForm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </td>
+    <td class="col-lg-1"> <!-- actions -->
+      <button type="button"
+              class="btn btn-outline-danger btn-block"
+              data-bind="attr: {'data-target': '#delete-tableau-visualization-' + id}"
+              data-bs-toggle="modal">
+        <i class="fa fa-remove"></i> {% trans "Delete" %}
+      </button>
+      <div class="modal fade"
+           data-bind="attr: {'id': 'delete-tableau-visualization-' + id}">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>
+              <h3>
+                {% trans "Delete Tableau Visualization" %} <strong data-bind="text: view_url"></strong>?
+              </h3>
+            </div>
+            <div class="modal-footer">
+              <button type="button"
+                      class="btn btn-outline-primary"
+                      data-bs-dismiss="modal">
+                {% trans "Cancel" %}
+              </button>
+              <button type="button"
+                      class="btn btn-outline-danger delete-item-confirm"
+                      data-loading-text="{% trans 'Deleting Tableau Visualization' %}">
+                <i class="fa fa-remove"></i> {% trans "Delete" %}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </td>
+  </script>
+
+  <script type="text/html" id="tableau-visualization-deleted-template">
+    <td data-bind="text: title"></td>
+    <td data-bind="text: server"></td>
+    <td data-bind="text: view_url"></td>
+    <td>{% trans 'Deleted' %}</td>
+  </script>
+{% endblock %}
+
+{% block pagination_footer %}
+  <div class="spacer"></div>
+  <div class="row">
+    <div class="col-md-12">
+      <a href="{% url 'tableau_visualization_detail_view' domain %}">
+        <button type="button" class="btn btn-primary">
+          {% trans "Add Tableau Visualization" %}
+        </button>
+      </a>
+    </div>
+  </div>
+{% endblock %}
