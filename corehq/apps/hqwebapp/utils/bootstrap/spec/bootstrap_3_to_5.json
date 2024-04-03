@@ -69,9 +69,6 @@
     "template_tag_renames": {
         "requirejs_main": "requirejs_main_b5"
     },
-    "template_tag_renames": {
-        "requirejs_main": "requirejs_main_b5"
-    },
     "data_attribute_renames": {
         "data-toggle": "data-bs-toggle",
         "data-target": "data-bs-target",
@@ -103,7 +100,10 @@
     ],
     "flagged_js_plugins": [
         "affix",
+        "bootstrapSwitch",
         "button",
+        "createDateRangePicker",
+        "datetimepicker",
         "modal",
         "popover",
         "tab",

@@ -21,6 +21,12 @@ from corehq.util.log import with_progress_bar
 logger = logging.getLogger('build_requirejs')
 BOOTSTRAP_VERSIONS = [3, 5]
 
+REQUIREJS_MAIN_GREP_PATTERN = r'{% requirejs_main\(_b5\)\? .\(\([^%]*\)/[^/%]*\). %}'
+REQUIREJS_MAIN_PYTHON_PATTERN = r'{% requirejs_main(_b(5))? .(([^%]*)/[^/%]*). %}'
+
+_pattern = r"sourceMappingURL=bundle.b[%s].js.map$"
+BUNDLE_SOURCE_MAP_PATTERN = re.compile(_pattern % "".join(str(v) for v in BOOTSTRAP_VERSIONS))
+
 
 class Command(ResourceStaticCommand):
     help = '''
@@ -100,7 +106,7 @@ class Command(ResourceStaticCommand):
         for root, dirs, files in os.walk(os.path.join(settings.BASE_DIR, 'corehq')):
             for name in files:
                 if name.endswith(".html"):
-                    filename = filename = os.path.join(root, name)
+                    filename = os.path.join(root, name)
                     if '/partials/' not in filename:
                         if '/includes/' not in filename and '/_includes/' not in filename:
                             html_files.append(filename)
@@ -127,12 +133,12 @@ class Command(ResourceStaticCommand):
         logger.info("Mapping main modules to django apps")
         dirs = {v: defaultdict(set) for v in BOOTSTRAP_VERSIONS}
         for filename in html_files:
-            proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
+            proc = subprocess.Popen(["grep", REQUIREJS_MAIN_GREP_PATTERN, filename],
                                     stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
             out = out.decode('utf-8')
             if out:
-                match = re.search(r"{% requirejs_main(_b([35]))? .(([^%]*)/[^/%]*). %}", out)
+                match = re.search(REQUIREJS_MAIN_PYTHON_PATTERN, out)
                 if match:
                     bootstrap_version = int(match.group(2) or '3')
                     main = match.group(3)
@@ -180,7 +186,7 @@ class Command(ResourceStaticCommand):
         logger.info(f"{log_prefix}Running r.js")
         ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", filename])
         if ret:
-            raise CommandError("Failed to build JS bundles")
+            raise CommandError(f"{log_prefix} Failed to build JS bundles")
         logger.info(f"{log_prefix}r.js complete, bundle config output written to staticfiles/build.txt")
 
         # Copy requirejs_config.js back into corehq, since r.js added all of the bundles to it
@@ -196,9 +202,9 @@ class Command(ResourceStaticCommand):
         # Copy build files for later troubleshooting, since the B5 run of this function will overwrite the B3 files
         for basename in ("build.js", "build.txt"):
             src = self._staticfiles_path(basename)
-            dest = src.replace("build", f"build.b{bootstrap_version}")
+            dest = src.replace("/build.", f"/build.b{bootstrap_version}.")
             logger.info(f"{log_prefix}Copying {os.path.relpath(src)} to {os.path.relpath(dest)}")
-            copyfile(filename, dest)
+            copyfile(src, dest)
 
     def _minify(self, config):
         if not self.optimize:
@@ -266,11 +272,10 @@ class Command(ResourceStaticCommand):
                 lines = fin.readlines()
             with open(filename, 'w') as fout:
                 for line in lines:
-                    match = re.search(r'sourceMappingURL=(bundle.b[35].js.map)$', line)
+                    match = re.search(BUNDLE_SOURCE_MAP_PATTERN, line)
                     if match:
-                        basename = match.group(1)
                         file_hash = self._update_resource_hash(module['name'] + ".js", filename)
-                        line = line.replace(basename, f'{basename}?version={file_hash}')
+                        line += f'?version={file_hash}'
                     fout.write(line)
 
     def _write_resource_versions(self):
