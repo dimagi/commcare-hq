@@ -81,6 +81,7 @@ class TestRequireJS(SimpleTestCase):
         #   knockout_bindings should be broken up, in the meantime, ignore
         test_files = [f for f in self.requirejs_files
                       if not f.endswith("reports/js/bootstrap3/standard_hq_report.js")
+                      and not f.endswith("reports/js/bootstrap5/standard_hq_report.js")
                       and not f.endswith("hqwebapp/js/bootstrap3/knockout_bindings.ko.js")]
 
         def _test_file(filename):
