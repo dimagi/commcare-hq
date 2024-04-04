@@ -48,6 +48,11 @@ class Command(PopulateSQLCommand):
             return couch_state == State.Pending or couch_state == State.Fail
 
         from ...models import State
+        is_very_old_pending_record = (
+            'registered_at' not in couch
+            and get_state(couch) == State.Pending
+            and (couch.get('next_check') or '2018-03-12') < '2018-03-12'
+        )
         fields = ["domain", "payload_id"]
         diffs = [cls.diff_attr(name, couch, sql) for name in fields]
         diffs.append(cls.diff_value(
@@ -57,18 +62,19 @@ class Command(PopulateSQLCommand):
         ))
         diffs.append(cls.diff_value(
             "state",
-            get_state(couch),
+            State.Cancelled if is_very_old_pending_record else get_state(couch),
             sql.state,
         ))
         diffs.append(cls.diff_value(
             "registered_at",
-            couch.get("registered_on") or '1970-01-01T00:00:00.000000Z',
+            (couch.get("next_check" if is_very_old_pending_record else "registered_on")
+                or '1970-01-01T00:00:00.000000Z'),
             json_format_datetime(sql.registered_at),
         ))
         if sql_may_have_next_check():
             diffs.append(cls.diff_value(
                 "next_check",
-                couch["next_check"],
+                None if is_very_old_pending_record else couch["next_check"],
                 json_format_datetime(sql.next_check) if sql.next_check else sql.next_check,
             ))
         if couch.get("failure_reason") and not couch.get("succeeded"):
