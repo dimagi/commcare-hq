@@ -1,4 +1,4 @@
-from django.conf.urls import re_path as url
+from django.urls import re_path as url
 
 from corehq.apps.groups.views import (
     add_group,

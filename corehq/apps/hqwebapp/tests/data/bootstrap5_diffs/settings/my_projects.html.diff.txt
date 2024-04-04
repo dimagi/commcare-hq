@@ -1,0 +1,44 @@
+--- 
++++ 
+@@ -29,8 +29,8 @@
+           </td>
+           <td class="{{ col_class }}">
+             {% if not domain.is_admin %}
+-              <a class="btn btn-danger"
+-                 data-toggle="modal"
++              <a class="btn btn-outline-danger"
++                 data-bs-toggle="modal"
+                  href="#delete_domain_{{ domain.name }}"><i class="fa fa-remove"></i> {% trans 'Remove My Membership' %}
+               </a>
+               <div id="delete_domain_{{ domain.name }}"
+@@ -38,7 +38,7 @@
+                 <div class="modal-dialog">
+                   <div class="modal-content">
+                     <div class="modal-header">
+-                      <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
++                      <button type="button" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                       <h3 class="modal-title">{% trans 'Remove Project Membership?' %}</h3>
+                     </div>
+                     <form class="form form-horizontal"
+@@ -56,9 +56,9 @@
+                         </p>
+                       </div>
+                       <div class="modal-footer">
+-                        <a href="#" data-dismiss="modal"
+-                           class="btn btn-default">{% trans 'Cancel' %}</a>
+-                        <button type="submit" class="btn btn-danger">
++                        <a href="#" data-bs-dismiss="modal"
++                           class="btn btn-outline-primary">{% trans 'Cancel' %}</a>
++                        <button type="submit" class="btn btn-outline-danger">
+                           <i class="fa fa-remove"></i> {% trans 'Remove' %}
+                         </button>
+                       </div>
+@@ -68,7 +68,7 @@
+ 
+               </div>
+             {% else %}
+-              <p class="text-muted">{% blocktrans %}You are this project's administrator.{% endblocktrans %}</p>
++              <p class="text-body-secondary">{% blocktrans %}You are this project's administrator.{% endblocktrans %}</p>
+             {% endif %}
+           </td>
+           {% if show_session_timeout %}

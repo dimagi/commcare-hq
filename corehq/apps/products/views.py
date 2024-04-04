@@ -8,6 +8,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
+from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound
@@ -33,6 +34,7 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
 )
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.forms import ProductForm
 from corehq.apps.products.models import Product, SQLProduct
@@ -85,8 +87,8 @@ def unarchive_product(request, domain, prod_id, archive=True):
     })
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ProductListView(BaseCommTrackManageView):
-    # todo mobile workers shares this type of view too---maybe there should be a class for this?
     urlname = 'commtrack_product_list'
     template_name = 'products/manage/products.html'
     page_title = gettext_noop("Products")
@@ -212,6 +214,7 @@ class FetchProductListView(ProductListView):
         }), 'text/json')
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class NewProductView(BaseCommTrackManageView):
     urlname = 'commtrack_product_new'
     page_title = gettext_noop("New Product")
@@ -303,7 +306,7 @@ class UploadProductView(BaseCommTrackManageView):
         # stash this in soil to make it easier to pass to celery
         file_ref = expose_cached_download(
             upload.read(),
-            expiry=1*60*60,
+            expiry=1 * 60 * 60,
             file_extension=file_extention_from_filename(upload.name)
         )
         task = import_products_async.delay(

@@ -148,34 +148,44 @@ hqDefine('cloudcare/js/utils', [
         return new RegionContainer();
     };
 
-    var showLoading = function () {
+    var showProminentLoading = function () {
         hqRequire([
             "cloudcare/js/formplayer/app",
-            "hqwebapp/js/toggles",
             "cloudcare/js/formplayer/layout/views/progress_bar",
-        ], function (FormplayerFrontend, toggles, ProgressBar) {
-            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
-                const progressView = ProgressBar({
-                    progressMessage: gettext("Loading..."),
-                });
-                if (!FormplayerFrontend.regions) {
-                    FormplayerFrontend.regions = getRegionContainer();
-                }
-                $('#breadcrumb-region').css('z-index', '0');
-                const loadingElement = FormplayerFrontend.regions.getRegion('loadingProgress');
-                loadingElement.show(progressView);
-                let currentProgress = 10;
-                progressView.progressEl.find('.progress').css("height", "12px");
-                progressView.progressEl.find('.progress-container').css("width", "50%");
-                progressView.progressEl.find('.progress-title h1').css("font-size", "25px");
-                progressView.progressEl.find('#formplayer-progress ').css("background-color", "rgba(255, 255, 255, 0.7)");
-                progressView.setProgress(currentProgress, 100, 200);
-                sessionStorage.progressIncrementInterval = setInterval(function () {
-                    if (currentProgress <= 100) {
-                        progressView.setProgress(currentProgress, 100, 200);
-                        currentProgress += 1;
+        ], function (FormplayerFrontend, ProgressBar) {
+            setTimeout(function () {
+                const formplayerQueryInProgress = sessionStorage.formplayerQueryInProgress && JSON.parse(sessionStorage.formplayerQueryInProgress);
+                if (formplayerQueryInProgress) {
+                    const progressView = ProgressBar({
+                        progressMessage: gettext("Loading..."),
+                    });
+                    if (!FormplayerFrontend.regions) {
+                        FormplayerFrontend.regions = getRegionContainer();
                     }
-                }, 250);
+                    $('#breadcrumb-region').css('z-index', '0');
+                    const loadingElement = FormplayerFrontend.regions.getRegion('loadingProgress');
+                    loadingElement.show(progressView);
+                    let currentProgress = 10;
+                    progressView.progressEl.find('.progress').css("height", "12px");
+                    progressView.progressEl.find('.progress-container').css("width", "50%");
+                    progressView.progressEl.find('.progress-title h1').css("font-size", "25px");
+                    progressView.progressEl.find('#formplayer-progress ').css("background-color", "rgba(255, 255, 255, 0.7)");
+                    progressView.setProgress(currentProgress, 100, 200);
+                    sessionStorage.progressIncrementInterval = setInterval(function () {
+                        if (currentProgress <= 100) {
+                            progressView.setProgress(currentProgress, 100, 200);
+                            currentProgress += 1;
+                        }
+                    }, 250);
+                }
+            }, constants.MILLIS_BEFORE_SHOW_LOADING);
+        });
+    };
+
+    var showLoading = function () {
+        hqRequire(["hqwebapp/js/toggles"], function (toggles) {
+            if (toggles.toggleEnabled('USE_PROMINENT_PROGRESS_BAR')) {
+                showProminentLoading();
             } else {
                 NProgress.start();
             }
@@ -183,12 +193,14 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var formplayerLoading = function () {
+        sessionStorage.formplayerQueryInProgress = true;
         if (shouldShowLoading()) {
             showLoading();
         }
     };
 
     var formplayerLoadingComplete = function (isError, message) {
+        sessionStorage.formplayerQueryInProgress = false;
         hideLoading();
         if (isError) {
             showError(message || gettext('Error saving!'), $('#cloudcare-notifications'));

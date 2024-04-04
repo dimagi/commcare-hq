@@ -83,7 +83,7 @@ contextlib2==21.6.0
     # via schema
 crispy-bootstrap3to5 @ git+https://github.com/dimagi/crispy-bootstrap3to5.git@775b93b8cd8e5312cab4a367409a95b66ce18165
     # via -r base-requirements.in
-cryptography==42.0.3
+cryptography==42.0.4
     # via
     #   -r base-requirements.in
     #   jwcrypto
@@ -111,14 +111,13 @@ defusedxml==0.7.1
     #   oic
 deprecated==1.2.10
     # via
-    #   jwcrypto
     #   opentelemetry-api
     #   pygithub
 diff-match-patch==20230430
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.24
+django==3.2.25
     # via
     #   -r base-requirements.in
     #   crispy-bootstrap3to5
@@ -330,7 +329,7 @@ jsonschema==4.17.3
     # via
     #   -r base-requirements.in
     #   ddtrace
-jwcrypto==1.5.1
+jwcrypto==1.5.6
     # via django-oauth-toolkit
 kafka-python==1.4.7
     # via -r base-requirements.in
@@ -620,6 +619,7 @@ typing-extensions==4.8.0
     #   cattrs
     #   ddtrace
     #   django-countries
+    #   jwcrypto
     #   oic
     #   qrcode
     #   stripe

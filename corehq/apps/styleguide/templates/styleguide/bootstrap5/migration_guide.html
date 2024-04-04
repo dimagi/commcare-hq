@@ -137,6 +137,14 @@
     </div>
   </div>
   <p>
+    If you can, please cherry-pick these lint commits into a separate PR and merge those changes before creating
+    the PR to split the files.
+  </p>
+  <div class="alert alert-primary">
+    <strong>Important:</strong> Avoid including lint fixes and split-files changes in the SAME commit.
+    These changes MUST be separated.
+  </div>
+  <p>
     Now, on to the migration.
     Please set aside focused time to PR these changes as soon as possible to avoid any migration conflicts or
     missed renamed references, especially in parts of the codebase that are undergoing frequent front-end changes. This
@@ -157,10 +165,9 @@
     <code>&lt;app_name&gt;</code>.
   </p>
   <p>
-    The management command will iterate through all template and javascript files in the app.
-    The command will prompt you to accept each find-and-replace change in a file. More involved changes will be
-    flagged with notes saved for later in markdown files within the <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code>.
-    You will always have the option to skip changes that do not make sense.
+    The management command will iterate through all template and javascript files in the app. You have the option to
+    review and accept each change line-by-line or review the diff for each file at the end.
+    A changelog for each file will be saved to a markdown file in <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code>.
   </p>
   <div class="alert alert-primary">
     Due to potential merge conflict issues, the markdown files outputted to <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code>
@@ -217,15 +224,17 @@
     <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/tests/data/bootstrap5_diff_config.json" target="_blank">
       bootstrap5_diff_config.json
     </a> and commit those changes.
-    To confirm which directories to add, check your app for directories with "bootstrap" in the name:
+  </p>
+  <p>
+    For most applications, you can just run the following command to automatically update <code>bootstrap5_diff_config.json</code>:
   </p>
   <div class="card text-bg-light mb-3">
     <div class="card-body">
-      <pre class="m-0">find corehq/apps/&lt;app_name&gt; -type d | grep bootstrap</pre>
+      <pre class="m-0">./manage.py build_bootstrap5_diffs --update_app &lt;app_name&gt;</pre>
     </div>
   </div>
   <p>
-    Once these paths are added, please run the following management command and commit the results.
+    Once those changes (if any) are committed, please run the following management command and commit the results:
   </p>
   <div class="card text-bg-light mb-3">
     <div class="card-body">
@@ -282,6 +291,19 @@
     It is important to create a separate Pull Request for stylesheet changes. This PR should come after the "split files"
     changes in the previous step.
   </div>
+  <p>
+    You will have to update <code>bootstrap5_diff_config.json</code> manually when working with stylesheet files.
+    To confirm which directories to add, check your app for directories with "bootstrap3" in the name:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">find corehq/apps/&lt;app_name&gt; -type d | grep bootstrap3</pre>
+    </div>
+  </div>
+  <p>
+    You can then see existing stylesheet file configuration in the config file as an example for how to update it
+    for your stylesheets.
+  </p>
 
   <h2 id="migrating-views" class="pt-4">
     Step 3: Migrating Views
@@ -334,20 +356,35 @@
     Once your view is functional under the Bootstrap 5 changes, check to see whether the <code>boostrap3</code> versions
     of your template or javascript files are being referenced elsewhere. If not, it is time to "un-split" that template
     by removing the <code>bootstrap3</code> version of that file and moving the <code>bootstrap5</code> version into
-    the file's original location before the split. When you do this, please ensure references to the <code>bootstrap5</code>
-    file are updated to reflect the changed filepath.
+    the file's original location before the split.
   </p>
   <p>
-    If the file you are "un-splitting" is the last file in the <code>bootstrap3</code> split directory for that path,
-    please ensure that path is removed from
-    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/tests/data/bootstrap5_diff_config.json" target="_blank">
-      bootstrap5_diff_config.json
-    </a>.
+    If the file you are un-splitting is a template, run:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">./manage.py complete_bootstrap5_migration &lt;app_name&gt; --template &lt;filename&gt;</pre>
+    </div>
+  </div>
+  <p>
+    If the file you are un-splitting is a javascript file, run:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">./manage.py complete_bootstrap5_migration &lt;app_name&gt; --javascript &lt;filename&gt;</pre>
+    </div>
+  </div>
+  <p>
+    Please follow the guidance of the <code>complete_bootstrap5_migration</code> management commands for suggested
+    commit messages and when to commit changes.
   </p>
 
   <h3 id="deploy-to-staging" class="pt-3">
     Deploy to Staging
   </h3>
+  <div class="alert alert-danger">
+    <strong>IMPORTANT: Do not skip this step!</strong> Please deploy to staging to avoid any fires. You have been warned.
+  </div>
   <p>
     Once you have your migrated view working locally, it is important to deploy your view's branch to staging to ensure
     that the requirejs build doesn't encounter any issues and that there are no other staticfiles or javascript
@@ -362,6 +399,19 @@
   <p>
     It is likely that you will have to run <code>build_bootstrap5_diffs</code> after the view migration. This will
     regenerate any diffs on split files affected by these changes.
+  </p>
+  <p>
+    Before you rebuild diffs, please update the <code>bootstrap5_diff_config.json</code> file with the
+    command below:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">./manage.py build_bootstrap5_diffs --update_app &lt;app_name&gt;</pre>
+    </div>
+  </div>
+  <p>
+    You can then commit those changes, if any, and then re run <code>build_bootstrap5_diffs</code> without
+    the <code>update_app</code> option to rebuild the diffs for split files.
   </p>
   <div class="alert alert-primary">
     <strong>Important:</strong> Please refrain from including commits from <code>build_bootstrap5_diffs</code>
@@ -383,6 +433,19 @@
     Please update the app's migration status
     <a href="https://docs.google.com/spreadsheets/d/1tkSXR643Da-fp6a-uYPa5dYs5if4W2LqtvUJs3IfUKs/edit#gid=0"
        target="_blank">in this table</a>.
+  </p>
+  <p>
+    You can run the following command to mark the application as complete:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">./manage.py complete_bootstrap5_migration &lt;app_name&gt;</pre>
+    </div>
+  </div>
+  <p>
+    Please make sure you re-run <code>build_bootstrap5_diffs</code> with the <code>update_app</code> option as
+    described above. If there are any changes, please commit those and then re-run <code>build_bootstrap5_diffs</code>
+    without the <code>update_app</code> option.
   </p>
 
   <h2 id="final-cleanup" class="pt-4">

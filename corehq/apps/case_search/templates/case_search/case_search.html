@@ -87,26 +87,18 @@
                 <strong>XPath Expression</strong>
               </div>
               <div class="panel-body">
-                <div class="form-group" style="width:100%">
-                  <textarea style="min-width: 50%" spellcheck="false" class="form-control vertical-resize" name="xpath" type="text" placeholder="e.g: name = 'tyrion' or nickname='the imp'" data-bind="value: xpath"> </textarea>
+                <div class="form-group" style="width:100%" data-bind="foreach: xpath_expressions" >
+                  <textarea style="min-width: 50%" spellcheck="false" class="form-control vertical-resize"
+                    name="xpath" type="text" placeholder="e.g: name = 'tyrion' or nickname='the imp'" data-bind="value: xpath"> </textarea>
+                  <span class='btn btn-danger' data-bind="click: $parent.removeXPath">
+                    <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
+                  </span>
                 </div>
+                <button class="btn btn-default" id="add-xpath" data-bind="click: addXPath">
+                  <i class="fa fa-plus"></i> {% trans "Add XPath" %}
+                </button>
               </div>
             </div>
-            {% if query_additions %}
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <strong>{% trans "Custom Query Addition" %}</strong>
-                </div>
-                <div class="panel-body">
-                  <select data-bind="value: customQueryAddition">
-                    <option></option>
-                    {% for query_addition in query_additions %}
-                      <option value="{{ query_addition.id }}">{{ query_addition.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-            {% endif %}
             <button type="button" class="btn btn-primary" data-bind="click: search">
               <i data-bind="attr: {class: searchButtonIcon}"></i> {% trans "Search" %}
             </button>
