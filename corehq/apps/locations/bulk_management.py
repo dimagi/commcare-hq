@@ -11,6 +11,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import ForeignKey
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -456,6 +457,12 @@ class NewLocationImporter(object):
         ])
 
 
+@memoized
+def _get_location_type_foreign_key_fields_minus_parent():
+    return [field.name for field in LocationType._meta.get_fields() if isinstance(field, ForeignKey)
+            and field.related_model == LocationType and field.name != 'parent_type']
+
+
 class LocationTreeValidator(object):
     """Validates the given type and location stubs
 
@@ -695,6 +702,20 @@ class LocationTreeValidator(object):
                 _("Location Type '{}' has a parentage that loops").format(code)
                 for code in e.affected_nodes
             ]
+
+        # Verify that deleted types are not referenced by other types via foreign key
+        for deleted_type in self.types_to_be_deleted:
+            for field_name in _get_location_type_foreign_key_fields_minus_parent():
+                referencing_types_and_fields = [
+                    (lt.code, field_name) for lt in self.location_types if getattr(lt.db_object, field_name)
+                    and getattr(lt.db_object, field_name).id == deleted_type.db_object.id
+                ]
+                if referencing_types_and_fields:
+                    return [
+                        _(f"Location Type '{referencing_type_and_field[0]}' references the type to be deleted"
+                          f" '{deleted_type.code}' via the field '{referencing_type_and_field[1]}'")
+                        for referencing_type_and_field in referencing_types_and_fields
+                    ]
 
     def _validate_location_tree(self):
         errors = []

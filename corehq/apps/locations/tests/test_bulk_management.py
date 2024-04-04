@@ -1094,6 +1094,21 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         self.assertFalse(save_location.called)
         self.assertFalse(save_type.called)
 
+    def test_dont_delete_referenced_location_types(self):
+        self.location_types['State'].expand_to = self.location_types['County']
+        self.location_types['State'].save()
+        delete_county_type = [
+            LocTypeRow('State', 'state', ''),
+            LocTypeRow('County', 'county', 'state', do_delete=True),
+            LocTypeRow('City', 'city', 'state'),
+        ]
+        result = self.bulk_update_locations(
+            delete_county_type,
+            [],
+        )
+        assert_errors(result, ["Location Type 'state' references the type to be deleted 'county'"
+                               " via the field 'expand_to'"])
+
 
 class TestRestrictedUserUpload(UploadTestUtils, LocationHierarchyPerTest):
     location_type_names = [lt.name for lt in FLAT_LOCATION_TYPES]
