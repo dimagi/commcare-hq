@@ -1,13 +1,15 @@
+import json
 import re
 from collections import defaultdict
-import json
+from functools import wraps
 
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
-from corehq import toggles
 
+from casexml.apps.case.fixtures import CaseDBFixture
 from dimagi.utils.logging import notify_exception
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.case_search.const import (
@@ -15,10 +17,12 @@ from corehq.apps.case_search.const import (
     COMMCARE_PROJECT,
     IS_RELATED_CASE,
 )
-from corehq.apps.case_search.exceptions import CaseSearchUserError, CaseFilterError, TooManyRelatedCasesError
-from corehq.apps.case_search.filter_dsl import (
-    build_filter_from_xpath,
+from corehq.apps.case_search.exceptions import (
+    CaseFilterError,
+    CaseSearchUserError,
+    TooManyRelatedCasesError,
 )
+from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
@@ -32,14 +36,29 @@ from corehq.apps.es.case_search import (
     case_property_missing,
     case_property_query,
     case_property_range_query,
-    wrap_case_search_hit,
     reverse_index_case_query,
+    wrap_case_search_hit,
 )
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.util.timer import TimingContext
+
+
+def time_function():
+    """Decorator to get timing information on a case search function that has `helper` as the first arg"""
+    def decorator(fn):
+        @wraps(fn)
+        def _inner(helper, *args, **kwargs):
+            tag = fn.__name__
+            if helper:
+                with helper.timing_context(tag):
+                    return fn(helper, *args, **kwargs)
+            return fn(helper, *args, **kwargs)
+        return _inner
+    return decorator
 
 
 def get_case_search_results_from_request(domain, app_id, couch_user, request_dict):
@@ -70,10 +89,30 @@ def get_case_search_results(domain, case_types, criteria,
     return cases
 
 
+def profile_case_search(domain, couch_user, app_id, config):
+    helper = _get_helper(couch_user, domain, config.case_types, config.data_registry)
+
+    with helper.timing_context:
+        cases = get_primary_case_search_results(helper, domain, config.case_types,
+                                                config.criteria, config.commcare_sort)
+        primary_count = len(cases)
+        if app_id:
+            cases.extend(get_and_tag_related_cases(
+                helper, app_id, config.case_types, cases, config.custom_related_case_property,
+                config.include_all_related_cases))
+        related_count = len(cases) - primary_count
+
+        with helper.timing_context('CaseDBFixture.fixture'):
+            CaseDBFixture(cases).fixture
+    return helper.timing_context, primary_count, related_count
+
+
+@time_function()
 def get_primary_case_search_results(helper, domain, case_types, criteria, commcare_sort=None):
     builder = CaseSearchQueryBuilder(domain, case_types, helper.query_domains)
     try:
-        search_es = builder.build_query(criteria, commcare_sort)
+        with helper.timing_context('build_query'):
+            search_es = builder.build_query(criteria, commcare_sort)
     except TooManyRelatedCasesError:
         raise CaseSearchUserError(_('Search has too many results. Please try a more specific search.'))
     except CaseFilterError as e:
@@ -84,14 +123,16 @@ def get_primary_case_search_results(helper, domain, case_types, criteria, commca
         raise CaseSearchUserError(str(e))
 
     try:
-        hits = search_es.run().raw_hits
+        with helper.timing_context('run query'):
+            hits = search_es.run().raw_hits
     except Exception as e:
         notify_exception(None, str(e), details=dict(
             exception_type=type(e),
         ))
         raise
 
-    cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
+    with helper.timing_context('wrap_cases'):
+        cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
     return cases
 
 
@@ -112,6 +153,7 @@ class _QueryHelper:
     def __init__(self, domain):
         self.domain = domain
         self.query_domains = [self.domain]
+        self.timing_context = TimingContext('Case Search')
 
     def get_base_queryset(self):
         return CaseSearchES().domain(self.query_domains)
@@ -131,6 +173,7 @@ class _RegistryQueryHelper:
         self.couch_user = couch_user
         self.registry_helper = registry_helper
         self.query_domains = self.registry_helper.visible_domains
+        self.timing_context = TimingContext('Case Search')
 
     def get_base_queryset(self):
         return CaseSearchES().domain(self.query_domains)
@@ -302,6 +345,7 @@ class CaseSearchQueryBuilder:
         ]
 
 
+@time_function()
 def get_and_tag_related_cases(helper, app_id, case_types, cases,
                             custom_related_case_property, include_all_related_cases):
     """
@@ -313,7 +357,8 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
     if not cases:
         return []
 
-    app = get_app_cached(helper.domain, app_id)
+    with helper.timing_context('get_app_cached'):
+        app = get_app_cached(helper.domain, app_id)
 
     expanded_case_results = []
     if custom_related_case_property:
@@ -328,11 +373,13 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
     results = list({
         case.case_id: case for case in unfiltered_results if case.case_id not in initial_case_ids
     }.values())
-    for case in results:
-        _tag_is_related_case(case)
+    with helper.timing_context('_tag_is_related_case'):
+        for case in results:
+            _tag_is_related_case(case)
     return results
 
 
+@time_function()
 def get_related_cases_result(helper, app, case_types, source_cases, include_all_related_cases):
     """
     Gets parent, child, and extension cases through sync algorithm if configured.
@@ -349,6 +396,7 @@ def get_related_cases_result(helper, app, case_types, source_cases, include_all_
         return results
 
 
+@time_function()
 def _get_all_related_cases(helper, source_cases):
     results = []
     results.extend(helper.get_all_related_live_cases(source_cases))
@@ -357,6 +405,7 @@ def _get_all_related_cases(helper, source_cases):
     return results
 
 
+@time_function()
 def _get_search_detail_path_defined_cases(helper, app, case_types, source_cases):
     paths = [
         rel for rels in [get_search_detail_relationship_paths(app, case_type) for case_type in case_types]
@@ -368,6 +417,7 @@ def _get_search_detail_path_defined_cases(helper, app, case_types, source_cases)
     return result
 
 
+@time_function()
 def _get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids):
     child_case_types = [
         _type for types in [get_child_case_types(app, case_type) for case_type in case_types]
@@ -398,6 +448,7 @@ def get_search_detail_relationship_paths(app, case_type):
     return paths
 
 
+@time_function()
 def get_path_related_cases_results(helper, cases, paths):
     """
     Given a set of cases and a set of case property paths,
@@ -444,6 +495,7 @@ def get_child_case_types(app, case_type):
     return child_case_types
 
 
+@time_function()
 def get_child_case_results(helper, parent_case_ids, child_case_types=None):
     filter = helper.get_base_queryset().get_child_cases(parent_case_ids, "parent")
     if child_case_types:
@@ -453,6 +505,7 @@ def get_child_case_results(helper, parent_case_ids, child_case_types=None):
     return [helper.wrap_case(result) for result in results]
 
 
+@time_function()
 def get_expanded_case_results(helper, custom_related_case_property, cases):
     expanded_case_ids = {
         case.get_case_property(custom_related_case_property, dynamic_only=True) for case in cases
@@ -461,6 +514,7 @@ def get_expanded_case_results(helper, custom_related_case_property, cases):
     return _get_case_search_cases(helper, expanded_case_ids)
 
 
+@time_function()
 def _get_case_search_cases(helper, case_ids):
     results = helper.get_base_queryset().case_ids(case_ids).run().hits
     return [helper.wrap_case(result) for result in results]
