@@ -315,6 +315,17 @@
       "compare_all_files": true
     }
   ],
+  "apps/hqwebapp/static/cloudcare": [
+    {
+      "directories": [
+        "less/",
+        "scss/"
+      ],
+      "file_type": "stylesheet",
+      "label": "stylesheets",
+      "compare_all_files": true
+    }
+  ],
   "apps/settings/templates/settings": [
     {
       "directories": [
