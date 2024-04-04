@@ -50,7 +50,7 @@ class Command(PopulateSQLCommand):
         from ...models import State
         is_very_old_pending_record = (
             'registered_at' not in couch
-            and get_state(couch) == State.Pending
+            and (get_state(couch) == State.Pending or get_state(couch) == State.Fail)
             and (couch.get('next_check') or '2018-03-12') < '2018-03-12'
         )
         fields = ["domain", "payload_id"]
