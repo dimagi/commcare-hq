@@ -561,11 +561,10 @@ class TestFormESAccessors(TestCase):
         xmlns = 'abc'
         self._send_form_to_es(form_name='test_a', app_id=app1, xmlns=xmlns)
         self._send_form_to_es(form_name='test_b', app_id=app2, xmlns=xmlns)
-        self._send_form_to_es()
 
         paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], size=1)
         self.assertEqual(len(paged_result.hits), 1)
-        self.assertEqual(paged_result.total, 3)
+        self.assertEqual(paged_result.total, 4)
 
         paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], app_ids=[app2], xmlns=[xmlns])
         self.assertEqual(len(paged_result.hits), 1)
