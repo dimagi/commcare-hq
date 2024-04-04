@@ -68,7 +68,8 @@ class RateLimiter(object):
                 for _rate_counter, current_rate, wait_time, limit in rates
             ]
             scope_wait_time = max(wait_times)
-            if scope_wait_time > wait_time:
+
+            if scope_wait_time == 0:
                 wait_time = scope_wait_time
             else:
                 metrics_counter('commcare.rate_limit_exceeded', tags={'key': self.feature_key, 'scope': scope})
