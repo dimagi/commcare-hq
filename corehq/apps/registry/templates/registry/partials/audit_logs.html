@@ -12,34 +12,28 @@
   <div data-bind="visible: loaded">
     <div class="row">
       <div class="col-lg-3">
-        <div class="form-group">
-          <label for="logs-daterange">{% trans "Date range" %}</label>
-          <input type="text"
-             class="form-control report-filter-datespan-filter"
-             name="logs-daterange"
-             data-bind="value: dateRange"/>
-        </div>
+        <label class="form-label" for="logs-daterange">{% trans "Date Range" %}</label>
+        <input type="text"
+           class="form-control report-filter-datespan-filter"
+           name="logs-daterange"
+           data-bind="value: dateRange"/>
       </div>
       {% if is_owner %}
       <div class="col-lg-3">
-        <div class="form-group">
-          <label for="logs-project-space">{% trans "Project Space" %}</label>
-          <select class="form-control" name="logs-project-space" data-bind="
-            select2: projectSpaces, value: selectedProjectSpace
-          "></select>
-        </div>
+        <label class="form-label" for="logs-project-space">{% trans "Project Space" %}</label>
+        <select class="form-control" name="logs-project-space" data-bind="
+          select2: projectSpaces, value: selectedProjectSpace
+        "></select>
       </div>
       {% endif %}
       <div class="col-lg-3">
-        <div class="form-group">
-          <label for="logs-action">{% trans "Action" %}</label>
-          <select class="form-control" name="logs-action" data-bind="
-            select2: actionTypes, value: selectedAction
-          "></select>
-        </div>
+        <label class="form-label" for="logs-action">{% trans "Action" %}</label>
+        <select class="form-control" name="logs-action" data-bind="
+          select2: actionTypes, value: selectedAction
+        "></select>
       </div>
       <div class="col-lg-3 {% if not is_owner %}offset-lg-3{% endif %}">
-          <button type="submit" class="btn btn-primary float-end mt-4" data-bind="click: filterLogs, disable: loading">
+          <button type="submit" class="btn btn-outline-primary float-end mt-4" data-bind="click: filterLogs, disable: loading">
             <i class="fa" data-bind="css: {
               'fa-spin': loading,
               'fa-refresh': loading
