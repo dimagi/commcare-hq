@@ -74,3 +74,51 @@ def test_sliding_window_with_grains_rate_counter():
 
     float_eq(counter.increment_and_get('alice', timestamp=timestamp + 1 * DAYS), 4)
     float_eq(counter.get('alice', timestamp=timestamp + 2 * DAYS), 3 * 6. / 7 + 1)
+
+
+class TestSlidingWindowCountAndWait:
+
+    def test_sliding_window_get_count_and_wait_time_basic(self):
+        timestamp = 1000 * 7 * DAYS
+
+        counter = _SlidingWindowRateCounter('test-sliding-week', 7 * DAYS, grains_per_window=7)
+        counter.grain_counter.counter.shared_cache.clear()
+
+        counter.increment('alice', timestamp=timestamp)
+        counter.increment('alice', timestamp=timestamp)
+
+        hits, wait_time = counter.get_count_and_wait_time('alice', threshold=1, timestamp=timestamp)
+        testil.eq(hits, 2)
+        testil.eq(wait_time / DAYS, 6.5)
+
+        hits, wait_time = counter.get_count_and_wait_time('alice', threshold=1, timestamp=timestamp + 6.5 * DAYS)
+        testil.eq(hits, 2)
+        testil.eq(wait_time / DAYS, 0.5)
+
+        hits, wait_time = counter.get_count_and_wait_time('alice', threshold=2, timestamp=timestamp)
+        testil.eq(hits, 2)
+        testil.eq(wait_time / DAYS, 7)
+
+        hits, wait_time = counter.get_count_and_wait_time('alice', threshold=2, timestamp=timestamp + 7 * DAYS)
+        testil.eq(hits, 2)
+        testil.eq(wait_time / DAYS, 0)
+
+    def test_sliding_window_get_count_and_wait_time_complex(self):
+        timestamp = 1000 * 7 * DAYS
+
+        counter = _SlidingWindowRateCounter('test-sliding-week', 7 * DAYS, grains_per_window=7)
+        counter.grain_counter.counter.shared_cache.clear()
+
+        counter.increment('alice', timestamp=timestamp)
+        counter.increment('alice', timestamp=timestamp)
+
+        counter.increment('alice', timestamp=timestamp + 1 * DAYS)
+        counter.increment('alice', timestamp=timestamp + 1 * DAYS)
+
+        hits, wait_time = counter.get_count_and_wait_time('alice', threshold=4, timestamp=timestamp + 2 * DAYS)
+        testil.eq(hits, 4)
+        testil.eq(wait_time / DAYS, 5)
+
+        hits, wait_time = counter.get_count_and_wait_time('alice', threshold=2, timestamp=timestamp + 7 * DAYS)
+        testil.eq(hits, 4)
+        testil.eq(wait_time / DAYS, 1)
