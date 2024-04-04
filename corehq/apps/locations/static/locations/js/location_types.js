@@ -203,6 +203,7 @@ hqDefine('locations/js/location_types', [
         self.code = ko.observable(locType.code || '');
         self.expand_from = ko.observable(locType.expand_from_root ? ROOT_LOCATION_ID : locType.expand_from);
         self.expand_to = ko.observable(locType.expand_to);
+        self.expand_view_child_data_to = ko.observable(locType.expand_view_child_data_to);
         self.include_without_expanding = ko.observable(locType.include_without_expanding);
         self.include_only = ko.observableArray(locType.include_only || []);
 
@@ -349,6 +350,7 @@ hqDefine('locations/js/location_types', [
                 expand_from: (self.expand_from() !== -1 ? self.expand_from() : null) || null,
                 expand_from_root: self.expand_from() === ROOT_LOCATION_ID,
                 expand_to: self.expand_to() || null,
+                expand_view_child_data_to: self.expand_view_child_data_to() || null,
                 include_without_expanding: self.include_without_expanding() || null,
                 include_only: self.include_only() || [],
             };

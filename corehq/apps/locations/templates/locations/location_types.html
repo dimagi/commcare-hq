@@ -157,6 +157,15 @@
                                           {% endblocktrans %}">
                                     </span>
               </th>
+              <th>
+                {% trans "View Child Data to Level" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "View Child data to Level" %}"
+                      data-content="{% blocktrans %}
+                          <p>...</p>
+                      {% endblocktrans %}">
+                </span>
+              </th>
               <th></th>
             </tr>
             </thead>
@@ -233,6 +242,15 @@
               </td>
               <td>
                 <input data-bind="checked: view_descendants" type="checkbox" />
+              </td>
+              <td>
+                <select class="form-control"
+                        data-bind="options: $root.loc_type_options($data),
+                                                   optionsText: 'name',
+                                                   optionsValue: 'pk',
+                                                   value: expand_view_child_data_to,
+                                                   optionsCaption: '\u2013top level\u2013'">
+                </select>
               </td>
               <td>
                 <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
