@@ -326,6 +326,17 @@
       "compare_all_files": true
     }
   ],
+  "apps/hqwebapp/static/preview_app": [
+    {
+      "directories": [
+        "less/",
+        "scss/"
+      ],
+      "file_type": "stylesheet",
+      "label": "stylesheets",
+      "compare_all_files": true
+    }
+  ],
   "apps/settings/templates/settings": [
     {
       "directories": [
