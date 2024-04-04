@@ -47,7 +47,8 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
                                    DataTablesColumn(_("Submit Time"), prop_name="received_on"),
                                    DataTablesColumn(_("Form Type"), sortable=False),
                                    DataTablesColumn(_("Error Type"), sortable=False),
-                                   DataTablesColumn(_("Error Message"), sortable=False))
+                                   DataTablesColumn(_("Error Message"), sortable=False),
+                                   DataTablesColumn(_("View Cases"), sortable=False))
         if self.support_toggle_enabled:
             headers.add_column(DataTablesColumn(_("Re-process Form")))
         headers.custom_sort = [[2, "desc"]]
@@ -149,23 +150,24 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
         EMPTY_FORM = _("Unknown Form")
 
         def _to_row(xform_dict):
-            def _fmt_url(doc_id):
-                if xform_dict['doc_type'] in [
-                        "XFormInstance",
-                        "XFormArchived",
-                        "XFormError",
-                        "XFormDeprecated"]:
-                    view_name = 'render_form_data'
+            def _get_url(doc_type, doc_id):
+                if doc_type in [
+                    "XFormInstance",
+                    "XFormArchived",
+                    "XFormError",
+                    "XFormDeprecated",
+                ]:
+                    view_name = "render_form_data"
                 else:
-                    view_name = 'download_form'
-                try:
-                    return format_html(
-                        "<a class='ajax_dialog' href='{url}'>{text}</a>",
-                        url=reverse(view_name, args=[self.domain, doc_id]),
-                        text=_("View Form")
-                    )
-                except NoReverseMatch:
-                    return 'unable to view form'
+                    view_name = "download_form"
+                return reverse(view_name, args=[self.domain, doc_id])
+
+            def _fmt_url(url, link_text):
+                return format_html(
+                    "<a class='ajax_dialog' href='{url}'>{text}</a>",
+                    url=url,
+                    text=link_text,
+                )
 
             def _fmt_date(somedate):
                 time = ServerTime(somedate).user_time(self.timezone).done()
@@ -193,13 +195,23 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
                         archived_form=SubmissionTypeFilter.display_name_by_doc_type(xform_dict['doc_type']),
                         date=_fmt_date(string_to_utc_datetime(archive_operations[-1].get('date'))),
                     )
+
+            try:
+                url = _get_url(xform_dict['doc_type'], xform_dict['_id'])
+            except NoReverseMatch:
+                view_form_link = _("Unable to view form")
+                view_case_link = _("Unable to view case")
+            else:
+                view_form_link = _fmt_url(url, _("View Form"))
+                view_case_link = _fmt_url(f'{url}#form-case-data', _("View Cases"))
             return [
-                _fmt_url(xform_dict['_id']),
+                view_form_link,
                 form_username,
                 _fmt_date(string_to_utc_datetime(xform_dict['received_on'])),
                 form_name,
                 error_type,
                 xform_dict.get('problem', EMPTY_ERROR),
+                view_case_link,
                 self._make_reproces_button(xform_dict) if self.support_toggle_enabled else '',
             ]
 
