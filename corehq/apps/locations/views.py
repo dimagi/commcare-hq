@@ -339,6 +339,7 @@ class LocationTypesView(BaseDomainView):
             'include_without_expanding': (loc_type.include_without_expanding_id
                                           if loc_type.include_without_expanding_id else None),
             'include_only': list(loc_type.include_only.values_list('pk', flat=True)),
+            'expand_view_child_data_to': loc_type.expand_view_child_data_to_id,
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     @method_decorator(lock_locations)
@@ -392,7 +393,7 @@ class LocationTypesView(BaseDomainView):
         payload_loc_type_code_by_pk = {}
         for loc_type in loc_types:
             for prop in ['name', 'parent_type', 'administrative',
-                         'shares_cases', 'view_descendants', 'pk']:
+                         'shares_cases', 'view_descendants', 'pk', 'expand_view_child_data_to']:
                 if prop not in loc_type:
                     raise LocationConsistencyError("Missing an organization level property!")
             pk = loc_type['pk']
@@ -443,6 +444,7 @@ class LocationTypesView(BaseDomainView):
         expand_to_id = loc_type_data['expand_to']
         include_without_expanding_id = loc_type_data['include_without_expanding']
         include_only_ids = loc_type_data['include_only']
+        expand_view_child_data_to_id = loc_type_data['expand_view_child_data_to']
         try:
             loc_type.expand_from = loc_type_db[expand_from_id] if expand_from_id else None
         except KeyError:        # expand_from location type was deleted
@@ -459,6 +461,13 @@ class LocationTypesView(BaseDomainView):
             loc_type.include_without_expanding = None
         include_only = LocationTypesView._get_include_only(include_only_ids, loc_type_db)
         loc_type.include_only.set(include_only)
+        # add rules for which locations are allowed for restrict cases to
+        try:
+            loc_type.expand_view_child_data_to = loc_type_db[expand_view_child_data_to_id] \
+                if expand_view_child_data_to_id else None
+        except KeyError:        # expand_view_child_data_to location type was deleted
+            loc_type.expand_view_child_data_to = None
+
         loc_type.save()
 
     @staticmethod
