@@ -68,6 +68,9 @@ class Command(makemigrations.Command):
 
         self.target_versions = options['target_versions']
 
+        # used in super().write_migration_files
+        self.written_files = []
+
         # abort early if a migration name is provided but is invalid
         if self.migration_name and not self.migration_name.isidentifier():
             raise CommandError("The migration name must be a valid Python identifier.")
