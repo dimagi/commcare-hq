@@ -58,13 +58,13 @@ class AdjListManager(models.Manager):
 
         def make_cte_query(cte):
             return self.filter(where).order_by().annotate(
-                _depth=Value(0, output_field=models.Field()),
+                _depth=Value(0, output_field=models.IntegerField()),
             ).union(
                 cte.join(
                     self.all().order_by(),
                     id=cte.col.parent_id,
                 ).annotate(
-                    _depth=cte.col._depth + Value(1, output_field=models.Field()),
+                    _depth=cte.col._depth + Value(1, output_field=models.IntegerField()),
                 ),
             )
 
