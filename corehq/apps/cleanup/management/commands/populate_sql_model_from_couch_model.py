@@ -560,6 +560,7 @@ Run the following commands to run the migration and get up to date:
             self._do_diff(doc, objs_by_couch_id.get(doc["_id"]), logfile)
         if diff_count != self.diff_count:
             print(f"Diff count: {self.diff_count}")
+            logfile.flush()
 
     def _do_diff(self, doc, obj, logfile, exit=False):
         if obj is None:
