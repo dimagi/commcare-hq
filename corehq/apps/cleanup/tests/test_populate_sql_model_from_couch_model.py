@@ -128,7 +128,8 @@ class TestPopulateSQLCommand(TestCase):
 
     def tearDown(self):
         delete_all_docs_by_doc_type(Command.couch_db(), [TestDoc.__name__])
-        Command.discard_resume_state()
+        Command.discard_resume_state(verify_only=False)
+        Command.discard_resume_state(verify_only=True)
         FakeModel._created = []
 
 

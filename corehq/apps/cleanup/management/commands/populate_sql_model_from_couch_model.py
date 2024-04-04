@@ -142,16 +142,18 @@ class PopulateSQLCommand(BaseCommand):
                     diffs.append(cls.diff_value(prefix, couch_field, sql_field))
         return diffs
 
-    def handle_override_is_completed(self, override_is_completed):
+    def handle_override_is_completed(self, override_is_completed, verify_only):
         if override_is_completed == "yes":
+            assert not verify_only
             self._set_migration_completed()
         elif override_is_completed == "no":
+            assert not verify_only
             self._override_migration_status(is_completed=False)
         elif override_is_completed == "discard":
-            self.discard_resume_state()
+            self.discard_resume_state(verify_only)
         else:
             self._avg_items_to_be_migrated()
-        print(f"status={self.get_migration_status()}")
+        print(f"status={self.get_migration_status(verify_only)}")
         print("Items to be migrated:", self.count_items_to_be_migrated())
 
     def _set_migration_completed(self):
@@ -194,12 +196,12 @@ class PopulateSQLCommand(BaseCommand):
         return couch_count - ignored_count - sql_count
 
     @classmethod
-    def get_migration_status(cls):
-        return cls._resume_iter_couch_view().state.progress
+    def get_migration_status(cls, verify_only):
+        return cls._resume_iter_couch_view(verify_only=verify_only).state.progress
 
     @classmethod
-    def discard_resume_state(cls):
-        resume = cls._resume_iter_couch_view()
+    def discard_resume_state(cls, verify_only):
+        resume = cls._resume_iter_couch_view(verify_only=verify_only)
         if hasattr(resume.state, "_rev"):
             print(f"Discarding resume state: {resume.state}")
             resume.discard_state()
@@ -316,13 +318,13 @@ Run the following commands to run the migration and get up to date:
             choices=["check", "yes", "no", "discard"],
             dest="override_is_completed",
             help="""
-                Check or set migration completion status. Use to override
-                the check performed by `migrate_from_migration` when the number
-                of items to be migrated is volatile. Accepted values:
+                Check or set migration or verification completion status. Use to
+                override the check performed by `migrate_from_migration` when
+                the number of items to be migrated is volatile. Accepted values:
                 check: check and print status,
-                yes: set `count_items_to_be_migrated` to zero,
+                yes: force migration into completed state,
                 no: remove override,
-                discard: discard all migration state.
+                discard: discard migration or verification state.
             """
         )
         parser.add_argument(
@@ -332,13 +334,20 @@ Run the following commands to run the migration and get up to date:
         )
 
     def handle(self, chunk_size, fixup_diffs, override_is_completed, debug, **options):
+        verify_only = options.get("verify_only", False)
         if override_is_completed:
             if options["domains"]:
                 raise CommandError("Cannot override status with --domains")
-            return self.handle_override_is_completed(override_is_completed)
+            if verify_only:
+                if override_is_completed in "yes no":
+                    raise CommandError(
+                        "Cannot override completion status with --verify-only. "
+                        "'check' and 'discard' are allowed."
+                    )
+                print("NOTE --verify-only status is distinct from migration status")
+            return self.handle_override_is_completed(override_is_completed, verify_only)
 
         log_path = options.get("log_path")
-        verify_only = options.get("verify_only", False)
         skip_verify = options.get("skip_verify", False)
 
         if not log_path or os.path.isdir(log_path):
@@ -375,19 +384,15 @@ Run the following commands to run the migration and get up to date:
         else:
             doc_count = self._get_couch_doc_count_for_type()
             sql_doc_count = self.sql_class().objects.count()
-            results = self._resume_iter_couch_view(chunk_size)
-            if verify_only:
-                # non-resumable iteration
-                results = paginate_function(results.data_function, results.args_provider)
-            else:
-                # resumable iteration
-                state = results.state.progress
-                offset = state.get("doc_count", 0)
-                if state.get("is_completed"):
-                    print(f"Migration is complete. Previously migrated {offset} documents.")
-                    print("Use --override-is-migration-completed to inspect or reset.")
-                    return
-                log_path = state.setdefault("log_path", str(log_path))
+            results = self._resume_iter_couch_view(chunk_size, verify_only)
+            state = results.state.progress
+            offset = state.get("doc_count", 0)
+            if state.get("is_completed"):
+                action = "Verification" if verify_only else "Migration"
+                print(f"{action} is complete. Previously processed {offset} documents.")
+                print("Use --override-is-migration-completed to inspect or reset.")
+                return
+            log_path = state.setdefault("log_path", str(log_path))
             should = self.should_process
             docs = (r['doc'] for r in results if should(r))
         docs = with_progress_bar(docs, doc_count, oneline=False, offset=offset)
@@ -624,12 +629,13 @@ Run the following commands to run the migration and get up to date:
             yield from (r['doc'] for r in results if should(r))
 
     @classmethod
-    def _resume_iter_couch_view(cls, chunk_size=1000):
+    def _resume_iter_couch_view(cls, chunk_size=1000, verify_only=False):
         view_name, params = cls.get_couch_view_name_and_parameters()
         view = retry_on_couch_error(partial(
             cls.couch_db().view, view_name, reduce=False, include_docs=True))
         args_provider = NoSkipArgsProvider(params | {"limit": chunk_size})
-        iteration_key = f"{cls.couch_doc_type()}-to-sql"
+        verify = "-verify" if verify_only else ""
+        iteration_key = f"{cls.couch_doc_type()}-to-sql{verify}"
         rfi = ResumableFunctionIterator(iteration_key, view, args_provider)
         assert rfi.event_handler is None, rfi
         rfi.event_handler = IterDocsEvents(rfi)
