@@ -121,8 +121,6 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
             if not user_ids:
                 # We have valid user filters but no results
                 return PagedResult(total=0, hits=[])
-        app_ids = []
-        xmlns_list = []
         app_ids, xmlns_list = self._get_app_ids_and_xmlns(list(self.all_relevant_forms.values()))
         return get_paged_forms_by_type(
             self.domain,
