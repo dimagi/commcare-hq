@@ -1,4 +1,4 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -111,7 +111,7 @@
       {% endif %}
     </div>
     <div class="col-lg-2">
-      <div class="btn-group float-end">
+      <div class="dropdown float-end">
         <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
           data-bind="class: invitationStatusClass"
         >
@@ -119,11 +119,11 @@
               'fa-spin': savingInvitation,
               'fa-refresh': savingInvitation
             }"></i>
-          {% trans "Invitation" %} <span data-bind="text: invitationStatusText"></span> <span class="caret"></span>
+          {% trans "Invitation" %} <span data-bind="text: invitationStatusText"></span></span>
         </button>
         <ul class="dropdown-menu">
-          <li><a href="#" data-bind="visible: showAccept, click: acceptInvitation"><i class="fa fa-check"></i> {% trans "Opt in" %}</a></li>
-          <li><a href="#" data-bind="visible: showReject, click: rejectInvitation"><i class="fa fa-remove"></i> {% trans "Opt out" %}</a></li>
+          <li><a href="#" class="dropdown-item" data-bind="visible: showAccept, click: acceptInvitation"><i class="fa fa-check"></i> {% trans "Opt in" %}</a></li>
+          <li><a href="#" class="dropdown-item" data-bind="visible: showReject, click: rejectInvitation"><i class="fa fa-remove"></i> {% trans "Opt out" %}</a></li>
         </ul>
       </div>
     </div>
@@ -173,38 +173,38 @@
       <div class="col-md-12 col-lg-8">
         <ul class="nav nav-tabs" role="tablist">
           {% if is_owner %}
-          <li role="presentation" class="active">
-            <a href="#domains" aria-controls="domains" role="tab" data-bs-toggle="tab">
+          <li role="presentation" class="nav-item">
+            <a href="#domains" aria-controls="domains" role="tab" data-bs-toggle="tab" class="nav-link active">
             {% trans "Project Spaces" %}
             </a>
           </li>
           {% endif %}
-          <li role="presentation" class="{% if not is_owner %}active{% endif %}">
-            <a href="#grants" aria-controls="grants" role="tab" data-bs-toggle="tab">
+          <li role="presentation" class="nav-item">
+            <a href="#grants" aria-controls="grants" role="tab" data-bs-toggle="tab" class="nav-link{% if not is_owner %} active{% endif %}">
             {% trans "Grants" %}
             </a>
           </li>
-          <li role="presentation">
-            <a href="#audit-logs" aria-controls="audit-logs" role="tab" data-bs-toggle="tab">
+          <li role="presentation" class="nav-item">
+            <a href="#audit-logs" aria-controls="audit-logs" role="tab" data-bs-toggle="tab" class="nav-link">
             {% trans "Audit Logs" %}
             </a>
           </li>
           {% if is_owner %}
-          <li role="presentation">
-            <a href="#actions" aria-controls="actions" role="tab" data-bs-toggle="tab">
+          <li role="presentation" class="nav-item">
+            <a href="#actions" aria-controls="actions" role="tab" data-bs-toggle="tab" class="nav-link">
             {% trans "Actions" %}
             </a>
           </li>
           {% endif %}
         </ul>
 
-        <div class="tab-content mt-4">
+        <div class="tab-content mt-2">
           {% if is_owner %}
-          <div role="tabpanel" class="tab-pane active" id="domains">
+          <div role="tabpanel" class="tab-pane active show" id="domains">
             <div class="row">
-              <div class="col-lg-2 offset-lg-10">
+              <div class="col-lg-12">
                 <div class="float-end">
-                  <button type="button" class="btn btn-primary" data-bind="openModal: 'add-project-space-modal'">
+                  <button type="button" class="btn btn-outline-primary" data-bind="openModal: 'add-project-space-modal'">
                     <i class="fa fa-plus"></i>
                     {% trans "Invite Project Space" %}
                   </button>
@@ -216,7 +216,7 @@
                 {% blocktrans %}No Project Spaces have been invited.{% endblocktrans %}
               </p>
             </div>
-            <table class="table table-striped table-hover mt-3" data-bind="if: invitations().length">
+            <table class="table table-striped table-hover mt-2" data-bind="if: invitations().length">
               <thead>
                 <tr>
                   <th class="col-md-2">{% trans "Project Name" %}</th>
@@ -252,20 +252,19 @@
             </table>
           </div>
           {% endif %}
-          <div role="tabpanel" class="tab-pane {% if not is_owner %}active{% endif %}" id="grants">
+          <div role="tabpanel" class="tab-pane {% if not is_owner %}active show{% endif %}" id="grants">
             <div class="row" data-bind="visible: domain_invitation.status() === 'accepted'">
               <div class="col-lg-10">
                 {% if is_owner %}
-                <div class="checkbox ps-3">
-                  <label>
-                    <input type="checkbox" data-bind="checked: showAllGrants"> {% trans "Show all grants" %}
-                  </label>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="show-all-grants" data-bind="checked: showAllGrants">
+                  <label class="form-check-label" for="show-all-grants">{% trans "Show all grants" %}</label>
                 </div>
                 {% endif %}
               </div>
               <div class="col-lg-2">
                 <div class="float-end">
-                  <button type="button" class="btn btn-primary" data-bind="openModal: 'create-grant-modal'">
+                  <button type="button" class="btn btn-outline-primary" data-bind="openModal: 'create-grant-modal'">
                     <i class="fa fa-plus"></i>
                     {% trans "Grant Access" %}
                   </button>
@@ -302,27 +301,23 @@
           </div>  <!-- end grants tab -->
 
           <div class="tab-pane" role="tabpanel" id="audit-logs">
-            <div class="card-body">
-              {% include "registry/partials/audit_logs.html" %}
-            </div>
+            {% include "registry/partials/audit_logs.html" %}
           </div> <!-- end audit-logs tab -->
 
           {% if is_owner %}
           <div class="tab-pane" role="tabpanel" id="actions">
-            <div class="card-body">
-              <div class="form form-horizontal">
-                <fieldset>
-                  <legend>{% trans 'Delete Data Registry' %}</legend>
-                  <div class="alert alert-danger">
-                    <p><i class="fa-solid fa-triangle-exclamation"></i> {% trans 'The following action is permanent!' %}</p>
-                    <p>
-                      <button type="button" class="btn btn-outline-danger btn-sm" data-bind="openModal: 'delete-registry-modal'">
-                        <i class="fa-regular fa-trash-can"></i> {% trans "Delete Data Registry" %}
-                      </button>
-                    </p>
-                  </div>
-                </fieldset>
-              </div>
+            <div class="form">
+              <fieldset>
+                <legend>{% trans 'Delete Data Registry' %}</legend>
+                <div class="alert alert-danger">
+                  <i class="fa-solid fa-triangle-exclamation"></i> {% trans 'The following action is permanent!' %}
+                </div>
+                <p>
+                  <button type="button" class="btn btn-outline-danger btn-sm" data-bind="openModal: 'delete-registry-modal'">
+                    <i class="fa-regular fa-trash-can"></i> {% trans "Delete Data Registry" %}
+                  </button>
+                </p>
+              </fieldset>
             </div>
           </div> <!-- end actions tab -->
           {% endif %}
@@ -336,10 +331,8 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="btn-close" data-bs-dismiss="modal">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <h4 class="modal-title">{% trans "Remove Project Space" %}</h4>
+          <h4 class="modal-title" id="remove-project-space-modal-title">{% trans "Remove Project Space" %}</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
         </div>
         <div class="modal-body">
           <div class='alert alert-warning'>
@@ -369,10 +362,8 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="btn-close" data-bs-dismiss="modal">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <h4 class="modal-title">{% trans "Invite Project Spaces" %}</h4>
+          <h4 class="modal-title" id="add-project-space-modal-title">{% trans "Invite Project Spaces" %}</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
         </div>
         <div class="modal-body">
           <div class="alert alert-info" data-bind="visible: availableInviteDomains().length">
@@ -393,7 +384,7 @@
               selectedOptions: inviteDomains,
               multiselect: {
                 properties: {
-                  selectableHeaderTitle: '{% trans_html_attr "Available Project Spaces" %}',
+                  selectableHeaderTitle: '{% trans_html_attr "Available" %}',
                   selectedHeaderTitle: '{% trans_html_attr "Selected" %}',
                   searchItemTitle: '{% trans_html_attr "Search" %}',
                 },
@@ -423,10 +414,8 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="btn-close" data-bs-dismiss="modal">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <h4 class="modal-title">{% trans "Edit Registry Case Types" %}</h4>
+          <h4 class="modal-title" id="edit-schema-modal-title">{% trans "Edit Registry Case Types" %}</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
         </div>
         <div class="modal-body">
           <div class='alert alert-info'>
@@ -467,10 +456,8 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="btn-close" data-bs-dismiss="modal">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <h4 class="modal-title">{% trans "Grant access" %}</h4>
+          <h4 class="modal-title" id="create-grant-modal-title">{% trans "Grant access" %}</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
         </div>
         <div class="modal-body">
           <div class="alert alert-info">
@@ -496,7 +483,7 @@
                 selectedOptions: grantDomains,
                 multiselect: {
                   properties: {
-                    selectableHeaderTitle: '{% trans_html_attr "Available Project Spaces" %}',
+                    selectableHeaderTitle: '{% trans_html_attr "Available" %}',
                     selectedHeaderTitle: '{% trans_html_attr "Selected" %}',
                     searchItemTitle: '{% trans_html_attr "Search" %}',
                   },
@@ -521,10 +508,8 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="btn-close" data-bs-dismiss="modal">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <h4 class="modal-title">{% trans "Remove Grant" %}</h4>
+          <h4 class="modal-title" id="remove-grant-modal-title">{% trans "Remove Grant" %}</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
         </div>
         <div class="modal-body">
           {% blocktrans trimmed %}
@@ -550,18 +535,14 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="btn-close" data-bs-dismiss="modal">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <h4 class="modal-title">
+          <h4 class="modal-title" id="delete-registry-modal-title">
             {% blocktrans %}Delete Data Registry{% endblocktrans %}
             <strong data-bind="text: name"></strong>?
             <small>{% trans "Permanent Action" %}</small>
           </h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
         </div>
-        <form class="form-horizontal"
-                style="margin: 0; padding: 0"
-                action="{% url "delete_registry" domain registry.slug %}"
+        <form action="{% url "delete_registry" domain registry.slug %}"
                 method="post"
                 data-bind="submit: submitDelete">
             {% csrf_token %}
