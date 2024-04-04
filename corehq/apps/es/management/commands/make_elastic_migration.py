@@ -34,13 +34,13 @@ class Command(makemigrations.Command):
             ),
         )
         parser.add_argument(
-            "-u", "--update", metavar="CNAME[:PROPERTY[,PROPERTY ...]]",
+            "-u", "--update-index", metavar="CNAME[:PROPERTY[,PROPERTY ...]]",
             dest="updates", default=[], type=self.adapter_and_properties_type,
             action="append", help=(
                 "Add an UpdateIndexMapping operation for index with canonical "
                 "name CNAME. Use the optional ':PROPERTY,...' suffix to "
                 "specify which properties to update, omitting this suffix will "
-                "update all properties. The -u/--update option may be "
+                "update all properties. The -u/--update-index option may be "
                 "specified multiple times."
             ),
         )
