@@ -2,7 +2,6 @@ hqDefine("registry/js/registry_logs", [
     'moment',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/alert_user',
     'registry/js/registry_actions',
     'hqwebapp/js/components/pagination',
     'hqwebapp/js/daterangepicker.config',
@@ -10,7 +9,6 @@ hqDefine("registry/js/registry_logs", [
     moment,
     ko,
     initialPageData,
-    alertUser,
     actions,
     pagination
 ) {

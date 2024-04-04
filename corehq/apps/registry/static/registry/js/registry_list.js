@@ -3,17 +3,15 @@ hqDefine("registry/js/registry_list", [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/alert_user',
     'registry/js/registry_text',
     'registry/js/registry_actions',
-    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // openModal
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // openModal
     'hqwebapp/js/select2_knockout_bindings.ko',
 ], function (
     $,
     _,
     ko,
     initialPageData,
-    alertUser,
     text,
     actions
 ) {

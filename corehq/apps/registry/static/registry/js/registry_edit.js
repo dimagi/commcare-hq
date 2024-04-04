@@ -3,21 +3,19 @@ hqDefine("registry/js/registry_edit", [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/alert_user',
     'registry/js/registry_text',
     'registry/js/registry_actions',
     'registry/js/registry_logs',
     'hqwebapp/js/components/inline_edit',
     'hqwebapp/js/select2_knockout_bindings.ko',
-    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // openModal
-    'hqwebapp/js/bootstrap3/main', // makeHqHelp
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // openModal
+    'hqwebapp/js/bootstrap5/main', // makeHqHelp
     'hqwebapp/js/multiselect_utils',
 ], function (
     moment,
     ko,
     _,
     initialPageData,
-    alertUser,
     text,
     actions,
     auditLogs,
