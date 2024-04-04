@@ -37,10 +37,10 @@
 /corehq/apps/analytics/ @biyeun
 /corehq/apps/app_manager/ @orangejenny
 /corehq/apps/callcenter/ @snopoke
-/corehq/apps/case_search/ @dimagi/ush-tech
+/corehq/apps/case_search/ @dimagi/USH-Tech
 /corehq/apps/change_feed/ @dannyroberts
 /corehq/apps/cleanup/management/commands/populate_sql_model_from_couch_model.py @millerdev
-/corehq/apps/cloudcare/ @dimagi/ush-tech @orangejenny
+/corehq/apps/cloudcare/ @dimagi/USH-Tech @orangejenny
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/data_dictionary/ @esoergel @orangejenny @zandre-eng
 /corehq/apps/domain/decorators.py @esoergel
