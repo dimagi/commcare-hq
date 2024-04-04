@@ -50,7 +50,7 @@ class TestPopulateSQLCommand(TestCase):
             output = call_command(log_path=log.path.parent)
             self.assertEqual(
                 output.strip(),
-                "Migration is complete. Previously migrated 5 documents.\n"
+                "Migration is complete. Previously processed 5 documents.\n"
                 "Use --override-is-migration-completed to inspect or reset.",
             )
 
