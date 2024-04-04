@@ -11,7 +11,7 @@
   </div>
   <div data-bind="visible: loaded">
     <div class="row">
-      <div class="col-md-3">
+      <div class="col-lg-3">
         <div class="form-group">
           <label for="logs-daterange">{% trans "Date range" %}</label>
           <input type="text"
@@ -21,7 +21,7 @@
         </div>
       </div>
       {% if is_owner %}
-      <div class="col-md-3">
+      <div class="col-lg-3">
         <div class="form-group">
           <label for="logs-project-space">{% trans "Project Space" %}</label>
           <select class="form-control" name="logs-project-space" data-bind="
@@ -30,7 +30,7 @@
         </div>
       </div>
       {% endif %}
-      <div class="col-md-3">
+      <div class="col-lg-3">
         <div class="form-group">
           <label for="logs-action">{% trans "Action" %}</label>
           <select class="form-control" name="logs-action" data-bind="
@@ -38,8 +38,8 @@
           "></select>
         </div>
       </div>
-      <div class="col-md-3 {% if not is_owner %}col-md-offset-3{% endif %}">
-          <button type="submit" class="btn btn-primary pull-right mt-4" data-bind="click: filterLogs, disable: loading">
+      <div class="col-lg-3 {% if not is_owner %}offset-lg-3{% endif %}">
+          <button type="submit" class="btn btn-primary float-end mt-4" data-bind="click: filterLogs, disable: loading">
             <i class="fa" data-bind="css: {
               'fa-spin': loading,
               'fa-refresh': loading
@@ -51,10 +51,10 @@
     <table class="table table-striped table-hover mt-3">
       <thead>
         <tr>
-          <th class="col-sm-2">{% trans "Date" %} <small>({{ user_timezone }})</small></th>
-          <th class="col-sm-2">{% trans "Project Space" %}</th>
-          <th class="col-sm-2">{% trans "User" %}</th>
-          <th class="col-sm-2">{% trans "Action" %}</th>
+          <th class="col-md-2">{% trans "Date" %} <small>({{ user_timezone }})</small></th>
+          <th class="col-md-2">{% trans "Project Space" %}</th>
+          <th class="col-md-2">{% trans "User" %}</th>
+          <th class="col-md-2">{% trans "Action" %}</th>
         </tr>
       </thead>
       <tbody data-bind="foreach: logs">

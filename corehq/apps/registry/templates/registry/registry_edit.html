@@ -16,7 +16,7 @@
   {% endcompress %}
 {% endblock %}
 
-{% requirejs_main 'registry/js/registry_edit' %}
+{% requirejs_main_b5 'registry/js/registry_edit' %}
 
 {% block page_content %}
 {% initial_page_data "registry" registry %}
@@ -32,7 +32,7 @@
 {% registerurl "registry_audit_logs" domain '---' %}
 <div id="edit-registry" class="registry-inlines">
   <div class="row">
-    <div class="col-sm-6 col-md-4">
+    <div class="col-md-6 col-lg-4">
       <inline-edit params="
           value: name,
           containerClass: 'h3',
@@ -43,8 +43,8 @@
           disallow_edit: {{ is_owner|yesno:"false,true" }}
       "></inline-edit>
     </div>
-    <div class="col-md-2 col-md-offset-2">
-      <div class="pull-right">
+    <div class="col-lg-2 offset-lg-2">
+      <div class="float-end">
         {% if is_owner %}
         <button type="button" class="btn" data-bind="
           click: toggleActiveState,
@@ -65,7 +65,7 @@
         </button>
         {% endif %}
         {% if not is_owner %}
-        <span class="label" data-bind="
+        <span class="badge" data-bind="
           class: is_active() ? 'btn-success-light' : 'btn-warning-light'
         ">
           <!-- ko if: is_active() -->
@@ -82,7 +82,7 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-sm-8 col-md-6">
+    <div class="col-md-8 col-lg-6">
       {% if is_owner %}
       <inline-edit params="
             value: '{{ registry.description|escapejs }}',
@@ -93,7 +93,7 @@
       {% endif %}
       {% if not is_owner %}
         <div class="registry-form-container">
-          {% if registry.description %}<p class="text-muted">{{ registry.description }}</p>{% endif %}
+          {% if registry.description %}<p class="text-body-secondary">{{ registry.description }}</p>{% endif %}
           <p>
             {% blocktrans trimmed with owning_domain=registry.domain %}
             This registry is managed by the '{{ owning_domain }}' project space.
@@ -104,15 +104,15 @@
             {% trans "Participating project spaces:" %}
           </p>
           <p data-bind="foreach: participatingDomains">
-            <span class="label label-default-light" data-bind="text: $data"></span>
+            <span class="badge label-default-light" data-bind="text: $data"></span>
           </p>
           {% endif %}
         </div>
       {% endif %}
     </div>
-    <div class="col-md-2">
-      <div class="btn-group pull-right">
-        <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+    <div class="col-lg-2">
+      <div class="btn-group float-end">
+        <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
           data-bind="class: invitationStatusClass"
         >
           <i class="fa" data-bind="css: {
@@ -130,12 +130,12 @@
   </div>
   <div class="registry-form-container">
     <div class="row ko-inline-edit">
-      <div class="col-md-5 read-only" data-bind="
+      <div class="col-lg-5 read-only" data-bind="
         style: {cursor: is_owner ? 'pointer' : 'default'},
         openModal: {templateId: 'edit-schema-modal', if: is_owner}
       ">
         <div class="row">
-          <div class="col-md-12">
+          <div class="col-lg-12">
             <strong>{% trans "Case Types" %}:</strong>
             {% if is_owner %}
             <span class="inline-edit-icon"><i class="fa fa-pencil"></i></span>
@@ -143,21 +143,21 @@
           </div>
         </div>
         <div class="row">
-          <div class="col-md-12 controls">
+          <div class="col-lg-12 controls">
             <textarea data-bind="value: schema().join(', ')" cols="50" disabled></textarea>
           </div>
         </div>
       </div>
     </div>
     <div class="row mt-4" data-bind="visible: !is_owner && domain_invitation.status() !== 'accepted'">
-      <div class="col-sm-12 col-md-8">
+      <div class="col-md-12 col-lg-8">
         <div class="alert alert-info">
         {% trans "You must opt-in to the registry before you are able to manage grants." %}
         </div>
       </div>
     </div>
     <div class="row mt-4" data-bind="if: is_owner || domain_invitation.status() === 'accepted'">
-      <div class="col-sm-12 col-md-8">
+      <div class="col-md-12 col-lg-8">
         <p data-bind="visible: currentDomainGrants.length == 0">
           {% trans "Your project space has not been granted access to data from any other project spaces." %}
         </p>
@@ -165,33 +165,33 @@
           {% trans "Data from the following project spaces is available to your project space:" %}
         </p>
         <p data-bind="foreach: currentDomainGrants">
-          <span class="label label-default-light" data-bind="text: $data"></span>
+          <span class="badge label-default-light" data-bind="text: $data"></span>
         </p>
       </div>
     </div>
     <div class="row mt-4" data-bind="if: is_owner || domain_invitation.status() === 'accepted'">
-      <div class="col-sm-12 col-md-8">
+      <div class="col-md-12 col-lg-8">
         <ul class="nav nav-tabs" role="tablist">
           {% if is_owner %}
           <li role="presentation" class="active">
-            <a href="#domains" aria-controls="domains" role="tab" data-toggle="tab">
+            <a href="#domains" aria-controls="domains" role="tab" data-bs-toggle="tab">
             {% trans "Project Spaces" %}
             </a>
           </li>
           {% endif %}
           <li role="presentation" class="{% if not is_owner %}active{% endif %}">
-            <a href="#grants" aria-controls="grants" role="tab" data-toggle="tab">
+            <a href="#grants" aria-controls="grants" role="tab" data-bs-toggle="tab">
             {% trans "Grants" %}
             </a>
           </li>
           <li role="presentation">
-            <a href="#audit-logs" aria-controls="audit-logs" role="tab" data-toggle="tab">
+            <a href="#audit-logs" aria-controls="audit-logs" role="tab" data-bs-toggle="tab">
             {% trans "Audit Logs" %}
             </a>
           </li>
           {% if is_owner %}
           <li role="presentation">
-            <a href="#actions" aria-controls="actions" role="tab" data-toggle="tab">
+            <a href="#actions" aria-controls="actions" role="tab" data-bs-toggle="tab">
             {% trans "Actions" %}
             </a>
           </li>
@@ -202,8 +202,8 @@
           {% if is_owner %}
           <div role="tabpanel" class="tab-pane active" id="domains">
             <div class="row">
-              <div class="col-md-2 col-md-offset-10">
-                <div class="pull-right">
+              <div class="col-lg-2 offset-lg-10">
+                <div class="float-end">
                   <button type="button" class="btn btn-primary" data-bind="openModal: 'add-project-space-modal'">
                     <i class="fa fa-plus"></i>
                     {% trans "Invite Project Space" %}
@@ -219,14 +219,14 @@
             <table class="table table-striped table-hover mt-3" data-bind="if: invitations().length">
               <thead>
                 <tr>
-                  <th class="col-sm-2">{% trans "Project Name" %}</th>
-                  <th class="col-sm-2">{% trans "Status" %}</th>
-                  <th class="col-sm-2">
+                  <th class="col-md-2">{% trans "Project Name" %}</th>
+                  <th class="col-md-2">{% trans "Status" %}</th>
+                  <th class="col-md-2">
                     <i class="fa fa-sort-amount-desc"></i>
                     {% trans "Invitation Date" %}
                   </th>
-                  <th class="col-sm-2">{% trans "Response Date" %}</th>
-                  <th class="col-sm-4">{% trans "Action" %}</th>
+                  <th class="col-md-2">{% trans "Response Date" %}</th>
+                  <th class="col-md-4">{% trans "Action" %}</th>
                 </tr>
               </thead>
               <tbody>
@@ -234,7 +234,7 @@
                 <tr>
                   <td data-bind="text: domain"></td>
                   <td>
-                    <span class="label" data-bind="class: cssClass">
+                    <span class="badge" data-bind="class: cssClass">
                       <i class="fa" data-bind="css: cssIcon"></i>
                       <span data-bind="text: statusText"></span>
                     </span>
@@ -242,7 +242,7 @@
                   <td data-bind="text: invitationDate"></td>
                   <td data-bind="text: responseDate"></td>
                   <td>
-                    <button type="button" class="btn btn-default btn-xs" data-bind="openModal: 'remove-project-space-modal'" title="{% trans_html_attr "Remove Project" %}">
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bind="openModal: 'remove-project-space-modal'" title="{% trans_html_attr "Remove Project" %}">
                       <i class="fa-regular fa-trash-can"></i>
                     </button>
                   </td>
@@ -254,7 +254,7 @@
           {% endif %}
           <div role="tabpanel" class="tab-pane {% if not is_owner %}active{% endif %}" id="grants">
             <div class="row" data-bind="visible: domain_invitation.status() === 'accepted'">
-              <div class="col-md-10">
+              <div class="col-lg-10">
                 {% if is_owner %}
                 <div class="checkbox ps-3">
                   <label>
@@ -263,8 +263,8 @@
                 </div>
                 {% endif %}
               </div>
-              <div class="col-md-2">
-                <div class="pull-right">
+              <div class="col-lg-2">
+                <div class="float-end">
                   <button type="button" class="btn btn-primary" data-bind="openModal: 'create-grant-modal'">
                     <i class="fa fa-plus"></i>
                     {% trans "Grant Access" %}
@@ -280,19 +280,19 @@
             <table class="table table-striped table-hover mt-3" data-bind="visible: grants().length">
               <thead>
                 <tr>
-                  <th class="col-sm-2">{% trans "From Project Space" %}</th>
-                  <th class="col-sm-2">{% trans "To Project Spaces" %}</th>
-                  <th class="col-sm-2">{% trans "Actions" %}</th>
+                  <th class="col-md-2">{% trans "From Project Space" %}</th>
+                  <th class="col-md-2">{% trans "To Project Spaces" %}</th>
+                  <th class="col-md-2">{% trans "Actions" %}</th>
                 </tr>
               </thead>
               <tbody data-bind="foreach: sortedGrants">
                 <tr>
                   <td data-bind="text: from_domain"></td>
                   <td data-bind="foreach: to_domains">
-                    <span class="label label-default" data-bind="text: $data"></span>
+                    <span class="badge text-bg-secondary" data-bind="text: $data"></span>
                   </td>
                   <td>
-                    <button type="button" class="btn btn-default btn-xs" data-bind="visible: canDelete, openModal: 'remove-grant-modal'" title="{% trans_html_attr "Remove Grant" %}">
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bind="visible: canDelete, openModal: 'remove-grant-modal'" title="{% trans_html_attr "Remove Grant" %}">
                       <i class="fa-regular fa-trash-can"></i>
                     </button>
                   </td>
@@ -302,21 +302,21 @@
           </div>  <!-- end grants tab -->
 
           <div class="tab-pane" role="tabpanel" id="audit-logs">
-            <div class="panel-body">
+            <div class="card-body">
               {% include "registry/partials/audit_logs.html" %}
             </div>
           </div> <!-- end audit-logs tab -->
 
           {% if is_owner %}
           <div class="tab-pane" role="tabpanel" id="actions">
-            <div class="panel-body">
+            <div class="card-body">
               <div class="form form-horizontal">
                 <fieldset>
                   <legend>{% trans 'Delete Data Registry' %}</legend>
                   <div class="alert alert-danger">
                     <p><i class="fa-solid fa-triangle-exclamation"></i> {% trans 'The following action is permanent!' %}</p>
                     <p>
-                      <button type="button" class="btn btn-danger btn-xs" data-bind="openModal: 'delete-registry-modal'">
+                      <button type="button" class="btn btn-outline-danger btn-sm" data-bind="openModal: 'delete-registry-modal'">
                         <i class="fa-regular fa-trash-can"></i> {% trans "Delete Data Registry" %}
                       </button>
                     </p>
@@ -336,7 +336,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">
+          <button type="button" class="btn-close" data-bs-dismiss="modal">
             <span aria-hidden="true">&times;</span>
           </button>
           <h4 class="modal-title">{% trans "Remove Project Space" %}</h4>
@@ -353,8 +353,8 @@
           </p>
         </div>
         <div class="modal-footer">
-          <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
-          <a href="#" class="btn btn-danger" data-bind="click: $root.removeDomain">
+          <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</a>
+          <a href="#" class="btn btn-outline-danger" data-bind="click: $root.removeDomain">
             <i class="fa" data-bind="css: {
               'fa-spin': $root.modalSaving,
               'fa-refresh': $root.modalSaving
@@ -369,7 +369,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">
+          <button type="button" class="btn-close" data-bs-dismiss="modal">
             <span aria-hidden="true">&times;</span>
           </button>
           <h4 class="modal-title">{% trans "Invite Project Spaces" %}</h4>
@@ -402,7 +402,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <a href="#" class="btn btn-default" data-dismiss="modal">
+          <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">
             <span data-bind="visible: availableInviteDomains().length">{% trans "Cancel" %}</span>
             <span data-bind="visible: !availableInviteDomains().length">{% trans "Close" %}</span>
           </a>
@@ -423,7 +423,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">
+          <button type="button" class="btn-close" data-bs-dismiss="modal">
             <span aria-hidden="true">&times;</span>
           </button>
           <h4 class="modal-title">{% trans "Edit Registry Case Types" %}</h4>
@@ -441,17 +441,17 @@
             {% endblocktrans %}
           </div>
           <div class="row">
-            <div class="col-sm-3 control-label">
+            <div class="col-md-3 form-label">
               <label class="inner-control-label">{% trans "Case Types" %}</label>
               <span data-bind="makeHqHelp: { description: '{% trans "Use the Data Dictionary to manage case types." %}'}"></span>
             </div>
-            <div class="col-md-9">
+            <div class="col-lg-9">
               <select multiple class="form-control" data-bind="select2: availableCaseTypes, selectedOptions: editedSchema"></select>
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+          <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</a>
           <a href="#" class="btn btn-primary" data-bind="click: saveSchema">
             <i class="fa" data-bind="css: {
               'fa-spin': modalSaving,
@@ -467,7 +467,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">
+          <button type="button" class="btn-close" data-bs-dismiss="modal">
             <span aria-hidden="true">&times;</span>
           </button>
           <h4 class="modal-title">{% trans "Grant access" %}</h4>
@@ -505,7 +505,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <a href="#" class="btn btn-default" data-dismiss="modal" data-bind="click: $root.cancelGrantEdit">{% trans "Cancel" %}</a>
+          <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal" data-bind="click: $root.cancelGrantEdit">{% trans "Cancel" %}</a>
           <button href="#" class="btn btn-primary" data-bind="click: createGrant, enable: grantDomains().length">
             <i class="fa" data-bind="css: {
               'fa-spin': modalSaving,
@@ -521,7 +521,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">
+          <button type="button" class="btn-close" data-bs-dismiss="modal">
             <span aria-hidden="true">&times;</span>
           </button>
           <h4 class="modal-title">{% trans "Remove Grant" %}</h4>
@@ -533,7 +533,7 @@
           <mark data-bind="text: to_domains.join(', ')"></mark>
         </div>
         <div class="modal-footer">
-          <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
+          <a href="#" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</a>
           <a href="#" class="btn btn-primary" data-bind="click: $root.removeGrant">
             <i class="fa" data-bind="css: {
               'fa-spin': $root.modalSaving,
@@ -550,7 +550,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">
+          <button type="button" class="btn-close" data-bs-dismiss="modal">
             <span aria-hidden="true">&times;</span>
           </button>
           <h4 class="modal-title">
@@ -602,8 +602,8 @@
               <input class="form-control" data-bind="value: signOffDelete, valueUpdate: 'input'" />
             </div>
             <div class="modal-footer">
-              <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
-              <button type="submit" class="btn btn-danger" data-bind="
+              <a href="#" data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans 'Cancel' %}</a>
+              <button type="submit" class="btn btn-outline-danger" data-bind="
                              css: {disabled: deleteDisabled()},
                              attr: {disabled: deleteDisabled()}
                          ">
