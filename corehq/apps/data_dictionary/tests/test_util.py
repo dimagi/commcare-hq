@@ -223,6 +223,10 @@ class MiscUtilTest(TestCase):
         self.assertEqual(len(errors), 0)
         for key, val in expected_output.items():
             self.assertEqual(row_vals[key], val)
+
+    def test_map_row_values_to_column_names_errors(self):
+        sheet_name = 'foobar'
+        column_headings, _ = get_column_headings(self.valid_header_row, self.valid_values, sheet_name)
         row_vals, errors = map_row_values_to_column_names(self.row, column_headings[0:1], sheet_name=sheet_name)
         self.assertEqual(errors[0], f'Column 2 in "{sheet_name}" sheet is missing a header')
 
