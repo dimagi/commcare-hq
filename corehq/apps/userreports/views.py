@@ -93,6 +93,7 @@ from corehq.apps.userreports.app_manager.helpers import (
 from corehq.apps.userreports.const import (
     DATA_SOURCE_MISSING_APP_ERROR_MESSAGE,
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
+    DATA_SOURCE_REBUILD_RESTRICTED_AT,
     FORM_NOT_FOUND_ERROR_MESSAGE,
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
@@ -150,6 +151,7 @@ from corehq.apps.userreports.reports.view import (
 )
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tasks import (
+    get_loop_iterations_for_rebuild,
     rebuild_indicators,
     rebuild_indicators_in_place,
     resume_building_indicators,
@@ -1309,6 +1311,18 @@ def undelete_data_source(request, domain, config_id):
 @require_POST
 def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
+
+    if toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
+        number_of_records_to_be_iterated = _number_of_records_to_be_iterated_for_rebuild(config=config)
+        if number_of_records_to_be_iterated > DATA_SOURCE_REBUILD_RESTRICTED_AT:
+            messages.error(
+                request,
+                _error_message_for_restricting_rebuild(number_of_records_to_be_iterated)
+            )
+            return HttpResponseRedirect(reverse(
+                EditDataSourceView.urlname, args=[domain, config_id]
+            ))
+
     if config.is_deactivated:
         config.is_deactivated = False
         config.save()
@@ -1324,6 +1338,33 @@ def rebuild_data_source(request, domain, config_id):
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
+
+
+def _number_of_records_to_be_iterated_for_rebuild(config):
+    loop_iterations = get_loop_iterations_for_rebuild(config)
+    count_of_records = 0
+    for domain, case_type_or_xmlns in loop_iterations:
+        document_store = get_document_store_for_doc_type(
+            domain, config.referenced_doc_type,
+            case_type_or_xmlns=case_type_or_xmlns,
+            load_source="build_indicators",
+        )
+
+        count_of_records += len(list(document_store.iter_document_ids()))
+    return count_of_records
+
+
+def _error_message_for_restricting_rebuild(number_of_records_to_be_iterated):
+    return _(
+        'Rebuilt was not initiated due to high number of records this data source is expected to '
+        'iterate during a rebuild. Expected records to be processed is currently {number_of_records} '
+        'which is above the limit of {rebuild_limit}. '
+        'Please consider creating a new data source instead or reach out to support if '
+        'you need to rebuild this data source.'
+    ).format(
+        number_of_records=number_of_records_to_be_iterated,
+        rebuild_limit=DATA_SOURCE_REBUILD_RESTRICTED_AT
+    )
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()

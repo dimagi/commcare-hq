@@ -152,10 +152,7 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
 def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-1):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
-    case_type_or_xmlns_list = config.get_case_type_or_xmlns_filter()
-    domains = config.data_domains
-
-    loop_iterations = list(itertools.product(domains, case_type_or_xmlns_list))
+    loop_iterations = get_loop_iterations_for_rebuild(config)
     completed_iterations = resume_helper.get_completed_iterations()
     if completed_iterations:
         loop_iterations = list(set(loop_iterations) - set(completed_iterations))
@@ -199,6 +196,13 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
                 if config.meta.build.initiated == current_config.meta.build.initiated:
                     current_config.meta.build.finished = True
             current_config.save()
+
+
+def get_loop_iterations_for_rebuild(config):
+    case_type_or_xmlns_list = config.get_case_type_or_xmlns_filter()
+    domains = config.data_domains
+
+    return list(itertools.product(domains, case_type_or_xmlns_list))
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
