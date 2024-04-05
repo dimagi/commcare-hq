@@ -1,8 +1,3 @@
-/*@b3-import-variables: '../../../../../../../../node_modules/bootstrap/less/variables';
-@b3-import-mixins: '../../../../../../../../node_modules/bootstrap/less/mixins';
-
-@import '../../hqwebapp/less/_hq/includes/variables.less';
-
 .show-focus {
   &:hover, &:focus {
     box-shadow: 0px 0px 5px rgba(.5, .5, .5, .5);
@@ -21,20 +16,3 @@
   margin-top: 8px;
   margin-left: 8px;
 }
-
-// HELPERS
-// These helpers are configured to match the defaults in Bootstrap 4/5
-
-@spacer: 1rem;
-@spacers: 0, (@spacer * .25), (@spacer * .5), @spacer, (@spacer * 1.5), (@spacer * 3);
-
-each(@spacers, {
-  @zero-index: (@index - 1);
-  .mt-@{zero-index} {
-    margin-top: @value !important;
-  }
-
-  .ps-@{zero-index} {
-    padding-left: @value !important;
-  }
-});*/
