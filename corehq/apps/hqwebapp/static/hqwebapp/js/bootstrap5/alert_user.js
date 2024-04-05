@@ -26,7 +26,7 @@ function (
         var self = {
             "message": ko.observable(message),
             "alert_class": ko.observable(
-                "alert fade in message-alert"
+                "alert alert-dismissible message-alert"
             ),
         };
         if (tags) {
