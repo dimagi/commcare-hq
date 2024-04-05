@@ -106,7 +106,7 @@ class TestLocationTypeOwnership(TestCase):
             set([g._id for g in self.user.get_case_sharing_groups()])
         )
 
-    def test_only_case_sharing_descendents_included(self):
+    def test_only_case_sharing_descendants_included(self):
         parent_type = make_loc_type('parent', domain=self.domain, shares_cases=True, view_descendants=True)
         child_type = make_loc_type('child', domain=self.domain, shares_cases=False)
         grandchild_type = make_loc_type('grandchild', domain=self.domain, shares_cases=True)

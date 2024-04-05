@@ -1,9 +1,10 @@
-DROP FUNCTION IF EXISTS get_location_fixture_ids(TEXT, INTEGER[]);
+DROP FUNCTION IF EXISTS get_location_fixture_ids_2(TEXT, INTEGER[], BOOLEAN);
 
-CREATE FUNCTION get_location_fixture_ids(
+CREATE FUNCTION get_location_fixture_ids_2(
     domain_name TEXT,
     -- array of locations_sqllocation.id (NOT locations_sqllocation.location_id)
-    user_location_ids_array INTEGER[]
+    user_location_ids_array INTEGER[],
+    case_sync_restriction BOOLEAN
 ) RETURNS TABLE (
     "id" INTEGER,       -- location id
     "path" INTEGER[],   -- location tree path from root (array of location ids)
@@ -57,10 +58,17 @@ BEGIN
             INNER JOIN "locations_locationtype" loc_type
                 ON loc."location_type_id" = loc_type."id"
             INNER JOIN "locations_locationtype" expand_to_type
-                ON expand_to_type."id" = loc_type."expand_to_id"
+                ON CASE
+                    WHEN case_sync_restriction THEN expand_to_type."id" = loc_type."restrict_cases_to_id"
+                    ELSE expand_to_type."id" = loc_type."expand_to_id"
+                END
             WHERE
                 loc."id" = ANY(user_location_ids_array)
-                AND loc_type."expand_to_id" IS NOT NULL
+                AND CASE
+                    WHEN case_sync_restriction THEN loc_type."restrict_cases_to_id" IS NOT NULL
+                    ELSE loc_type."expand_to_id" IS NOT NULL
+                END
+
 
             UNION ALL
 
@@ -75,7 +83,8 @@ BEGIN
             INNER JOIN "locations_locationtype" iwe_type
                 ON loc_type."include_without_expanding_id" = iwe_type."id"
             WHERE
-                loc."id" = ANY(user_location_ids_array)
+                NOT case_sync_restriction
+                AND loc."id" = ANY(user_location_ids_array)
                 AND loc_type."include_without_expanding_id" IS NOT NULL
 
             UNION ALL
@@ -147,17 +156,25 @@ BEGIN
                             FROM "locations_locationtype_include_only"
                             WHERE "from_locationtype_id" = loc."location_type_id"
                         )
-                    ) THEN loc_type."expand_from"
+                    ) AND NOT case_sync_restriction THEN loc_type."expand_from"
                     -- otherwise it will be null for this and all ancestors
                     ELSE NULL
                 END AS "expand_from_type",
                 CASE
                     -- expand_from_root -> no path
-                    WHEN loc_type."expand_from_root" = TRUE THEN NULL
+                    WHEN loc_type."expand_from_root" = TRUE AND NOT case_sync_restriction THEN NULL
                     -- else first path element
                     ELSE loc."id"
                 END AS "loc_id",
                 CASE
+                    WHEN case_sync_restriction THEN (
+                        CASE WHEN loc_type."restrict_cases_to_id" IS NOT NULL THEN (
+                            SELECT "expand_to_depth"
+                            FROM "expand_to"
+                            WHERE "expand_to_type" = loc_type."restrict_cases_to_id"
+                        ) ELSE -2
+                        END
+                    )
                     -- get expand_to depth
                     WHEN loc_type."expand_to_id" IS NOT NULL THEN (
                         SELECT "expand_to_depth"
