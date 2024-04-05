@@ -33,6 +33,23 @@ hqDefine('locations/js/location_types', [
             });
         };
 
+        self.child_loc_types = function (locType) {
+            const byParent = self.loc_types_by_parent();
+            const childLocTypes = [];
+
+            const addChildren = function (parentLocType) {
+                const children = byParent[parentLocType.pk];
+                if (children) {
+                    children.forEach(function (c) {
+                        childLocTypes.push(c);
+                        addChildren(c);
+                    });
+                }
+            };
+            addChildren(locType);
+            return childLocTypes;
+        };
+
         self.loc_types_by_id = function () {
             return _.reduce(self.loc_types(), function (memo, locType) {
                 memo[locType.pk] = locType;
