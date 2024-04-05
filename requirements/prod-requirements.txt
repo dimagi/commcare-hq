@@ -4,6 +4,8 @@
 #
 #    `make requirements` or `make upgrade-requirements`
 #
+abdm-python-integrator @ git+https://github.com/dimagi/abdm-python-integrator.git
+    # via -r base-requirements.in
 alembic==1.7.7
     # via -r base-requirements.in
 amqp==5.1.1
@@ -49,6 +51,7 @@ cattrs==23.1.1
 celery==5.2.7
     # via
     #   -r base-requirements.in
+    #   abdm-python-integrator
     #   django-celery-results
     #   flower
 certifi==2023.7.22
@@ -120,6 +123,7 @@ dimagi-memoized==1.1.3
 django==3.2.25
     # via
     #   -r base-requirements.in
+    #   abdm-python-integrator
     #   crispy-bootstrap3to5
     #   django-appconf
     #   django-braces
@@ -136,6 +140,7 @@ django==3.2.25
     #   django-two-factor-auth
     #   django-user-agents
     #   djangorestframework
+    #   drf-standardized-errors
     #   jsonfield
 django-appconf==1.0.5
     # via
@@ -196,7 +201,12 @@ django-user-agents==0.4.0
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
     # via -r base-requirements.in
 djangorestframework==3.13.1
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   abdm-python-integrator
+    #   drf-standardized-errors
+drf-standardized-errors==0.12.6
+    # via abdm-python-integrator
 dropbox==11.36.0
     # via -r base-requirements.in
 elasticsearch5==5.5.6
@@ -213,6 +223,10 @@ exceptiongroup==1.1.1
     # via cattrs
 executing==2.0.0
     # via stack-data
+fastecdsa==2.3.0
+    # via fidelius
+fidelius @ git+https://github.com/dimagi/pyfidelius.git@master
+    # via abdm-python-integrator
 firebase-admin==6.1.0
     # via -r base-requirements.in
 flower==2.0.0
@@ -324,7 +338,9 @@ jsonobject==2.0.0
 jsonobject-couchdbkit==1.1.0
     # via -r base-requirements.in
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   abdm-python-integrator
 jsonschema==4.17.3
     # via
     #   -r base-requirements.in
@@ -435,7 +451,9 @@ pyasn1-modules==0.2.8
 pycparser==2.20
     # via cffi
 pycryptodome==3.19.1
-    # via -r base-requirements.in
+    # via
+    #   -r base-requirements.in
+    #   fidelius
 pycryptodomex==3.19.1
     # via
     #   oic
@@ -449,6 +467,7 @@ pyjwkest==1.4.2
 pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
+    #   abdm-python-integrator
     #   firebase-admin
     #   pygithub
     #   twilio
@@ -506,6 +525,7 @@ reportlab==3.6.13
 requests==2.28.2
     # via
     #   -r base-requirements.in
+    #   abdm-python-integrator
     #   cachecontrol
     #   cloudant
     #   datadog

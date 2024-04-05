@@ -1,3 +1,4 @@
+abdm_python_integrator @ git+https://github.com/dimagi/abdm-python-integrator.git   # SolTech - Used for ABDM Integration
 alembic
 architect
 attrs>=21.4
@@ -46,7 +47,7 @@ dropbox
 elasticsearch5>=5.0.0,<6.0.0
 ethiopian-date-converter
 eulxml
-firebase-admin  # India Division - used for FCM Push Notifications
+firebase-admin  # SolTech - used for FCM Push Notifications
 gevent
 google-api-python-client==2.32.0
 google-auth-httplib2==0.1.0

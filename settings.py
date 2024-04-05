@@ -404,6 +404,7 @@ HQ_APPS = (
     'custom.hmhb',
 
     'custom.ccqa',
+    'custom.abdm',
 
     'corehq.extensions.app_config.ExtensionAppConfig',  # this should be last in the list
 )
@@ -1119,6 +1120,7 @@ DEFAULT_COMMCARE_EXTENSIONS = [
     "mvp.commcare_extensions",
     "custom.nutrition_project.commcare_extensions",
     "custom.samveg.commcare_extensions",
+    "custom.abdm.commcare_extensions",
 ]
 COMMCARE_EXTENSIONS = []
 
@@ -2075,6 +2077,9 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
 
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+
+ABDM_TOKEN_EXPIRY = 24 * 60 * 3  # in minutes
 
 # NOTE: if you are adding a new setting that you intend to have other environments override,
 # make sure you add it before localsettings are imported (from localsettings import *)
