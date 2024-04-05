@@ -5,14 +5,14 @@
 
 {% block stylesheets %}{{ block.super }}
   {% compress css %}
-  <link type="text/less"
+  <link type="text/scss"
         rel="stylesheet"
         media="all"
-        href="{% static 'registry/less/registry.less' %}" />
-  <link type="text/less"
+        href="{% static 'registry/scss/registry.scss' %}" />
+  <link type="text/scss"
         rel="stylesheet"
         media="all"
-        href="{% static 'registry/less/light_color_scheme.less' %}" />
+        href="{% static 'registry/scss/light_color_scheme.scss' %}" />
   {% endcompress %}
 {% endblock %}
 
