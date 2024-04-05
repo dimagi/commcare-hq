@@ -4,13 +4,16 @@ hqDefine("registry/js/registry_logs", [
     'hqwebapp/js/initial_page_data',
     'registry/js/registry_actions',
     'hqwebapp/js/components/pagination',
-    'hqwebapp/js/daterangepicker.config',
+    'popper',
+    'tempusDominus',
 ], function (
     moment,
     ko,
     initialPageData,
     actions,
-    pagination
+    pagination,
+    Popper,
+    tempusDominus
 ) {
     ko.components.register('pagination', pagination);
 
@@ -56,7 +59,7 @@ hqDefine("registry/js/registry_logs", [
                 'limit': self.perPage(),
             };
             if (self.dateRange() && self.dateRange() !== allDatesText) {
-                const separator = $().getDateRangeSeparator(),
+                const separator = $().getDateRangeSeparator(),  // TODO: port
                     dates = self.dateRange().split(separator);
                 requestData.startDate = dates[0];
                 requestData.endDate = dates[1];
@@ -81,8 +84,23 @@ hqDefine("registry/js/registry_logs", [
     };
 
     $(function () {
+        window.Popper = Popper; // TODO: encapsulate (from https://github.com/Eonasdan/tempus-dominus/discussions/2698)
         $('.report-filter-datespan-filter').each(function (i, el) {
-            $(el).createBootstrap3DefaultDateRangePicker();
+            new tempusDominus.TempusDominus(
+              el,
+              {
+                dateRange: true,
+                multipleDatesSeparator: " - ",
+                display: {
+                  theme: 'light',
+                  components: {
+                    clock: false,
+                  }
+                },
+                localization: {
+                  format: 'L',
+                },
+              });
         });
     });
     return {
