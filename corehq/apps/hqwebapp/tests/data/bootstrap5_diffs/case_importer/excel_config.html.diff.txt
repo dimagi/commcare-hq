@@ -1,20 +1,34 @@
 --- 
 +++ 
-@@ -2,7 +2,7 @@
+@@ -1,8 +1,8 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
  {% load hq_shared_tags %}
  {% load i18n %}
  
 -{% requirejs_main "case_importer/js/bootstrap3/main" %}
-+{% requirejs_main "case_importer/js/bootstrap5/main" %}
++{% requirejs_main_b5 "case_importer/js/bootstrap5/main" %}
  
  {% block page_content %}
    {% include 'case_importer/partials/help_message.html' %}
-@@ -57,10 +57,10 @@
+@@ -47,8 +47,7 @@
+     </div>
+   {% endif %}
+ 
+-  <form class="form-horizontal form-report"
+-        action="{% url "excel_fields" domain %}"
++  <form action="{% url "excel_fields" domain %}"
+         method="post"
+         id="field_form">
+     {% csrf_token %}
+@@ -56,11 +55,11 @@
+ 
      <fieldset>
        <legend>{% trans "Case Type to Update/Create" %}</legend>
-       <div class="form-group">
+-      <div class="form-group">
 -        <label class="control-label col-sm-3" for="case_type">
-+        <label class="form-label col-md-3" for="case_type">
++      <div class="row mb-3">
++        <label class="col-form-label col-md-3" for="case_type">
            {% trans "Case type" %}
          </label>
 -        <div class="col-sm-6">
@@ -22,12 +36,14 @@
            <select class="form-control hqwebapp-select2" name="case_type" id="case_type" {% if is_bulk_import %}disabled="disabled"{% endif %}>
              <option disabled>{% trans "Used in existing applications:" %}</option>
              {% for case_type in case_types_from_apps %}
-@@ -79,10 +79,10 @@
+@@ -78,11 +77,11 @@
+ 
      <fieldset>
        <legend>{% trans "Identifying Cases to Update/Create" %}</legend>
-       <div class="form-group">
+-      <div class="form-group">
 -        <label class="control-label col-sm-3" for="search_column">
-+        <label class="form-label col-md-3" for="search_column">
++      <div class="row mb-3">
++        <label class="col-form-label col-md-3" for="search_column">
            {% trans "Excel column" %}
          </label>
 -        <div class="col-sm-6">
@@ -35,12 +51,14 @@
            <select class="form-control hqwebapp-select2" name="search_column" id="search_column" {% if is_bulk_import %}disabled="disabled"{% endif %}>
              {% for column in columns %}
                <option value="{{column|escape}}">
-@@ -94,10 +94,10 @@
+@@ -93,11 +92,11 @@
+         </div>
        </div>
  
-       <div class="form-group">
+-      <div class="form-group">
 -        <label class="control-label col-sm-3" for="search_field">
-+        <label class="form-label col-md-3" for="search_field">
++      <div class="row mb-3">
++        <label class="col-form-label col-md-3" for="search_field">
            {% trans "Corresponding case field" %}
          </label>
 -        <div class="col-sm-6">
@@ -48,12 +66,14 @@
            <select-toggle params="id: 'search_field',
                                             name: 'search_field',
                                             options: [{
-@@ -112,10 +112,10 @@
+@@ -111,11 +110,11 @@
+         </div>
        </div>
  
-       <div class="form-group">
+-      <div class="form-group">
 -        <label class="control-label col-sm-3">
-+        <label class="form-label col-md-3">
++      <div class="row mb-3">
++        <label class="col-form-label col-md-3">
            {% trans "Handle New Records" %}
          </label>
 -        <div class="col-sm-6">
@@ -61,3 +81,15 @@
            <label class="checkbox" for="create_new_cases">
              <input type="checkbox"
                     name="create_new_cases"
+@@ -137,9 +136,9 @@
+     {% endif %}
+ 
+     <div class="form-actions">
+-      <div class="col-sm-offset-3">
++      <div class="offset-md-3">
+         <button type="button"
+-                class="btn btn-primary"
++                class="btn btn-outline-primary"
+                 id="back_button">
+           <i class="fa fa-backward"></i> {% trans "Back" %}
+         </button>
