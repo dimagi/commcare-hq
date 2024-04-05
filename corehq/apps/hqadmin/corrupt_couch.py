@@ -21,7 +21,6 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
-from corehq.motech.repeaters.models import RepeatRecord
 from corehq.toggles.models import Toggle
 from corehq.util.couch_helpers import NoSkipArgsProvider
 from corehq.util.pagination import ResumableFunctionIterator
@@ -52,11 +51,6 @@ DOC_TYPES_BY_NAME = {
     "apps": {
         "type": Application,
         "use_domain": True,
-    },
-    "receiver_wrapper_repeat_records": {
-        "type": RepeatRecord,
-        "use_domain": True,
-        "view": "repeaters/repeat_records",
     },
     "meta": {
         "type": ReportConfiguration,
