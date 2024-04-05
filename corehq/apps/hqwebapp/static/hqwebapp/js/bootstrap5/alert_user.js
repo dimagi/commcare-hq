@@ -1,3 +1,4 @@
+"use strict";
 /*
     This is the knockout-based, javascript analog of messages in Django.
 
@@ -40,7 +41,7 @@ function (
                 clearTimeout(self.timer);
                 self.timer = setTimeout(removeAlertTimerFunc(self), 5000);
             }
-        }
+        };
         return self;
     };
 
@@ -88,11 +89,11 @@ function (
             viewModel.removeAlert(ko.dataFor(this));
         });
 
-        var message_element = $("#message-alerts").get(0);
+        var messageElement = $("#message-alerts").get(0);
         // this element is not available on templates like iframe_domain_login.html
-        if (message_element) {
-            ko.cleanNode(message_element);
-            $(message_element).koApplyBindings(viewModel);
+        if (messageElement) {
+            ko.cleanNode(messageElement);
+            $(messageElement).koApplyBindings(viewModel);
         }
     });
 
