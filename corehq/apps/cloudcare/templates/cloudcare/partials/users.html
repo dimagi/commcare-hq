@@ -1,0 +1,91 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<script type="text/template" id="restore-as-view-template">
+  <div class="module-menu-container">
+    <div class="page-header menu-header">
+      <h1 class="page-title">Log in as user</h1>
+    </div>
+    <form class="module-search-container js-user-search">
+      <div class="input-group input-group-lg">
+        <input
+          type="text"
+          class="js-user-query form-control"
+          value="<%- query %>"
+          placeholder="Filter workers" />
+        <div class="input-group-btn">
+          <button class="btn btn-default" type="submit">
+            <i class="fa fa-search" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+    </form>
+    <table class="table module-table">
+      <tbody>
+      </tbody>
+    </table>
+    <% if (endPage) { %>
+      {% block pagination_templates %}
+        {% include 'cloudcare/partials/pagination.html' %}
+      {% endblock %}
+    <% } %>
+  </div>
+</script>
+
+<script type="text/template" id="user-row-view-template">
+  <td class="module-column module-column-icon">
+    <div class="module-icon-container module-icon-user">
+      <i class="fa fa-user module-icon" aria-hidden="true"></i>
+    </div>
+  </td>
+  <td class="module-column module-column-name">
+    <h3>
+      <b><%- username %></b>
+      <span><%- first_name + ' ' + last_name %></span>
+      <i><small><%- location ? location.name + ' (' + location.location_type + ')' : '' %></small></i>
+    </h3>
+  </td>
+</script>
+
+<script type="text/template" id="user-data-template">
+  <table class="table module-table module-table-case-detail">
+    <tbody>
+    <tr>
+      <th>{% trans "Name" %}</th>
+      <td><%- user.first_name + ' ' + user.last_name %></td>
+    </tr>
+    <% if (user.location) { %>
+    <tr>
+      <th>{% trans "Organization" %}</th>
+      <td><%- user.location.name %></td>
+    </tr>
+    <tr>
+      <th>{% trans "Organization Type" %}</th>
+      <td><%- user.location.location_type %></td>
+    </tr>
+    <% } %>
+    <tr>
+      <th>{% trans "Date Registered" %}</th>
+      <td><%- user.dateRegistered %></td>
+    </tr>
+    <% _.each(user.customFields, function(value, key) { %>
+    <% if (!key.startsWith('commcare_') && !key.startsWith('commtrack') && value) { %>
+    <tr>
+      <th><%- key %></th>
+      <td><%- value %></td>
+    </tr>
+    <% } %>
+    <% }) %>
+    </tbody>
+  </table>
+
+</script>
+<script type="text/template" id="restore-as-banner-template">
+  {% if request|can_use_restore_as %}
+    <% if (restoreAs) { %>
+    <div class="restore-as-banner module-banner">
+      <%= message %>
+    </div>
+    <% } %>
+  {% endif %}
+</script>

@@ -1,4 +1,3 @@
-from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
@@ -22,7 +21,7 @@ class RepeatRecordDisplay:
 
     @property
     def record_id(self):
-        return self.record.record_id
+        return self.record.id
 
     @property
     def last_checked(self):

@@ -295,11 +295,18 @@ class RolePermission(models.Model):
         return PermissionInfo(self.permission, allow=allow)
 
 
+class PermissionManager(AuditingManager):
+
+    def get_by_natural_key(self, value):
+        # Useful when serializing data that foreign keys to this table for a migration (e.g., RolePermission)
+        return self.get(value=value)
+
+
 @audit_fields("value", audit_special_queryset_writes=True)
 class Permission(models.Model):
     value = models.CharField(max_length=255, unique=True)
 
-    objects = AuditingManager()
+    objects = PermissionManager()
 
     class Meta:
         db_table = "users_permission"
@@ -312,6 +319,10 @@ class Permission(models.Model):
         from corehq.apps.users.models import HqPermissions
         for name in HqPermissions.permission_names():
             Permission.objects.get_or_create(value=name)
+
+    def natural_key(self):
+        # Useful when serializing data that foreign keys to this table for a migration (e.g., RolePermission)
+        return (self.value,)
 
 
 @audit_fields("role", "assignable_by_role", audit_special_queryset_writes=True)

@@ -1120,6 +1120,14 @@ HIDE_SYNC_BUTTON = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+MULTI_VIEW_API_KEYS = StaticToggle(
+    'multi_view_api_keys',
+    "Multi-View API Keys",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="Allows users to view and copy API keys after creation",
+)
+
 
 def _ensure_search_index_is_enabled(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
@@ -2168,11 +2176,17 @@ EMBEDDED_TABLEAU = StaticToggle(
 
 DETAILED_TAGGING = StaticToggle(
     'detailed_tagging',
-    'Send additional metrics to datadog and sentry. Currently only used in Formplayer.',
+    'Send additional metrics to datadog and sentry.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+HIGH_COUNT_DETAILED_TAGGING = StaticToggle(
+    'HIGH_COUNT_DETAILED_TAGGING',
+    'Send additional metrics to datadog and sentry. These tags have a high number of combinations.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
 
 USER_HISTORY_REPORT = StaticToggle(
     'user_history_report',
@@ -2393,7 +2407,7 @@ EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
 APPLICATION_RELEASE_LOGS = StaticToggle(
     'application_release_logs',
     'Show Application release logs',
-    TAG_PRODUCT,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='This feature provides the release logs for application.'
 )
@@ -2480,7 +2494,7 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
     'Allows access to report scheduling views for location restricted users',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Provides access to views for resport scheduling '
+    description='Provides access to views for report scheduling '
                 'such as schedule creation and deletion.'
 )
 
@@ -2738,10 +2752,27 @@ SUPPORT_GEO_JSON_EXPORT = StaticToggle(
     description='The Case Export page now supports the exporting of GeoJSON data.',
 )
 
+USE_PROMINENT_PROGRESS_BAR = StaticToggle(
+    slug='use_prominent_progress_bar',
+    label='Use more prominent progress bar in place of NProgress',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Replaces NProgress bar with more prominent progress bar',
+)
+
 INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
     slug='increased_max_search_results',
     label='Increases the maximum number of Elasticsearch results from 500 to 1500',
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='Temporary increase of the max number of search results.',
+)
+
+
+SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
+    slug='support_road_network_disbursement_algorithm',
+    label='Add Road Network disbursement algorithm on geospatial settings page',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
 )

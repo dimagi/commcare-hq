@@ -26,7 +26,11 @@ from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
 )
 from corehq.apps.es import UserES, filters
-from corehq.apps.es.aggregations import DateHistogram
+from corehq.apps.es.aggregations import (
+    DateHistogram,
+    FilterAggregation,
+    NestedAggregation,
+)
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
@@ -542,6 +546,27 @@ def _bootstrap_class(obj, severe, warn):
         return "label label-success"
 
 
+def _get_histogram_aggregation_for_app(field_name, date_field_name, app_id):
+    """
+    The histogram aggregation is put inside a nested and filter aggregation to only query
+    the nested documents that match the selected app ID.
+
+    Refer to `TestGetHistogramAggregationForApp` to see the final output.
+    """
+    field_path = f'reporting_metadata.{field_name}'
+    nested_agg = NestedAggregation(field_name, field_path)
+    filter_agg = FilterAggregation(
+        'filtered_agg',
+        filters.term(f'{field_path}.app_id', app_id),
+    )
+    histogram_agg = DateHistogram(
+        'date_histogram',
+        f'{field_path}.{date_field_name}',
+        DateHistogram.Interval.DAY,
+    )
+    return nested_agg.aggregation(filter_agg.aggregation(histogram_agg))
+
+
 class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     name = gettext_lazy("Application Error Report")
     slug = "application_error"
@@ -667,6 +692,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         FromDateFilter,
+        'corehq.apps.reports.filters.select.SelectApplicationFilter',
     ]
     exportable = False
     emailable = False
@@ -674,6 +700,11 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(AggregateUserStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def selected_app_id(self):
+        return self.request_params.get(SelectApplicationFilter.slug, None)
 
     @memoized
     def user_query(self):
@@ -686,17 +717,29 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             mobile_user_and_group_slugs,
             self.request.couch_user,
         )
-        user_query = user_query.aggregations([
-            DateHistogram(
+
+        if self.selected_app_id:
+            last_submission_agg = _get_histogram_aggregation_for_app(
+                "last_submissions", "submission_date", self.selected_app_id
+            )
+            last_sync_agg = _get_histogram_aggregation_for_app(
+                "last_syncs", "sync_date", self.selected_app_id
+            )
+        else:
+            last_submission_agg = DateHistogram(
                 'last_submission',
                 'reporting_metadata.last_submission_for_user.submission_date',
                 DateHistogram.Interval.DAY,
-            ),
-            DateHistogram(
+            )
+            last_sync_agg = DateHistogram(
                 'last_sync',
                 'reporting_metadata.last_sync_for_user.sync_date',
                 DateHistogram.Interval.DAY,
             )
+
+        user_query = user_query.aggregations([
+            last_submission_agg,
+            last_sync_agg,
         ])
         return user_query
 
@@ -786,8 +829,12 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         query = self.user_query().run()
 
         aggregations = query.aggregations
-        last_submission_buckets = aggregations[0].normalized_buckets
-        last_sync_buckets = aggregations[1].normalized_buckets
+        if self.selected_app_id:
+            last_submission_buckets = aggregations[0].filtered_agg.date_histogram.normalized_buckets
+            last_sync_buckets = aggregations[1].filtered_agg.date_histogram.normalized_buckets
+        else:
+            last_submission_buckets = aggregations[0].normalized_buckets
+            last_sync_buckets = aggregations[1].normalized_buckets
         total_users = query.total
 
         def _buckets_to_series(buckets, user_count):

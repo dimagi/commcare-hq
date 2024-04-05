@@ -9,9 +9,8 @@
 {% endblock %}
 
 {% block dependencies %}
-  {% include "formplayer/dependencies.html" %}
+  {% include "cloudcare/partials/dependencies.html" %}
   <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
-  <script src="{% static 'jasmine-fixture/dist/jasmine-fixture.js' %}"></script>
 {% endblock %}
 
 {% block mocha_tests %}
@@ -24,6 +23,6 @@
 {% endblock %}
 
 {% block fixtures %}
-  {% include "formplayer/case_list.html" %}
+  {% include "cloudcare/partials/case_list.html" %}
   <div id="date-entry-ethiopian" />
 {% endblock %}

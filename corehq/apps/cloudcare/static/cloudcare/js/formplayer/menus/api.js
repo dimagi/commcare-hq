@@ -1,9 +1,12 @@
+'use strict';
 /* global Sentry */
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
 
 hqDefine("cloudcare/js/formplayer/menus/api", function () {
+    'use strict';
+
     var Collections = hqImport("cloudcare/js/formplayer/menus/collections"),
         constants = hqImport("cloudcare/js/formplayer/constants"),
         errors = hqImport("cloudcare/js/form_entry/errors"),
@@ -11,7 +14,9 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        currentSelections = null,
+        ongoingRequests = [];
 
     var API = {
         queryFormplayer: function (params, route) {
@@ -24,7 +29,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 defer = $.Deferred(),
                 options,
                 menus;
-
             $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
                 if (!params.preview) {
                     // Make sure the user has access to the app
@@ -45,7 +49,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         return;
                     }
                 }
-
+                FormplayerFrontend.permitIntervalSync = true;
                 options = {
                     success: function (parsedMenus, response) {
                         if (response.status === 'retry') {
@@ -93,6 +97,12 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 return;
                             }
 
+                            let attemptRestore = undefined;
+                            if (parsedMenus.metaData) {
+                                attemptRestore = parsedMenus.metaData.attemptRestore;
+                            }
+                            formplayerUtils.setSyncInterval(params.appId, attemptRestore);
+                            sessionStorage.setItem("lastUserActivityTime",  Date.now());
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
@@ -113,6 +123,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 formEntryUtils.reloginErrorHtml(),
                                 true
                             );
+                        } else if (response.statusText === 'abort') {
+                            // do nothing
                         } else {
                             FormplayerFrontend.trigger(
                                 'showError',
@@ -154,6 +166,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "selected_values": params.selectedValues,
                     "isShortDetail": params.isShortDetail,
                     "isRefreshCaseSearch": params.isRefreshCaseSearch,
+                    "requestInitiatedByTag": params.requestInitiatedByTag,
                 };
                 options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;
@@ -171,8 +184,24 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 });
 
                 var callStartTime = performance.now();
-                menus.fetch($.extend(true, {}, options)).always(function () {
-                    if (data.query_data && data.query_data.results && data.query_data.results.initiatedBy === constants.queryInitiatedBy.DYNAMIC_SEARCH) {
+                const updateRequest = menus.fetch($.extend(true, {}, options));
+
+                if (route.startsWith("navigate_menu")) {
+                    if (!_.isEqual(params.selections, currentSelections)) {
+                        currentSelections = params.selections;
+                        while (ongoingRequests.length > 0) {
+                            const ongoingRequest = ongoingRequests.pop();
+                            if (ongoingRequest.readyState !== 4) {
+                                ongoingRequest.abort();
+                            }
+                        }
+                    }
+                    ongoingRequests.push(updateRequest);
+                }
+
+
+                updateRequest.always(function () {
+                    if (data.requestInitiatedByTag && data.requestInitiatedByTag === constants.requestInitiatedByTagsMapping.DYNAMIC_SEARCH) {
                         var callEndTime = performance.now();
                         var callResponseTime = callEndTime - callStartTime;
                         $.ajax(initialPageData.reverse('api_histogram_metrics'), {

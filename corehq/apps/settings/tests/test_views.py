@@ -2,25 +2,32 @@ import os
 from io import BytesIO
 from unittest.mock import Mock, patch
 
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.http.response import Http404, HttpResponse
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
 
-from two_factor.views import PhoneSetupView, ProfileView, SetupView
+from django_otp.plugins.otp_totp.models import TOTPDevice
+from two_factor.views import ProfileView, SetupView
+from two_factor.plugins.phonenumber.views import PhoneSetupView
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.models import UserHistory, WebUser
+from corehq.apps.users.models import UserHistory, WebUser, HQApiKey
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.tests.util.artifact import artifact
 from corehq.util.tests.test_utils import disable_quickcache
+from corehq.apps.sso.models import IdentityProvider, AuthenticatedEmailDomain
+from corehq.apps.sso.tests import generator
 
 from .. import views
 from ..views import (
+    ApiKeyView,
     EnableMobilePrivilegesView,
     TwoFactorPhoneSetupView,
     TwoFactorProfileView,
+    TwoFactorResetView,
     TwoFactorSetupView,
     get_qrcode,
 )
@@ -193,6 +200,82 @@ class TwoFactorPhoneSetupViewTests(SimpleTestCase):
         return view(request)
 
 
+class ApiKeyViewTests(TestCase):
+    def test_user_with_no_identity_provider_cannot_view_full_api_keys(self):
+        couch_user = self.create_user('test')
+        HQApiKey.objects.create(user=couch_user.get_django_user(), name='test-key', key='1234567890')
+        request = self.create_request_for_user(couch_user)
+        view = ApiKeyView()
+        view.request = request
+
+        displayed_key = list(view.paginated_list)[0]['itemData']
+
+        self.assertNotIn('full_key', displayed_key)
+
+    def test_user_with_identity_provider_that_allows_full_keys_can_see_full_key(self):
+        couch_user = self.create_user('test@test.com')
+        HQApiKey.objects.create(user=couch_user.get_django_user(), name='test-key', key='1234567890')
+
+        self.create_idp('test.com', always_show_user_api_keys=True)
+
+        request = self.create_request_for_user(couch_user)
+
+        view = ApiKeyView()
+        view.request = request
+
+        displayed_key = list(view.paginated_list)[0]['itemData']
+
+        self.assertEqual(displayed_key['full_key'], '1234567890')
+
+    def test_user_managed_by_identity_provider_that_forbids_full_keys_cannot_see_full_key(self):
+        couch_user = self.create_user('test@test.com')
+        HQApiKey.objects.create(user=couch_user.get_django_user(), name='test-key', key='1234567890')
+
+        self.create_idp('test.com', always_show_user_api_keys=False)
+
+        request = self.create_request_for_user(couch_user)
+
+        view = ApiKeyView()
+        view.request = request
+
+        displayed_key = list(view.paginated_list)[0]['itemData']
+
+        self.assertNotIn('full_key', displayed_key)
+
+    def setUp(self):
+        super().setUp()
+        patcher = patch.object(WebUser, 'get_time_zone', new=lambda self: 'UTC')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.billing_account = generator.get_billing_account_for_idp()
+
+    def create_user(self, username):
+        couch_user = WebUser.create(None, username, 'password', None, None)
+        self.addCleanup(couch_user.delete, None, None)
+        return couch_user
+
+    def create_request_for_user(self, user):
+        request = RequestFactory().get('/some_url')
+        request.couch_user = user
+        request.user = user.get_django_user()
+        return request
+
+    def create_idp(self, domain, always_show_user_api_keys=False):
+        idp = IdentityProvider.objects.create(
+            name='test-idp',
+            slug='test-idp',
+            owner=self.billing_account,
+            is_active=True,
+            always_show_user_api_keys=always_show_user_api_keys
+        )
+        AuthenticatedEmailDomain.objects.create(email_domain=domain, identity_provider=idp)
+        return idp
+
+
 class TestMyAccountSettingsView(TestCase):
     domain_name = 'test'
 
@@ -256,3 +339,44 @@ class TestQrCode(SimpleTestCase):
                 rendered_bytes,
                 f"Rendered PNG differs from expected reference: {reference_fpath}",
             )
+
+
+class TestTwoFactorResetView(TestCase):
+
+    def test_default_device_is_deleted(self):
+        default_device = TOTPDevice.objects.create(user=self.couch_user.get_django_user(), name='default')
+        self._call_view(self.couch_user)
+        with self.assertRaises(TOTPDevice.DoesNotExist):
+            TOTPDevice.objects.get(id=default_device.id)
+
+    def test_backup_device_is_not_deleted(self):
+        backup_device = TOTPDevice.objects.create(user=self.couch_user.get_django_user(), name='backup')
+        self._call_view(self.couch_user)
+        # should not raise error
+        TOTPDevice.objects.get(id=backup_device.id)
+
+    def _call_view(self, user):
+        request = self.factory.get('/some_url')
+        request.user = user.get_django_user()
+        request.couch_user = user
+
+        def get_response(request):
+            return {}
+
+        middleware = SessionMiddleware(get_response)
+        middleware.process_request(request)
+        request.session.save()
+        view = TwoFactorResetView.as_view()
+        return view(request)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = create_domain('two-factor-domain')
+        cls.addClassCleanup(cls.domain.delete)
+        cls.couch_user = WebUser.create(cls.domain.name, 'test@user.com', 'abc123', None, None)
+        cls.addClassCleanup(cls.couch_user.delete, None, None)
+
+    def setUp(self):
+        super().setUp()
+        self.factory = RequestFactory()

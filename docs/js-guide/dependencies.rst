@@ -8,6 +8,50 @@ managed differently depending on which area of the code you’re working
 in. This page is a developer’s guide to understanding which area you’re
 working in and what that means for your code.
 
+My python tests are failing because of javascript
+-------------------------------------------------
+`TestRequireJS
+<https://github.com/dimagi/commcare-hq/blob/0acf35279639c695b943784704a9f74ce6a86465/corehq/apps/hqwebapp/tests/test_requirejs.py#L10>`__
+reads all of our javascript files, checking for common errors.
+
+These tests are naive. They don't parse JavaScript, they just run regexes based on expected coding patterns.
+They use `this method <#how-do-i-know-whether-or-not-im-working-with-requirejs>`__ to determine if a file is
+using RequireJS. This is one reason not to add dependency lists in areas of HQ that don't yet use RequireJS.
+
+**test_requirejs_disallows_hqimport**
+
+``hqImport`` only works in non-RequireJS contexts. In RequireJS files, dependencies should be included in the
+module's ``hqDefine`` call, as described `here <#how-do-i-know-whether-or-not-im-working-with-requirejs>`__.
+
+Occasionally, this does not work due to a circular dependency. This will manifest as the module being undefined.
+`hqRequire <https://github.com/dimagi/commcare-hq/commit/15b436f77875f57d1e3d8d6db9b990720fa5dd6f#diff-73c73327e873d0e5f5f4e17c3251a1ceR100>`__
+exists for this purpose, to require the necessary module at the point where it’s used. ``hqRequire`` defines
+a new module, which can be fragile, so limit the code using it. As in python, best practice is to include
+dependencies at the module level, at the top of the file.
+
+
+**test_files_match_modules**
+
+RequireJS requires that a module's name is the same as the file containing it. Rename your module.
+
+My deploy is failing because of javascript
+------------------------------------------
+
+This manifests as an error during static files handling, referencing
+optimization, minification, or parsing.
+Sometimes this is due to strictness in the requirejs parsing.
+Most often this is a trailing comma in a list of function parameters.
+
+Errors also pop up due to certain syntax, including
+`spread syntax <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax>`__ and
+`optional chaining <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining>`__.
+This is the result of requirejs depending on a version of uglify that depends on an old version of
+esprima. See `here <https://github.com/requirejs/r.js/issues/971>`__.
+In third party libraries that are already minified, we can work around this by using ``empty:`` to
+skip optimization (docs). This is done for Sentry `here <https://github.com/dimagi/commcare-hq/blob/0d3badffdfe65bdbab554a1e1aed518398fcb53e/corehq/apps/hqwebapp/static/hqwebapp/yaml/bootstrap3/requirejs.yml#L12-L14>`__.
+For our own code, we have a `babel plugin for requirejs <https://www.npmjs.com/package/requirejs-babel7>`__.
+See `here <https://github.com/dimagi/commcare-hq/pull/33083>`__.
+
 How do I know whether or not I’m working with RequireJS?
 --------------------------------------------------------
 
@@ -204,18 +248,18 @@ umigrated files. At the time of writing:
 
    $ ./scripts/codechecks/hqDefine.sh
 
-   98%     (825/843) of HTML files are free of inline scripts
-   88%     (375/427) of JS files use hqDefine
-   59%     (249/427) of JS files specify their dependencies
-   91%     (765/843) of HTML files are free of script tags
+   97%     (1040/1081) of HTML files are free of inline scripts
+   93%     (501/539) of JS files use hqDefine
+   64%     (342/539) of JS files specify their dependencies
+   93%     (995/1080) of HTML files are free of script tags
 
 Why aren’t we using something more fully-featured, more modern, or cooler than RequireJS?
 -----------------------------------------------------------------------------------------
 
+RequireJS is now `deprecated <https://github.com/requirejs/requirejs/issues/1817>`__.
+
 This migration began quite a while ago. At the time, the team discussed
 options and selected RequireJS. The majority of the work done to move to
 RequireJS has been around reorganizing code into modules and explicitly
-declaring dependencies, which would be necessary for any kind of modern
-dependency management. We are not permanently wedded to RequireJS,
-although it is unlikely that we will migrate to another tool while a
-significant amount of code is still in the legacy state.
+declaring dependencies, which is necessary for any kind of modern
+dependency management.

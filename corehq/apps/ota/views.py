@@ -44,7 +44,7 @@ from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.exceptions import CaseSearchUserError
-from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
+from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, CASE_SEARCH_TAGS_MAPPING
 from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import check_domain_migration
@@ -65,7 +65,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.util.metrics import limit_domains, metrics_histogram
+from corehq.util.metrics import limit_domains, metrics_histogram, limit_tags
 from corehq.util.quickcache import quickcache
 
 from .case_restore import get_case_restore_response
@@ -123,27 +123,42 @@ def app_aware_search(request, domain, app_id):
     Returns results as a fixture with the same structure as a casedb instance.
     """
     start_time = datetime.now()
-    request_dict = request.GET if request.method == 'GET' else request.POST
+    request_dict = dict((request.GET if request.method == 'GET' else request.POST).lists())
+
     try:
         cases = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
     fixtures = CaseDBFixture(cases).fixture
-    _log_search_timing(start_time, request, domain)
+    _log_search_timing(start_time, request_dict, domain, app_id)
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
-def _log_search_timing(start_time, request, domain):
+def _log_search_timing(start_time, request_dict, domain, app_id):
+    for key, value in request_dict.items():
+        if isinstance(value, str):
+            request_dict[key] = value.replace('\t', '')
+        elif isinstance(value, list):
+            request_dict[key] = [item.replace('\t', '') for item in value if isinstance(item, str)]
+
+    tags = {
+        tag_name: value[0]
+        for param_name, tag_name in CASE_SEARCH_TAGS_MAPPING.items()
+        if (value := request_dict.pop(param_name, []))
+    }
+    tags.update({'domain': limit_domains(domain)})
+
     elapsed = (datetime.now() - start_time).total_seconds()
     metrics_histogram("commcare.app_aware_search.processing_time",
                       int(elapsed * 1000),
                       bucket_tag='duration_bucket',
                       buckets=(500, 1000, 5000),
                       bucket_unit='ms',
-                      tags={'domain': limit_domains(domain)})
+                      tags=limit_tags(tags, domain))
     if elapsed >= 10 and limit_domains(domain) != "__other__":
-        notify_exception(request, "LongCaseSearchRequest", details={
-            'request_dict': dict((request.GET if request.method == 'GET' else request.POST).lists()),
+        notify_exception(None, "LongCaseSearchRequest", details={
+            'request_dict': request_dict,
+            'app_id': app_id,
         })
 
 

@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("cloudcare/js/formplayer/users/controller", function () {
     var Collections = hqImport("cloudcare/js/formplayer/users/collections"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),

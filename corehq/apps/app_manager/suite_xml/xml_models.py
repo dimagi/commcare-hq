@@ -717,6 +717,10 @@ class Template(AbstractTemplate):
     ROOT_NAME = 'template'
 
 
+class AltText(AbstractTemplate):
+    ROOT_NAME = 'alt_text'
+
+
 class GraphTemplate(Template):
     # TODO: Is there a way to specify a default/static value for form?
     form = StringField('@form', choices=['graph'])
@@ -849,7 +853,7 @@ class EndpointAction(XmlObject):
 
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
-    ORDER = ('style', 'header', 'template', 'endpoint_action', 'sort_node')
+    ORDER = ('style', 'header', 'template', 'endpoint_action', 'sort_node', 'alt_text')
 
     sort = StringField('@sort')
     print_id = StringField('@print-id')
@@ -859,6 +863,7 @@ class Field(OrderedXmlObject):
     sort_node = NodeField('sort', Sort)
     background = NodeField('background/text', Text)
     endpoint_action = NodeField('endpoint_action', EndpointAction)
+    alt_text = NodeField('alt_text', AltText)
 
 
 class Lookup(OrderedXmlObject):

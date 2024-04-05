@@ -20,10 +20,10 @@ APP_MAPPING = {
             "type": "text"
         },
         "admin_password_charset": {
-            "type": "text"
+            "type": "keyword"
         },
         "application_version": {
-            "type": "text"
+            "type": "keyword"
         },
         "attribution_notes": {
             "type": "text"
@@ -54,7 +54,7 @@ APP_MAPPING = {
                     "type": "boolean"
                 },
                 "version": {
-                    "type": "text"
+                    "type": "keyword"
                 }
             }
         },
@@ -83,7 +83,7 @@ APP_MAPPING = {
                     "type": "boolean"
                 },
                 "version": {
-                    "type": "text"
+                    "type": "keyword"
                 }
             }
         },
@@ -100,9 +100,6 @@ APP_MAPPING = {
         "comment_from": {
             "type": "text"
         },
-        "copy_history": {
-            "type": "text"
-        },
         "copy_of": {
             "type": "keyword"
         },
@@ -110,7 +107,7 @@ APP_MAPPING = {
             "type": "boolean"
         },
         "created_from_template": {
-            "type": "text"
+            "type": "keyword"
         },
         "date_created": {
             "format": DATE_FORMATS_STRING,
@@ -138,7 +135,7 @@ APP_MAPPING = {
             "type": "text"
         },
         "family_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "force_http": {
             "type": "boolean"
@@ -208,13 +205,13 @@ APP_MAPPING = {
                                     }
                                 },
                                 "field": {
-                                    "type": "text"
+                                    "type": "keyword"
                                 },
                                 "filter_xpath": {
                                     "type": "text"
                                 },
                                 "format": {
-                                    "type": "text"
+                                    "type": "keyword"
                                 },
                                 "header": {
                                     "dynamic": False,
@@ -224,7 +221,7 @@ APP_MAPPING = {
                                     "type": "long"
                                 },
                                 "model": {
-                                    "type": "text"
+                                    "type": "keyword"
                                 },
                                 "time_ago_interval": {
                                     "type": "float"
@@ -242,7 +239,7 @@ APP_MAPPING = {
                             "type": "object",
                             "properties": {
                                 "direction": {
-                                    "type": "text"
+                                    "type": "keyword"
                                 },
                                 "doc_type": {
                                     "type": "keyword"
@@ -416,7 +413,7 @@ APP_MAPPING = {
                                             "type": "keyword"
                                         },
                                         "external_id": {
-                                            "type": "text"
+                                            "type": "keyword"
                                         },
                                         "name_path": {
                                             "type": "text"
@@ -523,7 +520,7 @@ APP_MAPPING = {
                                             "type": "keyword"
                                         },
                                         "reference_id": {
-                                            "type": "text"
+                                            "type": "keyword"
                                         },
                                         "repeat_context": {
                                             "type": "text"
@@ -600,14 +597,14 @@ APP_MAPPING = {
                             "type": "text"
                         },
                         "form_type": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "name": {
                             "dynamic": False,
                             "type": "object"
                         },
                         "requires": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "show_count": {
                             "type": "boolean"
@@ -638,10 +635,10 @@ APP_MAPPING = {
                             "type": "keyword"
                         },
                         "module_id": {
-                            "type": "text"
+                            "type": "keyword"
                         },
                         "relationship": {
-                            "type": "text"
+                            "type": "keyword"
                         }
                     }
                 },
@@ -684,7 +681,7 @@ APP_MAPPING = {
                     }
                 },
                 "unique_id": {
-                    "type": "text"
+                    "type": "keyword"
                 }
             }
         },
@@ -699,10 +696,10 @@ APP_MAPPING = {
                     "type": "text"
                 },
                 "multimedia_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "unique_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "version": {
                     "type": "long"
@@ -757,7 +754,7 @@ APP_MAPPING = {
             "type": "object"
         },
         "upstream_app_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "upstream_version": {
             "type": "long"

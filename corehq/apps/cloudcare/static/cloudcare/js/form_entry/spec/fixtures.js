@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
     return {
         textJSON: (options = {}) => (_.defaults(options, {

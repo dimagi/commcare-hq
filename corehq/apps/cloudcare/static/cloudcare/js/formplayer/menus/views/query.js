@@ -1,3 +1,4 @@
+'use strict';
 /*global Backbone, DOMPurify, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
@@ -121,7 +122,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 const geocoderValues = JSON.parse(sessionStorage.geocoderValues);
                 geocoderValues[model.id] = item.place_name;
                 sessionStorage.geocoderValues = JSON.stringify(geocoderValues);
-                var broadcastObj = formEntryUtils.getBroadcastObject(item);
+                var broadcastObj = formEntryUtils.getAddressBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
             };
@@ -401,7 +402,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
             }
-            this.parentView.notifyFieldChange(e, this, useDynamicSearch, formplayerConstants.queryInitiatedBy.FIELD_CHANGE);
+            this.parentView.notifyFieldChange(e, this, useDynamicSearch, formplayerConstants.requestInitiatedByTagsMapping.FIELD_CHANGE);
         },
 
         toggleBlankSearch: function (e) {
@@ -744,7 +745,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
             });
             if (invalidRequiredFields.length === 0) {
-                self.performSubmit(formplayerConstants.queryInitiatedBy.DYNAMIC_SEARCH);
+                self.performSubmit(formplayerConstants.requestInitiatedByTagsMapping.DYNAMIC_SEARCH);
             }
         },
 
@@ -802,7 +803,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return promise;
         },
 
-        _updateModelsForValidation: function (initiatedBy) {
+        _updateModelsForValidation: function (initiatedByTag) {
             var self = this;
             var promise = $.Deferred();
             self.updateModelsForValidation = promise;
@@ -813,8 +814,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 inputs: self.getAnswers(),
                 execute: false,
                 forceManualSearch: true,
-                initiatedBy: initiatedBy,
             });
+            urlObject.setRequestInitiatedByTag(initiatedByTag);
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
                 // Update models based on response
