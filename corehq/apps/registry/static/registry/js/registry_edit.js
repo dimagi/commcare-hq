@@ -6,6 +6,7 @@ hqDefine("registry/js/registry_edit", [
     'registry/js/registry_text',
     'registry/js/registry_actions',
     'registry/js/registry_logs',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/components/inline_edit',
     'hqwebapp/js/select2_knockout_bindings.ko',
     'hqwebapp/js/bootstrap5/knockout_bindings.ko', // openModal
@@ -19,6 +20,7 @@ hqDefine("registry/js/registry_edit", [
     text,
     actions,
     auditLogs,
+    bootstrap,
     inlineEdit
 ) {
     ko.components.register('inline-edit', inlineEdit);
@@ -123,7 +125,7 @@ hqDefine("registry/js/registry_edit", [
                 }));
             }).always(() => {
                 self.modalSaving(false);
-                $(".modal").modal('hide');
+                bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
             });
         }
 
@@ -136,7 +138,7 @@ hqDefine("registry/js/registry_edit", [
                 self.inviteDomains([]);
             }).always(() => {
                 self.modalSaving(false);
-                $(".modal").modal('hide');
+                bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
             });
         }
 
@@ -148,7 +150,7 @@ hqDefine("registry/js/registry_edit", [
                 self.schema(self.editedSchema());
             }).always(() => {
                 self.modalSaving(false);
-                $(".modal").modal('hide');
+                bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
             });
         }
 
@@ -165,7 +167,7 @@ hqDefine("registry/js/registry_edit", [
                 self.grantDomains([]);
             }).always(() => {
                 self.modalSaving(false);
-                $(".modal").modal('hide');
+                bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
             });
         }
 
@@ -177,7 +179,7 @@ hqDefine("registry/js/registry_edit", [
                 }));
             }).always(() => {
                 self.modalSaving(false);
-                $(".modal").modal('hide');
+                bootstrap.Modal.getOrCreateInstance($(".modal:visible")).hide();
             });
         }
 
