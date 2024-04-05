@@ -10,9 +10,10 @@ from dimagi.utils.parsing import string_to_utc_datetime
 from dimagi.utils.web import json_response
 
 from corehq import toggles
-from corehq.apps.reports.analytics.esaccessors import get_paged_forms_by_type
+from corehq.apps.reports.analytics.esaccessors import get_paged_forms_by_type, PagedResult
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
@@ -36,7 +37,8 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
     asynchronous = False
     base_template = 'reports/standard/submission_error_report.html'
 
-    fields = ['corehq.apps.reports.standard.forms.filters.SubmissionTypeFilter',
+    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+              'corehq.apps.reports.standard.forms.filters.SubmissionTypeFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter']
 
     @property
@@ -55,6 +57,20 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
         return headers
 
     _submitfilter = None
+
+    @property
+    @memoized
+    def selected_user_ids(self):
+        return EMWF.user_es_query(
+            self.domain,
+            self.request.GET.getlist(EMWF.slug),
+            self.request.couch_user,
+        ).get_ids()
+
+    @property
+    def has_user_filters(self):
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+        return len(mobile_user_and_group_slugs) > 0
 
     @property
     def submitfilter(self):
@@ -99,8 +115,12 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
     def paged_result(self):
         doc_types = [filter_.doc_type for filter_ in [filter_ for filter_ in self.submitfilter if filter_.show]]
         sort_col, desc = self.sort_params
-        app_ids = []
-        xmlns_list = []
+        user_ids = []
+        if self.has_user_filters:
+            user_ids = self.selected_user_ids
+            if not user_ids:
+                # We have valid user filters but no results
+                return PagedResult(total=0, hits=[])
         app_ids, xmlns_list = self._get_app_ids_and_xmlns(list(self.all_relevant_forms.values()))
         return get_paged_forms_by_type(
             self.domain,
@@ -109,6 +129,7 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
             desc=desc,
             start=self.pagination.start,
             size=self.pagination.count,
+            user_ids=user_ids,
             app_ids=app_ids,
             xmlns=xmlns_list,
         )
@@ -119,6 +140,10 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
         shared_params.append(dict(
             name=SubmissionTypeFilter.slug,
             value=[f.type for f in self.submitfilter if f.show]
+        ))
+        shared_params.append(dict(
+            name=EMWF.slug,
+            value=EMWF.get_value(self.request, self.domain),
         ))
         if FormsByApplicationFilter.has_selections(self.request):
             shared_params.extend(self.form_filter_params)

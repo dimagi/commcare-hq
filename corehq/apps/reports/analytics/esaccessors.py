@@ -145,6 +145,7 @@ def get_paged_forms_by_type(
         desc=True,
         start=0,
         size=10,
+        user_ids=None,
         app_ids=None,
         xmlns=None):
     sort_col = sort_col or "received_on"
@@ -158,6 +159,8 @@ def get_paged_forms_by_type(
         .start(start)
         .size(size)
     )
+    if user_ids:
+        query = query.user_id(user_ids)
     # Even if we have form xmlns we still filter by app_id since xmlns may not be unique (e.g. copied apps)
     if app_ids:
         query = query.app(app_ids)
