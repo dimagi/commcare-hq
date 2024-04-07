@@ -1,0 +1,30 @@
+--- 
++++ 
+@@ -3,7 +3,7 @@
+ {% load compress %}
+ {% load i18n %}
+ 
+-{% requirejs_main 'case_search/js/bootstrap3/profile_case_search' %}
++{% requirejs_main_b5 'case_search/js/bootstrap5/profile_case_search' %}
+ 
+ {% block page_content %}
+ 
+@@ -45,14 +45,14 @@
+       <li class="list-group-item">
+         <div class="container-fluid">
+           <div class="row">
+-            <div class="col-xs-3" data-bind="text: name"></div>
+-            <div class="col-xs-3">
++            <div class="col-sm-3" data-bind="text: name"></div>
++            <div class="col-sm-3">
+               <strong data-bind="text: duration ? duration.toFixed(3) : '-'"></strong> seconds;
+             </div>
+-            <div class="col-xs-3">
++            <div class="col-sm-3">
+               <strong data-bind="text: percent_total ? percent_total.toFixed(3) : '-'"></strong>% of total;
+             </div>
+-            <div class="col-xs-3">
++            <div class="col-sm-3">
+               <strong data-bind="text: percent_parent ? percent_parent.toFixed(3) : '-'"></strong>% of parent
+             </div>
+           </div>
