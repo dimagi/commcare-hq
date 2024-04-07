@@ -81,7 +81,7 @@ def get_graph_api_connection_issue_email_context(idp, error):
     email_context = {
         "subject": subject,
         "from": _(f"Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"),
-        "to": idp.owner.enterprise_admin_emails or idp.owner.dimagi_contact or settings.ACCOUNT_EMAIL,
+        "to": idp.owner.enterprise_admin_emails or [idp.owner.dimagi_contact] or [settings.ACCOUNT_EMAIL],
         "bcc": [settings.ACCOUNTS_EMAIL],
         "html": body_html,
         "plaintext": body_txt,
@@ -107,7 +107,7 @@ def get_sso_deactivation_skip_email_context(idp, failure_reason):
     email_context = {
         "subject": subject,
         "from": _(f"Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"),
-        "to": idp.owner.enterprise_admin_emails or idp.owner.dimagi_contact or settings.ACCOUNT_EMAIL,
+        "to": idp.owner.enterprise_admin_emails or [idp.owner.dimagi_contact] or [settings.ACCOUNT_EMAIL],
         "bcc": [settings.ACCOUNTS_EMAIL],
         "html": body_html,
         "plaintext": body_txt,
