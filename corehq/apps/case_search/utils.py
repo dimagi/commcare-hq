@@ -50,10 +50,16 @@ from corehq.util.timer import TimingContext
 
 @dataclass
 class CaseSearchProfiler:
+    debug_mode: bool = False
     primary_count: int = 0
     related_count: int = 0
     timing_context: TimingContext = field(
         default_factory=lambda: TimingContext('Case Search'))
+    queries: list = field(default_factory=list)
+
+    def add_query(self, slug, es_query):
+        if self.debug_mode:
+            self.queries.append({'slug': slug, 'query': es_query.raw_query})
 
 
 def time_function():
@@ -101,6 +107,7 @@ def get_case_search_results(domain, case_types, criteria,
 def profile_case_search(domain, couch_user, app_id, config):
     helper = _get_helper(couch_user, domain, config.case_types, config.data_registry)
     profiler = helper.profiler
+    profiler.debug_mode = True
 
     with profiler.timing_context:
         cases = get_primary_case_search_results(helper, domain, config.case_types,
@@ -134,6 +141,7 @@ def get_primary_case_search_results(helper, domain, case_types, criteria, commca
 
     try:
         with helper.profiler.timing_context('run query'):
+            helper.profiler.add_query('main', search_es)
             hits = search_es.run().raw_hits
     except Exception as e:
         notify_exception(None, str(e), details=dict(
@@ -509,11 +517,12 @@ def get_child_case_types(app, case_type):
 
 @time_function()
 def get_child_case_results(helper, parent_case_ids, child_case_types=None):
-    filter = helper.get_base_queryset().get_child_cases(parent_case_ids, "parent")
+    query = helper.get_base_queryset().get_child_cases(parent_case_ids, "parent")
     if child_case_types:
-        filter = filter.case_type(child_case_types)
+        query = query.case_type(child_case_types)
 
-    results = filter.run().hits
+    helper.profiler.add_query('get_child_case_results', query)
+    results = query.run().hits
     return [helper.wrap_case(result) for result in results]
 
 
@@ -528,7 +537,9 @@ def get_expanded_case_results(helper, custom_related_case_property, cases):
 
 @time_function()
 def _get_case_search_cases(helper, case_ids):
-    results = helper.get_base_queryset().case_ids(case_ids).run().hits
+    query = helper.get_base_queryset().case_ids(case_ids)
+    helper.profiler.add_query('_get_case_search_cases', query)
+    results = query.run().hits
     return [helper.wrap_case(result) for result in results]
 
 
