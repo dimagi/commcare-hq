@@ -31,7 +31,6 @@ def get_all_members_of_the_idp_from_entra(idp):
     )
     # looks up a token from cache
     result = app.acquire_token_silent(config["scope"], account=None)
-    # try:
     if not result:
         result = app.acquire_token_for_client(scopes=config["scope"])
     if "access_token" in result:
