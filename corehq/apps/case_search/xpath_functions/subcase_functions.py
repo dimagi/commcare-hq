@@ -98,9 +98,12 @@ def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
         .source(['indices.referenced_id', 'indices.identifier'])
     )
 
+    context.profiler.add_query('subcase_query', es_query)
+    with context.profiler.timing_context('subcase_query'):
+        results = es_query.run()
     counts_by_parent_id = Counter(
         index['referenced_id']
-        for subcase in es_query.run().hits
+        for subcase in results.hits
         for index in subcase['indices']
         if index['identifier'] == subcase_query.index_identifier
     )

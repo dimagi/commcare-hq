@@ -126,7 +126,7 @@ def profile_case_search(domain, couch_user, app_id, config):
 
 @time_function()
 def get_primary_case_search_results(helper, domain, case_types, criteria, commcare_sort=None):
-    builder = CaseSearchQueryBuilder(domain, case_types, helper.query_domains)
+    builder = CaseSearchQueryBuilder(domain, case_types, helper.profiler, helper.query_domains)
     try:
         with helper.profiler.timing_context('build_query'):
             search_es = builder.build_query(criteria, commcare_sort)
@@ -212,9 +212,10 @@ class _RegistryQueryHelper:
 class CaseSearchQueryBuilder:
     """Compiles the case search object for the view"""
 
-    def __init__(self, domain, case_types, query_domains=None):
+    def __init__(self, domain, case_types, profiler, query_domains=None):
         self.request_domain = domain
         self.case_types = case_types
+        self.profiler = profiler
         self.query_domains = [domain] if query_domains is None else query_domains
 
     @cached_property
@@ -290,7 +291,9 @@ class CaseSearchQueryBuilder:
         return search_es
 
     def _build_filter_from_xpath(self, xpath, fuzzy=False):
-        return build_filter_from_xpath(self.query_domains, xpath, fuzzy, self.request_domain)
+        with self.profiler.timing_context('_build_filter_from_xpath'):
+            return build_filter_from_xpath(self.query_domains, xpath, fuzzy,
+                                           self.request_domain, self.profiler)
 
     def _get_daterange_query(self, criteria):
         startdate, enddate = criteria.get_date_range()
