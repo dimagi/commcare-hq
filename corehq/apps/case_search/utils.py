@@ -272,14 +272,10 @@ class CaseSearchQueryBuilder:
     def _apply_filter(self, search_es, criteria):
         if criteria.key == CASE_SEARCH_XPATH_QUERY_KEY:
             if not criteria.is_empty:
-                if criteria.has_multiple_terms:
-                    for value in criteria.value:
-                        search_es = search_es.filter(build_filter_from_xpath(self.query_domains, value,
-                                                                             request_domain=self.request_domain))
-                    return search_es
-                else:
-                    return search_es.filter(build_filter_from_xpath(self.query_domains, criteria.value,
-                                                                    request_domain=self.request_domain))
+                xpaths = criteria.value if criteria.has_multiple_terms else [criteria.value]
+                for xpath in xpaths:
+                    search_es = search_es.filter(self._build_filter_from_xpath(xpath))
+                return search_es
         elif criteria.key == 'owner_id':
             if not criteria.is_empty:
                 return search_es.filter(case_search.owner(criteria.value))
@@ -292,6 +288,9 @@ class CaseSearchQueryBuilder:
         elif criteria.key not in UNSEARCHABLE_KEYS:
             return search_es.add_query(self._get_case_property_query(criteria), queries.MUST)
         return search_es
+
+    def _build_filter_from_xpath(self, xpath, fuzzy=False):
+        return build_filter_from_xpath(self.query_domains, xpath, fuzzy, self.request_domain)
 
     def _get_daterange_query(self, criteria):
         startdate, enddate = criteria.get_date_range()
@@ -309,8 +308,7 @@ class CaseSearchQueryBuilder:
             return case_property_missing(criteria.key)
 
         if criteria.is_ancestor_query:
-            missing_filter = build_filter_from_xpath(self.query_domains, f'{criteria.key} = ""',
-                                                     request_domain=self.request_domain)
+            missing_filter = self._build_filter_from_xpath(f'{criteria.key} = ""')
         else:
             missing_filter = case_property_missing(criteria.key)
         return filters.OR(self._get_query(criteria), missing_filter)
@@ -330,8 +328,7 @@ class CaseSearchQueryBuilder:
             query = f'{criteria.key} = "{value}"'
             if isinstance(value, list):
                 query = f"""{criteria.key} = unwrap-list('{json.dumps(value)}')"""
-            return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy,
-                                           request_domain=self.request_domain)
+            return self._build_filter_from_xpath(query, fuzzy=fuzzy)
         elif criteria.is_index_query:
             return reverse_index_case_query(value, criteria.index_query_identifier)
         else:
