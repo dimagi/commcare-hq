@@ -152,9 +152,9 @@ class PopulateSQLCommand(BaseCommand):
         elif override_is_completed == "discard":
             self.discard_resume_state(verify_only)
         else:
-            self._avg_items_to_be_migrated()
+            self._avg_items_to_be_migrated(verify_only)
         print(f"status={self.get_migration_status(verify_only)}")
-        print("Items to be migrated:", self.count_items_to_be_migrated())
+        print("Items to be migrated:", self.count_items_to_be_migrated(verify_only))
 
     def _set_migration_completed(self):
         print(f"Prior status={self.get_migration_status()}")
@@ -176,18 +176,18 @@ class PopulateSQLCommand(BaseCommand):
                 return
         self._resume_iter_couch_view().set_iterator_detail("is_completed", is_completed)
 
-    def _avg_items_to_be_migrated(self):
+    def _avg_items_to_be_migrated(self, verify_only=False):
         def get_count():
             sleep(1)
-            return self.count_items_to_be_migrated()
+            return self.count_items_to_be_migrated(verify_only)
         print("Sampling items to be migrated...")
         counts = [get_count() for x in range(10)]
         print(f"counts={counts} avg={sum(counts) / len(counts)}")
         return max(sum(counts) / len(counts), 0)
 
     @classmethod
-    def count_items_to_be_migrated(cls):
-        status = cls.get_migration_status()
+    def count_items_to_be_migrated(cls, verify_only=False):
+        status = cls.get_migration_status(verify_only)
         if status.get("is_completed"):
             return 0
         couch_count = cls._get_couch_doc_count_for_type()
