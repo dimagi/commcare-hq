@@ -72,7 +72,29 @@ def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
 
     Only cases with `[>,=] case_count_gt` subcases will be returned.
     """
-    # TODO: validate that the subcase filter doesn't contain any ancestor filtering
+
+    counts_by_parent_id = Counter(
+        index['referenced_id']
+        for subcase in _run_subcase_query(subcase_query, context)
+        for index in subcase['indices']
+        if index['identifier'] == subcase_query.index_identifier
+    )
+    if len(counts_by_parent_id) > MAX_RELATED_CASES:
+        from ..exceptions import TooManyRelatedCasesError
+        raise TooManyRelatedCasesError(
+            _("The related case lookup you are trying to perform would return too many cases"),
+            serialize(subcase_query.subcase_filter)
+        )
+
+    if subcase_query.op == '>' and subcase_query.count <= 0:
+        return list(counts_by_parent_id)
+
+    return [
+        case_id for case_id, count in counts_by_parent_id.items() if subcase_query.filter_count(count)
+    ]
+
+
+def _run_subcase_query(subcase_query, context):
     from corehq.apps.case_search.filter_dsl import (
         build_filter_from_ast,
     )
@@ -98,25 +120,12 @@ def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
         .source(['indices.referenced_id', 'indices.identifier'])
     )
 
-    counts_by_parent_id = Counter(
-        index['referenced_id']
-        for subcase in es_query.run().hits
-        for index in subcase['indices']
-        if index['identifier'] == subcase_query.index_identifier
-    )
-    if len(counts_by_parent_id) > MAX_RELATED_CASES:
-        from ..exceptions import TooManyRelatedCasesError
-        raise TooManyRelatedCasesError(
-            _("The related case lookup you are trying to perform would return too many cases"),
-            serialize(subcase_query.subcase_filter)
-        )
-
-    if subcase_query.op == '>' and subcase_query.count <= 0:
-        return list(counts_by_parent_id)
-
-    return [
-        case_id for case_id, count in counts_by_parent_id.items() if subcase_query.filter_count(count)
-    ]
+    if context.profiler:
+        context.profiler.add_query('subcase_query', es_query)
+        with context.profiler.timing_context('subcase_query'):
+            return es_query.run().hits
+    else:
+        return es_query.run().hits
 
 
 def _parse_normalize_subcase_query(node) -> SubCaseQuery:

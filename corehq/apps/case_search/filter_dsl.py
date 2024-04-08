@@ -10,6 +10,7 @@ from eulxml.xpath.ast import (
     serialize,
 )
 
+import corehq
 from corehq.apps.case_search.const import OPERATOR_MAPPING, COMPARISON_OPERATORS, ALL_OPERATORS
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
@@ -28,6 +29,7 @@ class SearchFilterContext:
     domain: Union[str, List[str]]  # query domain
     fuzzy: bool = False
     request_domain: str = None
+    profiler: 'corehq.apps.case_search.utils.CaseSearchProfiler' = None
 
     def __post_init__(self):
         if self.request_domain is None:
@@ -125,7 +127,7 @@ def build_filter_from_ast(node, context):
     return visit(node)
 
 
-def build_filter_from_xpath(query_domain, xpath, fuzzy=False, request_domain=None):
+def build_filter_from_xpath(query_domain, xpath, fuzzy=False, request_domain=None, profiler=None):
     """Given an xpath expression this function will generate an Elasticsearch
     filter"""
     error_message = _(
@@ -133,7 +135,7 @@ def build_filter_from_xpath(query_domain, xpath, fuzzy=False, request_domain=Non
         "Please try reformatting your query. "
         "The operators we accept are: {}"
     )
-    context = SearchFilterContext(query_domain, fuzzy, request_domain)
+    context = SearchFilterContext(query_domain, fuzzy, request_domain, profiler)
     try:
         return build_filter_from_ast(parse_xpath(xpath), context)
     except TypeError as e:
