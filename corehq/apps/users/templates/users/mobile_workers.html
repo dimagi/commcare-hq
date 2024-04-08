@@ -98,12 +98,6 @@
                 <i class="fa-solid fa-cloud-arrow-up"></i> {% trans "Bulk Upload" %}
               </a>
             {% endif %}
-            {% if can_add_extra_users and can_access_all_locations %}
-              <a class="btn btn-default" href="{% url "user_fields_view" domain %}" id="btn-edit_user_fields">
-                <i class="fa fa-edit"></i>
-                {% trans "Edit User Fields" %}
-              </a>
-            {% endif %}
             {% if request|toggle_enabled:"CLEAR_MOBILE_WORKER_DATA" %}
               <a id="clear-data" class="btn btn-danger" href="{% url "clear_commcare_users" domain %}">
                 <i class="fa fa-eraser"></i>
