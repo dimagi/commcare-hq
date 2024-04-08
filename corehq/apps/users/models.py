@@ -1138,12 +1138,22 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         user or descendant from an assigned location that views descendants
         """
         from corehq.apps.locations.models import SQLLocation
+        from corehq.apps.locations.fixtures import get_location_fixture_queryset
 
-        yield from self.get_sql_locations(domain).filter(location_type__shares_cases=True)
+        user_locations = self.get_sql_locations(domain)
 
-        yield from SQLLocation.objects.get_queryset_descendants(
-            self.get_sql_locations(domain).filter(location_type__view_descendants=True)
+        yield from user_locations.filter(location_type__shares_cases=True)
+
+        descendants = SQLLocation.objects.get_queryset_descendants(
+            user_locations.filter(location_type__view_descendants=True)
         ).filter(location_type__shares_cases=True, is_archived=False)
+        if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(domain):
+            user_location_ids = list(user_locations.order_by().values_list("id", flat=True))
+            # intersection of get_location_fixture_ids and descendants
+            yield from descendants.filter(id__in=get_location_fixture_queryset(
+                domain, user_location_ids, case_sync_restriction=True).values_list('id', flat=True))
+        else:
+            yield from descendants
 
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.users.model_log import UserModelAction

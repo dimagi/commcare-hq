@@ -4,6 +4,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.util.test_utils import flag_enabled
 
 
 class OwnerIDTestCase(TestCase):
@@ -97,8 +98,44 @@ class LocationOwnerIdTests(LocationHierarchyTestCase):
         user.set_location(self.domain, self.locations['New York'])
         user.save()
         self.addCleanup(user.delete, self.domain, deleted_by=None)
-
         self.assertItemsEqual(
             user.get_owner_ids(self.domain),
             [user.user_id] + [self.locations[loc].location_id for loc in ['Manhattan', 'Brooklyn', 'Queens']]
+        )
+
+    @flag_enabled('USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION')
+    def test_case_sync_restriction_default(self):
+        user = WebUser.create(self.domain, 'username', 'password', None, None)
+        user.set_location(self.domain, self.locations['Middlesex'])
+        user.save()
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
+
+        self.location_types['state'].shares_cases = True
+        self.location_types['state'].save()
+        self.location_types['county'].shares_cases = True
+        self.location_types['county'].view_descendants = True
+        self.location_types['county'].save()
+        self.assertItemsEqual(
+            user.get_owner_ids(self.domain),
+            [user.user_id] + [self.locations[loc].location_id for loc in [
+                'Middlesex', 'Cambridge', 'Somerville']]
+        )
+
+    @flag_enabled('USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION')
+    def test_case_sync_restriction(self):
+        user = WebUser.create(self.domain, 'username', 'password', None, None)
+        user.set_location(self.domain, self.locations['New York'])
+        user.save()
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
+
+        self.location_types['state'].restrict_cases_to = self.location_types['county']
+        self.location_types['state'].shares_cases = True
+        self.location_types['state'].save()
+        self.location_types['county'].shares_cases = True
+        self.location_types['county'].view_descendants = True
+        self.location_types['county'].save()
+        self.assertItemsEqual(
+            user.get_owner_ids(self.domain),
+            [user.user_id] + [self.locations[loc].location_id for loc in [
+                'New York', 'New York City']]
         )
