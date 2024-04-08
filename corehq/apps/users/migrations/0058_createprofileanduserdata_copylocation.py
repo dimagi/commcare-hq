@@ -28,12 +28,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='invitation',
             name='location',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='locations.sqllocation', to_field='location_id'),
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='locations.sqllocation', to_field='location_id'),
         ),
         migrations.AddField(
             model_name='invitation',
             name='profile',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='custom_data_fields.customdatafieldsprofile'),
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='custom_data_fields.customdatafieldsprofile'),
         ),
         migrations.RunPython(copy_invitation_supply_point, migrations.RunPython.noop),
     ]
