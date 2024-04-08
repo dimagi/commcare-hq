@@ -10,6 +10,7 @@ from eulxml.xpath.ast import (
     serialize,
 )
 
+import corehq
 from corehq.apps.case_search.const import OPERATOR_MAPPING, COMPARISON_OPERATORS, ALL_OPERATORS
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
