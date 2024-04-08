@@ -1,4 +1,3 @@
-import enum
 from functools import cached_property
 from uuid import uuid4
 
@@ -58,6 +57,8 @@ class ConfigurableAPI(models.Model):
             if self.url_key:
                 raise FieldError("'url_key' is auto-assigned")
             self.url_key = make_url_key()
+            if 'update_fields' in kwargs.keys():
+                kwargs['update_fields'].append('url_key')
             self.__original_url_key = self.url_key
         elif self.url_key != self.__original_url_key:
             raise FieldError("'url_key' can not be changed")
