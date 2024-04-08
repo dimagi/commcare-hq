@@ -157,23 +157,32 @@ class LocationType(models.Model):
     def commtrack_enabled(self):
         return Domain.get_by_name(self.domain).commtrack_enabled
 
-    def _populate_stock_levels(self, config):
+    def _populate_stock_levels(self, config, update_fields=None):
         self.emergency_level = config.emergency_level
         self.understock_threshold = config.understock_threshold
         self.overstock_threshold = config.overstock_threshold
+        if update_fields:
+            update_fields.append('emergency_level')
+            update_fields.append('understock_threshold')
+            update_fields.append('overstock_threshold')
 
     def save(self, *args, **kwargs):
+        additional_update_fields = []
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
+            additional_update_fields.append('code')
         if not self.commtrack_enabled:
             self.administrative = True
+            additional_update_fields.append('administrative')
 
         config = stock_level_config_for_domain(self.domain, self.commtrack_enabled)
         if config:
-            self._populate_stock_levels(config)
+            self._populate_stock_levels(config, update_fields=additional_update_fields)
 
         is_not_first_save = self.pk is not None
+        if 'update_fields' in kwargs.keys():
+            kwargs['update_fields'].extend(additional_update_fields)
         super(LocationType, self).save(*args, **kwargs)
 
         if is_not_first_save:
@@ -394,12 +403,16 @@ class SQLLocation(AdjListModel):
         from corehq.apps.commtrack.models import sync_supply_point
         from .document_store import publish_location_saved
 
+        additional_update_fields = []
         if not self.location_id:
             self.location_id = uuid.uuid4().hex
+            additional_update_fields.append('location_id')
 
         with transaction.atomic():
-            set_site_code_if_needed(self)
-            sync_supply_point(self)
+            set_site_code_if_needed(self, update_fields=additional_update_fields)
+            sync_supply_point(self, update_fields=additional_update_fields)
+            if 'update_fields' in kwargs.keys():
+                kwargs['update_fields'].extend(additional_update_fields)
             super(SQLLocation, self).save(*args, **kwargs)
 
         publish_location_saved(self.domain, self.location_id)
@@ -749,7 +762,7 @@ def get_location(location_id, domain=None):
         return SQLLocation.objects.get(location_id=location_id)
 
 
-def set_site_code_if_needed(location):
+def set_site_code_if_needed(location, update_fields=None):
     from corehq.apps.commtrack.util import generate_code
     if not location.site_code:
         all_codes = [
@@ -759,6 +772,8 @@ def set_site_code_if_needed(location):
                                 .values_list('site_code', flat=True))
         ]
         location.site_code = generate_code(location.name, all_codes)
+        if update_fields:
+            update_fields.append('site_code')
 
 
 class LocationFixtureConfiguration(models.Model):
