@@ -1124,6 +1124,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         if self.is_commcare_user() and self.is_demo_user:
             session_data[COMMCARE_USER_TYPE_KEY] = COMMCARE_USER_TYPE_DEMO
 
+        if self.is_web_user():
+            # TODO can we do this for both types of users and remove the fields from user data?
+            session_data['commcare_location_id'] = self.get_location_id(domain)
+            session_data['commcare_location_ids'] = user_location_data(self.get_location_ids(domain))
+
         session_data.update({
             f'{SYSTEM_PREFIX}_first_name': self.first_name,
             f'{SYSTEM_PREFIX}_last_name': self.last_name,
