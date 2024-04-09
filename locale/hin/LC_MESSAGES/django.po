@@ -933,7 +933,8 @@ msgstr ""
 #: corehq/apps/locations/templates/locations/location_types.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reminders/templates/reminders/keyword.html
-#: corehq/apps/settings/templates/settings/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap3/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap5/my_projects.html
 #: corehq/apps/sms/templates/sms/add_gateway.html
 #: corehq/apps/sms/templates/sms/backend_map.html
 #: corehq/apps/sms/templates/sms/partials/day_time_windows.html
@@ -1018,7 +1019,8 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/tableau_visualization.html
-#: corehq/apps/settings/templates/settings/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap3/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap5/my_projects.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
 #: corehq/apps/sms/templates/sms/global_gateway_list.html
 #: corehq/apps/styleguide/example_forms.py
@@ -1451,7 +1453,8 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
@@ -1463,7 +1466,8 @@ msgstr ""
 #: corehq/apps/reports/standard/cases/basic.py
 #: corehq/apps/reports/standard/sms.py
 #: corehq/apps/reports/templates/reports/messaging/survey_detail.html
-#: corehq/apps/settings/templates/settings/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap3/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap5/my_projects.html
 #: corehq/apps/settings/views.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 #: corehq/apps/sms/views.py corehq/apps/sso/forms.py
@@ -5462,7 +5466,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_ko_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_fields.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
@@ -5554,7 +5559,8 @@ msgid "Form Name"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/form_designer.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
 #: corehq/motech/dhis2/forms.py corehq/motech/dhis2/views.py
 msgid "Comment"
 msgstr ""
@@ -6842,7 +6848,8 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/reports_home.html
 #: corehq/apps/reports/templates/reports/tableau_visualization.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
+#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
 #: corehq/apps/sms/templates/sms/global_gateway_list.html
 #: corehq/apps/translations/templates/app_translations.html
@@ -7131,7 +7138,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_case_type.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
@@ -9441,7 +9449,8 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/builds/templates/builds/all.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
 #: corehq/apps/reports/forms.py
 msgid "Time"
 msgstr ""
@@ -9801,12 +9810,14 @@ msgid "Unsigned Jar"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
 msgid "(Click here to add a comment)"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
 msgid "Error updating comment.  Please try again."
 msgstr ""
 
@@ -10948,7 +10959,8 @@ msgid "Case Options"
 msgstr ""
 
 #: corehq/apps/case_importer/base.py
-#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_fields.html
 #: corehq/apps/case_importer/views.py
 msgid "Match Excel Columns to Case Properties"
 msgstr ""
@@ -11192,7 +11204,8 @@ msgid ""
 "unless you know what you are doing"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
 msgid ""
 "\n"
 "      <p>\n"
@@ -11216,7 +11229,8 @@ msgid ""
 "      "
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
 msgid ""
 "\n"
 "          The Excel file contains cases with the following deprecated case "
@@ -11224,51 +11238,62 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
 msgid ""
 "\n"
 "          Cases that have the above case types will not be imported.\n"
 "        "
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
 msgid "Case Type to Update/Create"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
 #: corehq/apps/domain/templates/domain/admin/partials/case_search_templates.html
 msgid "Case type"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
 msgid "Used in existing applications:"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
 msgid "From unknown or deleted applications:"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
 msgid "Identifying Cases to Update/Create"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
 msgid "Excel column"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
 msgid "Corresponding case field"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
 msgid "Handle New Records"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
 msgid "Create new records if there is no matching case"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
 msgid ""
 "\n"
 "            Selecting a case type, excel column, or corresponding case field "
@@ -11276,8 +11301,10 @@ msgid ""
 "          "
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
-#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_fields.html
 #: corehq/apps/domain/templates/error.html
 #: corehq/apps/domain/templates/login_and_password/partials/password_reset_form_only.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/_wizard_actions.html
@@ -11286,12 +11313,15 @@ msgstr ""
 msgid "Back"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_config.html
-#: corehq/apps/case_importer/templates/case_importer/import_cases.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/import_cases.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_config.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/import_cases.html
 msgid "Next step"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_fields.html
 msgid ""
 "\n"
 "          Excel mapping is disabled for bulk case imports. Excel columns "
@@ -11300,39 +11330,48 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_fields.html
 msgid "Reset to default matching"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_fields.html
 msgid "Excel Field"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_fields.html
 msgid "Create new property"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_fields.html
 msgid "Add another matching"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/excel_fields.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/excel_fields.html
 msgid "Confirm Import"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/import_cases.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/import_cases.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/import_cases.html
 msgid "Upload an Excel File From Your Computer to Import From"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/import_cases.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap3/import_cases.html
+#: corehq/apps/case_importer/templates/case_importer/bootstrap5/import_cases.html
 msgid "Select a file to upload"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/partials/excel_field_rows.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/excel_field_rows.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/excel_field_rows.html
 msgid "This is a deprecated property"
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/partials/excel_field_rows.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/excel_field_rows.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/excel_field_rows.html
 #, python-format
 msgid ""
 "\n"
@@ -11340,8 +11379,77 @@ msgid ""
 "        "
 msgstr ""
 
-#: corehq/apps/case_importer/templates/case_importer/partials/excel_field_rows.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/excel_field_rows.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/excel_field_rows.html
 msgid "blank"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
+msgid "Recent Uploads"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
+#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
+#: corehq/motech/generic_inbound/reports.py
+msgid "Details"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
+#: corehq/apps/export/templates/export/download_data_files.html
+msgid "File"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
+msgid "Form IDs"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
+msgid "Case IDs"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
+#: corehq/messaging/scheduling/views.py corehq/motech/generic_inbound/models.py
+#: corehq/motech/repeaters/templates/repeaters/repeaters.html
+#: corehq/motech/repeaters/views/repeat_record_display.py
+msgid "Success"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
+msgid "Success with warnings"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
+#: corehq/motech/repeaters/const.py
+#: corehq/motech/repeaters/views/repeat_record_display.py
+msgid "Failed"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
+msgid "Waiting to start"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
+#: corehq/apps/cloudcare/templates/form_entry/templates.html
+#: corehq/apps/export/templates/export/partials/export_download_progress.html
+#: corehq/ex-submodules/soil/templates/soil/partials/download_in_progress.html
+#: corehq/messaging/smsbackends/telerivet/templates/telerivet/partials/finish.html
+msgid "Complete"
+msgstr ""
+
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
+#: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
+msgid "No recent uploads found."
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
@@ -11364,63 +11472,6 @@ msgid ""
 "        help pages for this feature.\n"
 "      </a>\n"
 "    "
-msgstr ""
-
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-msgid "Recent Uploads"
-msgstr ""
-
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
-#: corehq/motech/generic_inbound/reports.py
-msgid "Details"
-msgstr ""
-
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/export/templates/export/download_data_files.html
-msgid "File"
-msgstr ""
-
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-msgid "Form IDs"
-msgstr ""
-
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-msgid "Case IDs"
-msgstr ""
-
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-#: corehq/messaging/scheduling/views.py corehq/motech/generic_inbound/models.py
-#: corehq/motech/repeaters/templates/repeaters/repeaters.html
-#: corehq/motech/repeaters/views/repeat_record_display.py
-msgid "Success"
-msgstr ""
-
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-msgid "Success with warnings"
-msgstr ""
-
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/motech/repeaters/const.py
-#: corehq/motech/repeaters/views/repeat_record_display.py
-msgid "Failed"
-msgstr ""
-
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-msgid "Waiting to start"
-msgstr ""
-
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-#: corehq/apps/export/templates/export/partials/export_download_progress.html
-#: corehq/ex-submodules/soil/templates/soil/partials/download_in_progress.html
-#: corehq/messaging/smsbackends/telerivet/templates/telerivet/partials/finish.html
-msgid "Complete"
-msgstr ""
-
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-msgid "No recent uploads found."
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html
@@ -11903,9 +11954,9 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
 msgid ""
 "Mobile workers in group\n"
-"                                  <strong data-bind=\"text: group.name\"></"
+"                                    <strong data-bind=\"text: group.name\"></"
 "strong>\n"
-"                                  have access to"
+"                                    have access to"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/config.html
@@ -13968,7 +14019,8 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
+#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
@@ -13993,7 +14045,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
+#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 msgid "Activate"
@@ -14002,7 +14055,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
+#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -24127,7 +24181,8 @@ msgid "Status Page"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
-#: corehq/apps/settings/templates/settings/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap3/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap5/my_projects.html
 #: corehq/apps/settings/views.py corehq/apps/users/views/web.py
 msgid "Project"
 msgstr ""
@@ -32204,6 +32259,10 @@ msgid "Date and time the API key should expire on"
 msgstr ""
 
 #: corehq/apps/settings/forms.py
+msgid "Must be no later than {} from today: {}"
+msgstr ""
+
+#: corehq/apps/settings/forms.py
 msgid "Add New API Key"
 msgstr ""
 
@@ -32211,14 +32270,28 @@ msgstr ""
 msgid "Generate New API Key"
 msgstr ""
 
-#: corehq/apps/settings/templates/settings/change_my_password.html
+#: corehq/apps/settings/forms.py
+msgid "{} Days"
+msgstr ""
+
+#: corehq/apps/settings/forms.py
+msgid "Expiration Date must be in the future"
+msgstr ""
+
+#: corehq/apps/settings/forms.py
+msgid "Your Identity Provider does not allow expiration dates beyond {}"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/change_my_password.html
+#: corehq/apps/settings/templates/settings/bootstrap5/change_my_password.html
 msgid ""
 "\n"
 "        Your password is not stored here.\n"
 "      "
 msgstr ""
 
-#: corehq/apps/settings/templates/settings/change_my_password.html
+#: corehq/apps/settings/templates/settings/bootstrap3/change_my_password.html
+#: corehq/apps/settings/templates/settings/bootstrap5/change_my_password.html
 #, python-format
 msgid ""
 "\n"
@@ -32228,16 +32301,113 @@ msgid ""
 "      "
 msgstr ""
 
-#: corehq/apps/settings/templates/settings/edit_my_account.html
+#: corehq/apps/settings/templates/settings/bootstrap3/edit_my_account.html
+#: corehq/apps/settings/templates/settings/bootstrap5/edit_my_account.html
 #: corehq/tabs/tabclasses.py
 msgid "My Settings"
 msgstr ""
 
-#: corehq/apps/settings/templates/settings/edit_my_account.html
+#: corehq/apps/settings/templates/settings/bootstrap3/edit_my_account.html
+#: corehq/apps/settings/templates/settings/bootstrap5/edit_my_account.html
 #: corehq/apps/sms/forms.py
 #: corehq/apps/users/templates/users/edit_web_user.html
 #: corehq/apps/users/templates/users/web_users.html
 msgid "Phone Numbers"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/enable_superuser.html
+#: corehq/apps/settings/templates/settings/bootstrap5/enable_superuser.html
+#: corehq/apps/settings/views.py
+msgid "Enable Privileges on Mobile"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/enable_superuser.html
+#: corehq/apps/settings/templates/settings/bootstrap5/enable_superuser.html
+msgid ""
+"Scanning this QR code from CommCare will enable special privileges for your "
+"mobile\n"
+"          device, and should not be shared with partners or other external "
+"users for any reason.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/enable_superuser.html
+#: corehq/apps/settings/templates/settings/bootstrap5/enable_superuser.html
+msgid ""
+"You can scan this QR code in CommCare by going to the app manager options "
+"menu and\n"
+"          selecting 'Advanced', and then 'Enable Mobile Privileges'."
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap5/my_projects.html
+msgid "Inactivity Timeout (minutes)"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap5/my_projects.html
+msgid "You are currently not a member of any projects."
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap5/my_projects.html
+msgid "Remove My Membership"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap5/my_projects.html
+msgid "Remove Project Membership?"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap5/my_projects.html
+#, python-format
+msgid ""
+"\n"
+"                            Are you sure you want to remove yourself from "
+"the project\n"
+"                            %(dn)s?\n"
+"                          "
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap5/my_projects.html
+msgid "You are this project's administrator."
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/my_projects.html
+#: corehq/apps/settings/templates/settings/bootstrap5/my_projects.html
+msgid "Create a New Project"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
+#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+msgid "Copy Full Key"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
+#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+msgid "Inctive"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
+#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+#: corehq/apps/users/templates/users/web_users.html
+msgid "Expired"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
+#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+msgid "Delete Key"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
+#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+msgid ""
+"\n"
+"                  Deleting this key will prevent any future API requests "
+"that use this key. This action cannot be undone. Are you sure?\n"
+"                "
 msgstr ""
 
 #: corehq/apps/settings/templates/settings/email/about_to_expire_api_key.html
@@ -32266,82 +32436,6 @@ msgid ""
 "\n"
 "Thanks,\n"
 "CommCare HQ\n"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/enable_superuser.html
-#: corehq/apps/settings/views.py
-msgid "Enable Privileges on Mobile"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/enable_superuser.html
-msgid ""
-"Scanning this QR code from CommCare will enable special privileges for your "
-"mobile\n"
-"          device, and should not be shared with partners or other external "
-"users for any reason.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/enable_superuser.html
-msgid ""
-"You can scan this QR code in CommCare by going to the app manager options "
-"menu and\n"
-"          selecting 'Advanced', and then 'Enable Mobile Privileges'."
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/my_projects.html
-msgid "Inactivity Timeout (minutes)"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/my_projects.html
-msgid "You are currently not a member of any projects."
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/my_projects.html
-msgid "Remove My Membership"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/my_projects.html
-msgid "Remove Project Membership?"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/my_projects.html
-#, python-format
-msgid ""
-"\n"
-"                            Are you sure you want to remove yourself from "
-"the project\n"
-"                            %(dn)s?\n"
-"                          "
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/my_projects.html
-msgid "You are this project's administrator."
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/my_projects.html
-msgid "Create a New Project"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-msgid "Inctive"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/users/templates/users/web_users.html
-msgid "Expired"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-msgid "Delete Key"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-msgid ""
-"\n"
-"                  Deleting this key will prevent any future API requests "
-"that use this key. This action cannot be undone. Are you sure?\n"
-"                "
 msgstr ""
 
 #: corehq/apps/settings/validators.py
@@ -34341,7 +34435,42 @@ msgid "Linked Email Domains"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
+msgid "Auto-Deactivation"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid ""
+"This option ensures any authorization provided by CommCare HQ to Web Users "
+"using SSO is removed when those users are removed from Entra ID. This "
+"includes automatic deactivation of any API keys associated with these users."
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "Automatically deactivate Web Users"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "Tenant Id"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "Application ID"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "Secret Expires On"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
 msgid "Single Sign-On Settings"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "This is required when Auto-Deactivation is enabled."
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "This certificate has already expired!"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
@@ -34381,13 +34510,23 @@ msgid "SAML Token Encryption"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-msgid ""
-"File type not accepted. Please ensure you have uploaded a Base64 x509 "
-"certificate."
+msgid "Update Secret"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-msgid "This certificate has already expired!"
+msgid "Cancel Update"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+#, fuzzy
+#| msgid "User Management"
+msgid "Remote User Management"
+msgstr "Manejo de Casos"
+
+#: corehq/apps/sso/forms.py
+msgid ""
+"File type not accepted. Please ensure you have uploaded a Base64 x509 "
+"certificate."
 msgstr ""
 
 #: corehq/apps/sso/forms.py
