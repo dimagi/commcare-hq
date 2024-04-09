@@ -221,19 +221,23 @@ def is_active(active=True):
     return filters.term("is_active", active)
 
 
-def _user_data(key, filter_):
-    # Note: user data does not exist in ES for web users
+def query_user_data(key, value):
     return queries.nested(
         'user_data_es',
         filters.AND(
-            filters.term(field='user_data_es.key', value=key),
-            filter_
+            filters.term('user_data_es.key', key),
+            queries.match('user_data_es.value', search_string=value)
         )
     )
 
 
-def query_user_data(key, value):
-    return _user_data(key, queries.match(field='user_data_es.value', search_string=value))
+def _user_data(key, filter_):
+    # Note: user data does not exist in ES for web users
+    return filters.nested(
+        'user_data_es',
+        filters.term('user_data_es.key', key),
+        filter_
+    )
 
 
 def login_as_user(value):
@@ -244,9 +248,9 @@ def missing_or_empty_user_data_property(property_name):
     """
     A user_data property doesn't exist, or does exist but has an empty string value.
     """
-    missing_property = filters.NOT(queries.nested(
+    missing_property = filters.NOT(filters.nested(
         'user_data_es',
-        filters.term(field='user_data_es.key', value=property_name),
+        filters.term('user_data_es.key', property_name),
     ))
     empty_value = _user_data(property_name, filters.term('user_data_es.value', ''))
     return filters.OR(missing_property, empty_value)
