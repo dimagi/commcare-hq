@@ -6,7 +6,6 @@ from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import gettext as _, gettext_lazy
 
-from corehq import toggles
 from corehq.apps.enterprise.views import BaseEnterpriseAdminView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
@@ -128,7 +127,7 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
 
     @property
     def show_remote_user_management(self):
-        return toggles.SSO_REMOTE_USER_MANAGEMENT.enabled_for_request(self.request)
+        return True
 
     @property
     def uses_api_key_management(self):
