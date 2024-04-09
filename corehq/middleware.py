@@ -120,12 +120,17 @@ class LogLongRequestMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
         request_timer = getattr(response, 'request_timer', None)
         if request_timer:
-            for sub in request_timer.to_list(exclude_root=True):
-                add_breadcrumb(
-                    category="timing",
-                    message=f"{sub.name}: {sub.duration:0.3f}",
-                    level="info",
-                )
+
+            def visit(element, prefix=""):
+                if element.duration is not None and element.percent_of_total is not None:
+                    message = (f"⏱  {element.percent_of_total:>3.0f}% {prefix} "
+                               f"{element.name or ''}: {element.duration:0.3f}s")
+                    add_breadcrumb(category="timing", message=message, level="info")
+                prefix += "  →"
+                for sub in element.subs:
+                    visit(sub, prefix=prefix)
+
+            visit(request_timer.root)
 
         if hasattr(request, '_profile_starttime'):
             duration = datetime.datetime.utcnow() - request._profile_starttime
@@ -336,7 +341,7 @@ def get_view_func(view_fn, view_kwargs):
         try:
             class_name = dispatcher.get_report_class_name(domain, slug)
             return to_function(class_name) if class_name else None
-        except:
+        except Exception:
             # custom report dispatchers may do things differently
             return
 
