@@ -136,9 +136,10 @@ def _get_user_case_fields(user, case_type, owner_id, domain):
     fields = {k: v for k, v in user.get_user_data(domain).items() if
               valid_element_name(k)}
 
-    if user.is_web_user:
+    if user.is_web_user():
         fields['commcare_location_id'] = user.get_location_id(domain)
         fields['commcare_location_ids'] = user_location_data(user.get_location_ids(domain))
+        fields['commcare_primary_case_sharing_id'] = user.get_location_id(domain)
 
     # language or phone_number can be null and will break
     # case submission

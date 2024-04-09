@@ -1128,6 +1128,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             # TODO can we do this for both types of users and remove the fields from user data?
             session_data['commcare_location_id'] = self.get_location_id(domain)
             session_data['commcare_location_ids'] = user_location_data(self.get_location_ids(domain))
+            session_data['commcare_primary_case_sharing_id'] = self.get_location_id(domain)
 
         session_data.update({
             f'{SYSTEM_PREFIX}_first_name': self.first_name,
