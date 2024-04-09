@@ -134,7 +134,7 @@ diff-match-patch==20230430
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.25
+django==4.2.11
     # via
     #   -r base-requirements.in
     #   crispy-bootstrap3to5
@@ -574,7 +574,6 @@ pytz==2024.1
     #   -r base-requirements.in
     #   babel
     #   celery
-    #   django
     #   djangorestframework
     #   twilio
 pyyaml==6.0
