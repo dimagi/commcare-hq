@@ -589,16 +589,24 @@ class TestFormRepeaterAllowedToForward(RepeaterTestCase):
 class TestRepeatRecordManager(RepeaterTestCase):
     before_now = datetime.utcnow() - timedelta(days=1)
 
-    def test_count_pending_records_for_domain(self):
-        now = datetime.utcnow()
-        self.new_record(next_check=now - timedelta(hours=1))
-        self.new_record(next_check=now - timedelta(minutes=15))
-        self.new_record(next_check=now - timedelta(minutes=5))
-        self.new_record(next_check=now + timedelta(minutes=5))
-        self.new_record(next_check=None, state=State.Success)
-        self.new_record(next_check=now - timedelta(hours=1), domain="other")
-        pending = RepeatRecord.objects.count_pending_records_for_domain("test")
-        self.assertEqual(pending, 4)
+    def test_count_by_repeater_and_state(self):
+        self.make_records(1, state=State.Pending)
+        self.make_records(2, state=State.Fail)
+        self.make_records(3, state=State.Cancelled)
+        self.make_records(5, state=State.Success)
+        counts = RepeatRecord.objects.count_by_repeater_and_state(domain="test")
+
+        rid = self.repeater.id
+        self.assertEqual(counts[rid][State.Pending], 1)
+        self.assertEqual(counts[rid][State.Fail], 2)
+        self.assertEqual(counts[rid][State.Cancelled], 3)
+        self.assertEqual(counts[rid][State.Success], 5)
+
+        missing_id = uuid.uuid4()
+        self.assertEqual(counts[missing_id][State.Pending], 0)
+        self.assertEqual(counts[missing_id][State.Fail], 0)
+        self.assertEqual(counts[missing_id][State.Cancelled], 0)
+        self.assertEqual(counts[missing_id][State.Success], 0)
 
     def test_count_overdue(self):
         now = datetime.utcnow()
@@ -667,14 +675,16 @@ class TestRepeatRecordManager(RepeaterTestCase):
             state=state,
         )
 
-    def make_records(self, n):
+    def make_records(self, n, state=State.Pending):
         now = timezone.now() - timedelta(seconds=10)
+        is_pending = state in [State.Pending, State.Fail]
         records = RepeatRecord.objects.bulk_create(RepeatRecord(
             domain="test",
             repeater=self.repeater,
             payload_id="c0ffee",
             registered_at=now,
-            next_check=now,
+            next_check=(now if is_pending else None),
+            state=state,
         ) for i in range(n))
         return {r.id for r in records}
 
