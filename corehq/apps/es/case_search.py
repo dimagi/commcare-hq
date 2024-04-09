@@ -230,15 +230,10 @@ def exact_case_property_text_query(case_property_name, value):
     letter casing and punctuation.
 
     """
-    return queries.nested(
+    return filters.nested(
         CASE_PROPERTIES_PATH,
-        queries.filtered(
-            queries.match_all(),
-            filters.AND(
-                filters.term(PROPERTY_KEY, case_property_name),
-                filters.term(PROPERTY_VALUE_EXACT, value),
-            )
-        )
+        filters.term(PROPERTY_KEY, case_property_name),
+        filters.term(PROPERTY_VALUE_EXACT, value),
     )
 
 
