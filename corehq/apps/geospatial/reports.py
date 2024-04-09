@@ -398,8 +398,5 @@ class CaseGroupingReport(BaseCaseMapReport):
                 field=PROPERTY_KEY,
                 value=case_property
             ))
-            query = query.nested(
-                path=CASE_PROPERTIES_PATH,
-                filter_=filters.AND(*filters_)
-            )
+            query = query.nested(CASE_PROPERTIES_PATH, *filters_)
         return query

@@ -211,10 +211,8 @@ def case_property_filter(case_property_name, value):
     warn("Use the query versions of this function from the case_search module instead", DeprecationWarning)
     return filters.nested(
         CASE_PROPERTIES_PATH,
-        filters.AND(
-            filters.term(PROPERTY_KEY, case_property_name),
-            filters.term(PROPERTY_VALUE, value),
-        )
+        filters.term(PROPERTY_KEY, case_property_name),
+        filters.term(PROPERTY_VALUE, value),
     )
 
 
@@ -383,7 +381,7 @@ def reverse_index_case_query(case_ids, identifier=None):
 
 def _case_property_not_set(case_property_name):
     return filters.NOT(
-        queries.nested(
+        filters.nested(
             CASE_PROPERTIES_PATH,
             filters.term(PROPERTY_KEY, case_property_name),
         )

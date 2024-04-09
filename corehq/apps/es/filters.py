@@ -116,14 +116,14 @@ def non_null(field):
     return NOT(empty(field))
 
 
-def nested(path, filter_):
+def nested(path, *filters):
     """Query nested documents which normally can't be queried directly"""
     return {
         "nested": {
             "path": path,
             "query": {
                 "bool": {
-                    "filter": filter_
+                    "filter": filters
                 }
             }
         }

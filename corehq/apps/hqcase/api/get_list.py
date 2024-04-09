@@ -129,12 +129,10 @@ def get_list(domain, couch_user, params):
 
 def _get_cursor_query(domain, params, last_date, last_id):
     query = _get_query(domain, params)
-    id_filter = queries.nested(
+    id_filter = filters.nested(
         CASE_PROPERTIES_PATH,
-        filters.AND(
-            filters.term(case_search.PROPERTY_KEY, '@case_id'),
-            filters.range_filter(case_search.PROPERTY_VALUE_EXACT, gt=last_id),
-        )
+        filters.term(case_search.PROPERTY_KEY, '@case_id'),
+        filters.range_filter(case_search.PROPERTY_VALUE_EXACT, gt=last_id),
     )
     return query.filter(
         filters.OR(

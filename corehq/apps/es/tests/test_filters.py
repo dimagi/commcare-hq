@@ -22,14 +22,21 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
                                 "path": "actions",
                                 "query": {
                                     "bool": {
-                                        "filter": {
-                                            "range": {
-                                                "actions.date": {
-                                                    "gte": "2015-01-01",
-                                                    "lt": "2015-02-01"
+                                        "filter": [
+                                            {
+                                                "term": {
+                                                    "actions.type": "decisive"
+                                                }
+                                            },
+                                            {
+                                                "range": {
+                                                    "actions.date": {
+                                                        "gte": "2015-01-01",
+                                                        "lt": "2015-02-01"
+                                                    }
                                                 }
                                             }
-                                        }
+                                        ]
                                     }
                                 }
                             }
@@ -49,6 +56,7 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
         start, end = date(2015, 1, 1), date(2015, 2, 1)
         query = (HQESQuery('cases')
                  .nested("actions",
+                         filters.term("actions.type", 'decisive'),
                          filters.date_range("actions.date", gte=start, lt=end)))
 
         self.checkQuery(query, json_output, validate_query=False)
