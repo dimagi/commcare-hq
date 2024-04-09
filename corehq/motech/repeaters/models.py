@@ -68,6 +68,7 @@ import json
 import traceback
 import uuid
 import warnings
+from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Any
@@ -435,34 +436,6 @@ class Repeater(RepeaterSuperProxy):
     def retire(self):
         self.is_deleted = True
         self.save()
-
-    def get_pending_record_count(self):
-        return SQLRepeatRecord.objects.filter(
-            domain=self.domain,
-            repeater_id=self.repeater_id,
-            state=State.Pending,
-        ).count()
-
-    def get_failure_record_count(self):
-        return SQLRepeatRecord.objects.filter(
-            domain=self.domain,
-            repeater_id=self.repeater_id,
-            state=State.Fail,
-        ).count()
-
-    def get_success_record_count(self):
-        return SQLRepeatRecord.objects.filter(
-            models.Q(state=State.Success) | models.Q(state=State.Empty),
-            domain=self.domain,
-            repeater_id=self.repeater_id,
-        ).count()
-
-    def get_cancelled_record_count(self):
-        return SQLRepeatRecord.objects.filter(
-            domain=self.domain,
-            repeater_id=self.repeater_id,
-            state=State.Cancelled,
-        ).count()
 
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)
@@ -1350,8 +1323,23 @@ DB_CASCADE = models.DO_NOTHING
 
 class RepeatRecordManager(models.Manager):
 
-    def count_pending_records_for_domain(self, domain):
-        return self.filter(domain=domain, next_check__isnull=False).count()
+    def count_by_repeater_and_state(self, domain):
+        """Returns a dict of dicts {<repeater_id>: {<state>: <count>, ...}, ...}
+
+        The returned dicts are defaultdicts to allow lookups without
+        concern for missing keys. Counts default to zero.
+        """
+        result = defaultdict(lambda: defaultdict(int))
+        query = (
+            self.filter(domain=domain)
+            .values('repeater_id', 'state')
+            .order_by()
+            .annotate(count=models.Count('*'))
+            .values_list('repeater_id', 'state', 'count')
+        )
+        for repeater_id, state, count in query:
+            result[repeater_id][state] = count
+        return result
 
     def count_overdue(self, threshold=timedelta(minutes=10)):
         return self.filter(
