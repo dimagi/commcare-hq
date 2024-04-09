@@ -7,6 +7,12 @@ DUMMY_USERNAME = "mclovin"
 DUMMY_PASSWORD = "changeme"
 DUMMY_PROJECT = "domain"
 
+LOCATION_IDS_DATA_FIELDS = """
+                              <data key="commcare_location_id"/>
+                              <data key="commcare_location_ids"/>"""
+COMMCARE_PRIMARY_CASE_SHARING_ID = """
+                                      <data key="commcare_primary_case_sharing_id"/>"""
+
 
 def dummy_user_xml(user=None):
     username = user.username if user else DUMMY_USERNAME
@@ -24,8 +30,8 @@ def dummy_user_xml(user=None):
         <date>{}</date>
         <user_data>
             <data key="commcare_first_name"/>
-            <data key="commcare_last_name"/>
-            <data key="commcare_phone_number"/>
+            <data key="commcare_last_name"/>{}
+            <data key="commcare_phone_number"/>{}
             <data key="commcare_profile"/>
             <data key="commcare_project">{}</data>
             <data key="commcare_user_type">{}</data>
@@ -36,6 +42,8 @@ def dummy_user_xml(user=None):
         password,
         user_id,
         date_to_xml_string(date_joined),
+        LOCATION_IDS_DATA_FIELDS if user_type == 'web' else '',
+        COMMCARE_PRIMARY_CASE_SHARING_ID if user_type == 'web' else '',
         project,
         user_type,
     )

@@ -29,15 +29,18 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.es.domains import domain_adapter
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.user_importer.importer import (
     create_or_update_commcare_users_and_groups,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.context_managers import drop_connected_signals
+from corehq.util.test_utils import flag_enabled
 
 TEST_DOMAIN = 'cc-util-test'
 CASE_TYPE = 'cc-flw'
@@ -216,6 +219,10 @@ class CallCenterUtilsTests(TestCase):
 
 
 class CallCenterUtilsUsercaseTests(TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.skip_commcareuser_teardown = False
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -228,7 +235,8 @@ class CallCenterUtilsUsercaseTests(TestCase):
                                         '***', None, None, commit=False)  # Don't commit yet
 
     def tearDown(self):
-        self.user.delete(self.domain.name, deleted_by=None)
+        if not self.skip_commcareuser_teardown:
+            self.user.delete(self.domain.name, deleted_by=None)
 
     @classmethod
     def tearDownClass(cls):
@@ -392,6 +400,24 @@ class CallCenterUtilsUsercaseTests(TestCase):
         new_user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, new_user._id, USERCASE_TYPE)
         self.assertEqual(new_user_case.owner_id, new_user.get_id)
         self.assertEqual(1, len(new_user_case.xform_ids))
+
+    @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
+    def test_web_user_location_fields_sync(self):
+        self.skip_commcareuser_teardown = True
+        web_user = WebUser.create(TEST_DOMAIN, 'user3', '***', None, None)
+        self.addCleanup(web_user.delete, TEST_DOMAIN, deleted_by=None)
+        lt = LocationType.objects.create(
+            domain=TEST_DOMAIN, name='lt2'
+        )
+        self.loc1 = make_loc('loc1', type=lt.name, domain=TEST_DOMAIN)
+        self.loc2 = make_loc('loc2', type=lt.name, domain=TEST_DOMAIN)
+        web_user.set_location(TEST_DOMAIN, self.loc1)
+        web_user.add_to_assigned_locations(TEST_DOMAIN, self.loc2)
+        case_json = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN,
+                                                                 web_user._id, USERCASE_TYPE).case_json
+        self.assertEqual(case_json['commcare_location_id'], self.loc1.location_id)
+        self.assertEqual(case_json['commcare_location_ids'], self.loc1.location_id + ' ' + self.loc2.location_id)
+        self.assertEqual(case_json['commcare_primary_case_sharing_id'], self.loc1.location_id)
 
 
 class DomainTimezoneTests(SimpleTestCase):
