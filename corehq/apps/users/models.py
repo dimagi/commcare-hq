@@ -3025,7 +3025,7 @@ class HQApiKey(models.Model):
     def save(self, *args, **kwargs):
         if not self.key:
             self.key = self.generate_key()
-            if 'update_fields' in kwargs.keys():
+            if 'update_fields' in kwargs:
                 kwargs['update_fields'].append('key')
 
         return super().save(*args, **kwargs)

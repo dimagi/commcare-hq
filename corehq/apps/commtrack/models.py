@@ -292,7 +292,7 @@ def sync_supply_point(location, is_deletion=False, update_fields=None):
         updated_supply_point = _reopen_or_create_supply_point(location)
         location.supply_point_id = updated_supply_point.case_id
 
-    if update_fields:
+    if update_fields is not None:
         update_fields.append('supply_point_id')
 
 

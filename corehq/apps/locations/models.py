@@ -161,10 +161,8 @@ class LocationType(models.Model):
         self.emergency_level = config.emergency_level
         self.understock_threshold = config.understock_threshold
         self.overstock_threshold = config.overstock_threshold
-        if update_fields:
-            update_fields.append('emergency_level')
-            update_fields.append('understock_threshold')
-            update_fields.append('overstock_threshold')
+        if update_fields is not None:
+            update_fields.extend(['emergency_level', 'understock_threshold', 'overstock_threshold'])
 
     def save(self, *args, **kwargs):
         additional_update_fields = []
@@ -181,7 +179,7 @@ class LocationType(models.Model):
             self._populate_stock_levels(config, update_fields=additional_update_fields)
 
         is_not_first_save = self.pk is not None
-        if 'update_fields' in kwargs.keys():
+        if 'update_fields' in kwargs:
             kwargs['update_fields'].extend(additional_update_fields)
         super(LocationType, self).save(*args, **kwargs)
 
@@ -411,7 +409,7 @@ class SQLLocation(AdjListModel):
         with transaction.atomic():
             set_site_code_if_needed(self, update_fields=additional_update_fields)
             sync_supply_point(self, update_fields=additional_update_fields)
-            if 'update_fields' in kwargs.keys():
+            if 'update_fields' in kwargs:
                 kwargs['update_fields'].extend(additional_update_fields)
             super(SQLLocation, self).save(*args, **kwargs)
 
