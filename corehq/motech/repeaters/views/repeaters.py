@@ -23,6 +23,7 @@ from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
 
+from ..const import State
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
 from ..models import (
     Repeater,
@@ -59,15 +60,22 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
+        state_counts = SQLRepeatRecord.objects.count_by_repeater_and_state(domain=self.domain)
         return {
             'report': 'repeat_record_report',
             'repeater_types_info': self.repeater_types_info,
-            'pending_record_count': SQLRepeatRecord.objects.count_pending_records_for_domain(self.domain),
+            'pending_record_count': sum(
+                count for repeater_id, states in state_counts.items()
+                for state, count in states.items()
+                if state == State.Pending or state == State.Fail
+            ),
             'user_can_configure': (
                 self.request.couch_user.is_superuser
                 or self.request.couch_user.can_edit_motech()
                 or toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
-            )
+            ),
+            'state_counts': state_counts,
+            'State': State,
         }
 
 
