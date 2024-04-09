@@ -451,6 +451,7 @@ fhir
 field_audit
  0001_initial
  0002_add_is_bootstrap_column
+ 0003_remove_auditevent_field_audit_auditevent_chk_create_or_delete_or_bootstrap_and_more
 fixtures
  0001_initial
  0002_rm_blobdb_domain_fixtures
