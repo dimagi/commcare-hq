@@ -27,7 +27,7 @@ from ..const import State
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
 from ..models import (
     Repeater,
-    SQLRepeatRecord,
+    RepeatRecord,
     get_all_repeater_types,
 )
 
@@ -52,7 +52,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
                 friendly_name=r.friendly_name,
                 has_config=r._has_config,
                 instances=r.objects.by_domain(self.domain),
-                state_count={s.name: state_counts[r.id][s] for s in State}
+                state_count={s.name: state_counts[r.id][s] for s in State},
             )
             for r in get_all_repeater_types().values()
             if r.available_for_domain(self.domain)
@@ -60,7 +60,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
-        state_counts = SQLRepeatRecord.objects.count_by_repeater_and_state(domain=self.domain)
+        state_counts = RepeatRecord.objects.count_by_repeater_and_state(domain=self.domain)
         return {
             'report': 'repeat_record_report',
             'repeater_types_info': self.get_repeater_types_info(state_counts),
