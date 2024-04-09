@@ -108,13 +108,8 @@ def _run_subcase_query(subcase_query, context):
         CaseSearchES().domain(context.domain)
         .nested(
             'indices',
-            queries.filtered(
-                queries.match_all(),
-                filters.AND(
-                    filters.term('indices.identifier', subcase_query.index_identifier),
-                    filters.NOT(filters.term('indices.referenced_id', ''))  # exclude deleted indices
-                )
-            )
+            filters.term('indices.identifier', subcase_query.index_identifier),
+            filters.NOT(filters.term('indices.referenced_id', ''))  # exclude deleted indices
         )
         .filter(subcase_filter)
         .source(['indices.referenced_id', 'indices.identifier'])
