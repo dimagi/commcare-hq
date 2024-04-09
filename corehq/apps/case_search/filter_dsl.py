@@ -130,11 +130,13 @@ def build_filter_from_ast(node, context):
 def build_filter_from_xpath(query_domain, xpath, fuzzy=False, request_domain=None, profiler=None):
     """Given an xpath expression this function will generate an Elasticsearch
     filter"""
+    from corehq.apps.case_search.utils import CaseSearchProfiler
     error_message = _(
         "We didn't understand what you were trying to do with {}. "
         "Please try reformatting your query. "
         "The operators we accept are: {}"
     )
+    profiler = CaseSearchProfiler() if profiler is None else profiler
     context = SearchFilterContext(query_domain, fuzzy, request_domain, profiler)
     try:
         return build_filter_from_ast(parse_xpath(xpath), context)

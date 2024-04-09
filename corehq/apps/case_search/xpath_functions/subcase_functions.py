@@ -120,11 +120,8 @@ def _run_subcase_query(subcase_query, context):
         .source(['indices.referenced_id', 'indices.identifier'])
     )
 
-    if context.profiler:
-        context.profiler.add_query('subcase_query', es_query)
-        with context.profiler.timing_context('subcase_query'):
-            return es_query.run().hits
-    else:
+    context.profiler.add_query('subcase_query', es_query)
+    with context.profiler.timing_context('subcase_query'):
         return es_query.run().hits
 
 
