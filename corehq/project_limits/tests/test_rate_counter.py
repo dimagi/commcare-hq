@@ -134,11 +134,15 @@ class TestSlidingWindowCountAndWait:
         testil.eq(hits, 1)
         testil.eq(wait_time / DAYS, 6.5)
 
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 0.75 * DAYS)
+        testil.eq(hits, 1)
+        testil.eq(wait_time / DAYS, 6.25)
+
         hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 1 * DAYS)
         testil.eq(hits, 1)
         testil.eq(wait_time / DAYS, 6)
 
-    def test_sliding_window_multiple_grains_more_complex(self):
+    def test_sliding_window_multiple_grains_complex(self):
         timestamp = 1000 * 7 * DAYS
         scope = 'john'
         counter = _SlidingWindowRateCounter('test-sliding-week', 7 * DAYS, grains_per_window=7)
@@ -167,7 +171,7 @@ class TestSlidingWindowCountAndWait:
         testil.eq(hits, 1)
         testil.eq(wait_time / DAYS, 0)
 
-    def test_sliding_window_multiple_grains_more_complex_2(self):
+    def test_sliding_window_multiple_grains_more_complex(self):
         timestamp = 1000 * 7 * DAYS
         scope = 'jack'
         counter = _SlidingWindowRateCounter('test-sliding-week', 7 * DAYS, grains_per_window=7)
@@ -185,13 +189,13 @@ class TestSlidingWindowCountAndWait:
         # Test wait time for 2 hits
         counter.increment(scope, timestamp=timestamp - 1 * DAYS)
 
-        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp)
-        testil.eq(hits, 2)
-        testil.eq(wait_time / DAYS, 6.5)
-
         hits, wait_time = counter.get_count_and_wait_time(scope, threshold=2, timestamp=timestamp)
         testil.eq(hits, 2)
         testil.eq(wait_time / DAYS, 6)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp)
+        testil.eq(hits, 2)
+        testil.eq(wait_time / DAYS, 6.5)
 
         hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 6 * DAYS)
         testil.eq(hits, 2)
@@ -204,19 +208,14 @@ class TestSlidingWindowCountAndWait:
         # Test wait time for 3 hits
         counter.increment(scope, timestamp=timestamp - 1 * DAYS)
 
-        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp)
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=3, timestamp=timestamp)
         testil.eq(hits, 3)
-        wait_time_days = wait_time / DAYS
-        testil.eq(round(wait_time_days, 3), 6.667)
+        testil.eq(wait_time / DAYS, 6)
 
         hits, wait_time = counter.get_count_and_wait_time(scope, threshold=2, timestamp=timestamp)
         testil.eq(hits, 3)
         wait_time_days = wait_time / DAYS
         testil.eq(round(wait_time_days, 2), 6.33)
-
-        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=3, timestamp=timestamp)
-        testil.eq(hits, 3)
-        testil.eq(wait_time / DAYS, 6)
 
         # After 6.333 days the threshold is met exactly
         hits, wait_time = counter.get_count_and_wait_time(
@@ -224,3 +223,8 @@ class TestSlidingWindowCountAndWait:
         )
         testil.eq(hits, 2)
         testil.eq(wait_time, 0.0)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp)
+        testil.eq(hits, 3)
+        wait_time_days = wait_time / DAYS
+        testil.eq(round(wait_time_days, 3), 6.667)

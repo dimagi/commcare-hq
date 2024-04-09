@@ -54,6 +54,9 @@ class SlidingWindowRateCounter(AbstractRateCounter):
         )
 
     def get(self, scope, timestamp=None):
+        if timestamp is None:
+            timestamp = time.time()
+
         window_count_sum, _ = self._get_window_counts(scope, timestamp)
         return window_count_sum
 
@@ -68,43 +71,13 @@ class SlidingWindowRateCounter(AbstractRateCounter):
         window_count_sum, grain_counts = self._get_window_counts(scope, timestamp)
 
         if window_count_sum >= threshold:
-            # compute how many grains back we need to go for the count to equal the threshold
-            cumulative_grains = 0
-            cumulative_count = 0
-
-            for grain_index, grain_count in enumerate([0] + grain_counts):
-                new_count = cumulative_count + grain_count
-                if new_count > threshold:
-                    # cumulative_count <= threshold < cumulative_count + count
-                    # solve for x: cumulative_count + x*count = threshold
-                    # x is the proportion of the new grain we need to get through to exactly meet the threshold
-                    cumulative_grains += (threshold - cumulative_count) / grain_count
-                    break
-                elif threshold == new_count:
-                    # threshold was reached exactly cumulative_grains back
-                    # if grain_index == 0:
-                    #     breakpoint()
-                    #     progress_in_current_grain = (timestamp % self.grain_duration) / self.grain_duration
-                    #     cumulative_grains += progress_in_current_grain
-                    # else:
-                    cumulative_grains += 1
-                    break
-                else:
-                    cumulative_count = new_count
-                    if grain_index == 0:
-                        progress_in_current_grain = (timestamp % self.grain_duration) / self.grain_duration
-                        cumulative_grains += progress_in_current_grain
-                    else:
-                        cumulative_grains += 1
-
-            wait_time = (self.grains_per_window - cumulative_grains + 1) * self.grain_duration
+            cumulative_grains = self._count_grains_to_threshold(grain_counts, threshold, timestamp)
+            wait_time = (self.grains_per_window - cumulative_grains) * self.grain_duration
         else:
             wait_time = 0
         return window_count_sum, wait_time
 
-    def _get_window_counts(self, scope, timestamp=None):
-        if timestamp is None:
-            timestamp = time.time()
+    def _get_window_counts(self, scope, timestamp):
         grain_counts = [
             self.grain_counter.get(scope, timestamp - i * self.grain_duration,
                                    key_is_active=(i == 0))
@@ -117,6 +90,47 @@ class SlidingWindowRateCounter(AbstractRateCounter):
         contribution_from_earliest = earliest_grain_count * (1 - progress_in_current_grain)
         window_counts_sum = sum(grain_counts[:-1]) + contribution_from_earliest
         return window_counts_sum, grain_counts
+
+    def _count_grains_to_threshold(self, grain_counts, threshold, timestamp):
+        """
+        This method computes how many grains (cumulative) back we need to go for the
+        cumulative grain count to equal the threshold.
+
+        Example usage:
+        >>> grain_counts = [1, 0, 0, 0, 0, 0, 0, 0]
+        >>> zero_percent_progress_timestamp = ...
+        >>> _count_grains_to_threshold(grain_counts, threshold=1, timestamp=zero_percent_progress_timestamp)
+        0
+        >>> fifty_percent_progress_timestamp = ...
+        >>> _count_grains_to_threshold(grain_counts, threshold=1, timestamp=fifty_percent_progress_timestamp)
+        0.5
+        >>> hundred_percent_progress_timestamp = ...
+        >>> _count_grains_to_threshold(grain_counts, threshold=1, timestamp=hundred_percent_progress_timestamp)
+        1
+        """
+        progress_in_current_grain = (timestamp % self.grain_duration) / self.grain_duration
+        # Need to subtract 1 from progress_in_current_grain to effectively move the evaluation point
+        # to the end of the current grain, i.e. to a point in the future, so that the full current grain
+        # is being considered in the calculations.
+        cumulative_grains = progress_in_current_grain - 1
+        cumulative_count = 0
+
+        for grain_count in grain_counts:
+            new_count = cumulative_count + grain_count
+            if new_count > threshold:
+                # Need to determine the proportion of the new grain we need to get through
+                # to exactly meet the threshold
+                # Solve for x: cumulative_count + x*count = threshold
+                cumulative_grains += (threshold - cumulative_count) / grain_count
+                break
+            elif threshold == new_count:
+                cumulative_grains += 1
+                break
+            else:
+                cumulative_count = new_count
+                cumulative_grains += 1
+
+        return cumulative_grains
 
     def increment(self, scope, delta=1, timestamp=None):
         # this intentionally doesn't return because this is the active grain count,
