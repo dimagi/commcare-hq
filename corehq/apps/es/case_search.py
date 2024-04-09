@@ -86,25 +86,6 @@ class CaseSearchES(CaseES):
         """
         return self.add_query(case_property_query(case_property_name, value, fuzzy), clause)
 
-    def regexp_case_property_query(self, case_property_name, regex, clause=queries.MUST):
-        """
-        Search for all cases where case property `case_property_name` matches the regular expression in `regex`
-        """
-        return self.add_query(
-            _base_property_query(case_property_name, queries.regexp(PROPERTY_VALUE, regex)),
-            clause,
-        )
-
-    def numeric_range_case_property_query(self, case_property_name, gt=None,
-                                          gte=None, lt=None, lte=None, clause=queries.MUST):
-        """
-        Search for all cases where case property `case_property_name` fulfills the range criteria.
-        """
-        return self.add_query(
-            case_property_range_query(case_property_name, gt, gte, lt, lte),
-            clause
-        )
-
     def xpath_query(self, domain, xpath, fuzzy=False):
         """Search for cases using an XPath predicate expression.
 
