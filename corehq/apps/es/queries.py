@@ -131,22 +131,6 @@ def nested(path, query, *args, **kwargs):
     }
 
 
-def nested_filter(path, filter_, *args, **kwargs):
-    """
-    Creates a nested query for use with nested documents
-
-    Keyword arguments such as score_mode and others can be added.
-    """
-    nested = {
-        "path": path,
-        "filter": filter_
-    }
-    nested.update(kwargs)
-    return {
-        "nested": nested
-    }
-
-
 def filtered(query, filter_):
     """
     Filtered query for performing both filtering and querying at once
