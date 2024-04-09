@@ -1,6 +1,5 @@
 import os
 import uuid
-from datetime import date
 
 from django.test import TestCase
 
@@ -287,8 +286,8 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         )
         all_sync_logs = get_all_syncslogs()
         [even_latest_log] = [log for log in all_sync_logs
-                             if log.get_id != sync_log_id and
-                             log.get_id != latest_log.get_id]
+                             if log.get_id != sync_log_id
+                             and log.get_id != latest_log.get_id]
 
         # case block should come back
         expected_sync_restore_payload = dummy_restore_xml(

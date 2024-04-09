@@ -48,6 +48,7 @@ def dummy_user_xml(user=None):
         user_type,
     )
 
+
 DUMMY_RESTORE_XML_TEMPLATE = ("""
 <OpenRosaResponse xmlns="http://openrosa.org/http/response"%(items_xml)s>
     <message nature="ota_restore_success">%(message)s</message>
