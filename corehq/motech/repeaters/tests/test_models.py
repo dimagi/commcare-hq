@@ -777,7 +777,7 @@ class TestRepeatRecordMethods(TestCase):
 
     def test_requeue(self):
         now = datetime.utcnow()
-        record = SQLRepeatRecord(
+        record = SQLRepeatRecord.objects.create(
             domain="test",
             repeater_id=self.repeater.id.hex,
             payload_id="abc123",
