@@ -115,19 +115,13 @@ def fuzzy(search_string, field, fuzziness="AUTO"):
     }
 
 
-def nested(path, query, *args, **kwargs):
-    """
-    Creates a nested query for use with nested documents
-
-    Keyword arguments such as score_mode and others can be added.
-    """
-    nested = {
-        "path": path,
-        "query": query
-    }
-    nested.update(kwargs)
+def nested(path, query):
+    """Creates a nested query for use with nested documents"""
     return {
-        "nested": nested
+        "nested": {
+            "path": path,
+            "query": query
+        }
     }
 
 
