@@ -140,8 +140,8 @@ def get_primary_case_search_results(helper, domain, case_types, criteria, commca
         raise CaseSearchUserError(str(e))
 
     try:
+        helper.profiler.add_query('main', search_es)
         with helper.profiler.timing_context('run query'):
-            helper.profiler.add_query('main', search_es)
             hits = search_es.run().raw_hits
     except Exception as e:
         notify_exception(None, str(e), details=dict(

@@ -32,6 +32,7 @@ class SearchFilterContext:
     profiler: 'corehq.apps.case_search.utils.CaseSearchProfiler' = None
 
     def __post_init__(self):
+        from corehq.apps.case_search.utils import CaseSearchProfiler
         if self.request_domain is None:
             if isinstance(self.domain, str):
                 self.request_domain = self.domain
@@ -39,6 +40,8 @@ class SearchFilterContext:
                 self.request_domain = self.domain[0]
             else:
                 raise ValueError("When domain is a list with more than one item, request_domain cannot be None.")
+        if self.profiler is None:
+            self.profiler = CaseSearchProfiler()
 
 
 def print_ast(node):
