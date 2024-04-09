@@ -246,10 +246,11 @@
               <td>
                 <select class="form-control"
                         data-bind="options: $root.child_loc_types($data),
-                                                   optionsText: 'name',
-                                                   optionsValue: 'pk',
-                                                   value: expand_view_child_data_to,
-                                                   optionsCaption: '\u2013none\u2013'">
+                                   optionsText: 'name',
+                                   optionsValue: 'pk',
+                                   value: expand_view_child_data_to,
+                                   optionsCaption: '\u2013none\u2013',
+                                   enable: view_descendants">
                 </select>
               </td>
               <td>
