@@ -328,30 +328,18 @@ def _parse_datetime(value):
         raise ValueError(gettext(f"{value} is an invalid datetime."))
 
 
-def reverse_index_case_query(case_ids, identifier=None):
+def reverse_index_case_query(case_ids, identifier):
     """Fetches related cases related by `identifier`.
 
     For example, in a regular parent/child relationship, given a list of parent
     case ids, this will return all the child cases which point to the parents
     with identifier `parent`.
-
     """
-    if isinstance(case_ids, str):
-        case_ids = [case_ids]
-
-    if identifier is None:      # some old relationships don't have an identifier specified
-        f = filters.term('{}.{}'.format(INDICES_PATH, REFERENCED_ID), list(case_ids)),
-    else:
-        f = filters.AND(
-            filters.term('{}.{}'.format(INDICES_PATH, REFERENCED_ID), list(case_ids)),
-            filters.term('{}.{}'.format(INDICES_PATH, IDENTIFIER), identifier),
-        )
-    return queries.nested(
+    case_ids = [case_ids] if isinstance(case_ids, str) else list(case_ids)
+    return filters.nested(
         INDICES_PATH,
-        queries.filtered(
-            queries.match_all(),
-            f
-        )
+        filters.term('{}.{}'.format(INDICES_PATH, REFERENCED_ID), case_ids),
+        filters.term('{}.{}'.format(INDICES_PATH, IDENTIFIER), identifier),
     )
 
 
