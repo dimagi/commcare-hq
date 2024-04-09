@@ -62,7 +62,7 @@ class RateLimiter(object):
     def get_wait_time_for_access(self, scope):
         wait_time = 0
         # allow usage if any scope has capacity
-        for _limit_scope, rates in self.iter_rates(scope, return_wait_time=True):
+        for _limit_scope, rates in self.iter_rates_with_wait_time(scope):
             wait_times = [
                 wait_time
                 for _rate_counter, current_rate, wait_time, limit in rates
@@ -75,7 +75,7 @@ class RateLimiter(object):
                 metrics_counter('commcare.rate_limit_exceeded', tags={'key': self.feature_key, 'scope': scope})
         return wait_time
 
-    def iter_rates(self, scope='', return_wait_time=False):
+    def iter_rates(self, scope=''):
         """
         Get generator of tuples for each set of limits returned by `get_rate_limits`, where the first item
         of the tuple is the normalized scope, and the second is a generator of
@@ -91,18 +91,31 @@ class RateLimiter(object):
         """
         for limit_scope, limits in self.get_rate_limits(scope):
             scope = self.feature_key + limit_scope
-            if return_wait_time:
-                yield (
-                    limit_scope,
-                    ((rate_counter, *rate_counter.get_count_and_wait_time(scope, limit), limit)
-                     for rate_counter, limit in limits)
-                )
-            else:
-                yield (
-                    limit_scope,
-                    ((rate_counter, rate_counter.get(scope), limit)
-                     for rate_counter, limit in limits)
-                )
+            yield (
+                limit_scope,
+                ((rate_counter, rate_counter.get(scope), limit)
+                 for rate_counter, limit in limits)
+            )
+
+    def iter_rates_with_wait_time(self, scope=''):
+        """
+        Same as iter_rates, but with addition of wait_time specified in the tuple
+
+        e.g.
+        ('test-domain', [
+            (rate_counter, 92359, 271512.0, 115000)
+            (rate_counter, ...)
+            ...
+        ])
+        where 271512.0 is the wait time in seconds
+        """
+        for limit_scope, limits in self.get_rate_limits(scope):
+            scope = self.feature_key + limit_scope
+            yield (
+                limit_scope,
+                ((rate_counter, *rate_counter.get_count_and_wait_time(scope, limit), limit)
+                 for rate_counter, limit in limits)
+            )
 
     def wait(self, scope, timeout, windows_not_to_wait_on=('hour', 'day', 'week')):
         start = time.time()
