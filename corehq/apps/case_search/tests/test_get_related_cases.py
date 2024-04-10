@@ -1,23 +1,25 @@
 from collections import Counter
 from unittest.mock import patch
 
-from testil import eq
+from django.test import TestCase
 
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearchProperty,
     DetailColumn,
+    DetailTab,
     Module,
 )
 from corehq.apps.case_search.const import IS_RELATED_CASE
 from corehq.apps.case_search.utils import (
-    _QueryHelper,
-    get_search_detail_relationship_paths,
-    get_path_related_cases_results,
-    get_and_tag_related_cases,
     _get_all_related_cases,
+    _QueryHelper,
+    get_and_tag_related_cases,
     get_child_case_results,
+    get_child_case_types,
+    get_path_related_cases_results,
     get_related_cases_result,
+    get_search_detail_relationship_paths,
 )
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.case_search import wrap_case_search_hit
@@ -25,31 +27,41 @@ from corehq.apps.es.tests.test_case_search_es import BaseCaseSearchTest
 from corehq.apps.es.tests.utils import es_test
 
 
-def test_get_search_detail_relationship_paths():
-    app = Application.new_app("test-domain", "Case Search App")
-    module = app.add_module(Module.new_module("Search Module", "en"))
-    module.case_type = "patient"
-    detail = module.case_details.short
-    detail.columns.extend([
-        DetailColumn(header={"en": "x"}, model="case", field="x", format="plain"),
-        DetailColumn(header={"en": "y"}, model="case", field="parent/parent/y", format="plain"),
-        DetailColumn(header={"en": "z"}, model="case", field="host/z", format="plain"),
-    ])
-    module.search_config.properties = [CaseSearchProperty(
-        name="texture",
-        label={"en": "Texture"},
-    )]
+class TestCaseSearchAppStuff(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.app = Application.new_app("test-domain", "Case Search App")
+        module = cls.app.add_module(Module.new_module("Search Module", "en"))
+        module.case_type = "patient"
+        detail = module.case_details.short
+        detail.columns.extend([
+            DetailColumn(header={"en": "x"}, model="case", field="x", format="plain"),
+            DetailColumn(header={"en": "y"}, model="case", field="parent/parent/y", format="plain"),
+            DetailColumn(header={"en": "z"}, model="case", field="host/z", format="plain"),
+        ])
+        module.search_config.properties = [CaseSearchProperty(
+            name="texture",
+            label={"en": "Texture"},
+        )]
+        module.case_details.long.tabs = [
+            DetailTab(starting_index=0),
+            DetailTab(starting_index=1, has_nodeset=True, nodeset_case_type="child")
+        ]
 
-    module = app.add_module(Module.new_module("Non-Search Module", "en"))
-    module.case_type = "patient"
-    detail = module.case_details.short
-    detail.columns.append(
-        DetailColumn(header={"en": "zz"}, model="case", field="parent/zz", format="plain"),
-    )
+        module = cls.app.add_module(Module.new_module("Non-Search Module", "en"))
+        module.case_type = "patient"
+        detail = module.case_details.short
+        detail.columns.append(
+            DetailColumn(header={"en": "zz"}, model="case", field="parent/zz", format="plain"),
+        )
 
-    eq(get_search_detail_relationship_paths(app, "patient"), {"parent/parent", "host"})
-    eq(get_search_detail_relationship_paths(app, "monster"), set())
+    def test_get_search_detail_relationship_paths(self):
+        self.assertEqual(get_search_detail_relationship_paths(self.app, "patient"), {"parent/parent", "host"})
+        self.assertEqual(get_search_detail_relationship_paths(self.app, "monster"), set())
 
+    def test_get_child_case_types(self):
+        self.assertEqual(get_child_case_types(self.app, "patient"), {'child'})
+        self.assertEqual(get_child_case_types(self.app, "monster"), set())
 
 @es_test
 class TestGetRelatedCases(BaseCaseSearchTest):
