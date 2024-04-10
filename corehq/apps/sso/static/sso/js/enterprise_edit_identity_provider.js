@@ -37,7 +37,7 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
         $('#sso-test-user-manager').koApplyBindings(ssoTestUserManager);
         ssoTestUserManager.init();
 
-        let editEnterpriseIdPFormManager = function (showAPIFields) {
+        let editEnterpriseIdPFormManager = function () {
             let self = {};
 
             if (initialPageData.get('is_oidc')) {
@@ -81,35 +81,32 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
                 };
             }
 
-            if (showAPIFields) {
-                const initialEnforce = $('#id_enforce_user_api_key_expiration').is(':checked');
-                self.initialExpirationLength =
-                    $('#id_max_days_until_user_api_key_expiration').val();
-                if (self.initialExpirationLength) {
-                    self.initialExpirationLength = parseInt(self.initialExpirationLength, 10);
-                }
-                self.enforceExpiration = ko.observable(initialEnforce);
-                self.expirationLengthValue = ko.observable(self.initialExpirationLength);
-                self.expirationLength = ko.observable(null);
-                self.expirationLengthValue.subscribe(function (newValue) {
-                    if (newValue) {
-                        const selValue = $('#id_max_days_until_user_api_key_expiration option:selected').text();
-                        self.expirationLength(selValue);
-                    }
-                });
-                self.showExpirationWarning = ko.pureComputed(function () {
-                    return (
-                        (self.initialExpirationLength === '' && self.expirationLengthValue() !== '') ||
-                        (self.expirationLengthValue() < self.initialExpirationLength)
-                    );
-                });
+            const initialEnforce = $('#id_enforce_user_api_key_expiration').is(':checked');
+            self.initialExpirationLength =
+                $('#id_max_days_until_user_api_key_expiration').val();
+            if (self.initialExpirationLength) {
+                self.initialExpirationLength = parseInt(self.initialExpirationLength, 10);
             }
+            self.enforceExpiration = ko.observable(initialEnforce);
+            self.expirationLengthValue = ko.observable(self.initialExpirationLength);
+            self.expirationLength = ko.observable(null);
+            self.expirationLengthValue.subscribe(function (newValue) {
+                if (newValue) {
+                    const selValue = $('#id_max_days_until_user_api_key_expiration option:selected').text();
+                    self.expirationLength(selValue);
+                }
+            });
+            self.showExpirationWarning = ko.pureComputed(function () {
+                return (
+                    (self.initialExpirationLength === '' && self.expirationLengthValue() !== '') ||
+                    (self.expirationLengthValue() < self.initialExpirationLength)
+                );
+            });
 
             return self;
 
         };
-        const showAPIFields = initialPageData.get('show_api_fields');
-        let formManager = new editEnterpriseIdPFormManager(showAPIFields);
+        let formManager = new editEnterpriseIdPFormManager();
         $('#idp').koApplyBindings(formManager);
     });
 });

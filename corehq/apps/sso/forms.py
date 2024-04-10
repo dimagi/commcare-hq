@@ -674,58 +674,53 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         '"Update Configuration" below. This will apply only to SSO users associated with this Identity Provider.'
     ))
 
-    def __init__(self, identity_provider, *args, uses_api_key_management=False, **kwargs):
+    def __init__(self, identity_provider, *args, **kwargs):
         if 'show_remote_user_management' in kwargs:
             self.show_remote_user_management = kwargs.pop('show_remote_user_management')
         else:
             self.show_remote_user_management = False
 
         self.idp = identity_provider
-        self.uses_api_key_management = uses_api_key_management
         initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
         initial.setdefault('enable_user_deactivation', identity_provider.enable_user_deactivation)
         initial.setdefault('api_host', identity_provider.api_host)
         initial.setdefault('api_id', identity_provider.api_id)
         initial.setdefault('date_api_secret_expiration', identity_provider.date_api_secret_expiration)
-        if self.uses_api_key_management:
-            initial.setdefault('always_show_user_api_keys', identity_provider.always_show_user_api_keys)
-            if identity_provider.max_days_until_user_api_key_expiration is not None:
-                initial.setdefault('enforce_user_api_key_expiration', True)
-                initial.setdefault(
-                    'max_days_until_user_api_key_expiration',
-                    identity_provider.max_days_until_user_api_key_expiration
-                )
+        initial.setdefault('always_show_user_api_keys', identity_provider.always_show_user_api_keys)
+        if identity_provider.max_days_until_user_api_key_expiration is not None:
+            initial.setdefault('enforce_user_api_key_expiration', True)
+            initial.setdefault(
+                'max_days_until_user_api_key_expiration',
+                identity_provider.max_days_until_user_api_key_expiration
+            )
 
         super().__init__(*args, **kwargs)
 
     def get_primary_fields(self):
-        if self.uses_api_key_management:
-            warning_message_div = render_to_string(
-                'sso/enterprise_admin/sso_api_expiration_warning.html',
-                {'warning_message': self.expiration_warning_message}
-            )
-            fieldset = crispy.Fieldset(
-                _('API Key Management'),
-                hqcrispy.CheckboxField('always_show_user_api_keys'),
-                hqcrispy.CheckboxField('enforce_user_api_key_expiration', data_bind='checked: enforceExpiration'),
-                crispy.Div(
-                    crispy.Field(
-                        'max_days_until_user_api_key_expiration', data_bind="value: expirationLengthValue"),
-                    crispy.HTML(warning_message_div),
-                    data_bind='visible: enforceExpiration'
-                ),
-            )
+        warning_message_div = render_to_string(
+            'sso/enterprise_admin/sso_api_expiration_warning.html',
+            {'warning_message': self.expiration_warning_message}
+        )
+        fieldset = crispy.Fieldset(
+            _('API Key Management'),
+            hqcrispy.CheckboxField('always_show_user_api_keys'),
+            hqcrispy.CheckboxField('enforce_user_api_key_expiration', data_bind='checked: enforceExpiration'),
+            crispy.Div(
+                crispy.Field(
+                    'max_days_until_user_api_key_expiration', data_bind="value: expirationLengthValue"),
+                crispy.HTML(warning_message_div),
+                data_bind='visible: enforceExpiration'
+            ),
+        )
 
-            api_key_management = \
+        api_key_management = \
+            crispy.Div(
                 crispy.Div(
-                    crispy.Div(
-                        fieldset,
-                        css_class="panel-body"
-                    ),
-                    css_class="panel panel-modern-gray panel-form-only"
-                )
-        else:
-            api_key_management = None
+                    fieldset,
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            )
 
         return [
             crispy.Div(
@@ -805,10 +800,9 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
     def update_identity_provider(self, admin_user):
         self.idp.last_modified_by = admin_user.username
 
-        if self.uses_api_key_management:
-            self.idp.always_show_user_api_keys = self.cleaned_data['always_show_user_api_keys']
-            self.idp.max_days_until_user_api_key_expiration = \
-                self.cleaned_data['max_days_until_user_api_key_expiration']
+        self.idp.always_show_user_api_keys = self.cleaned_data['always_show_user_api_keys']
+        self.idp.max_days_until_user_api_key_expiration = \
+            self.cleaned_data['max_days_until_user_api_key_expiration']
 
         self.idp.save()
         return self.idp
