@@ -864,7 +864,7 @@ def get_app_data_drilldown_values(request, domain):
     permissions = ExportsPermissionsManager(model_type, domain, request.couch_user)
     permissions.access_list_exports_or_404(is_deid=False, is_odata=is_odata)
 
-    rmi_helper = ApplicationDataRMIHelper(domain, request.couch_user)
+    rmi_helper = ApplicationDataRMIHelper(domain, request.project, request.couch_user)
     if model_type == 'form':
         response = rmi_helper.get_form_rmi_response()
     elif model_type == 'case':
