@@ -512,13 +512,6 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
     @property
     @memoized
-    def web_apps_privilege(self):
-        return self.domain_object.has_privilege(
-            privileges.CLOUDCARE
-        )
-
-    @property
-    @memoized
     def release_management_privilege(self):
         return self.domain_object.has_privilege(privileges.RELEASE_MANAGEMENT)
 
@@ -742,7 +735,6 @@ class ListRolesView(BaseRoleAccessView):
                 or toggles.GENERIC_INBOUND_API.enabled(self.domain)
             ),
             'web_apps_choices': get_cloudcare_apps(self.domain),
-            'web_apps_privilege': self.web_apps_privilege,
             'erm_privilege': self.release_management_privilege,
             'mrm_privilege': self.lite_release_management_privilege,
             'attendance_tracking_privilege': (

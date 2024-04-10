@@ -206,6 +206,52 @@
               </div>
             {% endif %}
 
+            {% if request|request_has_privilege:"CLOUDCARE" %}
+            <legend>
+              {% trans "Web Apps" %}
+            </legend>
+
+            <div data-bind="with: webAppsPermissions">
+              <div class="form-group">
+                <label class="col-sm-4 control-label" data-bind="text: text"></label>
+                <div class="col-sm-8 controls">
+                  <select class="form-control" data-bind="
+                    attr: { 'id': id },
+                    options: options,
+                    optionsText: 'text',
+                    optionsValue: 'value',
+                    value: selection">
+                    <option value="none" data-bind="text: accessNoneText"></option>
+                    <option value="all" data-bind="text: accessAllText"></option>
+                    <option value="selected" data-bind="text: accessSelectedText"></option>
+                </select>
+                </div>
+              </div>
+              <div class="form-group" data-bind="visible: showItems, css: {'has-error': hasError()}">
+                <div class="col-sm-8 col-sm-offset-4 controls">
+                  <div class="panel panel-default">
+                    <div class="panel-heading" data-bind="text: listHeading"></div>
+                    <div class="panel-body">
+                      <div data-bind="foreach: specific, slideVisible: showItems">
+                        <div class="form-check">
+                          <input type="checkbox"
+                                 data-bind="checked: value, attr: { 'id': $parent.id + slug() + '-checkbox' },
+                                            disable: !$root.allowEdit" />
+                          <label data-bind="attr: { 'for': $parent.id + slug() + '-checkbox' }">
+                            <span data-bind="text: name"></span>
+                          </label>
+                        </div>
+                      </div>
+                      <span class='help-block' data-bind="visible: hasError">
+                        {% trans "Please select at least one item." %}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
             {% if request|toggle_enabled:"DATA_REGISTRY" %}
             <legend>
               {% trans "Data Registries" %}

@@ -110,6 +110,17 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
+                data.accessWebAppsPermission = {
+                    all: data.permissions.access_web_apps,
+                    specific: ko.utils.arrayMap(root.webAppsChoices, function (app) {
+                        return {
+                            slug: app._id,
+                            name: app.name,
+                            value: data.permissions.web_apps_list.indexOf(app._id) !== -1,
+                        };
+                    }),
+                };
+
                 data.manageRegistryPermission = {
                     all: data.permissions.manage_data_registry,
                     specific: ko.utils.arrayMap(root.dataRegistryChoices, function (registry) {
@@ -156,6 +167,7 @@ hqDefine('users/js/roles',[
                 });
                 self.reportPermissions.filteredSpecific = filterSpecific(self.reportPermissions);
                 self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
+                self.accessWebAppsPermission.filteredSpecific = filterSpecific(self.accessWebAppsPermission);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
                 self.viewRegistryContentsPermission.filteredSpecific = filterSpecific(self.viewRegistryContentsPermission);
                 self.canSeeAnyReports = ko.computed(function () {
@@ -261,22 +273,6 @@ hqDefine('users/js/roles',[
                         showViewCheckbox: false,
                         viewCheckboxLabel: "view-data-checkbox",
                         screenReaderEditAndViewText: gettext("Edit & View Data"),
-                        screenReaderViewOnlyText: null,
-                        showAllowCheckbox: false,
-                        allowCheckboxText: null,
-                        allowCheckboxId: null,
-                        allowCheckboxPermission: null,
-                    },
-                    {
-                        showOption: root.webAppsPrivilege,
-                        editPermission: self.permissions.access_web_apps,
-                        viewPermission: null,
-                        text: gettext("<strong>Web Apps</strong> &mdash; use Web Apps for online data entry"),
-                        showEditCheckbox: true,
-                        editCheckboxLabel: "edit-web-apps-checkbox",
-                        showViewCheckbox: false,
-                        viewCheckboxLabel: "view-web-apps-checkbox",
-                        screenReaderEditAndViewText: gettext("Access Web Apps"),
                         screenReaderViewOnlyText: null,
                         showAllowCheckbox: false,
                         allowCheckboxText: null,
@@ -500,6 +496,16 @@ hqDefine('users/js/roles',[
                         }
                     ),
                 ];
+
+                self.webAppsPermissions = selectPermissionModel(
+                    'access_web_apps',
+                    self.accessWebAppsPermission,
+                    {
+                        permissionText: gettext("Use Web Apps for online data entry"),
+                        listHeading: gettext("Select which web apps the role has access to:"),
+                    }
+                );
+
                 // Automatically disable "Access APIs" when "Full Organization Access" is disabled
                 self.permissions.access_all_locations.subscribe(() => {
                     if (!self.permissions.access_all_locations() && self.permissions.access_api()) {
@@ -508,7 +514,8 @@ hqDefine('users/js/roles',[
                 });
 
                 self.validate = function () {
-                    self.registryPermissions.forEach((perm) => {
+                    let permissionsToValidate = self.registryPermissions.concat(self.webAppsPermissions);
+                    permissionsToValidate.forEach((perm) => {
                         if (perm.hasError()) {
                             throw interpolate(
                                 gettext('Select at least one item from the list for "%s"'),
@@ -547,6 +554,9 @@ hqDefine('users/js/roles',[
                 data.permissions.view_data_registry_contents_list = unwrapItemList(
                     data.viewRegistryContentsPermission.specific);
 
+                data.permissions.access_web_apps = data.accessWebAppsPermission.all;
+                data.permissions.web_apps_list = unwrapItemList(data.accessWebAppsPermission.specific);
+
                 data.is_non_admin_editable = data.manageRoleAssignments.all;
                 data.assignable_by = unwrapItemList(data.manageRoleAssignments.specific, 'path');
                 return data;
@@ -561,7 +571,7 @@ hqDefine('users/js/roles',[
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
         self.dataRegistryChoices = o.dataRegistryChoices;
-        self.webAppsPrivilege = o.webAppsPrivilege;
+        self.webAppsChoices = o.webAppsChoices;
         self.ermPrivilege = o.ermPrivilege;
         self.mrmPrivilege = o.mrmPrivilege;
         self.attendanceTrackingPrivilege = o.attendanceTrackingPrivilege;
