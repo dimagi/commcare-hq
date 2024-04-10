@@ -944,6 +944,13 @@ USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     """
 )
 
+WEB_APPS_PERMISSIONS_VIA_GROUPS = StaticToggle(
+    'web_apps_permissions_via_groups',
+    "Allow users to control access to specific web apps via mobile worker groups",
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN]
+)
+
 DISABLE_WEB_APPS = StaticToggle(
     'disable_web_apps',
     'Disable access to Web Apps UI',

@@ -1205,6 +1205,7 @@ users
  0056_add_manage_domain_alerts_permission
  0057_populate_sql_user_data
  0058_createprofileanduserdata_copylocation
+ 0059_add_web_apps_groups_permission_flag
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
