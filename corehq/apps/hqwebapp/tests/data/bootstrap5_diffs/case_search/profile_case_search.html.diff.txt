@@ -28,3 +28,22 @@
                <strong data-bind="text: percent_parent ? percent_parent.toFixed(3) : '-'"></strong>% of parent
              </div>
            </div>
+@@ -62,18 +62,6 @@
+       </li>
+     </script>
+ 
+-    <div class="panel-group" id="queries-accordion" data-bind="foreach: results().queries">
+-      <div class="panel panel-default">
+-        <div class="panel-heading clickable" data-toggle="collapse" data-parent="#queries-accordion"
+-          data-bind="attr: { href: '#query-' + $index() }">
+-          Elasticsearch query: <code data-bind="text: slug"></code>
+-        </div>
+-        <div class="panel-body panel-collapse collapse" data-bind="attr: { id: 'query-' + $index() }">
+-          <pre data-bind="text: JSON.stringify(query, null, 4)"></pre>
+-        </div>
+-      </div>
+-    </div>
+-
+   </div>
+ 
+ </div>
