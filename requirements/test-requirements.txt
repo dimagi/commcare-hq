@@ -215,7 +215,7 @@ exceptiongroup==1.1.1
     # via cattrs
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==22.0.0
+faker==24.8.0
     # via -r test-requirements.in
 firebase-admin==6.1.0
     # via -r base-requirements.in
