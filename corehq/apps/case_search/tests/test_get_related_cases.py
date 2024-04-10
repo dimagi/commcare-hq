@@ -63,8 +63,10 @@ class TestCaseSearchAppStuff(TestCase):
                          {"parent/parent", "host"})
 
     def test_get_child_case_types(self):
-        self.assertEqual(get_child_case_types(self.app, "patient"), {'child'})
-        self.assertEqual(get_child_case_types(self.app, "monster"), set())
+        self.assertEqual(get_child_case_types(self.app, ["patient"]), {'child'})
+        self.assertEqual(get_child_case_types(self.app, ["monster"]), set())
+        self.assertEqual(get_child_case_types(self.app, ["patient", "monster"]), {'child'})
+
 
 @es_test
 class TestGetRelatedCases(BaseCaseSearchTest):

@@ -474,17 +474,13 @@ def get_path_related_cases_results(helper, cases, paths):
 
 @time_function()
 def _get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids):
-    child_case_types = [
-        _type for types in [get_child_case_types(app, case_type) for case_type in case_types]
-        for _type in types
-    ]
-    result = []
+    child_case_types = get_child_case_types(app, case_types)
     if child_case_types:
-        result.extend(get_child_case_results(helper, source_case_ids, child_case_types))
-    return result
+        return get_child_case_results(helper, source_case_ids, child_case_types)
+    return []
 
 
-def get_child_case_types(app, case_type):
+def get_child_case_types(app, case_types):
     """
     Get child case types used by search detail tab nodesets in any modules
     that match the given case type and are configured for case search.
@@ -493,7 +489,7 @@ def get_child_case_types(app, case_type):
     """
     child_case_types = set()
     for module in app.get_modules():
-        if module.case_type == case_type and module_offers_search(module):
+        if module.case_type in case_types and module_offers_search(module):
             for tab in module.search_detail("long").tabs:
                 if tab.has_nodeset and tab.nodeset_case_type:
                     child_case_types.add(tab.nodeset_case_type)
