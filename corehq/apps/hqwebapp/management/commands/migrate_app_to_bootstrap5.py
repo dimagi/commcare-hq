@@ -38,6 +38,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.status import (
 from corehq.apps.hqwebapp.utils.management_commands import (
     get_break_line,
     get_confirmation,
+    select_option_from_prompt,
 )
 
 
@@ -157,12 +158,13 @@ class Command(BaseCommand):
         return set(available_js_files).difference(completed_js_files)
 
     def migrate_files(self, files, app_name, spec, is_template):
-        for file_path in files:
+        for index, file_path in enumerate(files):
             short_path = get_short_path(app_name, file_path, is_template)
             self.clear_screen()
             file_type = "templates" if is_template else "javascript"
             self.stdout.write(self.format_header(f"Migrating {app_name} {file_type}..."))
-            confirm = get_confirmation(f'Ready to migrate "{short_path}"?', default='y')
+            confirm = get_confirmation(f'Ready to migrate "{short_path}" ({index + 1} of {len(files)})?',
+                                       default='y')
             if not confirm:
                 self.write_response(f"ok, skipping {short_path}")
                 continue
@@ -299,40 +301,48 @@ class Command(BaseCommand):
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
 
-        confirm = get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
-                                   f'and update references?', default='y')
-        if not confirm:
+        # jls
+        next_step = select_option_from_prompt(f'\nDo you want to [s]plit {short_path} into Bootstrap 3 and '
+                                              f'Bootstrap 5 versions, [o]verwrite original file with Bootstrap 5 '
+                                              f'changes, or [r]oll back changes? ', ['s', 'o', 'r'], default='s')
+        if next_step == 'r':
             self.write_response("ok, canceling split and rolling back changes...")
             return
+        do_split = next_step == 's'
 
         has_no_existing_changes = self.has_no_existing_changes()
 
-        bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
-        bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
-        bootstrap5_short_path = get_short_path(app_name, bootstrap5_path, is_template)
-        self.stdout.write(f"\n\nSplitting files:\n"
-                          f"\n\t{bootstrap3_short_path}"
-                          f"\n\t{bootstrap5_short_path}\n\n")
         if '/bootstrap5/' not in str(file_path):
-            self.save_split_templates(
-                file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
-            )
-            self.stdout.write("\nUpdating references...")
-            references = update_and_get_references(short_path, bootstrap3_short_path, is_template)
-            if not is_template:
-                # also check extension-less references for javascript files
-                references.extend(update_and_get_references(
-                    get_requirejs_reference(short_path),
-                    get_requirejs_reference(bootstrap3_short_path),
-                    is_template=False
-                ))
-            if references:
-                self.stdout.write(f"\n\nUpdated references to {short_path} in these files:\n")
-                self.stdout.write("\n".join(references))
+            if do_split:
+                bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
+                bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
+                bootstrap5_short_path = get_short_path(app_name, bootstrap5_path, is_template)
+                self.stdout.write(f"\n\nSplitting files:\n"
+                                  f"\n\t{bootstrap3_short_path}"
+                                  f"\n\t{bootstrap5_short_path}\n\n")
+                self.save_split_templates(
+                    file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
+                )
+                self.stdout.write("\nUpdating references...")
+                references = update_and_get_references(short_path, bootstrap3_short_path, is_template)
+                if not is_template:
+                    # also check extension-less references for javascript files
+                    references.extend(update_and_get_references(
+                        get_requirejs_reference(short_path),
+                        get_requirejs_reference(bootstrap3_short_path),
+                        is_template=False
+                    ))
+                if references:
+                    self.stdout.write(f"\n\nUpdated references to {short_path} in these files:\n")
+                    self.stdout.write("\n".join(references))
+                else:
+                    self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
             else:
-                self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
+                self.stdout.write(f"\n\nOverwriting {short_path}:\n")
+                with open(file_path, 'w') as file:
+                    file.writelines(bootstrap5_lines)
         self.suggest_commit_message(
-            f"initial auto-migration for {short_path}, splitting templates",
+            f"initial auto-migration for {short_path}, handling {short_path}",
             show_apply_commit=has_no_existing_changes
         )
 

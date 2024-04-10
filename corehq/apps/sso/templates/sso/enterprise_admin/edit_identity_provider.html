@@ -9,7 +9,7 @@
   {% initial_page_data 'idp_slug' idp_slug %}
   {% initial_page_data 'is_oidc' is_oidc %}
   {% initial_page_data 'show_remote_user_management' show_remote_user_management %}
-
+  {% initial_page_data 'show_api_fields' show_api_fields %}
 
   <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
     <li><a href="#idp" data-toggle="tab">{% trans "Identity Provider" %}</a></li>
@@ -18,9 +18,7 @@
   </ul>
   <div class="tab-content tab-padded">
     <div class="tab-pane" id="idp">
-      <form class="form form-horizontal" method="post" enctype="multipart/form-data">
-        {% crispy edit_idp_form %}
-      </form>
+      {% crispy edit_idp_form %}
     </div>
     <div class="tab-pane" id="sso-exempt-users">
       {% include 'sso/partials/manage_sso_exempt_users.html' %}
