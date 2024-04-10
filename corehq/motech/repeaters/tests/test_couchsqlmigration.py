@@ -470,6 +470,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         doc.pop("attempts")
         doc.pop("registered_on")
         doc["succeeded"] = False
+        doc["registered_at"] = json_format_datetime(when)
         doc["next_check"] = json_format_datetime(when)
         doc["failure_reason"] = "A tree fell in the forest"
         doc_id = self.db.save_doc(doc)["id"]
