@@ -356,5 +356,27 @@
       "label": "javascript/settings/js",
       "compare_all_files": true
     }
+  ],
+  "apps/case_search/templates/case_search": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "case_search",
+      "compare_all_files": true
+    }
+  ],
+  "apps/case_search/static/case_search/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/case_search/js",
+      "compare_all_files": true
+    }
   ]
 }
