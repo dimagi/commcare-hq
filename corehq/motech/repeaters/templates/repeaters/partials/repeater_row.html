@@ -8,22 +8,22 @@
     </td>
     <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=PENDING">
-            {{ repeater.get_pending_record_count }}
+            {{ repeater.count_State.Pending }}
         </a>
     </td>
     <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=FAIL">
-            {{ repeater.get_failure_record_count }}
+            {{ repeater.count_State.Fail }}
         </a>
     </td>
     <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=CANCELLED">
-            {{ repeater.get_cancelled_record_count }}
+            {{ repeater.count_State.Cancelled }}
         </a>
     </td>
     <td>
         <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=SUCCESS">
-            {{ repeater.get_success_record_count }}
+            {{ repeater.count_State.Success }}
         </a>
     </td>
     <td>
