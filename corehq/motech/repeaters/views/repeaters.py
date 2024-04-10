@@ -23,10 +23,11 @@ from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
 
+from ..const import State
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
 from ..models import (
     Repeater,
-    SQLRepeatRecord,
+    RepeatRecord,
     get_all_repeater_types,
 )
 
@@ -44,14 +45,20 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
-    @property
-    def repeater_types_info(self):
+    def get_repeater_types_info(self, state_counts):
+        def get_repeaters_with_state_counts(repeater_class):
+            repeaters = repeater_class.objects.by_domain(self.domain)
+            for repeater in repeaters:
+                assert not hasattr(repeater, "count_State"), repeater.count_State
+                repeater.count_State = {s.name: state_counts[repeater.id][s] for s in State}
+            return repeaters
+
         return [
             RepeaterTypeInfo(
                 class_name=r._repeater_type,
                 friendly_name=r.friendly_name,
                 has_config=r._has_config,
-                instances=r.objects.by_domain(self.domain),
+                instances=get_repeaters_with_state_counts(r),
             )
             for r in get_all_repeater_types().values()
             if r.available_for_domain(self.domain)
@@ -59,10 +66,15 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
+        state_counts = RepeatRecord.objects.count_by_repeater_and_state(domain=self.domain)
         return {
             'report': 'repeat_record_report',
-            'repeater_types_info': self.repeater_types_info,
-            'pending_record_count': SQLRepeatRecord.objects.count_pending_records_for_domain(self.domain),
+            'repeater_types_info': self.get_repeater_types_info(state_counts),
+            'pending_record_count': sum(
+                count for repeater_id, states in state_counts.items()
+                for state, count in states.items()
+                if state == State.Pending or state == State.Fail
+            ),
             'user_can_configure': (
                 self.request.couch_user.is_superuser
                 or self.request.couch_user.can_edit_motech()
