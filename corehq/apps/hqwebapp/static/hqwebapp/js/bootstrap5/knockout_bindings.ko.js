@@ -375,23 +375,28 @@ hqDefine("hqwebapp/js/bootstrap5/knockout_bindings.ko", [
          */
         init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             let value = valueAccessor(),
-                templateID = value,
+                templateId = value,
                 ifValue = true;
             if (typeof value === 'object') {
-                templateID = value.templateId;
+                templateId = value.templateId;
                 ifValue = _.has(value, 'if') ? value.if : true;
             }
-            let modalElement = $('<div></div>').addClass('modal fade').attr("tabindex", "-1").appendTo('body'),
+            let modalElement = $('<div></div>')
+                    .addClass('modal fade')
+                    .attr("id", templateId)
+                    .attr("aria-labelledby", templateId + "-title")
+                    .attr("tabindex", "-1")
+                    .appendTo('body'),
                 newValueAccessor = function () {
                     let clickAction = function () {
                         if (!ifValue) {
                             return;
                         }
                         ko.bindingHandlers.template.init(modalElement.get(0), function () {
-                            return templateID;
+                            return templateId;
                         }, allBindingsAccessor, viewModel, bindingContext);
                         ko.bindingHandlers.template.update(modalElement.get(0), function () {
-                            return templateID;
+                            return templateId;
                         }, allBindingsAccessor, viewModel, bindingContext);
 
                         let modal = new bootstrap.Modal(modalElement.get(0));

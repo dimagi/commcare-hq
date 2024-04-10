@@ -51,7 +51,6 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
 )
 from corehq.apps.app_manager.dbaccessors import get_app_languages
-from corehq.apps.cloudcare.esaccessors import login_as_user_filter
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -60,12 +59,13 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.enterprise.models import EnterprisePermissions
-from corehq.apps.es import UserES, queries
+from corehq.apps.es import UserES
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_other_user,
 )
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
 )
@@ -767,12 +767,7 @@ def paginate_enterprise_users(request, domain):
     web_user_usernames = [u.username for u in web_users]
     mobile_result = (
         UserES().show_inactive().domains(domains).mobile_users().sort('username.exact')
-        .filter(
-            queries.nested(
-                'user_data_es',
-                login_as_user_filter(web_user_usernames)
-            )
-        )
+        .login_as_user(web_user_usernames)
         .run()
     )
     mobile_users = defaultdict(list)
@@ -1146,6 +1141,9 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
+                # Preparation for location to replace supply_point
+                supply_point = data.get("supply_point", None)
+                data["location"] = SQLLocation.by_location_id(supply_point) if supply_point else None
                 invite = Invitation(**data)
                 invite.save()
                 invite.send_activation_email()

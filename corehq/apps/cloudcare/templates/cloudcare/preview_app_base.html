@@ -67,21 +67,21 @@
 {% block body %}{% endblock %}
 
 {# HTML templates #}
-{% include 'form_entry/templates.html' %}
-{% include 'formplayer/debugger.html' %}
-{% include 'formplayer/grid_view.html' %}
-{% include 'formplayer/settings_view.html' %}
-{% include 'formplayer/case_detail.html' %}
-{% include 'formplayer/case_list.html' %}
-{% include 'formplayer/menu_list.html' %}
-{% include 'formplayer/session_list.html' %}
-{% include 'formplayer/confirmation_modal.html' %}
-{% include 'formplayer/users.html' %}
-{% include 'formplayer/progress.html' %}
-{% include 'formplayer/query_view.html' %}
+{% include 'cloudcare/partials/form_entry_templates.html' %}
+{% include 'cloudcare/partials/debugger.html' %}
+{% include 'cloudcare/partials/grid_view.html' %}
+{% include 'cloudcare/partials/settings_view.html' %}
+{% include 'cloudcare/partials/case_detail.html' %}
+{% include 'cloudcare/partials/case_list.html' %}
+{% include 'cloudcare/partials/menu_list.html' %}
+{% include 'cloudcare/partials/session_list.html' %}
+{% include 'cloudcare/partials/confirmation_modal.html' %}
+{% include 'cloudcare/partials/users.html' %}
+{% include 'cloudcare/partials/progress.html' %}
+{% include 'cloudcare/partials/query_view.html' %}
 
 {% block js %}{{ block.super }}
-  {% include 'formplayer/dependencies.html' %}
+  {% include 'cloudcare/partials/dependencies.html' %}
 {% endblock %}
 
 {% initial_page_data 'toggles_dict' toggles_dict %}
@@ -109,5 +109,3 @@
 </div>
 </body>
 </html>
-
-

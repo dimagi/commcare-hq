@@ -1,3 +1,4 @@
+import subprocess
 import time
 from pathlib import Path
 
@@ -36,9 +37,8 @@ from corehq.apps.hqwebapp.utils.bootstrap.status import (
 )
 from corehq.apps.hqwebapp.utils.management_commands import (
     get_break_line,
-    get_style_func,
-    Color,
     get_confirmation,
+    select_option_from_prompt,
 )
 
 
@@ -100,29 +100,31 @@ class Command(BaseCommand):
 
     def show_next_steps(self, app_name):
         self.clear_screen()
-        self.stdout.write(
-            self.format_header(f"All done with Step 2 of migrating {app_name}!"),
-            style_func=get_style_func(Color.GREEN)
-        )
+        self.stdout.write(self.style.SUCCESS(
+            self.format_header(f"All done with Step 2 of migrating {app_name}!")
+        ))
         self.stdout.write("If this is the first time running this command, "
                           "it's recommended to re-run the command\nat least one more "
                           "time in the event of nested dependencies / inheritance "
                           "in split files.\n\n")
         self.stdout.write("After this, please update `bootstrap5_diff_config.json` "
                           "using:\n\n")
-        self.stdout.write(f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n")
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n"
+        ))
         self.stdout.write("Once the changes to that file are committed, you can run:\n")
-        self.stdout.write("./mmanage.py build_bootstrap5_diffs\n\n")
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            "./mmanage.py build_bootstrap5_diffs\n\n"
+        ))
         self.stdout.write("Thank you for your dedication to this migration! <3\n\n")
         self.stdout.write("You can also review the next steps here:"
                           "\tcommcarehq.org/styleguide/b5/migration/#update-diffs\n\n\n")
 
     def show_completed_message(self, app_name):
         self.clear_screen()
-        self.stdout.write(
-            self.format_header(f"Bootstrap 5 Migration of '{app_name}' is already complete!"),
-            style_func=get_style_func(Color.GREEN)
-        )
+        self.stdout.write(self.style.SUCCESS(
+            self.format_header(f"Bootstrap 5 Migration of '{app_name}' is already complete!")
+        ))
         self.stdout.write(f"It appears that '{app_name}' has already been fully migrated to Bootstrap 5!\n\n")
         self.stdout.write("If you feel this is in error, "
                           "please consult the table referenced in the migration guide\n"
@@ -156,12 +158,13 @@ class Command(BaseCommand):
         return set(available_js_files).difference(completed_js_files)
 
     def migrate_files(self, files, app_name, spec, is_template):
-        for file_path in files:
+        for index, file_path in enumerate(files):
             short_path = get_short_path(app_name, file_path, is_template)
             self.clear_screen()
             file_type = "templates" if is_template else "javascript"
             self.stdout.write(self.format_header(f"Migrating {app_name} {file_type}..."))
-            confirm = get_confirmation(f'Ready to migrate "{short_path}"?', default='y')
+            confirm = get_confirmation(f'Ready to migrate "{short_path}" ({index + 1} of {len(files)})?',
+                                       default='y')
             if not confirm:
                 self.write_response(f"ok, skipping {short_path}")
                 continue
@@ -198,10 +201,9 @@ class Command(BaseCommand):
             short_path = get_short_path(app_name, file_path, is_template)
             if has_changes:
                 self.clear_screen()
-                self.stdout.write(
-                    self.format_header(f"Finalizing changes for {short_path}..."),
-                    style_func=get_style_func(Color.YELLOW)
-                )
+                self.stdout.write(self.style.WARNING(
+                    self.format_header(f"Finalizing changes for {short_path}...")
+                ))
                 self.record_file_changes(file_path, app_name, file_changelog, is_template)
                 if '/bootstrap5/' in str(file_path):
                     self.save_re_checked_file_changes(app_name, file_path, new_lines, is_template)
@@ -250,7 +252,7 @@ class Command(BaseCommand):
 
     def display_flag_summary(self, changelog):
         self.stdout.write(changelog[-3])
-        self.stdout.write(changelog[-2], style_func=get_style_func(Color.YELLOW))
+        self.stdout.write(self.style.WARNING(changelog[-2]))
         self.stdout.write(changelog[-1])
         self.stdout.write("\nThis change requires manual intervention and is not made automatically. "
                           "\nThis guidance will be saved to migration logs for reference later. \n\n")
@@ -258,8 +260,8 @@ class Command(BaseCommand):
     def display_rename_summary(self, changelog):
         self.stdout.write("".join(changelog[-5:-3]))
         changes = changelog[-3].split('\n')
-        self.stdout.write(changes[0], style_func=get_style_func(Color.RED))
-        self.stdout.write(changes[1], style_func=get_style_func(Color.GREEN))
+        self.stdout.write(self.style.ERROR(changes[0]))
+        self.stdout.write(self.style.SUCCESS(changes[1]))
         self.stdout.write("".join(changelog[-2:]))
         changelog.append("\n\n")
         self.stdout.write("\n\n\nAnswering 'y' below will automatically make this change "
@@ -299,37 +301,50 @@ class Command(BaseCommand):
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
 
-        confirm = get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
-                                   f'and update references?', default='y')
-        if not confirm:
+        # jls
+        next_step = select_option_from_prompt(f'\nDo you want to [s]plit {short_path} into Bootstrap 3 and '
+                                              f'Bootstrap 5 versions, [o]verwrite original file with Bootstrap 5 '
+                                              f'changes, or [r]oll back changes? ', ['s', 'o', 'r'], default='s')
+        if next_step == 'r':
             self.write_response("ok, canceling split and rolling back changes...")
             return
+        do_split = next_step == 's'
 
-        bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
-        bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
-        bootstrap5_short_path = get_short_path(app_name, bootstrap5_path, is_template)
-        self.stdout.write(f"\n\nSplitting files:\n"
-                          f"\n\t{bootstrap3_short_path}"
-                          f"\n\t{bootstrap5_short_path}\n\n")
+        has_no_existing_changes = self.has_no_existing_changes()
+
         if '/bootstrap5/' not in str(file_path):
-            self.save_split_templates(
-                file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
-            )
-            self.stdout.write("\nUpdating references...")
-            references = update_and_get_references(short_path, bootstrap3_short_path, is_template)
-            if not is_template:
-                # also check extension-less references for javascript files
-                references.extend(update_and_get_references(
-                    get_requirejs_reference(short_path),
-                    get_requirejs_reference(bootstrap3_short_path),
-                    is_template=False
-                ))
-            if references:
-                self.stdout.write(f"\n\nUpdated references to {short_path} in these files:\n")
-                self.stdout.write("\n".join(references))
+            if do_split:
+                bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
+                bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
+                bootstrap5_short_path = get_short_path(app_name, bootstrap5_path, is_template)
+                self.stdout.write(f"\n\nSplitting files:\n"
+                                  f"\n\t{bootstrap3_short_path}"
+                                  f"\n\t{bootstrap5_short_path}\n\n")
+                self.save_split_templates(
+                    file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
+                )
+                self.stdout.write("\nUpdating references...")
+                references = update_and_get_references(short_path, bootstrap3_short_path, is_template)
+                if not is_template:
+                    # also check extension-less references for javascript files
+                    references.extend(update_and_get_references(
+                        get_requirejs_reference(short_path),
+                        get_requirejs_reference(bootstrap3_short_path),
+                        is_template=False
+                    ))
+                if references:
+                    self.stdout.write(f"\n\nUpdated references to {short_path} in these files:\n")
+                    self.stdout.write("\n".join(references))
+                else:
+                    self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
             else:
-                self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
-        self.suggest_commit_message(f"initial auto-migration for {short_path}, splitting templates")
+                self.stdout.write(f"\n\nOverwriting {short_path}:\n")
+                with open(file_path, 'w') as file:
+                    file.writelines(bootstrap5_lines)
+        self.suggest_commit_message(
+            f"initial auto-migration for {short_path}, handling {short_path}",
+            show_apply_commit=has_no_existing_changes
+        )
 
     @staticmethod
     def save_split_templates(original_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines):
@@ -373,7 +388,9 @@ class Command(BaseCommand):
                     is_template=False
                 ))
             if references:
-                self.stdout.write(f"\n\nUpdated references to {old_reference} in these files:")
+                self.stdout.write(self.style.MIGRATE_HEADING(
+                    f"\n\nUpdated references to {old_reference} in these files:"
+                ))
                 self.stdout.write("\n".join(references))
                 self.suggest_commit_message(f"updated path references to '{references}'")
         self.stdout.write("\n\nDone.\n\n")
@@ -447,10 +464,25 @@ class Command(BaseCommand):
     def enter_to_continue():
         input("\nENTER to continue...")
 
-    def suggest_commit_message(self, message):
+    @staticmethod
+    def has_no_existing_changes():
+        status = subprocess.Popen(
+            ["git", "status"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        return "nothing to commit" in str(status.communicate()[0])
+
+    def suggest_commit_message(self, message, show_apply_commit=False):
         self.stdout.write("\nNow would be a good time to review changes with git and "
                           "commit before moving on to the next template.")
         self.stdout.write("\nSuggested command:")
-        self.stdout.write(f"git commit --no-verify -m \"Bootstrap 5 Migration - {message}\"")
+        commit_command = ["git", "commit", "--no-verify", f"--message=\"Bootstrap 5 Migration - {message}\""]
+        self.stdout.write(self.style.MIGRATE_LABEL(" ".join(commit_command)))
+        if show_apply_commit:
+            confirm = get_confirmation("\nAutomatically apply this commit with the command above?")
+            if confirm:
+                subprocess.call([
+                    "git", "add", ".",
+                ])
+                subprocess.call(commit_command)
         self.stdout.write("\n")
         self.enter_to_continue()

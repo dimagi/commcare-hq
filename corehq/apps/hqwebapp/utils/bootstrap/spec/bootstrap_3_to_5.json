@@ -100,7 +100,10 @@
     ],
     "flagged_js_plugins": [
         "affix",
+        "bootstrapSwitch",
         "button",
+        "createDateRangePicker",
+        "datetimepicker",
         "modal",
         "popover",
         "tab",

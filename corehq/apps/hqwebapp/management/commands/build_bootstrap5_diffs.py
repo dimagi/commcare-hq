@@ -194,13 +194,17 @@ class Command(BaseCommand):
                           "diff config for template and javascript files.")
         self.stdout.write(f"Stylesheets (less, scss) must be added to "
                           f"{DIFF_CONFIG_FILE} manually.\n\n")
-        self.stdout.write("\n\nAfter committing changes, please re-run:\n\n"
-                          "./manage.py build_bootstrap5_diffs\n"
-                          "to rebuild the diffs.\n\n")
+        self.stdout.write("\n\nAfter committing changes, please re-run:\n")
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            "./manage.py build_bootstrap5_diffs"
+        ))
+        self.stdout.write("to rebuild the diffs.\n\n")
         self.stdout.write("Thank you! <3\n\n")
 
     def suggest_commit_message(self, message):
         self.stdout.write("\nNow would be a good time to review changes with git and commit.")
         self.stdout.write("\nSuggested command:")
-        self.stdout.write(f"git commit --no-verify -m \"Bootstrap 5 Migration - {message}\"")
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            f"git commit --no-verify -m \"Bootstrap 5 Migration - {message}\""
+        ))
         self.stdout.write("\n")
