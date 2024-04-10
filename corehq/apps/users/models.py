@@ -104,9 +104,6 @@ from .models_role import (  # noqa
 from .user_data import SQLUserData  # noqa
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.locations.models import (
-    get_case_sharing_groups_for_locations,
-)
 
 WEB_USER = 'web'
 COMMCARE_USER = 'commcare'
@@ -1135,6 +1132,19 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         })
         return session_data
 
+    def _get_case_owning_locations(self, domain):
+        """
+        :return: queryset of case-owning locations either directly assigned to the
+        user or descendant from an assigned location that views descendants
+        """
+        from corehq.apps.locations.models import SQLLocation
+
+        yield from self.get_sql_locations(domain).filter(location_type__shares_cases=True)
+
+        yield from SQLLocation.objects.get_queryset_descendants(
+            self.get_sql_locations(domain).filter(location_type__view_descendants=True)
+        ).filter(location_type__shares_cases=True, is_archived=False)
+
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.users.model_log import UserModelAction
 
@@ -1805,9 +1815,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def _get_deleted_case_ids(self):
         return CommCareCase.objects.get_deleted_case_ids_by_owner(self.domain, self.user_id)
 
-    def get_owner_ids(self, domain=None):
+    def get_owner_ids(self, domain):
         owner_ids = [self.user_id]
-        owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
+        owner_ids.extend(g._id for g in self.get_case_sharing_groups())
         return owner_ids
 
     def unretire(self, unretired_by_domain, unretired_by, unretired_via=None):
@@ -1915,10 +1925,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         )
 
         # get faked location group objects
-        groups = list(get_case_sharing_groups_for_locations(
-            self.get_sql_locations(self.domain),
-            self._id
-        ))
+        groups = [
+            location.case_sharing_group_object(self._id)
+            for location in self._get_case_owning_locations(self.domain)
+        ]
         groups += [group for group in Group.by_user_id(self._id) if group.case_sharing]
 
         has_at_privilege = domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
@@ -1931,23 +1941,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_reporting_groups(self):
         from corehq.apps.groups.models import Group
         return [group for group in Group.by_user_id(self._id) if group.reporting]
-
-    @classmethod
-    def cannot_share(cls, domain, limit=None, skip=0):
-        users_checked = list(cls.by_domain(domain, limit=limit, skip=skip))
-        if not users_checked:
-            # stop fetching when you come back with none
-            return []
-        users = [user for user in users_checked if len(user.get_case_sharing_groups()) != 1]
-        if limit is not None:
-            total = cls.total_by_domain(domain)
-            max_limit = min(total - skip, limit)
-            if len(users) < max_limit:
-                new_limit = max_limit - len(users_checked)
-                new_skip = skip + len(users_checked)
-                users.extend(cls.cannot_share(domain, new_limit, new_skip))
-                return users
-        return users
 
     def get_group_ids(self):
         from corehq.apps.groups.models import Group
@@ -2430,6 +2423,11 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             request_user=request_user
         )
 
+    def get_owner_ids(self, domain):
+        owner_ids = [self.user_id]
+        owner_ids.extend(loc.location_id for loc in self._get_case_owning_locations(domain))
+        return owner_ids
+
     @quickcache(['self._id', 'domain'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self, domain):
         case = self.get_usercase_by_domain(domain)
@@ -2683,6 +2681,11 @@ class Invitation(models.Model):
     role = models.CharField(max_length=100, null=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
+    location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
+                                 to_field='location_id', null=True)  # to replace supply_point
+    profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
+                                on_delete=models.SET_NULL, null=True)
+    custom_user_data = models.JSONField(default=dict)
 
     def __repr__(self):
         return f"Invitation(domain='{self.domain}', email='{self.email})"

@@ -51,7 +51,6 @@ class Command(makemigrations.Command):
 
     @no_translations
     def handle(self, *app_labels, **options):
-
         def assert_exclusive_options(opt_name, extra=[]):
             prevent = extra + ["dry_run", "merge", "empty", "name", "check_changes"]
             enforce = ["interactive", "include_header"]  # default=True

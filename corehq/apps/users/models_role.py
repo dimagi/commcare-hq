@@ -161,7 +161,12 @@ class UserRole(models.Model):
     def set_permissions(self, permission_infos):
         def _clear_query_cache():
             try:
-                self.refresh_from_db(fields=["rolepermission_set"])
+                # There is a bug in refresh_from_db when specifying fields that results in this error:
+                # RuntimeError: Set changed size during iteration
+                # Once on a version of Django that includes the change made for
+                # https://code.djangoproject.com/ticket/35044, we can specify fields again.
+                # self.refresh_from_db(fields=["rolepermission_set"])
+                self.refresh_from_db()
             except FieldDoesNotExist:
                 pass
 
@@ -208,7 +213,12 @@ class UserRole(models.Model):
     def set_assignable_by(self, role_ids):
         def _clear_query_cache():
             try:
-                self.refresh_from_db(fields=["roleassignableby_set"])
+                # There is a bug in refresh_from_db when specifying fields that results in this error:
+                # RuntimeError: Set changed size during iteration
+                # Once on a version of Django that includes the change made for
+                # https://code.djangoproject.com/ticket/35044, we can specify fields again.
+                # self.refresh_from_db(fields=["roleassignableby_set"])
+                self.refresh_from_db()
             except FieldDoesNotExist:
                 pass
 

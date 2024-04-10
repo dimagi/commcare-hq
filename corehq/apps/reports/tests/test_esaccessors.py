@@ -554,12 +554,26 @@ class TestFormESAccessors(TestCase):
         self.assertEqual(results['2013-07-15'], 1)
 
     def test_get_paged_forms_by_type(self):
+        user = 'u1'
         self._send_form_to_es()
-        self._send_form_to_es()
+        self._send_form_to_es(user_id=user)
+        app1, app2 = '123', '456'
+        xmlns = 'abc'
+        self._send_form_to_es(form_name='test_a', app_id=app1, xmlns=xmlns)
+        self._send_form_to_es(form_name='test_b', app_id=app2, xmlns=xmlns)
 
         paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], size=1)
         self.assertEqual(len(paged_result.hits), 1)
-        self.assertEqual(paged_result.total, 2)
+        self.assertEqual(paged_result.total, 4)
+
+        paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], app_ids=[app2], xmlns=[xmlns])
+        self.assertEqual(len(paged_result.hits), 1)
+        form_dict = paged_result.hits[0]['form']
+        self.assertEqual(form_dict['@name'], 'test_b')
+
+        paged_result = get_paged_forms_by_type(self.domain, ['xforminstance'], user_ids=[user])
+        self.assertEqual(len(paged_result.hits), 1)
+        self.assertEqual(paged_result.hits[0]['user_id'], user)
 
     def test_timezone_differences(self):
         """
