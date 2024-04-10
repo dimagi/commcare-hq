@@ -5,7 +5,6 @@ from django.http import HttpResponse
 from django.test import override_settings, SimpleTestCase, TestCase
 from django.urls import path, include
 from django.views import View
-from testil import Regex
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.dispatcher import ReportDispatcher
@@ -23,9 +22,14 @@ class SlowClassView(View):
 
 @set_request_duration_reporting_threshold(0.1)
 def slow_function_view(request):
-    timer = TimingContext()
-    with timer("sleep"):
-        time.sleep(0.2)
+    timer = TimingContext('slow_function_view')
+    with timer:
+        with timer('part1'):
+            ...
+            with timer('part1a'):
+                ...
+        with timer('part2'):
+            time.sleep(0.2)
     response = HttpResponse()
     response.request_timer = timer
     return response
@@ -149,7 +153,13 @@ class TestLogLongRequestMiddleware(SimpleTestCase):
         self.assertEqual(res.status_code, 200)
         notify_exception.assert_called_once()
         add_breadcrumb.assert_has_calls([
-            mock.call(category="timing", message=Regex(r"^sleep: 0.\d+"), level="info")
+            mock.call(category="timing", message=message, level="info")
+            for message in [
+                "⏱  100%  slow_function_view: 0.200s",
+                "⏱    0%   → part1: 0.000s",
+                "⏱    0%   →  → part1a: 0.000s",
+                "⏱  100%   → part2: 0.200s",
+            ]
         ])
 
 

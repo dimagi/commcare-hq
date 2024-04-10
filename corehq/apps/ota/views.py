@@ -126,10 +126,10 @@ def app_aware_search(request, domain, app_id):
     request_dict = dict((request.GET if request.method == 'GET' else request.POST).lists())
 
     try:
-        cases = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
+        fixtures, profiler = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
-    fixtures = CaseDBFixture(cases).fixture
+    profiler.timing_context.add_to_sentry_breadcrumbs()
     _log_search_timing(start_time, request_dict, domain, app_id)
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
@@ -155,7 +155,7 @@ def _log_search_timing(start_time, request_dict, domain, app_id):
                       buckets=(500, 1000, 5000),
                       bucket_unit='ms',
                       tags=limit_tags(tags, domain))
-    if elapsed >= 10 and limit_domains(domain) != "__other__":
+    if elapsed >= 3 and limit_domains(domain) != "__other__":
         notify_exception(None, "LongCaseSearchRequest", details={
             'request_dict': request_dict,
             'app_id': app_id,
