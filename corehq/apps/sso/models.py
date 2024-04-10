@@ -310,10 +310,26 @@ class IdentityProvider(models.Model):
         for domain in self.get_active_projects():
             self.clear_domain_caches(domain)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_max_api_expiration = self.max_days_until_user_api_key_expiration
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.clear_all_email_domain_caches()
         self.clear_all_domain_subscriber_caches()
+
+        if self._api_expiration_date_has_become_more_restrictive():
+            from corehq.apps.sso.tasks import update_sso_user_api_key_expiration_dates
+            update_sso_user_api_key_expiration_dates.delay(self.id)
+
+    def _api_expiration_date_has_become_more_restrictive(self):
+        if self.max_days_until_user_api_key_expiration is None or \
+                self.max_days_until_user_api_key_expiration == self.__original_max_api_expiration:
+            return False
+
+        return self.__original_max_api_expiration is None or \
+            self.max_days_until_user_api_key_expiration < self.__original_max_api_expiration
 
     def create_trust_with_domain(self, domain, username):
         """
