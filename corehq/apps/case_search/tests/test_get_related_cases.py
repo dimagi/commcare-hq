@@ -275,9 +275,6 @@ class TestGetRelatedCases(BaseCaseSearchTest):
     def test_get_related_cases_result(self):
         """Test that `get_related_cases_result` includes all cases when include_all_related_cases
         is True. And includes only child and path related cases when include_all_related_cases is False"""
-        app = Application.new_app(self.domain, "Case Search App")
-        module = app.add_module(Module.new_module("Search Module", "en"))
-        module.case_type = "teacher"
 
         # a1>b1
         # c1>a2
@@ -308,10 +305,12 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         }
 
         def get_related_cases_result_helper(include_all_related_cases):
-            with patch("corehq.apps.case_search.utils.get_child_case_types", return_value={'c'}), \
-                    patch("corehq.apps.case_search.utils.get_search_detail_relationship_paths",
-                        return_value={"parent"}):
-                return get_related_cases_result(_QueryHelper(self.domain), app, {'teacher'},
+            with (patch("corehq.apps.case_search.utils.get_child_case_types", return_value={'c'}),
+                  patch("corehq.apps.case_search.utils.get_search_detail_relationship_paths",
+                        return_value={"parent"}),
+                  patch("corehq.apps.case_search.utils.get_app_cached",
+                        return_value=None)):
+                return get_related_cases_result(_QueryHelper(self.domain), 'app_id', {'teacher'},
                     source_cases, include_all_related_cases)
 
         EXPECTED_PARTIAL_RELATED_CASES = (source_cases_related["PATH_RELATED_CASE_ID"]
