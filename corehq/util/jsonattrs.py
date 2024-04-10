@@ -81,11 +81,12 @@ Things that may be added in the future:
 - Support for migrating/converting the outer collection of `AttrsDict` and
   `AttrsList`.
 """
-from attrs import asdict, define, field
-
 from django.core.exceptions import ValidationError
 from django.db.models import JSONField
+from django.db.models.expressions import Expression
 from django.utils.translation import gettext_lazy as _
+
+from attrs import asdict, define, field
 
 __all__ = ["AttrsDict", "AttrsList", "dict_of", "list_of"]
 
@@ -100,6 +101,8 @@ class JsonAttrsField(JSONField):
         self.builder = builder
 
     def get_prep_value(self, value):
+        if isinstance(value, Expression):
+            return super().get_prep_value(value)
         return super().get_prep_value(self.builder.jsonify(value))
 
     def to_python(self, value):
