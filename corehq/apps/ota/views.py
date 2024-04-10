@@ -129,10 +129,9 @@ def app_aware_search(request, domain, app_id):
         fixtures, profiler = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
+    profiler.timing_context.add_to_sentry_breadcrumbs()
     _log_search_timing(start_time, request_dict, domain, app_id)
-    response = HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
-    response.request_timer = profiler.timing_context  # logged as Sentry breadcrumbs
-    return response
+    return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
 def _log_search_timing(start_time, request_dict, domain, app_id):
