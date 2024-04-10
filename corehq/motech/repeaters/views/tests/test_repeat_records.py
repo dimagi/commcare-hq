@@ -7,8 +7,9 @@ from unittest.mock import Mock
 
 from corehq.motech.models import ConnectionSettings
 
+from .. import repeaters
 from .. import repeat_records
-from ...models import FormRepeater
+from ...models import FormRepeater, SQLRepeatRecord
 
 
 class TestUtilities(SimpleTestCase):
@@ -84,6 +85,42 @@ class TestUtilities(SimpleTestCase):
             self.assertEqual(result, expected_result)
 
 
+class TestDomainForwardingOptionsView(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        conn = ConnectionSettings.objects.create(domain="test", name="test", url="https://test.com/")
+        cls.repeater = FormRepeater.objects.create(
+            domain="test",
+            connection_settings_id=conn.id,
+            include_app_id_param=False,
+        )
+        cls.record = cls.repeater.repeat_records.create(
+            domain=cls.repeater.domain,
+            payload_id="3978e5d2bc2346fe958b933870c5b28a",
+            registered_at=datetime.utcnow(),
+            next_check=datetime.utcnow(),
+        )
+
+    def test_get_repeater_types_info(self):
+        class view:
+            domain = "test"
+        state_counts = SQLRepeatRecord.objects.count_by_repeater_and_state("test")
+        infos = repeaters.DomainForwardingOptionsView.get_repeater_types_info(view, state_counts)
+        repeater, = {i.class_name: i for i in infos}['FormRepeater'].instances
+
+        self.assertEqual(repeater.count_State, {
+            # templates that reference `count_State` may need to be
+            # updated if the keys in this dict change
+            'Pending': 1,
+            'Fail': 0,
+            'Success': 0,
+            'Cancelled': 0,
+            'Empty': 0,
+        })
+
+
 class TestRepeatRecordView(TestCase):
 
     @classmethod
@@ -114,17 +151,12 @@ class TestRepeatRecordView(TestCase):
         record = repeat_records.RepeatRecordView.get_record_or_404("test", rec_id)
         self.assertEqual(record.id, rec_id)
 
-    def test_get_record_or_404_with_couch_id(self):
-        rec_id = self.record.couch_id
-        record = repeat_records.RepeatRecordView.get_record_or_404("test", rec_id)
-        self.assertEqual(record.id, self.record.id)
-
     def test_get_record_or_404_not_found(self):
-        rec_id = "404aaaaaaaaaaaaaaaaaaaaaaaaaa404"
+        rec_id = 40400000000000000000000000000404
         with self.assertRaises(repeat_records.Http404):
             repeat_records.RepeatRecordView.get_record_or_404("test", rec_id)
 
     def test_get_record_or_404_with_wrong_domain(self):
-        rec_id = str(self.record.id)
+        rec_id = self.record.id
         with self.assertRaises(repeat_records.Http404):
             repeat_records.RepeatRecordView.get_record_or_404("wrong", rec_id)
