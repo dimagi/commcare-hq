@@ -56,7 +56,7 @@ celery==5.2.7
     # via
     #   -r base-requirements.in
     #   django-celery-results
-certifi==2023.7.22
+certifi==2024.2.2
     # via
     #   requests
     #   sentry-sdk
