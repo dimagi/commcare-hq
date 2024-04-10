@@ -1,5 +1,7 @@
-from django.db import connection
-from django.db import models
+from contextlib import contextmanager
+from unittest.mock import patch
+
+from django.db import connection, models
 from django.db.backends.postgresql.schema import DatabaseSchemaEditor
 
 from corehq.util.test_utils import unregistered_django_model
@@ -51,13 +53,18 @@ def test_CharField_has_pattern_ops_index():
         assert has_pattern_ops_index(statements), statements
 
 
+@contextmanager
 def schema_editor():
-    return DatabaseSchemaEditor(connection, collect_sql=True, atomic=False)
+    def capture_sql_output(sql, params=None):
+        editor.collected_sql.append(sql)
+    schema = DatabaseSchemaEditor(connection, collect_sql=True, atomic=False)
+    with patch.object(schema, 'execute', capture_sql_output), schema as editor:
+        yield editor
 
 
 def assert_no_pattern_ops_index(editor):
     statements = editor.collected_sql + editor.deferred_sql
-    assert statements, "expected at least one SQL statement"
+    assert editor.collected_sql, "expected at least one SQL statement"
     assert not has_pattern_ops_index(statements), \
         "\n".join(str(s) for s in statements)
 
