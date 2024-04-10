@@ -64,7 +64,7 @@ def schema_editor():
 
 def assert_no_pattern_ops_index(editor):
     statements = editor.collected_sql + editor.deferred_sql
-    assert editor.collected_sql, "expected at least one SQL statement"
+    assert statements, "expected at least one SQL statement"
     assert not has_pattern_ops_index(statements), \
         "\n".join(str(s) for s in statements)
 
