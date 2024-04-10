@@ -160,6 +160,7 @@ PARAMETERIZED_PERMISSIONS = {
     'view_data_registry_contents': 'view_data_registry_contents_list',
     'view_reports': 'view_report_list',
     'view_tableau': 'view_tableau_list',
+    'access_web_apps': 'web_apps_list',
 }
 
 
@@ -192,6 +193,7 @@ class HqPermissions(DocumentSchema):
     access_all_locations = BooleanProperty(default=True)
     access_api = BooleanProperty(default=False)
     access_web_apps = BooleanProperty(default=False)
+    web_apps_list = StringListProperty(default=[])
     edit_messaging = BooleanProperty(default=False)
     access_release_management = BooleanProperty(default=False)
     edit_linked_configurations = BooleanProperty(default=False)
