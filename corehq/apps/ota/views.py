@@ -155,7 +155,7 @@ def _log_search_timing(start_time, request_dict, domain, app_id):
                       buckets=(500, 1000, 5000),
                       bucket_unit='ms',
                       tags=limit_tags(tags, domain))
-    if elapsed >= 10 and limit_domains(domain) != "__other__":
+    if elapsed >= 3 and limit_domains(domain) != "__other__":
         notify_exception(None, "LongCaseSearchRequest", details={
             'request_dict': request_dict,
             'app_id': app_id,
