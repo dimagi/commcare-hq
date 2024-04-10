@@ -406,11 +406,11 @@ hqDefine('users/js/roles',[
 
                 var hasEmbeddedTableau = toggles.toggleEnabled("EMBEDDED_TABLEAU");
 
-                const linkedTitle = root.ermPrivilege ?
+                const linkedTitle = privileges.hasPrivilege('release_management') ?
                     gettext("Enterprise Release Management") : gettext("Multi-Environment Release Management");
                 self.erm = {
                     'title': linkedTitle,
-                    'visible': root.ermPrivilege || root.mrmPrivilege,
+                    'visible': privileges.hasPrivilege('release_management') || privileges.hasPrivilege('lite_release_management'),
                     'access_release_management': {
                         text: gettext('Linked Project Spaces'),
                         checkboxLabel: "erm-checkbox",
@@ -572,8 +572,6 @@ hqDefine('users/js/roles',[
         self.landingPageChoices = o.landingPageChoices;
         self.dataRegistryChoices = o.dataRegistryChoices;
         self.webAppsChoices = o.webAppsChoices;
-        self.ermPrivilege = o.ermPrivilege;
-        self.mrmPrivilege = o.mrmPrivilege;
         self.attendanceTrackingPrivilege = o.attendanceTrackingPrivilege;
         self.unlockLinkedRoles = ko.observable(false);
         self.canEditLinkedData = o.canEditLinkedData;

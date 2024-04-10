@@ -68,8 +68,6 @@ hqDefine("users/js/roles_and_permissions",[
             canRestrictAccessByLocation: initialPageData.get("can_restrict_access_by_location"),
             landingPageChoices: initialPageData.get("landing_page_choices"),
             webAppsChoices: initialPageData.get("web_apps_choices"),
-            ermPrivilege: initialPageData.get("erm_privilege"),
-            mrmPrivilege: initialPageData.get("mrm_privilege"),
             attendanceTrackingPrivilege: initialPageData.get("attendance_tracking_privilege"),
             DataFileDownloadEnabled: initialPageData.get("data_file_download_enabled"),
             ExportOwnershipEnabled: initialPageData.get("export_ownership_enabled"),
