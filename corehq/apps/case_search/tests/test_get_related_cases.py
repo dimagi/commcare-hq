@@ -56,8 +56,11 @@ class TestCaseSearchAppStuff(TestCase):
         )
 
     def test_get_search_detail_relationship_paths(self):
-        self.assertEqual(get_search_detail_relationship_paths(self.app, "patient"), {"parent/parent", "host"})
-        self.assertEqual(get_search_detail_relationship_paths(self.app, "monster"), set())
+        self.assertEqual(get_search_detail_relationship_paths(self.app, ["patient"]),
+                         {"parent/parent", "host"})
+        self.assertEqual(get_search_detail_relationship_paths(self.app, ["monster"]), set())
+        self.assertEqual(get_search_detail_relationship_paths(self.app, ["patient", "monster"]),
+                         {"parent/parent", "host"})
 
     def test_get_child_case_types(self):
         self.assertEqual(get_child_case_types(self.app, "patient"), {'child'})

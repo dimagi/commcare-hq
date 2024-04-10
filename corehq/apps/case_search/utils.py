@@ -417,14 +417,10 @@ def _get_all_related_cases(helper, source_cases):
 
 @time_function()
 def _get_search_detail_path_defined_cases(helper, app, case_types, source_cases):
-    paths = [
-        rel for rels in [get_search_detail_relationship_paths(app, case_type) for case_type in case_types]
-        for rel in rels
-    ]
-    result = []
+    paths = get_search_detail_relationship_paths(app, case_types)
     if paths:
-        result.extend(get_path_related_cases_results(helper, source_cases, paths))
-    return result
+        return get_path_related_cases_results(helper, source_cases, paths)
+    return []
 
 
 @time_function()
@@ -439,16 +435,16 @@ def _get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids)
     return result
 
 
-def get_search_detail_relationship_paths(app, case_type):
+def get_search_detail_relationship_paths(app, case_types):
     """
     Get unique case relationships used by search details in any modules that
-    match the given case type and are configured for case search.
+    match the given case types and are configured for case search.
 
     Returns a set of relationships, e.g. {"parent", "host", "parent/parent"}
     """
     paths = set()
     for module in app.get_modules():
-        if module.case_type == case_type and module_offers_search(module):
+        if module.case_type in case_types and module_offers_search(module):
             for column in module.search_detail("short").columns + module.search_detail("long").columns:
                 if not column.useXpathExpression:
                     parts = column.field.split("/")
