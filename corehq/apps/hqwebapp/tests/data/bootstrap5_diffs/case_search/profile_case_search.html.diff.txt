@@ -9,7 +9,18 @@
  
  {% block page_content %}
  
-@@ -45,14 +45,14 @@
+@@ -36,23 +36,23 @@
+     <p>Number of primary results: <span data-bind="text: results().primary_count"></span></p>
+     <p>Number of related cases: <span data-bind="text: results().related_count"></span></p>
+     <p>Total browser runtime: <span data-bind="text: browserTime"></span> seconds</p>
+-    <p>Total server runtime: <span data-bind="text: results().timing_data.duration.toFixed(3)"></span> seconds</p>
++    <p>Total server runtime: <span data-bind="text: results().runtime"></span> seconds</p>
+ 
+-    <ul data-bind="template: {name: 'timingRow', data: results().timing_data }"
++    <ul data-bind="template: {name: 'timingRow', foreach: results().timing_data }"
+       class="list-group"></ul>
+ 
+     <script id="timingRow" type="text/html">
        <li class="list-group-item">
          <div class="container-fluid">
            <div class="row">
