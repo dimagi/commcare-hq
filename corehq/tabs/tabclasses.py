@@ -1153,7 +1153,7 @@ class CloudcareTab(UITab):
         return (
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
-            and (self.couch_user.can_access_web_apps() or self.couch_user.is_commcare_user())
+            and (self.couch_user.can_access_any_web_apps() or self.couch_user.is_commcare_user())
         )
 
 
