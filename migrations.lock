@@ -1203,6 +1203,7 @@ users
  0055_add_user_data
  0056_add_manage_domain_alerts_permission
  0057_populate_sql_user_data
+ 0058_createprofileanduserdata_copylocation
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
