@@ -1,9 +1,10 @@
+import itertools
 import time
 import uuid
-
 from functools import wraps
+
 from memoized import memoized
-import itertools
+from sentry_sdk import add_breadcrumb
 
 from dimagi.utils.logging import notify_exception
 
@@ -204,8 +205,6 @@ class TimingContext(object):
         This must be called before sending to sentry, for instance if using
         notify_exception rather than raising a hard error
         """
-        from sentry_sdk import add_breadcrumb
-
         def visit(element, prefix=""):
             if element.duration is not None and element.percent_of_total is not None:
                 message = (f"⏱  {element.percent_of_total:>3.0f}% {prefix} "
@@ -216,7 +215,6 @@ class TimingContext(object):
                 visit(sub, prefix=prefix)
 
         visit(self.root)
-
 
     def __repr__(self):
         return "TimingContext(root='{}')".format(

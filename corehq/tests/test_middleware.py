@@ -138,7 +138,7 @@ urlpatterns = [
     ROOT_URLCONF='corehq.tests.test_middleware',
     MIDDLEWARE=('corehq.middleware.LogLongRequestMiddleware',)
 )
-@mock.patch('corehq.middleware.add_breadcrumb')
+@mock.patch('corehq.util.timer.add_breadcrumb')
 @mock.patch('corehq.middleware.notify_exception')
 class TestLogLongRequestMiddleware(SimpleTestCase):
 
