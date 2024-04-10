@@ -10,6 +10,7 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
@@ -740,6 +741,7 @@ class ListRolesView(BaseRoleAccessView):
                 or toggles.DHIS2_INTEGRATION.enabled(self.domain)
                 or toggles.GENERIC_INBOUND_API.enabled(self.domain)
             ),
+            'web_apps_choices': get_cloudcare_apps(self.domain),
             'web_apps_privilege': self.web_apps_privilege,
             'erm_privilege': self.release_management_privilege,
             'mrm_privilege': self.lite_release_management_privilege,
