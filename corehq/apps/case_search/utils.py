@@ -78,7 +78,7 @@ def time_function():
 
 def get_case_search_results_from_request(domain, app_id, couch_user, request_dict):
     config = extract_search_request_config(request_dict)
-    return get_case_search_results(
+    cases = get_case_search_results(
         domain,
         config.case_types,
         config.criteria,
@@ -89,6 +89,8 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
         include_all_related_cases=config.include_all_related_cases,
         commcare_sort=config.commcare_sort,
     )
+    fixtures = CaseDBFixture(cases).fixture
+    return fixtures
 
 
 def get_case_search_results(domain, case_types, criteria,
