@@ -1,9 +1,16 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Views = hqImport("cloudcare/js/formplayer/sessions/views");
-
+hqDefine("cloudcare/js/formplayer/sessions/controller", [
+    'jquery',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/sessions/views',
+    'cloudcare/js/formplayer/sessions/api', // for sessions
+], function (
+    $,
+    constants,
+    FormplayerFrontend,
+    Views
+) {
     return {
         listSessions: function listSessions(pageNumber, pageSize) {
             /* eslint-disable */
