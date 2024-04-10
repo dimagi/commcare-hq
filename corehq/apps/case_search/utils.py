@@ -423,18 +423,6 @@ def _get_search_detail_path_defined_cases(helper, app, case_types, source_cases)
     return []
 
 
-@time_function()
-def _get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids):
-    child_case_types = [
-        _type for types in [get_child_case_types(app, case_type) for case_type in case_types]
-        for _type in types
-    ]
-    result = []
-    if child_case_types:
-        result.extend(get_child_case_results(helper, source_case_ids, child_case_types))
-    return result
-
-
 def get_search_detail_relationship_paths(app, case_types):
     """
     Get unique case relationships used by search details in any modules that
@@ -482,6 +470,18 @@ def get_path_related_cases_results(helper, cases, paths):
         results.extend(results_cache[path])
 
     return results
+
+
+@time_function()
+def _get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids):
+    child_case_types = [
+        _type for types in [get_child_case_types(app, case_type) for case_type in case_types]
+        for _type in types
+    ]
+    result = []
+    if child_case_types:
+        result.extend(get_child_case_results(helper, source_case_ids, child_case_types))
+    return result
 
 
 def get_child_case_types(app, case_type):
