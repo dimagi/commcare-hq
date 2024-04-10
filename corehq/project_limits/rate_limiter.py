@@ -60,20 +60,22 @@ class RateLimiter(object):
         return allowed
 
     def get_wait_time_for_access(self, scope):
-        wait_time = 0
-        # allow usage if any scope has capacity
+        scope_wait_times = []
+
         for _limit_scope, rates in self.iter_rates_with_wait_time(scope):
             wait_times = [
                 wait_time
                 for _rate_counter, current_rate, wait_time, limit in rates
             ]
-            scope_wait_time = max(wait_times)
+            # for each scope all counters must be below threshold
+            limit_scope_wait_time = max(wait_times)
+            scope_wait_times.append(limit_scope_wait_time)
 
-            if scope_wait_time == 0:
-                wait_time = scope_wait_time
-            else:
+            if limit_scope_wait_time > 0:
                 metrics_counter('commcare.rate_limit_exceeded', tags={'key': self.feature_key, 'scope': scope})
-        return wait_time
+
+        # allow usage if any scope has capacity, thus minimum wait time
+        return min(scope_wait_times)
 
     def iter_rates(self, scope=''):
         """
