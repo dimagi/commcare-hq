@@ -770,7 +770,7 @@ def set_site_code_if_needed(location, update_fields=None):
                                 .values_list('site_code', flat=True))
         ]
         location.site_code = generate_code(location.name, all_codes)
-        if update_fields:
+        if update_fields is not None:
             update_fields.append('site_code')
 
 
