@@ -221,7 +221,6 @@ class CallCenterUtilsTests(TestCase):
 class CallCenterUtilsUsercaseTests(TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.skip_commcareuser_teardown = False
 
     @classmethod
     def setUpClass(cls):
@@ -235,8 +234,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
                                         '***', None, None, commit=False)  # Don't commit yet
 
     def tearDown(self):
-        if not self.skip_commcareuser_teardown:
-            self.user.delete(self.domain.name, deleted_by=None)
+        self.user.delete(self.domain.name, deleted_by=None)
 
     @classmethod
     def tearDownClass(cls):
@@ -403,7 +401,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
 
     @flag_enabled('USH_USERCASES_FOR_WEB_USERS')
     def test_web_user_location_fields_sync(self):
-        self.skip_commcareuser_teardown = True
+        self.user.save()
         web_user = WebUser.create(TEST_DOMAIN, 'user3', '***', None, None)
         self.addCleanup(web_user.delete, TEST_DOMAIN, deleted_by=None)
         lt = LocationType.objects.create(
