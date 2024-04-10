@@ -126,11 +126,13 @@ def app_aware_search(request, domain, app_id):
     request_dict = dict((request.GET if request.method == 'GET' else request.POST).lists())
 
     try:
-        fixtures = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
+        fixtures, profiler = get_case_search_results_from_request(domain, app_id, request.couch_user, request_dict)
     except CaseSearchUserError as e:
         return HttpResponse(str(e), status=400)
     _log_search_timing(start_time, request_dict, domain, app_id)
-    return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
+    response = HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
+    response.request_timer = profiler.timing_context  # logged as Sentry breadcrumbs
+    return response
 
 
 def _log_search_timing(start_time, request_dict, domain, app_id):
