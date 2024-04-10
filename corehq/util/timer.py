@@ -198,6 +198,26 @@ class TimingContext(object):
         """Get the list of ``NestableTimer`` objects in hierarchy order"""
         return self.root.to_list(exclude_root)
 
+    def add_to_sentry_breadcrumbs(self):
+        """Add timing context to the breadcrumbs section in sentry.
+
+        This must be called before sending to sentry, for instance if using
+        notify_exception rather than raising a hard error
+        """
+        from sentry_sdk import add_breadcrumb
+
+        def visit(element, prefix=""):
+            if element.duration is not None and element.percent_of_total is not None:
+                message = (f"⏱  {element.percent_of_total:>3.0f}% {prefix} "
+                           f"{element.name or ''}: {element.duration:0.3f}s")
+                add_breadcrumb(category="timing", message=message, level="info")
+            prefix += "  →"
+            for sub in element.subs:
+                visit(sub, prefix=prefix)
+
+        visit(self.root)
+
+
     def __repr__(self):
         return "TimingContext(root='{}')".format(
             self.root
