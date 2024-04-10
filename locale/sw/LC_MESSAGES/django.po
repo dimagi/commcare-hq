@@ -174,6 +174,7 @@ msgstr ""
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
 #: corehq/apps/domain/forms.py corehq/apps/events/forms.py
+#: corehq/apps/reports/standard/deployments.py
 #: corehq/messaging/scheduling/forms.py
 msgid "Start Date"
 msgstr ""
@@ -435,7 +436,7 @@ msgstr ""
 #: corehq/apps/accounting/forms.py corehq/apps/app_manager/forms.py
 #: corehq/apps/app_manager/models.py
 #: corehq/apps/case_search/templates/case_search/case_search.html
-#: corehq/apps/cloudcare/templates/formplayer/users.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/users.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_interfaces/forms.py
@@ -964,7 +965,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/password_setter_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
-#: corehq/apps/cloudcare/templates/formplayer/case_detail.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
@@ -3227,7 +3228,7 @@ msgstr ""
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
-#: corehq/apps/cloudcare/templates/formplayer/users.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/users.html
 #: corehq/apps/dashboard/views.py corehq/apps/domain/forms.py
 #: corehq/tabs/tabclasses.py
 msgid "Organization"
@@ -3660,7 +3661,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/app_view_release_manager.html
 #: corehq/apps/app_manager/templates/app_manager/app_view_settings.html
 #: corehq/apps/app_manager/templates/app_manager/apps_base.html
-#: corehq/apps/cloudcare/templates/formplayer/grid_view.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view.html
 #: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Applications"
 msgstr ""
@@ -4582,8 +4583,8 @@ msgid "Image Compatibility on Multiple Devices"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-#: corehq/apps/cloudcare/templates/formplayer/grid_view.html
-#: corehq/apps/cloudcare/templates/formplayer/session_list.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/session_list.html
 msgid "Incomplete Forms"
 msgstr ""
 
@@ -4594,7 +4595,7 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-#: corehq/apps/cloudcare/templates/formplayer/menu_list.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/menu_list.html
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
 msgid "Languages"
 msgstr ""
@@ -5358,7 +5359,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
-#: corehq/apps/cloudcare/templates/formplayer/grid_view.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view.html
 #: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
 msgid "Settings"
 msgstr ""
@@ -5381,7 +5382,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/apps_base.html
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_actions.html
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
 #: corehq/apps/domain/templates/domain/select_plan.html
 #: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
 #: corehq/apps/reports/templates/reports/partials/description.html
@@ -5414,7 +5415,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/case_summary.html
 #: corehq/apps/app_manager/templates/app_manager/partials/form_summary_header.html
-#: corehq/apps/cloudcare/templates/formplayer/pagination.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
 msgid "Go"
 msgstr ""
 
@@ -5951,8 +5952,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_diff_modal.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-#: corehq/apps/cloudcare/templates/formplayer/query_view.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/query_view.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html
 #: corehq/apps/domain/templates/domain/confirm_plan.html
@@ -7729,8 +7730,8 @@ msgid "Refresh"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
-#: corehq/apps/cloudcare/templates/formplayer/case_detail.html
-#: corehq/apps/cloudcare/templates/formplayer/case_list/multi_select_continue_button.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/multi_select_continue_button.html
 #: corehq/apps/domain/templates/domain/confirm_plan.html
 #: corehq/apps/domain/templates/domain/select_plan.html
 #: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_continue.html
@@ -7923,7 +7924,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_detail.html
 #: corehq/apps/app_manager/views/modules.py
-#: corehq/apps/cloudcare/templates/formplayer/case_detail.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 msgid "Case Detail"
 msgstr ""
 
@@ -8843,7 +8844,7 @@ msgid "Validation Message"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#: corehq/apps/cloudcare/templates/formplayer/settings_view.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/inactivity_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/inactivity_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap3/get_demo_modals.html
@@ -9338,7 +9339,7 @@ msgid "Select Icon Image"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html
-#: corehq/apps/cloudcare/templates/formplayer/case_detail.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/reports/templates/reports/partials/saved_exports.html
 #: corehq/motech/repeaters/views/repeat_records.py
@@ -10082,8 +10083,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/multimedia_ajax.html
-#: corehq/apps/cloudcare/templates/formplayer/grid_view.html
-#: corehq/apps/cloudcare/templates/formplayer/settings_view.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 msgid "Sync"
 msgstr ""
@@ -10162,7 +10163,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/toggle_diff_modal.html
-#: corehq/apps/cloudcare/templates/formplayer/case_list/search_controls.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 msgid "Select All"
 msgstr ""
@@ -11430,7 +11431,7 @@ msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
 #: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
 #: corehq/apps/export/templates/export/partials/export_download_progress.html
 #: corehq/ex-submodules/soil/templates/soil/partials/download_in_progress.html
 #: corehq/messaging/smsbackends/telerivet/templates/telerivet/partials/finish.html
@@ -11701,12 +11702,13 @@ msgid "Add input"
 msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
-msgid "Custom Query Addition"
+msgid "Add XPath"
 msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-#: corehq/apps/cloudcare/templates/formplayer/query_view.html
+#: corehq/apps/case_search/templates/case_search/profile_case_search.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/query_view.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/reports/filters/simple.py
@@ -11788,6 +11790,10 @@ msgstr ""
 #: corehq/apps/domain/views/settings.py corehq/apps/registry/models.py
 #: corehq/tabs/tabclasses.py
 msgid "Case Search"
+msgstr ""
+
+#: corehq/apps/case_search/views.py
+msgid "Profile Case Search"
 msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
@@ -11906,11 +11912,11 @@ msgstr ""
 msgid "Not found application by name: %s"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/block_web_apps.html
+#: corehq/apps/cloudcare/templates/cloudcare/block_web_apps.html
 msgid "Blocked"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/block_web_apps.html
+#: corehq/apps/cloudcare/templates/cloudcare/block_web_apps.html
 msgid "You are currently blocked from using Web Apps"
 msgstr ""
 
@@ -11972,11 +11978,188 @@ msgstr ""
 msgid "Show Full Menu"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/new_app_version_modal.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list.html
+msgid "Scroll to bottom"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/no_items_text.html
+msgid "List is empty."
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
+msgid "Hide Map"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/menu_header.html
+msgid "Refine search"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/search_controls.html
+msgid "Sort By"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Expand Data Preview Section."
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Data Preview"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Empty String"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Showing the first"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "lines..."
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Copy Full Evaluation to Clipboard"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Copy Full Trace to Clipboard"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "Recent Queries"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/debugger.html
+msgid "No recent queries"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid "Question Group"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid ""
+"\n"
+"              Please correct the answers below before submitting.\n"
+"              <br>\n"
+"              You can use the <strong><i class='fa fa-fast-forward'></i> "
+"Next Error</strong> button on the left-hand side of the screen to navigate "
+"between required fields.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid "An answer is required."
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid "Navigate Across Required Questions"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid ""
+"\n"
+"              You can use this button to navigate between questions that are "
+"required but missing or that contain errors.\n"
+"              You will also see a summary of questions that need attention "
+"at the bottom of the form.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid "Next Error"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid "Show help dialog"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid "A response is required for this question."
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid "Sorry, this response is required!"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid "This repeatable group is empty"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid "Your browser does not support audio"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid "Your browser does not support video"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid ""
+"\n"
+"      Sorry, web entry cannot support this type of question.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid ""
+"\n"
+"            This question will appear as follows in data exports.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid "OK"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/query_view.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/sms/templates/sms/chat_contacts.html
+msgid "Clear"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid "Clear map"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
+msgid "Please wait while the map loads"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view.html
+msgid "Log in as"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view.html
+#: corehq/messaging/scheduling/forms.py
+msgid "Start"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/menu_list.html
+msgid "Home"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/menu_list.html
+msgid "Dropdown toggle"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/menu_list.html
+#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html
+#: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html
+msgid "Print"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
 msgid "A new version of this app is available"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/new_app_version_modal.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
 msgid ""
 "\n"
 "              CommCare recommends that you get the latest version of this "
@@ -11984,23 +12167,23 @@ msgid ""
 "            "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/new_app_version_modal.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
 msgid "To keep any unsaved changes -"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/new_app_version_modal.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
 msgid "Click on “Update Later”."
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/new_app_version_modal.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
 msgid "Submit your changes."
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/new_app_version_modal.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
 msgid "Update by clicking on “Web Apps” at the top left of the browser page."
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/new_app_version_modal.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
 msgid ""
 "\n"
 "                  If you don’t have any unsaved changes and would like to "
@@ -12008,12 +12191,73 @@ msgid ""
 "                "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/new_app_version_modal.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
 msgid "Update Later"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/new_app_version_modal.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/new_app_version_modal.html
 msgid "Get Latest App"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
+#, python-format
+msgid "<%%- rowRange[i] %%> per page"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
+msgid "1"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/pagination.html
+msgid "..."
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/query_view.html
+#, python-format
+msgid "Include results where '<%%- text %%>' is blank"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/session_list.html
+msgid ""
+"\n"
+"          Web Apps deletes any Incomplete Forms that are more than 7 days "
+"old.\n"
+"          Please submit any forms with important data before then to avoid "
+"data loss.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+msgid "Use one question per screen"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+msgid "Set the application language"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+msgid "Clear user data"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+msgid "Break Pending Request Locks"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+msgid "Break"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/settings_view.html
+msgid "Sync User Data"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/users.html
+msgid "Organization Type"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/cloudcare/partials/users.html
+#: corehq/apps/users/templates/users/mobile_workers.html
+msgid "Date Registered"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/web_apps_disabled.html
@@ -12032,244 +12276,6 @@ msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/web_apps_disabled.html
 msgid "The 'disable_web_apps' feature flag is turned on."
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Question Group"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid ""
-"\n"
-"              Please correct the answers below before submitting.\n"
-"              <br>\n"
-"              You can use the <strong><i class='fa fa-fast-forward'></i> "
-"Next Error</strong> button on the left-hand side of the screen to navigate "
-"between required fields.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "An answer is required."
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Navigate Across Required Questions"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid ""
-"\n"
-"              You can use this button to navigate between questions that are "
-"required but missing or that contain errors.\n"
-"              You will also see a summary of questions that need attention "
-"at the bottom of the form.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Next Error"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Show help dialog"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "A response is required for this question."
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Sorry, this response is required!"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "This repeatable group is empty"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Your browser does not support audio"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Your browser does not support video"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid ""
-"\n"
-"      Sorry, web entry cannot support this type of question.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid ""
-"\n"
-"            This question will appear as follows in data exports.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "OK"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-#: corehq/apps/cloudcare/templates/formplayer/query_view.html
-#: corehq/apps/cloudcare/templates/formplayer/settings_view.html
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/geospatial/templates/case_grouping_map.html
-#: corehq/apps/sms/templates/sms/chat_contacts.html
-msgid "Clear"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Clear map"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Please wait while the map loads"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/case_list.html
-msgid "Scroll to bottom"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/case_list.html
-#: corehq/apps/cloudcare/templates/formplayer/case_list/no_items_text.html
-msgid "List is empty."
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/case_list/menu_header.html
-msgid "Hide Map"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/case_list/menu_header.html
-msgid "Refine search"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/case_list/search_controls.html
-msgid "Sort By"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/debugger.html
-msgid "Expand Data Preview Section."
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/debugger.html
-msgid "Data Preview"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/debugger.html
-msgid "Empty String"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/debugger.html
-msgid "Showing the first"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/debugger.html
-msgid "lines..."
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/debugger.html
-msgid "Copy Full Evaluation to Clipboard"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/debugger.html
-msgid "Copy Full Trace to Clipboard"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/debugger.html
-msgid "Recent Queries"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/debugger.html
-msgid "No recent queries"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/grid_view.html
-msgid "Log in as"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/grid_view.html
-#: corehq/messaging/scheduling/forms.py
-msgid "Start"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/menu_list.html
-msgid "Home"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/menu_list.html
-msgid "Dropdown toggle"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/menu_list.html
-#: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html
-#: corehq/apps/reports/templates/reports/standard/partials/filter_panel.html
-msgid "Print"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/pagination.html
-#, python-format
-msgid "<%%- rowRange[i] %%> per page"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/pagination.html
-msgid "1"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/pagination.html
-msgid "..."
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/query_view.html
-#, python-format
-msgid "Include results where '<%%- text %%>' is blank"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/session_list.html
-msgid ""
-"\n"
-"          Web Apps deletes any Incomplete Forms that are more than 7 days "
-"old.\n"
-"          Please submit any forms with important data before then to avoid "
-"data loss.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/settings_view.html
-msgid "Use one question per screen"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/settings_view.html
-msgid "Set the application language"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/settings_view.html
-msgid "Clear user data"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/settings_view.html
-msgid "Break Pending Request Locks"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/settings_view.html
-msgid "Break"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/settings_view.html
-msgid "Sync User Data"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/users.html
-msgid "Organization Type"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/formplayer/users.html
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "Date Registered"
 msgstr ""
 
 #: corehq/apps/cloudcare/views.py corehq/tabs/tabclasses.py
@@ -13301,15 +13307,7 @@ msgid "Column {} in \"{}\" sheet has an empty header"
 msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
-msgid "Column {} has an empty header"
-msgstr ""
-
-#: corehq/apps/data_dictionary/util.py
 msgid "Invalid column \"{}\" in \"{}\" sheet. Valid column names are: {}"
-msgstr ""
-
-#: corehq/apps/data_dictionary/util.py
-msgid "Invalid column \"{}\". Valid column names are: {}"
 msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
@@ -13317,7 +13315,7 @@ msgid "Missing \"Case Property\" column header in \"{}\" sheet"
 msgstr ""
 
 #: corehq/apps/data_dictionary/util.py
-msgid "Missing \"Case Property\" column header"
+msgid "Column {} in \"{}\" sheet is missing a header"
 msgstr ""
 
 #: corehq/apps/data_dictionary/views.py
@@ -30013,6 +30011,12 @@ msgid "App version"
 msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py
+msgid ""
+"Choose a start date up to 1 year ago. Report displays data from the selected "
+"date to today."
+msgstr ""
+
+#: corehq/apps/reports/standard/deployments.py
 msgid "Aggregate User Status"
 msgstr ""
 
@@ -30029,19 +30033,7 @@ msgid "Percent of Users"
 msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py
-msgid "in the last 3 days"
-msgstr ""
-
-#: corehq/apps/reports/standard/deployments.py
-msgid "in the last week"
-msgstr ""
-
-#: corehq/apps/reports/standard/deployments.py
-msgid "in the last 30 days"
-msgstr ""
-
-#: corehq/apps/reports/standard/deployments.py
-msgid "in the last 60 days"
+msgid "in the last {} days"
 msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py
@@ -30116,6 +30108,10 @@ msgid "Error Message"
 msgstr ""
 
 #: corehq/apps/reports/standard/forms/reports.py
+msgid "View Cases"
+msgstr ""
+
+#: corehq/apps/reports/standard/forms/reports.py
 msgid "Re-process Form"
 msgstr ""
 
@@ -30134,6 +30130,14 @@ msgstr ""
 #: corehq/apps/reports/standard/forms/reports.py
 #, python-brace-format
 msgid "{username} {archived_form} on {date}"
+msgstr ""
+
+#: corehq/apps/reports/standard/forms/reports.py
+msgid "Unable to view form"
+msgstr ""
+
+#: corehq/apps/reports/standard/forms/reports.py
+msgid "Unable to view case"
 msgstr ""
 
 #: corehq/apps/reports/standard/inspect.py
@@ -33887,7 +33891,7 @@ msgstr ""
 msgid "1 Week"
 msgstr ""
 
-#: corehq/apps/sms/views.py corehq/apps/sso/models.py
+#: corehq/apps/sms/views.py corehq/apps/sso/forms.py corehq/apps/sso/models.py
 msgid "30 Days"
 msgstr ""
 
@@ -34452,6 +34456,85 @@ msgid "Secret Expires On"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
+msgid "Reveal Keys"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid ""
+"When enabled, all keys on a user’s API Key page will no longer be partially "
+"hidden after creation. This also removes the suggestion to copy an API key "
+"to another location when generating a new key."
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "Always display full API keys to SSO users"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "Require Expiration Date"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid ""
+"When enabled, this ensures that a date of expiration is always provided when "
+"SSO users generated new keys from their API Keys page"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "Always require an expiration date for API keys"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "Maximum Expiration Length"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid ""
+"If an expiration date is required, the expiration date will not exceed this "
+"many days from the date an API key is created"
+msgstr ""
+
+#: corehq/apps/sso/forms.py corehq/apps/sso/models.py
+msgid "1 Year"
+msgstr ""
+
+#: corehq/apps/sso/forms.py corehq/apps/sso/models.py
+msgid "180 Days"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "160 Days"
+msgstr ""
+
+#: corehq/apps/sso/forms.py corehq/apps/sso/models.py
+msgid "120 Days"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "90 Days"
+msgstr ""
+
+#: corehq/apps/sso/forms.py corehq/apps/sso/models.py
+msgid "60 Days"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid ""
+"All existing API keys that do not comply with this expiration date policy "
+"will be updated to ensure a compliant expiration date is present. For keys "
+"that do not have an expiration date set, the date of expiration will be "
+"<span data-bind=\"text: expirationLength\"></span> from today after clicking "
+"\"Update Configuration\" below. This will apply only to SSO users associated "
+"with this Identity Provider."
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+#, fuzzy
+#| msgid "User Management"
+msgid "API Key Management"
+msgstr "Manejo de Casos"
+
+#: corehq/apps/sso/forms.py
 msgid "Single Sign-On Settings"
 msgstr ""
 
@@ -34461,6 +34544,10 @@ msgstr ""
 
 #: corehq/apps/sso/forms.py
 msgid "This certificate has already expired!"
+msgstr ""
+
+#: corehq/apps/sso/forms.py
+msgid "Please specify a value."
 msgstr ""
 
 #: corehq/apps/sso/forms.py
@@ -34508,10 +34595,8 @@ msgid "Cancel Update"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-#, fuzzy
-#| msgid "User Management"
 msgid "Remote User Management"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/sso/forms.py
 msgid ""
@@ -34541,22 +34626,6 @@ msgstr ""
 
 #: corehq/apps/sso/forms.py
 msgid "OpenID Provider Configuration"
-msgstr ""
-
-#: corehq/apps/sso/models.py
-msgid "1 Year"
-msgstr ""
-
-#: corehq/apps/sso/models.py
-msgid "180 Days"
-msgstr ""
-
-#: corehq/apps/sso/models.py
-msgid "120 Days"
-msgstr ""
-
-#: corehq/apps/sso/models.py
-msgid "60 Days"
 msgstr ""
 
 #: corehq/apps/sso/templates/sso/accounting_admin/edit_identity_provider.html
