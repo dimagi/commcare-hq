@@ -233,7 +233,8 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
 
     def tearDown(self):
         delete_all_repeat_records()
-        Command.discard_resume_state()
+        Command.discard_resume_state(verify_only=False)
+        Command.discard_resume_state(verify_only=True)
         super().tearDown()
 
     def test_sync_to_couch(self):
@@ -479,6 +480,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         doc.pop("attempts")
         doc.pop("registered_on")
         doc["succeeded"] = False
+        doc["registered_at"] = json_format_datetime(when)
         doc["next_check"] = json_format_datetime(when)
         doc["failure_reason"] = "A tree fell in the forest"
         doc_id = self.db.save_doc(doc)["id"]
