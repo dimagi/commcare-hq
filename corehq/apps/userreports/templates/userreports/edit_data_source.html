@@ -214,6 +214,9 @@
             <p>
               {% trans "Based on the amount of data to be processed, this can take a considerable amount of time." %}
             </p>
+            <p>
+              {% trans "Please confirm if you want to proceed." %}
+            </p>
           </div>
           <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
             {% csrf_token %}
@@ -221,11 +224,7 @@
               <button type="button" class="btn btn-default" data-dismiss="modal">
                 {% trans "Cancel" %}
               </button>
-              {% if use_updated_ucr_naming %}
-                <button type="submit" value="{% trans 'Rebuild Custom Web Report Source'%}" class="disable-on-submit btn btn-danger">{% trans 'Rebuild Custom Web Report Source'%}</button>
-              {% else %}
-                <button type="submit" value="{% trans 'Rebuild Data Source'%}" class="disable-on-submit btn btn-danger">{% trans 'Rebuild Data Source'%}</button>
-              {% endif %}
+              <button type="submit" value="{% trans 'Confirm'%}" class="disable-on-submit btn btn-danger">{% trans 'Confirm'%}</button>
             </div>
           </form>
         </div>
