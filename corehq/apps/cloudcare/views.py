@@ -79,7 +79,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import get_complete_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
 from corehq.util.metrics import metrics_histogram
@@ -146,10 +146,7 @@ class FormplayerMain(View):
         username = request.COOKIES.get(cookie_name)
         if username:
             username = urllib.parse.unquote(username)
-            # mobile workers do not have special characters in their name
-            # and web user usernames are email addresses
-            if '@' not in username:
-                username = format_username(username, domain)
+            username = get_complete_username(username, domain)
             user = CouchUser.get_by_username(username)
             if user:
                 return user, set_cookie
