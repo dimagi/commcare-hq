@@ -16,10 +16,9 @@ from corehq.apps.case_search.utils import (
     _QueryHelper,
     get_and_tag_related_cases,
     get_child_case_results,
-    get_child_case_types,
     get_path_related_cases_results,
     get_related_cases_result,
-    get_search_detail_relationship_paths,
+    get_app_context,
 )
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.case_search import wrap_case_search_hit
@@ -28,9 +27,11 @@ from corehq.apps.es.tests.utils import es_test
 
 
 class TestCaseSearchAppStuff(TestCase):
+    domain = "TestCaseSearchAppStuff"
+
     @classmethod
     def setUpTestData(cls):
-        cls.app = Application.new_app("test-domain", "Case Search App")
+        cls.app = Application.new_app(cls.domain, "Case Search App")
         module = cls.app.add_module(Module.new_module("Search Module", "en"))
         module.case_type = "patient"
         detail = module.case_details.short
@@ -54,18 +55,20 @@ class TestCaseSearchAppStuff(TestCase):
         detail.columns.append(
             DetailColumn(header={"en": "zz"}, model="case", field="parent/zz", format="plain"),
         )
+        cls.app.save()
 
-    def test_get_search_detail_relationship_paths(self):
-        self.assertEqual(get_search_detail_relationship_paths(self.app, ["patient"]),
-                         {"parent/parent", "host"})
-        self.assertEqual(get_search_detail_relationship_paths(self.app, ["monster"]), set())
-        self.assertEqual(get_search_detail_relationship_paths(self.app, ["patient", "monster"]),
-                         {"parent/parent", "host"})
+    def test_get_app_context(self):
+        paths, child_case_types = get_app_context(self.domain, self.app._id, ['patient'])
+        self.assertEqual(paths, {"parent/parent", "host"})
+        self.assertEqual(child_case_types, {'child'})
 
-    def test_get_child_case_types(self):
-        self.assertEqual(get_child_case_types(self.app, ["patient"]), {'child'})
-        self.assertEqual(get_child_case_types(self.app, ["monster"]), set())
-        self.assertEqual(get_child_case_types(self.app, ["patient", "monster"]), {'child'})
+        paths, child_case_types = get_app_context(self.domain, self.app._id, ['monster'])
+        self.assertEqual(paths, set())
+        self.assertEqual(child_case_types, set())
+
+        paths, child_case_types = get_app_context(self.domain, self.app._id, ['patient', 'monster'])
+        self.assertEqual(paths, {"parent/parent", "host"})
+        self.assertEqual(child_case_types, {'child'})
 
 
 @es_test
@@ -146,11 +149,8 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         }
 
         def get_related_cases_helper(include_all_related_cases):
-            with patch("corehq.apps.case_search.utils.get_search_detail_relationship_paths",
-                    return_value={"parent", "parent/parent"}), \
-                    patch("corehq.apps.case_search.utils.get_child_case_types", return_value={"c", "d"}), \
-                    patch("corehq.apps.case_search.utils.get_app_cached"):
-
+            with patch("corehq.apps.case_search.utils.get_app_context",
+                       return_value=({"parent", "parent/parent"}, {"c", "d"})):
                 return get_and_tag_related_cases(_QueryHelper(self.domain), None, {"c"}, source_cases, None,
                     include_all_related_cases)
 
@@ -199,10 +199,8 @@ class TestGetRelatedCases(BaseCaseSearchTest):
             "CHILD_CASE_ID": {"c1"},
         }
 
-        with patch("corehq.apps.case_search.utils.get_search_detail_relationship_paths",
-                   return_value={"parent"}), \
-                patch("corehq.apps.case_search.utils.get_child_case_types", return_value={'c'}), \
-                patch("corehq.apps.case_search.utils.get_app_cached"):
+        with patch("corehq.apps.case_search.utils.get_app_context",
+                   return_value=({"parent"}, {"c"})):
             include_all_related_cases = False
             partial_related_cases = get_and_tag_related_cases(_QueryHelper(self.domain), None, {"a"}, source_cases,
                 'custom_related_case_id', include_all_related_cases)
@@ -322,11 +320,8 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         }
 
         def get_related_cases_result_helper(include_all_related_cases):
-            with (patch("corehq.apps.case_search.utils.get_child_case_types", return_value={'c'}),
-                  patch("corehq.apps.case_search.utils.get_search_detail_relationship_paths",
-                        return_value={"parent"}),
-                  patch("corehq.apps.case_search.utils.get_app_cached",
-                        return_value=None)):
+            with patch("corehq.apps.case_search.utils.get_app_context",
+                    return_value=({"parent"}, {"c"})):
                 return get_related_cases_result(_QueryHelper(self.domain), 'app_id', {'teacher'},
                     source_cases, include_all_related_cases)
 
