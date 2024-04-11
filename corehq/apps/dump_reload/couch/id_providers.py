@@ -39,18 +39,6 @@ class DomainKeyGenerator(ViewKeyGenerator):
         }
 
 
-class DomainInListKeyGenerator(ViewKeyGenerator):
-    def __init__(self, static_key_items=None):
-        self.static_key_items = static_key_items or []
-
-    def get_key_args(self, doc_type, domain):
-        startkey = [domain] + self.static_key_items
-        return {
-            'startkey': startkey,
-            'endkey': startkey + [{}],
-        }
-
-
 class ViewIDProvider(BaseIDProvider):
     """ID provider that gets ID's from view rows
     :param doc_type: Doc Type of returned docs
