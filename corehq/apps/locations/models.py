@@ -179,7 +179,7 @@ class LocationType(models.Model):
             self._populate_stock_levels(config, update_fields=additional_update_fields)
 
         is_not_first_save = self.pk is not None
-        if 'update_fields' in kwargs:
+        if kwargs.get('update_fields') is not None:
             kwargs['update_fields'].extend(additional_update_fields)
         super(LocationType, self).save(*args, **kwargs)
 
@@ -409,7 +409,7 @@ class SQLLocation(AdjListModel):
         with transaction.atomic():
             set_site_code_if_needed(self, update_fields=additional_update_fields)
             sync_supply_point(self, update_fields=additional_update_fields)
-            if 'update_fields' in kwargs:
+            if kwargs.get('update_fields') is not None:
                 kwargs['update_fields'].extend(additional_update_fields)
             super(SQLLocation, self).save(*args, **kwargs)
 
