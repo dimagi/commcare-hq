@@ -34,14 +34,9 @@ def require_cloudcare_access_ex():
                 set_bootstrap_version5()
                 return render(request, "cloudcare/web_apps_disabled.html", context)
             if hasattr(request, "couch_user"):
-                if request.couch_user.is_web_user():
-                    if not request.couch_user.can_access_any_web_apps(domain):
-                        raise Http403()
-                    return view_func(request, domain, *args, **kwargs)
-                else:
-                    assert request.couch_user.is_commcare_user(), \
-                        "user was neither a web user or a commcare user!"
-                    return login_and_domain_required(view_func)(request, domain, *args, **kwargs)
+                if not request.couch_user.can_access_any_web_apps(domain):
+                    raise Http403()
+                return view_func(request, domain, *args, **kwargs)
             return login_and_domain_required(view_func)(request, domain, *args, **kwargs)
         return _inner
     return decorator
