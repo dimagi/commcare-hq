@@ -195,7 +195,7 @@ class RepeaterSuperProxy(models.Model):
         self.clear_caches()
         self.repeater_type = self._repeater_type
         self.name = self.name or self.connection_settings.name
-        if kwargs.get('update_fields') is not None:
+        if 'update_fields' in kwargs:
             kwargs['update_fields'].extend(['repeater_type', 'name'])
         return super().save(*args, **kwargs)
 
