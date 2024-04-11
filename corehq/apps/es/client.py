@@ -131,6 +131,10 @@ class ElasticManageAdapter(BaseAdapter):
         value = "all" if enabled else "none"
         self._cluster_put_settings({"cluster.routing.allocation.enable": value})
 
+    def cluster_get_settings(self, is_flat=True):
+        """Returns both transient and persistent cluster settings."""
+        return self._es.cluster.get_settings(flat_settings=is_flat)
+
     def _cluster_put_settings(self, settings, transient=True, is_flat=True):
         set_type = "transient" if transient else "persistent"
         self._es.cluster.put_settings({set_type: settings}, flat_settings=is_flat)

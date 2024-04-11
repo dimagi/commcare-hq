@@ -281,6 +281,24 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             for key in settings_obj:
                 self.assertIsNone(settings["transient"].get(key))
 
+    def test_cluster_get_settings_with_no_settings(self):
+        self._clear_cluster_settings()
+        settings = self.adapter.cluster_get_settings()
+        self.assertIn("transient", settings)
+        self.assertIn("persistent", settings)
+        self.assertEqual(settings['transient'], {})
+        self.assertEqual(settings['persistent'], {})
+
+    def test_cluster_get_settings_with_existing_settings(self):
+        settings_obj = {
+            "cluster.routing.allocation.enable": "all",
+            "cluster.routing.allocation.disk.watermark.low": "1gb"
+        }
+        self.adapter._cluster_put_settings(settings_obj)
+        settings = self.adapter.cluster_get_settings()
+        self.assertEqual(settings['transient'], settings_obj)
+        self._clear_cluster_settings(verify=True)
+
 
     def test_get_node_info(self):
         info = self.adapter._es.nodes.info()
