@@ -1561,7 +1561,7 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if self.can_view_cloudcare:
+        if self.can_view_cloudcare and toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled_for_request(self._request):
             title = _("Web Apps Permissions")
             menu.append({
                 'title': title,

@@ -450,6 +450,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     @use_bootstrap5
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
+    @method_decorator(toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(EditCloudcareUserPermissionsView, self).dispatch(request, *args, **kwargs)
 

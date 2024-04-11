@@ -11,6 +11,13 @@
   {% registerurl "cloudcare_app_settings" domain %}
 
   <h2>{% trans 'Manage Web Apps Permissions' %}</h2>
+  <div class="alert alert-danger">
+    {% url "roles_and_permissions" domain as roles_url %}
+    {% blocktrans %}
+      This feature is deprecated. Access to specific web apps can now be managed via
+      <a target="_blank" href="{{ roles_url }}">Roles & Permissions</a>.
+    {% endblocktrans %}
+  </div>
   <section id="cloudcare-app-settings" style="display: none">
     <div data-bind="saveButton: saveButton"></div>
     <div data-bind="with: applicationAccess">
