@@ -687,6 +687,15 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         initial.setdefault('api_host', identity_provider.api_host)
         initial.setdefault('api_id', identity_provider.api_id)
         initial.setdefault('date_api_secret_expiration', identity_provider.date_api_secret_expiration)
+        if self.uses_api_key_management:
+            initial.setdefault('always_show_user_api_keys', identity_provider.always_show_user_api_keys)
+            if identity_provider.max_days_until_user_api_key_expiration is not None:
+                initial.setdefault('enforce_user_api_key_expiration', True)
+                initial.setdefault(
+                    'max_days_until_user_api_key_expiration',
+                    identity_provider.max_days_until_user_api_key_expiration
+                )
+
         super().__init__(*args, **kwargs)
 
     def get_primary_fields(self):
@@ -794,7 +803,15 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
                 self.add_error('max_days_until_user_api_key_expiration', gettext('Please specify a value.'))
 
     def update_identity_provider(self, admin_user):
-        raise NotImplementedError("please implement update_identity_provider")
+        self.idp.last_modified_by = admin_user.username
+
+        if self.uses_api_key_management:
+            self.idp.always_show_user_api_keys = self.cleaned_data['always_show_user_api_keys']
+            self.idp.max_days_until_user_api_key_expiration = \
+                self.cleaned_data['max_days_until_user_api_key_expiration']
+
+        self.idp.save()
+        return self.idp
 
 
 class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
@@ -998,6 +1015,7 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         return public_key, date_expiration
 
     def update_identity_provider(self, admin_user):
+        self.is_valid()  # Ensure cleaned_data gets populated prior to accessing its fields, below
         self.idp.is_active = self.cleaned_data['is_active']
         self.idp.login_enforcement_type = self.cleaned_data['login_enforcement_type']
         self.idp.entity_id = self.cleaned_data['entity_id']
@@ -1016,9 +1034,7 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         self.idp.api_id = self.cleaned_data['api_id']
         self.idp.date_api_secret_expiration = self.cleaned_data['date_api_secret_expiration']
 
-        self.idp.last_modified_by = admin_user.username
-        self.idp.save()
-        return self.idp
+        return super().update_identity_provider(admin_user)
 
 
 class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
@@ -1122,12 +1138,11 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         return client_secret
 
     def update_identity_provider(self, admin_user):
+        self.is_valid()  # Ensure cleaned_data gets populated prior to accessing its fields, below
         self.idp.is_active = self.cleaned_data['is_active']
         self.idp.login_enforcement_type = self.cleaned_data['login_enforcement_type']
         self.idp.entity_id = self.cleaned_data['entity_id']
         self.idp.client_id = self.cleaned_data['client_id']
         self.idp.client_secret = self.cleaned_data['client_secret']
 
-        self.idp.last_modified_by = admin_user.username
-        self.idp.save()
-        return self.idp
+        return super().update_identity_provider(admin_user)
