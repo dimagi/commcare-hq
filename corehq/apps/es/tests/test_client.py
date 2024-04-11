@@ -317,6 +317,16 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         self.assertEqual(info['shard'], 2)
         self.assertTrue(len(info['rejection_explanation']) != 0)
 
+    def test_get_node_fs_stats(self):
+        stats = self.adapter.get_node_fs_stats()
+        self.assertTrue(len(stats) > 0)
+        expected_keys = set([
+            'node_id', 'node_name', 'roles', 'total_disk_size', 'free_disk_space', 'disk_usage_percentage'
+        ])
+        for stat in stats:
+            keys = set(stat.keys())
+            self.assertEqual(keys, expected_keys)
+
     def test_get_node_info(self):
         info = self.adapter._es.nodes.info()
         node_id = list(info["nodes"])[0]

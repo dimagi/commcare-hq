@@ -189,6 +189,24 @@ class ElasticManageAdapter(BaseAdapter):
         """
         return self._es.nodes.info(node_id, metric)["nodes"][node_id][metric]
 
+    def get_node_fs_stats(self):
+        """Returns Filesystem related stats for all nodes in the cluster."""
+        cluster_node_stats = []
+        for node_id, node_stats in self._es.nodes.stats()['nodes'].items():
+            total_disk_size = node_stats['fs']['total']['total_in_bytes']
+            free_disk_space = node_stats['fs']['total']['available_in_bytes']
+            used_disk_size = total_disk_size - free_disk_space
+            disk_usage_percentage = used_disk_size / total_disk_size * 100
+            cluster_node_stats.append({
+                "node_id": node_id,
+                "node_name": node_stats["name"],
+                "roles": list(node_stats["roles"]),  # possible values - data/ingest/master
+                "total_disk_size": total_disk_size,
+                "free_disk_space": free_disk_space,
+                "disk_usage_percentage": disk_usage_percentage
+            })
+        return cluster_node_stats
+
     def get_task(self, task_id):
         """Return the details for an active task
 
