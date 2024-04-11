@@ -1,8 +1,8 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main "case_importer/js/bootstrap5/main" %}
+{% requirejs_main_b5 "case_importer/js/bootstrap5/main" %}
 
 {% block page_content %}
   {% include 'case_importer/partials/help_message.html' %}
@@ -47,8 +47,7 @@
     </div>
   {% endif %}
 
-  <form class="form-horizontal form-report"
-        action="{% url "excel_fields" domain %}"
+  <form action="{% url "excel_fields" domain %}"
         method="post"
         id="field_form">
     {% csrf_token %}
@@ -56,8 +55,8 @@
 
     <fieldset>
       <legend>{% trans "Case Type to Update/Create" %}</legend>
-      <div class="form-group">
-        <label class="form-label col-md-3" for="case_type">
+      <div class="row mb-3">
+        <label class="col-form-label col-md-3" for="case_type">
           {% trans "Case type" %}
         </label>
         <div class="col-md-6">
@@ -78,8 +77,8 @@
 
     <fieldset>
       <legend>{% trans "Identifying Cases to Update/Create" %}</legend>
-      <div class="form-group">
-        <label class="form-label col-md-3" for="search_column">
+      <div class="row mb-3">
+        <label class="col-form-label col-md-3" for="search_column">
           {% trans "Excel column" %}
         </label>
         <div class="col-md-6">
@@ -93,8 +92,8 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label col-md-3" for="search_field">
+      <div class="row mb-3">
+        <label class="col-form-label col-md-3" for="search_field">
           {% trans "Corresponding case field" %}
         </label>
         <div class="col-md-6">
@@ -111,8 +110,8 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label col-md-3">
+      <div class="row mb-3">
+        <label class="col-form-label col-md-3">
           {% trans "Handle New Records" %}
         </label>
         <div class="col-md-6">
@@ -137,9 +136,9 @@
     {% endif %}
 
     <div class="form-actions">
-      <div class="col-sm-offset-3">
+      <div class="offset-md-3">
         <button type="button"
-                class="btn btn-primary"
+                class="btn btn-outline-primary"
                 id="back_button">
           <i class="fa fa-backward"></i> {% trans "Back" %}
         </button>
