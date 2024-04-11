@@ -19,6 +19,7 @@ from corehq.util.es.elasticsearch import (
     ElasticsearchException,
     NotFoundError,
     TransportError,
+    RequestError,
     bulk,
 )
 from corehq.util.global_request import get_request_domain
@@ -122,6 +123,46 @@ class ElasticManageAdapter(BaseAdapter):
         if index is not None:
             self._validate_single_index(index)
         return self._es.cluster.health(index)
+
+    def cluster_allocation_explain(self):
+        """
+        Returns cluster allocation for the first failed shard with their node allocation decisions.
+        It can be extended to return allocation of a specific shard or index if provided.
+        """
+        try:
+            return self._parse_cluster_allocation_info(self._es.cluster.allocation_explain())
+        except RequestError as err:
+            # RequestError is raised if there are no un-assigned shards
+            reason = err.info['error']['reason']
+            if 'unable to find any unassigned shards to explain' in reason:
+                return {'unassigned_shards': []}
+            raise err
+
+    def _parse_cluster_allocation_info(self, allocation_info):
+        "Parses the result of cluster allocation explain API"
+
+        shard_info = {
+            'index': allocation_info['index'],
+            'shard': allocation_info['shard'],
+            'primary': allocation_info['primary'],
+            'rejection_explanation': []
+        }
+
+        for decider in allocation_info['node_allocation_decisions']:
+            node_info = {
+                'node_id': decider['node_id'],
+                'node_name': decider['node_name'],
+                'rejection_reasons': []
+            }
+            for decision in decider['deciders']:
+                if decision['decision'] == 'NO':
+                    node_info['rejection_reasons'].append({
+                        'explanation': decision['explanation']
+                    })
+            shard_info["rejection_explanation"].append(node_info)
+        return {
+            "unassigned_shards": [shard_info]
+        }
 
     def cluster_routing(self, *, enabled):
         """Enable or disable cluster routing.

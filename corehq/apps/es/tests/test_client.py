@@ -299,6 +299,23 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         self.assertEqual(settings['transient'], settings_obj)
         self._clear_cluster_settings(verify=True)
 
+    def test_cluster_allocation_explain_on_normal_cluster(self):
+        allocation = self.adapter.cluster_allocation_explain()
+        self.assertEqual(allocation, {'unassigned_shards': []})
+
+    def test_cluster_allocation_explain_on_unassigned_shards(self):
+        test_index_name = 'test_index_for_cluster_allocation'
+        self.adapter.index_create(test_index_name)
+        self.addCleanup(self.adapter.index_delete, test_index_name)
+
+        # This will create unassigned shards because tests and local setup
+        # will always h
+        self.adapter.index_set_replicas(test_index_name, 5)
+        info = self.adapter.cluster_allocation_explain()['unassigned_shards'][0]
+        self.assertEqual(info['index'], test_index_name)
+        self.assertEqual(info['primary'], False)
+        self.assertEqual(info['shard'], 2)
+        self.assertTrue(len(info['rejection_explanation']) != 0)
 
     def test_get_node_info(self):
         info = self.adapter._es.nodes.info()
