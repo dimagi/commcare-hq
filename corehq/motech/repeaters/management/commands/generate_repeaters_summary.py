@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.db.models import Count
-from corehq.motech.repeaters.models import SQLRepeatRecord, Repeater
+from corehq.motech.repeaters.models import RepeatRecord, Repeater
 
 
 class Command(BaseCommand):
@@ -17,7 +17,7 @@ class Command(BaseCommand):
         self.stdout.write("\n")
         self.stdout.write('fetching repeat record data...')
         repeat_records_summary = dict(
-            SQLRepeatRecord.objects
+            RepeatRecord.objects
             .values("repeater__domain")
             .order_by()
             .annotate(record_count=Count("id"))
