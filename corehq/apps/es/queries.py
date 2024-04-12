@@ -84,10 +84,6 @@ def search_string_query(search_string, default_fields):
     }
 
 
-def ids_query(doc_ids):
-    return {"ids": {"values": doc_ids}}
-
-
 def match(search_string, field, operator=None):
     if operator not in [None, 'and', 'or']:
         raise ValueError(" 'operator' argument should be one of: 'and', 'or' ")

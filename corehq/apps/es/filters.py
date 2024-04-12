@@ -93,7 +93,7 @@ def doc_type(doc_type):
 
 def doc_id(doc_id):
     """Filter by doc_id.  Also accepts a list of doc ids"""
-    return term("_id", doc_id)
+    return {"ids": {"values": doc_id}}
 
 
 def missing(field):

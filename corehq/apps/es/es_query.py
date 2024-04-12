@@ -330,11 +330,6 @@ class ESQuery(object):
         self._legacy_fields = True
         return self.source(fields)
 
-    def ids_query(self, doc_ids):
-        return self.set_query(
-            queries.ids_query(doc_ids)
-        )
-
     def source(self, include, exclude=None):
         """
             Restrict the output of _source in the queryset. This can be used to return an object in a queryset
