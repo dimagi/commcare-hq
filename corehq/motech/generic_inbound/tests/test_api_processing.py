@@ -35,6 +35,8 @@ class TestGenericInboundAPI(SimpleTestCase):
             domain=self.domain_name,
             transform_expression=UCRExpression(definition={})
         )
+        # mock 'get_validations' to prevent reverse foreign key lookup on unsaved obj
+        api_model.get_validations = lambda: []
         user = MockUser()
         context = get_evaluation_context(user, 'post', {}, {}, {})
         with self.assertRaises(BadSpecError):
