@@ -49,6 +49,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.setUsercasePropertiesMap(params.usercasePropertiesMap);
 
             self.descriptionDict = params.propertyDescriptions;
+            self.deprecatedPropertiesDict = params.deprecatedProperties;
 
             self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
                 unsavedMessage: gettext("You have unchanged case settings"),
