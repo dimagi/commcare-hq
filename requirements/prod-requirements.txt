@@ -291,7 +291,7 @@ httplib2==0.20.4
     #   google-auth-httplib2
 humanize==4.1.0
     # via flower
-idna==3.4
+idna==3.7
     # via
     #   -r prod-requirements.in
     #   requests

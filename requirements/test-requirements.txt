@@ -295,7 +295,7 @@ httplib2==0.20.4
     # via
     #   google-api-python-client
     #   google-auth-httplib2
-idna==3.4
+idna==3.7
     # via requests
 importlib-metadata==6.0.0
     # via
