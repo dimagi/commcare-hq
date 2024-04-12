@@ -708,7 +708,6 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
 
     def test_form_default_expiration_values_are_empty(self):
         form = SsoSamlEnterpriseSettingsForm(self.idp)
-        self.assertIsNone(form['always_show_user_api_keys'].value())
         self.assertIsNone(form['enforce_user_api_key_expiration'].value())
         self.assertIsNone(form['max_days_until_user_api_key_expiration'].value())
 
@@ -720,7 +719,7 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
     def test_always_show_key_management_is_saved(self):
         self._update_identity_provider(always_show_user_api_keys=False)
         post_data = self._get_post_data(always_show_user_api_keys='on')
-        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data, uses_api_key_management=True)
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
 
         form.update_identity_provider(self.accounting_admin)
 
@@ -733,7 +732,7 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
             enforce_user_api_key_expiration=True,
             max_days_until_user_api_key_expiration=60
         )
-        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data, uses_api_key_management=True)
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
 
         form.update_identity_provider(self.accounting_admin)
 
@@ -743,7 +742,7 @@ class TestSsoSamlEnterpriseSettingsForm(BaseSSOFormTest):
     def test_expiration_enforcement_can_be_removed(self):
         self._update_identity_provider(max_days_until_user_api_key_expiration=60)
         post_data = self._get_post_data(enforce_user_api_key_expiration=False)
-        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data, uses_api_key_management=True)
+        form = SsoSamlEnterpriseSettingsForm(self.idp, post_data)
 
         form.update_identity_provider(self.accounting_admin)
 
