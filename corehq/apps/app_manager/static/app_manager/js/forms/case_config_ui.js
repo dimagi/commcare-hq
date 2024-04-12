@@ -1,5 +1,5 @@
+"use strict";
 hqDefine('app_manager/js/forms/case_config_ui', function () {
-    "use strict";
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
             initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
@@ -49,6 +49,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.setUsercasePropertiesMap(params.usercasePropertiesMap);
 
             self.descriptionDict = params.propertyDescriptions;
+            self.deprecatedPropertiesDict = params.deprecatedProperties;
 
             self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
                 unsavedMessage: gettext("You have unchanged case settings"),
@@ -411,6 +412,15 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 return count;
             });
 
+            self.hasDeprecatedProperties = ko.computed(function () {
+                for (const p of self.case_properties()) {
+                    if (p.isDeprecated()) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+
             self.repeat_context = function () {
                 if (self.case_name) {
                     return caseConfig.get_repeat_context(self.case_name());
@@ -502,6 +512,16 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     return self.case_transaction.case_type();
                 });
                 self.updatedDescription = ko.observable();
+                self.isDeprecated = ko.computed(function () {
+                    const config = self.case_transaction.caseConfig;
+                    if (self.key() !== 'name' && _(config.deprecatedPropertiesDict).has(self.caseType())) {
+                        const depProps = config.deprecatedPropertiesDict[self.caseType()];
+                        if (_(depProps).has(self.key())) {
+                            return depProps[self.key()];
+                        }
+                    }
+                    return false;
+                });
                 self.description = ko.computed({
                     read: function () {
                         if (self.updatedDescription() !== undefined) {
@@ -818,11 +838,11 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
         };
 
         if (initial_page_data('has_form_source')) {
-            var caseConfig = caseConfig(_.extend({}, initial_page_data("case_config_options"), {
+            var caseConfigObj = caseConfig(_.extend({}, initial_page_data("case_config_options"), {
                 home: $('#case-config-ko'),
                 requires: ko.observable(initial_page_data("form_requires")),
             }));
-            caseConfig.init();
+            caseConfigObj.init();
         }
     });
 });

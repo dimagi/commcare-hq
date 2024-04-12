@@ -151,6 +151,25 @@ def get_case_property_label_dict(domain):
     return labels_dict
 
 
+def get_case_property_deprecated_dict(domain):
+    """
+    This returns a dictionary of the structure
+    {
+        case_type: {
+            case_property: is_deprecated,
+            ...
+        },
+        ...
+    }
+    for each case type and case property in the domain
+    """
+    annotated_types = CaseType.objects.filter(domain=domain).prefetch_related('properties')
+    deprecated_dict = {}
+    for case_type in annotated_types:
+        deprecated_dict[case_type.name] = {prop.name: prop.deprecated for prop in case_type.properties.all()}
+    return deprecated_dict
+
+
 def get_values_hints_dict(domain, case_type_name):
     values_hints_dict = defaultdict(list)
     case_type = CaseType.objects.filter(domain=domain, name=case_type_name).first()
