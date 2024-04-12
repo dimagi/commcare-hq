@@ -1,17 +1,27 @@
 import dataclasses
+from functools import cached_property
 from unittest import mock
 
-from django.test import SimpleTestCase
+from testil import eq
 
 from . import response_factory as factory
-from ..data_model import AnswerQuestionStep, CommandStep, FormStep, SubmitFormStep, Workflow
+from ..data_model import AnswerQuestionStep, CommandStep, EntitySelectStep, FormStep, SubmitFormStep, Workflow
 from ..discovery import discover_workflows
 
 
 @dataclasses.dataclass
 class Screen:
     name: str
-    children: list = dataclasses.field(default_factory=list)
+    children: list
+
+    def process_selections(self, selections):
+        option = self
+        for selection in selections:
+            option = option.get_next(selection)
+        return option
+
+    def get_next(self, selection):
+        return self.children[int(selection)]
 
     def get_response_data(self, selections):
         pass
@@ -21,6 +31,22 @@ class Screen:
 class Menu(Screen):
     def get_response_data(self, selections):
         return factory.command_response(selections, [child.name for child in self.children])
+
+
+@dataclasses.dataclass
+class CaseList(Screen):
+    cases: list[str] = dataclasses.field(default_factory=list)
+
+    @cached_property
+    def entities(self):
+        return factory.make_entities(self.cases)
+
+    def get_response_data(self, selections):
+        return factory.entity_list_response(selections, self.entities)
+
+    def get_next(self, selection):
+        assert selection in [e["id"] for e in self.entities], selection
+        return Menu(name="Forms", children=self.children)
 
 
 @dataclasses.dataclass
@@ -44,11 +70,11 @@ APP1 = Menu(
                     factory.make_question("0", "Name", "name", "str"),
                 ])
             ]),
-            Menu(name="Followup", children=[
+            CaseList(name="Followup", cases=["Case1", "Case2"], children=[
                 Form(name="Followup Case", children=[
                     factory.make_question("0", "Name", "name", "str"),
                 ])
-            ])
+            ]),
         ]),
     ]
 )
@@ -61,10 +87,8 @@ class MockFormplayer:
 
     def process_request(self, session, data):
         if "navigate_menu" in session.request_url:
-            selections = [int(s) for s in data["selections"]]
-            option = self.app
-            for selection in selections:
-                option = option.children[selection]
+            selections = data["selections"]
+            option = self.app.process_selections(selections)
             data = option.get_response_data(selections)
             if isinstance(option, Form):
                 self.session = data
@@ -80,22 +104,34 @@ class MockFormplayer:
             return self.session
 
 
-class TestDiscovery(SimpleTestCase):
-    def test_discovery(self):
-        session = MockFormplayer(APP1)
-        with mock.patch("corehq.apps.app_execution.api._make_request", new=session.process_request):
-            workflows = discover_workflows("domain", "app_id", "user_id", "username")
+def test_discovery():
+    session = MockFormplayer(APP1)
+    with mock.patch("corehq.apps.app_execution.api._make_request", new=session.process_request):
+        workflows = discover_workflows("domain", "app_id", "user_id", "username")
 
-        self.assertEquals(len(workflows), 3)
-        form_step = FormStep(children=[
-            AnswerQuestionStep(question_text='Name', question_id='name', value='str'), SubmitFormStep()
-        ])
-        self.assertEquals(workflows, [
-            Workflow(steps=[CommandStep("Survey"), CommandStep("Form1"), form_step]),
-            Workflow(steps=[
-                CommandStep("Case List"), CommandStep("Register"), CommandStep("Register Case"), form_step
-            ]),
-            Workflow(steps=[
-                CommandStep("Case List"), CommandStep("Followup"), CommandStep("Followup Case"), form_step
-            ]),
-        ])
+    eq(len(workflows), 3)
+    form_step = FormStep(children=[
+        AnswerQuestionStep(question_text='Name', question_id='name', value='str'), SubmitFormStep()
+    ])
+
+    selected_case_id = APP1.process_selections([1, 1]).entities[0]["id"]
+    eq(workflows, [
+        Workflow(steps=[
+            CommandStep("Survey"),
+            CommandStep("Form1"),
+            form_step
+        ]),
+        Workflow(steps=[
+            CommandStep("Case List"),
+            CommandStep("Register"),
+            CommandStep("Register Case"),
+            form_step
+        ]),
+        Workflow(steps=[
+            CommandStep("Case List"),
+            CommandStep("Followup"),
+            EntitySelectStep(selected_case_id),
+            CommandStep("Followup Case"),
+            form_step
+        ]),
+    ])
