@@ -32,7 +32,7 @@
        {% if request|request_has_privilege:"FORM_CASE_IDS_CASE_IMPORTER" or couch_user.is_superuser %}
          <th>{% trans "Form IDs" %}</th>
          <th>{% trans "Case IDs" %}</th>
-@@ -32,27 +32,27 @@
+@@ -32,28 +32,27 @@
      </tr>
      <!--ko foreach: case_uploads-->
      <tr>
@@ -60,13 +60,15 @@
          {% trans "Waiting to start" %}
          <!--/ko-->
          <!--ko if: task_status().state == $root.states.STARTED-->
-         <div class="progress">
+-        <div class="progress">
 -          <div class="progress-bar progress-bar-info"
+-               role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
++        <div class="progress" role="progressbar" aria-label="{% trans_html_attr "Upload progress" %}" aria-valuemin="0" aria-valuemax="100">
 +          <div class="progress-bar bg-info"
-                role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
                 data-bind="attr: {style: 'width: ' + task_status().progress.percent + '%;'}">
                        <span><span data-bind="text: task_status().progress.percent"></span>%
-@@ -61,13 +61,13 @@
+                         {% trans "Complete" %}</span>
+@@ -61,13 +60,13 @@
          </div>
          <!--/ko-->
        </td>
@@ -84,7 +86,7 @@
          <strong data-bind="text: user_name"></strong>
          <!--ko if: upload_comment_edit_allowed-->
          <inline-edit data-apply-bindings="false" params="
-@@ -83,7 +83,7 @@
+@@ -83,7 +82,7 @@
          <span data-bind="text: comment"></span>
          <!--/ko-->
        </td>
