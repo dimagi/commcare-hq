@@ -234,7 +234,8 @@
       <tr class="form-group"
           data-bind="css: {
                       'has-error': validate,
-                      warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())
+                      warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key()),
+                      'has-warning': !validate() && isDeprecated()
                     }">
         <td class="col-sm-1 text-center"
             data-bind="if: $parent.hasPrivilege">
@@ -265,6 +266,11 @@
                         visible: validate"></p>
           <!-- ko if: $parent.hasPrivilege -->
           {% if request|request_has_privilege:"DATA_DICTIONARY" %}
+            <p class="help-block"  data-bind="visible: !validate() && isDeprecated()">
+              {% blocktrans %}
+                Property has been deprecated.
+              {% endblocktrans %}
+            </p>
             <inline-edit params="value: $data.description,
                                 rows: 3,
                                 cols: 30,
