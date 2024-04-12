@@ -1,6 +1,7 @@
 import json
 import re
 from collections import defaultdict
+from dataclasses import dataclass, field
 from functools import wraps
 
 from django.utils.functional import cached_property
@@ -47,6 +48,20 @@ from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.util.timer import TimingContext
 
 
+@dataclass
+class CaseSearchProfiler:
+    debug_mode: bool = False
+    primary_count: int = 0
+    related_count: int = 0
+    timing_context: TimingContext = field(
+        default_factory=lambda: TimingContext('Case Search'))
+    queries: list = field(default_factory=list)
+
+    def add_query(self, slug, es_query):
+        if self.debug_mode:
+            self.queries.append({'slug': slug, 'query': es_query.raw_query})
+
+
 def time_function():
     """Decorator to get timing information on a case search function that has `helper` as the first arg"""
     def decorator(fn):
@@ -54,64 +69,56 @@ def time_function():
         def _inner(helper, *args, **kwargs):
             tag = fn.__name__
             if helper:
-                with helper.timing_context(tag):
+                with helper.profiler.timing_context(tag):
                     return fn(helper, *args, **kwargs)
             return fn(helper, *args, **kwargs)
         return _inner
     return decorator
 
 
-def get_case_search_results_from_request(domain, app_id, couch_user, request_dict):
-    config = extract_search_request_config(request_dict)
-    return get_case_search_results(
-        domain,
-        config.case_types,
-        config.criteria,
-        app_id=app_id,
-        couch_user=couch_user,
-        registry_slug=config.data_registry,
-        custom_related_case_property=config.custom_related_case_property,
-        include_all_related_cases=config.include_all_related_cases,
-        commcare_sort=config.commcare_sort,
-    )
+def get_case_search_results_from_request(domain, app_id, couch_user, request_dict, debug=False):
+    profiler = CaseSearchProfiler(debug_mode=debug)
+    with profiler.timing_context:
+        config = extract_search_request_config(request_dict)
+        cases = get_case_search_results(
+            domain,
+            config.case_types,
+            config.criteria,
+            app_id=app_id,
+            couch_user=couch_user,
+            registry_slug=config.data_registry,
+            custom_related_case_property=config.custom_related_case_property,
+            include_all_related_cases=config.include_all_related_cases,
+            commcare_sort=config.commcare_sort,
+            profiler=profiler,
+        )
+        with profiler.timing_context('CaseDBFixture.fixture'):
+            fixtures = CaseDBFixture(cases).fixture
+    return fixtures, profiler
 
 
 def get_case_search_results(domain, case_types, criteria,
                             app_id=None, couch_user=None, registry_slug=None, custom_related_case_property=None,
-                            include_all_related_cases=None, commcare_sort=None
-                            ):
+                            include_all_related_cases=None, commcare_sort=None, profiler=None):
     helper = _get_helper(couch_user, domain, case_types, registry_slug)
+    if profiler:
+        helper.profiler = profiler
 
     cases = get_primary_case_search_results(helper, domain, case_types, criteria, commcare_sort)
+    helper.profiler.primary_count = len(cases)
     if app_id:
-        cases.extend(get_and_tag_related_cases(helper, app_id, case_types, cases,
-            custom_related_case_property, include_all_related_cases))
+        related_cases = get_and_tag_related_cases(helper, app_id, case_types, cases,
+                                                  custom_related_case_property, include_all_related_cases)
+        helper.profiler.related_count = len(related_cases)
+        cases.extend(related_cases)
     return cases
-
-
-def profile_case_search(domain, couch_user, app_id, config):
-    helper = _get_helper(couch_user, domain, config.case_types, config.data_registry)
-
-    with helper.timing_context:
-        cases = get_primary_case_search_results(helper, domain, config.case_types,
-                                                config.criteria, config.commcare_sort)
-        primary_count = len(cases)
-        if app_id:
-            cases.extend(get_and_tag_related_cases(
-                helper, app_id, config.case_types, cases, config.custom_related_case_property,
-                config.include_all_related_cases))
-        related_count = len(cases) - primary_count
-
-        with helper.timing_context('CaseDBFixture.fixture'):
-            CaseDBFixture(cases).fixture
-    return helper.timing_context, primary_count, related_count
 
 
 @time_function()
 def get_primary_case_search_results(helper, domain, case_types, criteria, commcare_sort=None):
-    builder = CaseSearchQueryBuilder(domain, case_types, helper.query_domains)
+    builder = CaseSearchQueryBuilder(domain, case_types, helper.profiler, helper.query_domains)
     try:
-        with helper.timing_context('build_query'):
+        with helper.profiler.timing_context('build_query'):
             search_es = builder.build_query(criteria, commcare_sort)
     except TooManyRelatedCasesError:
         raise CaseSearchUserError(_('Search has too many results. Please try a more specific search.'))
@@ -123,7 +130,8 @@ def get_primary_case_search_results(helper, domain, case_types, criteria, commca
         raise CaseSearchUserError(str(e))
 
     try:
-        with helper.timing_context('run query'):
+        helper.profiler.add_query('main', search_es)
+        with helper.profiler.timing_context('run query'):
             hits = search_es.run().raw_hits
     except Exception as e:
         notify_exception(None, str(e), details=dict(
@@ -131,7 +139,7 @@ def get_primary_case_search_results(helper, domain, case_types, criteria, commca
         ))
         raise
 
-    with helper.timing_context('wrap_cases'):
+    with helper.profiler.timing_context('wrap_cases'):
         cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
     return cases
 
@@ -153,7 +161,7 @@ class _QueryHelper:
     def __init__(self, domain):
         self.domain = domain
         self.query_domains = [self.domain]
-        self.timing_context = TimingContext('Case Search')
+        self.profiler = CaseSearchProfiler()
 
     def get_base_queryset(self):
         return CaseSearchES().domain(self.query_domains)
@@ -162,7 +170,9 @@ class _QueryHelper:
         return wrap_case_search_hit(es_hit, include_score=include_score)
 
     def get_all_related_live_cases(self, initial_cases):
-        from casexml.apps.phone.data_providers.case.livequery import get_all_related_live_cases
+        from casexml.apps.phone.data_providers.case.livequery import (
+            get_all_related_live_cases,
+        )
         case_ids = {case.case_id for case in initial_cases}
         return get_all_related_live_cases(self.domain, case_ids)
 
@@ -173,7 +183,7 @@ class _RegistryQueryHelper:
         self.couch_user = couch_user
         self.registry_helper = registry_helper
         self.query_domains = self.registry_helper.visible_domains
-        self.timing_context = TimingContext('Case Search')
+        self.profiler = CaseSearchProfiler()
 
     def get_base_queryset(self):
         return CaseSearchES().domain(self.query_domains)
@@ -192,9 +202,10 @@ class _RegistryQueryHelper:
 class CaseSearchQueryBuilder:
     """Compiles the case search object for the view"""
 
-    def __init__(self, domain, case_types, query_domains=None):
+    def __init__(self, domain, case_types, profiler, query_domains=None):
         self.request_domain = domain
         self.case_types = case_types
+        self.profiler = profiler
         self.query_domains = [domain] if query_domains is None else query_domains
 
     @cached_property
@@ -252,14 +263,10 @@ class CaseSearchQueryBuilder:
     def _apply_filter(self, search_es, criteria):
         if criteria.key == CASE_SEARCH_XPATH_QUERY_KEY:
             if not criteria.is_empty:
-                if criteria.has_multiple_terms:
-                    for value in criteria.value:
-                        search_es = search_es.filter(build_filter_from_xpath(self.query_domains, value,
-                                                                             request_domain=self.request_domain))
-                    return search_es
-                else:
-                    return search_es.filter(build_filter_from_xpath(self.query_domains, criteria.value,
-                                                                    request_domain=self.request_domain))
+                xpaths = criteria.value if criteria.has_multiple_terms else [criteria.value]
+                for xpath in xpaths:
+                    search_es = search_es.filter(self._build_filter_from_xpath(xpath))
+                return search_es
         elif criteria.key == 'owner_id':
             if not criteria.is_empty:
                 return search_es.filter(case_search.owner(criteria.value))
@@ -272,6 +279,11 @@ class CaseSearchQueryBuilder:
         elif criteria.key not in UNSEARCHABLE_KEYS:
             return search_es.add_query(self._get_case_property_query(criteria), queries.MUST)
         return search_es
+
+    def _build_filter_from_xpath(self, xpath, fuzzy=False):
+        with self.profiler.timing_context('_build_filter_from_xpath'):
+            return build_filter_from_xpath(self.query_domains, xpath, fuzzy,
+                                           self.request_domain, self.profiler)
 
     def _get_daterange_query(self, criteria):
         startdate, enddate = criteria.get_date_range()
@@ -289,8 +301,7 @@ class CaseSearchQueryBuilder:
             return case_property_missing(criteria.key)
 
         if criteria.is_ancestor_query:
-            missing_filter = build_filter_from_xpath(self.query_domains, f'{criteria.key} = ""',
-                                                     request_domain=self.request_domain)
+            missing_filter = self._build_filter_from_xpath(f'{criteria.key} = ""')
         else:
             missing_filter = case_property_missing(criteria.key)
         return filters.OR(self._get_query(criteria), missing_filter)
@@ -310,8 +321,7 @@ class CaseSearchQueryBuilder:
             query = f'{criteria.key} = "{value}"'
             if isinstance(value, list):
                 query = f"""{criteria.key} = unwrap-list('{json.dumps(value)}')"""
-            return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy,
-                                           request_domain=self.request_domain)
+            return self._build_filter_from_xpath(query, fuzzy=fuzzy)
         elif criteria.is_index_query:
             return reverse_index_case_query(value, criteria.index_query_identifier)
         else:
@@ -357,7 +367,7 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
     if not cases:
         return []
 
-    with helper.timing_context('get_app_cached'):
+    with helper.profiler.timing_context('get_app_cached'):
         app = get_app_cached(helper.domain, app_id)
 
     expanded_case_results = []
@@ -373,7 +383,7 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
     results = list({
         case.case_id: case for case in unfiltered_results if case.case_id not in initial_case_ids
     }.values())
-    with helper.timing_context('_tag_is_related_case'):
+    with helper.profiler.timing_context('_tag_is_related_case'):
         for case in results:
             _tag_is_related_case(case)
     return results
@@ -497,11 +507,12 @@ def get_child_case_types(app, case_type):
 
 @time_function()
 def get_child_case_results(helper, parent_case_ids, child_case_types=None):
-    filter = helper.get_base_queryset().get_child_cases(parent_case_ids, "parent")
+    query = helper.get_base_queryset().get_child_cases(parent_case_ids, "parent")
     if child_case_types:
-        filter = filter.case_type(child_case_types)
+        query = query.case_type(child_case_types)
 
-    results = filter.run().hits
+    helper.profiler.add_query('get_child_case_results', query)
+    results = query.run().hits
     return [helper.wrap_case(result) for result in results]
 
 
@@ -516,7 +527,9 @@ def get_expanded_case_results(helper, custom_related_case_property, cases):
 
 @time_function()
 def _get_case_search_cases(helper, case_ids):
-    results = helper.get_base_queryset().case_ids(case_ids).run().hits
+    query = helper.get_base_queryset().case_ids(case_ids)
+    helper.profiler.add_query('_get_case_search_cases', query)
+    results = query.run().hits
     return [helper.wrap_case(result) for result in results]
 
 

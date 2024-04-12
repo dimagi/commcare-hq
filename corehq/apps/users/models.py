@@ -2681,6 +2681,11 @@ class Invitation(models.Model):
     role = models.CharField(max_length=100, null=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
+    location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
+                                 to_field='location_id', null=True)  # to replace supply_point
+    profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
+                                on_delete=models.SET_NULL, null=True)
+    custom_user_data = models.JSONField(default=dict)
 
     def __repr__(self):
         return f"Invitation(domain='{self.domain}', email='{self.email})"
@@ -3025,6 +3030,8 @@ class HQApiKey(models.Model):
     def save(self, *args, **kwargs):
         if not self.key:
             self.key = self.generate_key()
+            if 'update_fields' in kwargs:
+                kwargs['update_fields'].append('key')
 
         return super().save(*args, **kwargs)
 

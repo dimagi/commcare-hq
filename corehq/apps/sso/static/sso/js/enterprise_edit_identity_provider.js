@@ -107,6 +107,6 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
 
         };
         let formManager = new editEnterpriseIdPFormManager();
-        $('#idp').koApplyBindings(formManager);
+        $('#idp form').koApplyBindings(formManager);
     });
 });
