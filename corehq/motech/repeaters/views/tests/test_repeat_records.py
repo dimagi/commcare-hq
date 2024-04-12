@@ -9,7 +9,7 @@ from corehq.motech.models import ConnectionSettings
 
 from .. import repeaters
 from .. import repeat_records
-from ...models import FormRepeater, SQLRepeatRecord
+from ...models import FormRepeater, RepeatRecord
 
 
 class TestUtilities(SimpleTestCase):
@@ -106,7 +106,7 @@ class TestDomainForwardingOptionsView(TestCase):
     def test_get_repeater_types_info(self):
         class view:
             domain = "test"
-        state_counts = SQLRepeatRecord.objects.count_by_repeater_and_state("test")
+        state_counts = RepeatRecord.objects.count_by_repeater_and_state("test")
         infos = repeaters.DomainForwardingOptionsView.get_repeater_types_info(view, state_counts)
         repeater, = {i.class_name: i for i in infos}['FormRepeater'].instances
 

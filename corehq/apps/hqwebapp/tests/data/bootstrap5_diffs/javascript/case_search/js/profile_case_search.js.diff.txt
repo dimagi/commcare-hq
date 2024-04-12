@@ -1,0 +1,15 @@
+--- 
++++ 
+@@ -1,10 +1,10 @@
+ 'use strict';
+ 
+-hqDefine('case_search/js/bootstrap3/profile_case_search', [
++hqDefine('case_search/js/bootstrap5/profile_case_search', [
+     'jquery',
+     'underscore',
+     'knockout',
+-    'hqwebapp/js/bootstrap3/alert_user',
++    'hqwebapp/js/bootstrap5/alert_user',
+ ], function (
+     $,
+     _,

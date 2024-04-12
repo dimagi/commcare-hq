@@ -554,12 +554,6 @@ class EventCaseTests(TestCase):
         )
         self.event.save()  # Creates case
 
-    def tearDown(self):
-        try:
-            self.event.delete()
-        except AssertionError:
-            pass  # self.event is already deleted
-
     def test_delete_closes_case(self):
         case = CommCareCase.objects.get_case(self.event.case_id, DOMAIN)
         self.assertFalse(case.closed)

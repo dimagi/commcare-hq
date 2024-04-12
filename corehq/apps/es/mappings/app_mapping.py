@@ -103,9 +103,6 @@ APP_MAPPING = {
         "copy_of": {
             "type": "keyword"
         },
-        "cp_is_active": {
-            "type": "boolean"
-        },
         "created_from_template": {
             "type": "keyword"
         },
