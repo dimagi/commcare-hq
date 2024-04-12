@@ -204,6 +204,18 @@
     </h4>
   </div>
   <div class="panel-body">
+    <div class="alert alert-warning" data-bind="visible: hasDeprecatedProperties" >
+      <p>
+        <i class="fa fa-warning"></i>
+        {% blocktrans %}
+          There are one or more form questions that are being saved to deprecated case properties.
+          Please revise and consider changing these case properties. For more information on deprecated
+          case properties, please refer to
+          <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958252/Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary" target="_blank">this documentation</a>
+          .
+        {% endblocktrans %}
+      </p>
+    </div>
     <table class="table table-savecaseprops"
            data-bind="visible: case_properties().length">
       <thead>

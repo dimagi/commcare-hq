@@ -412,6 +412,15 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 return count;
             });
 
+            self.hasDeprecatedProperties = ko.computed(function () {
+                for (const p of self.case_properties()) {
+                    if (p.isDeprecated()) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+
             self.repeat_context = function () {
                 if (self.case_name) {
                     return caseConfig.get_repeat_context(self.case_name());
