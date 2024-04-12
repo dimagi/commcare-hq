@@ -6,6 +6,7 @@ from corehq.apps.case_importer.tracking.dbaccessors import (
 )
 from corehq.apps.data_interfaces.interfaces import DataInterface
 from corehq.apps.data_interfaces.views import DataInterfaceSection
+from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.privileges import LOCATION_SAFE_CASE_IMPORTS
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -19,9 +20,13 @@ def location_safe_case_imports_enabled(view_func, request, *args, **kwargs):
 class ImportCases(DataInterface):
     name = gettext_lazy("Import Cases from Excel")
     slug = "import_cases"
-    report_template_path = "case_importer/bootstrap3/import_cases.html"
+    report_template_path = "case_importer/bootstrap5/import_cases.html"
     hide_filters = True
     asynchronous = False
+
+    def __init__(self, request, **kwargs):
+        super(ImportCases, self).__init__(request, **kwargs)
+        set_bootstrap_version5()
 
     @property
     def template_context(self, domain=None):
