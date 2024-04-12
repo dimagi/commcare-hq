@@ -78,7 +78,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import get_complete_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
 from corehq.util.metrics import metrics_histogram
@@ -109,6 +109,9 @@ class FormplayerMain(View):
         return _fetch_build(domain, self.request.couch_user.username, app_id)
 
     def get_web_apps_available_to_user(self, domain, user):
+        if user['doc_type'] == 'WebUser' and not user.can_access_web_apps(domain):
+            return []
+
         app_access = get_application_access_for_domain(domain)
         app_ids = get_app_ids_in_domain(domain)
 
@@ -140,7 +143,9 @@ class FormplayerMain(View):
             'restoreAs:{}:{}'.format(domain, request.couch_user.username))
         username = request.COOKIES.get(cookie_name)
         if username:
-            user = CouchUser.get_by_username(format_username(username, domain))
+            username = urllib.parse.unquote(username)
+            username = get_complete_username(username, domain)
+            user = CouchUser.get_by_username(username)
             if user:
                 return user, set_cookie
             else:
