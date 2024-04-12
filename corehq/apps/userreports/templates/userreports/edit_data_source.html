@@ -211,17 +211,17 @@
                 {% trans "Rebuilding this data source will erase all the existing data in the data source and start populating it again. While the rebuild is happening, reports based on this data source will show incomplete data." %}
               {% endif %}
             </p>
-            <p>
-              {% trans "Based on the amount of data to be processed, this can take a considerable amount of time." %}
-            </p>
             {% blocktrans %}
+              <p>
+                Based on the amount of data to be processed, this can take a considerable amount of time.
+              </p>
               <p>
                 Some useful tips around rebuilding can be found <a target="_blank" href="https://dimagi.atlassian.net/wiki/spaces/GS/pages/2250768909/User+Configurable+Reports+Performance+Tips">here.</a>
               </p>
+              <p>
+                Please confirm if you want to proceed.
+              </p>
             {% endblocktrans %}
-            <p>
-              {% trans "Please confirm if you want to proceed." %}
-            </p>
           </div>
           <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
             {% csrf_token %}
