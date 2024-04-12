@@ -83,7 +83,6 @@ Things that may be added in the future:
 """
 from django.core.exceptions import ValidationError
 from django.db.models import JSONField
-from django.db.models.expressions import Expression
 from django.utils.translation import gettext_lazy as _
 
 from attrs import asdict, define, field
@@ -101,7 +100,8 @@ class JsonAttrsField(JSONField):
         self.builder = builder
 
     def get_prep_value(self, value):
-        if isinstance(value, Expression):
+        # determine if this value is an expression and therefore should not be jsonified
+        if hasattr(value, "resolve_expression"):
             return super().get_prep_value(value)
         return super().get_prep_value(self.builder.jsonify(value))
 
