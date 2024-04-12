@@ -317,6 +317,21 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         self.assertEqual(info['shard'], 2)
         self.assertTrue(len(info['rejection_explanation']) != 0)
 
+    def test__parse_watermark_to_percentage_from_absolute_values(self):
+        total_space = 100 * 1024 * 1024 * 1024  # 100 GB
+        disk_percent = manager._parse_watermark_to_percentage(total_space, "10gb")
+        self.assertEqual(int(disk_percent), 90)
+
+    def test__parse_watermark_to_percentage_from_percentage(self):
+        total_space = 100 * 1024 * 1024 * 1024  # 100 GB
+        disk_percent = manager._parse_watermark_to_percentage(total_space, "90%")
+        self.assertEqual(int(disk_percent), 90)
+
+    def test__parse_watermark_to_percentage_raises_for_invalid_values(self):
+        total_space = 100 * 1024 * 1024 * 1024  # 100 GB
+        with self.assertRaises(ValueError):
+            manager._parse_watermark_to_percentage(total_space, "90Terrabytes")
+
     def test_get_node_fs_stats(self):
         stats = self.adapter.get_node_fs_stats()
         self.assertTrue(len(stats) > 0)

@@ -180,6 +180,43 @@ class ElasticManageAdapter(BaseAdapter):
         set_type = "transient" if transient else "persistent"
         self._es.cluster.put_settings({set_type: settings}, flat_settings=is_flat)
 
+    def _parse_watermark_to_percentage(self, total_space, watermark_value):
+        """
+        Calculate the watermark percentage based on the given total space and watermark value.
+
+        Args:
+            total_space (float):
+                The total available disk space (in bytes).
+            watermark_value (str):
+                The watermark value, which can be an absolute value (e.g., "10GB") or a percentage (e.g., "90%").
+
+        Returns:
+            float: The watermark value as a percentage.
+        """
+        if watermark_value.endswith('%'):
+            # Watermark is provided as a percentage
+            return float(watermark_value[:-1])
+        else:
+            # Watermark is provided as an absolute value
+            try:
+                num, unit = float(watermark_value[:-2]), watermark_value[-2:].lower()
+                if unit == 'kb':
+                    watermark_bytes = num * 1024
+                elif unit == 'mb':
+                    watermark_bytes = num * 1024 * 1024
+                elif unit == 'gb':
+                    watermark_bytes = num * 1024 * 1024 * 1024
+                elif unit == 'tb':
+                    watermark_bytes = num * 1024 * 1024 * 1024 * 1024
+                else:
+                    raise ValueError("Invalid unit. Must be 'KB', 'MB', or 'GB'.")
+                return ((total_space - watermark_bytes) / total_space) * 100
+            except (ValueError, IndexError):
+                raise ValueError(
+                    """Invalid watermark value format.
+                    Must be a percentage or an absolute value (e.g., '10GB')."""
+                )
+
     def get_node_info(self, node_id, metric):
         """Return a specific metric from the node info for an Elasticsearch node.
 
