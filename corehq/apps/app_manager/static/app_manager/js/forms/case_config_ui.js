@@ -1,5 +1,5 @@
+"use strict";
 hqDefine('app_manager/js/forms/case_config_ui', function () {
-    "use strict";
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
             initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
@@ -838,11 +838,11 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
         };
 
         if (initial_page_data('has_form_source')) {
-            var caseConfig = caseConfig(_.extend({}, initial_page_data("case_config_options"), {
+            var caseConfigObj = caseConfig(_.extend({}, initial_page_data("case_config_options"), {
                 home: $('#case-config-ko'),
                 requires: ko.observable(initial_page_data("form_requires")),
             }));
-            caseConfig.init();
+            caseConfigObj.init();
         }
     });
 });
