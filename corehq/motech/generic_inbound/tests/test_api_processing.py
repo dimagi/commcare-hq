@@ -6,7 +6,11 @@ from django.test import SimpleTestCase
 from corehq.apps.userreports.const import UCR_NAMED_FILTER
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import UCRExpression
-from corehq.motech.generic_inbound.backend.base import _execute_generic_api, _apply_api_filter, _validate_api_request
+from corehq.motech.generic_inbound.backend.base import (
+    _apply_api_filter,
+    _execute_generic_api,
+    _validate_api_request,
+)
 from corehq.motech.generic_inbound.exceptions import (
     GenericInboundRequestFiltered,
     GenericInboundValidationError,

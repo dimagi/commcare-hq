@@ -1,15 +1,17 @@
 import uuid
 
-import attr
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
+
+import attr
 from field_audit import audit_fields
 from field_audit.models import AuditAction, AuditingManager
 
+from dimagi.utils.logging import notify_error
+
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_init
-from dimagi.utils.logging import notify_error
 
 
 @attr.s(frozen=True)

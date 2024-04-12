@@ -1,6 +1,7 @@
 from django.test import SimpleTestCase
-from corehq.apps.users.models import UserRole
+
 from corehq.apps.linked_domain.updates import _copy_role_attributes
+from corehq.apps.users.models import UserRole
 
 
 class RoleCopyTests(SimpleTestCase):
