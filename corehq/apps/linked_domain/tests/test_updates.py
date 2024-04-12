@@ -6,7 +6,11 @@ from corehq.apps.users.models import UserRole
 
 class RoleCopyTests(SimpleTestCase):
     def test_copy_role_attributes_populates_all_attributes(self):
-        source_role_json = RoleCopyTests._get_source_role_as_json()
+        source_role_json = RoleCopyTests._get_source_role_as_json(
+            name="test",
+            default_landing_page="testpage",
+            is_non_admin_editable=False
+        )
 
         dest_role = UserRole()
 
@@ -32,7 +36,6 @@ class RoleCopyTests(SimpleTestCase):
             "is_non_admin_editable": False,
         }
         # add/override specified kwargs
-        for key, val in kwargs.items():
-            source_role_json[key] = val
+        source_role_json.update(kwargs)
 
         return source_role_json
