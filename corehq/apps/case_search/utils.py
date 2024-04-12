@@ -45,6 +45,7 @@ from corehq.apps.registry.exceptions import (
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 
 
@@ -419,8 +420,10 @@ def get_app_context(domain, app_id, case_types):
     return paths, child_case_types
 
 
-# TODO quickcache
+@quickcache(['domain', 'app_id'], timeout=24 * 60 * 60)
 def _get_app_context_by_case_type(domain, app_id):
+    # Loading and parsing a whole app is actually pretty expensive
+    # This fn extracts what we need and caches only that
     app = get_app_cached(domain, app_id)
     return (
         get_search_detail_relationship_paths(app),
