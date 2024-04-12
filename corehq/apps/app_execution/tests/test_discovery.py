@@ -3,8 +3,9 @@ from unittest import mock
 
 from django.test import SimpleTestCase
 
-from corehq.apps.app_execution.discovery import discover_workflows
 from . import response_factory as factory
+from ..data_model import AnswerQuestionStep, CommandStep, FormStep, SubmitFormStep, Workflow
+from ..discovery import discover_workflows
 
 
 @dataclasses.dataclass
@@ -58,10 +59,10 @@ class MockFormplayer:
     app: Menu
     session: dict = dataclasses.field(default_factory=dict)
 
-    def make_request(self, session, data):
+    def process_request(self, session, data):
         if "navigate_menu" in session.request_url:
             selections = [int(s) for s in data["selections"]]
-            option = APP1
+            option = self.app
             for selection in selections:
                 option = option.children[selection]
             data = option.get_response_data(selections)
@@ -82,7 +83,19 @@ class MockFormplayer:
 class TestDiscovery(SimpleTestCase):
     def test_discovery(self):
         session = MockFormplayer(APP1)
-        with mock.patch("corehq.apps.app_execution.api._make_request", new=session.make_request):
+        with mock.patch("corehq.apps.app_execution.api._make_request", new=session.process_request):
             workflows = discover_workflows("domain", "app_id", "user_id", "username")
 
         self.assertEquals(len(workflows), 3)
+        form_step = FormStep(children=[
+            AnswerQuestionStep(question_text='Name', question_id='name', value='str'), SubmitFormStep()
+        ])
+        self.assertEquals(workflows, [
+            Workflow(steps=[CommandStep("Survey"), CommandStep("Form1"), form_step]),
+            Workflow(steps=[
+                CommandStep("Case List"), CommandStep("Register"), CommandStep("Register Case"), form_step
+            ]),
+            Workflow(steps=[
+                CommandStep("Case List"), CommandStep("Followup"), CommandStep("Followup Case"), form_step
+            ]),
+        ])

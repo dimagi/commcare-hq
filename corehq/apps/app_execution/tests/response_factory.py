@@ -3,10 +3,10 @@ import uuid
 
 def command_response(selections, commands):
     return {
-        'title': 'Simple app',
-        'selections': selections,
-        'commands': [{'index': index, 'displayText': command} for index, command in enumerate(commands)],
-        'type': 'commands',
+        "title": "Simple app",
+        "selections": selections,
+        "commands": [{"index": index, "displayText": command} for index, command in enumerate(commands)],
+        "type": "commands",
     }
 
 
@@ -21,9 +21,9 @@ def entity_list_response(selections, entities):
             data: list[str]
     """
     return {
-        'title': 'Followup Form',
-        'selections': selections,
-        'entities': entities,
+        "title": "Followup Form",
+        "selections": selections,
+        "entities": entities,
     }
 
 
@@ -43,10 +43,10 @@ def form_response(selections, questions):
             choices: list[str] | None
     """
     return {
-        'title': 'Survey',
-        'selections': selections,
-        'tree': questions,
-        'session_id': '8e212c16-00ac-4060-bcee-a42ad430f614'
+        "title": "Survey",
+        "selections": selections,
+        "tree": questions,
+        "session_id": "8e212c16-00ac-4060-bcee-a42ad430f614"
     }
 
 
@@ -55,23 +55,23 @@ def make_entities(names):
 
 
 def make_entity(name):
-    return {'id': str(uuid.uuid4()), 'data': [name]}
+    return {"id": str(uuid.uuid4()), "data": [name]}
 
 
-def make_questions(captions, datatype='str'):
+def make_questions(captions, datatype="str"):
     return [
-        make_question(ix, caption, f'question_{ix}', datatype=datatype)
+        make_question(ix, caption, f"question_{ix}", datatype=datatype)
         for ix, caption in enumerate(captions)
     ]
 
 
-def make_question(ix, caption, question_id, answer=None, datatype='str', type_='question', choices=None):
+def make_question(ix, caption, question_id, answer=None, datatype="str", type_="question", choices=None):
     return {
-        'ix': ix,
-        'caption': caption,
-        'question_id': question_id,
-        'answer': answer,
-        'datatype': datatype,
-        'type': type_,
-        'choices': choices,
+        "ix": ix,
+        "caption": caption,
+        "question_id": question_id,
+        "answer": answer,
+        "datatype": datatype,
+        "type": type_,
+        "choices": choices,
     }

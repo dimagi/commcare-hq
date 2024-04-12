@@ -37,9 +37,6 @@ class CommandStep(Step):
             raise ValueError(f"Command not found: {self.value}: {commands.keys()}")
         return _append_selection(data, command["index"])
 
-    def __str__(self):
-        return f"Command: {self.value}"
-
 
 @dataclasses.dataclass
 class EntitySelectStep(Step):

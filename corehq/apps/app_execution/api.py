@@ -135,11 +135,8 @@ def execute_step(session, step):
 
 
 def _execute_leaf_step(session, step):
-    print(f"Executing {step} from screen {session.data}")
     data = session.get_request_data(step) if step else session.get_session_start_data()
-    print(f"Executing {step} with data: {data}")
     session.data = _make_request(session, data)
-    print(f"--> Result: {session.data}")
 
 
 def _make_request(session, data):

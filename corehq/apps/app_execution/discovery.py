@@ -1,5 +1,6 @@
 import dataclasses
 from datetime import datetime
+from itertools import chain
 
 from . import data_model
 from .api import FormplayerSession, ScreenType, execute_step
@@ -15,26 +16,26 @@ def discover_workflows(domain, app_id, user_id, username):
         WorkflowExploration(workflow=data_model.Workflow(steps=[step]), session=session.clone())
         for step in get_branches(session)
     ]
-    while any(e for e in explorations if not e.completed):
-        explorations = list(expand_workflows(explorations))
+    to_explore = explorations
+    while to_explore:
+        to_explore = list(chain.from_iterable(_expand_workflow(exploration) for exploration in to_explore))
+        explorations.extend(to_explore)
     return [exploration.workflow for exploration in explorations]
 
 
-def expand_workflows(explorations):
-    for exploration in explorations:
-        if exploration.completed:
-            yield exploration
-            continue
-
+def _expand_workflow(exploration):
+    """Expand the current workflow to completion.
+    This also returns a generator of newly discovered workflows to explore.
+    """
+    while not exploration.completed:
         exploration.execute_next_step()
         branches = get_branches(exploration.session)
         if not branches:
-            print("Complete", exploration.workflow)
             exploration.completed = True
-            yield exploration
         else:
-            for branch in branches:
-                yield exploration.extend(branch)
+            if len(branches) > 1:
+                yield from [exploration.extend(branch) for branch in branches[1:]]
+            exploration.workflow.steps += [branches[0]]
 
 
 def get_branches(session):
@@ -47,10 +48,11 @@ def get_branches(session):
         # select first one for now
         return [data_model.EntitySelectStep(value=data[0]["id"])]
     elif session.current_screen == ScreenType.SEARCH:
-        pass
+        pass  # TODO
     elif session.current_screen == ScreenType.DETAIL:
         pass
     elif session.current_screen == ScreenType.FORM:
+        # no support for conditional questions
         return [data_model.FormStep(children=[
             data_model.AnswerQuestionStep(
                 question_text=item["caption"],
@@ -62,6 +64,9 @@ def get_branches(session):
 
 
 def _get_value_for_type(item):
+    if answer := item.get("answer"):
+        return answer
+
     datatype = item["datatype"]
     if datatype == "str":
         return "some answer"
@@ -79,7 +84,6 @@ class WorkflowExploration:
     step_index: int = 0
 
     def execute_next_step(self):
-        print(self.step_index, self.workflow)
         step = self.workflow.steps[self.step_index]
         execute_step(self.session, step)
         self.step_index += 1
@@ -87,8 +91,9 @@ class WorkflowExploration:
 
     def extend(self, branch):
         new_steps = branch if isinstance(branch, list) else [branch]
+        workflow = data_model.Workflow(steps=self.workflow.steps + new_steps)
         return WorkflowExploration(
-            workflow=data_model.Workflow(steps=self.workflow.steps + new_steps),
+            workflow=workflow,
             session=self.session.clone(),
             step_index=self.step_index
         )
