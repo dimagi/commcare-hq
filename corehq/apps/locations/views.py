@@ -437,7 +437,6 @@ class LocationTypesView(BaseDomainView):
     def _attach_sync_boundaries_to_location_type(loc_type_data, loc_type_db):
         """Store the sync expansion boundaries along with the location type. i.e. where
         the user's locations start expanding from, and where they expand to
-
         """
         loc_type = loc_type_db[loc_type_data['pk']]
         expand_from_id = loc_type_data['expand_from']
@@ -461,14 +460,26 @@ class LocationTypesView(BaseDomainView):
             loc_type.include_without_expanding = None
         include_only = LocationTypesView._get_include_only(include_only_ids, loc_type_db)
         loc_type.include_only.set(include_only)
-        # add rules for which locations are allowed for restrict cases to
         try:
-            loc_type.expand_view_child_data_to = loc_type_db[expand_view_child_data_to_id] \
-                if expand_view_child_data_to_id else None
+            if LocationTypesView._is_descendent_loc_type(loc_type.pk, expand_view_child_data_to_id, loc_type_db):
+                loc_type.expand_view_child_data_to = loc_type_db[expand_view_child_data_to_id] \
+                    if expand_view_child_data_to_id else None
+            else:
+                raise LocationConsistencyError("Inconsistency in View Child Data")
         except KeyError:        # expand_view_child_data_to location type was deleted
             loc_type.expand_view_child_data_to = None
 
         loc_type.save()
+
+    @staticmethod
+    def _is_descendent_loc_type(possible_ancestor_id, descendent_id, loc_type_db):
+        parent_id = loc_type_db[descendent_id].parent_type_id
+        if parent_id is None:
+            return False
+        if parent_id == possible_ancestor_id:
+            return True
+        else:
+            return LocationTypesView._is_descendent_loc_type(possible_ancestor_id, parent_id, loc_type_db)
 
     @staticmethod
     def _get_include_only(include_only_ids, loc_type_db):
