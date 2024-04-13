@@ -1,6 +1,6 @@
 'use strict';
 
-hqDefine('case_search/js/bootstrap5/profile_case_search', [
+hqDefine('case_search/js/profile_case_search', [
     'jquery',
     'underscore',
     'knockout',
