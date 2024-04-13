@@ -21,10 +21,10 @@ RECORDS_AT_A_TIME = 1000
 class State(IntegerChoices):
     # powers of two to allow multiple simultaneous states (not currently used)
     Pending = 1, _('Pending')
-    Fail = 2, _('Failed')
+    Fail = 2, _('Failed')  # Will be retried. Implies Pending.
     Success = 4, _('Succeeded')
     Cancelled = 8, _('Cancelled')
-    Empty = 16, _('Empty')
+    Empty = 16, _('Empty')  # There was nothing to send. Implies Success.
 
 
 RECORD_PENDING_STATE = State.Pending
