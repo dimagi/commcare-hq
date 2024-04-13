@@ -7,5 +7,10 @@
     "javascript": [
       "js/edit_builds.js"
     ]
+  },
+  "case_search": {
+    "templates": [
+      ".html"
+    ]
   }
 }
