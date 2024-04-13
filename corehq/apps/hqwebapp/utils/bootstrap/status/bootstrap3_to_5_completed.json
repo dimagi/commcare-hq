@@ -14,7 +14,8 @@
       "profile_case_search.html"
     ],
     "javascript": [
-      "js/profile_case_search.js"
+      "js/profile_case_search.js",
+      "js/case_search.js"
     ]
   }
 }
