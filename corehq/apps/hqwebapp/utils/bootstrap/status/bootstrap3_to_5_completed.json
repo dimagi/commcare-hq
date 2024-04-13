@@ -12,6 +12,9 @@
     "templates": [
       ".html",
       "profile_case_search.html"
+    ],
+    "javascript": [
+      "js/profile_case_search.js"
     ]
   }
 }
