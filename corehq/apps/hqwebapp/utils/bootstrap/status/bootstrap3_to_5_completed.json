@@ -10,7 +10,8 @@
   },
   "case_search": {
     "templates": [
-      ".html"
+      ".html",
+      "profile_case_search.html"
     ]
   }
 }

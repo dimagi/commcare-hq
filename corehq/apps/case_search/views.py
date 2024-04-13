@@ -99,7 +99,7 @@ class CaseSearchView(_BaseCaseSearchView):
 
 @method_decorator(use_bootstrap5, name='dispatch')
 class ProfileCaseSearchView(_BaseCaseSearchView):
-    template_name = 'case_search/bootstrap5/profile_case_search.html'
+    template_name = 'case_search/profile_case_search.html'
     urlname = 'profile_case_search'
     page_title = gettext_lazy("Profile Case Search")
 
