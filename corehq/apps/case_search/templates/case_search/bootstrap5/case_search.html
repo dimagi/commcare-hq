@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load hq_shared_tags %}
 {% load compress %}
 {% load i18n %}
@@ -20,29 +20,37 @@
     <div class="row">
       <div class="col-md-12">
         <div class="controls">
-          <form class="form-inline" id="case-search-form">
+          <form id="case-search-form">
             {% csrf_token %}
-            <div class="card card-default">
+            <div class="card card-default mb-3">
               <div class="card-header">
                 <strong>{% trans "Case Metadata" %}</strong>
               </div>
-              <div class="card-body">
-                <label>
-                  {% trans "Case Type:" %}
+              <div class="card-body row">
+                <div class="col-auto">
+                  <label class="col-form-label">
+                    {% trans "Case Type:" %}
+                  </label>
+                </div>
+                <div class="col-auto">
                   <input name="type" type="text" placeholder="Case Type (optional)" data-bind="value: type" class="form-control"/>
-                </label>
-                <label>
-                  {% trans "Owner ID:" %}
+                </div>
+                <div class="col-auto">
+                  <label class="col-form-label">
+                    {% trans "Owner ID:" %}
+                  </label>
+                </div>
+                <div class="col-auto">
                   <input name="type" type="text" placeholder="Owner ID (optional)" data-bind="value: owner_id" class="form-control"/>
-                </label>
+                </div>
               </div>
             </div>
-            <div class="card card-default">
+            <div class="card card-default mb-3">
               <div class="card-header">
                 <strong>{% trans "Case Properties" %}</strong>
               </div>
               <div class="card-body">
-                <table class="table table-striped" >
+                <table class="table table-striped align-middle" >
                   <thead>
                   <th>{% trans "Property name" %}</th>
                   <th>{% trans "Property value" %}</th>
@@ -82,17 +90,21 @@
                 <span class="btn btn-outline-primary" id="add-input" data-bind="click: addParameter"><i class="fa fa-plus"></i> {% trans "Add input" %}</span>
               </div>
             </div>
-            <div class="card card-default">
+            <div class="card card-default mb-3">
               <div class="card-header">
                 <strong>XPath Expression</strong>
               </div>
               <div class="card-body">
-                <div class="form-group" style="width:100%" data-bind="foreach: xpath_expressions" >
-                  <textarea style="min-width: 50%" spellcheck="false" class="form-control vertical-resize"
+                <div class="row align-items-center" style="width:100%" data-bind="foreach: xpath_expressions" >
+                  <div class="col-9">
+                    <textarea style="min-width: 50%" spellcheck="false" class="form-control vertical-resize"
                     name="xpath" type="text" placeholder="e.g: name = 'tyrion' or nickname='the imp'" data-bind="value: xpath"> </textarea>
-                  <span class='btn btn-outline-danger' data-bind="click: $parent.removeXPath">
-                    <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
-                  </span>
+                  </div>
+                  <div class="col-auto">
+                    <span class='btn btn-outline-danger' data-bind="click: $parent.removeXPath">
+                      <i class="fa-regular fa-trash-can"></i> {% trans "Delete" %}
+                    </span>
+                  </div>
                 </div>
                 <button class="btn btn-outline-primary" id="add-xpath" data-bind="click: addXPath">
                   <i class="fa fa-plus"></i> {% trans "Add XPath" %}
@@ -114,9 +126,9 @@
     <div class="row" data-bind="visible: showResults">
       <div class="col-md-12">
         <ul class="nav nav-tabs">
-          <li class="active"><a data-bs-toggle="tab" href="#tabs-results">{% trans "Results" %}</a></li>
-          <li><a data-bs-toggle="tab" href="#tabs-query">{% trans "Query" %}</a></li>
-          <li data-bind="visible: profile"><a data-bs-toggle="tab" href="#tabs-profile">{% trans "Profile" %}</a></li>
+          <li class="active nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tabs-results">{% trans "Results" %}</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabs-query">{% trans "Query" %}</a></li>
+          <li class="nav-item" data-bind="visible: profile"><a class="nav-link" data-bs-toggle="tab" href="#tabs-profile">{% trans "Profile" %}</a></li>
         </ul>
         <div class="spacer"></div>
       </div>

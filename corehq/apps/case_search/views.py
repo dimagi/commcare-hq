@@ -5,12 +5,14 @@ from django.http import Http404
 from django.urls import reverse
 from django.utils.translation import gettext_lazy
 
+from django.utils.decorators import method_decorator
 from dimagi.utils.web import json_response
 
 from corehq.apps.case_search.models import case_search_enabled_for_domain
 from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.decorators import cls_require_superuser_or_contractor
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.util.view_utils import BadRequest, json_error
 
 
@@ -33,8 +35,9 @@ class _BaseCaseSearchView(BaseDomainView):
         return self.render_to_response(self.get_context_data())
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class CaseSearchView(_BaseCaseSearchView):
-    template_name = 'case_search/bootstrap3/case_search.html'
+    template_name = 'case_search/bootstrap5/case_search.html'
     urlname = 'case_search'
     page_title = gettext_lazy("Case Search")
 
