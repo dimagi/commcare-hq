@@ -69,6 +69,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
+    use_bootstrap5,
     use_daterangepicker,
     use_jquery_ui,
     waf_allow,
@@ -296,7 +297,7 @@ class FormplayerPreviewSingleApp(View):
 
 
 class PreviewAppView(TemplateView):
-    template_name = 'preview_app/base.html'
+    template_name = 'cloudcare/preview_app.html'
     urlname = 'preview_app'
 
     @use_daterangepicker
@@ -305,7 +306,7 @@ class PreviewAppView(TemplateView):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
         if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
             context = BlockWebAppsView.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
-            return render(request, 'preview_app/block_app_preview.html', context)
+            return render(request, 'cloudcare/block_preview_app.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
@@ -442,6 +443,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     def page_title(self):
         return _("Web Apps Permissions")
 
+    @use_bootstrap5
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
@@ -623,7 +625,7 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
 class BlockWebAppsView(BaseDomainView):
 
     urlname = 'block_web_apps'
-    template_name = 'block_web_apps.html'
+    template_name = 'cloudcare/block_web_apps.html'
 
     def get(self, request, *args, **kwargs):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)

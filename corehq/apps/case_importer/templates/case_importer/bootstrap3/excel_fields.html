@@ -1,0 +1,88 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% requirejs_main "case_importer/js/bootstrap3/main" %}
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'case_importer/less/case_importer.less' %}" />
+  {% endcompress %}
+{% endblock %}
+
+{% block page_content %}
+  {% include 'case_importer/partials/help_message.html' %}
+  {% if is_bulk_import %}
+    <div class="alert alert-warning">
+      <p>
+        <i class="fa fa-warning"></i>
+        {% blocktrans %}
+          Excel mapping is disabled for bulk case imports. Excel columns will be used to directly
+          map to the relevant case properties.
+        {% endblocktrans %}
+      </p>
+    </div>
+  {% endif %}
+
+  {% initial_page_data 'excel_fields' excel_fields %}
+  {% initial_page_data 'case_field_specs' case_field_specs %}
+  {% initial_page_data 'is_bulk_import' is_bulk_import %}
+
+  <form action="{% url "excel_commit" domain %}"
+        method="post"
+        id="field_form"
+        class="form-horizontal">
+    {% csrf_token %}
+    <input type="hidden" name="case_type" value="{{case_type}}" />
+    <input type="hidden" name="search_column" value="{{search_column}}" />
+    <input type="hidden" name="search_field" value="{{search_field}}" />
+    <input type="hidden" name="create_new_cases" value="{{create_new_cases}}" />
+
+    <fieldset>
+      {% if not is_bulk_import %}
+      <legend>
+        {% trans "Match Excel Columns to Case Properties" %}
+        <button type="button" class="btn btn-default pull-right" id="autofill" title="{% trans_html_attr 'Reset file-to-case-property matching to default' %}">
+          {% trans "Reset to default matching" %}
+        </button>
+      </legend>
+      <table class="table table-condensed" id="fieldlist">
+        <thead>
+        <th class="span1"></th>
+        <th>{% trans "Excel Field" %}</th>
+        <th></th>
+        <th>{% trans "Case Property" %}</th>
+        <th{% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %} class="col-md-1"{% endif %}>
+          {% trans "Create new property" %}
+        </th>
+        {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+          <th>{% include "data_dictionary/partials/valid_values_th_content.html" %}</th>
+        {% endif %}
+        </thead>
+        <tbody id="excel-field-rows" class="ko-template">
+        {% include "case_importer/partials/bootstrap3/excel_field_rows.html" %}
+        </tbody>
+      </table>
+      <a id="js-add-mapping" class="btn btn-default" href="#">
+        <i class="fa fa-plus"></i> {% trans "Add another matching" %}
+      </a>
+      {% endif %}
+    </fieldset>
+
+    <div class="form-actions">
+      <div class="col-sm-offset-3">
+        <button type="button" class="btn btn-primary" id="back_button">
+          <i class="fa fa-backward"></i> {% trans "Back" %}
+        </button>
+        <button type="submit" class="btn btn-primary disable-on-submit">
+          <i class="fa fa-forward"></i>
+          {% trans "Confirm Import" %}
+        </button>
+      </div>
+    </div>
+  </form>
+{% endblock %}
