@@ -1,9 +1,10 @@
 import uuid
 from collections import namedtuple
 from itertools import chain
-from lxml import etree
 
 from django.core.cache import cache
+
+from lxml import etree
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.couch import CriticalSection
@@ -14,6 +15,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.util import user_location_data
 from corehq.form_processor.models import CommCareCase
 from corehq.toggles import USH_USERCASES_FOR_WEB_USERS
 
@@ -133,6 +135,12 @@ def _get_user_case_fields(user, case_type, owner_id, domain):
     # remove any keys that aren't valid XML element names
     fields = {k: v for k, v in user.get_user_data(domain).items() if
               valid_element_name(k)}
+
+    if user.is_web_user():
+        fields['commcare_location_id'] = user.get_location_id(domain)
+        fields['commcare_location_ids'] = user_location_data(user.get_location_ids(domain))
+        fields['commcare_primary_case_sharing_id'] = user.get_location_id(domain)
+
     # language or phone_number can be null and will break
     # case submission
     fields.update({
