@@ -15,7 +15,10 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -504,6 +507,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
+    profile = forms.ChoiceField(choices=(), label="Profile")
 
     def __init__(self, data=None, excluded_emails=None, is_add_user=None, *args, **kwargs):
         domain_obj = None
@@ -514,19 +518,33 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
         if 'location' in kwargs:
             location = kwargs['location']
             del kwargs['location']
+        show_profile = False
+        show_location = False
+
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
-        if domain_obj and domain_obj.commtrack_enabled:
+        if domain_obj:
             self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
                                                           widget=LocationSelectWidget(domain_obj.name),
                                                           help_text=EMWF.location_search_help,
-                                                          initial=location.location_id if location else '')
-            self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
-            programs = Program.by_domain(domain_obj.name)
-            choices = list((prog.get_id, prog.name) for prog in programs)
-            choices.insert(0, ('', ''))
-            self.fields['program'].choices = choices
-        self.excluded_emails = excluded_emails or []
+                                                          initial='')
+            show_location = True
 
+            if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
+                from corehq.apps.users.views.mobile import UserFieldsView
+                definition = CustomDataFieldsDefinition.get(domain_obj.name, UserFieldsView.field_type)
+                profile_choices = []
+                if definition:
+                    profiles = definition.get_profiles()
+                    profile_choices = [('', '')] + [(profile.id, profile.name) for profile in profiles]
+                self.fields['profile'].choices = profile_choices
+                show_profile = True
+
+            if domain_obj.commtrack_enabled:
+                self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
+                programs = Program.by_domain(domain_obj.name)
+                choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
+                self.fields['program'].choices = choices
+        self.excluded_emails = excluded_emails or []
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
         self.helper.form_class = 'form-horizontal form-ko-validation'
@@ -543,6 +561,8 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
                     data_bind="textInput: email",
                 ),
                 'role',
+                'profile' if show_profile else None,
+                'supply_point' if show_location else None,
             ),
             crispy.HTML(
                 render_to_string(
