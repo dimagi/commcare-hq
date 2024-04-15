@@ -120,7 +120,7 @@ class FormplayerMain(View):
         ))
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
-        apps = filter(lambda app: user.can_access_web_app(domain, app.get('_id')), apps)
+        apps = filter(lambda app: user.can_access_web_app(domain, app.get('copy_of', app.get('_id'))), apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
         apps = [_format_app_doc(app) for app in apps]
         apps = sorted(apps, key=lambda app: app['name'].lower())
