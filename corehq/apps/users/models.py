@@ -1588,7 +1588,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         if domain:
             try:
                 role = self.get_role(domain)
-                return any(role.permissions.web_apps_list)
+                return role.permissions.web_apps_list
             except DomainMembershipError:
                 pass
         return False
