@@ -518,7 +518,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domain_memberships.append(domain_membership)
         self.domains.append(domain)
 
-    def add_as_web_user(self, domain, role, location_id=None, program_id=None):
+    def add_as_web_user(self, domain, role, location_id=None, program_id=None, profile=None):
         domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
@@ -526,6 +526,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
             self.get_domain_membership(domain).program_id = program_id
         if domain_obj.uses_locations and location_id:
             self.set_location(domain, location_id)
+        if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
+            user_data = self.get_user_data(domain_obj.name)
+            user_data.update({}, profile_id=profile.id if profile.name else ...)
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
@@ -2787,6 +2790,7 @@ class Invitation(models.Model):
             role=self.role,
             location_id=self.supply_point,
             program_id=self.program,
+            profile=self.profile,
         )
         self.is_accepted = True
         self.save()
