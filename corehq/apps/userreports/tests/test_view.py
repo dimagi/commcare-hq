@@ -22,16 +22,18 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.apps.userreports.views import _number_of_records_to_be_iterated_for_rebuild
-from corehq.apps.users.models import HqPermissions, UserRole, WebUser, HQApiKey
+from corehq.apps.userreports.views import (
+    _number_of_records_to_be_iterated_for_rebuild,
+)
+from corehq.apps.users.models import HQApiKey, HqPermissions, UserRole, WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.signals import sql_case_post_save
+from corehq.motech.const import OAUTH2_CLIENT
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.models import DataSourceRepeater
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import flag_enabled
-from corehq.motech.repeaters.models import DataSourceRepeater
-from corehq.motech.models import ConnectionSettings
-from corehq.motech.const import OAUTH2_CLIENT
 
 
 class ConfigurableReportTestMixin(object):
