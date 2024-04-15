@@ -115,12 +115,12 @@
           {% trans "Handle New Records" %}
         </label>
         <div class="col-md-6">
-          <label class="checkbox" for="create_new_cases">
-            <input type="checkbox"
-                   name="create_new_cases"
-                   id="create_new_cases" />
-            {% trans "Create new records if there is no matching case" %}
-          </label>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="create_new_cases" id="create_new_cases">
+            <label class="form-check-label" for="create_new_cases">
+              {% trans "Create new records if there is no matching case" %}
+            </label>
+          </div>
         </div>
       </div>
     </fieldset>
