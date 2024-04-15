@@ -76,7 +76,7 @@ class TestCaseListReport(TestCase):
         q_dict_get.setlist('case_list_filter', report_slugs)
         self.request.GET = q_dict_get
         data = CaseListReport(self.request, domain=self.domain).es_results['hits'].get('hits', [])
-        expected_case_ids = ['id-1', 'id-2', 'id-3', 'id-5']
+        expected_case_ids = ['id-1', 'id-2', 'id-3', 'id-4', 'id-5']
         queried_case_ids = [case['_id'] for case in data]
         self.assertCountEqual(expected_case_ids, queried_case_ids)
 
