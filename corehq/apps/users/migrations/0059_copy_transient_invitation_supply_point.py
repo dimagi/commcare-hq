@@ -14,7 +14,7 @@ def copy_invitation_supply_point(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0058_invitation_copy_supply_point'),
+        ('users', '0058_createprofileanduserdata_copylocation'),
     ]
 
     operations = [
