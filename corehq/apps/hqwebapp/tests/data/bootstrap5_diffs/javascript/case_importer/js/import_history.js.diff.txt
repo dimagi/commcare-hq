@@ -1,9 +1,16 @@
 --- 
 +++ 
-@@ -1,5 +1,5 @@
+@@ -1,11 +1,11 @@
  "use strict";
 -hqDefine('case_importer/js/bootstrap3/import_history', [
 +hqDefine('case_importer/js/bootstrap5/import_history', [
      'jquery',
      'knockout',
      'underscore',
+     'hqwebapp/js/assert_properties',
+     'hqwebapp/js/initial_page_data',
+-    'hqwebapp/js/bootstrap3/components.ko',
++    'hqwebapp/js/bootstrap5/components.ko',
+ ], function (
+     $,
+     ko,

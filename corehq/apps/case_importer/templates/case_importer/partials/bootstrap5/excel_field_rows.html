@@ -39,33 +39,31 @@
         value: selectedCaseFieldOrBlank
     "></select>
 
-    <div data-bind="
-        css: {
-            'has-success': hasDiscoverableSpecialField,
-            'has-error': hasNonDiscoverableField,
-        }
-    ">
-      <p class="help-block">
-        <!--ko if: hasDiscoverableSpecialField-->
+    <p class="help-block" data-bind="css: {
+      'text-success': hasDiscoverableSpecialField,
+      'text-danger': hasNonDiscoverableField,
+    }">
+      <!--ko if: hasDiscoverableSpecialField-->
         <i class="fa fa-check"></i>
-        <!--/ko-->
-        <!--ko if: hasNonDiscoverableField-->
+      <!--/ko-->
+      <!--ko if: hasNonDiscoverableField-->
         <i class="fa fa-warning"></i>
-        <!--/ko-->
-        <span data-bind="text: caseFieldSpec().description"></span>
-      </p>
-    </div>
-    <div class="has-warning" data-bind="visible: isDeprecated()">
-        <p class="help-block">{% trans "This is a deprecated property" %}</p>
+      <!--/ko-->
+      <span data-bind="text: caseFieldSpec().description"></span>
+    </p>
+    <div data-bind="visible: isDeprecated()">
+        <p class="help-block text-warning">
+          <i class="fa fa-warning"></i>
+          {% trans "This is a deprecated property" %}
+        </p>
     </div>
     <!--ko if: caseFieldSuggestions().length-->
-    <div class="has-warning">
-      <p class="help-block">
+      <p class="help-block text-warning">
+        <i class="fa fa-question-circle"></i>
         {% blocktrans with '<!--ko foreach: caseFieldSuggestions--><!--ko if: $index() !== 0-->, <!--/ko--><strong data-bind="text: $data"></strong><!--/ko-->' as suggestion %}
           Did you mean "{{ suggestion }}" instead?
         {% endblocktrans %}
       </p>
-    </div>
     <!--/ko-->
   </td>
 
