@@ -582,7 +582,7 @@ sqlalchemy==1.3.19
     #   -r base-requirements.in
     #   alembic
     #   sqlagg
-sqlparse==0.4.4
+sqlparse==0.5.0
     # via django
 stack-data==0.1.4
     # via ipython
