@@ -4,13 +4,17 @@ from unittest.mock import ANY, patch
 from django.test import TestCase
 from freezegun import freeze_time
 
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests import generator as accounting_generator
+from corehq.apps.domain.models import Domain
 from corehq.apps.sso.certificates import DEFAULT_EXPIRATION
 from django.contrib.auth.models import User
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.models import HQApiKey
-from corehq.apps.sso.models import AuthenticatedEmailDomain
+from corehq.apps.sso.models import AuthenticatedEmailDomain, IdentityProviderType, UserExemptFromSingleSignOn
 from corehq.apps.sso.tasks import (
     IDP_CERT_EXPIRES_REMINDER_DAYS,
+    auto_deactivate_removed_sso_users,
     idp_cert_expires_reminder,
     renew_service_provider_x509_certificates,
     create_rollover_service_provider_x509_certificates,
@@ -298,3 +302,101 @@ class EnforceKeyExpirationTaskTests(TestCase):
     def _create_key_for_user(self, user, expiration_date=None):
         return HQApiKey.objects.create(
             user=user.get_django_user(), key='key', name='test-key', expiration_date=expiration_date)
+
+
+class TestAutoDeactivationTask(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.account = generator.get_billing_account_for_idp()
+        cls.account.enterprise_admin_emails = ['test@vaultwax.com']
+        cls.account.save()
+        cls.domain = Domain.get_or_create_with_name("vaultwax-001", is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
+
+        enterprise_plan = accounting_generator.subscribable_plan_version(edition=SoftwarePlanEdition.ENTERPRISE)
+        accounting_generator.generate_domain_subscription(
+            cls.account,
+            cls.domain,
+            date_start=datetime.date.today(),
+            date_end=None,
+            plan_version=enterprise_plan,
+            is_active=True,
+        )
+
+        cls.idp = generator.create_idp('vaultwax', cls.account)
+        cls.idp.enable_user_deactivation = True
+        cls.idp.idp_type = IdentityProviderType.ENTRA_ID
+        cls.idp.save()
+        cls.email_domain = AuthenticatedEmailDomain.objects.create(
+            email_domain='vaultwax.com',
+            identity_provider=cls.idp,
+        )
+        idp_patcher = patch('corehq.apps.sso.models.IdentityProvider.get_all_members_of_the_idp')
+        cls.mock_get_all_members_of_the_idp = idp_patcher.start()
+        cls.addClassCleanup(idp_patcher.stop)
+
+    def setUp(self):
+        super().setUp()
+        self.web_user_a = self._create_web_user('a@vaultwax.com')
+        self.web_user_b = self._create_web_user('b@vaultwax.com')
+        self.web_user_c = self._create_web_user('c@vaultwax.com')
+
+    def test_user_is_deactivated_if_not_member_of_idp(self):
+        self.assertTrue(self.web_user_c.is_active)
+        self.mock_get_all_members_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
+
+        auto_deactivate_removed_sso_users()
+
+        # Refetch Web User
+        web_user = WebUser.get_by_username(self.web_user_c.username)
+        self.assertFalse(web_user.is_active)
+
+    def test_sso_exempt_users_are_not_deactivated(self):
+        sso_exempt = self._create_web_user('exempt@vaultwax.com')
+        UserExemptFromSingleSignOn.objects.create(
+            username=sso_exempt.username,
+            email_domain=self.email_domain,
+        )
+        self.mock_get_all_members_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
+
+        auto_deactivate_removed_sso_users()
+
+        # Refetch Web User
+        web_user = WebUser.get_by_username(sso_exempt.username)
+        self.assertTrue(web_user.is_active)
+
+    @patch('corehq.apps.sso.tasks.send_html_email_async.delay')
+    def test_deactivation_skipped_if_entra_return_empty_sso_user(self, mock_send):
+        self.mock_get_all_members_of_the_idp.return_value = []
+
+        auto_deactivate_removed_sso_users()
+
+        # Refetch Web User
+        web_user_a = WebUser.get_by_username(self.web_user_a.username)
+        self.assertTrue(web_user_a.is_active)
+        web_user_b = WebUser.get_by_username(self.web_user_b.username)
+        self.assertTrue(web_user_b.is_active)
+        web_user_c = WebUser.get_by_username(self.web_user_c.username)
+        self.assertTrue(web_user_c.is_active)
+        mock_send.assert_called_once()
+
+    def test_deactivation_skip_members_of_the_domains_but_not_have_an_email_domain_controlled_by_the_IdP(self):
+        dimagi_user = self._create_web_user('superuser@dimagi.com')
+        self.mock_get_all_members_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
+
+        auto_deactivate_removed_sso_users()
+
+        # Refetch Web User
+        dimagi_user = WebUser.get_by_username(dimagi_user.username)
+        self.assertTrue(dimagi_user.is_active)
+        web_user_c = WebUser.get_by_username(self.web_user_c.username)
+        self.assertFalse(web_user_c.is_active)
+
+    def _create_web_user(self, username):
+        user = WebUser.create(
+            self.domain.name, username, 'testpwd', None, None
+        )
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        return user
