@@ -63,6 +63,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.es import CaseSearchES, FormES
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
@@ -93,6 +94,7 @@ from corehq.apps.userreports.app_manager.helpers import (
 from corehq.apps.userreports.const import (
     DATA_SOURCE_MISSING_APP_ERROR_MESSAGE,
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
+    DATA_SOURCE_REBUILD_RESTRICTED_AT,
     FORM_NOT_FOUND_ERROR_MESSAGE,
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
@@ -1309,6 +1311,18 @@ def undelete_data_source(request, domain, config_id):
 @require_POST
 def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
+
+    if toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
+        number_of_records = _number_of_records_to_be_iterated_for_rebuild(config=config)
+        if number_of_records and number_of_records > DATA_SOURCE_REBUILD_RESTRICTED_AT:
+            messages.error(
+                request,
+                _error_message_for_restricting_rebuild(number_of_records)
+            )
+            return HttpResponseRedirect(reverse(
+                EditDataSourceView.urlname, args=[domain, config_id]
+            ))
+
     if config.is_deactivated:
         config.is_deactivated = False
         config.save()
@@ -1324,6 +1338,40 @@ def rebuild_data_source(request, domain, config_id):
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
+
+
+def _number_of_records_to_be_iterated_for_rebuild(config):
+    count_of_records = None
+
+    case_types_or_xmlns = config.get_case_type_or_xmlns_filter()
+    # case_types_or_xmlns could also be [None]
+    case_types_or_xmlns = list(filter(None, case_types_or_xmlns))
+
+    if config.referenced_doc_type == 'CommCareCase':
+        if case_types_or_xmlns:
+            count_of_records = CaseSearchES().domain(config.domain).case_type(case_types_or_xmlns).count()
+        else:
+            count_of_records = CaseSearchES().domain(config.domain).count()
+    elif config.referenced_doc_type == 'XFormInstance':
+        if case_types_or_xmlns:
+            count_of_records = FormES().domain().xmlns(case_types_or_xmlns)
+        else:
+            count_of_records = FormES().domain().count()
+
+    return count_of_records
+
+
+def _error_message_for_restricting_rebuild(number_of_records_to_be_iterated):
+    return _(
+        'Rebuilt was not initiated due to high number of records this data source is expected to '
+        'iterate during a rebuild. Expected records to be processed is currently {number_of_records} '
+        'which is above the limit of {rebuild_limit}. '
+        'Please consider creating a new data source instead or reach out to support if '
+        'you need to rebuild this data source.'
+    ).format(
+        number_of_records=number_of_records_to_be_iterated,
+        rebuild_limit=DATA_SOURCE_REBUILD_RESTRICTED_AT
+    )
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
