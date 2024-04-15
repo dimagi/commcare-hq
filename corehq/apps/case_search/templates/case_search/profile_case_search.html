@@ -1,9 +1,9 @@
-{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load hq_shared_tags %}
 {% load compress %}
 {% load i18n %}
 
-{% requirejs_main_b5 'case_search/js/bootstrap5/profile_case_search' %}
+{% requirejs_main_b5 'case_search/js/profile_case_search' %}
 
 {% block page_content %}
 
@@ -15,12 +15,12 @@
   </p>
   <div>
     <form>
-      <div class="form-group">
-        <label for="appId">App ID (if not already in the request dict)</label>
+      <div class="mb-3">
+        <label class="form-label" for="appId">App ID (if not already in the request dict)</label>
         <input data-bind="value: appId" type="text" class="form-control">
       </div>
-      <div class="form-group">
-        <label for="requestDict">request_dict</label>
+      <div class="mb-3">
+        <label class="form-label" for="requestDict">request_dict</label>
         <textarea id="requestDict" spellcheck="false" class="form-control vertical-resize" name="request_dict"
           type="json" data-bind="value: requestDict, attr: {placeholder: exampleRequestDict}"></textarea>
       </div>
