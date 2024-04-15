@@ -1340,6 +1340,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
         print: function () {
+            let thing = {};
+            thing.broken();
             window.print();
         },
     });
