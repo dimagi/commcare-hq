@@ -25,7 +25,6 @@
         "backbone": "npm:backbone#~1.3.2",
         "backbone.marionette": "4.1.3",
         "backbone.radio": "^2.0.0",
-        "blazy": "1.8.2",
         "bootstrap": "3.4.1",
         "bootstrap-daterangepicker": "3.0.3",
         "bootstrap-switch": "3.3.2",
