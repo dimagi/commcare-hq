@@ -276,6 +276,12 @@ class ConnectionSettings(models.Model):
         self.is_deleted = True
         self.save()
 
+    def encrypted_fields(self):
+        """
+        Used when serializing data to ensure encrypted fields are reset
+        """
+        return ['password', 'client_secret']
+
 
 class RequestLog(models.Model):
     """
