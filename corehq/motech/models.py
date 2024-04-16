@@ -10,7 +10,9 @@ import attr
 import jsonfield
 
 import corehq.motech.auth
+from corehq.apps.hqwebapp.const import PASSWORD_PLACEHOLDER
 from corehq.motech.auth import (
+    ApiKeyAuthManager,
     AuthManager,
     BasicAuthManager,
     BearerAuthManager,
@@ -20,10 +22,10 @@ from corehq.motech.auth import (
     OAuth2PasswordGrantManager,
     api_auth_settings_choices,
     oauth1_api_endpoints,
-    ApiKeyAuthManager,
 )
 from corehq.motech.const import (
     ALGO_AES,
+    APIKEY_AUTH,
     AUTH_TYPES,
     BASIC_AUTH,
     BEARER_AUTH,
@@ -32,7 +34,6 @@ from corehq.motech.const import (
     OAUTH1,
     OAUTH2_CLIENT,
     OAUTH2_PWD,
-    PASSWORD_PLACEHOLDER, APIKEY_AUTH,
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 from corehq.util import as_json_text, as_text

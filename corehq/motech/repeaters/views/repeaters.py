@@ -15,12 +15,12 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
+from corehq.apps.hqwebapp.const import PASSWORD_PLACEHOLDER
 from corehq.apps.users.decorators import (
     require_can_edit_web_users,
     require_permission,
 )
 from corehq.apps.users.models import HqPermissions
-from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
 
 from ..const import State

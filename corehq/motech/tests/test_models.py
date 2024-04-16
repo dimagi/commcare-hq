@@ -8,7 +8,8 @@ import requests
 from unittest.mock import Mock, patch
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pp_json
-from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
+from corehq.apps.hqwebapp.const import PASSWORD_PLACEHOLDER
+from corehq.motech.const import ALGO_AES
 from corehq.motech.models import (
     ConnectionSettings,
     RequestLog,

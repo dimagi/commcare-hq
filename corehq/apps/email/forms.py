@@ -6,7 +6,7 @@ from django.utils.translation import gettext as _
 
 from corehq.apps.email.models import EmailSettings
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.motech.const import PASSWORD_PLACEHOLDER
+from corehq.apps.hqwebapp.const import PASSWORD_PLACEHOLDER
 
 
 class EmailSMTPSettingsForm(forms.ModelForm):
