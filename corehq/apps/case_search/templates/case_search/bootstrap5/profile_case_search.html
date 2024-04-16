@@ -3,7 +3,7 @@
 {% load compress %}
 {% load i18n %}
 
-{% requirejs_main 'case_search/js/profile_case_search' %}
+{% requirejs_main_b5 'case_search/js/bootstrap5/profile_case_search' %}
 
 {% block page_content %}
 
@@ -36,23 +36,23 @@
     <p>Number of primary results: <span data-bind="text: results().primary_count"></span></p>
     <p>Number of related cases: <span data-bind="text: results().related_count"></span></p>
     <p>Total browser runtime: <span data-bind="text: browserTime"></span> seconds</p>
-    <p>Total server runtime: <span data-bind="text: results().timing_data.duration.toFixed(3)"></span> seconds</p>
+    <p>Total server runtime: <span data-bind="text: results().runtime"></span> seconds</p>
 
-    <ul data-bind="template: {name: 'timingRow', data: results().timing_data }"
+    <ul data-bind="template: {name: 'timingRow', foreach: results().timing_data }"
       class="list-group"></ul>
 
     <script id="timingRow" type="text/html">
       <li class="list-group-item">
         <div class="container-fluid">
           <div class="row">
-            <div class="col-xs-3" data-bind="text: name"></div>
-            <div class="col-xs-3">
+            <div class="col-sm-3" data-bind="text: name"></div>
+            <div class="col-sm-3">
               <strong data-bind="text: duration ? duration.toFixed(3) : '-'"></strong> seconds;
             </div>
-            <div class="col-xs-3">
+            <div class="col-sm-3">
               <strong data-bind="text: percent_total ? percent_total.toFixed(3) : '-'"></strong>% of total;
             </div>
-            <div class="col-xs-3">
+            <div class="col-sm-3">
               <strong data-bind="text: percent_parent ? percent_parent.toFixed(3) : '-'"></strong>% of parent
             </div>
           </div>
@@ -61,18 +61,6 @@
         </div>
       </li>
     </script>
-
-    <div class="panel-group" id="queries-accordion" data-bind="foreach: results().queries">
-      <div class="panel panel-default">
-        <div class="panel-heading clickable" data-toggle="collapse" data-parent="#queries-accordion"
-          data-bind="attr: { href: '#query-' + $index() }">
-          Elasticsearch query: <code data-bind="text: slug"></code>
-        </div>
-        <div class="panel-body panel-collapse collapse" data-bind="attr: { id: 'query-' + $index() }">
-          <pre data-bind="text: JSON.stringify(query, null, 4)"></pre>
-        </div>
-      </div>
-    </div>
 
   </div>
 
