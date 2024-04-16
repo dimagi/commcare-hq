@@ -94,7 +94,10 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(
                 f"\n\n'{app_name}' is not marked as 'in progress'.\n"
             ))
-            confirm = get_confirmation(f"Would you like to mark {app_name} as 'in progress' before continuing?")
+            confirm = get_confirmation(
+                f"Would you like to mark {app_name} as 'in progress' before continuing?",
+                default='y'
+            )
             if confirm:
                 has_changes = has_pending_git_changes()
                 mark_app_as_in_progress(app_name)
