@@ -89,7 +89,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         base_queryset = MALTRow.objects.filter(
             domain_name=domain,
             month=month,
-            user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
             user_id__in=active_not_deleted_users,
         )
         if selected_users:
