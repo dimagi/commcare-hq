@@ -39,6 +39,8 @@ from corehq.apps.hqwebapp.utils.bootstrap.status import (
     get_completed_templates_for_app,
     get_completed_javascript_for_app,
     get_completed_status,
+    is_app_in_progress,
+    mark_app_as_in_progress,
 )
 from corehq.apps.hqwebapp.utils.management_commands import (
     get_break_line,
@@ -87,6 +89,19 @@ class Command(BaseCommand):
         if get_completed_status(app_name):
             self.show_completed_message(app_name)
             return
+
+        if not is_app_in_progress(app_name):
+            self.stdout.write(self.style.WARNING(
+                f"\n\n'{app_name}' is not marked as 'in progress'.\n"
+            ))
+            confirm = get_confirmation(f"Would you like to mark {app_name} as 'in progress' before continuing?")
+            if confirm:
+                has_changes = has_pending_git_changes()
+                mark_app_as_in_progress(app_name)
+                self.suggest_commit_message(
+                    f"marking {app_name} as in progress",
+                    show_apply_commit=not has_changes
+                )
 
         self.skip_all = options.get('skip_all')
         if self.skip_all:

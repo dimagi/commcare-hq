@@ -24,20 +24,36 @@ def update_completed_summary(summary):
         f.writelines(summary_string + '\n')
 
 
+def apply_app_summary_changes(app_name, app_summary):
+    full_summary = get_status_data()
+    full_summary[app_name] = app_summary
+    update_completed_summary(full_summary)
+
+
 def get_app_status_summary(app_name):
     return get_status_data().get(app_name, {})
+
+
+def mark_app_as_in_progress(app_name):
+    app_summary = get_app_status_summary(app_name)
+    app_summary["in_progress"] = True
+    apply_app_summary_changes(app_name, app_summary)
 
 
 def get_completed_status(app_name):
     return get_app_status_summary(app_name).get("is_complete", False)
 
 
+def is_app_in_progress(app_name):
+    return get_app_status_summary(app_name).get("in_progress", False)
+
+
 def mark_app_as_complete(app_name):
     app_summary = get_app_status_summary(app_name)
+    if "in_progress" in app_summary:
+        del app_summary["in_progress"]
     app_summary["is_complete"] = True
-    full_summary = get_status_data()
-    full_summary[app_name] = app_summary
-    update_completed_summary(full_summary)
+    apply_app_summary_changes(app_name, app_summary)
 
 
 def mark_template_as_complete(app_name, template_short_path):
@@ -53,9 +69,7 @@ def _mark_file_as_complete(app_name, short_path, file_type):
     app_summary.setdefault(file_type, []).append(
         short_path.lstrip(f"{app_name}/")
     )
-    full_summary = get_status_data()
-    full_summary[app_name] = app_summary
-    update_completed_summary(full_summary)
+    apply_app_summary_changes(app_name, app_summary)
 
 
 def get_completed_templates_for_app(app_name, use_full_paths=True):
