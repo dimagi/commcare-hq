@@ -515,7 +515,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 self.isDeprecated = ko.computed(function () {
                     const config = self.case_transaction.caseConfig;
                     const depProps = config.deprecatedPropertiesDict[self.caseType()];
-                    if (self.key() !== 'name' && _(depProps).has(self.key())) {
+                    if (depProps && self.key() !== 'name') {
                         return depProps[self.key()];
                     }
                     return false;
