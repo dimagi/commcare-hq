@@ -1,14 +1,14 @@
 from testil import eq
 
 from corehq.apps.hqwebapp.utils.bootstrap.status import (
-    get_completed_status,
+    is_app_completed,
     get_completed_templates_for_app,
     get_completed_javascript_for_app,
 )
 
 
-def test_get_completed_status_for_builds():
-    is_completed = get_completed_status("builds")
+def test_is_app_completed_for_builds():
+    is_completed = is_app_completed("builds")
     eq(is_completed, True)
 
 

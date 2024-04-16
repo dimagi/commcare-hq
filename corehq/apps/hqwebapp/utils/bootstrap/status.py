@@ -40,7 +40,7 @@ def mark_app_as_in_progress(app_name):
     apply_app_summary_changes(app_name, app_summary)
 
 
-def get_completed_status(app_name):
+def is_app_completed(app_name):
     return get_app_status_summary(app_name).get("is_complete", False)
 
 

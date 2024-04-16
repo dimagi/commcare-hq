@@ -38,7 +38,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.references import (
 from corehq.apps.hqwebapp.utils.bootstrap.status import (
     get_completed_templates_for_app,
     get_completed_javascript_for_app,
-    get_completed_status,
+    is_app_completed,
     is_app_in_progress,
     mark_app_as_in_progress,
 )
@@ -86,7 +86,7 @@ class Command(BaseCommand):
                               "set in your localsettings.py before continuing...\n\n")
             return
 
-        if get_completed_status(app_name):
+        if is_app_completed(app_name):
             self.show_completed_message(app_name)
             return
 
