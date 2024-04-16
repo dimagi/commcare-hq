@@ -14,7 +14,7 @@ def enable_flag(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0058_createprofileanduserdata_copylocation'),
+        ('users', '0059_copy_transient_invitation_supply_point'),
     ]
 
     operations = [
