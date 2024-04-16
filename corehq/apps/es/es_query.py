@@ -290,8 +290,9 @@ class ESQuery(object):
         return es
 
     def enable_profiling(self):
-        self.es_query['profile'] = True
-        return self
+        query = self.clone()
+        query.es_query['profile'] = True
+        return query
 
     def add_query(self, new_query, clause):
         """
