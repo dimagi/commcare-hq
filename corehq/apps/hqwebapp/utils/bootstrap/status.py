@@ -9,23 +9,23 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
 PATH_TO_STATUS = 'apps/hqwebapp/utils/bootstrap/status'
 
 
-def get_completed_summary_path():
-    return COREHQ_BASE_DIR / PATH_TO_STATUS / "bootstrap3_to_5_completed.json"
+def get_status_file_path():
+    return COREHQ_BASE_DIR / PATH_TO_STATUS / "bootstrap3_to_5.json"
 
 
-def get_completed_summary():
-    with open(get_completed_summary_path(), 'r') as f:
+def get_status_data():
+    with open(get_status_file_path(), 'r') as f:
         return json.loads(f.read())
 
 
 def update_completed_summary(summary):
     summary_string = json.dumps(summary, indent=2)
-    with open(get_completed_summary_path(), "w") as f:
+    with open(get_status_file_path(), "w") as f:
         f.writelines(summary_string + '\n')
 
 
 def get_app_status_summary(app_name):
-    return get_completed_summary().get(app_name, {})
+    return get_status_data().get(app_name, {})
 
 
 def get_completed_status(app_name):
@@ -35,7 +35,7 @@ def get_completed_status(app_name):
 def mark_app_as_complete(app_name):
     app_summary = get_app_status_summary(app_name)
     app_summary["is_complete"] = True
-    full_summary = get_completed_summary()
+    full_summary = get_status_data()
     full_summary[app_name] = app_summary
     update_completed_summary(full_summary)
 
@@ -53,7 +53,7 @@ def _mark_file_as_complete(app_name, short_path, file_type):
     app_summary.setdefault(file_type, []).append(
         short_path.lstrip(f"{app_name}/")
     )
-    full_summary = get_completed_summary()
+    full_summary = get_status_data()
     full_summary[app_name] = app_summary
     update_completed_summary(full_summary)
 
