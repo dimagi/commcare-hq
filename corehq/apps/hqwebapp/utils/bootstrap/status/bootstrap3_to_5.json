@@ -41,5 +41,8 @@
   },
   "corehq.tabs": {
     "in_progress": true
+  },
+  "settings": {
+    "in_progress": true
   }
 }
