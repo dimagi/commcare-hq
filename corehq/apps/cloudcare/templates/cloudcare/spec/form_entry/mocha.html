@@ -1,6 +1,8 @@
 {% extends "mocha/base.html" %}
 {% load hq_shared_tags %}
 
+{% requirejs_main "cloudcare/js/form_entry/spec/main" %}
+
 {% block stylesheets %}{{ block.super }}
   <link type="text/css"
         rel="stylesheet"
@@ -10,16 +12,6 @@
 
 {% block dependencies %}
   {% include "cloudcare/partials/dependencies.html" %}
-  <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
-{% endblock %}
-
-{% block mocha_tests %}
-  <script src="{% static 'cloudcare/js/form_entry/spec/entries_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/form_entry/spec/fixtures.js' %}"></script>
-  <script src="{% static 'cloudcare/js/form_entry/spec/form_ui_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/form_entry/spec/integration_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/form_entry/spec/utils_spec.js' %}"></script>
-  <script src="{% static 'cloudcare/js/form_entry/spec/web_form_session_spec.js' %}"></script>
 {% endblock %}
 
 {% block fixtures %}
