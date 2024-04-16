@@ -406,6 +406,22 @@ hqDefine('users/js/roles',[
                         allowCheckboxId: null,
                         allowCheckboxPermission: null,
                     },
+                    {
+                        showOption: toggles.toggleEnabled("SUPERSET_ANALYTICS"),
+                        editPermission: self.permissions.edit_commcare_analytics,
+                        viewPermission: self.permissions.view_commcare_analytics,
+                        text: gettext("<strong>CommCare Analytics</strong> &mdash; manage CommCare Analytics associated with this project"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-commcare-analytics-checkbox",
+                        showViewCheckbox: true,
+                        viewCheckboxLabel: "view-commcare-analytics-checkbox",
+                        screenReaderEditAndViewText: gettext("Edit & View CommCare Analytics"),
+                        screenReaderViewOnlyText: gettext("View-Only CommCare Analytics"),
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
+                    },
                 ];
 
                 var hasEmbeddedTableau = toggles.toggleEnabled("EMBEDDED_TABLEAU");
