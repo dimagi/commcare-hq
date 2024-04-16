@@ -77,7 +77,7 @@ class AnswerQuestionStep(Step):
             "action": "answer",
             "answersToValidate": {},
             "answer": self.value,
-            "idx": question["ix"],
+            "ix": question["ix"],
             "session_id": session.data["session_id"]
         }
 
@@ -99,7 +99,8 @@ class SubmitFormStep(Step):
             **data,
             "action": "submit-all",
             "prevalidated": True,
-            "answers": answers
+            "answers": answers,
+            "session_id": session.data["session_id"]
         }
 
 
