@@ -6,7 +6,7 @@ import shutil
 from django.core.management import BaseCommand
 
 from corehq.apps.hqwebapp.utils.bootstrap.git import (
-    has_no_pending_git_changes,
+    has_pending_git_changes,
     ensure_no_pending_changes_before_continuing,
     apply_commit,
     get_commit_string,
@@ -143,7 +143,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         update_app = options.get('update_app')
 
-        if not has_no_pending_git_changes():
+        if has_pending_git_changes():
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
@@ -159,7 +159,7 @@ class Command(BaseCommand):
             with open(diff_filepath, 'w') as df:
                 df.writelines(get_diff(bootstrap3_filepath, bootstrap5_filepath))
 
-        if has_no_pending_git_changes():
+        if has_pending_git_changes():
             self.stdout.write(self.style.SUCCESS(
                 "\nDone! Diffs are already up-to-date, no changes needed.\n\n"
             ))
@@ -212,16 +212,16 @@ class Command(BaseCommand):
         self.stdout.write("\nSaving config...\n")
 
         update_bootstrap5_diff_config(config_file)
-        has_no_changes = has_no_pending_git_changes()
-        if has_no_changes:
-            self.stdout.write(self.style.SUCCESS(
-                "No changes were necessary. Thank you!"
-            ))
-        else:
+        has_changes = has_pending_git_changes()
+        if has_changes:
             self.stdout.write(self.style.SUCCESS(
                 f"{DIFF_CONFIG_FILE} has been updated."
             ))
             self.make_commit(f"Updated diff config for '{app_name}'")
+        else:
+            self.stdout.write(self.style.SUCCESS(
+                "No changes were necessary. Thank you!"
+            ))
 
         self.show_next_steps_after_config_update(show_build_notice=not has_no_changes)
 

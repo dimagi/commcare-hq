@@ -19,7 +19,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_crispy_forms_in_template,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.git import (
-    has_no_pending_git_changes,
+    has_pending_git_changes,
     get_commit_string,
     apply_commit,
     ensure_no_pending_changes_before_continuing,
@@ -94,7 +94,7 @@ class Command(BaseCommand):
                                        "Are you sure?")
             if not confirm:
                 return
-        if self.skip_all and not has_no_pending_git_changes():
+        if self.skip_all and has_pending_git_changes():
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
@@ -337,10 +337,10 @@ class Command(BaseCommand):
                 self.write_response("ok, canceling split and rolling back changes...")
                 return
 
-        has_no_existing_changes = has_no_pending_git_changes()
-        if not has_no_existing_changes:
+        has_changes = has_pending_git_changes()
+        if has_changes:
             self.prompt_user_to_commit_changes()
-            has_no_existing_changes = has_no_pending_git_changes()
+            has_changes = has_pending_git_changes()
 
         bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
         bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
@@ -368,7 +368,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
         self.suggest_commit_message(
             f"initial auto-migration for {short_path}, splitting templates",
-            show_apply_commit=has_no_existing_changes
+            show_apply_commit=not has_changes
         )
 
     @staticmethod

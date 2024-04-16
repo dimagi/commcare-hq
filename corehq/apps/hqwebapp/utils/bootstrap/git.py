@@ -21,17 +21,17 @@ def apply_commit(message):
     subprocess.call(commit_command)
 
 
-def has_no_pending_git_changes():
+def has_pending_git_changes():
     status = subprocess.Popen(
         ["git", "status"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
-    return "nothing to commit" in str(status.communicate()[0])
+    return "nothing to commit" not in str(status.communicate()[0])
 
 
 def ensure_no_pending_changes_before_continuing():
     continue_message = "\nENTER to continue..."
     while True:
-        if has_no_pending_git_changes():
+        if not has_pending_git_changes():
             break
         input(continue_message)
         continue_message = ("You still have un-committed changes. "
