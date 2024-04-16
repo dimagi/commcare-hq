@@ -50,6 +50,7 @@ from corehq.apps.hqwebapp.utils.management_commands import (
 
 class Command(BaseCommand):
     help = "This command helps migrate CCHQ applications from Bootstrap 3 to Bootstrap 5."
+    skip_all = False
 
     def add_arguments(self, parser):
         parser.add_argument('app_name')
