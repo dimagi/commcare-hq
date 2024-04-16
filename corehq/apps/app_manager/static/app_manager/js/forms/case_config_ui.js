@@ -514,11 +514,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 self.updatedDescription = ko.observable();
                 self.isDeprecated = ko.computed(function () {
                     const config = self.case_transaction.caseConfig;
-                    if (self.key() !== 'name' && _(config.deprecatedPropertiesDict).has(self.caseType())) {
-                        const depProps = config.deprecatedPropertiesDict[self.caseType()];
-                        if (_(depProps).has(self.key())) {
-                            return depProps[self.key()];
-                        }
+                    const depProps = config.deprecatedPropertiesDict[self.caseType()];
+                    if (self.key() !== 'name' && _(depProps).has(self.key())) {
+                        return depProps[self.key()];
                     }
                     return false;
                 });
