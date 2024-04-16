@@ -195,6 +195,7 @@ blobs
  0011_blobmeta_compressed
  0012_rename_indexes
  0013_drop_icds_cas_index
+ 0014_alter_deletedblobmeta_id
 case_importer
  0001_initial
  0002_auto_20161206_1937
@@ -344,6 +345,7 @@ data_interfaces
  0035_add_case_duplicate_new
  0036_backfill_dedupe_match_values
  0037_add_dedupe_update_toggle
+ 0038_alter_caseduplicate_potential_duplicates
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -1202,6 +1204,7 @@ users
  0055_add_user_data
  0056_add_manage_domain_alerts_permission
  0057_populate_sql_user_data
+ 0058_createprofileanduserdata_copylocation
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

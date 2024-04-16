@@ -72,6 +72,7 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             'idp_slug': self.idp_slug,
             'is_oidc': self.identity_provider.protocol == IdentityProviderProtocol.OIDC,
             'show_remote_user_management': self.show_remote_user_management,
+            'show_api_fields': self.uses_api_key_management,
         }
 
     @property
@@ -109,16 +110,29 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             SsoSamlEnterpriseSettingsForm if self.identity_provider.protocol == IdentityProviderProtocol.SAML
             else SsoOidcEnterpriseSettingsForm
         )
+
         if self.request.method == 'POST':
             return form_class(
-                self.identity_provider, self.request.POST, self.request.FILES,
-                show_remote_user_management=self.show_remote_user_management
+                self.identity_provider,
+                self.request.POST,
+                self.request.FILES,
+                show_remote_user_management=self.show_remote_user_management,
+                uses_api_key_management=self.uses_api_key_management
             )
-        return form_class(self.identity_provider, show_remote_user_management=self.show_remote_user_management)
+
+        return form_class(
+            self.identity_provider,
+            show_remote_user_management=self.show_remote_user_management,
+            uses_api_key_management=self.uses_api_key_management
+        )
 
     @property
     def show_remote_user_management(self):
         return toggles.SSO_REMOTE_USER_MANAGEMENT.enabled_for_request(self.request)
+
+    @property
+    def uses_api_key_management(self):
+        return toggles.MULTI_VIEW_API_KEYS.enabled_for_request(self.request)
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:

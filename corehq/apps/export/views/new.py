@@ -134,6 +134,17 @@ class BaseExportView(BaseProjectDataView):
 
         allow_deid = has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
 
+        show_deprecated_filter = False
+        if (
+            self.export_instance.type == CASE_EXPORT
+            and domain_has_privilege(self.domain, privileges.DATA_DICTIONARY)
+        ):
+            show_deprecated_filter = CaseProperty.objects.filter(
+                case_type__domain=self.domain,
+                case_type__name=self.export_instance.case_type,
+                deprecated=True,
+            ).exists()
+
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
@@ -151,6 +162,7 @@ class BaseExportView(BaseProjectDataView):
             'is_all_case_types_export': is_all_case_types_export,
             'disable_table_checkbox': (table_count < 2),
             'geo_properties': self._possible_geo_properties,
+            'show_deprecated_filter': show_deprecated_filter,
         }
 
     @property

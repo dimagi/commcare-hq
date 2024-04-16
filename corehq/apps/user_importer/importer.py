@@ -320,6 +320,7 @@ def get_location_from_site_code(site_code, location_cache):
 
 def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, location_id,
                                      user_change_logger=None, send_email=True):
+    # Preparation for location to replace supply_point
     invite, invite_created = Invitation.objects.update_or_create(
         email=email,
         domain=domain,
@@ -328,6 +329,7 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
             'invited_by': upload_user.user_id,
             'invited_on': datetime.utcnow(),
             'supply_point': location_id,
+            'location': SQLLocation.by_location_id(location_id),
             'role': role_qualified_id
         },
     )
