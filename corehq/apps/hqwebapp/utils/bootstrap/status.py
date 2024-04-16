@@ -40,10 +40,6 @@ def mark_app_as_in_progress(app_name):
     apply_app_summary_changes(app_name, app_summary)
 
 
-def is_app_completed(app_name):
-    return get_app_status_summary(app_name).get("is_complete", False)
-
-
 def is_app_in_progress(app_name):
     return get_app_status_summary(app_name).get("in_progress", False)
 
@@ -54,6 +50,10 @@ def mark_app_as_complete(app_name):
         del app_summary["in_progress"]
     app_summary["is_complete"] = True
     apply_app_summary_changes(app_name, app_summary)
+
+
+def is_app_completed(app_name):
+    return get_app_status_summary(app_name).get("is_complete", False)
 
 
 def mark_template_as_complete(app_name, template_short_path):
