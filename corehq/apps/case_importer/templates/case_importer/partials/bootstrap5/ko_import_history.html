@@ -51,9 +51,8 @@
         {% trans "Waiting to start" %}
         <!--/ko-->
         <!--ko if: task_status().state == $root.states.STARTED-->
-        <div class="progress">
+        <div class="progress" role="progressbar" aria-label="{% trans_html_attr "Upload progress" %}" aria-valuemin="0" aria-valuemax="100">
           <div class="progress-bar bg-info"
-               role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
                data-bind="attr: {style: 'width: ' + task_status().progress.percent + '%;'}">
                       <span><span data-bind="text: task_status().progress.percent"></span>%
                         {% trans "Complete" %}</span>
