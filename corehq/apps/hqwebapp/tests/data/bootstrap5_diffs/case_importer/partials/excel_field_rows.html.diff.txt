@@ -18,7 +18,7 @@
      <input type="text" name="custom_field[]"
             class="custom_field form-control"
             placeholder="Enter new property name"
-@@ -39,33 +39,31 @@
+@@ -39,42 +39,36 @@
          value: selectedCaseFieldOrBlank
      "></select>
  
@@ -69,3 +69,13 @@
      <!--/ko-->
    </td>
  
+   <td>
+-    <div class="checkbox">
+-      <label>
+-        <input type="checkbox" class="new_property" style="margin-left: auto;" data-bind="checked: createNewChecked"/>
+-      </label>
+-    </div>
++    <input type="checkbox" class="form-check-input mt-2" class="new_property" data-bind="checked: createNewChecked"/>
+   </td>
+ 
+   {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
