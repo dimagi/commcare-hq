@@ -523,7 +523,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
 
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
         if domain_obj:
-            self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
+            self.fields['location_id'] = forms.CharField(label='Primary Location', required=False,
                                                           widget=LocationSelectWidget(domain_obj.name),
                                                           help_text=EMWF.location_search_help,
                                                           initial='')
@@ -562,7 +562,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
                 ),
                 'role',
                 'profile' if show_profile else None,
-                'supply_point' if show_location else None,
+                'location_id' if show_location else None,
             ),
             crispy.HTML(
                 render_to_string(

@@ -203,7 +203,7 @@ def make_web_user_dict(user, location_cache, domain):
 def make_invited_web_user_dict(invite, location_cache):
     location_codes = []
     try:
-        location_codes.append(location_cache.get(invite.supply_point))
+        location_codes.append(location_cache.get(invite.location_id))
     except SQLLocation.DoesNotExist:
         pass
     return {
