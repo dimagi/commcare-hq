@@ -55,20 +55,20 @@ class TestAttendeeCaseManager(TestCase):
             'Clarence Closedcase',
         ) as closed_case:
             self.factory.close_case(closed_case.case_id)
-            yield open_case, closed_case
+            yield open_case.case_id, closed_case.case_id
 
     def test_manager_returns_open_cases(self):
-        with self.get_attendee_cases() as (open_case, closed_case):
-            cases = [m.case for m in AttendeeModel.objects.by_domain(DOMAIN)]
-            self.assertEqual(cases, [open_case])
+        with self.get_attendee_cases() as (open_case_id, closed_case_id):
+            case_ids = [m.case_id for m in AttendeeModel.objects.by_domain(DOMAIN)]
+            self.assertCountEqual(case_ids, [open_case_id])
 
     def test_manager_returns_closed_cases_as_well(self):
-        with self.get_attendee_cases() as (open_case, closed_case):
-            cases = [m.case for m in AttendeeModel.objects.by_domain(
+        with self.get_attendee_cases() as (open_case_id, closed_case_id):
+            case_ids = [m.case_id for m in AttendeeModel.objects.by_domain(
                 DOMAIN,
                 include_closed=True,
             )]
-            self.assertEqual(cases, [open_case, closed_case])
+            self.assertCountEqual(case_ids, [open_case_id, closed_case_id])
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
