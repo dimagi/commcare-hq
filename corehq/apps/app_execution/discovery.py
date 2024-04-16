@@ -28,7 +28,8 @@ def _expand_workflow(exploration):
     This also returns a generator of newly discovered workflows to explore.
     """
     while not exploration.completed:
-        exploration.execute_next_step()
+        if not exploration.execute_next_step():
+            continue
         branches = get_branches(exploration.session)
         if not branches:
             exploration.completed = True
@@ -71,7 +72,7 @@ def _get_value_for_type(item):
     if datatype == "str":
         return "some answer"
     if datatype == "date":
-        return datetime.today().isoformat()
+        return datetime.today().date().isoformat()
     if datatype == "select":
         return "1"  # first option in choice list
 
@@ -85,9 +86,12 @@ class WorkflowExploration:
 
     def execute_next_step(self):
         step = self.workflow.steps[self.step_index]
+        if isinstance(step, data_model.FormStep):
+            self.completed = True
+            return False
         execute_step(self.session, step)
         self.step_index += 1
-        return self
+        return True
 
     def extend(self, branch):
         new_steps = branch if isinstance(branch, list) else [branch]
