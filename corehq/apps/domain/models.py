@@ -448,6 +448,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     ga_opt_out = BooleanProperty(default=False)
     orphan_case_alerts_warning = BooleanProperty(default=False)
+    exports_use_elasticsearch = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
