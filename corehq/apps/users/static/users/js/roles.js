@@ -143,6 +143,17 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
+                data.commcareAnalyticsRoles = {
+                    all: data.permissions.commcare_analytics_roles,
+                    specific: ko.utils.arrayMap(o.commcareAnalyticsRoles, function (role) {
+                        return {
+                            name: role.name,
+                            slug: role.slug,
+                            value: data.permissions.commcare_analytics_roles_list.indexOf(role.slug) !== -1,
+                        };
+                    }),
+                };
+
                 self = ko.mapping.fromJS(data);
                 let filterSpecific = (permissions) => {
                     return ko.computed(function () {
@@ -158,6 +169,7 @@ hqDefine('users/js/roles',[
                 self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
                 self.viewRegistryContentsPermission.filteredSpecific = filterSpecific(self.viewRegistryContentsPermission);
+                self.commcareAnalyticsRoles.filteredSpecific = filterSpecific(self.commcareAnalyticsRoles);
                 self.canSeeAnyReports = ko.computed(function () {
                     return self.reportPermissions.all() || _.any(self.reportPermissions.specific(), (p) => p.value());
                 });
@@ -562,6 +574,10 @@ hqDefine('users/js/roles',[
                 data.permissions.view_data_registry_contents = data.viewRegistryContentsPermission.all;
                 data.permissions.view_data_registry_contents_list = unwrapItemList(
                     data.viewRegistryContentsPermission.specific);
+
+                data.permissions.commcare_analytics_roles = data.commcareAnalyticsRoles.all;
+                data.permissions.commcare_analytics_roles_list = unwrapItemList(
+                    data.commcareAnalyticsRoles.specific);
 
                 data.is_non_admin_editable = data.manageRoleAssignments.all;
                 data.assignable_by = unwrapItemList(data.manageRoleAssignments.specific, 'path');

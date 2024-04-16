@@ -160,6 +160,7 @@ PARAMETERIZED_PERMISSIONS = {
     'view_data_registry_contents': 'view_data_registry_contents_list',
     'view_reports': 'view_report_list',
     'view_tableau': 'view_tableau_list',
+    'commcare_analytics_roles': 'commcare_analytics_roles_list',
 }
 
 
