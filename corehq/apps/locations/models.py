@@ -103,7 +103,7 @@ class LocationType(models.Model):
         related_name="+",
         on_delete=models.RESTRICT,
     )  # levels above this type that are synced
-    restrict_cases_to = models.ForeignKey(
+    expand_view_child_data_to = models.ForeignKey(
         "self",
         null=True,
         related_name="+",

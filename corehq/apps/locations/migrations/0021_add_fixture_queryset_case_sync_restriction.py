@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='locationtype',
-            name='restrict_cases_to',
+            name='expand_view_child_data_to',
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='+', to='locations.locationtype'),
         ),
         migrations.AlterField(
