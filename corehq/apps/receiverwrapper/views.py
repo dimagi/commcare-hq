@@ -22,6 +22,7 @@ from corehq import toggles
 from corehq.apps.domain.auth import (
     BASIC,
     DIGEST,
+    FORMPLAYER,
     NOAUTH,
     API_KEY,
     OAUTH2,
@@ -33,6 +34,7 @@ from corehq.apps.domain.decorators import (
     login_or_basic_ex,
     login_or_digest_ex,
     login_or_api_key_ex,
+    login_or_formplayer_ex,
     login_or_oauth2_ex,
     two_factor_exempt,
 )
@@ -363,6 +365,10 @@ def secure_post(request, domain, app_id=None):
         OAUTH2: [
             two_factor_exempt,
             login_or_oauth2_ex(allow_cc_users=True, oauth_scopes=['sync']),
+        ],
+        FORMPLAYER: [
+            two_factor_exempt,
+            login_or_formplayer_ex(allow_cc_users=True)
         ],
     }
 
