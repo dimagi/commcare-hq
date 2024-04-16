@@ -1,9 +1,9 @@
 from collections import defaultdict
 from itertools import groupby
-from xml.etree.cElementTree import Element
+from xml.etree.cElementTree import Element, SubElement
 
 from django.contrib.postgres.fields.array import ArrayField
-from django.db.models import IntegerField
+from django.db.models import IntegerField, Q
 
 from django_cte import With
 from django_cte.raw import raw_cte_sql
@@ -74,7 +74,8 @@ def _app_has_changed(last_sync, app_id):
 
 
 def _fixture_has_changed(last_sync, restore_user):
-    return (not last_sync or not last_sync.date or restore_user.get_fixture_last_modified() >= last_sync.date)
+    return (not last_sync or not last_sync.date or
+            restore_user.get_fixture_last_modified() >= last_sync.date)
 
 
 def _locations_have_changed(last_sync, locations_queryset, restore_user):
@@ -108,7 +109,7 @@ class LocationFixtureProvider(FixtureProvider):
         if not self.serializer.should_sync(restore_user, restore_state.params.app):
             return []
 
-        # This just calls get_location_fixture_queryset_for_user but is memoized to the user
+        # This just calls get_location_fixture_queryset but is memoized to the user
         locations_queryset = restore_user.get_locations_to_sync()
         if not should_sync_locations(restore_state.last_sync_log, locations_queryset, restore_state):
             return []
@@ -244,7 +245,7 @@ int_field = IntegerField()
 int_array = ArrayField(int_field)
 
 
-def get_location_fixture_queryset_for_user(user):
+def get_location_fixture_queryset(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         return get_domain_locations(user.domain).prefetch_related('location_type')
 
@@ -255,16 +256,16 @@ def get_location_fixture_queryset_for_user(user):
 
     user_location_ids = list(user_locations.order_by().values_list("id", flat=True))
 
-    return get_location_fixture_queryset(user.domain, user_location_ids)
+    return _location_queryset_helper(user.domain, user_location_ids)
 
 
-def get_location_fixture_queryset(domain, location_pks, case_sync_restriction=False):
+def _location_queryset_helper(domain, location_pks):
     fixture_ids = With(raw_cte_sql(
         """
         SELECT "id", "path", "depth"
-        FROM get_location_fixture_ids_2(%s::TEXT, %s, %s)
+        FROM get_location_fixture_ids(%s::TEXT, %s)
         """,
-        [domain, location_pks, case_sync_restriction],
+        [domain, location_pks],
         {"id": int_field, "path": int_array, "depth": int_field},
     ))
 
@@ -284,8 +285,7 @@ def _append_children(node, location_db, locations, data_fields):
 
 
 def _group_by_type(locations):
-    def key(loc):
-        return (loc.location_type.code, loc.location_type)
+    key = lambda loc: (loc.location_type.code, loc.location_type)
     for (code, type), locs in groupby(sorted(locations, key=key), key=key):
         yield type, list(locs)
 

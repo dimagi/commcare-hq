@@ -35,7 +35,6 @@ from ..fixtures import (
     _location_to_fixture,
     get_location_data_fields,
     flat_location_fixture_generator,
-    get_location_fixture_queryset_for_user,
     get_location_fixture_queryset,
     location_fixture_generator,
     should_sync_flat_fixture,
@@ -112,14 +111,8 @@ class FixtureHasLocationsMixin(TestXmlMixin):
         desired_fixture = self._assemble_expected_fixture(xml_name, desired_locations)
         self.assertXmlEqual(desired_fixture, fixture)
 
-    def assert_fixture_queryset_equals_locations_for_user(self, desired_locations):
-        actual = get_location_fixture_queryset_for_user(self.user).values_list('name', flat=True)
-        self.assertItemsEqual(actual, desired_locations)
-
-    def assert_fixture_queryset_equals_locations(self, desired_locations, location_pks,
-                                                 case_sync_restriction):
-        actual = get_location_fixture_queryset(self.domain, location_pks,
-                                               case_sync_restriction).values_list('name', flat=True)
+    def assert_fixture_queryset_equals_locations(self, desired_locations):
+        actual = get_location_fixture_queryset(self.user).values_list('name', flat=True)
         self.assertItemsEqual(actual, desired_locations)
 
 
@@ -148,8 +141,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
         empty_fixture = EMPTY_LOCATION_FIXTURE_TEMPLATE.format(self.user.user_id)
-        fixture = ElementTree.tostring(call_fixture_generator(
-            location_fixture_generator, self.user)[0], encoding='utf-8')
+        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0], encoding='utf-8')
         self.assertXmlEqual(empty_fixture, fixture)
 
     def test_metadata(self):
@@ -322,7 +314,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_type.include_only.set([self.location_types['state'], self.location_types['county']])
         location_type.save()
         # include county and state
-        self.assert_fixture_queryset_equals_locations_for_user(
+        self.assert_fixture_queryset_equals_locations(
             ['Massachusetts', 'Suffolk', 'Middlesex']
         )
 
@@ -336,41 +328,6 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         self._assert_fixture_matches_file(
             'expand_to_county_from_state',
             ['Massachusetts', 'Suffolk', 'Middlesex']
-        )
-
-    def test_get_location_fixture_queryset_with_case_sync_restriction_default_1(self):
-        # Test default - case_sync_restriction on w/o any restrict_cases_to
-        middlesex = self.locations['Middlesex']
-        self.location_types['county'].expand_to = self.location_types['county']  # This should have no effect
-        self.location_types['county'].expand_from = self.location_types['state']  # Also should have no effect
-        self.location_types['county'].save()
-        self.assert_fixture_queryset_equals_locations(
-            ['Massachusetts', 'Middlesex', 'Cambridge', 'Somerville'],
-            [middlesex.id],
-            True
-        )
-
-    def test_get_location_fixture_queryset_with_case_sync_restriction_default_2(self):
-        middlesex = self.locations['Middlesex']
-        self.location_types['county']._expand_from_root = True
-        self.location_types['county'].include_only.set([self.location_types['state']])
-        self.location_types['county'].save()
-        self.assert_fixture_queryset_equals_locations(
-            ['Massachusetts', 'Middlesex', 'Cambridge', 'Somerville'],
-            [middlesex.id],
-            True
-        )
-
-    def test_get_location_fixture_queryset_with_case_sync_restriction_restrict_cases_to(self):
-        # Verify restrict_cases_to
-        mass = self.locations['Massachusetts']
-        self.location_types['state'].restrict_cases_to = self.location_types['county']
-        self.location_types['state'].include_without_expanding = self.location_types['city']
-        self.location_types['state'].save()
-        self.assert_fixture_queryset_equals_locations(
-            ['Massachusetts', 'Middlesex', 'Suffolk'],
-            [mass.id],
-            True
         )
 
 
@@ -444,8 +401,7 @@ class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
         location_type.include_without_expanding = self.locations['DTO'].location_type
         location_type.save()
 
-        fixture = ElementTree.tostring(call_fixture_generator(
-            flat_location_fixture_generator, self.user)[-1], encoding='utf-8').decode('utf-8')
+        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1], encoding='utf-8').decode('utf-8')
 
         for location_name in ('CDST1', 'CDST', 'DRTB1', 'DRTB', 'DTO1', 'DTO', 'CTO', 'CTO1', 'CTD'):
             self.assertTrue(location_name in fixture)
@@ -562,8 +518,7 @@ class WebUserLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
         empty_fixture = EMPTY_LOCATION_FIXTURE_TEMPLATE.format(self.user.user_id)
-        fixture = ElementTree.tostring(call_fixture_generator(
-            location_fixture_generator, self.user)[0], encoding='utf-8')
+        fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0], encoding='utf-8')
         self.assertXmlEqual(empty_fixture, fixture)
 
     def test_simple_location_fixture(self):
@@ -657,7 +612,7 @@ class ForkedHierarchyLocationFixturesTest(TestCase, FixtureHasLocationsMixin):
         ])
         location_type.save()
         # include county and state
-        self.assert_fixture_queryset_equals_locations_for_user([
+        self.assert_fixture_queryset_equals_locations([
             'Massachusetts',
             'Middlesex',
             'Cambridge',
