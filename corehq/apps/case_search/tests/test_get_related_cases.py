@@ -56,6 +56,7 @@ class TestCaseSearchAppStuff(TestCase):
             DetailColumn(header={"en": "zz"}, model="case", field="parent/zz", format="plain"),
         )
         cls.app.save()
+        cls.addClassCleanup(cls.app.delete)
 
     def test_get_app_context(self):
         paths, child_case_types = get_app_context(self.domain, self.app._id, ['patient'])
