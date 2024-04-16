@@ -493,7 +493,6 @@ class Command(BaseCommand):
         self.stdout.write(self.style.ERROR(
             "\nYou have un-committed changes! Please commit these changes before proceeding. Thank you!"
         ))
-        ensure_no_pending_changes_before_continuing()
 
     def suggest_commit_message(self, message, show_apply_commit=False):
         if self.skip_all and show_apply_commit:
