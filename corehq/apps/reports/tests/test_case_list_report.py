@@ -14,6 +14,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.form_processor.models import CommCareCase
+from corehq.util.test_utils import flag_enabled
 
 
 @es_test(requires=[case_adapter, group_adapter, user_adapter], setup_class=True)
@@ -71,6 +72,17 @@ class TestCaseListReport(TestCase):
         case_adapter.bulk_index(cls.case_list, refresh=True)
 
     def test_with_project_data_slug(self):
+        report_slugs = ['project_data']
+        q_dict_get = QueryDict('', mutable=True)
+        q_dict_get.setlist('case_list_filter', report_slugs)
+        self.request.GET = q_dict_get
+        data = CaseListReport(self.request, domain=self.domain).es_results['hits'].get('hits', [])
+        expected_case_ids = ['id-1', 'id-2', 'id-3', 'id-5']
+        queried_case_ids = [case['_id'] for case in data]
+        self.assertCountEqual(expected_case_ids, queried_case_ids)
+
+    @flag_enabled('WEB_USERS_IN_REPORTS')
+    def test_with_project_data_slug_web_users_enabled(self):
         report_slugs = ['project_data']
         q_dict_get = QueryDict('', mutable=True)
         q_dict_get.setlist('case_list_filter', report_slugs)

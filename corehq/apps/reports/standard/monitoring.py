@@ -1388,6 +1388,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             return util.get_simplified_users(user_query)
         elif not self.group_ids:
             user_query = UserES().domain(self.domain)
+            if not toggles.WEB_USERS_IN_REPORTS.enabled(self.domain):
+                user_query = user_query.mobile_users()
             return util.get_simplified_users(user_query)
         else:
             all_users = flatten_list(list(self.users_by_group.values()))

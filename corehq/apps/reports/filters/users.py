@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy, gettext_noop
 
 from memoized import memoized
 
+from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import filters
@@ -19,7 +20,6 @@ from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
 from corehq.apps.users.util import cached_user_id_to_user_display
 from corehq.const import USER_DATETIME_FORMAT
-from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -267,8 +267,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         defaults = [
             self.utils.user_type_tuple(HQUserType.ACTIVE),
             self.utils.user_type_tuple(HQUserType.DEACTIVATED),
-            self.utils.user_type_tuple(HQUserType.WEB),
         ]
+        if toggles.WEB_USERS_IN_REPORTS.enabled(self.domain):
+            defaults.append(self.utils.user_type_tuple(HQUserType.WEB))
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
         return defaults
@@ -401,7 +402,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
         group_id_filter = filters.term("__group_ids", group_ids)
 
-        if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain) and group_ids and location_ids:
+        if toggles.FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain) and group_ids and location_ids:
             group_and_location_filter = filters.AND(
                 group_id_filter,
                 user_es.location(location_ids),
@@ -526,7 +527,9 @@ class UserPropertyFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        from corehq.apps.reports.standard.users.reports import UserHistoryReport
+        from corehq.apps.reports.standard.users.reports import (
+            UserHistoryReport,
+        )
         properties = UserHistoryReport.get_primary_properties(self.domain)
         properties.pop("username", None)
         return list(properties.items())
