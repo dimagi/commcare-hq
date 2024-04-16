@@ -190,10 +190,10 @@ class Command(ResourceStaticCommand):
         logger.info(f"{log_prefix}r.js complete, bundle config output written to staticfiles/build.txt")
 
         # Copy requirejs_config.js back into corehq, since r.js added all of the bundles to it
+        bootstrap_dir = f'bootstrap{bootstrap_version}'
+        self._update_resource_hash(f"hqwebapp/js/{bootstrap_dir}/requirejs_config.js", filename)
         if self.local:
-            bootstrap_dir = f'bootstrap{bootstrap_version}'
             filename = self._staticfiles_path('hqwebapp', 'js', bootstrap_dir, 'requirejs_config.js')
-            self._update_resource_hash(f"hqwebapp/js/{bootstrap_dir}/requirejs_config.js", filename)
             dest = os.path.join(settings.BASE_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
                                 'hqwebapp', 'js', bootstrap_dir, 'requirejs_config.js')
             logger.info(f"{log_prefix}Copying {bootstrap_dir}/requirejs_config.js back to {os.path.relpath(dest)}")
