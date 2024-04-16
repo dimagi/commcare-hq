@@ -128,7 +128,7 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
 
     @property
     def show_remote_user_management(self):
-        return toggles.SSO_REMOTE_USER_MANAGEMENT.enabled_for_request(self.request)
+        return True
 
     @property
     def uses_api_key_management(self):
