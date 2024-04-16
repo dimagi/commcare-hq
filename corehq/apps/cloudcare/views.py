@@ -111,9 +111,6 @@ class FormplayerMain(View):
         return _fetch_build(domain, self.request.couch_user.username, app_id)
 
     def get_web_apps_available_to_user(self, domain, user):
-        if user['doc_type'] == 'WebUser' and not user.can_access_web_apps(domain):
-            return []
-
         app_access = get_application_access_for_domain(domain)
         app_ids = get_app_ids_in_domain(domain)
 
