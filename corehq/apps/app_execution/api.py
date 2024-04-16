@@ -65,13 +65,12 @@ class FormplayerSession:
 
         raise ValueError(f"Unknown screen type: {current_data}")
 
-    @property
-    def request_url(self):
+    def request_url(self, step):
         screen = self.current_screen
         if screen == ScreenType.START:
             return "navigate_menu_start"
         if screen == ScreenType.FORM:
-            return "answer"
+            return "submit-all" if isinstance(step, data_model.SubmitFormStep) else "answer"
         return "navigate_menu"
 
     def get_session_start_data(self):
@@ -136,13 +135,13 @@ def execute_step(session, step):
 
 def _execute_leaf_step(session, step):
     data = session.get_request_data(step) if step else session.get_session_start_data()
-    session.data = _make_request(session, data)
+    session.data = _make_request(session, data, session.request_url(step))
 
 
-def _make_request(session, data):
+def _make_request(session, data, url):
     data_bytes = json.dumps(data).encode('utf-8')
     response = requests.post(
-        url=f"{get_formplayer_url()}/{session.request_url}",
+        url=f"{get_formplayer_url()}/{url}",
         data=data_bytes,
         headers={
             "Content-Type": "application/json",

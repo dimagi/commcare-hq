@@ -85,8 +85,8 @@ class MockFormplayer:
     app: Menu
     session: dict = dataclasses.field(default_factory=dict)
 
-    def process_request(self, session, data):
-        if "navigate_menu" in session.request_url:
+    def process_request(self, session, data, url):
+        if "navigate_menu" in url:
             selections = data["selections"]
             option = self.app.process_selections(selections)
             data = option.get_response_data(selections)
@@ -97,6 +97,7 @@ class MockFormplayer:
             # form response
             if not self.session:
                 raise ValueError("No session data")
+            assert data.get("session_id") == self.session["session_id"]
             if data["action"] == "answer":
                 self.session["tree"][int(data["idx"])]["answer"] = data["answer"]
             elif data["action"] == "submit-all":
