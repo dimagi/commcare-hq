@@ -16,10 +16,10 @@ XFORM_MAPPING = {
             "type": "keyword"
         },
         "@uiVersion": {
-            "type": "text"
+            "type": "keyword"
         },
         "@version": {
-            "type": "text"
+            "type": "keyword"
         },
         "__retrieved_case_ids": {
             "type": "keyword"

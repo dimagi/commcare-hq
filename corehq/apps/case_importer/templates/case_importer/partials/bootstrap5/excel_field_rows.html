@@ -1,0 +1,90 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<!--ko foreach: mappingRows-->
+<tr>
+
+  <td>
+    <!-- ko if: $parent.mappingRows().length > 1 -->
+    <a class="remove_row" href="#" data-bind="click: $root.removeRow"><i class="fa fa-remove"></i></a>
+    <!--/ko-->
+  </td>
+
+  <td class="col-md-3">
+    <select class="form-control excel_field" name="excel_field[]" data-bind="
+        options: $root.excelFields,
+        optionsCaption: '{% trans_html_attr 'Select field from excel' %}',
+        value: excelField
+    "></select>
+  </td>
+
+  <td class="text-center">
+    <i class="fa fa-arrow-right"></i>
+  </td>
+
+  <td class="col-md-3">
+    <input type="text" name="custom_field[]"
+           class="custom_field form-control"
+           placeholder="Enter new property name"
+           data-bind="
+        visible: isCustom(),
+        value: customCaseFieldOrBlank
+    "/>
+
+    <select class="form-control case_field" name="case_field[]" data-bind="
+        visible: !isCustom(),
+        options: $root.caseFieldSpecsInMenu,
+        optionsCaption: '{% trans_html_attr 'Select property name' %}',
+        optionsText: 'field',
+        optionsValue: 'field',
+        value: selectedCaseFieldOrBlank
+    "></select>
+
+    <div data-bind="
+        css: {
+            'has-success': hasDiscoverableSpecialField,
+            'has-error': hasNonDiscoverableField,
+        }
+    ">
+      <p class="help-block">
+        <!--ko if: hasDiscoverableSpecialField-->
+        <i class="fa fa-check"></i>
+        <!--/ko-->
+        <!--ko if: hasNonDiscoverableField-->
+        <i class="fa fa-warning"></i>
+        <!--/ko-->
+        <span data-bind="text: caseFieldSpec().description"></span>
+      </p>
+    </div>
+    <div class="has-warning" data-bind="visible: isDeprecated()">
+        <p class="help-block">{% trans "This is a deprecated property" %}</p>
+    </div>
+    <!--ko if: caseFieldSuggestions().length-->
+    <div class="has-warning">
+      <p class="help-block">
+        {% blocktrans with '<!--ko foreach: caseFieldSuggestions--><!--ko if: $index() !== 0-->, <!--/ko--><strong data-bind="text: $data"></strong><!--/ko-->' as suggestion %}
+          Did you mean "{{ suggestion }}" instead?
+        {% endblocktrans %}
+      </p>
+    </div>
+    <!--/ko-->
+  </td>
+
+  <td>
+    <div class="checkbox">
+      <label>
+        <input type="checkbox" class="new_property" style="margin-left: auto;" data-bind="checked: createNewChecked"/>
+      </label>
+    </div>
+  </td>
+
+  {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+  <td>
+      <ul class="list-unstyled" data-bind="visible: valuesHints().length, foreach: valuesHints">
+        <!--ko if: $data--><li data-bind="text: $data"></li><!--/ko-->
+        <!--ko if: !$data--><li data-bind="html: '<i>{% trans "blank" %}</i>'"></li><!--/ko-->
+      </ul>
+  </td>
+  {% endif %}
+
+</tr>
+<!--/ko-->

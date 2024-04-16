@@ -1,0 +1,111 @@
+{% load hq_shared_tags %}
+{% load compress %}
+{% load statici18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="HandheldFriendly" content="True">
+
+  {% include 'hqwebapp/includes/bootstrap3/core_stylesheets.html' %}
+  {% compress css %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
+  {% endcompress %}
+
+  {% if request.use_daterangepicker %}
+    {% compress css %}
+      <link type="text/css"
+            rel="stylesheet"
+            media="screen"
+            href="{% static "bootstrap-daterangepicker/daterangepicker.css" %}" />
+    {% endcompress %}
+  {% endif %}
+
+  {% block css %}{% endblock %}
+
+  <link rel="stylesheet"
+        href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
+  <link type="text/css"
+        rel="stylesheet"
+        media="screen"
+        href="{% static "jquery-ui-built-themes/redmond/jquery-ui.min.css" %}" />
+
+  <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
+  <link rel="stylesheet" href="{% static 'jquery-ui-built-themes/base/jquery-ui.min.css' %}">
+  <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
+
+  {% javascript_libraries use_bootstrap5=use_bootstrap5 underscore=True jquery_ui=True ko=True hq=True analytics=True %}
+  <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+
+  {% compress js %}
+    <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+    <script src="{% static 'cloudcare/js/preview_app/dragscroll.js' %}"></script>
+  {% endcompress %}
+
+  {% if request.use_daterangepicker and not requirejs_main %}
+    {% compress js %}
+      <script src="{% static 'moment/moment.js' %}"></script>
+      <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/daterangepicker.config.js' %}"></script>
+    {% endcompress %}
+  {% endif %}
+
+  <style id="list-cell-layout-style"></style>
+  <!-- For Formplayer's app preview -->
+
+</head>
+<body>
+{% block body %}{% endblock %}
+
+{# HTML templates #}
+{% include 'cloudcare/partials/form_entry_templates.html' %}
+{% include 'cloudcare/partials/debugger.html' %}
+{% include 'cloudcare/partials/grid_view.html' %}
+{% include 'cloudcare/partials/settings_view.html' %}
+{% include 'cloudcare/partials/case_detail.html' %}
+{% include 'cloudcare/partials/case_list.html' %}
+{% include 'cloudcare/partials/menu_list.html' %}
+{% include 'cloudcare/partials/session_list.html' %}
+{% include 'cloudcare/partials/confirmation_modal.html' %}
+{% include 'cloudcare/partials/users.html' %}
+{% include 'cloudcare/partials/progress.html' %}
+{% include 'cloudcare/partials/query_view.html' %}
+
+{% block js %}{{ block.super }}
+  {% include 'cloudcare/partials/dependencies.html' %}
+{% endblock %}
+
+{% initial_page_data 'toggles_dict' toggles_dict %}
+{% initial_page_data 'previews_dict' previews_dict %}
+<div class="initial-page-data" class="hide">
+  {% block initial_page_data %}
+    {# do not override this block, use initial_page_data template tag to populate #}
+  {% endblock %}
+</div>
+<div class="commcarehq-urls" class="hide">
+  {% block registered_urls %}
+    {# do not override this block, use registerurl template tag to populate #}
+  {% endblock %}
+</div>
+{% include 'analytics/initial/all.html' %}
+<div class="initial-analytics-data hide">
+  {% block initial_analytics_data %}
+    {# do not override this block, use initial_analytics_data template tag to populate #}
+  {% endblock %}
+</div>
+<div class="analytics-ab-tests hide">
+  {% block analytics_ab_test %}
+    {# do not override this block, use analytics_ab_test template tag to populate #}
+  {% endblock %}
+</div>
+</body>
+</html>

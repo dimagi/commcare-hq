@@ -1,0 +1,27 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load i18n %}
+
+{% block page_content %}
+  <form class="form-horizontal">
+    <fieldset>
+      <legend>{% block title %}{% trans "Enable Privileges on Mobile" %}{% endblock %}</legend>
+
+      <p>
+        {% blocktrans %}Scanning this QR code from CommCare will enable special privileges for your mobile
+          device, and should not be shared with partners or other external users for any reason.
+        {% endblocktrans %}
+      </p>
+
+      <p class="text-center">
+        <img src="data:image/png;base64,{{ qrcode_64 }}" width="250" alt="QR Code"/>
+      </p>
+
+      <p>
+        {% blocktrans %}You can scan this QR code in CommCare by going to the app manager options menu and
+          selecting 'Advanced', and then 'Enable Mobile Privileges'.{% endblocktrans %}
+      </p>
+
+    </fieldset>
+  </form>
+
+{% endblock %}

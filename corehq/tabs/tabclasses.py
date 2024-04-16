@@ -972,14 +972,20 @@ class ProjectDataTab(UITab):
                 case_search_enabled_for_domain,
             )
             if case_search_enabled_for_domain(self.domain):
-                from corehq.apps.case_search.views import CaseSearchView
-                explore_data_views.append({
+                from corehq.apps.case_search.views import CaseSearchView, ProfileCaseSearchView
+                explore_data_views.extend([{
                     'title': _(CaseSearchView.page_title),
                     'url': reverse(CaseSearchView.urlname, args=(self.domain,)),
                     'icon': 'fa fa-search',
                     'show_in_dropdown': False,
                     'subpages': [],
-                })
+                }, {
+                    'title': _(ProfileCaseSearchView.page_title),
+                    'url': reverse(ProfileCaseSearchView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-clock',
+                    'show_in_dropdown': False,
+                    'subpages': [],
+                }])
         return explore_data_views
 
     def _get_geospatial_views(self):
@@ -2081,6 +2087,7 @@ def _get_manage_domain_alerts_section(domain):
 
 
 def _get_integration_section(domain, couch_user):
+    from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
 
     def _get_forward_name(repeater_type=None, **context):
         if repeater_type == 'FormRepeater':
@@ -2115,7 +2122,7 @@ def _get_integration_section(domain, couch_user):
             {
                 'title': _('Data Forwarding Records'),
                 'url': reverse('domain_report_dispatcher',
-                               args=[domain, _get_repeat_record_report(domain)])
+                               args=[domain, DomainForwardingRepeatRecords.slug])
             },
             {
                 'title': _(MotechLogListView.page_title),
@@ -2609,15 +2616,3 @@ class AttendanceTrackingTab(UITab):
     def _is_viewable(self):
         # The FF check is temporary until the full feature is released
         return toggles.ATTENDANCE_TRACKING.enabled(self.domain) and self.couch_user.can_manage_events(self.domain)
-
-
-def _get_repeat_record_report(domain):
-    from corehq.motech.repeaters.models import are_repeat_records_migrated
-    from corehq.motech.repeaters.views import (
-        DomainForwardingRepeatRecords,
-        SQLRepeatRecordReport,
-    )
-
-    if are_repeat_records_migrated(domain):
-        return SQLRepeatRecordReport.slug
-    return DomainForwardingRepeatRecords.slug

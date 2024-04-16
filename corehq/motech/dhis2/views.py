@@ -15,7 +15,6 @@ from django.views.generic.edit import BaseCreateView, BaseUpdateView
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -201,7 +200,6 @@ class DataSetMapCreateView(BaseCreateView, BaseProjectSettingsView):
 
     @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator())
-    @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
@@ -234,7 +232,6 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
 
     @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator())
-    @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 

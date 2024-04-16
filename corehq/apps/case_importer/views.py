@@ -121,7 +121,7 @@ def excel_config(request, domain):
         return render_error(request, domain, _("Please upload file with extension .xls or .xlsx"))
 
     context.update(_case_importer_breadcrumb_context(_('Case Options'), domain))
-    return render(request, "case_importer/excel_config.html", context)
+    return render(request, "case_importer/bootstrap3/excel_config.html", context)
 
 
 def _get_workbook_sheet_names(case_upload):
@@ -375,7 +375,7 @@ def excel_fields(request, domain):
         'is_bulk_import': request.POST.get('is_bulk_import', 'False') == 'True',
     }
     context.update(_case_importer_breadcrumb_context(_('Match Excel Columns to Case Properties'), domain))
-    return render(request, "case_importer/excel_fields.html", context)
+    return render(request, "case_importer/bootstrap3/excel_fields.html", context)
 
 
 @require_POST

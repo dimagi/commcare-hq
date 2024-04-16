@@ -1,0 +1,103 @@
+{% extends 'hqwebapp/bootstrap3/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main "settings/js/bootstrap5/user_api_keys" %}
+
+{% block page_content %}
+  {% initial_page_data 'always_show_user_api_keys' always_show_user_api_keys %}
+  {% initial_page_data 'maximum_key_expiration_window' maximum_key_expiration_window %}
+  {{ block.super }}
+{% endblock %}
+
+{% block pagination_templates %}
+  <script type="text/html" id="base-user-api-key-template">
+    <td data-bind="text: name"></td>
+    <td>
+      <span data-bind="text: key"></span>
+      {% if always_show_user_api_keys %}
+      <button type="button" class="btn btn-default">
+        <i class="fa-regular fa-copy"></i>
+        {% trans "Copy Full Key" %}
+      </button>
+      {% endif %}
+    </td>
+    <td data-bind="text: domain"></td>
+    <td data-bind="text: ip_allowlist"></td>
+    <td data-bind="text: created"></td>
+    <td data-bind="text: last_used"></td>
+    <td data-bind="text: expiration_date"></td>
+    <td>
+      <span class="badge text-bg-success" data-bind="visible: status == 'active'">{% trans "Active" %}</span>
+      <span class="badge text-bg-warning" data-bind="visible: status == 'inactive'">{% trans "Inctive" %}</span>
+      <span class="badge text-bg-danger" data-bind="visible: status == 'expired'">{% trans "Expired" %}</span>
+      <small class="help-block" data-bind="hidden: is_active, text: deactivated_on" />
+    </td>
+    <td>
+
+      <button class="btn btn-outline-primary" data-bind="visible: status == 'active', click: $root.deactivate">
+        <i class="fa fa-pause"></i> {% trans "Deactivate" %}
+      </button>
+      <button class="btn btn-outline-primary" data-bind="visible: status == 'inactive', click: $root.activate">
+        <i class="fa fa-toggle-right"></i> {% trans "Activate" %}
+      </button>
+
+      <button type="button"
+              data-bs-toggle="modal"
+              data-bind="attr: {'data-target': '#delete-key-' + id}, hidden: status == 'active'"
+              class="btn btn-outline-danger">
+        <i class="fa fa-remove"></i> {% trans "Delete" %}
+      </button>
+
+      <div class="modal fade"
+           data-bind="attr: {id: 'delete-key-' + id}">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>
+              <h3>
+                {% trans "Delete Key" %} <strong data-bind="text: name"></strong>?
+              </h3>
+            </div>
+            <div class="modal-body">
+              <p class="lead">
+                {% blocktrans %}
+                  Deleting this key will prevent any future API requests that use this key. This action cannot be undone. Are you sure?
+                {% endblocktrans %}
+              </p>
+            </div>
+              <div class="modal-footer">
+              <button type="button"
+                      class="btn btn-outline-primary"
+                      data-bs-dismiss="modal">
+                Cancel
+              </button>
+              <button type="button"
+                      class="btn btn-outline-danger delete-item-confirm">
+                <i class="fa fa-remove"></i> {% trans "Delete Key" %}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </td>
+  </script>
+
+  <script type="text/html" id="deleted-user-api-key-template">
+    <td data-bind="text: name"></td>
+  </script>
+
+  <script type="text/html" id="new-user-api-key-template">
+    <td data-bind="text: name"></td>
+    <td data-bind="text: key"></td>
+    <td data-bind="text: domain"></td>
+    <td data-bind="text: ip_allowlist"></td>
+    <td data-bind="text: created"></td>
+    <td data-bind="text: last_used"></td>
+    <td data-bind="text: expiration_date"></td>
+    <td>
+      <span class="badge text-bg-success">{% trans "Active" %}</span>
+    </td>
+    <td></td>
+  </script>
+{% endblock %}
