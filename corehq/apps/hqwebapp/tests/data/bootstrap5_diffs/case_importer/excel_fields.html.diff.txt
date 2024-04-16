@@ -1,15 +1,27 @@
 --- 
 +++ 
-@@ -3,7 +3,7 @@
+@@ -1,18 +1,9 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load compress %}
  {% load hq_shared_tags %}
  {% load i18n %}
  
 -{% requirejs_main "case_importer/js/bootstrap3/main" %}
-+{% requirejs_main "case_importer/js/bootstrap5/main" %}
+-
+-{% block stylesheets %}{{ block.super }}
+-  {% compress css %}
+-  <link type="text/less"
+-        rel="stylesheet"
+-        media="all"
+-        href="{% static 'case_importer/less/case_importer.less' %}" />
+-  {% endcompress %}
+-{% endblock %}
++{% requirejs_main_b5 "case_importer/js/bootstrap5/main" %}
  
- {% block stylesheets %}{{ block.super }}
-   {% compress css %}
-@@ -46,7 +46,7 @@
+ {% block page_content %}
+   {% include 'case_importer/partials/help_message.html' %}
+@@ -46,7 +37,7 @@
        {% if not is_bulk_import %}
        <legend>
          {% trans "Match Excel Columns to Case Properties" %}
@@ -18,7 +30,7 @@
            {% trans "Reset to default matching" %}
          </button>
        </legend>
-@@ -56,7 +56,7 @@
+@@ -56,7 +47,7 @@
          <th>{% trans "Excel Field" %}</th>
          <th></th>
          <th>{% trans "Case Property" %}</th>
@@ -27,7 +39,7 @@
            {% trans "Create new property" %}
          </th>
          {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
-@@ -64,10 +64,10 @@
+@@ -64,18 +55,18 @@
          {% endif %}
          </thead>
          <tbody id="excel-field-rows" class="ko-template">
@@ -36,7 +48,17 @@
          </tbody>
        </table>
 -      <a id="js-add-mapping" class="btn btn-default" href="#">
-+      <a id="js-add-mapping" class="btn btn-outline-primary" href="#">
++      <a id="js-add-mapping" class="btn btn-outline-primary mb-3" href="#">
          <i class="fa fa-plus"></i> {% trans "Add another matching" %}
        </a>
        {% endif %}
+     </fieldset>
+ 
+     <div class="form-actions">
+-      <div class="col-sm-offset-3">
+-        <button type="button" class="btn btn-primary" id="back_button">
++      <div class="offset-md-3">
++        <button type="button" class="btn btn-outline-primary" id="back_button">
+           <i class="fa fa-backward"></i> {% trans "Back" %}
+         </button>
+         <button type="submit" class="btn btn-primary disable-on-submit">
