@@ -99,6 +99,9 @@ class Command(PopulateSQLCommand):
                 sql.attempts,
                 transforms,
             ))
+        if any(d for d in diffs) and '_rev' in couch:
+            # possibly useful for detecting Couch data corruption
+            diffs.append(f"couch['_rev']: {couch['_rev']}")
         return diffs
 
     def get_ids_to_ignore(self, docs):
