@@ -66,7 +66,7 @@ def mobile_auth(view_func):
     It supports basic, session, and apikey auth, but not digest.
     Endpoints with this decorator will not enforce two factor authentication.
     """
-    return get_multi_auth_decorator(default=BASIC, oauth_scopes=['sync'])(
+    return get_multi_auth_decorator(default=BASIC, allow_formplayer=True, oauth_scopes=['sync'])(
         two_factor_exempt(
             require_mobile_access(view_func)
         )

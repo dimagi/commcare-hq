@@ -9,10 +9,103 @@ import settings
 from corehq.apps.app_execution import data_model
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.hmac_request import get_hmac_digest
+from dimagi.utils.web import get_url_base
 
 
 class FormplayerException(Exception):
     pass
+
+
+class BaseFormplayerClient:
+
+    def __init__(self, domain, username, user_id, commcare_url=None, formplayer_url=None):
+        self.domain = domain
+        self.username = username
+        self.user_id = user_id
+        self.commcare_url = commcare_url or get_url_base()
+        self.formplayer_url = formplayer_url or get_formplayer_url()
+
+    def __enter__(self):
+        self.session = requests.Session()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.session.close()
+
+    def make_request(self, data, endpoint):
+        data_bytes = json.dumps(data).encode('utf-8')
+        response_data = self._make_request(endpoint, data_bytes, headers={
+            "Content-Type": "application/json",
+            "content-length": str(len(data)),
+            "X-FORMPLAYER-SESSION": self.user_id,
+        })
+
+        if response_data.get("exception") or response_data.get("status") == "error":
+            raise FormplayerException(response_data.get("exception", "Unknown error"))
+        return response_data
+
+    def _make_request(self, endpoint, data_bytes, headers):
+        raise NotImplementedError()
+
+
+class UserFormplayerClient(BaseFormplayerClient):
+    def __init__(self, domain, username, user_id, password, commcare_url=None, formplayer_url=None):
+        self.password = password
+        super().__init__(domain, username, user_id, commcare_url, formplayer_url)
+
+    def __enter__(self):
+        self.session = requests.Session()
+        login_url = self.commcare_url + f"/a/{self.domain}/login/"
+        self.session.get(login_url)  # csrf
+        response = self.session.post(
+            login_url,
+            {
+                "auth-username": self.username,
+                "auth-password": self.password,
+                "cloud_care_login_view-current_step": ['auth'],  # fake out two_factor ManagementForm
+            },
+            headers={
+                "X-CSRFToken": self.session.cookies.get('csrftoken'),
+                "REFERER": login_url,  # csrf requires this for secure requests
+            },
+        )
+        assert (response.status_code == 200)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.session.close()
+
+    def _make_request(self, endpoint, data, headers):
+        if 'XSRF-TOKEN' not in self.session.cookies:
+            response = self.session.get(f"{self.formplayer_url}/serverup")
+            response.raise_for_status()
+
+        xsrf_token = self.session.cookies['XSRF-TOKEN']
+
+        response = self.session.post(
+            url=f"{self.formplayer_url}/{endpoint}",
+            data=data,
+            headers={
+                "X-XSRF-TOKEN": xsrf_token,
+                **headers
+            },
+        )
+        response.raise_for_status()
+        return response.json()
+
+
+class HmacFormplayerClient(BaseFormplayerClient):
+
+    def _make_request(self, endpoint, data, headers):
+        response = self.session.post(
+            url=f"{self.formplayer_url}/{endpoint}",
+            data=data,
+            headers={
+                "X-MAC-DIGEST": get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data),
+                **headers
+            },
+        )
+        response.raise_for_status()
+        return response.json()
 
 
 class ScreenType(str, Enum):
@@ -26,11 +119,8 @@ class ScreenType(str, Enum):
 
 @dataclasses.dataclass
 class FormplayerSession:
-    domain: str
-    user_id: str
-    username: str
+    client: BaseFormplayerClient
     app_id: str
-    session_id: str = None
     data: dict = None
 
     def clone(self):
@@ -46,13 +136,13 @@ class FormplayerSession:
     def _get_screen_and_data(self, current_data):
         if not current_data:
             return ScreenType.START, None
-        data = current_data.get("commands")
-        if data:
-            return ScreenType.MENU, data
-        data = current_data.get("entities")
-        if data:
-            return ScreenType.CASE_LIST, data
-        if current_data.get("type") == "query":
+
+        type_ = current_data.get("type")
+        if type_ == "commands":
+            return ScreenType.MENU, current_data["commands"]
+        if type_ == "entities":
+            return ScreenType.CASE_LIST, current_data["entities"]
+        if type_ == "query":
             return ScreenType.SEARCH, current_data.get("displays")
         data = current_data.get("details")
         if data:
@@ -111,12 +201,16 @@ class FormplayerSession:
 
     def _get_base_data(self):
         return {
-            "domain": self.domain,
+            "domain": self.client.domain,
             "restore_as": None,
             "tz_from_browser": "UTC",
             "tz_offset_millis": 0,
-            "username": self.username,
+            "username": self.client.username,
         }
+
+    def execute_step(self, step):
+        data = self.get_request_data(step) if step else self.get_session_start_data()
+        self.data = self.client.make_request(data, self.request_url(step))
 
 
 def execute_workflow(session: FormplayerSession, workflow):
@@ -128,30 +222,6 @@ def execute_workflow(session: FormplayerSession, workflow):
 def execute_step(session, step):
     if step and (children := step.get_children()):
         for child in children:
-            _execute_leaf_step(session, child)
+            session.execute_step(child)
     else:
-        _execute_leaf_step(session, step)
-
-
-def _execute_leaf_step(session, step):
-    data = session.get_request_data(step) if step else session.get_session_start_data()
-    session.data = _make_request(session, data, session.request_url(step))
-
-
-def _make_request(session, data, url):
-    data_bytes = json.dumps(data).encode('utf-8')
-    response = requests.post(
-        url=f"{get_formplayer_url()}/{url}",
-        data=data_bytes,
-        headers={
-            "Content-Type": "application/json",
-            "content-length": str(len(data_bytes)),
-            "X-MAC-DIGEST": get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data_bytes),
-            "X-FORMPLAYER-SESSION": session.user_id,
-        },
-    )
-    response.raise_for_status()
-    data = response.json()
-    if data.get("exception"):
-        raise FormplayerException(data["exception"])
-    return data
+        session.execute_step(step)

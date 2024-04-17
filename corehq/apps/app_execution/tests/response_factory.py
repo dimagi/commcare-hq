@@ -22,6 +22,7 @@ def entity_list_response(selections, entities):
     """
     return {
         "title": "Followup Form",
+        "type": "entities",
         "selections": selections,
         "entities": entities,
     }

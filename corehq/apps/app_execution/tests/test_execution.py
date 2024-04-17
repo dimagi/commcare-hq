@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 
 from . import response_factory as factory
-from .mock_formplayer import CaseList, Form, Menu, MockFormplayer
+from .mock_formplayer import CaseList, Form, Menu, MockFormplayerClient
 from ..api import FormplayerSession, execute_workflow
 from ..data_model import AnswerQuestionStep, CommandStep, EntitySelectStep, FormStep, SubmitFormStep, Workflow
 
@@ -31,6 +31,5 @@ class TestDiscovery(SimpleTestCase):
                 AnswerQuestionStep(question_text='Name', question_id='name', value='str'), SubmitFormStep()
             ])
         ])
-        session = FormplayerSession(domain="domain", app_id="app_id", user_id="user_id", username="username")
-        with MockFormplayer(APP):
-            execute_workflow(session, workflow)
+        session = FormplayerSession(MockFormplayerClient(APP), app_id="app_id")
+        execute_workflow(session, workflow)

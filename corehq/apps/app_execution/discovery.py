@@ -6,21 +6,22 @@ from . import data_model
 from .api import FormplayerSession, ScreenType, execute_step
 
 
-def discover_workflows(domain, app_id, user_id, username):
+def discover_workflows(client, app_id):
     """
     Returns a list of workflows for the given app_id and user_id
     """
-    session = FormplayerSession(domain=domain, app_id=app_id, user_id=user_id, username=username)
-    execute_step(session, None)
-    explorations = [
-        WorkflowExploration(workflow=data_model.Workflow(steps=[step]), session=session.clone())
-        for step in get_branches(session)
-    ]
-    to_explore = explorations
-    while to_explore:
-        to_explore = list(chain.from_iterable(_expand_workflow(exploration) for exploration in to_explore))
-        explorations.extend(to_explore)
-    return [exploration.workflow for exploration in explorations]
+    with client:
+        session = FormplayerSession(client=client, app_id=app_id)
+        execute_step(session, None)
+        explorations = [
+            WorkflowExploration(workflow=data_model.Workflow(steps=[step]), session=session.clone())
+            for step in get_branches(session)
+        ]
+        to_explore = explorations
+        while to_explore:
+            to_explore = list(chain.from_iterable(_expand_workflow(exploration) for exploration in to_explore))
+            explorations.extend(to_explore)
+        return [exploration.workflow for exploration in explorations]
 
 
 def _expand_workflow(exploration):
@@ -47,7 +48,7 @@ def get_branches(session):
         return [data_model.CommandStep(value=command["displayText"]) for command in data]
     elif session.current_screen == ScreenType.CASE_LIST:
         # select first one for now
-        return [data_model.EntitySelectStep(value=data[0]["id"])]
+        return [data_model.EntitySelectStep(value=data[0]["id"])] if data else []
     elif session.current_screen == ScreenType.SEARCH:
         pass  # TODO
     elif session.current_screen == ScreenType.DETAIL:

@@ -2,7 +2,7 @@ from django.test import SimpleTestCase
 from testil import eq
 
 from . import response_factory as factory
-from .mock_formplayer import CaseList, Form, Menu, MockFormplayer
+from .mock_formplayer import CaseList, Form, Menu, MockFormplayerClient
 from ..data_model import AnswerQuestionStep, CommandStep, EntitySelectStep, FormStep, SubmitFormStep, Workflow
 from ..discovery import discover_workflows
 
@@ -33,8 +33,7 @@ APP = Menu(
 
 class TestDiscovery(SimpleTestCase):
     def test_discovery(self):
-        with MockFormplayer(APP):
-            workflows = discover_workflows("domain", "app_id", "user_id", "username")
+        workflows = discover_workflows(MockFormplayerClient(APP), "app_id")
 
         eq(len(workflows), 3)
         form_step = FormStep(children=[

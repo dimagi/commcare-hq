@@ -1,7 +1,8 @@
 import dataclasses
+import json
 from functools import cached_property
-from unittest import mock
 
+from corehq.apps.app_execution.api import BaseFormplayerClient
 from corehq.apps.app_execution.tests import response_factory as factory
 
 
@@ -52,35 +53,28 @@ class Form(Screen):
         return factory.form_response(selections, self.children)
 
 
-@dataclasses.dataclass
-class MockFormplayer:
-    app: Menu
-    session: dict = dataclasses.field(default_factory=dict)
+class MockFormplayerClient(BaseFormplayerClient):
+    def __init__(self, app):
+        self.app = app
+        self.form_session = {}
+        super().__init__("domain", "username", "user_id")
 
-    def __enter__(self):
-        self._patch = mock.patch("corehq.apps.app_execution.api._make_request", new=self.process_request)
-        self._patch.start()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._patch.stop()
-        self._patch = None
-
-    def process_request(self, session, data, url):
-        if "navigate_menu" in url:
+    def _make_request(self, endpoint, data_bytes, headers):
+        data = json.loads(data_bytes.decode("utf-8"))
+        if "navigate_menu" in endpoint:
             selections = data["selections"]
             option = self.app.process_selections(selections)
             data = option.get_response_data(selections)
             if isinstance(option, Form):
-                self.session = data
+                self.form_session = data
             return data
         else:
             # form response
-            if not self.session:
+            if not self.form_session:
                 raise ValueError("No session data")
-            assert data.get("session_id") == self.session["session_id"]
+            assert data.get("session_id") == self.form_session["session_id"]
             if data["action"] == "answer":
-                self.session["tree"][int(data["ix"])]["answer"] = data["answer"]
+                self.form_session["tree"][int(data["ix"])]["answer"] = data["answer"]
             elif data["action"] == "submit-all":
                 return {"submitResponseMessage": "success", "nextScreen": None}
-            return self.session
+            return self.form_session
