@@ -2785,7 +2785,7 @@ class Invitation(models.Model):
         web_user.add_as_web_user(
             self.domain,
             role=self.role,
-            location_id=self.supply_point,
+            location_id=getattr(self.location, "location_id", None),
             program_id=self.program,
         )
         self.is_accepted = True
