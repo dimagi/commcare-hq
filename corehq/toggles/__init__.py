@@ -2785,3 +2785,16 @@ SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
 )
+
+USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
+    'ush_restore_file_location_case_sync_restriction',
+    'USH: Limit the location-owned cases that show up in a user\'s restore file',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2252210196/Prevent+Syncing+of+Lower+Level+Locations',  # noqa: E501
+    description="""
+    In the 'Organizational Level' section of location management, web admins can specify which org level to
+    expand to when syncing the location-owned cases included in a user's restore file. Limits cases in a user's
+    restore file and thus can improve performance.
+    """
+)
