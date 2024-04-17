@@ -14,10 +14,31 @@ class Step:
     def get_children(self):
         return []
 
+    def to_dict(self):
+        return {"type": self.type, **dataclasses.asdict(self)}
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(**data)
+
 
 @dataclasses.dataclass
 class Workflow:
     steps: list[Step] = dataclasses.field(default_factory=list)
+
+    def to_dict(self):
+        return {
+            "steps": [step.to_dict() for step in self.steps]
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        workflow = cls()
+        for step in data["steps"]:
+            step_type = step.pop("type")
+            step_class = STEP_MAP[step_type]
+            workflow.steps.append(step_class.from_dict(step))
+        return workflow
 
     def __str__(self):
         return " -> ".join(str(step) for step in self.steps)
@@ -130,11 +151,31 @@ class FormStep(Step):
     type: ClassVar[str] = "form"
     children: list[AnswerQuestionStep | SubmitFormStep]
 
+    def to_dict(self):
+        return {
+            "type": self.type,
+            "children": [child.to_dict() for child in self.children]
+        }
+
     def get_children(self):
         return self.children
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(children=[STEP_MAP[child.pop("type")].from_dict(child) for child in data["children"]])
 
 
 def _append_selection(data, selection):
     selections = data.get("selections", [])
     selections.append(selection)
     return {**data, "selections": selections}
+
+
+STEP_MAP = {
+    "command": CommandStep,
+    "entity_select": EntitySelectStep,
+    "query": QueryStep,
+    "answer_question": AnswerQuestionStep,
+    "submit_form": SubmitFormStep,
+    "form": FormStep,
+}
