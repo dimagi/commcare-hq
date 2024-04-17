@@ -3,7 +3,6 @@ from copy import copy
 
 from django.core.serializers.json import Serializer as JsonSerializer
 
-from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.util.json import CommCareJSONEncoder
 
 
@@ -21,8 +20,7 @@ class JsonLinesSerializer(JsonSerializer):
     def get_dump_object(self, obj):
         dumped_obj = super().get_dump_object(obj)
         if hasattr(obj, 'encrypted_fields'):
-            for field in obj.encrypted_fields():
-                dumped_obj['fields'][field] = PASSWORD_PLACEHOLDER
+            dumped_obj['fields'].update(obj.encrypted_fields)
         return dumped_obj
 
     def end_object(self, obj):
