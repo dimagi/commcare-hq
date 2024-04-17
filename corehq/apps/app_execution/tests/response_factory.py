@@ -50,12 +50,12 @@ def form_response(selections, questions):
     }
 
 
-def make_entities(names):
-    return [make_entity(name) for name in names]
+def make_entities(case_data):
+    return [make_entity(case) for case in case_data]
 
 
-def make_entity(name):
-    return {"id": str(uuid.uuid4()), "data": [name]}
+def make_entity(case):
+    return {"id": case.get("id", str(uuid.uuid4())), "data": [case["name"]]}
 
 
 def make_questions(captions, datatype="str"):

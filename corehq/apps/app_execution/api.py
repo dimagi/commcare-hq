@@ -119,9 +119,9 @@ class FormplayerSession:
         }
 
 
-def execute_workflow(session: FormplayerSession, steps):
+def execute_workflow(session: FormplayerSession, workflow):
     execute_step(session, None)
-    for step in steps:
+    for step in workflow.steps:
         execute_step(session, step)
 
 
