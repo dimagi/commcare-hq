@@ -134,7 +134,7 @@ def auto_deactivate_removed_sso_users():
         except EntraVerificationFailed as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_reason=MSGraphIssue.VERIFICATION_ERROR,
-                                            error_code=EntraVerificationFailed.code,
+                                            error=EntraVerificationFailed.error,
                                             error_description=EntraVerificationFailed.message)
             continue
         except requests.exceptions.HTTPError as e:
@@ -171,10 +171,10 @@ def auto_deactivate_removed_sso_users():
                 user.save()
 
 
-def send_deactivation_skipped_email(idp, failure_code, error_code=None, error_description=None):
+def send_deactivation_skipped_email(idp, failure_code, error=None, error_description=None):
     if failure_code == MSGraphIssue.VERIFICATION_ERROR:
         failure_reason = _("There was an issue connecting to the Microsoft Graph API. "
-                           f"Error code: {error_code}. Error description: {error_description}")
+                           f"Error: {error}. Error description: {error_description}")
     elif failure_code == MSGraphIssue.HTTP_ERROR:
         failure_reason = _("An HTTP error occured when connecting to the Microsoft Graph API, which usually"
                            "indicates an issue with Microsoft's servers.")

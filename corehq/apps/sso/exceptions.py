@@ -23,10 +23,10 @@ class OidcSsoError(Exception):
 
 
 class EntraVerificationFailed(Exception):
-    def __init__(self, error_code, message):
-        super().__init__(f"{error_code}: {message}")
-        self.code = error_code
+    def __init__(self, error, message):
+        super().__init__(f"{error}: {message}")
+        self.error = error
         self.message = message
 
     def __str__(self):
-        return f"EntraVerificationFailed({self.error_code}, {self.message})"
+        return f"EntraVerificationFailed({self.error}, {self.message})"

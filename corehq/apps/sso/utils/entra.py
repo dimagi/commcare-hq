@@ -74,5 +74,5 @@ def get_all_members_of_the_idp_from_entra(idp):
         ]
         return user_principal_names
     else:
-        raise EntraVerificationFailed(result.get('error', {}).get('code', 'Unknown'),
-                                      result.get('error', {}).get('message', 'No error message provided.'))
+        raise EntraVerificationFailed(result.get('error', {}),
+                                      result.get('error_description', 'No error description provided'))
