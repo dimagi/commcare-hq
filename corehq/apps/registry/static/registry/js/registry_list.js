@@ -1,19 +1,18 @@
+"use strict";
 hqDefine("registry/js/registry_list", [
     'jquery',
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/alert_user',
     'registry/js/registry_text',
     'registry/js/registry_actions',
-    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // openModal
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // openModal
     'hqwebapp/js/select2_knockout_bindings.ko',
 ], function (
     $,
     _,
     ko,
     initialPageData,
-    alertUser,
     text,
     actions
 ) {
@@ -68,7 +67,7 @@ hqDefine("registry/js/registry_list", [
 
         // CREATE workflow
         self.name = ko.observable("").extend({
-            rateLimit: { method: "notifyWhenChangesStop", timeout: 400, }
+            rateLimit: { method: "notifyWhenChangesStop", timeout: 400 }
         });
 
         self.validatingPending = ko.observable(false);
