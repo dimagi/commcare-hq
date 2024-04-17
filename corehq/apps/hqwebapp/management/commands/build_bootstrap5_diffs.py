@@ -223,7 +223,7 @@ class Command(BaseCommand):
                 "No changes were necessary. Thank you!"
             ))
 
-        self.show_next_steps_after_config_update(show_build_notice=not has_no_changes)
+        self.show_next_steps_after_config_update(show_build_notice=has_changes)
 
     def show_next_steps_after_config_update(self, show_build_notice=False):
         self.stdout.write(self.style.MIGRATE_LABEL(
