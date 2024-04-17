@@ -327,7 +327,7 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
         defaults={
             'invited_by': upload_user.user_id,
             'invited_on': datetime.utcnow(),
-            'location_id': location_id,  # TODO this is just location_id rather than location
+            'location': SQLLocation.by_location_id(location_id),
             'role': role_qualified_id
         },
     )
@@ -476,8 +476,9 @@ class CCUserRow(BaseUserRow):
     def _parse_username(self):
         username = self.row.get('username')
         try:
-            self.column_values['username'] = (generate_mobile_username(str(username), self.domain, False)
-                                              if username else None)
+            self.column_values['username'] = (
+                generate_mobile_username(str(username), self.domain, False) if username else None
+            )
         except ValidationError:
             self.status_row['flag'] = _("Username must not contain blank spaces or special characters.")
             self.column_values['username'] = username

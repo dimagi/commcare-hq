@@ -2590,6 +2590,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_usercase_by_domain(self, domain):
         return CommCareCase.objects.get_case_by_external_id(domain, self._id, USERCASE_TYPE)
 
+    def get_user_session_data(self, domain):
+        # TODO can we do this for both types of users and remove the fields from user data?
+        session_data = super(WebUser, self).get_user_session_data(domain)
+        session_data['commcare_location_id'] = self.get_location_id(domain)
+        session_data['commcare_location_ids'] = user_location_data(self.get_location_ids(domain))
+        session_data['commcare_primary_case_sharing_id'] = self.get_location_id(domain)
+        return session_data
+
 
 class FakeUser(WebUser):
     """
@@ -2788,7 +2796,7 @@ class Invitation(models.Model):
         web_user.add_as_web_user(
             self.domain,
             role=self.role,
-            location_id=self.location_id,
+            location_id=getattr(self.location, "location_id", None),
             program_id=self.program,
             profile=self.profile,
         )
