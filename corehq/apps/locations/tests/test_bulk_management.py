@@ -1106,8 +1106,8 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
             delete_county_type,
             [],
         )
-        assert_errors(result, ["Location Type 'state' references the type to be deleted 'county'"
-                               " via the field 'expand_to'"])
+        assert_errors(result, ["Cannot delete location type 'county'. It is referenced by the type 'state' via "
+                               "the 'expand_to' setting. Change this setting on 'state' and try again."])
 
 
 class TestRestrictedUserUpload(UploadTestUtils, LocationHierarchyPerTest):
