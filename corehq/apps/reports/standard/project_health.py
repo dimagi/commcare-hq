@@ -11,6 +11,7 @@ from memoized import memoized
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
 
+from corehq import toggles
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.groups import GroupES
@@ -89,9 +90,10 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         base_queryset = MALTRow.objects.filter(
             domain_name=domain,
             month=month,
-            user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
             user_id__in=active_not_deleted_users,
         )
+        if not toggles.WEB_USERS_IN_REPORTS.enabled(domain):
+            base_queryset = base_queryset.filter(user_type__in=['CommCareUser', 'CommCareUser-Deleted'])
         if selected_users:
             base_queryset = base_queryset.filter(
                 user_id__in=selected_users,
