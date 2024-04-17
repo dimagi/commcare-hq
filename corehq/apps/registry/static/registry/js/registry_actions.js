@@ -1,3 +1,4 @@
+"use strict";
 hqDefine("registry/js/registry_actions", [
     'moment',
     'hqwebapp/js/initial_page_data',
@@ -21,7 +22,7 @@ hqDefine("registry/js/registry_actions", [
             registrySlug,
             gettext("Opt in successful"),
             onSuccess
-        )
+        );
     };
 
     let reject = function (registrySlug, onSuccess) {
@@ -30,7 +31,7 @@ hqDefine("registry/js/registry_actions", [
             registrySlug,
             gettext("Opt out successful"),
             onSuccess
-        )
+        );
     };
 
     let acceptOrReject = function (url, registrySlug, successMessage, onSuccess) {

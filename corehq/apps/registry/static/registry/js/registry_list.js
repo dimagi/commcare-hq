@@ -1,3 +1,4 @@
+"use strict";
 hqDefine("registry/js/registry_list", [
     'jquery',
     'underscore',
@@ -66,7 +67,7 @@ hqDefine("registry/js/registry_list", [
 
         // CREATE workflow
         self.name = ko.observable("").extend({
-            rateLimit: { method: "notifyWhenChangesStop", timeout: 400, }
+            rateLimit: { method: "notifyWhenChangesStop", timeout: 400 }
         });
 
         self.validatingPending = ko.observable(false);

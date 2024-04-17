@@ -1,3 +1,4 @@
+"use strict";
 hqDefine("registry/js/registry_edit", [
     'moment',
     'knockout',
@@ -25,7 +26,7 @@ hqDefine("registry/js/registry_edit", [
 ) {
     ko.components.register('inline-edit', inlineEdit);
 
-    let InvitationModel = function(data) {
+    let InvitationModel = function (data) {
         let self = data;
         self.statusText = text.getStatusText(self.status);
         self.cssIcon = text.getStatusIcon(self.status);
@@ -38,12 +39,12 @@ hqDefine("registry/js/registry_edit", [
         }
         return self;
     }
-    let GrantModel = function(currentDomain, data) {
+    let GrantModel = function (currentDomain, data) {
         let self = data;
         self.canDelete = self.from_domain === currentDomain;
         return self;
-    }
-    let EditModel = function(data, availableCaseTypes, availableDomains, invitedDomains) {
+    };
+    let EditModel = function (data, availableCaseTypes, availableDomains, invitedDomains) {
         const mapping = {
             'copy': ["domain", "current_domain", "is_owner", "slug", "description"],
             'observe': ["name", "is_active", "schema", "invitations", "grants", "domain_invitation"],
@@ -51,8 +52,8 @@ hqDefine("registry/js/registry_edit", [
                 create: (options) => InvitationModel(options.data)
             },
             grants: {
-                create: (options) => GrantModel(data.current_domain, options.data)
-            }
+                create: (options) => GrantModel(data.current_domain, options.data),
+            },
         };
         const grantSort = (a, b) => {
             // show grants for current domain at the top
@@ -94,7 +95,7 @@ hqDefine("registry/js/registry_edit", [
             if (self.domain_invitation.status() !== 'accepted') {
                 allInvitations.delete(self.current_domain);
             }
-           return Array.from(allInvitations);
+            return Array.from(allInvitations);
         });
         self.availableGrantDomains = ko.computed(() => {
             let availableDomains = new Set(self.participatingDomains()),
@@ -107,17 +108,17 @@ hqDefine("registry/js/registry_edit", [
         });
 
         self.savingActiveState = ko.observable(false);
-        self.toggleActiveState = function() {
+        self.toggleActiveState = function () {
             self.savingActiveState(true);
             actions.editAttr(self.slug, "is_active", {"value": !self.is_active()}, (data) => {
                 self.is_active(data.is_active);
             }).always(() => {
                 self.savingActiveState(false);
             });
-        }
+        };
 
         self.inviteDomains = ko.observable([]);
-        self.removeDomain = function (toRemove){
+        self.removeDomain = function (toRemove) {
             self.modalSaving(true);
             actions.removeInvitation(self.slug, toRemove.id, toRemove.domain, () => {
                 self.invitations(self.invitations().filter((invite) => {
@@ -133,7 +134,7 @@ hqDefine("registry/js/registry_edit", [
             self.modalSaving(true);
             actions.addInvitations(self.slug, self.inviteDomains(), (data) => {
                 _.each(data.invitations, (invite) => {
-                   self.invitations.unshift(InvitationModel(invite));
+                    self.invitations.unshift(InvitationModel(invite));
                 });
                 self.inviteDomains([]);
             }).always(() => {
@@ -162,7 +163,7 @@ hqDefine("registry/js/registry_edit", [
             self.modalSaving(true);
             actions.createGrant(self.slug, self.grantDomains(), (data) => {
                 _.each(data.grants, (grant) => {
-                   self.grants.unshift(GrantModel(self.current_domain, grant));
+                    self.grants.unshift(GrantModel(self.current_domain, grant));
                 });
                 self.grantDomains([]);
             }).always(() => {
