@@ -1096,6 +1096,7 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
 
     def test_dont_delete_referenced_location_types(self):
         self.location_types['State'].expand_to = self.location_types['County']
+        self.location_types['State'].expand_view_child_data_to = self.location_types['County']
         self.location_types['State'].save()
         delete_county_type = [
             LocTypeRow('State', 'state', ''),
@@ -1107,7 +1108,10 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
             [],
         )
         assert_errors(result, ["Cannot delete location type 'county'. It is referenced by the type 'state' via "
-                               "the 'expand_to' setting. Change this setting on 'state' and try again."])
+                               "the 'expand_to' setting. Change this setting on 'state' and try again.",
+                               "Cannot delete location type 'county'. It is referenced by the type 'state' via "
+                               "the 'expand_view_child_data_to' setting. Change this setting on 'state' and try "
+                               "again."])
 
 
 class TestRestrictedUserUpload(UploadTestUtils, LocationHierarchyPerTest):

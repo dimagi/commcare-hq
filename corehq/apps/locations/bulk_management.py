@@ -698,12 +698,10 @@ class LocationTreeValidator(object):
                     and getattr(lt.db_object, field_name).id == deleted_type.db_object.id
                 ]
                 if referencing_types_and_fields:
-                    return [
-                        _(f"Cannot delete location type '{deleted_type.code}'. It is referenced by the type "
+                    for type_code, field in referencing_types_and_fields:
+                        yield _(f"Cannot delete location type '{deleted_type.code}'. It is referenced by the type "
                           f"'{type_code}' via the '{field}' setting. Change this setting on '{type_code}'"
                           " and try again.")
-                        for type_code, field in referencing_types_and_fields
-                    ]
 
     def _validate_types_tree(self):
         type_pairs = [(lt.code, lt.parent_code) for lt in self.location_types]
@@ -720,7 +718,9 @@ class LocationTreeValidator(object):
                 for code in e.affected_nodes
             ]
 
-        return self._verify_deleted_types_not_referenced_by_other_types()
+        deleted_type_errors = list(self._verify_deleted_types_not_referenced_by_other_types())
+        if deleted_type_errors:
+            return deleted_type_errors
 
     def _validate_location_tree(self):
         errors = []
