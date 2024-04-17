@@ -16,6 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit import ResourceConflict
+from ddtrace import tracer
 from iso8601 import iso8601
 from looseversion import LooseVersion
 from memoized import memoized
@@ -83,6 +84,7 @@ PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
 
+@tracer.wrap(name="ota.restore", service='hqtraces')
 @location_safe
 @handle_401_response
 @mobile_auth_or_formplayer
@@ -100,6 +102,7 @@ def restore(request, domain, app_id=None):
     return response
 
 
+@tracer.wrap(name="ota.search", service='hqtraces')
 @location_safe_bypass
 @csrf_exempt
 @mobile_auth
@@ -109,6 +112,7 @@ def search(request, domain):
     return app_aware_search(request, domain, None)
 
 
+@tracer.wrap(name="ota.app_aware_search", service='hqtraces')
 @location_safe_bypass
 @csrf_exempt
 @mobile_auth
@@ -162,6 +166,7 @@ def _log_search_timing(start_time, request_dict, domain, app_id):
         })
 
 
+@tracer.wrap(name="ota.claim", service='hqtraces')
 @location_safe_bypass
 @csrf_exempt
 @require_POST
@@ -485,6 +490,7 @@ def recovery_measures(request, domain, build_id):
     return JsonResponse(response)
 
 
+@tracer.wrap(name="ota.case_fixture", service='hqtraces')
 @location_safe_bypass
 @csrf_exempt
 @mobile_auth
@@ -560,6 +566,7 @@ def _data_registry_case_fixture(request, domain, app_id, case_types, case_ids, r
     return helper.get_multi_domain_case_hierarchy(request.couch_user, cases)
 
 
+@tracer.wrap(name="ota.case_restore", service='hqtraces')
 @formplayer_auth
 def case_restore(request, domain, case_id):
     """Restore endpoint used for SMS forms where the 'user' is a case.
