@@ -174,7 +174,8 @@ class FormplayerSession:
 
     def _get_navigation_data(self, step):
         if step:
-            assert isinstance(step, (data_model.CommandStep, data_model.EntitySelectStep)), step
+            permitted_types = (data_model.CommandStep, data_model.EntitySelectStep, data_model.QueryStep)
+            assert isinstance(step, permitted_types), step
         selections = list(self.data.get("selections", [])) if self.data else []
         data = {
             **self._get_base_data(),
@@ -185,7 +186,7 @@ class FormplayerSession:
             "preview": False,
             "offset": 0,
             "selections": selections,
-            "query_data": {},
+            "query_data": self.data.get("query_data", {}) if self.data else {},
             "search_text": None,
             "sortIndex": None,
         }

@@ -28,6 +28,28 @@ def entity_list_response(selections, entities):
     }
 
 
+def query_response(selections, query_key, displays):
+    """
+    Returns a response for a search screen
+
+    Args:
+        selections: list of selections
+        query_key: query key
+        displays: list of displays
+            id: str
+            value: str
+            required: bool
+            allow_blank_value: bool
+    """
+    return {
+        "title": "Case Search",
+        "type": "query",
+        "queryKey": query_key,
+        "selections": selections,
+        "displays": displays,
+    }
+
+
 def form_response(selections, questions):
     """
     Returns a response for a form screen

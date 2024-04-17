@@ -11,14 +11,21 @@ class Screen:
     name: str
     children: list
 
-    def process_selections(self, selections):
+    def process_selections(self, selections, data):
+        output = {}
         option = self
         for selection in selections:
             option = option.get_next(selection)
-        return option
+            option, partial_data = option.execute(data)
+            output.update(partial_data)
+
+        return {**output, **option.get_response_data(selections)}
 
     def get_next(self, selection):
         return self.children[int(selection)]
+
+    def execute(self, data):
+        return self, {}
 
     def get_response_data(self, selections):
         pass
@@ -47,6 +54,28 @@ class CaseList(Screen):
 
 
 @dataclasses.dataclass
+class CaseSearch(Screen):
+    query_key: str
+    displays: list = dataclasses.field(default_factory=list)
+
+    def __post_init__(self):
+        assert len(self.children) == 1, len(self.children)
+        assert isinstance(self.children[0], CaseList), self.children[0]
+
+    def get_response_data(self, selections):
+        return factory.query_response(selections, self.query_key, self.displays)
+
+    def execute(self, data):
+        query_data = data.get("query_data", {})
+        if query_data.get(self.query_key, {}).get("execute"):
+            return self.children[0], {"query_data": query_data}
+        return self, {"query_data": query_data}
+
+    def get_next(self, selection):
+        raise NotImplementedError("CaseSearch does not support selections")
+
+
+@dataclasses.dataclass
 class Form(Screen):
 
     def get_response_data(self, selections):
@@ -63,11 +92,10 @@ class MockFormplayerClient(BaseFormplayerClient):
         data = json.loads(data_bytes.decode("utf-8"))
         if "navigate_menu" in endpoint:
             selections = data["selections"]
-            option = self.app.process_selections(selections)
-            data = option.get_response_data(selections)
-            if isinstance(option, Form):
-                self.form_session = data
-            return data
+            output = self.app.process_selections(selections, data)
+            if "tree" in output:
+                self.form_session = output
+            return output
         else:
             # form response
             if not self.form_session:

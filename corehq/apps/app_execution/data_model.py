@@ -54,6 +54,27 @@ class EntitySelectStep(Step):
 
 
 @dataclasses.dataclass
+class QueryStep(Step):
+    type: ClassVar[str] = "query"
+    inputs: dict
+
+    def get_request_data(self, session, data):
+        query_key = session.data["queryKey"]
+        return {
+            **data,
+            "query_data": {
+                query_key: {
+                    "execute": True,
+                    "inputs": self.inputs,
+                }
+            },
+        }
+
+    def __str__(self):
+        return f"Query: {self.inputs}"
+
+
+@dataclasses.dataclass
 class AnswerQuestionStep(Step):
     type: ClassVar[str] = "answer_question"
     question_text: str

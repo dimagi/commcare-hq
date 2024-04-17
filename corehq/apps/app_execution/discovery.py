@@ -42,6 +42,7 @@ def _expand_workflow(exploration):
 
 def get_branches(session):
     screen, data = session.get_screen_and_data()
+    print(screen, session.data)
     if session.current_screen == ScreenType.START:
         return []
     elif session.current_screen == ScreenType.MENU:
@@ -50,7 +51,12 @@ def get_branches(session):
         # select first one for now
         return [data_model.EntitySelectStep(value=data[0]["id"])] if data else []
     elif session.current_screen == ScreenType.SEARCH:
-        pass  # TODO
+        # only required fields
+        inputs = {
+            display["id"]: _get_value_for_query(display)
+            for display in data if display["required"] and not display["allow_blank_value"]
+        }
+        return [data_model.QueryStep(inputs=inputs)]
     elif session.current_screen == ScreenType.DETAIL:
         pass
     elif session.current_screen == ScreenType.FORM:
@@ -59,13 +65,19 @@ def get_branches(session):
             data_model.AnswerQuestionStep(
                 question_text=item["caption"],
                 question_id=item["question_id"],
-                value=_get_value_for_type(item)
+                value=_get_value_for_question(item)
             )
             for item in data if item["type"] == "question"
         ] + [data_model.SubmitFormStep()])]
 
 
-def _get_value_for_type(item):
+def _get_value_for_query(display):
+    if display.get("value"):
+        return display["value"]
+    return "query value"
+
+
+def _get_value_for_question(item):
     if answer := item.get("answer"):
         return answer
 
