@@ -29,5 +29,5 @@ class Migration(migrations.Migration):
             name='expand_to',
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='+', to='locations.locationtype'),
         ),
-        locations_sql_migrator.get_migration('get_location_fixture_ids_2.sql'),
+        locations_sql_migrator.get_migration('get_case_owning_locations.sql'),
     ]
