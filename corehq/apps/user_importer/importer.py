@@ -384,16 +384,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
            sets Invitation with the CommCare user's role and primary location
     All changes to users only, are tracked using UserChangeLogger, as an audit trail.
     """
-    # HELPME
-    #
-    # This method has been flagged for refactoring due to its complexity and
-    # frequency of touches in changesets
-    #
-    # If you are writing code that touches this method, your changeset
-    # should leave the method better than you found it.
-    #
-    # Please remove this flag when this method no longer triggers an 'E' or 'F'
-    # classification from the radon code static analysis
     return CCImporter(
         upload_domain, user_specs, upload_user, upload_record_id,
         group_memoizer=group_memoizer,
@@ -406,6 +396,7 @@ class BaseUserRow:
         self.importer = importer
         self.row = row
         self.status_row = {
+            'username': row.get('username'),
             'row': copy.copy(row)
         }
         self.error = None
@@ -626,11 +617,15 @@ class CCUserRow(BaseUserRow):
             check_can_upload_web_users(self.domain, self.importer.upload_user)
             web_user = CouchUser.get_by_username(web_user_username)
             if web_user:
-                web_user_importer = WebUserImporter(self.importer.upload_domain, self.domain, web_user,
-                                                    upload_user=self.importer.upload_user,
-                                                    is_new_user=False,
-                                                    via=USER_CHANGE_VIA_BULK_IMPORTER,
-                                                    upload_record_id=self.importer.upload_record_id)
+                web_user_importer = WebUserImporter(
+                    upload_domain=self.importer.upload_domain,
+                    user_domain=self.domain,
+                    user=web_user,
+                    upload_user=self.importer.upload_user,
+                    is_new_user=False,
+                    via=USER_CHANGE_VIA_BULK_IMPORTER,
+                    upload_record_id=self.importer.upload_record_id,
+                )
                 user_change_logger = web_user_importer.logger
             else:
                 web_user_importer = None
@@ -651,10 +646,10 @@ class CCUserRow(BaseUserRow):
                     # role_qualified_id would be present here as confirmed in check_user_role
                     web_user_importer.add_to_domain(role_qualified_id, self.user.location_id)
                 elif not web_user or not web_user.is_member_of(self.domain):
-                    create_or_update_web_user_invite(web_user_username, self.domain,
-                                                    role_qualified_id, self.importer.upload_user,
-                                                    self.user.location_id, user_change_logger,
-                                                    send_email=cv["send_confirmation_email"])
+                    create_or_update_web_user_invite(
+                        web_user_username, self.domain, role_qualified_id, self.importer.upload_user,
+                        self.user.location_id, user_change_logger, send_email=cv["send_confirmation_email"]
+                    )
                 elif web_user.is_member_of(self.domain):
                     # edit existing user in the domain
                     web_user_importer.update_role(role_qualified_id)

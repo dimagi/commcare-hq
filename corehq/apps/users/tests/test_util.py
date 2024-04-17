@@ -14,7 +14,7 @@ from corehq.apps.users.util import (
     bulk_auto_deactivate_commcare_users,
     cached_user_id_to_user_display,
     generate_mobile_username,
-    get_complete_mobile_username,
+    get_complete_username,
     is_username_available,
     user_display_string,
     user_id_to_username,
@@ -261,11 +261,11 @@ class TestIsUsernameAvailable(TestCase):
 class TestGetCompleteMobileUsername(SimpleTestCase):
 
     def test_returns_unchanged_username_if_already_complete(self):
-        username = get_complete_mobile_username('test@test-domain.commcarehq.org', 'test-domain')
+        username = get_complete_username('test@test-domain.commcarehq.org', 'test-domain')
         self.assertEqual(username, 'test@test-domain.commcarehq.org')
 
     def test_returns_complete_username_if_incomplete(self):
-        username = get_complete_mobile_username('test', 'test-domain')
+        username = get_complete_username('test', 'test-domain')
         self.assertEqual(username, 'test@test-domain.commcarehq.org')
 
 
