@@ -110,6 +110,6 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
         };
         const showAPIFields = initialPageData.get('show_api_fields');
         let formManager = new editEnterpriseIdPFormManager(showAPIFields);
-        $('#idp').koApplyBindings(formManager);
+        $('#idp form').koApplyBindings(formManager);
     });
 });
