@@ -1143,8 +1143,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
-                supply_point = data.get("location_id", None)
-                data["location"] = SQLLocation.by_location_id(supply_point) if supply_point else None #TODO should be location or location_id?
+                location_id = data.get("location_id", None)
+                data["location"] = SQLLocation.by_location_id(location_id) if location_id else None
                 profile_id = data.get("profile", None)
                 data["profile"] = CustomDataFieldsProfile.objects.get(
                     id=profile_id,
