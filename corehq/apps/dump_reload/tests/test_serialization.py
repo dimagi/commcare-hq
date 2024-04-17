@@ -13,7 +13,7 @@ from corehq.form_processor.models.cases import CaseTransaction, CommCareCase
 from corehq.form_processor.models.forms import XFormInstance, XFormOperation
 from corehq.apps.registry.models import DataRegistry, RegistryGrant
 from corehq.motech.models import ConnectionSettings
-from corehq.apps.hqwebapp.const import PASSWORD_PLACEHOLDER
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 
 
 class TestJSONFieldSerialization(SimpleTestCase):

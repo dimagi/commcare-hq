@@ -81,6 +81,8 @@ AUTH_PRESETS = {
     ),  # https://docs.ipswitch.com/MOVEit/Automation2018/API/REST-API/index.html
 }
 
+PASSWORD_PLACEHOLDER = '*' * 16
+
 CONNECT_TIMEOUT = 60
 # If any remote service does not respond within 5 minutes, time out.
 # (Some OpenMRS reports can take a long time. Cut them a little slack,

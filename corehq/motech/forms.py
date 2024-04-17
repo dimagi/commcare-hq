@@ -10,11 +10,11 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.const import PASSWORD_PLACEHOLDER
 from corehq.motech.const import (
     AUTH_PRESETS,
     AUTH_TYPES,
     AUTH_TYPES_REQUIRE_USERNAME,
+    PASSWORD_PLACEHOLDER,
 )
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import validate_user_input_url_for_repeaters

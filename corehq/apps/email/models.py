@@ -1,7 +1,6 @@
 from django.db import models
 
-from corehq.apps.hqwebapp.const import PASSWORD_PLACEHOLDER
-from corehq.motech.const import ALGO_AES
+from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 
 
