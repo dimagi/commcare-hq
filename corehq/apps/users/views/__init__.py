@@ -11,7 +11,8 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
-from corehq.apps.custom_data_fields.models import PROFILE_SLUG
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
@@ -1059,7 +1060,6 @@ class InviteWebUserView(BaseManageWebUserView):
             'email': domain_request.email if domain_request else None,
         }
         if 'location_id' in self.request.GET:
-            from corehq.apps.locations.models import SQLLocation
             loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
@@ -1121,6 +1121,12 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
+                location_id = data.get("location_id", None)
+                data["location"] = SQLLocation.by_location_id(location_id) if location_id else None
+                profile_id = data.get("profile", None)
+                data["profile"] = CustomDataFieldsProfile.objects.get(
+                    id=profile_id,
+                    definition__domain=self.domain) if profile_id else None
                 invite = Invitation(**data)
                 invite.save()
                 invite.send_activation_email()
