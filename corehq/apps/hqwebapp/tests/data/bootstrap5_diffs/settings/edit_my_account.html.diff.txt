@@ -1,0 +1,15 @@
+--- 
++++ 
+@@ -26,10 +26,10 @@
+   {% if user_type == 'web' %}
+     <ul class="nav nav-tabs">
+       <li class="active">
+-        <a data-toggle="tab" href="#user-settings-tab">{% trans "My Settings" %}</a>
++        <a data-bs-toggle="tab" href="#user-settings-tab">{% trans "My Settings" %}</a>
+       </li>
+       <li>
+-        <a data-toggle="tab" href="#manage-phone-numbers-tab">{% trans "Phone Numbers" %}</a></li>
++        <a data-bs-toggle="tab" href="#manage-phone-numbers-tab">{% trans "Phone Numbers" %}</a></li>
+     </ul>
+     <div class="spacer"></div>
+     <div class="tab-content">

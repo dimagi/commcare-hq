@@ -70,7 +70,7 @@ class BasicCrispyExampleForm(forms.Form):
                 # This is a special component that is best to use
                 # in combination with BootstrapCheckboxInput on a
                 # BooleanField (see Molecules > Checkboxes)
-                twbscrispy.PrependedText('forward_message', ''),
+                hqcrispy.CheckboxField('forward_message'),
             ),
             crispy.Fieldset(
                 _("Advanced Information"),

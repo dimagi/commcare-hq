@@ -5,18 +5,25 @@ import shutil
 
 from django.core.management import BaseCommand
 
+from corehq.apps.hqwebapp.utils.bootstrap.git import (
+    has_pending_git_changes,
+    ensure_no_pending_changes_before_continuing,
+    apply_commit,
+    get_commit_string,
+)
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     COREHQ_BASE_DIR,
     get_app_template_folder,
     get_app_static_folder,
     get_all_template_paths_for_app,
-    get_migrated_folders,
+    get_split_folders,
     get_all_javascript_paths_for_app,
+    TRACKED_JS_FOLDERS,
 )
+from corehq.apps.hqwebapp.utils.management_commands import get_confirmation
 
 DIFF_CONFIG_FILE = "apps/hqwebapp/tests/data/bootstrap5_diff_config.json"
 DIFF_STORAGE_FOLDER = "apps/hqwebapp/tests/data/bootstrap5_diffs/"
-TRACKED_JS_FOLDERS = ["js", "spec"]
 
 
 def get_diff_filename(filename_bootstrap3, filename_bootstrap5, file_type):
@@ -135,6 +142,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         update_app = options.get('update_app')
+
+        if has_pending_git_changes():
+            self.stdout.write(self.style.ERROR(
+                "You have un-committed changes. Please commit these changes before proceeding...\n"
+            ))
+            ensure_no_pending_changes_before_continuing()
+
         if update_app:
             self.update_configuration_file_for_app(update_app)
             return
@@ -145,13 +159,23 @@ class Command(BaseCommand):
             with open(diff_filepath, 'w') as df:
                 df.writelines(get_diff(bootstrap3_filepath, bootstrap5_filepath))
 
+        if has_pending_git_changes():
+            self.stdout.write(self.style.SUCCESS(
+                "\nDone! Diffs are already up-to-date, no changes needed.\n\n"
+            ))
+        else:
+            self.stdout.write(self.style.SUCCESS(
+                "\n\nDiffs have been rebuilt. Thank you!\n"
+            ))
+            self.make_commit("Rebuilt diffs")
+
     def update_config(self, config, app_name, js_folder=None):
         parent_path = get_parent_path(app_name, js_folder)
-        migrated_folders = get_migrated_folders(
+        split_folders = get_split_folders(
             get_all_javascript_paths_for_app(app_name) if js_folder is not None
             else get_all_template_paths_for_app(app_name)
         )
-        folders = get_relative_folder_paths(parent_path, migrated_folders)
+        folders = get_relative_folder_paths(parent_path, split_folders)
         folder_configs = [
             get_folder_config(app_name, folder, js_folder)
             for folder in folders
@@ -164,9 +188,9 @@ class Command(BaseCommand):
             self.stdout.write(f"Removed '{parent_path}' from config. No more relevant files.")
 
     def check_javascript_paths(self, app_name, js_folders):
-        migrated_js_folders = get_migrated_folders(get_all_javascript_paths_for_app(app_name))
+        split_js_folders = get_split_folders(get_all_javascript_paths_for_app(app_name))
         untracked_folders = [
-            folder for folder in migrated_js_folders
+            folder for folder in split_js_folders
             if not any([path in folder for path in js_folders])
         ]
         if untracked_folders:
@@ -185,12 +209,48 @@ class Command(BaseCommand):
         for js_folder in TRACKED_JS_FOLDERS:
             self.update_config(config_file, app_name, js_folder)
         self.check_javascript_paths(app_name, TRACKED_JS_FOLDERS)
-        self.stdout.write("Saving config...\n")
+        self.stdout.write("\nSaving config...\n")
+
         update_bootstrap5_diff_config(config_file)
-        self.stdout.write(f"{DIFF_CONFIG_FILE} has been updated. "
-                          f"Please review the diff and commit the following:\n\n")
-        self.stdout.write(f"B5 Migration: Updated diff config for '{app_name}'\n\n")
-        self.stdout.write("PLEASE NOTE: This utility only supports automatically generating a "
-                          "diff config for template and javascript files.")
-        self.stdout.write(f"Stylesheets (less, scss) must be added to "
-                          f"{DIFF_CONFIG_FILE} manually.\n\n")
+        has_changes = has_pending_git_changes()
+        if has_changes:
+            self.stdout.write(self.style.SUCCESS(
+                f"{DIFF_CONFIG_FILE} has been updated."
+            ))
+            self.make_commit(f"Updated diff config for '{app_name}'")
+        else:
+            self.stdout.write(self.style.SUCCESS(
+                "No changes were necessary. Thank you!"
+            ))
+
+        self.show_next_steps_after_config_update(show_build_notice=not has_no_changes)
+
+    def show_next_steps_after_config_update(self, show_build_notice=False):
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            "\n\nPLEASE NOTE: This utility only supports automatically generating a "
+            "diff config for template and javascript files.\n"
+        ))
+        self.stdout.write(self.style.MIGRATE_HEADING(
+            f"Stylesheets (less, scss) must be added to {DIFF_CONFIG_FILE} manually."
+        ))
+
+        if show_build_notice:
+            self.stdout.write("\n\nAfter committing changes, please re-run:\n\n")
+            self.stdout.write(self.style.MIGRATE_HEADING(
+                "./manage.py build_bootstrap5_diffs"
+            ))
+            self.stdout.write("\nto rebuild the diffs.")
+
+        self.stdout.write("\n\nThank you! <3\n\n")
+
+    def make_commit(self, message):
+        self.stdout.write("\nNow would be a good time to review changes with git and commit.")
+        confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
+        if confirm:
+            apply_commit(message)
+            self.stdout.write(self.style.SUCCESS("\nChanges committed!\n\n"))
+            return
+        commit_string = get_commit_string(message)
+        self.stdout.write("\n\nSuggested command:\n")
+        self.stdout.write(self.style.MIGRATE_HEADING(commit_string))
+        self.stdout.write("\n")

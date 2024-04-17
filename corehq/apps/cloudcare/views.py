@@ -69,6 +69,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
+    use_bootstrap5,
     use_daterangepicker,
     use_jquery_ui,
     waf_allow,
@@ -78,7 +79,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import get_complete_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
 from corehq.util.metrics import metrics_histogram
@@ -110,6 +111,9 @@ class FormplayerMain(View):
         return _fetch_build(domain, self.request.couch_user.username, app_id)
 
     def get_web_apps_available_to_user(self, domain, user):
+        if user['doc_type'] == 'WebUser' and not user.can_access_web_apps(domain):
+            return []
+
         app_access = get_application_access_for_domain(domain)
         app_ids = get_app_ids_in_domain(domain)
 
@@ -141,7 +145,9 @@ class FormplayerMain(View):
             'restoreAs:{}:{}'.format(domain, request.couch_user.username))
         username = request.COOKIES.get(cookie_name)
         if username:
-            user = CouchUser.get_by_username(format_username(username, domain))
+            username = urllib.parse.unquote(username)
+            username = get_complete_username(username, domain)
+            user = CouchUser.get_by_username(username)
             if user:
                 return user, set_cookie
             else:
@@ -296,7 +302,7 @@ class FormplayerPreviewSingleApp(View):
 
 
 class PreviewAppView(TemplateView):
-    template_name = 'preview_app/base.html'
+    template_name = 'cloudcare/preview_app.html'
     urlname = 'preview_app'
 
     @use_daterangepicker
@@ -305,7 +311,7 @@ class PreviewAppView(TemplateView):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
         if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
             context = BlockWebAppsView.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
-            return render(request, 'preview_app/block_app_preview.html', context)
+            return render(request, 'cloudcare/block_preview_app.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
@@ -378,6 +384,7 @@ class LoginAsUsers(View):
 
     def _format_user(self, user_json):
         user = CouchUser.wrap_correctly(user_json)
+        sql_location = user.get_sql_location(self.domain)
         formatted_user = {
             'username': user.raw_username,
             'customFields': user.get_user_data(self.domain).to_dict(),
@@ -385,7 +392,7 @@ class LoginAsUsers(View):
             'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,
             'user_id': user.user_id,
-            'location': user.sql_location.to_json() if user.sql_location else None,
+            'location': sql_location.to_json() if sql_location else None,
         }
         return formatted_user
 
@@ -442,6 +449,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     def page_title(self):
         return _("Web Apps Permissions")
 
+    @use_bootstrap5
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
@@ -623,7 +631,7 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
 class BlockWebAppsView(BaseDomainView):
 
     urlname = 'block_web_apps'
-    template_name = 'block_web_apps.html'
+    template_name = 'cloudcare/block_web_apps.html'
 
     def get(self, request, *args, **kwargs):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
