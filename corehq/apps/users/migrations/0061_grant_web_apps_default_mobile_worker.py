@@ -17,7 +17,7 @@ def _update_default_mobile_worker_role(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0059_add_web_apps_groups_permission_flag'),
+        ('users', '0060_add_web_apps_groups_permission_flag'),
     ]
 
     operations = [

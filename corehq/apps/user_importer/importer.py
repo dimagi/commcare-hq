@@ -2,7 +2,7 @@ import copy
 import logging
 import string
 import random
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from datetime import datetime
 from corehq.util.soft_assert.api import soft_assert
 
@@ -320,7 +320,6 @@ def get_location_from_site_code(site_code, location_cache):
 
 def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, location_id,
                                      user_change_logger=None, send_email=True):
-    # Preparation for location to replace supply_point
     invite, invite_created = Invitation.objects.update_or_create(
         email=email,
         domain=domain,
@@ -328,7 +327,6 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
         defaults={
             'invited_by': upload_user.user_id,
             'invited_on': datetime.utcnow(),
-            'supply_point': location_id,
             'location': SQLLocation.by_location_id(location_id),
             'role': role_qualified_id
         },
@@ -386,16 +384,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
            sets Invitation with the CommCare user's role and primary location
     All changes to users only, are tracked using UserChangeLogger, as an audit trail.
     """
-    # HELPME
-    #
-    # This method has been flagged for refactoring due to its complexity and
-    # frequency of touches in changesets
-    #
-    # If you are writing code that touches this method, your changeset
-    # should leave the method better than you found it.
-    #
-    # Please remove this flag when this method no longer triggers an 'E' or 'F'
-    # classification from the radon code static analysis
     return CCImporter(
         upload_domain, user_specs, upload_user, upload_record_id,
         group_memoizer=group_memoizer,
@@ -408,6 +396,7 @@ class BaseUserRow:
         self.importer = importer
         self.row = row
         self.status_row = {
+            'username': row.get('username'),
             'row': copy.copy(row)
         }
         self.error = None
@@ -487,8 +476,10 @@ class CCUserRow(BaseUserRow):
     def _parse_username(self):
         username = self.row.get('username')
         try:
-            self.column_values['username'] = generate_mobile_username(str(username), self.domain, False) if username else None
-        except ValidationError as e:
+            self.column_values['username'] = (
+                generate_mobile_username(str(username), self.domain, False) if username else None
+            )
+        except ValidationError:
             self.status_row['flag'] = _("Username must not contain blank spaces or special characters.")
             self.column_values['username'] = username
             return False
@@ -527,7 +518,8 @@ class CCUserRow(BaseUserRow):
             "deactivate_after": self.row.get('deactivate_after', None)
         }
 
-        for v in ['is_active', 'is_account_confirmed', 'send_confirmation_email', 'remove_web_user', 'send_confirmation_sms']:
+        for v in ['is_active', 'is_account_confirmed', 'send_confirmation_email',
+                  'remove_web_user', 'send_confirmation_sms']:
             values[v] = spec_value_to_boolean_or_none(self.row, v)
 
         if values["send_confirmation_sms"] and not values["user_id"]:
@@ -625,10 +617,15 @@ class CCUserRow(BaseUserRow):
             check_can_upload_web_users(self.domain, self.importer.upload_user)
             web_user = CouchUser.get_by_username(web_user_username)
             if web_user:
-                web_user_importer = WebUserImporter(self.importer.upload_domain, self.domain, web_user, self.importer.upload_user,
-                                                    is_new_user=False,
-                                                    via=USER_CHANGE_VIA_BULK_IMPORTER,
-                                                    upload_record_id=self.importer.upload_record_id)
+                web_user_importer = WebUserImporter(
+                    upload_domain=self.importer.upload_domain,
+                    user_domain=self.domain,
+                    user=web_user,
+                    upload_user=self.importer.upload_user,
+                    is_new_user=False,
+                    via=USER_CHANGE_VIA_BULK_IMPORTER,
+                    upload_record_id=self.importer.upload_record_id,
+                )
                 user_change_logger = web_user_importer.logger
             else:
                 web_user_importer = None
@@ -649,9 +646,10 @@ class CCUserRow(BaseUserRow):
                     # role_qualified_id would be present here as confirmed in check_user_role
                     web_user_importer.add_to_domain(role_qualified_id, self.user.location_id)
                 elif not web_user or not web_user.is_member_of(self.domain):
-                    create_or_update_web_user_invite(web_user_username, self.domain, role_qualified_id,
-                                                    self.importer.upload_user, self.user.location_id, user_change_logger,
-                                                    send_email=cv["send_confirmation_email"])
+                    create_or_update_web_user_invite(
+                        web_user_username, self.domain, role_qualified_id, self.importer.upload_user,
+                        self.user.location_id, user_change_logger, send_email=cv["send_confirmation_email"]
+                    )
                 elif web_user.is_member_of(self.domain):
                     # edit existing user in the domain
                     web_user_importer.update_role(role_qualified_id)
@@ -816,7 +814,6 @@ class WebImporter:
 
     def run(self):
         ret = {"errors": [], "rows": []}
-        current = 0
         for i, row in enumerate(self.user_specs):
             if self.update_progress:
                 self.update_progress(i)
