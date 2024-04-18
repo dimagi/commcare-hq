@@ -12,7 +12,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from django.http import HttpRequest
 
-from corehq.apps.app_execution import data_model
+from corehq.apps.app_execution import const, data_model
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.hmac_request import get_hmac_digest
 from dimagi.utils.web import get_url_base
@@ -175,6 +175,7 @@ class ScreenType(str, Enum):
 class FormplayerSession:
     client: BaseFormplayerClient
     app_id: str
+    form_mode: str = const.FORM_MODE_HUMAN
     data: dict = None
     log: StringIO = dataclasses.field(default_factory=StringIO)
 
@@ -265,14 +266,24 @@ class FormplayerSession:
         }
 
     def execute_step(self, step):
+        is_form_step = isinstance(step, (data_model.AnswerQuestionStep, data_model.SubmitFormStep))
+        if is_form_step and self.form_mode == const.FORM_MODE_IGNORE:
+            self.log_step(step, skipped=True)
+            return
+        if self.form_mode == const.FORM_MODE_NO_SUBMIT and isinstance(step, data_model.SubmitFormStep):
+            self.log_step(step, skipped=True)
+            return
         data = self.get_request_data(step) if step else self.get_session_start_data()
         self.data = self.client.make_request(data, self.request_url(step))
         self.log_step(step)
 
-    def log_step(self, step, indent="  "):
+    def log_step(self, step, indent="  ", skipped=False):
+        skipped_log = " (ignored)" if skipped else ""
+        print(f"Execute step: {step or 'START'} {skipped_log}", file=self.log)
+        if skipped:
+            return
         double_indent = indent * 2
         screen, data = self.get_screen_and_data()
-        print(f"Execute step: {step or 'START'}", file=self.log)
         print(f"{indent}New Screen: {screen}", file=self.log)
         if data:
             if screen == ScreenType.START:
