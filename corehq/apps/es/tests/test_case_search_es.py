@@ -15,13 +15,13 @@ from corehq.apps.es import queries
 from corehq.apps.es.client import manager
 from corehq.apps.es.case_search import (
     CaseSearchES,
-    case_search_adapter,
-    case_property_starts_with,
+    case_property_date_range,
     case_property_geo_distance,
     case_property_missing,
     case_property_query,
-    case_property_range_query,
+    case_property_starts_with,
     case_property_text_query,
+    case_search_adapter,
     wrap_case_search_hit,
 )
 from corehq.apps.es.const import SIZE_LIMIT
@@ -464,7 +464,7 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
                 {'_id': 'c4', 'dob': date(2020, 3, 4)},
             ],
             CaseSearchES().domain(self.domain).add_query(
-                case_property_range_query('dob', gte='2020-03-02', lte='2020-03-03'),
+                case_property_date_range('dob', gte='2020-03-02', lte='2020-03-03'),
                 clause=queries.MUST
             ),
             "dob >= '2020-03-02' and dob <= '2020-03-03'",
