@@ -125,7 +125,7 @@ class ExploreCaseDataReport(BaseReport):
 
                 try:
                     special_property = SPECIAL_CASE_PROPERTIES_MAP[prop_name]
-                    query = query.sort(special_property.sort_property,
+                    query = query.sort(special_property.es_field_name,
                                        desc=descending)
                 except KeyError:
                     query = query.sort_by_case_property(prop_name,

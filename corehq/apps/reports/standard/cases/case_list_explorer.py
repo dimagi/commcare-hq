@@ -119,7 +119,7 @@ class CaseListExplorer(CaseListReport, XpathCaseSearchFilterMixin):
                         }
                     }]
                     return query
-                query = query.sort(special_property.sort_property, desc=descending)
+                query = query.sort(special_property.es_field_name, desc=descending)
             except KeyError:
                 query = query.sort_by_case_property(column.prop_name, desc=descending)
         return query

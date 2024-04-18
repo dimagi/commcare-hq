@@ -6,35 +6,38 @@
 class _SystemProperty:
     key = None  # The user-facing property name
     system_name = None  # The CommCareCase field name
+    _es_field_name = None  # Path to use for ES logic, if not system_name
     is_datetime = False
 
     @classmethod
     def value_getter(cls, doc):
         return doc.get(cls.system_name)
 
+    @classmethod
+    @property
+    def es_field_name(cls):
+        return cls._es_field_name or cls.system_name
+
 
 class CaseID(_SystemProperty):
     key = '@case_id'
     system_name = '_id'
-    sort_property = '_id'
 
 
 class CaseType(_SystemProperty):
     key = '@case_type'
     system_name = 'type'
-    sort_property = 'type.exact'
+    _es_field_name = 'type.exact'
 
 
 class OwnerID(_SystemProperty):
     key = '@owner_id'
     system_name = 'owner_id'
-    sort_property = 'owner_id'
 
 
 class Status(_SystemProperty):
     key = '@status'
     system_name = 'closed'
-    sort_property = 'closed'
 
     @classmethod
     def value_getter(cls, doc):
@@ -44,7 +47,7 @@ class Status(_SystemProperty):
 class Name(_SystemProperty):
     key = 'name'
     system_name = 'name'
-    sort_property = 'name.exact'
+    _es_field_name = 'name.exact'
 
 
 class CaseName(_SystemProperty):
@@ -56,7 +59,6 @@ class CaseName(_SystemProperty):
 class ExternalID(_SystemProperty):
     key = 'external_id'
     system_name = 'external_id'
-    sort_property = 'external_id'
 
     @classmethod
     def value_getter(cls, doc):
@@ -66,21 +68,18 @@ class ExternalID(_SystemProperty):
 class DateOpened(_SystemProperty):
     key = 'date_opened'
     system_name = 'opened_on'
-    sort_property = 'opened_on'
     is_datetime = True
 
 
 class ClosedOn(_SystemProperty):
     key = 'closed_on'
     system_name = 'closed_on'
-    sort_property = 'closed_on'
     is_datetime = True
 
 
 class LastModified(_SystemProperty):
     key = 'last_modified'
     system_name = 'modified_on'
-    sort_property = 'modified_on'
     is_datetime = True
 
 
