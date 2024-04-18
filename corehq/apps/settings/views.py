@@ -49,7 +49,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui
 from corehq.apps.hqwebapp.utils import sign
 from corehq.apps.hqwebapp.utils.two_factor import user_can_use_phone
 from corehq.apps.hqwebapp.views import (
@@ -272,8 +272,9 @@ class MyAccountSettingsView(BaseMyAccountView):
 class MyProjectsList(BaseMyAccountView):
     urlname = 'my_projects'
     page_title = gettext_lazy("My Projects")
-    template_name = 'settings/bootstrap3/my_projects.html'
+    template_name = 'settings/bootstrap5/my_projects.html'
 
+    @use_bootstrap5
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if not request.couch_user.is_web_user():
