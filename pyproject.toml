@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools"]
+
+[project]
+name = "commcare-hq"
+readme = "README.md"
+version = "1.0"
+requires-python = ">=3.9,<3.10"
+license = {file = "LICENSE"}
+
+[project.urls]
+Homepage = "https://www.commcarehq.org/"
+Documentation = "https://commcare-hq.readthedocs.io/"
+Repository = "https://github.com/dimagi/commcare-hq/"
+Issues = "https://github.com/dimagi/commcare-hq/issues"
+
+[project.entry-points.pytest11]
+corehq = "corehq.tests.pytest_hooks"
+
+[tool.setuptools]
+py-modules = ["manage"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["corehq"]
+namespaces = false
+
+[tool.pytest.ini_options]
+minversion = "8.1"
+
+empty_parameter_set_mark = "xfail"
+xfail_strict = true
+
+norecursedirs = [
+    "docker",
+    "node_modules",
+    "staticfiles",
+]
+
+required_plugins = "pytest-django"
+DJANGO_SETTINGS_MODULE = "testsettings"

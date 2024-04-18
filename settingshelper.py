@@ -10,6 +10,11 @@ from collections import namedtuple
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 
 
+if 'pytest' in sys.modules:
+    from corehq.tests.pytest_hooks import assert_loaded
+    assert_loaded()
+
+
 def is_testing():
     return os.environ.get("CCHQ_TESTING") == "1"
 
