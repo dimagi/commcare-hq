@@ -413,7 +413,7 @@ def get_app_context(domain, app_id, case_types):
     """
     for the provided case types, return paths to required case types, plus child case types
     """
-    all_paths, all_child_case_types = _get_app_context_by_case_type(domain, app_id)
+    all_paths, all_child_case_types = get_app_context_by_case_type(domain, app_id)
     paths = set().union(*(all_paths[ct] for ct in case_types if ct in all_paths))
     child_case_types = set().union(*(
         all_child_case_types[ct] for ct in case_types if ct in all_child_case_types))
@@ -421,7 +421,7 @@ def get_app_context(domain, app_id, case_types):
 
 
 @quickcache(['domain', 'app_id'], timeout=24 * 60 * 60)
-def _get_app_context_by_case_type(domain, app_id):
+def get_app_context_by_case_type(domain, app_id):
     # Loading and parsing a whole app is actually pretty expensive
     # This fn extracts what we need and caches only that
     app = get_app_cached(domain, app_id)
