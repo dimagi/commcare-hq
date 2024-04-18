@@ -3,6 +3,7 @@
 *~
 *.swp
 *.swo
+*.egg-info
 /local.ini*
 /localsettings*
 /loadtest/test_scripts/localsettings.py
