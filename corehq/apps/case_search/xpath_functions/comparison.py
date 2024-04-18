@@ -23,10 +23,11 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
 
     case_property_name = serialize(case_property_name_raw)
     value = unwrap_value(value_raw, context)
-    if (case_property_name in SPECIAL_CASE_PROPERTIES_MAP
-            and SPECIAL_CASE_PROPERTIES_MAP[case_property_name].is_datetime):
-        timezone = get_timezone_for_domain(context.request_domain)
-        return _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone)
+    if system_property := SPECIAL_CASE_PROPERTIES_MAP.get(case_property_name):
+        if system_property.is_datetime:
+            return _create_system_datetime_query(
+                context.request_domain, case_property_name, op, value, node,
+            )
     return _create_query(context, case_property_name, op, value, node)
 
 
@@ -54,12 +55,13 @@ def _case_property_range_query(case_property_name: str, op_value_dict, node):
         raise CaseFilterError(str(e), serialize(node))
 
 
-def _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone):
+def _create_system_datetime_query(domain, case_property_name, op, value, node):
     """
     Given a date, it gets the equivalent starting time of that date in UTC. i.e 2023-06-05
     in Asia/Seoul timezone begins at 2023-06-04T20:00:00 UTC.
     This might be inconsistent in daylight savings situations.
     """
+    timezone = get_timezone_for_domain(domain)
     utc_equivalent_datetime_value = adjust_input_date_by_timezone(value_to_date(node, value), timezone, op)
     if op in [EQ, NEQ]:
         day_start_datetime = utc_equivalent_datetime_value
