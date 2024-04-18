@@ -45,19 +45,16 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
 
 
 def _create_query(context, case_property_name, op, value, node):
-    if op in [EQ, NEQ]:
-        query = case_property_query(case_property_name, value, fuzzy=context.fuzzy)
-        if op == NEQ:
-            query = filters.NOT(query)
-        return query
-    else:
-        op_value_dict = {RANGE_OP_MAPPING[op]: value}
-        return _case_property_range_query(case_property_name, op_value_dict, node)
+    if op == EQ:
+        return case_property_query(case_property_name, value, fuzzy=context.fuzzy)
+    if op == NEQ:
+        return filters.NOT(_create_query(context, case_property_name, EQ, value, node))
+    return _case_property_range_query(case_property_name, op, value, node)
 
 
-def _case_property_range_query(case_property_name: str, op_value_dict, node):
+def _case_property_range_query(case_property_name, op, value, node):
     try:
-        return case_property_range_query(case_property_name, **op_value_dict)
+        return case_property_range_query(case_property_name, **{RANGE_OP_MAPPING[op]: value})
     except TypeError:
         raise CaseFilterError(
             gettext("The right hand side of a comparison must be a number or date. "
@@ -119,22 +116,19 @@ def _create_system_datetime_query(domain, case_property_name, op, value, node):
     in Asia/Seoul timezone begins at 2023-06-04T20:00:00 UTC.
     This might be inconsistent in daylight savings situations.
     """
+    if op == NEQ:
+        return filters.NOT(_create_system_datetime_query(domain, case_property_name, EQ, value, node))
+
     timezone = get_timezone_for_domain(domain)
     utc_equivalent_datetime_value = adjust_input_date_by_timezone(value_to_date(node, value), timezone, op)
-    if op in [EQ, NEQ]:
-        day_start_datetime = utc_equivalent_datetime_value
-        day_end_datetime = (utc_equivalent_datetime_value + timedelta(days=1))
-        op_value_dict = {
-            RANGE_OP_MAPPING[">="]: day_start_datetime,
-            RANGE_OP_MAPPING["<"]: day_end_datetime,
-        }
-        query = _case_property_range_query(case_property_name, op_value_dict, node)
-        if op == NEQ:
-            query = filters.NOT(query)
-        return query
-    else:
-        op_value_dict = {RANGE_OP_MAPPING[op]: utc_equivalent_datetime_value}
-        return _case_property_range_query(case_property_name, op_value_dict, node)
+    if op == EQ:
+        return case_property_date_range(
+            case_property_name,
+            gte=utc_equivalent_datetime_value,
+            lt=utc_equivalent_datetime_value + timedelta(days=1),
+        )
+    op_value_dict = {RANGE_OP_MAPPING[op]: utc_equivalent_datetime_value}
+    return case_property_date_range(case_property_name, **op_value_dict)
 
 
 def adjust_input_date_by_timezone(date, timezone, op):
