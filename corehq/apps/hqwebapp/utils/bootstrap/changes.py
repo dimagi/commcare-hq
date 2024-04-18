@@ -161,6 +161,14 @@ def flag_bootstrap3_references_in_template(line):
     return flags
 
 
+def flag_bootstrap3_references_in_javascript(line):
+    flags = []
+    regex = r"([\"\'][\w\/]+)(\/bootstrap3\/)"
+    if re.search(regex, line):
+        flags.append("This javascript file references a bootstrap 3 file.")
+    return flags
+
+
 def flag_crispy_forms_in_template(line):
     flags = []
     regex = r"\{% crispy"
