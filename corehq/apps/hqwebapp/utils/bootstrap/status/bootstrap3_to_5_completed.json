@@ -21,5 +21,10 @@
       "js/import_history.js",
       "js/main.js"
     ]
+  },
+  "settings": {
+    "templates": [
+      "my_projects.html"
+    ]
   }
 }

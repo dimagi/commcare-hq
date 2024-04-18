@@ -272,7 +272,7 @@ class MyAccountSettingsView(BaseMyAccountView):
 class MyProjectsList(BaseMyAccountView):
     urlname = 'my_projects'
     page_title = gettext_lazy("My Projects")
-    template_name = 'settings/bootstrap5/my_projects.html'
+    template_name = 'settings/my_projects.html'
 
     @use_bootstrap5
     @method_decorator(login_required)
