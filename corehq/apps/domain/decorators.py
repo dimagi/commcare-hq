@@ -3,12 +3,13 @@ from functools import wraps
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import (
+from django.http import HttpRequest
+from django.http.response import (
     Http404,
-    HttpRequest,
     HttpResponse,
     HttpResponseForbidden,
     HttpResponseRedirect,
+    HttpResponseRedirectBase,
     JsonResponse,
 )
 from django.template.response import TemplateResponse
@@ -17,6 +18,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views import View
 
+from django_digest.decorators import httpdigest
 from django_otp import match_token
 from django_prbac.utils import has_privilege
 from oauth2_provider.oauth2_backends import get_oauthlib_core
@@ -56,11 +58,20 @@ from corehq.toggles import (
     TWO_FACTOR_SUPERUSER_ROLLOUT,
 )
 from corehq.util.soft_assert import soft_assert
-from django_digest.decorators import httpdigest
 
 auth_logger = logging.getLogger("commcare_auth")
 
 OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
+
+
+class HttpResponsePermanentRedirect(HttpResponseRedirectBase):
+    # django.http.response has a class with this name, but it returns
+    # status code 301: Moved Permanently, which is different from 308:
+    #
+    #     The request method and the body will not be altered, whereas
+    #     301 may incorrectly sometimes be changed to a GET method.
+    #     -- https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308
+    status_code = 308
 
 
 def load_domain(req, domain):
@@ -668,6 +679,10 @@ cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_s
 def check_domain_migration(view_func):
     def wrapped_view(request, domain, *args, **kwargs):
         if DATA_MIGRATION.enabled(domain):
+            domain_obj = Domain.get_by_name(domain)
+            if domain_obj.redirect_url:
+                return HttpResponsePermanentRedirect(domain_obj.redirect_url)
+
             auth_logger.info(
                 "Request rejected domain=%s reason=%s request=%s",
                 domain, "flag:migration", request.path
