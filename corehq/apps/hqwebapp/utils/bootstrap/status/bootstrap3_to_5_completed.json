@@ -24,6 +24,7 @@
   },
   "settings": {
     "templates": [
+      "enable_superuser.html",
       "my_projects.html"
     ]
   }
