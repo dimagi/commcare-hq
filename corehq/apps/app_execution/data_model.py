@@ -3,8 +3,11 @@ from __future__ import annotations
 import dataclasses
 from typing import ClassVar
 
+from attr import define
+from attrs import asdict
 
-@dataclasses.dataclass
+
+@define
 class Step:
     type: ClassVar[str]
 
@@ -14,37 +17,32 @@ class Step:
     def get_children(self):
         return []
 
-    def to_dict(self):
-        return {"type": self.type, **dataclasses.asdict(self)}
+    def to_json(self):
+        return {"type": self.type, **asdict(self)}
 
     @classmethod
-    def from_dict(cls, data):
+    def from_json(cls, data):
         return cls(**data)
 
 
-@dataclasses.dataclass
+@define
 class Workflow:
     steps: list[Step] = dataclasses.field(default_factory=list)
 
-    def to_dict(self):
+    def __jsonattrs_to_json__(self):
         return {
-            "steps": [step.to_dict() for step in self.steps]
+            "steps": [step.to_json() for step in self.steps]
         }
 
     @classmethod
-    def from_dict(cls, data):
-        workflow = cls()
-        for step in data["steps"]:
-            step_type = step.pop("type")
-            step_class = STEP_MAP[step_type]
-            workflow.steps.append(step_class.from_dict(step))
-        return workflow
+    def __jsonattrs_from_json__(cls, data):
+        return cls(steps=_steps_from_json(data["steps"]))
 
     def __str__(self):
         return " -> ".join(str(step) for step in self.steps)
 
 
-@dataclasses.dataclass
+@define
 class CommandStep(Step):
     type: ClassVar[str] = "command"
     value: str
@@ -59,7 +57,7 @@ class CommandStep(Step):
         return _append_selection(data, command["index"])
 
 
-@dataclasses.dataclass
+@define
 class EntitySelectStep(Step):
     type: ClassVar[str] = "entity_select"
     value: str
@@ -74,7 +72,7 @@ class EntitySelectStep(Step):
         return f"Entity Select: {self.value}"
 
 
-@dataclasses.dataclass
+@define
 class QueryStep(Step):
     type: ClassVar[str] = "query"
     inputs: dict
@@ -95,7 +93,7 @@ class QueryStep(Step):
         return f"Query: {self.inputs}"
 
 
-@dataclasses.dataclass
+@define
 class AnswerQuestionStep(Step):
     type: ClassVar[str] = "answer_question"
     question_text: str
@@ -127,7 +125,7 @@ class AnswerQuestionStep(Step):
         return f"Answer Question: {self.question_text or self.question_id} = {self.value}"
 
 
-@dataclasses.dataclass
+@define
 class SubmitFormStep(Step):
     type: ClassVar[str] = "submit_form"
 
@@ -146,23 +144,23 @@ class SubmitFormStep(Step):
         }
 
 
-@dataclasses.dataclass
+@define
 class FormStep(Step):
     type: ClassVar[str] = "form"
     children: list[AnswerQuestionStep | SubmitFormStep]
 
-    def to_dict(self):
+    def to_json(self):
         return {
             "type": self.type,
-            "children": [child.to_dict() for child in self.children]
+            "children": [child.to_json() for child in self.children]
         }
 
     def get_children(self):
         return self.children
 
     @classmethod
-    def from_dict(cls, data):
-        return cls(children=[STEP_MAP[child.pop("type")].from_dict(child) for child in data["children"]])
+    def from_json(cls, data):
+        return cls(children=_steps_from_json(data["children"]))
 
 
 def _append_selection(data, selection):
@@ -179,3 +177,7 @@ STEP_MAP = {
     "submit_form": SubmitFormStep,
     "form": FormStep,
 }
+
+
+def _steps_from_json(data):
+    return [STEP_MAP[child.pop("type")].from_json(child) for child in data]
