@@ -89,7 +89,26 @@ def test_flag_bootstrap3_references_in_template_extends():
 def test_flag_bootstrap3_references_in_template_requirejs():
     line = """    {% requirejs_main 'hqwebapp/bootstrap3/foo' %}\n"""
     flags = flag_bootstrap3_references_in_template(line)
+    eq(flags, ["This template references a bootstrap 3 requirejs file. "
+               "It should also use requirejs_main_b5 instead of requirejs_main."])
+
+
+def test_flag_bootstrap3_references_in_template_requirejs_b5():
+    line = """    {% requirejs_main_b5 'hqwebapp/js/bootstrap3/foo' %}\n"""
+    flags = flag_bootstrap3_references_in_template(line)
     eq(flags, ['This template references a bootstrap 3 requirejs file.'])
+
+
+def test_flag_requirejs_main_references_in_template():
+    line = """    {% requirejs_main 'hqwebapp/js/foo' %}\n"""
+    flags = flag_bootstrap3_references_in_template(line)
+    eq(flags, ['This template should use requirejs_main_b5 instead of requirejs_main.'])
+
+
+def test_flag_any_bootstrap3_references_in_template():
+    line = """<link src='sms/js/bootstrap3/compose.js' >\n"""
+    flags = flag_bootstrap3_references_in_template(line)
+    eq(flags, ['This template references a bootstrap 3 file.'])
 
 
 def test_flag_crispy_forms_in_template():

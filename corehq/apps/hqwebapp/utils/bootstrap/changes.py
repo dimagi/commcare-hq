@@ -141,13 +141,23 @@ def flag_stateful_button_changes_bootstrap5(line):
 
 def flag_bootstrap3_references_in_template(line):
     flags = []
-    for template_tag in ["extends", "requirejs_main"]:
-        regex = r"(\{% " + template_tag + r" [\"\'][\w]+)(\/bootstrap3\/)"
-        if re.search(regex, line):
+    for template_tag in ["extends", "requirejs_main", "requirejs_main_b5"]:
+        b3_ref_regex = r"(\{% " + template_tag + r" [\"\'][\w\/]+)(\/bootstrap3\/)"
+        tag_only_regex = r"(\{% " + template_tag + r" [\"\'][\w]+)"
+        if re.search(b3_ref_regex, line):
             if template_tag == "extends":
                 flags.append("This template extends a bootstrap 3 template.")
             if template_tag == "requirejs_main":
+                flags.append("This template references a bootstrap 3 requirejs file. "
+                             "It should also use requirejs_main_b5 instead of requirejs_main.")
+            if template_tag == "requirejs_main_b5":
                 flags.append("This template references a bootstrap 3 requirejs file.")
+        elif re.search(tag_only_regex, line):
+            if template_tag == "requirejs_main":
+                flags.append("This template should use requirejs_main_b5 instead of requirejs_main.")
+    regex = r"(=[\"\'][\w\/]+)(\/bootstrap3\/)"
+    if re.search(regex, line):
+        flags.append("This template references a bootstrap 3 file.")
     return flags
 
 
