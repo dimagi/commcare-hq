@@ -12,7 +12,7 @@ APP = Menu(
         Menu(name="Case List", children=[
             CaseList(name="Followup", cases=CASES, children=[
                 Form(name="Followup Case", children=[
-                    factory.make_question("0", "Name", "name", "str"),
+                    factory.make_question("0", "Name", "name", ""),
                 ])
             ]),
         ]),

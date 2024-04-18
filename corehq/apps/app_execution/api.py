@@ -4,6 +4,7 @@ import json
 from enum import Enum
 from functools import cached_property
 from importlib import import_module
+from io import StringIO
 
 import requests
 from django.conf import settings
@@ -175,6 +176,7 @@ class FormplayerSession:
     client: BaseFormplayerClient
     app_id: str
     data: dict = None
+    log: StringIO = dataclasses.field(default_factory=StringIO)
 
     def clone(self):
         return dataclasses.replace(self, data=copy.deepcopy(self.data) if self.data else None)
@@ -265,6 +267,30 @@ class FormplayerSession:
     def execute_step(self, step):
         data = self.get_request_data(step) if step else self.get_session_start_data()
         self.data = self.client.make_request(data, self.request_url(step))
+        self.log_step(step)
+
+    def log_step(self, step, indent="  "):
+        double_indent = indent * 2
+        screen, data = self.get_screen_and_data()
+        print(f"Execute step: {step or 'START'}", file=self.log)
+        print(f"{indent}New Screen: {screen}", file=self.log)
+        if data:
+            if screen == ScreenType.START:
+                print("", file=self.log)
+            elif screen == ScreenType.MENU:
+                for command in data:
+                    print(f"{double_indent}Command: {command['displayText']}", file=self.log)
+            elif screen == ScreenType.CASE_LIST:
+                for row in data:
+                    print(f"{double_indent}Case: {row['id']}", file=self.log)
+            elif screen == ScreenType.SEARCH:
+                for display in data:
+                    print(f"{double_indent}Search field: {display['text']}", file=self.log)
+            elif screen == ScreenType.FORM:
+                for item in data:
+                    if item["type"] == "question":
+                        answer = item.get('answer', None) or '""'
+                        print(f"{double_indent}Question: {item['caption']}={answer}", file=self.log)
 
 
 def execute_workflow(session: FormplayerSession, workflow):
