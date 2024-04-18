@@ -224,6 +224,9 @@ class HqPermissions(DocumentSchema):
 
     manage_domain_alerts = BooleanProperty(default=False)
 
+    edit_user_tableau_config = BooleanProperty(default=False)
+    view_user_tableau_config = BooleanProperty(default=False)
+
     @classmethod
     def from_permission_list(cls, permission_list):
         """Converts a list of Permission objects into a Permissions object"""
