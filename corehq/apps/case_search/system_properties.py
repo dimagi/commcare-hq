@@ -5,68 +5,81 @@
 
 class _SystemProperty:
     key = None  # The user-facing property name
+    system_name = None  # The CommCareCase field name
     is_datetime = False
+
+    @classmethod
+    def value_getter(cls, doc):
+        return doc.get(cls.system_name)
 
 
 class CaseID(_SystemProperty):
     key = '@case_id'
-    value_getter = lambda doc: doc.get('_id')
+    system_name = '_id'
     sort_property = '_id'
 
 
 class CaseType(_SystemProperty):
     key = '@case_type'
-    value_getter = lambda doc: doc.get('type')
+    system_name = 'type'
     sort_property = 'type.exact'
 
 
 class OwnerID(_SystemProperty):
     key = '@owner_id'
-    value_getter = lambda doc: doc.get('owner_id')
+    system_name = 'owner_id'
     sort_property = 'owner_id'
 
 
 class Status(_SystemProperty):
     key = '@status'
-    value_getter = lambda doc: 'closed' if doc.get('closed') else 'open'
+    system_name = 'closed'
     sort_property = 'closed'
+
+    @classmethod
+    def value_getter(cls, doc):
+        return 'closed' if doc.get('closed') else 'open'
 
 
 class Name(_SystemProperty):
     key = 'name'
-    value_getter = lambda doc: doc.get('name')
+    system_name = 'name'
     sort_property = 'name.exact'
 
 
 class CaseName(_SystemProperty):
     key = 'case_name'
-    value_getter = lambda doc: doc.get('name')
+    system_name = 'name'
     sort_property = 'name.exact'
 
 
 class ExternalID(_SystemProperty):
     key = 'external_id'
-    value_getter = lambda doc: doc.get('external_id', '')
+    system_name = 'external_id'
     sort_property = 'external_id'
+
+    @classmethod
+    def value_getter(cls, doc):
+        return doc.get('external_id', '')
 
 
 class DateOpened(_SystemProperty):
     key = 'date_opened'
-    value_getter = lambda doc: doc.get('opened_on')
+    system_name = 'opened_on'
     sort_property = 'opened_on'
     is_datetime = True
 
 
 class ClosedOn(_SystemProperty):
     key = 'closed_on'
-    value_getter = lambda doc: doc.get('closed_on')
+    system_name = 'closed_on'
     sort_property = 'closed_on'
     is_datetime = True
 
 
 class LastModified(_SystemProperty):
     key = 'last_modified'
-    value_getter = lambda doc: doc.get('modified_on')
+    system_name = 'modified_on'
     sort_property = 'modified_on'
     is_datetime = True
 
