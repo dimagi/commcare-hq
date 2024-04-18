@@ -161,13 +161,13 @@ class Command(BaseCommand):
 
         if has_pending_git_changes():
             self.stdout.write(self.style.SUCCESS(
-                "\nDone! Diffs are already up-to-date, no changes needed.\n\n"
-            ))
-        else:
-            self.stdout.write(self.style.SUCCESS(
                 "\n\nDiffs have been rebuilt. Thank you!\n"
             ))
             self.make_commit("Rebuilt diffs")
+        else:
+            self.stdout.write(self.style.SUCCESS(
+                "\nDone! Diffs are already up-to-date, no changes needed.\n\n"
+            ))
 
     def update_config(self, config, app_name, js_folder=None):
         parent_path = get_parent_path(app_name, js_folder)
