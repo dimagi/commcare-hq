@@ -1564,6 +1564,15 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+
+EXPORTS_APPS_USE_ELASTICSEARCH = StaticToggle(
+    'export_apps_use_elasticsearch',
+    'Use elasticsearch when fetching apps for exports',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
+
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Enikshay: Disable column limit in UCR',
