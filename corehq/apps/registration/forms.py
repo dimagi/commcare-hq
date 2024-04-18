@@ -490,7 +490,7 @@ class AdminInvitesUserForm(forms.Form):
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
-    profile = forms.ChoiceField(choices=(), label="Profile")
+    profile = forms.ChoiceField(choices=(), label="Profile", required=False)
 
     def __init__(self, data=None, excluded_emails=None, is_add_user=None, location=None,
                  role_choices=(), *, domain, **kwargs):
