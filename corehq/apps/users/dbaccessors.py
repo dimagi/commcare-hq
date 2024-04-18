@@ -221,6 +221,10 @@ def get_all_user_id_username_pairs_by_domain(domain, include_web_users=True, inc
     ))
 
 
+def get_active_web_usernames_by_domain(domain):
+    return (row['key'][3] for row in get_all_user_rows(domain, include_mobile_users=False, include_inactive=False))
+
+
 def get_web_user_count(domain, include_inactive=True):
     return sum([
         row['value']
