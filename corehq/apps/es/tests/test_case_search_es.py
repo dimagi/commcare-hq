@@ -385,19 +385,6 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             ['c2']
         )
 
-    def test_regex_case_property_query(self):
-        self._assert_query_runs_correctly(
-            self.domain,
-            [
-                {'_id': 'c1', 'foo': 'redbeard'},
-                {'_id': 'c2', 'foo': 'blackbeard'},
-                {'_id': 'c3', 'foo': 'redblack'},
-            ],
-            CaseSearchES().domain(self.domain).regexp_case_property_query("foo", ".*beard.*"),
-            None,
-            ['c1', 'c2']
-        )
-
     def test_multiple_case_search_queries(self):
         query = (CaseSearchES().domain(self.domain)
                  .case_property_query("foo", "redbeard")
@@ -465,20 +452,6 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             CaseSearchES().domain(self.domain).filter(case_property_text_query('description', 'red')),
             None,
             ['c1']
-        )
-
-    def test_numeric_range_query(self):
-        self._assert_query_runs_correctly(
-            self.domain,
-            [
-                {'_id': 'c1', 'num': '1'},
-                {'_id': 'c2', 'num': '2'},
-                {'_id': 'c3', 'num': '3'},
-                {'_id': 'c4', 'num': '4'},
-            ],
-            CaseSearchES().domain(self.domain).numeric_range_case_property_query('num', gte=2, lte=3),
-            'num <= 3 and num >= 2',
-            ['c2', 'c3']
         )
 
     def test_date_range_query(self):

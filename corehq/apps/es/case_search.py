@@ -59,7 +59,6 @@ class CaseSearchES(CaseES):
     @property
     def builtin_filters(self):
         return [
-            case_property_filter,
             blacklist_owner_id,
             external_id,
             indexed_on,
@@ -85,25 +84,6 @@ class CaseSearchES(CaseES):
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
         return self.add_query(case_property_query(case_property_name, value, fuzzy), clause)
-
-    def regexp_case_property_query(self, case_property_name, regex, clause=queries.MUST):
-        """
-        Search for all cases where case property `case_property_name` matches the regular expression in `regex`
-        """
-        return self.add_query(
-            _base_property_query(case_property_name, queries.regexp(PROPERTY_VALUE, regex)),
-            clause,
-        )
-
-    def numeric_range_case_property_query(self, case_property_name, gt=None,
-                                          gte=None, lt=None, lte=None, clause=queries.MUST):
-        """
-        Search for all cases where case property `case_property_name` fulfills the range criteria.
-        """
-        return self.add_query(
-            case_property_range_query(case_property_name, gt, gte, lt, lte),
-            clause
-        )
 
     def xpath_query(self, domain, xpath, fuzzy=False):
         """Search for cases using an XPath predicate expression.
@@ -205,17 +185,6 @@ case_search_adapter = create_document_adapter(
     case_adapter.type,
     secondary=HQ_CASE_SEARCH_SECONDARY_INDEX_NAME,
 )
-
-
-def case_property_filter(case_property_name, value):
-    warn("Use the query versions of this function from the case_search module instead", DeprecationWarning)
-    return filters.nested(
-        CASE_PROPERTIES_PATH,
-        filters.AND(
-            filters.term(PROPERTY_KEY, case_property_name),
-            filters.term(PROPERTY_VALUE, value),
-        )
-    )
 
 
 def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None):
