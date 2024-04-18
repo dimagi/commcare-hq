@@ -3,7 +3,7 @@ from testil import eq
 
 from corehq.apps.app_execution.data_model import (
     AnswerQuestionStep, CommandStep, EntitySelectStep, FormStep, QueryStep,
-    SubmitFormStep, Workflow,
+    SubmitFormStep, AppWorkflow,
 )
 
 
@@ -13,12 +13,12 @@ class DataModelTest(SimpleTestCase):
         eq(_get_workflow().__jsonattrs_to_json__(), _get_workflow_json())
 
     def test_from_json(self):
-        workflow = Workflow.__jsonattrs_from_json__(_get_workflow_json())
+        workflow = AppWorkflow.__jsonattrs_from_json__(_get_workflow_json())
         eq(workflow, _get_workflow())
 
 
 def _get_workflow():
-    return Workflow(steps=[
+    return AppWorkflow(steps=[
         CommandStep("Case Search"),
         QueryStep({"first_name": "query value", "last_name": "query value"}),
         EntitySelectStep("123"),

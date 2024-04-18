@@ -4,7 +4,7 @@ from testil import eq
 from . import response_factory as factory
 from .mock_formplayer import CaseList, CaseSearch, Form, Menu, MockFormplayerClient
 from ..data_model import AnswerQuestionStep, CommandStep, EntitySelectStep, FormStep, QueryStep, SubmitFormStep, \
-    Workflow
+    AppWorkflow
 from ..discovery import discover_workflows
 
 CASES = [{"id": "123", "name": "Case1"}, {"id": "456", "name": "Case2"}]
@@ -55,25 +55,25 @@ class TestDiscovery(SimpleTestCase):
         ])
 
         eq(workflows, [
-            Workflow(steps=[
+            AppWorkflow(steps=[
                 CommandStep("Survey"),
                 CommandStep("Form1"),
                 form_step
             ]),
-            Workflow(steps=[
+            AppWorkflow(steps=[
                 CommandStep("Case List"),
                 CommandStep("Register"),
                 CommandStep("Register Case"),
                 form_step
             ]),
-            Workflow(steps=[
+            AppWorkflow(steps=[
                 CommandStep("Case Search"),
                 QueryStep({"first_name": "query value", "last_name": "query value"}),
                 EntitySelectStep("123"),
                 CommandStep("Followup Case"),
                 form_step
             ]),
-            Workflow(steps=[
+            AppWorkflow(steps=[
                 CommandStep("Case List"),
                 CommandStep("Followup"),
                 EntitySelectStep("123"),

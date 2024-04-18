@@ -26,7 +26,7 @@ class Step:
 
 
 @define
-class Workflow:
+class AppWorkflow:
     steps: list[Step] = dataclasses.field(default_factory=list)
 
     def __jsonattrs_to_json__(self):

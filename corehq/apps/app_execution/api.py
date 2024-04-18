@@ -2,10 +2,15 @@ import copy
 import dataclasses
 import json
 from enum import Enum
+from functools import cached_property
+from importlib import import_module
 
 import requests
+from django.conf import settings
+from django.contrib.auth import login, logout
+from django.contrib.auth.models import User
+from django.http import HttpRequest
 
-import settings
 from corehq.apps.app_execution import data_model
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.hmac_request import get_hmac_digest
@@ -17,19 +22,26 @@ class FormplayerException(Exception):
 
 
 class BaseFormplayerClient:
+    """Client class used to make requests to Formplayer"""
 
-    def __init__(self, domain, username, user_id, commcare_url=None, formplayer_url=None):
+    def __init__(self, domain, username, user_id, formplayer_url=None):
         self.domain = domain
         self.username = username
         self.user_id = user_id
-        self.commcare_url = commcare_url or get_url_base()
         self.formplayer_url = formplayer_url or get_formplayer_url()
 
     def __enter__(self):
-        self.session = requests.Session()
+        self.session = self._get_requests_session()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def _get_requests_session(self):
+        return requests.Session()
+
+    def close(self):
         self.session.close()
+        self.session = None
 
     def make_request(self, data, endpoint):
         data_bytes = json.dumps(data).encode('utf-8')
@@ -47,34 +59,41 @@ class BaseFormplayerClient:
         raise NotImplementedError()
 
 
-class UserFormplayerClient(BaseFormplayerClient):
-    def __init__(self, domain, username, user_id, password, commcare_url=None, formplayer_url=None):
-        self.password = password
-        super().__init__(domain, username, user_id, commcare_url, formplayer_url)
+class LocalUserClient(BaseFormplayerClient):
+    """Authenticates as a local user to Formplayer.
 
-    def __enter__(self):
-        self.session = requests.Session()
-        login_url = self.commcare_url + f"/a/{self.domain}/login/"
-        self.session.get(login_url)  # csrf
-        response = self.session.post(
-            login_url,
-            {
-                "auth-username": self.username,
-                "auth-password": self.password,
-                "cloud_care_login_view-current_step": ['auth'],  # fake out two_factor ManagementForm
-            },
-            headers={
-                "X-CSRFToken": self.session.cookies.get('csrftoken'),
-                "REFERER": login_url,  # csrf requires this for secure requests
-            },
-        )
-        assert (response.status_code == 200)
-        return self
+    This fakes a user login in the Django session and uses the session cookie to authenticate with Formplayer."""
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.session.close()
+    @cached_property
+    def user(self):
+        return User.objects.get(username=self.username)
 
-    def _make_request(self, endpoint, data, headers):
+    def _get_requests_session(self):
+        session = requests.Session()
+
+        engine = import_module(settings.SESSION_ENGINE)
+        self.django_session = engine.SessionStore()
+
+        # Create a fake request to store login details.
+        request = HttpRequest()
+        request.session = self.django_session
+        login(request, self.user, "django.contrib.auth.backends.ModelBackend")
+        # Save the session values.
+        request.session.save()
+        # Set the cookie to represent the session.
+        session_cookie = settings.SESSION_COOKIE_NAME
+        session.cookies.set(session_cookie, request.session.session_key)
+        return session
+
+    def close(self):
+        super().close()
+        request = HttpRequest()
+        request.session = self.django_session
+        request.user = self.user
+        logout(request)
+        self.django_session = None
+
+    def _make_request(self, endpoint, data_bytes, headers):
         if 'XSRF-TOKEN' not in self.session.cookies:
             response = self.session.get(f"{self.formplayer_url}/serverup")
             response.raise_for_status()
@@ -83,7 +102,7 @@ class UserFormplayerClient(BaseFormplayerClient):
 
         response = self.session.post(
             url=f"{self.formplayer_url}/{endpoint}",
-            data=data,
+            data=data_bytes,
             headers={
                 "X-XSRF-TOKEN": xsrf_token,
                 **headers
@@ -93,14 +112,48 @@ class UserFormplayerClient(BaseFormplayerClient):
         return response.json()
 
 
-class HmacFormplayerClient(BaseFormplayerClient):
+class UserPasswordClient(LocalUserClient):
+    """Authenticates using a username and password.
 
-    def _make_request(self, endpoint, data, headers):
+    This client logs in to CommCareHQ and uses the session cookie to authenticate with Formplayer.
+    You can use this client with a local or remote CommCareHQ + Formplayer instance.
+    """
+    def __init__(self, domain, username, user_id, password, commcare_url=None, formplayer_url=None):
+        self.password = password
+        self.commcare_url = commcare_url or get_url_base()
+        super().__init__(domain, username, user_id, formplayer_url)
+
+    def _get_requests_session(self):
+        session = requests.Session()
+        login_url = self.commcare_url + f"/a/{self.domain}/login/"
+        session.get(login_url)  # csrf
+        response = session.post(
+            login_url,
+            {
+                "auth-username": self.username,
+                "auth-password": self.password,
+                "cloud_care_login_view-current_step": ['auth'],  # fake out two_factor ManagementForm
+            },
+            headers={
+                "X-CSRFToken": session.cookies.get('csrftoken'),
+                "REFERER": login_url,  # csrf requires this for secure requests
+            },
+        )
+        assert (response.status_code == 200)
+        return session
+
+
+class HmacAuthClient(BaseFormplayerClient):
+    """Authenticates using a shared secret key.
+
+    Note: This client does not currently work for case search requests and form submissions."""
+
+    def _make_request(self, endpoint, data_bytes, headers):
         response = self.session.post(
             url=f"{self.formplayer_url}/{endpoint}",
-            data=data,
+            data=data_bytes,
             headers={
-                "X-MAC-DIGEST": get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data),
+                "X-MAC-DIGEST": get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data_bytes),
                 **headers
             },
         )

@@ -3,7 +3,7 @@ from django.test import SimpleTestCase
 from . import response_factory as factory
 from .mock_formplayer import CaseList, Form, Menu, MockFormplayerClient
 from ..api import FormplayerSession, execute_workflow
-from ..data_model import AnswerQuestionStep, CommandStep, EntitySelectStep, FormStep, SubmitFormStep, Workflow
+from ..data_model import AnswerQuestionStep, CommandStep, EntitySelectStep, FormStep, SubmitFormStep, AppWorkflow
 
 CASES = [{"id": "123", "name": "Case1"}, {"id": "456", "name": "Case2"}]
 APP = Menu(
@@ -22,7 +22,7 @@ APP = Menu(
 
 class TestDiscovery(SimpleTestCase):
     def test_execution(self):
-        workflow = Workflow(steps=[
+        workflow = AppWorkflow(steps=[
             CommandStep("Case List"),
             CommandStep("Followup"),
             EntitySelectStep("123"),

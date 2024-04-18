@@ -14,7 +14,7 @@ def discover_workflows(client, app_id):
         session = FormplayerSession(client=client, app_id=app_id)
         execute_step(session, None)
         explorations = [
-            WorkflowExploration(workflow=data_model.Workflow(steps=[step]), session=session.clone())
+            WorkflowExploration(workflow=data_model.AppWorkflow(steps=[step]), session=session.clone())
             for step in get_branches(session)
         ]
         to_explore = explorations
@@ -42,7 +42,6 @@ def _expand_workflow(exploration):
 
 def get_branches(session):
     screen, data = session.get_screen_and_data()
-    print(screen, session.data)
     if session.current_screen == ScreenType.START:
         return []
     elif session.current_screen == ScreenType.MENU:
@@ -92,7 +91,7 @@ def _get_value_for_question(item):
 
 @dataclasses.dataclass
 class WorkflowExploration:
-    workflow: data_model.Workflow
+    workflow: data_model.AppWorkflow
     session: FormplayerSession
     completed: bool = False
     step_index: int = 0
@@ -108,7 +107,7 @@ class WorkflowExploration:
 
     def extend(self, branch):
         new_steps = branch if isinstance(branch, list) else [branch]
-        workflow = data_model.Workflow(steps=self.workflow.steps + new_steps)
+        workflow = data_model.AppWorkflow(steps=self.workflow.steps + new_steps)
         return WorkflowExploration(
             workflow=workflow,
             session=self.session.clone(),
