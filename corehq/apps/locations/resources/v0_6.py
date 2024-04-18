@@ -18,7 +18,7 @@ from tastypie.exceptions import BadRequest
 class LocationAPIError(BadRequest):
     def __init__(self, message="", errors=None, code=None, site_code=None):
         if site_code:
-            message = message + " " + f"Location site code: {site_code}."
+            message = message + " " + _(f"Location site code: {site_code}.")
         super(LocationAPIError, self).__init__(message, errors, code)
 
 
