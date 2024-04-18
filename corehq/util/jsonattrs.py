@@ -85,6 +85,7 @@ from attrs import asdict, define, field
 
 from django.core.exceptions import ValidationError
 from django.db.models import JSONField
+from django import forms
 from django.utils.translation import gettext_lazy as _
 
 __all__ = ["AttrsDict", "AttrsList", "dict_of", "list_of"]
@@ -143,6 +144,18 @@ class JsonAttrsField(JSONField):
         assert not args, (name, path, args, kwargs)
         assert "builder" not in kwargs, (name, path, args, kwargs)
         return self.__class__(self.builder, **kwargs)
+
+    def validate(self, value, model_instance):
+        super().validate(self.builder.jsonify(value), model_instance)
+
+    def formfield(self, **kwargs):
+        return super().formfield(**{
+            'form_class': JsonAttrsFormField,
+            'builder': self.builder,
+            'encoder': self.encoder,
+            'decoder': self.decoder,
+            **kwargs,
+        })
 
 
 class AttrsDict(JsonAttrsField):
@@ -325,3 +338,15 @@ class list_of:
     @property
     def __name__(self):
         return f"{type(self).__name__}({self.item_type.__name__})"
+
+
+class JsonAttrsFormField(forms.JSONField):
+
+    def __init__(self, builder, encoder=None, decoder=None, **kwargs):
+        self.builder = builder
+        super().__init__(encoder, decoder, **kwargs)
+
+    def prepare_value(self, value):
+        if isinstance(value, self.builder.attrs_type):
+            value = self.builder.jsonify(value)
+        return super().prepare_value(value)

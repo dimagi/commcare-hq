@@ -5,6 +5,7 @@ from attrs import asdict, define, field
 from attrs.exceptions import NotAnAttrsClassError
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.forms import modelform_factory
 from testil import assert_raises, eq
 
 from ..jsonattrs import AttrsDict, AttrsList, AttrsObject, dict_of, list_of
@@ -191,6 +192,88 @@ def test_invalid_value_does_not_save():
         "<class 'dict'> is not an attrs-decorated class."
     )):
         get_json_value(check, "events")
+
+
+def test_jsonattrs_formfield__attrdict():
+    @unregistered_django_model
+    class Check(models.Model):
+        points = AttrsDict(Point)
+
+    _check_jsonattrs_formfield(
+        Check,
+        field_name="points",
+        raw_value='{"north": {"x": 0, "y": 1}}',
+        empty_value={},
+        expected={"north": Point(0, 1)}
+    )
+
+
+def test_jsonattrs_formfield__attrdict_list_of():
+    @unregistered_django_model
+    class Check(models.Model):
+        points = AttrsDict(list_of(Point))
+
+    _check_jsonattrs_formfield(
+        Check,
+        field_name="points",
+        raw_value='{"north": [{"x": 0, "y": 1}]}',
+        empty_value={},
+        expected={"north": [Point(0, 1)]}
+    )
+
+
+def test_jsonattrs_formfield__attrslist():
+    @unregistered_django_model
+    class Check(models.Model):
+        points = AttrsList(Point)
+
+    _check_jsonattrs_formfield(
+        Check,
+        field_name="points",
+        raw_value='[{"x": 0, "y": 1}]',
+        empty_value=[],
+        expected=[Point(0, 1)]
+    )
+
+
+def test_jsonattrs_formfield__attrslist_dict_of():
+    @unregistered_django_model
+    class Check(models.Model):
+        points = AttrsList(dict_of(Point))
+
+    _check_jsonattrs_formfield(
+        Check,
+        field_name="points",
+        raw_value='[{"north": {"x": 0, "y": 1}}]',
+        empty_value=[],
+        expected=[{"north": Point(0, 1)}]
+    )
+
+
+def test_jsonattrs_formfield__attrsobject():
+    @unregistered_django_model
+    class Check(models.Model):
+        points = AttrsObject(Point)
+
+    _check_jsonattrs_formfield(
+        Check,
+        field_name="points",
+        raw_value='{"x": 0, "y": 1}',
+        empty_value=None,
+        expected=Point(0, 1)
+    )
+
+
+def _check_jsonattrs_formfield(model, field_name, raw_value, empty_value, expected):
+    obj = model(**{field_name: empty_value})
+    form_cls = modelform_factory(model, fields=[field_name])
+    form = form_cls({field_name: empty_value}, instance=obj)
+    assert not form.is_valid()
+    assert form.has_error(field_name, "required")
+
+    form = form_cls({field_name: raw_value}, instance=obj)
+    assert form.is_valid(), form.errors.as_data()
+    eq(getattr(form.instance, field_name), expected)
 
 
 def get_json_value(model, field_name):
