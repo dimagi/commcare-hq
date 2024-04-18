@@ -138,14 +138,12 @@
           <div class="col-lg-12">
             <strong>{% trans "Case Types" %}:</strong>
             {% if is_owner %}
-            <span class="inline-edit-icon"><i class="fa fa-pencil"></i></span>
+              <span class="inline-edit-icon"><i class="fa fa-pencil"></i></span>
             {% endif %}
           </div>
         </div>
         <div class="row">
-          <div class="col-lg-12 controls">
-            <textarea data-bind="value: schema().join(', ')" cols="50" disabled></textarea>
-          </div>
+          <div class="col-sm-12" data-bind="text: schema().join(', ')"></div>
         </div>
       </div>
     </div>
