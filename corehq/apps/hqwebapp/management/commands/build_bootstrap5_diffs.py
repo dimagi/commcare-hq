@@ -7,7 +7,6 @@ from django.core.management import BaseCommand
 
 from corehq.apps.hqwebapp.utils.bootstrap.git import (
     has_pending_git_changes,
-    ensure_no_pending_changes_before_continuing,
     apply_commit,
     get_commit_string,
 )
@@ -147,7 +146,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
-            ensure_no_pending_changes_before_continuing()
 
         if update_app:
             self.update_configuration_file_for_app(update_app)
