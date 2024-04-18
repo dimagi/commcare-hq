@@ -6,7 +6,7 @@ from eulxml.xpath import serialize
 from eulxml.xpath.ast import Step
 
 from corehq.apps.case_search.dsl_utils import unwrap_value
-from corehq.apps.case_search.exceptions import CaseFilterError, XPathFunctionException
+from corehq.apps.case_search.exceptions import CaseFilterError
 from corehq.apps.case_search.xpath_functions.value_functions import value_to_date
 from corehq.apps.case_search.const import RANGE_OP_MAPPING, EQ, NEQ, SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.es import filters
@@ -45,16 +45,17 @@ def _create_query(context, case_property_name, op, value, node):
 
 
 def _case_property_range_query(case_property_name: str, op_value_dict, node):
-        try:
-            return case_property_range_query(case_property_name, **op_value_dict)
-        except TypeError:
-            raise CaseFilterError(
-                gettext("The right hand side of a comparison must be a number or date. "
-                  "Dates must be surrounded in quotation marks"),
-                serialize(node),
-            )
-        except ValueError as e:
-            raise CaseFilterError(str(e), serialize(node))
+    try:
+        return case_property_range_query(case_property_name, **op_value_dict)
+    except TypeError:
+        raise CaseFilterError(
+            gettext("The right hand side of a comparison must be a number or date. "
+                "Dates must be surrounded in quotation marks"),
+            serialize(node),
+        )
+    except ValueError as e:
+        raise CaseFilterError(str(e), serialize(node))
+
 
 def _create_timezone_adjusted_datetime_query(case_property_name, op, value, node, timezone):
     """
