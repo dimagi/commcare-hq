@@ -167,6 +167,16 @@ class AttrsList(JsonAttrsField):
         super().__init__(builder=AttrsListBuilder(item_type), **jsonfield_args)
 
 
+class AttrsObject(JsonAttrsField):
+    """Field containing a single attrs object, saved to the database as JSON
+
+    The object must be of the type specified by `item_type`.
+    """
+
+    def __init__(self, item_type, /, **jsonfield_args):
+        super().__init__(builder=AttrsObjectBuilder(item_type), **jsonfield_args)
+
+
 @define
 class AttrsListBuilder:
     attrs_type = field()
@@ -207,6 +217,27 @@ class AttrsDictBuilder:
         else:
             to_json = asdict
         return {k: to_json(v) for k, v in value.items()}
+
+
+@define
+class AttrsObjectBuilder:
+    attrs_type = field()
+
+    def attrify(self, value):
+        attrs_type = self.attrs_type
+        if value is None:
+            return value
+        from_json = make_from_json(attrs_type)
+        return from_json(value)
+
+    def jsonify(self, value):
+        if not value:
+            return value
+        if hasattr(self.attrs_type, "__jsonattrs_to_json__"):
+            to_json = self.attrs_type.__jsonattrs_to_json__
+        else:
+            to_json = asdict
+        return to_json(value)
 
 
 def make_from_json(attrs_type):

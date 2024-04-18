@@ -7,8 +7,34 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from testil import assert_raises, eq
 
-from ..jsonattrs import AttrsDict, AttrsList, dict_of, list_of
+from ..jsonattrs import AttrsDict, AttrsList, AttrsObject, dict_of, list_of
 from ..test_utils import unregistered_django_model
+
+
+def test_attrsobject():
+    @unregistered_django_model
+    class Check(models.Model):
+        point = AttrsObject(Point)
+
+    point = {}
+    check = Check(point=point)
+    assert check.point is point, (check.point, point)
+
+    check.point = xy = Point(0, 1)
+    eq(get_json_value(check, "point"), {"x": 0, "y": 1})
+
+    set_json_value(check, "point", {"x": 0, "y": 1})
+    assert check.point is not xy, xy
+    eq(check.point, Point(0, 1))
+
+    with assert_raises(ValidationError, msg=(
+        '["'
+        "'point' field value has an invalid format: "
+        "Cannot construct Point with {} -> "
+        "TypeError: __init__() missing 2 required positional arguments: 'x' and 'y'"
+        '"]'
+    )):
+        set_json_value(check, "point", {})
 
 
 def test_attrsdict():
