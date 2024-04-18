@@ -1,0 +1,31 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block title %}Automatically Executed App Workflows{% endblock %}
+{% block js-inline %} {{ block.super }}
+{% endblock %}
+{% block reportcontent %}
+  <div class="text-right">
+    <a class='btn btn-primary' href="{% url 'app_execution:new_workflow' %}">Create New</a>
+  </div>
+  <table class="table table-striped table-hover">
+  <thead>
+  <tr>
+    <th class="col-sm-4">Name</th>
+    <th class="col-sm-2">Domain</th>
+    <th class="col-sm-4">App</th>
+    <th class="col-sm-4">User</th>
+  </tr>
+  </thead>
+  <tbody>
+  {% for workflow in workflows %}
+  <tr>
+    <td><a href="{% url "app_execution:edit_workflow" workflow.id %}">{{ workflow.name }}</a></td>
+    <td>{{ workflow.domain }}</td>
+    <td>{{ workflow.app_name }}</td>
+    <td>{{ workflow.django_user.username }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
