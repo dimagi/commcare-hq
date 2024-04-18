@@ -331,6 +331,8 @@ class ExportListHelper(object):
         }
 
     def _get_owner_username(export):
+        if not export.owner_id:
+            return UNKNOWN_EXPORT_OWNER
         user = CouchUser.get_by_user_id(export.owner_id)
         return user.username if user else UNKNOWN_EXPORT_OWNER
 
