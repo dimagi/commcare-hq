@@ -81,7 +81,7 @@ class LocationResource(v0_5.LocationResource):
     def _update(self, bundle, domain, is_new_location=False):
         data = bundle.data
         if 'parent_location_id' in data:
-            parent = self._get_parent_location(data.pop('parent_location_id'), data)
+            parent = self._get_parent_location(data.pop('parent_location_id'), data.get('site_code', None))
             if not is_new_location and 'location_type_code' not in data:
                 # Otherwise validation of new parent will effectively be done under 'location_type_code'
                 self._validate_new_parent(domain, bundle.obj, parent,
@@ -117,12 +117,12 @@ class LocationResource(v0_5.LocationResource):
 
         bundle.obj.save()
 
-    def _get_parent_location(self, id, data):
+    def _get_parent_location(self, id, site_code):
         try:
             return SQLLocation.objects.get(location_id=id)
         except SQLLocation.DoesNotExist:
             raise LocationAPIError(_("Could not find parent location with the given ID."),
-                                   site_code=data.get('site_code', None))
+                                   site_code=site_code)
 
     def _validate_unique_among_siblings(self, location, name, parent, location_site_code):
         if has_siblings_with_name(location, name, parent.location_id):
