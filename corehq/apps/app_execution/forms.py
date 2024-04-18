@@ -13,7 +13,10 @@ class AppWorkflowConfigForm(forms.ModelForm):
 
     class Meta:
         model = AppWorkflowConfig
-        fields = "__all__"
+        fields = ("name", "domain", "app_id", "user_id", "workflow", "form_mode")
+        widgets = {
+            "form_mode": forms.RadioSelect(),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -31,13 +34,12 @@ class AppWorkflowConfigForm(forms.ModelForm):
     def clean(self):
         self.final_clean_app_id()
         self.final_clean_user_id()
-        print(self.cleaned_data)
         return self.cleaned_data
 
     def final_clean_user_id(self):
         domain = self.cleaned_data.get("domain")
         try:
-            CommCareUser.get_by_user_id(domain, self.cleaned_data.get("user_id"))
+            self.commcare_user = CommCareUser.get_by_user_id(self.cleaned_data.get("user_id"), domain)
         except ResourceNotFound:
             raise forms.ValidationError(f"User not found in domain: {domain}:{self.cleaned_data.get('user_id')}")
 
@@ -48,3 +50,7 @@ class AppWorkflowConfigForm(forms.ModelForm):
             get_brief_app(domain, app_id)
         except NoResultFound:
             raise forms.ValidationError(f"App not found in domain: {domain}:{app_id}")
+
+    def save(self, commit=True):
+        self.instance.django_user = self.commcare_user.get_django_user()
+        return super().save(commit=commit)
