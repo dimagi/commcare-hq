@@ -1,7 +1,12 @@
-# Properties that are inconsistent between case models stored in HQ and casedb
-# expressions. We store these as case properties in the case search index so
-# they are easily searchable, then remove them when pulling the case source
-# from ES
+"""
+System properties are top level, schema'd properties on CommCareCase that are
+made available to the user in interactions with the case search elasticsearch
+index.
+
+These are stored along with dynamic case properties in the case search index to
+be easily searchable, then removed when pulling the case source from ES.
+"""
+
 
 class _SystemProperty:
     key = None  # The user-facing property name
