@@ -307,7 +307,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def total_records(self):
-        return len(self.user_ids)
+        return len(self.owner_ids)
 
     @property
     def headers(self):
@@ -387,29 +387,46 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     @memoized
-    def paginated_users(self):
-        if self.sort_column is None:
-            return sorted(
-                self.selected_users, key=lambda u: u.raw_username, reverse=self.pagination.desc
-            )[self.pagination.start:self.pagination.start + self.pagination.count]
+    def selected_owners(self):
+        if self.view_by_groups:
+            return self.selected_groups + self.selected_locations
         return self.selected_users
 
     @property
     @memoized
-    def paginated_users_by_id(self):
-        return [(user.user_id, user) for user in self.paginated_users]
+    def owners_by_id(self):
+        return {owner.id: owner for owner in self.selected_owners}
 
     @property
     @memoized
-    def paginated_user_ids(self):
-        return [user.user_id for user in self.paginated_users]
+    def owner_ids(self):
+        return list(self.owners_by_id)
+
+    @property
+    @memoized
+    def paginated_owners(self):
+        if self.sort_column is None:
+            return sorted(
+                self.selected_owners, key=lambda o: o.name, reverse=self.pagination.desc
+            )[self.pagination.start:self.pagination.start + self.pagination.count]
+        return self.selected_owners
+
+    @property
+    @memoized
+    def paginated_owners_by_id(self):
+        return [(owner.id, owner) for owner in self.paginated_owners]
+
+    @property
+    @memoized
+    def paginated_owner_ids(self):
+        return [owner.id for owner in self.paginated_owners]
 
     @property
     def sort_column(self):
         column_num = self.request_params.get('iSortCol_0', 0)
         num_columns = self.request_params.get('iColumns', 15)
         if column_num == 0:
-            return None  # user
+            return None  # owner
         elif column_num == (num_columns - 2):
             return "active_total"
         elif column_num == (num_columns - 1):
@@ -432,7 +449,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return "landmark_%d" % (landmark,)
 
     @property
-    def should_sort_by_username(self):
+    def should_sort_by_name(self):
         return self.request_params.get('iSortCol_0', 0) == 0
 
     def _format_row(self, row):
@@ -557,8 +574,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     @memoized
-    def missing_users(self):
-        return None in self.user_ids
+    def missing_owners(self):
+        return None in self.owner_ids
 
     @property
     def end_date(self):
