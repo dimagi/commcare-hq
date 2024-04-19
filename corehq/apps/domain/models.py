@@ -6,7 +6,12 @@ from functools import reduce
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.postgres.fields import ArrayField
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+    URLValidator,
+)
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import F
 from django.db.transaction import atomic
@@ -58,6 +63,7 @@ from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import (
     get_all_doc_ids_for_domain_grouped_by_db,
 )
+from corehq.toggles import DATA_MIGRATION
 from corehq.util.models import GetOrNoneManager
 from corehq.util.quickcache import get_session_key, quickcache
 from corehq.util.soft_assert import soft_assert
@@ -883,13 +889,37 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return 50000
 
 
+class SecureURLField(models.CharField):
+    def validate(self, value, model_instance):
+        super().validate(value, model_instance)
+
+        if not value.startswith('https'):
+            raise ValidationError(f'{value} is not a secure URL.')
+
+        validate_url = URLValidator()
+        try:
+            validate_url(value)
+        except ValidationError:
+            raise ValidationError(f'{value} is not a valid URL.')
+
+
 class DomainSettings(models.Model):
     domain = models.CharField(max_length=255, primary_key=True)
 
     # For domains that have been migrated to a different environment
-    redirect_base_url = models.CharField(max_length=255, blank=True, default='')
+    redirect_base_url = SecureURLField(max_length=255, blank=True, default='')
 
     objects = GetOrNoneManager()
+
+    def clean(self):
+        error_dict = defaultdict(list)
+        if self.redirect_base_url and not DATA_MIGRATION.enabled(self.domain):
+            error_dict['redirect_base_url'].append(
+                f'Domain {self.domain} is not migrated.'
+            )
+
+        if error_dict:
+            raise ValidationError(error_dict)
 
 
 class TransferDomainRequest(models.Model):

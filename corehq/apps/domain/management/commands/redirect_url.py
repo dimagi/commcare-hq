@@ -1,9 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
-from django.core.validators import URLValidator
 
 from corehq.apps.domain.models import DomainSettings
-from corehq.toggles import DATA_MIGRATION
 
 
 class Command(BaseCommand):
@@ -32,10 +30,13 @@ class Command(BaseCommand):
         domain_settings, _ = DomainSettings.objects.get_or_create(pk=domain)
 
         if options['set']:
-            _assert_data_migration(domain)
-            url = options['set']
-            _assert_valid_url(url)
-            domain_settings.redirect_base_url = url
+            domain_settings.redirect_base_url = options['set']
+            try:
+                domain_settings.clean_fields()
+                domain_settings.clean()
+            except ValidationError as err:
+                msg = err.error_dict['redirect_base_url'][0].message
+                raise CommandError(msg)
             domain_settings.save()
 
         elif options['unset']:
@@ -49,19 +50,3 @@ class Command(BaseCommand):
             )
         else:
             self.stdout.write('Redirect URL not set')
-
-
-def _assert_data_migration(domain):
-    if not DATA_MIGRATION.enabled(domain):
-        raise CommandError(f'Domain {domain} is not migrated.')
-
-
-def _assert_valid_url(url):
-    if not url.startswith('https'):
-        raise CommandError(f'{url} is not a secure URL.')
-
-    validate = URLValidator()
-    try:
-        validate(url)
-    except ValidationError:
-        raise CommandError(f'{url} is not a valid URL.')
