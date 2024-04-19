@@ -907,9 +907,17 @@ class DomainSettings(models.Model):
     domain = models.CharField(max_length=255, primary_key=True)
 
     # For domains that have been migrated to a different environment
-    redirect_base_url = SecureURLField(max_length=255, blank=True, default='')
+    redirect_base_url = SecureURLField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name='Redirect base URL',
+    )
 
     objects = GetOrNoneManager()
+
+    class Meta:
+        verbose_name_plural = "domain settings"
 
     def clean(self):
         error_dict = defaultdict(list)
@@ -1176,6 +1184,9 @@ class OperatorCallLimitSettings(models.Model):
             MaxValueValidator(CALL_LIMIT_MAXIMUM)
         ]
     )
+
+    class Meta:
+        verbose_name_plural = "operator call limit settings"
 
 
 class SMSAccountConfirmationSettings(models.Model):

@@ -391,6 +391,7 @@ domain
  0013_accountconfirmationsettings_squashed_0016_alter_smsaccountconfirmationsettings_project_name (4 squashed migrations)
  0014_appreleasemodesetting
  0015_domainsettings
+ 0016_auto_20240419_2223
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
