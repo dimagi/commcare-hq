@@ -49,10 +49,10 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
     @patch("corehq.apps.case_search.xpath_functions.comparison.get_timezone_for_domain",
            return_value=pytz.timezone('America/Los_Angeles'))
-    def test_datetime_special_case_property_equality_comparison(self, mock_get_timezone):
+    def test_datetime_system_property_filter(self, mock_get_timezone):
         parsed = parse_xpath("last_modified='2023-01-10'")
-        expected_filter = case_property_date_range(
-            'last_modified', gte='2023-01-10T08:00:00', lt='2023-01-11T08:00:00')
+        expected_filter = filters.date_range(
+            'modified_on', gte='2023-01-10T08:00:00', lt='2023-01-11T08:00:00')
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         mock_get_timezone.assert_called_once()
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
