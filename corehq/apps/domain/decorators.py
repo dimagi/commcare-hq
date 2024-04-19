@@ -42,7 +42,11 @@ from corehq.apps.domain.auth import (
     formplayer_as_user_auth,
     get_username_and_password_from_request,
 )
-from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
+from corehq.apps.domain.models import (
+    Domain,
+    DomainAuditRecordEntry,
+    DomainSettings,
+)
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.sso.utils.request_helpers import (
@@ -683,12 +687,12 @@ cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_s
 def check_domain_migration(view_func):
     def wrapped_view(request, domain, *args, **kwargs):
         if DATA_MIGRATION.enabled(domain):
-            domain_obj = Domain.get_by_name(domain)
-            if domain_obj.redirect_url:
+            domain_settings = DomainSettings.objects.get_or_none(pk=domain)
+            if domain_settings and domain_settings.redirect_base_url:
                 # IMPORTANT!
                 #     We assume that the domain name is the same on both
                 #     environments.
-                url = urljoin(domain_obj.redirect_url, request.path)
+                url = urljoin(domain_settings.redirect_base_url, request.path)
                 return HttpResponsePermanentRedirect(url)
 
             auth_logger.info(

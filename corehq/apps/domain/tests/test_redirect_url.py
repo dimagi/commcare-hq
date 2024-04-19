@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import DomainSettings
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.const import OPENROSA_VERSION_2
@@ -174,12 +174,11 @@ class TestCheckDomainMigration(TestCase):
 
 @contextmanager
 def _set_redirect_url():
-    domain_obj = Domain.get_by_name(DOMAIN)
-    domain_obj.redirect_url = 'https://example.com/'
-    domain_obj.save()
+    domain_settings, _ = DomainSettings.objects.get_or_create(pk=DOMAIN)
+    domain_settings.redirect_base_url = 'https://example.com/'
+    domain_settings.save()
     try:
         yield
     finally:
-        domain_obj = Domain.get_by_name(DOMAIN)
-        domain_obj.redirect_url = ''
-        domain_obj.save()
+        domain_settings.redirect_base_url = 'https://example.com/'
+        domain_settings.save()

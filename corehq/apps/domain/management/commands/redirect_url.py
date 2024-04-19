@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 from django.core.validators import URLValidator
 
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import DomainSettings
 from corehq.toggles import DATA_MIGRATION
 
 
@@ -29,23 +29,23 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain, **options):
-        domain_obj = Domain.get_by_name(domain)
+        domain_settings, _ = DomainSettings.objects.get_or_create(pk=domain)
 
         if options['set']:
             _assert_data_migration(domain)
             url = options['set']
             _assert_valid_url(url)
-            domain_obj.redirect_url = url
-            domain_obj.save()
+            domain_settings.redirect_base_url = url
+            domain_settings.save()
 
         elif options['unset']:
-            domain_obj.redirect_url = ''
-            domain_obj.save()
+            domain_settings.redirect_base_url = ''
+            domain_settings.save()
 
-        if domain_obj.redirect_url:
+        if domain_settings.redirect_base_url:
             self.stdout.write(
                 'Form submissions and syncs are redirected to '
-                f'{domain_obj.redirect_url}'
+                f'{domain_settings.redirect_base_url}'
             )
         else:
             self.stdout.write('Redirect URL not set')
