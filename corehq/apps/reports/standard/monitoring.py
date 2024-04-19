@@ -587,11 +587,22 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             .aggregation(FilterAggregation('closed', case_es.is_closed()))
         )
 
+    class RowData(object):
+        def __init__(self, id, name, name_in_report, filter_func):
+            self.id = id
+            self.name = name
+            self.name_in_report = name_in_report
+            self.filter_func = filter_func  # Func for getting ID to filter by in Case List
+
+        @property
+        def filter_id(self):
+            return urlencode(self.filter_func(self.id))
+
     class Row(object):
 
-        def __init__(self, report, user, bucket):
+        def __init__(self, report, row_data, bucket):
             self.report = report
-            self.user = user
+            self.row_data = row_data
             self.bucket = bucket
 
         def active_count(self, landmark_key):
@@ -649,7 +660,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 return 0
 
         def header(self):
-            return self.report.get_user_link(self.user)['html']
+            return self.report.get_user_link(self.row_data)['html']
 
     class TotalRow(object):
 
