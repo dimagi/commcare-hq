@@ -212,6 +212,11 @@ class ExportListHelper(object):
         :return dict
         """
         from corehq.apps.export.views.new import DeleteNewCustomExportView
+
+        def get_export_owner_username(owner_id):
+            user = CouchUser.get_by_user_id(owner_id) if owner_id else None
+            return user.username if user else UNKNOWN_EXPORT_OWNER
+
         formname = export.formname if isinstance(export, FormExportInstance) else None
         return {
             'id': export.get_id,
@@ -219,7 +224,7 @@ class ExportListHelper(object):
             'name': export.name,
             'description': export.description,
             'sharing': export.sharing,
-            'owner_username': self._get_owner_username(export),
+            'owner_username': get_export_owner_username(export.owner_id),
             'can_edit': export.can_edit(self.request.couch_user),
             'exportType': export.type,
             'filters': self._get_filters(export),
@@ -329,12 +334,6 @@ class ExportListHelper(object):
             'showExpiredWarning': (last_accessed and last_accessed < cutoff_datetime),
             'downloadUrl': download_url,
         }
-
-    def _get_owner_username(export):
-        user = None
-        if export.owner_id:
-            user = CouchUser.get_by_user_id(export.owner_id)
-        return user.username if user else UNKNOWN_EXPORT_OWNER
 
 
 class DailySavedExportListHelper(ExportListHelper):
