@@ -1,5 +1,6 @@
 import pickle
 
+import pytest
 from testil import eq
 
 
@@ -17,9 +18,6 @@ def test_pickle_5():
     eq(pickle.loads(b'\x80\x05\x89.'), False)
 
 
-def test_dump_and_load_all_protocols():
-    def test(protocol):
-        eq(pickle.loads(pickle.dumps(False, protocol=protocol)), False)
-
-    for protocol in range(1, pickle.HIGHEST_PROTOCOL + 1):
-        yield test, protocol
+@pytest.mark.parametrize("protocol", range(1, pickle.HIGHEST_PROTOCOL + 1))
+def test_dump_and_load_all_protocols(protocol):
+    eq(pickle.loads(pickle.dumps(False, protocol=protocol)), False)
