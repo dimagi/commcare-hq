@@ -96,7 +96,10 @@ def login_and_domain_required(view_func):
     def _inner(req, domain, *args, **kwargs):
         user = req.user
         domain_name, domain_obj = load_domain(req, domain)
-        def call_view(): return view_func(req, domain_name, *args, **kwargs)
+
+        def call_view():
+            return view_func(req, domain_name, *args, **kwargs)
+
         if not domain_obj:
             msg = _('The domain "{domain}" was not found.').format(domain=domain_name)
             raise Http404(msg)
@@ -465,10 +468,10 @@ def two_factor_check(view_func, api_key):
             domain_obj = Domain.get_by_name(domain)
             _ensure_request_couch_user(request)
             if (
-                not api_key and
-                not getattr(request, 'skip_two_factor_check', False) and
-                domain_obj and
-                _two_factor_required(view_func, domain_obj, request)
+                not api_key
+                and not getattr(request, 'skip_two_factor_check', False)
+                and domain_obj
+                and _two_factor_required(view_func, domain_obj, request)
             ):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if not token and 'otp' in request.GET:
