@@ -21,5 +21,13 @@
       "js/import_history.js",
       "js/main.js"
     ]
+  },
+  "case_search": {
+    "templates": [
+      "profile_case_search.html"
+    ],
+    "javascript": [
+      "js/profile_case_search.js"
+    ]
   }
 }
