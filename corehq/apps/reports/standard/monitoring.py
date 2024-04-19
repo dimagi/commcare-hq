@@ -204,6 +204,11 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return self.domain_object.case_sharing_included()
 
     @property
+    @memoized
+    def view_by_groups(self):
+        return self.request.GET.get('view_by', None) == 'groups'
+
+    @property
     def shared_pagination_GET_params(self):
         params = [
             dict(
@@ -310,7 +315,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                                     help_text=help_text.format(num_days),
                                     sortable=False if title == "Proportion" else True)
 
-        columns = [DataTablesColumn(_("Users"))]
+        columns = [DataTablesColumn(_("Groups"))] if self.view_by_groups else [DataTablesColumn(_("Users"))]
 
         for __, landmark in self.landmarks:
             columns.append(DataTablesColumnGroup(
@@ -504,7 +509,10 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         query = self.add_landmark_aggregations(query, self.end_date)
 
-        return self._format_row(self.TotalRow(query.run(), _("All Users")))
+        return self._format_row(self.TotalRow(
+            query.run(),
+            _("All Groups") if self.view_by_groups else _("All Users")
+        ))
 
     @property
     @memoized
