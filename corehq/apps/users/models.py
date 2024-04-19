@@ -252,6 +252,9 @@ class HqPermissions(DocumentSchema):
         if self.edit_web_users:
             self.view_web_users = True
 
+        if self.edit_user_tableau_config:
+            self.view_user_tableau_config = True
+
         if self.edit_commcare_users:
             self.view_commcare_users = True
 
