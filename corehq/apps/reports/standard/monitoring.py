@@ -181,14 +181,27 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """See column headers for details"""
     name = gettext_lazy('Case Activity')
     slug = 'case_activity'
-    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-              'corehq.apps.reports.filters.select.CaseTypeFilter']
     display_data = ['percent']
     emailable = True
     description = gettext_lazy("Followup rates on active cases.")
     is_cacheable = True
     ajax_pagination = True
     exportable_all = True
+
+    @property
+    def fields(self):
+        fields = [
+            'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+            'corehq.apps.reports.filters.select.CaseTypeFilter',
+        ]
+        if self.has_case_sharing:
+            fields.append('corehq.apps.reports.filters.users.UserOrGroupFilter')
+        return fields
+
+    @property
+    @memoized
+    def has_case_sharing(self):
+        return self.domain_object.case_sharing_included()
 
     @property
     def shared_pagination_GET_params(self):
@@ -206,6 +219,10 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             dict(
                 name='landmark',
                 value=self.request.GET.get('landmark')
+            ),
+            dict(
+                name='view_by',
+                value=self.request.GET.get('view_by')
             )
         ]
         return params
