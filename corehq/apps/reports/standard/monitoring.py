@@ -264,10 +264,17 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def special_notice(self):
-        if self.domain_object.case_sharing_included():
-            return _("This report currently does not support case sharing. "
-                     "There might be inconsistencies in case totals if the "
-                     "user is part of a case sharing group.")
+        if self.has_case_sharing:
+            help_link = (
+                "https://dimagi.atlassian.net/wiki/spaces/commcarepublic"
+                "/pages/2143957523/Debugging+Case+Sharing+errors"
+            )
+            return format_html(_(
+                "Note that when viewing this report by group it will only include "
+                "cases which are assigned to a Case Sharing Group/Location. Learn "
+                "more about troubleshooting issues with Case Sharing Groups "
+                "<a href='{}' target='blank'>here</a>."
+            ).format(help_link))
 
     _default_landmarks = [30, 60, 90]
 
