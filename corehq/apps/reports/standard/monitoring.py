@@ -480,23 +480,22 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     @property
     def rows(self):
         es_results = self.es_queryset(
-            user_ids=self.paginated_user_ids,
+            owner_ids=self.paginated_owner_ids,
             size=self.pagination.start + self.pagination.count
         )
-        buckets = es_results.aggregations.users.buckets_list
-        if self.missing_users:
-            buckets.append(es_results.aggregations.missing_users.bucket)
+        buckets = es_results.aggregations.owners.buckets_list
+        if self.missing_owners:
+            buckets.append(es_results.aggregations.missing_owners.bucket)
         rows = []
         for bucket in buckets:
-            user = self.users_by_id[bucket.key]
-            rows.append(self.Row(self, user, bucket))
+            owner = self.owners_by_id[bucket.key]
+            rows.append(self.Row(self, owner, bucket))
 
-        rows.extend(self._unmatched_buckets(buckets, self.paginated_user_ids))
+        rows.extend(self._unmatched_buckets(buckets, self.paginated_owner_ids))
 
-        if self.should_sort_by_username:
+        if self.should_sort_by_name:
             # ES handles sorting for all other columns
-            rows.sort(key=lambda row: row.user.raw_username)
-
+            rows.sort(key=lambda row: row.row_data.name)
         self.total_row = self._total_row
         if len(rows) <= self.pagination.count:
             return list(map(self._format_row, rows))
@@ -508,29 +507,29 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def get_all_rows(self):
-        es_results = self.es_queryset(user_ids=self.user_ids)
-        buckets = es_results.aggregations.users.buckets_list
-        if self.missing_users:
-            buckets.append(es_results.aggregations.missing_users.bucket)
+        es_results = self.es_queryset(user_ids=self.owner_ids)
+        buckets = es_results.aggregations.owners.buckets_list
+        if self.missing_owners:
+            buckets.append(es_results.aggregations.missing_owners.bucket)
         rows = []
         for bucket in buckets:
-            user = self.users_by_id[bucket.key]
-            rows.append(self.Row(self, user, bucket))
+            owner = self.owners_by_id[bucket.key]
+            rows.append(self.Row(self, owner, bucket))
 
-        rows.extend(self._unmatched_buckets(buckets, self.user_ids))
+        rows.extend(self._unmatched_buckets(buckets, self.owner_ids))
 
         self.total_row = self._total_row
         return list(map(self._format_row, rows))
 
-    def _unmatched_buckets(self, buckets, user_ids):
+    def _unmatched_buckets(self, buckets, owner_ids):
         # ES doesn't return buckets that don't have any docs matching docs
-        # we expect a bucket for each relevant user id so add empty buckets
-        returned_user_ids = {b.key for b in buckets}
-        not_returned_user_ids = set(user_ids) - returned_user_ids
+        # we expect a bucket for each relevant owner id so add empty buckets
+        returned_owner_ids = {b.key for b in buckets}
+        not_returned_owner_ids = set(owner_ids) - returned_owner_ids
         extra_rows = []
-        for user_id in not_returned_user_ids:
-            extra_rows.append(self.Row(self, self.users_by_id[user_id], {}))
-        extra_rows.sort(key=lambda row: row.user.raw_username)
+        for owner_id in not_returned_owner_ids:
+            extra_rows.append(self.Row(self, self.owners_by_id[owner_id], {}))
+        extra_rows.sort(key=lambda row: row.row_data.name)
         return extra_rows
 
     @property
@@ -550,9 +549,12 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         query = (
             case_es.CaseES()
             .domain(self.domain)
-            .user_ids_handle_unknown(self.user_ids)
             .size(0)
         )
+        if self.view_by_groups:
+            query = query.owner(self.owner_ids)
+        else:
+            query = query.user_ids_handle_unknown(self.owner_ids)
         if self.case_type:
             query = query.filter(case_es.case_type(self.case_type))
         else:
