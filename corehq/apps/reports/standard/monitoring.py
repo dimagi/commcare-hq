@@ -98,8 +98,9 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
     def get_user_link(self, user):
         if self._has_form_view_permission():
             user_link = self.get_raw_user_link(user)
-            return self.table_cell(user.raw_username, user_link)
-        return self.table_cell(user.raw_username)
+            name = user.raw_username if hasattr(user, 'raw_username') else user.name
+            return self.table_cell(name, user_link)
+        return self.table_cell(name)
 
     def _has_form_view_permission(self):
         return self.request.couch_user.has_permission(
@@ -753,6 +754,16 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         def header(self):
             return self._header
+
+    def get_raw_user_link(self, row_data):
+        row_link_template = '<a href="{link}?{params}">{name}</a>'
+        row_link = format_html(
+            row_link_template,
+            link=self.raw_user_link_url,
+            params=row_data.filter_id,
+            name=row_data.name_in_report,
+        )
+        return row_link
 
 
 @location_safe
