@@ -58,40 +58,8 @@ INSTALLED_APPS = (
     'testapps.test_pillowtop',
 ) + tuple(INSTALLED_APPS)  # noqa: F405
 
-TEST_RUNNER = 'django_nose.BasicNoseRunner'
-NOSE_ARGS = [
-    #'--no-migrations' # trim ~120s from test run with db tests
-    #'--with-fixture-bundling',
-]
-NOSE_PLUGINS = [
-    'corehq.tests.nose.HqTestFinderPlugin',
-    'corehq.tests.noseplugins.classcleanup.ClassCleanupPlugin',
-    'corehq.tests.noseplugins.dbtransaction.DatabaseTransactionPlugin',
-    'corehq.tests.noseplugins.dividedwerun.DividedWeRunPlugin',
-    'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
-    'corehq.tests.noseplugins.cmdline_params.CmdLineParametersPlugin',
-    'corehq.tests.noseplugins.patches.PatchesPlugin',
-    'corehq.tests.noseplugins.redislocks.RedisLockTimeoutPlugin',
-    'corehq.tests.noseplugins.uniformresult.UniformTestResultPlugin',
-
-    # The following are not enabled by default
-    'corehq.tests.noseplugins.logfile.LogFilePlugin',
-    'corehq.tests.noseplugins.timing.TimingPlugin',
-    'corehq.tests.noseplugins.output.OutputPlugin',
-    'corehq.tests.noseplugins.elasticsnitch.ElasticSnitchPlugin',
-
-    # Uncomment to debug tests. Plugins have nice hooks for inspecting state
-    # before/after each test or context setup/teardown, etc.
-    #'corehq.tests.noseplugins.debug.DebugPlugin',
-]
-
 # these settings can be overridden with environment variables
 for key, value in {
-    'NOSE_DB_TEST_CONTEXT': 'corehq.tests.nose.HqdbContext',
-    'NOSE_NON_DB_TEST_CONTEXT': 'corehq.tests.nose.ErrorOnDbAccessContext',
-    'NOSE_IGNORE_FILES': '^localsettings',
-    'NOSE_EXCLUDE_DIRS': 'scripts',
-
     'DD_DOGSTATSD_DISABLE': 'true',
     'DD_TRACE_ENABLED': 'false',
 }.items():
@@ -146,7 +114,6 @@ _set_logging_levels({
     'urllib3': 'WARNING',
 })
 
-# use empty LOGGING dict with --debug=nose,nose.plugins to debug test discovery
 # TODO empty logging config (and fix revealed deprecation warnings)
 LOGGING = {
     'disable_existing_loggers': False,
