@@ -449,7 +449,8 @@ msgstr "Se requiere un nombre para este nuevo rol."
 
 #: corehq/apps/accounting/forms.py corehq/apps/app_manager/forms.py
 #: corehq/apps/app_manager/models.py
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/users.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -7242,7 +7243,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/menu/module_link.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
@@ -7562,7 +7564,8 @@ msgstr "Etiqueta del Caso"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_case_type.html
 #: corehq/apps/case_importer/templates/case_importer/partials/bootstrap3/ko_import_history.html
 #: corehq/apps/case_importer/templates/case_importer/partials/bootstrap5/ko_import_history.html
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
@@ -12252,7 +12255,8 @@ msgstr ""
 msgid "{param} must be a string"
 msgstr ""
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 #, python-format
 msgid ""
 "\n"
@@ -12262,59 +12266,71 @@ msgid ""
 "    "
 msgstr ""
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Search Parameters"
 msgstr "Parámetros de Búsqueda"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Case Metadata"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Case Type:"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Owner ID:"
 msgstr "ID del Propietario:"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 #: corehq/apps/reports/templates/reports/reportdata/case_data.html
 msgid "Case Properties"
 msgstr "Propiedades del Caso"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Property name"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Property value"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Clause"
 msgstr "Cláusula"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Fuzzy"
 msgstr "Difuso"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Remove Characters"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Add input"
 msgstr ""
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
-#, fuzzy
-#| msgid "XPath"
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Add XPath"
-msgstr "XPath"
+msgstr ""
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
-#: corehq/apps/case_search/templates/case_search/profile_case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/profile_case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/profile_case_search.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry_templates.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query_view.html
 #: corehq/apps/domain/forms.py
@@ -12326,45 +12342,54 @@ msgstr "XPath"
 msgid "Search"
 msgstr "Búsqueda"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 #: corehq/apps/custom_data_fields/edit_entity.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/users/templates/users/enterprise_users.html
 msgid "Profile"
 msgstr ""
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html
 msgid "Results"
 msgstr "Resultados"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Query"
 msgstr ""
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "results"
 msgstr ""
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 #: corehq/apps/userreports/reports/builder/forms.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Closed"
 msgstr "Cerrado"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Properties"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Indices"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid "Score"
 msgstr "Puntuación"
 
-#: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap3/case_search.html
+#: corehq/apps/case_search/templates/case_search/bootstrap5/case_search.html
 msgid ""
 "\n"
 "                See <a href='https://www.elastic.co/guide/en/elasticsearch/"
@@ -12401,10 +12426,8 @@ msgid "Case Search"
 msgstr "Búsqueda de Caso"
 
 #: corehq/apps/case_search/views.py
-#, fuzzy
-#| msgid "Enable Case Search"
 msgid "Profile Case Search"
-msgstr "Habilite Búsqueda de Caso"
+msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #, python-brace-format
@@ -25925,6 +25948,12 @@ msgctxt "twilio_locale"
 msgid "en"
 msgstr "en"
 
+#: corehq/apps/hqwebapp/utils/bootstrap/changes_guide/checkbox.txt
+#, fuzzy
+#| msgid "Create New Report"
+msgid "Create new records"
+msgstr "Crear Nuevo Reporte "
+
 #: corehq/apps/hqwebapp/views.py
 #, python-format
 msgid "Welcome back to %s!"
@@ -31115,10 +31144,8 @@ msgid "Percent of Users"
 msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py
-#, fuzzy
-#| msgid "Cases in Last {} Days"
 msgid "in the last {} days"
-msgstr "Casos en los Últimos {} Días"
+msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Users who have Submitted"
@@ -31192,10 +31219,8 @@ msgid "Error Message"
 msgstr "Mensaje de Error"
 
 #: corehq/apps/reports/standard/forms/reports.py
-#, fuzzy
-#| msgid "View Changes"
 msgid "View Cases"
-msgstr "Ver Cambios"
+msgstr ""
 
 #: corehq/apps/reports/standard/forms/reports.py
 msgid "Re-process Form"
@@ -31219,16 +31244,12 @@ msgid "{username} {archived_form} on {date}"
 msgstr ""
 
 #: corehq/apps/reports/standard/forms/reports.py
-#, fuzzy
-#| msgid "Enabled toggle items"
 msgid "Unable to view form"
-msgstr "Habilitar ítems de tecla"
+msgstr ""
 
 #: corehq/apps/reports/standard/forms/reports.py
-#, fuzzy
-#| msgid "The name of the case"
 msgid "Unable to view case"
-msgstr "El nombre del caso"
+msgstr ""
 
 #: corehq/apps/reports/standard/inspect.py
 #: corehq/apps/reports/templates/reports/form/partials/form_breadcrumbs.html
@@ -35733,10 +35754,8 @@ msgid "Always display full API keys to SSO users"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-#, fuzzy
-#| msgid "Expiration Date"
 msgid "Require Expiration Date"
-msgstr "Fecha de Expiración"
+msgstr ""
 
 #: corehq/apps/sso/forms.py
 msgid ""
@@ -35749,10 +35768,8 @@ msgid "Always require an expiration date for API keys"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-#, fuzzy
-#| msgid "Expiration Date"
 msgid "Maximum Expiration Length"
-msgstr "Fecha de Expiración"
+msgstr ""
 
 #: corehq/apps/sso/forms.py
 msgid ""
@@ -35769,20 +35786,16 @@ msgid "180 Days"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-#, fuzzy
-#| msgid "30 Days"
 msgid "160 Days"
-msgstr "30 Días"
+msgstr ""
 
 #: corehq/apps/sso/forms.py corehq/apps/sso/models.py
 msgid "120 Days"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-#, fuzzy
-#| msgid "30 Days"
 msgid "90 Days"
-msgstr "30 Días"
+msgstr ""
 
 #: corehq/apps/sso/forms.py corehq/apps/sso/models.py
 msgid "60 Days"
@@ -35799,10 +35812,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-#, fuzzy
-#| msgid "Case Management"
 msgid "API Key Management"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/sso/forms.py
 msgid "Single Sign-On Settings"
@@ -35817,10 +35828,8 @@ msgid "This certificate has already expired!"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
-#, fuzzy
-#| msgid "Please specify a case property value."
 msgid "Please specify a value."
-msgstr "Por favor especifique un valor de propiedad de caso."
+msgstr ""
 
 #: corehq/apps/sso/forms.py
 msgid "Upload Certificate (Base64)"
@@ -46591,6 +46600,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "Custom Query Addition"
-#~ msgstr "Incorporación de Consulta Personalizada"
