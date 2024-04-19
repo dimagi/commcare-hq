@@ -63,7 +63,7 @@
     </script>
 
     <div class="panel-group" id="queries-accordion" data-bind="foreach: results().queries">
-      <div class="card card-default">
+      <div class="card card-default my-1">
         <div class="card-header clickable" data-bs-toggle="collapse" data-parent="#queries-accordion"
           data-bind="attr: { href: '#query-' + $index() }">
           Elasticsearch query: <code data-bind="text: slug"></code>
