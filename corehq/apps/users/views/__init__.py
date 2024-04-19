@@ -436,7 +436,12 @@ class EditWebUserView(BaseEditUserView):
         if self.request.project.commtrack_enabled or self.request.project.uses_locations:
             ctx.update({'update_form': self.commtrack_form})
         if TABLEAU_USER_SYNCING.enabled(self.domain):
-            ctx.update({'tableau_form': self.tableau_form})
+            user = CouchUser.get_by_user_id(self.couch_user._id)
+            ctx.update({
+                'tableau_form': self.tableau_form,
+                'view_user_tableau_config': user.has_permission(self.domain, 'view_user_tableau_config'),
+                'edit_user_tableau_config': user.has_permission(self.domain, 'edit_user_tableau_config')
+            })
         if self.can_grant_superuser_access:
             ctx.update({'update_permissions': True})
 
