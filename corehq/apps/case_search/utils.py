@@ -57,6 +57,20 @@ class CaseSearchProfiler:
     timing_context: TimingContext = field(
         default_factory=lambda: TimingContext('Case Search'))
     queries: list = field(default_factory=list)
+    profile_results: list = field(default_factory=list)
+
+    def run_query(self, slug, es_query):
+        if self.debug_mode:
+            es_query = es_query.enable_profiling()
+
+        with self.timing_context('run query'):
+            results = es_query.run()
+
+        if self.debug_mode:
+            self.queries.append({'slug': slug, 'query': es_query.raw_query})
+            self.profile_results.append({'slug': slug, 'results': results.raw.get('profile')})
+
+        return results
 
     def add_query(self, slug, es_query):
         if self.debug_mode:
@@ -131,9 +145,7 @@ def get_primary_case_search_results(helper, domain, case_types, criteria, commca
         raise CaseSearchUserError(str(e))
 
     try:
-        helper.profiler.add_query('main', search_es)
-        with helper.profiler.timing_context('run query'):
-            hits = search_es.run().raw_hits
+        results = helper.profiler.run_query('main', search_es)
     except Exception as e:
         notify_exception(None, str(e), details=dict(
             exception_type=type(e),
@@ -141,7 +153,7 @@ def get_primary_case_search_results(helper, domain, case_types, criteria, commca
         raise
 
     with helper.profiler.timing_context('wrap_cases'):
-        cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
+        cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
     return cases
 
 
@@ -511,9 +523,8 @@ def get_child_case_results(helper, parent_case_ids, child_case_types=None):
     if child_case_types:
         query = query.case_type(child_case_types)
 
-    helper.profiler.add_query('get_child_case_results', query)
-    results = query.run().hits
-    return [helper.wrap_case(result) for result in results]
+    results = helper.profiler.run_query('get_child_case_results', query)
+    return [helper.wrap_case(result) for result in results.hits]
 
 
 @time_function()
@@ -528,9 +539,8 @@ def get_expanded_case_results(helper, custom_related_case_property, cases):
 @time_function()
 def _get_case_search_cases(helper, case_ids):
     query = helper.get_base_queryset().case_ids(case_ids)
-    helper.profiler.add_query('_get_case_search_cases', query)
-    results = query.run().hits
-    return [helper.wrap_case(result) for result in results]
+    results = helper.profiler.run_query('_get_case_search_cases', query)
+    return [helper.wrap_case(result) for result in results.hits]
 
 
 # Warning: '_tag_is_related_case' may cause the relevant user-defined properties to be overwritten.
