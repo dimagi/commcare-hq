@@ -232,6 +232,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                         return new GroupedElementTileRow(options.data, self);
                     } else if (options.data.type === constants.QUESTION_TYPE) {
                         return new Question(options.data, self);
+                    } else if (options.data.type === constants.GROUP_TYPE && options.data.exists === "false") {
+                        return new AddGroup(options.data, self);
                     } else if (options.data.type === constants.GROUP_TYPE) {
                         return new Group(options.data, self);
                     } else if (options.data.type === constants.REPEAT_TYPE) {
@@ -733,6 +735,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
      */
+    // User controlled repeat groups
     function Repeat(json, parent) {
         var self = this;
         self.parent = parent;
@@ -805,6 +808,32 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         return itemsPerRow !== null ? Math.round(constants.GRID_COLUMNS / itemsPerRow) : constants.GRID_COLUMNS;
     };
+
+     function AddGroup (json, parent) {
+         var self = this;
+         // self.fromJS(json);
+         self.parent = parent;
+         self.hasError = function () {
+             return false;
+         }
+         self.children = function () {
+             return [];
+         }
+
+         self.newRepeat = function () {
+             console.log("add new repeat ...");
+             $.publish('formplayer.' + constants.NEW_REPEAT, self);
+             $.publish('formplayer.dirty');
+             $('.add').trigger('blur');
+         }
+
+         self.entryTemplate = "add-group-entry-ko-template";
+
+         self.type = "add-group";
+         self.rel_ix = function () {
+             return json.ix;
+         }
+     }
 
     /**
      * Represents a Question. A Question contains an Entry which is the widget that is displayed for that question
