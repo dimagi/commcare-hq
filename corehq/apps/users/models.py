@@ -2688,7 +2688,7 @@ class Invitation(models.Model):
                                 on_delete=models.SET_NULL, null=True)
     custom_user_data = models.JSONField(default=dict)
     tableau_role = models.CharField(max_length=32, choices=TABLEAU_ROLES, null=True)
-    tableau_group_ids = ArrayField(models.CharField(max_length=32), null=True)
+    tableau_group_ids = ArrayField(models.CharField(max_length=36), null=True)
 
     def __repr__(self):
         return f"Invitation(domain='{self.domain}', email='{self.email})"
