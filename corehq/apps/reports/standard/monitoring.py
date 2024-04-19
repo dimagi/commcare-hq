@@ -585,9 +585,10 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def milestone_start(self):
         return ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
 
-    def es_queryset(self, user_ids, size=None):
+    def es_queryset(self, owner_ids, size=None):
+        field = 'owner_id' if self.view_by_groups else 'user_id'
         top_level_aggregation = (
-            TermsAggregation('users', 'user_id')
+            TermsAggregation('owners', field)
             .aggregation(self._touched_total_aggregation)
             .aggregation(self._active_total_aggregation)
             .aggregation(self._inactive_total_aggregation)
@@ -606,9 +607,10 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         query = (
             case_es.CaseES()
             .domain(self.domain)
-            .user_ids_handle_unknown(user_ids)
             .size(0)
         )
+        query = query.owner(owner_ids) if self.view_by_groups else query.user_ids_handle_unknown(owner_ids)
+
         if self.case_type:
             query = query.case_type(self.case_type)
         else:
@@ -616,9 +618,9 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         query = query.aggregation(top_level_aggregation)
 
-        if self.missing_users:
+        if self.missing_owners:
             missing_aggregation = (
-                MissingAggregation('missing_users', 'user_id')
+                MissingAggregation('missing_owners', field)
                 .aggregation(self._touched_total_aggregation)
                 .aggregation(self._active_total_aggregation)
                 .aggregation(self._inactive_total_aggregation)
