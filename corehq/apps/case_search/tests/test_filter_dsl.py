@@ -25,6 +25,7 @@ from corehq.apps.es.case_search import (
     case_property_starts_with,
     case_search_adapter,
 )
+from corehq.apps.es.cases import case_name
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
@@ -34,7 +35,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
     def test_simple_filter(self):
         parsed = parse_xpath("name = 'farid'")
-        expected_filter = case_property_query('name', 'farid')
+        expected_filter = case_name('farid')
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
@@ -59,7 +60,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
     def test_not_filter(self):
         parsed = parse_xpath("not(name = 'farid')")
-        expected_filter = filters.NOT(case_property_query('name', 'farid'))
+        expected_filter = filters.NOT(case_name('farid'))
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
@@ -109,10 +110,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
     def test_nested_filter(self):
         parsed = parse_xpath("(name = 'farid' or name = 'leila') and dob <= '2017-02-11'")
         expected_filter = filters.AND(
-            filters.OR(
-                case_property_query('name', 'farid'),
-                case_property_query('name', 'leila'),
-            ),
+            filters.OR(case_name('farid'), case_name('leila')),
             case_property_date_range('dob', lte='2017-02-11'),
         )
 

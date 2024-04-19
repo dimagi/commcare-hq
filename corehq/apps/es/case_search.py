@@ -316,9 +316,7 @@ def _case_property_not_set(case_property_name):
 
 
 def case_property_missing(case_property_name):
-    """case_property_name isn't set or is the empty string
-
-    """
+    """case_property_name isn't set or is the empty string"""
     return filters.OR(
         _case_property_not_set(case_property_name),
         exact_case_property_text_query(case_property_name, '')

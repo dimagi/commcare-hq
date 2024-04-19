@@ -39,8 +39,10 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
     if system_property := SPECIAL_CASE_PROPERTIES_MAP.get(case_property_name):
         if system_property.is_datetime:
             return _create_system_datetime_query(
-                context.request_domain, es_field_name, op, value, node,
+                context.request_domain, system_property.es_field_name, op, value, node,
             )
+        if op in [EQ, NEQ] and not context.fuzzy:  # We can filter better at the top level
+            return _create_system_query(system_property.es_field_name, op, value)
     return _create_query(context, case_property_name, op, value, node)
 
 
@@ -136,3 +138,11 @@ def adjust_input_date_by_timezone(date, timezone, op):
     if op == '>' or op == '<=':
         date += timedelta(days=1)
     return UserTime(date, tzinfo=timezone).server_time().done()
+
+
+def _create_system_query(es_field_name, op, value):
+    if op == NEQ:
+        return filters.NOT(_create_system_query(es_field_name, EQ, value))
+    if not value:
+        return filters.empty(es_field_name)
+    return filters.term(es_field_name, value)
