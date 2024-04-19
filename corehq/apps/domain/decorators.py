@@ -1,5 +1,6 @@
 import logging
 from functools import wraps
+from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib import messages
@@ -684,7 +685,11 @@ def check_domain_migration(view_func):
         if DATA_MIGRATION.enabled(domain):
             domain_obj = Domain.get_by_name(domain)
             if domain_obj.redirect_url:
-                return HttpResponsePermanentRedirect(domain_obj.redirect_url)
+                # IMPORTANT!
+                #     We assume that the domain name is the same on both
+                #     environments.
+                url = urljoin(domain_obj.redirect_url, request.path)
+                return HttpResponsePermanentRedirect(url)
 
             auth_logger.info(
                 "Request rejected domain=%s reason=%s request=%s",

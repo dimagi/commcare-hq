@@ -10,7 +10,10 @@ class Command(BaseCommand):
     help = (
         'Sets the redirect URL for a "308 Permanent Redirect" response to '
         'form submissions and syncs. Only valid for domains that have been '
-        'migrated to new environments.'
+        'migrated to new environments. Set the schema and hostname only '
+        '(e.g. "https://example.com/"). The rest of the path will be appended '
+        'for redirecting different endpoints. THIS FEATURE ASSUMES THE DOMAIN '
+        'NAME IS THE SAME ON BOTH ENVIRONMENTS.'
     )
 
     def add_arguments(self, parser):

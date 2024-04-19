@@ -145,7 +145,10 @@ class TestCheckDomainMigration(TestCase):
         with _set_redirect_url():
             response = self._submit_form()
             self.assertEqual(response.status_code, 308)
-            self.assertEqual(response.url, 'https://example.com/')
+            self.assertEqual(
+                response.url,
+                'https://example.com/a/test-redirect-url/receiver/'
+            )
 
     @flag_enabled('DATA_MIGRATION')
     def test_service_unavailable_response(self):
