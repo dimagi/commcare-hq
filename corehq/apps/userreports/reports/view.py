@@ -454,7 +454,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             if settings.DEBUG:
                 raise
             return self.render_json_response({
-                'error': str(e),
+                'error_message': str(e),
                 'aaData': [],
                 'iTotalRecords': 0,
                 'iTotalDisplayRecords': 0,
