@@ -5,14 +5,16 @@ from functools import reduce
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.postgres.fields import ArrayField
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import F
-from django.contrib.postgres.fields import ArrayField
 from django.db.transaction import atomic
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from langcodes import langs as all_langs
 from memoized import memoized
 
 from couchforms.analytics import domain_has_submission_in_last_30_days
@@ -56,17 +58,15 @@ from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import (
     get_all_doc_ids_for_domain_grouped_by_db,
 )
-from corehq.util.quickcache import quickcache, get_session_key
+from corehq.util.models import GetOrNoneManager
+from corehq.util.quickcache import get_session_key, quickcache
 from corehq.util.soft_assert import soft_assert
-from langcodes import langs as all_langs
 
 from .exceptions import (
     InactiveTransferDomainException,
     NameUnavailableException,
 )
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
-
-from django.core.validators import MaxValueValidator, MinValueValidator
 
 lang_lookup = defaultdict(str)
 
@@ -449,8 +449,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     ga_opt_out = BooleanProperty(default=False)
     orphan_case_alerts_warning = BooleanProperty(default=False)
 
-    # For domains that have been migrated to a different environment
-    redirect_url = StringProperty()
+    # HELLO!
+    #     Thinking of adding a new property?
+    #     Put it in `DomainSettings` instead.
 
     @classmethod
     def wrap(cls, data):
@@ -882,6 +883,17 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return 50000
 
 
+class DomainSettings(models.Model):
+    domain = models.CharField(max_length=255, primary_key=True)
+
+    # TODO: Add your settings here
+
+    objects = GetOrNoneManager()
+
+    class Meta:
+        verbose_name_plural = "domain settings"
+
+
 class TransferDomainRequest(models.Model):
     active = models.BooleanField(default=True, blank=True)
     request_time = models.DateTimeField(null=True, blank=True)
@@ -1136,6 +1148,9 @@ class OperatorCallLimitSettings(models.Model):
             MaxValueValidator(CALL_LIMIT_MAXIMUM)
         ]
     )
+
+    class Meta:
+        verbose_name_plural = "operator call limit settings"
 
 
 class SMSAccountConfirmationSettings(models.Model):
