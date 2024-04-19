@@ -334,7 +334,15 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     @property
     @memoized
     def selected_users(self):
-        return _get_selected_users(self.domain, self.request)
+        users = _get_selected_users(self.domain, self.request)
+        return [
+            self.RowData(
+                id=user.user_id,
+                name=user.raw_username,
+                name_in_report=user.username_in_report,
+                filter_func=CaseListFilter.for_user
+            ) for user in users
+        ]
 
     @property
     def has_group_filters(self):
