@@ -75,6 +75,8 @@ from corehq.util import flatten_list
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.groups.models import Group
 
 TOO_MUCH_DATA = gettext_noop(
     'The filters you selected include too much data. Please change your filters and try again'
@@ -335,14 +337,45 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return _get_selected_users(self.domain, self.request)
 
     @property
-    @memoized
-    def users_by_id(self):
-        return {user.user_id: user for user in self.selected_users}
+    def has_group_filters(self):
+        slugs = EMWF.get_value(self.request, self.domain)
+        filter_count = len(EMWF.selected_group_ids(slugs) + EMWF.selected_location_ids(slugs))
+        return filter_count > 0
 
     @property
     @memoized
-    def user_ids(self):
-        return list(self.users_by_id)
+    def selected_groups(self):
+        slugs = EMWF.get_value(self.request, self.domain)
+        if self.has_group_filters:
+            group_ids = EMWF.selected_group_ids(slugs)
+            groups = [Group.get(g) for g in group_ids]
+        else:
+            groups = Group.get_reporting_groups(self.domain)
+        return [
+            self.RowData(
+                id=group['_id'],
+                name=group['name'],
+                name_in_report=group['name'],
+                filter_func=CaseListFilter.for_reporting_group
+            ) for group in groups
+        ]
+
+    @property
+    @memoized
+    def selected_locations(self):
+        locations = SQLLocation.objects.filter(domain=self.domain)
+        slugs = EMWF.get_value(self.request, self.domain)
+        if self.has_group_filters:
+            location_ids = EMWF.selected_location_ids(slugs)
+            locations = locations.filter(location_id__in=location_ids)
+        return [
+            self.RowData(
+                id=loc.location_id,
+                name=loc.name,
+                name_in_report=loc.display_name,
+                filter_func=CaseListFilter.for_reporting_location
+            ) for loc in locations
+        ]
 
     @property
     @memoized
@@ -1382,8 +1415,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     @property
     @memoized
     def users_by_group(self):
-        from corehq.apps.groups.models import Group
-
         if not self.group_ids or self.request.GET.get('all_groups', 'off') == 'on':
             groups = Group.get_reporting_groups(self.domain)
         else:
