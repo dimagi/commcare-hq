@@ -42,7 +42,7 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
                 context.request_domain, system_property.es_field_name, op, value, node,
             )
         if op in [EQ, NEQ] and not context.fuzzy:  # We can filter better at the top level
-            return _create_system_query(system_property.es_field_name, op, value)
+            return _create_system_query(system_property, op, value)
     return _create_query(context, case_property_name, op, value, node)
 
 
@@ -140,9 +140,11 @@ def adjust_input_date_by_timezone(date, timezone, op):
     return UserTime(date, tzinfo=timezone).server_time().done()
 
 
-def _create_system_query(es_field_name, op, value):
+def _create_system_query(system_property, op, value):
     if op == NEQ:
-        return filters.NOT(_create_system_query(es_field_name, EQ, value))
+        return filters.NOT(_create_system_query(system_property.es_field_name, EQ, value))
     if not value:
-        return filters.empty(es_field_name)
-    return filters.term(es_field_name, value)
+        return filters.empty(system_property.es_field_name)
+    if system_property.key == '@status':
+        value = value == 'closed'  # "@status = 'closed'" => "closed = True"
+    return filters.term(system_property.es_field_name, value)

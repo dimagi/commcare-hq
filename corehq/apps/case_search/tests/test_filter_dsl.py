@@ -25,7 +25,7 @@ from corehq.apps.es.case_search import (
     case_property_starts_with,
     case_search_adapter,
 )
-from corehq.apps.es.cases import case_name
+from corehq.apps.es.cases import case_name, is_closed
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
@@ -192,6 +192,12 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
     def test_match_none(self):
         parsed = parse_xpath("match-none()")
         expected_filter = filters.match_none()
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    def test_status_query(self):
+        parsed = parse_xpath("@status = 'open'")
+        expected_filter = is_closed(False)
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
