@@ -6,10 +6,10 @@ from dimagi.utils.couch import get_redis_lock
 from corehq.util.test_utils import timelimit
 
 from .locks import ReentrantTestLock, reentrant_redis_locks
-from .noseplugins.redislocks import TestLock, TimeoutError
+from .pytest_plugins.redislocks import TestLock, TimeoutError
 
 
-def test_redislocks_nose_plugin():
+def test_redislocks_pytest_plugin():
     lock1 = get_redis_lock(__name__, timeout=0.2, name="test")
     assert isinstance(lock1.lock, TestLock), lock1.lock
     assert lock1.acquire(blocking_timeout=1)
