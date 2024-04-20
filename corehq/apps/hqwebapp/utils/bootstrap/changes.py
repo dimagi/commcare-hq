@@ -105,9 +105,9 @@ def make_data_attribute_renames(line, spec):
 def make_javascript_dependency_renames(line, spec):
     return _do_rename(
         line,
-        spec['javascript_dependency_renames'],
+        spec['dependency_renames'],
         lambda x: r"(['\"][\w/.\-]+/)(" + x + r")(/[\w/.\-]+['\"],?)$",
-        lambda x: r"\1" + spec['javascript_dependency_renames'][x] + r"\3"
+        lambda x: r"\1" + spec['dependency_renames'][x] + r"\3"
     )
 
 
