@@ -12,10 +12,10 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     make_template_tag_renames,
     make_data_attribute_renames,
     make_javascript_dependency_renames,
+    make_template_dependency_renames,
     flag_changed_css_classes,
     flag_stateful_button_changes_bootstrap5,
     flag_changed_javascript_plugins,
-    flag_bootstrap3_references_in_template,
     flag_crispy_forms_in_template,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.git import (
@@ -446,6 +446,8 @@ class Command(BaseCommand):
         renames.extend(numbered_renames)
         new_line, attribute_renames = make_data_attribute_renames(new_line, spec)
         renames.extend(attribute_renames)
+        new_line, template_dependency_renames = make_template_dependency_renames(new_line, spec)
+        renames.extend(template_dependency_renames)
         new_line, template_tag_renames = make_template_tag_renames(new_line, spec)
         renames.extend(template_tag_renames)
         return new_line, renames
@@ -454,7 +456,6 @@ class Command(BaseCommand):
     def get_flags_in_template_line(template_line, spec):
         flags = flag_changed_css_classes(template_line, spec)
         flags.extend(flag_stateful_button_changes_bootstrap5(template_line))
-        flags.extend(flag_bootstrap3_references_in_template(template_line))
         flags.extend(flag_crispy_forms_in_template(template_line))
         return flags
 
