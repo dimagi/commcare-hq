@@ -179,6 +179,13 @@ class FormplayerSession:
     data: dict = None
     log: StringIO = dataclasses.field(default_factory=StringIO)
 
+    def __enter__(self):
+        self.client.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.client.__exit__(exc_type, exc_val, exc_tb)
+
     def clone(self):
         return dataclasses.replace(self, data=copy.deepcopy(self.data) if self.data else None)
 
@@ -230,8 +237,7 @@ class FormplayerSession:
 
     def _get_navigation_data(self, step):
         if step:
-            permitted_types = (data_model.CommandStep, data_model.EntitySelectStep, data_model.QueryStep)
-            assert isinstance(step, permitted_types), step
+            assert not step.is_form_step, step
         selections = list(self.data.get("selections", [])) if self.data else []
         data = {
             **self._get_base_data(),
@@ -249,7 +255,7 @@ class FormplayerSession:
         return step.get_request_data(self, data) if step else data
 
     def _get_form_data(self, step):
-        assert isinstance(step, (data_model.AnswerQuestionStep, data_model.SubmitFormStep)), step
+        assert step.is_form_step, step
         data = {
             **self._get_base_data(),
             "debuggerEnabled": False,
@@ -305,9 +311,10 @@ class FormplayerSession:
 
 
 def execute_workflow(session: FormplayerSession, workflow):
-    execute_step(session, None)
-    for step in workflow.steps:
-        execute_step(session, step)
+    with session:
+        execute_step(session, None)
+        for step in workflow.steps:
+            execute_step(session, step)
 
 
 def execute_step(session, step):

@@ -15,6 +15,7 @@
     <th class="col-sm-2">Domain</th>
     <th class="col-sm-4">App</th>
     <th class="col-sm-4">User</th>
+    <th class="col-sm-4"></th>
   </tr>
   </thead>
   <tbody>
@@ -24,6 +25,7 @@
     <td>{{ workflow.domain }}</td>
     <td>{{ workflow.app_name }}</td>
     <td>{{ workflow.django_user.username }}</td>
+    <td><a class="btn btn-primary" href="{% url "app_execution:test_workflow" workflow.id %}">Test</a></td>
   </tr>
   {% endfor %}
   </tbody>

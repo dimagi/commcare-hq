@@ -48,7 +48,7 @@ def get_branches(session):
         return [data_model.CommandStep(value=command["displayText"]) for command in data]
     elif session.current_screen == ScreenType.CASE_LIST:
         # select first one for now
-        return [data_model.EntitySelectStep(value=data[0]["id"])] if data else []
+        return [data_model.EntitySelectIndexStep(value=0)] if data else []
     elif session.current_screen == ScreenType.SEARCH:
         # only required fields
         inputs = {

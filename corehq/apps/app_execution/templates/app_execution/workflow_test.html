@@ -1,0 +1,22 @@
+{% extends "hqadmin/hqadmin_base_report.html" %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block title %}Automatically Executed App Workflows{% endblock %}
+{% block js-inline %} {{ block.super }}
+{% endblock %}
+{% block reportcontent %}
+  <div class="mb-3">
+    <h2>Testing {{ workflow.name }}</h2>
+    <a class='btn btn-primary' href="{% url 'app_execution:edit_workflow' workflow.id %}">Edit</a>
+  </div>
+  <h3>Logs</h3>
+  <pre>
+  {{ log }}
+  {% if error %}
+    <div class="alert-danger">
+      <strong>Error:</strong> {{ error }}
+    </div>
+  {% endif %}
+  </pre>
+{% endblock %}

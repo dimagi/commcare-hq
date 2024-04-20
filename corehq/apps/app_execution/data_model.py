@@ -6,10 +6,13 @@ from typing import ClassVar
 from attr import define
 from attrs import asdict
 
+from corehq.apps.app_execution.exceptions import AppExecutionError
+
 
 @define
 class Step:
     type: ClassVar[str]
+    is_form_step: ClassVar[bool]
 
     def get_request_data(self, session, data):
         return data
@@ -45,6 +48,7 @@ class AppWorkflow:
 @define
 class CommandStep(Step):
     type: ClassVar[str] = "command"
+    is_form_step: ClassVar[bool] = False
     value: str
 
     def get_request_data(self, session, data):
@@ -53,20 +57,41 @@ class CommandStep(Step):
         try:
             command = commands[self.value.lower()]
         except KeyError:
-            raise ValueError(f"Command not found: {self.value}: {commands.keys()}")
+            raise AppExecutionError(f"Command not found: {self.value}: {commands.keys()}")
         return _append_selection(data, command["index"])
 
 
 @define
 class EntitySelectStep(Step):
     type: ClassVar[str] = "entity_select"
+    is_form_step: ClassVar[bool] = False
     value: str
 
     def get_request_data(self, session, data):
         entities = {entity["id"] for entity in session.data.get("entities", [])}
+        if not entities:
+            raise AppExecutionError("No entities found")
         if self.value not in entities:
-            raise ValueError(f"Entity not found: {self.value}")
+            raise AppExecutionError(f"Entity not found: {self.value}: {list(entities)}")
         return _append_selection(data, self.value)
+
+    def __str__(self):
+        return f"Entity Select: {self.value}"
+
+
+@define
+class EntitySelectIndexStep(Step):
+    type: ClassVar[str] = "entity_select_index"
+    is_form_step: ClassVar[bool] = False
+    value: int
+
+    def get_request_data(self, session, data):
+        entities = {entity["id"] for entity in session.data.get("entities", [])}
+        if not entities:
+            raise AppExecutionError("No entities found")
+        if self.value >= len(entities):
+            raise AppExecutionError(f"Entity index out of range: {self.value}: {list(entities)}")
+        return _append_selection(data, entities[self.value])
 
     def __str__(self):
         return f"Entity Select: {self.value}"
@@ -75,6 +100,7 @@ class EntitySelectStep(Step):
 @define
 class QueryStep(Step):
     type: ClassVar[str] = "query"
+    is_form_step: ClassVar[bool] = False
     inputs: dict
 
     def get_request_data(self, session, data):
@@ -96,6 +122,7 @@ class QueryStep(Step):
 @define
 class AnswerQuestionStep(Step):
     type: ClassVar[str] = "answer_question"
+    is_form_step: ClassVar[bool] = True
     question_text: str
     question_id: str
     value: str
@@ -110,7 +137,7 @@ class AnswerQuestionStep(Step):
                 )
             ][0]
         except IndexError:
-            raise ValueError(f"Question not found: {self.question_text or self.question_id}")
+            raise AppExecutionError(f"Question not found: {self.question_text or self.question_id}")
 
         return {
             **data,
@@ -128,6 +155,7 @@ class AnswerQuestionStep(Step):
 @define
 class SubmitFormStep(Step):
     type: ClassVar[str] = "submit_form"
+    is_form_step: ClassVar[bool] = True
 
     def get_request_data(self, session, data):
         answers = {
@@ -148,6 +176,7 @@ class SubmitFormStep(Step):
 class FormStep(Step):
     type: ClassVar[str] = "form"
     children: list[AnswerQuestionStep | SubmitFormStep]
+    is_form_step: ClassVar[bool] = True
 
     def to_json(self):
         return {
@@ -172,6 +201,7 @@ def _append_selection(data, selection):
 STEP_MAP = {
     "command": CommandStep,
     "entity_select": EntitySelectStep,
+    "entity_select_index": EntitySelectIndexStep,
     "query": QueryStep,
     "answer_question": AnswerQuestionStep,
     "submit_form": SubmitFormStep,
