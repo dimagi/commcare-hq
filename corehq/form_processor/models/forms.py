@@ -836,3 +836,20 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
         version_text = get_commcare_version_from_appversion_text(self.appVersion)
         if version_text:
             return LooseVersion(version_text)
+
+
+class TempFormCache:
+    def __init__(self):
+        self.cache = {}
+
+    def get_forms(self, form_ids):
+        forms = [self.cache[form_id] for form_id in form_ids if form_id in self.cache]
+        not_cached_forms = [form_id for form_id in form_ids if form_id not in self.cache]
+        if not_cached_forms:
+            retrieved_forms = XFormInstance.objects.get_forms(not_cached_forms, ordered=True)
+            for form in retrieved_forms:
+                self.cache[form.form_id] = form
+            forms += retrieved_forms
+        if len(form_ids) > 1:
+            sort_with_id_list(forms, form_ids, 'form_id')
+        return forms
