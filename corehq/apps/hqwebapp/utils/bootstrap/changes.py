@@ -151,21 +151,23 @@ def flag_stateful_button_changes_bootstrap5(line):
     return flags
 
 
-def flag_bootstrap3_references_in_template(line):
+def flag_bootstrap3_references_in_template(line, spec):
     flags = []
-    for template_tag in ["extends", "requirejs_main", "requirejs_main_b5"]:
-        b3_ref_regex = r"(\{% " + template_tag + r" [\"\'][\w\/]+)(\/bootstrap3\/)"
-        tag_only_regex = r"(\{% " + template_tag + r" [\"\'][\w]+)"
+    for tag in spec['template_tags_with_dependencies']:
+        b3_ref_regex = r"(\{% " + tag + r" ['\"][\w/.\-]+/)(bootstrap3)(/[\w/.\-]+['\"]?)"
+        tag_only_regex = r"(\{% " + tag + r" ['\"][\w/.\-]+)"
         if re.search(b3_ref_regex, line):
-            if template_tag == "extends":
+            if tag == "extends":
                 flags.append("This template extends a bootstrap 3 template.")
-            if template_tag == "requirejs_main":
+            if tag == "static":
+                flags.append("This template references a bootstrap 3 static file.")
+            if tag == "requirejs_main":
                 flags.append("This template references a bootstrap 3 requirejs file. "
                              "It should also use requirejs_main_b5 instead of requirejs_main.")
-            if template_tag == "requirejs_main_b5":
+            if tag == "requirejs_main_b5":
                 flags.append("This template references a bootstrap 3 requirejs file.")
         elif re.search(tag_only_regex, line):
-            if template_tag == "requirejs_main":
+            if tag == "requirejs_main":
                 flags.append("This template should use requirejs_main_b5 instead of requirejs_main.")
     regex = r"(=[\"\'][\w\/]+)(\/bootstrap3\/)"
     if re.search(regex, line):
