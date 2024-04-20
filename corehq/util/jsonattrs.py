@@ -81,6 +81,8 @@ Things that may be added in the future:
 - Support for migrating/converting the outer collection of `AttrsDict` and
   `AttrsList`.
 """
+import json
+
 from attrs import asdict, define, field
 
 from django.core.exceptions import ValidationError
@@ -349,4 +351,4 @@ class JsonAttrsFormField(forms.JSONField):
     def prepare_value(self, value):
         if isinstance(value, self.builder.attrs_type):
             value = self.builder.jsonify(value)
-        return super().prepare_value(value)
+        return json.dumps(value, ensure_ascii=False, cls=self.encoder, indent=2)
