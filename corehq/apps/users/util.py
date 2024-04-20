@@ -200,17 +200,6 @@ def cached_owner_id_to_display(owner_id):
         return ret
 
 
-def django_user_from_couch_id(id):
-    """
-    From a couch id of a profile object, get the django user
-    """
-    # get the couch doc
-    from corehq.apps.users.models import CouchUser
-    couch_rep = CouchUser.get_db().get(id)
-    django_id = couch_rep["django_user"]["id"]
-    return User.objects.get(id=django_id)
-
-
 def doc_value_wrapper(doc_cls, value_cls):
     """
     Wrap both the doc and the value
