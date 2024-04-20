@@ -154,6 +154,17 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
+                data.commcareAnalyticsRoles = {
+                    all: data.permissions.commcare_analytics_roles,
+                    specific: ko.utils.arrayMap(o.commcareAnalyticsRoles, function (role) {
+                        return {
+                            name: role.name,
+                            slug: role.slug,
+                            value: data.permissions.commcare_analytics_roles_list.indexOf(role.slug) !== -1,
+                        };
+                    }),
+                };
+
                 self = ko.mapping.fromJS(data);
                 let filterSpecific = (permissions) => {
                     return ko.computed(function () {
@@ -170,6 +181,7 @@ hqDefine('users/js/roles',[
                 self.accessWebAppsPermission.filteredSpecific = filterSpecific(self.accessWebAppsPermission);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
                 self.viewRegistryContentsPermission.filteredSpecific = filterSpecific(self.viewRegistryContentsPermission);
+                self.commcareAnalyticsRoles.filteredSpecific = filterSpecific(self.commcareAnalyticsRoles);
                 self.canSeeAnyReports = ko.computed(function () {
                     return self.reportPermissions.all() || _.any(self.reportPermissions.specific(), (p) => p.value());
                 });
@@ -402,6 +414,22 @@ hqDefine('users/js/roles',[
                         allowCheckboxId: null,
                         allowCheckboxPermission: null,
                     },
+                    {
+                        showOption: toggles.toggleEnabled("SUPERSET_ANALYTICS"),
+                        editPermission: self.permissions.edit_commcare_analytics,
+                        viewPermission: self.permissions.view_commcare_analytics,
+                        text: gettext("<strong>CommCare Analytics</strong> &mdash; manage CommCare Analytics associated with this project"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-commcare-analytics-checkbox",
+                        showViewCheckbox: true,
+                        viewCheckboxLabel: "view-commcare-analytics-checkbox",
+                        screenReaderEditAndViewText: gettext("Edit & View CommCare Analytics"),
+                        screenReaderViewOnlyText: gettext("View-Only CommCare Analytics"),
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
+                    },
                 ];
 
                 var hasEmbeddedTableau = toggles.toggleEnabled("EMBEDDED_TABLEAU");
@@ -556,6 +584,10 @@ hqDefine('users/js/roles',[
 
                 data.permissions.access_web_apps = data.accessWebAppsPermission.all;
                 data.permissions.web_apps_list = unwrapItemList(data.accessWebAppsPermission.specific);
+
+                data.permissions.commcare_analytics_roles = data.commcareAnalyticsRoles.all;
+                data.permissions.commcare_analytics_roles_list = unwrapItemList(
+                    data.commcareAnalyticsRoles.specific);
 
                 data.is_non_admin_editable = data.manageRoleAssignments.all;
                 data.assignable_by = unwrapItemList(data.manageRoleAssignments.specific, 'path');
