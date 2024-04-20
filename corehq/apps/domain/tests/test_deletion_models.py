@@ -60,8 +60,8 @@ IGNORE_MODELS = {
     'fixtures.UserLookupTableStatus',
     'fixtures.LookupTableRow',          # handled by cascading delete
     'fixtures.LookupTableRowOwner',     # handled by cascading delete
-    'repeaters.SQLRepeatRecord',         # handled by cascading delete
-    'repeaters.SQLRepeatRecordAttempt',  # handled by cascading delete
+    'repeaters.RepeatRecord',         # handled by cascading delete
+    'repeaters.RepeatRecordAttempt',  # handled by cascading delete
     'sms.MigrationStatus',
     'util.BouncedEmail',
     'util.ComplaintBounceMeta',
