@@ -14,6 +14,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_bootstrap3_references_in_template,
     flag_crispy_forms_in_template,
     flag_bootstrap3_references_in_javascript,
+    make_template_dependency_renames,
 )
 
 
@@ -87,6 +88,15 @@ def test_flag_bootstrap3_references_in_template_extends():
     eq(flags, ['This template extends a bootstrap 3 template.'])
 
 
+def test_make_template_dependency_renames_extends():
+    line = """{% extends "hqwebapp/bootstrap3/base_section.html" %}\n"""
+    final_line, renames = make_template_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """{% extends "hqwebapp/bootstrap5/base_section.html" %}\n""")
+    eq(renames, ['renamed bootstrap3 to bootstrap5'])
+
+
 def test_flag_bootstrap3_references_in_template_requirejs():
     line = """    {% requirejs_main 'hqwebapp/bootstrap3/foo' %}\n"""
     flags = flag_bootstrap3_references_in_template(line)
@@ -94,10 +104,37 @@ def test_flag_bootstrap3_references_in_template_requirejs():
                "It should also use requirejs_main_b5 instead of requirejs_main."])
 
 
+def test_make_template_dependency_renames_requirejs():
+    line = """    {% requirejs_main 'hqwebapp/js/bootstrap3/foo' %}\n"""
+    final_line, renames = make_template_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """    {% requirejs_main 'hqwebapp/js/bootstrap5/foo' %}\n""")
+    eq(renames, ['renamed bootstrap3 to bootstrap5'])
+
+
 def test_flag_bootstrap3_references_in_template_requirejs_b5():
     line = """    {% requirejs_main_b5 'hqwebapp/js/bootstrap3/foo' %}\n"""
     flags = flag_bootstrap3_references_in_template(line)
     eq(flags, ['This template references a bootstrap 3 requirejs file.'])
+
+
+def test_make_template_dependency_renames_requirejs_b5():
+    line = """    {% requirejs_main_b5 'hqwebapp/js-test/bootstrap3/foo' %}\n"""
+    final_line, renames = make_template_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """    {% requirejs_main_b5 'hqwebapp/js-test/bootstrap5/foo' %}\n""")
+    eq(renames, ['renamed bootstrap3 to bootstrap5'])
+
+
+def test_make_template_dependency_renames_static():
+    line = """    <link rel="stylesheet" href="{% static 'test/js/bootstrap3/foo' %}"></link>\n"""
+    final_line, renames = make_template_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """    <link rel="stylesheet" href="{% static 'test/js/bootstrap5/foo' %}"></link>\n""")
+    eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
 def test_flag_requirejs_main_references_in_template():

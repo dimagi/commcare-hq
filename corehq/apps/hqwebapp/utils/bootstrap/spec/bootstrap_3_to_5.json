@@ -109,5 +109,11 @@
         "popover",
         "tab",
         "tooltip"
+    ],
+    "template_tags_with_dependencies": [
+        "extends",
+        "requirejs_main",
+        "requirejs_main_b5",
+        "static"
     ]
 }

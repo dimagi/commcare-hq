@@ -111,6 +111,18 @@ def make_javascript_dependency_renames(line, spec):
     )
 
 
+def make_template_dependency_renames(line, spec):
+    for tag in spec['template_tags_with_dependencies']:
+        final_line, renames = _do_rename(
+            line,
+            spec['dependency_renames'],
+            lambda x: r"(\{% " + tag + r" ['\"][\w\/.\-]+\/)(" + x + r")(\/[\w\/.\-]+['\"]?)",
+            lambda x: r"\1" + spec['dependency_renames'][x] + r"\3"
+        )
+        if renames:
+            return final_line, renames
+
+
 def flag_changed_css_classes(line, spec):
     flags = []
     for css_class in spec['flagged_css_changes']:
