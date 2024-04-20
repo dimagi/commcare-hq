@@ -1,5 +1,7 @@
 import sys
 
+from .tools import nottest as nottest_tool
+
 
 def create_nose_virtual_package():
     sys.modules['nose.tools'] = VirtualNose.tools
@@ -9,9 +11,7 @@ def create_nose_virtual_package():
 class VirtualNose:
     """Legacy namespace for tests written before pytest"""
     class tools:
-        def nottest(fn):
-            fn.__test__ = False
-            return fn
+        nottest = nottest_tool
 
     class plugins:
         class attrib:
