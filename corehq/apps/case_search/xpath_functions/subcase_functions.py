@@ -120,9 +120,8 @@ def _run_subcase_query(subcase_query, context):
         .source(['indices.referenced_id', 'indices.identifier'])
     )
 
-    context.profiler.add_query('subcase_query', es_query)
-    with context.profiler.timing_context('subcase_query'):
-        return es_query.run().hits
+    results = context.profiler.run_query('subcase_query', es_query)
+    return results.hits
 
 
 def _parse_normalize_subcase_query(node) -> SubCaseQuery:
