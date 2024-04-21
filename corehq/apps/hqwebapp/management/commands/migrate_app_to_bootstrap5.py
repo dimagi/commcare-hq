@@ -55,11 +55,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('app_name')
         parser.add_argument(
-            '--template_name',
+            '--template-name',
             help="Specify the exact template name(s) you would like to split and migrate",
         )
         parser.add_argument(
-            '--js_name',
+            '--js-name',
             help="Specify the exact javascript name(s) you would like to split and migrate",
         )
         parser.add_argument(
