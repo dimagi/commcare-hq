@@ -44,6 +44,10 @@ def is_app_in_progress(app_name):
     return get_app_status_summary(app_name).get("in_progress", False)
 
 
+def get_apps_completed_or_in_progress():
+    return get_status_data().keys()
+
+
 def mark_app_as_complete(app_name):
     app_summary = get_app_status_summary(app_name)
     if "in_progress" in app_summary:

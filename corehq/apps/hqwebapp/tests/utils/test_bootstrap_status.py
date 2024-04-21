@@ -5,6 +5,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.status import (
     get_completed_templates_for_app,
     get_completed_javascript_for_app,
     is_app_in_progress,
+    get_apps_completed_or_in_progress,
 )
 
 
@@ -31,3 +32,8 @@ def test_get_completed_javascript_for_app_relative_paths():
     eq(completed_templates, [
         "js/edit_builds.js"
     ])
+
+
+def test_hqwebapp_is_in_get_apps_completed_or_in_progress():
+    apps_completed_or_in_progress = get_apps_completed_or_in_progress()
+    eq("hqwebapp" in apps_completed_or_in_progress, True)
