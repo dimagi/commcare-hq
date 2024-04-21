@@ -1,10 +1,10 @@
-hqDefine('registration/js/password', [
+hqDefine('registration/js/bootstrap5/password', [
     'jquery',
     'knockout',
     'underscore',
     'zxcvbn/dist/zxcvbn',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // password initializeValue binding
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // password initializeValue binding
 ], function (
     $,
     ko,
