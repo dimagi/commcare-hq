@@ -87,11 +87,27 @@ class Command(BaseCommand):
                               "set in your localsettings.py before continuing...\n\n")
             return
 
-        if is_app_completed(app_name):
+        template_name = options.get('template_name')
+        js_name = options.get('js_name')
+
+        is_app_migration_complete = is_app_completed(app_name)
+
+        if is_app_migration_complete and not (template_name or js_name):
             self.show_completed_message(app_name)
             return
 
-        if not is_app_in_progress(app_name):
+        if is_app_migration_complete:
+            filename = template_name or js_name
+            self.stdout.write(self.style.WARNING(
+                f"\nIt appears the app '{app_name}' is already marked as complete.\n"
+            ))
+            confirm = get_confirmation(
+                f"Continue migrating '{filename}'?", default='y'
+            )
+            if not confirm:
+                return
+
+        if not is_app_in_progress(app_name) and not is_app_migration_complete:
             self.stdout.write(self.style.WARNING(
                 f"\n\n'{app_name}' is not marked as 'in progress'.\n"
             ))
@@ -120,8 +136,6 @@ class Command(BaseCommand):
             ensure_no_pending_changes_before_continuing()
 
         spec = get_spec('bootstrap_3_to_5')
-        template_name = options.get('template_name')
-        js_name = options.get('js_name')
         do_re_check = options.get('re_check')
         verify_references = options.get('verify_references')
 
@@ -189,12 +203,16 @@ class Command(BaseCommand):
     def get_templates_for_migration(self, app_name, template_name, do_re_check):
         app_templates = get_all_template_paths_for_app(app_name)
         available_templates = self._get_files_for_migration(app_templates, template_name, do_re_check)
+        if template_name:
+            return available_templates
         completed_templates = get_completed_templates_for_app(app_name)
         return set(available_templates).difference(completed_templates)
 
     def get_js_files_for_migration(self, app_name, js_name, do_re_check):
         app_js_files = get_all_javascript_paths_for_app(app_name)
         available_js_files = self._get_files_for_migration(app_js_files, js_name, do_re_check)
+        if js_name:
+            return available_js_files
         completed_js_files = get_completed_javascript_for_app(app_name)
         return set(available_js_files).difference(completed_js_files)
 
