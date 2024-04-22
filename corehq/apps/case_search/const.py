@@ -26,12 +26,6 @@ EXCLUDE_RELATED_CASES_FILTER = "[not(commcare_is_related_case=true())]"
 # Added to each case on the index for debugging when a case was added to ES
 INDEXED_ON = '@indexed_on'
 
-# Properties added to the case search mapping to provide extra information
-SYSTEM_PROPERTIES = [
-    CASE_PROPERTIES_PATH,
-    INDEXED_ON,
-]
-
 
 @dataclass(frozen=True)
 class _SystemProperty:

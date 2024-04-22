@@ -26,7 +26,6 @@ from corehq.apps.case_search.const import (
     REFERENCED_ID,
     RELEVANCE_SCORE,
     SPECIAL_CASE_PROPERTIES,
-    SYSTEM_PROPERTIES,
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
@@ -167,7 +166,7 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         doc = {
             desired_property: case_dict.get(desired_property)
             for desired_property in self.mapping['properties'].keys()
-            if desired_property not in SYSTEM_PROPERTIES
+            if desired_property != CASE_PROPERTIES_PATH
         }
         doc[INDEXED_ON] = json_format_datetime(datetime.utcnow())
         doc['case_properties'] = _get_case_properties(case_dict)
