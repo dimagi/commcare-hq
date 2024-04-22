@@ -25,9 +25,6 @@ requirejs.config({
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
         "datatables.bootstrap": { deps: ['datatables'] },
         "datatables.fixedColumns.bootstrap": { deps: ['datatables.fixedColumns'] },
-        "tempusDominus": {
-            deps: ['popper'],
-        },
         "d3/d3.min": {
             "exports": "d3",
         },
