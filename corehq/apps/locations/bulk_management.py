@@ -693,14 +693,10 @@ class LocationTreeValidator(object):
         # delete a type that is referenced by another type by foreign key, we'll catch that here.
         for deleted_type in self.types_to_be_deleted:
             for field_name in _get_location_type_foreign_key_fields_minus_parent():
-                referencing_types_and_fields = [
-                    (lt.code, field_name) for lt in self.location_types if getattr(lt.db_object, field_name)
-                    and getattr(lt.db_object, field_name).id == deleted_type.db_object.id
-                ]
-                if referencing_types_and_fields:
-                    for type_code, field in referencing_types_and_fields:
+                for lt in in self.location_types:
+                    if getattr(lt.db_object, field_name) and getattr(lt.db_object, field_name).id == deleted_type.db_object.id:
                         yield _(f"Cannot delete location type '{deleted_type.code}'. It is referenced by the type "
-                          f"'{type_code}' via the '{field}' setting. Change this setting on '{type_code}'"
+                          f"'{lt.code}' via the '{field_name}' setting. Change this setting on '{lt.code}'"
                           " and try again.")
 
     def _validate_types_tree(self):
