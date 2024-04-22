@@ -84,7 +84,9 @@
 {% include 'cloudcare/partials/users/user_data.html' %}
 {% include 'cloudcare/partials/users/user_row.html' %}
 {% include 'cloudcare/partials/progress.html' %}
-{% include 'cloudcare/partials/query_view.html' %}
+{% include 'cloudcare/partials/query/group.html' %}
+{% include 'cloudcare/partials/query/item.html' %}
+{% include 'cloudcare/partials/query/list.html' %}
 
 {% block js %}{{ block.super }}
   {% include 'cloudcare/partials/dependencies.html' %}
