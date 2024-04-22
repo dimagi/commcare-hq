@@ -32,10 +32,12 @@
   "case_search": {
     "in_progress": true,
     "templates": [
-      "profile_case_search.html"
+      "profile_case_search.html",
+      "case_search.html"
     ],
     "javascript": [
-      "js/profile_case_search.js"
+      "js/profile_case_search.js",
+      "js/case_search.js"
     ]
   },
   "hqwebapp": {
