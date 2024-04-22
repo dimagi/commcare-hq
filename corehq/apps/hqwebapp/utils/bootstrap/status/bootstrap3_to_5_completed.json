@@ -25,7 +25,7 @@
   "case_search": {
     "templates": [
       "profile_case_search.html",
-      ".html"
+      "case_search.html"
     ],
     "javascript": [
       "js/profile_case_search.js",
