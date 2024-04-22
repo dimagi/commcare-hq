@@ -354,7 +354,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         ]
 
     @property
-    def has_group_filters(self):
+    def has_case_group_filters(self):
         slugs = EMWF.get_value(self.request, self.domain)
         filter_count = len(EMWF.selected_group_ids(slugs) + EMWF.selected_location_ids(slugs))
         return filter_count > 0
@@ -363,7 +363,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     @memoized
     def selected_groups(self):
         slugs = EMWF.get_value(self.request, self.domain)
-        if self.has_group_filters:
+        if self.has_case_group_filters:
             group_ids = EMWF.selected_group_ids(slugs)
             groups = [Group.get(g) for g in group_ids]
         else:
@@ -382,7 +382,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def selected_locations(self):
         locations = SQLLocation.objects.filter(domain=self.domain)
         slugs = EMWF.get_value(self.request, self.domain)
-        if self.has_group_filters:
+        if self.has_case_group_filters:
             location_ids = EMWF.selected_location_ids(slugs)
             locations = locations.filter(location_id__in=location_ids)
         return [
