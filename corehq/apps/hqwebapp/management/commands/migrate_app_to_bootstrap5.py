@@ -419,6 +419,13 @@ class Command(BaseCommand):
             "See: https://www.commcarehq.org/styleguide/b5/migration/#migrating-views"
         )
         self.enter_to_continue()
+        if has_pending_git_changes():
+            self.stdout.write(self.style.WARNING(
+                "\n\nDon't forget to commit these changes!"
+            ))
+            self.suggest_commit_message(
+                f"added use_bootstrap5 decorator to views referencing {short_path}"
+            )
 
     def migrate_file_again(self, app_name, bootstrap3_path, bootstrap5_lines, is_template):
         bootstrap5_path = self.get_bootstrap5_path(bootstrap3_path)
