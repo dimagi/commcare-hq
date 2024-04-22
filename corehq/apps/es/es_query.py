@@ -92,7 +92,9 @@ import textwrap
 
 from memoized import memoized
 
+from corehq.toggles import ES_QUERY_PREFERENCE
 from corehq.util.files import TransientTempfile
+from corehq.util.global_request import get_request_domain
 
 from . import aggregations, filters, queries
 from .const import SCROLL_SIZE, SIZE_LIMIT
@@ -150,6 +152,7 @@ class ESQuery(object):
                 }
             }
         }
+        self.set_preference()
 
     def clone(self):
         adapter = self.adapter
@@ -292,6 +295,20 @@ class ESQuery(object):
     def enable_profiling(self):
         query = self.clone()
         query.es_query['profile'] = True
+        return query
+
+    def set_preference(self):
+        """
+        If the specified domain has ES_QUERY_PREFERENCE enabled, route requests to primary shards.
+        Otherwise, route to replica shards. The '*_first' naming scheme ensures requests are still
+        handled if the intended shard is unavailable.
+        https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-preference.html
+        """
+        query = self.clone()
+        if ES_QUERY_PREFERENCE.enabled(get_request_domain()):
+            query.es_query['preference'] = '_primary_first'
+        else:
+            query.es_query['preference'] = '_replica_first'
         return query
 
     def add_query(self, new_query, clause):
