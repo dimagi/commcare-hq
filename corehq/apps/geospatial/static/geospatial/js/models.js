@@ -207,6 +207,58 @@ hqDefine('geospatial/js/models', [
                         'visibility': 'none',
                     },
                 });
+                self.mapInstance.addLayer({
+                    id: 'Building',
+                    source: 'mapbox-streets',
+                    'source-layer': 'building',
+                    type: 'fill',
+                    paint: {
+                        'fill-color': '#808080', // grey
+                    },
+                    'layout': {
+                        'visibility': 'none',
+                    },
+                });
+
+                self.mapInstance.addLayer({
+                    id: 'Landuse',
+                    source: 'mapbox-streets',
+                    'source-layer': 'landuse',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#695447', // brown land color
+                    },
+                    'layout': {
+                        'visibility': 'none',
+                    },
+                });
+
+                self.mapInstance.addLayer({
+                    id: 'Road',
+                    source: 'mapbox-streets',
+                    'source-layer': 'road',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#000000', // black
+                    },
+                    'layout': {
+                        'visibility': 'none',
+                    },
+                });
+
+                self.mapInstance.addLayer({
+                    id: 'Waterway',
+                    source: 'mapbox-streets',
+                    'source-layer': 'waterway',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#00008b', // darkblue
+                    },
+                    'layout': {
+                        'visibility': 'none',
+                    },
+                });
+
             });
         }
 
