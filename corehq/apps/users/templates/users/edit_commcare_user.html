@@ -85,8 +85,8 @@
         <div class="panel-body">
           <div class="form form-horizontal">
 
-            {% if form_user_update.loadtest_users_enabled %}
-            {% crispy form_user_update.action_form %}
+            {% if request|request_has_privilege:"LOADTEST_USERS" %}
+              {% crispy form_user_update.action_form %}
             {% endif %}
 
             <fieldset>
@@ -180,7 +180,7 @@
 {% endblock %}
 
 {% block modals %} {{ block.super }}
-  {% include 'users/partials/basic_info_modals.html' with user_type='mobile' %}
+  {% include 'users/partials/bootstrap3/basic_info_modals.html' with user_type='mobile' %}
   {% if not is_currently_logged_in_user %}
     <div id="delete_user_{{ couch_user.user_id }}" class="modal fade">
       <div class="modal-dialog">

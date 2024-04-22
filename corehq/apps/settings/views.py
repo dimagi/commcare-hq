@@ -49,7 +49,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui
 from corehq.apps.hqwebapp.utils import sign
 from corehq.apps.hqwebapp.utils.two_factor import user_can_use_phone
 from corehq.apps.hqwebapp.views import (
@@ -272,8 +272,9 @@ class MyAccountSettingsView(BaseMyAccountView):
 class MyProjectsList(BaseMyAccountView):
     urlname = 'my_projects'
     page_title = gettext_lazy("My Projects")
-    template_name = 'settings/bootstrap3/my_projects.html'
+    template_name = 'settings/my_projects.html'
 
+    @use_bootstrap5
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if not request.couch_user.is_web_user():
@@ -320,9 +321,10 @@ class MyProjectsList(BaseMyAccountView):
 
 class ChangeMyPasswordView(BaseMyAccountView):
     urlname = 'change_my_password'
-    template_name = 'settings/bootstrap3/change_my_password.html'
+    template_name = 'settings/change_my_password.html'
     page_title = gettext_lazy("Change My Password")
 
+    @use_bootstrap5
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
@@ -566,8 +568,9 @@ def get_qrcode(data):
 class EnableMobilePrivilegesView(BaseMyAccountView):
     urlname = 'enable_mobile_privs'
     page_title = gettext_lazy("Enable Privileges on Mobile")
-    template_name = 'settings/bootstrap3/enable_superuser.html'
+    template_name = 'settings/enable_superuser.html'
 
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         # raises a 404 if a user tries to access this page without the right authorizations
         if hasattr(request, 'couch_user') and self.is_user_authorized(request.couch_user):
@@ -671,7 +674,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     def _to_user_time(self, value):
         return (ServerTime(value)
-                .user_time(ZoneInfo(self.request.couch_user.get_time_zone()))
+                .user_time(self.get_user_timezone())
                 .done()
                 .strftime(USER_DATETIME_FORMAT)) if value else '-'
 
@@ -754,6 +757,9 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     create_item_form_class = "form form-horizontal"
 
+    def get_user_timezone(self):
+        return ZoneInfo(self.request.couch_user.get_time_zone() or 'UTC')
+
     def get_create_form(self, is_blank=False):
         if self.managing_idp:
             max_expiration_window = self.managing_idp.max_days_until_user_api_key_expiration
@@ -767,12 +773,12 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 self.request.POST,
                 user_domains=user_domains,
                 max_allowed_expiration_days=max_expiration_window,
-                timezone=ZoneInfo(self.request.couch_user.get_time_zone())
+                timezone=self.get_user_timezone(),
             )
         return HQApiKeyForm(
             user_domains=user_domains,
             max_allowed_expiration_days=max_expiration_window,
-            timezone=ZoneInfo(self.request.couch_user.get_time_zone())
+            timezone=self.get_user_timezone(),
         )
 
     def get_create_item_data(self, create_form):

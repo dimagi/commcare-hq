@@ -322,10 +322,7 @@
   </p>
   <p>
     Finally, you should make sure any javascript files needed to render that view also inherit from <code>bootstrap5</code>
-    dependencies. As you migrate a view's requirejs module, it is important to update the
-    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/build_requirejs.py#L147-L149"
-       target="_blank">split_bundles</a>
-    map in <code>build_requirejs</code>.
+    dependencies.
   </p>
   <p>
     Once a view's template and javascript files updated, it is now time to load that view make visual observations and
