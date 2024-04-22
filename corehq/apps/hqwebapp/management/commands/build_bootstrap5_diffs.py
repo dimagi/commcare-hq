@@ -19,6 +19,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_split_folders,
     get_all_javascript_paths_for_app,
     TRACKED_JS_FOLDERS,
+    get_app_name_and_slug,
 )
 from corehq.apps.hqwebapp.utils.management_commands import get_confirmation
 
@@ -104,6 +105,7 @@ def get_folder_config(app_name, path, js_folder=None):
     """This only supports javascript and template files.
     Stylesheets should be handled separately.
     """
+    _, app_name = get_app_name_and_slug(app_name)
     if js_folder:
         label = "javascript" / Path(app_name) / js_folder / path
     else:
