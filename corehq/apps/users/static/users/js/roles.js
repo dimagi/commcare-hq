@@ -26,7 +26,7 @@ hqDefine('users/js/roles',[
             permissionText: 'Change me',
             accessNoneText: gettext("No Access"),
             accessAllText: gettext("Access All"),
-            accessSelectedText: gettext("Access Selected"),
+            accessSelectedText: gettext("Limited Access"),
             listHeading: gettext("Select which items the role can access:"),
         });
         const [NONE, ALL, SELECTED] = ["none", "all", "selected"];
