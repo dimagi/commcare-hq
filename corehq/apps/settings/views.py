@@ -321,9 +321,10 @@ class MyProjectsList(BaseMyAccountView):
 
 class ChangeMyPasswordView(BaseMyAccountView):
     urlname = 'change_my_password'
-    template_name = 'settings/bootstrap3/change_my_password.html'
+    template_name = 'settings/change_my_password.html'
     page_title = gettext_lazy("Change My Password")
 
+    @use_bootstrap5
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
