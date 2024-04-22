@@ -91,7 +91,7 @@ def _child_case_lookup(context, case_ids, identifier):
     """
     es_query = CaseSearchES().domain(context.domain).get_child_cases(case_ids, identifier)
     context.profiler.add_query('_child_case_lookup', es_query)
-    return es_query.scroll_ids()
+    return es_query.get_ids()
 
 
 def ancestor_exists(node, context):
