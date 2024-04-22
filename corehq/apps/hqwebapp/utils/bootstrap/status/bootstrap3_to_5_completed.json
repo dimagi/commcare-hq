@@ -22,12 +22,20 @@
       "js/main.js"
     ]
   },
+  "settings": {
+    "templates": [
+      "enable_superuser.html",
+      "my_projects.html"
+    ]
+  },
   "case_search": {
     "templates": [
-      "profile_case_search.html"
+      "profile_case_search.html",
+      "case_search.html"
     ],
     "javascript": [
-      "js/profile_case_search.js"
+      "js/profile_case_search.js",
+      "js/case_search.js"
     ]
   }
 }
