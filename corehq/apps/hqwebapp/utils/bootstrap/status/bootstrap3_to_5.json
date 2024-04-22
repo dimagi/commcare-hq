@@ -23,12 +23,14 @@
     ]
   },
   "settings": {
+    "in_progress": true,
     "templates": [
       "enable_superuser.html",
       "my_projects.html"
     ]
   },
   "case_search": {
+    "in_progress": true,
     "templates": [
       "profile_case_search.html"
     ],
@@ -40,9 +42,6 @@
     "in_progress": true
   },
   "corehq.tabs": {
-    "in_progress": true
-  },
-  "settings": {
     "in_progress": true
   }
 }
