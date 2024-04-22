@@ -161,6 +161,8 @@ def flag_bootstrap3_references_in_template(line, spec):
                 flags.append("This template extends a bootstrap 3 template.")
             if tag == "static":
                 flags.append("This template references a bootstrap 3 static file.")
+            if tag == "include":
+                flags.append("This template includes a bootstrap 3 template.")
             if tag == "requirejs_main":
                 flags.append("This template references a bootstrap 3 requirejs file. "
                              "It should also use requirejs_main_b5 instead of requirejs_main.")
