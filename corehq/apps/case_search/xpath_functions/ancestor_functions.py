@@ -154,4 +154,4 @@ def _get_case_ids_from_ast_filter(context, filter_node):
                 new_query
             )
 
-        return es_query.scroll_ids()
+        return es_query.get_ids()
