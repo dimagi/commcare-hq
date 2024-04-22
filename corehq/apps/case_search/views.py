@@ -37,7 +37,7 @@ class _BaseCaseSearchView(BaseDomainView):
 
 @method_decorator(use_bootstrap5, name='dispatch')
 class CaseSearchView(_BaseCaseSearchView):
-    template_name = 'case_search/bootstrap5/case_search.html'
+    template_name = 'case_search/case_search.html'
     urlname = 'case_search'
     page_title = gettext_lazy("Case Search")
 
