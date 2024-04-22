@@ -143,6 +143,21 @@ def test_make_template_dependency_renames_static():
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
+def test_flag_bootstrap3_references_in_template_include():
+    line = """    {% include "some_app/bootstrap3/some_thing.html" %}\n"""
+    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    eq(flags, ['This template includes a bootstrap 3 template.'])
+
+
+def test_make_template_dependency_renames_include():
+    line = """    {% include "some_app/bootstrap3/some_thing.html" %}\n"""
+    final_line, renames = make_template_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """    {% include "some_app/bootstrap5/some_thing.html" %}\n""")
+    eq(renames, ['renamed bootstrap3 to bootstrap5'])
+
+
 def test_flag_requirejs_main_references_in_template():
     line = """    {% requirejs_main 'hqwebapp/js/foo' %}\n"""
     flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))

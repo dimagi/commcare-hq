@@ -114,6 +114,7 @@
         "extends",
         "requirejs_main",
         "requirejs_main_b5",
-        "static"
+        "static",
+        "include"
     ]
 }
