@@ -52,6 +52,7 @@ from corehq.apps.hqwebapp.utils.management_commands import (
 class Command(BaseCommand):
     help = "This command helps migrate CCHQ applications from Bootstrap 3 to Bootstrap 5."
     skip_all = False
+    no_split = False
 
     def add_arguments(self, parser):
         parser.add_argument('app_name')
@@ -68,6 +69,12 @@ class Command(BaseCommand):
             action='store_true',
             default=False,
             help="Run migration against already split bootstrap 5 files"
+        )
+        parser.add_argument(
+            '--no-split',
+            action='store_true',
+            default=False,
+            help="Do not split files, make migration changes directly to files."
         )
         parser.add_argument(
             '--skip-all',
@@ -127,17 +134,34 @@ class Command(BaseCommand):
                     show_apply_commit=not has_changes
                 )
 
+        self.no_split = options.get('no_split')
         self.skip_all = options.get('skip_all')
+        if self.skip_all and self.no_split:
+            self.stderr.write((
+                "\n--skip-all and --no-split cannot be used at the same time.\n"
+            ))
+            return
+
         if self.skip_all:
             confirm = get_confirmation("You have elected to skip all the confirmation prompts. "
                                        "Are you sure?")
             if not confirm:
                 return
+
         if self.skip_all and has_pending_git_changes():
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
             ensure_no_pending_changes_before_continuing()
+
+        if self.no_split:
+            self.stdout.write(self.style.WARNING(
+                "\n\nYou have elected to skip the split files step and will apply migration "
+                "changes directly to each un-migrated file.\n"
+            ))
+            confirm = get_confirmation("Are you sure?")
+            if not confirm:
+                return
 
         spec = get_spec('bootstrap_3_to_5')
         do_re_check = options.get('re_check')
@@ -275,7 +299,10 @@ class Command(BaseCommand):
                     self.format_header(f"Finalizing changes for {short_path}...")
                 ))
                 self.record_file_changes(file_path, app_name, file_changelog, is_template)
-                if '/bootstrap5/' in str(file_path):
+                if self.no_split:
+                    self.migrate_file_in_place(app_name, file_path, new_lines, is_template)
+                    self.show_next_steps_after_migrating_file_in_place(short_path)
+                elif '/bootstrap5/' in str(file_path):
                     self.save_re_checked_file_changes(app_name, file_path, new_lines, is_template)
                 else:
                     self.split_files_and_refactor(
@@ -349,8 +376,12 @@ class Command(BaseCommand):
         self.show_information_about_readme(readme_path)
 
     def show_information_about_readme(self, readme_path):
-        self.stdout.write("\nThe changelog for all changes to the Bootstrap 5 "
-                          "version of this file can be found here:\n")
+        if self.no_split:
+            self.stdout.write("\nThe changelog summarizing the "
+                              "migration changes can be found here:\n")
+        else:
+            self.stdout.write("\nThe changelog for all changes to the Bootstrap 5 "
+                              "version of this file can be found here:\n")
         self.stdout.write(f"\n{readme_path}\n\n")
         self.stdout.write("** Please make a note of this for reviewing later.\n\n\n")
 
@@ -367,6 +398,40 @@ class Command(BaseCommand):
             readme_file.writelines(changed_lines)
         self.stdout.write("\nChanges saved.")
         self.suggest_commit_message(f"re-ran migration for {short_path}")
+
+    def migrate_file_in_place(self, app_name, file_path, bootstrap5_lines, is_template):
+        short_path = get_short_path(app_name, file_path, is_template)
+        confirm = get_confirmation(f"Apply changes to '{short_path}'?")
+        if not confirm:
+            self.write_response("ok, discarding changes...")
+
+        has_changes = has_pending_git_changes()
+        if has_changes:
+            self.prompt_user_to_commit_changes()
+            has_changes = has_pending_git_changes()
+
+        with open(file_path, 'w') as file:
+            file.writelines(bootstrap5_lines)
+        self.suggest_commit_message(
+            f"initial auto-migration for {short_path}, migrated in-place",
+            show_apply_commit=not has_changes
+        )
+
+    def show_next_steps_after_migrating_file_in_place(self, short_path):
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            "\n\nPlease take a moment now to search for all views referencing\n"
+        ))
+        self.stdout.write(self.style.MIGRATE_HEADING(
+            f"{short_path}\n"
+        ))
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            "and make sure that these views have the @use_bootstrap5 decorator applied.\n"
+            "Afterwards, please commit these changes and proceed to the next file. Thank you!\n\n"
+        ))
+        self.stdout.write(
+            "See: https://www.commcarehq.org/styleguide/b5/migration/#migrating-views"
+        )
+        self.enter_to_continue()
 
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
