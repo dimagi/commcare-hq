@@ -67,9 +67,6 @@ requirejs.config({
         },
         "datatables.bootstrap": { deps: ['datatables'] },
         "datatables.fixedColumns.bootstrap": { deps: ['datatables.fixedColumns'] },
-        "tempusDominus": {
-            deps: ['popper'],
-        },
         "d3/d3.min": {
             "exports": "d3",
         },
