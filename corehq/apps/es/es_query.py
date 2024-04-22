@@ -299,16 +299,14 @@ class ESQuery(object):
 
     def set_preference(self):
         """
-        If the specified domain has ES_QUERY_PREFERENCE enabled, route requests to primary shards.
-        Otherwise, route to replica shards. The '*_first' naming scheme ensures requests are still
-        handled if the intended shard is unavailable.
+        If the specified domain has ES_QUERY_PREFERENCE enabled, use domain as key to route to a consistent set
+        of shards.
         https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-preference.html
         """
+        domain = get_request_domain()
         query = self.clone()
-        if ES_QUERY_PREFERENCE.enabled(get_request_domain()):
-            query.es_query['preference'] = '_primary_first'
-        else:
-            query.es_query['preference'] = '_replica_first'
+        if ES_QUERY_PREFERENCE.enabled(domain):
+            query.es_query['preference'] = domain
         return query
 
     def add_query(self, new_query, clause):
