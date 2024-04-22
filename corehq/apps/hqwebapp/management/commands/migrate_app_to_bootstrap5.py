@@ -440,11 +440,18 @@ class Command(BaseCommand):
 
         with open(bootstrap5_path, 'w') as bootstrap5_file:
             bootstrap5_file.writelines(bootstrap5_lines)
-        self.stdout.write("\nChanges saved.")
-        self.suggest_commit_message(
-            f"re-ran migration for {bootstrap3_short_path}",
-            show_apply_commit=not has_changes
-        )
+
+        if has_pending_git_changes():
+            self.stdout.write(
+                f"\nChanges applied to {bootstrap5_short_path}."
+            )
+            self.suggest_commit_message(
+                f"re-ran migration for {bootstrap3_short_path}",
+                show_apply_commit=not has_changes
+            )
+        else:
+            self.stdout.write("\nNo changes were necessary!\n")
+            self.enter_to_continue()
 
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
