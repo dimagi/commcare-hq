@@ -249,7 +249,12 @@ config.js
 ---------
 
 This controls the UI for the Web Apps Permissions page, in the Users section of HQ.
-Web apps permissions are not part of the standard roles and permissions framework. They use their own model, which grants/denies permissions to apps based on user groups.
+
+This is a legacy approach to web apps permissions, which is outside of the standard roles and permissions framework.
+It uses its own model, ``ApplicationAccess``, which grants/denies permissions to specific apps based on user groups.
+
+This behavior is gated behind a feature flag, ``WEB_APPS_PERMISSIONS_VIA_GROUPS``. New projects should be using
+roles and permimissions to control Web Apps access.
 
 formplayer_inline.js
 --------------------
