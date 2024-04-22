@@ -67,6 +67,7 @@ from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_other_user,
 )
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
 )
@@ -1059,7 +1060,6 @@ class InviteWebUserView(BaseManageWebUserView):
             'email': domain_request.email if domain_request else None,
         }
         if 'location_id' in self.request.GET:
-            from corehq.apps.locations.models import SQLLocation
             loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
@@ -1121,6 +1121,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
+                location_id = data.pop("location_id", None)
+                data["location"] = SQLLocation.by_location_id(location_id) if location_id else None
                 invite = Invitation(**data)
                 invite.save()
                 invite.send_activation_email()

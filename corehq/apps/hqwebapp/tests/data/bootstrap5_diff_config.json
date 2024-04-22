@@ -304,34 +304,14 @@
       "compare_all_files": true
     }
   ],
-  "apps/case_importer/templates/case_importer": [
-    {
-      "directories": [
-        "bootstrap3",
-        "bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "case_importer",
-      "compare_all_files": true
-    },
-    {
-      "directories": [
-        "partials/bootstrap3",
-        "partials/bootstrap5"
-      ],
-      "file_type": "template",
-      "label": "case_importer/partials",
-      "compare_all_files": true
-    }
-  ],
-  "apps/case_importer/static/case_importer/js": [
+  "apps/registration/static/registration/js": [
     {
       "directories": [
         "bootstrap3",
         "bootstrap5"
       ],
       "file_type": "javascript",
-      "label": "javascript/case_importer/js",
+      "label": "javascript/registration/js",
       "compare_all_files": true
     }
   ],
@@ -357,25 +337,14 @@
       "compare_all_files": true
     }
   ],
-  "apps/case_search/templates/case_search": [
+  "apps/users/templates/users": [
     {
       "directories": [
-        "bootstrap3",
-        "bootstrap5"
+        "partials/bootstrap3",
+        "partials/bootstrap5"
       ],
       "file_type": "template",
-      "label": "case_search",
-      "compare_all_files": true
-    }
-  ],
-  "apps/case_search/static/case_search/js": [
-    {
-      "directories": [
-        "bootstrap3",
-        "bootstrap5"
-      ],
-      "file_type": "javascript",
-      "label": "javascript/case_search/js",
+      "label": "users/partials",
       "compare_all_files": true
     }
   ]

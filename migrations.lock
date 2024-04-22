@@ -1206,7 +1206,8 @@ users
  0057_populate_sql_user_data
  0058_createprofileanduserdata_copylocation
  0059_copy_transient_invitation_supply_point
- 0060_add_web_apps_groups_permission_flag
+ 0060_invitations_addtableau_roles_and_groupids
+ 0061_add_web_apps_groups_permission_flag
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
