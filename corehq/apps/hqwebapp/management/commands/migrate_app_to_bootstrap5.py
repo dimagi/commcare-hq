@@ -401,7 +401,7 @@ class Command(BaseCommand):
 
     def migrate_file_in_place(self, app_name, file_path, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
-        confirm = get_confirmation(f"Apply changes to '{short_path}'?")
+        confirm = get_confirmation(f"Apply changes to '{short_path}'?", default='y')
         if not confirm:
             self.write_response("ok, discarding changes...")
 
