@@ -78,7 +78,7 @@ def _get_case_properties(doc_dict):
     case_id = doc_dict.get('_id')
     assert domain
     base_case_properties = [
-        {'key': base_case_property.key, 'value': base_case_property.value_getter(doc_dict)}
+        {'key': base_case_property.key, 'value': base_case_property.get_value(doc_dict)}
         for base_case_property in list(SPECIAL_CASE_PROPERTIES_MAP.values())
     ]
     dynamic_properties = [_format_property(key, value, case_id)

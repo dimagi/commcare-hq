@@ -130,7 +130,7 @@ def add_case_properties_to_query(es, case, case_properties, match_type):
         if case_property_name in SPECIAL_CASE_PROPERTIES_MAP:
             if _case_json is None:
                 _case_json = case.to_json()
-            case_property_value = SPECIAL_CASE_PROPERTIES_MAP[case_property_name].value_getter(_case_json)
+            case_property_value = SPECIAL_CASE_PROPERTIES_MAP[case_property_name].get_value(_case_json)
         else:
             case_property_value = case.get_case_property(case_property_name)
 

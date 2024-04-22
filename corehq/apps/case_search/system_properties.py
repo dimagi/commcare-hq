@@ -15,7 +15,7 @@ class _SystemProperty:
     is_datetime = False
 
     @classmethod
-    def value_getter(cls, doc):
+    def get_value(cls, doc):
         return doc.get(cls.system_name)
 
     @classmethod
@@ -45,7 +45,7 @@ class Status(_SystemProperty):
     system_name = 'closed'
 
     @classmethod
-    def value_getter(cls, doc):
+    def get_value(cls, doc):
         return 'closed' if doc.get('closed') else 'open'
 
 
@@ -66,7 +66,7 @@ class ExternalID(_SystemProperty):
     system_name = 'external_id'
 
     @classmethod
-    def value_getter(cls, doc):
+    def get_value(cls, doc):
         return doc.get('external_id', '')
 
 

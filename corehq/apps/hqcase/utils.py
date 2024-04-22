@@ -259,7 +259,7 @@ def get_case_value(case, value):
         return None, None
 
     if value in SPECIAL_CASE_PROPERTIES_MAP:
-        return SPECIAL_CASE_PROPERTIES_MAP[value].value_getter(case.to_json()), False
+        return SPECIAL_CASE_PROPERTIES_MAP[value].get_value(case.to_json()), False
     elif value in case.case_json:
         return case.case_json.get(value, None), True
     return None, None

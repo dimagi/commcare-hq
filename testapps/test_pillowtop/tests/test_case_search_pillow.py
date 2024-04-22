@@ -172,7 +172,7 @@ class CaseSearchPillowTest(TestCase):
             key = case_property['key']
             try:
                 self.assertEqual(
-                    SPECIAL_CASE_PROPERTIES_MAP[key].value_getter(case.to_json()),
+                    SPECIAL_CASE_PROPERTIES_MAP[key].get_value(case.to_json()),
                     case_property['value'],
                 )
             except KeyError:
