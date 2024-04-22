@@ -7,7 +7,6 @@ from django.core.management import BaseCommand
 
 from corehq.apps.hqwebapp.utils.bootstrap.git import (
     has_pending_git_changes,
-    ensure_no_pending_changes_before_continuing,
     apply_commit,
     get_commit_string,
 )
@@ -149,7 +148,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
-            ensure_no_pending_changes_before_continuing()
 
         if update_app:
             self.update_configuration_file_for_app(update_app)
@@ -163,13 +161,13 @@ class Command(BaseCommand):
 
         if has_pending_git_changes():
             self.stdout.write(self.style.SUCCESS(
-                "\nDone! Diffs are already up-to-date, no changes needed.\n\n"
-            ))
-        else:
-            self.stdout.write(self.style.SUCCESS(
                 "\n\nDiffs have been rebuilt. Thank you!\n"
             ))
             self.make_commit("Rebuilt diffs")
+        else:
+            self.stdout.write(self.style.SUCCESS(
+                "\nDone! Diffs are already up-to-date, no changes needed.\n\n"
+            ))
 
     def update_config(self, config, app_name, js_folder=None):
         parent_path = get_parent_path(app_name, js_folder)
