@@ -65,12 +65,6 @@ class Command(BaseCommand):
             help="Specify the exact javascript name(s) you would like to split and migrate",
         )
         parser.add_argument(
-            '--re-check',
-            action='store_true',
-            default=False,
-            help="Run migration against already split bootstrap 5 files"
-        )
-        parser.add_argument(
             '--no-split',
             action='store_true',
             default=False,
@@ -170,7 +164,6 @@ class Command(BaseCommand):
                 return
 
         spec = get_spec('bootstrap_3_to_5')
-        do_re_check = options.get('re_check')
         verify_references = options.get('verify_references')
 
         if verify_references:
@@ -178,11 +171,11 @@ class Command(BaseCommand):
             return
 
         if not js_name:
-            app_templates = self.get_templates_for_migration(app_name, template_name, do_re_check)
+            app_templates = self.get_templates_for_migration(app_name, template_name)
             self.migrate_files(app_templates, app_name, spec, is_template=True)
 
         if not template_name:
-            app_javascript = self.get_js_files_for_migration(app_name, js_name, do_re_check)
+            app_javascript = self.get_js_files_for_migration(app_name, js_name)
             self.migrate_files(app_javascript, app_name, spec, is_template=False)
 
         self.show_next_steps(app_name)
@@ -219,32 +212,29 @@ class Command(BaseCommand):
                           "please consult the table referenced in the migration guide\n"
                           "and `bootstrap3_to_5_completed.json`.\n\n")
 
-    def _get_files_for_migration(self, files, file_name, do_re_check):
-        if file_name is not None:
+    @staticmethod
+    def _get_files_for_migration(files, file_name):
+        if file_name:
             files = [t for t in files if file_name in str(t)]
-
-        # filter out already split bootstrap3 templates
-        files = [t for t in files if '/bootstrap3/' not in str(t)]
-
-        if do_re_check:
-            self.clear_screen()
-            self.write_response("\n\nRe-checking split Bootstrap 5 templates only.\n\n")
-            files = [t for t in files if '/bootstrap5/' in str(t)]
         else:
-            files = [t for t in files if '/bootstrap5/' not in str(t)]
+            # filter out already split bootstrap3 templates
+            files = [t for t in files if '/bootstrap3/' not in str(t)]
+
+        # always filter out bootstrap5 split templates
+        files = [t for t in files if '/bootstrap5/' not in str(t)]
         return files
 
-    def get_templates_for_migration(self, app_name, template_name, do_re_check):
+    def get_templates_for_migration(self, app_name, template_name):
         app_templates = get_all_template_paths_for_app(app_name)
-        available_templates = self._get_files_for_migration(app_templates, template_name, do_re_check)
+        available_templates = self._get_files_for_migration(app_templates, template_name)
         if template_name:
             return available_templates
         completed_templates = get_completed_templates_for_app(app_name)
         return set(available_templates).difference(completed_templates)
 
-    def get_js_files_for_migration(self, app_name, js_name, do_re_check):
+    def get_js_files_for_migration(self, app_name, js_name):
         app_js_files = get_all_javascript_paths_for_app(app_name)
-        available_js_files = self._get_files_for_migration(app_js_files, js_name, do_re_check)
+        available_js_files = self._get_files_for_migration(app_js_files, js_name)
         if js_name:
             return available_js_files
         completed_js_files = get_completed_javascript_for_app(app_name)
@@ -308,8 +298,8 @@ class Command(BaseCommand):
                 if self.no_split:
                     self.migrate_file_in_place(app_name, file_path, new_lines, is_template)
                     self.show_next_steps_after_migrating_file_in_place(short_path)
-                elif '/bootstrap5/' in str(file_path):
-                    self.save_re_checked_file_changes(app_name, file_path, new_lines, is_template)
+                elif '/bootstrap3/' in str(file_path):
+                    self.migrate_file_again(app_name, file_path, new_lines, is_template)
                 else:
                     self.split_files_and_refactor(
                         app_name, file_path, old_lines, new_lines, is_template
@@ -371,7 +361,11 @@ class Command(BaseCommand):
                           "in the Bootstrap 5 version of this file.\n\n")
 
     def record_file_changes(self, template_path, app_name, changelog, is_template):
-        short_path = get_short_path(app_name, template_path.parent, is_template)
+        if '/bootstrap3/' in str(template_path):
+            parent_dir = template_path.parent.parent
+        else:
+            parent_dir = template_path.parent
+        short_path = get_short_path(app_name, parent_dir, is_template)
         readme_directory = Path(settings.BOOTSTRAP_MIGRATION_LOGS_DIR) / short_path
         readme_directory.mkdir(parents=True, exist_ok=True)
         extension = '.html' if is_template else '.js'
@@ -390,20 +384,6 @@ class Command(BaseCommand):
                               "version of this file can be found here:\n")
         self.stdout.write(f"\n{readme_path}\n\n")
         self.stdout.write("** Please make a note of this for reviewing later.\n\n\n")
-
-    def save_re_checked_file_changes(self, app_name, file_path, changed_lines, is_template):
-        short_path = get_short_path(app_name, file_path, is_template)
-
-        confirm = get_confirmation(f"\nSave changes to {short_path}?")
-
-        if not confirm:
-            self.write_response("ok, skipping save...")
-            return
-
-        with open(file_path, 'w') as readme_file:
-            readme_file.writelines(changed_lines)
-        self.stdout.write("\nChanges saved.")
-        self.suggest_commit_message(f"re-ran migration for {short_path}")
 
     def migrate_file_in_place(self, app_name, file_path, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
@@ -439,6 +419,33 @@ class Command(BaseCommand):
         )
         self.enter_to_continue()
 
+    def migrate_file_again(self, app_name, bootstrap3_path, bootstrap5_lines, is_template):
+        bootstrap5_path = self.get_bootstrap5_path(bootstrap3_path)
+        bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
+        self.stdout.write(self.style.MIGRATE_HEADING(
+            f"NOTE: This was a re-migration of {bootstrap3_short_path}."
+        ))
+        bootstrap5_short_path = get_short_path(app_name, bootstrap5_path, is_template)
+        confirm = get_confirmation(
+            f"\nApply migration changes to {bootstrap5_short_path}?", default='y'
+        )
+        if not confirm:
+            self.write_response("ok, skipping save...")
+            return
+
+        has_changes = has_pending_git_changes()
+        if has_changes:
+            self.prompt_user_to_commit_changes()
+            has_changes = has_pending_git_changes()
+
+        with open(bootstrap5_path, 'w') as bootstrap5_file:
+            bootstrap5_file.writelines(bootstrap5_lines)
+        self.stdout.write("\nChanges saved.")
+        self.suggest_commit_message(
+            f"re-ran migration for {bootstrap3_short_path}",
+            show_apply_commit=not has_changes
+        )
+
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
 
@@ -460,24 +467,23 @@ class Command(BaseCommand):
         self.stdout.write(f"\n\nSplitting files:\n"
                           f"\n\t{bootstrap3_short_path}"
                           f"\n\t{bootstrap5_short_path}\n\n")
-        if '/bootstrap5/' not in str(file_path):
-            self.save_split_templates(
-                file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
-            )
-            self.stdout.write("\nUpdating references...")
-            references = update_and_get_references(short_path, bootstrap3_short_path, is_template)
-            if not is_template:
-                # also check extension-less references for javascript files
-                references.extend(update_and_get_references(
-                    get_requirejs_reference(short_path),
-                    get_requirejs_reference(bootstrap3_short_path),
-                    is_template=False
-                ))
-            if references:
-                self.stdout.write(f"\n\nUpdated references to {short_path} in these files:\n")
-                self.stdout.write("\n".join(references))
-            else:
-                self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
+        self.save_split_templates(
+            file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
+        )
+        self.stdout.write("\nUpdating references...")
+        references = update_and_get_references(short_path, bootstrap3_short_path, is_template)
+        if not is_template:
+            # also check extension-less references for javascript files
+            references.extend(update_and_get_references(
+                get_requirejs_reference(short_path),
+                get_requirejs_reference(bootstrap3_short_path),
+                is_template=False
+            ))
+        if references:
+            self.stdout.write(f"\n\nUpdated references to {short_path} in these files:\n")
+            self.stdout.write("\n".join(references))
+        else:
+            self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
         self.suggest_commit_message(
             f"initial auto-migration for {short_path}, splitting templates",
             show_apply_commit=not has_changes
@@ -562,6 +568,12 @@ class Command(BaseCommand):
     def get_flags_in_javascript_line(javascript_line, spec):
         flags = flag_changed_javascript_plugins(javascript_line, spec)
         return flags
+
+    @staticmethod
+    def get_bootstrap5_path(bootstrap3_path):
+        bootstrap5_folder = bootstrap3_path.parent.parent / BOOTSTRAP_5
+        bootstrap5_folder.mkdir(parents=True, exist_ok=True)
+        return bootstrap5_folder / bootstrap3_path.name
 
     @staticmethod
     def get_split_file_paths(file_path):
