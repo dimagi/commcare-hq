@@ -162,6 +162,7 @@ PARAMETERIZED_PERMISSIONS = {
     'view_reports': 'view_report_list',
     'view_tableau': 'view_tableau_list',
     'access_web_apps': 'web_apps_list',
+    'commcare_analytics_roles': 'commcare_analytics_roles_list',
 }
 
 
@@ -226,6 +227,12 @@ class HqPermissions(DocumentSchema):
     manage_attendance_tracking = BooleanProperty(default=False)
 
     manage_domain_alerts = BooleanProperty(default=False)
+
+    view_commcare_analytics = BooleanProperty(default=False)
+    edit_commcare_analytics = BooleanProperty(default=False)
+
+    commcare_analytics_roles = BooleanProperty(default=False)
+    commcare_analytics_roles_list = StringListProperty(default=[])
 
     @classmethod
     def from_permission_list(cls, permission_list):
