@@ -3,6 +3,7 @@
 {% load i18n %}
 
 {% for phone_number in phonenumbers %}
+  <!-- TODO: modal -->
   <div id="delete_phonenumber_{{ forloop.counter }}" class="modal fade">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -35,6 +36,7 @@
     </div>
   </div>
   {% if user_type == "mobile" and phone_number.status == "pending" %}
+    <!-- TODO: modal -->
     <div id="reverify_{{phone_number.number|urlencode}}" class="modal fade">
       <div class="modal-dialog">
         <div class="modal-content">
