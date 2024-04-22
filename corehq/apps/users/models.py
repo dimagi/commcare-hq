@@ -66,6 +66,7 @@ from corehq.apps.domain.utils import (
     guess_domain_language,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.reports.const import TABLEAU_ROLES
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
@@ -2697,6 +2698,8 @@ class Invitation(models.Model):
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
                                 on_delete=models.SET_NULL, null=True)
     custom_user_data = models.JSONField(default=dict)
+    tableau_role = models.CharField(max_length=32, choices=TABLEAU_ROLES, null=True)
+    tableau_group_ids = ArrayField(models.CharField(max_length=36), null=True)
 
     def __repr__(self):
         return f"Invitation(domain='{self.domain}', email='{self.email})"

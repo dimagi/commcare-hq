@@ -67,6 +67,7 @@ from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_other_user,
 )
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
 )

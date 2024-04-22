@@ -299,23 +299,16 @@ def case_property_starts_with(case_property_name, value):
 
 
 def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None):
-    """Returns cases where case property `key` fall into the range provided.
-
-    """
+    """Returns cases where case property `key` fall into the range provided."""
     kwargs = {'gt': gt, 'gte': gte, 'lt': lt, 'lte': lte}
-    # if its a number, use it
     try:
-        # numeric range
+        # if its a number, use it
         kwargs = {key: float(value) for key, value in kwargs.items() if value is not None}
-        return _base_property_query(
-            case_property_name,
-            queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
-        )
     except (TypeError, ValueError):
         pass
+    else:
+        return case_property_numeric_range(case_property_name, **kwargs)
 
-    # if its a date or datetime, use it
-    # date range
     kwargs = {
         key: value if isinstance(value, (date, datetime)) else _parse_date_or_datetime(value)
         for key, value in kwargs.items()
@@ -323,7 +316,19 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
     }
     if not kwargs:
         raise TypeError()       # Neither a date nor number was passed in
+    return case_property_date_range(case_property_name, **kwargs)
 
+
+def case_property_numeric_range(case_property_name, gt=None, gte=None, lt=None, lte=None):
+    kwargs = {'gt': gt, 'gte': gte, 'lt': lt, 'lte': lte}
+    return _base_property_query(
+        case_property_name,
+        queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
+    )
+
+
+def case_property_date_range(case_property_name, gt=None, gte=None, lt=None, lte=None):
+    kwargs = {'gt': gt, 'gte': gte, 'lt': lt, 'lte': lte}
     return _base_property_query(
         case_property_name,
         queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
