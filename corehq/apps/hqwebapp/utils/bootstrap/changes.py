@@ -121,6 +121,7 @@ def make_template_dependency_renames(line, spec):
         )
         if renames:
             return final_line, renames
+    return line, []
 
 
 def flag_changed_css_classes(line, spec):

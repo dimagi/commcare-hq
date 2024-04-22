@@ -82,6 +82,15 @@ def test_flag_stateful_button_changes_bootstrap5():
     eq(flags, ['You are using stateful buttons here, which are no longer supported in Bootstrap 5.'])
 
 
+def test_make_template_dependency_renames_no_change():
+    line = """        <button type="button">test</button>\n"""
+    final_line, renames = make_template_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, line)
+    eq(renames, [])
+
+
 def test_flag_bootstrap3_references_in_template_extends():
     line = """{% extends "hqwebapp/bootstrap3/base_section.html" %}\n"""
     flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
