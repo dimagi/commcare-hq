@@ -54,13 +54,11 @@ class HQPasswordChangeForm(PasswordChangeForm):
                     data_bind="value: password, valueUpdate: 'input'",
                 ),
                 'new_password2',
-                hqcrispy.FormActions(
-                    twbscrispy.StrictButton(
-                        _('Change Password'),
-                        css_class='btn-primary',
-                        type='submit',
-                        data_bind="enable: passwordSufficient(), click: submitCheck"
-                    )
+                twbscrispy.StrictButton(
+                    _('Change Password'),
+                    css_class='btn-primary',
+                    type='submit',
+                    data_bind="enable: passwordSufficient(), click: submitCheck"
                 ),
                 css_class='check-password',
             )
