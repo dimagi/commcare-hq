@@ -297,7 +297,8 @@ class Command(BaseCommand):
                 self.record_file_changes(file_path, app_name, file_changelog, is_template)
                 if self.no_split:
                     self.migrate_file_in_place(app_name, file_path, new_lines, is_template)
-                    self.show_next_steps_after_migrating_file_in_place(short_path)
+                    if is_template:
+                        self.show_next_steps_after_migrating_file_in_place(short_path)
                 elif '/bootstrap3/' in str(file_path):
                     self.migrate_file_again(app_name, file_path, new_lines, is_template)
                 else:
