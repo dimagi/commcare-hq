@@ -325,5 +325,16 @@
       "label": "javascript/settings/js",
       "compare_all_files": true
     }
+  ],
+  "apps/users/templates/users": [
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "users/partials",
+      "compare_all_files": true
+    }
   ]
 }

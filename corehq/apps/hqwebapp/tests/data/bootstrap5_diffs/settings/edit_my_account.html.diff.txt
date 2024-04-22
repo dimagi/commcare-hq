@@ -1,5 +1,14 @@
 --- 
 +++ 
+@@ -18,7 +18,7 @@
+ 
+ {% block modals %}{{ block.super }}
+   {% if user_type == 'web' %}
+-    {% include 'users/partials/bootstrap3/basic_info_modals.html' %}
++    {% include 'users/partials/bootstrap5/basic_info_modals.html' %}
+   {% endif %}
+ {% endblock %}
+ 
 @@ -26,10 +26,10 @@
    {% if user_type == 'web' %}
      <ul class="nav nav-tabs">
