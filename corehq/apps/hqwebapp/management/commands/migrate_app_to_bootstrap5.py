@@ -86,6 +86,9 @@ class Command(BaseCommand):
         if not settings.BOOTSTRAP_MIGRATION_LOGS_DIR:
             self.stderr.write("\nPlease make sure BOOTSTRAP_MIGRATION_LOGS_DIR is "
                               "set in your localsettings.py before continuing...\n\n")
+            self.stdout.write(self.style.MIGRATE_LABEL(
+                "TIP: path should be outside of this repository\n\n"
+            ))
             return
 
         template_name = options.get('template_name')
