@@ -1,7 +1,9 @@
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
+from django.core.validators import URLValidator
 
-from corehq.apps.domain.models import DomainSettings
+from corehq.apps.domain.models import Domain
+from corehq.toggles import DATA_MIGRATION
 
 
 class Command(BaseCommand):
@@ -27,26 +29,39 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain, **options):
-        domain_settings, _ = DomainSettings.objects.get_or_create(pk=domain)
+        domain_obj = Domain.get_by_name(domain)
 
         if options['set']:
-            domain_settings.redirect_base_url = options['set']
-            try:
-                domain_settings.clean_fields()
-                domain_settings.clean()
-            except ValidationError as err:
-                msg = err.error_dict['redirect_base_url'][0].message
-                raise CommandError(msg)
-            domain_settings.save()
+            _assert_data_migration(domain)
+            url = options['set']
+            _assert_valid_url(url)
+            domain_obj.redirect_url = url
+            domain_obj.save()
 
         elif options['unset']:
-            domain_settings.redirect_base_url = ''
-            domain_settings.save()
+            domain_obj.redirect_url = ''
+            domain_obj.save()
 
-        if domain_settings.redirect_base_url:
+        if domain_obj.redirect_url:
             self.stdout.write(
                 'Form submissions and syncs are redirected to '
-                f'{domain_settings.redirect_base_url}'
+                f'{domain_obj.redirect_url}'
             )
         else:
             self.stdout.write('Redirect URL not set')
+
+
+def _assert_data_migration(domain):
+    if not DATA_MIGRATION.enabled(domain):
+        raise CommandError(f'Domain {domain} is not migrated.')
+
+
+def _assert_valid_url(url):
+    if not url.startswith('https'):
+        raise CommandError(f'{url} is not a secure URL.')
+
+    validate = URLValidator()
+    try:
+        validate(url)
+    except ValidationError:
+        raise CommandError(f'{url} is not a valid URL.')

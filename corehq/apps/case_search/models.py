@@ -10,7 +10,6 @@ from django.utils.translation import gettext as _
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.util.metrics.const import MODULE_NAME_TAG
-from corehq.util.models import GetOrNoneManager
 from corehq.util.quickcache import quickcache
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
@@ -207,6 +206,18 @@ def extract_search_request_config(request_dict):
     }
     criteria = criteria_dict_to_criteria_list(params)
     return CaseSearchRequestConfig(criteria=criteria, **kwargs_from_params)
+
+
+class GetOrNoneManager(models.Manager):
+    """
+    Adds get_or_none method to objects
+    """
+
+    def get_or_none(self, **kwargs):
+        try:
+            return self.get(**kwargs)
+        except self.model.DoesNotExist:
+            return None
 
 
 class FuzzyProperties(models.Model):
