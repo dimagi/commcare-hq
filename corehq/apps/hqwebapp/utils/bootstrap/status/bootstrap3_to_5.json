@@ -35,5 +35,8 @@
     "javascript": [
       "js/profile_case_search.js"
     ]
+  },
+  "hqwebapp": {
+    "in_progress": true,
   }
 }
