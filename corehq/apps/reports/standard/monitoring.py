@@ -271,9 +271,10 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             )
             return format_html(_(
                 "Note that when viewing this report by group it will only include "
-                "cases which are assigned to a Case Sharing Group/Location. Learn "
-                "more about troubleshooting issues with Case Sharing Groups "
-                "<a href='{}' target='blank'>here</a>."
+                "cases which are assigned to a Case Sharing Group/Location. To learn "
+                "more about Case Sharing click on "
+                "<a href='{}' target='blank'>this</a> "
+                "documentation."
             ).format(help_link))
 
     _default_landmarks = [30, 60, 90]
