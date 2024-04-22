@@ -1,5 +1,11 @@
 from django.core.management import BaseCommand
 
+from corehq.apps.hqwebapp.utils.bootstrap.git import (
+    apply_commit,
+    get_commit_string,
+    has_pending_git_changes,
+    ensure_no_pending_changes_before_continuing,
+)
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_template_paths_for_app,
     get_all_javascript_paths_for_app,
@@ -36,6 +42,12 @@ class Command(BaseCommand):
         )
 
     def handle(self, app_name, **options):
+        if has_pending_git_changes():
+            self.stdout.write(self.style.ERROR(
+                "You have un-committed changes. Please commit these changes before proceeding...\n"
+            ))
+            ensure_no_pending_changes_before_continuing()
+
         template = options.get('template')
         if template:
             self.mark_file_as_complete(app_name, template, is_template=True)
@@ -92,7 +104,7 @@ class Command(BaseCommand):
             mark_template_as_complete(app_name, destination_short_path)
         else:
             mark_javascript_as_complete(app_name, destination_short_path)
-        self.suggest_commit_message(
+        self.make_commit(
             f"Marked {file_type} '{destination_short_path}' as complete and un-split files."
         )
         self.show_next_steps(app_name)
@@ -234,12 +246,15 @@ class Command(BaseCommand):
             self.stdout.write("\n".join(list_to_display))
             self.stdout.write("\n\n")
 
-    def suggest_commit_message(self, message):
+    def make_commit(self, message):
         self.stdout.write("\nNow would be a good time to review changes with git and commit.")
-        self.stdout.write("\nSuggested command:")
-        self.stdout.write(self.style.MIGRATE_LABEL(
-            f"git commit --no-verify -m \"Bootstrap 5 Migration - {message}\""
-        ))
+        confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
+        if confirm:
+            apply_commit(message)
+            return
+        commit_string = get_commit_string(message)
+        self.stdout.write("\n\nSuggested command:\n")
+        self.stdout.write(self.style.MIGRATE_HEADING(commit_string))
         self.stdout.write("\n")
 
     def show_next_steps(self, app_name):
