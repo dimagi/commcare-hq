@@ -34,12 +34,6 @@ class CaseDataFormatter(CaseDisplaySQL):
         fmt_prop = prop.replace('@', '')
         if hasattr(self, fmt_prop):
             return getattr(self, fmt_prop)
-        elif prop in SPECIAL_CASE_PROPERTIES:
-            return self._get_special_property(prop)
-        raise NotImplementedError(
-            "CaseDataFormatter.{} not found".format(prop))
-
-    def _get_special_property(self, prop):
-        if prop not in SPECIAL_CASE_PROPERTIES_MAP:
-            return None
-        return SPECIAL_CASE_PROPERTIES_MAP[prop].get_value(self.raw_data)
+        elif prop in SPECIAL_CASE_PROPERTIES_MAP:
+            return SPECIAL_CASE_PROPERTIES_MAP[prop].get_value(self.raw_data)
+        raise NotImplementedError("CaseDataFormatter.{} not found".format(prop))
