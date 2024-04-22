@@ -1475,21 +1475,17 @@ class AddPhoneNumberForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(AddPhoneNumberForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form'
         self.helper.layout = crispy.Layout(
             Fieldset(
                 _('Add a Phone Number'),
                 'form_type',
                 twbscrispy.PrependedText('phone_number', '+', type='tel', pattern=r'\d+')
             ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    _('Add Number'),
-                    css_class='btn-primary disable-on-submit',
-                    type='submit',
-                )
+            StrictButton(
+                _('Add Number'),
+                css_class='btn-primary disable-on-submit',
+                type='submit',
             )
         )
         self.fields['phone_number'].label = gettext_lazy('Phone number')
