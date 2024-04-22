@@ -304,6 +304,17 @@
       "compare_all_files": true
     }
   ],
+  "apps/registration/static/registration/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/registration/js",
+      "compare_all_files": true
+    }
+  ],
   "apps/settings/templates/settings": [
     {
       "directories": [

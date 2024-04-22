@@ -24,6 +24,7 @@
   },
   "settings": {
     "templates": [
+      "change_my_password.html",
       "enable_superuser.html",
       "my_projects.html"
     ]
