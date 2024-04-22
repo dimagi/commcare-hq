@@ -1143,7 +1143,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             user_location_ids = list(self.get_sql_locations(domain).order_by().values_list("id", flat=True))
             yield from SQLLocation.objects.raw(
                 """
-                    SELECT id FROM get_case_owning_locations(%s, %s);
+                    SELECT loc.*
+                    FROM locations_sqllocation loc
+                    INNER JOIN get_case_owning_locations(%s, %s) owned ON owned.id = loc.id;
                 """,
                 [domain, user_location_ids]
             )
