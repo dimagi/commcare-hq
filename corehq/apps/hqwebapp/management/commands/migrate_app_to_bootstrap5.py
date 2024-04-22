@@ -137,9 +137,9 @@ class Command(BaseCommand):
         self.no_split = options.get('no_split')
         self.skip_all = options.get('skip_all')
         if self.skip_all and self.no_split:
-            self.stderr.write((
+            self.stderr.write(
                 "\n--skip-all and --no-split cannot be used at the same time.\n"
-            ))
+            )
             return
 
         if self.skip_all:
