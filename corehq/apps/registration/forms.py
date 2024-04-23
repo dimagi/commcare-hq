@@ -494,7 +494,7 @@ class AdminInvitesUserForm(forms.Form):
         domain_obj = Domain.get_by_name(domain)
         self.fields['role'].choices = role_choices
         if domain_obj.commtrack_enabled:
-            self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
+            self.fields['location_id'] = forms.CharField(label='Primary Location', required=False,
                                                           widget=LocationSelectWidget(domain_obj.name),
                                                           help_text=EMWF.location_search_help,
                                                           initial=location.location_id if location else '')
