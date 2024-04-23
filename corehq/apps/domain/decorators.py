@@ -10,7 +10,6 @@ from django.http.response import (
     HttpResponse,
     HttpResponseForbidden,
     HttpResponseRedirect,
-    HttpResponseRedirectBase,
     JsonResponse,
 )
 from django.template.response import TemplateResponse
@@ -63,11 +62,6 @@ from corehq.util.soft_assert import soft_assert
 auth_logger = logging.getLogger("commcare_auth")
 
 OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
-
-
-class HttpResponseTemporaryRedirect(HttpResponseRedirectBase):
-    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/307
-    status_code = 307
 
 
 def load_domain(req, domain):
@@ -684,7 +678,7 @@ def check_domain_migration(view_func):
                 #     We assume that the domain name is the same on both
                 #     environments.
                 url = urljoin(domain_obj.redirect_url, request.path)
-                return HttpResponseTemporaryRedirect(url)
+                return HttpResponseRedirect(url)
 
             auth_logger.info(
                 "Request rejected domain=%s reason=%s request=%s",
