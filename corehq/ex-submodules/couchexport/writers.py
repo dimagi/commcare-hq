@@ -17,8 +17,11 @@ import xlwt
 from couchexport.models import Format
 from openpyxl.styles import numbers
 from openpyxl.cell import WriteOnlyCell
-
 from couchexport.util import get_excel_format_value, get_legacy_excel_safe_value
+from corehq.apps.export.models.new import (
+    GPS_SPLIT_COLUMN_LONGITUDE_TEMPLATE,
+    GPS_SPLIT_COLUMN_LATITUDE_TEMPLATE,
+)
 
 MAX_XLS_COLUMNS = 256
 
@@ -583,108 +586,107 @@ class GeoJSONWriter(JsonExportWriter):
 
     @staticmethod
     def _is_multiselect_split(table, data_table_headers):
+        """
+        Since we can't directly check whether the columns are split or not we're
+        deducing it from the number of columns.
+        """
         return table.get_headers(split_columns=True) == data_table_headers
 
-    @staticmethod
-    def _find_geo_data_lat_lng_from_multi_columns(column_names, geo_column_name):
-        def is_related_lng_column(column_name):
-            return f'{geo_column_name}: longitude (degrees)' == column_name
-
-        def is_related_lat_column(column_name):
-            return f'{geo_column_name}: latitude (degrees)' == column_name
-
-        indices = {'lng': None, 'lat': None}
-        for index, header in enumerate(column_names):
-            if is_related_lat_column(header):
-                indices['lat'] = index
-            elif is_related_lng_column(header):
-                indices['lng'] = index
-            else:
-                continue
-
-        if indices['lat'] and indices['lng']:
-            return indices['lat'], indices['lng']
-        return []
-
-    def _find_geo_data_indices(self, table, data_headers, multi_column=False):
-        geo_property_name = table.selected_geo_property
-
-        if geo_property_name not in data_headers:
-            # This might happen for some form export metadata columns
-            geo_property_name = self._find_geo_property_by_path(table)
-            if geo_property_name not in data_headers:
-                if multi_column:
-                    return self._find_geo_data_lat_lng_from_multi_columns(
-                        column_names=data_headers,
-                        geo_column_name=geo_property_name,
-                    )
-                return []
-
-        return [data_headers.index(geo_property_name)]
-
-    @staticmethod
-    def _get_coordinates_from_row(row_data, column_indices):
-        def pull_lat_lng_from_row(row, lat_index, lng_index):
-            return row[lat_index], row[lng_index]
-
-        try:
-            if len(column_indices) > 1:
-                # column at column_indices[0] has data formatted as "<lat>"
-                # column at column_indices[1] has data formatted as "<lng>"
-                return pull_lat_lng_from_row(
-                    row_data,
-                    lat_index=column_indices[0],
-                    lng_index=column_indices[1],
-                )
-
-            # column at column_indices[0] has data formatted as "<lat> <lng> ..."
-            coordinates = row_data[column_indices[0]].split(" ")
-            return pull_lat_lng_from_row(coordinates, lat_index=0, lng_index=1)
-
-        except IndexError:
-            return None, None
-
-    def build_geo_features_from_data(self, data, geo_data_column_indices):
+    def build_geo_features_from_data(
+        self, data, geo_property_name, geo_column_index_func, geo_data_collector_func
+    ):
         table_headers = data[0]
+        geo_column_index = geo_column_index_func(table_headers, geo_property_name)
+
+        if not geo_column_index:
+            return []
 
         features = []
         for row in data[1:]:
-            lat, lng = self._get_coordinates_from_row(row, column_indices=geo_data_column_indices)
-            properties = {
-                header: row[i]
-                for i, header in enumerate(table_headers)
-                if i not in geo_data_column_indices
-            }
-            if not (lng and lat):
+            coordinates, properties = geo_data_collector_func(table_headers, row, geo_column_index)
+            if not coordinates.get('lng') or not coordinates.get('lat'):
                 continue
 
             features.append(self.parse_feature(
-                coordinates=[lng, lat],
+                coordinates=[coordinates['lng'], coordinates['lat']],
                 properties=properties,
             ))
 
         return features
 
+    def find_geo_property_header(self, table, table_headers):
+        selected_geo_property_header = table.selected_geo_property
+        if selected_geo_property_header not in table_headers:
+            selected_geo_property_header = self._find_geo_property_by_path(table)
+        return selected_geo_property_header
+
+    @staticmethod
+    def find_geo_data_column(headers, geo_property_name):
+        if geo_property_name not in headers:
+            return None
+        return headers.index(geo_property_name)
+
+    @staticmethod
+    def find_geo_data_columns(headers, geo_property_name):
+        """
+        Finds the indices of the latitude and longitude columns relating to the geo_column_name
+        and returns the indices in that specific order, i.e. <lat_index>, <lng_index>
+        """
+        longitude_column = GPS_SPLIT_COLUMN_LONGITUDE_TEMPLATE.format(geo_property_name)
+        latitude_column = GPS_SPLIT_COLUMN_LATITUDE_TEMPLATE.format(geo_property_name)
+
+        if longitude_column not in headers or latitude_column not in headers:
+            return []
+
+        return [headers.index(latitude_column), headers.index(longitude_column)]
+
+    @staticmethod
+    def collect_geo_data(table_headers, row, col_index):
+        coordinate_data = row[col_index].split(" ")
+        # check for invalid data in row
+        if len(coordinate_data) < 2:
+            return {}, {}
+
+        lat, lng = coordinate_data[0], coordinate_data[1]
+
+        properties = {
+            header: row[i]
+            for i, header in enumerate(table_headers)
+            if i != col_index
+        }
+        return {'lat': lat, 'lng': lng}, properties
+
+    @staticmethod
+    def collect_geo_data_multi_column(table_headers, row, col_index):
+        lat = row[col_index[0]]
+        lng = row[col_index[1]]
+
+        properties = {
+            header: row[i]
+            for i, header in enumerate(table_headers)
+            if i not in col_index
+        }
+        return {'lat': lat, 'lng': lng}, properties
+
     def get_features(self, table, data):
         table_headers = data[0]
-        geo_data_column_indices = self._find_geo_data_indices(
-            table=table,
-            data_headers=table_headers,
-            multi_column=self._is_multiselect_split(table, table_headers),
-        )
+        geo_column_index_func = self.find_geo_data_column
+        geo_data_collector_func = self.collect_geo_data
 
-        if not geo_data_column_indices:
-            return []
+        if self._is_multiselect_split(table, table_headers):
+            geo_column_index_func = self.find_geo_data_columns
+            geo_data_collector_func = self.collect_geo_data_multi_column
 
         return self.build_geo_features_from_data(
             data=data,
-            geo_data_column_indices=geo_data_column_indices,
+            geo_property_name=self.find_geo_property_header(table, table_headers),
+            geo_column_index_func=geo_column_index_func,
+            geo_data_collector_func=geo_data_collector_func,
         )
 
     def _close(self):
         feature_collections = []
         for table, data in self.tables.items():
-            breakpoint()
             feature_collections.append(
                 self.get_features(table, data)
             )

@@ -17,8 +17,18 @@ from couchexport.writers import (
     ZippedExportWriter,
     GeoJSONWriter,
 )
-from corehq.apps.export.models import TableConfiguration
-from corehq.apps.export.models import SplitGPSExportColumn, GeopointItem, PathNode, ExportColumn, ExportItem
+from corehq.apps.export.models import (
+    TableConfiguration,
+    SplitGPSExportColumn,
+    GeopointItem,
+    PathNode,
+    ExportColumn,
+    ExportItem,
+)
+from corehq.apps.export.models.new import (
+    GPS_SPLIT_COLUMN_LONGITUDE_TEMPLATE,
+    GPS_SPLIT_COLUMN_LATITUDE_TEMPLATE,
+)
 
 
 class ZippedExportWriterTests(SimpleTestCase):
@@ -240,6 +250,72 @@ class HeaderNameTest(SimpleTestCase):
 
 class TestGeoJSONWriter(SimpleTestCase):
 
+    def _table_data(self, table, multi_column=False):
+        data = [table.get_headers(split_columns=multi_column)]
+        table_data_rows = self._table_data_rows(multi_column=multi_column)
+        [data.append(row) for row in table_data_rows]
+        return data
+
+    def _table_data_rows(self, multi_column):
+        def row_data(city, home, country, location_meta):
+            home_data = home.split(" ") if multi_column else [home]
+            location_meta_data = location_meta.split(" ") if multi_column else [location_meta]
+            return [city, *home_data, country, *location_meta_data]
+
+        return [
+            row_data("Boston", "42.361145 -71.057083 0 0", "United States", "42.361146 -71.057084 100 0"),
+            row_data("Cape Town", "-33.918861 18.423300 0 0", "South Africa", "-33.918862 18.423301 100 0"),
+            row_data("Delhi", "28.6100 77.2300 0 0", "India", "28.6101 77.2301 100 0")
+        ]
+
+    def geopoint_table_configuration(self, selected_geo_property):
+        location_metadata_column = self.create_export_column(
+            label='location',
+            path_string='form.meta.location',
+            column_class=SplitGPSExportColumn,
+            column_item=GeopointItem,
+        )
+        other_location_column = self.create_export_column(
+            label='form.home',
+            path_string="form.home",
+            column_class=SplitGPSExportColumn,
+            column_item=GeopointItem,
+        )
+        city_column = self.create_export_column(
+            label='form.city',
+            path_string='form.name',
+            column_class=ExportColumn,
+            column_item=ExportItem,
+        )
+        country_column = self.create_export_column(
+            label='form.country',
+            path_string='form.country',
+            column_class=ExportColumn,
+            column_item=ExportItem,
+        )
+
+        return TableConfiguration(
+            selected=True,
+            selected_geo_property=selected_geo_property,
+            columns=[
+                city_column,
+                other_location_column,
+                country_column,
+                location_metadata_column,
+            ]
+        )
+
+    @staticmethod
+    def create_export_column(label, path_string, column_class, column_item):
+        path = [PathNode(name=node) for node in path_string.split('.')]
+        return column_class(
+            label=label,
+            item=column_item(
+                path=path,
+            ),
+            selected=True,
+        )
+
     def test_get_features(self):
         table = self.geopoint_table_configuration(
             selected_geo_property="form.home",
@@ -362,68 +438,79 @@ class TestGeoJSONWriter(SimpleTestCase):
         ]
         self.assertEqual(feature_coordinates, expected_coordinates)
 
-    def _table_data(self, table, multi_column=False):
-        data = [table.get_headers(split_columns=multi_column)]
-        table_data_rows = self._table_data_rows(multi_column=multi_column)
-        [data.append(row) for row in table_data_rows]
-        return data
+    def test_find_geo_data_column(self):
+        header = GeoJSONWriter.find_geo_data_column(
+            headers=["name", "home"],
+            geo_property_name="home"
+        )
+        self.assertEqual(header, 1)
 
-    def _table_data_rows(self, multi_column):
-        def row_data(city, home, country, location_meta):
-            home_data = home.split(" ") if multi_column else [home]
-            location_meta_data = location_meta.split(" ") if multi_column else [location_meta]
-            return [city, *home_data, country, *location_meta_data]
+    def test_find_geo_data_column_invalid(self):
+        header = GeoJSONWriter.find_geo_data_column(
+            headers=["name", "home"],
+            geo_property_name="town"
+        )
+        self.assertEqual(header, None)
 
-        return [
-            row_data("Boston", "42.361145 -71.057083 0 0", "United States", "42.361146 -71.057084 100 0"),
-            row_data("Cape Town", "-33.918861 18.423300 0 0", "South Africa", "-33.918862 18.423301 100 0"),
-            row_data("Delhi", "28.6100 77.2300 0 0", "India", "28.6101 77.2301 100 0")
+    def test_find_geo_data_columns(self):
+        geo_prop = "home"
+        header = GeoJSONWriter.find_geo_data_columns(
+            headers=[
+                "name",
+                GPS_SPLIT_COLUMN_LATITUDE_TEMPLATE.format(geo_prop),
+                GPS_SPLIT_COLUMN_LONGITUDE_TEMPLATE.format(geo_prop),
+            ],
+            geo_property_name=geo_prop,
+        )
+        self.assertEqual(header, [1, 2])
+
+    def test_find_geo_data_columns_swapped(self):
+        geo_prop = "home"
+        header = GeoJSONWriter.find_geo_data_columns(
+            headers=[
+                "name",
+                GPS_SPLIT_COLUMN_LONGITUDE_TEMPLATE.format(geo_prop),
+                GPS_SPLIT_COLUMN_LATITUDE_TEMPLATE.format(geo_prop),
+            ],
+            geo_property_name=geo_prop,
+        )
+        self.assertEqual(header, [2, 1])
+
+    def test_find_geo_data_columns_invalid(self):
+        geo_prop = "town"
+        header = GeoJSONWriter.find_geo_data_columns(
+            headers=["name", "home"],
+            geo_property_name=geo_prop,
+        )
+        self.assertEqual(header, [])
+
+    def test_collect_geo_data(self):
+        table_headers = ["city", "home"]
+        row = ["Texas", "lat lng"]
+        coordinates, properties = GeoJSONWriter.collect_geo_data(table_headers, row, 1)
+
+        self.assertEqual(coordinates['lat'], 'lat')
+        self.assertEqual(coordinates['lng'], 'lng')
+        self.assertEqual(properties, {'city': 'Texas'})
+
+    def test_collect_geo_data_invalid_coordinate(self):
+        table_headers = ["city", "home"]
+        row = ["Texas", "latlng"]
+        coordinates, properties = GeoJSONWriter.collect_geo_data(table_headers, row, 1)
+
+        self.assertEqual(coordinates, {})
+        self.assertEqual(properties, {})
+
+    def test_collect_geo_data_multi_column(self):
+        geo_prop = "home"
+        table_headers = [
+            "city",
+            GPS_SPLIT_COLUMN_LATITUDE_TEMPLATE.format(geo_prop),
+            GPS_SPLIT_COLUMN_LONGITUDE_TEMPLATE.format(geo_prop),
         ]
+        row = ["Texas", "lat", "lng"]
+        coordinates, properties = GeoJSONWriter.collect_geo_data_multi_column(table_headers, row, [1, 2])
 
-    def geopoint_table_configuration(self, selected_geo_property):
-        location_metadata_column = self.create_export_column(
-            label='location',
-            path_string='form.meta.location',
-            column_class=SplitGPSExportColumn,
-            column_item=GeopointItem,
-        )
-        other_location_column = self.create_export_column(
-            label='form.home',
-            path_string="form.home",
-            column_class=SplitGPSExportColumn,
-            column_item=GeopointItem,
-        )
-        city_column = self.create_export_column(
-            label='form.city',
-            path_string='form.name',
-            column_class=ExportColumn,
-            column_item=ExportItem,
-        )
-        country_column = self.create_export_column(
-            label='form.country',
-            path_string='form.country',
-            column_class=ExportColumn,
-            column_item=ExportItem,
-        )
-
-        return TableConfiguration(
-            selected=True,
-            selected_geo_property=selected_geo_property,
-            columns=[
-                city_column,
-                other_location_column,
-                country_column,
-                location_metadata_column,
-            ]
-        )
-
-    @staticmethod
-    def create_export_column(label, path_string, column_class, column_item):
-        path = [PathNode(name=node) for node in path_string.split('.')]
-        return column_class(
-            label=label,
-            item=column_item(
-                path=path,
-            ),
-            selected=True,
-        )
+        self.assertEqual(coordinates['lat'], 'lat')
+        self.assertEqual(coordinates['lng'], 'lng')
+        self.assertEqual(properties, {'city': 'Texas'})
