@@ -322,42 +322,6 @@
   </div>
 </script>
 
-
-
-
-
-
-
-
-
-<script type="text/html" id="select-entry-ko-template">
-  <fieldset>
-  <legend class="sr-only" data-bind="text: question.caption()"></legend>
-    <div class="sel clear">
-      <div data-bind="foreach: choices, as: 'choice'">
-        <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }, class: $parent.colStyleIfHideLabel">
-          <label>
-              <input data-bind="
-                          checked: $parent.rawAnswer,
-                          checkedValue: $data,
-                          attr: {
-                              id: 'group-' + $parent.entryId + '-choice-' + $index(),
-                              type: $parent.isMulti ? 'checkbox' : 'radio',
-                              name: $parent.entryId,
-                              class: 'group-' + $parent.entryId,
-                          },
-                      "/>
-              <span data-bind="renderMarkdown: $data, class: $parent.hideLabel ? 'sr-only' : ''"></span>
-          </label>
-          </div>
-        </div>
-      </div>
-      <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear, fadeVisible: !isMulti && rawAnswer()">
-        {% trans "Clear" %}
-      </button>
-    </div>
-  </fieldset>
-</script>
 <script type="text/html" id="button-entry-ko-template">
   <button class="btn btn-default" data-bind="click: onClick, attr: {id: entryId}">
     <span data-bind="renderMarkdown: buttonLabel()"></span>
