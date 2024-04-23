@@ -14,7 +14,7 @@ def enable_flag(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0060_invitations_addtableau_roles_and_groupids'),
+        ('users', '0061_auto_20240423_0802'),
     ]
 
     operations = [

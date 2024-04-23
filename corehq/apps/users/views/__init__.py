@@ -733,7 +733,21 @@ class ListRolesView(BaseRoleAccessView):
                 domain_has_privilege(self.domain, privileges.DATA_FILE_DOWNLOAD),
             'export_ownership_enabled': domain_has_privilege(self.domain, privileges.EXPORT_OWNERSHIP),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
+            'commcare_analytics_roles': _commcare_analytics_roles_options(),
         }
+
+
+def _commcare_analytics_roles_options():
+    return [
+        {
+            'slug': 'gamma',
+            'name': 'Gamma'
+        },
+        {
+            'slug': 'sql_lab',
+            'name': 'SQL Lab'
+        }
+    ]
 
 
 @always_allow_project_access
