@@ -649,7 +649,8 @@ class ElasticDocumentAdapter(BaseAdapter):
         if ES_QUERY_PREFERENCE.enabled(domain):
             # Use domain as key to route to a consistent set of shards.kwargs
             # See https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-preference.html
-            kw['preference'] = domain
+            if 'preference' not in kw:
+                kw['preference'] = domain
 
         with metrics_histogram_timer(
                 'commcare.elasticsearch.search.timing',
