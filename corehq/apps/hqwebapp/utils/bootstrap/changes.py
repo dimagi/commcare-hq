@@ -46,6 +46,14 @@ def _get_path_reference_regex(path_reference):
     return r"([\"\'])(" + path_reference + r")([\"\'])"
 
 
+def _get_template_reference_regex(tag, reference):
+    return r"(\{% " + tag + r" ['\"][\w\/.\-]+\/)(" + reference + r")(\/[\w\/.\-]+['\"]?)"
+
+
+def _get_javascript_reference_regex(reference):
+    return r"(['\"][\w/.\-]+/)(" + reference + r")(/[\w/.\-]+['\"],?)$"
+
+
 def _do_rename(line, change_map, regex_fn, replacement_fn):
     renames = []
     for css_class in change_map.keys():
@@ -106,7 +114,7 @@ def make_javascript_dependency_renames(line, spec):
     return _do_rename(
         line,
         spec['dependency_renames'],
-        lambda x: r"(['\"][\w/.\-]+/)(" + x + r")(/[\w/.\-]+['\"],?)$",
+        lambda x: _get_javascript_reference_regex(x),
         lambda x: r"\1" + spec['dependency_renames'][x] + r"\3"
     )
 
@@ -116,7 +124,7 @@ def make_template_dependency_renames(line, spec):
         final_line, renames = _do_rename(
             line,
             spec['dependency_renames'],
-            lambda x: r"(\{% " + tag + r" ['\"][\w\/.\-]+\/)(" + x + r")(\/[\w\/.\-]+['\"]?)",
+            lambda x: _get_template_reference_regex(tag, x),
             lambda x: r"\1" + spec['dependency_renames'][x] + r"\3"
         )
         if renames:
@@ -155,7 +163,7 @@ def flag_stateful_button_changes_bootstrap5(line):
 def flag_bootstrap3_references_in_template(line, spec):
     flags = []
     for tag in spec['template_tags_with_dependencies']:
-        b3_ref_regex = r"(\{% " + tag + r" ['\"][\w/.\-]+/)(bootstrap3)(/[\w/.\-]+['\"]?)"
+        b3_ref_regex = _get_template_reference_regex(tag, 'bootstrap3')
         tag_only_regex = r"(\{% " + tag + r" ['\"][\w/.\-]+)"
         if re.search(b3_ref_regex, line):
             if tag == "extends":
@@ -180,7 +188,7 @@ def flag_bootstrap3_references_in_template(line, spec):
 
 def flag_bootstrap3_references_in_javascript(line):
     flags = []
-    regex = r"([\"\'][\w\/]+)(\/bootstrap3\/)"
+    regex = _get_javascript_reference_regex('bootstrap3')
     if re.search(regex, line):
         flags.append("This javascript file references a bootstrap 3 file.")
     return flags
