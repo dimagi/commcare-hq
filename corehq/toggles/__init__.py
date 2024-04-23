@@ -2803,7 +2803,6 @@ INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
     description='Temporary increase of the max number of search results.',
 )
 
-
 SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
     slug='support_road_network_disbursement_algorithm',
     label='Add Road Network disbursement algorithm on geospatial settings page',
