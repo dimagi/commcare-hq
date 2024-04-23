@@ -114,14 +114,22 @@ class FormplayerMain(View):
         app_access = get_application_access_for_domain(domain)
         app_ids = get_app_ids_in_domain(domain)
 
+        def _can_access_web_app(user, domain, app):
+            if user.can_access_web_app(domain, app.get('copy_of', app.get('_id'))):
+                return True
+            if user.can_access_web_app(domain, app.get('upstream_app_id')):
+                return True
+            if app_access.user_can_access_app(user, app):
+                return True
+            return False
+
         apps = list(map(
             lambda app_id: self.fetch_app(domain, app_id),
             app_ids,
         ))
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
-        apps = filter(lambda app: user.can_access_web_app(domain, app.get('copy_of', app.get('_id'))), apps)
-        apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
+        apps = filter(lambda app: _can_access_web_app(user, domain, app), apps)
         apps = [_format_app_doc(app) for app in apps]
         apps = sorted(apps, key=lambda app: app['name'].lower())
         return apps
