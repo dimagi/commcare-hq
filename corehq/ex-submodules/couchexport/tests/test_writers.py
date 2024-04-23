@@ -334,6 +334,34 @@ class TestGeoJSONWriter(SimpleTestCase):
         ]
         self.assertEqual(features, expected_features)
 
+    def test_get_features_multiple_columns(self):
+        table = self.geopoint_table_configuration(
+            selected_geo_property="form.home",
+        )
+        features = GeoJSONWriter().get_features(table, self._table_data(table=table, multi_column=True))
+
+        feature_coordinates = [feature['geometry']['coordinates'] for feature in features]
+        expected_coordinates = [
+            ["-71.057083", "42.361145"],
+            ["18.423300", "-33.918861"],
+            ["77.2300", "28.6100"],
+        ]
+        self.assertEqual(feature_coordinates, expected_coordinates)
+
+    def test_get_features_from_path_multiple_columns(self):
+        table = self.geopoint_table_configuration(
+            selected_geo_property="form.meta.location",
+        )
+        features = GeoJSONWriter().get_features(table, self._table_data(table=table, multi_column=True))
+
+        feature_coordinates = [feature['geometry']['coordinates'] for feature in features]
+        expected_coordinates = [
+            ["-71.057084", "42.361146"],
+            ["18.423301", "-33.918862"],
+            ["77.2301", "28.6101"],
+        ]
+        self.assertEqual(feature_coordinates, expected_coordinates)
+
     def _table_data(self, table, multi_column=False):
         data = [table.get_headers(split_columns=multi_column)]
         table_data_rows = self._table_data_rows(multi_column=multi_column)
@@ -344,13 +372,7 @@ class TestGeoJSONWriter(SimpleTestCase):
         def row_data(city, home, country, location_meta):
             home_data = home.split(" ") if multi_column else [home]
             location_meta_data = location_meta.split(" ") if multi_column else [location_meta]
-
-            return [
-                city,
-                *home_data,
-                country,
-                *location_meta_data
-            ]
+            return [city, *home_data, country, *location_meta_data]
 
         return [
             row_data("Boston", "42.361145 -71.057083 0 0", "United States", "42.361146 -71.057084 100 0"),
