@@ -655,6 +655,8 @@ class GeoJSONWriter(JsonExportWriter):
                 for i, header in enumerate(table_headers)
                 if i not in geo_data_column_indices
             }
+            if not (lng and lat):
+                continue
 
             features.append(self.parse_feature(
                 coordinates=[lng, lat],
@@ -682,6 +684,7 @@ class GeoJSONWriter(JsonExportWriter):
     def _close(self):
         feature_collections = []
         for table, data in self.tables.items():
+            breakpoint()
             feature_collections.append(
                 self.get_features(table, data)
             )
