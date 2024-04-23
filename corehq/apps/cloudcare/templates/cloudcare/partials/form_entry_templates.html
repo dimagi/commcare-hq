@@ -326,18 +326,6 @@
 
 
 
-<script type="text/html" id="str-entry-ko-template">
-  <input autocomplete="off" type="text" class="form-control" data-bind="
-        value: $data.rawAnswer,
-        valueUpdate: valueUpdate,
-        attr: {
-            maxlength: lengthLimit,
-            id: entryId,
-            placeholder: placeholderText,
-            'aria-required': $parent.required() ? 'true' : 'false',
-        }
-    "/>
-</script>
 <script type="text/html" id="unsupported-entry-ko-template">
   <div class="unsupported alert alert-warning">
     <a class="unsupported-question-type-trigger" role="button"
