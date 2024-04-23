@@ -141,6 +141,12 @@ def auto_deactivate_removed_sso_users():
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_reason=MSGraphIssue.HTTP_ERROR)
             continue
+        except Exception as e:
+            notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
+            send_deactivation_skipped_email(idp=idp, failure_reason=MSGraphIssue.VERIFICATION_ERROR,
+                                            error="verification error",
+                                            error_description={str(e)})
+            continue
 
         # if the Graph Users API returns an empty list of users we will skip auto deactivation
         if len(idp_users) == 0:
