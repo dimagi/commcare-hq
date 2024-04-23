@@ -349,7 +349,7 @@ class CustomDataModelMixin(object):
             )
             if not created and obj.has_users_assigned:
                 refresh_es_for_profile_users.delay(self.domain, obj.id)
-                bulk_sync_usercases_if_applicable(obj.definition.domain, obj.user_ids_assigned())
+                bulk_sync_usercases_if_applicable(obj.definition.domain, list(obj.user_ids_assigned()))
             seen.add(obj.id)
 
         errors = []

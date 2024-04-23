@@ -7,6 +7,18 @@ from corehq.apps.case_search.exceptions import CaseFilterError, TooManyRelatedCa
 from corehq.apps.case_search.xpath_functions.utils import confirm_args_count
 from corehq.apps.case_search.const import MAX_RELATED_CASES
 from corehq.apps.es.case_search import CaseSearchES, reverse_index_case_query
+from corehq.toggles import NO_SCROLL_IN_CASE_SEARCH
+
+
+def _should_scroll(context):
+    if not isinstance(context.domain, list):
+        domains = [context.domain]
+    else:
+        domains = context.domain
+    for domain in domains:
+        if NO_SCROLL_IN_CASE_SEARCH.enabled(domain):
+            return False
+    return True
 
 
 def is_ancestor_comparison(node):
@@ -89,7 +101,12 @@ def _is_ancestor_path_expression(node):
 def _child_case_lookup(context, case_ids, identifier):
     """returns a list of all case_ids who have parents `case_id` with the relationship `identifier`
     """
-    return CaseSearchES().domain(context.domain).get_child_cases(case_ids, identifier).scroll_ids()
+    es_query = CaseSearchES().domain(context.domain).get_child_cases(case_ids, identifier)
+    context.profiler.add_query('_child_case_lookup', es_query)
+    if _should_scroll(context):
+        return es_query.scroll_ids()
+    else:
+        return es_query.get_ids()
 
 
 def ancestor_exists(node, context):
@@ -144,6 +161,7 @@ def _get_case_ids_from_ast_filter(context, filter_node):
         es_filter = build_filter_from_ast(filter_node, context)
 
         es_query = CaseSearchES().domain(context.domain).filter(es_filter)
+        context.profiler.add_query('_get_case_ids_from_ast_filter', es_query)
         if es_query.count() > MAX_RELATED_CASES:
             new_query = serialize(filter_node)
             raise TooManyRelatedCasesError(
@@ -151,4 +169,7 @@ def _get_case_ids_from_ast_filter(context, filter_node):
                 new_query
             )
 
-        return es_query.scroll_ids()
+        if _should_scroll(context):
+            return es_query.scroll_ids()
+        else:
+            return es_query.get_ids()

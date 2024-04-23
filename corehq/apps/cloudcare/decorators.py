@@ -1,9 +1,9 @@
 from functools import wraps
 
-from django.http import HttpResponse
 from django.shortcuts import render
 
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
 from corehq import toggles
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -32,10 +32,12 @@ def require_cloudcare_access_ex():
                     "app_or_domain_name": app_or_domain_name,
                     "is_superuser": hasattr(request, "couch_user") and request.couch_user.is_superuser
                 }
+                set_bootstrap_version5()
                 return render(request, "cloudcare/web_apps_disabled.html", context)
             if hasattr(request, "couch_user"):
                 if request.couch_user.is_web_user():
-                    return require_permission(HqPermissions.access_web_apps)(view_func)(request, domain, *args, **kwargs)
+                    return require_permission(HqPermissions.access_web_apps)(view_func)(request, domain,
+                        *args, **kwargs)
                 else:
                     assert request.couch_user.is_commcare_user(), \
                         "user was neither a web user or a commcare user!"
@@ -43,5 +45,6 @@ def require_cloudcare_access_ex():
             return login_and_domain_required(view_func)(request, domain, *args, **kwargs)
         return _inner
     return decorator
+
 
 require_cloudcare_access = require_cloudcare_access_ex()

@@ -1,0 +1,178 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% requirejs_main_b5 'commtrack/js/products_and_programs_main' %}
+
+{% block page_content %}
+  {% initial_page_data 'program_product_options' program_product_options %}
+  <header>
+    <div class="row">
+      <div class="col-md-8">
+        <h2>
+          {% trans 'Available Products' %}
+        </h2>
+        {% if show_inactive %}
+          <p class="alert alert-info">
+            {% if show_inactive %}{% trans 'Showing the Inactive Product List.' %}{% endif %}
+          </p>
+        {% endif %}
+      </div>
+      <div class="col-md-4">
+        {% if not show_inactive %}
+          <a class="btn btn-outline-primary float-end" href="?show_inactive=true" style="margin-right: 2.5em;">
+            {% trans "Show Archived Products" %}
+          </a>
+        {% else %}
+          <a class="btn btn-outline-primary float-end" href="?" style="margin-right: 2.5em;">
+            {% trans "Show Active Products" %}
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <div class="ko-program-product-list">
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="btn-toolbar mb-3">
+          <a class="btn btn-primary me-2" href="{% url "commtrack_product_new" domain %}">
+            <i class="fa fa-plus"></i> {% trans 'New Product' %}
+          </a>
+          <a class="btn btn-info me-2" href="{% url "commtrack_upload_products" domain %}">
+            <i class="fa-solid fa-cloud-arrow-up"></i> {% trans 'Bulk Import Products' %}
+          </a>
+          <a class="btn btn-outline-primary me-2" href="{% url "product_fields_view" domain %}">
+            <i class="fa fa-edit"></i>
+            {% trans "Edit Product Fields" %}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" data-bind="visible: !initialLoad() || currentlySearching()">
+      <div class="col-md-12">
+        <i class="fa fa-spin fa-spinner"></i>
+        {% trans 'Loading products...' %}
+      </div>
+    </div>
+
+    <div class="d-none hide-until-load">
+      <div class="row" data-bind="visible: dataList().length">
+        <div class="col-md-12">
+          {% include 'commtrack/manage/partials/pagination.html' %}
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-12">
+          <div id="user-list-notification" data-bind="visible: !currentlySearching() && !dataList().length" class="alert alert-info">
+            {% if show_inactive %}
+              {% blocktrans %}There are no inactive products for this project.{% endblocktrans %}
+            {% else %}
+              {% blocktrans %}There are no products for this project yet.{% endblocktrans %}
+            {% endif %}
+          </div>
+          <table data-bind="visible: !currentlySearching() && (dataList().length + archiveActionItems().length > 0)" class="table table-striped table-bordered" style="margin-bottom:0">
+            <thead data-bind="visible: dataList().length > 0">
+            <tr>
+              <th></th>
+              <th>{% trans "Product" %}</th>
+              <th>{% trans "Product ID" %}</th>
+              <th>{% trans "Program" %}</th>
+              <th>{% trans "Description" %}</th>
+              <th>{% trans "Units" %}</th>
+              <th>
+                {% trans "Archive" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "Archive Product" %}"
+                      data-content="{{ archive_help_text }}"
+                      data-placement="left"
+                ></span>
+              </th>
+            </tr>
+            </thead>
+            <tbody data-bind="foreach: dataList">
+            <tr>
+              <td data-bind="text: $parent.getDataIndex($index)"></td>
+              <td><a data-bind="attr: {href: edit_url}, text: name"></a></td>
+              <td data-bind="text: code"></td>
+              <td data-bind="text: program"></td>
+              <td data-bind="text: description"></td>
+              <td data-bind="text: unit"></td>
+              <td>
+                <a data-bind="attr: {href: '#'+product_id}, text: archive_action_text"
+                   class="btn btn-outline-primary"
+                   data-bs-toggle="modal"></a>
+
+                <div class="modal fade" data-bind="attr: {id: product_id}" aria-labelledby="modalTitle">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h4 class="modal-title" id="modalTitle">
+                          {% trans "Are you sure you want to" %}
+                          <strong data-bind="text: archive_action_text"></strong>
+                          '<span data-bind="text: name"></span>'?
+                        </h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
+                      </div>
+                      <div class="modal-body">
+                        <p data-bind="text: archive_action_desc"></p>
+                        <div class="d-none alert alert-danger" data-bind="attr: {id: 'alert_' + product_id}"></div>
+                      </div>
+                      <div class="modal-footer">
+                        <a href="#" class="btn btn-outline-danger"
+                           data-bind="text: archive_action_text, click: function (data, event) { $parent.takeArchiveAction(archive_url, event.currentTarget, $index) }"></a>
+                        <a href="#" data-bs-dismiss="modal" class="btn btn-outline-primary">{% trans "Cancel" %}</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            </tbody>
+            <tbody data-bind="fadeVisible: archiveActionItems().length > 0">
+            <tr>
+              <th data-bind="attr: {colspan: colspan()}">
+                {% if show_inactive %}
+                  {% trans "Re-Activated / Un-Archived Products" %}
+                {% else %}
+                  {% trans "Archived Products" %}
+                {% endif %}
+              </th>
+            </tr>
+            </tbody>
+            <tbody data-bind="foreach: archiveActionItems, fadeVisible: archiveActionItems().length">
+            <tr>
+              <td data-bind="text: $index()+1"></td>
+              <td><a data-bind="attr: {href: edit_url}, text: name"></a></td>
+              <td data-bind="text: code"></td>
+              <td data-bind="text: program"></td>
+              <td data-bind="text: description"></td>
+              <td data-bind="text: unit"></td>
+              <td>{% if show_inactive %}{% trans "Un-Archived" %}{% else %}{% trans "Archived" %}{% endif %}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="row" data-bind="visible: dataList().length">
+        <div class="col-md-4">
+          <select class="form-control" id="pagination-limit" data-bind="event: {change: update_limit}">
+            {% for limit in pagination_limit_options %}
+              <option value="{{ limit }}">{% blocktrans %}{{ limit }} products per page{% endblocktrans %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-8">
+          {% include 'commtrack/manage/partials/pagination.html' %}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+{% endblock %}

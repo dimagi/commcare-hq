@@ -128,7 +128,18 @@
  {% endblock post_navigation_content %}
  
  
-@@ -126,7 +119,7 @@
+@@ -113,9 +106,8 @@
+              class="ko-template"
+              data-bind="foreach: {data: alerts, beforeRemove: fadeOut}">
+           <div data-bind="attr: {'class': alert_class}">
+-            <a class="close"
+-               data-dismiss="alert" href="#">&times;</a>
+             <span data-bind="html: message"></span>
++            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans_html_attr "Close" %}"></button>
+           </div>
+         </div>
+       </div>
+@@ -126,7 +118,7 @@
  
  {% block footer %}
    {% if not enterprise_mode %}
@@ -137,7 +148,7 @@
    {% endif %}
  {% endblock footer %}
  
-@@ -134,9 +127,9 @@
+@@ -134,9 +126,9 @@
  {% block modals %}
    {% if domain and not enterprise_mode %}
      {% if show_overdue_invoice_modal %}

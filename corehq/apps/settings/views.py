@@ -4,7 +4,7 @@ from base64 import b64encode
 from io import BytesIO
 from datetime import datetime
 
-import pytz
+from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -13,6 +13,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
@@ -48,7 +49,7 @@ from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui
 from corehq.apps.hqwebapp.utils import sign
 from corehq.apps.hqwebapp.utils.two_factor import user_can_use_phone
 from corehq.apps.hqwebapp.views import (
@@ -144,7 +145,7 @@ class DefaultMySettingsView(BaseMyAccountView):
 class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = gettext_lazy("My Information")
-    template_name = 'settings/edit_my_account.html'
+    template_name = 'settings/bootstrap3/edit_my_account.html'
 
     @two_factor_exempt
     @method_decorator(login_required)
@@ -273,6 +274,7 @@ class MyProjectsList(BaseMyAccountView):
     page_title = gettext_lazy("My Projects")
     template_name = 'settings/my_projects.html'
 
+    @use_bootstrap5
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if not request.couch_user.is_web_user():
@@ -322,6 +324,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
     template_name = 'settings/change_my_password.html'
     page_title = gettext_lazy("Change My Password")
 
+    @use_bootstrap5
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
@@ -567,6 +570,7 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
     page_title = gettext_lazy("Enable Privileges on Mobile")
     template_name = 'settings/enable_superuser.html'
 
+    @use_bootstrap5
     def dispatch(self, request, *args, **kwargs):
         # raises a 404 if a user tries to access this page without the right authorizations
         if hasattr(request, 'couch_user') and self.is_user_authorized(request.couch_user):
@@ -614,7 +618,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("API Keys")
     urlname = "user_api_keys"
 
-    template_name = "settings/user_api_keys.html"
+    template_name = "settings/bootstrap3/user_api_keys.html"
 
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
@@ -670,13 +674,35 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     def _to_user_time(self, value):
         return (ServerTime(value)
-                .user_time(pytz.timezone(self.request.couch_user.get_time_zone()))
+                .user_time(self.get_user_timezone())
                 .done()
                 .strftime(USER_DATETIME_FORMAT)) if value else '-'
 
     @property
     def page_context(self):
-        return self.pagination_context
+        pagination_context = self.pagination_context
+        context = {
+            'always_show_user_api_keys': self.allow_viewable_API_keys,
+            'maximum_key_expiration_window': self.maximum_key_expiration_window,
+        }
+        context.update(pagination_context)
+
+        return context
+
+    @property
+    def allow_viewable_API_keys(self):
+        return self.managing_idp.always_show_user_api_keys if self.managing_idp else False
+
+    @property
+    def maximum_key_expiration_window(self):
+        if not self.managing_idp:
+            return None
+
+        return self.managing_idp.max_days_until_user_api_key_expiration
+
+    @cached_property
+    def managing_idp(self):
+        return IdentityProvider.get_active_identity_provider_by_username(self.request.user.username)
 
     @property
     def paginated_list(self):
@@ -689,9 +715,14 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     def _to_json(self, api_key, redacted=True):
         if redacted:
             key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
+            full_key = api_key.key
         else:
-            copy_msg = _("Copy this in a secure place. It will not be shown again.")
-            key = f"{api_key.key} ({copy_msg})",
+            if self.allow_viewable_API_keys:
+                key = api_key.key
+            else:
+                copy_msg = _("Copy this in a secure place. It will not be shown again.")
+                key = f"{api_key.key} ({copy_msg})",
+            full_key = api_key.key
 
         if api_key.expiration_date and api_key.expiration_date < datetime.now():
             status = "expired"
@@ -699,7 +730,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             status = "active"
         else:
             status = "inactive"
-        return {
+        key_json = {
             "id": api_key.id,
             "name": api_key.name,
             "key": key,
@@ -716,15 +747,39 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             "is_active": api_key.is_active,
         }
 
+        if self.allow_viewable_API_keys:
+            key_json['full_key'] = full_key
+
+        return key_json
+
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
 
     create_item_form_class = "form form-horizontal"
 
+    def get_user_timezone(self):
+        return ZoneInfo(self.request.couch_user.get_time_zone() or 'UTC')
+
     def get_create_form(self, is_blank=False):
+        if self.managing_idp:
+            max_expiration_window = self.managing_idp.max_days_until_user_api_key_expiration
+        else:
+            max_expiration_window = None
+
+        user_domains = self.request.couch_user.get_domains()
+
         if self.request.method == 'POST' and not is_blank:
-            return HQApiKeyForm(self.request.POST, couch_user=self.request.couch_user)
-        return HQApiKeyForm(couch_user=self.request.couch_user)
+            return HQApiKeyForm(
+                self.request.POST,
+                user_domains=user_domains,
+                max_allowed_expiration_days=max_expiration_window,
+                timezone=self.get_user_timezone(),
+            )
+        return HQApiKeyForm(
+            user_domains=user_domains,
+            max_allowed_expiration_days=max_expiration_window,
+            timezone=self.get_user_timezone(),
+        )
 
     def get_create_item_data(self, create_form):
         try:

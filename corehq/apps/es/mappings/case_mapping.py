@@ -16,7 +16,7 @@ CASE_MAPPING = {
             "type": "nested",
             "properties": {
                 "action_type": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "date": {
                     "format": DATE_FORMATS_STRING,
@@ -60,7 +60,7 @@ CASE_MAPPING = {
                     "type": "text"
                 },
                 "xform_xmlns": {
-                    "type": "text"
+                    "type": "keyword"
                 }
             }
         },
@@ -103,7 +103,7 @@ CASE_MAPPING = {
             "type": "text"
         },
         "export_tag": {
-            "type": "text"
+            "type": "keyword"
         },
         "external_id": {
             "fields": {
@@ -187,7 +187,7 @@ CASE_MAPPING = {
             "type": "keyword"
         },
         "version": {
-            "type": "text"
+            "type": "keyword"
         },
         "xform_ids": {
             "type": "keyword"

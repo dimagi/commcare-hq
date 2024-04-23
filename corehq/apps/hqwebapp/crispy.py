@@ -274,6 +274,10 @@ class FieldWithExtras(Field):
         return super(FieldWithExtras, self).render(form, context, template_pack=template_pack, **kwargs)
 
 
+class CheckboxField(Field):
+    template = "bootstrap3to5/layout/prepended_appended_text.html"
+
+
 class FieldWithHelpBubble(FieldWithExtras):
     """Add a help bubble after the field label.
 
