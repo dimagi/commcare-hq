@@ -343,12 +343,17 @@ class list_of:
 
 
 class JsonAttrsFormField(forms.JSONField):
+    default_error_messages = {
+        'invalid': _("'%(field)s' field value has an invalid format: %(exc)s"),
+    }
 
     def __init__(self, builder, encoder=None, decoder=None, **kwargs):
         self.builder = builder
         super().__init__(encoder, decoder, **kwargs)
 
     def prepare_value(self, value):
+        if isinstance(value, str):
+            return value
         if isinstance(value, self.builder.attrs_type):
             value = self.builder.jsonify(value)
         return json.dumps(value, ensure_ascii=False, cls=self.encoder, indent=2)

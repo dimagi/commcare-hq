@@ -211,3 +211,16 @@ STEP_MAP = {
 
 def _steps_from_json(data):
     return [STEP_MAP[child.pop("type")].from_json(child) for child in data]
+
+
+EXAMPLE_WORKFLOW = AppWorkflow(steps=[
+    CommandStep(value="My Module"),
+    EntitySelectStep(value="clinic_123"),
+    QueryStep(inputs={"name": "John Doe"}),
+    EntitySelectIndexStep(value=0),
+    FormStep(children=[
+        AnswerQuestionStep(question_text="Name", question_id="name", value="John Doe"),
+        AnswerQuestionStep(question_text="Age", question_id="age", value="30"),
+        SubmitFormStep(),
+    ]),
+])

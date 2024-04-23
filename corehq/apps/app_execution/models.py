@@ -2,12 +2,22 @@ from functools import cached_property
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import functions
 
 from corehq.apps.app_execution import const
 from corehq.apps.app_execution.api import FormplayerSession, LocalUserClient
 from corehq.apps.app_execution.data_model import AppWorkflow
 from corehq.apps.app_manager.dbaccessors import get_brief_app
+from corehq.sql_db.functions import MakeInterval
 from corehq.util.jsonattrs import AttrsObject
+
+
+class AppWorkflowManager(models.Manager):
+    def get_due(self):
+        cutoff = functions.Now() - MakeInterval("mins", models.F("run_every"))
+        return self.filter(last_run__isnull=True) | self.filter(
+            last_run__lt=cutoff
+        )
 
 
 class AppWorkflowConfig(models.Model):
@@ -23,6 +33,10 @@ class AppWorkflowConfig(models.Model):
     django_user = models.ForeignKey(User, on_delete=models.CASCADE)
     workflow = AttrsObject(AppWorkflow)
     form_mode = models.CharField(max_length=255, choices=FORM_MODE_CHOICES)
+    run_every = models.IntegerField(default=0, help_text="Number of minutes between runs")
+    last_run = models.DateTimeField(null=True, blank=True)
+
+    objects = AppWorkflowManager()
 
     class Meta:
         unique_together = ("domain", "user_id")

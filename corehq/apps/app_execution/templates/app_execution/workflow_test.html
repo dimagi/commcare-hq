@@ -2,14 +2,12 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block title %}Automatically Executed App Workflows{% endblock %}
 {% block js-inline %} {{ block.super }}
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const form = document.querySelector('form');
       form.addEventListener('submit', function (event) {
         document.getElementById("submit-button").disabled = true;
-        document.getElementById("loading-indicator").style.display = "block";
       });
     });
   </script>

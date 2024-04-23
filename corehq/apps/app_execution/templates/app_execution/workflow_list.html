@@ -1,7 +1,6 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block title %}Automatically Executed App Workflows{% endblock %}
 {% block page_content %}
   <div>
     <a class='btn btn-primary' href="{% url 'app_execution:new_workflow' %}">Create New</a>
@@ -13,6 +12,7 @@
     <th class="col-sm-2">Domain</th>
     <th class="col-sm-4">App</th>
     <th class="col-sm-4">User</th>
+    <th class="col-sm-4">Last Run</th>
     <th class="col-sm-4"></th>
   </tr>
   </thead>
@@ -23,6 +23,7 @@
     <td>{{ workflow.domain }}</td>
     <td>{{ workflow.app_name }}</td>
     <td>{{ workflow.django_user.username }}</td>
+    <td>{{ workflow.last_run|default:"" }}</td>
     <td><a class="btn btn-primary" href="{% url "app_execution:test_workflow" workflow.id %}">Test</a></td>
   </tr>
   {% endfor %}

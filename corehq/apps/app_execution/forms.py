@@ -10,10 +10,11 @@ from corehq.apps.users.models import CommCareUser
 
 
 class AppWorkflowConfigForm(forms.ModelForm):
+    run_every = forms.IntegerField(min_value=1)
 
     class Meta:
         model = AppWorkflowConfig
-        fields = ("name", "domain", "app_id", "user_id", "workflow", "form_mode")
+        fields = ("name", "domain", "app_id", "user_id", "workflow", "form_mode", "run_every")
         widgets = {
             "form_mode": forms.RadioSelect(),
         }
