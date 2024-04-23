@@ -103,7 +103,7 @@ def _child_case_lookup(context, case_ids, identifier):
     """
     es_query = CaseSearchES().domain(context.domain).get_child_cases(case_ids, identifier)
     context.profiler.add_query('_child_case_lookup', es_query)
-    if _should_scroll(context.domain):
+    if _should_scroll(context):
         return es_query.scroll_ids()
     else:
         return es_query.get_ids()
@@ -169,7 +169,7 @@ def _get_case_ids_from_ast_filter(context, filter_node):
                 new_query
             )
 
-        if _should_scroll(context.domain):
+        if _should_scroll(context):
             return es_query.scroll_ids()
         else:
             return es_query.get_ids()
