@@ -81,6 +81,7 @@ cryptography==42.0.4
     # via
     #   -r base-requirements.in
     #   jwcrypto
+    #   msal
     #   oic
     #   pyjwt
 csiphash==0.0.5
@@ -335,6 +336,8 @@ markupsafe==2.1.2
     #   jinja2
     #   mako
     #   werkzeug
+msal==1.26.0
+    # via -r sso-requirements.in
 msgpack==1.0.5
     # via cachecontrol
 oauthlib==3.1.0
@@ -413,6 +416,7 @@ pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
     #   firebase-admin
+    #   msal
     #   pygithub
     #   twilio
 pynacl==1.5.0
@@ -475,6 +479,7 @@ requests==2.28.2
     #   dropbox
     #   google-api-core
     #   google-cloud-storage
+    #   msal
     #   oic
     #   pygithub
     #   pyjwkest
