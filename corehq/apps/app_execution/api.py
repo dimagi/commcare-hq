@@ -13,6 +13,8 @@ from django.contrib.auth.models import User
 from django.http import HttpRequest
 
 from corehq.apps.app_execution import const, data_model
+from corehq.apps.app_execution.exceptions import AppExecutionError
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.hmac_request import get_hmac_digest
 from dimagi.utils.web import get_url_base
@@ -189,6 +191,15 @@ class FormplayerSession:
     def clone(self):
         return dataclasses.replace(self, data=copy.deepcopy(self.data) if self.data else None)
 
+    @cached_property
+    def app_build_id(self):
+        app = get_app(self.client.domain, self.app_id, latest=True)
+        build_on = "Latest Version"
+        if app.built_on:
+            build_on = app.built_on.strftime("%B %d, %Y")
+        print(f"Using app '{app.name}' ({app._id} - {build_on})", file=self.log)
+        return app._id
+
     @property
     def current_screen(self):
         return self.get_screen_and_data()[0]
@@ -216,7 +227,9 @@ class FormplayerSession:
         if current_data.get("submitResponseMessage"):
             return self._get_screen_and_data(current_data["nextScreen"])
 
-        raise ValueError(f"Unknown screen type: {current_data}")
+        if current_data.get("errors"):
+            raise AppExecutionError(current_data["errors"])
+        raise AppExecutionError(f"Unknown screen type: {current_data}")
 
     def request_url(self, step):
         screen = self.current_screen
@@ -241,7 +254,7 @@ class FormplayerSession:
         selections = list(self.data.get("selections", [])) if self.data else []
         data = {
             **self._get_base_data(),
-            "app_id": self.app_id,
+            "app_id": self.app_build_id,
             "locale": "en",
             "geo_location": None,
             "cases_per_page": 10,

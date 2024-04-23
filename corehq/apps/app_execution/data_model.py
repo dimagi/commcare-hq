@@ -86,7 +86,7 @@ class EntitySelectIndexStep(Step):
     value: int
 
     def get_request_data(self, session, data):
-        entities = {entity["id"] for entity in session.data.get("entities", [])}
+        entities = [entity["id"] for entity in session.data.get("entities", [])]
         if not entities:
             raise AppExecutionError("No entities found")
         if self.value >= len(entities):
@@ -159,7 +159,7 @@ class SubmitFormStep(Step):
 
     def get_request_data(self, session, data):
         answers = {
-            node["ix"]: node["answer"] or "OK"
+            node["ix"]: node["answer"]
             for node in session.data["tree"]
             if "answer" in node
         }
