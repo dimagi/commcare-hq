@@ -142,7 +142,7 @@ def adjust_input_date_by_timezone(date, timezone, op):
 
 def _create_system_query(meta_property, op, value):
     if op == NEQ:
-        return filters.NOT(_create_system_query(meta_property.es_field_name, EQ, value))
+        return filters.NOT(_create_system_query(meta_property, EQ, value))
     if not value:
         return filters.empty(meta_property.es_field_name)
     if meta_property.key == '@status':

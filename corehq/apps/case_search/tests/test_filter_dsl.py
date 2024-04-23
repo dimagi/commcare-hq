@@ -201,6 +201,12 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
+    def test_not_equals_query(self):
+        parsed = parse_xpath("external_id != 'MyBadID'")
+        expected_filter = filters.NOT(filters.term('external_id', 'MyBadID'))
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
 
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestFilterDslLookups(ElasticTestMixin, TestCase):
