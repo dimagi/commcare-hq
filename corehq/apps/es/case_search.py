@@ -25,7 +25,7 @@ from corehq.apps.case_search.const import (
     INDICES_PATH,
     REFERENCED_ID,
     RELEVANCE_SCORE,
-    SPECIAL_CASE_PROPERTIES,
+    INDEXED_METADATA_BY_KEY,
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
@@ -382,7 +382,7 @@ def wrap_case_search_hit(hit, include_score=False):
         case_json={
             prop["key"]: prop[_VALUE]
             for prop in data.get(CASE_PROPERTIES_PATH, {})
-            if prop["key"] not in SPECIAL_CASE_PROPERTIES
+            if prop["key"] not in INDEXED_METADATA_BY_KEY
         },
         indices=data.get("indices", []),
     )

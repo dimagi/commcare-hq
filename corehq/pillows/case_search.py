@@ -3,7 +3,7 @@ from django.db import ProgrammingError
 
 from corehq.apps.case_search.const import (
     GEOPOINT_VALUE,
-    SPECIAL_CASE_PROPERTIES_MAP,
+    INDEXED_METADATA_BY_KEY,
     VALUE,
 )
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
@@ -79,7 +79,7 @@ def _get_case_properties(doc_dict):
     assert domain
     base_case_properties = [
         {'key': base_case_property.key, 'value': base_case_property.get_value(doc_dict)}
-        for base_case_property in list(SPECIAL_CASE_PROPERTIES_MAP.values())
+        for base_case_property in INDEXED_METADATA_BY_KEY.values()
     ]
     dynamic_properties = [_format_property(key, value, case_id)
                           for key, value in doc_dict['case_json'].items()]
