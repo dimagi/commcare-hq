@@ -2540,6 +2540,17 @@ ALLOW_WEB_APPS_RESTRICTION = StaticToggle(
     """
 )
 
+ES_QUERY_PREFERENCE = StaticToggle(
+    'es_query_preference',
+    'Sets preference option on ES queries',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    When enabled, ES queries for this domain will be routed to the same shards for every request. This helps
+    ES queries take advantage of caching on ES nodes.
+    """
+)
+
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
