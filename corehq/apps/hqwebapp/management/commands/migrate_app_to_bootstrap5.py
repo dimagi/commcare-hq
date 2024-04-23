@@ -96,7 +96,7 @@ class Command(BaseCommand):
             self.show_completed_message(app_name)
             return
 
-        if is_app_migration_complete:
+        if is_app_migration_complete and (template_name or js_name):
             filename = template_name or js_name
             self.stdout.write(self.style.WARNING(
                 f"\nIt appears the app '{app_name}' is already marked as complete.\n"
