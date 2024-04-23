@@ -31,7 +31,7 @@
     ]
   },
   "case_search": {
-    "in_progress": true,
+    "is_complete": true,
     "templates": [
       "profile_case_search.html",
       "case_search.html"
