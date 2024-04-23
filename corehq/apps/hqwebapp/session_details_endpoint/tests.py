@@ -3,7 +3,7 @@ import json
 import pytz
 
 from django.conf import settings
-from django.test import Client, TestCase, override_settings
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from django.utils.dateparse import parse_datetime
@@ -44,6 +44,7 @@ class SessionDetailsViewTest(TestCase):
         self.session = self.client.session
         self.session.save()
         self.session_key = self.session.session_key
+        self.expected_response['authToken'] = self.session_key
 
     @classmethod
     def tearDownClass(cls):
