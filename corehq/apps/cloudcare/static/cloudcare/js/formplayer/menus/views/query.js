@@ -1,21 +1,45 @@
 'use strict';
-/*global Backbone, DOMPurify, Marionette */
-
-hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
-    // 'hqwebapp/js/bootstrap3/hq.helpers' is a dependency. It needs to be added
-    // explicitly when webapps is migrated to requirejs
-    var kissmetrics = hqImport("analytix/js/kissmetrix"),
-        cloudcareUtils = hqImport("cloudcare/js/utils"),
-        markdown = hqImport("cloudcare/js/markdown"),
-        formEntryConstants = hqImport("cloudcare/js/form_entry/const"),
-        formplayerConstants = hqImport("cloudcare/js/formplayer/constants"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
-
+hqDefine("cloudcare/js/formplayer/menus/views/query", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'DOMPurify/dist/purify.min',
+    'backbone.marionette',
+    'moment',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/markdown',
+    'cloudcare/js/utils',
+    'cloudcare/js/form_entry/const',
+    'cloudcare/js/form_entry/utils',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/utils/utils',
+    'hqwebapp/js/bootstrap3/hq.helpers',   // needed for hqHelp
+    'bootstrap-daterangepicker/daterangepicker',  // needed for $.daterangepicker
+    'cloudcare/js/formplayer/menus/api',    // needed for app:select:menus
+    'select2/dist/js/select2.full.min',
+], function (
+    $,
+    _,
+    Backbone,
+    DOMPurify,
+    Marionette,
+    moment,
+    initialPageData,
+    toggles,
+    kissmetrics,
+    markdown,
+    cloudcareUtils,
+    formEntryConstants,
+    formEntryUtils,
+    FormplayerFrontend,
+    formplayerConstants,
+    Collection,
+    formplayerUtils
+) {
     var separator = " to ",
         serverSeparator = "__",
         serverPrefix = "__range__",
