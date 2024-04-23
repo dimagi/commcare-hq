@@ -7,8 +7,9 @@ from unittest.mock import Mock
 
 from corehq.motech.models import ConnectionSettings
 
+from .. import repeaters
 from .. import repeat_records
-from ...models import FormRepeater
+from ...models import FormRepeater, SQLRepeatRecord
 
 
 class TestUtilities(SimpleTestCase):
@@ -82,6 +83,42 @@ class TestUtilities(SimpleTestCase):
             result = repeat_records._change_record_state(
                 query_dict, str_to_add).urlencode()
             self.assertEqual(result, expected_result)
+
+
+class TestDomainForwardingOptionsView(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        conn = ConnectionSettings.objects.create(domain="test", name="test", url="https://test.com/")
+        cls.repeater = FormRepeater.objects.create(
+            domain="test",
+            connection_settings_id=conn.id,
+            include_app_id_param=False,
+        )
+        cls.record = cls.repeater.repeat_records.create(
+            domain=cls.repeater.domain,
+            payload_id="3978e5d2bc2346fe958b933870c5b28a",
+            registered_at=datetime.utcnow(),
+            next_check=datetime.utcnow(),
+        )
+
+    def test_get_repeater_types_info(self):
+        class view:
+            domain = "test"
+        state_counts = SQLRepeatRecord.objects.count_by_repeater_and_state("test")
+        infos = repeaters.DomainForwardingOptionsView.get_repeater_types_info(view, state_counts)
+        repeater, = {i.class_name: i for i in infos}['FormRepeater'].instances
+
+        self.assertEqual(repeater.count_State, {
+            # templates that reference `count_State` may need to be
+            # updated if the keys in this dict change
+            'Pending': 1,
+            'Fail': 0,
+            'Success': 0,
+            'Cancelled': 0,
+            'Empty': 0,
+        })
 
 
 class TestRepeatRecordView(TestCase):

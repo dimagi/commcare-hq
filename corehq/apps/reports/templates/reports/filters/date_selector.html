@@ -7,5 +7,7 @@
          name="date"
          value="{{ date|date:'Y-m-d' }}"
          data-init="{% if slug == 'date' %}1{% endif %}"
+         {% if min_date %} data-min-date="{{min_date |date:'Y-m-d' }}" {% endif %}
+         {% if max_date %} data-max-date="{{max_date |date:'Y-m-d' }}" {% endif %}
          class="form-control" />
 {% endblock %}

@@ -192,9 +192,6 @@ hqDefine("cloudcare/js/formplayer/app", [
     FormplayerFrontend.on('startForm', function (data) {
         FormplayerFrontend.permitIntervalSync = false;
         FormplayerFrontend.getChannel().request("clearMenu");
-        hqRequire(["cloudcare/js/formplayer/menus/utils"], function (MenusUtils) {
-            MenusUtils.showBreadcrumbs(data.breadcrumbs);
-        });
 
         data.onLoading = CloudcareUtils.formplayerLoading;
         data.onLoadingComplete = CloudcareUtils.formplayerLoadingComplete;

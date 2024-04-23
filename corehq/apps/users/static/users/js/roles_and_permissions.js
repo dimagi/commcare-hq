@@ -75,6 +75,7 @@ hqDefine("users/js/roles_and_permissions",[
             ExportOwnershipEnabled: initialPageData.get("export_ownership_enabled"),
             dataRegistryChoices: initialPageData.get("data_registry_choices"),
             canEditLinkedData: initialPageData.get("can_edit_linked_data"),
+            commcareAnalyticsRoles: initialPageData.get('commcare_analytics_roles'),
         });
     });
 });

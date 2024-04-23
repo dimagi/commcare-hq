@@ -1,15 +1,17 @@
 import uuid
 
-import attr
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
+
+import attr
 from field_audit import audit_fields
 from field_audit.models import AuditAction, AuditingManager
 
+from dimagi.utils.logging import notify_error
+
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_init
-from dimagi.utils.logging import notify_error
 
 
 @attr.s(frozen=True)
@@ -161,7 +163,12 @@ class UserRole(models.Model):
     def set_permissions(self, permission_infos):
         def _clear_query_cache():
             try:
-                self.refresh_from_db(fields=["rolepermission_set"])
+                # There is a bug in refresh_from_db when specifying fields that results in this error:
+                # RuntimeError: Set changed size during iteration
+                # Once on a version of Django that includes the change made for
+                # https://code.djangoproject.com/ticket/35044, we can specify fields again.
+                # self.refresh_from_db(fields=["rolepermission_set"])
+                self.refresh_from_db()
             except FieldDoesNotExist:
                 pass
 
@@ -208,7 +215,12 @@ class UserRole(models.Model):
     def set_assignable_by(self, role_ids):
         def _clear_query_cache():
             try:
-                self.refresh_from_db(fields=["roleassignableby_set"])
+                # There is a bug in refresh_from_db when specifying fields that results in this error:
+                # RuntimeError: Set changed size during iteration
+                # Once on a version of Django that includes the change made for
+                # https://code.djangoproject.com/ticket/35044, we can specify fields again.
+                # self.refresh_from_db(fields=["roleassignableby_set"])
+                self.refresh_from_db()
             except FieldDoesNotExist:
                 pass
 
@@ -239,9 +251,7 @@ class UserRole(models.Model):
 
     @property
     def assignable_by_couch(self):
-        return list(
-            self.roleassignableby_set.values_list('assignable_by_role__couch_id', flat=True)
-        )
+        return list(self.roleassignableby_set.values_list("assignable_by_role__couch_id", flat=True))
 
     @property
     def assignable_by(self):
