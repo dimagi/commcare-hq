@@ -304,10 +304,11 @@ class ESQuery(object):
         https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-preference.html
         """
         domain = get_request_domain()
-        query = self.clone()
         if ES_QUERY_PREFERENCE.enabled(domain):
+            query = self.clone()
             query.es_query['preference'] = domain
-        return query
+            return query
+        return self
 
     def add_query(self, new_query, clause):
         """
