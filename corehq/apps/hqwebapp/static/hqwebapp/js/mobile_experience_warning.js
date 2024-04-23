@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('hqwebapp/js/mobile_experience_warning', [
     "jquery",
     "hqwebapp/js/initial_page_data",

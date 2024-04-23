@@ -233,6 +233,17 @@ def styleguide_molecules_inline_editing(request):
 
 
 @use_bootstrap5
+def styleguide_molecules_help(request):
+    context = get_navigation_context("styleguide_molecules_help_b5")
+    context.update({
+        'examples': {
+            'help': get_example_context('styleguide/bootstrap5/examples/help.html'),
+        }
+    })
+    return render(request, 'styleguide/bootstrap5/molecules/help.html', context)
+
+
+@use_bootstrap5
 def styleguide_molecules_feedback(request):
     context = get_navigation_context("styleguide_molecules_feedback_b5")
     context.update({

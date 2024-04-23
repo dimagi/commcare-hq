@@ -94,7 +94,7 @@ IGNORE_MODELS = {
     "tastypie.ApiAccess",  # not tagged by domain
     "tastypie.ApiKey",  # not domain-specific
     "toggle_ui.ToggleAudit",
-    "two_factor.PhoneDevice",
+    "phonenumber.PhoneDevice",
     "users.Permission",
     "util.BouncedEmail",
     "util.ComplaintBounceMeta",
@@ -120,8 +120,6 @@ UNKNOWN_MODELS = {
     "couchforms.UnfinishedSubmissionStub",
     "data_interfaces.CaseDuplicate",
     "data_interfaces.CaseDuplicateNew",
-    "dhis2.SQLDataSetMap",
-    "dhis2.SQLDataValueMap",
     "fhir.FHIRImportConfig",
     "fhir.FHIRImportResourceProperty",
     "fhir.FHIRImportResourceType",

@@ -39,10 +39,10 @@ DOMAIN_MAPPING = {
             "type": "object",
             "properties": {
                 "case_owner_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "case_type": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "doc_type": {
                     "type": "keyword"
@@ -93,13 +93,13 @@ DOMAIN_MAPPING = {
                     "type": "keyword"
                 },
                 "user_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "user_ip": {
                     "type": "text"
                 },
                 "version": {
-                    "type": "text"
+                    "type": "keyword"
                 }
             }
         },
@@ -231,7 +231,7 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "creating_user": {
-            "type": "text"
+            "type": "keyword"
         },
         "date_created": {
             "format": DATE_FORMATS_STRING,
@@ -381,10 +381,10 @@ DOMAIN_MAPPING = {
                     "type": "boolean"
                 },
                 "sf_account_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "sf_contract_id": {
-                    "type": "text"
+                    "type": "keyword"
                 },
                 "sub_area": {
                     "fields": {
@@ -429,14 +429,14 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "is_test": {
-            "type": "text"
+            "type": "keyword"
         },
         "last_modified": {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
         "license": {
-            "type": "text"
+            "type": "keyword"
         },
         "migrations": {
             "dynamic": False,
@@ -495,13 +495,13 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "sms_case_registration_owner_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "sms_case_registration_type": {
-            "type": "text"
+            "type": "keyword"
         },
         "sms_case_registration_user_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "sms_mobile_worker_registration_enabled": {
             "type": "boolean"
@@ -537,7 +537,7 @@ DOMAIN_MAPPING = {
             "type": "boolean"
         },
         "yt_id": {
-            "type": "text"
+            "type": "keyword"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"

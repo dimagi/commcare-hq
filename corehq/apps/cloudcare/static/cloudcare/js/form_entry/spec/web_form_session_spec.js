@@ -1,5 +1,4 @@
 'use strict';
-/* global affix */
 /* eslint-env mocha */
 hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
     describe('WebForm', function () {
@@ -83,15 +82,6 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
             );
 
             beforeEach(function () {
-                // Setup HTML
-                try {
-                    affix('input#submit');
-                    affix('#content');
-                } catch (e) {
-                    // temporarily catch this error while we work out issues running
-                    // mocha tests with grunt-mocha. this passes fine in browser
-                }
-
                 // Setup Params object
                 params = {
                     form_url: window.location.host,
@@ -280,15 +270,6 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", function () {
             );
 
             beforeEach(function () {
-                // Setup HTML
-                try {
-                    affix('input#submit');
-                    affix('#content');
-                } catch (e) {
-                    // temporarily catch this error while we work out issues running
-                    // mocha tests with grunt-mocha. this passes fine in browser
-                }
-
                 formJSON = {
                     form_url: window.location.host,
                     onerror: sinon.spy(),

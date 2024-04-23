@@ -11,6 +11,9 @@ from corehq.apps.users.models import SQLUserData
 from corehq.apps.users.models_role import Permission, RolePermission, UserRole
 from corehq.form_processor.models.cases import CaseTransaction, CommCareCase
 from corehq.form_processor.models.forms import XFormInstance, XFormOperation
+from corehq.apps.registry.models import DataRegistry, RegistryGrant
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 
 
 class TestJSONFieldSerialization(SimpleTestCase):
@@ -58,6 +61,20 @@ class TestForeignKeyFieldSerialization(SimpleTestCase):
         self.assertEqual(fk_field, ['testuser'])
 
     def test_foreign_key_on_model_without_natural_key_returns_primary_key_when_serialized(self):
+        data_registry = DataRegistry(pk=500, domain='test', name='test-registry')
+        registry_grant = RegistryGrant(pk=10, registry=data_registry, from_domain='test', to_domains=['to-test'])
+
+        output_stream = StringIO()
+        with patch('corehq.apps.dump_reload.sql.dump.get_objects_to_dump', return_value=[registry_grant]):
+            SqlDataDumper('test', [], []).dump(output_stream)
+
+        deserialized_model = json.loads(output_stream.getvalue())
+        pk_field = deserialized_model['pk']
+        self.assertEqual(pk_field, 10)
+        registry_field = deserialized_model['fields']['registry']
+        self.assertEqual(registry_field, 500)
+
+    def test_natural_foreign_key_for_Permission_returns_tuple_when_serialized(self):
         role = UserRole(pk=10, domain='test', name='test-role')
         permission = Permission(pk=500, value='test')
         role_permission = RolePermission(role=role, permission_fk=permission)
@@ -70,7 +87,7 @@ class TestForeignKeyFieldSerialization(SimpleTestCase):
         role_field = deserialized_model['fields']['role']
         self.assertEqual(role_field, 10)
         permission_field = deserialized_model['fields']['permission_fk']
-        self.assertEqual(permission_field, 500)
+        self.assertEqual(permission_field, ['test'])
 
     def test_natural_foreign_key_for_CommCareCase_returns_str_when_serialized(self):
         cc_case = CommCareCase(domain='test', case_id='abc123')
@@ -95,3 +112,19 @@ class TestForeignKeyFieldSerialization(SimpleTestCase):
         deserialized_model = json.loads(output_stream.getvalue())
         fk_field = deserialized_model['fields']['form']
         self.assertEqual(fk_field, 'abc123')
+
+
+class TestEncryptedFieldSerialization(SimpleTestCase):
+
+    def test_encrypted_fields_are_reset_on_model_that_provides_encrypted_fields(self):
+        test_data = ConnectionSettings(
+            domain="test", name="test-connection-settings", url="http://www.example.com", password='abc123'
+        )
+
+        output_stream = StringIO()
+        with patch('corehq.apps.dump_reload.sql.dump.get_objects_to_dump', return_value=[test_data]):
+            SqlDataDumper('test', [], []).dump(output_stream)
+
+        deserialized_model = json.loads(output_stream.getvalue())
+        self.assertEqual(deserialized_model['fields']['password'], PASSWORD_PLACEHOLDER)
+        self.assertEqual(deserialized_model['fields']['name'], 'test-connection-settings')

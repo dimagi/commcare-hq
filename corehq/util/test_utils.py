@@ -912,8 +912,12 @@ def new_db_connection(alias=DEFAULT_DB_ALIAS):
     Use to test transaction isolation when a transaction is in progress
     on the current/existing connection.
     """
-    connections.ensure_defaults(alias)
-    connections.prepare_test_settings(alias)
+    from django import VERSION as django_version
+    if django_version[:2] >= (4, 1):
+        connections.configure_settings({})
+    else:
+        connections.ensure_defaults(alias)
+        connections.prepare_test_settings(alias)
     db = connections.databases[alias]
     backend = load_backend(db['ENGINE'])
     with closing(backend.DatabaseWrapper(db, alias)) as cn, \

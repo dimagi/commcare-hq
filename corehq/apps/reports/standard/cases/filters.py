@@ -5,7 +5,6 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy, gettext
-from django.utils.functional import lazy
 
 from corehq.apps.export.const import DEID_ID_TRANSFORM, DEID_DATE_TRANSFORM
 
@@ -25,9 +24,6 @@ from corehq.apps.reports.filters.base import (
     BaseSingleOptionFilter,
 )
 from corehq import privileges
-
-
-mark_safe_lazy = lazy(mark_safe, str)  # TODO: Replace with library method
 
 
 class CaseSearchFilter(BaseSimpleFilter):

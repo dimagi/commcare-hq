@@ -12,6 +12,7 @@ fileExclusionRegExp: ^\.|\.css$
 paths:
   sentry_browser: "empty:"
   sentry_captureconsole: "empty:"
+  "tempusDominus": "empty:"
 modules:
   # These two modules are referenced in hqwebapp/base.html, not in a requirejs_main tag,
   # so they won't get picked up by build_requirejs.py and instead need to be specified here

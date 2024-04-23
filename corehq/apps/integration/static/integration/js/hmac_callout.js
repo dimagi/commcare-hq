@@ -1,3 +1,4 @@
+"use strict";
 hqDefine("integration/js/hmac_callout", [
     "hqwebapp/js/initial_page_data",
     "crypto-js/crypto-js",

@@ -1,4 +1,4 @@
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 
 from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 from two_factor.urls import urlpatterns as tf_urls
@@ -79,9 +79,9 @@ urlpatterns = [
     url(r'^account/two_factor/backup/tokens/$', TwoFactorBackupTokensView.as_view(),
         name=TwoFactorBackupTokensView.urlname),
     url(r'^account/two_factor/disable/$', TwoFactorDisableView.as_view(), name=TwoFactorDisableView.urlname),
-    url(r'^account/two_factor/backup/phone/register/$', TwoFactorPhoneSetupView.as_view(),
+    url(r'^account/two_factor/phone/register/$', TwoFactorPhoneSetupView.as_view(),
         name=TwoFactorPhoneSetupView.urlname),
-    url(r'^account/two_factor/backup/phone/unregister/(?P<pk>\d+)/$', TwoFactorPhoneDeleteView.as_view(),
+    url(r'^account/two_factor/phone/unregister/(?P<pk>\d+)/$', TwoFactorPhoneDeleteView.as_view(),
         name=TwoFactorPhoneDeleteView.urlname),
     url(r'', include(tf_urls)),
     url(r'', include(tf_twilio_urls)),

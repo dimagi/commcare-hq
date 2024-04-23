@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('app_manager/js/preview_app', function () {
     'use strict';
     var module = {};

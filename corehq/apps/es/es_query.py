@@ -92,7 +92,9 @@ import textwrap
 
 from memoized import memoized
 
+from corehq.toggles import ES_QUERY_PREFERENCE
 from corehq.util.files import TransientTempfile
+from corehq.util.global_request import get_request_domain
 
 from . import aggregations, filters, queries
 from .const import SCROLL_SIZE, SIZE_LIMIT
@@ -150,6 +152,16 @@ class ESQuery(object):
                 }
             }
         }
+        self._set_preference()
+
+    def _set_preference(self):
+        """
+        If the specified domain has ES_QUERY_PREFERENCE enabled, use domain as key to route to a consistent set
+        of shards. See https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-preference.html
+        """
+        domain = get_request_domain()
+        if ES_QUERY_PREFERENCE.enabled(domain):
+            self.es_query['preference'] = domain
 
     def clone(self):
         adapter = self.adapter
@@ -182,7 +194,6 @@ class ESQuery(object):
             filters.doc_id,
             filters.nested,
             filters.regexp,
-            filters.wildcard,
         ]
 
     def __getattr__(self, attr):
@@ -291,8 +302,9 @@ class ESQuery(object):
         return es
 
     def enable_profiling(self):
-        self.es_query['profile'] = True
-        return self
+        query = self.clone()
+        query.es_query['profile'] = True
+        return query
 
     def add_query(self, new_query, clause):
         """
@@ -330,11 +342,6 @@ class ESQuery(object):
             """
         self._legacy_fields = True
         return self.source(fields)
-
-    def ids_query(self, doc_ids):
-        return self.set_query(
-            queries.ids_query(doc_ids)
-        )
 
     def source(self, include, exclude=None):
         """
@@ -596,7 +603,7 @@ class ESQuerySet(object):
 
 class HQESQuery(ESQuery):
     """
-    Query logic specific to CommCareHQ
+    Query logic specific to CommCare HQ
     """
     @property
     def builtin_filters(self):

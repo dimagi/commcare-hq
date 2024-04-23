@@ -1,3 +1,5 @@
+from corehq.apps.es.utils import get_es_reindex_setting_value
+
 SIZE_LIMIT = 1000000
 
 # this is what ES's maxClauseCount is currently set to, can change this config
@@ -52,3 +54,31 @@ HQ_SMS_SECONDARY_INDEX_NAME = None
 HQ_USERS_INDEX_CANONICAL_NAME = "users"
 HQ_USERS_INDEX_NAME = "users-20230524"
 HQ_USERS_SECONDARY_INDEX_NAME = None
+
+ES_REINDEX_LOG = [
+    '6',
+]
+
+
+ES_APPS_INDEX_MULTIPLEXED = get_es_reindex_setting_value('ES_APPS_INDEX_MULTIPLEXED', False)
+ES_CASE_SEARCH_INDEX_MULTIPLEXED = get_es_reindex_setting_value('ES_CASE_SEARCH_INDEX_MULTIPLEXED', False)
+ES_CASES_INDEX_MULTIPLEXED = get_es_reindex_setting_value('ES_CASES_INDEX_MULTIPLEXED', False)
+ES_DOMAINS_INDEX_MULTIPLEXED = get_es_reindex_setting_value('ES_DOMAINS_INDEX_MULTIPLEXED', False)
+ES_FORMS_INDEX_MULTIPLEXED = get_es_reindex_setting_value('ES_FORMS_INDEX_MULTIPLEXED', False)
+ES_GROUPS_INDEX_MULTIPLEXED = get_es_reindex_setting_value('ES_GROUPS_INDEX_MULTIPLEXED', False)
+ES_SMS_INDEX_MULTIPLEXED = get_es_reindex_setting_value('ES_SMS_INDEX_MULTIPLEXED', False)
+ES_USERS_INDEX_MULTIPLEXED = get_es_reindex_setting_value('ES_USERS_INDEX_MULTIPLEXED', False)
+
+
+ES_APPS_INDEX_SWAPPED = get_es_reindex_setting_value('ES_APPS_INDEX_SWAPPED', False)
+ES_CASE_SEARCH_INDEX_SWAPPED = get_es_reindex_setting_value('ES_CASE_SEARCH_INDEX_SWAPPED', False)
+ES_CASES_INDEX_SWAPPED = get_es_reindex_setting_value('ES_CASES_INDEX_SWAPPED', False)
+ES_DOMAINS_INDEX_SWAPPED = get_es_reindex_setting_value('ES_DOMAINS_INDEX_SWAPPED', False)
+ES_FORMS_INDEX_SWAPPED = get_es_reindex_setting_value('ES_FORMS_INDEX_SWAPPED', False)
+ES_GROUPS_INDEX_SWAPPED = get_es_reindex_setting_value('ES_GROUPS_INDEX_SWAPPED', False)
+ES_SMS_INDEX_SWAPPED = get_es_reindex_setting_value('ES_SMS_INDEX_SWAPPED', False)
+ES_USERS_INDEX_SWAPPED = get_es_reindex_setting_value('ES_USERS_INDEX_SWAPPED', False)
+
+
+ES_FOR_TEST_INDEX_MULTIPLEXED = get_es_reindex_setting_value('ES_FOR_TEST_INDEX_MULTIPLEXED', False)
+ES_FOR_TEST_INDEX_SWAPPED = get_es_reindex_setting_value('ES_FOR_TEST_INDEX_MULTIPLEXED', False)

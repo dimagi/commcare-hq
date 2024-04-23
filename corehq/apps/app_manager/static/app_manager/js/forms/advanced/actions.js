@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('app_manager/js/forms/advanced/actions', function () {
     var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
         caseProperty = hqImport('app_manager/js/forms/advanced/case_properties').caseProperty,

@@ -11,6 +11,7 @@ from memoized import memoized
 
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.es import const
 from corehq.apps.es.filters import term
 from corehq.util.es.elasticsearch import (
     BulkIndexError,
@@ -1404,11 +1405,11 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
 
     def index_multiplexed(cls):
         key = f"ES_{cls.canonical_name.upper()}_INDEX_MULTIPLEXED"
-        return getattr(settings, key)
+        return getattr(const, key)
 
     def index_swapped(cls):
         key = f"ES_{cls.canonical_name.upper()}_INDEX_SWAPPED"
-        return getattr(settings, key)
+        return getattr(const, key)
 
     doc_adapter = cls(index_runtime_name(index_name), type_)
 

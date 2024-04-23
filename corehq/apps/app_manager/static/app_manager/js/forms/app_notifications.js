@@ -1,3 +1,4 @@
+"use strict";
 /* globals moment */
 hqDefine('app_manager/js/forms/app_notifications', function () {
     var getMessage = function (redisMessage, userId) {

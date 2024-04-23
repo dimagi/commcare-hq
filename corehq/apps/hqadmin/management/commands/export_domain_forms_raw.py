@@ -21,7 +21,7 @@ class FormMetadata(JsonObject):
 
 class Command(BaseCommand):
     help = "Save all form XML documents and attachments for a domain to a folder on disk. " \
-           "Use ``import_domain_forms_raw`` to reload the forms into CommCareHQ."
+           "Use ``import_domain_forms_raw`` to reload the forms into CommCare HQ."
 
     def add_arguments(self, parser):
         parser.add_argument('domain')

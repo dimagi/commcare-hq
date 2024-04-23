@@ -5,7 +5,6 @@ from django.db.models import Count
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
-from corehq.util.couch_helpers import paginate_view
 
 from ...models import Repeater, SQLRepeatRecordAttempt, enable_attempts_sync_to_sql
 
@@ -31,7 +30,7 @@ class Command(PopulateSQLCommand):
 
     def handle(self, *args, **kw):
         couch_model_class = self.sql_class()._migration_get_couch_model_class()
-        with enable_attempts_sync_to_sql(couch_model_class, True):
+        with patch_couch_to_sql(couch_model_class):
             return super().handle(*args, **kw)
 
     @classmethod
@@ -49,6 +48,11 @@ class Command(PopulateSQLCommand):
             return couch_state == State.Pending or couch_state == State.Fail
 
         from ...models import State
+        is_very_old_pending_record = (
+            'registered_at' not in couch
+            and (get_state(couch) == State.Pending or get_state(couch) == State.Fail)
+            and (couch.get('next_check') or '2018-03-12') < '2018-03-12'
+        )
         fields = ["domain", "payload_id"]
         diffs = [cls.diff_attr(name, couch, sql) for name in fields]
         diffs.append(cls.diff_value(
@@ -58,18 +62,19 @@ class Command(PopulateSQLCommand):
         ))
         diffs.append(cls.diff_value(
             "state",
-            get_state(couch),
+            State.Cancelled if is_very_old_pending_record else get_state(couch),
             sql.state,
         ))
         diffs.append(cls.diff_value(
             "registered_at",
-            couch.get("registered_on") or '1970-01-01T00:00:00.000000Z',
+            (couch.get("next_check" if is_very_old_pending_record else "registered_on")
+                or '1970-01-01T00:00:00.000000Z'),
             json_format_datetime(sql.registered_at),
         ))
         if sql_may_have_next_check():
             diffs.append(cls.diff_value(
                 "next_check",
-                couch["next_check"],
+                None if is_very_old_pending_record else couch["next_check"],
                 json_format_datetime(sql.next_check) if sql.next_check else sql.next_check,
             ))
         if couch.get("failure_reason") and not couch.get("succeeded"):
@@ -79,7 +84,7 @@ class Command(PopulateSQLCommand):
                 sql.failure_reason,
             ))
 
-        if "attempts" not in couch:
+        if not couch.get("attempts"):
             if len(sql.attempts) > 1:
                 diffs.append(f"attempts: not in couch, {len(sql.attempts)} in sql")
         else:
@@ -149,27 +154,27 @@ class Command(PopulateSQLCommand):
     def _get_couch_doc_count_for_type(cls):
         return count_docs()
 
-    def _get_all_couch_docs_for_model(self, chunk_size):
-        yield from iter_docs(chunk_size, self.__logfile)
+    @classmethod
+    def get_couch_view_name_and_parameters(cls):
+        return 'repeaters/repeat_records_by_payload_id', {}
+
+    @classmethod
+    def get_couch_view_name_and_parameters_for_domains(cls, domains):
+        return 'repeaters/repeat_records_by_payload_id', [{
+            'startkey': [domain],
+            'endkey': [domain, {}],
+        } for domain in domains]
+
+    def should_process(self, result):
+        if result['doc'] is None:
+            self.logfile.write(f"Ignored null document: {result['id']}\n")
+            return False
+        return True
 
     def _get_couch_doc_count_for_domains(self, domains):
         def count_domain_docs(domain):
             return count_docs(startkey=[domain], endkey=[domain, {}])
         return sum(count_domain_docs(d) for d in domains)
-
-    def _iter_couch_docs_for_domains(self, domains, chunk_size):
-        def iter_domain_docs(domain):
-            return iter_docs(chunk_size, self.__logfile, startkey=[domain], endkey=[domain, {}])
-        for domain in domains:
-            yield from iter_domain_docs(domain)
-
-    def open_log(self, *args, **kw):
-        @contextmanager
-        def grab_log(ctx):
-            with ctx as log:
-                self.__logfile = log
-                yield log
-        return grab_log(super().open_log(*args, **kw))
 
 
 def count_docs(**params):
@@ -188,23 +193,6 @@ def count_docs(**params):
     return int(result['value'] / 2)
 
 
-def iter_docs(chunk_size, logfile, **params):
-    from ...models import RepeatRecord
-    # repeaters/repeat_records_by_payload_id's map emits once per document
-    for result in paginate_view(
-        RepeatRecord.get_db(),
-        'repeaters/repeat_records_by_payload_id',
-        chunk_size=chunk_size,
-        include_docs=True,
-        reduce=False,
-        **params,
-    ):
-        if result['doc'] is None:
-            logfile.write(f"Ignored null document: {result['id']}\n")
-            continue
-        yield result['doc']
-
-
 def get_state(doc):
     from ...models import State
     if doc['succeeded'] and doc.get('cancelled'):
@@ -213,7 +201,7 @@ def get_state(doc):
         return State.Success
     if doc.get('cancelled'):
         return State.Cancelled
-    if doc['failure_reason']:
+    if doc.get('failure_reason'):
         return State.Fail
     return State.Pending
 
@@ -225,3 +213,28 @@ ATTEMPT_TRANSFORMS = {
     ) or ''),
     "created_at": (lambda doc: string_to_utc_datetime(doc["datetime"])),
 }
+
+
+def _attempt_to_preserve_failure_reason(doc, obj):
+    if not doc.attempts and not doc.succeeded and doc.failure_reason:
+        attempt = SQLRepeatRecordAttempt(
+            repeat_record=obj,
+            state=doc.state,
+            message=doc.failure_reason,
+            created_at=doc.registered_on or doc.next_check,
+        )
+        assert not obj._new_submodels[SQLRepeatRecordAttempt][0], 'unexpected attempts'
+        obj._new_submodels[SQLRepeatRecordAttempt][0].append(attempt)
+
+
+@contextmanager
+def patch_couch_to_sql(couch_model):
+    original_functions = couch_model._migration_get_custom_couch_to_sql_functions
+    couch_model._migration_get_custom_couch_to_sql_functions = staticmethod(
+        lambda: [_attempt_to_preserve_failure_reason]
+    )
+    try:
+        with enable_attempts_sync_to_sql(couch_model, True):
+            yield
+    finally:
+        couch_model._migration_get_custom_couch_to_sql_functions = original_functions

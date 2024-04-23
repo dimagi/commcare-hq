@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-select', [
     'jquery',
     'underscore',
@@ -7,7 +8,6 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-select', [
     _,
     hqMain
 ) {
-    'use strict';
     var module = {};
 
     var Select = function (options) {

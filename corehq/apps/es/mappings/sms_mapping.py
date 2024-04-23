@@ -15,10 +15,10 @@ SMS_MAPPING = {
     "dynamic": False,
     "properties": {
         "backend_api": {
-            "type": "text"
+            "type": "keyword"
         },
         "backend_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "base_doc": {
             "type": "text"
@@ -60,16 +60,16 @@ SMS_MAPPING = {
             "type": "boolean"
         },
         "reminder_id": {
-            "type": "text"
+            "type": "keyword"
         },
         "text": {
             "type": "text"
         },
         "workflow": {
-            "type": "text"
+            "type": "keyword"
         },
         "xforms_session_couch_id": {
-            "type": "text"
+            "type": "keyword"
         },
         Tombstone.PROPERTY_NAME: {
             "type": "boolean"

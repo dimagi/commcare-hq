@@ -1,3 +1,4 @@
+"use strict";
 hqDefine("hqwebapp/js/select_2_ajax_widget", [
     'jquery',
     'underscore',

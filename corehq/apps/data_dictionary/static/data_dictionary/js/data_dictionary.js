@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("data_dictionary/js/data_dictionary", [
     "jquery",
     "knockout",
@@ -172,6 +173,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.confirmDeleteProperty = function () {
             const $modal = $("#delete-case-prop-modal").modal('show');
+            $("#delete-case-prop-name").text(self.name);
             $("#delete-case-prop-btn").off("click").on("click", () => {
                 self.deleted(true);
                 $modal.modal('hide');

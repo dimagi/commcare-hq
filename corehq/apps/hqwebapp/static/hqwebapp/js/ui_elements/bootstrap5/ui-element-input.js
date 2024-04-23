@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input', [
     'jquery',
     'hqwebapp/js/bootstrap5/main',
@@ -7,7 +8,6 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input', [
     hqMain,
     langcodeButton
 ) {
-    'use strict';
     var module = {};
 
     var Input = function ($elem, initialValue, getElemValue, setElemValue, setPlaceholderValue) {
@@ -70,8 +70,9 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input', [
                         button.button.hide();
                     }
                 });
-            } else
+            } else {
                 this.setElemValue(translated.value);
+            }
             this.$noedit_view.text(translated.value);
             this.setIcon(this.icon);
             return this;

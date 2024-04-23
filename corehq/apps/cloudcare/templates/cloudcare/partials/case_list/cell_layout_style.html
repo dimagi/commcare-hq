@@ -1,0 +1,31 @@
+<script type="text/template" id="cell-layout-style-template">
+  <% _.each(models, function(model){ %>
+    .<%- model.id %> {
+      grid-area: <%- model.gridStyle %>;
+      font-size: <%- model.fontStyle %>;
+      text-align: <%- model.horizontalAlign %>;
+      <% if (!model.borderInTile && !model.shadingInTile) { %>
+        justify-self: <%- model.horizontalAlign %>;
+        align-self: <%- model.verticalAlign %>;
+      <% } else { %>
+        <% if (model.showBorder || model.showShading) { %>
+          justify-self: stretch;
+          margin: 2px;
+          padding: 4px;
+          <% if (model.showBorder) { %>
+            border: 1px solid #685c53;
+          <% } %>
+          border-radius: 8px;
+          <% if (model.showShading) { %>
+            background-color: white;
+            z-index: -1;
+          <% } %>
+        <% } else { %>
+          margin: 14px;
+          justify-self: <%- model.horizontalAlign %>;
+          align-self: <%- model.verticalAlign %>;
+        <% } %>
+      <% } %>
+    }
+  <% }); %>
+</script>

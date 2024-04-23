@@ -2,7 +2,6 @@ import json
 
 from django.conf import settings
 from django.core.paginator import Paginator
-from django.forms.models import model_to_dict
 from django.http import (
     Http404,
     HttpResponseBadRequest,
@@ -41,7 +40,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone
 from corehq.util.view_utils import json_error
 
-from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA
+from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA, GPS_POINT_CASE_PROPERTY
 from .models import GeoConfig, GeoPolygon
 from .routing_solvers.mapbox_optimize import (
     routing_status,
@@ -102,9 +101,12 @@ class CaseDisbursementAlgorithm(BaseDomainView):
     urlname = "case_disbursement"
 
     def post(self, request, domain, *args, **kwargs):
-        solver_class = GeoConfig.objects.get(domain=domain).disbursement_solver
+        config = GeoConfig.objects.get(domain=domain)
         request_json = json.loads(request.body.decode('utf-8'))
-        poll_id, result = solver_class(request_json).solve()
+
+        solver_class = config.disbursement_solver
+        poll_id, result = solver_class(request_json).solve(config=config)
+
         if poll_id is None:
             return json_response(
                 {'result': result}
@@ -229,16 +231,15 @@ class GeospatialConfigPage(BaseConfigView):
             case_type__domain=self.domain,
             data_type=CaseProperty.DataType.GPS,
         )
+        gps_case_props_deprecated_state = {prop.name: prop.deprecated for prop in gps_case_props}
+        if GPS_POINT_CASE_PROPERTY not in gps_case_props_deprecated_state:
+            gps_case_props_deprecated_state[GPS_POINT_CASE_PROPERTY] = False
         context.update({
-            'config': model_to_dict(
-                self.config,
-                fields=GeospatialConfigForm.Meta.fields,
-            ),
-            'gps_case_props_deprecated_state': {
-                prop.name: prop.deprecated for prop in gps_case_props
-            },
+            'config': self.config.as_dict(fields=GeospatialConfigForm.Meta.fields),
+            'gps_case_props_deprecated_state': gps_case_props_deprecated_state,
             'target_grouping_name': GeoConfig.TARGET_SIZE_GROUPING,
             'min_max_grouping_name': GeoConfig.MIN_MAX_GROUPING,
+            'road_network_algorithm_slug': GeoConfig.ROAD_NETWORK_ALGORITHM,
         })
         return context
 

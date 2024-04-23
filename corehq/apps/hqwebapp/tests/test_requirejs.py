@@ -25,7 +25,6 @@ class TestRequireJS(SimpleTestCase):
                     return line
         return None
 
-
     @classmethod
     def setUpClass(cls):
         super(TestRequireJS, cls).setUpClass()
@@ -52,6 +51,11 @@ class TestRequireJS(SimpleTestCase):
 
         cls._run_jobs(cls.js_files, _categorize_file)
 
+    def _fail_with_message(self, description, errors):
+        errors = "\n".join(errors)
+        link = "https://commcare-hq.readthedocs.io/js-guide/dependencies.html##my-python-tests-are-failing-because-of-javascript"  # noqa: E501
+        self.fail(f"{description}:\n{errors}\n\nSee {link} for assistance.")
+
     def test_files_match_modules(self):
         errors = []
 
@@ -67,7 +71,7 @@ class TestRequireJS(SimpleTestCase):
         self._run_jobs(self.hqdefine_files, _test_file)
 
         if errors:
-            self.fail("Mismatched JS file/modules: \n{}".format("\n".join(errors)))
+            self._fail_with_message("Mismatched JS file/modules", errors)
 
     def test_requirejs_disallows_hqimport(self):
         errors = []
@@ -95,4 +99,4 @@ class TestRequireJS(SimpleTestCase):
         self._run_jobs(test_files, _test_file)
 
         if errors:
-            self.fail("hqImport used in RequireJS modules: \n{}".format("\n".join(errors)))
+            self._fail_with_message("hqImport used in RequireJS modules", errors)
