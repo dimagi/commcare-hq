@@ -36,7 +36,7 @@ from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_missing,
     case_property_query,
-    case_property_range_query,
+    case_property_date_range,
     reverse_index_case_query,
     wrap_case_search_hit,
 )
@@ -300,7 +300,7 @@ class CaseSearchQueryBuilder:
 
     def _get_daterange_query(self, criteria):
         startdate, enddate = criteria.get_date_range()
-        return case_property_range_query(criteria.key, gte=startdate, lte=enddate)
+        return case_property_date_range(criteria.key, gte=startdate, lte=enddate)
 
     def _get_case_property_query(self, criteria):
         if criteria.has_multiple_terms and criteria.has_missing_filter:
