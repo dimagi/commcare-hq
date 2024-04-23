@@ -19,13 +19,16 @@
   </div>
   {% if result %}
     <h3>Logs</h3>
-    <pre class="text-bg-light border rounded-3">{{ log }}
-      {% if error %}
-        <div class="text-bg-danger">
+    <pre class="text-bg-light border rounded-3 p-3">{{ log }}</pre>
+    {% if error %}
+      <div class="text-bg-danger p-3">
         <strong>Error:</strong> {{ error }}
       </div>
-      {% endif %}
-    </pre>
+    {% else %}
+      <div class="text-bg-success p-3">
+        <strong>Success</strong>
+      </div>
+    {% endif %}
   {% endif %}
   <form method="post" class="mt-3">
     {% csrf_token %}

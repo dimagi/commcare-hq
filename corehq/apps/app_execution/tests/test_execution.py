@@ -20,7 +20,7 @@ APP = Menu(
 )
 
 
-class TestDiscovery(SimpleTestCase):
+class TestExecution(SimpleTestCase):
     def test_execution(self):
         workflow = AppWorkflow(steps=[
             CommandStep("Case List"),
@@ -32,4 +32,5 @@ class TestDiscovery(SimpleTestCase):
             ])
         ])
         session = FormplayerSession(MockFormplayerClient(APP), app_id="app_id")
+        session.__dict__["app_build_id"] = "app_build_id"  # prime cache to avoid DB hit
         execute_workflow(session, workflow)
