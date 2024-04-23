@@ -92,7 +92,9 @@ import textwrap
 
 from memoized import memoized
 
+from corehq.toggles import ES_QUERY_PREFERENCE
 from corehq.util.files import TransientTempfile
+from corehq.util.global_request import get_request_domain
 
 from . import aggregations, filters, queries
 from .const import SCROLL_SIZE, SIZE_LIMIT
@@ -150,6 +152,7 @@ class ESQuery(object):
                 }
             }
         }
+        self.set_preference()
 
     def clone(self):
         adapter = self.adapter
@@ -292,6 +295,18 @@ class ESQuery(object):
     def enable_profiling(self):
         query = self.clone()
         query.es_query['profile'] = True
+        return query
+
+    def set_preference(self):
+        """
+        If the specified domain has ES_QUERY_PREFERENCE enabled, use domain as key to route to a consistent set
+        of shards.
+        https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-preference.html
+        """
+        domain = get_request_domain()
+        query = self.clone()
+        if ES_QUERY_PREFERENCE.enabled(domain):
+            query.es_query['preference'] = domain
         return query
 
     def add_query(self, new_query, clause):
