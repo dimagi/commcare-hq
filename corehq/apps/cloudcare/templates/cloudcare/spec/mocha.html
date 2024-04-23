@@ -28,8 +28,6 @@
 {% endblock %}
 
 {% block fixtures %}
-  {% include "cloudcare/partials/case_list.html" %}
-
   <div id="restore-as-region"></div>
   <div id="phone-mode-navigation"></div>
   <div id="breadcrumb-region"></div>
@@ -37,26 +35,7 @@
   <div id="menu-region" class="container"></div>
   <div id="sidebar-region" class="container"></div>
 
-  {% include 'cloudcare/partials/form_entry_templates.html' %}
-  {% include 'cloudcare/partials/debugger.html' %}
-  {% include 'cloudcare/partials/grid_view/grid.html' %}
-  {% include 'cloudcare/partials/grid_view/landing_page_app.html' %}
-  {% include 'cloudcare/partials/grid_view/row.html' %}
-  {% include 'cloudcare/partials/grid_view/single_app.html' %}
-  {% include 'cloudcare/partials/settings_view.html' %}
-  {% include 'cloudcare/partials/case_detail.html' %}
-  {% include 'cloudcare/partials/case_list.html' %}
-  {% include 'cloudcare/partials/menu_list.html' %}
-  {% include 'cloudcare/partials/sessions/item.html' %}
-  {% include 'cloudcare/partials/sessions/list.html' %}
-  {% include 'cloudcare/partials/users/restore_as.html' %}
-  {% include 'cloudcare/partials/users/restore_as_banner.html' %}
-  {% include 'cloudcare/partials/users/user_data.html' %}
-  {% include 'cloudcare/partials/users/user_row.html' %}
-  {% include 'cloudcare/partials/query/group.html' %}
-  {% include 'cloudcare/partials/query/item.html' %}
-  {% include 'cloudcare/partials/query/list.html' %}
   {% include 'cloudcare/partials/confirmation_modal.html' %}
-  {% include 'cloudcare/partials/progress.html' %}
+  {% include 'cloudcare/partials/all_templates.html' %}
 
 {% endblock %}
