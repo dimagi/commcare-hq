@@ -133,17 +133,17 @@ def auto_deactivate_removed_sso_users():
             idp_users = idp.get_all_members_of_the_idp()
         except EntraVerificationFailed as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
-            send_deactivation_skipped_email(idp=idp, failure_reason=MSGraphIssue.VERIFICATION_ERROR,
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.VERIFICATION_ERROR,
                                             error=EntraVerificationFailed.error,
                                             error_description=EntraVerificationFailed.message)
             continue
         except requests.exceptions.HTTPError as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
-            send_deactivation_skipped_email(idp=idp, failure_reason=MSGraphIssue.HTTP_ERROR)
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.HTTP_ERROR)
             continue
         except Exception as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
-            send_deactivation_skipped_email(idp=idp, failure_reason=MSGraphIssue.VERIFICATION_ERROR,
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.VERIFICATION_ERROR,
                                             error="verification error",
                                             error_description={str(e)})
             continue
