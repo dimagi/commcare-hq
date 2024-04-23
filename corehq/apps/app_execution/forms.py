@@ -20,6 +20,7 @@ class AppWorkflowConfigForm(forms.ModelForm):
             "app_id",
             "user_id",
             "workflow",
+            "sync_before_run",
             "form_mode",
             "run_every",
             "notification_emails"

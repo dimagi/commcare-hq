@@ -15,6 +15,7 @@ from django.http import HttpRequest
 from corehq.apps.app_execution import const, data_model
 from corehq.apps.app_execution.exceptions import AppExecutionError
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.formplayer_api.sync_db import sync_db
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.hmac_request import get_hmac_digest
 from dimagi.utils.web import get_url_base
@@ -178,6 +179,7 @@ class FormplayerSession:
     client: BaseFormplayerClient
     app_id: str
     form_mode: str = const.FORM_MODE_HUMAN
+    sync_first: bool = False
     data: dict = None
     log: StringIO = dataclasses.field(default_factory=StringIO)
 
@@ -199,6 +201,12 @@ class FormplayerSession:
             build_on = app.built_on.strftime("%B %d, %Y")
         print(f"Using app '{app.name}' ({app._id} - {build_on})", file=self.log)
         return app._id
+
+    def sync(self):
+        if not self.sync_first:
+            return
+        print(f"Syncing user data for {self.client.username}", file=self.log)
+        sync_db(self.client.domain, self.client.username)
 
     @property
     def current_screen(self):
@@ -297,6 +305,8 @@ class FormplayerSession:
         self.log_step(step)
 
     def log_step(self, step, indent="  ", skipped=False):
+        if not step:
+            print("Starting app session:\n", file=self.log)
         skipped_log = " (ignored)" if skipped else ""
         print(f"Execute step: {step or 'START'} {skipped_log}", file=self.log)
         if skipped:
@@ -325,6 +335,7 @@ class FormplayerSession:
 
 def execute_workflow(session: FormplayerSession, workflow):
     with session:
+        session.sync()
         execute_step(session, None)
         for step in workflow.steps:
             execute_step(session, step)

@@ -34,6 +34,7 @@ class AppWorkflowConfig(models.Model):
     django_user = models.ForeignKey(User, on_delete=models.CASCADE)
     workflow = AttrsObject(AppWorkflow)
     form_mode = models.CharField(max_length=255, choices=FORM_MODE_CHOICES)
+    sync_before_run = models.BooleanField(default=False, help_text="Sync user data before running")
     run_every = models.IntegerField(default=0, help_text="Number of minutes between runs")
     last_run = models.DateTimeField(null=True, blank=True)
     notification_emails = ArrayField(models.EmailField(), default=list, help_text="Emails to notify on failure")
@@ -54,4 +55,4 @@ class AppWorkflowConfig(models.Model):
             username=self.django_user.username,
             user_id=self.user_id
         )
-        return FormplayerSession(client, self.app_id, self.form_mode)
+        return FormplayerSession(client, self.app_id, self.form_mode, self.sync_before_run)
