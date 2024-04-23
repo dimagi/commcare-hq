@@ -19,9 +19,10 @@ class SessionDetailsViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(SessionDetailsViewTest, cls).setUpClass()
-        cls.domain = Domain(name="toyland", is_active=True)
-        cls.domain.save()
+        cls.domain = Domain.get_or_create_with_name('toyland', is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
         cls.couch_user = CommCareUser.create(cls.domain.name, 'bunkey', '123', None, None)
+        cls.addClassCleanup(cls.couch_user.delete, cls.domain.name, deleted_by=None)
         cls.sql_user = cls.couch_user.get_django_user()
 
         cls.expected_response = {
@@ -45,12 +46,6 @@ class SessionDetailsViewTest(TestCase):
         self.session.save()
         self.session_key = self.session.session_key
         self.expected_response['authToken'] = self.session_key
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.couch_user.delete(cls.domain.name, deleted_by=None)
-        cls.domain.delete()
-        super(SessionDetailsViewTest, cls).tearDownClass()
 
     def _assert_session_expiry_in_minutes(self, expected_minutes, actual_time_string):
         delta = parse_datetime(actual_time_string) - datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
