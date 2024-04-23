@@ -65,14 +65,9 @@ auth_logger = logging.getLogger("commcare_auth")
 OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
 
 
-class HttpResponsePermanentRedirect(HttpResponseRedirectBase):
-    # django.http.response has a class with this name, but it returns
-    # status code 301: Moved Permanently, which is different from 308:
-    #
-    #     The request method and the body will not be altered, whereas
-    #     301 may incorrectly sometimes be changed to a GET method.
-    #     -- https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308
-    status_code = 308
+class HttpResponseTemporaryRedirect(HttpResponseRedirectBase):
+    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/307
+    status_code = 307
 
 
 def load_domain(req, domain):
@@ -689,7 +684,7 @@ def check_domain_migration(view_func):
                 #     We assume that the domain name is the same on both
                 #     environments.
                 url = urljoin(domain_obj.redirect_url, request.path)
-                return HttpResponsePermanentRedirect(url)
+                return HttpResponseTemporaryRedirect(url)
 
             auth_logger.info(
                 "Request rejected domain=%s reason=%s request=%s",

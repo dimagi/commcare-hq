@@ -116,7 +116,7 @@ class TestCheckDomainMigration(TestCase):
     ``corehq.apps.domain.decorators.check_domain_migration`` decorator.
 
     All relevant views are protected by that decorator during and after
-    data migration. These tests verify that the decorator returns a 308
+    data migration. These tests verify that the decorator returns a 307
     redirect response when the domain's ``redirect_url`` is set, and a
     503 service unavailable response when it is not set.
     """
@@ -144,7 +144,7 @@ class TestCheckDomainMigration(TestCase):
     def test_redirect_response(self):
         with _set_redirect_url():
             response = self._submit_form()
-            self.assertEqual(response.status_code, 308)
+            self.assertEqual(response.status_code, 307)
             self.assertEqual(
                 response.url,
                 'https://example.com/a/test-redirect-url/receiver/'
