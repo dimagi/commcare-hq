@@ -1,6 +1,7 @@
 from functools import cached_property
 
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import functions
 
@@ -35,6 +36,7 @@ class AppWorkflowConfig(models.Model):
     form_mode = models.CharField(max_length=255, choices=FORM_MODE_CHOICES)
     run_every = models.IntegerField(default=0, help_text="Number of minutes between runs")
     last_run = models.DateTimeField(null=True, blank=True)
+    notification_emails = ArrayField(models.EmailField(), default=list, help_text="Emails to notify on failure")
 
     objects = AppWorkflowManager()
 

@@ -14,7 +14,16 @@ class AppWorkflowConfigForm(forms.ModelForm):
 
     class Meta:
         model = AppWorkflowConfig
-        fields = ("name", "domain", "app_id", "user_id", "workflow", "form_mode", "run_every")
+        fields = (
+            "name",
+            "domain",
+            "app_id",
+            "user_id",
+            "workflow",
+            "form_mode",
+            "run_every",
+            "notification_emails"
+        )
         widgets = {
             "form_mode": forms.RadioSelect(),
         }
@@ -26,9 +35,7 @@ class AppWorkflowConfigForm(forms.ModelForm):
         self.helper.layout = crispy.Layout(
             *self.fields.keys(),
             hqcrispy.FormActions(
-                twbscrispy.StrictButton("Save",
-                                        type='submit',
-                                        css_class='btn-primary'),
+                twbscrispy.StrictButton("Save", type='submit', css_class='btn-primary')
             ),
         )
 
