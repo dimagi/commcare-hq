@@ -57,13 +57,8 @@ def subcase(node, context):
     subcase_query = _parse_normalize_subcase_query(node)
     ids = _get_parent_case_ids_matching_subcase_query(subcase_query, context)
     if subcase_query.invert:
-        if not ids:
-            return filters.match_all()
-        return filters.NOT(filters.doc_id(ids))
-    # uncomment once we are on ES > 2.4
-    # if not ids:
-    #     return filters.match_none()
-    return filters.doc_id(ids)
+        return filters.NOT(filters.doc_id(ids)) if ids else filters.match_all()
+    return filters.doc_id(ids) if ids else filters.match_none()
 
 
 def _get_parent_case_ids_matching_subcase_query(subcase_query, context):

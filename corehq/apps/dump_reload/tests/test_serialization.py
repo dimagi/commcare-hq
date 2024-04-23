@@ -12,6 +12,8 @@ from corehq.apps.users.models_role import Permission, RolePermission, UserRole
 from corehq.form_processor.models.cases import CaseTransaction, CommCareCase
 from corehq.form_processor.models.forms import XFormInstance, XFormOperation
 from corehq.apps.registry.models import DataRegistry, RegistryGrant
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 
 
 class TestJSONFieldSerialization(SimpleTestCase):
@@ -110,3 +112,19 @@ class TestForeignKeyFieldSerialization(SimpleTestCase):
         deserialized_model = json.loads(output_stream.getvalue())
         fk_field = deserialized_model['fields']['form']
         self.assertEqual(fk_field, 'abc123')
+
+
+class TestEncryptedFieldSerialization(SimpleTestCase):
+
+    def test_encrypted_fields_are_reset_on_model_that_provides_encrypted_fields(self):
+        test_data = ConnectionSettings(
+            domain="test", name="test-connection-settings", url="http://www.example.com", password='abc123'
+        )
+
+        output_stream = StringIO()
+        with patch('corehq.apps.dump_reload.sql.dump.get_objects_to_dump', return_value=[test_data]):
+            SqlDataDumper('test', [], []).dump(output_stream)
+
+        deserialized_model = json.loads(output_stream.getvalue())
+        self.assertEqual(deserialized_model['fields']['password'], PASSWORD_PLACEHOLDER)
+        self.assertEqual(deserialized_model['fields']['name'], 'test-connection-settings')

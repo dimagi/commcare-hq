@@ -372,7 +372,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
     def test_subcase_exists__filter_no_match(self):
         parsed = parse_xpath("subcase-exists('father', name='Mace')")
-        expected_filter = filters.doc_id([])
+        expected_filter = filters.match_none()
         built_filter = build_filter_from_ast(parsed, SearchFilterContext(self.domain))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
@@ -396,7 +396,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
     def test_subcase_count__filter_no_match(self):
         parsed = parse_xpath("subcase-count('father', house='Martel') > 0")
-        expected_filter = filters.doc_id([])
+        expected_filter = filters.match_none()
         built_filter = build_filter_from_ast(parsed, SearchFilterContext(self.domain))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
@@ -422,7 +422,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
     def test_subcase_count_no_match(self):
         parsed = parse_xpath("subcase-count('father', house='Tyrell') > 2")
-        expected_filter = filters.doc_id([])
+        expected_filter = filters.match_none()
         built_filter = build_filter_from_ast(parsed, SearchFilterContext(self.domain))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
@@ -440,6 +440,6 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
     def test_subcase_filter_relationship_no_hits(self):
         parsed = parse_xpath("subcase-count('grandmother', house='Tyrell') > 1")
-        expected_filter = filters.doc_id([])
+        expected_filter = filters.match_none()
         built_filter = build_filter_from_ast(parsed, SearchFilterContext(self.domain))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)

@@ -28,8 +28,6 @@
 {% endblock %}
 
 {% block fixtures %}
-  {% include "cloudcare/partials/case_list.html" %}
-
   <div id="restore-as-region"></div>
   <div id="phone-mode-navigation"></div>
   <div id="breadcrumb-region"></div>
@@ -37,17 +35,7 @@
   <div id="menu-region" class="container"></div>
   <div id="sidebar-region" class="container"></div>
 
-  {% include 'cloudcare/partials/form_entry_templates.html' %}
-  {% include 'cloudcare/partials/debugger.html' %}
-  {% include 'cloudcare/partials/grid_view.html' %}
-  {% include 'cloudcare/partials/settings_view.html' %}
-  {% include 'cloudcare/partials/case_detail.html' %}
-  {% include 'cloudcare/partials/case_list.html' %}
-  {% include 'cloudcare/partials/menu_list.html' %}
-  {% include 'cloudcare/partials/users.html' %}
-  {% include 'cloudcare/partials/session_list.html' %}
-  {% include 'cloudcare/partials/query_view.html' %}
   {% include 'cloudcare/partials/confirmation_modal.html' %}
-  {% include 'cloudcare/partials/progress.html' %}
+  {% include 'cloudcare/partials/all_templates.html' %}
 
 {% endblock %}
