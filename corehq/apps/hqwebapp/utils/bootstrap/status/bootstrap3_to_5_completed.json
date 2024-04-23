@@ -37,6 +37,7 @@
     "javascript": [
       "js/profile_case_search.js",
       "js/case_search.js"
-    ]
+    ],
+    "is_complete": true
   }
 }

@@ -1,6 +1,8 @@
 import difflib
 import json
+import os
 from pathlib import Path
+import re
 import shutil
 
 from django.core.management import BaseCommand
@@ -79,10 +81,14 @@ def get_bootstrap5_filepaths(full_diff_config):
             path_bootstrap5 = COREHQ_BASE_DIR / parent_path / directory_bootstrap5
 
             if compare_all_files:
-                migrated_files = [
-                    [x.name, x.name] for x in path_bootstrap3.glob('**/*')
-                    if x.is_file() and not x.name.startswith(".")
-                ]
+                migrated_files = []
+                for path in path_bootstrap3.glob('**/*'):
+                    if path.is_file() and not path.name.startswith("."):
+                        path = os.path.relpath(path, path_bootstrap3)
+                        pair = [path, path]
+                        if file_type == "stylesheet":
+                            pair[1] = re.sub(r'\.less$', '.scss', pair[1])
+                        migrated_files.append(pair)
 
             for filename_bootstrap3, filename_bootstrap5 in migrated_files:
                 diff_filename = get_diff_filename(filename_bootstrap3, filename_bootstrap5, file_type)

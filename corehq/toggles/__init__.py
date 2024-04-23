@@ -1008,6 +1008,17 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
+NO_SCROLL_IN_CASE_SEARCH = StaticToggle(
+    'no_scroll_in_case_search',
+    "Do not use scroll queries in case search elasticsearch queries",
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This toggle replaces scroll queries in case search ancestor functions with
+    normal search queries.
+    """
+)
+
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
@@ -2526,6 +2537,17 @@ ALLOW_WEB_APPS_RESTRICTION = StaticToggle(
     When enabled, the domain is eligible to be restricted from using web apps/app preview. The intention is
     to only enable this for domains in extreme cases where their formplayer restores are resource intensive
     to the point where they can degrade web apps performance for the entire system.
+    """
+)
+
+ES_QUERY_PREFERENCE = StaticToggle(
+    'es_query_preference',
+    'Sets preference option on ES queries',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    When enabled, ES queries for this domain will be routed to the same shards for every request. This helps
+    ES queries take advantage of caching on ES nodes.
     """
 )
 
