@@ -10,17 +10,7 @@
  * @copyright 2015 asvd <heliosframework@gmail.com>
  */
 
-/* globals exports */
-
-(function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-        define(['exports'], factory);
-    } else if (typeof exports !== 'undefined') {
-        factory(exports);
-    } else {
-        factory((root.dragscroll = {}));
-    }
-}(this, function (exports) {
+hqDefine("cloudcare/js/preview_app/dragscroll", ["jquery"], function ($) {
     var _window = window;
     var _document = document;
     var mousemove = 'mousemove';
@@ -85,13 +75,8 @@
         }
     };
 
-
-    if (_document.readyState === 'complete') {
+    $(function () {
         reset();
-    } else {
-        _window[addEventListener]('load', reset, 0);
-    }
-
-    exports.reset = reset;
-}));
+    });
+});
 
