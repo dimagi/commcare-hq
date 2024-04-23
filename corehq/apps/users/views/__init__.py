@@ -12,6 +12,7 @@ from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
@@ -512,27 +513,6 @@ class BaseRoleAccessView(BaseUserSettingsView):
         return self.domain_object.has_privilege(
             privileges.RESTRICT_ACCESS_BY_LOCATION)
 
-    @property
-    @memoized
-    def web_apps_privilege(self):
-        return self.domain_object.has_privilege(
-            privileges.CLOUDCARE
-        )
-
-    @property
-    @memoized
-    def release_management_privilege(self):
-        return self.domain_object.has_privilege(privileges.RELEASE_MANAGEMENT)
-
-    @property
-    @memoized
-    def lite_release_management_privilege(self):
-        """
-        Only true if domain does not have privileges.RELEASE_MANAGEMENT
-        """
-        return self.domain_object.has_privilege(privileges.LITE_RELEASE_MANAGEMENT) and \
-            not self.domain_object.has_privilege(privileges.RELEASE_MANAGEMENT)
-
 
 @method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(toggles.ENTERPRISE_USER_MANAGEMENT.required_decorator(), name='dispatch')
@@ -743,9 +723,7 @@ class ListRolesView(BaseRoleAccessView):
                 or toggles.DHIS2_INTEGRATION.enabled(self.domain)
                 or toggles.GENERIC_INBOUND_API.enabled(self.domain)
             ),
-            'web_apps_privilege': self.web_apps_privilege,
-            'erm_privilege': self.release_management_privilege,
-            'mrm_privilege': self.lite_release_management_privilege,
+            'web_apps_choices': get_cloudcare_apps(self.domain),
             'attendance_tracking_privilege': (
                 toggles.ATTENDANCE_TRACKING.enabled(self.domain)
                 and domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)

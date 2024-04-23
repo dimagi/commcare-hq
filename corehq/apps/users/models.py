@@ -161,6 +161,7 @@ PARAMETERIZED_PERMISSIONS = {
     'view_data_registry_contents': 'view_data_registry_contents_list',
     'view_reports': 'view_report_list',
     'view_tableau': 'view_tableau_list',
+    'access_web_apps': 'web_apps_list',
 }
 
 
@@ -193,6 +194,7 @@ class HqPermissions(DocumentSchema):
     access_all_locations = BooleanProperty(default=True)
     access_api = BooleanProperty(default=False)
     access_web_apps = BooleanProperty(default=False)
+    web_apps_list = StringListProperty(default=[])
     edit_messaging = BooleanProperty(default=False)
     access_release_management = BooleanProperty(default=False)
     edit_linked_configurations = BooleanProperty(default=False)
@@ -322,6 +324,9 @@ class HqPermissions(DocumentSchema):
 
     def view_report(self, report):
         return self.view_reports or report in self.view_report_list
+
+    def access_web_app(self, app_id):
+        return self.access_web_apps or app_id in self.web_apps_list
 
     def view_tableau_viz(self, viz_id):
         if not self.access_all_locations:
@@ -1580,6 +1585,17 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             permission_slug for permission_slug in self._get_viewable_report_slugs(domain)
             if permission_slug in EXPORT_PERMISSIONS
         ])
+
+    def can_access_any_web_apps(self, domain=None):
+        if self.can_access_web_apps(domain):
+            return True
+        if domain:
+            try:
+                role = self.get_role(domain)
+                return role.permissions.web_apps_list
+            except DomainMembershipError:
+                pass
+        return False
 
     def can_view_some_tableau_viz(self, domain):
         if not self.can_access_all_locations(domain):
