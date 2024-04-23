@@ -152,7 +152,16 @@ class ESQuery(object):
                 }
             }
         }
-        self.set_preference()
+        self._set_preference()
+
+    def _set_preference(self):
+        """
+        If the specified domain has ES_QUERY_PREFERENCE enabled, use domain as key to route to a consistent set
+        of shards. See https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-preference.html
+        """
+        domain = get_request_domain()
+        if ES_QUERY_PREFERENCE.enabled(domain):
+            self.es_query['preference'] = domain
 
     def clone(self):
         adapter = self.adapter
@@ -296,19 +305,6 @@ class ESQuery(object):
         query = self.clone()
         query.es_query['profile'] = True
         return query
-
-    def set_preference(self):
-        """
-        If the specified domain has ES_QUERY_PREFERENCE enabled, use domain as key to route to a consistent set
-        of shards.
-        https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-preference.html
-        """
-        domain = get_request_domain()
-        if ES_QUERY_PREFERENCE.enabled(domain):
-            query = self.clone()
-            query.es_query['preference'] = domain
-            return query
-        return self
 
     def add_query(self, new_query, clause):
         """
