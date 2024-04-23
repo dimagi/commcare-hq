@@ -10,6 +10,17 @@ from corehq.apps.es.case_search import CaseSearchES, reverse_index_case_query
 from corehq.toggles import NO_SCROLL_IN_CASE_SEARCH
 
 
+def _should_scroll(context):
+    if not isinstance(context.domain, list):
+        domains = [context.domain]
+    else:
+        domains = context.domain
+    for domain in domains:
+        if NO_SCROLL_IN_CASE_SEARCH.enabled(domain):
+            return False
+    return True
+
+
 def is_ancestor_comparison(node):
     """Returns whether a particular AST node is an ancestor comparison
 
@@ -92,10 +103,10 @@ def _child_case_lookup(context, case_ids, identifier):
     """
     es_query = CaseSearchES().domain(context.domain).get_child_cases(case_ids, identifier)
     context.profiler.add_query('_child_case_lookup', es_query)
-    if NO_SCROLL_IN_CASE_SEARCH.enabled(context.domain):
-        return es_query.get_ids()
-    else:
+    if _should_scroll(context.domain):
         return es_query.scroll_ids()
+    else:
+        return es_query.get_ids()
 
 
 def ancestor_exists(node, context):
@@ -158,7 +169,7 @@ def _get_case_ids_from_ast_filter(context, filter_node):
                 new_query
             )
 
-        if NO_SCROLL_IN_CASE_SEARCH.enabled(context.domain):
-            return es_query.get_ids()
-        else:
+        if _should_scroll(context.domain):
             return es_query.scroll_ids()
+        else:
+            return es_query.get_ids()
