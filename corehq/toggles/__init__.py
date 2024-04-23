@@ -1008,6 +1008,17 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
+NO_SCROLL_IN_CASE_SEARCH = StaticToggle(
+    'no_scroll_in_case_search',
+    "Do not use scroll queries in case search elasticsearch queries",
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This toggle replaces scroll queries in case search ancestor functions with
+    normal search queries.
+    """
+)
+
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
@@ -2529,6 +2540,17 @@ ALLOW_WEB_APPS_RESTRICTION = StaticToggle(
     """
 )
 
+ES_QUERY_PREFERENCE = StaticToggle(
+    'es_query_preference',
+    'Sets preference option on ES queries',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    When enabled, ES queries for this domain will be routed to the same shards for every request. This helps
+    ES queries take advantage of caching on ES nodes.
+    """
+)
+
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
@@ -2784,4 +2806,13 @@ SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
+)
+
+
+RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
+    slug='restrict_data_source_rebuilds',
+    label='Restrict data source rebuilt from UI',
+    tag=TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
 )
