@@ -1,7 +1,3 @@
-{% load hq_shared_tags %}
-{% load i18n %}
-
-
 <script type="text/template" id="maybe-custom-badge-template">
   <% /*
   Ensure backwards compatibility with formplayer backend
@@ -12,5 +8,4 @@
   <% if (typeof badgeText !== 'undefined' && badgeText) { %>
   <span class="badge"><%- badgeText %></span>
   <% } %>
-
 </script>
