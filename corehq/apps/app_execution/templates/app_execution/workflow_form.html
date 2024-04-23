@@ -1,10 +1,8 @@
-{% extends "hqadmin/hqadmin_base_report.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block title %}Automatically Executed App Workflows{% endblock %}
-{% block js-inline %} {{ block.super }}
-{% endblock %}
-{% block reportcontent %}
+{% block page_content %}
   {% crispy form %}
 {% endblock %}

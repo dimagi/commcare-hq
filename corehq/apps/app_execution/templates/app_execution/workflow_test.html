@@ -1,22 +1,38 @@
-{% extends "hqadmin/hqadmin_base_report.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block title %}Automatically Executed App Workflows{% endblock %}
 {% block js-inline %} {{ block.super }}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.querySelector('form');
+      form.addEventListener('submit', function (event) {
+        document.getElementById("submit-button").disabled = true;
+        document.getElementById("loading-indicator").style.display = "block";
+      });
+    });
+  </script>
 {% endblock %}
-{% block reportcontent %}
+{% block page_content %}
   <div class="mb-3">
     <h2>Testing {{ workflow.name }}</h2>
     <a class='btn btn-primary' href="{% url 'app_execution:edit_workflow' workflow.id %}">Edit</a>
   </div>
-  <h3>Logs</h3>
-  <pre>
-  {{ log }}
-  {% if error %}
-    <div class="alert-danger">
-      <strong>Error:</strong> {{ error }}
-    </div>
+  {% if result %}
+    <h3>Logs</h3>
+    <pre class="text-bg-light border rounded-3">
+    {{ log }}
+      {% if error %}
+        <div class="text-bg-danger">
+        <strong>Error:</strong> {{ error }}
+      </div>
+      {% endif %}
+    </pre>
   {% endif %}
-  </pre>
+  <form method="post" class="mt-3">
+    {% csrf_token %}
+    <button id="submit-button" type="submit" class="btn btn-primary" data-loading-text="Running...">
+      Run {% if result %}Again{% endif %}</button>
+  </form>
 {% endblock %}
