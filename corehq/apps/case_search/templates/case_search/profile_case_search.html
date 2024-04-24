@@ -72,7 +72,7 @@
         </div>
         <div class="card-body panel-collapse collapse" data-bind="attr: { id: 'query-' + $index() }">
           <!-- ko if: profile_url -->
-            <a class="btn btn-info" data-bind="attr: {href: profile_url}">Download Profile JSON</a>
+            <a class="btn btn-info float-end" data-bind="attr: {href: profile_url}">Download Profile JSON</a>
           <!-- /ko -->
           <pre data-bind="text: JSON.stringify(query, null, 4)"></pre>
         </div>
