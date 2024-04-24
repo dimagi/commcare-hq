@@ -413,6 +413,7 @@ es
  0006_verify_es2_indices_reindexed
  0007_init_indices_for_fresh_es_5
  0008_add_doc_id_to_all_mappings
+ 0009_add_indices_for_reindex_in_es5
 events
  0001_add_events_model
  0002_attendancetrackingconfig
