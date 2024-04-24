@@ -26,7 +26,7 @@ hqDefine('users/js/roles',[
             permissionText: 'Change me',
             accessNoneText: gettext("No Access"),
             accessAllText: gettext("Access All"),
-            accessSelectedText: gettext("Access Selected"),
+            accessSelectedText: gettext("Limited Access"),
             listHeading: gettext("Select which items the role can access:"),
         });
         const [NONE, ALL, SELECTED] = ["none", "all", "selected"];
@@ -110,6 +110,17 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
+                data.accessWebAppsPermission = {
+                    all: data.permissions.access_web_apps,
+                    specific: ko.utils.arrayMap(root.webAppsChoices, function (app) {
+                        return {
+                            slug: app._id,
+                            name: app.name,
+                            value: data.permissions.web_apps_list.indexOf(app._id) !== -1,
+                        };
+                    }),
+                };
+
                 data.manageRegistryPermission = {
                     all: data.permissions.manage_data_registry,
                     specific: ko.utils.arrayMap(root.dataRegistryChoices, function (registry) {
@@ -167,6 +178,7 @@ hqDefine('users/js/roles',[
                 });
                 self.reportPermissions.filteredSpecific = filterSpecific(self.reportPermissions);
                 self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
+                self.accessWebAppsPermission.filteredSpecific = filterSpecific(self.accessWebAppsPermission);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
                 self.viewRegistryContentsPermission.filteredSpecific = filterSpecific(self.viewRegistryContentsPermission);
                 self.commcareAnalyticsRoles.filteredSpecific = filterSpecific(self.commcareAnalyticsRoles);
@@ -273,22 +285,6 @@ hqDefine('users/js/roles',[
                         showViewCheckbox: false,
                         viewCheckboxLabel: "view-data-checkbox",
                         screenReaderEditAndViewText: gettext("Edit & View Data"),
-                        screenReaderViewOnlyText: null,
-                        showAllowCheckbox: false,
-                        allowCheckboxText: null,
-                        allowCheckboxId: null,
-                        allowCheckboxPermission: null,
-                    },
-                    {
-                        showOption: root.webAppsPrivilege,
-                        editPermission: self.permissions.access_web_apps,
-                        viewPermission: null,
-                        text: gettext("<strong>Web Apps</strong> &mdash; use Web Apps for online data entry"),
-                        showEditCheckbox: true,
-                        editCheckboxLabel: "edit-web-apps-checkbox",
-                        showViewCheckbox: false,
-                        viewCheckboxLabel: "view-web-apps-checkbox",
-                        screenReaderEditAndViewText: gettext("Access Web Apps"),
                         screenReaderViewOnlyText: null,
                         showAllowCheckbox: false,
                         allowCheckboxText: null,
@@ -438,11 +434,11 @@ hqDefine('users/js/roles',[
 
                 var hasEmbeddedTableau = toggles.toggleEnabled("EMBEDDED_TABLEAU");
 
-                const linkedTitle = root.ermPrivilege ?
+                const linkedTitle = privileges.hasPrivilege('release_management') ?
                     gettext("Enterprise Release Management") : gettext("Multi-Environment Release Management");
                 self.erm = {
                     'title': linkedTitle,
-                    'visible': root.ermPrivilege || root.mrmPrivilege,
+                    'visible': privileges.hasPrivilege('release_management') || privileges.hasPrivilege('lite_release_management'),
                     'access_release_management': {
                         text: gettext('Linked Project Spaces'),
                         checkboxLabel: "erm-checkbox",
@@ -528,6 +524,16 @@ hqDefine('users/js/roles',[
                         }
                     ),
                 ];
+
+                self.webAppsPermissions = selectPermissionModel(
+                    'access_web_apps',
+                    self.accessWebAppsPermission,
+                    {
+                        permissionText: gettext("Use Web Apps for online data entry"),
+                        listHeading: gettext("Select which web apps the role has access to:"),
+                    }
+                );
+
                 // Automatically disable "Access APIs" when "Full Organization Access" is disabled
                 self.permissions.access_all_locations.subscribe(() => {
                     if (!self.permissions.access_all_locations() && self.permissions.access_api()) {
@@ -536,7 +542,8 @@ hqDefine('users/js/roles',[
                 });
 
                 self.validate = function () {
-                    self.registryPermissions.forEach((perm) => {
+                    let permissionsToValidate = self.registryPermissions.concat(self.webAppsPermissions);
+                    permissionsToValidate.forEach((perm) => {
                         if (perm.hasError()) {
                             throw interpolate(
                                 gettext('Select at least one item from the list for "%s"'),
@@ -575,6 +582,9 @@ hqDefine('users/js/roles',[
                 data.permissions.view_data_registry_contents_list = unwrapItemList(
                     data.viewRegistryContentsPermission.specific);
 
+                data.permissions.access_web_apps = data.accessWebAppsPermission.all;
+                data.permissions.web_apps_list = unwrapItemList(data.accessWebAppsPermission.specific);
+
                 data.permissions.commcare_analytics_roles = data.commcareAnalyticsRoles.all;
                 data.permissions.commcare_analytics_roles_list = unwrapItemList(
                     data.commcareAnalyticsRoles.specific);
@@ -593,9 +603,7 @@ hqDefine('users/js/roles',[
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
         self.dataRegistryChoices = o.dataRegistryChoices;
-        self.webAppsPrivilege = o.webAppsPrivilege;
-        self.ermPrivilege = o.ermPrivilege;
-        self.mrmPrivilege = o.mrmPrivilege;
+        self.webAppsChoices = o.webAppsChoices;
         self.attendanceTrackingPrivilege = o.attendanceTrackingPrivilege;
         self.unlockLinkedRoles = ko.observable(false);
         self.canEditLinkedData = o.canEditLinkedData;
