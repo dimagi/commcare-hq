@@ -414,6 +414,7 @@ class TestGeoJSONWriter(SimpleTestCase):
         table = self.geopoint_table_configuration(
             selected_geo_property="form.home",
         )
+        table.split_multiselects = True
         features = GeoJSONWriter().get_features(table, self._table_data(table=table, multi_column=True))
 
         feature_coordinates = [feature['geometry']['coordinates'] for feature in features]
@@ -428,6 +429,7 @@ class TestGeoJSONWriter(SimpleTestCase):
         table = self.geopoint_table_configuration(
             selected_geo_property="form.meta.location",
         )
+        table.split_multiselects = True
         features = GeoJSONWriter().get_features(table, self._table_data(table=table, multi_column=True))
 
         feature_coordinates = [feature['geometry']['coordinates'] for feature in features]

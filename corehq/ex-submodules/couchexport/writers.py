@@ -584,14 +584,6 @@ class GeoJSONWriter(JsonExportWriter):
 
         return table.selected_geo_property
 
-    @staticmethod
-    def _is_multiselect_split(table, data_table_headers):
-        """
-        Since we can't directly check whether the columns are split or not we're
-        deducing it from the number of columns.
-        """
-        return table.get_headers(split_columns=True) == data_table_headers
-
     def build_geo_features_from_data(
         self, data, geo_property_name, geo_column_index_func, geo_data_collector_func
     ):
@@ -673,7 +665,7 @@ class GeoJSONWriter(JsonExportWriter):
         geo_column_index_func = self.find_geo_data_column
         geo_data_collector_func = self.collect_geo_data
 
-        if self._is_multiselect_split(table, table_headers):
+        if getattr(table, 'split_multiselects', False):
             geo_column_index_func = self.find_geo_data_columns
             geo_data_collector_func = self.collect_geo_data_multi_column
 
