@@ -515,7 +515,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def get_all_rows(self):
-        es_results = self.es_queryset(user_ids=self.owner_ids)
+        es_results = self.es_queryset(owner_ids=self.owner_ids)
         buckets = es_results.aggregations.owners.buckets_list
         if self.missing_owners:
             buckets.append(es_results.aggregations.missing_owners.bucket)
