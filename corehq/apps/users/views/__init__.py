@@ -10,6 +10,7 @@ import six.moves.urllib.request
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
+from corehq.apps.custom_data_fields.models import PROFILE_SLUG
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
@@ -94,8 +95,8 @@ from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
     SetUserPasswordForm,
-    UpdateUserRoleForm,
     TableauUserForm,
+    WebUserFormSet,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
 from corehq.apps.users.models import (
@@ -284,8 +285,7 @@ class BaseEditUserView(BaseUserSettingsView):
             and (
                 self.request.couch_user.is_domain_admin(self.domain)
                 or not self.existing_role
-                or self.existing_role
-                in [choice[0] for choice in self.editable_role_choices]
+                or self.existing_role in [choice[0] for choice in self.editable_role_choices]
             )
         )
 
@@ -390,8 +390,8 @@ class EditWebUserView(BaseEditUserView):
             data = self.request.POST
         else:
             data = None
-        form = UpdateUserRoleForm(data=data, domain=self.domain, existing_user=self.editable_user,
-                                  request=self.request)
+        form = WebUserFormSet(data=data, domain=self.domain,
+            editable_user=self.editable_user, request_user=self.request.couch_user, request=self.request)
 
         if self.can_change_user_roles:
             try:
@@ -401,9 +401,9 @@ class EditWebUserView(BaseEditUserView):
                 messages.error(self.request, _("""
                     This user has no role. Please assign this user a role and save.
                 """))
-            form.load_roles(current_role=existing_role, role_choices=self.user_role_choices)
+            form.user_form.load_roles(current_role=existing_role, role_choices=self.user_role_choices)
         else:
-            del form.fields['role']
+            del form.user_form.fields['role']
 
         return form
 
@@ -423,16 +423,18 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def page_context(self):
+        profiles = [profile.to_json() for profile in self.form_user_update.custom_data.model.get_profiles()]
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
+            'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
+            'custom_fields_profiles': sorted(profiles, key=lambda x: x['name'].lower()),
+            'custom_fields_profile_slug': PROFILE_SLUG,
+            'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
         }
         if self.request.is_view_only:
             make_form_readonly(self.commtrack_form)
-        if (
-            self.request.project.commtrack_enabled
-            or self.request.project.uses_locations
-        ):
+        if self.request.project.commtrack_enabled or self.request.project.uses_locations:
             ctx.update({'update_form': self.commtrack_form})
         if TABLEAU_USER_SYNCING.enabled(self.domain):
             ctx.update({'tableau_form': self.tableau_form})
@@ -752,7 +754,21 @@ class ListRolesView(BaseRoleAccessView):
                 domain_has_privilege(self.domain, privileges.DATA_FILE_DOWNLOAD),
             'export_ownership_enabled': domain_has_privilege(self.domain, privileges.EXPORT_OWNERSHIP),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
+            'commcare_analytics_roles': _commcare_analytics_roles_options(),
         }
+
+
+def _commcare_analytics_roles_options():
+    return [
+        {
+            'slug': 'gamma',
+            'name': 'Gamma'
+        },
+        {
+            'slug': 'sql_lab',
+            'name': 'SQL Lab'
+        }
+    ]
 
 
 @always_allow_project_access
@@ -906,8 +922,9 @@ def undo_remove_web_user(request, domain, record_id):
         reverse(ListWebUsersView.urlname, args=[domain]))
 
 
-# If any permission less than domain admin were allowed here, having that permission would give you the permission
-# to change the permissions of your own role such that you could do anything, and would thus be equivalent to
+# If any permission less than domain admin were allowed here, having that
+# permission would give you the permission to change the permissions of your
+# own role such that you could do anything, and would thus be equivalent to
 # having domain admin permissions.
 @json_error
 @domain_admin_required
@@ -1079,7 +1096,6 @@ class InviteWebUserView(BaseManageWebUserView):
             'email': domain_request.email if domain_request else None,
         }
         if 'location_id' in self.request.GET:
-            from corehq.apps.locations.models import SQLLocation
             loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
@@ -1127,7 +1143,7 @@ class InviteWebUserView(BaseManageWebUserView):
                     domain_request.send_approval_email()
                     create_invitation = False
                     user.add_as_web_user(self.domain, role=data["role"],
-                                         location_id=data.get("supply_point", None),
+                                         location_id=data.get("location_id", None),
                                          program_id=data.get("program", None))
                 messages.success(request, "%s added." % data["email"])
             else:
@@ -1141,9 +1157,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
-                # Preparation for location to replace supply_point
-                supply_point = data.get("supply_point", None)
-                data["location"] = SQLLocation.by_location_id(supply_point) if supply_point else None
+                location_id = data.pop("location_id", None)
+                data["location"] = SQLLocation.by_location_id(location_id) if location_id else None
                 invite = Invitation(**data)
                 invite.save()
                 invite.send_activation_email()

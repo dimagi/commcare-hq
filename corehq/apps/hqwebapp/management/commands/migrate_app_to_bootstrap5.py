@@ -1,4 +1,3 @@
-import subprocess
 import time
 from pathlib import Path
 
@@ -19,6 +18,12 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_bootstrap3_references_in_template,
     flag_crispy_forms_in_template,
 )
+from corehq.apps.hqwebapp.utils.bootstrap.git import (
+    has_pending_git_changes,
+    get_commit_string,
+    apply_commit,
+    ensure_no_pending_changes_before_continuing,
+)
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_app_template_folder,
     get_app_static_folder,
@@ -38,7 +43,6 @@ from corehq.apps.hqwebapp.utils.bootstrap.status import (
 from corehq.apps.hqwebapp.utils.management_commands import (
     get_break_line,
     get_confirmation,
-    select_option_from_prompt,
 )
 
 
@@ -62,6 +66,12 @@ class Command(BaseCommand):
             help="Run migration against already split bootstrap 5 files"
         )
         parser.add_argument(
+            '--skip-all',
+            action='store_true',
+            default=False,
+            help="Skip all confirmation when migrating."
+        )
+        parser.add_argument(
             '--verify-references',
             action='store_true',
             default=False,
@@ -77,6 +87,18 @@ class Command(BaseCommand):
         if get_completed_status(app_name):
             self.show_completed_message(app_name)
             return
+
+        self.skip_all = options.get('skip_all')
+        if self.skip_all:
+            confirm = get_confirmation("You have elected to skip all the confirmation prompts. "
+                                       "Are you sure?")
+            if not confirm:
+                return
+        if self.skip_all and has_pending_git_changes():
+            self.stdout.write(self.style.ERROR(
+                "You have un-committed changes. Please commit these changes before proceeding...\n"
+            ))
+            ensure_no_pending_changes_before_continuing()
 
         spec = get_spec('bootstrap_3_to_5')
         template_name = options.get('template_name')
@@ -103,22 +125,22 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             self.format_header(f"All done with Step 2 of migrating {app_name}!")
         ))
-        self.stdout.write("If this is the first time running this command, "
-                          "it's recommended to re-run the command\nat least one more "
-                          "time in the event of nested dependencies / inheritance "
-                          "in split files.\n\n")
+        self.stdout.write(self.style.WARNING(
+            "IMPORTANT: If this is the first time running this command, "
+            "it's recommended to re-run the command\nat least one more "
+            "time in the event of nested dependencies / inheritance "
+            "in split files.\n\n"
+        ))
         self.stdout.write("After this, please update `bootstrap5_diff_config.json` "
-                          "using:\n\n")
-        self.stdout.write(self.style.MIGRATE_LABEL(
+                          "using the command below and follow the next steps after.\n\n")
+        self.stdout.write(self.style.MIGRATE_HEADING(
             f"./manage.py build_bootstrap5_diffs --update_app {app_name}\n\n"
         ))
-        self.stdout.write("Once the changes to that file are committed, you can run:\n")
-        self.stdout.write(self.style.MIGRATE_LABEL(
-            "./mmanage.py build_bootstrap5_diffs\n\n"
-        ))
         self.stdout.write("Thank you for your dedication to this migration! <3\n\n")
-        self.stdout.write("You can also review the next steps here:"
-                          "\tcommcarehq.org/styleguide/b5/migration/#update-diffs\n\n\n")
+        self.stdout.write("You may review the full migration guide here:")
+        self.stdout.write(self.style.MIGRATE_HEADING(
+            "commcarehq.org/styleguide/b5/migration/\n\n\n"
+        ))
 
     def show_completed_message(self, app_name):
         self.clear_screen()
@@ -163,14 +185,21 @@ class Command(BaseCommand):
             self.clear_screen()
             file_type = "templates" if is_template else "javascript"
             self.stdout.write(self.format_header(f"Migrating {app_name} {file_type}..."))
-            confirm = get_confirmation(f'Ready to migrate "{short_path}" ({index + 1} of {len(files)})?',
-                                       default='y')
-            if not confirm:
-                self.write_response(f"ok, skipping {short_path}")
-                continue
+
+            if not self.skip_all:
+                confirm = get_confirmation(f'Ready to migrate "{short_path}" ({index + 1} of {len(files)})?',
+                                           default='y')
+                if not confirm:
+                    self.write_response(f"ok, skipping {short_path}")
+                    continue
 
             self.stdout.write("\n")
-            review_changes = get_confirmation('Do you want to review each change line-by-line here?', default='n')
+            if not self.skip_all:
+                review_changes = get_confirmation(
+                    'Do you want to review each change line-by-line here?', default='n'
+                )
+            else:
+                review_changes = False
             self.migrate_single_file(app_name, file_path, spec, is_template, review_changes)
 
     def migrate_single_file(self, app_name, file_path, spec, is_template, review_changes):
@@ -301,49 +330,45 @@ class Command(BaseCommand):
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
 
-        # jls
-        next_step = select_option_from_prompt(f'\nDo you want to [s]plit {short_path} into Bootstrap 3 and '
-                                              f'Bootstrap 5 versions, [o]verwrite original file with Bootstrap 5 '
-                                              f'changes, or [r]oll back changes? ', ['s', 'o', 'r'], default='s')
-        if next_step == 'r':
-            self.write_response("ok, canceling split and rolling back changes...")
-            return
-        do_split = next_step == 's'
+        if not self.skip_all:
+            confirm = get_confirmation(f'\nSplit {short_path} into Bootstrap 3 and Bootstrap 5 versions '
+                                       f'and update references?', default='y')
+            if not confirm:
+                self.write_response("ok, canceling split and rolling back changes...")
+                return
 
-        has_no_existing_changes = self.has_no_existing_changes()
+        has_changes = has_pending_git_changes()
+        if has_changes:
+            self.prompt_user_to_commit_changes()
+            has_changes = has_pending_git_changes()
 
+        bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
+        bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
+        bootstrap5_short_path = get_short_path(app_name, bootstrap5_path, is_template)
+        self.stdout.write(f"\n\nSplitting files:\n"
+                          f"\n\t{bootstrap3_short_path}"
+                          f"\n\t{bootstrap5_short_path}\n\n")
         if '/bootstrap5/' not in str(file_path):
-            if do_split:
-                bootstrap3_path, bootstrap5_path = self.get_split_file_paths(file_path)
-                bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
-                bootstrap5_short_path = get_short_path(app_name, bootstrap5_path, is_template)
-                self.stdout.write(f"\n\nSplitting files:\n"
-                                  f"\n\t{bootstrap3_short_path}"
-                                  f"\n\t{bootstrap5_short_path}\n\n")
-                self.save_split_templates(
-                    file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
-                )
-                self.stdout.write("\nUpdating references...")
-                references = update_and_get_references(short_path, bootstrap3_short_path, is_template)
-                if not is_template:
-                    # also check extension-less references for javascript files
-                    references.extend(update_and_get_references(
-                        get_requirejs_reference(short_path),
-                        get_requirejs_reference(bootstrap3_short_path),
-                        is_template=False
-                    ))
-                if references:
-                    self.stdout.write(f"\n\nUpdated references to {short_path} in these files:\n")
-                    self.stdout.write("\n".join(references))
-                else:
-                    self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
+            self.save_split_templates(
+                file_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines
+            )
+            self.stdout.write("\nUpdating references...")
+            references = update_and_get_references(short_path, bootstrap3_short_path, is_template)
+            if not is_template:
+                # also check extension-less references for javascript files
+                references.extend(update_and_get_references(
+                    get_requirejs_reference(short_path),
+                    get_requirejs_reference(bootstrap3_short_path),
+                    is_template=False
+                ))
+            if references:
+                self.stdout.write(f"\n\nUpdated references to {short_path} in these files:\n")
+                self.stdout.write("\n".join(references))
             else:
-                self.stdout.write(f"\n\nOverwriting {short_path}:\n")
-                with open(file_path, 'w') as file:
-                    file.writelines(bootstrap5_lines)
+                self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
         self.suggest_commit_message(
-            f"initial auto-migration for {short_path}, handling {short_path}",
-            show_apply_commit=has_no_existing_changes
+            f"initial auto-migration for {short_path}, splitting templates",
+            show_apply_commit=not has_changes
         )
 
     @staticmethod
@@ -464,25 +489,25 @@ class Command(BaseCommand):
     def enter_to_continue():
         input("\nENTER to continue...")
 
-    @staticmethod
-    def has_no_existing_changes():
-        status = subprocess.Popen(
-            ["git", "status"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        return "nothing to commit" in str(status.communicate()[0])
+    def prompt_user_to_commit_changes(self):
+        self.stdout.write(self.style.ERROR(
+            "\nYou have un-committed changes! Please commit these changes before proceeding. Thank you!"
+        ))
 
     def suggest_commit_message(self, message, show_apply_commit=False):
+        if self.skip_all and show_apply_commit:
+            apply_commit(message)
+            return
+
         self.stdout.write("\nNow would be a good time to review changes with git and "
                           "commit before moving on to the next template.")
-        self.stdout.write("\nSuggested command:")
-        commit_command = ["git", "commit", "--no-verify", f"--message=\"Bootstrap 5 Migration - {message}\""]
-        self.stdout.write(self.style.MIGRATE_LABEL(" ".join(commit_command)))
         if show_apply_commit:
-            confirm = get_confirmation("\nAutomatically apply this commit with the command above?")
+            confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
             if confirm:
-                subprocess.call([
-                    "git", "add", ".",
-                ])
-                subprocess.call(commit_command)
+                apply_commit(message)
+                return
+        commit_string = get_commit_string(message)
+        self.stdout.write("\n\nSuggested command:\n")
+        self.stdout.write(self.style.MIGRATE_HEADING(commit_string))
         self.stdout.write("\n")
         self.enter_to_continue()

@@ -4,7 +4,7 @@ hqDefine('case_search/js/case_search', [
     'jquery',
     'underscore',
     'knockout',
-    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/bootstrap5/alert_user',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,

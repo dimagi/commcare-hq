@@ -1,20 +1,18 @@
 import json
 import re
-from datetime import datetime
 
 from django.http import Http404
 from django.urls import reverse
 from django.utils.translation import gettext_lazy
 
+from django.utils.decorators import method_decorator
 from dimagi.utils.web import json_response
 
-from corehq.apps.case_search.models import (
-    case_search_enabled_for_domain,
-    extract_search_request_config,
-)
-from corehq.apps.case_search.utils import profile_case_search
+from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.decorators import cls_require_superuser_or_contractor
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.util.view_utils import BadRequest, json_error
 
 
@@ -37,6 +35,7 @@ class _BaseCaseSearchView(BaseDomainView):
         return self.render_to_response(self.get_context_data())
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class CaseSearchView(_BaseCaseSearchView):
     template_name = 'case_search/case_search.html'
     urlname = 'case_search'
@@ -98,6 +97,7 @@ class CaseSearchView(_BaseCaseSearchView):
         })
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ProfileCaseSearchView(_BaseCaseSearchView):
     template_name = 'case_search/profile_case_search.html'
     urlname = 'profile_case_search'
@@ -109,15 +109,12 @@ class ProfileCaseSearchView(_BaseCaseSearchView):
         data = json.loads(request.POST.get('q'))
         request_dict = data.get('request_dict', data)
         app_id = data.get('app_id', request.POST.get('app_id'))  # may be in either place
-        start = datetime.now()
-        config = extract_search_request_config(request_dict)
-        profiler = profile_case_search(
-            self.domain, request.couch_user, app_id, config)
-        runtime = (datetime.now() - start).total_seconds()
+        _, profiler = get_case_search_results_from_request(
+            self.domain, app_id, request.couch_user, request_dict, debug=True)
         return json_response({
             'primary_count': profiler.primary_count,
             'related_count': profiler.related_count,
             'timing_data': profiler.timing_context.to_dict(),
             'queries': profiler.queries,
-            'runtime': runtime,
+            'profile_results': profiler.profile_results,
         })
