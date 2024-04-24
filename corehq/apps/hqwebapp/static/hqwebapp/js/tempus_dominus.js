@@ -3,7 +3,7 @@
   * This replaces hqwebapp/js/daterangepicker.config, which is tied to bootstrap3
   *
   * It does not yet support predefined date ranges, which are not natively supported in tempus dominus.
-  * It also does not support a default date range, as tempus dominus's defaultDate only supports one date.
+  * It also does not yet support a default date range.
   */
 hqDefine("hqwebapp/js/tempus_dominus", [
     'underscore',
@@ -26,7 +26,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
 
     // This replaces createDateRangePicker in hqwebapp/js/daterangepicker.config
     let createDateRangePicker = function (el, separator) {
-        return new tempusDominus.TempusDominus(
+        let picker = new tempusDominus.TempusDominus(
             el, {
                 dateRange: true,
                 multipleDatesSeparator: separator,
@@ -46,6 +46,14 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 }),
             }
         );
+
+        // Handle single-date ranges
+        picker.subscribe("hide.td", function(e) {
+            if (picker.dates.picked.length == 1) {
+                picker.dates.setValue(picker.dates.picked[0], 0);
+                picker.dates.setValue(picker.dates.picked[0], 1);
+            }
+        });
     };
 
     let getDateRangeSeparator = function () {
