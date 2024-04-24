@@ -3840,6 +3840,34 @@ msgstr ""
 msgid "Choose a primary location"
 msgstr ""
 
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+msgid "Password must have at least <%- passwordLength %> characters."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+msgid ""
+"<i class='fa fa-warning'></i>This password is automatically generated. "
+"Please copy it or create your own. It will not be shown again."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+msgid "Your password is too weak! Try adding numbers or symbols!"
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+msgid "Your password is almost strong enough! Try adding numbers or symbols!"
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/bootstrap3/password.js
+#: corehq/apps/registration/static/registration/js/bootstrap5/password.js
+msgid "Good Job! Your password is strong!"
+msgstr ""
+
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please enter your name."
 msgstr ""
@@ -3860,34 +3888,11 @@ msgid "Please specify a password."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
-#: corehq/apps/registration/static/registration/js/password.js
-msgid "Password must have at least <%- passwordLength %> characters."
-msgstr ""
-
-#: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify a project name."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify."
-msgstr ""
-
-#: corehq/apps/registration/static/registration/js/password.js
-msgid ""
-"<i class='fa fa-warning'></i>This password is automatically generated. "
-"Please copy it or create your own. It will not be shown again."
-msgstr ""
-
-#: corehq/apps/registration/static/registration/js/password.js
-msgid "Your password is too weak! Try adding numbers or symbols!"
-msgstr ""
-
-#: corehq/apps/registration/static/registration/js/password.js
-msgid "Your password is almost strong enough! Try adding numbers or symbols!"
-msgstr ""
-
-#: corehq/apps/registration/static/registration/js/password.js
-msgid "Good Job! Your password is strong!"
 msgstr ""
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
@@ -4708,6 +4713,20 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Edit Attendance Tracking Events"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>CommCare Analytics</strong> &mdash; manage CommCare Analytics "
+"associated with this project"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View CommCare Analytics"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only CommCare Analytics"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
