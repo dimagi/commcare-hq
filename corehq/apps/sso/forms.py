@@ -872,7 +872,7 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         self.helper.form_class = 'form form-horizontal ko-template'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        layout = crispy.Layout(
+        self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
@@ -912,8 +912,6 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
             crispy.Div(*self.get_remote_user_management_fields()),
             crispy.Div(*self.get_primary_fields())
         )
-
-        self.helper.layout = layout
 
     def get_remote_user_management_fields(self):
         masked_api = get_masked_string(self.idp.api_secret)
