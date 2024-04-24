@@ -10,6 +10,7 @@ from django.http.response import (
     HttpResponse,
     HttpResponseForbidden,
     HttpResponseRedirect,
+    HttpResponsePermanentRedirect,
     JsonResponse,
 )
 from django.template.response import TemplateResponse
@@ -671,15 +672,14 @@ cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_s
 
 def check_domain_migration(view_func):
     def wrapped_view(request, domain, *args, **kwargs):
+        domain_obj = Domain.get_by_name(domain)
+        if domain_obj.redirect_url:
+            # IMPORTANT!
+            #     We assume that the domain name is the same on both
+            #     environments.
+            url = urljoin(domain_obj.redirect_url, request.path)
+            return HttpResponsePermanentRedirect(url)
         if DATA_MIGRATION.enabled(domain):
-            domain_obj = Domain.get_by_name(domain)
-            if domain_obj.redirect_url:
-                # IMPORTANT!
-                #     We assume that the domain name is the same on both
-                #     environments.
-                url = urljoin(domain_obj.redirect_url, request.path)
-                return HttpResponseRedirect(url)
-
             auth_logger.info(
                 "Request rejected domain=%s reason=%s request=%s",
                 domain, "flag:migration", request.path
