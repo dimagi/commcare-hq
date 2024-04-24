@@ -20,6 +20,7 @@ class LocationResource(v0_5.LocationResource):
     patch_limit = 100
 
     class Meta:
+        max_limit = 5000
         queryset = SQLLocation.active_objects.all()
         detail_uri_name = 'location_id'
         authentication = RequirePermissionAuthentication(HqPermissions.edit_locations)
