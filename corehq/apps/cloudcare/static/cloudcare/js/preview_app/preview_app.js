@@ -1,11 +1,7 @@
 'use strict';
-hqDefine('cloudcare/js/preview_app/preview_app', [
-    'jquery',
-    'cloudcare/js/formplayer/app',
-], function (
-    $,
-    FormplayerFrontend
-) {
+hqDefine('cloudcare/js/preview_app/preview_app', function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     var start = function (options) {
 
         $('#cloudcare-notifications').on('click', 'a', function () {

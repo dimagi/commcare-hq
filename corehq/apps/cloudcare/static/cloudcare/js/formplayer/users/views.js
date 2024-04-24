@@ -1,25 +1,12 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/users/views", [
-    'jquery',
-    'underscore',
-    'backbone',
-    'backbone.marionette',
-    'hqwebapp/js/toggles',
-    'cloudcare/js/formplayer/app',
-    'cloudcare/js/formplayer/utils/utils',
-    'cloudcare/js/formplayer/users/models',
-    'cloudcare/js/formplayer/users/utils',
-], function (
-    $,
-    _,
-    Backbone,
-    Marionette,
-    toggles,
-    FormplayerFrontend,
-    formplayerUtils,
-    usersModels,
-    usersUtils
-) {
+/*global Backbone, Marionette */
+
+hqDefine("cloudcare/js/formplayer/users/views", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        Toggles = hqImport("hqwebapp/js/toggles"),
+        usersUtils = hqImport("cloudcare/js/formplayer/users/utils");
+
     /**
      * RestoreAsBanner
      *
@@ -37,7 +24,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
         },
         templateContext: function () {
             var template = "";
-            if (toggles.toggleEnabled('WEB_APPS_DOMAIN_BANNER')) {
+            if (Toggles.toggleEnabled('WEB_APPS_DOMAIN_BANNER')) {
                 template = gettext("Working as <b><%- restoreAs %></b> in <b><%- domain %></b>.");
             } else {
                 template = gettext("Working as <b><%- restoreAs %></b>.");
@@ -47,7 +34,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
             var message = _.template(template)({
                 restoreAs: this.model.restoreAs,
                 username: this.model.getDisplayUsername(),
-                domain: usersModels.getCurrentUser().domain,
+                domain: FormplayerFrontend.getChannel().request('currentUser').domain,
             });
             return {
                 message: message,
@@ -90,7 +77,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
                     usersUtils.Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                         new RestoreAsBanner({
-                            model: usersModels.getCurrentUser(),
+                            model: FormplayerFrontend.getChannel().request('currentUser'),
                         })
                     );
                     var loginAsNextOptions = FormplayerFrontend.getChannel().request('getLoginAsNextOptions');
@@ -166,7 +153,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
             });
         },
         navigate: function () {
-            formplayerUtils.navigate(
+            FormplayerFrontend.navigate(
                 '/restore_as/' +
                 this.model.get('page') + '/' +
                 this.model.get('query')

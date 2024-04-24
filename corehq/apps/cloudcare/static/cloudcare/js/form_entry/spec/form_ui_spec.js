@@ -1,22 +1,11 @@
 'use strict';
 /* eslint-env mocha */
-hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
-    "underscore",
-    "sinon/pkg/sinon",
-    "hqwebapp/js/initial_page_data",
-    "cloudcare/js/form_entry/const",
-    "cloudcare/js/form_entry/form_ui",
-    "cloudcare/js/form_entry/spec/fixtures",
-], function (
-    _,
-    sinon,
-    initialPageData,
-    constants,
-    formUI,
-    fixtures
-) {
+hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", function () {
     describe('Fullform formUI', function () {
-        var questionJSON,
+        var constants = hqImport("cloudcare/js/form_entry/const"),
+            formUI = hqImport("cloudcare/js/form_entry/form_ui"),
+            fixtures = hqImport("cloudcare/js/form_entry/spec/fixtures"),
+            questionJSON,
             formJSON,
             groupJSON,
             noQuestionGroupJSON,
@@ -26,7 +15,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             repeatNestJSON;
 
         before(function () {
-            initialPageData.register(
+            hqImport("hqwebapp/js/initial_page_data").register(
                 "toggles_dict",
                 {
                     WEB_APPS_UPLOAD_QUESTIONS: true,
@@ -36,7 +25,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
         });
 
         after(function () {
-            initialPageData.unregister("toggles_dict");
+            hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
         });
 
         beforeEach(function () {

@@ -1,16 +1,10 @@
 'use strict';
 /* eslint-env mocha */
-hqDefine("cloudcare/js/formplayer/spec/debugger_spec", [
-    "sinon/pkg/sinon",
-    "cloudcare/js/debugger/debugger",
-], function (
-    sinon,
-    Debugger
-) {
+hqDefine("cloudcare/js/formplayer/spec/debugger_spec", function () {
     describe('Debugger', function () {
-        let EvaluateXPath = Debugger.EvaluateXPath,
-            API = Debugger.API,
-            CloudCareDebugger = Debugger.CloudCareDebuggerFormEntry;
+        let EvaluateXPath = hqImport('cloudcare/js/debugger/debugger').EvaluateXPath,
+            API = hqImport('cloudcare/js/debugger/debugger').API,
+            CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerFormEntry;
 
         describe('EvaluateXPath', function () {
             it('should correctly match xpath input', function () {

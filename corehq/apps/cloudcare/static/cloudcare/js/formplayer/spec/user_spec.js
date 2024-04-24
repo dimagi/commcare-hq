@@ -1,89 +1,31 @@
 'use strict';
 /* eslint-env mocha */
-hqDefine("cloudcare/js/formplayer/spec/user_spec", [
-    "underscore",
-    "sinon/pkg/sinon",
-    "cloudcare/js/formplayer/app",
-    "cloudcare/js/formplayer/users/collections",
-    "cloudcare/js/formplayer/users/models",
-    "cloudcare/js/formplayer/users/utils",
-], function (
-    _,
-    sinon,
-    FormplayerFrontend,
-    UsersCollections,
-    UsersModels,
-    UsersUtils
-) {
+hqDefine("cloudcare/js/formplayer/spec/user_spec", function () {
     describe('User', function () {
         describe('Collection', function () {
             it('should instantiate a user collection', function () {
-                let collection = UsersCollections([], { domain: 'mydomain' });
+                let collection = hqImport("cloudcare/js/formplayer/users/collections")([], { domain: 'mydomain' });
                 assert.equal(collection.domain, 'mydomain');
             });
 
             it('should error on fetch a user collection', function () {
                 let instantiate = function () {
-                    let collection = UsersCollections();
+                    let collection = hqImport("cloudcare/js/formplayer/users/collections")();
                     collection.fetch();
                 };
                 assert.throws(instantiate, /without domain/);
             });
         });
 
-        describe('Display Options', function () {
-            let options;
-            beforeEach(function () {
-                options = {
-                    username: 'batman',
-                    domain: 'domain',
-                    apps: [],
-                };
-            });
-
-            it('should initialize user', function () {
-                UsersModels.setCurrentUser(options);
-
-                let user = UsersModels.getCurrentUser();
-                assert.equal(user.username, options.username);
-                assert.equal(user.domain, options.domain);
-            });
-
-            it('should correctly restore display options', function () {
-                let newOptions = _.clone(options),
-                    user;
-                newOptions.phoneMode = true;
-                newOptions.oneQuestionPerScreen = true;
-                newOptions.language = 'sindarin';
-
-                UsersModels.setCurrentUser(newOptions);
-
-                user = UsersModels.getCurrentUser();
-                UsersModels.saveDisplayOptions(user.displayOptions);
-
-                // New session, but old options
-                UsersModels.setCurrentUser(options);
-                user = UsersModels.getCurrentUser();
-
-                assert.deepEqual(user.displayOptions, {
-                    phoneMode: undefined, // we don't store this option
-                    singleAppMode: undefined,
-                    landingPageAppMode: undefined,
-                    oneQuestionPerScreen: true,
-                    language: 'sindarin',
-                });
-            });
-        });
-
         describe('CurrentUser Model', function () {
             it('should get the display name of a mobile worker', function () {
-                let model = UsersModels.getCurrentUser();
+                let model = hqImport("cloudcare/js/formplayer/users/models").CurrentUser();
                 model.username = 'worker@domain.commcarehq.org';
                 assert.equal(model.getDisplayUsername(), 'worker');
             });
 
             it('should get the display name of a web user', function () {
-                let model = UsersModels.getCurrentUser();
+                let model = hqImport("cloudcare/js/formplayer/users/models").CurrentUser();
                 model.username = 'web@gmail.com';
                 assert.equal(model.getDisplayUsername(), 'web@gmail.com');
             });
@@ -91,23 +33,26 @@ hqDefine("cloudcare/js/formplayer/spec/user_spec", [
         });
 
         describe('Utils', function () {
-            let Utils = UsersUtils.Users,
+            let Utils = hqImport("cloudcare/js/formplayer/users/utils").Users,
+                FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
                 username = 'clark@kent.com',
                 restoreAsUsername = 'worker@kent.com',
                 domain = 'preview-domain',
+                dummyChannel,
                 dummyUser;
             beforeEach(function () {
                 dummyUser = {
                     domain: domain,
                     username: username,
                 };
+                dummyChannel = FormplayerFrontend.getChannel();
                 window.localStorage.clear();
-                sinon.stub(UsersModels, 'getCurrentUser').callsFake(function () { return dummyUser; });
+                sinon.stub(dummyChannel, 'request').callsFake(function () { return dummyUser; });
             });
 
             afterEach(function () {
                 window.localStorage.clear();
-                UsersModels.getCurrentUser.restore();
+                dummyChannel.request.restore();
             });
 
             it('should store and clear a restore as user', function () {

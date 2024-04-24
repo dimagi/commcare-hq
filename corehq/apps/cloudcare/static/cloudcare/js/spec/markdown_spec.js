@@ -1,18 +1,11 @@
 'use strict';
 /* eslint-env mocha */
-hqDefine("cloudcare/js/spec/markdown_spec", [
-    "sinon/pkg/sinon",
-    "hqwebapp/js/initial_page_data",
-    "integration/js/hmac_callout",
-    "cloudcare/js/markdown",
-], function (
-    sinon,
-    initialPageData,
-    hmacCallout,
-    markdown
-) {
+hqDefine("cloudcare/js/spec/markdown_spec", function () {
     describe('Markdown', function () {
-        let render = markdown.render;
+        let markdown = hqImport('cloudcare/js/markdown'),
+            render = markdown.render,
+            initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+            hmacCallout = hqImport("integration/js/hmac_callout");
 
         let sandbox;
         beforeEach(function () {

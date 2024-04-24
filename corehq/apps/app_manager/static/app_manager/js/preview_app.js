@@ -1,17 +1,6 @@
 "use strict";
-hqDefine('app_manager/js/preview_app', [
-    'jquery',
-    'analytix/js/google',
-    'analytix/js/kissmetrix',
-    'app_manager/js/app_manager_utils',
-    'hqwebapp/js/layout',
-], function (
-    $,
-    googleAnalytics,
-    kissAnalytics,
-    appManagerUtils,
-    layoutController
-) {
+hqDefine('app_manager/js/preview_app', function () {
+    'use strict';
     var module = {};
     var _private = {};
 
@@ -49,8 +38,8 @@ hqDefine('app_manager/js/preview_app', [
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).removeClass('hide');
 
         if (triggerAnalytics) {
-            kissAnalytics.track.event("[app-preview] Clicked Show App Preview");
-            googleAnalytics.track.event("App Preview", "Clicked Show App Preview");
+            hqImport('analytix/js/kissmetrix').track.event("[app-preview] Clicked Show App Preview");
+            hqImport('analytix/js/google').track.event("App Preview", "Clicked Show App Preview");
         }
 
         var $offsetContainer = (_private.isFormdesigner) ? $(module.SELECTORS.FORMDESIGNER) : $(module.SELECTORS.APP_MANAGER_BODY);
@@ -71,8 +60,8 @@ hqDefine('app_manager/js/preview_app', [
         }
 
         if (triggerAnalytics) {
-            kissAnalytics.track.event("[app-preview] Clicked Hide App Preview");
-            googleAnalytics.track.event("App Preview", "Clicked Hide App Preview");
+            hqImport('analytix/js/kissmetrix').track.event("[app-preview] Clicked Hide App Preview");
+            hqImport('analytix/js/google').track.event("App Preview", "Clicked Hide App Preview");
         }
     };
 
@@ -83,7 +72,7 @@ hqDefine('app_manager/js/preview_app', [
         _private.triggerPreviewEvent('tablet-view');
 
         if (triggerAnalytics) {
-            kissAnalytics.track.event('[app-preview] User turned on tablet mode');
+            hqImport('analytix/js/kissmetrix').track.event('[app-preview] User turned on tablet mode');
         }
     };
 
@@ -94,7 +83,7 @@ hqDefine('app_manager/js/preview_app', [
         _private.triggerPreviewEvent('phone-view');
 
         if (triggerAnalytics) {
-            kissAnalytics.track.event('[app-preview] User turned off tablet mode');
+            hqImport('analytix/js/kissmetrix').track.event('[app-preview] User turned off tablet mode');
         }
     };
 
@@ -161,7 +150,8 @@ hqDefine('app_manager/js/preview_app', [
 
     module.initPreviewWindow = function () {
 
-        var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW),
+        var layoutController = hqImport("hqwebapp/js/layout"),
+            $appPreview = $(module.SELECTORS.PREVIEW_WINDOW),
             $appBody = $(module.SELECTORS.APP_MANAGER_BODY),
             $togglePreviewBtn = $(module.SELECTORS.BTN_TOGGLE_PREVIEW),
             $iframe = $(module.SELECTORS.PREVIEW_WINDOW_IFRAME),
@@ -230,10 +220,10 @@ hqDefine('app_manager/js/preview_app', [
         $('.js-preview-refresh').click(function () {
             $(module.SELECTORS.BTN_REFRESH).removeClass('app-out-of-date');
             _private.triggerPreviewEvent('refresh');
-            kissAnalytics.track.event("[app-preview] Clicked Refresh App Preview");
-            googleAnalytics.track.event("App Preview", "Clicked Refresh App Preview");
+            hqImport('analytix/js/kissmetrix').track.event("[app-preview] Clicked Refresh App Preview");
+            hqImport('analytix/js/google').track.event("App Preview", "Clicked Refresh App Preview");
         });
-            appManagerUtils.handleAjaxAppChange(function () {
+        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function () {
             $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
         });
         var onload = function () {

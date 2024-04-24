@@ -1,49 +1,22 @@
 'use strict';
+/*global Marionette, Backbone */
+
 /**
  * The primary Marionette application managing menu navigation and launching form entry
  */
-hqDefine("cloudcare/js/formplayer/app", [
-    'jquery',
-    'knockout',
-    'underscore',
-    'backbone',
-    'backbone.marionette',
-    'markdown-it/dist/markdown-it',
-    'hqwebapp/js/initial_page_data',
-    'analytix/js/appcues',
-    'analytix/js/google',
-    'analytix/js/kissmetrix',
-    'cloudcare/js/utils',
-    'cloudcare/js/formplayer/apps/api',
-    'cloudcare/js/formplayer/constants',
-    'cloudcare/js/formplayer/utils/utils',
-    'cloudcare/js/formplayer/layout/views/progress_bar',
-    'cloudcare/js/formplayer/users/models',
-    'cloudcare/js/form_entry/web_form_session',
-    'marionette.templatecache/lib/marionette.templatecache.min',    // needed for Marionette.TemplateCache
-    'backbone.radio',
-    'jquery.cookie/jquery.cookie',  // $.cookie
-], function (
-    $,
-    ko,
-    _,
-    Backbone,
-    Marionette,
-    markdowner,
-    initialPageData,
-    appcues,
-    GGAnalytics,
-    Kissmetrics,
-    CloudcareUtils,
-    AppsAPI,
-    Const,
-    FormplayerUtils,
-    ProgressBar,
-    UsersModels,
-    WebFormSession,
-    TemplateCache
-) {
-    Marionette.setRenderer(TemplateCache.render);
+hqDefine("cloudcare/js/formplayer/app", function () {
+    var appcues = hqImport('analytix/js/appcues'),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        CloudcareUtils = hqImport("cloudcare/js/utils"),
+        Const = hqImport("cloudcare/js/formplayer/constants"),
+        FormplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        GGAnalytics = hqImport("analytix/js/google"),
+        Kissmetrics = hqImport("analytix/js/kissmetrix"),
+        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
+        UsersModels = hqImport("cloudcare/js/formplayer/users/models"),
+        WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session');
+
+    Marionette.setRenderer(Marionette.TemplateCache.render);
     var FormplayerFrontend = new Marionette.Application();
 
     FormplayerFrontend.on("before:start", function (app, options) {
@@ -77,6 +50,11 @@ hqDefine("cloudcare/js/formplayer/app", [
         });
     });
 
+    FormplayerFrontend.navigate = function (route, options) {
+        options || (options = {});
+        Backbone.history.navigate(route, options);
+    };
+
     FormplayerFrontend.getCurrentRoute = function () {
         return Backbone.history.fragment;
     };
@@ -91,7 +69,7 @@ hqDefine("cloudcare/js/formplayer/app", [
      * The actual mapping is contained in the app Couch document
      */
     FormplayerFrontend.getChannel().reply('resourceMap', function (resourcePath, appId) {
-        var currentApp = AppsAPI.getAppEntity(appId);
+        var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
         if (!currentApp) {
             console.warn('App is undefined for app_id: ' + appId);
             console.warn('Not processing resource: ' + resourcePath);
@@ -102,7 +80,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
             var resource = currentApp.get('multimedia_map')[resourcePath];
             if (!resource) {
-                console.warn('Unable to find resource ' + resourcePath + 'in multimedia map');
+                console.warn('Unable to find resource ' + resourcePath + ' in multimedia map');
                 return;
             }
             var id = resource.multimedia_id;
@@ -117,6 +95,13 @@ hqDefine("cloudcare/js/formplayer/app", [
         } else {
             return FormplayerFrontend.gridPolyfillPath;
         }
+    });
+
+    FormplayerFrontend.getChannel().reply('currentUser', function () {
+        if (!FormplayerFrontend.currentUser) {
+            FormplayerFrontend.currentUser = UsersModels.CurrentUser();
+        }
+        return FormplayerFrontend.currentUser;
     });
 
     FormplayerFrontend.getChannel().reply('lastRecordedLocation', function () {
@@ -195,7 +180,7 @@ hqDefine("cloudcare/js/formplayer/app", [
 
         data.onLoading = CloudcareUtils.formplayerLoading;
         data.onLoadingComplete = CloudcareUtils.formplayerLoadingComplete;
-        var user = UsersModels.getCurrentUser();
+        var user = FormplayerFrontend.getChannel().request('currentUser');
         data.xform_url = user.formplayer_url;
         data.domain = user.domain;
         data.username = user.username;
@@ -221,7 +206,8 @@ hqDefine("cloudcare/js/formplayer/app", [
             if (resp.status === "success") {
                 var $alert;
                 if (resp.submitResponseMessage) {
-                    var analyticsLinks = [
+                    var markdowner = window.markdownit(),
+                        analyticsLinks = [
                             { url: initialPageData.reverse('list_case_exports'), text: '[Data Feedback Loop Test] Clicked on Export Cases Link' },
                             { url: initialPageData.reverse('list_form_exports'), text: '[Data Feedback Loop Test] Clicked on Export Forms Link' },
                             { url: initialPageData.reverse('case_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Case Data Link' },
@@ -240,7 +226,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                             }
                         };
                     $("#cloudcare-notifications").off('click').on('click', dataFeedbackLoopAnalytics);
-                    $alert = CloudcareUtils.showSuccess(markdowner().render(resp.submitResponseMessage), $("#cloudcare-notifications"), undefined, true);
+                    $alert = CloudcareUtils.showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), undefined, true);
                 } else {
                     $alert = CloudcareUtils.showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"));
                 }
@@ -282,7 +268,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                 } else if (urlObject.appId !== null && urlObject.appId !== undefined) {
                     FormplayerFrontend.trigger("apps:currentApp");
                 } else {
-                    FormplayerUtils.navigate('/apps', { trigger: true });
+                    FormplayerFrontend.navigate('/apps', { trigger: true });
                 }
             } else {
                 if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
@@ -299,24 +285,47 @@ hqDefine("cloudcare/js/formplayer/app", [
         };
         var sess = WebFormSession.WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
+        if (user.environment === Const.WEB_APPS_ENVIRONMENT) {
+            // This isn't a circular import, but importing it at the top level would
+            // mean it would need to be faked for tests
+            hqRequire(["notifications/js/bootstrap3/notifications_service_main"], function (Notifications) {
+                Notifications.initNotifications();
+            });
+        }
         $('.menu-scrollable-container').addClass('hide');
     });
 
     FormplayerFrontend.on("start", function (model, options) {
-        var self = this,
-            user = UsersModels.setCurrentUser(options);
+        var user = FormplayerFrontend.getChannel().request('currentUser'),
+            self = this;
+        user.username = options.username;
+        user.domain = options.domain;
+        user.formplayer_url = options.formplayer_url;
+        user.debuggerEnabled = options.debuggerEnabled;
+        user.environment = options.environment;
+        user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
 
-        hqRequire([
-            "cloudcare/js/formplayer/users/utils",  // restoreAsUser
-        ], function () {
-            user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
+        hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
             AppsAPI.primeApps(user.restoreAs, options.apps);
         });
+        $.when(FormplayerUtils.getSavedDisplayOptions()).done(function (savedDisplayOptions) {
+            savedDisplayOptions = _.pick(
+                savedDisplayOptions,
+                Const.ALLOWED_SAVED_OPTIONS
+            );
+            user.displayOptions = _.defaults(savedDisplayOptions, {
+                singleAppMode: options.singleAppMode,
+                landingPageAppMode: options.landingPageAppMode,
+                phoneMode: options.phoneMode,
+                oneQuestionPerScreen: options.oneQuestionPerScreen,
+                language: options.language,
+            });
 
-        FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
-        hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
-            FormplayerFrontend.router = Router.start();
-            $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
+            FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
+            $.when(
+                FormplayerFrontend.getChannel().request("appselect:apps"),
+                FormplayerFrontend.xsrfRequest
+            ).done(function (appCollection) {
                 var appId;
                 var apps = appCollection.toJSON();
                 if (Backbone.history) {
@@ -406,7 +415,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         hqRequire(["cloudcare/js/debugger/debugger"], function (Debugger) {
             var CloudCareDebugger = Debugger.CloudCareDebuggerMenu,
                 TabIDs = Debugger.TabIDs,
-                user = UsersModels.getCurrentUser(),
+                user = FormplayerFrontend.getChannel().request('currentUser'),
                 cloudCareDebugger,
                 $debug = $('#cloudcare-debugger');
 
@@ -437,7 +446,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     FormplayerFrontend.getChannel().reply('getCurrentAppId', function () {
         // First attempt to grab app id from URL
         var urlObject = FormplayerUtils.currentUrlToObject(),
-            user = UsersModels.getCurrentUser(),
+            user = FormplayerFrontend.getChannel().request('currentUser'),
             appId;
 
         appId = urlObject.appId;
@@ -500,7 +509,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     function makeSyncRequest(route, requestData) {
         var options,
             complete,
-            user = UsersModels.getCurrentUser(),
+            user = FormplayerFrontend.getChannel().request('currentUser'),
             formplayerUrl = user.formplayer_url,
             data = {
                 "username": user.username,
@@ -608,7 +617,7 @@ hqDefine("cloudcare/js/formplayer/app", [
 
 
     FormplayerFrontend.on('setVersionInfo', function (versionInfo) {
-        var user = UsersModels.getCurrentUser();
+        var user = FormplayerFrontend.getChannel().request('currentUser');
         $("#version-info").text(versionInfo || '');
         if (versionInfo) {
             user.set('versionInfo',  versionInfo);
@@ -628,7 +637,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         if (!appId) {
             throw new Error('Attempt to refresh application for null appId');
         }
-        var user = UsersModels.getCurrentUser(),
+        var user = FormplayerFrontend.getChannel().request('currentUser'),
             formplayerUrl = user.formplayer_url,
             resp,
             options = {
@@ -664,7 +673,7 @@ hqDefine("cloudcare/js/formplayer/app", [
      * current user. Returns the ajax promise.
      */
     FormplayerFrontend.getChannel().reply('breakLocks', function () {
-        var user = UsersModels.getCurrentUser(),
+        var user = FormplayerFrontend.getChannel().request('currentUser'),
             formplayerUrl = user.formplayer_url,
             resp,
             options = {
@@ -693,7 +702,7 @@ hqDefine("cloudcare/js/formplayer/app", [
      * current user. Returns the ajax promise.
      */
     FormplayerFrontend.getChannel().reply('clearUserData', function () {
-        var user = UsersModels.getCurrentUser(),
+        var user = FormplayerFrontend.getChannel().request('currentUser'),
             formplayerUrl = user.formplayer_url,
             resp,
             options = {
@@ -721,7 +730,7 @@ hqDefine("cloudcare/js/formplayer/app", [
 
         var urlObject = FormplayerUtils.currentUrlToObject(),
             appId,
-            currentUser = UsersModels.getCurrentUser();
+            currentUser = FormplayerFrontend.getChannel().request('currentUser');
         urlObject.clearExceptApp();
         FormplayerFrontend.regions.getRegion('sidebar').empty();
         FormplayerFrontend.regions.getRegion('breadcrumb').empty();

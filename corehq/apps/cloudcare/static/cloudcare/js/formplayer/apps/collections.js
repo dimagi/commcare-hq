@@ -1,11 +1,9 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/apps/collections", [
-    'backbone',
-    'cloudcare/js/formplayer/apps/models',
-], function (
-    Backbone,
-    Models
-) {
+/*global Backbone */
+
+hqDefine("cloudcare/js/formplayer/apps/collections", function () {
+    var Models = hqImport("cloudcare/js/formplayer/apps/models");
+
     var self = Backbone.Collection.extend({
         url: "appSelects",
         model: Models,

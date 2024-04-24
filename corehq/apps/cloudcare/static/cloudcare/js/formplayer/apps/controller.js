@@ -1,28 +1,16 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/apps/controller", [
-    'jquery',
-    'backbone',
-    'hqwebapp/js/toggles',
-    'cloudcare/js/formplayer/constants',
-    'cloudcare/js/formplayer/app',
-    'cloudcare/js/formplayer/layout/views/settings',
-    'cloudcare/js/formplayer/apps/api',
-    'cloudcare/js/formplayer/apps/views',
-    'cloudcare/js/formplayer/users/models',
-], function (
-    $,
-    Backbone,
-    Toggles,
-    constants,
-    FormplayerFrontend,
-    settingsViews,
-    AppsAPI,
-    views,
-    UsersModels
-) {
+/*global Backbone */
+
+hqDefine("cloudcare/js/formplayer/apps/controller", function () {
+    var constants = hqImport("cloudcare/js/formplayer/constants"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        settingsViews = hqImport("cloudcare/js/formplayer/layout/views/settings"),
+        Toggles = hqImport("hqwebapp/js/toggles"),
+        views = hqImport("cloudcare/js/formplayer/apps/views");
+
     return {
         listApps: function () {
-            $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
+            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
                 let apps = appCollection.toJSON();
                 let isIncompleteFormsDisabled = (app) => (app.profile.properties || {})['cc-show-incomplete'] === 'no';
                 let isAllIncompleteFormsDisabled = apps.every(isIncompleteFormsDisabled);
@@ -40,7 +28,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", [
          * Renders a SingleAppView.
          */
         singleApp: function (appId) {
-            $.when(AppsAPI.getAppEntities()).done(function () {
+            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function () {
                 var singleAppView = views.SingleAppView({
                     appId: appId,
                 });
@@ -48,7 +36,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", [
             });
         },
         landingPageApp: function (appId) {
-            $.when(AppsAPI.getAppEntities()).done(function () {
+            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function () {
                 var landingPageAppView = views.LandingPageAppView({
                     appId: appId,
                 });
@@ -56,7 +44,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", [
             });
         },
         listSettings: function () {
-            var currentUser = UsersModels.getCurrentUser(),
+            var currentUser = FormplayerFrontend.getChannel().request('currentUser'),
                 slugs = settingsViews.slugs,
                 settings = [],
                 collection,

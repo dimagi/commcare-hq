@@ -1,11 +1,9 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/sessions/models", [
-    'backbone',
-    'cloudcare/js/formplayer/utils/utils',
-], function (
-    Backbone,
-    utils
-) {
+/*global Backbone */
+
+hqDefine("cloudcare/js/formplayer/sessions/models", function () {
+    var utils = hqImport("cloudcare/js/formplayer/utils/utils");
+
     return Backbone.Model.extend({
         isNew: function () {
             return !this.get('sessionId');

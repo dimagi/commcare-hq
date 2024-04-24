@@ -1,21 +1,10 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/layout/views/settings", [
-    'jquery',
-    'underscore',
-    'backbone.marionette',
-    'cloudcare/js/formplayer/app',
-    'cloudcare/js/formplayer/apps/api',
-    'cloudcare/js/formplayer/users/models',
-    'cloudcare/js/formplayer/utils/utils',
-    'bootstrap-switch/dist/js/bootstrap-switch', // bootstrapSwitch
-], function (
-    $,
-    _,
-    Marionette,
-    FormplayerFrontend,
-    AppsAPI,
-    UsersModels
-) {
+/*global Marionette */
+
+hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+
     var slugs = {
         SET_LANG: 'lang',
         SET_DISPLAY: 'display',
@@ -31,7 +20,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
         template: _.template($("#lang-setting-template").html() || ""),
         tagName: 'tr',
         initialize: function () {
-            this.currentUser = UsersModels.getCurrentUser();
+            this.currentUser = FormplayerFrontend.getChannel().request('currentUser');
         },
         ui: {
             language: '.js-lang',
@@ -41,11 +30,11 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
         },
         onLanguageChange: function (e) {
             this.currentUser.displayOptions.language = $(e.currentTarget).val();
-            UsersModels.saveDisplayOptions(this.currentUser.displayOptions);
+            Utils.saveDisplayOptions(this.currentUser.displayOptions);
         },
         templateContext: function () {
             var appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
-            var currentApp = AppsAPI.getAppEntity(appId);
+            var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
             return {
                 langs: currentApp.get('langs'),
                 currentLang: this.currentUser.displayOptions.language,
@@ -61,7 +50,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
         template: _.template($("#display-setting-template").html() || ""),
         tagName: 'tr',
         initialize: function () {
-            this.currentUser = UsersModels.getCurrentUser();
+            this.currentUser = FormplayerFrontend.getChannel().request('currentUser');
         },
         ui: {
             oneQuestionPerScreen: '.js-one-question-per-screen',
@@ -77,7 +66,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
         },
         onChangeOneQuestionPerScreen: function (e, switchValue) {
             this.currentUser.displayOptions.oneQuestionPerScreen = switchValue;
-            UsersModels.saveDisplayOptions(this.currentUser.displayOptions);
+            Utils.saveDisplayOptions(this.currentUser.displayOptions);
         },
     });
 

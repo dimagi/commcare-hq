@@ -2,15 +2,11 @@
 /**
  * Backbone model and functions for listing and selecting CommCare apps
  */
-hqDefine("cloudcare/js/formplayer/apps/api", [
-    'jquery',
-    'cloudcare/js/formplayer/apps/collections',
-    'cloudcare/js/formplayer/users/models',
-], function (
-    $,
-    Collections,
-    UsersModels
-) {
+
+hqDefine("cloudcare/js/formplayer/apps/api", function () {
+    var Collections = hqImport("cloudcare/js/formplayer/apps/collections"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     var appsPromiseByRestoreAs = {};
     var appsByRestoreAs = {};
     var predefinedAppsPromise;
@@ -38,8 +34,8 @@ hqDefine("cloudcare/js/formplayer/apps/api", [
         },
         getAppEntities: function () {
             var appsPromise,
-                restoreAs = UsersModels.getCurrentUser().restoreAs,
-                singleAppMode = UsersModels.getCurrentUser().displayOptions.singleAppMode;
+                restoreAs = FormplayerFrontend.getChannel().request('currentUser').restoreAs,
+                singleAppMode = FormplayerFrontend.getChannel().request('currentUser').displayOptions.singleAppMode;
             if (singleAppMode) {
                 appsPromise = fetchPredefinedApps();
             } else {
@@ -51,7 +47,7 @@ hqDefine("cloudcare/js/formplayer/apps/api", [
             });
         },
         getAppEntity: function (id) {
-            var restoreAs = UsersModels.getCurrentUser().restoreAs;
+            var restoreAs = FormplayerFrontend.getChannel().request('currentUser').restoreAs;
             var apps = appsByRestoreAs[restoreAs];
             if (!apps) {
                 console.warn("getAppEntity is returning null. If the app_id is correct, " +
@@ -62,6 +58,14 @@ hqDefine("cloudcare/js/formplayer/apps/api", [
             return appCollection.get(id);
         },
     };
+
+    FormplayerFrontend.getChannel().reply("appselect:apps", function () {
+        return API.getAppEntities();
+    });
+
+    FormplayerFrontend.getChannel().reply("appselect:getApp", function (id) {
+        return API.getAppEntity(id);
+    });
 
     return API;
 });

@@ -1,29 +1,16 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/menus/utils", [
-    'underscore',
-    'backbone',
-    'hqwebapp/js/toggles',
-    'analytix/js/kissmetrix',
-    'cloudcare/js/formplayer/app',
-    'cloudcare/js/formplayer/constants',
-    'cloudcare/js/formplayer/layout/views/progress_bar',
-    'cloudcare/js/formplayer/menus/views/query',
-    'cloudcare/js/formplayer/users/models',
-    'cloudcare/js/formplayer/utils/utils',
-    'cloudcare/js/formplayer/menus/views',
-], function (
-    _,
-    Backbone,
-    toggles,
-    kissmetrics,
-    FormplayerFrontend,
-    constants,
-    ProgressBar,
-    view,
-    UsersModels,
-    utils,
-    views
-) {
+/*global Backbone */
+
+hqDefine("cloudcare/js/formplayer/menus/utils", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        kissmetrics = hqImport("analytix/js/kissmetrix"),
+        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
+        view = hqImport("cloudcare/js/formplayer/menus/views/query"),
+        toggles = hqImport("hqwebapp/js/toggles"),
+        utils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        views = hqImport("cloudcare/js/formplayer/menus/views"),
+        constants = hqImport("cloudcare/js/formplayer/constants");
+
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
         sessionStorage.locationLon = position.coords.longitude;
@@ -192,7 +179,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
             return views.MenuListView(menuData);
         } else if (menuResponse.type === constants.QUERY) {
             var props = {
-                domain: UsersModels.getCurrentUser().domain,
+                domain: FormplayerFrontend.getChannel().request('currentUser').domain,
             };
             if (menuResponse.breadcrumbs && menuResponse.breadcrumbs.length) {
                 props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
@@ -214,7 +201,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", [
                 menuData.sidebarEnabled = true;
             }
             var eventData = {
-                domain: UsersModels.getCurrentUser().domain,
+                domain: FormplayerFrontend.getChannel().request("currentUser").domain,
                 name: menuResponse.title,
             };
             var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });

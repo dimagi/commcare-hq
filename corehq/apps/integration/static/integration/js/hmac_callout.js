@@ -2,7 +2,6 @@
 hqDefine("integration/js/hmac_callout", [
     "hqwebapp/js/initial_page_data",
     "crypto-js/crypto-js",
-    "url-polyfill/url-polyfill",     // for URL.searchParams in signedCallout
 ], function (
     initialPageData,
     CryptoJS

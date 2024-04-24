@@ -4,13 +4,8 @@
  *
  * This is framework for allowing messages from HQ
  */
-hqDefine("cloudcare/js/formplayer/hq_events", [
-    'underscore',
-    'cloudcare/js/formplayer/app',
-], function (
-    _,
-    FormplayerFrontend
-) {
+hqDefine("cloudcare/js/formplayer/hq_events", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     var self = {};
 
     self.Receiver = function (allowedHost) {

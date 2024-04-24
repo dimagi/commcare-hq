@@ -1,17 +1,9 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/users/utils", [
-    'jquery',
-    'sentry_browser',
-    'hqwebapp/js/initial_page_data',
-    'cloudcare/js/formplayer/app',
-    'cloudcare/js/formplayer/users/models',
-], function (
-    $,
-    Sentry,
-    initialPageData,
-    FormplayerFrontend,
-    UsersModels
-) {
+/* global Sentry */
+hqDefine("cloudcare/js/formplayer/users/utils", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+
     var self = {};
     self.Users = {
         /**
@@ -22,7 +14,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", [
          * setting it in a cookie
          */
         logInAsUser: function (restoreAsUsername) {
-            var currentUser = UsersModels.getCurrentUser();
+            var currentUser = FormplayerFrontend.getChannel().request('currentUser');
             currentUser.restoreAs = restoreAsUsername;
             Sentry.setTag("loginAsUser", restoreAsUsername);
 
@@ -79,7 +71,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", [
      * navigates you to the main page.
      */
     FormplayerFrontend.on('clearRestoreAsUser', function () {
-        var user = UsersModels.getCurrentUser();
+        var user = FormplayerFrontend.getChannel().request('currentUser');
         self.Users.clearRestoreAsUser(
             user.domain,
             user.username

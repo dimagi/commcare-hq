@@ -1,15 +1,10 @@
 'use strict';
 /* eslint-env mocha */
-hqDefine("cloudcare/js/spec/utils_spec", [
-    "sinon/pkg/sinon",
-    "cloudcare/js/formplayer/constants",
-    "cloudcare/js/utils",
-], function (
-    sinon,
-    constants,
-    utils
-) {
+hqDefine("cloudcare/js/spec/utils_spec", function () {
     describe("Cloudcare Utils", function () {
+        const constants = hqImport("cloudcare/js/formplayer/constants"),
+            utils = hqImport("cloudcare/js/utils");
+
         describe('Small Screen Listener', function () {
             const callback = sinon.stub().callsFake(smallScreenEnabled => smallScreenEnabled);
             const smallScreenListener = utils.smallScreenListener(callback);

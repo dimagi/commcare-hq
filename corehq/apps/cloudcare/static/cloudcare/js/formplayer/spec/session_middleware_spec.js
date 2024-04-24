@@ -1,13 +1,9 @@
 'use strict';
 /* eslint-env mocha */
-hqDefine("cloudcare/js/formplayer/spec/session_middleware_spec", [
-    "sinon/pkg/sinon",
-    "cloudcare/js/formplayer/middleware",
-], function (
-    sinon,
-    Middleware
-) {
+hqDefine("cloudcare/js/formplayer/spec/session_middleware_spec", function () {
     describe('SessionMiddle', function () {
+        let Middleware = hqImport("cloudcare/js/formplayer/middleware");
+
         it('Should call middleware and apis with same arguments', function () {
             let middlewareSpy = sinon.spy(),
                 result,

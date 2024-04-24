@@ -1,21 +1,10 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/utils/utils", [
-    'jquery',
-    'underscore',
-    'backbone',
-    'DOMPurify/dist/purify.min',
-    'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/toggles',
-    "cloudcare/js/formplayer/constants"
-], function (
-    $,
-    _,
-    Backbone,
-    DOMPurify,
-    initialPageData,
-    toggles,
-    constants
-) {
+/*global Backbone, DOMPurify */
+hqDefine("cloudcare/js/formplayer/utils/utils", function () {
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        toggles = hqImport("hqwebapp/js/toggles"),
+        constants = hqImport("cloudcare/js/formplayer/constants");
+
     var Utils = {};
 
     /**
@@ -80,12 +69,9 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
         }
 
         var encodedUrl = Utils.objectToEncodedUrl(urlObject.toJson());
-        Utils.navigate(encodedUrl, { replace: replace });
-    };
-
-    Utils.navigate = function (route, options) {
-        options || (options = {});
-        Backbone.history.navigate(route, options);
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            FormplayerFrontend.navigate(encodedUrl, { replace: replace });
+        });
     };
 
     /**
@@ -113,6 +99,39 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
         options.crossDomain = {crossDomain: true};
         options.xhrFields = {withCredentials: true};
         options.contentType = "application/json;charset=UTF-8";
+    };
+
+    Utils.saveDisplayOptions = function (displayOptions) {
+        $.when(Utils.getDisplayOptionsKey()).done(function (displayOptionsKey) {
+            localStorage.setItem(displayOptionsKey, JSON.stringify(displayOptions));
+        });
+    };
+
+    Utils.getSavedDisplayOptions = function () {
+        var defer = $.Deferred();
+        $.when(Utils.getDisplayOptionsKey()).done(function (displayOptionsKey) {
+            try {
+                defer.resolve(JSON.parse(localStorage.getItem(displayOptionsKey)));
+            } catch (e) {
+                window.console.warn('Unabled to parse saved display options');
+                defer.resolve({});
+            }
+        });
+        return defer.promise();
+    };
+
+    Utils.getDisplayOptionsKey = function () {
+        var defer = $.Deferred();
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            var user = FormplayerFrontend.getChannel().request('currentUser');
+            defer.resolve([
+                user.environment,
+                user.domain,
+                user.username,
+                'displayOptions',
+            ].join(':'));
+        });
+        return defer.promise();
     };
 
     // This method takes current page number on which user has clicked and total possible pages

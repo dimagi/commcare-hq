@@ -1,34 +1,21 @@
 'use strict';
 /* eslint-env mocha */
-hqDefine("cloudcare/js/form_entry/spec/entries_spec", [
-    "underscore",
-    "sinon/pkg/sinon",
-    "moment",
-    "hqwebapp/js/initial_page_data",
-    "cloudcare/js/form_entry/const",
-    "cloudcare/js/form_entry/entries",
-    "cloudcare/js/form_entry/form_ui",
-    "cloudcare/js/utils",
-], function (
-    _,
-    sinon,
-    moment,
-    initialPageData,
-    constants,
-    entries,
-    formUI,
-    utils
-) {
+/* globals moment */
+hqDefine("cloudcare/js/form_entry/spec/entries_spec", function () {
     describe('Entries', function () {
-        var questionJSON,
+        var constants = hqImport("cloudcare/js/form_entry/const"),
+            entries = hqImport("cloudcare/js/form_entry/entries"),
+            formUI = hqImport("cloudcare/js/form_entry/form_ui"),
+            utils = hqImport("cloudcare/js/utils"),
+            questionJSON,
             spy;
 
         before(function () {
-            initialPageData.register(
+            hqImport("hqwebapp/js/initial_page_data").register(
                 "has_geocoder_privs",
                 true
             );
-            initialPageData.register(
+            hqImport("hqwebapp/js/initial_page_data").register(
                 "toggles_dict",
                 {
                     WEB_APPS_UPLOAD_QUESTIONS: true,
@@ -38,7 +25,7 @@ hqDefine("cloudcare/js/form_entry/spec/entries_spec", [
         });
 
         after(function () {
-            initialPageData.unregister("toggles_dict");
+            hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
         });
 
         beforeEach(function () {

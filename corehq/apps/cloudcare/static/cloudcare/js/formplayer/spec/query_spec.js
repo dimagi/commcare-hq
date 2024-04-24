@@ -1,25 +1,19 @@
 'use strict';
 /* eslint-env mocha */
-hqDefine("cloudcare/js/formplayer/spec/query_spec", [
-    "backbone",
-    "sinon/pkg/sinon",
-    "hqwebapp/js/initial_page_data",
-    "cloudcare/js/formplayer/utils/utils",
-    "cloudcare/js/formplayer/menus/views/query",
-], function (
-    Backbone,
-    sinon,
-    initialPageData,
-    Utils,
-    QueryListView
-) {
+/* global Backbone */
+hqDefine("cloudcare/js/formplayer/spec/query_spec", function () {
     describe('Query', function () {
+
         describe('itemset', function () {
 
             let keyQueryView;
 
             before(function () {
-                initialPageData.register("toggles_dict", { DYNAMICALLY_UPDATE_SEARCH_RESULTS: false });
+                const QueryListView = hqImport("cloudcare/js/formplayer/menus/views/query");
+                const Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+
+                hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", { DYNAMICALLY_UPDATE_SEARCH_RESULTS: false });
+
                 const QueryViewModel = Backbone.Model.extend();
                 const QueryViewCollection = Backbone.Collection.extend();
                 const keyModel = new QueryViewModel({
@@ -44,7 +38,7 @@ hqDefine("cloudcare/js/formplayer/spec/query_spec", [
             });
 
             after(function () {
-                initialPageData.unregister("toggles_dict");
+                hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
             });
 
             it('should create dictionary with either keys', function () {

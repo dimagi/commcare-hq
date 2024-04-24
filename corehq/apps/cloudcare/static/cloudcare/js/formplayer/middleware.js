@@ -1,15 +1,7 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/middleware", [
-    'jquery',
-    'underscore',
-    'cloudcare/js/formplayer/app',
-    'cloudcare/js/formplayer/users/models',
-], function (
-    $,
-    _,
-    FormplayerFrontend,
-    UsersModels
-) {
+hqDefine("cloudcare/js/formplayer/middleware", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     var clearFormMiddleware = function () {
         FormplayerFrontend.trigger("clearForm");
     };
@@ -25,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/middleware", [
     };
     var setScrollableMaxHeight = function () {
         var maxHeight,
-            user = UsersModels.getCurrentUser(),
+            user = FormplayerFrontend.getChannel().request('currentUser'),
             restoreAsBannerHeight = 0;
 
         if (user.restoreAs) {
