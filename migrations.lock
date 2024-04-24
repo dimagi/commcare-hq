@@ -1212,6 +1212,7 @@ users
  0059_copy_transient_invitation_supply_point
  0060_invitations_addtableau_roles_and_groupids
  0061_auto_20240423_0802
+ 0062_add_web_apps_groups_permission_flag
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
