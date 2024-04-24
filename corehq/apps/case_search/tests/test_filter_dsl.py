@@ -28,12 +28,20 @@ from corehq.apps.es.case_search import (
 from corehq.apps.es.cases import case_name, is_closed
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.util.test_utils import flag_enabled
 
 
 @es_test
 class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
     def test_simple_filter(self):
+        parsed = parse_xpath("name = 'farid'")
+        expected_filter = case_property_query('name', 'farid')
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
+    def test_simple_filter_optimized(self):
         parsed = parse_xpath("name = 'farid'")
         expected_filter = case_name('farid')
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
@@ -52,6 +60,17 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
            return_value=pytz.timezone('America/Los_Angeles'))
     def test_datetime_system_property_filter(self, mock_get_timezone):
         parsed = parse_xpath("last_modified='2023-01-10'")
+        expected_filter = case_property_date_range(
+            'last_modified', gte='2023-01-10T08:00:00', lt='2023-01-11T08:00:00')
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        mock_get_timezone.assert_called_once()
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
+    @patch("corehq.apps.case_search.xpath_functions.comparison.get_timezone_for_domain",
+           return_value=pytz.timezone('America/Los_Angeles'))
+    def test_datetime_system_property_filter_optimized(self, mock_get_timezone):
+        parsed = parse_xpath("last_modified='2023-01-10'")
         expected_filter = filters.date_range(
             'modified_on', gte='2023-01-10T08:00:00', lt='2023-01-11T08:00:00')
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
@@ -59,6 +78,13 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_not_filter(self):
+        parsed = parse_xpath("not(name = 'farid')")
+        expected_filter = filters.NOT(case_property_query('name', 'farid'))
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
+    def test_not_filter_optimized(self):
         parsed = parse_xpath("not(name = 'farid')")
         expected_filter = filters.NOT(case_name('farid'))
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
@@ -107,6 +133,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         query = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(query, expected_filter, is_raw_query=True)
 
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
     def test_nested_filter(self):
         parsed = parse_xpath("(name = 'farid' or name = 'leila') and dob <= '2017-02-11'")
         expected_filter = filters.AND(
@@ -195,12 +222,14 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
     def test_status_query(self):
         parsed = parse_xpath("@status = 'open'")
         expected_filter = is_closed(False)
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
     def test_not_equals_query(self):
         parsed = parse_xpath("external_id != 'MyBadID'")
         expected_filter = filters.NOT(filters.term('external_id', 'MyBadID'))

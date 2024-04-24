@@ -8,9 +8,9 @@ from eulxml.xpath.ast import Step
 
 from corehq.apps.case_search.const import (
     EQ,
+    INDEXED_METADATA_BY_KEY,
     NEQ,
     RANGE_OP_MAPPING,
-    INDEXED_METADATA_BY_KEY,
 )
 from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import CaseFilterError
@@ -23,6 +23,7 @@ from corehq.apps.es.case_search import (
     case_property_numeric_range,
     case_property_query,
 )
+from corehq.toggles import CASE_SEARCH_INDEXED_METADATA
 from corehq.util.timezones.conversions import UserTime
 from corehq.util.timezones.utils import get_timezone_for_domain
 
@@ -39,9 +40,10 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
     if meta_property := INDEXED_METADATA_BY_KEY.get(case_property_name):
         if meta_property.is_datetime:
             return _create_system_datetime_query(
-                context.request_domain, meta_property.es_field_name, op, value, node,
+                context.request_domain, meta_property, op, value, node,
             )
-        if op in [EQ, NEQ] and not context.fuzzy:  # We can filter better at the top level
+        if (CASE_SEARCH_INDEXED_METADATA.enabled(context.request_domain)
+                and op in [EQ, NEQ] and not context.fuzzy):  # We can filter better at the top level
             return _create_system_query(meta_property, op, value)
     return _create_query(context, case_property_name, op, value, node)
 
@@ -112,25 +114,27 @@ def _parse_datetime(value):
         raise ValueError(gettext(f"{value} is an invalid datetime."))
 
 
-def _create_system_datetime_query(domain, es_field_name, op, value, node):
+def _create_system_datetime_query(domain, meta_property, op, value, node):
     """
     Given a date, it gets the equivalent starting time of that date in UTC. i.e 2023-06-05
     in Asia/Seoul timezone begins at 2023-06-04T20:00:00 UTC.
     This might be inconsistent in daylight savings situations.
     """
     if op == NEQ:
-        return filters.NOT(_create_system_datetime_query(domain, es_field_name, EQ, value, node))
+        return filters.NOT(_create_system_datetime_query(domain, meta_property, EQ, value, node))
 
     timezone = get_timezone_for_domain(domain)
     utc_equivalent_datetime_value = adjust_input_date_by_timezone(value_to_date(node, value), timezone, op)
     if op == EQ:
-        return filters.date_range(
-            es_field_name,
-            gte=utc_equivalent_datetime_value,
-            lt=utc_equivalent_datetime_value + timedelta(days=1),
-        )
-    op_value_dict = {RANGE_OP_MAPPING[op]: utc_equivalent_datetime_value}
-    return filters.date_range(es_field_name, **op_value_dict)
+        range_kwargs = {
+            'gte': utc_equivalent_datetime_value,
+            'lt': utc_equivalent_datetime_value + timedelta(days=1),
+        }
+    else:
+        range_kwargs = {RANGE_OP_MAPPING[op]: utc_equivalent_datetime_value}
+    if CASE_SEARCH_INDEXED_METADATA.enabled(domain):
+        return filters.date_range(meta_property.es_field_name, **range_kwargs)
+    return case_property_date_range(meta_property.key, **range_kwargs)
 
 
 def adjust_input_date_by_timezone(date, timezone, op):
