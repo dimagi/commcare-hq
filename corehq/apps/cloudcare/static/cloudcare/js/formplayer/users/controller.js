@@ -1,12 +1,18 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/users/controller", function () {
-    var Collections = hqImport("cloudcare/js/formplayer/users/collections"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        views = hqImport("cloudcare/js/formplayer/users/views");
-
+hqDefine("cloudcare/js/formplayer/users/controller", [
+    'cloudcare/js/formplayer/users/collections',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/users/views',
+], function (
+    Collections,
+    FormplayerFrontend,
+    models,
+    views
+) {
     return {
         listUsers: function (page, query) {
-            var currentUser = FormplayerFrontend.getChannel().request('currentUser'),
+            var currentUser = models.getCurrentUser(),
                 users;
 
             users = Collections([], { domain: currentUser.domain });
