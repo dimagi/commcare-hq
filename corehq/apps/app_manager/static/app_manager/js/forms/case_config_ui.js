@@ -727,6 +727,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 return usercaseTransaction({
                     case_properties: case_properties,
                     case_preload: case_preload,
+                    case_type: 'commcare-user', // will get overridden by the default. Set here to check deprecated status for saved properties on initial page load
                     allow: {
                         repeats: function () {
                             // This placeholder function allows us to reuse the "case-config:case-properties:question"
