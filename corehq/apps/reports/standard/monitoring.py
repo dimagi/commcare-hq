@@ -209,7 +209,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     @property
     @memoized
     def view_by_groups(self):
-        return self.request.GET.get('view_by', None) == 'groups'
+        return self.request.GET.get('view_by') == 'groups'
 
     @property
     def shared_pagination_GET_params(self):
@@ -272,9 +272,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return format_html(_(
                 "Note that when viewing this report by group it will only include "
                 "cases which are assigned to a Case Sharing Group/Location. To learn "
-                "more about Case Sharing click on "
-                "<a href='{}' target='blank'>this</a> "
-                "documentation."
+                "more about Case Sharing click "
+                "<a href='{}' target='blank'>here</a>."
             ).format(help_link))
 
     _default_landmarks = [30, 60, 90]
@@ -362,8 +361,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     @property
     @memoized
     def selected_groups(self):
-        slugs = EMWF.get_value(self.request, self.domain)
         if self.has_case_group_filters:
+            slugs = EMWF.get_value(self.request, self.domain)
             group_ids = EMWF.selected_group_ids(slugs)
             groups = [Group.get(g) for g in group_ids]
         else:
@@ -620,7 +619,10 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             .domain(self.domain)
             .size(0)
         )
-        query = query.owner(owner_ids) if self.view_by_groups else query.user_ids_handle_unknown(owner_ids)
+        if self.view_by_groups:
+            query = query.owner(owner_ids)
+        else:
+            query = query.user_ids_handle_unknown(owner_ids)
 
         if self.case_type:
             query = query.case_type(self.case_type)
