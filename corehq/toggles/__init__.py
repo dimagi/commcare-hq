@@ -2735,14 +2735,12 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
     help_link='https://confluence.dimagi.com/display/commcarepublic/Bulk+User+Management'
 )
 
-APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
-    privileges.APPLICATION_ERROR_REPORT,
+APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     label='Show Application Error Report',
-    tag=TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
     description="Show Application Error Report.",
-    # TODO: Move to public wiki
     help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
 )
 
