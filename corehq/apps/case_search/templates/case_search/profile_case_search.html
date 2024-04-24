@@ -47,17 +47,17 @@
           <div class="row">
             <div class="col-sm-3" data-bind="text: name"></div>
             <div class="col-sm-3">
-              <strong data-bind="text: duration ? duration.toFixed(3) : '-'"></strong> seconds;
+              <strong data-bind="text: duration ? duration.toFixed(3) : '-'"></strong> seconds
             </div>
             <div class="col-sm-3">
-              <strong data-bind="text: percent_total ? percent_total.toFixed(3) : '-'"></strong>% of total;
+              <strong data-bind="text: percent_total ? percent_total.toFixed(3) : '-'"></strong>% of total
             </div>
             <div class="col-sm-3">
               <strong data-bind="text: percent_parent ? percent_parent.toFixed(3) : '-'"></strong>% of parent
             </div>
           </div>
           <ul data-bind="template: { name: 'timingRow', foreach: subs }"
-          class="list-group"></ul>
+            class="list-group"></ul>
         </div>
       </li>
     </script>
@@ -66,7 +66,9 @@
       <div class="card card-default my-1">
         <div class="card-header clickable" data-bs-toggle="collapse" data-parent="#queries-accordion"
           data-bind="attr: { href: '#query-' + $index() }">
-          Elasticsearch query: <code data-bind="text: slug"></code>
+          Elasticsearch query #<span data-bind="text: query_number"></span>:
+          <code data-bind="text: slug"></code> -
+          <strong data-bind="text: duration ? duration.toFixed(3) : '-'"></strong> seconds
         </div>
         <div class="card-body panel-collapse collapse" data-bind="attr: { id: 'query-' + $index() }">
           <pre data-bind="text: JSON.stringify(query, null, 4)"></pre>

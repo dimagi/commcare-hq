@@ -57,24 +57,34 @@ class CaseSearchProfiler:
     timing_context: TimingContext = field(
         default_factory=lambda: TimingContext('Case Search'))
     queries: list = field(default_factory=list)
-    profile_results: list = field(default_factory=list)
+    _query_number: int = 0
 
     def run_query(self, slug, es_query):
+        self._query_number += 1
         if self.debug_mode:
             es_query = es_query.enable_profiling()
 
-        with self.timing_context('run query'):
+        tc = self.timing_context(f'run query #{self._query_number}: {slug}')
+        timer = tc.peek()
+        with tc:
             results = es_query.run()
 
         if self.debug_mode:
-            self.queries.append({'slug': slug, 'query': es_query.raw_query})
-            self.profile_results.append({'slug': slug, 'results': results.raw.get('profile')})
-
+            self.queries.append({
+                'slug': slug,
+                'query_number': self._query_number,
+                'query': es_query.raw_query,
+                'duration': timer.duration,
+                'profile': results.raw.get('profile'),
+            })
         return results
 
     def add_query(self, slug, es_query):
+        self._query_number += 1
         if self.debug_mode:
-            self.queries.append({'slug': slug, 'query': es_query.raw_query})
+            self.queries.append({'slug': slug,
+                                 'query_number': self._query_number,
+                                 'query': es_query.raw_query})
 
 
 def time_function():
