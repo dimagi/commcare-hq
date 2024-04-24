@@ -1,18 +1,18 @@
+"use strict";
 hqDefine("registry/js/registry_logs", [
     'moment',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/alert_user',
     'registry/js/registry_actions',
     'hqwebapp/js/components/pagination',
-    'hqwebapp/js/daterangepicker.config',
+    'hqwebapp/js/tempus_dominus',
 ], function (
     moment,
     ko,
     initialPageData,
-    alertUser,
     actions,
-    pagination
+    pagination,
+    hqTempusDominus
 ) {
     ko.components.register('pagination', pagination);
 
@@ -58,7 +58,7 @@ hqDefine("registry/js/registry_logs", [
                 'limit': self.perPage(),
             };
             if (self.dateRange() && self.dateRange() !== allDatesText) {
-                const separator = $().getDateRangeSeparator(),
+                const separator = hqTempusDominus.getDateRangeSeparator(),
                     dates = self.dateRange().split(separator);
                 requestData.startDate = dates[0];
                 requestData.endDate = dates[1];
@@ -84,7 +84,7 @@ hqDefine("registry/js/registry_logs", [
 
     $(function () {
         $('.report-filter-datespan-filter').each(function (i, el) {
-            $(el).createBootstrap3DefaultDateRangePicker();
+            hqTempusDominus.createDefaultDateRangePicker(el);
         });
     });
     return {
