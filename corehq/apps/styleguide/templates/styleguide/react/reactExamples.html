@@ -31,44 +31,54 @@
 {% block content %}
   <div>
     <h2 id="formPopup">Form Popup</h2>
-    <div id="formPopupRoot"></div>
-    <script type="text/html" id="test_form">
-        <form>
-            <label>First Name</label>
-            <input type="text" name="first_name">
-            <br/>
-            <label>Last Name</label>
-            <input type="text" name="last_name">
-        </form>
-    </script>
+    {% include 'styleguide/react/partials/formPopup.html' %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=markup.form_popup %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.form_popup %}
   </div>
 
   <hr />
 
-  <h2 id="readFromKnockout">Read From Knockout</h2>
-  <div id="ko-root">
-    <input type="text" data-bind="value: myField">
+  <div>
+    <h2 id="readFromKnockout">Read From Knockout</h2>
+    {% include 'styleguide/react/partials/readFromKnockout.html' %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=markup.readFromKnockout %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.koTest %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.readFromKnockout %}
   </div>
-  <div id="readFromKnockoutRoot"></div>
 
   <hr/>
 
-  <h2 id="reactToHTML">React To HTML</h2>
-  <p>HTML Value: <span id="htmlSpan"></span></p>
-  <div id="reactToHTMLRoot"></div>
+  <div>
+    <h2 id="reactToHTML">React To HTML</h2>
+    {% include 'styleguide/react/partials/reactToHTML.html' with content=markup.reactToHTML %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=markup.reactToHTML %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.reactToHTML %}
+  </div>
 
   <hr/>
 
-  <h2 id="localTable">Local Table</h2>
-  <div id="localTableRoot"></div>
+  <div>
+    <h2 id="localTable">Local Table</h2>
+    {% include 'styleguide/react/partials/localTable.html' with content=markup.localTable %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=markup.localTable %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.localTable %}
+  </div>
 
   <hr/>
 
-  <h2 id="remoteTable">Remote Table</h2>
-  <div id="remoteTableRoot"></div>
+  <div>
+    <h2 id="remoteTable">Remote Table</h2>
+    {% include 'styleguide/react/partials/remoteTable.html' with content=markup.remoteTable %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=markup.remoteTable %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.remoteTable %}
+  </div>
 
   <hr/>
 
-  <h2 id="buttonTable">Button Table</h2>
-  <div id="buttonTableRoot"></div>
+  <div>
+    <h2 id="buttonTable">Button Table</h2>
+    {% include 'styleguide/react/partials/buttonTable.html' with content=markup.buttonTable %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=markup.buttonTable %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.buttonTable %}
+  </div>
 {% endblock content %}

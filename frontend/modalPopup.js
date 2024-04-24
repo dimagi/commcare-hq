@@ -1,4 +1,5 @@
 import React from 'react';
+import { createRoot } from 'react-dom/client';
 import { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
@@ -34,3 +35,9 @@ export default function ModalPopup({bodyHTML}) {
         </>
     );
 }
+
+window.addEventListener('load', () => {
+    const formHTML = document.querySelector('#test_form').innerHTML;
+    const modalRoot = createRoot(document.getElementById('formPopupRoot'));
+    modalRoot.render(<ModalPopup bodyHTML={formHTML} />);
+});

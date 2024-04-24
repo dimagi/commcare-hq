@@ -1,4 +1,5 @@
 import React from 'react';
+import { createRoot } from 'react-dom/client';
 import { useState } from 'react';
 import DataTable from 'react-data-table-component';
 
@@ -118,7 +119,7 @@ const rows = [
     },
 ];
 
-export default function Table() {
+export default function LocalTable() {
     const [data, setData] = useState(rows);
 
     const handleSearch = e => {
@@ -173,3 +174,8 @@ export default function Table() {
         </>
     );
 }
+
+window.addEventListener('load', () => {
+    const localTableRoot = createRoot(document.getElementById('localTableRoot'));
+    localTableRoot.render(<LocalTable/>);
+});

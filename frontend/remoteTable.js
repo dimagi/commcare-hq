@@ -1,4 +1,5 @@
 import React from 'react';
+import { createRoot } from 'react-dom/client';
 import { useState, useEffect } from 'react';
 import DataTable from 'react-data-table-component';
 
@@ -95,3 +96,8 @@ export default function RemoteTable() {
         />
     );
 }
+
+window.addEventListener('load', () => {
+    const remoteTableRoot = createRoot(document.getElementById('remoteTableRoot'));
+    remoteTableRoot.render(<RemoteTable/>);
+});

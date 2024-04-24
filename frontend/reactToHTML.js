@@ -1,4 +1,5 @@
 import React from 'react';
+import { createRoot } from 'react-dom/client';
 import { useState, useEffect } from 'react';
 
 
@@ -14,3 +15,9 @@ export default function ReactToHTML({outputSpan}) {
         </>
     );
 }
+
+window.addEventListener('load', () => {
+    const outputSpan = document.getElementById('htmlSpan');
+    const reactToHTMLRoot = createRoot(document.getElementById('reactToHTMLRoot'));
+    reactToHTMLRoot.render(<ReactToHTML outputSpan={outputSpan} />);
+});

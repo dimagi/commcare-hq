@@ -1,4 +1,5 @@
 import React from 'react';
+import { createRoot } from 'react-dom/client';
 import { useState, useEffect } from 'react';
 
 export default function ReadFromKnockout({inputSelector}) {
@@ -19,3 +20,8 @@ export default function ReadFromKnockout({inputSelector}) {
         </>
     );
 }
+
+window.addEventListener('load', () => {
+    const knockoutRoot = createRoot(document.getElementById('readFromKnockoutRoot'));
+    knockoutRoot.render(<ReadFromKnockout inputSelector="#ko-root input" />);
+});
