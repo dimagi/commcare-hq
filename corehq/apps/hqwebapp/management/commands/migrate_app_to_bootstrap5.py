@@ -154,7 +154,7 @@ class Command(BaseCommand):
 
     def _get_files_for_migration(self, files, file_name, do_re_check):
         if file_name is not None:
-            files = [t for t in files if file_name in str(t)]
+            return [t for t in files if file_name in str(t)]
 
         # filter out already split bootstrap3 templates
         files = [t for t in files if '/bootstrap3/' not in str(t)]
