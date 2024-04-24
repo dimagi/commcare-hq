@@ -32,6 +32,7 @@ from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
 from corehq.apps.accounting.utils.invoicing import (
     get_oldest_unpaid_invoice_over_threshold,
 )
+from corehq.apps.sso.tasks import auto_deactivate_removed_sso_users
 from corehq.toggles import ACCOUNTING_TESTING_TOOLS
 
 from corehq import privileges
@@ -85,6 +86,7 @@ from corehq.apps.accounting.forms import (
     TriggerDowngradeForm,
     TriggerAutopaymentsForm,
     BulkUpgradeToLatestVersionForm,
+    TriggerWebUserAutoDeactivationForm,
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface,
@@ -1328,6 +1330,32 @@ class TriggerAutopaymentsView(BaseTriggerAccountingTestView):
                     ' to confirm.',
                     domain,
                     statements_url
+                )
+            )
+            return HttpResponseRedirect(reverse(self.urlname))
+        return self.get(request, *args, **kwargs)
+
+
+class TriggerWebUserAutoDeactivationView(BaseTriggerAccountingTestView):
+    urlname = 'accounting_test_deactivation'
+    page_title = "Trigger Web User Auto Deactivation"
+
+    @property
+    @memoized
+    def trigger_form(self):
+        if self.request.method == 'POST':
+            return TriggerWebUserAutoDeactivationForm(self.request.POST)
+        return TriggerWebUserAutoDeactivationForm()
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_form.is_valid():
+            auto_deactivate_removed_sso_users()
+            messages.success(
+                request,
+                format_html(
+                    'Successfully triggered auto deactivation of web users'
                 )
             )
             return HttpResponseRedirect(reverse(self.urlname))
