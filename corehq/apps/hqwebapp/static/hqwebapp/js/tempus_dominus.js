@@ -48,8 +48,8 @@ hqDefine("hqwebapp/js/tempus_dominus", [
         );
 
         // Handle single-date ranges
-        picker.subscribe("hide.td", function(e) {
-            if (picker.dates.picked.length == 1) {
+        picker.subscribe("hide.td", function () {
+            if (picker.dates.picked.length === 1) {
                 picker.dates.setValue(picker.dates.picked[0], 0);
                 picker.dates.setValue(picker.dates.picked[0], 1);
             }
