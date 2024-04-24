@@ -70,7 +70,6 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             'edit_idp_form': self.edit_enterprise_idp_form,
             'idp_slug': self.idp_slug,
             'is_oidc': self.identity_provider.protocol == IdentityProviderProtocol.OIDC,
-            'show_remote_user_management': self.show_remote_user_management,
         }
 
     @property
@@ -114,17 +113,11 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
                 self.identity_provider,
                 self.request.POST,
                 self.request.FILES,
-                show_remote_user_management=self.show_remote_user_management
             )
 
         return form_class(
             self.identity_provider,
-            show_remote_user_management=self.show_remote_user_management
         )
-
-    @property
-    def show_remote_user_management(self):
-        return True
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
