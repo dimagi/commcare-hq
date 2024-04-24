@@ -909,9 +909,9 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                 ),
                 css_class="panel panel-modern-gray panel-form-only"
             ),
+            crispy.Div(*self.get_remote_user_management_fields()),
+            crispy.Div(*self.get_primary_fields())
         )
-        layout.append(crispy.Div(*self.get_remote_user_management_fields()))
-        layout.append(crispy.Div(*self.get_primary_fields()))
 
         self.helper.layout = layout
 
