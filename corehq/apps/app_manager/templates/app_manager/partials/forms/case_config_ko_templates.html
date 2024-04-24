@@ -204,6 +204,18 @@
     </h4>
   </div>
   <div class="panel-body">
+    <div class="alert alert-warning" data-bind="visible: hasDeprecatedProperties" >
+      <p>
+        <i class="fa fa-warning"></i>
+        {% blocktrans %}
+          There are one or more form questions that are being saved to deprecated case properties.
+          Please revise and consider changing these case properties. For more information on deprecated
+          case properties, please refer to
+          <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958252/Deprecating+Case+Types+and+Case+Properties+using+Data+Dictionary" target="_blank">this documentation</a>
+          .
+        {% endblocktrans %}
+      </p>
+    </div>
     <table class="table table-savecaseprops"
            data-bind="visible: case_properties().length">
       <thead>
@@ -234,7 +246,8 @@
       <tr class="form-group"
           data-bind="css: {
                       'has-error': validate,
-                      warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())
+                      warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key()),
+                      'has-warning': !validate() && isDeprecated()
                     }">
         <td class="col-sm-1 text-center"
             data-bind="if: $parent.hasPrivilege">
@@ -265,6 +278,11 @@
                         visible: validate"></p>
           <!-- ko if: $parent.hasPrivilege -->
           {% if request|request_has_privilege:"DATA_DICTIONARY" %}
+            <p class="help-block"  data-bind="visible: !validate() && isDeprecated()">
+              {% blocktrans %}
+                Property has been deprecated.
+              {% endblocktrans %}
+            </p>
             <inline-edit params="value: $data.description,
                                 rows: 3,
                                 cols: 30,
