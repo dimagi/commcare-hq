@@ -125,7 +125,7 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
 
     @property
     def show_remote_user_management(self):
-        return toggles.SSO_REMOTE_USER_MANAGEMENT.enabled_for_request(self.request)
+        return True
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
