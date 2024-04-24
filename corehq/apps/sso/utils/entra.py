@@ -8,6 +8,7 @@ class MSGraphIssue:
     HTTP_ERROR = "http_error"
     VERIFICATION_ERROR = "verification_error"
     EMPTY_ERROR = "empty_error"
+    OTHER_ERROR = "other_error"
 
 
 def get_all_members_of_the_idp_from_entra(idp):

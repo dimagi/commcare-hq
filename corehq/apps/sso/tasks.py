@@ -143,9 +143,7 @@ def auto_deactivate_removed_sso_users():
             continue
         except Exception as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
-            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.VERIFICATION_ERROR,
-                                            error="verification error",
-                                            error_description={str(e)})
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.OTHER_ERROR)
             continue
 
         # if the Graph Users API returns an empty list of users we will skip auto deactivation
@@ -186,6 +184,8 @@ def send_deactivation_skipped_email(idp, failure_code, error=None, error_descrip
                            "indicates an issue with Microsoft's servers.")
     elif failure_code == MSGraphIssue.EMPTY_ERROR:
         failure_reason = _("We received an empty list of users from your Microsoft Entra ID instance.")
+    elif failure_code == MSGraphIssue.OTHER_ERROR:
+        failure_reason = _("We encountered an unknown issue, please contact Commcare HQ Support.")
 
     context = get_sso_deactivation_skip_email_context(idp, failure_reason)
     for send_to in context["to"]:
