@@ -1,100 +1,81 @@
 // A paler version of Bootstrap's button and label color scheme
-$cc-color-default-light-bg: #F5F5F6;
-$cc-color-default-light-fg: #545D6A;
-$cc-color-default-light-hover: #DADCDF;
-
-$cc-color-success-light-bg: #E3F7EE;
-$cc-color-success-light-fg: #4BC18F;
-$cc-color-success-light-hover: #CAEEDE;
-
-$cc-color-info-light-bg: #E4F5FA;
-$cc-color-info-light-fg: #5BC0DE;
-$cc-color-info-light-hover: #C8EAF4;
-
-$cc-color-warning-light-bg: #FFF5E7;
-$cc-color-warning-light-fg: #EC9D28;
-$cc-color-warning-light-hover: #FCE6C7;
-
-$cc-color-danger-light-bg: #FFEDED;
-$cc-color-danger-light-fg: #D03939;
-$cc-color-danger-light-hover: #F7CFCF;
 
 .btn-default-light {
-  background-color: $cc-color-default-light-bg !important;
-  color: $cc-color-default-light-fg !important;
+  background-color: var(--bssecondary-bg-subtle) !important;
+  color: var(--bssecondary) !important;
   font-weight: bold;
 }
 
 .btn-default-light:hover {
-  background-color: $cc-color-default-light-hover !important;
+  background-color: var(--bssecondary-border-subtle) !important;
 }
 
 .btn-default-light:focus {
-  outline-color: $cc-color-default-light-fg;
+  outline-color: var(--bssecondary);
 }
 
 .btn-success-light {
-  background-color: $cc-color-success-light-bg !important;
-  color: $cc-color-success-light-fg !important;
+  background-color: var(--bssuccess-bg-subtle) !important;
+  color: var(--bssuccess) !important;
   font-weight: bold;
 }
 
 .btn-success-light:hover {
-  background-color: $cc-color-success-light-hover !important;
+  background-color: var(--bssuccess-border-subtle) !important;
 }
 
 .btn-success-light:focus {
-  outline-color: $cc-color-success-light-fg;
+  outline-color: var(--bssuccess);
 }
 
 .btn-warning-light {
-  background-color: $cc-color-warning-light-bg !important;
-  color: $cc-color-warning-light-fg !important;
+  background-color: var(--bswarning-bg-subtle) !important;
+  color: var(--bswarning) !important;
   font-weight: bold;
 }
 
 .btn-warning-light:hover {
-  background-color: $cc-color-warning-light-hover !important;
+  background-color: var(--bswarning-border-subtle) !important;
 }
 .btn-warning-light:focus {
-  outline-color: $cc-color-warning-light-fg;
+  outline-color: var(--bswarning);
 }
 
 .btn-danger-light {
-  background-color: $cc-color-danger-light-bg !important;
-  color: $cc-color-danger-light-fg !important;
+  background-color: var(--bsdanger-bg-subtle) !important;
+  color: var(--bsdanger) !important;
   font-weight: bold;
 }
 
 .btn-danger-light:hover {
-  background-color: $cc-color-danger-light-hover !important;
+  background-color: var(--bsdanger-border-subtle) !important;
 }
 
 .btn-danger-light:focus {
-  outline-color: $cc-color-danger-light-fg;
+  outline-color: var(--bsdanger);
 }
 
 .label-default-light {
-  background-color: $cc-color-default-light-bg !important;
-  color: $cc-color-default-light-fg !important;
+  background-color: var(--bssecondary-bg-subtle) !important;
+  color: var(--bssecondary) !important;
 }
 
 .label-info-light {
-  background-color: $cc-color-info-light-bg !important;
-  color: $cc-color-info-light-fg !important;
+  background-color: var(--bsinfo-bg-subtle) !important;
+  color: var(--bsinfo) !important;
 }
 
 .label-success-light {
-  background-color: $cc-color-success-light-bg !important;
-  color: $cc-color-success-light-fg !important;
+  background-color: var(--bssuccess-bg-subtle) !important;
+  color: var(--bssuccess) !important;
 }
 
 .label-warning-light {
-  background-color: $cc-color-warning-light-bg !important;
-  color: $cc-color-warning-light-fg !important;
+  background-color: var(--bswarning-bg-subtle) !important;
+  color: var(--bswarning) !important;
 }
 
 .label-danger-light {
-  background-color: $cc-color-danger-light-bg !important;
-  color: $cc-color-danger-light-fg !important;
+  background-color: var(--bsdanger-bg-subtle) !important;
+  color: var(--bsdanger) !important;
 }
