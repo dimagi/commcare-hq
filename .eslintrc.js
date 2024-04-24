@@ -2,11 +2,15 @@
 // http://eslint.org/
 'use strict';
 module.exports = {
-    "extends": "eslint:recommended",
+    "extends": [
+        "eslint:recommended",
+        "plugin:react/recommended",
+    ],
 
     // https://eslint.org/docs/4.0.0/user-guide/configuring#specifying-parser-options
     "parserOptions": {
         "ecmaVersion": 6,
+        "sourceType": "module",
     },
 
     // http://eslint.org/docs/user-guide/configuring#specifying-environments

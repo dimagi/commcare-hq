@@ -1,0 +1,74 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block javascript %}
+  <script src="{% static 'styleguide/js_examples/ko-test.js' %}"></script>
+  <script src="{% static 'react/reactExamples.js' %}"></script>
+{% endblock javascript %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">React Examples</h1>
+  <p class="sg-lead">
+    Here are some scenarios React handles well
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#formPopup">Form Popup</a></li>
+      <li><a href="#readFromKnockout">Read From Knockout</a></li>
+      <li><a href="#reactToHTML">React To HTML</a></li>
+      <li><a href="#localTable">Local Table</a></li>
+      <li><a href="#remoteTable">Remote Table</a></li>
+      <li><a href="#buttonTable">Button Table</a></li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <div>
+    <h2 id="formPopup">Form Popup</h2>
+    <div id="formPopupRoot"></div>
+    <script type="text/html" id="test_form">
+        <form>
+            <label>First Name</label>
+            <input type="text" name="first_name">
+            <br/>
+            <label>Last Name</label>
+            <input type="text" name="last_name">
+        </form>
+    </script>
+  </div>
+
+  <hr />
+
+  <h2 id="readFromKnockout">Read From Knockout</h2>
+  <div id="ko-root">
+    <input type="text" data-bind="value: myField">
+  </div>
+  <div id="readFromKnockoutRoot"></div>
+
+  <hr/>
+
+  <h2 id="reactToHTML">React To HTML</h2>
+  <p>HTML Value: <span id="htmlSpan"></span></p>
+  <div id="reactToHTMLRoot"></div>
+
+  <hr/>
+
+  <h2 id="localTable">Local Table</h2>
+  <div id="localTableRoot"></div>
+
+  <hr/>
+
+  <h2 id="remoteTable">Remote Table</h2>
+  <div id="remoteTableRoot"></div>
+
+  <hr/>
+
+  <h2 id="buttonTable">Button Table</h2>
+  <div id="buttonTableRoot"></div>
+{% endblock content %}
