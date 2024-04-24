@@ -675,11 +675,6 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
     ))
 
     def __init__(self, identity_provider, *args, **kwargs):
-        if 'show_remote_user_management' in kwargs:
-            self.show_remote_user_management = kwargs.pop('show_remote_user_management')
-        else:
-            self.show_remote_user_management = False
-
         self.idp = identity_provider
         initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
         initial.setdefault('enable_user_deactivation', identity_provider.enable_user_deactivation)
@@ -915,8 +910,7 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                 css_class="panel panel-modern-gray panel-form-only"
             ),
         )
-        if self.show_remote_user_management:
-            layout.append(crispy.Div(*self.get_remote_user_management_fields()))
+        layout.append(crispy.Div(*self.get_remote_user_management_fields()))
         layout.append(crispy.Div(*self.get_primary_fields()))
 
         self.helper.layout = layout
