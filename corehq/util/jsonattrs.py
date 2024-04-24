@@ -81,8 +81,11 @@ Things that may be added in the future:
 - Support for migrating/converting the outer collection of `AttrsDict` and
   `AttrsList`.
 """
+import json
+
 from django.core.exceptions import ValidationError
 from django.db.models import JSONField
+from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from attrs import asdict, define, field
@@ -147,6 +150,18 @@ class JsonAttrsField(JSONField):
         assert "builder" not in kwargs, (name, path, args, kwargs)
         return self.__class__(self.builder, **kwargs)
 
+    def validate(self, value, model_instance):
+        super().validate(self.builder.jsonify(value), model_instance)
+
+    def formfield(self, **kwargs):
+        return super().formfield(**{
+            'form_class': JsonAttrsFormField,
+            'builder': self.builder,
+            'encoder': self.encoder,
+            'decoder': self.decoder,
+            **kwargs,
+        })
+
 
 class AttrsDict(JsonAttrsField):
     """Dict field containing attrs values, saved to the database as JSON
@@ -168,6 +183,16 @@ class AttrsList(JsonAttrsField):
 
     def __init__(self, item_type, /, **jsonfield_args):
         super().__init__(builder=AttrsListBuilder(item_type), **jsonfield_args)
+
+
+class AttrsObject(JsonAttrsField):
+    """Field containing a single attrs object, saved to the database as JSON
+
+    The object must be of the type specified by `item_type`.
+    """
+
+    def __init__(self, item_type, /, **jsonfield_args):
+        super().__init__(builder=AttrsObjectBuilder(item_type), **jsonfield_args)
 
 
 @define
@@ -210,6 +235,27 @@ class AttrsDictBuilder:
         else:
             to_json = asdict
         return {k: to_json(v) for k, v in value.items()}
+
+
+@define
+class AttrsObjectBuilder:
+    attrs_type = field()
+
+    def attrify(self, value):
+        attrs_type = self.attrs_type
+        if value is None:
+            return value
+        from_json = make_from_json(attrs_type)
+        return from_json(value)
+
+    def jsonify(self, value):
+        if not value:
+            return value
+        if hasattr(self.attrs_type, "__jsonattrs_to_json__"):
+            to_json = self.attrs_type.__jsonattrs_to_json__
+        else:
+            to_json = asdict
+        return to_json(value)
 
 
 def make_from_json(attrs_type):
@@ -297,3 +343,20 @@ class list_of:
     @property
     def __name__(self):
         return f"{type(self).__name__}({self.item_type.__name__})"
+
+
+class JsonAttrsFormField(forms.JSONField):
+    default_error_messages = {
+        'invalid': _("'%(field)s' field value has an invalid format: %(exc)s"),
+    }
+
+    def __init__(self, builder, encoder=None, decoder=None, **kwargs):
+        self.builder = builder
+        super().__init__(encoder, decoder, **kwargs)
+
+    def prepare_value(self, value):
+        if isinstance(value, str):
+            return value
+        if isinstance(value, self.builder.attrs_type):
+            value = self.builder.jsonify(value)
+        return json.dumps(value, ensure_ascii=False, cls=self.encoder, indent=2)

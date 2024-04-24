@@ -3,6 +3,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import wraps
+from io import BytesIO
 
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
@@ -40,11 +41,13 @@ from corehq.apps.es.case_search import (
     reverse_index_case_query,
     wrap_case_search_hit,
 )
+from corehq.apps.hqadmin.utils import get_download_url
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 
@@ -57,24 +60,47 @@ class CaseSearchProfiler:
     timing_context: TimingContext = field(
         default_factory=lambda: TimingContext('Case Search'))
     queries: list = field(default_factory=list)
-    profile_results: list = field(default_factory=list)
+    _query_number: int = 0
 
     def run_query(self, slug, es_query):
+        self._query_number += 1
         if self.debug_mode:
             es_query = es_query.enable_profiling()
 
-        with self.timing_context('run query'):
+        tc = self.timing_context(f'run query #{self._query_number}: {slug}')
+        timer = tc.peek()
+        with tc:
             results = es_query.run()
 
         if self.debug_mode:
-            self.queries.append({'slug': slug, 'query': es_query.raw_query})
-            self.profile_results.append({'slug': slug, 'results': results.raw.get('profile')})
-
+            self.queries.append({
+                'slug': slug,
+                'query_number': self._query_number,
+                'query': es_query.raw_query,
+                'duration': timer.duration,
+                'profile_url': self._get_profile_url(slug, self._query_number, results.raw.get('profile')),
+            })
         return results
 
     def add_query(self, slug, es_query):
+        self._query_number += 1
         if self.debug_mode:
-            self.queries.append({'slug': slug, 'query': es_query.raw_query})
+            self.queries.append({
+                'slug': slug,
+                'query_number': self._query_number,
+                'query': es_query.raw_query,
+                'duration': None,
+                'profile_url': None,
+            })
+
+    @staticmethod
+    def _get_profile_url(slug, query_number, profile_json):
+        timestamp = get_timestamp_for_filename()
+        name = f'es_profile_{query_number}_{slug}_{timestamp}.json'
+        io = BytesIO()
+        io.write(json.dumps(profile_json).encode('utf-8'))
+        io.seek(0)
+        return get_download_url(io, name, content_type='application/json')
 
 
 def time_function():

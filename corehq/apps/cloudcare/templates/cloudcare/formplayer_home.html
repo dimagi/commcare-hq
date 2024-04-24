@@ -52,9 +52,10 @@
   {% endcompress %}
 {% endblock %}
 
+{% requirejs_main "cloudcare/js/formplayer/main" %}
+
 {% block js %} {{ block.super }}
   {% include "cloudcare/partials/dependencies.html" %}
-  <script src="{% static "cloudcare/js/formplayer/main.js" %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -129,18 +130,8 @@
   {% if not request.session.secure_session %}
     {% include 'hqwebapp/includes/inactivity_modal_data.html' %}
   {% endif %}
-  {% include 'cloudcare/partials/form_entry_templates.html' %}
-  {% include 'cloudcare/partials/debugger.html' %}
-  {% include 'cloudcare/partials/grid_view.html' %}
-  {% include 'cloudcare/partials/settings_view.html' %}
-  {% include 'cloudcare/partials/case_detail.html' %}
-  {% include 'cloudcare/partials/case_list.html' %}
-  {% include 'cloudcare/partials/menu_list.html' %}
-  {% include 'cloudcare/partials/users.html' %}
-  {% include 'cloudcare/partials/session_list.html' %}
-  {% include 'cloudcare/partials/query_view.html' %}
   {% include 'cloudcare/partials/confirmation_modal.html' %}
-  {% include 'cloudcare/partials/progress.html' %}
   {% include 'cloudcare/partials/new_app_version_modal.html' %}
+  {% include 'cloudcare/partials/all_templates.html' %}
 
 {% endblock %}
