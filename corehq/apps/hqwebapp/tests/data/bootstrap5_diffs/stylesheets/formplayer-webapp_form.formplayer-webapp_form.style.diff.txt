@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -28,7 +28,7 @@
+       margin-right: -@form-text-indent;
+     }
+ 
+-    background-color: @call-to-action-extra-hi;
++    background-color: @primary-subtle;
+     .border-bottom-radius(0);
+ 
+     .submit .btn {
