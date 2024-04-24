@@ -10,7 +10,6 @@ from django.http.response import (
     HttpResponse,
     HttpResponseForbidden,
     HttpResponseRedirect,
-    HttpResponsePermanentRedirect,
     JsonResponse,
 )
 from django.template.response import TemplateResponse
@@ -678,7 +677,7 @@ def check_domain_migration(view_func):
             #     We assume that the domain name is the same on both
             #     environments.
             url = urljoin(domain_obj.redirect_url, request.path)
-            return HttpResponsePermanentRedirect(url)
+            return HttpResponseRedirect(url)
         if DATA_MIGRATION.enabled(domain):
             auth_logger.info(
                 "Request rejected domain=%s reason=%s request=%s",
