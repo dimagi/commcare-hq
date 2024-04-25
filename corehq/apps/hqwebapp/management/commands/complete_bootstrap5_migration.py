@@ -28,7 +28,8 @@ from corehq.apps.hqwebapp.utils.bootstrap.status import (
 
 
 class Command(BaseCommand):
-    help = "This command helps finalize the migration of CCHQ applications from Bootstrap 3 to Bootstrap 5."
+    help = "This command helps finalize the migration of CCHQ adASDA " \
+           "applications from Bootstrap 3 to Bootstrap 5."
 
     def add_arguments(self, parser):
         parser.add_argument('app_name')
