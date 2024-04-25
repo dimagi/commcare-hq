@@ -292,6 +292,12 @@ class FormplayerSession:
             "username": self.client.username,
         }
 
+    def start_session(self):
+        self.sync()
+        data = self.get_session_start_data()
+        self.data = self.client.make_request(data, "navigate_menu_start")
+        print("Starting app session:\n", file=self.log)
+
     def execute_step(self, step):
         is_form_step = isinstance(step, (data_model.AnswerQuestionStep, data_model.SubmitFormStep))
         if is_form_step and self.form_mode == const.FORM_MODE_IGNORE:
@@ -300,13 +306,11 @@ class FormplayerSession:
         if self.form_mode == const.FORM_MODE_NO_SUBMIT and isinstance(step, data_model.SubmitFormStep):
             self.log_step(step, skipped=True)
             return
-        data = self.get_request_data(step) if step else self.get_session_start_data()
+        data = self.get_request_data(step)
         self.data = self.client.make_request(data, self.request_url(step))
         self.log_step(step)
 
     def log_step(self, step, indent="  ", skipped=False):
-        if not step:
-            print("Starting app session:\n", file=self.log)
         skipped_log = " (ignored)" if skipped else ""
         print(f"Execute step: {step or 'START'} {skipped_log}", file=self.log)
         if skipped:
@@ -335,8 +339,7 @@ class FormplayerSession:
 
 def execute_workflow(session: FormplayerSession, workflow):
     with session:
-        session.sync()
-        execute_step(session, None)
+        session.start_session()
         for step in workflow.steps:
             execute_step(session, step)
 
