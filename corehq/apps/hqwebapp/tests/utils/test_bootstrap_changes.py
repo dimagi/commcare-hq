@@ -14,6 +14,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_bootstrap3_references_in_template,
     flag_crispy_forms_in_template,
     flag_bootstrap3_references_in_javascript,
+    flag_inline_styles,
     make_template_dependency_renames,
 )
 
@@ -183,6 +184,13 @@ def test_flag_bootstrap3_references_in_javascript():
     line = """    "hqwebapp/js/bootstrap3/foo",\n"""
     flags = flag_bootstrap3_references_in_javascript(line)
     eq(flags, ['This javascript file references a bootstrap 3 file.'])
+
+
+def test_flag_inline_styles():
+    line = """method="post" style="float: left; margin-right: 5px;">"""
+    flags = flag_inline_styles(line)
+    eq(len(flags), 1)
+    eq(flags[0].startswith('This template uses inline styles.'), True)
 
 
 def test_flag_crispy_forms_in_template():
