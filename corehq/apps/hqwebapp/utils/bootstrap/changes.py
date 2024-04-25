@@ -46,6 +46,14 @@ def _get_path_reference_regex(path_reference):
     return r"([\"\'])(" + path_reference + r")([\"\'])"
 
 
+def _get_template_reference_regex(tag, reference):
+    return r"(\{% " + tag + r" ['\"][\w\/.\-]+\/)(" + reference + r")(\/[\w\/.\-]+['\"]?)"
+
+
+def _get_javascript_reference_regex(reference):
+    return r"(['\"][\w/.\-]+/)(" + reference + r")(/[\w/.\-]+['\"],?)$"
+
+
 def _do_rename(line, change_map, regex_fn, replacement_fn):
     renames = []
     for css_class in change_map.keys():
@@ -105,10 +113,23 @@ def make_data_attribute_renames(line, spec):
 def make_javascript_dependency_renames(line, spec):
     return _do_rename(
         line,
-        spec['javascript_dependency_renames'],
-        lambda x: r"(['\"][\w/.\-]+/)(" + x + r")(/[\w/.\-]+['\"],?)$",
-        lambda x: r"\1" + spec['javascript_dependency_renames'][x] + r"\3"
+        spec['dependency_renames'],
+        lambda x: _get_javascript_reference_regex(x),
+        lambda x: r"\1" + spec['dependency_renames'][x] + r"\3"
     )
+
+
+def make_template_dependency_renames(line, spec):
+    for tag in spec['template_tags_with_dependencies']:
+        final_line, renames = _do_rename(
+            line,
+            spec['dependency_renames'],
+            lambda x: _get_template_reference_regex(tag, x),
+            lambda x: r"\1" + spec['dependency_renames'][x] + r"\3"
+        )
+        if renames:
+            return final_line, renames
+    return line, []
 
 
 def flag_changed_css_classes(line, spec):
@@ -139,15 +160,37 @@ def flag_stateful_button_changes_bootstrap5(line):
     return flags
 
 
-def flag_bootstrap3_references_in_template(line):
+def flag_bootstrap3_references_in_template(line, spec):
     flags = []
-    for template_tag in ["extends", "requirejs_main"]:
-        regex = r"(\{% " + template_tag + r" [\"\'][\w]+)(\/bootstrap3\/)"
-        if re.search(regex, line):
-            if template_tag == "extends":
+    for tag in spec['template_tags_with_dependencies']:
+        b3_ref_regex = _get_template_reference_regex(tag, 'bootstrap3')
+        tag_only_regex = r"(\{% " + tag + r" ['\"][\w/.\-]+)"
+        if re.search(b3_ref_regex, line):
+            if tag == "extends":
                 flags.append("This template extends a bootstrap 3 template.")
-            if template_tag == "requirejs_main":
+            if tag == "static":
+                flags.append("This template references a bootstrap 3 static file.")
+            if tag == "include":
+                flags.append("This template includes a bootstrap 3 template.")
+            if tag == "requirejs_main":
+                flags.append("This template references a bootstrap 3 requirejs file. "
+                             "It should also use requirejs_main_b5 instead of requirejs_main.")
+            if tag == "requirejs_main_b5":
                 flags.append("This template references a bootstrap 3 requirejs file.")
+        elif re.search(tag_only_regex, line):
+            if tag == "requirejs_main":
+                flags.append("This template should use requirejs_main_b5 instead of requirejs_main.")
+    regex = r"(=[\"\'][\w\/]+)(\/bootstrap3\/)"
+    if re.search(regex, line):
+        flags.append("This template references a bootstrap 3 file.")
+    return flags
+
+
+def flag_bootstrap3_references_in_javascript(line):
+    flags = []
+    regex = _get_javascript_reference_regex('bootstrap3')
+    if re.search(regex, line):
+        flags.append("This javascript file references a bootstrap 3 file.")
     return flags
 
 
