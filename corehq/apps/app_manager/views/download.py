@@ -89,8 +89,8 @@ def download_odk_media_profile(request, domain, app_id):
     )
 
 
-@safe_cached_download
 @check_redirect
+@safe_cached_download
 def download_suite(request, domain, app_id):
     """
     See Application.create_suite
@@ -104,8 +104,8 @@ def download_suite(request, domain, app_id):
     )
 
 
-@safe_cached_download
 @check_redirect
+@safe_cached_download
 def download_media_suite(request, domain, app_id):
     """
     See Application.create_media_suite
@@ -119,8 +119,8 @@ def download_media_suite(request, domain, app_id):
     )
 
 
-@safe_cached_download
 @check_redirect
+@safe_cached_download
 def download_app_strings(request, domain, app_id, lang):
     """
     See Application.create_app_strings
@@ -133,8 +133,8 @@ def download_app_strings(request, domain, app_id, lang):
     )
 
 
-@safe_cached_download
 @check_redirect
+@safe_cached_download
 def download_xform(request, domain, app_id, module_id, form_id):
     """
     See FormBase.render_xform
@@ -172,8 +172,8 @@ class DownloadCCZ(DownloadMultimediaZip):
         super(DownloadCCZ, self).check_before_zipping()
 
 
-@safe_cached_download
 @check_redirect
+@safe_cached_download
 def download_file(request, domain, app_id, path):
     download_target_version = request.GET.get('download_target_version') == 'true'
     if download_target_version:
@@ -312,8 +312,8 @@ def download_media_profile(request, domain, app_id):
     )
 
 
-@safe_cached_download
 @check_redirect
+@safe_cached_download
 def download_practice_user_restore(request, domain, app_id):
     if not request.app.copy_of:
         autogenerate_build(request.app, request.user.username)

@@ -140,6 +140,7 @@ class TestCheckDomainMigration(TestCase):
                 response.url,
                 f'https://example.com/a/{DOMAIN}/apps/download/{self.app._id}'
                 '/media_profile.ccpr?latest=true'
+                f'&username=user%40{DOMAIN}.commcarehq.org'
             )
 
     def test_normal_response(self):
@@ -163,7 +164,7 @@ class TestCheckDomainMigration(TestCase):
         return self.client.get(reverse(
             'download_odk_media_profile',
             args=[DOMAIN, self.app._id],
-        ), {'latest': 'true'})
+        ), {'latest': 'true', 'username': f'user@{DOMAIN}.commcarehq.org'})
 
 
 @contextmanager
