@@ -154,6 +154,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
+            self.enter_to_continue()
 
         if update_app:
             self.update_configuration_file_for_app(update_app)
@@ -248,6 +249,10 @@ class Command(BaseCommand):
             self.stdout.write("\nto rebuild the diffs.")
 
         self.stdout.write("\n\nThank you! <3\n\n")
+
+    @staticmethod
+    def enter_to_continue():
+        input("\nENTER to continue...")
 
     def make_commit(self, message):
         self.stdout.write("\nNow would be a good time to review changes with git and commit.")
