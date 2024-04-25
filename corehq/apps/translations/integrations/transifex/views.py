@@ -300,8 +300,8 @@ class PullResource(BaseTranslationsView):
             if self.pull_resource_form.is_valid():
                 try:
                     return self._pull_resource(request)
-                except TransifexApiException:
-                    messages.add_message(request, messages.ERROR, 'Resource not found')
+                except TransifexApiException as e:
+                    messages.add_message(request, messages.ERROR, 'Resource not found. {}'.format(e))
         return self.get(request, *args, **kwargs)
 
 

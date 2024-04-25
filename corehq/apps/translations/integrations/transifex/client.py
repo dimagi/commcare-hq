@@ -81,9 +81,9 @@ class TransifexApiClient(object):
         cls = self.api.Resource
         return self._get_object(cls, slug=resource_slug, project=self.project)
 
-    def _get_language_stats(self, resource_id, language_id):
+    def _get_language_stats(self, resource, language_id):
         cls = self.api.ResourceLanguageStats
-        return self._get_object(cls, id=language_id, resource=resource_id)
+        return self._get_object(cls, language=language_id, resource=resource, project=self.project)
 
     @staticmethod
     def _list_objects(cls, **kwargs):
@@ -112,9 +112,9 @@ class TransifexApiClient(object):
         response = requests.get(download, stream=True)
         return response.content
 
-    def _download_resource_translations(self, resource_id, language_id):
+    def _download_resource_translations(self, resource, language):
         cls = self.api.ResourceTranslationsAsyncDownload
-        return self._download_content(cls, resource=resource_id, language_id=language_id)
+        return self._download_content(cls, resource=resource, language=language)
 
     def _lock_resource(self, resource):
         return resource.save(accept_translations=False)
@@ -195,7 +195,12 @@ class TransifexApiClient(object):
         """
         resource = self._get_resource(resource_slug)
         language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
-        content = self._download_resource_translations(resource.id, language_id)
+        langs = [lang for lang in self._fetch_related(self.project, 'languages') if lang.id == language_id]
+        try:
+            language = langs[0]
+        except IndexError:
+            raise TransifexApiException("Target language does not exist on resource")
+        content = self._download_resource_translations(resource, language)
         temp_file = tempfile.NamedTemporaryFile()
         with open(temp_file.name, 'w', encoding='utf-8') as f:
             f.write(content.decode(encoding='utf-8'))
@@ -225,10 +230,10 @@ class TransifexApiClient(object):
         resource = self._get_resource(resource_slug)
         if hq_lang_code:
             language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
-            language_stats = self._get_language_stats(resource.id, language_id)
+            language_stats = self._get_language_stats(resource, language_id)
             return completed(language_stats)
         else:
-            language_stats_list = self._list_language_stats(resource_id=resource.id)
+            language_stats_list = self._list_language_stats(resource=resource)
             return all(completed(stats) for stats in language_stats_list)
 
     @staticmethod
