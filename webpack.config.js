@@ -3,6 +3,7 @@ const path = require('path');
 module.exports = {
     entry: {
         'reactExamples': './frontend/reactExamples.js',
+        'mobileWorkers': './corehq/apps/users/static/users/js/react_test.js',
     },
     output: {
         filename: '[name].js',

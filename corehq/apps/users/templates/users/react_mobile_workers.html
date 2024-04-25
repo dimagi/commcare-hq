@@ -1,0 +1,114 @@
+{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% load compress %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% requirejs_main 'users/js/react_mobile_workers' %}
+
+{% block page_content %}
+  {% initial_page_data 'can_access_all_locations' can_access_all_locations %}
+  {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
+  {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
+  {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}
+  {% initial_page_data 'skip_standard_password_validations' skip_standard_password_validations %}
+  {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
+  {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
+  {% initial_page_data 'show_deactivate_after_date' show_deactivate_after_date %}
+  {% initial_page_data 'two_stage_user_confirmation' two_stage_user_confirmation %}
+  {% registerurl 'location_search' domain %}
+  {% registerurl 'mobile_workers' domain %}
+  {% registerurl 'edit_commcare_user' domain '---' %}
+  {% registerurl 'paginate_mobile_workers' domain %}
+  {% registerurl 'activate_commcare_user' domain '---' %}
+  {% registerurl 'deactivate_commcare_user' domain '---' %}
+  {% registerurl 'send_confirmation_email' domain '---' %}
+  {% registerurl 'send_confirmation_sms' domain '---' %}
+
+  <div>
+    <div class="row">
+      <div class="col-sm-12">
+        <p class="lead">
+          {% blocktrans %}
+            Mobile Workers can log into applications in this project space and submit data.
+          {% endblocktrans %}
+        </p>
+        <p>
+          {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+            Their activity and form submissions can be monitored in the Reports section of this {{ hq_name }} project space.
+            <br />
+            Read more about managing mobile workers on our
+            <a href="https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers" target="_blank">Help Site</a>.
+          {% endblocktrans %}
+        </p>
+        {% if request|ui_notify_enabled:"MULTI_DOMAIN_DOWNLOAD_MOBILE_WORKERS" and request|request_has_privilege:"FILTERED_BULK_USER_DOWNLOAD" and request|toggle_enabled:"DOMAIN_PERMISSIONS_MIRROR" %}
+          <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
+               data-slug="{{ 'MULTI_DOMAIN_DOWNLOAD_MOBILE_WORKERS'|ui_notify_slug }}"
+               role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label='{% trans_html_attr "Close" %}'>
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <p class="lead">{% trans 'New feature: Project Spaces filter on Filtered Download' %}</p>
+            <p>
+              {% blocktrans %}
+                Download mobile workers from all or a select number of project spaces
+                using the 'Project Spaces' filter on the 'Filter and Download Mobile Workers' page!
+              {% endblocktrans %}
+            </p>
+          </div>
+        {% endif %}
+        <div class="btn-toolbar" style="margin-bottom: 20px;">
+          {% if not request.is_view_only %}
+            <button type="button"
+                    class="btn btn-primary ko-template"
+                    id="new-user-modal-trigger"
+                    data-toggle="modal"
+                    data-target="#new-user-modal"
+                    data-bind="click: initializeUser">
+              <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
+            </button>
+          {% endif %}
+
+          <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
+            <i class="fa-solid fa-cloud-arrow-down"></i> {% trans "Download Mobile Workers" %}
+          </a>
+
+          {% if not request.is_view_only %}
+            {% if can_bulk_edit_users and can_access_all_locations %}
+              <a id="bulk_upload" class="btn btn-default" href="{% url "upload_commcare_users" domain %}">
+                <i class="fa-solid fa-cloud-arrow-up"></i> {% trans "Bulk Upload" %}
+              </a>
+            {% endif %}
+            {% if can_add_extra_users and can_access_all_locations %}
+              <a class="btn btn-default" href="{% url "user_fields_view" domain %}" id="btn-edit_user_fields">
+                <i class="fa fa-edit"></i>
+                {% trans "Edit User Fields" %}
+              </a>
+            {% endif %}
+            {% if request|toggle_enabled:"CLEAR_MOBILE_WORKER_DATA" %}
+              <a id="clear-data" class="btn btn-danger" href="{% url "clear_commcare_users" domain %}">
+                <i class="fa fa-eraser"></i>
+                {% trans "Bulk Clear Data" %}
+              </a>
+            {% endif %}
+            {% if request|request_has_privilege:"FILTERED_BULK_USER_DOWNLOAD" %}
+              <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
+                <i class="fa-regular fa-trash-can"></i>
+                {% trans "Bulk Delete Users" %}
+              </a>
+              <a class="btn btn-default" href="{% url "commcare_users_lookup" domain %}">
+                <i class="fa fa-search"></i>
+                {% trans "Bulk Lookup of Users" %}
+              </a>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="reactRoot"></div>
+{% endblock page_content %}
+
+{% block js %}
+  <script src="{% static 'react/mobileWorkers.js' %}"></script>
+{% endblock js %}
