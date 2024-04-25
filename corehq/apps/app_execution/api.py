@@ -199,7 +199,7 @@ class FormplayerSession:
         build_on = "Latest Version"
         if app.built_on:
             build_on = app.built_on.strftime("%B %d, %Y")
-        print(f"Using app '{app.name}' ({app._id} - {build_on})", file=self.log)
+        print(f"Using app '{app.name}' ({app._id} - {app.version} - {build_on})", file=self.log)
         return app._id
 
     def sync(self):
