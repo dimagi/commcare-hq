@@ -131,12 +131,6 @@ class Command(BaseCommand):
             )
             return
 
-        if self.skip_all and selected_filename:
-            self.stderr.write(
-                "\n--skip-all cannot be used with --filename\n"
-            )
-            return
-
         if self.skip_all:
             confirm = get_confirmation("You have elected to skip all the confirmation prompts. "
                                        "Are you sure?")
