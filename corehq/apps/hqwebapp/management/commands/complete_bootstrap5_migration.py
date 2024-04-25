@@ -13,6 +13,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
 )
 from corehq.apps.hqwebapp.utils.management_commands import (
     get_confirmation,
+    enter_to_continue,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.references import (
     get_references,
@@ -45,7 +46,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
-            self.enter_to_continue()
+            enter_to_continue()
 
         template = options.get('template')
         if template:
@@ -251,10 +252,6 @@ class Command(BaseCommand):
             self.stdout.write("\n\n")
             self.stdout.write("\n".join(list_to_display))
             self.stdout.write("\n\n")
-
-    @staticmethod
-    def enter_to_continue():
-        input("\nENTER to continue...")
 
     def suggest_commit_message(self, message, show_apply_commit=False):
         self.stdout.write("\nNow would be a good time to review changes with git and commit.")

@@ -46,6 +46,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.status import (
 from corehq.apps.hqwebapp.utils.management_commands import (
     get_break_line,
     get_confirmation,
+    enter_to_continue,
 )
 
 
@@ -320,7 +321,7 @@ class Command(BaseCommand):
                 changelog.append(self.format_guidance(flag))
                 if review_changes:
                     self.display_flag_summary(changelog)
-                    self.enter_to_continue()
+                    enter_to_continue()
                     self.clear_screen()
                     self.stdout.write(self.format_header(
                         f"Additional changes to line {line_number} will be made..."
@@ -418,7 +419,7 @@ class Command(BaseCommand):
         self.stdout.write(
             "See: https://www.commcarehq.org/styleguide/b5/migration/#migrating-views"
         )
-        self.enter_to_continue()
+        enter_to_continue()
         if has_pending_git_changes():
             self.stdout.write(self.style.WARNING(
                 "\n\nDon't forget to commit these changes!"
@@ -459,7 +460,7 @@ class Command(BaseCommand):
             )
         else:
             self.stdout.write("\nNo changes were necessary!\n")
-            self.enter_to_continue()
+            enter_to_continue()
 
     def split_files_and_refactor(self, app_name, file_path, bootstrap3_lines, bootstrap5_lines, is_template):
         short_path = get_short_path(app_name, file_path, is_template)
@@ -626,10 +627,6 @@ class Command(BaseCommand):
         self.stdout.write(f'\n{response_text}')
         time.sleep(2)
 
-    @staticmethod
-    def enter_to_continue():
-        input("\nENTER to continue...")
-
     def prompt_user_to_commit_changes(self):
         self.stdout.write(self.style.ERROR(
             "\nYou have un-committed changes! Please commit these changes before proceeding. Thank you!"
@@ -651,4 +648,4 @@ class Command(BaseCommand):
         self.stdout.write("\n\nSuggested command:\n")
         self.stdout.write(self.style.MIGRATE_HEADING(commit_string))
         self.stdout.write("\n")
-        self.enter_to_continue()
+        enter_to_continue()
