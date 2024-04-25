@@ -27,7 +27,8 @@
     "templates": [
       "change_my_password.html",
       "enable_superuser.html",
-      "my_projects.html"
+      "my_projects.html",
+      "user_api_keys.html"
     ]
   },
   "case_search": {
