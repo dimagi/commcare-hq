@@ -4,7 +4,6 @@ from corehq.apps.hqwebapp.utils.bootstrap.git import (
     apply_commit,
     get_commit_string,
     has_pending_git_changes,
-    ensure_no_pending_changes_before_continuing,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_template_paths_for_app,
@@ -46,7 +45,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
-            ensure_no_pending_changes_before_continuing()
+            self.enter_to_continue()
 
         template = options.get('template')
         if template:
@@ -76,6 +75,7 @@ class Command(BaseCommand):
         mark_app_as_complete(app_name)
 
     def mark_file_as_complete(self, app_name, filename, is_template):
+        has_changes = has_pending_git_changes()
         file_type = "template" if is_template else "js file"
         if is_template:
             relevant_paths = get_all_template_paths_for_app(app_name)
@@ -104,8 +104,9 @@ class Command(BaseCommand):
             mark_template_as_complete(app_name, destination_short_path)
         else:
             mark_javascript_as_complete(app_name, destination_short_path)
-        self.make_commit(
-            f"Marked {file_type} '{destination_short_path}' as complete and un-split files."
+        self.suggest_commit_message(
+            f"Marked {file_type} '{destination_short_path}' as complete and un-split files.",
+            show_apply_commit=not has_changes
         )
         self.show_next_steps(app_name)
 
@@ -246,12 +247,17 @@ class Command(BaseCommand):
             self.stdout.write("\n".join(list_to_display))
             self.stdout.write("\n\n")
 
-    def make_commit(self, message):
+    @staticmethod
+    def enter_to_continue():
+        input("\nENTER to continue...")
+
+    def suggest_commit_message(self, message, show_apply_commit=False):
         self.stdout.write("\nNow would be a good time to review changes with git and commit.")
-        confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
-        if confirm:
-            apply_commit(message)
-            return
+        if show_apply_commit:
+            confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
+            if confirm:
+                apply_commit(message)
+                return
         commit_string = get_commit_string(message)
         self.stdout.write("\n\nSuggested command:\n")
         self.stdout.write(self.style.MIGRATE_HEADING(commit_string))
