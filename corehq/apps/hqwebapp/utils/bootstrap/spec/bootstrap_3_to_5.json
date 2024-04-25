@@ -8,6 +8,7 @@
         "badge-warning": "text-bg-warning",
         "badge-info": "text-bg-info",
         "badge-light": "text-bg-light",
+        "hide": "d-none",
         "label": "badge",
         "label-default": "text-bg-secondary",
         "label-primary": "text-bg-primary",
@@ -74,7 +75,7 @@
         "data-target": "data-bs-target",
         "data-dismiss": "data-bs-dismiss"
     },
-    "javascript_dependency_renames": {
+    "dependency_renames": {
         "bootstrap3": "bootstrap5"
     },
     "flagged_css_changes": [
@@ -109,5 +110,12 @@
         "popover",
         "tab",
         "tooltip"
+    ],
+    "template_tags_with_dependencies": [
+        "extends",
+        "requirejs_main",
+        "requirejs_main_b5",
+        "static",
+        "include"
     ]
 }
