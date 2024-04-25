@@ -1,0 +1,2 @@
+class AppExecutionError(Exception):
+    pass

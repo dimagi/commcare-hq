@@ -385,6 +385,7 @@ HQ_APPS = (
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
+    'corehq.apps.app_execution',
 
     # custom reports
     'custom.reports.mc',

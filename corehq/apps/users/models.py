@@ -66,6 +66,7 @@ from corehq.apps.domain.utils import (
     guess_domain_language,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.reports.const import TABLEAU_ROLES
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
@@ -160,6 +161,7 @@ PARAMETERIZED_PERMISSIONS = {
     'view_data_registry_contents': 'view_data_registry_contents_list',
     'view_reports': 'view_report_list',
     'view_tableau': 'view_tableau_list',
+    'commcare_analytics_roles': 'commcare_analytics_roles_list',
 }
 
 
@@ -223,6 +225,12 @@ class HqPermissions(DocumentSchema):
     manage_attendance_tracking = BooleanProperty(default=False)
 
     manage_domain_alerts = BooleanProperty(default=False)
+
+    view_commcare_analytics = BooleanProperty(default=False)
+    edit_commcare_analytics = BooleanProperty(default=False)
+
+    commcare_analytics_roles = BooleanProperty(default=False)
+    commcare_analytics_roles_list = StringListProperty(default=[])
 
     @classmethod
     def from_permission_list(cls, permission_list):
@@ -2587,6 +2595,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_usercase_by_domain(self, domain):
         return CommCareCase.objects.get_case_by_external_id(domain, self._id, USERCASE_TYPE)
 
+    def get_user_session_data(self, domain):
+        # TODO can we do this for both types of users and remove the fields from user data?
+        session_data = super(WebUser, self).get_user_session_data(domain)
+        session_data['commcare_location_id'] = self.get_location_id(domain)
+        session_data['commcare_location_ids'] = user_location_data(self.get_location_ids(domain))
+        session_data['commcare_primary_case_sharing_id'] = self.get_location_id(domain)
+        return session_data
+
 
 class FakeUser(WebUser):
     """
@@ -2686,6 +2702,8 @@ class Invitation(models.Model):
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
                                 on_delete=models.SET_NULL, null=True)
     custom_user_data = models.JSONField(default=dict)
+    tableau_role = models.CharField(max_length=32, choices=TABLEAU_ROLES, null=True)
+    tableau_group_ids = ArrayField(models.CharField(max_length=36), null=True)
 
     def __repr__(self):
         return f"Invitation(domain='{self.domain}', email='{self.email})"
@@ -2785,7 +2803,7 @@ class Invitation(models.Model):
         web_user.add_as_web_user(
             self.domain,
             role=self.role,
-            location_id=self.supply_point,
+            location_id=getattr(self.location, "location_id", None),
             program_id=self.program,
         )
         self.is_accepted = True

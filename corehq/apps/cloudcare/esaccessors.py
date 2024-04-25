@@ -1,4 +1,5 @@
 from corehq.apps.es import UserES
+from corehq.apps.es.users import web_users, mobile_users
 from corehq.apps.locations.models import SQLLocation
 
 
@@ -43,7 +44,7 @@ def login_as_user_query(
         if couch_user.has_permission(domain, 'access_default_login_as_user'):
             login_as_users.append('default')
         user_es = user_es.login_as_user(login_as_users)
-    return user_es.mobile_users()
+    return user_es.OR(web_users(), mobile_users())
 
 
 def _limit_login_as(couch_user, domain):
