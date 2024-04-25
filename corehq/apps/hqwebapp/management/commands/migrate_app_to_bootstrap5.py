@@ -14,10 +14,11 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     make_javascript_dependency_renames,
     make_template_dependency_renames,
     flag_changed_css_classes,
-    flag_stateful_button_changes_bootstrap5,
     flag_changed_javascript_plugins,
     flag_crispy_forms_in_template,
     flag_inline_styles,
+    flag_knockout_bindings,
+    flag_stateful_button_changes_bootstrap5,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.git import (
     has_pending_git_changes,
@@ -477,6 +478,7 @@ class Command(BaseCommand):
         flags.extend(flag_stateful_button_changes_bootstrap5(template_line))
         flags.extend(flag_crispy_forms_in_template(template_line))
         flags.extend(flag_inline_styles(template_line))
+        flags.extend(flag_knockout_bindings(template_line))
         return flags
 
     @staticmethod

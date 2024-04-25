@@ -204,6 +204,21 @@ def flag_inline_styles(line):
     return flags
 
 
+def flag_knockout_bindings(line):
+    flags = []
+    regex = r"\bcss:"
+    if re.search(regex, line):
+        flags.append("This template uses the `css` knockout binding. Please verify that the classes applied "
+                     "using this binding are still valid for Bootstrap 5.\n\n"
+                     "Common classes used by the css binding that are NOT supported in B5 include "
+                     "has-error, has-success, and hide.\n\n"
+                     "See `direct_css_renames` in the mgiration spec for classes that can be replaced: "
+                     "https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/utils/bootstrap/spec/bootstrap_3_to_5.json\n\n"  # noqa: E501
+                     "See the documents in changes_guide for help with more complex updates: "
+                     "https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/utils/bootstrap/changes_guide")  # noqa: E501
+    return flags
+
+
 def flag_crispy_forms_in_template(line):
     flags = []
     regex = r"\{% crispy"

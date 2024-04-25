@@ -15,6 +15,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_crispy_forms_in_template,
     flag_bootstrap3_references_in_javascript,
     flag_inline_styles,
+    flag_knockout_bindings,
     make_template_dependency_renames,
 )
 
@@ -191,6 +192,13 @@ def test_flag_inline_styles():
     flags = flag_inline_styles(line)
     eq(len(flags), 1)
     eq(flags[0].startswith('This template uses inline styles.'), True)
+
+
+def test_flag_knockout_bindings():
+    line = """    <td data-bind="css: {'has-error': messageError}">"""
+    flags = flag_knockout_bindings(line)
+    eq(len(flags), 1)
+    eq(flags[0].startswith('This template uses the `css` knockout binding.'), True)
 
 
 def test_flag_crispy_forms_in_template():
