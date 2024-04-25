@@ -168,10 +168,17 @@ hqDefine('users/js/roles',[
                 };
                 self.preventRoleDelete = data.preventRoleDelete;
                 self.hasUnpermittedLocationRestriction = data.has_unpermitted_location_restriction || false;
+
                 self.restrictRoleChecked = ko.computed(function () {
                     return data.manageRoleAssignments.specific.some(role => role.value() && !role.access_all_locations);
                 });
                 self.showRestrictedLocationRoleAssignmentWarning = ko.computed(function () {
+                    return self.permissions.access_all_locations() && self.restrictRoleChecked();
+                });
+                self.cantAccessAllLocations = ko.computed(function () {
+                    return !self.hasUnpermittedLocationRestriction && !self.permissions.access_all_locations();
+                });
+                self.unrestrictedButRestrictedRoleCanAssign = ko.computed(function () {
                     return self.permissions.access_all_locations() && self.restrictRoleChecked();
                 });
                 if (self.hasUnpermittedLocationRestriction) {
