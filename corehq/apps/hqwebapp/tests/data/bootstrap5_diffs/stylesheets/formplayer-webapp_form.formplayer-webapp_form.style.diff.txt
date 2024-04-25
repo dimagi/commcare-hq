@@ -5,7 +5,7 @@
      }
  
 -    background-color: @call-to-action-extra-hi;
-+    background-color: @primary-subtle;
++    background-color: var(--bsprimary-bg-subtle);
      .border-bottom-radius(0);
  
      .submit .btn {

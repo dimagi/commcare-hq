@@ -99,6 +99,9 @@ class Command(PopulateSQLCommand):
                 sql.attempts,
                 transforms,
             ))
+        if any(d for d in diffs) and '_rev' in couch:
+            # possibly useful for detecting Couch data corruption
+            diffs.append(f"couch['_rev']: {couch['_rev']}")
         return diffs
 
     def get_ids_to_ignore(self, docs):
@@ -116,7 +119,7 @@ class Command(PopulateSQLCommand):
         rare condition, it is not handled. It should be sufficient to
         rerun the migration to recover from that error.
         """
-        existing_ids = {id_.hex for id_ in Repeater.objects.filter(
+        existing_ids = {id_.hex for id_ in Repeater.all_objects.filter(
             id__in=list({d["repeater_id"] for d in docs})
         ).values_list("id", flat=True)}
         return {d["_id"] for d in docs if d["repeater_id"] not in existing_ids}

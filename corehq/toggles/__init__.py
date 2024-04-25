@@ -761,13 +761,6 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SSO_REMOTE_USER_MANAGEMENT = StaticToggle(
-    'sso_remote_user_management',
-    "Shows remote user management fields in SSO Identity Provider Form",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 BIOMETRIC_INTEGRATION = StaticToggle(
     'biometric_integration',
     "Enables biometric integration (simprints) features.",
@@ -991,6 +984,19 @@ USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Allow+selecting+multiple+cases+from+the+case+list',  # noqa: E501
     description="""
     Allows user to select multiple cases and load them all into the form.
+    """
+)
+
+CASE_SEARCH_INDEXED_METADATA = StaticToggle(
+    'CASE_SEARCH_INDEXED_METADATA',
+    "Case Search: Search against indexed system metadata fields when possible",
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This is a performance optimization. When creating filters from CSQL
+    expressions and the property being queried is a standard system metadata
+    property, query against the top-level location of that property rather than
+    the nested document inside case_properties.
     """
 )
 

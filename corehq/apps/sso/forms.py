@@ -675,11 +675,6 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
     ))
 
     def __init__(self, identity_provider, *args, **kwargs):
-        if 'show_remote_user_management' in kwargs:
-            self.show_remote_user_management = kwargs.pop('show_remote_user_management')
-        else:
-            self.show_remote_user_management = False
-
         self.idp = identity_provider
         initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
         initial.setdefault('enable_user_deactivation', identity_provider.enable_user_deactivation)
@@ -877,7 +872,7 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         self.helper.form_class = 'form form-horizontal ko-template'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        layout = crispy.Layout(
+        self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Div(
                     crispy.Fieldset(
@@ -914,12 +909,9 @@ class SsoSamlEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                 ),
                 css_class="panel panel-modern-gray panel-form-only"
             ),
+            crispy.Div(*self.get_remote_user_management_fields()),
+            crispy.Div(*self.get_primary_fields())
         )
-        if self.show_remote_user_management:
-            layout.append(crispy.Div(*self.get_remote_user_management_fields()))
-        layout.append(crispy.Div(*self.get_primary_fields()))
-
-        self.helper.layout = layout
 
     def get_remote_user_management_fields(self):
         masked_api = get_masked_string(self.idp.api_secret)

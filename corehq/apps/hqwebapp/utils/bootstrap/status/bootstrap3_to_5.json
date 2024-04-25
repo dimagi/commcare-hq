@@ -23,6 +23,7 @@
     ]
   },
   "settings": {
+    "in_progress": true,
     "templates": [
       "change_my_password.html",
       "enable_superuser.html",
@@ -30,6 +31,7 @@
     ]
   },
   "case_search": {
+    "is_complete": true,
     "templates": [
       "profile_case_search.html",
       "case_search.html"
@@ -37,7 +39,12 @@
     "javascript": [
       "js/profile_case_search.js",
       "js/case_search.js"
-    ],
-    "is_complete": true
+    ]
+  },
+  "hqwebapp": {
+    "in_progress": true
+  },
+  "corehq.tabs": {
+    "in_progress": true
   }
 }

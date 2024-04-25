@@ -116,5 +116,4 @@ class ProfileCaseSearchView(_BaseCaseSearchView):
             'related_count': profiler.related_count,
             'timing_data': profiler.timing_context.to_dict(),
             'queries': profiler.queries,
-            'profile_results': profiler.profile_results,
         })
