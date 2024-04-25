@@ -86,6 +86,8 @@
         "form-group",
         "form-inline",
         "glyphicon",
+        "has-error",
+        "has-success",
         "input-group-addon",
         "input-group-btn",
         "modal-header",
