@@ -291,20 +291,9 @@
     If you merge <code>master</code> into your split files branch and find that the diffs have diverged for a file,
     please run the following command to re-migrate the <code>bootstrap3</code> version of that file.
   </p>
-  <p>
-    If the file is a template, please run:
-  </p>
   <div class="card text-bg-light mb-3">
     <div class="card-body">
-      <pre class="m-0">./manage.py migrate_app_to_bootstrap5 &lt;app_name&gt; --template-name &lt;file_path&gt;</pre>
-    </div>
-  </div>
-  <p>
-    If the file is a javascript file, please run:
-  </p>
-  <div class="card text-bg-light mb-3">
-    <div class="card-body">
-      <pre class="m-0">./manage.py migrate_app_to_bootstrap5 &lt;app_name&gt; --js-name &lt;file_path&gt;</pre>
+      <pre class="m-0">./manage.py migrate_app_to_bootstrap5 &lt;app_name&gt; --filename &lt;file_path&gt;</pre>
     </div>
   </div>
   <p>

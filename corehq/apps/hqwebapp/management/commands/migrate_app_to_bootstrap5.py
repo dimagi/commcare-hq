@@ -58,12 +58,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('app_name')
         parser.add_argument(
-            '--template-name',
-            help="Specify the exact template name(s) you would like to split and migrate",
-        )
-        parser.add_argument(
-            '--js-name',
-            help="Specify the exact javascript name(s) you would like to split and migrate",
+            '--filename',
+            help="Specify the exact filename you would like to split and migrate.",
         )
         parser.add_argument(
             '--no-split',
@@ -93,22 +89,20 @@ class Command(BaseCommand):
             ))
             return
 
-        template_name = options.get('template_name')
-        js_name = options.get('js_name')
+        selected_filename = options.get('filename')
 
         is_app_migration_complete = is_app_completed(app_name)
 
-        if is_app_migration_complete and not (template_name or js_name):
+        if is_app_migration_complete and not selected_filename:
             self.show_completed_message(app_name)
             return
 
-        if is_app_migration_complete and (template_name or js_name):
-            filename = template_name or js_name
+        if is_app_migration_complete and selected_filename:
             self.stdout.write(self.style.WARNING(
                 f"\nIt appears the app '{app_name}' is already marked as complete.\n"
             ))
             confirm = get_confirmation(
-                f"Continue migrating '{filename}'?", default='y'
+                f"Continue migrating '{selected_filename}'?", default='y'
             )
             if not confirm:
                 return
@@ -137,9 +131,9 @@ class Command(BaseCommand):
             )
             return
 
-        if self.skip_all and (js_name or template_name):
+        if self.skip_all and selected_filename:
             self.stderr.write(
-                "\n--skip-all cannot be used with --template-name or --js-name\n"
+                "\n--skip-all cannot be used with --filename\n"
             )
             return
 
@@ -171,13 +165,11 @@ class Command(BaseCommand):
             self.verify_split_references(app_name)
             return
 
-        if not js_name:
-            app_templates = self.get_templates_for_migration(app_name, template_name)
-            self.migrate_files(app_templates, app_name, spec, is_template=True)
+        app_templates = self.get_templates_for_migration(app_name, selected_filename)
+        self.migrate_files(app_templates, app_name, spec, is_template=True)
 
-        if not template_name:
-            app_javascript = self.get_js_files_for_migration(app_name, js_name)
-            self.migrate_files(app_javascript, app_name, spec, is_template=False)
+        app_javascript = self.get_js_files_for_migration(app_name, selected_filename)
+        self.migrate_files(app_javascript, app_name, spec, is_template=False)
 
         self.show_next_steps(app_name)
 
@@ -225,18 +217,18 @@ class Command(BaseCommand):
         files = [t for t in files if '/bootstrap5/' not in str(t)]
         return files
 
-    def get_templates_for_migration(self, app_name, template_name):
+    def get_templates_for_migration(self, app_name, selected_filename):
         app_templates = get_all_template_paths_for_app(app_name)
-        available_templates = self._get_files_for_migration(app_templates, template_name)
-        if template_name:
+        available_templates = self._get_files_for_migration(app_templates, selected_filename)
+        if selected_filename:
             return available_templates
         completed_templates = get_completed_templates_for_app(app_name)
         return set(available_templates).difference(completed_templates)
 
-    def get_js_files_for_migration(self, app_name, js_name):
+    def get_js_files_for_migration(self, app_name, selected_filename):
         app_js_files = get_all_javascript_paths_for_app(app_name)
-        available_js_files = self._get_files_for_migration(app_js_files, js_name)
-        if js_name:
+        available_js_files = self._get_files_for_migration(app_js_files, selected_filename)
+        if selected_filename:
             return available_js_files
         completed_js_files = get_completed_javascript_for_app(app_name)
         return set(available_js_files).difference(completed_js_files)
