@@ -8,6 +8,7 @@
         "badge-warning": "text-bg-warning",
         "badge-info": "text-bg-info",
         "badge-light": "text-bg-light",
+        "hide": "d-none",
         "label": "badge",
         "label-default": "text-bg-secondary",
         "label-primary": "text-bg-primary",
