@@ -517,17 +517,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
             numEntitiesPerRow, useUniformUnits, 'list', options.isMultiSelect);
 
-        const gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
-
-        $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
-        $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
+        $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle);
+        $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle);
         // If we have multiple cases per line, need to generate the outer grid style as well
         if (caseTileStyles.cellWrapperStyle && caseTileStyles.cellContainerStyle) {
-            $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle).data("css-polyfilled", false);
-            $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle).data("css-polyfilled", false);
+            $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle);
+            $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle);
         }
-
-        $.getScript(gridPolyfillPath);
     };
 
     const CaseTileGroupedView = CaseTileView.extend({
