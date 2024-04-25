@@ -38,7 +38,8 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.couch.database import iter_docs
 from soil.progress import set_task_progress
 
-from corehq import feature_previews
+from corehq import feature_previews, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.app_schemas.case_properties import (
     ParentCasePropertyBuilder,
 )
@@ -57,6 +58,7 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction,
     RemoteApp,
 )
+from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import (
     ALL_CASE_TYPE_EXPORT,
@@ -2357,6 +2359,11 @@ class CaseExportDataSchema(ExportDataSchema):
         )
         case_property_mapping = builder.get_case_property_map([case_type])
 
+        if domain_has_privilege(app.domain, privileges.DATA_DICTIONARY):
+            case_property_mapping[case_type] = cls._reorder_case_properties_from_data_dictionary(
+                app.domain, case_type, case_property_mapping[case_type]
+            )
+
         parent_types = builder.get_case_relationships_for_case_type(case_type)
         case_schemas = []
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
@@ -2379,6 +2386,27 @@ class CaseExportDataSchema(ExportDataSchema):
         case_schemas.append(current_schema)
 
         return cls._merge_schemas(*case_schemas)
+
+    @classmethod
+    def _reorder_case_properties_from_data_dictionary(cls, domain, case_type, case_properties):
+        case_properties_indices = {}
+
+        filter_kwargs = {'case_type__domain': domain, 'case_type__name': case_type}
+        # ToDo: Check if we can directly get a dictionary from query itself
+        for case_property in (
+            CaseProperty.objects
+                .filter(**filter_kwargs)
+                .select_related('case_type')
+                .order_by('index')
+        ):
+            case_properties_indices[case_property] = case_property.index
+
+        ordered_case_properties = sorted(
+            case_properties,
+            key=lambda prop: case_properties_indices.get(prop, 0)
+        )
+
+        return ordered_case_properties
 
     @classmethod
     def _generate_schema_from_case_property_mapping(cls, case_property_mapping, parent_types, app_id, app_version):
