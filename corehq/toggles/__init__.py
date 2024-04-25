@@ -761,13 +761,6 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SSO_REMOTE_USER_MANAGEMENT = StaticToggle(
-    'sso_remote_user_management',
-    "Shows remote user management fields in SSO Identity Provider Form",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 BIOMETRIC_INTEGRATION = StaticToggle(
     'biometric_integration',
     "Enables biometric integration (simprints) features.",
@@ -994,6 +987,19 @@ USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     """
 )
 
+CASE_SEARCH_INDEXED_METADATA = StaticToggle(
+    'CASE_SEARCH_INDEXED_METADATA',
+    "Case Search: Search against indexed system metadata fields when possible",
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This is a performance optimization. When creating filters from CSQL
+    expressions and the property being queried is a standard system metadata
+    property, query against the top-level location of that property rather than
+    the nested document inside case_properties.
+    """
+)
+
 USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     "USH Specific toggle to support several different case search/claim workflows in web apps",
@@ -1006,6 +1012,17 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     and other options in Webapps Case Search.
     """,
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
+)
+
+NO_SCROLL_IN_CASE_SEARCH = StaticToggle(
+    'no_scroll_in_case_search',
+    "Do not use scroll queries in case search elasticsearch queries",
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This toggle replaces scroll queries in case search ancestor functions with
+    normal search queries.
+    """
 )
 
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
@@ -1118,14 +1135,6 @@ HIDE_SYNC_BUTTON = StaticToggle(
     "USH: Hide Sync Button in Web Apps",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-MULTI_VIEW_API_KEYS = StaticToggle(
-    'multi_view_api_keys',
-    "Multi-View API Keys",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="Allows users to view and copy API keys after creation",
 )
 
 
@@ -2529,6 +2538,17 @@ ALLOW_WEB_APPS_RESTRICTION = StaticToggle(
     """
 )
 
+ES_QUERY_PREFERENCE = StaticToggle(
+    'es_query_preference',
+    'Sets preference option on ES queries',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    When enabled, ES queries for this domain will be routed to the same shards for every request. This helps
+    ES queries take advantage of caching on ES nodes.
+    """
+)
+
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
@@ -2784,4 +2804,13 @@ SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
     tag=TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
+)
+
+
+RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
+    slug='restrict_data_source_rebuilds',
+    label='Restrict data source rebuilt from UI',
+    tag=TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
 )

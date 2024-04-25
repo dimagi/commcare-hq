@@ -1,0 +1,50 @@
+{
+  "builds": {
+    "is_complete": true,
+    "templates": [
+      "edit_menu.html"
+    ],
+    "javascript": [
+      "js/edit_builds.js"
+    ]
+  },
+  "case_importer": {
+    "is_complete": true,
+    "templates": [
+      "excel_config.html",
+      "excel_fields.html",
+      "import_cases.html",
+      "partials/excel_field_rows.html",
+      "partials/ko_import_history.html"
+    ],
+    "javascript": [
+      "js/import_history.js",
+      "js/main.js"
+    ]
+  },
+  "settings": {
+    "in_progress": true,
+    "templates": [
+      "change_my_password.html",
+      "enable_superuser.html",
+      "my_projects.html"
+    ]
+  },
+  "case_search": {
+    "is_complete": true,
+    "templates": [
+      "profile_case_search.html",
+      "case_search.html"
+    ],
+    "javascript": [
+      "js/profile_case_search.js",
+      "js/case_search.js"
+    ]
+  },
+  "hqwebapp": {
+    "in_progress": true
+  },
+  "corehq.tabs": {
+    "in_progress": true
+  }
+}

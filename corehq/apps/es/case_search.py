@@ -11,11 +11,7 @@ from corehq.apps.es import case_search as case_search_es
 """
 
 from copy import deepcopy
-from datetime import date, datetime
-from warnings import warn
-
-from django.utils.dateparse import parse_date, parse_datetime
-from django.utils.translation import gettext
+from datetime import datetime
 
 from memoized import memoized
 
@@ -29,8 +25,7 @@ from corehq.apps.case_search.const import (
     INDICES_PATH,
     REFERENCED_ID,
     RELEVANCE_SCORE,
-    SPECIAL_CASE_PROPERTIES,
-    SYSTEM_PROPERTIES,
+    INDEXED_METADATA_BY_KEY,
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
@@ -59,7 +54,6 @@ class CaseSearchES(CaseES):
     @property
     def builtin_filters(self):
         return [
-            case_property_filter,
             blacklist_owner_id,
             external_id,
             indexed_on,
@@ -85,25 +79,6 @@ class CaseSearchES(CaseES):
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
         return self.add_query(case_property_query(case_property_name, value, fuzzy), clause)
-
-    def regexp_case_property_query(self, case_property_name, regex, clause=queries.MUST):
-        """
-        Search for all cases where case property `case_property_name` matches the regular expression in `regex`
-        """
-        return self.add_query(
-            _base_property_query(case_property_name, queries.regexp(PROPERTY_VALUE, regex)),
-            clause,
-        )
-
-    def numeric_range_case_property_query(self, case_property_name, gt=None,
-                                          gte=None, lt=None, lte=None, clause=queries.MUST):
-        """
-        Search for all cases where case property `case_property_name` fulfills the range criteria.
-        """
-        return self.add_query(
-            case_property_range_query(case_property_name, gt, gte, lt, lte),
-            clause
-        )
 
     def xpath_query(self, domain, xpath, fuzzy=False):
         """Search for cases using an XPath predicate expression.
@@ -191,7 +166,7 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         doc = {
             desired_property: case_dict.get(desired_property)
             for desired_property in self.mapping['properties'].keys()
-            if desired_property not in SYSTEM_PROPERTIES
+            if desired_property != CASE_PROPERTIES_PATH
         }
         doc[INDEXED_ON] = json_format_datetime(datetime.utcnow())
         doc['case_properties'] = _get_case_properties(case_dict)
@@ -205,17 +180,6 @@ case_search_adapter = create_document_adapter(
     case_adapter.type,
     secondary=HQ_CASE_SEARCH_SECONDARY_INDEX_NAME,
 )
-
-
-def case_property_filter(case_property_name, value):
-    warn("Use the query versions of this function from the case_search module instead", DeprecationWarning)
-    return filters.nested(
-        CASE_PROPERTIES_PATH,
-        filters.AND(
-            filters.term(PROPERTY_KEY, case_property_name),
-            filters.term(PROPERTY_VALUE, value),
-        )
-    )
 
 
 def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None):
@@ -298,60 +262,20 @@ def case_property_starts_with(case_property_name, value):
     )
 
 
-def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None):
-    """Returns cases where case property `key` fall into the range provided.
-
-    """
+def case_property_numeric_range(case_property_name, gt=None, gte=None, lt=None, lte=None):
     kwargs = {'gt': gt, 'gte': gte, 'lt': lt, 'lte': lte}
-    # if its a number, use it
-    try:
-        # numeric range
-        kwargs = {key: float(value) for key, value in kwargs.items() if value is not None}
-        return _base_property_query(
-            case_property_name,
-            queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
-        )
-    except (TypeError, ValueError):
-        pass
+    return _base_property_query(
+        case_property_name,
+        queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
+    )
 
-    # if its a date or datetime, use it
-    # date range
-    kwargs = {
-        key: value if isinstance(value, (date, datetime)) else _parse_date_or_datetime(value)
-        for key, value in kwargs.items()
-        if value is not None
-    }
-    if not kwargs:
-        raise TypeError()       # Neither a date nor number was passed in
 
+def case_property_date_range(case_property_name, gt=None, gte=None, lt=None, lte=None):
+    kwargs = {'gt': gt, 'gte': gte, 'lt': lt, 'lte': lte}
     return _base_property_query(
         case_property_name,
         queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
     )
-
-
-def _parse_date_or_datetime(value):
-    parsed_date = _parse_date(value)
-    if parsed_date is not None:
-        return parsed_date
-    parsed_datetime = _parse_datetime(value)
-    if parsed_datetime is not None:
-        return parsed_datetime
-    raise ValueError(gettext(f"{value} is not a correctly formatted date or datetime."))
-
-
-def _parse_date(value):
-    try:
-        return parse_date(value)
-    except ValueError:
-        raise ValueError(gettext(f"{value} is an invalid date."))
-
-
-def _parse_datetime(value):
-    try:
-        return parse_datetime(value)
-    except ValueError:
-        raise ValueError(gettext(f"{value} is an invalid datetime."))
 
 
 def reverse_index_case_query(case_ids, identifier=None):
@@ -391,9 +315,7 @@ def _case_property_not_set(case_property_name):
 
 
 def case_property_missing(case_property_name):
-    """case_property_name isn't set or is the empty string
-
-    """
+    """case_property_name isn't set or is the empty string"""
     return filters.OR(
         _case_property_not_set(case_property_name),
         exact_case_property_text_query(case_property_name, '')
@@ -460,7 +382,7 @@ def wrap_case_search_hit(hit, include_score=False):
         case_json={
             prop["key"]: prop[_VALUE]
             for prop in data.get(CASE_PROPERTIES_PATH, {})
-            if prop["key"] not in SPECIAL_CASE_PROPERTIES
+            if prop["key"] not in INDEXED_METADATA_BY_KEY
         },
         indices=data.get("indices", []),
     )

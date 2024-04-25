@@ -66,6 +66,7 @@ from corehq.apps.domain.utils import (
     guess_domain_language,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.reports.const import TABLEAU_ROLES
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
@@ -160,6 +161,7 @@ PARAMETERIZED_PERMISSIONS = {
     'view_data_registry_contents': 'view_data_registry_contents_list',
     'view_reports': 'view_report_list',
     'view_tableau': 'view_tableau_list',
+    'commcare_analytics_roles': 'commcare_analytics_roles_list',
 }
 
 
@@ -223,6 +225,12 @@ class HqPermissions(DocumentSchema):
     manage_attendance_tracking = BooleanProperty(default=False)
 
     manage_domain_alerts = BooleanProperty(default=False)
+
+    view_commcare_analytics = BooleanProperty(default=False)
+    edit_commcare_analytics = BooleanProperty(default=False)
+
+    commcare_analytics_roles = BooleanProperty(default=False)
+    commcare_analytics_roles_list = StringListProperty(default=[])
 
     @classmethod
     def from_permission_list(cls, permission_list):
@@ -2694,6 +2702,8 @@ class Invitation(models.Model):
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
                                 on_delete=models.SET_NULL, null=True)
     custom_user_data = models.JSONField(default=dict)
+    tableau_role = models.CharField(max_length=32, choices=TABLEAU_ROLES, null=True)
+    tableau_group_ids = ArrayField(models.CharField(max_length=36), null=True)
 
     def __repr__(self):
         return f"Invitation(domain='{self.domain}', email='{self.email})"

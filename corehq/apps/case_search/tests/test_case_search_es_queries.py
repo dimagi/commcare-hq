@@ -6,6 +6,7 @@ from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
 from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns, _parse_commcare_sort_properties
 from corehq.apps.case_search.tests.utils import get_case_search_query
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
+from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'mighty-search'
 
@@ -251,6 +252,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             validate_query=False
         )
 
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
     def test_multi_xpath_query(self):
         criteria = OrderedDict([
             ('_xpath_query', ["name='Frodo Baggins'", "home='Hobbiton'"]),
@@ -262,6 +264,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                         {"terms": {"domain.exact": [DOMAIN]}},
                         {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
+                        {"term": {"name.exact": "Frodo Baggins"}},
                         {
                             "nested": {
                                 "path": "case_properties",
@@ -271,64 +274,20 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                                             {
                                                 "bool": {
                                                     "filter": [
-                                                        {
-                                                            "term": {
-                                                                "case_properties.key.exact": "name"
-                                                            }
-                                                        },
-                                                        {
-                                                            "term": {
-                                                                "case_properties.value.exact": "Frodo Baggins"
-                                                            }
-                                                        }
+                                                        {"term": {"case_properties.key.exact": "home"}},
+                                                        {"term": {"case_properties.value.exact": "Hobbiton"}}
                                                     ]
                                                 }
                                             }
                                         ],
-                                        "must": {
-                                            "match_all": {}
-                                        }
+                                        "must": {"match_all": {}}
                                     }
                                 }
                             }
                         },
-                        {
-                            "nested": {
-                                "path": "case_properties",
-                                "query": {
-                                    "bool": {
-                                        "filter": [
-                                            {
-                                                "bool": {
-                                                    "filter": [
-                                                        {
-                                                            "term": {
-                                                                "case_properties.key.exact": "home"
-                                                            }
-                                                        },
-                                                        {
-                                                            "term": {
-                                                                "case_properties.value.exact": "Hobbiton"
-                                                            }
-                                                        }
-                                                    ]
-                                                }
-                                            }
-                                        ],
-                                        "must": {
-                                            "match_all": {}
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "match_all": {}
-                        }
+                        {"match_all": {}}
                     ],
-                    "must": {
-                        "match_all": {}
-                    }
+                    "must": {"match_all": {}}
                 }
             },
             "sort": [
