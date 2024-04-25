@@ -55,8 +55,7 @@ class TestRedirectUrlCommand(TestCase):
         stdout = self._call_redirect_url('--set', 'https://example.com/')
         self.assertEqual(
             stdout,
-            'Form submissions and syncs are redirected to '
-            'https://example.com/\n'
+            'App updates are redirected to https://example.com/\n'
         )
 
     def test_unset_url_data_migration_not_enabled(self):
@@ -75,8 +74,7 @@ class TestRedirectUrlCommand(TestCase):
             stdout = self._call_redirect_url()
             self.assertEqual(
                 stdout,
-                'Form submissions and syncs are redirected to '
-                'https://example.com/\n'
+                'App updates are redirected to https://example.com/\n'
             )
 
     @flag_enabled('DATA_MIGRATION')
@@ -85,8 +83,7 @@ class TestRedirectUrlCommand(TestCase):
             stdout = self._call_redirect_url()
             self.assertEqual(
                 stdout,
-                'Form submissions and syncs are redirected to '
-                'https://example.com/\n'
+                'App updates are redirected to https://example.com/\n'
             )
 
     def test_return_unset_url_data_migration_not_enabled(self):
