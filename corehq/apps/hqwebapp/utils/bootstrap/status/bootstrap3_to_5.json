@@ -29,6 +29,9 @@
       "enable_superuser.html",
       "my_projects.html",
       "user_api_keys.html"
+    ],
+    "javascript": [
+      "js/user_api_keys.js"
     ]
   },
   "case_search": {
