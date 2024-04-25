@@ -79,6 +79,7 @@
     },
     "flagged_css_changes": [
         "breadcrumb",
+        "checkbox",
         "close",
         "dl-horizontal",
         "dropdown",
@@ -100,7 +101,10 @@
     ],
     "flagged_js_plugins": [
         "affix",
+        "bootstrapSwitch",
         "button",
+        "createDateRangePicker",
+        "datetimepicker",
         "modal",
         "popover",
         "tab",

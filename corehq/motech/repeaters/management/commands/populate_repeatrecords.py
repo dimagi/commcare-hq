@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from django.db.models import Count
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
@@ -28,10 +30,7 @@ class Command(PopulateSQLCommand):
 
     def handle(self, *args, **kw):
         couch_model_class = self.sql_class()._migration_get_couch_model_class()
-        couch_model_class._migration_get_custom_couch_to_sql_functions = staticmethod(
-            lambda: [_attempt_to_preserve_failure_reason]
-        )
-        with enable_attempts_sync_to_sql(couch_model_class, True):
+        with patch_couch_to_sql(couch_model_class):
             return super().handle(*args, **kw)
 
     @classmethod
@@ -49,6 +48,11 @@ class Command(PopulateSQLCommand):
             return couch_state == State.Pending or couch_state == State.Fail
 
         from ...models import State
+        is_very_old_pending_record = (
+            'registered_at' not in couch
+            and (get_state(couch) == State.Pending or get_state(couch) == State.Fail)
+            and (couch.get('next_check') or '2018-03-12') < '2018-03-12'
+        )
         fields = ["domain", "payload_id"]
         diffs = [cls.diff_attr(name, couch, sql) for name in fields]
         diffs.append(cls.diff_value(
@@ -58,18 +62,19 @@ class Command(PopulateSQLCommand):
         ))
         diffs.append(cls.diff_value(
             "state",
-            get_state(couch),
+            State.Cancelled if is_very_old_pending_record else get_state(couch),
             sql.state,
         ))
         diffs.append(cls.diff_value(
             "registered_at",
-            couch.get("registered_on") or '1970-01-01T00:00:00.000000Z',
+            (couch.get("next_check" if is_very_old_pending_record else "registered_on")
+                or '1970-01-01T00:00:00.000000Z'),
             json_format_datetime(sql.registered_at),
         ))
         if sql_may_have_next_check():
             diffs.append(cls.diff_value(
                 "next_check",
-                couch["next_check"],
+                None if is_very_old_pending_record else couch["next_check"],
                 json_format_datetime(sql.next_check) if sql.next_check else sql.next_check,
             ))
         if couch.get("failure_reason") and not couch.get("succeeded"):
@@ -196,7 +201,7 @@ def get_state(doc):
         return State.Success
     if doc.get('cancelled'):
         return State.Cancelled
-    if doc['failure_reason']:
+    if doc.get('failure_reason'):
         return State.Fail
     return State.Pending
 
@@ -220,3 +225,16 @@ def _attempt_to_preserve_failure_reason(doc, obj):
         )
         assert not obj._new_submodels[SQLRepeatRecordAttempt][0], 'unexpected attempts'
         obj._new_submodels[SQLRepeatRecordAttempt][0].append(attempt)
+
+
+@contextmanager
+def patch_couch_to_sql(couch_model):
+    original_functions = couch_model._migration_get_custom_couch_to_sql_functions
+    couch_model._migration_get_custom_couch_to_sql_functions = staticmethod(
+        lambda: [_attempt_to_preserve_failure_reason]
+    )
+    try:
+        with enable_attempts_sync_to_sql(couch_model, True):
+            yield
+    finally:
+        couch_model._migration_get_custom_couch_to_sql_functions = original_functions

@@ -10,7 +10,7 @@ from corehq.apps.data_interfaces.tasks import (
 class TestTasks(TestCase):
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    @patch('corehq.apps.data_interfaces.utils._get_sql_repeat_record')
     def test_task_operate_on_payloads_no_action(
         self,
         unused_1,
@@ -20,7 +20,6 @@ class TestTasks(TestCase):
             record_ids=['payload_id'],
             domain='test_domain',
             action='',
-            use_sql=False,
         )
         self.assertEqual(response, {
             'messages': {
@@ -38,13 +37,12 @@ class TestTasks(TestCase):
             record_ids=[],
             domain='test_domain',
             action='test_action',
-            use_sql=False,
         )
         self.assertEqual(response,
                          {'messages': {'errors': ['No payloads specified']}})
 
     @patch('corehq.apps.data_interfaces.utils.DownloadBase')
-    @patch('corehq.apps.data_interfaces.utils._get_couch_repeat_record')
+    @patch('corehq.apps.data_interfaces.utils._get_sql_repeat_record')
     @patch('corehq.apps.data_interfaces.tasks._get_repeat_record_ids')
     def test_task_generate_ids_and_operate_on_payloads_no_action(
         self,
@@ -58,7 +56,6 @@ class TestTasks(TestCase):
             repeater_id=None,
             domain='test_domain',
             action='',
-            use_sql=False,
         )
         self.assertEqual(response, {
             'messages': {
@@ -79,7 +76,6 @@ class TestTasks(TestCase):
             repeater_id=None,
             domain='test_domain',
             action='',
-            use_sql=False,
         )
         self.assertEqual(response,
                          {'messages': {'errors': ['No payloads specified']}})

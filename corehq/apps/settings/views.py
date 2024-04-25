@@ -671,7 +671,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     def _to_user_time(self, value):
         return (ServerTime(value)
-                .user_time(ZoneInfo(self.request.couch_user.get_time_zone()))
+                .user_time(self.get_user_timezone())
                 .done()
                 .strftime(USER_DATETIME_FORMAT)) if value else '-'
 
@@ -754,6 +754,9 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     create_item_form_class = "form form-horizontal"
 
+    def get_user_timezone(self):
+        return ZoneInfo(self.request.couch_user.get_time_zone() or 'UTC')
+
     def get_create_form(self, is_blank=False):
         if self.managing_idp:
             max_expiration_window = self.managing_idp.max_days_until_user_api_key_expiration
@@ -767,12 +770,12 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 self.request.POST,
                 user_domains=user_domains,
                 max_allowed_expiration_days=max_expiration_window,
-                timezone=ZoneInfo(self.request.couch_user.get_time_zone())
+                timezone=self.get_user_timezone(),
             )
         return HQApiKeyForm(
             user_domains=user_domains,
             max_allowed_expiration_days=max_expiration_window,
-            timezone=ZoneInfo(self.request.couch_user.get_time_zone())
+            timezone=self.get_user_timezone(),
         )
 
     def get_create_item_data(self, create_form):
