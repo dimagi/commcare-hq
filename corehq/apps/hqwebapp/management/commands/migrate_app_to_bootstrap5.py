@@ -131,26 +131,11 @@ class Command(BaseCommand):
             )
             return
 
-        if self.skip_all:
-            confirm = get_confirmation("You have elected to skip all the confirmation prompts. "
-                                       "Are you sure?")
-            if not confirm:
-                return
-
         if self.skip_all and has_pending_git_changes():
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
             ensure_no_pending_changes_before_continuing()
-
-        if self.no_split:
-            self.stdout.write(self.style.WARNING(
-                "\n\nYou have elected to skip the split files step and will apply migration "
-                "changes directly to each un-migrated file.\n"
-            ))
-            confirm = get_confirmation("Are you sure?")
-            if not confirm:
-                return
 
         spec = get_spec('bootstrap_3_to_5')
         verify_references = options.get('verify_references')
