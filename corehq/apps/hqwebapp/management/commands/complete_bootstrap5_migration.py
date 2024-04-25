@@ -58,6 +58,7 @@ class Command(BaseCommand):
         self.mark_app_as_complete(app_name)
 
     def mark_app_as_complete(self, app_name):
+        has_changes = has_pending_git_changes()
         split_paths = [get_short_path(app_name, path, True)
                        for path in get_split_paths(get_all_template_paths_for_app(app_name))]
         split_paths.extend([get_short_path(app_name, path, False)
@@ -73,6 +74,10 @@ class Command(BaseCommand):
             f"\nMarking '{app_name}' as complete!\n\n"
         ))
         mark_app_as_complete(app_name)
+        self.suggest_commit_message(
+            f"Marked '{app_name}' as complete",
+            show_apply_commit=not has_changes
+        )
 
     def mark_file_as_complete(self, app_name, filename, is_template):
         has_changes = has_pending_git_changes()
