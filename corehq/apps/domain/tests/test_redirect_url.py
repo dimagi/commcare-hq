@@ -134,10 +134,7 @@ class TestCheckDomainMigration(TestCase):
 
     def test_redirect_response(self):
         with _set_redirect_url():
-            response = self.client.get(reverse(
-                'download_odk_media_profile',
-                args=[DOMAIN, self.app._id],
-            ), {'latest': 'true'})
+            response = self._download_odk_media_profile()
             self.assertEqual(response.status_code, 302)
             self.assertEqual(
                 response.url,
@@ -146,15 +143,27 @@ class TestCheckDomainMigration(TestCase):
             )
 
     def test_normal_response(self):
-        response = self.client.get(reverse(
-            'download_odk_media_profile',
-            args=[DOMAIN, self.app._id],
-        ))
+        response = self._download_odk_media_profile()
         self.assertEqual(response.status_code, 200)
         self.assertRegex(
             response.content.decode('utf-8'),
             r"^<\?xml version='1.0' encoding='UTF-8'\?>"
         )
+
+    @flag_enabled('DATA_MIGRATION')
+    def test_data_migration_doesnt_block_updates(self):
+        response = self._download_odk_media_profile()
+        self.assertEqual(response.status_code, 200)
+        self.assertRegex(
+            response.content.decode('utf-8'),
+            r"^<\?xml version='1.0' encoding='UTF-8'\?>"
+        )
+
+    def _download_odk_media_profile(self):
+        return self.client.get(reverse(
+            'download_odk_media_profile',
+            args=[DOMAIN, self.app._id],
+        ), {'latest': 'true'})
 
 
 @contextmanager
