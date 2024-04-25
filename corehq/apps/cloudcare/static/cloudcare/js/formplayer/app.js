@@ -111,14 +111,6 @@ hqDefine("cloudcare/js/formplayer/app", [
         }
     });
 
-    FormplayerFrontend.getChannel().reply('gridPolyfillPath', function (path) {
-        if (path) {
-            FormplayerFrontend.gridPolyfillPath = path;
-        } else {
-            return FormplayerFrontend.gridPolyfillPath;
-        }
-    });
-
     FormplayerFrontend.getChannel().reply('lastRecordedLocation', function () {
         if (!sessionStorage.locationLat) {
             return null;
@@ -313,7 +305,6 @@ hqDefine("cloudcare/js/formplayer/app", [
             AppsAPI.primeApps(user.restoreAs, options.apps);
         });
 
-        FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
         hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
             FormplayerFrontend.router = Router.start();
             $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
