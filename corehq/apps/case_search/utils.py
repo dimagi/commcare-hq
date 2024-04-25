@@ -129,6 +129,24 @@ def get_case_search_results(domain, case_types, criteria,
     return cases
 
 
+def _find_ids(query):
+    ids = set()
+    for i, filter_dict in enumerate(query.get("filter", {})):
+        if filter_dict.get("bool", {}):
+            ids |= _find_ids(filter_dict["bool"])
+        elif filter_dict.get("ids"):
+            if len(filter_dict["ids"].get("values", [])) > 50:
+                ids |= set(filter_dict["ids"]["values"])
+                query["filter"].pop(i)
+    return ids
+
+
+def _remove_ids(search_es):
+    query = search_es.raw_query.get("query", {}).get("bool", {})
+    ids = _find_ids(query)
+    return ids
+
+
 @time_function()
 def get_primary_case_search_results(helper, domain, case_types, criteria, commcare_sort=None):
     builder = CaseSearchQueryBuilder(domain, case_types, helper.profiler, helper.query_domains)
@@ -144,6 +162,7 @@ def get_primary_case_search_results(helper, domain, case_types, criteria, commca
         ))
         raise CaseSearchUserError(str(e))
 
+    filter_ids = _remove_ids(search_es)
     try:
         results = helper.profiler.run_query('main', search_es)
     except Exception as e:
@@ -153,7 +172,10 @@ def get_primary_case_search_results(helper, domain, case_types, criteria, commca
         raise
 
     with helper.profiler.timing_context('wrap_cases'):
-        cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
+        if filter_ids:
+            cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits if hit.get("_id") in _ids]
+        else:
+            cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
     return cases
 
 
