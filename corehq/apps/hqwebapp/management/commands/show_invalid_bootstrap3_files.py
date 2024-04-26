@@ -8,6 +8,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_template_paths_for_app,
     get_all_javascript_paths_for_app,
     get_short_path,
+    is_split_path,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.status import (
     get_apps_completed_or_in_progress,
@@ -44,13 +45,8 @@ IGNORED_FILES = [
 ]
 
 
-def _is_split_path(path):
-    path = str(path)
-    return "/bootstrap3/" in path or "/bootstrap5/" in path
-
-
 def _is_relevant_path(path, completed_paths):
-    return not (_is_split_path(path) or str(path) in completed_paths)
+    return not (is_split_path(path) or str(path) in completed_paths)
 
 
 def _get_bootstrap3_flags_from_file(file_path, is_template):
