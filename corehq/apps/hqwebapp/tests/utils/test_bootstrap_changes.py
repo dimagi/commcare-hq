@@ -117,8 +117,8 @@ def test_make_template_dependency_renames_no_change():
 
 def test_check_bootstrap3_references_in_template_extends():
     line = """{% extends "hqwebapp/bootstrap3/base_section.html" %}\n"""
-    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
-    eq(flags, ['This template extends a bootstrap 3 template.'])
+    issues = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    eq(issues, ['This template extends a bootstrap 3 template.'])
 
 
 def test_make_template_dependency_renames_extends():
@@ -132,9 +132,9 @@ def test_make_template_dependency_renames_extends():
 
 def test_check_bootstrap3_references_in_template_requirejs():
     line = """    {% requirejs_main 'hqwebapp/bootstrap3/foo' %}\n"""
-    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
-    eq(flags, ["This template references a bootstrap 3 requirejs file. "
-               "It should also use requirejs_main_b5 instead of requirejs_main."])
+    issues = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    eq(issues, ["This template references a bootstrap 3 requirejs file. "
+                "It should also use requirejs_main_b5 instead of requirejs_main."])
 
 
 def test_make_template_dependency_renames_requirejs():
@@ -148,8 +148,8 @@ def test_make_template_dependency_renames_requirejs():
 
 def test_check_bootstrap3_references_in_template_requirejs_b5():
     line = """    {% requirejs_main_b5 'hqwebapp/js-test/bootstrap3/foo' %}\n"""
-    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
-    eq(flags, ['This template references a bootstrap 3 requirejs file.'])
+    issues = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    eq(issues, ['This template references a bootstrap 3 requirejs file.'])
 
 
 def test_make_template_dependency_renames_requirejs_b5():
@@ -163,8 +163,8 @@ def test_make_template_dependency_renames_requirejs_b5():
 
 def test_check_bootstrap3_references_in_template_static():
     line = """    <link rel="stylesheet" href="{% static 'test/js/bootstrap3/foo' %}"></link>\n"""
-    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
-    eq(flags, ['This template references a bootstrap 3 static file.'])
+    issues = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    eq(issues, ['This template references a bootstrap 3 static file.'])
 
 
 def test_make_template_dependency_renames_static():
@@ -178,8 +178,8 @@ def test_make_template_dependency_renames_static():
 
 def test_check_bootstrap3_references_in_template_include():
     line = """    {% include "some_app/bootstrap3/some_thing.html" %}\n"""
-    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
-    eq(flags, ['This template includes a bootstrap 3 template.'])
+    issues = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    eq(issues, ['This template includes a bootstrap 3 template.'])
 
 
 def test_make_template_dependency_renames_include():
@@ -193,20 +193,20 @@ def test_make_template_dependency_renames_include():
 
 def test_flag_requirejs_main_references_in_template():
     line = """    {% requirejs_main 'hqwebapp/js/foo' %}\n"""
-    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
-    eq(flags, ['This template should use requirejs_main_b5 instead of requirejs_main.'])
+    issues = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    eq(issues, ['This template should use requirejs_main_b5 instead of requirejs_main.'])
 
 
 def test_flag_any_bootstrap3_references_in_template():
     line = """<link src='sms/js/bootstrap3/compose.js' >\n"""
-    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
-    eq(flags, ['This template references a bootstrap 3 file.'])
+    issues = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    eq(issues, ['This template references a bootstrap 3 file.'])
 
 
 def test_check_bootstrap3_references_in_javascript():
     line = """    "hqwebapp/js/bootstrap3/foo",\n"""
-    flags = check_bootstrap3_references_in_javascript(line)
-    eq(flags, ['This javascript file references a bootstrap 3 file.'])
+    issues = check_bootstrap3_references_in_javascript(line)
+    eq(issues, ['This javascript file references a bootstrap 3 file.'])
 
 
 def test_flag_inline_styles():

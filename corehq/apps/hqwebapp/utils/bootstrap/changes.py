@@ -196,37 +196,37 @@ def flag_stateful_button_changes_bootstrap5(line):
 
 
 def check_bootstrap3_references_in_template(line, spec):
-    flags = []
+    issues = []
     for tag in spec['template_tags_with_dependencies']:
         b3_ref_regex = _get_template_reference_regex(tag, 'bootstrap3')
         tag_only_regex = r"(\{% " + tag + r" ['\"][\w/.\-]+)"
         if re.search(b3_ref_regex, line):
             if tag == "extends":
-                flags.append("This template extends a bootstrap 3 template.")
+                issues.append("This template extends a bootstrap 3 template.")
             if tag == "static":
-                flags.append("This template references a bootstrap 3 static file.")
+                issues.append("This template references a bootstrap 3 static file.")
             if tag == "include":
-                flags.append("This template includes a bootstrap 3 template.")
+                issues.append("This template includes a bootstrap 3 template.")
             if tag == "requirejs_main":
-                flags.append("This template references a bootstrap 3 requirejs file. "
+                issues.append("This template references a bootstrap 3 requirejs file. "
                              "It should also use requirejs_main_b5 instead of requirejs_main.")
             if tag == "requirejs_main_b5":
-                flags.append("This template references a bootstrap 3 requirejs file.")
+                issues.append("This template references a bootstrap 3 requirejs file.")
         elif re.search(tag_only_regex, line):
             if tag == "requirejs_main":
-                flags.append("This template should use requirejs_main_b5 instead of requirejs_main.")
+                issues.append("This template should use requirejs_main_b5 instead of requirejs_main.")
     regex = r"(=[\"\'][\w\/]+)(\/bootstrap3\/)"
     if re.search(regex, line):
-        flags.append("This template references a bootstrap 3 file.")
-    return flags
+        issues.append("This template references a bootstrap 3 file.")
+    return issues
 
 
 def check_bootstrap3_references_in_javascript(line):
-    flags = []
+    issues = []
     regex = _get_javascript_reference_regex('bootstrap3')
     if re.search(regex, line):
-        flags.append("This javascript file references a bootstrap 3 file.")
-    return flags
+        issues.append("This javascript file references a bootstrap 3 file.")
+    return issues
 
 
 def flag_inline_styles(line):
