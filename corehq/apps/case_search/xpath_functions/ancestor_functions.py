@@ -3,6 +3,7 @@ from eulxml.xpath import serialize
 from eulxml.xpath.ast import BinaryExpression, FunctionCall, Step
 
 from corehq.apps.case_search.const import OPERATOR_MAPPING, EQ
+from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import CaseFilterError, TooManyRelatedCasesError
 from corehq.apps.case_search.xpath_functions.utils import confirm_args_count
 from corehq.apps.case_search.const import MAX_RELATED_CASES
@@ -150,9 +151,8 @@ def _validate_ancestor_exists_filter(node):
 
 
 def _get_case_ids_from_ast_filter(context, filter_node):
-    from corehq.apps.case_search.dsl_utils import unwrap_value
     if (isinstance(filter_node, BinaryExpression)
-    and serialize(filter_node.left) == "@case_id" and filter_node.op == EQ):
+            and serialize(filter_node.left) == "@case_id" and filter_node.op == EQ):
         # case id is provided in query i.e @case_id="b9eaf791-e427-482d-add4-2a60acf0362e"
         case_ids = unwrap_value(filter_node.right, context)
         return [case_ids] if isinstance(case_ids, str) else case_ids
