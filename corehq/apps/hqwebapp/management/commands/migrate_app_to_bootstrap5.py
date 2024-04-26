@@ -189,7 +189,12 @@ class Command(BaseCommand):
     @staticmethod
     def _get_files_for_migration(files, file_name):
         if file_name:
-            return [path for path in files if file_name in str(path)]
+            files = [path for path in files if file_name in str(path)]
+            if len(files) > 1 and not is_bootstrap5_path(file_name):
+                files = [
+                    path for path in files if not is_bootstrap5_path(path)
+                ]
+            return files
         return [path for path in files if not is_split_path(path)]
 
     def get_templates_for_migration(self, app_name, selected_filename):
