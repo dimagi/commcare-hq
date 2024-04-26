@@ -1,16 +1,17 @@
+from .ancestor_functions import ancestor_exists
 from .query_functions import (
     fuzzy_match,
+    fuzzy_or_phonetic,
+    match_all,
+    match_none,
     not_,
+    phonetic_match,
     selected_all,
     selected_any,
-    within_distance,
-    phonetic_match,
     starts_with,
-    match_all,
-    match_none
+    within_distance,
 )
 from .subcase_functions import subcase
-from .ancestor_functions import ancestor_exists
 from .value_functions import date, date_add, today, unwrap_list
 
 # functions that transform or produce a value
@@ -20,7 +21,6 @@ XPATH_VALUE_FUNCTIONS = {
     'today': today,
     'unwrap-list': unwrap_list,
 }
-
 
 XPATH_QUERY_FUNCTIONS = {
     'not': not_,
@@ -36,4 +36,5 @@ XPATH_QUERY_FUNCTIONS = {
     'ancestor-exists': ancestor_exists,
     'match-all': match_all,
     'match-none': match_none,
+    'fuzzy-or-phonetic': fuzzy_or_phonetic,
 }

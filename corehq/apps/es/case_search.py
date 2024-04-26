@@ -193,7 +193,7 @@ def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=
     if value == '':
         return case_property_missing(case_property_name)
     if fuzzy:
-        return _base_property_query(
+        return base_property_query(
             case_property_name,
             filters.OR(
                 # fuzzy match. This portion of this query OR's together multi-word case
@@ -235,16 +235,9 @@ def case_property_text_query(case_property_name, value, operator=None):
     use the `exact_case_property_text_query` instead.
 
     """
-    return _base_property_query(
+    return base_property_query(
         case_property_name,
         queries.match(value, PROPERTY_VALUE, operator=operator)
-    )
-
-
-def sounds_like_text_query(case_property_name, value):
-    return _base_property_query(
-        case_property_name,
-        queries.match(value, '{}.{}.phonetic'.format(CASE_PROPERTIES_PATH, VALUE))
     )
 
 
@@ -264,7 +257,7 @@ def case_property_starts_with(case_property_name, value):
 
 def case_property_numeric_range(case_property_name, gt=None, gte=None, lt=None, lte=None):
     kwargs = {'gt': gt, 'gte': gte, 'lt': lt, 'lte': lte}
-    return _base_property_query(
+    return base_property_query(
         case_property_name,
         queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
     )
@@ -272,7 +265,7 @@ def case_property_numeric_range(case_property_name, gt=None, gte=None, lt=None, 
 
 def case_property_date_range(case_property_name, gt=None, gte=None, lt=None, lte=None):
     kwargs = {'gt': gt, 'gte': gte, 'lt': lt, 'lte': lte}
-    return _base_property_query(
+    return base_property_query(
         case_property_name,
         queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
     )
@@ -323,13 +316,13 @@ def case_property_missing(case_property_name):
 
 
 def case_property_geo_distance(geopoint_property_name, geopoint, **kwargs):
-    return _base_property_query(
+    return base_property_query(
         geopoint_property_name,
         queries.geo_distance(PROPERTY_GEOPOINT_VALUE, geopoint, **kwargs)
     )
 
 
-def _base_property_query(case_property_name, query):
+def base_property_query(case_property_name, query):
     return queries.nested(
         CASE_PROPERTIES_PATH,
         queries.filtered(
