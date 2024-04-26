@@ -221,7 +221,7 @@ def check_bootstrap3_references_in_template(line, spec):
     return flags
 
 
-def flag_bootstrap3_references_in_javascript(line):
+def check_bootstrap3_references_in_javascript(line):
     flags = []
     regex = _get_javascript_reference_regex('bootstrap3')
     if re.search(regex, line):

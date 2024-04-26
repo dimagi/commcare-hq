@@ -13,7 +13,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     replace_path_references,
     check_bootstrap3_references_in_template,
     flag_crispy_forms_in_template,
-    flag_bootstrap3_references_in_javascript,
+    check_bootstrap3_references_in_javascript,
     flag_inline_styles,
     make_template_dependency_renames,
     add_todo_comments_for_flags,
@@ -203,9 +203,9 @@ def test_flag_any_bootstrap3_references_in_template():
     eq(flags, ['This template references a bootstrap 3 file.'])
 
 
-def test_flag_bootstrap3_references_in_javascript():
+def test_check_bootstrap3_references_in_javascript():
     line = """    "hqwebapp/js/bootstrap3/foo",\n"""
-    flags = flag_bootstrap3_references_in_javascript(line)
+    flags = check_bootstrap3_references_in_javascript(line)
     eq(flags, ['This javascript file references a bootstrap 3 file.'])
 
 
