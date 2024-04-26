@@ -31,6 +31,8 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_short_path,
     get_all_template_paths_for_app,
     get_all_javascript_paths_for_app,
+    is_split_path,
+    is_bootstrap5_path,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.references import (
     update_and_get_references,
@@ -187,14 +189,8 @@ class Command(BaseCommand):
     @staticmethod
     def _get_files_for_migration(files, file_name):
         if file_name:
-            files = [t for t in files if file_name in str(t)]
-        else:
-            # filter out already split bootstrap3 templates
-            files = [t for t in files if '/bootstrap3/' not in str(t)]
-
-        # always filter out bootstrap5 split templates
-        files = [t for t in files if '/bootstrap5/' not in str(t)]
-        return files
+            return [path for path in files if file_name in str(path)]
+        return [path for path in files if not is_split_path(path)]
 
     def get_templates_for_migration(self, app_name, selected_filename):
         app_templates = get_all_template_paths_for_app(app_name)
@@ -236,6 +232,7 @@ class Command(BaseCommand):
             self.migrate_single_file(app_name, file_path, spec, is_template, review_changes)
 
     def migrate_single_file(self, app_name, file_path, spec, is_template, review_changes):
+        is_fresh_migration = not is_bootstrap5_path(file_path)
         with open(file_path, 'r') as current_file:
             old_lines = current_file.readlines()
             new_lines = []
@@ -244,7 +241,7 @@ class Command(BaseCommand):
 
             for line_number, old_line in enumerate(old_lines):
                 if is_template:
-                    new_line, renames = self.make_template_line_changes(old_line, spec)
+                    new_line, renames = self.make_template_line_changes(old_line, spec, is_fresh_migration)
                     flags = self.get_flags_in_template_line(old_line, spec)
                 else:
                     new_line, renames = self.make_javascript_line_changes(old_line, spec)
@@ -526,10 +523,17 @@ class Command(BaseCommand):
         self.stdout.write("\n\nDone.\n\n")
 
     @staticmethod
-    def make_template_line_changes(old_line, spec):
+    def make_template_line_changes(old_line, spec, is_fresh_migration):
         new_line, renames = make_direct_css_renames(old_line, spec)
-        new_line, numbered_renames = make_numbered_css_renames(new_line, spec)
-        renames.extend(numbered_renames)
+
+        if is_fresh_migration:
+            # These changes can only be done on a fresh migration (only bootstrap3 templates)
+            # as changes like col-md-1 > col-lg-1 can only be applied one time, as the classes
+            # being replaced are not deprecated in the bootstrap 3 templates. Only the column size
+            # definitions have changes.
+            new_line, numbered_renames = make_numbered_css_renames(new_line, spec)
+            renames.extend(numbered_renames)
+
         new_line, attribute_renames = make_data_attribute_renames(new_line, spec)
         renames.extend(attribute_renames)
         new_line, template_dependency_renames = make_template_dependency_renames(new_line, spec)
