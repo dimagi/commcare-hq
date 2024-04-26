@@ -3,7 +3,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
             initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-            privileges = initial_page_data('add_ons_privileges'),
+            addOnsPrivileges = initial_page_data('add_ons_addOnsPrivileges'),
             toggles = hqImport("hqwebapp/js/toggles");
         var action_names = ["open_case", "update_case", "close_case", "case_preload",
             // Usercase actions are managed in the User Properties tab.
@@ -238,11 +238,11 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 })
             );
             self.addSubCase = function () {
-                if (!privileges.subcases) return;
+                if (!addOnsPrivileges.subcases) return;
                 self.subcases.push(HQOpenSubCaseAction.to_case_transaction({}, caseConfig));
             };
             self.removeSubCase = function (subcase) {
-                if (!privileges.subcases) return;
+                if (!addOnsPrivileges.subcases) return;
                 self.subcases.remove(subcase);
             };
 
@@ -816,7 +816,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                             return false;
                         },
                     },
-                }, caseConfig, privileges.subcases);
+                }, caseConfig, addOnsPrivileges.subcases);
             },
             from_case_transaction: function (case_transaction) {
                 var o = ko.mapping.toJS(case_transaction, caseTransactionMapping(case_transaction));
