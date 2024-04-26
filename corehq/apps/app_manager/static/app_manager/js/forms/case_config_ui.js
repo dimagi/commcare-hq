@@ -1,5 +1,7 @@
 "use strict";
-hqDefine('app_manager/js/forms/case_config_ui', function () {
+hqDefine('app_manager/js/forms/case_config_ui', [
+    'hqwebapp/js/privileges',
+], function (privileges) {
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
             initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
@@ -413,9 +415,11 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             });
 
             self.hasDeprecatedProperties = ko.computed(function () {
-                for (const p of self.case_properties()) {
-                    if (p.isDeprecated()) {
-                        return true;
+                if (privileges.hasPrivilege('data_dictionary')) {
+                    for (const p of self.case_properties()) {
+                        if (p.isDeprecated()) {
+                            return true;
+                        }
                     }
                 }
                 return false;
@@ -513,10 +517,12 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 });
                 self.updatedDescription = ko.observable();
                 self.isDeprecated = ko.computed(function () {
-                    const config = self.case_transaction.caseConfig;
-                    const depProps = config.deprecatedPropertiesDict[self.caseType()];
-                    if (depProps && self.key() !== 'name') {
-                        return depProps[self.key()];
+                    if (privileges.hasPrivilege('data_dictionary')) {
+                        const config = self.case_transaction.caseConfig;
+                        const depProps = config.deprecatedPropertiesDict[self.caseType()];
+                        if (depProps && self.key() !== 'name') {
+                            return depProps[self.key()];
+                        }
                     }
                     return false;
                 });
