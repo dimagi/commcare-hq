@@ -160,9 +160,9 @@
               <th>
                 {% trans "View Child Data to Level" %}
                 <span class="hq-help-template"
-                      data-title="{% trans "View Child data to Level" %}"
+                      data-title="{% trans "View Child Data to Level" %}"
                       data-content="{% blocktrans %}
-                          <p>...</p>
+                          <p>Only include cases that show up in the user's restore file down to this level (inclusive).</p>
                       {% endblocktrans %}">
                 </span>
               </th>
@@ -245,11 +245,11 @@
               </td>
               <td>
                 <select class="form-control"
-                        data-bind="options: $root.child_loc_types($data),
+                        data-bind="options: $data.child_loc_types(),
                                    optionsText: 'name',
                                    optionsValue: 'pk',
                                    value: expand_view_child_data_to,
-                                   optionsCaption: '\u2013none\u2013',
+                                   optionsCaption: '\u2013{% trans 'none' %}\u2013',
                                    enable: view_descendants">
                 </select>
               </td>

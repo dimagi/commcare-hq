@@ -33,23 +33,6 @@ hqDefine('locations/js/location_types', [
             });
         };
 
-        self.child_loc_types = function (locType) {
-            const byParent = self.loc_types_by_parent();
-            const childLocTypes = [];
-
-            const addChildren = function (parentLocType) {
-                const children = byParent[parentLocType.pk];
-                if (children) {
-                    children.forEach(function (c) {
-                        childLocTypes.push(c);
-                        addChildren(c);
-                    });
-                }
-            };
-            addChildren(locType);
-            return childLocTypes;
-        };
-
         self.loc_types_by_id = function () {
             return _.reduce(self.loc_types(), function (memo, locType) {
                 memo[locType.pk] = locType;
@@ -243,13 +226,14 @@ hqDefine('locations/js/location_types', [
             var allChildren = [self],
                 toCheck = [self];
             if (!self.view.has_cycles()) {
+                const locTypesByParent = self.view.loc_types_by_parent();
                 while (toCheck.length > 0) {
                     var currentLoc = toCheck.pop(),
-                        children = self.view.loc_types_by_parent()[currentLoc.pk];
+                        children = locTypesByParent[currentLoc.pk];
                     if (children) {
                         children.forEach(function (child) {
                             allChildren.push(child);
-                            if (self.view.loc_types_by_parent()[child.pk]) {
+                            if (locTypesByParent[child.pk]) {
                                 toCheck.push(child);
                             }
                         }, self);
@@ -310,28 +294,41 @@ hqDefine('locations/js/location_types', [
 
         self.expand_to_options = function () {
             // display all locations with the same index as being on the same level
-            var locsToReturn = [],
-                locs = self.children();
+            let locs = self.children();
             if (self.expand_from() && self.expand_from() !== ROOT_LOCATION_ID) {
                 locs = self.view.loc_types_by_id()[self.expand_from()].children();
             }
             if (self.expand_from() && self.expand_from() === ROOT_LOCATION_ID) {
                 locs = self.view.loc_types();
             }
-            var locsSameLevels = self.view.types_by_index(locs);
-            for (var level in locsSameLevels) {
+            const levels = self.getLevels(locs);
+            return {
+                children: levels.slice(0, levels.length - 1),
+                leaf: levels[levels.length - 1],
+            };
+        };
+
+        self.child_loc_types = function () {
+            const locs = self.children();
+            const levels = self.getLevels(locs);
+            levels.shift(); // not self
+            return levels;
+        };
+
+        self.getLevels = function (locs) {
+            const locsSameLevels = self.view.types_by_index(locs);
+            const locsToReturn = []
+            for (const level in locsSameLevels) {
                 // Only display a single child at each level
-                var childToAdd = locsSameLevels[level][0];
+                const childToAdd = locsSameLevels[level][0];
                 locsToReturn.push(locationTypeModel({
                     name: childToAdd.compiled_name(),
                     pk: childToAdd.pk,
                 }, false, self.view));
             }
-            return {
-                children: locsToReturn.slice(0, locsToReturn.length - 1),
-                leaf: locsToReturn[locsToReturn.length - 1],
-            };
-        };
+            return locsToReturn;
+
+        }
 
         self.include_without_expanding_options = function () {
             if (self.expand_from() !== ROOT_LOCATION_ID) {
