@@ -268,7 +268,7 @@ class Command(BaseCommand):
                     self.migrate_file_in_place(app_name, file_path, new_lines, is_template)
                     if is_template:
                         self.show_next_steps_after_migrating_file_in_place(short_path)
-                elif '/bootstrap3/' in str(file_path):
+                elif is_split_path(file_path):
                     self.migrate_file_again(app_name, file_path, new_lines, is_template)
                 else:
                     self.split_files_and_refactor(
@@ -331,7 +331,7 @@ class Command(BaseCommand):
                           "in the Bootstrap 5 version of this file.\n\n")
 
     def record_file_changes(self, template_path, app_name, changelog, is_template):
-        if '/bootstrap3/' in str(template_path):
+        if is_split_path(template_path):
             parent_dir = template_path.parent.parent
         else:
             parent_dir = template_path.parent
@@ -396,12 +396,15 @@ class Command(BaseCommand):
                 f"added use_bootstrap5 decorator to views referencing {short_path}"
             )
 
-    def migrate_file_again(self, app_name, bootstrap3_path, bootstrap5_lines, is_template):
-        bootstrap5_path = self.get_bootstrap5_path(bootstrap3_path)
-        bootstrap3_short_path = get_short_path(app_name, bootstrap3_path, is_template)
+    def migrate_file_again(self, app_name, file_path, bootstrap5_lines, is_template):
+        bootstrap5_path = (file_path if is_bootstrap5_path(file_path)
+                           else self.get_bootstrap5_path(file_path))
+
+        migrated_file_short_path = get_short_path(app_name, file_path, is_template)
         self.stdout.write(self.style.MIGRATE_HEADING(
-            f"NOTE: This was a re-migration of {bootstrap3_short_path}."
+            f"NOTE: This is a re-migration of {migrated_file_short_path}."
         ))
+
         bootstrap5_short_path = get_short_path(app_name, bootstrap5_path, is_template)
         confirm = get_confirmation(
             f"\nApply migration changes to {bootstrap5_short_path}?", default='y'
@@ -423,7 +426,7 @@ class Command(BaseCommand):
                 f"\nChanges applied to {bootstrap5_short_path}."
             )
             self.suggest_commit_message(
-                f"re-ran migration for {bootstrap3_short_path}",
+                f"re-ran migration for {migrated_file_short_path}",
                 show_apply_commit=not has_changes
             )
         else:
