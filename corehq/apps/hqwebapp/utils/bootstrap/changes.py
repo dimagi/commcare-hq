@@ -195,7 +195,7 @@ def flag_stateful_button_changes_bootstrap5(line):
     return flags
 
 
-def flag_bootstrap3_references_in_template(line, spec):
+def check_bootstrap3_references_in_template(line, spec):
     flags = []
     for tag in spec['template_tags_with_dependencies']:
         b3_ref_regex = _get_template_reference_regex(tag, 'bootstrap3')

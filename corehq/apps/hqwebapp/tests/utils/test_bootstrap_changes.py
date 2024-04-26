@@ -11,7 +11,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_changed_javascript_plugins,
     file_contains_reference_to_path,
     replace_path_references,
-    flag_bootstrap3_references_in_template,
+    check_bootstrap3_references_in_template,
     flag_crispy_forms_in_template,
     flag_bootstrap3_references_in_javascript,
     flag_inline_styles,
@@ -115,9 +115,9 @@ def test_make_template_dependency_renames_no_change():
     eq(renames, [])
 
 
-def test_flag_bootstrap3_references_in_template_extends():
+def test_check_bootstrap3_references_in_template_extends():
     line = """{% extends "hqwebapp/bootstrap3/base_section.html" %}\n"""
-    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
     eq(flags, ['This template extends a bootstrap 3 template.'])
 
 
@@ -130,9 +130,9 @@ def test_make_template_dependency_renames_extends():
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
-def test_flag_bootstrap3_references_in_template_requirejs():
+def test_check_bootstrap3_references_in_template_requirejs():
     line = """    {% requirejs_main 'hqwebapp/bootstrap3/foo' %}\n"""
-    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
     eq(flags, ["This template references a bootstrap 3 requirejs file. "
                "It should also use requirejs_main_b5 instead of requirejs_main."])
 
@@ -146,9 +146,9 @@ def test_make_template_dependency_renames_requirejs():
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
-def test_flag_bootstrap3_references_in_template_requirejs_b5():
+def test_check_bootstrap3_references_in_template_requirejs_b5():
     line = """    {% requirejs_main_b5 'hqwebapp/js-test/bootstrap3/foo' %}\n"""
-    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
     eq(flags, ['This template references a bootstrap 3 requirejs file.'])
 
 
@@ -161,9 +161,9 @@ def test_make_template_dependency_renames_requirejs_b5():
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
-def test_flag_bootstrap3_references_in_template_static():
+def test_check_bootstrap3_references_in_template_static():
     line = """    <link rel="stylesheet" href="{% static 'test/js/bootstrap3/foo' %}"></link>\n"""
-    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
     eq(flags, ['This template references a bootstrap 3 static file.'])
 
 
@@ -176,9 +176,9 @@ def test_make_template_dependency_renames_static():
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
-def test_flag_bootstrap3_references_in_template_include():
+def test_check_bootstrap3_references_in_template_include():
     line = """    {% include "some_app/bootstrap3/some_thing.html" %}\n"""
-    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
     eq(flags, ['This template includes a bootstrap 3 template.'])
 
 
@@ -193,13 +193,13 @@ def test_make_template_dependency_renames_include():
 
 def test_flag_requirejs_main_references_in_template():
     line = """    {% requirejs_main 'hqwebapp/js/foo' %}\n"""
-    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
     eq(flags, ['This template should use requirejs_main_b5 instead of requirejs_main.'])
 
 
 def test_flag_any_bootstrap3_references_in_template():
     line = """<link src='sms/js/bootstrap3/compose.js' >\n"""
-    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    flags = check_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
     eq(flags, ['This template references a bootstrap 3 file.'])
 
 

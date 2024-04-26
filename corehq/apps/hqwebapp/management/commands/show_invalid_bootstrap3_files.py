@@ -1,7 +1,7 @@
 from django.core.management import BaseCommand
 
 from corehq.apps.hqwebapp.utils.bootstrap.changes import (
-    flag_bootstrap3_references_in_template,
+    check_bootstrap3_references_in_template,
     flag_bootstrap3_references_in_javascript, get_spec,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
@@ -55,7 +55,7 @@ def _get_bootstrap3_flags_from_file(file_path, is_template):
         lines = current_file.readlines()
         for line_number, line in enumerate(lines):
             if is_template:
-                flags = flag_bootstrap3_references_in_template(
+                flags = check_bootstrap3_references_in_template(
                     line, get_spec('bootstrap_3_to_5')
                 )
             else:
