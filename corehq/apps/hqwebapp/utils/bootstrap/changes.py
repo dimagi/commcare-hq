@@ -54,6 +54,12 @@ def _get_javascript_reference_regex(reference):
     return r"(['\"][\w/.\-]+/)(" + reference + r")(/[\w/.\-]+['\"],?)"
 
 
+def _get_todo_regex(is_template):
+    open_comment = r"\{#" if is_template else r"\/\*"
+    close_comment = r"#\}" if is_template else r"\*\/"
+    return open_comment + r" todo B5: [\w\/.\-:, ]+" + close_comment
+
+
 def _do_rename(line, change_map, regex_fn, replacement_fn):
     renames = []
     for css_class in change_map.keys():
@@ -132,12 +138,35 @@ def make_template_dependency_renames(line, spec):
     return line, []
 
 
+def add_todo_comments_for_flags(flags, line, is_template):
+    if flags:
+        line = line.rstrip('\n')
+        flag_summary = [f[0] for f in flags]
+        open_comment = "{#" if is_template else "/*"
+        close_comment = "#}" if is_template else "*/"
+        comment = f"{open_comment} todo B5: {', '.join(flag_summary)} {close_comment}\n"
+
+        todo_regex = _get_todo_regex(is_template)
+        if re.search(todo_regex, line):
+            line = re.sub(
+                pattern=todo_regex,
+                repl=comment,
+                string=line
+            )
+        else:
+            line = f"{line}  {comment}"
+    return line
+
+
 def flag_changed_css_classes(line, spec):
     flags = []
     for css_class in spec['flagged_css_changes']:
         regex = _get_direct_css_regex(css_class)
         if re.search(regex, line):
-            flags.append(_get_change_guide(css_class))
+            flags.append([
+                f'css:{css_class}',
+                _get_change_guide(css_class)
+            ])
     return flags
 
 
@@ -147,7 +176,10 @@ def flag_changed_javascript_plugins(line, spec):
         plugin_regex = _get_plugin_regex(plugin)
         extension_regex = _get_extension_regex(plugin)
         if re.search(plugin_regex, line) or re.search(extension_regex, line):
-            flags.append(_get_change_guide(f"js-{plugin}"))
+            flags.append([
+                f'plugin:{plugin}',
+                _get_change_guide(f"js-{plugin}")
+            ])
     return flags
 
 
@@ -155,8 +187,11 @@ def flag_stateful_button_changes_bootstrap5(line):
     flags = []
     regex = r"([\n }])(data-\w*-text)(=[\"\'])"
     if re.search(regex, line):
-        flags.append("You are using stateful buttons here, "
-                     "which are no longer supported in Bootstrap 5.")
+        flags.append([
+            "stateful button",
+            "You are using stateful buttons here, "
+            "which are no longer supported in Bootstrap 5."
+        ])
     return flags
 
 
@@ -198,9 +233,12 @@ def flag_inline_styles(line):
     flags = []
     regex = r"\bstyle\s*=\s*"
     if re.search(regex, line):
-        flags.append("This template uses inline styles. Please revisit this usage.\n\n"
-                     "Inline styles can often be replaced with Bootstrap 5's utility classes, "
-                     "particularly the spacing utilities: https://getbootstrap.com/docs/5.0/utilities/spacing/")
+        flags.append([
+            "inline style",
+            "This template uses inline styles. Please revisit this usage.\n\n"
+            "Inline styles can often be replaced with Bootstrap 5's utility classes, "
+            "particularly the spacing utilities: https://getbootstrap.com/docs/5.0/utilities/spacing/"
+        ])
     return flags
 
 
@@ -208,9 +246,12 @@ def flag_crispy_forms_in_template(line):
     flags = []
     regex = r"\{% crispy"
     if re.search(regex, line):
-        flags.append("This template uses crispy forms. "
-                     "Please ensure the form looks good after migration, and refer to "
-                     "the updated Style Guide for current best practices, especially with checkbox fields.")
+        flags.append([
+            "check crispy",
+            "This template uses crispy forms. "
+            "Please ensure the form looks good after migration, and refer to "
+            "the updated Style Guide for current best practices, especially with checkbox fields."
+        ])
     return flags
 
 
