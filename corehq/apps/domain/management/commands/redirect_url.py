@@ -8,19 +8,18 @@ from corehq.toggles import DATA_MIGRATION
 
 class Command(BaseCommand):
     help = (
-        'Sets the redirect URL for a "308 Permanent Redirect" response to '
-        'form submissions and syncs. Only valid for domains that have been '
-        'migrated to new environments. Set the schema and hostname only '
-        '(e.g. "https://example.com/"). The rest of the path will be appended '
-        'for redirecting different endpoints. THIS FEATURE ASSUMES THE DOMAIN '
-        'NAME IS THE SAME ON BOTH ENVIRONMENTS.'
+        'Sets the redirect URL for a "302 Found" redirect response to app '
+        'update requests from CommCare Mobile. Set the base URL only '
+        '(e.g. "https://example.com/"). THIS FEATURE ASSUMES THAT THE DOMAIN '
+        'WAS MIGRATED FROM THIS ENVIRONMENT TO THE TARGET ENVIRONMENT: Domain '
+        'names must match; App IDs must match; User IDs must match.'
     )
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument(
             '--set',
-            help="The URL to redirect to",
+            help="The base URL to redirect to",
         )
         parser.add_argument(
             '--unset',
@@ -44,8 +43,7 @@ class Command(BaseCommand):
 
         if domain_obj.redirect_url:
             self.stdout.write(
-                'Form submissions and syncs are redirected to '
-                f'{domain_obj.redirect_url}'
+                f'App updates are redirected to {domain_obj.redirect_url}'
             )
         else:
             self.stdout.write('Redirect URL not set')
