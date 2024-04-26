@@ -19,11 +19,10 @@ class SessionDetailsViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(SessionDetailsViewTest, cls).setUpClass()
-        cls.domain = Domain.get_or_create_with_name(name="domain", is_active=True)
-        cls.domain.save()
+        cls.domain = Domain.get_or_create_with_name('toyland', is_active=True)
         cls.addClassCleanup(cls.domain.delete)
         cls.couch_user = CommCareUser.create(cls.domain.name, 'bunkey', '123', None, None)
-        cls.addClassCleanup(cls.couch_user.delete, cls.domain.name, None)
+        cls.addClassCleanup(cls.couch_user.delete, cls.domain.name, deleted_by=None)
         cls.sql_user = cls.couch_user.get_django_user()
 
         cls.expected_response = {

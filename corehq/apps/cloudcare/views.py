@@ -71,7 +71,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
     use_bootstrap5,
     use_daterangepicker,
-    use_jquery_ui,
     waf_allow,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
@@ -79,7 +78,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import get_complete_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.integration.util import integration_contexts
 from corehq.util.metrics import metrics_histogram
@@ -101,7 +100,6 @@ class FormplayerMain(View):
 
     @xframe_options_sameorigin
     @use_daterangepicker
-    @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
@@ -111,6 +109,9 @@ class FormplayerMain(View):
         return _fetch_build(domain, self.request.couch_user.username, app_id)
 
     def get_web_apps_available_to_user(self, domain, user):
+        if user['doc_type'] == 'WebUser' and not user.can_access_web_apps(domain):
+            return []
+
         app_access = get_application_access_for_domain(domain)
         app_ids = get_app_ids_in_domain(domain)
 
@@ -142,7 +143,9 @@ class FormplayerMain(View):
             'restoreAs:{}:{}'.format(domain, request.couch_user.username))
         username = request.COOKIES.get(cookie_name)
         if username:
-            user = CouchUser.get_by_username(format_username(username, domain))
+            username = urllib.parse.unquote(username)
+            username = get_complete_username(username, domain)
+            user = CouchUser.get_by_username(username)
             if user:
                 return user, set_cookie
             else:
@@ -253,7 +256,6 @@ class FormplayerPreviewSingleApp(View):
 
     urlname = 'formplayer_single_app'
 
-    @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
@@ -379,6 +381,7 @@ class LoginAsUsers(View):
 
     def _format_user(self, user_json):
         user = CouchUser.wrap_correctly(user_json)
+        sql_location = user.get_sql_location(self.domain)
         formatted_user = {
             'username': user.raw_username,
             'customFields': user.get_user_data(self.domain).to_dict(),
@@ -386,7 +389,7 @@ class LoginAsUsers(View):
             'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,
             'user_id': user.user_id,
-            'location': user.sql_location.to_json() if user.sql_location else None,
+            'location': sql_location.to_json() if sql_location else None,
         }
         return formatted_user
 

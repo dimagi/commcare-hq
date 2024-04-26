@@ -68,5 +68,6 @@ urlpatterns = [
     url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
         name=ReprocessMessagingCaseUpdatesView.urlname),
     url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
+    url(r'workflows/', include("corehq.apps.app_execution.urls")),
     AdminReportDispatcher.url_pattern(),
 ]
