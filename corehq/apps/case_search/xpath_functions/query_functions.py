@@ -8,9 +8,13 @@ from couchforms.geopoint import GeoPoint
 
 from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import XPathFunctionException
+from corehq.apps.case_search.xpath_functions.value_functions import (
+    value_to_date,
+)
 from corehq.apps.es import filters, queries
 from corehq.apps.es.case_search import (
     PROPERTY_VALUE,
+    PROPERTY_VALUE_PHONETIC,
     base_property_query,
     case_property_geo_distance,
     case_property_query,
@@ -88,7 +92,7 @@ def phonetic_match(node, context):
 
 
 def _phonetic(value):
-    return queries.match(value, f'{PROPERTY_VALUE}.phonetic')
+    return queries.match(value, PROPERTY_VALUE_PHONETIC)
 
 
 def fuzzy_match(node, context):
@@ -112,6 +116,14 @@ def fuzzy_or_phonetic(node, context):
             queries.fuzzy(value, PROPERTY_VALUE, fuzziness='AUTO'),
         )
     )
+
+
+def fuzzy_date(node, context):
+    confirm_args_count(node, 2)
+    property_name = _property_name_to_string(node.args[0], node)
+    value = unwrap_value(node.args[1], context)
+    parsed_date = value_to_date(node, value)
+    return case_property_query(property_name, value, fuzzy=True)
 
 
 def _property_name_to_string(value, node):

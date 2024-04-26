@@ -14,9 +14,12 @@ from corehq.apps.case_search.filter_dsl import (
     SearchFilterContext,
     build_filter_from_ast,
 )
-from corehq.apps.es import filters
+from corehq.apps.es import filters, queries
 from corehq.apps.es.case_search import (
+    PROPERTY_VALUE,
+    PROPERTY_VALUE_PHONETIC,
     CaseSearchES,
+    base_property_query,
     case_property_date_range,
     case_property_geo_distance,
     case_property_missing,
@@ -202,6 +205,24 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         self._test_xpath_query(
             "fuzzy-match(name, 'jimmy')",
             case_property_query("name", "jimmy", fuzzy=True)
+        )
+
+    def test_fuzzy_or_phonetic(self):
+        self._test_xpath_query(
+            "fuzzy-or-phonetic(name, 'jimmy')",
+            base_property_query(
+                'name',
+                filters.OR(
+                    queries.match('jimmy', PROPERTY_VALUE_PHONETIC),
+                    queries.fuzzy('jimmy', PROPERTY_VALUE, fuzziness='AUTO'),
+                )
+            )
+        )
+
+    def test_fuzzy_date(self):
+        self._test_xpath_query(
+            "fuzzy-date(dob, '2020-08-30')",
+            case_property_query("dob", "2020-08-30", fuzzy=True)
         )
 
     def _test_xpath_query(self, query_string, expected_filter, context=None):

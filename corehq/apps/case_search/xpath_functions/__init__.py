@@ -1,5 +1,6 @@
 from .ancestor_functions import ancestor_exists
 from .query_functions import (
+    fuzzy_date,
     fuzzy_match,
     fuzzy_or_phonetic,
     match_all,
@@ -32,9 +33,10 @@ XPATH_QUERY_FUNCTIONS = {
     'within-distance': within_distance,
     'fuzzy-match': fuzzy_match,
     'phonetic-match': phonetic_match,
+    'fuzzy-or-phonetic': fuzzy_or_phonetic,
+    'fuzzy-date': fuzzy_date,
     'starts-with': starts_with,
     'ancestor-exists': ancestor_exists,
     'match-all': match_all,
     'match-none': match_none,
-    'fuzzy-or-phonetic': fuzzy_or_phonetic,
 }
