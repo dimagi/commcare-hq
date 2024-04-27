@@ -498,9 +498,9 @@ class AdminInvitesUserForm(forms.Form):
         self.fields['role'].choices = role_choices
         if domain_obj:
             self.fields['location_id'] = forms.CharField(label='Primary Location', required=False,
-                                                         widget=LocationSelectWidget(domain_obj.name),
-                                                         help_text=EMWF.location_search_help,
-                                                         initial='')
+                                                         widget=LocationSelectWidget(domain_obj.name,
+                                                                                    id='id_location_id'),
+                                                         help_text=EMWF.location_search_help)
 
             if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
                 self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)
