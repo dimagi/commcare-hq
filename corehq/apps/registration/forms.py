@@ -506,11 +506,11 @@ class AdminInvitesUserForm(forms.Form):
                 self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)
                 from corehq.apps.users.views.mobile import UserFieldsView
                 definition = CustomDataFieldsDefinition.get(domain_obj.name, UserFieldsView.field_type)
-                profile_choices = []
                 if definition:
                     profiles = definition.get_profiles()
-                    profile_choices = [('', '')] + [(profile.id, profile.name) for profile in profiles]
-                self.fields['profile'].choices = profile_choices
+                    self.fields['profile'].choices = [('', '')] + [
+                        (profile.id, profile.name) for profile in profiles
+                    ]
 
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
