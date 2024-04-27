@@ -3,6 +3,7 @@ import os
 import pytest
 
 pytest_plugins = [
+    #'corehq.tests.pytest_plugins.dbtransaction',  # FIXME
     'corehq.tests.pytest_plugins.patches',
     'corehq.tests.pytest_plugins.redislocks',
 ]
