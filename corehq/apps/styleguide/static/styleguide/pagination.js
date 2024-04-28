@@ -51,7 +51,7 @@ function PageControl({currentPage, pageSize, totalItems, goToPage, maxPagesShown
         <nav aria-label="Page navigation example">
             <ul className="pagination">
                 <li className="page-item">
-                    <a href="#"
+                    <a
                         className="page-link"
                         aria-label="Previous"
                         onClick={goToPrevious}
@@ -65,11 +65,11 @@ function PageControl({currentPage, pageSize, totalItems, goToPage, maxPagesShown
                         aria-current={pageNum === currentPage ? "page" : null}
                         key={pageNum}
                     >
-                        <a href="#" className="page-link" onClick={() => goToPage(pageNum)}><span>{pageNum}</span></a>
+                        <a className="page-link" onClick={() => goToPage(pageNum)}><span>{pageNum}</span></a>
                     </li>
                 )}
                 <li className="page-item">
-                    <a href="#"
+                    <a
                         className="page-link"
                         aria-label="Next"
                         onClick={goToNext}
