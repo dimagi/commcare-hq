@@ -119,22 +119,36 @@ export default function Pagination({RowCls, getPageItems, id, slug, inlinePageLi
     let [items, setItems] = useState([]);
     let [totalItemCount, setTotalItemCount] = useState(0);
     let [page, setPage] = useState(1);
+    let [isLoading, setIsLoading] = useState(false);
+
 
     const updatePage = (page) => {
-        const {items, totalItemCount} = getPageItems(page, pageSize);
+        setIsLoading(true);
         setPage(page);
-        setItems(items);
-        setTotalItemCount(totalItemCount);
+        Promise.resolve(getPageItems(page, pageSize))
+            .then(({items, totalItemCount}) => {
+                setItems(items);
+                setTotalItemCount(totalItemCount);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
     };
 
     const updatePageSize = (pageSize) => {
         const newPage = 1; // reset to the first page on every page change
-        const {items, totalItemCount} = getPageItems(newPage, pageSize);
+        setIsLoading(true);
         setPage(newPage);
-        setPageSize(pageSize);
-        setItems(items);
-        setTotalItemCount(totalItemCount);
-        updatePageSizeCookie(slug, pageSize);
+        Promise.resolve(getPageItems(newPage, pageSize))
+            .then(({items, totalItemCount}) => {
+                setPageSize(pageSize);
+                setItems(items);
+                setTotalItemCount(totalItemCount);
+                updatePageSizeCookie(slug, pageSize);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
     };
 
     useEffect(() => {
@@ -156,7 +170,7 @@ export default function Pagination({RowCls, getPageItems, id, slug, inlinePageLi
                 <div className="py-3 d-flex justify-content-between">
                     <StatusDisplay start={offset + 1} total={totalItemCount} pageSize={pageSize} sizes={pageSizes} setPageSize={updatePageSize} />
                     <div className="col-sm-7 text-right">
-                        <PageControl currentPage={page} pageSize={pageSize} totalItems={totalItemCount} goToPage={updatePage} isLoading={false} />
+                        <PageControl currentPage={page} pageSize={pageSize} totalItems={totalItemCount} goToPage={updatePage} isLoading={isLoading} />
                     </div>
                 </div>
             }
@@ -180,12 +194,22 @@ window.addEventListener('load', () => {
         };
     };
 
+    const getPageItemsAsync = (pageNum, pageSize) => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(getPageItems(pageNum, pageSize));
+            }, 3000);
+        });
+    };
+
+
     const root = createRoot(document.getElementById('root'));
     root.render(
         <Pagination
             id="pagination-example"
             RowCls={Row}
             getPageItems={getPageItems}
+            // getPageItems={getPageItemsAsync}
             slug="pagination-example"
         />
     );
