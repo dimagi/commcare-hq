@@ -2,6 +2,7 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import _ from 'underscore';
+import Cookies from 'universal-cookie';
 
 
 const pageSizes = [5, 25, 50, 100];
@@ -81,8 +82,36 @@ function PageControl({currentPage, pageSize, totalItems, goToPage, maxPagesShown
     );
 }
 
-export default function Pagination({RowCls, getPageItems, id}) {
-    let [pageSize, setPageSize] = useState(5);
+const cookies = new Cookies();
+
+function getPageSizeCookieName(slug) {
+    return 'ko-pagination-' + slug;  // Unfortunate that knockout is part of this cookie's name
+}
+
+function getInitialPageSize(slug, value) {
+    if (!slug) {
+        return value;
+    }
+
+    const cookieName = getPageSizeCookieName(slug);
+    const cookieValue = parseInt(cookies.get(cookieName), 10);
+    return cookieValue || value;
+}
+
+function updatePageSizeCookie(slug, value) {
+    if (!slug) {
+        return;
+    }
+
+    const cookieName = getPageSizeCookieName(slug);
+    const expirationDate = new Date();
+    expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+    // secure should probably be set through a context
+    cookies.set(cookieName, value, { expires: expirationDate, path: '/', secure: false});
+}
+
+export default function Pagination({RowCls, getPageItems, id, slug}) {
+    let [pageSize, setPageSize] = useState(() => getInitialPageSize(slug, 5));
     let [items, setItems] = useState([]);
     let [totalItemCount, setTotalItemCount] = useState(0);
     let [page, setPage] = useState(1);
@@ -101,6 +130,7 @@ export default function Pagination({RowCls, getPageItems, id}) {
         setPageSize(pageSize);
         setItems(items);
         setTotalItemCount(totalItemCount);
+        updatePageSizeCookie(slug, pageSize);
     };
 
     useEffect(() => {
@@ -145,5 +175,5 @@ window.addEventListener('load', () => {
     };
 
     const root = createRoot(document.getElementById('root'));
-    root.render(<Pagination id="pagination-example" RowCls={Row} getPageItems={getPageItems} />);
+    root.render(<Pagination id="pagination-example" RowCls={Row} getPageItems={getPageItems} slug="pagination-example" />);
 });
