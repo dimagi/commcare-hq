@@ -37,7 +37,7 @@ function StatusDisplay({start, total, pageSize, sizes, setPageSize}) {
     );
 }
 
-function PageControl({currentPage, pageSize, totalItems, goToPage, maxPagesShown=9}) {
+function PageControl({currentPage, pageSize, totalItems, goToPage, isLoading=true, maxPagesShown=9}) {
     const numPages = Math.ceil(totalItems / pageSize);
     const pagesOnSide = Math.floor(maxPagesShown / 2);
     const lowerBound = Math.max(currentPage - pagesOnSide, 1);
@@ -65,7 +65,11 @@ function PageControl({currentPage, pageSize, totalItems, goToPage, maxPagesShown
                         aria-current={pageNum === currentPage ? "page" : null}
                         key={pageNum}
                     >
-                        <a className="page-link" onClick={() => goToPage(pageNum)}><span>{pageNum}</span></a>
+                        <a className="page-link" onClick={() => goToPage(pageNum)}>
+                            {pageNum === currentPage && isLoading ?
+                                <i className="fa fa-spin fa-spinner"></i> : <span>{pageNum}</span>
+                            }
+                        </a>
                     </li>
                 )}
                 <li className="page-item">
@@ -151,7 +155,7 @@ export default function Pagination({RowCls, getPageItems, id, slug}) {
             <div className="py-3 d-flex justify-content-between">
                 <StatusDisplay start={offset + 1} total={totalItemCount} pageSize={pageSize} sizes={pageSizes} setPageSize={updatePageSize} />
                 <div className="col-sm-7 text-right">
-                    <PageControl currentPage={page} pageSize={pageSize} totalItems={totalItemCount} goToPage={updatePage} />
+                    <PageControl currentPage={page} pageSize={pageSize} totalItems={totalItemCount} goToPage={updatePage} isLoading={false} />
                 </div>
             </div>
         </div>
