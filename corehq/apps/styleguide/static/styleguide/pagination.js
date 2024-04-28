@@ -16,7 +16,7 @@ function Summary({start, end, total}) {
 
 function PageSizeControl({pageSize, sizes, setPageSize}) {
     return (
-        <select className="form-select" value={pageSize} onChange={e => setPageSize(e.target.value)}>
+        <select className="form-select" value={pageSize} onChange={e => setPageSize(parseInt(e.target.value, 10))}>
             {
                 sizes.map(size => <option key={size} value={size}>{size} per page</option>)
             }
@@ -95,7 +95,9 @@ export default function Pagination({RowCls, getPageItems, id}) {
     };
 
     const updatePageSize = (pageSize) => {
-        const {items, totalItemCount} = getPageItems(page, pageSize);
+        const newPage = 1; // reset to the first page on every page change
+        const {items, totalItemCount} = getPageItems(newPage, pageSize);
+        setPage(newPage);
         setPageSize(pageSize);
         setItems(items);
         setTotalItemCount(totalItemCount);
