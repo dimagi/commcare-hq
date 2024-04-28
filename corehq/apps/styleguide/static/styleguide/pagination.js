@@ -1,6 +1,5 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { createRoot } from 'react-dom/client';
 import _ from 'underscore';
 import Cookies from 'universal-cookie';
 
@@ -177,40 +176,3 @@ export default function Pagination({RowCls, getPageItems, id, slug, inlinePageLi
         </div>
     );
 }
-
-function Row({item}) {
-    return (
-        <>{item}</>
-    );
-}
-
-
-window.addEventListener('load', () => {
-    const allItems = _.map(_.range(23), i => `Item #${i + 1}`);
-    const getPageItems = (pageNum, pageSize) => {
-        return {
-            items: allItems.slice(pageSize * (pageNum - 1), pageSize * pageNum),
-            totalItemCount: allItems.length,
-        };
-    };
-
-    const getPageItemsAsync = (pageNum, pageSize) => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve(getPageItems(pageNum, pageSize));
-            }, 3000);
-        });
-    };
-
-
-    const root = createRoot(document.getElementById('root'));
-    root.render(
-        <Pagination
-            id="pagination-example"
-            RowCls={Row}
-            getPageItems={getPageItems}
-            // getPageItems={getPageItemsAsync}
-            slug="pagination-example"
-        />
-    );
-});

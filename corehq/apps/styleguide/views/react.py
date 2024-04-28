@@ -1,9 +1,30 @@
 from django.shortcuts import render
-from corehq.apps.styleguide.context import get_example_context, get_js_example_context, get_react_example_context
+from corehq.apps.styleguide.context import (
+    get_example_context,
+    get_js_example_context,
+    get_react_example_context,
+    get_local_react_example_context
+)
 
 
 def pagination(request):
-    return render(request, 'styleguide/react/pagination.html', {})
+    context = {}
+    context['examples'] = {
+        'paginationSync': {
+            'code': get_local_react_example_context('paginationSync.js'),
+            'language': 'JSX',
+        },
+        'paginationAsync': {
+            'code': get_local_react_example_context('paginationAsync.js'),
+            'language': 'JSX',
+        },
+        'componentCode': {
+            'code': get_local_react_example_context('pagination.js'),
+            'language': 'JSX',
+        },
+    }
+
+    return render(request, 'styleguide/react/pagination.html', context)
 
 
 def react_examples(request):

@@ -290,3 +290,11 @@ def get_react_example_context(filename):
     path = os.path.join(react_example_root, filename)
     with open(path, 'r', encoding='utf-8') as content:
         return content.read()
+
+
+def get_local_react_example_context(filename):
+    react_example_root = os.path.join(os.path.dirname(__file__), 'static', 'styleguide')
+
+    path = os.path.join(react_example_root, filename)
+    with open(path, 'r', encoding='utf-8') as content:
+        return content.read()
