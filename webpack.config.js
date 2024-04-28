@@ -4,6 +4,7 @@ module.exports = {
     entry: {
         'reactExamples': './frontend/reactExamples.js',
         'mobileWorkers': './corehq/apps/users/static/users/js/react_test.js',
+        'pagination': './corehq/apps/styleguide/static/styleguide/pagination.js',
     },
     output: {
         filename: '[name].js',

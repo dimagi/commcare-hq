@@ -1,0 +1,10 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block javascript %}
+  <script src="{% static 'react/pagination.js' %}"></script>
+{% endblock javascript %}
+
+{% block content %}
+  <div id="root"></div>
+{% endblock content %}

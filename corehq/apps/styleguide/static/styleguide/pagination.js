@@ -1,0 +1,147 @@
+import React from 'react';
+import { useState, useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
+import _ from 'underscore';
+
+
+const pageSizes = [5, 25, 50, 100];
+
+function Summary({start, end, total}) {
+    return (
+        <div className="input-group-text">
+            Showing {start} to {end} of {total} entries
+        </div>
+    );
+}
+
+function PageSizeControl({pageSize, sizes, setPageSize}) {
+    return (
+        <select className="form-select" value={pageSize} onChange={e => setPageSize(e.target.value)}>
+            {
+                sizes.map(size => <option key={size} value={size}>{size} per page</option>)
+            }
+        </select>
+    );
+}
+
+function StatusDisplay({start, total, pageSize, sizes, setPageSize}) {
+    const end = Math.min(start + pageSize - 1, total);
+    return (
+        <div>
+            <div className="input-group">
+                <Summary start={start} end={end} total={total} />
+                <PageSizeControl pageSize={pageSize} sizes={sizes} setPageSize={setPageSize} />
+            </div>
+        </div>
+    );
+}
+
+function PageControl({currentPage, pageSize, totalItems, goToPage, maxPagesShown=9}) {
+    const numPages = Math.ceil(totalItems / pageSize);
+    const pagesOnSide = Math.floor(maxPagesShown / 2);
+    const lowerBound = Math.max(currentPage - pagesOnSide, 1);
+    const upperBound = Math.min(currentPage + pagesOnSide, numPages) + 1;
+    const pages = _.range(lowerBound, upperBound);
+
+    const goToPrevious = () => goToPage(Math.max(currentPage - 1, 1));
+    const goToNext = () => goToPage(Math.min(currentPage + 1, numPages));
+
+    return (
+        <nav aria-label="Page navigation example">
+            <ul className="pagination">
+                <li className="page-item">
+                    <a href="#"
+                        className="page-link"
+                        aria-label="Previous"
+                        onClick={goToPrevious}
+                    >
+                        <span aria-hidden="true">Previous</span>
+                    </a>
+                </li>
+                {pages.map(pageNum =>
+                    <li
+                        className={pageNum === currentPage ? "page-item active" : "page-item"}
+                        aria-current={pageNum === currentPage ? "page" : null}
+                        key={pageNum}
+                    >
+                        <a href="#" className="page-link" onClick={() => goToPage(pageNum)}><span>{pageNum}</span></a>
+                    </li>
+                )}
+                <li className="page-item">
+                    <a href="#"
+                        className="page-link"
+                        aria-label="Next"
+                        onClick={goToNext}
+                    >
+                        <span aria-hidden="hidden">Next</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    );
+}
+
+export default function Pagination({RowCls, getPageItems, id}) {
+    let [pageSize, setPageSize] = useState(5);
+    let [items, setItems] = useState([]);
+    let [totalItemCount, setTotalItemCount] = useState(0);
+    let [page, setPage] = useState(1);
+
+    const updatePage = (page) => {
+        const {items, totalItemCount} = getPageItems(page, pageSize);
+        setPage(page);
+        setItems(items);
+        setTotalItemCount(totalItemCount);
+    };
+
+    const updatePageSize = (pageSize) => {
+        const {items, totalItemCount} = getPageItems(page, pageSize);
+        setPageSize(pageSize);
+        setItems(items);
+        setTotalItemCount(totalItemCount);
+    };
+
+    useEffect(() => {
+        updatePage(page);
+    }, []);
+
+    const offset = pageSize * (page - 1);
+
+    return (
+        <div id={id}>
+            <ul className="list-group">
+                { items.map((item, i) => (
+                    <li className="list-group-item" key={offset + i}>
+                        <RowCls item={item} />
+                    </li>
+                ))}
+            </ul>
+            <div className="py-3 d-flex justify-content-between">
+                <StatusDisplay start={offset + 1} total={totalItemCount} pageSize={pageSize} sizes={pageSizes} setPageSize={updatePageSize} />
+                <div className="col-sm-7 text-right">
+                    <PageControl currentPage={page} pageSize={pageSize} totalItems={totalItemCount} goToPage={updatePage} />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function Row({item}) {
+    return (
+        <>{item}</>
+    );
+}
+
+
+window.addEventListener('load', () => {
+    const allItems = _.map(_.range(23), i => `Item #${i + 1}`);
+    const getPageItems = (pageNum, pageSize) => {
+        return {
+            items: allItems.slice(pageSize * (pageNum - 1), pageSize * pageNum),
+            totalItemCount: allItems.length,
+        };
+    };
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<Pagination id="pagination-example" RowCls={Row} getPageItems={getPageItems} />);
+});

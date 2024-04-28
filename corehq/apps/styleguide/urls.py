@@ -32,6 +32,7 @@ urlpatterns = [
         name=PagesStyleGuideView.urlname),
     url(r'^docs/', include(doc_urlpatterns)),
     url(r'^react_examples/$', react.react_examples),
+    url(r'^react_pagination/$', react.pagination),
     url(r'^b5/$', bootstrap5.styleguide_home, name="styleguide_home_b5"),
     url(r'^b5/data/select2_ajax_demo$', bootstrap5_data.select2_ajax_demo,
         name="styleguide_data_select2_ajax_demo"),
