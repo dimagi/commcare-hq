@@ -92,8 +92,8 @@ function getPageSizeCookieName(slug) {
     return 'ko-pagination-' + slug;  // Unfortunate that knockout is part of this cookie's name
 }
 
-function getInitialPageSize(slug, value) {
-    if (!slug) {
+function getInitialPageSize(slug, value, inlinePageListOnly) {
+    if (!slug || inlinePageListOnly) {
         return value;
     }
 
@@ -114,8 +114,8 @@ function updatePageSizeCookie(slug, value) {
     cookies.set(cookieName, value, { expires: expirationDate, path: '/', secure: false});
 }
 
-export default function Pagination({RowCls, getPageItems, id, slug}) {
-    let [pageSize, setPageSize] = useState(() => getInitialPageSize(slug, 5));
+export default function Pagination({RowCls, getPageItems, id, slug, inlinePageListOnly}) {
+    let [pageSize, setPageSize] = useState(() => getInitialPageSize(slug, 5, inlinePageListOnly));
     let [items, setItems] = useState([]);
     let [totalItemCount, setTotalItemCount] = useState(0);
     let [page, setPage] = useState(1);
@@ -152,12 +152,14 @@ export default function Pagination({RowCls, getPageItems, id, slug}) {
                     </li>
                 ))}
             </ul>
-            <div className="py-3 d-flex justify-content-between">
-                <StatusDisplay start={offset + 1} total={totalItemCount} pageSize={pageSize} sizes={pageSizes} setPageSize={updatePageSize} />
-                <div className="col-sm-7 text-right">
-                    <PageControl currentPage={page} pageSize={pageSize} totalItems={totalItemCount} goToPage={updatePage} isLoading={false} />
+            { !inlinePageListOnly &&
+                <div className="py-3 d-flex justify-content-between">
+                    <StatusDisplay start={offset + 1} total={totalItemCount} pageSize={pageSize} sizes={pageSizes} setPageSize={updatePageSize} />
+                    <div className="col-sm-7 text-right">
+                        <PageControl currentPage={page} pageSize={pageSize} totalItems={totalItemCount} goToPage={updatePage} isLoading={false} />
+                    </div>
                 </div>
-            </div>
+            }
         </div>
     );
 }
@@ -179,5 +181,12 @@ window.addEventListener('load', () => {
     };
 
     const root = createRoot(document.getElementById('root'));
-    root.render(<Pagination id="pagination-example" RowCls={Row} getPageItems={getPageItems} slug="pagination-example" />);
+    root.render(
+        <Pagination
+            id="pagination-example"
+            RowCls={Row}
+            getPageItems={getPageItems}
+            slug="pagination-example"
+        />
+    );
 });
