@@ -113,6 +113,19 @@ function updatePageSizeCookie(slug, value) {
     cookies.set(cookieName, value, { expires: expirationDate, path: '/', secure: false});
 }
 
+/**
+ *  React Pagination Component
+ *
+ *  Include the <Pagination> element on your JSX page with the following parameters:
+ *      RowCls: A JSX component that will render your list items. Will receive a single 'row' object as props
+ *      getPageItems: A function or promise to return a page's items. Requires pageNum and pageSize parameters,
+ *          and must return an object containing with 'items' and 'totalItemCount' keys.
+ *      inlinePageListOnly: Optional. True or false. If true, leave off the "Showing X to Y of Z entries"
+ *          text and the associated dropdown.
+ *      id: Optional. An id that will be applied to the native HTML container
+ *      slug: Optional. A string unique among pagination widgets. If provided, used to save perPage value
+ *          in a cookie.
+ */
 export default function Pagination({RowCls, getPageItems, id, slug, inlinePageListOnly}) {
     let [pageSize, setPageSize] = useState(() => getInitialPageSize(slug, 5, inlinePageListOnly));
     let [items, setItems] = useState([]);
