@@ -24,7 +24,7 @@ from corehq.apps.case_search.exceptions import (
     CaseSearchUserError,
     TooManyRelatedCasesError,
 )
-from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
+from corehq.apps.case_search.filter_dsl import build_filter_from_xpath, SearchFilterContext
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
@@ -320,9 +320,10 @@ class CaseSearchQueryBuilder:
         return search_es
 
     def _build_filter_from_xpath(self, xpath, fuzzy=False):
+        context = SearchFilterContext(self.query_domains, fuzzy, self.request_domain,
+                                      self.profiler)
         with self.profiler.timing_context('_build_filter_from_xpath'):
-            return build_filter_from_xpath(self.query_domains, xpath, fuzzy,
-                                           self.request_domain, self.profiler)
+            return build_filter_from_xpath(xpath, context=context)
 
     def _get_daterange_query(self, criteria):
         startdate, enddate = criteria.get_date_range()

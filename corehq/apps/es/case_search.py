@@ -93,8 +93,9 @@ class CaseSearchES(CaseES):
 
         If fuzzy is true, all equality checks will be treated as fuzzy.
         """
-        from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
-        return self.filter(build_filter_from_xpath(domain, xpath, fuzzy=fuzzy))
+        from corehq.apps.case_search.filter_dsl import build_filter_from_xpath, SearchFilterContext
+        context = SearchFilterContext(domain, fuzzy=fuzzy)
+        return self.filter(build_filter_from_xpath(xpath, context=context))
 
     def get_child_cases(self, case_ids, identifier):
         """Returns all cases that reference cases with ids: `case_ids`

@@ -130,7 +130,7 @@ def build_filter_from_ast(node, context):
     return visit(node)
 
 
-def build_filter_from_xpath(query_domain, xpath, fuzzy=False, request_domain=None, profiler=None):
+def build_filter_from_xpath(xpath, *, domain=None, context=None):
     """Given an xpath expression this function will generate an Elasticsearch
     filter"""
     error_message = _(
@@ -138,7 +138,10 @@ def build_filter_from_xpath(query_domain, xpath, fuzzy=False, request_domain=Non
         "Please try reformatting your query. "
         "The operators we accept are: {}"
     )
-    context = SearchFilterContext(query_domain, fuzzy, request_domain, profiler)
+    if bool(context) == bool(domain):
+        raise TypeError("build_filter_from_xpath takes either a context or a domain, but not both")
+    if not context:
+        context = SearchFilterContext(domain)
     try:
         return build_filter_from_ast(parse_xpath(xpath), context)
     except TypeError as e:
