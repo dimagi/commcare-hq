@@ -2,9 +2,9 @@
 
 <fieldset>
   <div class="col-md-12">
-    <div class="checkbox">  {# todo B5: css:checkbox #}
-      <label>
-        <input name="remove-existing" type="checkbox" data-bind="checked: purge_existing">{% trans "Remove unused fields from existing data."%}  {# todo B5: css:checkbox #}
+    <div class="form-check">
+      <input class="form-check-input" name="remove-existing" type="checkbox" data-bind="checked: purge_existing">{% trans "Remove unused fields from existing data."%}
+      <label class="form-check-label">
         <span class="hq-help-template"
               data-title="{% trans "Remove Unused Fields" %}"
               data-content="{% blocktrans with entity_string=view.entity_string|lower %}
