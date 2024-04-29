@@ -70,7 +70,7 @@
           {% endblocktrans %}
         {% endif %}
       </p>
-      {% include "enterprise/partials/enterprise_permissions_table.html" with DOMAINS=controlled_domains ACTION_ENABLE=False %}
+      {% include "enterprise/partials/bootstrap3/enterprise_permissions_table.html" with DOMAINS=controlled_domains ACTION_ENABLE=False %}
     </div>
     <div class="col-sm-6">
       <p class="help-block">
@@ -84,7 +84,7 @@
           {% endblocktrans %}
         {% endif %}
       </p>
-      {% include "enterprise/partials/enterprise_permissions_table.html" with DOMAINS=ignored_domains ACTION_ENABLE=True %}
+      {% include "enterprise/partials/bootstrap3/enterprise_permissions_table.html" with DOMAINS=ignored_domains ACTION_ENABLE=True %}
     </div>
   </div>
 
