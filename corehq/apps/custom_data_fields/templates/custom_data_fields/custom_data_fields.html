@@ -79,9 +79,9 @@
     {% if custom_fields_form.errors %}
       {% for field, errors in custom_fields_form.errors.items %}
         {% for error in errors %}
-          <div class="alert alert-danger">
+          <div class="alert alert-dismissible alert-danger">
             {{ error }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert">&times;</button>  {# todo B5: css:close #}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans_html_attr "Close" %}"></button>
           </div>
         {% endfor %}
       {% endfor %}
