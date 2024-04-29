@@ -321,7 +321,7 @@ class CaseSearchQueryBuilder:
 
     def _build_filter_from_xpath(self, xpath, fuzzy=False):
         context = SearchFilterContext(self.query_domains, fuzzy, self.request_domain,
-                                      self.profiler)
+                                      self.profiler, self.config)
         with self.profiler.timing_context('_build_filter_from_xpath'):
             return build_filter_from_xpath(xpath, context=context)
 

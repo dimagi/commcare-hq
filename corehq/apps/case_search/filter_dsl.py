@@ -30,9 +30,11 @@ class SearchFilterContext:
     fuzzy: bool = False
     request_domain: str = None
     profiler: 'corehq.apps.case_search.utils.CaseSearchProfiler' = None
+    config: 'corehq.apps.case_search.models.CaseSearchConfig' = None
 
     def __post_init__(self):
         from corehq.apps.case_search.utils import CaseSearchProfiler
+        from corehq.apps.case_search.models import CaseSearchConfig
         if self.request_domain is None:
             if isinstance(self.domain, str):
                 self.request_domain = self.domain
@@ -42,6 +44,8 @@ class SearchFilterContext:
                 raise ValueError("When domain is a list with more than one item, request_domain cannot be None.")
         if self.profiler is None:
             self.profiler = CaseSearchProfiler()
+        if self.config is None:
+            self.config = CaseSearchConfig(domain=self.request_domain)
 
 
 def print_ast(node):
