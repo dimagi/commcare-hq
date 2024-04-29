@@ -13,6 +13,7 @@ pytest_plugins = [
     #'corehq.tests.pytest_plugins.dbtransaction',  # FIXME
     'corehq.tests.pytest_plugins.patches',
     'corehq.tests.pytest_plugins.redislocks',
+    'corehq.tests.pytest_plugins.reusedb',
 ]
 
 
