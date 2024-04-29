@@ -299,7 +299,7 @@ class FormplayerPreviewSingleApp(View):
 
 
 class PreviewAppView(TemplateView):
-    template_name = 'cloudcare/preview_app.html'
+    template_name = 'cloudcare/bootstrap3/preview_app.html'
     urlname = 'preview_app'
 
     @use_daterangepicker
