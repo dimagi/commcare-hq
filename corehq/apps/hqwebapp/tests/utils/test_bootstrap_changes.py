@@ -29,6 +29,15 @@ def test_make_direct_css_renames_bootstrap5():
     eq(renames, ['renamed btn-default to btn-outline-primary', 'renamed btn-xs to btn-sm'])
 
 
+def test_make_direct_css_renames_in_knockout():
+    line = """    <td data-bind="css: {'badge-success': isSuccess}">"""
+    final_line, renames = make_direct_css_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """    <td data-bind="css: {'text-bg-success': isSuccess}">""")
+    eq(renames, ['renamed badge-success to text-bg-success'])
+
+
 def test_make_numbered_css_renames_bootstrap5():
     line = """        <div class="col-xs-6">\n"""
     final_line, renames = make_numbered_css_renames(
@@ -62,6 +71,15 @@ def test_make_javascript_dependency_renames():
         line, get_spec('bootstrap_3_to_5')
     )
     eq(final_line, """        "hqwebapp/js/bootstrap5/widgets",\n""")
+    eq(renames, ['renamed bootstrap3 to bootstrap5'])
+
+
+def test_make_javascript_dependency_renames_hqdefine():
+    line = """hqDefine("hqwebapp/js/bootstrap3/prepaid_modal", [\n"""
+    final_line, renames = make_javascript_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """hqDefine("hqwebapp/js/bootstrap5/prepaid_modal", [\n""")
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 

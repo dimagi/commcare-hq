@@ -51,7 +51,7 @@ def _get_template_reference_regex(tag, reference):
 
 
 def _get_javascript_reference_regex(reference):
-    return r"(['\"][\w/.\-]+/)(" + reference + r")(/[\w/.\-]+['\"],?)$"
+    return r"(['\"][\w/.\-]+/)(" + reference + r")(/[\w/.\-]+['\"],?)"
 
 
 def _do_rename(line, change_map, regex_fn, replacement_fn):
