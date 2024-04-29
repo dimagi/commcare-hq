@@ -14,6 +14,15 @@ PARENT_PATHS = {
 }
 
 
+def is_split_path(path):
+    path = str(path)
+    return "/bootstrap3/" in path or "/bootstrap5/" in path
+
+
+def is_bootstrap5_path(path):
+    return '/bootstrap5/' in str(path)
+
+
 def get_app_name_and_slug(app_name):
     app_parts = app_name.split(".")
     if len(app_parts) == 2:

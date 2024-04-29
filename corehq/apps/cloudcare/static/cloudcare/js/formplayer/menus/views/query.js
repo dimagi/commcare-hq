@@ -878,16 +878,21 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
 
         onBeforeDetach: function () {
             this.smallScreenListener.stopListening();
+            for (const topic of this.geocoderTopics) {
+                $.unsubscribe(topic);
+            }
         },
 
         initGeocoders: function () {
             var self = this;
+            self.geocoderTopics = new Set();
             _.each(self._getChildModels(), function (model, i) {
                 var $field = $($(".query-field")[i]);
 
                 // Set geocoder receivers to subscribe
                 if (model.get('receive')) {
                     var topic = model.get('receive').split("-")[0];
+                    self.geocoderTopics.add(topic);
                     $.subscribe(topic, updateReceiver($field));
                 }
 
