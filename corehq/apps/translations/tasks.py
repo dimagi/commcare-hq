@@ -158,7 +158,7 @@ def backup_project_from_transifex(domain, data, email):
         tmp.seek(0)
         send_mail_async(
             subject='[{}] - Transifex backup translations'.format(settings.SERVER_ENVIRONMENT),
-            body="PFA Translations backup from transifex.",
+            message="PFA Translations backup from transifex.",
             recipient_list=[email],
             filename="%s-TransifexBackup.zip" % project_name,
             content=tmp.read(),
@@ -227,7 +227,7 @@ def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, 
 
     send_mail_async(
         subject='[{}] - Transifex Project Migration Status'.format(settings.SERVER_ENVIRONMENT),
-        body=linebreaksbr(generate_email_body()),
+        message=linebreaksbr(generate_email_body()),
         recipient_list=[email],
         domain=domain,
         use_domain_gateway=True,
