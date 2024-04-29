@@ -594,6 +594,14 @@ hqDefine('geospatial/js/models', [
             }
         };
 
+        self.loadSelectedPolygonFromQueryParam = function () {
+            const url = new URL(window.location.href);
+            const selectedFeatureParam = url.searchParams.get(SELECTED_FEATURE_ID_QUERY_PARAM);
+            if (selectedFeatureParam) {
+                self.selectedSavedPolygonId(selectedFeatureParam);
+            }
+        };
+
         function removeActivePolygonLayer() {
             if (self.activeSavedPolygon) {
                 self.mapObj.mapInstance.removeLayer(self.activeSavedPolygon.id);
@@ -695,6 +703,7 @@ hqDefine('geospatial/js/models', [
                 }
                 self.savedPolygons.push(new SavedPolygon(polygon));
             });
+            self.loadSelectedPolygonFromQueryParam();
         };
 
         self.exportGeoJson = function (exportButtonId) {
