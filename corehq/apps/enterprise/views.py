@@ -78,7 +78,7 @@ def enterprise_dashboard(request, domain):
             'title': _('Enterprise Dashboard'),
         }
     }
-    return render(request, "enterprise/enterprise_dashboard.html", context)
+    return render(request, "enterprise/bootstrap3/enterprise_dashboard.html", context)
 
 
 @require_enterprise_admin
