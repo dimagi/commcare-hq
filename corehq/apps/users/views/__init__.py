@@ -112,7 +112,10 @@ from corehq.apps.users.models import (
     UserRole,
 )
 from corehq.apps.users.util import log_user_change
-from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
+from corehq.apps.users.views.utils import (
+    filter_user_query_by_locations_accessible_to_user,
+    get_editable_role_choices, BulkUploadResponseWrapper
+)
 from corehq.apps.user_importer.importer import UserUploadError
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
@@ -372,6 +375,7 @@ class BaseEditUserView(BaseUserSettingsView):
             return self.get(request, *args, **kwargs)
 
 
+@location_safe
 class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
@@ -549,6 +553,7 @@ class EnterpriseUsersView(BaseRoleAccessView):
 
 @method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
+@location_safe
 class ListWebUsersView(BaseRoleAccessView):
     template_name = 'users/web_users.html'
     page_title = gettext_lazy("Web Users")
@@ -565,6 +570,8 @@ class ListWebUsersView(BaseRoleAccessView):
     @property
     @memoized
     def invitations(self):
+        if not self.request.couch_user.has_permission(self.domain, 'access_all_locations'):
+            return []
         return [
             {
                 "uuid": str(invitation.uuid),
@@ -832,8 +839,9 @@ def _format_enterprise_user(domain, user):
 @always_allow_project_access
 @require_can_edit_or_view_web_users
 @require_GET
+@location_safe
 def paginate_web_users(request, domain):
-    web_users, pagination = _get_web_users(request, [domain])
+    web_users, pagination = _get_web_users(request, [domain], filter_by_accessible_locations=True)
     web_users_fmt = [{
         'eulas': u.get_eulas(),
         'email': u.get_email(),
@@ -858,17 +866,22 @@ def paginate_web_users(request, domain):
     })
 
 
-def _get_web_users(request, domains):
+def _get_web_users(request, domains, filter_by_accessible_locations=False):
     limit = int(request.GET.get('limit', 10))
     page = int(request.GET.get('page', 1))
     skip = limit * (page - 1)
     query = request.GET.get('query')
 
-    result = (
+    user_es = (
         UserES().domains(domains).web_users().sort('username.exact')
         .search_string_query(query, ["username", "last_name", "first_name"])
-        .start(skip).size(limit).run()
+        .start(skip).size(limit)
     )
+    if filter_by_accessible_locations:
+        assert len(domains) == 1
+        domain = domains[0]
+        user_es = filter_user_query_by_locations_accessible_to_user(user_es, domain, request.couch_user)
+    result = user_es.run()
 
     return (
         [WebUser.wrap(w) for w in result.hits],
