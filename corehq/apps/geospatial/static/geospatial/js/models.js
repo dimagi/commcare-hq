@@ -14,6 +14,7 @@ hqDefine('geospatial/js/models', [
 ) {
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
+    const SELECTED_FEATURE_ID_QUERY_PARAM = 'selected_feature_id';
     const MAX_URL_LENGTH = 4500;
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
@@ -563,6 +564,21 @@ hqDefine('geospatial/js/models', [
                 self.hasUrlError(true);
             }
         }
+
+        function updateSelectedSavedPolygonParam() {
+            const url = new URL(window.location.href);
+            const prevSelectedId = url.searchParams.get(SELECTED_FEATURE_ID_QUERY_PARAM);
+            if (prevSelectedId === self.selectedSavedPolygonId()) {
+                // If the user refreshes the page, we shouldn't prompt another refresh
+                return;
+            }
+
+            if (self.selectedSavedPolygonId()) {
+                url.searchParams.set(SELECTED_FEATURE_ID_QUERY_PARAM, self.selectedSavedPolygonId());
+            } else {
+                url.searchParams.delete(SELECTED_FEATURE_ID_QUERY_PARAM);
+            }
+            updateUrl(url);
         }
 
         self.loadPolygonFromQueryParam = function () {
@@ -604,12 +620,12 @@ hqDefine('geospatial/js/models', [
 
         self.clearActivePolygon = function () {
             if (self.activeSavedPolygon) {
-                // self.selectedSavedPolygonId('');
-                self.removePolygonsFromFilterList(self.activeSavedPolygon.geoJson.features);
+                self.selectedSavedPolygonId('');
                 removeActivePolygonLayer();
                 self.activeSavedPolygon = null;
                 self.btnSaveDisabled(false);
                 self.btnExportDisabled(true);
+                updateSelectedSavedPolygonParam();
             }
         };
 
@@ -657,7 +673,7 @@ hqDefine('geospatial/js/models', [
             createActivePolygonLayer(polygonObj);
 
             self.activeSavedPolygon = polygonObj;
-            self.addPolygonsToFilterList(polygonObj.geoJson.features);
+            updateSelectedSavedPolygonParam();
             self.btnExportDisabled(false);
             self.btnSaveDisabled(true);
             if (self.shouldSelectAfterFilter) {
