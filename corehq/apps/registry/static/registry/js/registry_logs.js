@@ -61,7 +61,7 @@ hqDefine("registry/js/registry_logs", [
                 const separator = hqTempusDominus.getDateRangeSeparator(),
                     dates = self.dateRange().split(separator);
                 requestData.startDate = dates[0];
-                requestData.endDate = dates[1];
+                requestData.endDate = dates[1] || dates[0];
             }
             if (self.selectedProjectSpace() && self.selectedProjectSpace() !== allDomainsText) {
                 requestData.domain = self.selectedProjectSpace();
