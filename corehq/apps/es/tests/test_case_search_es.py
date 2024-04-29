@@ -217,6 +217,51 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
         }
         self.checkQuery(query, expected, validate_query=False)
 
+    def test_fuzzy_property_query(self):
+        query = self.es.domain('swashbucklers').filter(
+            case_property_query("foo", "backbeard", fuzzy=True, fuzzy_prefix_length=2)
+        )
+        expected = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"domain.exact": "swashbucklers"}},
+                        {
+                            "nested": {
+                                "path": "case_properties",
+                                "query": {
+                                    "bool": {
+                                        "filter": [{"term": {"case_properties.key.exact": "foo"}}],
+                                        "must": {
+                                            "bool": {
+                                                "should": [
+                                                    {"fuzzy": {"case_properties.value": {
+                                                        "value": "backbeard",
+                                                        "fuzziness": "AUTO",
+                                                        "max_expansions": 100,
+                                                        "prefix_length": 2
+                                                    }}},
+                                                    {"match": {"case_properties.value": {
+                                                        "query": "backbeard",
+                                                        "operator": "or",
+                                                        "fuzziness": "0"
+                                                    }}}
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        {"match_all": {}}
+                    ],
+                    "must": {"match_all": {}}
+                }
+            },
+            "size": 1000000
+        }
+        self.checkQuery(query, expected, validate_query=False)
+
 
 class TestCaseSearchHitConversions(SimpleTestCase):
     maxDiff = None
@@ -383,6 +428,21 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             CaseSearchES().domain(self.domain).case_property_query("foo", "backbeard", fuzzy=True),
             None,
             ['c2']
+        )
+
+    def test_fuzzy_case_property_query_with_prefix(self):
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'foo': 'redbeard'},
+                {'_id': 'c2', 'foo': 'blackbeard'},
+                {'_id': 'c3', 'foo': 'backbird'},
+            ],
+            CaseSearchES().domain(self.domain).filter(
+                case_property_query("foo", "backbeard", fuzzy=True, fuzzy_prefix_length=2)
+            ),
+            None,
+            ['c3']
         )
 
     def test_multiple_case_search_queries(self):
