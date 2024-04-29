@@ -13,12 +13,12 @@
       <th class="col-md-3">
         {% trans "Name" %}
       </th>
-      <th class="col-md-9">
+      <th data-bind="css: {'col-md-7': $root.hasLinkedData, 'col-md-8': !$root.hasLinkedData}">
         {% trans "Fields" %}
       </th>
       <th class="col-md-1">{% trans "Delete" %}</th>
       <!-- ko if: $root.hasLinkedData -->
-      <th>
+      <th class="col-md-1">
         {# Linked #}
       </th>
       <!-- /ko -->
@@ -31,7 +31,7 @@
         <input class="form-control" type="text" data-bind="value: name, enable: isEditable"/>
       </td>
       <td data-bind="jqueryElement: $fields"></td>
-      <td>
+      <td data-bind="css: {'col-md-2': $root.hasLinkedData, 'col-md-4': !$root.hasLinkedData}">
         <a type="button"
            class="btn btn-outline-danger"
            data-bs-toggle="modal"
