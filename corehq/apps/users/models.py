@@ -541,7 +541,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
             self.set_location(domain, location_id)
         if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
             user_data = self.get_user_data(domain_obj.name)
-            user_data.update({}, profile_id=profile.id if profile.name else ...)
+            user_data.update({}, profile_id=profile.id)
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):

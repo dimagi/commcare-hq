@@ -490,31 +490,27 @@ class AdminInvitesUserForm(forms.Form):
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
-    profile = forms.ChoiceField(choices=(), label="Profile", required=False)
 
     def __init__(self, data=None, excluded_emails=None, is_add_user=None, location=None,
                  role_choices=(), *, domain, **kwargs):
         super(AdminInvitesUserForm, self).__init__(data=data, **kwargs)
         domain_obj = Domain.get_by_name(domain)
         self.fields['role'].choices = role_choices
-        show_profile = False
-        show_location = False
         if domain_obj:
             self.fields['location_id'] = forms.CharField(label='Primary Location', required=False,
-                                                         widget=LocationSelectWidget(domain_obj.name),
-                                                         help_text=EMWF.location_search_help,
-                                                         initial='')
-            show_location = True
+                                                         widget=LocationSelectWidget(domain_obj.name,
+                                                                                    id='id_location_id'),
+                                                         help_text=EMWF.location_search_help)
 
             if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
+                self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)
                 from corehq.apps.users.views.mobile import UserFieldsView
                 definition = CustomDataFieldsDefinition.get(domain_obj.name, UserFieldsView.field_type)
-                profile_choices = []
                 if definition:
                     profiles = definition.get_profiles()
-                    profile_choices = [('', '')] + [(profile.id, profile.name) for profile in profiles]
-                self.fields['profile'].choices = profile_choices
-                show_profile = True
+                    self.fields['profile'].choices = [('', '')] + [
+                        (profile.id, profile.name) for profile in profiles
+                    ]
 
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
@@ -538,8 +534,8 @@ class AdminInvitesUserForm(forms.Form):
                     data_bind="textInput: email",
                 ),
                 'role',
-                'profile' if show_profile else None,
-                'location_id' if show_location else None,
+                'profile' if 'profile' in self.fields else None,
+                'location_id' if 'location_id' in self.fields else None,
             ),
             crispy.HTML(
                 render_to_string(
