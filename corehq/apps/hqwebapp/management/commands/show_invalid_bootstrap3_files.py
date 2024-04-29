@@ -8,6 +8,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_template_paths_for_app,
     get_all_javascript_paths_for_app,
     get_short_path,
+    is_split_path,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.status import (
     get_apps_completed_or_in_progress,
@@ -44,13 +45,8 @@ IGNORED_FILES = [
 ]
 
 
-def _is_split_path(path):
-    path = str(path)
-    return "/bootstrap3/" in path or "/bootstrap5/" in path
-
-
 def _is_relevant_path(path, completed_paths):
-    return not (_is_split_path(path) or str(path) in completed_paths)
+    return not (is_split_path(path) or str(path) in completed_paths)
 
 
 def _get_bootstrap3_flags_from_file(file_path, is_template):
@@ -145,16 +141,15 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.MIGRATE_LABEL(
                     "Issues with templates:\n"
                 ))
-                self.show_app_issue_summary(app_name, template_issues, is_template=True)
+                self.show_app_issue_summary(app_name, template_issues)
             javascript_issues = summary[1].get('javascript', [])
             if javascript_issues:
                 self.stdout.write(self.style.MIGRATE_LABEL(
-                    "Issues with javascript:"
+                    "Issues with javascript:\n"
                 ))
-                self.show_app_issue_summary(app_name, javascript_issues, is_template=False)
+                self.show_app_issue_summary(app_name, javascript_issues)
 
-    def show_app_issue_summary(self, app_name, issues, is_template):
-        argument = "--template-name" if is_template else "--js-name"
+    def show_app_issue_summary(self, app_name, issues):
         for issue in issues:
             path = issue[0]
             self.stdout.write(self.style.WARNING(
@@ -166,7 +161,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"\t{flag_list}")
             self.stdout.write("\nto fix this, run:")
             self.stdout.write(self.style.MIGRATE_HEADING(
-                f"./manage.py migrate_app_to_bootstrap5 {app_name} {argument} {path}\n"
+                f"./manage.py migrate_app_to_bootstrap5 {app_name} --filename {path}\n"
             ))
             self.enter_to_continue()
 

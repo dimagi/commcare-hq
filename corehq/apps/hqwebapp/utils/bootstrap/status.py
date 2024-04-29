@@ -71,7 +71,7 @@ def mark_javascript_as_complete(app_name, js_short_path):
 def _mark_file_as_complete(app_name, short_path, file_type):
     app_summary = get_app_status_summary(app_name)
     app_summary.setdefault(file_type, []).append(
-        short_path.lstrip(f"{app_name}/")
+        short_path.removeprefix(f"{app_name}/")
     )
     apply_app_summary_changes(app_name, app_summary)
 
