@@ -478,7 +478,8 @@ class Command(BaseCommand):
             self.stdout.write(f"\n\nNo references were found for {short_path}...\n")
         self.suggest_commit_message(
             f"initial auto-migration for {short_path}, splitting templates",
-            show_apply_commit=not has_changes
+            show_apply_commit=not has_changes,
+            renames={file_path: bootstrap5_path},
         )
 
     @staticmethod
@@ -615,7 +616,7 @@ class Command(BaseCommand):
             "\nYou have un-committed changes! Please commit these changes before proceeding. Thank you!"
         ))
 
-    def suggest_commit_message(self, message, show_apply_commit=False):
+    def suggest_commit_message(self, message, show_apply_commit=False, renames=None):
         if self.skip_all and show_apply_commit:
             apply_commit(message)
             return
@@ -625,7 +626,7 @@ class Command(BaseCommand):
         if show_apply_commit:
             confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
             if confirm:
-                apply_commit(message)
+                apply_commit(message, renames)
                 return
         commit_string = get_commit_string(message)
         self.stdout.write("\n\nSuggested command:\n")

@@ -47,6 +47,10 @@ def get_app_static_folder(app_name):
     return parent_path / app_name / "static" / app_name
 
 
+def get_git_path(path):
+    return path.relative_to(COREHQ_BASE_DIR.parent)
+
+
 def get_short_path(app_name, full_path, is_template):
     parent_path = get_parent_path(app_name)
     _, app_name = get_app_name_and_slug(app_name)

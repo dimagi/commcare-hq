@@ -1,5 +1,7 @@
 import subprocess
 
+from corehq.apps.hqwebapp.utils.bootstrap.paths import get_git_path
+
 
 def get_commit_command(message, as_string=False):
     message = message.replace('"', '\'')  # make sure there are no double-quotes
@@ -13,8 +15,16 @@ def get_commit_string(message):
     return get_commit_command(message, as_string=True)
 
 
-def apply_commit(message):
+def apply_commit(message, renames=None):
     commit_command = get_commit_command(message)
+    if renames is not None:
+        for old_path, new_path in renames.items():
+            subprocess.call([
+                "git",
+                "mv",
+                get_git_path(old_path),
+                get_git_path(new_path),
+            ])
     subprocess.call([
         "git", "add", ".",
     ])
