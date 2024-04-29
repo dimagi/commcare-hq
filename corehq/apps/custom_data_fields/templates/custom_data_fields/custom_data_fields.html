@@ -111,12 +111,10 @@
       </div>
     </div>
 
-    <div class="form-actions">
-      <div class="col-md-12">
-        <button id="save-custom-fields" class="btn btn-primary disable-on-submit" type="submit"{% if disable_save %} disabled{% endif %}>
-            {% trans "Save" %}
-        </button>
-      </div>
+    <div class="col-md-12">
+      <button id="save-custom-fields" class="btn btn-primary disable-on-submit" type="submit"{% if disable_save %} disabled{% endif %}>
+          {% trans "Save" %}
+      </button>
     </div>
 
     {% include 'custom_data_fields/partials/modal_delete.html' %}
