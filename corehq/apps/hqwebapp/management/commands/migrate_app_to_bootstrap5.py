@@ -484,7 +484,6 @@ class Command(BaseCommand):
 
     @staticmethod
     def save_split_templates(original_path, bootstrap3_path, bootstrap3_lines, bootstrap5_path, bootstrap5_lines):
-        original_path.unlink(missing_ok=True)
         with open(bootstrap3_path, 'w') as file:
             file.writelines(bootstrap3_lines)
         with open(bootstrap5_path, 'w') as file:
@@ -620,16 +619,19 @@ class Command(BaseCommand):
         if self.skip_all and show_apply_commit:
             apply_commit(message)
             return
+        else:
+            self.stdout.write("\nNow would be a good time to review changes with git and "
+                              "commit before moving on to the next template.")
+            if show_apply_commit:
+                confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
+                if confirm:
+                    apply_commit(message, renames)
+                    return
+            commit_string = get_commit_string(message)
+            self.stdout.write("\n\nSuggested command:\n")
+            self.stdout.write(self.style.MIGRATE_HEADING(commit_string))
+            self.stdout.write("\n")
+            enter_to_continue()
 
-        self.stdout.write("\nNow would be a good time to review changes with git and "
-                          "commit before moving on to the next template.")
-        if show_apply_commit:
-            confirm = get_confirmation("\nAutomatically commit these changes?", default='y')
-            if confirm:
-                apply_commit(message, renames)
-                return
-        commit_string = get_commit_string(message)
-        self.stdout.write("\n\nSuggested command:\n")
-        self.stdout.write(self.style.MIGRATE_HEADING(commit_string))
-        self.stdout.write("\n")
-        enter_to_continue()
+        for path in renames.keys():
+            path.unlink(missing_ok=True)
