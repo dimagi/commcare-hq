@@ -14,6 +14,7 @@ hqDefine('geospatial/js/models', [
 ) {
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
+    const MAX_URL_LENGTH = 4500;
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
 
@@ -514,6 +515,7 @@ hqDefine('geospatial/js/models', [
 
         self.polygons = {};
         self.shouldRefreshPage = ko.observable(false);
+        self.hasUrlError = ko.observable(false);
 
         self.savedPolygons = ko.observableArray([]);
         self.selectedSavedPolygonId = ko.observable('');
@@ -543,13 +545,24 @@ hqDefine('geospatial/js/models', [
 
         function updatePolygonQueryParam() {
             const url = new URL(window.location.href);
-            if (Object.keys(self.polygons).length) {
+            if (Object.keys(self.polygons)) {
                 url.searchParams.set(FEATURE_QUERY_PARAM, JSON.stringify(self.polygons));
             } else {
                 url.searchParams.delete(FEATURE_QUERY_PARAM);
             }
-            window.history.replaceState({ path: url.href }, '', url.href);
-            self.shouldRefreshPage(true);
+            updateUrl(url);
+        }
+
+        function updateUrl(url) {
+            if (url.href.length <= MAX_URL_LENGTH) {
+                window.history.replaceState({ path: url.href }, '', url.href);
+                self.shouldRefreshPage(true);
+                self.hasUrlError(false);
+            } else {
+                self.shouldRefreshPage(false);
+                self.hasUrlError(true);
+            }
+        }
         }
 
         self.loadPolygonFromQueryParam = function () {
