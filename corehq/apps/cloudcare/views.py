@@ -225,7 +225,7 @@ class FormplayerMain(View):
         }
 
         return set_cookie(
-            render(request, "cloudcare/formplayer_home.html", context)
+            render(request, "cloudcare/bootstrap3/formplayer_home.html", context)
         )
 
 
@@ -295,7 +295,7 @@ class FormplayerPreviewSingleApp(View):
             "has_geocoder_privs": has_geocoder_privs(domain),
             "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         }
-        return render(request, "cloudcare/formplayer_home.html", context)
+        return render(request, "cloudcare/bootstrap3/formplayer_home.html", context)
 
 
 class PreviewAppView(TemplateView):
