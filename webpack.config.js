@@ -1,11 +1,63 @@
 const path = require('path');
+const fs = require('fs');
 
-module.exports = {
-    entry: {
+const BUNDLE_SUFFIX = 'Main.js';
+
+function hasReactCode(dirEntry) {
+    const reactPath = getReactPathForApp(dirEntry.name);
+    try {
+        return fs.readdirSync(reactPath).some(name => name.endsWith(BUNDLE_SUFFIX));
+    } catch (e) {
+        return false;
+    }
+}
+
+function getReactPathForApp(app) {
+    return path.resolve(__dirname, 'corehq', 'apps', app, 'static', app, 'js', 'react');
+}
+
+function getEntriesForApp(app) {
+    const reactPath = getReactPathForApp(app);
+    const entries = {};
+    fs.readdirSync(reactPath, {withFileTypes: true})
+        .filter(dirEnt => dirEnt.isFile())
+        .filter(dirEnt => dirEnt.name.endsWith(BUNDLE_SUFFIX))
+        .forEach(dirEnt => {
+            const filename = dirEnt.name.slice(0, -BUNDLE_SUFFIX.length);
+            const fullName = `${app}_${filename}`;
+            entries[fullName] = {
+                import: path.resolve(dirEnt.path, dirEnt.name),
+                filename: `${app}/${filename}.js`,
+            };
+        });
+
+    return entries;
+}
+
+function getDynamicReactApps() {
+    const appsPath = path.resolve(__dirname, 'corehq', 'apps');
+    let reactEntries = {};
+    fs.readdirSync(appsPath, {withFileTypes: true})
+        .filter(dirEnt => dirEnt.isDirectory())
+        .filter(hasReactCode)
+        .forEach(dirEnt => {
+            reactEntries = Object.assign(reactEntries, getEntriesForApp(dirEnt.name));
+        });
+
+    return reactEntries;
+}
+
+function getEntries() {
+    const customEntries = {
         'reactExamples': './frontend/reactExamples.js',
         'mobileWorkers': './corehq/apps/users/static/users/js/react_test.js',
         'pagination': './corehq/apps/styleguide/static/styleguide/paginationExamples.js',
-    },
+    };
+    return Object.assign(getDynamicReactApps(), customEntries);
+}
+
+module.exports = {
+    entry: getEntries(),
     output: {
         filename: '[name].js',
         path: path.resolve(__dirname, './static_react'),
