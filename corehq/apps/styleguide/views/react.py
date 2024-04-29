@@ -19,7 +19,7 @@ def pagination(request):
             'language': 'JSX',
         },
         'componentCode': {
-            'code': get_local_react_example_context('pagination.js'),
+            'code': get_local_react_example_context('components', 'pagination.js'),
             'language': 'JSX',
         },
     }

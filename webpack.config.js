@@ -51,7 +51,6 @@ function getEntries() {
     const customEntries = {
         'reactExamples': './frontend/reactExamples.js',
         'mobileWorkers': './corehq/apps/users/static/users/js/react_test.js',
-        'pagination': './corehq/apps/styleguide/static/styleguide/paginationExamples.js',
     };
     return Object.assign(getDynamicReactApps(), customEntries);
 }

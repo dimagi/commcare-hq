@@ -292,9 +292,9 @@ def get_react_example_context(filename):
         return content.read()
 
 
-def get_local_react_example_context(filename):
-    react_example_root = os.path.join(os.path.dirname(__file__), 'static', 'styleguide')
+def get_local_react_example_context(*paths):
+    react_example_root = os.path.join(os.path.dirname(__file__), 'static', 'styleguide', 'js', 'react')
 
-    path = os.path.join(react_example_root, filename)
+    path = os.path.join(react_example_root, *paths)
     with open(path, 'r', encoding='utf-8') as content:
         return content.read()
