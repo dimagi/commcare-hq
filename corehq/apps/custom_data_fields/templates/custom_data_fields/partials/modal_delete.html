@@ -20,7 +20,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
       </div>
 
-      <div class="modal-body" style="line-height: 18px" data-bind="css: {hide: !hasModalDetail}">  {# todo B5: inline style #}
+      <div class="modal-body" data-bind="css: {hide: !hasModalDetail}">
         {% blocktrans with entity_string=view.entity_string|lower %}
           <p>
             Deleting this field can cause you to lose data for any {{ entity_string }} with information stored in this field.
