@@ -308,7 +308,7 @@ class PreviewAppView(TemplateView):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
         if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
             context = BlockWebAppsView.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
-            return render(request, 'cloudcare/block_preview_app.html', context)
+            return render(request, 'cloudcare/bootstrap3/block_preview_app.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
