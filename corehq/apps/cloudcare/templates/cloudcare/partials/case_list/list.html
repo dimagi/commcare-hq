@@ -15,7 +15,7 @@
 
     <% if (isMultiSelect) { %>
     <div class="case-list-actions">
-      {% include 'cloudcare/partials/case_list/multi_select_continue_button.html' %}
+      {% include 'cloudcare/partials/case_list/bootstrap3/multi_select_continue_button.html' %}
     </div>
     <% } %>
 
@@ -59,7 +59,7 @@
     <% if (actions || isMultiSelect) { %>
       <div class="case-list-actions">
         <% if (isMultiSelect) { %>
-          {% include 'cloudcare/partials/case_list/multi_select_continue_button.html' %}
+          {% include 'cloudcare/partials/case_list/bootstrap3/multi_select_continue_button.html' %}
         <% } %>
         <% if (actions) { %>
           <% _.each(actions, function(action, index) { %>
