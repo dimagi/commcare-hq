@@ -181,9 +181,7 @@ export default function Pagination({RowCls, getPageItems, id, slug, inlinePageLi
             { !inlinePageListOnly &&
                 <div className="py-3 d-flex justify-content-between">
                     <StatusDisplay start={offset + 1} total={totalItemCount} pageSize={pageSize} sizes={pageSizes} setPageSize={updatePageSize} />
-                    <div className="col-sm-7 text-right">
-                        <PageControl currentPage={page} pageSize={pageSize} totalItems={totalItemCount} goToPage={updatePage} isLoading={isLoading} />
-                    </div>
+                    <PageControl currentPage={page} pageSize={pageSize} totalItems={totalItemCount} goToPage={updatePage} isLoading={isLoading} />
                 </div>
             }
         </div>
