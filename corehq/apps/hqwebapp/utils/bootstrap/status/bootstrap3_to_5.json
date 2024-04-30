@@ -58,5 +58,8 @@
   },
   "user_importer": {
     "is_complete": true
+  },
+  "dropbox": {
+    "is_complete": true
   }
 }
