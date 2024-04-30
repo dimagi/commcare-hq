@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     'underscore',
     'backbone',
     'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'cloudcare/js/markdown',
@@ -21,6 +22,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     _,
     Backbone,
     DOMPurify,
+    bootstrap5,
     initialPageData,
     toggles,
     markdown,
@@ -255,8 +257,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
         $('#case-detail-modal').find('.js-detail-content').html(contentView.render().el);
         $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
-        $('#case-detail-modal').modal('show');
-
+        if (window.USE_BOOTSTRAP5) {
+            /* todo B5: plugin:modal */
+            console.log("Loaded bootstrap 5: " + bootstrap5);
+        } else {
+            $('#case-detail-modal').modal('show');
+        }
     };
 
     var getDetailList = function (detailObject) {
