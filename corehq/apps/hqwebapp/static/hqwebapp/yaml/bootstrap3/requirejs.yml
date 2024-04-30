@@ -23,6 +23,8 @@ map:
     hqwebapp/js/bootstrap5_loader: cloudcare/js/empty_module
   cloudcare/js/formplayer/menus/views:
     hqwebapp/js/bootstrap5/alert_user: hqwebapp/js/bootstrap3/alert_user
+  cloudcare/js/formplayer/menus/views/query:
+    hqwebapp/js/bootstrap5/hq.helpers: hqwebapp/js/bootstrap3/hq.helpers
   cloudcare/js/formplayer/utils/utils:
     hqwebapp/js/bootstrap5_loader: cloudcare/js/empty_module
   cloudcare/js/utils:
