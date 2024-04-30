@@ -95,7 +95,7 @@ __all__ = ["AttrsDict", "AttrsList", "dict_of", "list_of"]
 
 class JsonAttrsField(JSONField):
     default_error_messages = {
-        'invalid': _("'%(field)s' field value has an invalid format: %(exc)s"),
+        'invalid_attr': _("'%(field)s' field value has an invalid format: %(exc)s"),
     }
 
     def __init__(self, *args, builder, **kw):
@@ -113,8 +113,8 @@ class JsonAttrsField(JSONField):
             return self.builder.attrify(value)
         except Exception as exc:
             raise ValidationError(
-                self.error_messages['invalid'],
-                code='invalid',
+                self.error_messages['invalid_attr'],
+                code='invalid_attr',
                 params={
                     'field': self.name,
                     'exc': BadValue.format(value, exc),
@@ -341,12 +341,25 @@ class list_of:
 
 class JsonAttrsFormField(forms.JSONField):
     default_error_messages = {
-        'invalid': _("'%(field)s' field value has an invalid format: %(exc)s"),
+        'invalid_attr': _("%(exc)s"),
     }
 
     def __init__(self, builder, encoder=None, decoder=None, **kwargs):
         self.builder = builder
         super().__init__(encoder, decoder, **kwargs)
+
+    def validate(self, value):
+        super().validate(value)
+        try:
+            self.builder.attrify(value)
+        except Exception as exc:
+            raise ValidationError(
+                self.error_messages['invalid_attr'],
+                code='invalid_attr',
+                params={
+                    'exc': BadValue.format(value, exc),
+                },
+            )
 
     def prepare_value(self, value):
         if isinstance(value, str):
