@@ -52,5 +52,8 @@
   },
   "commtrack": {
     "is_complete": true
+  },
+  "registry": {
+    "is_complete": true
   }
 }
