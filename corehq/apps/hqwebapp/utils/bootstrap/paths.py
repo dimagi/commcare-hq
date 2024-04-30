@@ -12,6 +12,7 @@ PARENT_PATHS = {
     "casexml": COREHQ_BASE_DIR / "ex-submodules/casexml/apps",
     "ex-submodules": COREHQ_BASE_DIR / "ex-submodules",
 }
+GRUNTFILE_PATH = COREHQ_BASE_DIR.parent / "Gruntfile.js"
 
 
 def is_split_path(path):

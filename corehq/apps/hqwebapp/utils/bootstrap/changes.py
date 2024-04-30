@@ -54,6 +54,10 @@ def _get_javascript_reference_regex(reference):
     return r"(['\"][\w/.\-]+/)(" + reference + r")(/[\w/.\-]+['\"],?)"
 
 
+def _get_mocha_app_regex(app):
+    return r"([ ]+[\"\'])(" + app + r")([\"\'],\n)"
+
+
 def _get_todo_regex(is_template):
     open_comment = r"\{#" if is_template else r"\/\*"
     close_comment = r"#\}" if is_template else r"\*\/"
@@ -267,3 +271,16 @@ def replace_path_references(filedata, old_reference, new_reference):
         repl=r"\1" + new_reference + r"\3",
         string=filedata
     )
+
+
+def update_gruntfile(filedata, mocha_paths):
+    mocha_apps = [path.replace('/spec', '').replace('/mocha.html', '')
+                  for path in mocha_paths]
+    for app in mocha_apps:
+        regex = _get_mocha_app_regex(app)
+        filedata = re.sub(
+            pattern=regex,
+            repl=r"\1" + f"{app}/bootstrap3" + r"\3\1" + f"{app}/bootstrap5" + r"\3",
+            string=filedata
+        )
+    return filedata

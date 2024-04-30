@@ -19,6 +19,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_crispy_forms_in_template,
     flag_inline_styles,
     add_todo_comments_for_flags,
+    update_gruntfile,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.git import (
     has_pending_git_changes,
@@ -34,6 +35,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_javascript_paths_for_app,
     is_split_path,
     is_bootstrap5_path,
+    GRUNTFILE_PATH,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.references import (
     update_and_get_references,
@@ -153,7 +155,34 @@ class Command(BaseCommand):
         app_javascript = self.get_js_files_for_migration(app_name, selected_filename)
         self.migrate_files(app_javascript, app_name, spec, is_template=False)
 
+        mocha_paths = [path for path in migrated_templates
+                       if f'{app_name}/spec/' in str(path)]
+        if mocha_paths:
+            mocha_paths = [get_short_path(app_name, path, True)
+                           for path in mocha_paths]
+            self.make_updates_to_gruntfile(app_name, mocha_paths)
+
         self.show_next_steps(app_name)
+
+    def make_updates_to_gruntfile(self, app_name, mocha_paths):
+        has_changes = has_pending_git_changes()
+        self.clear_screen()
+        self.stdout.write(self.style.WARNING(
+            self.format_header("Mocha (javascript test) files were split!")
+        ))
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            "Updating Gruntfile.js...\n\n"
+        ))
+        with open(GRUNTFILE_PATH, 'r+') as file:
+            filedata = file.read()
+            file.seek(0)
+            file.write(update_gruntfile(
+                filedata, mocha_paths
+            ))
+        self.suggest_commit_message(
+            f"Updated 'Gruntfile.js' after splitting '{app_name}'.",
+            show_apply_commit=not has_changes
+        )
 
     def show_next_steps(self, app_name):
         self.clear_screen()
