@@ -149,8 +149,9 @@ class Transifex(object):
             self._ensure_resources_belong_to_version()
         po_entries = {}
         for resource_slug in self.resource_slugs:
-            po_entries[resource_slug] = self.client.get_translation(resource_slug, self.source_lang,
-                                                                    self.lock_translations)
+            if self.source_lang in [lang.id for lang in self.client.get_all_project_languages()]:
+                po_entries[resource_slug] = self.client.get_translation(resource_slug, self.source_lang,
+                                                                        self.lock_translations)
         return po_entries
 
     def resources_pending_translations(self, all_langs=False):
