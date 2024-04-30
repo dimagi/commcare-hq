@@ -937,6 +937,18 @@ USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     """
 )
 
+WEB_APPS_PERMISSIONS_VIA_GROUPS = StaticToggle(
+    'web_apps_permissions_via_groups',
+    "USH: Allow users to control access to specific web apps via mobile worker groups.",
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+    description="""
+        This is a legacy feature that allows setting app-specific permissions in Web Apps based on user
+        groups. This functionality is now available via the roles and permissions page, where the
+        permission for accessing web apps supports specifying a list of apps.
+    """,
+)
+
 DISABLE_WEB_APPS = StaticToggle(
     'disable_web_apps',
     'Disable access to Web Apps UI',
