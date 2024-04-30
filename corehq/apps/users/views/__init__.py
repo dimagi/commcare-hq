@@ -1075,14 +1075,11 @@ class InviteWebUserView(BaseManageWebUserView):
     @memoized
     def invite_web_user_form(self):
         role_choices = get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
-        loc = None
         domain_request = DomainRequest.objects.get(id=self.request_id) if self.request_id else None
         is_add_user = self.request_id is not None
         initial = {
             'email': domain_request.email if domain_request else None,
         }
-        if 'location_id' in self.request.GET:
-            loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
             pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
@@ -1097,7 +1094,6 @@ class InviteWebUserView(BaseManageWebUserView):
             initial=initial,
             role_choices=role_choices,
             domain=self.domain,
-            location=loc,
             is_add_user=is_add_user,
         )
 

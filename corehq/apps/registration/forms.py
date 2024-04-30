@@ -491,7 +491,7 @@ class AdminInvitesUserForm(forms.Form):
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
 
-    def __init__(self, data=None, excluded_emails=None, is_add_user=None, location=None,
+    def __init__(self, data=None, excluded_emails=None, is_add_user=None,
                  role_choices=(), *, domain, **kwargs):
         super(AdminInvitesUserForm, self).__init__(data=data, **kwargs)
         domain_obj = Domain.get_by_name(domain)
