@@ -23,6 +23,7 @@ requirejs.config({
         // Without this config, any B3 files referencing any of these files will break the build.
         "es6!hqwebapp/js/bootstrap5_loader": "cloudcare/js/empty_module",
         "hqwebapp/js/bootstrap5/knockout_bindings.ko": "hqwebapp/js/bootstrap3/knockout_bindings.ko",
+        "hqwebapp/js/bootstrap5/alert_user": "hqwebapp/js/bootstrap3/alert_user",
     },
     shim: {
         "accounting/js/lib/stripe": { exports: 'Stripe' },
