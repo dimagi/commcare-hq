@@ -3,7 +3,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
             initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-            addOnsPrivileges = initial_page_data('add_ons_addOnsPrivileges'),
+            addOnsPrivileges = initial_page_data('add_ons_privileges'),
             privileges = hqImport('hqwebapp/js/privileges'),
             toggles = hqImport("hqwebapp/js/toggles");
         var action_names = ["open_case", "update_case", "close_case", "case_preload",
