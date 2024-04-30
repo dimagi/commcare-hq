@@ -1,11 +1,14 @@
 --- 
 +++ 
-@@ -2,26 +2,36 @@
+@@ -2,18 +2,25 @@
  requirejs.config({
      baseUrl: '/static/',
      paths: {
 +        "babel": "@babel/standalone/babel.min",
 +        "babel-plugin-transform-modules-requirejs-babel": "babel-plugin-transform-modules-requirejs-babel/index",
+         "backbone": "backbone/backbone-min",
+         "backbone.radio": "backbone.radio/build/backbone.radio.min",
+         "backbone.marionette": "backbone.marionette/lib/backbone.marionette.min",
          "bootstrap": "bootstrap/dist/js/bootstrap.min",
 +        "bootstrap5": "bootstrap5/dist/js/bootstrap.bundle.min",
          "datatables": "datatables.net/js/jquery.dataTables.min",
@@ -25,9 +28,17 @@
          "underscore": "underscore/underscore",
      },
      shim: {
-         "accounting/js/lib/stripe": { exports: 'Stripe' },
-         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
+@@ -24,7 +31,6 @@
+         "ace-builds/src-min-noconflict/ext-searchbox": { deps: ["ace-builds/src-min-noconflict/ace"] },
+         "At.js/dist/js/jquery.atwho": { deps: ['jquery', 'Caret.js/dist/jquery.caret'] },
+         "backbone": { exports: "backbone" },
 -        "bootstrap": { deps: ['jquery'] },
+         "calendars/dist/js/jquery.calendars.picker": {
+             deps: [
+                 "calendars/dist/js/jquery.plugin",
+@@ -60,10 +66,14 @@
+             ],
+         },
          "datatables.bootstrap": { deps: ['datatables'] },
 +        "datatables.fixedColumns.bootstrap": { deps: ['datatables.fixedColumns'] },
 +        "tempusDominus": {
@@ -41,7 +52,7 @@
          "hqwebapp/js/lib/modernizr": {
              exports: 'Modernizr',
          },
-@@ -47,7 +57,7 @@
+@@ -98,7 +108,7 @@
          },
      },
  

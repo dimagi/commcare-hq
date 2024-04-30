@@ -13,6 +13,9 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     replace_path_references,
     flag_bootstrap3_references_in_template,
     flag_crispy_forms_in_template,
+    flag_bootstrap3_references_in_javascript,
+    flag_inline_styles,
+    make_template_dependency_renames,
 )
 
 
@@ -24,6 +27,15 @@ def test_make_direct_css_renames_bootstrap5():
     eq(final_line, '        <button class="btn-sm btn btn-outline-primary '
                    'context-right btn-sm" id="prepaid-snooze"></button>\n')
     eq(renames, ['renamed btn-default to btn-outline-primary', 'renamed btn-xs to btn-sm'])
+
+
+def test_make_direct_css_renames_in_knockout():
+    line = """    <td data-bind="css: {'badge-success': isSuccess}">"""
+    final_line, renames = make_direct_css_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """    <td data-bind="css: {'text-bg-success': isSuccess}">""")
+    eq(renames, ['renamed badge-success to text-bg-success'])
 
 
 def test_make_numbered_css_renames_bootstrap5():
@@ -62,6 +74,15 @@ def test_make_javascript_dependency_renames():
     eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
+def test_make_javascript_dependency_renames_hqdefine():
+    line = """hqDefine("hqwebapp/js/bootstrap3/prepaid_modal", [\n"""
+    final_line, renames = make_javascript_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """hqDefine("hqwebapp/js/bootstrap5/prepaid_modal", [\n""")
+    eq(renames, ['renamed bootstrap3 to bootstrap5'])
+
+
 def test_flag_changed_css_classes_bootstrap5():
     line = """        <dl class="dl-horizontal">\n"""
     flags = flag_changed_css_classes(
@@ -80,16 +101,114 @@ def test_flag_stateful_button_changes_bootstrap5():
     eq(flags, ['You are using stateful buttons here, which are no longer supported in Bootstrap 5.'])
 
 
+def test_make_template_dependency_renames_no_change():
+    line = """        <button type="button">test</button>\n"""
+    final_line, renames = make_template_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, line)
+    eq(renames, [])
+
+
 def test_flag_bootstrap3_references_in_template_extends():
     line = """{% extends "hqwebapp/bootstrap3/base_section.html" %}\n"""
-    flags = flag_bootstrap3_references_in_template(line)
+    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
     eq(flags, ['This template extends a bootstrap 3 template.'])
+
+
+def test_make_template_dependency_renames_extends():
+    line = """{% extends "hqwebapp/bootstrap3/base_section.html" %}\n"""
+    final_line, renames = make_template_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """{% extends "hqwebapp/bootstrap5/base_section.html" %}\n""")
+    eq(renames, ['renamed bootstrap3 to bootstrap5'])
 
 
 def test_flag_bootstrap3_references_in_template_requirejs():
     line = """    {% requirejs_main 'hqwebapp/bootstrap3/foo' %}\n"""
-    flags = flag_bootstrap3_references_in_template(line)
+    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    eq(flags, ["This template references a bootstrap 3 requirejs file. "
+               "It should also use requirejs_main_b5 instead of requirejs_main."])
+
+
+def test_make_template_dependency_renames_requirejs():
+    line = """    {% requirejs_main 'hqwebapp/js/bootstrap3/foo' %}\n"""
+    final_line, renames = make_template_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """    {% requirejs_main 'hqwebapp/js/bootstrap5/foo' %}\n""")
+    eq(renames, ['renamed bootstrap3 to bootstrap5'])
+
+
+def test_flag_bootstrap3_references_in_template_requirejs_b5():
+    line = """    {% requirejs_main_b5 'hqwebapp/js-test/bootstrap3/foo' %}\n"""
+    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
     eq(flags, ['This template references a bootstrap 3 requirejs file.'])
+
+
+def test_make_template_dependency_renames_requirejs_b5():
+    line = """    {% requirejs_main_b5 'hqwebapp/js-test/bootstrap3/foo' %}\n"""
+    final_line, renames = make_template_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """    {% requirejs_main_b5 'hqwebapp/js-test/bootstrap5/foo' %}\n""")
+    eq(renames, ['renamed bootstrap3 to bootstrap5'])
+
+
+def test_flag_bootstrap3_references_in_template_static():
+    line = """    <link rel="stylesheet" href="{% static 'test/js/bootstrap3/foo' %}"></link>\n"""
+    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    eq(flags, ['This template references a bootstrap 3 static file.'])
+
+
+def test_make_template_dependency_renames_static():
+    line = """    <link rel="stylesheet" href="{% static 'test/js/bootstrap3/foo' %}"></link>\n"""
+    final_line, renames = make_template_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """    <link rel="stylesheet" href="{% static 'test/js/bootstrap5/foo' %}"></link>\n""")
+    eq(renames, ['renamed bootstrap3 to bootstrap5'])
+
+
+def test_flag_bootstrap3_references_in_template_include():
+    line = """    {% include "some_app/bootstrap3/some_thing.html" %}\n"""
+    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    eq(flags, ['This template includes a bootstrap 3 template.'])
+
+
+def test_make_template_dependency_renames_include():
+    line = """    {% include "some_app/bootstrap3/some_thing.html" %}\n"""
+    final_line, renames = make_template_dependency_renames(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    eq(final_line, """    {% include "some_app/bootstrap5/some_thing.html" %}\n""")
+    eq(renames, ['renamed bootstrap3 to bootstrap5'])
+
+
+def test_flag_requirejs_main_references_in_template():
+    line = """    {% requirejs_main 'hqwebapp/js/foo' %}\n"""
+    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    eq(flags, ['This template should use requirejs_main_b5 instead of requirejs_main.'])
+
+
+def test_flag_any_bootstrap3_references_in_template():
+    line = """<link src='sms/js/bootstrap3/compose.js' >\n"""
+    flags = flag_bootstrap3_references_in_template(line, get_spec('bootstrap_3_to_5'))
+    eq(flags, ['This template references a bootstrap 3 file.'])
+
+
+def test_flag_bootstrap3_references_in_javascript():
+    line = """    "hqwebapp/js/bootstrap3/foo",\n"""
+    flags = flag_bootstrap3_references_in_javascript(line)
+    eq(flags, ['This javascript file references a bootstrap 3 file.'])
+
+
+def test_flag_inline_styles():
+    line = """method="post" style="float: left; margin-right: 5px;">"""
+    flags = flag_inline_styles(line)
+    eq(len(flags), 1)
+    eq(flags[0].startswith('This template uses inline styles.'), True)
 
 
 def test_flag_crispy_forms_in_template():
