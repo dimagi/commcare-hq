@@ -46,5 +46,8 @@
   },
   "corehq.tabs": {
     "in_progress": true
+  },
+  "ota": {
+    "is_complete": true
   }
 }
