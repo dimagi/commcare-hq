@@ -492,7 +492,7 @@ class AdminInvitesUserForm(forms.Form):
     role = forms.ChoiceField(choices=(), label="Project Role")
 
     def __init__(self, data=None, excluded_emails=None, is_add_user=None,
-                 role_choices=(), *, domain, **kwargs):
+                 role_choices=(), should_show_location=False, *, domain, **kwargs):
         super(AdminInvitesUserForm, self).__init__(data=data, **kwargs)
         domain_obj = Domain.get_by_name(domain)
         self.fields['role'].choices = role_choices
@@ -535,7 +535,7 @@ class AdminInvitesUserForm(forms.Form):
                 ),
                 'role',
                 'profile' if 'profile' in self.fields else None,
-                'location_id' if 'location_id' in self.fields else None,
+                'location_id' if ('location_id' in self.fields and should_show_location) else None,
             ),
             crispy.HTML(
                 render_to_string(
