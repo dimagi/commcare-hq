@@ -7,7 +7,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
     'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
-    'bootstrap-switch/dist/js/bootstrap-switch', // bootstrapSwitch
+    'bootstrap-switch/dist/js/bootstrap-switch', // todo B5: remove
 ], function (
     $,
     _,
@@ -70,10 +70,13 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
             'switchChange.bootstrapSwitch @ui.oneQuestionPerScreen': 'onChangeOneQuestionPerScreen',
         },
         onRender: function () {
-            this.ui.oneQuestionPerScreen.bootstrapSwitch(
-                'state',
-                this.currentUser.displayOptions.oneQuestionPerScreen
-            );
+            if (!window.USE_BOOTSTRAP5) {
+                /* todo B5: plugin:bootstrapSwitch */
+                this.ui.oneQuestionPerScreen.bootstrapSwitch(
+                    'state',
+                    this.currentUser.displayOptions.oneQuestionPerScreen
+                );
+            }
         },
         onChangeOneQuestionPerScreen: function (e, switchValue) {
             this.currentUser.displayOptions.oneQuestionPerScreen = switchValue;
