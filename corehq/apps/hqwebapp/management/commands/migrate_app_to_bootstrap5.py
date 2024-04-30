@@ -18,6 +18,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_changed_javascript_plugins,
     flag_crispy_forms_in_template,
     flag_inline_styles,
+    add_todo_comments_for_flags,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.git import (
     has_pending_git_changes,
@@ -255,6 +256,7 @@ class Command(BaseCommand):
                 saved_line, line_changelog = self.confirm_and_get_line_changes(
                     line_number, old_line, new_line, renames, flags, review_changes
                 )
+                saved_line = add_todo_comments_for_flags(flags, saved_line, is_template)
 
                 new_lines.append(saved_line)
                 if saved_line != old_line or flags:
@@ -289,9 +291,10 @@ class Command(BaseCommand):
             self.clear_screen()
             self.stdout.write(changelog[-1])
             for flag in flags:
+                guidance = flag[1]
                 changelog.append("\nFlagged Code:")
                 changelog.append(self.format_code(old_line, break_length=len(old_line) + 5))
-                changelog.append(self.format_guidance(flag))
+                changelog.append(self.format_guidance(guidance))
                 if review_changes:
                     self.display_flag_summary(changelog)
                     enter_to_continue()
