@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
     'underscore',
     'backbone',
     'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     "cloudcare/js/formplayer/constants"
@@ -12,6 +13,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
     _,
     Backbone,
     DOMPurify,
+    bootstrap5,
     initialPageData,
     toggles,
     constants
@@ -51,7 +53,12 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
         $confirmationButton.on('click.confirmationModal', function (e) {
             options.onConfirm(e);
         });
-        $modal.modal('show');
+        if (window.USE_BOOTSTRAP5) {
+            /* todo B5: plugin:modal */
+            console.log("Loaded bootstrap 5: " + bootstrap5);
+        } else {
+            $modal.modal('show');
+        }
     };
 
     Utils.encodedUrlToObject = function (encodedUrl) {
