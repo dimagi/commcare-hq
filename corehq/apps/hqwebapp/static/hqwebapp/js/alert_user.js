@@ -1,3 +1,4 @@
+"use strict";
 /*
     This is the knockout-based, javascript analog of messages in Django.
 
@@ -13,7 +14,7 @@
        (success < info < warning < danger).
     fadeOut: Set to 'true' to have the message automatically removed from the UI after 5s.
 */
-hqDefine("hqwebapp/js/bootstrap3/alert_user", [
+hqDefine("hqwebapp/js/alert_user", [
     "jquery",
     "knockout",
 ],
@@ -25,7 +26,7 @@ function (
         var self = {
             "message": ko.observable(message),
             "alert_class": ko.observable(
-                "alert fade in message-alert"
+                window.USE_BOOTSTRAP5 ? "alert alert-dismissible message-alert" : "alert fade in message-alert"
             ),
         };
         if (tags) {
@@ -39,7 +40,7 @@ function (
                 clearTimeout(self.timer);
                 self.timer = setTimeout(removeAlertTimerFunc(self), 5000);
             }
-        }
+        };
         return self;
     };
 
@@ -87,11 +88,11 @@ function (
             viewModel.removeAlert(ko.dataFor(this));
         });
 
-        var message_element = $("#message-alerts").get(0);
+        var messageElement = $("#message-alerts").get(0);
         // this element is not available on templates like iframe_domain_login.html
-        if (message_element) {
-            ko.cleanNode(message_element);
-            $(message_element).koApplyBindings(viewModel);
+        if (messageElement) {
+            ko.cleanNode(messageElement);
+            $(messageElement).koApplyBindings(viewModel);
         }
     });
 

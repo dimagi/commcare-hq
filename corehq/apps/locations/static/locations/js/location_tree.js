@@ -3,7 +3,7 @@ hqDefine('locations/js/location_tree', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/alert_user',
     'analytix/js/google',
     'locations/js/search',
 ], function (
