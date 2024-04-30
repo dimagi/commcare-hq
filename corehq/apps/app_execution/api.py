@@ -13,16 +13,12 @@ from django.contrib.auth.models import User
 from django.http import HttpRequest
 
 from corehq.apps.app_execution import const, data_model
-from corehq.apps.app_execution.exceptions import AppExecutionError
+from corehq.apps.app_execution.exceptions import AppExecutionError, FormplayerException
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.formplayer_api.sync_db import sync_db
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.hmac_request import get_hmac_digest
 from dimagi.utils.web import get_url_base
-
-
-class FormplayerException(Exception):
-    pass
 
 
 class BaseFormplayerClient:
