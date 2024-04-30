@@ -8,6 +8,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     'underscore',
     'backbone',
     'backbone.marionette',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'markdown-it/dist/markdown-it',
     'hqwebapp/js/initial_page_data',
     'analytix/js/appcues',
@@ -29,6 +30,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     _,
     Backbone,
     Marionette,
+    bootstrap5,
     markdowner,
     initialPageData,
     appcues,
@@ -130,7 +132,12 @@ hqDefine("cloudcare/js/formplayer/app", [
         $('#webforms-nav').html("");
         $('#cloudcare-debugger').html("");
         $('.atwho-container').remove();
-        $('#case-detail-modal').modal('hide');
+        if (window.USE_BOOTSTRAP5) {
+            /* todo B5: plugin:modal */
+            console.log("Loaded bootstrap 5: " + bootstrap5);
+        } else {
+            $('#case-detail-modal').modal('hide');
+        }
     });
 
     FormplayerFrontend.getChannel().reply('clearMenu', function () {

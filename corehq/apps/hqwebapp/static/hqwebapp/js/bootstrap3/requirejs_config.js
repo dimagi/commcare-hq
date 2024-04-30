@@ -2,6 +2,8 @@
 requirejs.config({
     baseUrl: '/static/',
     paths: {
+        "babel": "@babel/standalone/babel.min",
+        "babel-plugin-transform-modules-requirejs-babel": "babel-plugin-transform-modules-requirejs-babel/index",
         "backbone": "backbone/backbone-min",
         "backbone.radio": "backbone.radio/build/backbone.radio.min",
         "backbone.marionette": "backbone.marionette/lib/backbone.marionette.min",
@@ -9,6 +11,7 @@ requirejs.config({
         "datatables": "datatables.net/js/jquery.dataTables.min",
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
         "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
+        "es6": "requirejs-babel7/es6",
         "jquery": "jquery/dist/jquery.min",
         "knockout": "knockout/build/output/knockout-latest.debug",
         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
@@ -18,6 +21,7 @@ requirejs.config({
 
         // These are for the cloudcare B5 migration, so that the B3 templates fall back to the B3 files
         // Without this config, any B3 files referencing any of these files will break the build.
+        "es6!hqwebapp/js/bootstrap5_loader": "cloudcare/js/empty_module",
         "hqwebapp/js/bootstrap5/knockout_bindings.ko": "hqwebapp/js/bootstrap3/knockout_bindings.ko",
     },
     shim: {
