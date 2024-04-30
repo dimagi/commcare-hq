@@ -5,7 +5,7 @@
 hqDefine('notifications/js/bootstrap5/notifications_service_main', [
     'jquery',
     'hqwebapp/js/initial_page_data',
-    'notifications/js/bootstrap5/notifications_service',
+    'notifications/js/notifications_service',
     'analytix/js/google',
 ], function (
     $,
