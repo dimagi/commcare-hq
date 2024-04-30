@@ -271,17 +271,6 @@
       "compare_all_files": true
     }
   ],
-  "apps/notifications/static/notifications/js": [
-    {
-      "directories": [
-        "bootstrap3",
-        "bootstrap5"
-      ],
-      "file_type": "javascript",
-      "label": "javascript/notifications/js",
-      "compare_all_files": true
-    }
-  ],
   "apps/analytics/templates/analytics": [
     {
       "directories": [
