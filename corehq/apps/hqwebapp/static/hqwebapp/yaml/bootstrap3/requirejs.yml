@@ -25,6 +25,8 @@ map:
     hqwebapp/js/bootstrap5/alert_user: hqwebapp/js/bootstrap3/alert_user
   cloudcare/js/formplayer/utils/utils:
     hqwebapp/js/bootstrap5_loader: cloudcare/js/empty_module
+  cloudcare/js/utils:
+    hqwebapp/js/bootstrap5_loader: cloudcare/js/empty_module
 modules:
   # These two modules are referenced in hqwebapp/base.html, not in a requirejs_main tag,
   # so they won't get picked up by build_requirejs.py and instead need to be specified here

@@ -4,6 +4,7 @@ hqDefine('cloudcare/js/utils', [
     'underscore',
     'backbone.marionette',
     'moment',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     "hqwebapp/js/toggles",
     "cloudcare/js/formplayer/constants",
@@ -17,6 +18,7 @@ hqDefine('cloudcare/js/utils', [
     _,
     Marionette,
     moment,
+    bootstrap5,
     initialPageData,
     toggles,
     constants,
@@ -399,22 +401,27 @@ hqDefine('cloudcare/js/utils', [
             return;
         }
 
-        $el.datetimepicker({
-            date: selectedDate,
-            useCurrent: false,
-            showClear: true,
-            showClose: true,
-            showTodayButton: true,
-            debug: true,
-            format: dateFormat,
-            extraFormats: dateFormats,
-            useStrict: true,
-            icons: {
-                today: 'glyphicon glyphicon-calendar',
-            },
-            tooltips: dateTimePickerTooltips,
-            parseInputDate: parseInputDate,
-        });
+        if (window.USE_BOOTSTRAP5) {
+            /* todo B5: plugin:datetimepicker */
+            console.log("Loaded bootstrap 5: " + bootstrap5);
+        } else {
+            $el.datetimepicker({
+                date: selectedDate,
+                useCurrent: false,
+                showClear: true,
+                showClose: true,
+                showTodayButton: true,
+                debug: true,
+                format: dateFormat,
+                extraFormats: dateFormats,
+                useStrict: true,
+                icons: {
+                    today: 'glyphicon glyphicon-calendar',
+                },
+                tooltips: dateTimePickerTooltips,
+                parseInputDate: parseInputDate,
+            });
+        }
 
         $el.on("focusout", $el.data("DateTimePicker").hide);
         $el.attr("placeholder", dateFormat);
@@ -427,16 +434,21 @@ hqDefine('cloudcare/js/utils', [
         }
 
         let date = moment(selectedTime, timeFormat);
-        $el.datetimepicker({
-            date: date.isValid() ? date : null,
-            format: timeFormat,
-            useStrict: true,
-            useCurrent: false,
-            showClear: true,
-            showClose: true,
-            debug: true,
-            tooltips: dateTimePickerTooltips,
-        });
+        if (window.USE_BOOTSTRAP5) {
+            /* todo B5: plugin:datetimepicker */
+            console.log("Loaded bootstrap 5: " + bootstrap5);
+        } else {
+            $el.datetimepicker({
+                date: date.isValid() ? date : null,
+                format: timeFormat,
+                useStrict: true,
+                useCurrent: false,
+                showClear: true,
+                showClose: true,
+                debug: true,
+                tooltips: dateTimePickerTooltips,
+            });
+        }
 
         $el.on("focusout", $el.data("DateTimePicker").hide);
     };
