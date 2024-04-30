@@ -15,6 +15,10 @@ requirejs.config({
         "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
         "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
         "underscore": "underscore/underscore",
+
+        // These are for the cloudcare B5 migration, so that the B3 templates fall back to the B3 files
+        // Without this config, any B3 files referencing any of these files will break the build.
+        "hqwebapp/js/bootstrap5/knockout_bindings.ko": "hqwebapp/js/bootstrap3/knockout_bindings.ko",
     },
     shim: {
         "accounting/js/lib/stripe": { exports: 'Stripe' },

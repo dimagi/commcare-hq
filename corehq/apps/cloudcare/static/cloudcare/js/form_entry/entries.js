@@ -14,7 +14,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     'cloudcare/js/form_entry/utils',
     'signature_pad/dist/signature_pad.umd.min',
     'mapbox.js/dist/mapbox.uncompressed',
-    'hqwebapp/js/bootstrap3/knockout_bindings.ko',  // fadeVisible
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // fadeVisible
     'cloudcare/js/formplayer/utils/calendar-picker-translations',   // EthiopianDateEntry
     'select2/dist/js/select2.full.min',
 ], function (
