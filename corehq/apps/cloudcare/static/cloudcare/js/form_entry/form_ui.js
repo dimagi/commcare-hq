@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     'knockout',
     'underscore',
     'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/toggles',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
@@ -16,6 +17,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     ko,
     _,
     DOMPurify,
+    bootstrap5,
     toggles,
     markdown,
     cloudcareUtils,
@@ -601,12 +603,22 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             $(document).on("click", ".help-text-trigger", function (event) {
                 event.preventDefault();
                 var container = $(event.currentTarget).closest(".caption");
-                container.find(".modal").modal('show');
+                if (window.USE_BOOTSTRAP5) {
+                    /* todo B5: plugin:modal */
+                    console.log("Loaded bootstrap 5: " + bootstrap5);
+                } else {
+                    container.find(".modal").modal('show');
+                }
             });
 
             $(document).on("click", ".unsupported-question-type-trigger", function (event) {
                 var container = $(event.currentTarget).closest(".widget");
-                container.find(".modal").modal('show');
+                if (window.USE_BOOTSTRAP5) {
+                    /* todo B5: plugin:modal */
+                    console.log("Loaded bootstrap 5: " + bootstrap5);
+                } else {
+                    container.find(".modal").modal('show');  /* todo B5: plugin:modal */
+                }
             });
         };
 
