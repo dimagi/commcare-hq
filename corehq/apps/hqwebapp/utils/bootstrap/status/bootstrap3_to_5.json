@@ -67,5 +67,8 @@
   },
   "programs": {
     "is_complete": true
+  },
+  "products": {
+    "is_complete": true
   }
 }
