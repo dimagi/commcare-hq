@@ -304,7 +304,14 @@ class FormplayerSession:
             return
         data = self.get_request_data(step)
         self.data = self.client.make_request(data, self.request_url(step))
+        self.augment_data_from_request(data, ["query_data", "session_id"])
         self.log_step(step)
+
+    def augment_data_from_request(self, request_data, fields):
+        """Some fields aren't returned by Formplayer, so we need to maintain their value across requests"""
+        for field in fields:
+            if request_data.get(field) and not self.data.get(field):
+                self.data[field] = request_data[field]
 
     def log_step(self, step, indent="  ", skipped=False):
         skipped_log = " (ignored)" if skipped else ""
