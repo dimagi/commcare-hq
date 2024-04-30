@@ -49,5 +49,8 @@
   },
   "ota": {
     "is_complete": true
+  },
+  "commtrack": {
+    "is_complete": true
   }
 }
