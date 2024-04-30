@@ -1,6 +1,5 @@
 import logging
 from functools import wraps
-from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib import messages
@@ -671,13 +670,6 @@ cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_s
 
 def check_domain_migration(view_func):
     def wrapped_view(request, domain, *args, **kwargs):
-        domain_obj = Domain.get_by_name(domain)
-        if domain_obj.redirect_url:
-            # IMPORTANT!
-            #     We assume that the domain name is the same on both
-            #     environments.
-            url = urljoin(domain_obj.redirect_url, request.path)
-            return HttpResponseRedirect(url)
         if DATA_MIGRATION.enabled(domain):
             auth_logger.info(
                 "Request rejected domain=%s reason=%s request=%s",

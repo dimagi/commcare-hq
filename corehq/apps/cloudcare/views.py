@@ -109,9 +109,6 @@ class FormplayerMain(View):
         return _fetch_build(domain, self.request.couch_user.username, app_id)
 
     def get_web_apps_available_to_user(self, domain, user):
-        if user['doc_type'] == 'WebUser' and not user.can_access_web_apps(domain):
-            return []
-
         app_access = get_application_access_for_domain(domain)
         app_ids = get_app_ids_in_domain(domain)
 
@@ -121,6 +118,7 @@ class FormplayerMain(View):
         ))
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
+        apps = filter(lambda app: user.can_access_web_app(domain, app.get('copy_of', app.get('_id'))), apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
         apps = [_format_app_doc(app) for app in apps]
         apps = sorted(apps, key=lambda app: app['name'].lower())
@@ -225,7 +223,7 @@ class FormplayerMain(View):
         }
 
         return set_cookie(
-            render(request, "cloudcare/formplayer_home.html", context)
+            render(request, "cloudcare/bootstrap3/formplayer_home.html", context)
         )
 
 
@@ -269,6 +267,9 @@ class FormplayerPreviewSingleApp(View):
         if not app_access.user_can_access_app(request.couch_user, app):
             raise Http404()
 
+        if not request.couch_user.can_access_web_app(domain, app.origin_id):
+            raise Http404()
+
         def _default_lang():
             try:
                 return app['langs'][0]
@@ -295,11 +296,11 @@ class FormplayerPreviewSingleApp(View):
             "has_geocoder_privs": has_geocoder_privs(domain),
             "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         }
-        return render(request, "cloudcare/formplayer_home.html", context)
+        return render(request, "cloudcare/bootstrap3/formplayer_home.html", context)
 
 
 class PreviewAppView(TemplateView):
-    template_name = 'cloudcare/preview_app.html'
+    template_name = 'cloudcare/bootstrap3/preview_app.html'
     urlname = 'preview_app'
 
     @use_daterangepicker
@@ -308,7 +309,7 @@ class PreviewAppView(TemplateView):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
         if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
             context = BlockWebAppsView.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
-            return render(request, 'cloudcare/block_preview_app.html', context)
+            return render(request, 'cloudcare/bootstrap3/block_preview_app.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
@@ -449,6 +450,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     @use_bootstrap5
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
+    @method_decorator(toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(EditCloudcareUserPermissionsView, self).dispatch(request, *args, **kwargs)
 

@@ -1,0 +1,20 @@
+--- 
++++ 
+@@ -12,7 +12,7 @@
+                           checkedValue: $data,
+                           attr: {
+                               id: 'group-' + $parent.entryId + '-choice-' + $index(),
+-                              type: $parent.isMulti ? 'checkbox' : 'radio',
++                              type: $parent.isMulti ? 'checkbox' : 'radio',  {# todo B5: css:checkbox #}
+                               name: $parent.entryId,
+                               class: 'group-' + $parent.entryId,
+                           },
+@@ -22,7 +22,7 @@
+           </div>
+         </div>
+       </div>
+-      <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear, fadeVisible: !isMulti && rawAnswer()">
++      <button class="btn btn-outline-primary btn-sm float-end" data-bind="click: onClear, fadeVisible: !isMulti && rawAnswer()">
+         {% trans "Clear" %}
+       </button>
+     </div>

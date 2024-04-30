@@ -14,6 +14,7 @@ from corehq.apps.case_search.filter_dsl import (
     SearchFilterContext,
     build_filter_from_ast,
 )
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
     CaseSearchES,
@@ -202,6 +203,14 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         self._test_xpath_query(
             "fuzzy-match(name, 'jimmy')",
             case_property_query("name", "jimmy", fuzzy=True)
+        )
+
+    def test_fuzzy_match_with_prefix(self):
+        context = SearchFilterContext("domain", config=CaseSearchConfig(domain="domain", fuzzy_prefix_length=2))
+        self._test_xpath_query(
+            "fuzzy-match(name, 'jimmy')",
+            case_property_query("name", "jimmy", fuzzy=True, fuzzy_prefix_length=2),
+            context=context,
         )
 
     def _test_xpath_query(self, query_string, expected_filter, context=None):
