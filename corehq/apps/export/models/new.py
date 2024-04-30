@@ -1766,6 +1766,7 @@ class ExportDataSchema(Document):
         force_rebuild=False,
         only_process_current_builds=False,
         task=None,
+        for_new_export_instance=False,
     ):
         """
         Builds a schema from Application builds for a given identifier
@@ -1781,6 +1782,7 @@ class ExportDataSchema(Document):
             be present in the schema since past builds have not been
             processed.
         :param task: A celery task to update the progress of the build
+        :param for_new_export_instance: Flag to be set if generating schema for a new export instance
         :returns: Returns a ExportDataSchema instance
         """
 
@@ -1802,7 +1804,8 @@ class ExportDataSchema(Document):
                 current_schema.last_app_versions,
             )
         app_build_ids.extend(app_ids_for_domain)
-        current_schema = cls._process_apps_for_export(domain, current_schema, identifier, app_build_ids, task)
+        current_schema = cls._process_apps_for_export(domain, current_schema, identifier, app_build_ids, task,
+                                                      for_new_export_instance=for_new_export_instance)
 
         inferred_schema = cls._get_inferred_schema(domain, app_id, identifier)
         if inferred_schema:
@@ -1947,7 +1950,8 @@ class ExportDataSchema(Document):
         return current_schema
 
     @classmethod
-    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
+                                 for_new_export_instance=False):
         apps_processed = 0
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             doc_type = app_doc.get('doc_type', '')
@@ -1971,6 +1975,7 @@ class ExportDataSchema(Document):
                     schema,
                     app,
                     identifier,
+                    for_new_export_instance=for_new_export_instance,
                 )
             except Exception as e:
                 logging.exception('Failed to process app {}. {}'.format(app._id, e))
@@ -2034,7 +2039,7 @@ class FormExportDataSchema(ExportDataSchema):
         return get_latest_form_export_schema(domain, app_id, form_xmlns)
 
     @classmethod
-    def _process_app_build(cls, current_schema, app, form_xmlns):
+    def _process_app_build(cls, current_schema, app, form_xmlns, for_new_export_instance=False):
         forms = app.get_forms_by_xmlns(form_xmlns, log_missing=False)
         if not forms:
             return current_schema
@@ -2351,7 +2356,7 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_latest_case_export_schema(domain, case_type)
 
     @classmethod
-    def _process_app_build(cls, current_schema, app, case_type):
+    def _process_app_build(cls, current_schema, app, case_type, for_new_export_instance=False):
         builder = ParentCasePropertyBuilder(
             app.domain,
             [app],
@@ -2359,7 +2364,7 @@ class CaseExportDataSchema(ExportDataSchema):
         )
         case_property_mapping = builder.get_case_property_map([case_type])
 
-        if domain_has_privilege(app.domain, privileges.DATA_DICTIONARY):
+        if for_new_export_instance and domain_has_privilege(app.domain, privileges.DATA_DICTIONARY):
             case_property_mapping[case_type] = cls._reorder_case_properties_from_data_dictionary(
                 app.domain, case_type, case_property_mapping[case_type]
             )
