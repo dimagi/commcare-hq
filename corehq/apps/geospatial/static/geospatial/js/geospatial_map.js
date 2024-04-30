@@ -3,7 +3,7 @@ hqDefine("geospatial/js/geospatial_map", [
     "hqwebapp/js/initial_page_data",
     "knockout",
     'geospatial/js/models',
-    'hqwebapp/js/bootstrap3/alert_user',
+    'hqwebapp/js/alert_user',
     'select2/dist/js/select2.full.min',
 ], function (
     $,

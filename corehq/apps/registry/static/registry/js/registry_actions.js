@@ -2,7 +2,7 @@
 hqDefine("registry/js/registry_actions", [
     'moment',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap5/alert_user',
+    'hqwebapp/js/alert_user',
 ], function (
     moment,
     initialPageData,

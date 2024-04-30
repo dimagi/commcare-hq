@@ -4,7 +4,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
     "underscore",
     "hqwebapp/js/lib/modernizr",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/bootstrap5/alert_user",
+    "hqwebapp/js/alert_user",
     "analytix/js/google",
     "es6!hqwebapp/js/bootstrap5_loader",
     "hqwebapp/js/hq_extensions.jquery",
