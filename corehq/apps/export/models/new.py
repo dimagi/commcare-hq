@@ -2310,13 +2310,15 @@ class FormExportDataSchema(ExportDataSchema):
         return items
 
     @classmethod
-    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
+                                 for_new_export_instance=False):
         return super(FormExportDataSchema, cls)._process_apps_for_export(
             domain,
             schema,
             identifier,
             app_build_ids,
-            task
+            task,
+            for_new_export_instance=for_new_export_instance
         )
 
 
@@ -2506,7 +2508,8 @@ class CaseExportDataSchema(ExportDataSchema):
         return schema
 
     @classmethod
-    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
+                                 for_new_export_instance=False):
         if identifier == ALL_CASE_TYPE_EXPORT:
             return cls._process_apps_for_bulk_export(domain, schema, app_build_ids, task)
         else:
@@ -2515,7 +2518,8 @@ class CaseExportDataSchema(ExportDataSchema):
                 schema,
                 identifier,
                 app_build_ids,
-                task
+                task,
+                for_new_export_instance=for_new_export_instance
             )
 
     @classmethod
@@ -2583,13 +2587,15 @@ class SMSExportDataSchema(ExportDataSchema):
     def get_latest_export_schema(domain, include_metadata, identifier=None):
         return SMSExportDataSchema(domain=domain, include_metadata=include_metadata)
 
-    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
-        return super(FormExportDataSchema, cls)._process_apps_for_export(
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
+                                 for_new_export_instance=False):
+        return super(SMSExportDataSchema, cls)._process_apps_for_export(
             domain,
             schema,
             identifier,
             app_build_ids,
-            task
+            task,
+            for_new_export_instance=for_new_export_instance
         )
 
 
