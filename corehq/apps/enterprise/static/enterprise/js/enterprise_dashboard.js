@@ -3,7 +3,6 @@ hqDefine("enterprise/js/enterprise_dashboard", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/bootstrap3/alert_user',
     'analytix/js/kissmetrix',
-    'hqwebapp/js/bootstrap3/hq.helpers',
 ], function (
     $,
     initialPageData,

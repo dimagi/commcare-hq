@@ -2,7 +2,6 @@ hqDefine('hqwebapp/js/bootstrap3/email-request', [
     "jquery",
     "knockout",
     "jquery-form/dist/jquery.form.min",
-    "hqwebapp/js/bootstrap3/hq.helpers",
 ], function ($, ko) {
 
     var EmailRequest = function (modalId, formId) {

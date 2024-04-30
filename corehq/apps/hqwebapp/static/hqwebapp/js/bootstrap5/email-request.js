@@ -3,7 +3,6 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
     "knockout",
     "es6!hqwebapp/js/bootstrap5_loader",
     "jquery-form/dist/jquery.form.min",
-    "hqwebapp/js/bootstrap5/hq.helpers",
 ], function ($, ko, bootstrap) {
     'use strict';
 
