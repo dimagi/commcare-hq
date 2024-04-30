@@ -128,6 +128,7 @@ api
  0004_rename_apiuser
 app_execution
  0001_initial
+ 0002_alter_appworkflowconfig_unique_together
 app_manager
  0001_linked_app_domain
  0002_latestenabledbuildprofiles
