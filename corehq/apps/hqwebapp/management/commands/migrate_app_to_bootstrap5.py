@@ -148,7 +148,7 @@ class Command(BaseCommand):
             return
 
         app_templates = self.get_templates_for_migration(app_name, selected_filename)
-        self.migrate_files(app_templates, app_name, spec, is_template=True)
+        migrated_templates = self.migrate_files(app_templates, app_name, spec, is_template=True)
 
         app_javascript = self.get_js_files_for_migration(app_name, selected_filename)
         self.migrate_files(app_javascript, app_name, spec, is_template=False)
@@ -215,6 +215,7 @@ class Command(BaseCommand):
         return set(available_js_files).difference(completed_js_files)
 
     def migrate_files(self, files, app_name, spec, is_template):
+        migrated_files = []
         for index, file_path in enumerate(files):
             short_path = get_short_path(app_name, file_path, is_template)
             self.clear_screen()
@@ -235,7 +236,9 @@ class Command(BaseCommand):
                 )
             else:
                 review_changes = False
-            self.migrate_single_file(app_name, file_path, spec, is_template, review_changes)
+            if self.migrate_single_file(app_name, file_path, spec, is_template, review_changes):
+                migrated_files.append(file_path)
+        return migrated_files
 
     def migrate_single_file(self, app_name, file_path, spec, is_template, review_changes):
         is_fresh_migration = not is_bootstrap5_path(file_path)
@@ -281,8 +284,10 @@ class Command(BaseCommand):
                     self.split_files_and_refactor(
                         app_name, file_path, old_lines, new_lines, is_template
                     )
+                return True
             else:
                 self.write_response(f"\nNo changes were needed for {short_path}. Skipping...\n\n")
+        return False
 
     def confirm_and_get_line_changes(self, line_number, old_line, new_line, renames, flags, review_changes):
         changelog = []
