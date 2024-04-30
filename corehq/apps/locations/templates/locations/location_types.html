@@ -40,10 +40,10 @@
     <fieldset>
       <div class="col-sm-12">
         <div class="form-group">
-          <button type="submit" class="btn btn-default pull-right" disabled>
+          <button type="submit" class="btn btn-primary pull-right" disabled>
             {% trans "Save" %}
           </button>
-          <button type="button" class="btn btn-primary" data-bind="click: new_loctype">
+          <button type="button" class="btn btn-default" data-bind="click: new_loctype">
             <i class="fa fa-plus"></i> {% trans "New Organization Level" %}
           </button>
           <hr />
@@ -157,6 +157,15 @@
                                           {% endblocktrans %}">
                                     </span>
               </th>
+              <th>
+                {% trans "View Child Data to Level" %}
+                <span class="hq-help-template"
+                      data-title="{% trans "View Child Data to Level" %}"
+                      data-content="{% blocktrans %}
+                          <p>Only include cases that show up in the user's restore file down to this level (inclusive).</p>
+                      {% endblocktrans %}">
+                </span>
+              </th>
               <th></th>
             </tr>
             </thead>
@@ -233,6 +242,16 @@
               </td>
               <td>
                 <input data-bind="checked: view_descendants" type="checkbox" />
+              </td>
+              <td>
+                <select class="form-control"
+                        data-bind="options: $data.child_loc_types(),
+                                   optionsText: 'name',
+                                   optionsValue: 'pk',
+                                   value: expand_view_child_data_to,
+                                   optionsCaption: '\u2013{% trans 'none' %}\u2013',
+                                   enable: view_descendants">
+                </select>
               </td>
               <td>
                 <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
