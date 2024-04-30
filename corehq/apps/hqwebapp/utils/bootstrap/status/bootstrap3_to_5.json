@@ -61,5 +61,8 @@
   },
   "dropbox": {
     "is_complete": true
+  },
+  "casexml": {
+    "is_complete": true
   }
 }
