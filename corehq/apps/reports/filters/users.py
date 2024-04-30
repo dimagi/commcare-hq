@@ -454,6 +454,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             cls.slug: 'g__%s' % group_id
         }
 
+    @classmethod
+    def for_reporting_location(cls, loc_id):
+        return {
+            cls.slug: 'l__%s' % loc_id
+        }
+
 
 class EnterpriseUsersUtils(EmwfUtils):
 
