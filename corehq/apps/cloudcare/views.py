@@ -225,7 +225,7 @@ class FormplayerMain(View):
         }
 
         return set_cookie(
-            render(request, "cloudcare/formplayer_home.html", context)
+            render(request, "cloudcare/bootstrap3/formplayer_home.html", context)
         )
 
 
@@ -295,11 +295,11 @@ class FormplayerPreviewSingleApp(View):
             "has_geocoder_privs": has_geocoder_privs(domain),
             "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
         }
-        return render(request, "cloudcare/formplayer_home.html", context)
+        return render(request, "cloudcare/bootstrap3/formplayer_home.html", context)
 
 
 class PreviewAppView(TemplateView):
-    template_name = 'cloudcare/preview_app.html'
+    template_name = 'cloudcare/bootstrap3/preview_app.html'
     urlname = 'preview_app'
 
     @use_daterangepicker
@@ -308,7 +308,7 @@ class PreviewAppView(TemplateView):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
         if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
             context = BlockWebAppsView.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
-            return render(request, 'cloudcare/block_preview_app.html', context)
+            return render(request, 'cloudcare/bootstrap3/block_preview_app.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),

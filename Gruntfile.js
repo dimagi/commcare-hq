@@ -33,8 +33,10 @@ module.exports = function (grunt) {
         'reports_core/choiceListUtils',
         'locations',
         'userreports',
-        'cloudcare',
-        'cloudcare/form_entry',
+        'cloudcare/bootstrap3',
+        'cloudcare/bootstrap5',
+        'cloudcare/form_entry/bootstrap3',
+        'cloudcare/form_entry/bootstrap5',
         'hqwebapp',
         'case_importer',
     ];
