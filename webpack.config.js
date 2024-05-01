@@ -34,6 +34,19 @@ function getEntriesForApp(app) {
     return entries;
 }
 
+function getAppAliases() {
+    const appsPath = path.resolve(__dirname, 'corehq', 'apps');
+    const aliases = {};
+    fs.readdirSync(appsPath, {withFileTypes: true})
+        .filter(dirEnt => dirEnt.isDirectory())
+        .filter(hasReactCode)
+        .forEach(dirEnt => {
+            aliases[`HQ/${dirEnt.name}`] = getReactPathForApp(dirEnt.name);
+        });
+
+    return aliases;
+}
+
 function getDynamicReactApps() {
     const appsPath = path.resolve(__dirname, 'corehq', 'apps');
     let reactEntries = {};
@@ -70,5 +83,8 @@ module.exports = {
                 options: { presets: ['@babel/preset-env', '@babel/preset-react'] },
             },
         ],
+    },
+    resolve: {
+        alias: getAppAliases(),
     },
 };
