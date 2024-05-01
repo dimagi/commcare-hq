@@ -1234,17 +1234,31 @@ class CommtrackUserForm(forms.Form):
                 updated_program_id = program_id
             domain_membership.program_id = program_id
 
-        location_updates = self._update_location_data(user)
+        new_location_id = self.cleaned_data['primary_location']
+        new_location_ids = self.cleaned_data['assigned_locations']
+        error_response = self._verify_location_data(new_location_id, new_location_ids)
+        if error_response:
+            return error_response
+        location_updates = self._update_location_data(user, new_location_id, new_location_ids)
         if user.is_commcare_user():
             self._log_commcare_user_changes(user_change_logger, location_updates, updated_program_id)
         else:
             self._log_web_user_changes(user_change_logger, location_updates, updated_program_id)
 
-    def _update_location_data(self, user):
-        new_location_id = self.cleaned_data['primary_location']
-        new_location_ids = self.cleaned_data['assigned_locations']
-        updates = {}
+    def _verify_location_data(self, new_location_id, new_location_ids):
+        from django.http import HttpResponse
+        assigned_location_ids = set([new_location_id] + new_location_ids)
+        user_location_ids = set(
+            SQLLocation.objects
+            .accessible_to_user(self.domain, self.request.couch_user)
+            .values_list('location_id', flat=True)
+        )
+        if not assigned_location_ids.issubset(user_location_ids):
+            return HttpResponse("You do not have permission to all of the locations you are "
+                                "adding the user to.", status=401)
 
+    def _update_location_data(self, user, new_location_id, new_location_ids):
+        updates = {}
         if user.is_commcare_user():
             # fetch this before set_location is called
             old_assigned_location_ids = set(user.assigned_location_ids)

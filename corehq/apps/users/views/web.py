@@ -257,6 +257,7 @@ def accept_invitation(request, domain, uuid):
 @require_POST
 @require_can_edit_web_users
 def reinvite_web_user(request, domain):
+    # Need to make location safe?
     uuid = request.POST['uuid']
     try:
         invitation = Invitation.objects.get(uuid=uuid)
@@ -273,6 +274,7 @@ def reinvite_web_user(request, domain):
 @require_POST
 @require_can_edit_web_users
 def delete_invitation(request, domain):
+    # Need to make location safe?
     uuid = request.POST['uuid']
     invitation = Invitation.objects.get(uuid=uuid)
     invitation.delete()

@@ -46,6 +46,26 @@ def get_default_available_permissions(**kwargs):
     return permissions
 
 
+# class TestCommtrackUserForm(TestCase):
+#     domain = 'commtrack-user-form'
+#     password = '***'
+
+#     def setUp(self):
+#         super().setUp()
+#         self.project = create_domain(self.domain)
+#         self.web_user1 = WebUser.create(self.domain, 'test-webuser1', self.password, None, None)
+#         self.web_user2 = WebUser.create(self.domain, 'test-webuser2', self.password, None, None)
+
+#         self.web_user1.save()
+#         self.web_user2.save()
+
+#         self.role = UserRole.create(self.domain, 'default mobile use role', is_commcare_user_default=True)
+
+#     def tearDown(self):
+#         self.project.delete()
+#         delete_all_users()
+#         super().tearDown()
+
 class TestMobileWorkerListView(TestCase):
     domain = 'mobile-worker-list-view'
     web_username = 'test-webuser'
