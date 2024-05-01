@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+ {% extends "mocha/base.html" %}
+ {% load hq_shared_tags %}
+ 
+-{% requirejs_main "hqwebapp/spec/bootstrap3/main" %}
++{% requirejs_main_b5 "hqwebapp/spec/bootstrap5/main" %}
+ 
+ {% block fixtures %}
+ {% endblock %}

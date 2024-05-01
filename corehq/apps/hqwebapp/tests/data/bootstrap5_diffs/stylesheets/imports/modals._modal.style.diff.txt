@@ -44,32 +44,81 @@
  
              // These styles, along with the body/header/footer ones below,
              // allow the body to scroll vertically while the header and footer stay fixed
-@@ -54,11 +54,11 @@
+@@ -54,58 +54,17 @@
  }
  
  .full-screen-modal {
 -    .absolute-center-modal(20px);
 +    @include absolute-center-modal(20px);
  }
- 
- .full-screen-no-background-modal {
+-
+-.full-screen-no-background-modal {
 -    .absolute-center-modal(0);
-+    @include absolute-center-modal(0);
- 
-     .modal-dialog {
-         .modal-content {
-@@ -100,12 +100,12 @@
+-
+-    .modal-dialog {
+-        .modal-content {
+-            border-radius: 0;
+-            border: 0;
+-
+-            .modal-body .video-container {
+-                margin: 15px auto;
+-                float: none;
+-            }
+-        }
+-    }
+-}
+-
+-// Modal that has some kind of control (pagination, search box, etc.) in header or footer
+-.modal-header.with-controls, .modal-footer.with-controls {
+-    h4 {
+-        margin-top: 3px;    // vertically align better with controls, which are taller than plain text
+-    }
+-
+-    .close {
+-        margin-left: 10px;
+-    }
+-
+-    .nav-pills {
+-        display: inline-block;
+-        vertical-align: middle;
+-
+-        a {
+-            padding: 6px 9px;
+-        }
+-    }
+-
+-    .pagination {
+-        margin: 0;
+-    }
+-}
+-
  
  .modal-primary {
      .modal-header {
 -        border-bottom: 4px solid @cc-brand-low;
-+        border-bottom: 4px solid $cc-brand-low;
++        border-bottom: 4px solid $primary-border-subtle-dark;
      }
  
      .modal-content {
          color: white;
 -        background-color: @cc-brand-mid;
-+        background-color: $cc-brand-mid;
++        background-color: $primary;
      }
  
      .close {
+@@ -113,15 +72,3 @@
+         opacity: 1.0;
+     }
+ }
+-
+-.modal-force-show {
+-    display: block;
+-    opacity: 1.0;
+-
+-    .modal-dialog {
+-        -webkit-transform: translate(0, 0) !important;
+-        -ms-transform: translate(0, 0) !important;
+-        -o-transform: translate(0, 0) !important;
+-        transform: translate(0, 0) !important;
+-    }
+-}
