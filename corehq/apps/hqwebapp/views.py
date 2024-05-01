@@ -588,8 +588,9 @@ def ping_response(request):
 
 @location_safe
 @login_required
+@use_bootstrap5
 def login_new_window(request):
-    return render_static(request, "hqwebapp/bootstrap3/close_window.html", _("Thank you for logging in!"))
+    return render_static(request, "hqwebapp/close_window.html", _("Thank you for logging in!"))
 
 
 @xframe_options_sameorigin

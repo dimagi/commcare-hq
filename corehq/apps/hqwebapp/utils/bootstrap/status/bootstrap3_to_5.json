@@ -44,7 +44,8 @@
   "hqwebapp": {
     "in_progress": true,
     "templates": [
-      "maintenance_alerts.html"
+      "maintenance_alerts.html",
+      "close_window.html"
     ]
   },
   "corehq.tabs": {
