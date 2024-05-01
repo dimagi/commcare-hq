@@ -41,7 +41,7 @@ from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import user_can_access_location_id
+from corehq.apps.locations.permissions import user_can_access_location_id, location_restricted_response
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.models import TableauUser
@@ -1234,17 +1234,25 @@ class CommtrackUserForm(forms.Form):
                 updated_program_id = program_id
             domain_membership.program_id = program_id
 
-        location_updates = self._update_location_data(user)
+        new_location_id = self.cleaned_data['primary_location']
+        new_location_ids = self.cleaned_data['assigned_locations']
+        error_response = self._validate_location_data(new_location_id, new_location_ids)
+        if error_response:
+            return error_response
+        location_updates = self._update_location_data(user, new_location_id, new_location_ids)
         if user.is_commcare_user():
             self._log_commcare_user_changes(user_change_logger, location_updates, updated_program_id)
         else:
             self._log_web_user_changes(user_change_logger, location_updates, updated_program_id)
 
-    def _update_location_data(self, user):
-        new_location_id = self.cleaned_data['primary_location']
-        new_location_ids = self.cleaned_data['assigned_locations']
-        updates = {}
+    def _validate_location_data(self, new_location_id, new_location_ids):
+        assigned_locations = SQLLocation.objects.filter(location_id__in=new_location_ids)
+        if not len(assigned_locations) == len(assigned_locations.accessible_to_user(
+                self.domain, self.request.couch_user)):
+            return location_restricted_response(self.request)
 
+    def _update_location_data(self, user, new_location_id, new_location_ids):
+        updates = {}
         if user.is_commcare_user():
             # fetch this before set_location is called
             old_assigned_location_ids = set(user.assigned_location_ids)
