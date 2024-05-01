@@ -14,6 +14,7 @@ from corehq.apps.case_search.filter_dsl import (
     SearchFilterContext,
     build_filter_from_ast,
 )
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
     CaseSearchES,
@@ -25,8 +26,10 @@ from corehq.apps.es.case_search import (
     case_property_starts_with,
     case_search_adapter,
 )
+from corehq.apps.es.cases import case_name, is_closed
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.util.test_utils import flag_enabled
 
 
 @es_test
@@ -35,6 +38,13 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
     def test_simple_filter(self):
         parsed = parse_xpath("name = 'farid'")
         expected_filter = case_property_query('name', 'farid')
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
+    def test_simple_filter_optimized(self):
+        parsed = parse_xpath("name = 'farid'")
+        expected_filter = case_name('farid')
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
@@ -49,7 +59,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
     @patch("corehq.apps.case_search.xpath_functions.comparison.get_timezone_for_domain",
            return_value=pytz.timezone('America/Los_Angeles'))
-    def test_datetime_special_case_property_equality_comparison(self, mock_get_timezone):
+    def test_datetime_system_property_filter(self, mock_get_timezone):
         parsed = parse_xpath("last_modified='2023-01-10'")
         expected_filter = case_property_date_range(
             'last_modified', gte='2023-01-10T08:00:00', lt='2023-01-11T08:00:00')
@@ -57,9 +67,27 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         mock_get_timezone.assert_called_once()
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
+    @patch("corehq.apps.case_search.xpath_functions.comparison.get_timezone_for_domain",
+           return_value=pytz.timezone('America/Los_Angeles'))
+    def test_datetime_system_property_filter_optimized(self, mock_get_timezone):
+        parsed = parse_xpath("last_modified='2023-01-10'")
+        expected_filter = filters.date_range(
+            'modified_on', gte='2023-01-10T08:00:00', lt='2023-01-11T08:00:00')
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        mock_get_timezone.assert_called_once()
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
     def test_not_filter(self):
         parsed = parse_xpath("not(name = 'farid')")
         expected_filter = filters.NOT(case_property_query('name', 'farid'))
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
+    def test_not_filter_optimized(self):
+        parsed = parse_xpath("not(name = 'farid')")
+        expected_filter = filters.NOT(case_name('farid'))
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
@@ -106,13 +134,11 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         query = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(query, expected_filter, is_raw_query=True)
 
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
     def test_nested_filter(self):
         parsed = parse_xpath("(name = 'farid' or name = 'leila') and dob <= '2017-02-11'")
         expected_filter = filters.AND(
-            filters.OR(
-                case_property_query('name', 'farid'),
-                case_property_query('name', 'leila'),
-            ),
+            filters.OR(case_name('farid'), case_name('leila')),
             case_property_date_range('dob', lte='2017-02-11'),
         )
 
@@ -179,6 +205,14 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
             case_property_query("name", "jimmy", fuzzy=True)
         )
 
+    def test_fuzzy_match_with_prefix(self):
+        context = SearchFilterContext("domain", config=CaseSearchConfig(domain="domain", fuzzy_prefix_length=2))
+        self._test_xpath_query(
+            "fuzzy-match(name, 'jimmy')",
+            case_property_query("name", "jimmy", fuzzy=True, fuzzy_prefix_length=2),
+            context=context,
+        )
+
     def _test_xpath_query(self, query_string, expected_filter, context=None):
         parsed = parse_xpath(query_string)
         context = context or SearchFilterContext("domain")
@@ -194,6 +228,20 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
     def test_match_none(self):
         parsed = parse_xpath("match-none()")
         expected_filter = filters.match_none()
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
+    def test_status_query(self):
+        parsed = parse_xpath("@status = 'open'")
+        expected_filter = is_closed(False)
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
+    @flag_enabled('CASE_SEARCH_INDEXED_METADATA')
+    def test_not_equals_query(self):
+        parsed = parse_xpath("external_id != 'MyBadID'")
+        expected_filter = filters.NOT(filters.term('external_id', 'MyBadID'))
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
@@ -372,7 +420,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
     def test_subcase_exists__filter_no_match(self):
         parsed = parse_xpath("subcase-exists('father', name='Mace')")
-        expected_filter = filters.doc_id([])
+        expected_filter = filters.match_none()
         built_filter = build_filter_from_ast(parsed, SearchFilterContext(self.domain))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
@@ -396,7 +444,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
     def test_subcase_count__filter_no_match(self):
         parsed = parse_xpath("subcase-count('father', house='Martel') > 0")
-        expected_filter = filters.doc_id([])
+        expected_filter = filters.match_none()
         built_filter = build_filter_from_ast(parsed, SearchFilterContext(self.domain))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
@@ -422,7 +470,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
     def test_subcase_count_no_match(self):
         parsed = parse_xpath("subcase-count('father', house='Tyrell') > 2")
-        expected_filter = filters.doc_id([])
+        expected_filter = filters.match_none()
         built_filter = build_filter_from_ast(parsed, SearchFilterContext(self.domain))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
@@ -440,6 +488,6 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
 
     def test_subcase_filter_relationship_no_hits(self):
         parsed = parse_xpath("subcase-count('grandmother', house='Tyrell') > 1")
-        expected_filter = filters.doc_id([])
+        expected_filter = filters.match_none()
         built_filter = build_filter_from_ast(parsed, SearchFilterContext(self.domain))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)

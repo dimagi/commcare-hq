@@ -1153,7 +1153,7 @@ class CloudcareTab(UITab):
         return (
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
-            and (self.couch_user.can_access_web_apps() or self.couch_user.is_commcare_user())
+            and (self.couch_user.can_access_any_web_apps(self.domain) or self.couch_user.is_commcare_user())
         )
 
 
@@ -1563,10 +1563,11 @@ class ProjectUsersTab(UITab):
 
     def _web_apps_permissions(self):
         if has_privilege(self._request, privileges.CLOUDCARE) and self.couch_user.is_domain_admin():
-            return {
-                'title': _("Web Apps Permissions"),
-                'url': reverse('cloudcare_app_settings', args=[self.domain]),
-            }
+            if toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled_for_request(self._request):
+                return {
+                    'title': _("Web Apps Permissions"),
+                    'url': reverse('cloudcare_app_settings', args=[self.domain]),
+                }
 
     def _web_users(self):
         if self.couch_user.can_edit_web_users() or self.couch_user.can_view_web_users():
@@ -2481,6 +2482,9 @@ class AdminTab(UITab):
                 {'title': GlobalThresholds.page_title,
                  'url': reverse(GlobalThresholds.urlname),
                  'icon': 'fa fa-fire'},
+                {'title': 'Auto App Workflows',
+                 'url': reverse('app_execution:workflow_list'),
+                 'icon': 'fcc fcc-chart-report'},
             ]
             user_operations = user_operations + [
                 {'title': _('Grant superuser privileges'),
