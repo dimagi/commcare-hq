@@ -122,3 +122,11 @@ class TestRepeatRecordIdsQuery(RepeaterTestCase):
             domain="test",
         )
         self.assertEqual(set(ids), {self.record1.id, self.record2.id, self.record3.id})
+
+    def test_get_repeat_record_ids_by_payload_id_and_repeater_id(self):
+        ids = _get_repeat_record_ids(
+            repeater_id=self.repeater.id,
+            payload_id="c0ffee",
+            domain="test",
+        )
+        self.assertEqual(ids, [self.record1.id])
