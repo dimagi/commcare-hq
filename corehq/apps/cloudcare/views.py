@@ -46,10 +46,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_ids_in_domain,
     get_current_app,
     get_current_app_doc,
-    get_latest_build_doc,
-    get_latest_build_id,
-    get_latest_released_app_doc,
-    get_latest_released_build_id,
 )
 from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
@@ -64,6 +60,8 @@ from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
 from corehq.apps.cloudcare.utils import (
     can_user_access_web_app,
+    get_latest_build_for_web_apps,
+    get_latest_build_id_for_web_apps,
     get_mobile_ucr_count,
     should_restrict_web_apps_usage,
 )
@@ -111,7 +109,7 @@ class FormplayerMain(View):
         return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
     def fetch_app(self, domain, app_id):
-        return _fetch_build(domain, self.request.couch_user.username, app_id)
+        return get_latest_build_for_web_apps(domain, self.request.couch_user.username, app_id)
 
     def get_web_apps_available_to_user(self, domain, user):
         def is_web_app(app):
@@ -228,20 +226,6 @@ class FormplayerMain(View):
         return set_cookie(
             render(request, "cloudcare/bootstrap3/formplayer_home.html", context)
         )
-
-
-def _fetch_build(domain, username, app_id):
-    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
-        return get_latest_build_doc(domain, app_id)
-    else:
-        return get_latest_released_app_doc(domain, app_id)
-
-
-def _fetch_build_id(domain, username, app_id):
-    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
-        return get_latest_build_id(domain, app_id)
-    else:
-        return get_latest_released_build_id(domain, app_id)
 
 
 class FormplayerMainPreview(FormplayerMain):
@@ -599,7 +583,7 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
     if not toggles.SESSION_ENDPOINTS.enabled_for_request(request):
         return _fail(_("Linking directly into Web Apps has been disabled."))
 
-    build_id = _fetch_build_id(domain, request.couch_user.username, app_id)
+    build_id = get_latest_build_id_for_web_apps(domain, request.couch_user.username, app_id)
     if not build_id:
         # These links can be used for cross-domain web apps workflows, where a link jumps to the
         # same screen but in another domain's corresponding app. This works if both the source and
@@ -610,7 +594,7 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
         id_map = get_downstream_app_id_map(domain)
         if app_id in id_map:
             if len(id_map[app_id]) == 1:
-                build_id = _fetch_build_id(domain, request.couch_user.username, id_map[app_id][0])
+                build_id = get_latest_build_id_for_web_apps(domain, request.couch_user.username, id_map[app_id][0])
             else:
                 return _fail(_("Multiple corresponding applications found. Could not follow link."))
         if not build_id:

@@ -6,7 +6,13 @@ from django.urls import reverse
 from six.moves.urllib.parse import quote
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import (
+    get_apps_in_domain,
+    get_latest_build_doc,
+    get_latest_build_id,
+    get_latest_released_app_doc,
+    get_latest_released_build_id,
+)
 from corehq.util.quickcache import quickcache
 
 
@@ -30,6 +36,20 @@ def can_user_access_web_app(app, user, domain):
         has_access_via_group = app_access.user_can_access_app(user, app)
 
     return has_access_via_permission or has_access_via_group
+
+
+def get_latest_build_for_web_apps(domain, username, app_id):
+    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+        return get_latest_build_doc(domain, app_id)
+    else:
+        return get_latest_released_app_doc(domain, app_id)
+
+
+def get_latest_build_id_for_web_apps(domain, username, app_id):
+    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+        return get_latest_build_id(domain, app_id)
+    else:
+        return get_latest_released_build_id(domain, app_id)
 
 
 def should_show_preview_app(request, app, username):
