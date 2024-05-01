@@ -10,6 +10,28 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.util.quickcache import quickcache
 
 
+def can_user_access_web_app(app, user, domain):
+    """
+    :param app: app doc (not wrapped Application)
+    :param user: either a WebUser or CommCareUser
+    :param domain: domain name
+    """
+    # Backwards-compatibility - mobile users haven't historically required this permission
+    has_access_via_permission = False
+    if user.is_web_user() or user.can_access_any_web_apps(domain):
+        has_access_via_permission = user.can_access_web_app(domain, app.get('copy_of', app.get('_id')))
+
+    has_access_via_group = False
+    if toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled(domain):
+        from corehq.apps.cloudcare.dbaccessors import (
+            get_application_access_for_domain,
+        )
+        app_access = get_application_access_for_domain(domain)
+        has_access_via_group = app_access.user_can_access_app(user, app)
+
+    return has_access_via_permission or has_access_via_group
+
+
 def should_show_preview_app(request, app, username):
     return not app.is_remote_app()
 
