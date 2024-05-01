@@ -55,7 +55,7 @@ class TextField(Field):
     Layout object.
     Contains text specified in place of the field's normal input.
     """
-    template = "hqwebapp/crispy/field/field_with_text.html"
+    template = "hqwebapp/crispy/field/bootstrap3/field_with_text.html"
 
     def __init__(self, field_name, text, *args, **kwargs):
         self.text = text
