@@ -29,7 +29,7 @@ class Command(BaseCommand):
         force = options["force"]
         status = get_migration_status(ALL_DOMAINS, MIGRATION_SLUG)
         if status == MigrationStatus.COMPLETE and not force:
-            print("Copying supply point field to location field has already been marked as complete")
+            self.stderr.write("Copying supply point field to location field has already been marked as complete")
             return
         if status not in (MigrationStatus.IN_PROGRESS, MigrationStatus.COMPLETE):
             set_migration_started(ALL_DOMAINS, MIGRATION_SLUG)
