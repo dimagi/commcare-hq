@@ -45,7 +45,8 @@
     "in_progress": true,
     "templates": [
       "maintenance_alerts.html",
-      "close_window.html"
+      "close_window.html",
+      "crispy/field/multifield.html"
     ]
   },
   "corehq.tabs": {
