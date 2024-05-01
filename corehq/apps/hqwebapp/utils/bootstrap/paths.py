@@ -33,6 +33,7 @@ IGNORED_PATHS_BY_APP = {
         "hqwebapp/crispy/multi_field.html",
         "hqwebapp/crispy/field_with_help_bubble.html",
         "hqwebapp/crispy/field_with_addons.html",
+        "hqwebapp/js/daterangepicker.config.js",  # Todo B5: delete me after migration
         # todo, remove these files and fully split:
         "hqwebapp/iframe_domain_login.html",
         "hqwebapp/bulk_upload.html",
