@@ -508,10 +508,10 @@ class AdminInvitesUserForm(forms.Form):
                 definition = CustomDataFieldsDefinition.get(domain_obj.name, UserFieldsView.field_type)
                 if definition:
                     profiles = definition.get_profiles()
-                    self.fields['profile'].choices = [('', '')] + [
-                        (profile.id, profile.name) for profile in profiles
-                    ]
-
+                    if len(profiles) > 0:
+                        self.fields['profile'].choices = [('', '')] + [
+                            (profile.id, profile.name) for profile in profiles
+                        ]
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
                 programs = Program.by_domain(domain_obj.name)
@@ -534,7 +534,7 @@ class AdminInvitesUserForm(forms.Form):
                     data_bind="textInput: email",
                 ),
                 'role',
-                'profile' if 'profile' in self.fields else None,
+                'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
                 'location_id' if ('location_id' in self.fields and should_show_location) else None,
             ),
             crispy.HTML(
