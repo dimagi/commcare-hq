@@ -6,7 +6,11 @@ from django.urls import reverse
 from six.moves.urllib.parse import quote
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import (
+    get_apps_in_domain,
+    get_latest_build_doc,
+    get_latest_released_app_doc,
+)
 from corehq.util.quickcache import quickcache
 
 
@@ -39,7 +43,9 @@ def webapps_module(domain, app_id, module_id):
 
 
 def filter_available_web_apps(apps, domain, user, is_preview):
-    from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
+    from corehq.apps.cloudcare.dbaccessors import (
+        get_application_access_for_domain,
+    )
     app_access = get_application_access_for_domain(domain)
     apps = filter(None, apps)
     apps = filter(lambda app: app.get('cloudcare_enabled') or is_preview, apps)
@@ -48,6 +54,13 @@ def filter_available_web_apps(apps, domain, user, is_preview):
         apps = filter(lambda app: user.can_access_web_app(domain, app.get('copy_of', app.get('_id'))), apps)
     apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
     return list(apps)
+
+
+def fetch_build(domain, username, app_id):
+    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+        return get_latest_build_doc(domain, app_id)
+    else:
+        return get_latest_released_app_doc(domain, app_id)
 
 
 @quickcache(['domain'], timeout=24 * 60 * 60)

@@ -47,9 +47,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_ids_in_domain,
     get_current_app,
     get_current_app_doc,
-    get_latest_build_doc,
     get_latest_build_id,
-    get_latest_released_app_doc,
     get_latest_released_build_id,
 )
 
@@ -62,6 +60,7 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
 from corehq.apps.cloudcare.utils import (
+    fetch_build,
     filter_available_web_apps,
     get_mobile_ucr_count,
     should_restrict_web_apps_usage,
@@ -110,7 +109,7 @@ class FormplayerMain(View):
         return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
     def fetch_app(self, domain, app_id):
-        return _fetch_build(domain, self.request.couch_user.username, app_id)
+        return fetch_build(domain, self.request.couch_user.username, app_id)
 
     def get_web_apps_available_to_user(self, domain, user):
         app_ids = get_app_ids_in_domain(domain)
@@ -225,13 +224,6 @@ class FormplayerMain(View):
         return set_cookie(
             render(request, "cloudcare/bootstrap3/formplayer_home.html", context)
         )
-
-
-def _fetch_build(domain, username, app_id):
-    if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
-        return get_latest_build_doc(domain, app_id)
-    else:
-        return get_latest_released_app_doc(domain, app_id)
 
 
 def _fetch_build_id(domain, username, app_id):

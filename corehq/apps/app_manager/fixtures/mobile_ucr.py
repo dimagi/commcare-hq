@@ -19,12 +19,14 @@ from corehq.apps.app_manager.const import (
     MOBILE_UCR_VERSION_2,
 )
 from corehq.apps.app_manager.dbaccessors import (
+    get_app_ids_in_domain,
     get_apps_in_domain,
 )
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     is_valid_mobile_select_filter_type,
 )
-from corehq.apps.cloudcare.utils import filter_available_web_apps
+from corehq.apps.app_manager.util import get_correct_app_class
+from corehq.apps.cloudcare.utils import fetch_build, filter_available_web_apps
 from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     UserReportsError,
@@ -113,13 +115,19 @@ class ReportFixturesProvider(FixtureProvider):
 
         if app_aware_sync_app:
             apps = [app_aware_sync_app]
-        else:
-            apps = get_apps_in_domain(restore_user.domain, include_remote=False)
+        elif web_apps_restore and toggles.RESTORE_ACCESSIBLE_REPORTS_ONLY:
+            app_ids = get_app_ids_in_domain(restore_user.domain)
+            apps = [
+                fetch_build(restore_user.domain, restore_user._couch_user.username, app_id) for app_id in app_ids
+            ]
             if web_apps_restore and toggles.RESTORE_ACCESSIBLE_REPORTS_ONLY:
                 # use couch_user to determine app access
                 apps = filter_available_web_apps(
                     apps, restore_user.domain, restore_user._couch_user, is_preview=False
                 )
+            apps = [get_correct_app_class(app).wrap(app) for app in apps]
+        else:
+            apps = get_apps_in_domain(restore_user.domain)
 
         return apps
 
