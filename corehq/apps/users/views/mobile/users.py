@@ -278,7 +278,6 @@ class EditCommCareUserView(BaseEditUserView):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, request=self.request, domain=self.domain)
 
-        # currently only support one location on the UI
         linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
         program_id = self.editable_user.get_domain_membership(self.domain).program_id
