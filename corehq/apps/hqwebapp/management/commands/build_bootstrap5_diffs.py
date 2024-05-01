@@ -1,6 +1,8 @@
 import difflib
 import json
+import os
 from pathlib import Path
+import re
 import shutil
 
 from django.core.management import BaseCommand
@@ -18,8 +20,12 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_split_folders,
     get_all_javascript_paths_for_app,
     TRACKED_JS_FOLDERS,
+    get_app_name_and_slug,
 )
-from corehq.apps.hqwebapp.utils.management_commands import get_confirmation
+from corehq.apps.hqwebapp.utils.management_commands import (
+    get_confirmation,
+    enter_to_continue,
+)
 
 DIFF_CONFIG_FILE = "apps/hqwebapp/tests/data/bootstrap5_diff_config.json"
 DIFF_STORAGE_FOLDER = "apps/hqwebapp/tests/data/bootstrap5_diffs/"
@@ -79,10 +85,14 @@ def get_bootstrap5_filepaths(full_diff_config):
             path_bootstrap5 = COREHQ_BASE_DIR / parent_path / directory_bootstrap5
 
             if compare_all_files:
-                migrated_files = [
-                    [x.name, x.name] for x in path_bootstrap3.glob('**/*')
-                    if x.is_file() and not x.name.startswith(".")
-                ]
+                migrated_files = []
+                for path in path_bootstrap3.glob('**/*'):
+                    if path.is_file() and not path.name.startswith("."):
+                        path = os.path.relpath(path, path_bootstrap3)
+                        pair = [path, path]
+                        if file_type == "stylesheet":
+                            pair[1] = re.sub(r'\.less$', '.scss', pair[1])
+                        migrated_files.append(pair)
 
             for filename_bootstrap3, filename_bootstrap5 in migrated_files:
                 diff_filename = get_diff_filename(filename_bootstrap3, filename_bootstrap5, file_type)
@@ -103,6 +113,7 @@ def get_folder_config(app_name, path, js_folder=None):
     """This only supports javascript and template files.
     Stylesheets should be handled separately.
     """
+    _, app_name = get_app_name_and_slug(app_name)
     if js_folder:
         label = "javascript" / Path(app_name) / js_folder / path
     else:
@@ -146,6 +157,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
+            enter_to_continue()
 
         if update_app:
             self.update_configuration_file_for_app(update_app)

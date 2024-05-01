@@ -50,8 +50,9 @@ hqDefine('reports_core/js/base_template_new', function () {
         };
 
         var successCallback = function (data) {
-            if (data.error) {
-                $('#error-message').html(data.error);
+            if (data.error || data.error_message) {
+                const message = data.error || data.error_message;
+                $('#error-message').html(message);
                 $('#report-error').removeClass('hide');
             } else {
                 $('#report-error').addClass('hide');

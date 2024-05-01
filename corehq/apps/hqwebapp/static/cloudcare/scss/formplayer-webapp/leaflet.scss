@@ -1,0 +1,9 @@
+// override leaflet-fullscreen styles to fix icon alignment in mapbox.js
+.leaflet-touch {
+  .leaflet-control-fullscreen a {
+    background-position: 0px 0px !important;
+  }
+  &.leaflet-fullscreen-on .leaflet-control-fullscreen a {
+    background-position: 0px -26px !important;
+  }
+}
