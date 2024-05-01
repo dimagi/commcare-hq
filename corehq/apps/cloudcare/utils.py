@@ -7,6 +7,7 @@ from six.moves.urllib.parse import quote
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
+    get_app_ids_in_domain,
     get_apps_in_domain,
     get_latest_build_doc,
     get_latest_build_id,
@@ -50,6 +51,23 @@ def get_latest_build_id_for_web_apps(domain, username, app_id):
         return get_latest_build_id(domain, app_id)
     else:
         return get_latest_released_build_id(domain, app_id)
+
+
+def get_web_apps_available_to_user(domain, user, is_preview=False, fetch_app_fn=get_latest_build_for_web_apps):
+    """
+    The fetch_app_fn is a function to fetch app docs, and should accept a domain, username and app_id if overridden
+    """
+    def is_web_app(app):
+        return app.get('cloudcare_enabled') or is_preview
+
+    apps = []
+    app_ids = get_app_ids_in_domain(domain)
+    for app_id in app_ids:
+        app = fetch_app_fn(domain, user.username, app_id)
+        if app and is_web_app(app) and can_user_access_web_app(app, user, domain):
+            apps.append(app)
+
+    return apps
 
 
 def should_show_preview_app(request, app, username):

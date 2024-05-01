@@ -43,7 +43,6 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_app_ids_in_domain,
     get_current_app,
     get_current_app_doc,
 )
@@ -59,10 +58,10 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
 from corehq.apps.cloudcare.utils import (
-    can_user_access_web_app,
     get_latest_build_for_web_apps,
     get_latest_build_id_for_web_apps,
     get_mobile_ucr_count,
+    get_web_apps_available_to_user,
     should_restrict_web_apps_usage,
 )
 from corehq.apps.domain.decorators import (
@@ -108,22 +107,15 @@ class FormplayerMain(View):
     def dispatch(self, request, *args, **kwargs):
         return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
-    def fetch_app(self, domain, app_id):
-        return get_latest_build_for_web_apps(domain, self.request.couch_user.username, app_id)
+    def fetch_app_fn(self):
+        return get_latest_build_for_web_apps
 
-    def get_web_apps_available_to_user(self, domain, user):
-        def is_web_app(app):
-            return app.get('cloudcare_enabled') or self.preview
-
-        apps = []
-        app_ids = get_app_ids_in_domain(domain)
-        for app_id in app_ids:
-            app = self.fetch_app(domain, app_id)
-            if app and is_web_app(app) and can_user_access_web_app(app, user, domain):
-                apps.append(_format_app_doc(app))
-
-        apps = sorted(apps, key=lambda app: app['name'].lower())
-        return apps
+    def get_web_apps_for_user(self, domain, user):
+        apps = get_web_apps_available_to_user(
+            domain, user, is_preview=self.preview, fetch_app_fn=self.fetch_app_fn()
+        )
+        apps = [_format_app_doc(app) for app in apps]
+        return sorted(apps, key=lambda app: app['name'].lower())
 
     @staticmethod
     def get_restore_as_user(request, domain):
@@ -183,12 +175,12 @@ class FormplayerMain(View):
 
     def get_option_apps(self, request, domain):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
-        apps = self.get_web_apps_available_to_user(domain, restore_as)
+        apps = self.get_web_apps_for_user(domain, restore_as)
         return JsonResponse(apps, safe=False)
 
     def get_main(self, request, domain):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
-        apps = self.get_web_apps_available_to_user(domain, restore_as)
+        apps = self.get_web_apps_for_user(domain, restore_as)
 
         def _default_lang():
             try:
@@ -233,7 +225,11 @@ class FormplayerMainPreview(FormplayerMain):
     preview = True
     urlname = 'formplayer_main_preview'
 
-    def fetch_app(self, domain, app_id):
+    def fetch_app_fn(self):
+        return self.wrap_get_current_app_doc
+
+    def wrap_get_current_app_doc(domain, username, app_id):
+        # ignore username as it is only here to confirm to fetch_app_fn signature
         return get_current_app_doc(domain, app_id)
 
 
