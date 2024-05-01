@@ -48,6 +48,30 @@
     "in_progress": true
   },
   "custom_user_fields": {
+    "in_progress": true
+  },
+  "ota": {
+    "is_complete": true
+  },
+  "commtrack": {
+    "is_complete": true
+  },
+  "registry": {
+    "is_complete": true
+  },
+  "user_importer": {
+    "is_complete": true
+  },
+  "dropbox": {
+    "is_complete": true
+  },
+  "casexml": {
+    "is_complete": true
+  },
+  "programs": {
+    "is_complete": true
+  },
+  "products": {
     "is_complete": true
   }
 }

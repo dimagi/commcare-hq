@@ -93,8 +93,9 @@ class CaseSearchES(CaseES):
 
         If fuzzy is true, all equality checks will be treated as fuzzy.
         """
-        from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
-        return self.filter(build_filter_from_xpath(domain, xpath, fuzzy=fuzzy))
+        from corehq.apps.case_search.filter_dsl import build_filter_from_xpath, SearchFilterContext
+        context = SearchFilterContext(domain, fuzzy=fuzzy)
+        return self.filter(build_filter_from_xpath(xpath, context=context))
 
     def get_child_cases(self, case_ids, identifier):
         """Returns all cases that reference cases with ids: `case_ids`
@@ -182,7 +183,8 @@ case_search_adapter = create_document_adapter(
 )
 
 
-def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None):
+def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None,
+                        fuzzy_prefix_length=None):
     """
     Search for all cases where case property with name `case_property_name`` has text value `value`
     """
@@ -193,12 +195,15 @@ def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=
     if value == '':
         return case_property_missing(case_property_name)
     if fuzzy:
+        kwargs = {'fuzziness': 'AUTO'}
+        if fuzzy_prefix_length:
+            kwargs['prefix_length'] = fuzzy_prefix_length
         return _base_property_query(
             case_property_name,
             filters.OR(
                 # fuzzy match. This portion of this query OR's together multi-word case
                 # property values and doesn't respect multivalue_mode
-                queries.fuzzy(value, PROPERTY_VALUE, fuzziness='AUTO'),
+                queries.fuzzy(value, PROPERTY_VALUE, **kwargs),
                 # non-fuzzy match. added to improve the score of exact matches
                 queries.match(value, PROPERTY_VALUE, operator=multivalue_mode)
             ),

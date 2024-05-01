@@ -67,8 +67,7 @@ class Command(PopulateSQLCommand):
         ))
         diffs.append(cls.diff_value(
             "registered_at",
-            (couch.get("next_check" if is_very_old_pending_record else "registered_on")
-                or '1970-01-01T00:00:00.000000Z'),
+            (couch.get("next_check" if is_very_old_pending_record else "registered_on") or EPOCH),
             json_format_datetime(sql.registered_at),
         ))
         if sql_may_have_next_check():
@@ -214,7 +213,7 @@ ATTEMPT_TRANSFORMS = {
     "message": (lambda doc: (
         doc.get("success_response") if doc.get("succeeded") else doc.get("failure_reason")
     ) or ''),
-    "created_at": (lambda doc: string_to_utc_datetime(doc["datetime"])),
+    "created_at": (lambda doc: string_to_utc_datetime(doc["datetime"] or EPOCH)),
 }
 
 
@@ -224,7 +223,7 @@ def _attempt_to_preserve_failure_reason(doc, obj):
             repeat_record=obj,
             state=doc.state,
             message=doc.failure_reason,
-            created_at=doc.registered_on or doc.next_check,
+            created_at=doc.registered_on or doc.next_check or EPOCH_DATETIME,
         )
         assert not obj._new_submodels[SQLRepeatRecordAttempt][0], 'unexpected attempts'
         obj._new_submodels[SQLRepeatRecordAttempt][0].append(attempt)
@@ -241,3 +240,7 @@ def patch_couch_to_sql(couch_model):
             yield
     finally:
         couch_model._migration_get_custom_couch_to_sql_functions = original_functions
+
+
+EPOCH = '1970-01-01T00:00:00.000000Z'
+EPOCH_DATETIME = string_to_utc_datetime(EPOCH)

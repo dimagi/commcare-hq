@@ -1,8 +1,8 @@
 from django.core.management import BaseCommand
 
 from corehq.apps.hqwebapp.utils.bootstrap.changes import (
-    flag_bootstrap3_references_in_template,
-    flag_bootstrap3_references_in_javascript, get_spec,
+    check_bootstrap3_references_in_template,
+    check_bootstrap3_references_in_javascript, get_spec,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_template_paths_for_app,
@@ -49,22 +49,22 @@ def _is_relevant_path(path, completed_paths):
     return not (is_split_path(path) or str(path) in completed_paths)
 
 
-def _get_bootstrap3_flags_from_file(file_path, is_template):
-    flagged_lines = []
+def _get_bootstrap3_references_from_file(file_path, is_template):
+    problem_lines = []
     with open(file_path, 'r') as current_file:
         lines = current_file.readlines()
         for line_number, line in enumerate(lines):
             if is_template:
-                flags = flag_bootstrap3_references_in_template(
+                issues = check_bootstrap3_references_in_template(
                     line, get_spec('bootstrap_3_to_5')
                 )
             else:
-                flags = flag_bootstrap3_references_in_javascript(line)
-            if flags:
-                flagged_lines.append([
-                    line_number, flags
+                issues = check_bootstrap3_references_in_javascript(line)
+            if issues:
+                problem_lines.append([
+                    line_number, issues
                 ])
-    return flagged_lines
+    return problem_lines
 
 
 def _get_flagged_files(app_name, paths, is_template):
@@ -73,7 +73,7 @@ def _get_flagged_files(app_name, paths, is_template):
         short_path = get_short_path(app_name, path, is_template)
         if short_path in IGNORED_FILES:
             continue
-        flagged_lines = _get_bootstrap3_flags_from_file(path, is_template)
+        flagged_lines = _get_bootstrap3_references_from_file(path, is_template)
         if flagged_lines:
             flagged_files.append([
                 short_path,

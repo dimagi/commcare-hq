@@ -10,6 +10,7 @@ from memoized import memoized
 from unittest.mock import patch
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_build_ids
+from corehq.apps.app_manager.decorators import _get_latest_enabled_build
 from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
@@ -401,3 +402,13 @@ class AppManagerTest(TestCase, TestXmlMixin):
         unlinked_doc = linked_app.convert_to_application().to_json()
         self.assertEqual(unlinked_doc['doc_type'], 'Application')
         self.assertFalse(hasattr(unlinked_doc, 'linked_app_attrs'))
+
+    def test_get_latest_enabled_build_with_loc_flag(self):
+        build = _get_latest_enabled_build(
+            self.domain,
+            'no-such-user',
+            self.app._id,
+            None,
+            location_flag_enabled=True,
+        )
+        self.assertIsNone(build)

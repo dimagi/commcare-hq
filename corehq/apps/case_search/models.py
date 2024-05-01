@@ -1,11 +1,13 @@
 import re
 
-import attr
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.forms import model_to_dict
 from django.utils.translation import gettext as _
+
+import attr
 
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.filter_dsl import CaseFilterError
@@ -288,6 +290,9 @@ class CaseSearchConfig(models.Model):
     sync_cases_on_form_entry = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
     ignore_patterns = models.ManyToManyField(IgnorePatterns)
+    fuzzy_prefix_length = models.SmallIntegerField(blank=True, null=True, validators=[
+        MinValueValidator(0), MaxValueValidator(10),
+    ])
 
     objects = GetOrNoneManager()
 
