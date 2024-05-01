@@ -189,7 +189,7 @@ class Command(BaseCommand):
                           "and `bootstrap3_to_5_completed.json`.\n\n")
 
     @staticmethod
-    def _get_files_for_migration(files, file_name):
+    def _get_files_for_migration(app_name, files, file_name):
         if file_name:
             files = [path for path in files if file_name in str(path)]
             if len(files) > 1 and not is_bootstrap5_path(file_name):
@@ -198,11 +198,13 @@ class Command(BaseCommand):
                 ]
             return files
         return [path for path in files
-                if not (is_split_path(path) or is_ignored_path(path))]
+                if not (is_split_path(path) or is_ignored_path(app_name, path))]
 
     def get_templates_for_migration(self, app_name, selected_filename):
         app_templates = get_all_template_paths_for_app(app_name)
-        available_templates = self._get_files_for_migration(app_templates, selected_filename)
+        available_templates = self._get_files_for_migration(
+            app_name, app_templates, selected_filename
+        )
         if selected_filename:
             return available_templates
         completed_templates = get_completed_templates_for_app(app_name)
@@ -210,7 +212,9 @@ class Command(BaseCommand):
 
     def get_js_files_for_migration(self, app_name, selected_filename):
         app_js_files = get_all_javascript_paths_for_app(app_name)
-        available_js_files = self._get_files_for_migration(app_js_files, selected_filename)
+        available_js_files = self._get_files_for_migration(
+            app_name, app_js_files, selected_filename
+        )
         if selected_filename:
             return available_js_files
         completed_js_files = get_completed_javascript_for_app(app_name)

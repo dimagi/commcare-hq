@@ -12,9 +12,25 @@ PARENT_PATHS = {
     "casexml": COREHQ_BASE_DIR / "ex-submodules/casexml/apps",
     "ex-submodules": COREHQ_BASE_DIR / "ex-submodules",
 }
-IGNORED_FOLDERS = [
-    "hqwebapp/crispy/",
-]
+IGNORED_PATHS_BY_APP = {
+    "hqwebapp": [
+        "hqwebapp/js/resource_versions.js",
+        "hqwebapp/base.html",
+        "hqwebapp/base_mobile.html",
+        "hqwebapp/crispy/",
+        "hqwebapp/includes/inactivity_modal_data.html",
+        "hqwebapp/includes/core_libraries.html",
+        "hqwebapp/includes/ui_element_js.html",
+        "hqwebapp/partials/requirejs.html",
+        # todo, remove these files and fully split:
+        "hqwebapp/iframe_domain_login.html",
+        "hqwebapp/bulk_upload.html",
+        "hqwebapp/crispy/single_crispy_form.html",
+        "hqwebapp/spec/mocha.html",
+        "hqwebapp/js/maintenance_alerts.js",
+        "hqwebapp/spec/widgets_spec.js",
+    ]
+}
 
 
 def is_split_path(path):
@@ -22,10 +38,10 @@ def is_split_path(path):
     return "/bootstrap3/" in path or "/bootstrap5/" in path
 
 
-def is_ignored_path(path):
+def is_ignored_path(app_name, path):
     path = str(path)
-    for folder in IGNORED_FOLDERS:
-        if folder in path:
+    for ignored_path in IGNORED_PATHS_BY_APP.get(app_name, []):
+        if ignored_path in path:
             return True
     return False
 
