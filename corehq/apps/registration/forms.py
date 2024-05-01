@@ -497,9 +497,9 @@ class AdminInvitesUserForm(forms.Form):
         domain_obj = Domain.get_by_name(domain)
         self.fields['role'].choices = role_choices
         if domain_obj:
-            self.fields['location_id'] = forms.CharField(label='Primary Location', required=False,
+            self.fields['primary_location_id'] = forms.CharField(label='Primary Location', required=False,
                                                          widget=LocationSelectWidget(domain_obj.name,
-                                                                                    id='id_location_id'),
+                                                                                    id='id_primary_location_id'),
                                                          help_text=EMWF.location_search_help)
 
             if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
@@ -535,7 +535,7 @@ class AdminInvitesUserForm(forms.Form):
                 ),
                 'role',
                 'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
-                'location_id' if ('location_id' in self.fields and should_show_location) else None,
+                'primary_location_id' if ('primary_location_id' in self.fields and should_show_location) else None,
             ),
             crispy.HTML(
                 render_to_string(
