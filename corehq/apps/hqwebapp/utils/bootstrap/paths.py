@@ -41,10 +41,8 @@ def is_split_path(path):
 
 def is_ignored_path(app_name, path):
     path = str(path)
-    for ignored_path in IGNORED_PATHS_BY_APP.get(app_name, []):
-        if ignored_path in path:
-            return True
-    return False
+    ignored_paths = IGNORED_PATHS_BY_APP.get(app_name, [])
+    return any(ignored_path in path for ignored_path in ignored_paths)
 
 
 def is_bootstrap5_path(path):
