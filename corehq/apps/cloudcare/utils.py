@@ -52,7 +52,8 @@ def filter_available_web_apps(apps, domain, user, is_preview):
     # Backwards-compatibility - mobile users haven't historically required this permission
     if user.is_web_user() or user.can_access_any_web_apps(domain):
         apps = filter(lambda app: user.can_access_web_app(domain, app.get('copy_of', app.get('_id'))), apps)
-    apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
+    if toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled(domain):
+        apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
     return list(apps)
 
 

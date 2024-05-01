@@ -256,11 +256,13 @@ class FormplayerPreviewSingleApp(View):
 
         app = get_current_app(domain, app_id)
 
-        if not app_access.user_can_access_app(request.couch_user, app):
-            raise Http404()
+        if toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled(domain):
+            if not app_access.user_can_access_app(request.couch_user, app):
+                raise Http404()
 
-        if not request.couch_user.can_access_web_app(domain, app.origin_id):
-            raise Http404()
+        if request.couch_user.is_web_user() or request.couch_user.can_access_any_web_apps(domain):
+            if not request.couch_user.can_access_web_app(domain, app.origin_id):
+                raise Http404()
 
         def _default_lang():
             try:
