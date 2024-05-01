@@ -1,9 +1,8 @@
 import json
 import re
 import string
+import urllib.parse
 
-import requests
-import sentry_sdk
 from django.conf import settings
 from django.contrib import messages
 from django.http import (
@@ -13,23 +12,22 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import redirect, render
-
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 from django.views.generic.base import TemplateView
-from django.views.decorators.clickjacking import xframe_options_sameorigin
 
-import urllib.parse
+import requests
+import sentry_sdk
+from langcodes import get_name
 from text_unidecode import unidecode
+from xml2json.lib import xml2json
 
-from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.formplayer_api.utils import get_formplayer_url
-from corehq.util.metrics import metrics_counter
 from couchforms.const import VALID_ATTACHMENT_FILE_EXTENSION_MAP
 from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.web import json_response
@@ -39,9 +37,10 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_for_commcare_user,
     requires_privilege_with_fallback,
 )
-from corehq.apps.accounting.utils import domain_is_on_trial, domain_has_privilege
-from corehq.apps.domain.models import Domain
-
+from corehq.apps.accounting.utils import (
+    domain_has_privilege,
+    domain_is_on_trial,
+)
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_ids_in_domain,
@@ -52,25 +51,30 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_doc,
     get_latest_released_build_id,
 )
-
 from corehq.apps.cloudcare.const import (
     PREVIEW_APP_ENVIRONMENT,
     WEB_APPS_ENVIRONMENT,
 )
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_application_access_for_domain
+from corehq.apps.cloudcare.dbaccessors import (
+    get_application_access_for_domain,
+    get_cloudcare_apps,
+)
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
 from corehq.apps.cloudcare.utils import (
     can_user_access_web_app,
     get_mobile_ucr_count,
-    should_restrict_web_apps_usage
+    should_restrict_web_apps_usage,
 )
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
     login_or_digest_ex,
 )
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
     use_bootstrap5,
@@ -78,17 +82,14 @@ from corehq.apps.hqwebapp.decorators import (
     waf_allow,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
+from corehq.apps.integration.util import integration_contexts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import get_complete_username
 from corehq.apps.users.views import BaseUserSettingsView
-from corehq.apps.integration.util import integration_contexts
-from corehq.util.metrics import metrics_histogram
-from xml2json.lib import xml2json
-
-from langcodes import get_name
+from corehq.util.metrics import metrics_counter, metrics_histogram
 
 
 @require_cloudcare_access
@@ -603,7 +604,9 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
         # These links can be used for cross-domain web apps workflows, where a link jumps to the
         # same screen but in another domain's corresponding app. This works if both the source and
         # target apps are downstream apps that share an upstream app - the link references the upstream app.
-        from corehq.apps.linked_domain.applications import get_downstream_app_id_map
+        from corehq.apps.linked_domain.applications import (
+            get_downstream_app_id_map,
+        )
         id_map = get_downstream_app_id_map(domain)
         if app_id in id_map:
             if len(id_map[app_id]) == 1:
