@@ -18,11 +18,21 @@ IGNORED_PATHS_BY_APP = {
         "hqwebapp/js/resource_versions.js",
         "hqwebapp/base.html",
         "hqwebapp/base_mobile.html",
-        "hqwebapp/crispy/",
         "hqwebapp/includes/inactivity_modal_data.html",
         "hqwebapp/includes/core_libraries.html",
         "hqwebapp/includes/ui_element_js.html",
         "hqwebapp/partials/requirejs.html",
+        # these need to be explicitly specified since we DO want to migrate
+        # hqwebapp/crispy/single_crispy_form.html
+        "hqwebapp/crispy/checkbox_widget.html",
+        "hqwebapp/crispy/form_actions.html",
+        "hqwebapp/crispy/text_field.html",
+        "hqwebapp/crispy/accordion_group.html",
+        "hqwebapp/crispy/static_field.html",
+        "hqwebapp/crispy/radioselect.html",
+        "hqwebapp/crispy/multi_field.html",
+        "hqwebapp/crispy/field_with_help_bubble.html",
+        "hqwebapp/crispy/field_with_addons.html",
         # todo, remove these files and fully split:
         "hqwebapp/iframe_domain_login.html",
         "hqwebapp/bulk_upload.html",
