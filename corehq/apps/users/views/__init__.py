@@ -577,6 +577,8 @@ class ListWebUsersView(BaseRoleAccessView):
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'bulk_download_url': bulk_download_url,
+            'user_can_access_all_locations': self.request.couch_user.has_permission(
+                self.domain, 'access_all_locations'),
             'from_address': settings.DEFAULT_FROM_EMAIL
         }
 
@@ -874,8 +876,11 @@ def _get_web_users(request, domains, filter_by_accessible_locations=False):
 @always_allow_project_access
 @require_can_edit_web_users
 @require_POST
+@location_safe
 def remove_web_user(request, domain, couch_user_id):
     user = WebUser.get_by_user_id(couch_user_id, domain)
+    if not user_can_access_other_user(domain, request.couch_user, user):
+        return HttpResponse(status=401)
     # if no user, very likely they just pressed delete twice in rapid succession so
     # don't bother doing anything.
     if user:
