@@ -482,6 +482,45 @@ def _get_report_count(domain):
     return get_report_builder_count(domain)
 
 
+def _track_domain(env):
+    from corehq.apps.es import DomainES
+    res = (
+        DomainES()
+        .source(['name', 'is_active', 'cp_is_active', 'is_test', 'subscription',])
+    ).run().hits
+
+    submit_json = []
+    for domain in res:
+        domain_json = {
+            'email': domain['name'],  # TODO: Double check that we can use name here instead of email
+            'properties': [
+                {
+                    'property': '{}domain_is_live'.format(env),
+                    'value': domain['is_active']
+                },
+                {
+                    'property': '{}domain_form_submission_last_30_days'.format(env),
+                    'value': domain['cp_is_active']
+                },
+                {
+                    'property': '{}domain_subscription_plan'.format(env),
+                    'value': domain['subscription']
+                },
+                {
+                    'property': '{}domain_subscription_plan'.format(env),
+                    'value': domain['subscription']
+                },
+                {
+                    'property': '{}domain_is_test'.format(env),
+                    'value': domain['is_test']
+                },
+            ]
+        }
+        submit_json.append(domain_json)
+
+    # TODO: Send to kissmetrics
+
+
 @periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
@@ -674,8 +713,11 @@ def submit_data_to_hub_and_kiss(submit_json):
     kissmetrics_dispatch = (
         _track_periodic_data_on_kiss, "Error submitting periodic analytics data to Kissmetrics"
     )
+    submit_data([hubspot_dispatch, kissmetrics_dispatch], submit_json)
 
-    for (dispatcher, error_message) in [hubspot_dispatch, kissmetrics_dispatch]:
+
+def submit_data(dispatchers, submit_json):
+    for (dispatcher, error_message) in dispatchers:
         try:
             dispatcher(submit_json)
         except requests.exceptions.HTTPError as e:
