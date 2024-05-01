@@ -12,11 +12,22 @@ PARENT_PATHS = {
     "casexml": COREHQ_BASE_DIR / "ex-submodules/casexml/apps",
     "ex-submodules": COREHQ_BASE_DIR / "ex-submodules",
 }
+IGNORED_FOLDERS = [
+    "hqwebapp/crispy/",
+]
 
 
 def is_split_path(path):
     path = str(path)
     return "/bootstrap3/" in path or "/bootstrap5/" in path
+
+
+def is_ignored_path(path):
+    path = str(path)
+    for folder in IGNORED_FOLDERS:
+        if folder in path:
+            return True
+    return False
 
 
 def is_bootstrap5_path(path):

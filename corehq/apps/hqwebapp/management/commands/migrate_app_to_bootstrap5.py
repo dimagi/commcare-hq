@@ -34,6 +34,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_javascript_paths_for_app,
     is_split_path,
     is_bootstrap5_path,
+    is_ignored_path,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.references import (
     update_and_get_references,
@@ -196,7 +197,8 @@ class Command(BaseCommand):
                     path for path in files if not is_bootstrap5_path(path)
                 ]
             return files
-        return [path for path in files if not is_split_path(path)]
+        return [path for path in files
+                if not (is_split_path(path) or is_ignored_path(path))]
 
     def get_templates_for_migration(self, app_name, selected_filename):
         app_templates = get_all_template_paths_for_app(app_name)
