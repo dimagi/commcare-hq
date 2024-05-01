@@ -245,7 +245,7 @@ class MultiInlineField(InlineField):
     B3MultiField adds form-group at a higher level, and that makes
     the field not render properly.)
     """
-    template = 'hqwebapp/crispy/multi_inline_field.html'
+    template = 'hqwebapp/crispy/bootstrap3/multi_inline_field.html'
 
 
 class CrispyTemplate(object):
