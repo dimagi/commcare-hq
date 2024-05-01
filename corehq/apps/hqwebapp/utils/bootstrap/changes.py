@@ -274,7 +274,7 @@ def replace_path_references(filedata, old_reference, new_reference):
 
 
 def update_gruntfile(filedata, mocha_paths):
-    mocha_apps = [path.replace('/spec', '').replace('/mocha.html', '')
+    mocha_apps = [path.replace('/spec/', '/').removesuffix('/mocha.html')
                   for path in mocha_paths]
     for app in mocha_apps:
         regex = _get_mocha_app_regex(app)
