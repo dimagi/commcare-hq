@@ -23,9 +23,8 @@ from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
-from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.programs.models import Program
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.users.forms import BaseLocationForm
 from corehq.apps.users.models import CouchUser
 
 
@@ -486,22 +485,17 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
         return ""
 
 
-class AdminInvitesUserForm(forms.Form):
+class AdminInvitesUserForm(BaseLocationForm):
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
 
     def __init__(self, data=None, excluded_emails=None, is_add_user=None,
                  role_choices=(), should_show_location=False, *, domain, **kwargs):
-        super(AdminInvitesUserForm, self).__init__(data=data, **kwargs)
+        super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
         domain_obj = Domain.get_by_name(domain)
         self.fields['role'].choices = role_choices
         if domain_obj:
-            self.fields['primary_location_id'] = forms.CharField(label='Primary Location', required=False,
-                                                         widget=LocationSelectWidget(domain_obj.name,
-                                                                                    id='id_primary_location_id'),
-                                                         help_text=EMWF.location_search_help)
-
             if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
                 self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)
                 from corehq.apps.users.views.mobile import UserFieldsView
@@ -524,7 +518,6 @@ class AdminInvitesUserForm(forms.Form):
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 gettext("Information for new Web User"),
@@ -535,7 +528,8 @@ class AdminInvitesUserForm(forms.Form):
                 ),
                 'role',
                 'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
-                'primary_location_id' if ('primary_location_id' in self.fields and should_show_location) else None,
+                'assigned_locations' if ('assigned_locations' in self.fields and should_show_location) else None,
+                'primary_location' if ('primary_location' in self.fields and should_show_location) else None,
             ),
             crispy.HTML(
                 render_to_string(
@@ -570,7 +564,8 @@ class AdminInvitesUserForm(forms.Form):
         return email
 
     def clean(self):
-        for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], str):
-                self.cleaned_data[field] = self.cleaned_data[field].strip()
-        return self.cleaned_data
+        cleaned_data = super(AdminInvitesUserForm, self).clean()
+        for field in cleaned_data:
+            if isinstance(cleaned_data[field], str):
+                cleaned_data[field] = cleaned_data[field].strip()
+        return cleaned_data

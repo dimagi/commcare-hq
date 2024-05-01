@@ -1175,7 +1175,7 @@ class BaseLocationForm(forms.Form):
         help_text=_('Primary Location must always be set to one of above locations')
     )
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, domain: str, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
         super(BaseLocationForm, self).__init__(*args, **kwargs)
         self.domain = domain
