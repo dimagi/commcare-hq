@@ -490,7 +490,7 @@ def _get_synced_role(upstream_role_def, downstream_domain, downstream_roles,
         return (None, upstream_role_def['name'], is_default_role)
 
     if not role:
-        role = UserRole(domain=downstream_domain)
+        role = UserRole.create(domain=downstream_domain)
 
     _copy_role_attributes(upstream_role_def, role)
 
