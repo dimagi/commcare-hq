@@ -18,10 +18,9 @@ code-level documentation. Plugins can be managed through the admin UI,
 available at ``https://<hq.server.url>/hq/flags/``.
 
 The CommCare Community of Practice urges all plugin maintainers to
-follow our best practices for `documentation
-<https://commcare-hq.readthedocs.io/documenting.html>`_. Each commit
-should include a description of the functionality and links to relevant
-tickets.
+follow our best practices for :doc:`documentation <documenting>`. Each
+commit should include a description of the functionality and links to
+relevant tickets.
 
 Plugins allow limiting access to a set of functionality.
 
