@@ -155,18 +155,19 @@ def get_case_property_deprecated_dict(domain):
     """
     This returns a dictionary of the structure
     {
-        case_type: {
-            case_property: is_deprecated,
+        case_type: [
+            case_property,
             ...
-        },
+        ],
         ...
     }
-    for each case type and case property in the domain
+    for each case type and case property in the domain. Each case type
+    will contain a list of only deprecated case properties.
     """
     annotated_types = CaseType.objects.filter(domain=domain).prefetch_related('properties')
     deprecated_dict = {}
     for case_type in annotated_types:
-        deprecated_dict[case_type.name] = {prop.name: prop.deprecated for prop in case_type.properties.all()}
+        deprecated_dict[case_type.name] = [prop.name for prop in case_type.properties.all() if prop.deprecated]
     return deprecated_dict
 
 

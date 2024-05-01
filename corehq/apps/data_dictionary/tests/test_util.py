@@ -305,13 +305,12 @@ class MiscUtilTest(TestCase):
     def test_get_case_property_deprecated_dict(self):
         dep_dict = get_case_property_deprecated_dict(self.domain)
         expected_response = {
-            'caseType': {
-                'case_prop_1': False,
-                'case_prop_2': True,
-            },
-            'depCaseType': {
-                'case_prop_3': True,
-            }
+            'caseType': [
+                'case_prop_2',
+            ],
+            'depCaseType': [
+                'case_prop_3',
+            ]
         }
         self.assertEqual(dep_dict, expected_response)
 

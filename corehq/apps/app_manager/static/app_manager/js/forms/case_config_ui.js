@@ -520,7 +520,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                         const config = self.case_transaction.caseConfig;
                         const depProps = config.deprecatedPropertiesDict[self.caseType()];
                         if (depProps && self.key() !== 'name') {
-                            return depProps[self.key()];
+                            return depProps.includes(self.key());
                         }
                     }
                     return false;
