@@ -38,6 +38,18 @@ def webapps_module(domain, app_id, module_id):
     return _webapps_url(domain, app_id, selections=[module_id])
 
 
+def filter_available_web_apps(apps, domain, user, is_preview):
+    from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
+    app_access = get_application_access_for_domain(domain)
+    apps = filter(None, apps)
+    apps = filter(lambda app: app.get('cloudcare_enabled') or is_preview, apps)
+    # Backwards-compatibility - mobile users haven't historically required this permission
+    if user.is_web_user() or user.can_access_any_web_apps(domain):
+        apps = filter(lambda app: user.can_access_web_app(domain, app.get('copy_of', app.get('_id'))), apps)
+    apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
+    return list(apps)
+
+
 @quickcache(['domain'], timeout=24 * 60 * 60)
 def get_mobile_ucr_count(domain):
     """

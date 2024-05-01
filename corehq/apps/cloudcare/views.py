@@ -61,7 +61,11 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_applicatio
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
-from corehq.apps.cloudcare.utils import get_mobile_ucr_count, should_restrict_web_apps_usage
+from corehq.apps.cloudcare.utils import (
+    filter_available_web_apps,
+    get_mobile_ucr_count,
+    should_restrict_web_apps_usage,
+)
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -109,19 +113,13 @@ class FormplayerMain(View):
         return _fetch_build(domain, self.request.couch_user.username, app_id)
 
     def get_web_apps_available_to_user(self, domain, user):
-        app_access = get_application_access_for_domain(domain)
         app_ids = get_app_ids_in_domain(domain)
 
         apps = list(map(
             lambda app_id: self.fetch_app(domain, app_id),
             app_ids,
         ))
-        apps = filter(None, apps)
-        apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
-        # Backwards-compatibility - mobile users haven't historically required this permission
-        if user.is_web_user() or user.can_access_any_web_apps(domain):
-            apps = filter(lambda app: user.can_access_web_app(domain, app.get('copy_of', app.get('_id'))), apps)
-        apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
+        apps = filter_available_web_apps(apps, domain, user, self.preview)
         apps = [_format_app_doc(app) for app in apps]
         apps = sorted(apps, key=lambda app: app['name'].lower())
         return apps
