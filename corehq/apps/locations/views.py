@@ -265,6 +265,7 @@ class LocationOptionsController(EmwfOptionsController):
 
 
 @method_decorator(locations_access_required, name='dispatch')
+@location_safe
 class LocationsSearchView(EmwfOptionsView):
 
     @property
