@@ -463,12 +463,16 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
 @xframe_options_sameorigin
 @location_safe
 def iframe_domain_login(req, domain):
-    return domain_login(req, domain, custom_template_name="hqwebapp/bootstrap3/iframe_domain_login.html", extra_context={
-        'current_page': {'page_name': _('Your session has expired')},
-        'restrict_domain_creation': True,
-        'is_session_expiration': True,
-        'ANALYTICS_IDS': {},
-    })
+    return domain_login(
+        req,
+        domain,
+        custom_template_name="hqwebapp/bootstrap3/iframe_domain_login.html",
+        extra_context={
+            'current_page': {'page_name': _('Your session has expired')},
+            'restrict_domain_creation': True,
+            'is_session_expiration': True,
+            'ANALYTICS_IDS': {},
+        })
 
 
 @xframe_options_sameorigin
