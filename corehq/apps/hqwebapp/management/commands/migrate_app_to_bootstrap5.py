@@ -244,6 +244,15 @@ class Command(BaseCommand):
         return set(available_js_files).difference(completed_js_files)
 
     def migrate_files(self, files, app_name, spec, is_template):
+        """
+        Migrates a list of files if there are changes.
+
+        :param app_name: string (app name that's being migrated)
+        :param files: list(Path) (object)
+        :param spec: dict
+        :param is_template: boolean (whether the file is a template or javascript file)
+        :return: list(Path) (list of all Paths that had changes)
+        """
         migrated_files = []
         for index, file_path in enumerate(files):
             short_path = get_short_path(app_name, file_path, is_template)
@@ -270,6 +279,17 @@ class Command(BaseCommand):
         return migrated_files
 
     def migrate_single_file(self, app_name, file_path, spec, is_template, review_changes):
+        """
+        This runs through each line in a file and obtains flagged todos and changes for each line
+        and applies them, depending on user input (if skip-all isn't active).
+
+        :param app_name: string (app name that's being migrated)
+        :param file_path: Path (object)
+        :param spec: dict
+        :param is_template: boolean (whether the file is a template or javascript file)
+        :param review_changes: boolean (option of whether the user should review line-by-line)
+        :return: boolean (True if changes were made, False if no changes)
+        """
         is_fresh_migration = not is_bootstrap5_path(file_path)
         with open(file_path, 'r') as current_file:
             old_lines = current_file.readlines()
