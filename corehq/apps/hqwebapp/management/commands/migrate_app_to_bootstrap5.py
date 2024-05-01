@@ -305,6 +305,11 @@ class Command(BaseCommand):
                 changelog.append("\n\n")
             if renames:
                 changelog.append("\nDiff of changes:")
+                if not old_line.endswith('\n'):
+                    # in case there isn't a new line at the end, add one to avoid errors
+                    # this will also fix linting in the new_line :)
+                    old_line = f'{old_line}\n'
+                    new_line = f'{new_line}\n'
                 changelog.extend(self.format_code(
                     f"-{old_line}+{new_line}",
                     split_lines=True,
