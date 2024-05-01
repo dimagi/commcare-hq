@@ -49,7 +49,7 @@ hqDefine('analytix/js/kissmetrix', [
         var apiId = _get('apiId'),
             scriptUrls = [
                 '//i.kissmetrics.com/i.js',
-                '//doug1izaerwt3.cloudfront.net/' + apiId + '.1.js',
+                '//scripts.kissmetrics.io/' + apiId + '.2.js',
             ];
 
         _logger = logging.getLoggerForApi('Kissmetrics');
@@ -122,10 +122,13 @@ hqDefine('analytix/js/kissmetrix', [
     var trackEvent = function (name, properties, callbackFn, timeout) {
         var originalArgs = arguments;
         _ready.done(function () {
+            console.log("starting done");
             _logger.debug.log(originalArgs, 'RECORD EVENT');
             callbackFn = utils.createSafeCallback(callbackFn, timeout);
             _kmqPushCommand('record', properties, callbackFn, name);
+            console.log("tracking done");
         }).fail(function () {
+            console.log("tracking failed");
             if (_.isFunction(callbackFn)) {
                 callbackFn();
             }
