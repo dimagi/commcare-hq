@@ -51,6 +51,7 @@ def test_get_all_repeater_types():
 
 
 class RepeaterTestCase(TestCase):
+    before_now = datetime.utcnow() - timedelta(days=1)
 
     def setUp(self):
         super().setUp()
@@ -68,6 +69,22 @@ class RepeaterTestCase(TestCase):
         super().tearDownClass()
         from ..dbaccessors import delete_all_repeat_records
         delete_all_repeat_records()
+
+    def make_records(self, n, state=State.Pending, **kw):
+        is_pending = state in [State.Pending, State.Fail]
+        kw.setdefault("domain", "test")
+        kw.setdefault("repeater", self.repeater)
+        kw.setdefault("payload_id", "c0ffee")
+        kw.setdefault("registered_at", self.before_now)
+        kw.setdefault("state", state)
+        if is_pending:
+            kw.setdefault("next_check", self.before_now)
+        return SQLRepeatRecord.objects.bulk_create(
+            SQLRepeatRecord(**kw) for i in range(n)
+        )
+
+    def new_record(self, **kw):
+        return self.make_records(1, **kw).pop()
 
 
 class TestSoftDeleteRepeaters(RepeaterTestCase):
@@ -483,7 +500,6 @@ def test_attempt_forward_now_kwargs():
 @patch("corehq.motech.repeaters.tasks.retry_process_repeat_record")
 @patch("corehq.motech.repeaters.tasks.process_repeat_record")
 class TestAttemptForwardNow(RepeaterTestCase):
-    before_now = datetime.utcnow() - timedelta(seconds=1)
 
     def test_future_next_check(self, process, retry_process):
         rec = self.new_record(next_check=datetime.utcnow() + timedelta(hours=1))
@@ -543,18 +559,6 @@ class TestAttemptForwardNow(RepeaterTestCase):
             except AssertionError as err:
                 raise AssertionError(f"{task} unexpectedly called:\n{err}")
 
-    def new_record(self, next_check=before_now, state=RECORD_PENDING_STATE):
-        rec = SQLRepeatRecord(
-            domain="test",
-            repeater_id=self.repeater.repeater_id,
-            payload_id="c0ffee",
-            registered_at=self.before_now,
-            next_check=next_check,
-            state=state,
-        )
-        rec.save()
-        return rec
-
 
 class TestRepeaterModelMethods(RepeaterTestCase):
 
@@ -610,7 +614,6 @@ class TestFormRepeaterAllowedToForward(RepeaterTestCase):
 
 
 class TestRepeatRecordManager(RepeaterTestCase):
-    before_now = datetime.utcnow() - timedelta(days=1)
 
     def test_count_by_repeater_and_state(self):
         self.make_records(1, state=State.Pending)
@@ -688,28 +691,8 @@ class TestRepeatRecordManager(RepeaterTestCase):
             {'alex', 'alice'},
         )
 
-    def new_record(self, next_check=before_now, state=State.Pending, domain="test"):
-        return SQLRepeatRecord.objects.create(
-            domain=domain,
-            repeater_id=self.repeater.repeater_id,
-            payload_id="c0ffee",
-            registered_at=self.before_now,
-            next_check=next_check,
-            state=state,
-        )
-
-    def make_records(self, n, state=State.Pending):
-        now = timezone.now() - timedelta(seconds=10)
-        is_pending = state in [State.Pending, State.Fail]
-        records = SQLRepeatRecord.objects.bulk_create(SQLRepeatRecord(
-            domain="test",
-            repeater=self.repeater,
-            payload_id="c0ffee",
-            registered_at=now,
-            next_check=(now if is_pending else None),
-            state=state,
-        ) for i in range(n))
-        return {r.id for r in records}
+    def make_records(self, *args, **kw):
+        return {r.id for r in super().make_records(*args, **kw)}
 
     def tearDown(self):
         from ..dbaccessors import delete_all_repeat_records
