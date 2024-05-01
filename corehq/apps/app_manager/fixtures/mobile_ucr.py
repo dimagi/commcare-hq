@@ -25,6 +25,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     is_valid_mobile_select_filter_type,
 )
+from corehq.apps.cloudcare.utils import filter_available_web_apps
 from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     UserReportsError,
@@ -109,11 +110,15 @@ class ReportFixturesProvider(FixtureProvider):
 
     def _get_apps(self, restore_state, restore_user):
         app_aware_sync_app = restore_state.params.app
+        web_apps_restore = restore_state.params.device_id.startswith('WebAppsLogin')
 
         if app_aware_sync_app:
             apps = [app_aware_sync_app]
         else:
             apps = get_apps_in_domain(restore_user.domain, include_remote=False)
+            if web_apps_restore:
+                # use couch_user to determine app access
+                apps = filter_available_web_apps(apps, restore_user.domain, restore_user._couch_user, False)
 
         return apps
 
