@@ -115,7 +115,7 @@ class ReportFixturesProvider(FixtureProvider):
             apps = [app_aware_sync_app]
         else:
             apps = get_apps_in_domain(restore_user.domain, include_remote=False)
-            if web_apps_restore:
+            if web_apps_restore and toggles.RESTORE_ACCESSIBLE_REPORTS_ONLY:
                 # use couch_user to determine app access
                 apps = filter_available_web_apps(apps, restore_user.domain, restore_user._couch_user, False)
 
