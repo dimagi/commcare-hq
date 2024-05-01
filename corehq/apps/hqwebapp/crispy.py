@@ -47,7 +47,7 @@ class HQModalFormHelper(FormHelper):
 
 
 class HiddenFieldWithErrors(Field):
-    template = "hqwebapp/crispy/field/bootstrap3/hidden_with_errors.html"
+    template = "hqwebapp/crispy/field/hidden_with_errors.html"
 
 
 class TextField(Field):
