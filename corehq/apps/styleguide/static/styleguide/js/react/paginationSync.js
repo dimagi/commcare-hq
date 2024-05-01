@@ -11,17 +11,26 @@ window.addEventListener('load', () => {
         };
     };
 
-    function Row({item}) {
+    function ListDisplay({rows, getItemId}) {
         return (
-            <>{item}</>
+            <ul className="list-group">
+                { rows.map((row) => (
+                    <li className="list-group-item" key={getItemId(row)}>
+                        {row}
+                    </li>
+                ))}
+            </ul>
         );
     }
+
+    const getItemId = (item) => item;
 
     const root = createRoot(document.getElementById('paginationSyncRoot'));
     root.render(
         <Pagination
             id="pagination-example"
-            RowCls={Row}
+            DisplayCls={ListDisplay}
+            getItemId={getItemId}
             getPageItems={getPageItems}
             slug="pagination-example"
         />

@@ -117,7 +117,8 @@ function updatePageSizeCookie(slug, value) {
  *  React Pagination Component
  *
  *  Include the <Pagination> element on your JSX page with the following parameters:
- *      RowCls: A JSX component that will render your list items. Will receive a single 'row' object as props
+ *      DisplayCls: A JSX component that will display your collection. Expected props are {items, getItemId}
+ *          where items are the items to be displayed and getItemId resolves an item into a unique identifier
  *      getPageItems: A function or promise to return a page's items. Requires pageNum and pageSize parameters,
  *          and must return an object containing with 'items' and 'totalItemCount' keys.
  *      inlinePageListOnly: Optional. True or false. If true, leave off the "Showing X to Y of Z entries"
@@ -126,7 +127,7 @@ function updatePageSizeCookie(slug, value) {
  *      slug: Optional. A string unique among pagination widgets. If provided, used to save perPage value
  *          in a cookie.
  */
-export default function Pagination({RowCls, getPageItems, id, slug, inlinePageListOnly}) {
+export default function Pagination({DisplayCls, getItemId, getPageItems, id, slug, inlinePageListOnly}) {
     let [pageSize, setPageSize] = useState(() => getInitialPageSize(slug, 5, inlinePageListOnly));
     let [items, setItems] = useState([]);
     let [totalItemCount, setTotalItemCount] = useState(0);
@@ -171,13 +172,7 @@ export default function Pagination({RowCls, getPageItems, id, slug, inlinePageLi
 
     return (
         <div id={id}>
-            <ul className="list-group">
-                { items.map((item, i) => (
-                    <li className="list-group-item" key={offset + i}>
-                        <RowCls item={item} />
-                    </li>
-                ))}
-            </ul>
+            <DisplayCls rows={items} getItemId={getItemId} />
             { !inlinePageListOnly &&
                 <div className="py-3 d-flex justify-content-between">
                     <StatusDisplay start={offset + 1} total={totalItemCount} pageSize={pageSize} sizes={pageSizes} setPageSize={updatePageSize} />
