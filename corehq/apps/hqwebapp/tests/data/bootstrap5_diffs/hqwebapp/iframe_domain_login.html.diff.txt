@@ -1,0 +1,20 @@
+--- 
++++ 
+@@ -5,7 +5,7 @@
+ 
+ {% block title %}{% trans "Your session has expired" %}{% endblock %}
+ 
+-{% requirejs_main 'registration/js/login' %}
++{% requirejs_main_b5 'registration/js/login' %}
+ 
+ {% block background_content %}
+   <div class="bg-container">
+@@ -28,7 +28,7 @@
+           href="{% static 'registration/less/registration.less' %}" />
+   {% endcompress %}
+   <style>
+-    /* hide password reset link */
++    /* d-none password reset link */
+     .help-block {
+       display:  none;
+     }

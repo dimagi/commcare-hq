@@ -1,0 +1,8 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+ {% load i18n %}
+ <p>
+-  {% trans "You may close this window and return to your work." %}
++  {% trans "You may btn-close this window and return to your work." %}  {# todo B5: css:close #}
+ </p>

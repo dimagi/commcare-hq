@@ -1,0 +1,18 @@
+--- 
++++ 
+@@ -1,5 +1,5 @@
+ 'use strict';
+-hqDefine('hqwebapp/js/bootstrap3/mobile_experience_warning', [
++hqDefine('hqwebapp/js/bootstrap5/mobile_experience_warning', [
+     "jquery",
+     "hqwebapp/js/initial_page_data",
+     "analytix/js/kissmetrix",
+@@ -36,7 +36,7 @@
+                     type: 'post',
+                 });
+                 e.preventDefault();
+-                $videoModal.modal();
++                $videoModal.modal();  /* todo B5: plugin:modal */
+                 $videoModal.on('shown.bs.modal', function () {
+                     $modal.removeClass('modal-force-show');
+                 });
