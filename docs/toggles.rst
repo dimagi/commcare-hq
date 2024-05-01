@@ -5,7 +5,7 @@ There are a number of plugins which sit on top of the core CommCare functionalit
 
 When hosting the CommCare HQ, be aware that plugins aren't fully supported by the core committers and generally have a higher support burden. They may require directly reading the code to provide support or understand in full. A smaller percentage of CommCare’s open source developer community typically has knowledge on any given plugin. If you are enabling plugins in your local environment, please make sure you have sufficient engineering expertise to be able to read direct code-level documentation. Plugins can be managed through the admin UI, available at ``https://<hq.server.url>/hq/flags/``.
 
-The CommCare Community of Practice urges all plugin maintainers to follow our best practices for `documentation <(https://commcare-hq.readthedocs.io/documenting.html>`_. Each commit should include a description of the functionality and links to relevant tickets.
+The CommCare Community of Practice urges all plugin maintainers to follow our best practices for `documentation <https://commcare-hq.readthedocs.io/documenting.html>`_. Each commit should include a description of the functionality and links to relevant tickets.
 
 Plugins allow limiting access to a set of functionality.
 
