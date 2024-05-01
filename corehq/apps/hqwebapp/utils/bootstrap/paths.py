@@ -33,6 +33,7 @@ IGNORED_PATHS_BY_APP = {
         "hqwebapp/crispy/multi_field.html",
         "hqwebapp/crispy/field_with_help_bubble.html",
         "hqwebapp/crispy/field_with_addons.html",
+        "hqwebapp/crispy/field/field_with_text.html",
         "hqwebapp/js/daterangepicker.config.js",  # Todo B5: delete me after migration
     ]
 }
