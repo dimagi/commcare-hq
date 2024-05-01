@@ -17,6 +17,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_inline_styles,
     make_template_dependency_renames,
     add_todo_comments_for_flags,
+    update_gruntfile,
 )
 
 
@@ -401,3 +402,39 @@ def test_add_todo_comments_for_flags_javascript_noop():
     )
     line = add_todo_comments_for_flags(flags, line, is_template=False)
     eq(line, line)
+
+
+def test_update_gruntfile():
+    filedata = """
+    var apps = [
+        'app_manager',
+        'export/ko',
+        'notifications',
+        'reports_core/choiceListUtils',
+        'locations',
+        'userreports',
+        'cloudcare',
+        'cloudcare/form_entry',
+        'hqwebapp',
+        'case_importer',
+    ];
+    """
+    mocha_paths = ["cloudcare/spec/mocha.html", "cloudcare/spec/form_entry/mocha.html"]
+    result = update_gruntfile(filedata, mocha_paths)
+    expected_result = """
+    var apps = [
+        'app_manager',
+        'export/ko',
+        'notifications',
+        'reports_core/choiceListUtils',
+        'locations',
+        'userreports',
+        'cloudcare/bootstrap3',
+        'cloudcare/bootstrap5',
+        'cloudcare/form_entry/bootstrap3',
+        'cloudcare/form_entry/bootstrap5',
+        'hqwebapp',
+        'case_importer',
+    ];
+    """
+    eq(result, expected_result)

@@ -22,12 +22,12 @@
            </div>
          </div>
        {% endif %}
--      <div id="submit-button" class="form-actions form-group noprint-sub-container" data-bind="visible: showSubmitButton">
-+      <div id="submit-button" class="form-actions form-group noprint-sub-container" data-bind="visible: showSubmitButton">  {# todo B5: css:form-group #}
-         <div data-bind="
-           css: submitClass,
-           style: {
-@@ -69,10 +69,10 @@
+-      <div id="submit-button" class="form-actions form-group noprint-sub-container"
++      <div id="submit-button" class="form-actions form-group noprint-sub-container"  {# todo B5: css:form-group #}
+            data-bind="
+               visible: showSubmitButton,
+               css: { 'sticky-submit': isAnchoredSubmitStyle },
+@@ -67,10 +67,10 @@
      {% if environment == "web-apps" %}
        {% if request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
          <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-bottom-left fade in"
@@ -40,7 +40,7 @@
              <span aria-hidden="true">&times;</span>
            </button>
            <p class="lead">{% trans 'Navigate Across Required Questions' %}</p>
-@@ -87,7 +87,7 @@
+@@ -85,7 +85,7 @@
          </div>
        {% endif %}
      {% endif %}
