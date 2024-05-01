@@ -83,7 +83,7 @@ def get_sso_deactivation_skip_email_context(idp, failure_reason):
         "subject": subject,
         "from": _(f"Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"),
         "to": idp.owner.enterprise_admin_emails or [idp.owner.dimagi_contact] or [settings.ACCOUNT_EMAIL],
-        "bcc": [settings.ACCOUNTS_EMAIL],
+        "bcc": [],
         "html": body_html,
         "plaintext": body_txt,
     }
@@ -130,7 +130,7 @@ def get_api_secret_expiration_email_context(idp):
         "subject": subject,
         "from": _(f"Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"),
         "to": idp.owner.enterprise_admin_emails,
-        "bcc": [settings.ACCOUNTS_EMAIL],
+        "bcc": [],
         "html": body_html,
         "plaintext": body_txt,
     }
