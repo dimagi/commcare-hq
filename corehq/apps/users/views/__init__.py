@@ -375,6 +375,11 @@ class BaseEditUserView(BaseUserSettingsView):
         else:
             return self.get(request, *args, **kwargs)
 
+    def dispatch(self, *args, **kwargs):
+        if not user_can_access_other_user(self.domain, self.request.couch_user, self.editable_user):
+            return HttpResponse(status=401)
+        return super().dispatch(*args, **kwargs)
+
 
 @location_safe
 class EditWebUserView(BaseEditUserView):
