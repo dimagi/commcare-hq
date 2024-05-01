@@ -38,7 +38,6 @@ IGNORED_PATHS_BY_APP = {
         "hqwebapp/bulk_upload.html",
         "hqwebapp/crispy/single_crispy_form.html",
         "hqwebapp/spec/mocha.html",
-        "hqwebapp/js/maintenance_alerts.js",
         "hqwebapp/spec/widgets_spec.js",
     ]
 }
