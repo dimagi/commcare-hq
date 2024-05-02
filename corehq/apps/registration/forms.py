@@ -528,8 +528,8 @@ class AdminInvitesUserForm(BaseLocationForm):
                 ),
                 'role',
                 'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
-                'assigned_locations' if ('assigned_locations' in self.fields and should_show_location) else None,
-                'primary_location' if ('primary_location' in self.fields and should_show_location) else None,
+                'assigned_locations' if should_show_location else None,
+                'primary_location' if should_show_location else None,
             ),
             crispy.HTML(
                 render_to_string(
