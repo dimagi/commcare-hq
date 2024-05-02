@@ -1528,7 +1528,7 @@ def case_form_data(request, domain, case_id, xform_id):
         }, status=403)
     context = _get_form_render_context(request, domain, instance, case_id)
     return JsonResponse({
-        'html': render_to_string("reports/form/partials/single_form.html", context, request=request),
+        'html': render_to_string("reports/form/partials/bootstrap3/single_form.html", context, request=request),
         'xform_id': xform_id,
         'question_response_map': context['question_response_map'],
         'ordered_question_values': context['ordered_question_values'],
