@@ -1884,7 +1884,7 @@ class TableauServerView(BaseProjectReportSectionView):
 class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedViewMixin):
     urlname = 'tableau_visualization_list_view'
     page_title = _('Tableau Visualizations')
-    template_name = 'reports/tableau_visualization.html'
+    template_name = 'reports/bootstrap3/tableau_visualization.html'
 
     @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
     def dispatch(self, request, *args, **kwargs):
