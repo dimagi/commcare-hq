@@ -505,11 +505,11 @@ def _track_domain(env):
                 },
                 {
                     'property': '{}domain_form_submission_last_30_days'.format(env),
-                    'value': domain['cp_is_active']
+                    'value': domain['cp_is_active'] if 'cp_is_active' in domain else False
                 },
                 {
                     'property': '{}domain_subscription_plan'.format(env),
-                    'value': domain['subscription']
+                    'value': domain['subscription'] if 'subscription' in domain else None
                 },
                 {
                     'property': '{}domain_is_test'.format(env),
