@@ -254,9 +254,7 @@ class PushAppTranslationsForm(AppTranslationsForm):
 
     def form_fields(self):
         form_fields = super(PushAppTranslationsForm, self).form_fields()
-        # for some reason this works only works with both of these lines, not one or the other
         form_fields.append(crispy.Field('target_lang', css_class="hqwebapp-select2"))
-        form_fields.append('target_lang')
         return form_fields
 
 
@@ -291,9 +289,11 @@ class DeleteAppTranslationsForm(AppTranslationsForm):
     form_action = 'delete'
 
     def form_fields(self):
-        form_fields = super(DeleteAppTranslationsForm, self).form_fields()
-        form_fields.append('perform_translated_check')
-        return form_fields
+        return [
+            crispy.Field('transifex_project_slug', css_class="hqwebapp-select2"),
+            'action',
+            'perform_translated_check'
+        ]
 
 
 class DownloadAppTranslationsForm(CreateUpdateAppTranslationsForm):
