@@ -165,7 +165,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
 class SensitiveCaseProperties(CaseListExplorerColumns):
     slug = "sensitive_properties"
     label = gettext_lazy("De-identify options")
-    template = "reports/filters/sensitive_columns.html"
+    template = "reports/filters/bootstrap3/sensitive_columns.html"
 
     @property
     def filter_context(self):
