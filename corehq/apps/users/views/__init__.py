@@ -1230,7 +1230,7 @@ class BaseUploadUser(BaseUserSettingsView):
 
 
 class UploadWebUsers(BaseUploadUser):
-    template_name = 'hqwebapp/bulk_upload.html'
+    template_name = 'hqwebapp/bootstrap3/bulk_upload.html'
     urlname = 'upload_web_users'
     page_title = gettext_noop("Bulk Upload Web Users")
     is_web_upload = True

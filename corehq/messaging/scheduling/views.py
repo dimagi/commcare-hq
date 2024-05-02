@@ -1057,7 +1057,7 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
 class UploadConditionalAlertView(BaseMessagingSectionView):
     urlname = 'upload_conditional_alert'
     page_title = gettext_lazy("Upload SMS Alert Content")
-    template_name = 'hqwebapp/bulk_upload.html'
+    template_name = 'hqwebapp/bootstrap3/bulk_upload.html'
 
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     def dispatch(self, *args, **kwargs):
