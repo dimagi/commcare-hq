@@ -165,7 +165,7 @@ class BaseMultipleOptionFilter(BaseSingleOptionFilter):
     """
         Displays a multiselect field.
     """
-    template = "reports/filters/multi_option.html"
+    template = "reports/filters/bootstrap3/multi_option.html"
     default_options = [] # specify a list
 
     @classmethod
