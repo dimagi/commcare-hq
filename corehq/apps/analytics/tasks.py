@@ -493,8 +493,12 @@ def _track_domain(env):
     submit_data = []
     for domain in res:
         domain_json = {
-            'email': domain['name'],  # TODO: Double check that we can use name here instead of email
+            'email': '',  # TODO: Use an appropriate identity
             'properties': [
+                {
+                    'property': '{}domain_name'.format(env),
+                    'value': domain['name']
+                },
                 {
                     'property': '{}domain_is_live'.format(env),
                     'value': domain['is_active']
