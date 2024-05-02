@@ -490,7 +490,7 @@ def _track_domain(env):
     ).run().hits
     # TODO: Check if we want to process in chunks (maybe not ?)
 
-    submit_json = []
+    submit_data = []
     for domain in res:
         domain_json = {
             'email': domain['name'],  # TODO: Double check that we can use name here instead of email
@@ -513,12 +513,12 @@ def _track_domain(env):
                 },
             ]
         }
-        submit_json.append(domain_json)
+        submit_data.append(domain_json)
 
     kissmetrics_dispatch = (
         _track_periodic_data_on_kiss, "Error submitting periodic analytics data to Kissmetrics"
     )
-    submit_data([kissmetrics_dispatch], submit_json)
+    submit_data([kissmetrics_dispatch], json.dumps(submit_data))
 
 
 @periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
