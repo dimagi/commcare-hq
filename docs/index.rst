@@ -132,7 +132,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :caption: Code
     :maxdepth: 1
 
-    toggles
+    toggles/toggles
     commtrack
     elasticsearch
     middleware
