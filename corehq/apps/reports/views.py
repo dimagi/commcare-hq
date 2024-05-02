@@ -219,7 +219,7 @@ class BaseProjectReportSectionView(BaseDomainView):
 class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
     page_title = gettext_noop("My Saved Reports")
-    template_name = 'reports/reports_home.html'
+    template_name = 'reports/bootstrap3/reports_home.html'
 
     @use_jquery_ui
     @use_datatables
