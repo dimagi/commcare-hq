@@ -1484,7 +1484,7 @@ def view_form_attachment(request, domain, instance_id, attachment_id):
     }
     return render(
         request,
-        template_name='reports/reportdata/view_form_attachment.html',
+        template_name='reports/reportdata/bootstrap3/view_form_attachment.html',
         context=context
     )
 
