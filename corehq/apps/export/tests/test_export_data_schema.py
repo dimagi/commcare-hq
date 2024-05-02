@@ -5,7 +5,6 @@ from django.test import SimpleTestCase, TestCase
 from unittest.mock import patch
 
 from corehq.apps.app_manager.models import (
-    AdvancedModule,
     AdvancedOpenCaseAction,
     Application,
     CaseIndex,
@@ -18,6 +17,8 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_dictionary.util import generate_data_dictionary
 from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
@@ -1353,4 +1354,87 @@ class TestOrderingOfSchemas(SimpleTestCase):
                 ScalarItem(path=[PathNode(name='three')]),
                 GeopointItem(path=[PathNode(name='one')]),
             ],
+        )
+
+
+class TestOrderingOfCaseSchemaItemsFromDataDictionary(TestCase, TestXmlMixin):
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+    case_type = 'person'
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestOrderingOfCaseSchemaItemsFromDataDictionary, cls).setUpClass()
+
+        factory = AppFactory(domain=cls.domain)
+        module1, form1 = factory.new_basic_module('update_case', cls.case_type)
+        factory.form_requires_case(form1, cls.case_type, update={
+            'age': '/data/age',
+            'height': '/data/height',
+            'weight': '/data/weight',
+        })
+        cls.current_app = factory.app
+
+        with drop_connected_signals(app_post_save):
+            cls.current_app.save()
+
+        with patch('corehq.apps.data_dictionary.util.get_case_types_from_apps', return_value={cls.case_type}):
+            generate_data_dictionary(cls.domain)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.current_app.delete()
+        super(TestOrderingOfCaseSchemaItemsFromDataDictionary, cls).tearDownClass()
+
+    def _get_schema_item_order(self, for_new_export_instance=True):
+        schema = self._generate_schema(for_new_export_instance=for_new_export_instance)
+        return [item.label for item in schema.group_schemas[0].items]
+
+    def _generate_schema(self, for_new_export_instance=True):
+        return CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            None,
+            self.case_type,
+            for_new_export_instance=for_new_export_instance
+        )
+
+    def test_data_dictionary_setup(self):
+        data_dictionary_case_types = CaseType.objects.filter(domain=self.domain).all()
+        self.assertEqual(len(data_dictionary_case_types), 1)
+
+        case_type = data_dictionary_case_types[0]
+        case_properties = list(CaseProperty.objects.filter(case_type=case_type.pk).values_list('name', flat=True))
+        self.assertEqual(
+            set(case_properties),
+            {'name', 'age', 'height', 'weight'}
+        )
+
+    @patch('corehq.apps.data_dictionary.util.get_case_types_from_apps')
+    def test_default_ordering(self, *args):
+        self.assertListEqual(
+            self._get_schema_item_order(),
+            ['age', 'height', 'weight']
+        )
+
+        self.assertListEqual(
+            self._get_schema_item_order(for_new_export_instance=False),
+            ['age', 'height', 'weight']
+        )
+
+    @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
+    def test_ordering_for_existing_instance_with_feature_flag(self, *args):
+        schema = self._generate_schema(for_new_export_instance=False)
+        schemas_item_order = [item.label for item in schema.group_schemas[0].items]
+        self.assertListEqual(schemas_item_order, ['age', 'height', 'weight'])
+
+    @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
+    def test_ordering_for_new_instance_with_feature_flag(self, *args):
+        age_case_property = CaseProperty.objects.filter(name='age').first()
+        age_case_property.index = 2  # move it to the end
+        age_case_property.save()
+
+        self.assertListEqual(
+            self._get_schema_item_order(),
+            ['height', 'weight', 'age']
         )
