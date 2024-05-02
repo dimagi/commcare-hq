@@ -133,7 +133,8 @@ class TestCanUserAccessWebApp(TestCase):
 
         self.assertTrue(has_access)
 
-    def test_commcare_user_does_not_have_access_if_assigned_role_that_cannot_access_web_apps(self):
+    def test_commcare_user_has_access_if_assigned_role_that_cannot_access_web_apps(self):
+        # mobile users have not historically required this new permission, so we need to assume they have access
         role = UserRole.create(
             self.domain, "cannot-access-web-apps", permissions=HqPermissions(access_web_apps=False)
         )
@@ -141,7 +142,7 @@ class TestCanUserAccessWebApp(TestCase):
 
         can_access = can_user_access_web_app(self.app_doc, self.commcare_user, self.domain)
 
-        self.assertFalse(can_access)
+        self.assertTrue(can_access)
 
     def test_commcare_user_has_access_if_assigned_role_that_can_access_specific_app(self):
         role = UserRole.create(

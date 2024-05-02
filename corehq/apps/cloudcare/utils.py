@@ -24,7 +24,7 @@ def can_user_access_web_app(app, user, domain):
     :param domain: domain name
     """
     # Backwards-compatibility - mobile users haven't historically required this permission
-    has_access_via_permission = False
+    has_access_via_permission = user.is_commcare_user()
     if user.is_web_user() or user.can_access_any_web_apps(domain):
         has_access_via_permission = user.can_access_web_app(domain, app.get('copy_of', app.get('_id')))
 
