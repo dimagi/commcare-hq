@@ -17,12 +17,12 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.util.quickcache import quickcache
 
 
-def can_user_access_web_app(app, user, domain):
+def can_user_access_web_app(user, app):
     """
-    :param app: app doc (not wrapped Application)
     :param user: either a WebUser or CommCareUser
-    :param domain: domain name
+    :param app: app doc (not wrapped Application)
     """
+    domain = app.get("domain")
     # Backwards-compatibility - mobile users haven't historically required this permission
     has_access_via_permission = user.is_commcare_user()
     if user.is_web_user() or user.can_access_any_web_apps(domain):
@@ -64,7 +64,7 @@ def get_web_apps_available_to_user(domain, user, is_preview=False, fetch_app_fn=
     app_ids = get_app_ids_in_domain(domain)
     for app_id in app_ids:
         app = fetch_app_fn(domain, user.username, app_id)
-        if app and is_web_app(app) and can_user_access_web_app(app, user, domain):
+        if app and is_web_app(app) and can_user_access_web_app(user, app):
             apps.append(app)
 
     return apps
