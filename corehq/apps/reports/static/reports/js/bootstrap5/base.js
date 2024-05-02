@@ -1,4 +1,4 @@
-hqDefine("reports/js/base", function () {
+hqDefine("reports/js/bootstrap5/base", function () {
     $(function () {
         hqImport("reports/js/filters/main").init();
 
@@ -26,7 +26,7 @@ hqDefine("reports/js/base", function () {
             reportConfigsView.setConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
         }
 
-        $('#email-enabled').tooltip({
+        $('#email-enabled').tooltip({  /* todo B5: plugin:tooltip */
             placement: 'right',
             html: true,
             title: gettext("You can email a saved version<br />of this report."),
