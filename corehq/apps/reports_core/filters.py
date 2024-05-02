@@ -112,7 +112,7 @@ class BaseFilter(object):
 
 
 class DatespanFilter(BaseFilter):
-    template = 'reports_core/filters/datespan_filter.html'
+    template = 'reports_core/filters/bootstrap3/datespan_filter.html'
 
     def __init__(self, name, label='Datespan Filter', css_id=None, compare_as_string=False):
         self.label = label
