@@ -531,14 +531,17 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domain_memberships.append(domain_membership)
         self.domains.append(domain)
 
-    def add_as_web_user(self, domain, role, location_id=None, program_id=None):
+    def add_as_web_user(self, domain, role, primary_location_id=None,
+                        assigned_locations_ids=[], program_id=None):
         domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
         if domain_obj.commtrack_enabled:
             self.get_domain_membership(domain).program_id = program_id
-        if domain_obj.uses_locations and location_id:
-            self.set_location(domain, location_id)
+        if domain_obj.uses_locations:
+            if primary_location_id:
+                self.set_location(domain, primary_location_id)
+            self.reset_locations(domain, assigned_locations_ids)
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
@@ -2821,7 +2824,8 @@ class Invitation(models.Model):
         web_user.add_as_web_user(
             self.domain,
             role=self.role,
-            location_id=getattr(self.location, "location_id", None),
+            primary_location_id=getattr(self.location, "primary_location_id", None),
+            assigned_locations_ids=getattr(self.location, "assigned_locations_ids", None),
             program_id=self.program,
         )
         self.is_accepted = True
