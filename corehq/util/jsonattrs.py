@@ -95,7 +95,7 @@ __all__ = ["AttrsDict", "AttrsList", "dict_of", "list_of"]
 
 class JsonAttrsField(JSONField):
     default_error_messages = {
-        'invalid': _("'%(field)s' field value has an invalid format: %(exc)s"),
+        'invalid_attr': _("'%(field)s' field value has an invalid format: %(exc)s"),
     }
 
     def __init__(self, *args, builder, **kw):
@@ -113,8 +113,8 @@ class JsonAttrsField(JSONField):
             return self.builder.attrify(value)
         except Exception as exc:
             raise ValidationError(
-                self.error_messages['invalid'],
-                code='invalid',
+                self.error_messages['invalid_attr'],
+                code='invalid_attr',
                 params={
                     'field': self.name,
                     'exc': BadValue.format(value, exc),
@@ -196,49 +196,7 @@ class AttrsObject(JsonAttrsField):
 
 
 @define
-class AttrsListBuilder:
-    attrs_type = field()
-
-    def attrify(self, items):
-        attrs_type = self.attrs_type
-        if items is None:
-            return items
-        from_json = make_from_json(attrs_type)
-        return [from_json(item) for item in items]
-
-    def jsonify(self, value):
-        if not value:
-            return value
-        if hasattr(self.attrs_type, "__jsonattrs_to_json__"):
-            to_json = self.attrs_type.__jsonattrs_to_json__
-        else:
-            to_json = asdict
-        return [to_json(v) for v in value]
-
-
-@define
-class AttrsDictBuilder:
-    attrs_type = field()
-
-    def attrify(self, values):
-        attrs_type = self.attrs_type
-        if values is None:
-            return values
-        from_json = make_from_json(attrs_type)
-        return {key: from_json(value) for key, value in values.items()}
-
-    def jsonify(self, value):
-        if not value:
-            return value
-        if hasattr(self.attrs_type, "__jsonattrs_to_json__"):
-            to_json = self.attrs_type.__jsonattrs_to_json__
-        else:
-            to_json = asdict
-        return {k: to_json(v) for k, v in value.items()}
-
-
-@define
-class AttrsObjectBuilder:
+class BaseBuilder:
     attrs_type = field()
 
     def attrify(self, value):
@@ -246,7 +204,7 @@ class AttrsObjectBuilder:
         if value is None:
             return value
         from_json = make_from_json(attrs_type)
-        return from_json(value)
+        return self._attrify(value, from_json)
 
     def jsonify(self, value):
         if not value:
@@ -255,6 +213,42 @@ class AttrsObjectBuilder:
             to_json = self.attrs_type.__jsonattrs_to_json__
         else:
             to_json = asdict
+        return self._jsonify(value, to_json)
+
+    def _attrify(self, value, from_json):
+        raise NotImplementedError()
+
+    def _jsonify(self, value, to_json):
+        raise NotImplementedError()
+
+
+@define
+class AttrsListBuilder(BaseBuilder):
+
+    def _attrify(self, value, from_json):
+        return [from_json(item) for item in value]
+
+    def _jsonify(self, value, to_json):
+        return [to_json(v) for v in value]
+
+
+@define
+class AttrsDictBuilder(BaseBuilder):
+
+    def _attrify(self, value, from_json):
+        return {key: from_json(value) for key, value in value.items()}
+
+    def _jsonify(self, value, to_json):
+        return {k: to_json(v) for k, v in value.items()}
+
+
+@define
+class AttrsObjectBuilder(BaseBuilder):
+
+    def _attrify(self, value, from_json):
+        return from_json(value)
+
+    def _jsonify(self, value, to_json):
         return to_json(value)
 
 
@@ -347,12 +341,25 @@ class list_of:
 
 class JsonAttrsFormField(forms.JSONField):
     default_error_messages = {
-        'invalid': _("'%(field)s' field value has an invalid format: %(exc)s"),
+        'invalid_attr': _("%(exc)s"),
     }
 
     def __init__(self, builder, encoder=None, decoder=None, **kwargs):
         self.builder = builder
         super().__init__(encoder, decoder, **kwargs)
+
+    def validate(self, value):
+        super().validate(value)
+        try:
+            self.builder.attrify(value)
+        except Exception as exc:
+            raise ValidationError(
+                self.error_messages['invalid_attr'],
+                code='invalid_attr',
+                params={
+                    'exc': BadValue.format(value, exc),
+                },
+            )
 
     def prepare_value(self, value):
         if isinstance(value, str):

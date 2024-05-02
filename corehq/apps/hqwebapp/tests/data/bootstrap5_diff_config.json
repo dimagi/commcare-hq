@@ -263,11 +263,29 @@
   "apps/notifications/templates/notifications": [
     {
       "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "notifications",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
         "partials/bootstrap3",
         "partials/bootstrap5"
       ],
       "file_type": "template",
       "label": "notifications/partials",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "spec/bootstrap3",
+        "spec/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "notifications/spec",
       "compare_all_files": true
     }
   ],
@@ -468,6 +486,17 @@
       ],
       "file_type": "template",
       "label": "cloudcare/spec/form_entry",
+      "compare_all_files": true
+    }
+  ],
+  "apps/notifications/static/notifications/spec": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/notifications/spec",
       "compare_all_files": true
     }
   ]
