@@ -167,7 +167,7 @@ class DatespanFilter(BaseFilter):
 
 
 class QuarterFilter(BaseFilter):
-    template = 'reports_core/filters/quarter_filter.html'
+    template = 'reports_core/filters/bootstrap3/quarter_filter.html'
 
     def __init__(self, name, label=_('Quarter'), css_id=None, show_all=False):
         self.label = label
