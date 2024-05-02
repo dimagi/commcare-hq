@@ -1,6 +1,13 @@
 import os
+import sys
 
 import pytest
+
+if type(sys.modules).__module__.split(".")[0] == "ddtrace" and hasattr(sys.modules, "uninstall"):
+    # Remove ddtrace cruft from tracebacks. ModuleWatchdog is installed
+    # unconditionally when ddtrace is imported, which happens early
+    # in pytest startup because of ddtrace's pytest11 entry point(s).
+    sys.modules.uninstall()
 
 pytest_plugins = [
     #'corehq.tests.pytest_plugins.dbtransaction',  # FIXME
