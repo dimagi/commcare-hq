@@ -629,6 +629,15 @@
     },
     {
       "directories": [
+        "spec/bootstrap3",
+        "spec/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports/spec",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
         "standard/bootstrap3",
         "standard/bootstrap5"
       ],
@@ -663,6 +672,17 @@
       ],
       "file_type": "javascript",
       "label": "javascript/reports/js/filters",
+      "compare_all_files": true
+    }
+  ],
+  "apps/reports/static/reports/spec": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/reports/spec",
       "compare_all_files": true
     }
   ]
