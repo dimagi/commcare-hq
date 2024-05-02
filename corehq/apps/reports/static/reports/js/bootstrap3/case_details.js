@@ -1,4 +1,4 @@
-hqDefine("reports/js/case_details", [
+hqDefine("reports/js/bootstrap3/case_details", [
     'jquery',
     'knockout',
     'underscore',
