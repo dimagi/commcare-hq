@@ -315,7 +315,7 @@ class ChoiceListFilter(BaseFilter):
     """
     Filter for a list of choices. Each choice should be a Choice object as per above.
     """
-    template = 'reports_core/filters/choice_list_filter.html'
+    template = 'reports_core/filters/bootstrap3/choice_list_filter.html'
 
     def __init__(self, name, field, datatype, label='Choice List Filter',
                  css_id=None, choices=None):
