@@ -68,3 +68,8 @@ To access your plugin:
   ``toggleEnabled`` method.
 
 (Note: Plugins were historically called Feature Flags and Toggles)
+
+ .. toctree::
+    :maxdepth: 2
+
+    application_error_report
