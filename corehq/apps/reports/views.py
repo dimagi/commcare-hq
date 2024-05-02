@@ -874,7 +874,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 
 
 class ReportNotificationUnsubscribeView(TemplateView):
-    template_name = 'reports/notification_unsubscribe.html'
+    template_name = 'reports/bootstrap3/notification_unsubscribe.html'
     urlname = 'notification_unsubscribe'
     not_found_error = gettext_noop('Could not find the requested Scheduled Report')
     broken_link_error = gettext_noop('Invalid unsubscribe link')
