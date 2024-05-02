@@ -54,6 +54,7 @@ from corehq.apps.analytics.utils.partner_analytics import (
 from corehq.apps.celery import periodic_task
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
+from corehq.apps.es import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.apps.users.dbaccessors import get_all_user_rows
@@ -483,11 +484,11 @@ def _get_report_count(domain):
 
 
 def _track_domain(env):
-    from corehq.apps.es import DomainES
     res = (
         DomainES()
         .source(['name', 'is_active', 'cp_is_active', 'is_test', 'subscription',])
     ).run().hits
+    # TODO: Check if we want to process in chunks (maybe not ?)
 
     submit_json = []
     for domain in res:
@@ -507,10 +508,6 @@ def _track_domain(env):
                     'value': domain['subscription']
                 },
                 {
-                    'property': '{}domain_subscription_plan'.format(env),
-                    'value': domain['subscription']
-                },
-                {
                     'property': '{}domain_is_test'.format(env),
                     'value': domain['is_test']
                 },
@@ -518,7 +515,10 @@ def _track_domain(env):
         }
         submit_json.append(domain_json)
 
-    # TODO: Send to kissmetrics
+    kissmetrics_dispatch = (
+        _track_periodic_data_on_kiss, "Error submitting periodic analytics data to Kissmetrics"
+    )
+    submit_data([kissmetrics_dispatch], submit_json)
 
 
 @periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
@@ -533,6 +533,9 @@ def track_periodic_data():
         return
 
     time_started = datetime.utcnow()
+
+    # Keep track of india and www data separately
+    env = get_instance_string()
 
     three_months_ago = date.today() - timedelta(days=90)
 
@@ -576,9 +579,6 @@ def track_periodic_data():
                                    .aggregations
                                    .domain
                                    .counts_by_bucket())
-
-        # Keep track of india and www data seperately
-        env = get_instance_string()
 
         for num_forms in domains_to_forms.values():
             if num_forms > HUBSPOT_THRESHOLD:
@@ -686,6 +686,9 @@ def track_periodic_data():
         'commcare.hubspot.domains_with_forms_gt_threshold', hubspot_number_of_domains_with_forms_gt_threshold,
         multiprocess_mode=MPM_MAX
     )
+
+    # TODO: Consider refactoring user metrics to a separate method
+    _track_domain(env)
 
     task_time = datetime.utcnow() - time_started
     metrics_gauge(
