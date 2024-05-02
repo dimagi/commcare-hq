@@ -2,13 +2,13 @@
  * todo add docstring
  */
 
-hqDefine('reports/v2/js/datagrid/data_models', [
+hqDefine('reports/v2/js/datagrid/bootstrap5/data_models', [
     'jquery',
     'knockout',
     'underscore',
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/components.ko',  // pagination widget
+    'hqwebapp/js/bootstrap5/components.ko',  // pagination widget
 ], function (
     $,
     ko,
