@@ -685,5 +685,45 @@
       "label": "javascript/reports/spec",
       "compare_all_files": true
     }
+  ],
+  "apps/reports_core/templates/reports_core": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports_core",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "filters/bootstrap3",
+        "filters/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports_core/filters",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "reports_core/partials",
+      "compare_all_files": true
+    }
+  ],
+  "apps/reports_core/static/reports_core/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/reports_core/js",
+      "compare_all_files": true
+    }
   ]
 }
