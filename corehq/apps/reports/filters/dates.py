@@ -59,7 +59,7 @@ class HiddenLastMonthDateFilter(DatespanFilter):
     A filter that returns last month as datespan
     but is hidden since datespan should be fixed to last month
     """
-    template = "reports/filters/month_datespan.html"
+    template = "reports/filters/bootstrap3/month_datespan.html"
     label = gettext_lazy("Date Range")
     slug = "datespan"
     inclusive = True
