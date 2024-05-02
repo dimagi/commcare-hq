@@ -1,7 +1,9 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import _ from 'underscore';
+import Pagination from 'HQ/styleguide/components/pagination.js'
 
-function RowClass({row}) {
+function RowDisplay({row}) {
     return (
         <tr>
             <td>
@@ -29,7 +31,7 @@ function RowClass({row}) {
     );
 }
 
-function DisplayTable({rows, RowCls}) {
+function TableDisplay({rows, getItemId}) {
     return (
         <table className="table table-striped table-responsive" style={{marginBottom: 0}}>
             <thead>
@@ -42,24 +44,39 @@ function DisplayTable({rows, RowCls}) {
                 </tr>
             </thead>
             <tbody>
-                {rows.map(row => <RowCls key={row.id} row={row} />)}
+                {rows.map(row => <RowDisplay key={getItemId(row)} row={row} />)}
             </tbody>
         </table>
     );
 }
 
 window.addEventListener('load', async () => {
-    const url = new URL('/a/first-domain/settings/users/commcare/json/', window.location.origin);
-    url.search = new URLSearchParams({
-        page: 1,
-        limit: 5,
-        showDeactivatedUsers: false,
-    }) ;
+    const getPageItemsAsync = (pageNum, pageSize) => {
+        const url = new URL('/a/first-domain/settings/users/commcare/json/', window.location.origin);
+        url.search = new URLSearchParams({
+            page: pageNum,
+            limit: pageSize,
+            showDeactivatedUsers: false,
+        }) ;
 
-    const users = await fetch(url)
-    .then(response => response.json()).then(response => {
-        return response.users.map(user => Object.assign(user, {'id': user['user_id']}));
-    });
+        return fetch(url).then(response => response.json()).then(response => {
+            return {
+                items: response.users,
+                totalItemCount: response.total,
+            };
+        });
+    };
+
+
+    const getItemId = (item) => item.user_id;
     const root = createRoot(document.getElementById('reactRoot'));
-    root.render(<DisplayTable rows={users} RowCls={RowClass} />);
+    root.render(
+        <Pagination
+            id="pagination-example"
+            DisplayCls={TableDisplay}
+            getItemId={getItemId}
+            getPageItems={getPageItemsAsync}
+            slug="pagination-example"
+        />
+    );
 });
