@@ -6,7 +6,7 @@
 
 */
 
-hqDefine("reports/js/scheduled_reports_list", [
+hqDefine("reports/js/bootstrap3/scheduled_reports_list", [
     'jquery',
     'knockout',
     'underscore',
