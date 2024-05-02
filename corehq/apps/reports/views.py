@@ -1812,7 +1812,7 @@ def project_health_user_details(request, domain, user_id):
         reverse('project_report_dispatcher', args=(domain, 'submissions_by_form')),
         user_id,
     )
-    return render(request, 'reports/project_health/user_details.html', {
+    return render(request, 'reports/project_health/bootstrap3/user_details.html', {
         'domain': domain,
         'user': user,
         'groups': ', '.join(g.name for g in Group.by_user_id(user_id)),
