@@ -15,7 +15,10 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -488,23 +491,33 @@ class AdminInvitesUserForm(forms.Form):
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
 
-    def __init__(self, data=None, excluded_emails=None, is_add_user=None, location=None,
-                 role_choices=(), *, domain, **kwargs):
+    def __init__(self, data=None, excluded_emails=None, is_add_user=None,
+                 role_choices=(), should_show_location=False, *, domain, **kwargs):
         super(AdminInvitesUserForm, self).__init__(data=data, **kwargs)
         domain_obj = Domain.get_by_name(domain)
         self.fields['role'].choices = role_choices
-        if domain_obj.commtrack_enabled:
-            self.fields['location_id'] = forms.CharField(label='Primary Location', required=False,
-                                                          widget=LocationSelectWidget(domain_obj.name),
-                                                          help_text=EMWF.location_search_help,
-                                                          initial=location.location_id if location else '')
-            self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
-            programs = Program.by_domain(domain_obj.name)
-            choices = list((prog.get_id, prog.name) for prog in programs)
-            choices.insert(0, ('', ''))
-            self.fields['program'].choices = choices
-        self.excluded_emails = excluded_emails or []
+        if domain_obj:
+            self.fields['primary_location_id'] = forms.CharField(label='Primary Location', required=False,
+                                                         widget=LocationSelectWidget(domain_obj.name,
+                                                                                    id='id_primary_location_id'),
+                                                         help_text=EMWF.location_search_help)
 
+            if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
+                self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)
+                from corehq.apps.users.views.mobile import UserFieldsView
+                definition = CustomDataFieldsDefinition.get(domain_obj.name, UserFieldsView.field_type)
+                if definition:
+                    profiles = definition.get_profiles()
+                    if len(profiles) > 0:
+                        self.fields['profile'].choices = [('', '')] + [
+                            (profile.id, profile.name) for profile in profiles
+                        ]
+            if domain_obj.commtrack_enabled:
+                self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
+                programs = Program.by_domain(domain_obj.name)
+                choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
+                self.fields['program'].choices = choices
+        self.excluded_emails = excluded_emails or []
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
         self.helper.form_class = 'form-horizontal form-ko-validation'
@@ -521,6 +534,8 @@ class AdminInvitesUserForm(forms.Form):
                     data_bind="textInput: email",
                 ),
                 'role',
+                'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
+                'primary_location_id' if ('primary_location_id' in self.fields and should_show_location) else None,
             ),
             crispy.HTML(
                 render_to_string(
