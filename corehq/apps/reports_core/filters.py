@@ -233,7 +233,7 @@ class QuarterFilter(BaseFilter):
 
 
 class NumericFilter(BaseFilter):
-    template = "reports_core/filters/numeric_filter.html"
+    template = "reports_core/filters/bootstrap3/numeric_filter.html"
 
     def __init__(self, name, label=_('Numeric Filter'), css_id=None):
         self.label = label
