@@ -418,7 +418,7 @@ class MultiFieldDynamicChoiceListFilter(DynamicChoiceListFilter):
 
 
 class LocationDrilldownFilter(BaseFilter):
-    template = 'reports_core/filters/location_async.html'
+    template = 'reports_core/filters/bootstrap3/location_async.html'
     location_filter = True
 
     def __init__(self, name, field, datatype, label, domain, include_descendants,
