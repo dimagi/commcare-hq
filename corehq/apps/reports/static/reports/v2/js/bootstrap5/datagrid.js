@@ -2,18 +2,18 @@
  * todo add docstring
  */
 
-hqDefine('reports/v2/js/datagrid', [
+hqDefine('reports/v2/js/bootstrap5/datagrid', [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
-    'reports/v2/js/datagrid/bootstrap3/data_models',
+    'reports/v2/js/datagrid/bootstrap5/data_models',
     'reports/v2/js/datagrid/columns',
     'reports/v2/js/datagrid/report_filters',
     'analytix/js/kissmetrix',
     'hqwebapp/js/initial_page_data',
     'reports/v2/js/datagrid/binding_handlers',  // for custom ko bindingHandlers
-    'hqwebapp/js/bootstrap3/knockout_bindings.ko',  // for modal bindings
+    'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // for modal bindings
 ], function (
     $,
     ko,

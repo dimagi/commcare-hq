@@ -3,7 +3,7 @@ hqDefine('reports/v2/js/views/explore_case_data', [
     'knockout',
     'underscore',
     'reports/v2/js/context',
-    'reports/v2/js/datagrid',
+    'reports/v2/js/bootstrap3/datagrid',
 ], function (
     $,
     ko,
