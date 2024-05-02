@@ -847,7 +847,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
     emailable = False
     exportable = False
     hide_filters = True
-    report_template_path = "reports/messaging/event_detail.html"
+    report_template_path = "reports/messaging/bootstrap3/event_detail.html"
     parent_report_class = MessagingEventsReport
 
     @classmethod
