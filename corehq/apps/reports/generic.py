@@ -320,7 +320,7 @@ class GenericReportView(object):
     @property
     @memoized
     def template_filters(self):
-        return self.base_template_filters or "reports/async/filters.html"
+        return self.base_template_filters or "reports/async/bootstrap3/filters.html"
 
     @property
     @memoized
