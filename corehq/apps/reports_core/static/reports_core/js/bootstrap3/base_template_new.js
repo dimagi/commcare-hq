@@ -24,7 +24,7 @@ hqDefine('reports_core/js/bootstrap3/base_template_new', function () {
         var updateMap = function (data) {
             if (mapSpec) {
                 mapSpec.mapboxAccessToken = initialPageData.get('MAPBOX_ACCESS_TOKEN');
-                var renderMap = hqImport('reports_core/js/maps').render;
+                var renderMap = hqImport('reports_core/js/bootstrap3/maps').render;
                 renderMap(mapSpec, data.aaData, $("#map-container"));
             }
         };
