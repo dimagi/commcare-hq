@@ -4,12 +4,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "knockout",
     "underscore",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/bootstrap3/main",
+    "hqwebapp/js/bootstrap5/main",
     "analytix/js/google",
-    "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list",
+    "hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list",
     "DOMPurify/dist/purify.min",
     "hqwebapp/js/toggles",
-    "hqwebapp/js/bootstrap3/knockout_bindings.ko",
+    "hqwebapp/js/bootstrap5/knockout_bindings.ko",
     "data_interfaces/js/make_read_only",
     'hqwebapp/js/select2_knockout_bindings.ko',
     'knockout-sortable/build/knockout-sortable',
@@ -146,10 +146,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.confirmGeospatialDeprecation = function () {
-            const $modal = $("#deprecate-geospatial-prop-modal").modal('show');
+            const $modal = $("#deprecate-geospatial-prop-modal").modal('show');  /* todo B5: plugin:modal */
             $("#deprecate-geospatial-prop-btn").off('click').on('click', function () {
                 self.deprecated(true);
-                $modal.modal('hide');
+                $modal.modal('hide');  /* todo B5: plugin:modal */
             });
         };
 
@@ -172,11 +172,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
         });
 
         self.confirmDeleteProperty = function () {
-            const $modal = $("#delete-case-prop-modal").modal('show');
+            const $modal = $("#delete-case-prop-modal").modal('show');  /* todo B5: plugin:modal */
             $("#delete-case-prop-name").text(self.name);
             $("#delete-case-prop-btn").off("click").on("click", () => {
                 self.deleted(true);
-                $modal.modal('hide');
+                $modal.modal('hide');  /* todo B5: plugin:modal */
             });
         };
 
