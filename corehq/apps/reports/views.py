@@ -1411,7 +1411,7 @@ def safely_get_form(request, domain, instance_id):
 class FormDataView(BaseProjectReportSectionView):
     urlname = 'render_form_data'
     page_title = gettext_lazy("Untitled Form")
-    template_name = "reports/reportdata/form_data.html"
+    template_name = "reports/reportdata/bootstrap3/form_data.html"
     http_method_names = ['get']
 
     @method_decorator(require_form_view_permission)
