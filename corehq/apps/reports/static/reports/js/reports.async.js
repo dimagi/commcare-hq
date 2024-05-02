@@ -35,7 +35,7 @@ hqDefine("reports/js/reports.async", function () {
             self.filterRequest = null;
             try {
                 $('#hq-report-filters').html(data.filters);
-                hqImport("reports/js/filters/main").init();
+                hqImport("reports/js/filters/bootstrap3/main").init();
             } catch (e) {
                 console.log(e);
             }
