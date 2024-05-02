@@ -1,4 +1,4 @@
-hqDefine("reports/js/maps_utils", function () {
+hqDefine("reports/js/bootstrap3/maps_utils", function () {
     var module = {};
     module.displayDimensions = ['size', 'color', 'icon'];
     module.tableToggle = false;

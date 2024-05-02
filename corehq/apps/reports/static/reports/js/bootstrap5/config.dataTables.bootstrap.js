@@ -155,7 +155,7 @@ hqDefine("reports/js/bootstrap5/config.dataTables.bootstrap", [
                             applyBootstrapMagic();
                             if ('context' in data) {
                                 var iconPath = data['icon_path'] || $(".base-maps-data").data("icon_path");
-                                hqRequire(["reports/js/maps_utils"], function (mapsUtils) {
+                                hqRequire(["reports/js/bootstrap5/maps_utils"], function (mapsUtils) {
                                     mapsUtils.load(data['context'], iconPath);
                                 });
                             }
