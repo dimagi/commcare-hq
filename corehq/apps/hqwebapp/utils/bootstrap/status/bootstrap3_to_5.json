@@ -46,7 +46,8 @@
     "templates": [
       "maintenance_alerts.html",
       "close_window.html",
-      "crispy/field/multifield.html"
+      "crispy/field/multifield.html",
+      "includes/create_item_form.html"
     ]
   },
   "corehq.tabs": {
