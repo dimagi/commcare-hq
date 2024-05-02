@@ -349,7 +349,8 @@ class TestCommCareUserResource(APIResourceTest):
         backend_id = commcare_user.get_id
 
         activate_url = self.single_endpoint(backend_id) + 'activate/'
-        response = self._assert_auth_post_resource(activate_url, json.dumps({}), content_type='application/json', method='POST')
+        response = self._assert_auth_post_resource(activate_url, json.dumps({}), content_type='application/json',
+                                                   method='POST')
 
         self.assertEqual(response.status_code, 202)
         updated_user = CommCareUser.get(backend_id)
@@ -363,7 +364,8 @@ class TestCommCareUserResource(APIResourceTest):
         backend_id = commcare_user.get_id
 
         deactivate_url = self.single_endpoint(backend_id) + 'deactivate/'
-        response = self._assert_auth_post_resource(deactivate_url, json.dumps({}), content_type='application/json', method='POST')
+        response = self._assert_auth_post_resource(deactivate_url, json.dumps({}), content_type='application/json',
+                                                   method='POST')
 
         self.assertEqual(response.status_code, 202)
         updated_user = CommCareUser.get(backend_id)

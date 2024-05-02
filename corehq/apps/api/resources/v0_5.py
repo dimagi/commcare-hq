@@ -33,7 +33,7 @@ from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
-from tastypie.http import HttpForbidden, HttpUnauthorized, HttpAccepted
+from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource
 
 
@@ -328,8 +328,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/activate/$" % self._meta.resource_name, self.wrap_view('activate_user'), name="api_activate_user"),
-            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/deactivate/$" % self._meta.resource_name, self.wrap_view('deactivate_user'), name="api_deactivate_user"),
+            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/activate/$" % self._meta.resource_name,
+                self.wrap_view('activate_user'), name="api_activate_user"),
+            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/deactivate/$" % self._meta.resource_name,
+                self.wrap_view('deactivate_user'), name="api_deactivate_user"),
         ]
 
     def activate_user(self, request, **kwargs):
