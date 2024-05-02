@@ -231,7 +231,7 @@ class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
 
 
 class DateRangeFilter(BaseReportFilter):
-    template = 'reports/filters/daterange.html'
+    template = 'reports/filters/bootstrap3/daterange.html'
     default_days = 7
 
     START_DATE = 'startdate'
