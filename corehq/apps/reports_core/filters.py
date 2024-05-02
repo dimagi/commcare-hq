@@ -353,7 +353,7 @@ class DynamicChoiceListFilter(BaseFilter):
 
     The choices are generated dynamically based on the database.
     """
-    template = 'reports_core/filters/dynamic_choice_list.html'
+    template = 'reports_core/filters/bootstrap3/dynamic_choice_list.html'
 
     def __init__(self, name, field, datatype, label, show_all, url_generator, choice_provider,
                  ancestor_expression=None, css_id=None):
