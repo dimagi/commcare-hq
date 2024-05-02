@@ -1,4 +1,4 @@
-hqDefine('reports/v2/js/views/explore_case_data', [
+hqDefine('reports/v2/js/views/bootstrap3/explore_case_data', [
     'jquery',
     'knockout',
     'underscore',
