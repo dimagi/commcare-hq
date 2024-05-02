@@ -1,4 +1,4 @@
-hqDefine("reports/js/saved_reports_main", [
+hqDefine("reports/js/bootstrap3/saved_reports_main", [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
