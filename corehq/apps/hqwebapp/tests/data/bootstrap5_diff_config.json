@@ -20,6 +20,15 @@
     },
     {
       "directories": [
+        "crispy/field/bootstrap3",
+        "crispy/field/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "hqwebapp/crispy/field",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
         "includes/bootstrap3",
         "includes/bootstrap5"
       ],
