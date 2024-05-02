@@ -341,6 +341,34 @@ class TestCommCareUserResource(APIResourceTest):
             "non-editable field 'username', 'default_phone_number' must be a string\"}"
         )
 
+    def test_activate_user(self):
+        """Activate the user through the API"""
+        commcare_user = CommCareUser.create(domain=self.domain.name, username='inactive_user', password='*****',
+                                            created_by=None, created_via=None, is_active=False)
+        self.addCleanup(commcare_user.delete, self.domain.name, deleted_by=None)
+        backend_id = commcare_user.get_id
+
+        activate_url = self.single_endpoint(backend_id) + 'activate/'
+        response = self._assert_auth_post_resource(activate_url, json.dumps({}), content_type='application/json', method='POST')
+
+        self.assertEqual(response.status_code, 202)
+        updated_user = CommCareUser.get(backend_id)
+        self.assertTrue(updated_user.is_active)
+
+    def test_deactivate_user(self):
+        """Deactivate the user through the API"""
+        commcare_user = CommCareUser.create(domain=self.domain.name, username='active_user', password='*****',
+                                            created_by=None, created_via=None, is_active=True)
+        self.addCleanup(commcare_user.delete, self.domain.name, deleted_by=None)
+        backend_id = commcare_user.get_id
+
+        deactivate_url = self.single_endpoint(backend_id) + 'deactivate/'
+        response = self._assert_auth_post_resource(deactivate_url, json.dumps({}), content_type='application/json', method='POST')
+
+        self.assertEqual(response.status_code, 202)
+        updated_user = CommCareUser.get(backend_id)
+        self.assertFalse(updated_user.is_active)
+
 
 class TestWebUserResource(APIResourceTest):
     """

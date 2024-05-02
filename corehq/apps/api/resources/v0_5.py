@@ -33,7 +33,7 @@ from tastypie import fields, http
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
-from tastypie.http import HttpForbidden, HttpUnauthorized
+from tastypie.http import HttpForbidden, HttpUnauthorized, HttpAccepted
 from tastypie.resources import ModelResource, Resource
 
 
@@ -325,6 +325,31 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 errors.append(e.message)
 
         return errors
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/activate/$" % self._meta.resource_name, self.wrap_view('activate_user'), name="api_activate_user"),
+            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/deactivate/$" % self._meta.resource_name, self.wrap_view('deactivate_user'), name="api_deactivate_user"),
+        ]
+
+    def activate_user(self, request, **kwargs):
+        return self.change_user_status(request, **kwargs, active=True)
+
+    def deactivate_user(self, request, **kwargs):
+        return self.change_user_status(request, **kwargs, active=False)
+
+    #@api_auth()
+    def change_user_status(self, request, active, **kwargs):
+        self.is_authenticated(request)
+
+        try:
+            user = self.cached_obj_get(bundle=None, **self.remove_api_resource_names(kwargs))
+        except CommCareUser.ObjectDoesNotExist:
+            raise NotFound
+
+        user.is_active = active
+        user.save()
+        return ImmediateHttpResponse(response=http.HttpAccepted())
 
 
 class WebUserResource(v0_1.WebUserResource):
