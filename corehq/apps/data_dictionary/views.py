@@ -32,7 +32,7 @@ from corehq.apps.data_dictionary.util import (
     get_data_dict_props_by_case_type,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
@@ -423,6 +423,7 @@ class DataDictionaryView(BaseProjectDataView):
     urlname = 'data_dictionary'
 
     @method_decorator(login_and_domain_required)
+    @use_bootstrap5
     @use_jquery_ui
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_DICTIONARY))
     @method_decorator(require_permission(HqPermissions.edit_data_dict,
