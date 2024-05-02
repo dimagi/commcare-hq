@@ -1,4 +1,4 @@
-hqDefine('reports_core/js/base_template_new', function () {
+hqDefine('reports_core/js/bootstrap5/base_template_new', function () {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     var baseUrl = initialPageData.get('url');
     function getReportUrl() {
@@ -65,7 +65,7 @@ hqDefine('reports_core/js/base_template_new', function () {
             }
         };
 
-        var reportTables = hqImport("reports/js/bootstrap3/config.dataTables.bootstrap").HQReportDataTables({
+        var reportTables = hqImport("reports/js/bootstrap5/config.dataTables.bootstrap").HQReportDataTables({
             dataTableElem: '#report_table_' + initialPageData.get('report_slug'),
             defaultRows: initialPageData.get('table_default_rows'),
             startAtRowNum: initialPageData.get('table_start_at_row'),
@@ -96,7 +96,7 @@ hqDefine('reports_core/js/base_template_new', function () {
         $("#apply-filters").prop('disabled', false);
 
         $(function () {
-            $('.header-popover').popover({
+            $('.header-popover').popover({  /* todo B5: plugin:popover */
                 trigger: 'hover',
                 placement: 'bottom',
                 container: 'body',
@@ -105,7 +105,7 @@ hqDefine('reports_core/js/base_template_new', function () {
 
         // filter init
         $(function () {
-            hqImport("reports/js/filters/bootstrap3/main").init();
+            hqImport("reports/js/filters/bootstrap5/main").init();
             hqImport("reports/js/charts/main").init();
         });
     });
