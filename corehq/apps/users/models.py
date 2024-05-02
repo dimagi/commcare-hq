@@ -2824,8 +2824,8 @@ class Invitation(models.Model):
         web_user.add_as_web_user(
             self.domain,
             role=self.role,
-            primary_location_id=getattr(self.location, "primary_location_id", None),
-            assigned_locations_ids=getattr(self.location, "assigned_locations_ids", None),
+            primary_location_id=getattr(self.primary_location, "location_id", None),
+            assigned_location_ids=[getattr(loc, "location_id", None) for loc in self.assigned_locations],
             program_id=self.program,
         )
         self.is_accepted = True
