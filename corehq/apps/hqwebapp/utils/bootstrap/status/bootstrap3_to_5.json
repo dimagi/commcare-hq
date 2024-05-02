@@ -70,5 +70,8 @@
   },
   "products": {
     "is_complete": true
+  },
+  "notifications": {
+    "in_progress": true
   }
 }
