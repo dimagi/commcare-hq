@@ -8,7 +8,7 @@ hqDefine("reports/js/bootstrap5/case_details", [
     'analytix/js/kissmetrix',
     'case/js/case_property_modal',
     'reports/js/bootstrap5/data_corrections',
-    'reports/js/single_form',
+    'reports/js/bootstrap5/single_form',
     'case/js/case_hierarchy',
     'case/js/repeat_records',
     'reports/js/bootstrap5/readable_form',
