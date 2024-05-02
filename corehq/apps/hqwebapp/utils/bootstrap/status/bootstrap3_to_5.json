@@ -53,6 +53,9 @@
   "corehq.tabs": {
     "in_progress": true
   },
+  "custom_user_fields": {
+    "in_progress": true
+  },
   "ota": {
     "is_complete": true
   },
