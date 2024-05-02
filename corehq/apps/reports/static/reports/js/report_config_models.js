@@ -4,7 +4,7 @@ hqDefine("reports/js/report_config_models", [
     'knockout',
     'underscore',
     'analytix/js/google',
-    'reports/js/standard_hq_report',
+    'reports/js/bootstrap3/standard_hq_report',
     'bootstrap-daterangepicker/daterangepicker',
 ], function (
     $,
