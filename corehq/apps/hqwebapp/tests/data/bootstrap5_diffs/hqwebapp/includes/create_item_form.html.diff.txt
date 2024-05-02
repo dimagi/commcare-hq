@@ -1,6 +1,0 @@
---- 
-+++ 
-@@ -1,2 +1,2 @@
- {% load crispy_forms_tags %}
--{% crispy form %}
-+{% crispy form %}  {# todo B5: check crispy #}

@@ -9,12 +9,3 @@
  
  {% block background_content %}
    <div class="bg-container">
-@@ -28,7 +28,7 @@
-           href="{% static 'registration/less/registration.less' %}" />
-   {% endcompress %}
-   <style>
--    /* hide password reset link */
-+    /* d-none password reset link */
-     .help-block {
-       display:  none;
-     }

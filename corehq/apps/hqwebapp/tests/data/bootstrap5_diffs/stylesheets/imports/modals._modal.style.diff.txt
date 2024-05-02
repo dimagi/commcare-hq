@@ -44,13 +44,12 @@
  
              // These styles, along with the body/header/footer ones below,
              // allow the body to scroll vertically while the header and footer stay fixed
-@@ -54,58 +54,17 @@
+@@ -54,23 +54,7 @@
  }
  
  .full-screen-modal {
 -    .absolute-center-modal(20px);
-+    @include absolute-center-modal(20px);
- }
+-}
 -
 -.full-screen-no-background-modal {
 -    .absolute-center-modal(0);
@@ -66,32 +65,11 @@
 -            }
 -        }
 -    }
--}
--
--// Modal that has some kind of control (pagination, search box, etc.) in header or footer
--.modal-header.with-controls, .modal-footer.with-controls {
--    h4 {
--        margin-top: 3px;    // vertically align better with controls, which are taller than plain text
--    }
--
--    .close {
--        margin-left: 10px;
--    }
--
--    .nav-pills {
--        display: inline-block;
--        vertical-align: middle;
--
--        a {
--            padding: 6px 9px;
--        }
--    }
--
--    .pagination {
--        margin: 0;
--    }
--}
--
++    @include absolute-center-modal(20px);
+ }
+ 
+ // Modal that has some kind of control (pagination, search box, etc.) in header or footer
+@@ -100,12 +84,12 @@
  
  .modal-primary {
      .modal-header {
@@ -106,7 +84,7 @@
      }
  
      .close {
-@@ -113,15 +72,3 @@
+@@ -113,15 +97,3 @@
          opacity: 1.0;
      }
  }
