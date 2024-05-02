@@ -33,7 +33,7 @@
           </th>
         </tr>
       {% endif %}
-    {% with template_name='reports/form/partials/single_form_tree.html' questions=question.children %}
+    {% with template_name='reports/form/partials/bootstrap3/single_form_tree.html' questions=question.children %}
       {% include template_name %}
     {% endwith %}
     {% if question.type %}
