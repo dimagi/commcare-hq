@@ -79,5 +79,8 @@
   },
   "notifications": {
     "in_progress": true
+  },
+  "reports": {
+    "in_progress": true
   }
 }
