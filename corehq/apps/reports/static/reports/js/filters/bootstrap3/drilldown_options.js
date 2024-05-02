@@ -1,4 +1,4 @@
-hqDefine('reports/js/filters/drilldown_options', [
+hqDefine('reports/js/filters/bootstrap3/drilldown_options', [
     'jquery',
     'knockout',
     'underscore',
