@@ -1,10 +1,10 @@
 'use strict';
-hqDefine("reports/js/report_config_models", [
+hqDefine("reports/js/bootstrap5/report_config_models", [
     'jquery',
     'knockout',
     'underscore',
     'analytix/js/google',
-    'reports/js/bootstrap3/standard_hq_report',
+    'reports/js/bootstrap5/standard_hq_report',
     'bootstrap-daterangepicker/daterangepicker',
 ], function (
     $,
