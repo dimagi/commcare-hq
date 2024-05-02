@@ -1839,7 +1839,7 @@ def project_health_user_details(request, domain, user_id):
 class TableauServerView(BaseProjectReportSectionView):
     urlname = 'tableau_server_view'
     page_title = gettext_lazy('Tableau Server Config')
-    template_name = 'hqwebapp/crispy/single_crispy_form.html'
+    template_name = 'hqwebapp/crispy/bootstrap3/single_crispy_form.html'
 
     @method_decorator(require_superuser)
     @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
@@ -1982,7 +1982,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
 class TableauVisualizationDetailView(BaseProjectReportSectionView, ModelFormMixin, ProcessFormView):
     urlname = 'tableau_visualization_detail_view'
     page_title = _('Tableau Visualization')
-    template_name = 'hqwebapp/crispy/single_crispy_form.html'
+    template_name = 'hqwebapp/crispy/bootstrap3/single_crispy_form.html'
     model = TableauVisualization
     form_class = TableauVisualizationForm
 
