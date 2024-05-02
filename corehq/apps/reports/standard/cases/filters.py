@@ -90,7 +90,7 @@ class XPathCaseSearchFilter(BaseSimpleFilter):
     """
     slug = 'search_xpath'
     label = gettext_lazy("Search")
-    template = "reports/filters/xpath_textarea.html"
+    template = "reports/filters/bootstrap3/xpath_textarea.html"
 
     @property
     def filter_context(self):
