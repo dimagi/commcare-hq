@@ -1,4 +1,4 @@
-hqDefine("reports/js/readable_form", ["jquery"], function ($) {
+hqDefine("reports/js/bootstrap5/readable_form", ["jquery"], function ($) {
     function showReadable() {
         $('.form-data-raw').hide();
         $('.form-data-readable').show();
@@ -38,7 +38,7 @@ hqDefine("reports/js/readable_form", ["jquery"], function ($) {
 
         $(document).on('click', '.formDisplayToggle a', function () {
             // activate the correct 'tab' header
-            $(this).tab('show');
+            $(this).tab('show');  /* todo B5: plugin:tab */
             return false;
         });
 
