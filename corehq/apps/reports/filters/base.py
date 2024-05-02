@@ -83,7 +83,7 @@ class BaseReportFilter(object):
 class CheckboxFilter(BaseReportFilter):
     slug = "checkbox"
     label = "hello"
-    template = "reports/filters/checkbox.html"
+    template = "reports/filters/bootstrap3/checkbox.html"
 
     @property
     def filter_context(self):
