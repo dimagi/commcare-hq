@@ -126,7 +126,7 @@ def safely_get_case(request, domain, case_id):
 @location_safe
 class CaseDataView(BaseProjectReportSectionView):
     urlname = 'case_data'
-    template_name = "reports/reportdata/case_data.html"
+    template_name = "reports/reportdata/bootstrap3/case_data.html"
     page_title = gettext_lazy("Case Data")
     http_method_names = ['get']
 
