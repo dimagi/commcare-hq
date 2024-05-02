@@ -79,7 +79,7 @@ class SingleDateFilter(BaseReportFilter):
     """
     A filter that returns a single date
     """
-    template = "reports/filters/date_selector.html"
+    template = "reports/filters/bootstrap3/date_selector.html"
     label = gettext_lazy("Date")
     slug = "date"
     # below delta should be in days from today's date
