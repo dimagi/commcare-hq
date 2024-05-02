@@ -2713,8 +2713,10 @@ class Invitation(models.Model):
     role = models.CharField(max_length=100, null=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
-    location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
+    primary_location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
                                  to_field='location_id', null=True)  # to replace supply_point
+    assigned_locations = models.ManyToManyField("locations.SQLLocation", symmetrical=False,
+                                                related_name='invitations')
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
                                 on_delete=models.SET_NULL, null=True)
     custom_user_data = models.JSONField(default=dict)
