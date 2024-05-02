@@ -1,6 +1,5 @@
 import logging
 import numbers
-import uuid
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -19,9 +18,7 @@ from corehq.apps.app_manager.const import (
     MOBILE_UCR_VERSION_1,
     MOBILE_UCR_VERSION_2,
 )
-from corehq.apps.app_manager.dbaccessors import (
-    get_apps_in_domain,
-)
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     is_valid_mobile_select_filter_type,
 )
@@ -441,7 +438,9 @@ def generate_rows_and_filters(report_data_cache, report_config, restore_user, ro
     return row_elements, filters_elem
 
 
-def get_report_element(report_data_cache, report_config, data_source, deferred_fields, filter_options_by_field, row_to_element):
+def get_report_element(
+    report_data_cache, report_config, data_source, deferred_fields, filter_options_by_field, row_to_element
+):
     """
     :param row_to_element: function (
                 deferred_fields, filter_options_by_field, row, index, is_total_row
