@@ -12,7 +12,7 @@ hqDefine("reports/js/single_form", [
     "analytix/js/google",
     "analytix/js/kissmetrix",
     "reports/js/readable_form",
-    "reports/js/data_corrections",
+    "reports/js/bootstrap3/data_corrections",
     "clipboard/dist/clipboard",
 ], function (
     $,

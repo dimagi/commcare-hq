@@ -7,7 +7,7 @@ hqDefine("reports/js/case_details", [
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'case/js/case_property_modal',
-    'reports/js/data_corrections',
+    'reports/js/bootstrap3/data_corrections',
     'reports/js/single_form',
     'case/js/case_hierarchy',
     'case/js/repeat_records',

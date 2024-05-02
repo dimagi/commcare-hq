@@ -28,7 +28,7 @@
  *              Property is the data, plucked from the properties array. Name is displayed in the menu that lets
  *              user toggle between display properties.
  */
-hqDefine("reports/js/data_corrections", [
+hqDefine("reports/js/bootstrap3/data_corrections", [
     "jquery",
     "knockout",
     "underscore",

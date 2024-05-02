@@ -39,7 +39,7 @@ describe('Data Corrections', function () {
         },
         initModel = function (properties, additionalOptions) {
             additionalOptions = additionalOptions || {};
-            return hqImport('reports/js/data_corrections').init(
+            return hqImport('reports/js/bootstrap3/data_corrections').init(
                 $(".data-corrections-trigger"),
                 $(".data-corrections-modal"),
                 _.extend(generateOptions(properties), additionalOptions)
