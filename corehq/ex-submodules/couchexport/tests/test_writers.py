@@ -17,8 +17,18 @@ from couchexport.writers import (
     ZippedExportWriter,
     GeoJSONWriter,
 )
-from corehq.apps.export.models import TableConfiguration
-from corehq.apps.export.models import SplitGPSExportColumn, GeopointItem, PathNode
+from corehq.apps.export.models import (
+    TableConfiguration,
+    SplitGPSExportColumn,
+    GeopointItem,
+    PathNode,
+    ExportColumn,
+    ExportItem,
+)
+from corehq.apps.export.models.new import (
+    GPS_SPLIT_COLUMN_LONGITUDE_TEMPLATE,
+    GPS_SPLIT_COLUMN_LATITUDE_TEMPLATE,
+)
 
 
 class ZippedExportWriterTests(SimpleTestCase):
@@ -239,145 +249,270 @@ class HeaderNameTest(SimpleTestCase):
 
 
 class TestGeoJSONWriter(SimpleTestCase):
-    GEO_PROPERTY = 'geo-prop'
 
-    def test_get_features(self):
-        table = TableConfiguration(selected_geo_property=self.GEO_PROPERTY)
-        features = GeoJSONWriter().get_features(table, self._table_data())
-
-        expected_features = [
-            {
-                'type': 'Feature',
-                'geometry': {'type': 'Point', 'coordinates': ['-71.057083', '42.361145']},
-                'properties': {'name': 'Boston', 'country': 'United States'}
-            },
-            {
-                'type': 'Feature',
-                'geometry': {'type': 'Point', 'coordinates': ['18.423300', '-33.918861']},
-                'properties': {'name': 'Cape Town', 'country': 'South Africa'}
-            },
-            {
-                'type': 'Feature',
-                'geometry': {'type': 'Point', 'coordinates': ['77.2300', '28.6100']},
-                'properties': {'name': 'Delhi', 'country': 'India'}
-            },
-        ]
-        self.assertEqual(features, expected_features)
-
-    def test_get_features__other_geo_property_configured(self):
-        table = TableConfiguration(selected_geo_property="some-other-property")
-        features = GeoJSONWriter().get_features(table, self._table_data())
-        self.assertEqual(features, [])
-
-    def test_get_features__invalid_geo_property_column_value(self):
-        table = TableConfiguration(selected_geo_property=self.GEO_PROPERTY)
-
-        data = self._table_data()
-        data[1][1] = "not-a-geo-coordinate-value"
-        features = GeoJSONWriter().get_features(table, data)
-
-        features_names = [feature['properties']['name'] for feature in features]
-        self.assertTrue(data[1][2] not in features_names)
-
-    def test_get_features_from_path(self):
-        table = self.geopoint_table_configuration(
-            selected_geo_property="some.path",
-            path_string='some.path',
-        )
-        features = GeoJSONWriter().get_features(table, self._table_data(geo_property_header='some.path'))
-
-        expected_features = [
-            {
-                'geometry': {'coordinates': ['-71.057083', '42.361145'], 'type': 'Point'},
-                'properties': {'country': 'United States', 'name': 'Boston'},
-                'type': 'Feature'
-            },
-            {
-                'geometry': {'coordinates': ['18.423300', '-33.918861'], 'type': 'Point'},
-                'properties': {'country': 'South Africa', 'name': 'Cape Town'},
-                'type': 'Feature'
-            },
-            {
-                'geometry': {'coordinates': ['77.2300', '28.6100'], 'type': 'Point'},
-                'properties': {'country': 'India', 'name': 'Delhi'},
-                'type': 'Feature'
-            },
-        ]
-        self.assertEqual(features, expected_features)
-
-    def test_get_features_from_path__invalid_path(self):
-        table = self.geopoint_table_configuration(
-            selected_geo_property="some.other.path",
-            path_string='some.path',
-        )
-        features = GeoJSONWriter().get_features(table, self._table_data(geo_property_header='some.path'))
-
-        expected_features = []
-        self.assertEqual(features, expected_features)
-
-    def test_get_features_from_path__location_metadata(self):
-        table = self.geopoint_table_configuration(
-            selected_geo_property="form.meta.location",
-            path_string="form.meta.location",
-            header_name='location',
-        )
-        features = GeoJSONWriter().get_features(table, self._table_data(geo_property_header='location'))
-
-        expected_features = [
-            {
-                'geometry': {'coordinates': ['-71.057083', '42.361145'], 'type': 'Point'},
-                'properties': {'country': 'United States', 'name': 'Boston'},
-                'type': 'Feature'
-            },
-            {
-                'geometry': {'coordinates': ['18.423300', '-33.918861'], 'type': 'Point'},
-                'properties': {'country': 'South Africa', 'name': 'Cape Town'},
-                'type': 'Feature'
-            },
-            {
-                'geometry': {'coordinates': ['77.2300', '28.6100'], 'type': 'Point'},
-                'properties': {'country': 'India', 'name': 'Delhi'},
-                'type': 'Feature'
-            },
-        ]
-        self.assertEqual(features, expected_features)
-
-    def _table_data(self, geo_property_header=None):
-        data = [self._table_header(geo_property_header)]
-        table_data_rows = self._table_data_rows
+    def _table_data(self, table, multi_column=False):
+        data = [table.get_headers(split_columns=multi_column)]
+        table_data_rows = self._table_data_rows(multi_column=multi_column)
         [data.append(row) for row in table_data_rows]
         return data
 
-    def _table_header(self, geo_property_header=None):
-        geo_property_header = self.GEO_PROPERTY if geo_property_header is None else geo_property_header
+    def _table_data_rows(self, multi_column):
+        def row_data(city, home, country, location_meta):
+            home_data = home.split(" ") if multi_column else [home]
+            location_meta_data = location_meta.split(" ") if multi_column else [location_meta]
+            return [city, *home_data, country, *location_meta_data]
+
         return [
-            'name',
-            geo_property_header,
-            'country',
+            row_data("Boston", "42.361145 -71.057083 0 0", "United States", "42.361146 -71.057084 100 0"),
+            row_data("Cape Town", "-33.918861 18.423300 0 0", "South Africa", "-33.918862 18.423301 100 0"),
+            row_data("Delhi", "28.6100 77.2300 0 0", "India", "28.6101 77.2301 100 0")
         ]
 
-    @property
-    def _table_data_rows(self):
-        return [
-            ['Boston', '42.361145 -71.057083 0 0', 'United States'],
-            ['Cape Town', '-33.918861 18.423300 0 0', 'South Africa'],
-            ['Delhi', '28.6100 77.2300 0 0', 'India']
-        ]
-
-    def geopoint_table_configuration(self, selected_geo_property, path_string, header_name=None):
-        path = [PathNode(name=node) for node in path_string.split('.')]
-        header_name = header_name if header_name is not None else 'MyGPSProperty'
+    def geopoint_table_configuration(self, selected_geo_property):
+        location_metadata_column = self.create_export_column(
+            label='location',
+            path_string='form.meta.location',
+            column_class=SplitGPSExportColumn,
+            column_item=GeopointItem,
+        )
+        other_location_column = self.create_export_column(
+            label='form.home',
+            path_string="form.home",
+            column_class=SplitGPSExportColumn,
+            column_item=GeopointItem,
+        )
+        city_column = self.create_export_column(
+            label='form.city',
+            path_string='form.name',
+            column_class=ExportColumn,
+            column_item=ExportItem,
+        )
+        country_column = self.create_export_column(
+            label='form.country',
+            path_string='form.country',
+            column_class=ExportColumn,
+            column_item=ExportItem,
+        )
 
         return TableConfiguration(
             selected=True,
             selected_geo_property=selected_geo_property,
             columns=[
-                SplitGPSExportColumn(
-                    label=header_name,
-                    item=GeopointItem(
-                        path=path,
-                    ),
-                    selected=True,
-                )
+                city_column,
+                other_location_column,
+                country_column,
+                location_metadata_column,
             ]
         )
+
+    @staticmethod
+    def create_export_column(label, path_string, column_class, column_item):
+        path = [PathNode(name=node) for node in path_string.split('.')]
+        return column_class(
+            label=label,
+            item=column_item(
+                path=path,
+            ),
+            selected=True,
+        )
+
+    def test_get_features(self):
+        table = self.geopoint_table_configuration(
+            selected_geo_property="form.home",
+        )
+        features = GeoJSONWriter().get_features(table, self._table_data(table=table))
+
+        expected_features = [
+            {
+                'geometry': {'coordinates': ['-71.057083', '42.361145'], 'type': 'Point'},
+                'properties': {
+                    'form.country': 'United States',
+                    'form.city': 'Boston',
+                    'location': '42.361146 -71.057084 100 0',
+                },
+                'type': 'Feature'
+            },
+            {
+                'geometry': {'coordinates': ['18.423300', '-33.918861'], 'type': 'Point'},
+                'properties': {
+                    'form.country': 'South Africa',
+                    'form.city': 'Cape Town',
+                    'location': '-33.918862 18.423301 100 0',
+                },
+                'type': 'Feature'
+            },
+            {
+                'geometry': {'coordinates': ['77.2300', '28.6100'], 'type': 'Point'},
+                'properties': {
+                    'form.country': 'India',
+                    'form.city': 'Delhi',
+                    'location': '28.6101 77.2301 100 0',
+                },
+                'type': 'Feature'
+            },
+        ]
+        self.assertEqual(features, expected_features)
+
+    def test_get_features__other_geo_property_configured(self):
+        table = self.geopoint_table_configuration(
+            selected_geo_property="form.not_home",
+        )
+        features = GeoJSONWriter().get_features(table, self._table_data(table=table))
+        self.assertEqual(features, [])
+
+    def test_get_features__invalid_geo_property_column_value(self):
+        table = self.geopoint_table_configuration(
+            selected_geo_property="form.home",
+        )
+        data = self._table_data(table=table)
+
+        data[1][1] = "not-a-geo-coordinate-value"
+        corrupt_country = data[1][2]
+
+        features = GeoJSONWriter().get_features(table, data)
+        features_names = [feature['properties']['form.country'] for feature in features]
+
+        self.assertTrue(corrupt_country not in features_names)
+
+    def test_get_features_from_path__location_metadata(self):
+        table = self.geopoint_table_configuration(
+            selected_geo_property="form.meta.location",
+        )
+        features = GeoJSONWriter().get_features(table, self._table_data(table=table))
+        expected_features = [
+            {
+                'geometry': {'coordinates': ['-71.057084', '42.361146'], 'type': 'Point'},
+                'properties': {
+                    'form.country': 'United States',
+                    'form.city': 'Boston',
+                    'form.home': '42.361145 -71.057083 0 0'
+                },
+                'type': 'Feature'
+            },
+            {
+                'geometry': {'coordinates': ['18.423301', '-33.918862'], 'type': 'Point'},
+                'properties': {
+                    'form.country': 'South Africa',
+                    'form.city': 'Cape Town',
+                    'form.home': '-33.918861 18.423300 0 0',
+                },
+                'type': 'Feature'
+            },
+            {
+                'geometry': {'coordinates': ['77.2301', '28.6101'], 'type': 'Point'},
+                'properties': {
+                    'form.country': 'India',
+                    'form.city': 'Delhi',
+                    'form.home': '28.6100 77.2300 0 0',
+                },
+                'type': 'Feature'
+            },
+        ]
+        self.assertEqual(features, expected_features)
+
+    def test_get_features_multiple_columns(self):
+        table = self.geopoint_table_configuration(
+            selected_geo_property="form.home",
+        )
+        table.split_multiselects = True
+        features = GeoJSONWriter().get_features(table, self._table_data(table=table, multi_column=True))
+
+        feature_coordinates = [feature['geometry']['coordinates'] for feature in features]
+        expected_coordinates = [
+            ["-71.057083", "42.361145"],
+            ["18.423300", "-33.918861"],
+            ["77.2300", "28.6100"],
+        ]
+        self.assertEqual(feature_coordinates, expected_coordinates)
+
+    def test_get_features_from_path_multiple_columns(self):
+        table = self.geopoint_table_configuration(
+            selected_geo_property="form.meta.location",
+        )
+        table.split_multiselects = True
+        features = GeoJSONWriter().get_features(table, self._table_data(table=table, multi_column=True))
+
+        feature_coordinates = [feature['geometry']['coordinates'] for feature in features]
+        expected_coordinates = [
+            ["-71.057084", "42.361146"],
+            ["18.423301", "-33.918862"],
+            ["77.2301", "28.6101"],
+        ]
+        self.assertEqual(feature_coordinates, expected_coordinates)
+
+    def test_find_geo_data_column(self):
+        header = GeoJSONWriter.find_geo_data_column(
+            headers=["name", "home"],
+            geo_property_name="home"
+        )
+        self.assertEqual(header, 1)
+
+    def test_find_geo_data_column_invalid(self):
+        header = GeoJSONWriter.find_geo_data_column(
+            headers=["name", "home"],
+            geo_property_name="town"
+        )
+        self.assertEqual(header, None)
+
+    def test_find_geo_data_columns(self):
+        geo_prop = "home"
+        header = GeoJSONWriter.find_geo_data_columns(
+            headers=[
+                "name",
+                GPS_SPLIT_COLUMN_LATITUDE_TEMPLATE.format(geo_prop),
+                GPS_SPLIT_COLUMN_LONGITUDE_TEMPLATE.format(geo_prop),
+            ],
+            geo_property_name=geo_prop,
+        )
+        self.assertEqual(header, [1, 2])
+
+    def test_find_geo_data_columns_swapped(self):
+        geo_prop = "home"
+        header = GeoJSONWriter.find_geo_data_columns(
+            headers=[
+                "name",
+                GPS_SPLIT_COLUMN_LONGITUDE_TEMPLATE.format(geo_prop),
+                GPS_SPLIT_COLUMN_LATITUDE_TEMPLATE.format(geo_prop),
+            ],
+            geo_property_name=geo_prop,
+        )
+        self.assertEqual(header, [2, 1])
+
+    def test_find_geo_data_columns_invalid(self):
+        geo_prop = "town"
+        header = GeoJSONWriter.find_geo_data_columns(
+            headers=["name", "home"],
+            geo_property_name=geo_prop,
+        )
+        self.assertEqual(header, [])
+
+    def test_collect_geo_data(self):
+        table_headers = ["city", "home"]
+        row = ["Texas", "lat lng"]
+        coordinates, properties = GeoJSONWriter.collect_geo_data(table_headers, row, 1)
+
+        self.assertEqual(coordinates['lat'], 'lat')
+        self.assertEqual(coordinates['lng'], 'lng')
+        self.assertEqual(properties, {'city': 'Texas'})
+
+    def test_collect_geo_data_invalid_coordinate(self):
+        table_headers = ["city", "home"]
+        row = ["Texas", "latlng"]
+        coordinates, properties = GeoJSONWriter.collect_geo_data(table_headers, row, 1)
+
+        self.assertEqual(coordinates, {})
+        self.assertEqual(properties, {})
+
+    def test_collect_geo_data_multi_column(self):
+        geo_prop = "home"
+        table_headers = [
+            "city",
+            GPS_SPLIT_COLUMN_LATITUDE_TEMPLATE.format(geo_prop),
+            GPS_SPLIT_COLUMN_LONGITUDE_TEMPLATE.format(geo_prop),
+        ]
+        row = ["Texas", "lat", "lng"]
+        coordinates, properties = GeoJSONWriter.collect_geo_data_multi_column(table_headers, row, [1, 2])
+
+        self.assertEqual(coordinates['lat'], 'lat')
+        self.assertEqual(coordinates['lng'], 'lng')
+        self.assertEqual(properties, {'city': 'Texas'})
