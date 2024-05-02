@@ -56,7 +56,7 @@ hqDefine("userreports/js/configurable_report", function () {
                 enddate: initialPageData.get('enddate'),
             };
         }
-        var standardHQReport = hqImport("reports/js/hq_report").hqReport(reportOptions);
+        var standardHQReport = hqImport("reports/js/bootstrap3/hq_report").hqReport(reportOptions);
         standardHQReport.init();
         return standardHQReport;
     };

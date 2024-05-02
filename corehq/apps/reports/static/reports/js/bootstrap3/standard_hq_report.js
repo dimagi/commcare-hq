@@ -37,7 +37,7 @@ hqDefine("reports/js/bootstrap3/standard_hq_report", [
                 // UCRs
                 standardReport = hqImport(ucr).getStandardHQReport();
             } else {
-                hqRequire(["reports/js/hq_report"], function (hqReportModule) {
+                hqRequire(["reports/js/bootstrap3/hq_report"], function (hqReportModule) {
                     // Standard reports
                     var reportOptions = _.extend({}, initialPageData.get('js_options'), {
                         emailSuccessMessage: gettext('Report successfully emailed'),
