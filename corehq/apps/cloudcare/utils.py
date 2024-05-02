@@ -28,7 +28,7 @@ def can_user_access_web_app(app, user, domain):
     if user.is_web_user() or user.can_access_any_web_apps(domain):
         has_access_via_permission = user.can_access_web_app(domain, app.get('copy_of', app.get('_id')))
 
-    has_access_via_group = False
+    has_access_via_group = True  # permission takes precedence over groups, so default to True
     if toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled(domain):
         from corehq.apps.cloudcare.dbaccessors import (
             get_application_access_for_domain,
@@ -36,7 +36,7 @@ def can_user_access_web_app(app, user, domain):
         app_access = get_application_access_for_domain(domain)
         has_access_via_group = app_access.user_can_access_app(user, app)
 
-    return has_access_via_permission or has_access_via_group
+    return has_access_via_permission and has_access_via_group
 
 
 def get_latest_build_for_web_apps(domain, username, app_id):

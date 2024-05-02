@@ -156,6 +156,18 @@ class TestCanUserAccessWebApp(TestCase):
 
         self.assertTrue(has_access)
 
+    def test_commcare_user_does_not_have_access_if_assigned_role_that_can_access_different_app(self):
+        role = UserRole.create(
+            self.domain,
+            "can-access-random-app",
+            permissions=HqPermissions(web_apps_list=["random-app"]),
+        )
+        self.commcare_user.set_role(self.domain, role.get_qualified_id())
+
+        has_access = can_user_access_web_app(self.app_doc, self.commcare_user, self.domain)
+
+        self.assertFalse(has_access)
+
     def test_web_user_has_access_if_assigned_role_that_can_access_all_web_apps(self):
         role = UserRole.create(
             self.domain, "can-access-all-web-apps", permissions=HqPermissions(access_web_apps=True)
@@ -188,10 +200,22 @@ class TestCanUserAccessWebApp(TestCase):
 
         self.assertTrue(has_access)
 
-    @flag_enabled("WEB_APPS_PERMISSIONS_VIA_GROUPS")
-    def test_commcare_user_has_access_if_in_group(self):
+    def test_web_user_does_not_have_access_if_assigned_role_that_can_access_different_app(self):
         role = UserRole.create(
-            self.domain, "can-access-all-web-apps", permissions=HqPermissions(access_web_apps=True)
+            self.domain,
+            "can-access-random-app",
+            permissions=HqPermissions(web_apps_list=["random-app"]),
+        )
+        self.web_user.set_role(self.domain, role.get_qualified_id())
+
+        has_access = can_user_access_web_app(self.app_doc, self.web_user, self.domain)
+
+        self.assertFalse(has_access)
+
+    @flag_enabled("WEB_APPS_PERMISSIONS_VIA_GROUPS")
+    def test_commcare_user_has_access_if_in_group_with_access_and_role_that_cannot_access_web_apps(self):
+        role = UserRole.create(
+            self.domain, "cannot-access-web-apps", permissions=HqPermissions(access_web_apps=False)
         )
         self.commcare_user.set_role(self.domain, role.get_qualified_id())
         group = Group(domain=self.domain, name="web-apps-group")
@@ -204,6 +228,60 @@ class TestCanUserAccessWebApp(TestCase):
         has_access = can_user_access_web_app(self.app_doc, self.commcare_user, self.domain)
 
         self.assertTrue(has_access)
+
+    @flag_enabled("WEB_APPS_PERMISSIONS_VIA_GROUPS")
+    def test_commcare_user_does_not_have_access_if_in_group_with_access_and_role_with_access_to_different_app(self):  # noqa: E501
+        # this tests the precendence of permissions over groups
+        role = UserRole.create(
+            self.domain,
+            "can-access-specific-app",
+            permissions=HqPermissions(web_apps_list=['random-app']),
+        )
+        self.commcare_user.set_role(self.domain, role.get_qualified_id())
+        group = Group(domain=self.domain, name="web-apps-group")
+        group.add_user(self.commcare_user._id)
+        group.save()
+        self.addCleanup(group.delete)
+        app_access = ApplicationAccess.objects.create(domain=self.domain, restrict=True)
+        SQLAppGroup.objects.create(app_id=self.app_doc['_id'], group_id=group._id, application_access=app_access)
+
+        has_access = can_user_access_web_app(self.app_doc, self.commcare_user, self.domain)
+
+        self.assertFalse(has_access)
+
+    @flag_enabled("WEB_APPS_PERMISSIONS_VIA_GROUPS")
+    def test_commcare_user_does_not_have_access_if_in_group_without_access_and_role_with_access_to_different_app(self):  # noqa: E501
+        role = UserRole.create(
+            self.domain,
+            "can-access-specific-app",
+            permissions=HqPermissions(web_apps_list=['random-app']),
+        )
+        self.commcare_user.set_role(self.domain, role.get_qualified_id())
+        group = Group(domain=self.domain, name="web-apps-group")
+        group.add_user(self.commcare_user._id)
+        group.save()
+        self.addCleanup(group.delete)
+        app_access = ApplicationAccess.objects.create(domain=self.domain, restrict=True)
+        SQLAppGroup.objects.create(app_id='random-app', group_id=group._id, application_access=app_access)
+
+        has_access = can_user_access_web_app(self.app_doc, self.commcare_user, self.domain)
+
+        self.assertFalse(has_access)
+
+    @flag_enabled("WEB_APPS_PERMISSIONS_VIA_GROUPS")
+    def test_permission_takes_precedence_over_group_for_web_user(self):
+        # only has access to a different app
+        role = UserRole.create(
+            self.domain,
+            "can-access-specific-app",
+            permissions=HqPermissions(web_apps_list=['random-app'])
+        )
+        self.web_user.set_role(self.domain, role.get_qualified_id())
+        # web users always have permission via groups
+
+        has_access = can_user_access_web_app(self.app_doc, self.web_user, self.domain)
+
+        self.assertFalse(has_access)
 
     @classmethod
     def setUpClass(cls):
