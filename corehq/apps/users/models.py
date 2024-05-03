@@ -2825,7 +2825,7 @@ class Invitation(models.Model):
             self.domain,
             role=self.role,
             primary_location_id=getattr(self.primary_location, "location_id", None),
-            assigned_location_ids=[getattr(loc, "location_id", None) for loc in self.assigned_locations],
+            assigned_location_ids=[getattr(loc, "location_id", None) for loc in self.assigned_locations.all()],
             program_id=self.program,
         )
         self.is_accepted = True
