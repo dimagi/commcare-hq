@@ -138,9 +138,13 @@ class TransifexApiClient(object):
         :param resource_name: resource name, mostly same as resource slug itself
         :param update_resource: update resource
         """
+        create_missing_resource = False
         if update_resource:
-            resource = self._get_resource(resource_slug)
-        else:
+            try:
+                resource = self._get_resource(resource_slug)
+            except TransifexApiException:
+                create_missing_resource = True
+        if not update_resource or create_missing_resource:
             # must create the new resource first
             if resource_name is None:
                 __, filename = os.path.split(path_to_po_file)
@@ -257,3 +261,11 @@ class TransifexApiClient(object):
     @staticmethod
     def _to_lang_code(language_id):
         return language_id.replace("l:", "")
+
+    def get_resource_slugs_for_deleted_forms(self, project_resources):
+        # this could be a problem if you're using two completely different apps for the same project....
+        # but we won't do that in practice....?
+        transifex_resources = self._list_resources()
+        if len(transifex_resources) > len(project_resources):
+            return list(set([r.slug for r in transifex_resources]) - set(project_resources))
+        return None
