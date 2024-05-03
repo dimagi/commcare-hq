@@ -245,13 +245,14 @@ class FormplayerPreviewSingleApp(View):
 
     def get(self, request, domain, app_id, **kwargs):
         app = get_current_app(domain, app_id)
-        has_access = can_user_access_web_app(request.couch_user, app.to_json())
+        app_json = app.to_json()
+        has_access = can_user_access_web_app(request.couch_user, app_json)
         if not has_access:
             raise Http404()
 
         def _default_lang():
             try:
-                return app['langs'][0]
+                return app_json['langs'][0]
             except Exception:
                 return 'en'
 
@@ -264,7 +265,7 @@ class FormplayerPreviewSingleApp(View):
             "domain": domain,
             "default_geocoder_location": domain_obj.default_geocoder_location,
             "language": language,
-            "apps": [_format_app_doc(app)],
+            "apps": [_format_app_doc(app_json)],
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.user.username,
             "formplayer_url": get_formplayer_url(for_js=True),
