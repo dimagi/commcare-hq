@@ -1119,7 +1119,7 @@ class InviteWebUserView(BaseManageWebUserView):
                     domain_request.send_approval_email()
                     create_invitation = False
                     user.add_as_web_user(self.domain, role=data["role"],
-                                         primary_location_id=data.get("location_id", None),
+                                         primary_location_id=data.get("primary_location", None),
                                          program_id=data.get("program", None))
                 messages.success(request, "%s added." % data["email"])
             else:
@@ -1133,7 +1133,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
-                primary_location_id = data.pop("location_id", None)
+                primary_location_id = data.pop("primary_location", None)
                 data["primary_location"] = (SQLLocation.by_location_id(primary_location_id)
                                         if primary_location_id else None)
                 profile_id = data.get("profile", None)
