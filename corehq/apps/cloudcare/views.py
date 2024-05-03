@@ -229,7 +229,7 @@ class FormplayerMainPreview(FormplayerMain):
     def fetch_app_fn(self):
         return self.wrap_get_current_app_doc
 
-    def wrap_get_current_app_doc(domain, username, app_id):
+    def wrap_get_current_app_doc(self, domain, username, app_id):
         # ignore username as it is only here to confirm to fetch_app_fn signature
         return get_current_app_doc(domain, app_id)
 
