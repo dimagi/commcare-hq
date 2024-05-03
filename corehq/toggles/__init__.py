@@ -2570,6 +2570,17 @@ ES_QUERY_PREFERENCE = StaticToggle(
     """
 )
 
+RESTORE_ACCESSIBLE_REPORTS_ONLY = StaticToggle(
+    'restore_accessible_reports_only',
+    'Only restore reports in apps that are accessible to the restoring user',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This is an optimization for web apps restores that limits the number of mobile reports included in the restore
+    based on which apps the user can access.
+    """
+)
+
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
