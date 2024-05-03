@@ -241,6 +241,28 @@ class TestUpdateRoles(TestCase):
         self.assertListEqual(role.permissions.web_apps_list, [downstream_app.id])
 
     @flag_enabled('EMBEDDED_TABLEAU')
+    def test_tableau_report_permission_does_not_raise_error_if_downstream_role_is_newly_created(self):
+        """
+        Regression test for https://github.com/dimagi/commcare-hq/pull/34536
+        """
+        server = TableauServer.objects.create(
+            domain=self.upstream_domain,
+            server_type="server",
+            server_name="my_server",
+            target_site="my_site",
+        )
+        upstream_viz = TableauVisualization.objects.create(
+            domain=self.upstream_domain,
+            server=server,
+        )
+        self.upstream_tableau_role = UserRole.create(
+            self.upstream_domain, "tableau_test", HqPermissions(view_tableau_list=[str(upstream_viz.id)])
+        )
+
+        # successful if a ValueError isn't raised
+        update_user_roles(self.domain_link)
+
+    @flag_enabled('EMBEDDED_TABLEAU')
     def test_tableau_report_permissions(self):
         server = TableauServer.objects.create(
             domain=self.upstream_domain,

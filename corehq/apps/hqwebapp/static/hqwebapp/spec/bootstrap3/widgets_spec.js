@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-hqDefine("hqwebapp/spec/widgets_spec", [
+hqDefine("hqwebapp/spec/bootstrap3/widgets_spec", [
     'hqwebapp/js/bootstrap3/widgets',
 ], function (
     widgets
