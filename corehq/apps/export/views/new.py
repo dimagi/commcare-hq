@@ -324,12 +324,13 @@ class BaseExportView(BaseProjectDataView):
             return HttpResponseRedirect(url)
 
     @memoized
-    def get_export_schema(self, domain, app_id, identifier):
+    def get_export_schema(self, domain, app_id, identifier, for_new_export_instance=False):
         return self.export_schema_cls.generate_schema_from_builds(
             domain,
             app_id,
             identifier,
             only_process_current_builds=True,
+            for_new_export_instance=for_new_export_instance
         )
 
     @memoized
@@ -432,7 +433,7 @@ class CreateNewCustomCaseExportView(BaseExportView):
         if case_type == ALL_CASE_TYPE_EXPORT:
             schema = self.get_empty_export_schema(self.domain, case_type)
         else:
-            schema = self.get_export_schema(self.domain, None, case_type)
+            schema = self.get_export_schema(self.domain, None, case_type, for_new_export_instance=True)
 
         export_settings = get_default_export_settings_if_available(self.domain)
         self.export_instance = self.create_new_export_instance(
