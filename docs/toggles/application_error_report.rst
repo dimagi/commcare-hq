@@ -14,4 +14,5 @@ This plugin needs to be enabled on a per-user basis. Once enabled for a user, th
 can be accessed under **Project Reports**
 
 Data will not be sent to this report if the ``SERVER_ENVIRONMENT`` environment setting has
-been added to ``NO_DEVICE_LOG_ENVS``.
+been added to ``NO_DEVICE_LOG_ENVS``. This is true for Dimagi maintained environments where
+application errors get sent to Sumologic.
