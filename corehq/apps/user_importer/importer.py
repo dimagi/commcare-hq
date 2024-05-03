@@ -318,7 +318,7 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
-def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, location_id,
+def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, primary_location_id,
                                      user_change_logger=None, send_email=True):
     invite, invite_created = Invitation.objects.update_or_create(
         email=email,
@@ -327,7 +327,7 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
         defaults={
             'invited_by': upload_user.user_id,
             'invited_on': datetime.utcnow(),
-            'primary_location': SQLLocation.by_location_id(location_id),
+            'primary_location': SQLLocation.by_location_id(primary_location_id),
             'role': role_qualified_id
         },
     )
