@@ -1107,7 +1107,7 @@ def get_user_upload_context(domain, request_params, download_url, adjective, plu
 
 
 class UploadCommCareUsers(BaseUploadUser):
-    template_name = 'hqwebapp/bulk_upload.html'
+    template_name = 'hqwebapp/bootstrap3/bulk_upload.html'
     urlname = 'upload_commcare_users'
     page_title = gettext_noop("Bulk Upload Mobile Workers")
     is_web_upload = False
