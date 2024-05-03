@@ -1,0 +1,84 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block javascript %}
+  <script src="{% static 'styleguide/js_examples/ko-test.js' %}"></script>
+  <script src="{% static 'react/reactExamples.js' %}"></script>
+{% endblock javascript %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">React Examples</h1>
+  <p class="sg-lead">
+    Here are some scenarios React handles well
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#formPopup">Form Popup</a></li>
+      <li><a href="#readFromKnockout">Read From Knockout</a></li>
+      <li><a href="#reactToHTML">React To HTML</a></li>
+      <li><a href="#localTable">Local Table</a></li>
+      <li><a href="#remoteTable">Remote Table</a></li>
+      <li><a href="#buttonTable">Button Table</a></li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <div>
+    <h2 id="formPopup">Form Popup</h2>
+    {% include 'styleguide/react/partials/formPopup.html' %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=markup.form_popup %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.form_popup %}
+  </div>
+
+  <hr />
+
+  <div>
+    <h2 id="readFromKnockout">Read From Knockout</h2>
+    {% include 'styleguide/react/partials/readFromKnockout.html' %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=markup.readFromKnockout %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.koTest %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.readFromKnockout %}
+  </div>
+
+  <hr/>
+
+  <div>
+    <h2 id="reactToHTML">React To HTML</h2>
+    {% include 'styleguide/react/partials/reactToHTML.html' with content=markup.reactToHTML %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=markup.reactToHTML %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.reactToHTML %}
+  </div>
+
+  <hr/>
+
+  <div>
+    <h2 id="localTable">Local Table</h2>
+    {% include 'styleguide/react/partials/localTable.html' with content=markup.localTable %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=markup.localTable %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.localTable %}
+  </div>
+
+  <hr/>
+
+  <div>
+    <h2 id="remoteTable">Remote Table</h2>
+    {% include 'styleguide/react/partials/remoteTable.html' with content=markup.remoteTable %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=markup.remoteTable %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.remoteTable %}
+  </div>
+
+  <hr/>
+
+  <div>
+    <h2 id="buttonTable">Button Table</h2>
+    {% include 'styleguide/react/partials/buttonTable.html' with content=markup.buttonTable %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=markup.buttonTable %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.buttonTable %}
+  </div>
+{% endblock content %}
