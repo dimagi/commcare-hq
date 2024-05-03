@@ -213,3 +213,7 @@ def filter_user_query_by_locations_accessible_to_user(user_es, domain, couch_use
         loc_ids = (SQLLocation.objects.accessible_to_user(domain, couch_user).location_ids())
         user_es = user_es.location(list(loc_ids))
     return user_es
+
+
+def user_can_access_invite(domain, user, invite):
+    return invite.assigned_locations.all().accessible_to_user(domain, user).exists()

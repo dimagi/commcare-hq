@@ -115,7 +115,8 @@ from corehq.apps.users.models import (
 from corehq.apps.users.util import log_user_change
 from corehq.apps.users.views.utils import (
     filter_user_query_by_locations_accessible_to_user,
-    get_editable_role_choices, BulkUploadResponseWrapper
+    get_editable_role_choices, BulkUploadResponseWrapper,
+    user_can_access_invite
 )
 from corehq.apps.user_importer.importer import UserUploadError
 from corehq.apps.user_importer.models import UserUploadRecord
@@ -555,8 +556,10 @@ class ListWebUsersView(BaseRoleAccessView):
     @property
     @memoized
     def invitations(self):
+        invitations = Invitation.by_domain(self.domain)
         if not self.request.couch_user.has_permission(self.domain, 'access_all_locations'):
-            return []
+            invitations = [invite for invite in invitations if user_can_access_invite(
+                self.domain, self.request.couch_user, invite)]
         return [
             {
                 "uuid": str(invitation.uuid),
@@ -566,7 +569,7 @@ class ListWebUsersView(BaseRoleAccessView):
                 "role_label": self.role_labels.get(invitation.role, ""),
                 "email_status": invitation.email_status,
             }
-            for invitation in Invitation.by_domain(self.domain)
+            for invitation in invitations
         ]
 
     @property
