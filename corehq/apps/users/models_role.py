@@ -198,7 +198,13 @@ class UserRole(models.Model):
         _clear_query_cache()
 
     def get_permission_infos(self):
-        return [rp.as_permission_info() for rp in self.rolepermission_set.all()]
+        try:
+            role_permission_set = self.rolepermission_set.all()
+        except ValueError:
+            # A ValueError is raised if this instance hasn't been saved yet when attempting to access the reverse
+            # foreign key relationship. Return an empty list in this scenario.
+            return []
+        return [rp.as_permission_info() for rp in role_permission_set]
 
     @property
     def permissions(self):

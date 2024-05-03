@@ -42,9 +42,42 @@
     ]
   },
   "hqwebapp": {
-    "in_progress": true
+    "in_progress": true,
+    "templates": [
+      "maintenance_alerts.html",
+      "close_window.html",
+      "crispy/field/multifield.html",
+      "includes/create_item_form.html"
+    ]
   },
   "corehq.tabs": {
+    "in_progress": true
+  },
+  "ota": {
+    "is_complete": true
+  },
+  "commtrack": {
+    "is_complete": true
+  },
+  "registry": {
+    "is_complete": true
+  },
+  "user_importer": {
+    "is_complete": true
+  },
+  "dropbox": {
+    "is_complete": true
+  },
+  "casexml": {
+    "is_complete": true
+  },
+  "programs": {
+    "is_complete": true
+  },
+  "products": {
+    "is_complete": true
+  },
+  "notifications": {
     "in_progress": true
   }
 }

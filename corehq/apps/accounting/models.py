@@ -852,6 +852,7 @@ class DefaultProductPlan(models.Model):
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
     is_trial = models.BooleanField(default=False)
     is_report_builder_enabled = models.BooleanField(default=False)
+    is_annual_plan = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta(object):
@@ -862,14 +863,14 @@ class DefaultProductPlan(models.Model):
     @quickcache(['edition', 'is_trial', 'is_report_builder_enabled'],
                 skip_arg=lambda *args, **kwargs: not settings.ENTERPRISE_MODE or settings.UNIT_TESTING)
     def get_default_plan_version(cls, edition=None, is_trial=False,
-                                 is_report_builder_enabled=False):
+                                 is_report_builder_enabled=False, is_annual_plan=False):
         if not edition:
             edition = (SoftwarePlanEdition.ENTERPRISE if settings.ENTERPRISE_MODE
                        else SoftwarePlanEdition.COMMUNITY)
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
                 edition=edition, is_trial=is_trial,
-                is_report_builder_enabled=is_report_builder_enabled
+                is_report_builder_enabled=is_report_builder_enabled, is_annual_plan=is_annual_plan
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:

@@ -29,7 +29,8 @@ module.exports = function (grunt) {
     var apps = [
         'app_manager',
         'export/ko',
-        'notifications',
+        'notifications/bootstrap3',
+        'notifications/bootstrap5',
         'reports_core/choiceListUtils',
         'locations',
         'userreports',
@@ -37,7 +38,8 @@ module.exports = function (grunt) {
         'cloudcare/bootstrap5',
         'cloudcare/form_entry/bootstrap3',
         'cloudcare/form_entry/bootstrap5',
-        'hqwebapp',
+        'hqwebapp/bootstrap3',
+        'hqwebapp/bootstrap5',
         'case_importer',
     ];
 
