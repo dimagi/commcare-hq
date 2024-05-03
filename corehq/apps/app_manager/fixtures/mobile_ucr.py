@@ -113,7 +113,7 @@ class ReportFixturesProvider(FixtureProvider):
             apps = [app_aware_sync_app]
         elif toggles.RESTORE_ACCESSIBLE_REPORTS_ONLY and restore_state.params.is_webapps:
             apps = []
-            if restore_user.request_user.can_edit_apps():
+            if restore_user.request_user.can_view_apps():
                 # return all apps since we don't know if this is in a live preview or web apps context
                 apps = get_apps_in_domain(restore_user.domain, include_remote=False)
             else:
