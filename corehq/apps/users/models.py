@@ -532,7 +532,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domains.append(domain)
 
     def add_as_web_user(self, domain, role, primary_location_id=None,
-                        assigned_locations_ids=[], program_id=None):
+                        assigned_location_ids=[], program_id=None):
         domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
@@ -541,7 +541,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         if domain_obj.uses_locations:
             if primary_location_id:
                 self.set_location(domain, primary_location_id)
-            self.reset_locations(domain, assigned_locations_ids)
+            self.reset_locations(domain, assigned_location_ids)
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
