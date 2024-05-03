@@ -532,7 +532,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domains.append(domain)
 
     def add_as_web_user(self, domain, role, primary_location_id=None,
-                        assigned_locations_ids=[], program_id=None, profile=None):
+                        assigned_location_ids=[], program_id=None, profile=None):
         domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
@@ -541,7 +541,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         if domain_obj.uses_locations:
             if primary_location_id:
                 self.set_location(domain, primary_location_id)
-            self.reset_locations(domain, assigned_locations_ids)
+            self.reset_locations(domain, assigned_location_ids)
         if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
             user_data = self.get_user_data(domain_obj.name)
             user_data.update({}, profile_id=profile.id)
@@ -2828,7 +2828,7 @@ class Invitation(models.Model):
             self.domain,
             role=self.role,
             primary_location_id=getattr(self.primary_location, "location_id", None),
-            assigned_location_ids=[getattr(loc, "location_id", None) for loc in self.assigned_locations],
+            assigned_location_ids=[getattr(loc, "location_id", None) for loc in self.assigned_locations.all()],
             program_id=self.program,
             profile=self.profile,
         )
