@@ -22,13 +22,12 @@ from corehq.apps.translations.integrations.transifex.transifex import Transifex
 
 @task
 def delete_resources_on_transifex(domain, data, email):
-    version = data.get('version')
     transifex = Transifex(domain,
-                          data.get('app_id'),
-                          data.get('target_lang') or data.get('source_lang'),
-                          data.get('transifex_project_slug'),
-                          version,
-                          use_version_postfix='yes' in data['use_version_postfix'])
+                          app_id=None,
+                          source_lang=None,
+                          project_slug=data.get('transifex_project_slug'),
+                          version=None,
+                          use_version_postfix=[])
     delete_status = transifex.delete_resources()
     result_note = "Hi,\nThe request to delete resources for app {app_id}(version {version}), " \
                   "was completed on project {transifex_project_slug} on transifex. " \
@@ -158,7 +157,7 @@ def backup_project_from_transifex(domain, data, email):
         tmp.seek(0)
         send_mail_async(
             subject='[{}] - Transifex backup translations'.format(settings.SERVER_ENVIRONMENT),
-            body="PFA Translations backup from transifex.",
+            message="PFA Translations backup from transifex.",
             recipient_list=[email],
             filename="%s-TransifexBackup.zip" % project_name,
             content=tmp.read(),
@@ -227,7 +226,7 @@ def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, 
 
     send_mail_async(
         subject='[{}] - Transifex Project Migration Status'.format(settings.SERVER_ENVIRONMENT),
-        body=linebreaksbr(generate_email_body()),
+        message=linebreaksbr(generate_email_body()),
         recipient_list=[email],
         domain=domain,
         use_domain_gateway=True,
