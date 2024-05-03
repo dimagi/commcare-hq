@@ -532,7 +532,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domains.append(domain)
 
     def add_as_web_user(self, domain, role, primary_location_id=None,
-                        assigned_location_ids=[], program_id=None):
+                        assigned_location_ids=None, program_id=None):
+        if assigned_location_ids is None:
+            assigned_location_ids = []
         domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
