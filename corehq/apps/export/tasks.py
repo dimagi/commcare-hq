@@ -215,7 +215,7 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
 def generate_schema_for_all_builds(self, export_type, domain, app_id, identifier):
     from .views.utils import GenerateSchemaFromAllBuildsView
     export_cls = GenerateSchemaFromAllBuildsView.export_cls(export_type)
-    export_cls.generate_schema_from_builds(
+    export_cls.generate_schema(
         domain,
         app_id,
         identifier,
@@ -240,7 +240,7 @@ def process_populate_export_tables(export_id, progress_id=None):
     if progress_id:
         cache.set(progress_id, progress_data)
 
-    schema = CaseExportDataSchema.generate_schema_from_builds(export.domain, None, export.case_type)
+    schema = CaseExportDataSchema.generate_schema(export.domain, None, export.case_type)
     if progress_id:
         progress_data['progress'] = 50
         cache.set(progress_id, progress_data)

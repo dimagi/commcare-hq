@@ -28,7 +28,7 @@ class Command(BaseCommand):
             print("Rebuilding {} schemas for domain '{}'".format(len(schema_keys), domain))
             for app_id, xmlns in schema_keys:
                 print("    rebuilding ('{}', '{}')".format(app_id, xmlns))
-                FormExportDataSchema.generate_schema_from_builds(domain, app_id, xmlns, force_rebuild=True)
+                FormExportDataSchema.generate_schema(domain, app_id, xmlns, force_rebuild=True)
 
 
 def _latest_form_schema_ids():

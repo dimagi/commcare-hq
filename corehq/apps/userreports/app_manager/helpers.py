@@ -28,7 +28,7 @@ def get_case_data_sources(app):
 
 
 def get_case_data_source(app, case_type):
-    schema = CaseExportDataSchema.generate_schema_from_builds(
+    schema = CaseExportDataSchema.generate_schema(
         app.domain,
         app._id,
         case_type,
@@ -37,7 +37,11 @@ def get_case_data_source(app, case_type):
     # the first two (row number and case id) are redundant/export specific,
     meta_properties_to_use = MAIN_CASE_TABLE_PROPERTIES[2:]
     # anything with a transform should also be removed
-    meta_properties_to_use = [property_def for property_def in meta_properties_to_use if property_def.item.transform is None]
+    meta_properties_to_use = [
+        property_def
+        for property_def in meta_properties_to_use
+        if property_def.item.transform is None
+    ]
     meta_indicators = [_export_column_to_ucr_indicator(c) for c in meta_properties_to_use]
     dynamic_indicators = _get_dynamic_indicators_from_export_schema(schema)
     # filter out any duplicately defined columns from dynamic indicators
@@ -71,7 +75,7 @@ def get_form_data_sources(app):
 
 def get_form_data_source(app, form):
     xform = XForm(form.source, domain=app.domain)
-    schema = FormExportDataSchema.generate_schema_from_builds(
+    schema = FormExportDataSchema.generate_schema(
         app.domain,
         app._id,
         xform.data_node.tag_xmlns,

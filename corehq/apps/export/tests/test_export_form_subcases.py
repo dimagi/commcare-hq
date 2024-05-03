@@ -1,4 +1,3 @@
-import json
 import os
 
 from django.test import TestCase
@@ -61,7 +60,7 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
         super(TestFormExportSubcases, cls).tearDownClass()
 
     def test(self):
-        schema = FormExportDataSchema.generate_schema_from_builds(
+        schema = FormExportDataSchema.generate_schema(
             self.domain,
             self.app._id,
             self.form_xmlns,
