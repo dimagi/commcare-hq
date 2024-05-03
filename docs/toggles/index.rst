@@ -18,7 +18,7 @@ code-level documentation. Plugins can be managed through the admin UI,
 available at ``https://<hq.server.url>/hq/flags/``.
 
 The CommCare Community of Practice urges all plugin maintainers to
-follow our best practices for :doc:`documentation <documenting>`. Each
+follow our best practices for :doc:`documentation <../documenting>`. Each
 commit should include a description of the functionality and links to
 relevant tickets.
 
@@ -68,3 +68,8 @@ To access your plugin:
   ``toggleEnabled`` method.
 
 (Note: Plugins were historically called Feature Flags and Toggles)
+
+ .. toctree::
+    :maxdepth: 2
+
+    application_error_report
