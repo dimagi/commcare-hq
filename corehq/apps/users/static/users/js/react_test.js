@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import _ from 'underscore';
-import Pagination from 'HQ/styleguide/components/pagination.js'
+import Pagination from 'HQ/styleguide/components/pagination.js';
 
 function RowDisplay({row}) {
     return (
@@ -51,8 +51,17 @@ function TableDisplay({rows, getItemId}) {
 }
 
 window.addEventListener('load', async () => {
+    const loadRequireLib = (lib) => {
+        return new Promise(resolve => {
+            window.requirejs([lib], (foundLib) => resolve(foundLib));
+        });
+    };
+
+    const paginationUrl = await loadRequireLib('hqwebapp/js/initial_page_data')
+        .then(initialPageData => initialPageData.reverse('paginate_mobile_workers'));
+
     const getPageItemsAsync = (pageNum, pageSize) => {
-        const url = new URL('/a/first-domain/settings/users/commcare/json/', window.location.origin);
+        const url = new URL(paginationUrl, window.location.origin);
         url.search = new URLSearchParams({
             page: pageNum,
             limit: pageSize,
