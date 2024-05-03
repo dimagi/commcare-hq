@@ -1120,7 +1120,9 @@ class InviteWebUserView(BaseManageWebUserView):
                     create_invitation = False
                     user.add_as_web_user(self.domain, role=data["role"],
                                          primary_location_id=data.get("primary_location", None),
-                                         program_id=data.get("program", None))
+                                         program_id=data.get("program", None),
+                                         assigned_location_ids=data.get("assigned_locations", None),
+                                         )
                 messages.success(request, "%s added." % data["email"])
             else:
                 track_workflow(request.couch_user.get_email(),
@@ -1136,6 +1138,10 @@ class InviteWebUserView(BaseManageWebUserView):
                 primary_location_id = data.pop("primary_location", None)
                 data["primary_location"] = (SQLLocation.by_location_id(primary_location_id)
                                         if primary_location_id else None)
+                assigned_location_ids = data.pop("assigned_locations", None)
+                data["assigned_locations"] = [SQLLocation.by_location_id(assigned_location_id)
+                                        if assigned_location_id else None
+                                        for assigned_location_id in assigned_location_ids]
                 profile_id = data.get("profile", None)
                 data["profile"] = CustomDataFieldsProfile.objects.get(
                     id=profile_id,
