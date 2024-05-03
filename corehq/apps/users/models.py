@@ -531,14 +531,17 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domain_memberships.append(domain_membership)
         self.domains.append(domain)
 
-    def add_as_web_user(self, domain, role, location_id=None, program_id=None, profile=None):
+    def add_as_web_user(self, domain, role, primary_location_id=None,
+                        assigned_locations_ids=[], program_id=None, profile=None):
         domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
         if domain_obj.commtrack_enabled:
             self.get_domain_membership(domain).program_id = program_id
-        if domain_obj.uses_locations and location_id:
-            self.set_location(domain, location_id)
+        if domain_obj.uses_locations:
+            if primary_location_id:
+                self.set_location(domain, primary_location_id)
+            self.reset_locations(domain, assigned_locations_ids)
         if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
             user_data = self.get_user_data(domain_obj.name)
             user_data.update({}, profile_id=profile.id)
@@ -1599,7 +1602,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         if domain:
             try:
                 role = self.get_role(domain)
-                return role.permissions.web_apps_list
+                return bool(role.permissions.web_apps_list)
             except DomainMembershipError:
                 pass
         return False
@@ -2716,8 +2719,10 @@ class Invitation(models.Model):
     role = models.CharField(max_length=100, null=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
-    location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
+    primary_location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
                                  to_field='location_id', null=True)  # to replace supply_point
+    assigned_locations = models.ManyToManyField("locations.SQLLocation", symmetrical=False,
+                                                related_name='invitations')
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
                                 on_delete=models.SET_NULL, null=True)
     custom_user_data = models.JSONField(default=dict)
@@ -2822,7 +2827,8 @@ class Invitation(models.Model):
         web_user.add_as_web_user(
             self.domain,
             role=self.role,
-            location_id=getattr(self.location, "location_id", None),
+            primary_location_id=getattr(self.primary_location, "location_id", None),
+            assigned_location_ids=[getattr(loc, "location_id", None) for loc in self.assigned_locations],
             program_id=self.program,
             profile=self.profile,
         )
