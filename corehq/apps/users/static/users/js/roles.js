@@ -196,7 +196,7 @@ hqDefine('users/js/roles',[
                 }
                 self.accessAreas = [
                     {
-                        showOption: self.permissions.access_all_locations,
+                        showOption: true,
                         editPermission: self.permissions.edit_web_users,
                         viewPermission: self.permissions.view_web_users,
                         text: gettext("<strong>Web Users</strong> &mdash; invite new web users, manage account settings, remove membership"),

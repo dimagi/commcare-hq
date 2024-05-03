@@ -248,8 +248,6 @@ class HqPermissions(DocumentSchema):
         if not self.access_all_locations:
             # The following permissions cannot be granted to location-restricted
             # roles.
-            self.edit_web_users = False
-            self.view_web_users = False
             self.edit_groups = False
             self.view_groups = False
             self.edit_apps = False
@@ -532,7 +530,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domains.append(domain)
 
     def add_as_web_user(self, domain, role, primary_location_id=None,
-                        assigned_location_ids=None, program_id=None):
+                        assigned_location_ids=None, program_id=None, profile=None):
         if assigned_location_ids is None:
             assigned_location_ids = []
         domain_obj = Domain.get_by_name(domain)
@@ -544,6 +542,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
             if primary_location_id:
                 self.set_location(domain, primary_location_id)
             self.reset_locations(domain, assigned_location_ids)
+        if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
+            user_data = self.get_user_data(domain_obj.name)
+            user_data.update({}, profile_id=profile.id)
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
@@ -2839,6 +2840,7 @@ class Invitation(models.Model):
             primary_location_id=getattr(self.primary_location, "location_id", None),
             assigned_location_ids=[getattr(loc, "location_id", None) for loc in self.assigned_locations.all()],
             program_id=self.program,
+            profile=self.profile,
         )
         self.is_accepted = True
         self.save()
