@@ -195,10 +195,12 @@ class TransifexApiClient(object):
         """
         resource = self._get_resource(resource_slug)
         language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
-        langs = [lang for lang in self._fetch_related(self.project, 'languages') if lang.id == language_id]
-        try:
-            language = langs[0]
-        except IndexError:
+        language = None
+        for lang in self.get_all_project_languages():
+            if lang.id == language_id:
+                language = lang
+                break
+        if language is None:
             raise TransifexApiException("Target language does not exist on resource")
         content = self._download_resource_translations(resource, language)
         temp_file = tempfile.NamedTemporaryFile()
@@ -209,9 +211,12 @@ class TransifexApiClient(object):
         return polib.pofile(temp_file.name)
 
     def get_project_langcodes(self):
-        languages = self._fetch_related(self.project, 'languages')
-        languages.append(self.project.source_language)
+        languages = self.get_all_project_languages()
         return [self._to_lang_code(language.id) for language in languages]
+
+    def get_all_project_languages(self):
+        languages = self._fetch_related(self.project, 'languages')
+        return languages
 
     def source_lang_is(self, hq_lang_code):
         """
