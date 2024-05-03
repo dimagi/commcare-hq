@@ -58,6 +58,7 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
 from corehq.apps.cloudcare.utils import (
+    can_user_access_web_app,
     get_latest_build_for_web_apps,
     get_latest_build_id_for_web_apps,
     get_mobile_ucr_count,
@@ -243,17 +244,10 @@ class FormplayerPreviewSingleApp(View):
         return super(FormplayerPreviewSingleApp, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, domain, app_id, **kwargs):
-        app_access = get_application_access_for_domain(domain)
-
         app = get_current_app(domain, app_id)
-
-        if toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled(domain):
-            if not app_access.user_can_access_app(request.couch_user, app):
-                raise Http404()
-
-        if request.couch_user.is_web_user() or request.couch_user.can_access_any_web_apps(domain):
-            if not request.couch_user.can_access_web_app(domain, app.origin_id):
-                raise Http404()
+        has_access = can_user_access_web_app(request.couch_user, app.to_json())
+        if not has_access:
+            raise Http404()
 
         def _default_lang():
             try:
