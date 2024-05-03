@@ -1177,6 +1177,7 @@ class BaseLocationForm(forms.Form):
 
     def __init__(self, domain: str, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
+        self.request = kwargs.pop('request')
         super(BaseLocationForm, self).__init__(*args, **kwargs)
         self.domain = domain
         self.fields['assigned_locations'].widget = LocationSelectWidget(
@@ -1238,7 +1239,6 @@ class CommtrackUserForm(BaseLocationForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request')
         self.domain = kwargs.pop('domain', None)
         super(CommtrackUserForm, self).__init__(self.domain, *args, **kwargs)
 

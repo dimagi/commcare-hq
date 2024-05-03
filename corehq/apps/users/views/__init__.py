@@ -1107,14 +1107,16 @@ class InviteWebUserView(BaseManageWebUserView):
                 role_choices=role_choices,
                 domain=self.domain,
                 is_add_user=is_add_user,
-                should_show_location=self.request.project.uses_locations
+                should_show_location=self.request.project.uses_locations,
+                request=self.request
             )
         return AdminInvitesUserForm(
             initial=initial,
             role_choices=role_choices,
             domain=self.domain,
             is_add_user=is_add_user,
-            should_show_location=self.request.project.uses_locations
+            should_show_location=self.request.project.uses_locations,
+            request=self.request
         )
 
     @property
