@@ -1139,15 +1139,17 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["primary_location"] = (SQLLocation.by_location_id(primary_location_id)
                                         if primary_location_id else None)
                 assigned_location_ids = data.pop("assigned_locations", None)
-                data["assigned_locations"] = [SQLLocation.by_location_id(assigned_location_id)
-                                        if assigned_location_id else None
-                                        for assigned_location_id in assigned_location_ids]
                 profile_id = data.get("profile", None)
                 data["profile"] = CustomDataFieldsProfile.objects.get(
                     id=profile_id,
                     definition__domain=self.domain) if profile_id else None
                 invite = Invitation(**data)
                 invite.save()
+
+                assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
+                        if assigned_location_id else None
+                        for assigned_location_id in assigned_location_ids]
+                invite.assigned_locations.set(assigned_locations)
                 invite.send_activation_email()
 
             # Ensure trust is established with Invited User's Identity Provider
