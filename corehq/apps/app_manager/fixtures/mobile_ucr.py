@@ -111,7 +111,10 @@ class ReportFixturesProvider(FixtureProvider):
 
         if app_aware_sync_app:
             apps = [app_aware_sync_app]
-        elif toggles.RESTORE_ACCESSIBLE_REPORTS_ONLY and restore_state.params.is_webapps:
+        elif (
+            toggles.RESTORE_ACCESSIBLE_REPORTS_ONLY.enabled(restore_user.domain)
+            and restore_state.params.is_webapps
+        ):
             apps = []
             if restore_user.request_user.can_view_apps():
                 # return all apps since we don't know if this is in a live preview or web apps context
