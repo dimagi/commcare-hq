@@ -138,9 +138,13 @@ class TransifexApiClient(object):
         :param resource_name: resource name, mostly same as resource slug itself
         :param update_resource: update resource
         """
+        create_missing_resource = False
         if update_resource:
-            resource = self._get_resource(resource_slug)
-        else:
+            try:
+                resource = self._get_resource(resource_slug)
+            except TransifexApiException:
+                create_missing_resource = True
+        if not update_resource or create_missing_resource:
             # must create the new resource first
             if resource_name is None:
                 __, filename = os.path.split(path_to_po_file)
@@ -195,10 +199,12 @@ class TransifexApiClient(object):
         """
         resource = self._get_resource(resource_slug)
         language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
-        langs = [lang for lang in self._fetch_related(self.project, 'languages') if lang.id == language_id]
-        try:
-            language = langs[0]
-        except IndexError:
+        language = None
+        for lang in self.get_all_project_languages():
+            if lang.id == language_id:
+                language = lang
+                break
+        if language is None:
             raise TransifexApiException("Target language does not exist on resource")
         content = self._download_resource_translations(resource, language)
         temp_file = tempfile.NamedTemporaryFile()
@@ -209,9 +215,12 @@ class TransifexApiClient(object):
         return polib.pofile(temp_file.name)
 
     def get_project_langcodes(self):
-        languages = self._fetch_related(self.project, 'languages')
-        languages.append(self.project.source_language)
+        languages = self.get_all_project_languages()
         return [self._to_lang_code(language.id) for language in languages]
+
+    def get_all_project_languages(self):
+        languages = self._fetch_related(self.project, 'languages')
+        return languages
 
     def source_lang_is(self, hq_lang_code):
         """
@@ -252,3 +261,11 @@ class TransifexApiClient(object):
     @staticmethod
     def _to_lang_code(language_id):
         return language_id.replace("l:", "")
+
+    def get_resource_slugs_for_deleted_forms(self, project_resources):
+        # this could be a problem if you're using two completely different apps for the same project....
+        # but we won't do that in practice....?
+        transifex_resources = self._list_resources()
+        if len(transifex_resources) > len(project_resources):
+            return list(set([r.slug for r in transifex_resources]) - set(project_resources))
+        return None
