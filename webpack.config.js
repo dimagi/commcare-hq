@@ -63,7 +63,7 @@ function getDynamicReactApps() {
 function getEntries() {
     const customEntries = {
         'reactExamples': './frontend/reactExamples.js',
-        'mobileWorkers': './corehq/apps/users/static/users/js/react_test.js',
+        'mobileWorkers2': './corehq/apps/users/static/users/js/react_test.js',
     };
     return Object.assign(getDynamicReactApps(), customEntries);
 }
