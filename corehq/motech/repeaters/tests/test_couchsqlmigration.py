@@ -4,7 +4,6 @@ from pathlib import Path
 from unittest.mock import patch
 from uuid import UUID, uuid4
 
-from django import VERSION as django_version
 from django.db import connection, transaction
 from django.core.management import call_command
 from django.test import SimpleTestCase, TestCase
@@ -142,10 +141,7 @@ class TestRepeatRecordCouchToSQLDiff(BaseRepeatRecordCouchToSQLTest):
     def test_diff_state(self):
         doc, obj = self.create_repeat_record()
         obj.state = models.State.Empty
-        if django_version[:2] >= (4, 0):
-            expected_diff = ["state: couch value State.Pending != sql value State.Empty"]
-        else:
-            expected_diff = ["state: couch value <State.Pending: 1> != sql value <State.Empty: 16>"]
+        expected_diff = ["state: couch value State.Pending != sql value State.Empty"]
         self.assertEqual(self.diff(doc, obj), expected_diff)
 
     def test_diff_registered_at(self):
@@ -207,20 +203,12 @@ class TestRepeatRecordCouchToSQLDiff(BaseRepeatRecordCouchToSQLTest):
         obj.attempts[1].message = ''
         couch_datetime = repr(datetime(2020, 1, 1, 0, 0))
         sql_created_at = repr(obj.attempts[1].created_at)
-        if django_version[:2] >= (4, 0):
-            expected_diff = [
-                "attempts[0].state: couch value State.Success != sql value State.Fail",
-                "attempts[0].message: couch value '' != sql value 'something bad happened'",
-                f"attempts[1].created_at: couch value {couch_datetime} != sql value {sql_created_at}",
-                "couch['_rev']: v0-fake",
-            ]
-        else:
-            expected_diff = [
-                "attempts[0].state: couch value <State.Success: 4> != sql value <State.Fail: 2>",
-                "attempts[0].message: couch value '' != sql value 'something bad happened'",
-                f"attempts[1].created_at: couch value {couch_datetime} != sql value {sql_created_at}",
-                "couch['_rev']: v0-fake",
-            ]
+        expected_diff = [
+            "attempts[0].state: couch value State.Success != sql value State.Fail",
+            "attempts[0].message: couch value '' != sql value 'something bad happened'",
+            f"attempts[1].created_at: couch value {couch_datetime} != sql value {sql_created_at}",
+            "couch['_rev']: v0-fake",
+        ]
         self.assertEqual(self.diff(doc, obj), expected_diff)
 
     def diff(self, doc, obj):
@@ -396,10 +384,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
             self.assertIn(f"payload_id: couch value {payload_id!r} != sql value {obj.payload_id!r}\n", log.content)
             self.assertIn(
                 f"repeater_id: couch value '{REPEATER_ID_2}' != sql value '{REPEATER_ID_1}'\n", log.content)
-            if django_version[:2] >= (4, 0):
-                self.assertIn("state: couch value State.Fail != sql value 1\n", log.content)
-            else:
-                self.assertIn("state: couch value <State.Fail: 2> != sql value 1\n", log.content)
+            self.assertIn("state: couch value State.Fail != sql value 1\n", log.content)
             self.assertIn("registered_at: couch value '", log.content)
 
             call_command('populate_repeatrecords', fixup_diffs=log.path)
