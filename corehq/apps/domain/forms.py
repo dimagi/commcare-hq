@@ -115,7 +115,6 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import DatetimeLocalWidget, HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.hqwebapp.widgets import (
     BootstrapCheckboxInput,
     GeoCoderInput,
@@ -797,7 +796,7 @@ class PrivacySecurityForm(forms.Form):
     secure_submissions = BooleanField(
         label=gettext_lazy("Secure submissions"),
         required=False,
-        help_text=mark_safe_lazy(gettext_lazy(  # nosec: no user input
+        help_text=mark_safe(gettext_lazy(  # nosec: no user input
             "Secure Submissions prevents others from impersonating your mobile workers. "
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "

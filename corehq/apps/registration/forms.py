@@ -19,7 +19,6 @@ from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
@@ -59,7 +58,7 @@ class RegisterWebUserForm(forms.Form):
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
         required=False,
-        label=mark_safe_lazy(_(
+        label=mark_safe(_(
             """I have read and agree to Dimagi's
             <a href="http://www.dimagi.com/terms/latest/privacy/"
                target="_blank">Privacy Policy</a>,
@@ -367,7 +366,7 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
     eula_confirmed = forms.BooleanField(
         required=False,
         label="",
-        help_text=mark_safe_lazy(_(
+        help_text=mark_safe(_(
             """I have read and agree to Dimagi's
                 <a href="http://www.dimagi.com/terms/latest/privacy/"
                     target="_blank">Privacy Policy</a>,
