@@ -775,6 +775,7 @@ class WebUserRow(BaseUserRow):
                 self.check_invitation_status(self.domain, cv['username'])
 
             user_invite_loc_id = None
+            user_invite_locs_ids = []
             if self.domain_info.can_assign_locations and cv['location_codes']:
                 if len(cv['location_codes']) > 0:
                     user_invite_loc = get_location_from_site_code(
