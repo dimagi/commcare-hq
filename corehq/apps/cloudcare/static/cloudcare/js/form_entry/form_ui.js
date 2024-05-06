@@ -649,6 +649,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
         self.isRepetition = parent.parent instanceof Repeat;
+        self.showDelete = self.delete();
         let parentForm = getParentForm(self);
         let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
 
@@ -825,31 +826,26 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         return itemsPerRow !== null ? Math.round(constants.GRID_COLUMNS / itemsPerRow) : constants.GRID_COLUMNS;
     };
 
-     function AddGroup (json, parent) {
-         var self = this;
-         self.parent = parent;
-         self.hasError = function () {
-             return false;
-         }
-         self.children = function () {
-             return [];
-         }
-
-         self.newRepeat = function () {
-             $.publish('formplayer.' + constants.NEW_REPEAT, self);
-             $.publish('formplayer.dirty');
-             $('.add').trigger('blur');
-         }
-
-         self.entryTemplate = "add-group-entry-ko-template";
-         self.type = function () {
-             return "add-group";
-         }
-
-         self.rel_ix = function () {
-             return json.ix;
-         }
-     }
+    function AddGroup (json, parent) {
+        var self = this;
+        self.parent = parent;
+        self.hasError = function () {
+            return false;
+        }
+        self.children = function () {
+            return [];
+        }
+        self.newRepeat = function () {
+            $.publish('formplayer.' + constants.NEW_REPEAT, self);
+            $.publish('formplayer.dirty');
+            $('.add').trigger('blur');
+        }
+        self.entryTemplate = "add-group-entry-ko-template";
+        self.type = function () {
+            return "add-group";
+        }
+        self.rel_ix = ko.observable(relativeIndex( json.ix) );
+    }
 
     /**
      * Represents a Question. A Question contains an Entry which is the widget that is displayed for that question
@@ -1046,5 +1042,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         Question: function (json, parent) {
             return new Question(json, parent);
         },
+        Repeat: Repeat
     };
 });
