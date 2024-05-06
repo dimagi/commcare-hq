@@ -21,8 +21,7 @@ corehq = "corehq.tests.pytest_hooks"
 py-modules = ["manage"]
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["corehq"]
+where = [".", "corehq/ex-submodules", "submodules"]
 namespaces = false
 
 [tool.pytest.ini_options]
