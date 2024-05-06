@@ -11,7 +11,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
-from corehq.apps.custom_data_fields.models import PROFILE_SLUG
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
@@ -113,7 +113,11 @@ from corehq.apps.users.models import (
     UserRole,
 )
 from corehq.apps.users.util import log_user_change
-from corehq.apps.users.views.utils import get_editable_role_choices, BulkUploadResponseWrapper
+from corehq.apps.users.views.utils import (
+    filter_user_query_by_locations_accessible_to_user,
+    get_editable_role_choices, BulkUploadResponseWrapper,
+    user_can_access_invite
+)
 from corehq.apps.user_importer.importer import UserUploadError
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups, parallel_user_import
@@ -372,7 +376,13 @@ class BaseEditUserView(BaseUserSettingsView):
         else:
             return self.get(request, *args, **kwargs)
 
+    def dispatch(self, *args, **kwargs):
+        if not user_can_access_other_user(self.domain, self.request.couch_user, self.editable_user):
+            return HttpResponse(status=401)
+        return super().dispatch(*args, **kwargs)
 
+
+@location_safe
 class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
@@ -529,6 +539,7 @@ class EnterpriseUsersView(BaseRoleAccessView):
 
 @method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
+@location_safe
 class ListWebUsersView(BaseRoleAccessView):
     template_name = 'users/web_users.html'
     page_title = gettext_lazy("Web Users")
@@ -545,6 +556,10 @@ class ListWebUsersView(BaseRoleAccessView):
     @property
     @memoized
     def invitations(self):
+        invitations = Invitation.by_domain(self.domain)
+        if not self.request.couch_user.has_permission(self.domain, 'access_all_locations'):
+            invitations = [invite for invite in invitations if user_can_access_invite(
+                self.domain, self.request.couch_user, invite)]
         return [
             {
                 "uuid": str(invitation.uuid),
@@ -554,7 +569,7 @@ class ListWebUsersView(BaseRoleAccessView):
                 "role_label": self.role_labels.get(invitation.role, ""),
                 "email_status": invitation.email_status,
             }
-            for invitation in Invitation.by_domain(self.domain)
+            for invitation in invitations
         ]
 
     @property
@@ -570,6 +585,8 @@ class ListWebUsersView(BaseRoleAccessView):
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'bulk_download_url': bulk_download_url,
+            'user_can_access_all_locations': self.request.couch_user.has_permission(
+                self.domain, 'access_all_locations'),
             'from_address': settings.DEFAULT_FROM_EMAIL
         }
 
@@ -810,8 +827,9 @@ def _format_enterprise_user(domain, user):
 @always_allow_project_access
 @require_can_edit_or_view_web_users
 @require_GET
+@location_safe
 def paginate_web_users(request, domain):
-    web_users, pagination = _get_web_users(request, [domain])
+    web_users, pagination = _get_web_users(request, [domain], filter_by_accessible_locations=True)
     web_users_fmt = [{
         'eulas': u.get_eulas(),
         'email': u.get_email(),
@@ -836,17 +854,22 @@ def paginate_web_users(request, domain):
     })
 
 
-def _get_web_users(request, domains):
+def _get_web_users(request, domains, filter_by_accessible_locations=False):
     limit = int(request.GET.get('limit', 10))
     page = int(request.GET.get('page', 1))
     skip = limit * (page - 1)
     query = request.GET.get('query')
 
-    result = (
+    user_es = (
         UserES().domains(domains).web_users().sort('username.exact')
         .search_string_query(query, ["username", "last_name", "first_name"])
-        .start(skip).size(limit).run()
+        .start(skip).size(limit)
     )
+    if filter_by_accessible_locations:
+        assert len(domains) == 1
+        domain = domains[0]
+        user_es = filter_user_query_by_locations_accessible_to_user(user_es, domain, request.couch_user)
+    result = user_es.run()
 
     return (
         [WebUser.wrap(w) for w in result.hits],
@@ -861,11 +884,14 @@ def _get_web_users(request, domains):
 @always_allow_project_access
 @require_can_edit_web_users
 @require_POST
+@location_safe
 def remove_web_user(request, domain, couch_user_id):
     user = WebUser.get_by_user_id(couch_user_id, domain)
     # if no user, very likely they just pressed delete twice in rapid succession so
     # don't bother doing anything.
     if user:
+        if not user_can_access_other_user(domain, request.couch_user, user):
+            return HttpResponse(status=401)
         record = user.delete_domain_membership(domain, create_record=True)
         user.save()
         # web user's membership is bound to the domain, so log as a change for that domain
@@ -1067,14 +1093,11 @@ class InviteWebUserView(BaseManageWebUserView):
     @memoized
     def invite_web_user_form(self):
         role_choices = get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
-        loc = None
         domain_request = DomainRequest.objects.get(id=self.request_id) if self.request_id else None
         is_add_user = self.request_id is not None
         initial = {
             'email': domain_request.email if domain_request else None,
         }
-        if 'location_id' in self.request.GET:
-            loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
             pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
@@ -1084,13 +1107,16 @@ class InviteWebUserView(BaseManageWebUserView):
                 role_choices=role_choices,
                 domain=self.domain,
                 is_add_user=is_add_user,
+                should_show_location=self.request.project.uses_locations,
+                request=self.request
             )
         return AdminInvitesUserForm(
             initial=initial,
             role_choices=role_choices,
             domain=self.domain,
-            location=loc,
             is_add_user=is_add_user,
+            should_show_location=self.request.project.uses_locations,
+            request=self.request
         )
 
     @property
@@ -1121,8 +1147,10 @@ class InviteWebUserView(BaseManageWebUserView):
                     domain_request.send_approval_email()
                     create_invitation = False
                     user.add_as_web_user(self.domain, role=data["role"],
-                                         primary_location_id=data.get("location_id", None),
-                                         program_id=data.get("program", None))
+                                         primary_location_id=data.get("primary_location", None),
+                                         program_id=data.get("program", None),
+                                         assigned_location_ids=data.get("assigned_locations", None),
+                                         )
                 messages.success(request, "%s added." % data["email"])
             else:
                 track_workflow(request.couch_user.get_email(),
@@ -1135,11 +1163,21 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
-                primary_location_id = data.pop("location_id", None)
+                primary_location_id = data.pop("primary_location", None)
                 data["primary_location"] = (SQLLocation.by_location_id(primary_location_id)
                                         if primary_location_id else None)
+                assigned_location_ids = data.pop("assigned_locations", None)
+                profile_id = data.get("profile", None)
+                data["profile"] = CustomDataFieldsProfile.objects.get(
+                    id=profile_id,
+                    definition__domain=self.domain) if profile_id else None
                 invite = Invitation(**data)
                 invite.save()
+
+                assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
+                        if assigned_location_id else None
+                        for assigned_location_id in assigned_location_ids]
+                invite.assigned_locations.set(assigned_locations)
                 invite.send_activation_email()
 
             # Ensure trust is established with Invited User's Identity Provider
