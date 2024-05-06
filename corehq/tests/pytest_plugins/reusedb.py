@@ -16,7 +16,13 @@ import os
 from unittest.mock import patch
 
 import pytest
-from django.test import utils as django_utils
+from pytest_django.plugin import blocking_manager_key
+
+from django.test import utils as djutils
+
+from dimagi.utils.parsing import string_to_boolean
+
+from corehq.util.test_utils import timelimit
 
 REUSE_DB_HELP = """
 To be used in conjunction with the environment variable REUSE_DB=1.
@@ -35,23 +41,29 @@ teardown: Skip database setup; do normal teardown after running tests.
 
 @pytest.hookimpl
 def pytest_addoption(parser):
-    parser.addoption("--reusedb", default=os.environ.get("REUSE_DB"), help=REUSE_DB_HELP)
-    parser.addoption("--db",
-                     default="both",
-                     choices=["skip", "only"],
-                     help="Skip or only run database tests.")
+    parser.addoption(
+        "--reusedb",
+        default=string_to_boolean(os.environ.get("REUSE_DB") or "0"),
+        help=REUSE_DB_HELP
+    )
+    parser.addoption(
+        "--db",
+        default="both",
+        choices=["skip", "only"],
+        help="Skip or only run database tests."
+    )
 
 
 @pytest.hookimpl
 def pytest_configure(config):
-    config.reusedb = reusedb = config.getoption("--reusedb")
+    config.reuse_db = reusedb = config.getoption("--reusedb")
     config.skip_setup_for_reuse_db = reusedb and reusedb != "reset"
     config.skip_teardown_for_reuse_db = reusedb and reusedb != "teardown"
     db_opt = config.getoption("--db")
     assert db_opt in ["both", "only", "skip"], db_opt
     config.should_run_database_tests = db_opt
 
-    db_context.patch_django()
+    _db_context.patch_django()
 
 
 @pytest.hookimpl(wrapper=True)
@@ -59,12 +71,13 @@ def pytest_collection_modifyitems(config, items):
     """Sort and filter tests"""
     import pytest_django.plugin as mod
     django_key = None
+    is_db_test = None
 
     class items_for_django:
         def sort(key):
-            nonlocal django_key
+            nonlocal django_key, is_db_test
             django_key = key
-            filter_and_sort(items, key, config)
+            is_db_test = filter_and_sort(items, key, config)
 
     def skip_django_modifyitems():
         called.append(1)
@@ -77,7 +90,9 @@ def pytest_collection_modifyitems(config, items):
         yield
     assert called, "django_settings_is_configured patch was ineffective. " \
         "HQ-speicific test filtering and sorting may not have happened."
-    assert is_still_sorted(items, django_key)
+    assert is_still_sorted(items, django_key), "Test order changed. Database " \
+        "tests are mixed with non-database tests."
+    _db_context.setup_before_first_db_test(items, is_db_test, config)
 
 
 def filter_and_sort(items, key, config):
@@ -95,8 +110,8 @@ def filter_and_sort(items, key, config):
             return True
 
     tests = sorted((t for t in items if should_run(t)), key=new_key)
-    db_context.inject_database_setup(tests, is_db_test)
     items[:] = tests
+    return is_db_test
 
 
 def reorder(key):
@@ -126,31 +141,43 @@ class DeferredDatabaseContext:
         self.setup_cfg = None
 
     def patch_django(self):
-        self.django_setup_databases = django_utils.setup_databases
-        self.django_teardown_databases = django_utils.teardown_databases
-        django_utils.setup_databases = self.session_setup
-        django_utils.teardown_databases = self.session_teardown
-
-    def inject_database_setup(self, tests, is_db_test):
-        """Inject database setup just before the first that needs it"""
-        for test in tests:
-            if is_db_test(test):
-                def setup_databases():
-                    breakpoint()
-                    self.setup_databases()
-                    return setup()
-
-                setup = test.setup
-                test.setup = setup_databases
-                break
+        self.django_setup_databases = djutils.setup_databases
+        self.django_teardown_databases = djutils.teardown_databases
+        # HACK monkey patch
+        djutils.setup_databases = self.session_setup
+        djutils.teardown_databases = self.session_teardown
 
     def session_setup(self, *args, **kw):
-        """Preserve arguments, but do setup databases initially"""
+        """Preserve arguments, but do not setup databases initially"""
         db_cfg = []
         self.setup_cfg = (db_cfg, args, kw)
         return db_cfg
 
-    def setup_databases(self):
+    def setup_before_first_db_test(self, tests, is_db_test, config):
+        """Inject database setup just before the first test that needs it
+
+        Allows expensive setup to be avoided when there are no database
+        tests included in the test run.
+        """
+        def setup_databases_before(test):
+            def setup():
+                db_blocker = config.stash[blocking_manager_key]
+                with db_blocker.unblock():
+                    self.setup_databases(config)
+                return test_setup()
+
+            # HACK monkey patch
+            test_setup = test.setup
+            test.setup = setup
+
+        for test in tests:
+            if is_db_test(test):
+                setup_databases_before(test)
+                break
+
+    @timelimit(480)
+    def setup_databases(self, config):
+        """Setup databases for tests"""
         assert not self.did_setup, "already set up"
         self.did_setup = True
         db_cfg, args, kw = self.setup_cfg
@@ -163,4 +190,4 @@ class DeferredDatabaseContext:
         assert self.setup_cfg is not None, "session_setup() not called"
 
 
-db_context = DeferredDatabaseContext()
+_db_context = DeferredDatabaseContext()
