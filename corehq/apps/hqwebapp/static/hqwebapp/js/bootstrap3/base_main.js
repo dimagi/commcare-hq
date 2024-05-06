@@ -14,7 +14,7 @@ hqDefine("hqwebapp/js/bootstrap3/base_main", [
     'analytix/js/hubspot',
     'analytix/js/kissmetrix',
     'analytix/js/gtm',
-    'hqwebapp/js/mobile_experience_warning',
+    'hqwebapp/js/bootstrap3/mobile_experience_warning',
 ], function () {
     // nothing to do, this is just to define the dependencies for hqwebapp/base.html
 });

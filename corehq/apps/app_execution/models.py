@@ -41,9 +41,6 @@ class AppWorkflowConfig(models.Model):
 
     objects = AppWorkflowManager()
 
-    class Meta:
-        unique_together = ("domain", "user_id")
-
     @cached_property
     def app_name(self):
         app = get_brief_app(self.domain, self.app_id)
