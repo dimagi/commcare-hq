@@ -89,7 +89,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     css_class = "span5"
     drilldown_empty_text = gettext_lazy("You don't have any applications set up, so there are no forms "
                                         "to choose from. Please create an application!")
-    template = "reports/filters/form_app_module_drilldown.html"
+    template = "reports/filters/bootstrap3/form_app_module_drilldown.html"
     unknown_slug = "unknown"
     fuzzy_slug = "@@FUZZY"
     show_global_hide_fuzzy_checkbox = True

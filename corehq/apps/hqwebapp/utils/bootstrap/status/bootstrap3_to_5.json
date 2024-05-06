@@ -83,5 +83,11 @@
   },
   "notifications": {
     "in_progress": true
+  },
+  "reports": {
+    "in_progress": true
+  },
+  "reports_core": {
+    "in_progress": true
   }
 }
