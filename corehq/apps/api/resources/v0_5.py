@@ -120,7 +120,12 @@ from corehq.apps.users.models import (
     HqPermissions,
     WebUser,
 )
-from corehq.apps.users.util import generate_mobile_username, raw_username
+from corehq.apps.users.util import (
+    generate_mobile_username,
+    raw_username,
+    log_user_change,
+    verify_modify_user_conditions,
+)
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
@@ -137,7 +142,7 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
-
+from ...users.exceptions import ModifyUserStatusException
 
 MOCK_BULK_USER_ES = None
 EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 1000
@@ -334,24 +339,31 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 self.wrap_view('deactivate_user'), name="api_deactivate_user"),
         ]
 
+    @location_safe
     def activate_user(self, request, **kwargs):
-        return self.change_user_status(request, **kwargs, active=True)
+        return self._modify_user_status(request, **kwargs, active=True)
 
+    @location_safe
     def deactivate_user(self, request, **kwargs):
-        return self.change_user_status(request, **kwargs, active=False)
+        return self._modify_user_status(request, **kwargs, active=False)
 
-    #@api_auth()
-    def change_user_status(self, request, active, **kwargs):
+    def _modify_user_status(self, request, active, **kwargs):
         self.is_authenticated(request)
 
         try:
-            user = self.cached_obj_get(bundle=None, **self.remove_api_resource_names(kwargs))
-        except CommCareUser.ObjectDoesNotExist:
-            raise NotFound
+            user = CommCareUser.get(kwargs['pk'])
+            assert user.domain == kwargs['domain']
+            verify_modify_user_conditions(request, user, active)
+        except ModifyUserStatusException as e:
+            raise BadRequest(_(str(e)))
 
         user.is_active = active
-        user.save()
-        return ImmediateHttpResponse(response=http.HttpAccepted())
+        user.save(spawn_task=True)
+        log_user_change(by_domain=request.domain, for_domain=user.domain,
+                        couch_user=user, changed_by_user=request.couch_user,
+                        changed_via=USER_CHANGE_VIA_API, fields_changed={'is_active': user.is_active})
+
+        return self.create_response(request, {}, response_class=http.HttpAccepted)
 
 
 class WebUserResource(v0_1.WebUserResource):
