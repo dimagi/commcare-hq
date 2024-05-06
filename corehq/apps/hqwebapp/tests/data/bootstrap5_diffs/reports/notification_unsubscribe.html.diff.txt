@@ -1,0 +1,27 @@
+--- 
++++ 
+@@ -1,12 +1,12 @@
+-{% extends 'hqwebapp/bootstrap3/base_navigation.html' %}
++{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
+ {% load i18n %}
+ 
+ {% block content %}
+-  <div style="margin-left: 20px">
++  <div style="margin-left: 20px">  {# todo B5: inline style #}
+     {% if error or success %}
+       <a href="{% url 'reports_home' domain=report.domain %}"
+          onclick="location.href=this.href+'#scheduled-reports';return false;"
+-         class="btn btn-default">{% trans 'Return to Scheduled Reports' %}</a>
++         class="btn btn-outline-primary">{% trans 'Return to Scheduled Reports' %}</a>
+     {% else %}
+       <form method="POST">
+         {% csrf_token %}
+@@ -26,7 +26,7 @@
+         <input type="submit" value="{% trans 'Confirm' %}" class="btn btn-primary" />
+         <a href="{% url 'reports_home' domain=report.domain %}"
+            onclick="location.href=this.href+'#scheduled-reports';return false;"
+-           class="btn btn-default">{% trans 'Cancel' %}</a>
++           class="btn btn-outline-primary">{% trans 'Cancel' %}</a>
+       </form>
+     {% endif %}
+   </div>

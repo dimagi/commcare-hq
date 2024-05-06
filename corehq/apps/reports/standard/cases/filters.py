@@ -90,7 +90,7 @@ class XPathCaseSearchFilter(BaseSimpleFilter):
     """
     slug = 'search_xpath'
     label = gettext_lazy("Search")
-    template = "reports/filters/xpath_textarea.html"
+    template = "reports/filters/bootstrap3/xpath_textarea.html"
 
     @property
     def filter_context(self):
@@ -119,7 +119,7 @@ class XPathCaseSearchFilter(BaseSimpleFilter):
 class CaseListExplorerColumns(BaseSimpleFilter):
     slug = 'explorer_columns'
     label = gettext_lazy("Columns")
-    template = "reports/filters/explorer_columns.html"
+    template = "reports/filters/bootstrap3/explorer_columns.html"
     DEFAULT_COLUMNS = [
         {'name': '@case_type', 'label': '@case_type'},
         {'name': 'case_name', 'label': 'case_name'},
@@ -165,7 +165,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
 class SensitiveCaseProperties(CaseListExplorerColumns):
     slug = "sensitive_properties"
     label = gettext_lazy("De-identify options")
-    template = "reports/filters/sensitive_columns.html"
+    template = "reports/filters/bootstrap3/sensitive_columns.html"
 
     @property
     def filter_context(self):

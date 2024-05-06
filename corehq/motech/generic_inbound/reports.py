@@ -43,7 +43,7 @@ class ApiFilter(BaseMultipleOptionFilter):
 class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
     name = gettext_lazy('Inbound API Request Logs')
     slug = 'api_request_log_report'
-    base_template = "reports/base_template.html"
+    base_template = "reports/bootstrap3/base_template.html"
     section_name = gettext_lazy('Project Settings')
     dispatcher = DomainReportDispatcher
     ajax_pagination = True
