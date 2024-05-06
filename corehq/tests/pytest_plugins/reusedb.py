@@ -12,17 +12,33 @@ databases will be re-created and migrated.
 The `REUSE_DB` environment variable may be overridden with
 `--reusedb` option passed on the command line.
 """
+import logging
 import os
+import sys
 from unittest.mock import patch
 
 import pytest
 from pytest_django.plugin import blocking_manager_key
 
+from django.conf import settings
+from django.core import cache
+from django.core.management import call_command
+from django.db.backends.base.creation import TEST_DATABASE_PREFIX
+from django.db.utils import OperationalError
 from django.test import utils as djutils
+from django.test.utils import get_unique_databases_and_mirrors
+from django.utils.functional import cached_property
+
+from couchdbkit import ResourceNotFound
+from requests.exceptions import HTTPError
 
 from dimagi.utils.parsing import string_to_boolean
 
-from corehq.util.test_utils import timelimit
+from corehq.util.test_utils import timelimit, unit_testing_only
+
+from ..tools import nottest
+
+log = logging.getLogger(__name__)
 
 REUSE_DB_HELP = """
 To be used in conjunction with the environment variable REUSE_DB=1.
@@ -181,13 +197,149 @@ class DeferredDatabaseContext:
         assert not self.did_setup, "already set up"
         self.did_setup = True
         db_cfg, args, kw = self.setup_cfg
-        db_cfg.extend(self.django_setup_databases(*args, **kw))
+
+        from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
+        self.blob_db = TemporaryFilesystemBlobDB()
+
+        if config.skip_setup_for_reuse_db and self._databases_ok():
+            if config.reuse_db == "migrate":
+                call_command('migrate_multi', interactive=False)
+            if config.reuse_db == "flush":
+                flush_databases()
+            if config.reuse_db == "bootstrap":
+                bootstrap_migrated_db_state()
+            return  # skip remaining setup
+
+        if config.reuse_db == "reset":
+            self.reset_databases()
+
+        print("", file=sys.__stdout__)  # newline for creating database message
+        if config.reuse_db:
+            print("REUSE_DB={} ".format(config.reuse_db), file=sys.__stdout__, end="")
+
+        if config.skip_setup_for_reuse_db:
+            # avoid creating databases that already exist
+            kw["keepdb"] = True
+        # reversed -> tear down in reverse order
+        db_cfg.extend(reversed(self.django_setup_databases(*args, **kw)))
+
+    def reset_databases(self):
+        self.delete_couch_databases()
+        self.delete_elastic_indexes()
+        self.clear_redis()
+        # tear down all databases together to avoid dependency issues
+        teardown = []
+        for connection, db_name, is_first in self._databases:
+            try:
+                connection.ensure_connection()
+                teardown.append((connection, db_name, is_first))
+            except OperationalError:
+                pass  # ignore missing database
+        self.django_teardown_databases(reversed(teardown))
+
+    def _databases_ok(self):
+        for connection, db_name, _ in self._databases:
+            try:
+                connection.ensure_connection()
+            except OperationalError as e:
+                print(str(e), file=sys.__stderr__)
+                return False
+        return True
+
+    @cached_property
+    def _databases(self):
+        from django.db import connections
+        dbs = []
+        test_databases, mirrored_aliases = get_unique_databases_and_mirrors()
+        assert not mirrored_aliases, "DB mirrors not supported"
+        for signature, (db_name, aliases) in test_databases.items():
+            alias = list(aliases)[0]
+            connection = connections[alias]
+            db = connection.settings_dict
+            assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
+            dbs.append((connection, db_name, True))
+        return dbs
+
+    def delete_couch_databases(self):
+        for db in get_all_test_dbs():
+            try:
+                db.server.delete_db(db.dbname)
+                log.info("deleted database %s", db.dbname)
+            except ResourceNotFound:
+                log.info("database %s not found! it was probably already deleted.",
+                         db.dbname)
+
+    def delete_elastic_indexes(self):
+        from corehq.apps.es.client import manager as elastic_manager
+        # corehq.apps.es.client.create_document_adapter uses
+        # TEST_DATABASE_PREFIX when constructing test index names
+        for index_name in elastic_manager.get_indices():
+            if index_name.startswith(TEST_DATABASE_PREFIX):
+                elastic_manager.index_delete(index_name)
+
+    def clear_redis(self):
+        config = settings.CACHES.get("redis", {})
+        loc = config.get("TEST_LOCATION")
+        if loc:
+            redis = cache.caches['redis']
+            assert redis.client._server == [loc], (redis.client._server, config)
+            redis.clear()
 
     def session_teardown(self, *args, **kw):
-        if self.did_setup:
-            result = self.django_teardown_databases(*args, **kw)
-            assert result is None, result
-        assert self.setup_cfg is not None, "session_setup() not called"
+        try:
+            if self.did_setup:
+                self.blob_db.close()
+                self.delete_elastic_indexes()
+
+            if self.skip_teardown_for_reuse_db:
+                return
+
+            self.delete_couch_databases()
+            self.clear_redis()
+
+            # HACK clean up leaked database connections
+            from corehq.sql_db.connections import connection_manager
+            connection_manager.dispose_all()
+
+            self.django_teardown_databases(*args, **kw)
+        finally:
+            assert self.setup_cfg is not None, "session_setup() not called"
+
+
+@nottest
+@unit_testing_only
+def get_all_test_dbs():
+    from corehq.util.couchdb_management import couch_config
+    all_dbs = list(couch_config.all_dbs_by_db_name.values())
+    for db in all_dbs:
+        if '/test_' not in db.uri:
+            raise ValueError("not a test db url: db=%s url=%r" % (db.dbname, db.uri))
+    return all_dbs
+
+
+@unit_testing_only
+def flush_databases():
+    """
+    Best effort at emptying all documents from all databases.
+    Useful when you break a test and it doesn't clean up properly. This took
+    about 5 seconds to run when trying it out.
+    """
+    print("Flushing test databases, check yourself before you wreck yourself!", file=sys.__stdout__)
+    for db in get_all_test_dbs():
+        try:
+            db.flush()
+        except (ResourceNotFound, HTTPError):
+            pass
+    call_command('flush', interactive=False)
+    bootstrap_migrated_db_state()
+
+
+@unit_testing_only
+def bootstrap_migrated_db_state():
+    from corehq.apps.accounting.tests.generator import bootstrap_accounting
+    from corehq.apps.smsbillables.tests.utils import bootstrap_smsbillables
+    bootstrap_accounting()
+    bootstrap_smsbillables()
 
 
 _db_context = DeferredDatabaseContext()
