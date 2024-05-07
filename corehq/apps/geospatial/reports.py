@@ -226,9 +226,9 @@ class CaseGroupingReport(BaseCaseMapReport):
             top_left=bounds['top_left'],
             bottom_right=bounds['bottom_right'],
         )]
-        if self.features_from_request:
+        if self.all_features:
             features_filter = self._get_filter_for_features(
-                self.features_from_request
+                self.all_features
             )
             filters_.append(features_filter)
         query = self._filter_query(query, filters_)
@@ -287,12 +287,21 @@ class CaseGroupingReport(BaseCaseMapReport):
                 features |= json.loads(features_json)
             except json.JSONDecodeError:
                 raise ValueError(f'{features_json!r} parameter is not valid JSON')
+        return features
+
+    @property
+    def saved_polygon_from_request(self):
+        features = {}
         selected_feature_id = self.request.GET.get('selected_feature_id')
         if selected_feature_id:
             selected_polygon = GeoPolygon.objects.get(id=selected_feature_id)
             geo_json_features = selected_polygon.geo_json['features']
-            features |= {uuid.uuid4().hex: feature for feature in geo_json_features}
+            features = {uuid.uuid4().hex: feature for feature in geo_json_features}
         return features
+
+    @property
+    def all_features(self):
+        return self.features_from_request | self.saved_polygon_from_request
 
     @property
     def total_records(self):
@@ -312,7 +321,7 @@ class CaseGroupingReport(BaseCaseMapReport):
         query = super()._build_query()
         if self.request.GET.get('features'):
             features_filter = self._get_filter_for_features(
-                self.features_from_request
+                self.all_features
             )
             query = self._filter_query(query, [features_filter])
         return query
