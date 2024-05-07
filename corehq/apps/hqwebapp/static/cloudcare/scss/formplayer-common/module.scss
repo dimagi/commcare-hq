@@ -91,7 +91,7 @@ button.clickable-icon {
   font-size: 16px;
 }
 
-@media (min-width: $screen-md) {
+@include media-breakpoint-up(lg) {
   .make-module-size(80px);
   .module-column-name h3 {
     font-size: 20px;
@@ -299,7 +299,7 @@ button.clickable-icon {
   }
 }
 
-@media(max-width: $screen-sm-max) {
+@include media-breakpoint-down(lg) {
   .module-case-list-table-container {
     width: 100%;
     overflow-x: scroll;
