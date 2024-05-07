@@ -4,7 +4,7 @@
 
 .form-container {
   background-color: white;
-  .box-shadow(0 0 10px 2px rgba(0,0,0,.1));
+  box-shadow: 0 0 10px 2px rgba(0,0,0,.1);
   margin-bottom: 2rem;
   font-size: $form-text-size;   // Don't overshadow inputs
 
