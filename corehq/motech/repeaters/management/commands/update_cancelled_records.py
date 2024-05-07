@@ -6,7 +6,7 @@ import time
 from django.core.management.base import BaseCommand
 
 from corehq.motech.repeaters.const import State
-from corehq.motech.repeaters.models import Repeater, SQLRepeatRecord
+from corehq.motech.repeaters.models import Repeater, RepeatRecord
 
 
 class Command(BaseCommand):
@@ -93,7 +93,7 @@ class Command(BaseCommand):
 
         records = list(filter(
             meets_filter,
-            SQLRepeatRecord.objects.iterate(domain, repeater_id=repeater_id, state=State.Cancelled)
+            RepeatRecord.objects.iterate(domain, repeater_id=repeater_id, state=State.Cancelled)
         ))
 
         if verbose:
