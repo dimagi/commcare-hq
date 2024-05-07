@@ -1,4 +1,4 @@
-.make-module-size($icon-size) {
+@mixin make-module-size($icon-size) {
   .module-icon-image,
   .module-icon-container {
     width: $icon-size;
