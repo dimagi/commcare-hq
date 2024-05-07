@@ -1412,9 +1412,8 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     class Meta:
         db_table = 'repeaters_repeatrecord'
         indexes = [
-            models.Index(fields=['domain']),
-            models.Index(fields=['payload_id']),
-            models.Index(fields=['registered_at']),
+            models.Index(fields=['domain', 'payload_id']),
+            models.Index(fields=['domain', 'registered_at']),
             models.Index(
                 name="next_check_not_null",
                 fields=["next_check"],
