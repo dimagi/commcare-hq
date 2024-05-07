@@ -83,17 +83,16 @@ def pytest_configure(config):
 
 
 @pytest.hookimpl(wrapper=True)
-def pytest_collection_modifyitems(config, items):
-    """Sort and filter tests"""
+def pytest_collection_modifyitems(session, items):
+    """Sort and filter tests, inject database setup"""
     import pytest_django.plugin as mod
     django_key = None
-    is_db_test = None
 
     class items_for_django:
         def sort(key):
-            nonlocal django_key, is_db_test
+            nonlocal django_key
             django_key = key
-            is_db_test = filter_and_sort(items, key, config)
+            filter_and_sort(items, key, session)
 
     def skip_django_modifyitems():
         called.append(1)
@@ -107,18 +106,17 @@ def pytest_collection_modifyitems(config, items):
     assert called, "django_settings_is_configured patch was ineffective. " \
         "HQ-speicific test filtering and sorting may not have happened."
     assert is_still_sorted(items, django_key), "Test order changed. Database " \
-        "tests are mixed with non-database tests."
-    _db_context.setup_before_first_db_test(items, is_db_test, config)
+        "setup may not be done at the correct point in the test run."
 
 
-def filter_and_sort(items, key, config):
+def filter_and_sort(items, key, session):
     def is_db_test(item):
         return bool(new_key(item))
 
     new_key = reorder(key)
-    if config.should_run_database_tests == "only":
+    if session.config.should_run_database_tests == "only":
         should_run = is_db_test
-    elif config.should_run_database_tests == "skip":
+    elif session.config.should_run_database_tests == "skip":
         def should_run(item):
             return not is_db_test(item)
     else:
@@ -126,19 +124,24 @@ def filter_and_sort(items, key, config):
             return True
 
     tests = sorted((t for t in items if should_run(t)), key=new_key)
+    if session.config.should_run_database_tests != "skip":
+        _db_context.setup_before_first_db_test(tests, is_db_test, session)
     items[:] = tests
-    return is_db_test
 
 
 def reorder(key):
     """Translate django-pytest's test sorting key
 
     - 2 -> 0: non-db tests first (pytest-django normally runs them last)
-    - 0 -> 1: TestCase
-    - 1 -> 2: TransactionTestCase last
+    -      1: DeferredDatabaseContext.setup_databases
+    - 0 -> 2: TestCase
+    - 1 -> 3: TransactionTestCase last
     """
-    new_order = {2: 0, 0: 1, 1: 2}
-    return lambda item: new_order[key(item)]
+    def is_setup(item):
+        return item.name == "reusedb setup_databases"
+
+    new_order = {2: 0, 0: 2, 1: 3}
+    return lambda item: 1 if is_setup(item) else new_order[key(item)]
 
 
 def is_still_sorted(items, key):
@@ -169,26 +172,30 @@ class DeferredDatabaseContext:
         self.setup_cfg = (db_cfg, args, kw)
         return db_cfg
 
-    def setup_before_first_db_test(self, tests, is_db_test, config):
+    def setup_before_first_db_test(self, tests, is_db_test, session):
         """Inject database setup just before the first test that needs it
 
         Allows expensive setup to be avoided when there are no database
-        tests included in the test run.
+        tests included in the test run. Database tests will not be run if
+        database setup fails.
         """
-        def setup_databases_before(test):
-            def setup():
-                db_blocker = config.stash[blocking_manager_key]
-                with db_blocker.unblock():
-                    self.setup_databases(config)
-                return test_setup()
+        def setup_databases():
+            db_blocker = session.config.stash[blocking_manager_key]
+            with db_blocker.unblock():
+                try:
+                    self.setup_databases(session.config)
+                except BaseException:
+                    session.shouldfail = "Abort: database setup failed"
+                    raise
 
-            # HACK monkey patch
-            test_setup = test.setup
-            test.setup = setup
-
-        for test in tests:
+        setup = pytest.Function.from_parent(
+            session,
+            name=f"{__name__} setup_databases",
+            callobj=setup_databases,
+        )
+        for i, test in enumerate(tests):
             if is_db_test(test):
-                setup_databases_before(test)
+                tests.insert(i, setup)
                 break
 
     @timelimit(480)
