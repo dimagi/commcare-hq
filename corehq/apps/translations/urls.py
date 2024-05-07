@@ -1,6 +1,7 @@
 from django.urls import re_path as url
 
 from corehq.apps.translations.integrations.transifex.views import (
+    BackupTranslations,
     BlacklistTranslations,
     CreateUpdateTranslations,
     ConvertTranslations,
@@ -28,6 +29,8 @@ urlpatterns = [
         name='push_translations'),
     url(r'^translations/pull', PullTranslations.as_view(),
         name='pull_translations'),
+    url(r'^translations/backup', BackupTranslations.as_view(),
+        name='backup_translations'),
     url(r'^translations/delete', DeleteTranslations.as_view(),
         name='delete_translations'),
     url(r'^dl/', DownloadTranslations.as_view(),

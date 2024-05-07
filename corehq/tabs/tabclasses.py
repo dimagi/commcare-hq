@@ -1852,6 +1852,10 @@ class TranslationsTab(UITab):
                         'title': _('Pull Translations')
                     },
                     {
+                        'url': reverse('backup_translations', args=[self.domain]),
+                        'title': _('Backup Translations')
+                    },
+                    {
                         'url': reverse('pull_resource', args=[self.domain]),
                         'title': _('Pull Resource')
                     },
