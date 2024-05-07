@@ -284,7 +284,7 @@ class CaseGroupingReport(BaseCaseMapReport):
         features_json = self.request.GET.get('features')
         if features_json:
             try:
-                features |= json.loads(features_json)
+                features = json.loads(features_json)
             except json.JSONDecodeError:
                 raise ValueError(f'{features_json!r} parameter is not valid JSON')
         return features
