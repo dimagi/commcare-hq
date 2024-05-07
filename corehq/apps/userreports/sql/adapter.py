@@ -149,7 +149,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         Saves rows to a data source after deleting the old rows
         :param use_shard_col: use shard column along with doc id for searching rows to delete/update
         """
-        if not self.table_exists():
+        if not self.table_exists:
             return
         if not rows:
             return
@@ -210,7 +210,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.save_rows(rows)
 
     def bulk_delete(self, docs, use_shard_col=True):
-        if not self.table_exists():
+        if not self.table_exists:
             return
 
         table = self.get_table()
