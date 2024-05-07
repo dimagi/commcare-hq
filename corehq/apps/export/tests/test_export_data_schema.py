@@ -1423,11 +1423,14 @@ class TestOrderingOfCaseSchemaItemsFromDataDictionary(TestCase, TestXmlMixin):
         data_dictionary_case_types = CaseType.objects.filter(domain=self.domain).all()
         self.assertEqual(len(data_dictionary_case_types), 1)
 
-        case_type = data_dictionary_case_types[0]
-        case_properties = list(CaseProperty.objects.filter(case_type=case_type.pk).values_list('name', flat=True))
-        self.assertEqual(
-            set(case_properties),
-            {'name', 'age', 'height', 'weight', 'address'}
+        self.assertListEqual(
+            list(CaseProperty.objects.order_by('name').values_list('name', 'index')),
+            [('address', 0), ('age', 0), ('height', 1), ('name', 0), ('weight', 0)]
+        )
+
+        self.assertListEqual(
+            list(CasePropertyGroup.objects.order_by('name').values_list('name', 'index')),
+            [('details', 1), ('location', 2)]
         )
 
     @patch('corehq.apps.data_dictionary.util.get_case_types_from_apps')
