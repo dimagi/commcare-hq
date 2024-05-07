@@ -2408,11 +2408,13 @@ class CaseExportDataSchema(ExportDataSchema):
         case_properties_indices = {}
 
         filter_kwargs = {'case_type__domain': domain, 'case_type__name': case_type}
-        for case_property_name, case_property_index in (
+
+        for case_property_index, case_property_name in enumerate(
             CaseProperty.objects
                 .filter(**filter_kwargs)
-                .select_related('case_type')
-                .values_list('name', 'index')
+                .select_related('case_type').select_related('group')
+                .order_by('group__index', 'index')
+                .values_list('name', flat=True)
         ):
             case_properties_indices[case_property_name] = case_property_index
 

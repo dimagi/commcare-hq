@@ -17,7 +17,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyGroup, CaseType
 from corehq.apps.data_dictionary.util import generate_data_dictionary
 from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
@@ -1373,6 +1373,7 @@ class TestOrderingOfCaseSchemaItemsFromDataDictionary(TestCase, TestXmlMixin):
             'age': '/data/age',
             'height': '/data/height',
             'weight': '/data/weight',
+            'address': '/data/address'
         })
         cls.current_app = factory.app
 
@@ -1381,6 +1382,25 @@ class TestOrderingOfCaseSchemaItemsFromDataDictionary(TestCase, TestXmlMixin):
 
         with patch('corehq.apps.data_dictionary.util.get_case_types_from_apps', return_value={cls.case_type}):
             generate_data_dictionary(cls.domain)
+
+        case_type = CaseType.objects.filter(name=cls.case_type).first()
+        details_group = CasePropertyGroup.objects.create(case_type=case_type, name='details', index=1)
+
+        weight_case_property = CaseProperty.objects.filter(name='weight').first()
+        weight_case_property.group = details_group
+        weight_case_property.index = 0
+        weight_case_property.save()
+
+        height_case_property = CaseProperty.objects.filter(name='height').first()
+        height_case_property.group = details_group
+        height_case_property.index = 1
+        height_case_property.save()
+
+        address_group = CasePropertyGroup.objects.create(case_type=case_type, name='location', index=2)
+        address_case_property = CaseProperty.objects.filter(name='address').first()
+        address_case_property.group = address_group
+        address_case_property.index = 0
+        address_case_property.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -1407,34 +1427,30 @@ class TestOrderingOfCaseSchemaItemsFromDataDictionary(TestCase, TestXmlMixin):
         case_properties = list(CaseProperty.objects.filter(case_type=case_type.pk).values_list('name', flat=True))
         self.assertEqual(
             set(case_properties),
-            {'name', 'age', 'height', 'weight'}
+            {'name', 'age', 'height', 'weight', 'address'}
         )
 
     @patch('corehq.apps.data_dictionary.util.get_case_types_from_apps')
     def test_default_ordering(self, *args):
         self.assertListEqual(
             self._get_schema_item_order(),
-            ['age', 'height', 'weight']
+            ['address', 'age', 'height', 'weight']
         )
 
         self.assertListEqual(
             self._get_schema_item_order(for_new_export_instance=False),
-            ['age', 'height', 'weight']
+            ['address', 'age', 'height', 'weight']
         )
 
     @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
     def test_ordering_for_existing_instance_with_feature_flag(self, *args):
         schema = self._generate_schema(for_new_export_instance=False)
         schemas_item_order = [item.label for item in schema.group_schemas[0].items]
-        self.assertListEqual(schemas_item_order, ['age', 'height', 'weight'])
+        self.assertListEqual(schemas_item_order, ['address', 'age', 'height', 'weight'])
 
     @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
     def test_ordering_for_new_instance_with_feature_flag(self, *args):
-        age_case_property = CaseProperty.objects.filter(name='age').first()
-        age_case_property.index = 2  # move it to the end
-        age_case_property.save()
-
         self.assertListEqual(
             self._get_schema_item_order(),
-            ['height', 'weight', 'age']
+            ['weight', 'height', 'address', 'age']
         )
