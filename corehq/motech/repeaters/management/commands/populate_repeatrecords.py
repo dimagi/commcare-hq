@@ -158,7 +158,7 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def get_couch_view_name_and_parameters(cls):
-        return 'repeaters/repeat_records_by_payload_id', {}
+        return 'repeaters/repeat_records', {}
 
     @classmethod
     def get_couch_view_name_and_parameters_for_domains(cls, domains):
@@ -168,6 +168,8 @@ class Command(PopulateSQLCommand):
         } for domain in domains]
 
     def should_process(self, result):
+        if result['key'][1] is None:
+            return False
         if result['doc'] is None:
             self.logfile.write(f"Ignored null document: {result['id']}\n")
             return False
