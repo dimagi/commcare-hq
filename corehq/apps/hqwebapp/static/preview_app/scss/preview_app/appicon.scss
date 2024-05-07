@@ -1,5 +1,5 @@
 $appicon-height-preview: 130px;
-$appicon-icon-height-preview: @appicon-height-preview - 40px;
+$appicon-icon-height-preview: $appicon-height-preview - 40px;
 
 .appicon {
   min-height: $appicon-height-preview;
