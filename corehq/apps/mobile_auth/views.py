@@ -5,7 +5,6 @@ from django.views.decorators.http import require_GET
 
 from dimagi.utils.parsing import string_to_datetime
 
-from corehq.apps.domain.auth import BASIC
 from corehq.apps.domain.decorators import api_auth, domain_admin_required
 from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
 from corehq.apps.mobile_auth.utils import (

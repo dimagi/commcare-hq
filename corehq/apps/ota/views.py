@@ -105,7 +105,7 @@ def restore(request, domain, app_id=None):
 @tracer.wrap(name="ota.search")
 @location_safe_bypass
 @csrf_exempt
-@mobile_auth
+@mobile_auth_or_formplayer
 @check_domain_migration
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def search(request, domain):
@@ -115,7 +115,7 @@ def search(request, domain):
 @tracer.wrap(name="ota.app_aware_search")
 @location_safe_bypass
 @csrf_exempt
-@mobile_auth
+@mobile_auth_or_formplayer
 @check_domain_migration
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def app_aware_search(request, domain, app_id):
@@ -170,7 +170,7 @@ def _log_search_timing(start_time, request_dict, domain, app_id):
 @location_safe_bypass
 @csrf_exempt
 @require_POST
-@mobile_auth
+@mobile_auth_or_formplayer
 @check_domain_migration
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def claim(request, domain):
@@ -457,7 +457,7 @@ def _should_force_log_submission(request):
 
 
 @location_safe
-@mobile_auth
+@mobile_auth_or_formplayer
 @require_GET
 def get_next_id(request, domain):
     bucket_id = request.GET.get('pool_id')
@@ -493,7 +493,7 @@ def recovery_measures(request, domain, build_id):
 @tracer.wrap(name="ota.case_fixture")
 @location_safe_bypass
 @csrf_exempt
-@mobile_auth
+@mobile_auth_or_formplayer
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def case_fixture(request, domain, app_id):
     request_dict = request.GET if request.method == 'GET' else request.POST

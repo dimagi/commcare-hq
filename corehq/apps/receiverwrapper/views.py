@@ -22,6 +22,7 @@ from corehq import toggles
 from corehq.apps.domain.auth import (
     BASIC,
     DIGEST,
+    FORMPLAYER,
     NOAUTH,
     API_KEY,
     OAUTH2,
@@ -33,6 +34,7 @@ from corehq.apps.domain.decorators import (
     login_or_basic_ex,
     login_or_digest_ex,
     login_or_api_key_ex,
+    login_or_formplayer_ex,
     login_or_oauth2_ex,
     two_factor_exempt,
 )
@@ -338,65 +340,6 @@ def _noauth_post(request, domain, app_id=None):
     )
 
 
-@login_or_digest_ex(allow_cc_users=True)
-@two_factor_exempt
-@set_request_duration_reporting_threshold(60)
-def _secure_post_digest(request, domain, app_id=None):
-    """only ever called from secure post"""
-    return _process_form(
-        request=request,
-        domain=domain,
-        app_id=app_id,
-        user_id=request.couch_user.get_id,
-        authenticated=True,
-    )
-
-
-@handle_401_response
-@login_or_basic_ex(allow_cc_users=True)
-@two_factor_exempt
-@set_request_duration_reporting_threshold(60)
-def _secure_post_basic(request, domain, app_id=None):
-    """only ever called from secure post"""
-    return _process_form(
-        request=request,
-        domain=domain,
-        app_id=app_id,
-        user_id=request.couch_user.get_id,
-        authenticated=True,
-    )
-
-
-@handle_401_response
-@login_or_oauth2_ex(allow_cc_users=True, oauth_scopes=['sync'])
-@two_factor_exempt
-@set_request_duration_reporting_threshold(60)
-def _secure_post_oauth2(request, domain, app_id=None):
-    """only ever called from secure post"""
-    return _process_form(
-        request=request,
-        domain=domain,
-        app_id=app_id,
-        user_id=request.couch_user.get_id,
-        authenticated=True,
-    )
-
-
-@login_or_api_key_ex()
-@require_permission(HqPermissions.edit_data)
-@require_permission(HqPermissions.access_api)
-@set_request_duration_reporting_threshold(60)
-def _secure_post_api_key(request, domain, app_id=None):
-    """only ever called from secure post"""
-    return _process_form(
-        request=request,
-        domain=domain,
-        app_id=app_id,
-        user_id=request.couch_user.get_id,
-        authenticated=True,
-    )
-
-
 @waf_allow('XSS_BODY')
 @location_safe
 @csrf_exempt
@@ -405,11 +348,28 @@ def _secure_post_api_key(request, domain, app_id=None):
 @set_request_duration_reporting_threshold(60)
 def secure_post(request, domain, app_id=None):
     authtype_map = {
-        DIGEST: _secure_post_digest,
-        BASIC: _secure_post_basic,
-        NOAUTH: _noauth_post,
-        API_KEY: _secure_post_api_key,
-        OAUTH2: _secure_post_oauth2,
+        DIGEST: [
+            two_factor_exempt,
+            login_or_digest_ex(allow_cc_users=True),
+        ],
+        BASIC: [
+            two_factor_exempt,
+            login_or_basic_ex(allow_cc_users=True),
+            handle_401_response,
+        ],
+        API_KEY: [
+            require_permission(HqPermissions.edit_data),
+            require_permission(HqPermissions.access_api),
+            login_or_api_key_ex(),
+        ],
+        OAUTH2: [
+            two_factor_exempt,
+            login_or_oauth2_ex(allow_cc_users=True, oauth_scopes=['sync']),
+        ],
+        FORMPLAYER: [
+            two_factor_exempt,
+            login_or_formplayer_ex(allow_cc_users=True)
+        ],
     }
 
     if request.GET.get('authtype'):
@@ -417,11 +377,31 @@ def secure_post(request, domain, app_id=None):
     else:
         authtype = determine_authtype_from_request(request, default=BASIC)
 
+    if authtype == NOAUTH:
+        return _noauth_post(request, domain, app_id=app_id)
+
     try:
-        decorated_view = authtype_map[authtype]
+        decorators = authtype_map[authtype]
     except KeyError:
         return HttpResponseBadRequest(
             'authtype must be one of: {0}'.format(','.join(authtype_map))
         )
 
-    return decorated_view(request, domain, app_id=app_id)
+    @set_request_duration_reporting_threshold(60)
+    def decorated_view(request, domain, app_id):
+        return _process_form(
+            request=request,
+            domain=domain,
+            app_id=app_id,
+            user_id=request.couch_user.get_id,
+            authenticated=True,
+        )
+
+    for decorator in decorators:
+        decorated_view = decorator(decorated_view)
+
+    return decorated_view(
+        request=request,
+        domain=domain,
+        app_id=app_id,
+    )

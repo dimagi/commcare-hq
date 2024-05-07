@@ -45,7 +45,7 @@ class SessionDetailsViewTest(TestCase):
         self.session = self.client.session
         self.session.save()
         self.session_key = self.session.session_key
-        self.expected_response['authToken'] = self.session_key
+        self.expected_response["authToken"] = self.session_key
 
     def _assert_session_expiry_in_minutes(self, expected_minutes, actual_time_string):
         delta = parse_datetime(actual_time_string) - datetime.datetime.utcnow().replace(tzinfo=pytz.utc)

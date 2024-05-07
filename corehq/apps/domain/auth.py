@@ -73,11 +73,12 @@ def determine_authtype_from_header(request, default=DIGEST):
         return DIGEST
     elif auth_header.startswith('bearer '):
         return OAUTH2
-    elif _is_api_key_authentication(request):
-        return API_KEY
-
-    if request.META.get('HTTP_X_MAC_DIGEST', None):
+    elif request.META.get('HTTP_X_MAC_DIGEST', None):
         return FORMPLAYER
+    elif _is_api_key_authentication(request):
+        # do this after header checks since it may read the request body which interferes with
+        # other auth methods e.g. HMAC
+        return API_KEY
 
     return default
 
