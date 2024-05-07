@@ -937,6 +937,18 @@ USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     """
 )
 
+WEB_APPS_PERMISSIONS_VIA_GROUPS = StaticToggle(
+    'web_apps_permissions_via_groups',
+    "USH: Allow users to control access to specific web apps via mobile worker groups.",
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+    description="""
+        This is a legacy feature that allows setting app-specific permissions in Web Apps based on user
+        groups. This functionality is now available via the roles and permissions page, where the
+        permission for accessing web apps supports specifying a list of apps.
+    """,
+)
+
 DISABLE_WEB_APPS = StaticToggle(
     'disable_web_apps',
     'Disable access to Web Apps UI',
@@ -2727,14 +2739,12 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
     help_link='https://confluence.dimagi.com/display/commcarepublic/Bulk+User+Management'
 )
 
-APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
-    privileges.APPLICATION_ERROR_REPORT,
+APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     label='Show Application Error Report',
-    tag=TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
     description="Show Application Error Report.",
-    # TODO: Move to public wiki
     help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
 )
 
