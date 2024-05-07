@@ -628,12 +628,10 @@ hqDefine('geospatial/js/models', [
 
         self.clearActivePolygon = function () {
             if (self.activeSavedPolygon) {
-                self.selectedSavedPolygonId('');
                 removeActivePolygonLayer();
                 self.activeSavedPolygon = null;
                 self.btnSaveDisabled(false);
                 self.btnExportDisabled(true);
-                updateSelectedSavedPolygonParam();
             }
         };
 
