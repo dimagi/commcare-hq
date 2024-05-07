@@ -2,8 +2,7 @@
   .alert  {
     box-shadow: none;
     margin-bottom: 0;
-    .border-top-radius(0);
-    .border-bottom-radius(0);
+    border-radius: 0;
     padding: 9px;
     .close {
       vertical-align: top;

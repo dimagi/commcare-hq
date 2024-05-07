@@ -5,8 +5,7 @@
     height: @icon-size;
   }
   .module-icon-container {
-    .border-top-radius(@icon-size/2);
-    .border-bottom-radius(@icon-size/2);
+    border-radius: @icon-size / 2;
     .module-icon {
       font-size: @icon-size * 0.5;
       line-height: @icon-size;
@@ -20,11 +19,10 @@
   .module-audio-control, .module-delete-control {
     width: @control-size;
     height: @control-size;
-    right: (0.4*@icon-size)/2;
-    margin-top: -@control-size/2;
+    right: (0.4*@icon-size) / 2;
+    margin-top: -@control-size / 2;
 
-    .border-top-radius(@control-size/2);
-    .border-bottom-radius(@control-size/2);
+    border-radius: @control-size / 2;
   }
   .module-audio-icon, .module-delete-icon {
     font-size: @control-size * 0.5;

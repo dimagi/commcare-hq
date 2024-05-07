@@ -35,8 +35,7 @@
   border: none;
   color: $cc-brand-mid;
 
-  .border-top-radius(0);
-  .border-bottom-radius(0);
+  border-radius: 0;
   .transition(background 1s);
 
   &:hover {

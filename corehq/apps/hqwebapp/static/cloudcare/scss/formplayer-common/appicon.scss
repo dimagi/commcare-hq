@@ -67,8 +67,7 @@
   box-sizing: border-box;
   margin-bottom: 15px;
 
-  .border-top-radius(5px);
-  .border-bottom-radius(5px);
+  border-radius: 5px;
   .transition(background 1s);
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.45);
 

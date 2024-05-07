@@ -99,8 +99,7 @@
   .modal-content {
     height: 442px;
     overflow-x: hidden;
-    .border-top-radius(0);
-    .border-bottom-radius(0);
+    border-radius: 0;
   }
 }
 
@@ -110,8 +109,7 @@
   }
 
   .modal-content {
-    .border-top-radius(0);
-    .border-bottom-radius(0);
+    border-radius: 0;
   }
 
   .btn-lg {
