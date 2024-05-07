@@ -319,7 +319,8 @@ def get_location_from_site_code(site_code, location_cache):
 
 
 def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, primary_location_id=None,
-                                    assigned_location_ids=None, user_change_logger=None, send_email=True):
+                                    assigned_location_ids=None, profile=None, user_change_logger=None,
+                                    send_email=True):
     if assigned_location_ids is None:
         assigned_location_ids = []
     invite, invite_created = Invitation.objects.update_or_create(
@@ -330,7 +331,8 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
             'invited_by': upload_user.user_id,
             'invited_on': datetime.utcnow(),
             'primary_location': SQLLocation.by_location_id(primary_location_id),
-            'role': role_qualified_id
+            'role': role_qualified_id,
+            'profile': profile
         },
     )
     assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
@@ -653,10 +655,14 @@ class CCUserRow(BaseUserRow):
                     web_user_importer.add_to_domain(role_qualified_id, self.user.location_id,
                                                 self.user.assigned_location_ids)
                 elif not web_user or not web_user.is_member_of(self.domain):
+                    profile = None
+                    if cv["profile_name"] in self.domain_info.profiles_by_name:
+                        profile = self.domain_info.profiles_by_name[cv["profile_name"]]
                     create_or_update_web_user_invite(
                         web_user_username, self.domain, role_qualified_id, self.importer.upload_user,
                         self.user.location_id,
                         assigned_location_ids=self.user.assigned_location_ids,
+                        profile=profile,
                         user_change_logger=user_change_logger,
                         send_email=cv["send_confirmation_email"]
                     )
@@ -727,10 +733,14 @@ class WebUserRow(BaseUserRow):
                     membership, role_qualified_id, user, web_user_importer
                 )
             else:
+                profile = None
+                if self.column_values["profile_name"] in self.domain_info.profiles_by_name:
+                    profile = self.domain_info.profiles_by_name[self.column_values["profile_name"]]
                 create_or_update_web_user_invite(
                     user.username, self.domain, role_qualified_id, self.importer.upload_user,
                     user.location_id,
                     assigned_location_ids=user.assigned_location_ids,
+                    profile=profile,
                     user_change_logger=user_change_logger
                 )
         web_user_importer.save_log()
@@ -791,11 +801,14 @@ class WebUserRow(BaseUserRow):
                         for loc in cv['location_codes']
                     ]
                     user_invite_loc_id = user_invite_loc.location_id
-
+            profile = None
+            if cv["profile_name"] in self.domain_info.profiles_by_name:
+                profile = self.domain_info.profiles_by_name[cv["profile_name"]]
             create_or_update_web_user_invite(
                 cv['username'], self.domain, self.domain_info.roles_by_name[cv['role']], self.importer.upload_user,
                 user_invite_loc_id,
-                assigned_location_ids=user_invite_locs_ids
+                assigned_location_ids=user_invite_locs_ids,
+                profile=profile
             )
             self.status_row['flag'] = 'invited'
 
