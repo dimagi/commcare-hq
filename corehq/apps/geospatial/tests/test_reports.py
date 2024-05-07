@@ -64,18 +64,31 @@ class TestCaseGroupingReport(BaseReportTest):
     @classmethod
     def setUpClass(cls):
         super(TestCaseGroupingReport, cls).setUpClass()
-        cls.poly_obj_features = [
-            {
-                'type': 'Feature',
-                'geometry': {
-                    'type': 'Polygon',
-                    'coordinates': []
-                }
+        cls.poly_obj_feature = {
+            'type': 'Feature',
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': []
             }
-        ]
+        }
         cls.poly_obj = GeoPolygon.objects.create(
-            name='foobar', domain=DOMAIN, geo_json={'features': cls.poly_obj_features}
+            name='foobar', domain=DOMAIN, geo_json={'features': [cls.poly_obj_feature]}
         )
+        cls.feature_dict = {
+            'id': '1234',
+            'type': 'Feature',
+            'properties': {},
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [
+                    [
+                        [1.1, 2.2],
+                        [3.3, 3.3],
+                        [1.1, 2.2]
+                    ]
+                ]
+            }
+        }
 
     @classmethod
     def tearDownClass(cls):
@@ -147,37 +160,25 @@ class TestCaseGroupingReport(BaseReportTest):
         self.assertIn(porto_novo.case_id, case_ids)
 
     def test_features_from_request(self):
-        poly_feature = {
-            'id': '1234',
-            'type': 'Feature',
-            'properties': {},
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [
-                    [
-                        [1.1, 2.2],
-                        [3.3, 3.3],
-                        [1.1, 2.2]
-                    ]
-                ]
-            }
-        }
         feature_params = {
-            'selected_feature_id': self.poly_obj.id,
+            # 'selected_feature_id': self.poly_obj.id,
             'features': json.dumps({
-                '1234': poly_feature
+                '1234': self.feature_dict
             })
         }
         request = self._get_request(data=feature_params)
         report_obj = CaseGroupingReport(request, domain=DOMAIN)
         request_features = report_obj.features_from_request
-        self.assertEqual(request_features['1234'], poly_feature)
+        self.assertEqual(len(request_features), 1)
+        self.assertEqual(request_features['1234'], self.feature_dict)
 
-        # Selected feature ID is a random ID, so we need to retrieve it
-        feature_ids = list(request_features)
-        feature_ids.remove('1234')
-        selected_feature_id = feature_ids[0]
-        self.assertEqual([request_features[selected_feature_id]], self.poly_obj_features)
+    def test_saved_polygon_from_request(self):
+        request = self._get_request(data={'selected_feature_id': self.poly_obj.id})
+        report_obj = CaseGroupingReport(request, domain=DOMAIN)
+        saved_poly_feature = report_obj.saved_polygon_from_request
+        self.assertEqual(len(saved_poly_feature), 1)
+        saved_poly_feature_id = list(saved_poly_feature)[0]
+        self.assertEqual(saved_poly_feature[saved_poly_feature_id], self.poly_obj_feature)
 
     @contextmanager
     def get_cases(self):
