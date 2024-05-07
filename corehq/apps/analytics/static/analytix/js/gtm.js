@@ -52,7 +52,7 @@ hqDefine('analytix/js/gtm', [
             var userProperties = {
                 userId: _get('userId', 'none'),
                 isDimagi: _get('userIsDimagi', 'no', 'yes'),
-                isCommCare: _get('userIsCommCare', 'no', 'yes'),
+                isCommCare: _get('userIsCommCareUser', 'no', 'yes'),
                 domain: _get('domain', 'none'),
                 hqEnvironment: _get('hqInstance', 'none'),
             };
