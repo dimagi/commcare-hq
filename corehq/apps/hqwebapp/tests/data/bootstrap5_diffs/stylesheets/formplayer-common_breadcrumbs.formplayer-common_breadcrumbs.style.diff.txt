@@ -1,0 +1,20 @@
+--- 
++++ 
+@@ -2,7 +2,7 @@
+     position: sticky;
+     position: -webkit-sticky;
+     top: 0;
+-    z-index: @zindex-navbar-cloudcare;
++    z-index: $zindex-navbar-cloudcare;
+ }
+ 
+ #breadcrumb-region .breadcrumb-text, .single-app-view .breadcrumb-text {
+@@ -12,7 +12,7 @@
+ #breadcrumb-region .breadcrumb,
+ .single-app-view .breadcrumb,
+ .breadcrumb-form-container .breadcrumb {
+-  background-color: @cc-brand-mid;
++  background-color: $cc-brand-mid;
+   color: white;
+   .border-top-radius(0);
+   .border-bottom-radius(0);
