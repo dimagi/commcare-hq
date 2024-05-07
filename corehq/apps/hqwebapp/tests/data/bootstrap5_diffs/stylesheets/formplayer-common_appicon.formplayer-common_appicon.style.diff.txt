@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -121,17 +121,17 @@
+ .make-appicon-size(170px, 115px, 35px, 16px);
+ .make-gridicon-size(70px);
+ 
+-@media(min-width: @screen-xs) {
++@include media-breakpoint-up(sm) {
+   .make-appicon-size(200px, 135px, 35px, 16px);
+   .make-gridicon-size(60px);
+ }
+ 
+-@media(min-width: @screen-sm) {
++@include media-breakpoint-up(md) {
+   .make-appicon-size(210px, 140px, 40px, 18px);
+   .make-gridicon-size(70px);
+ }
+ 
+-@media(min-width: @screen-md) {
++@include media-breakpoint-up(lg) {
+   .make-appicon-size(230px, 150px, 45px, 20px);
+   .make-gridicon-size(130px);
+ }

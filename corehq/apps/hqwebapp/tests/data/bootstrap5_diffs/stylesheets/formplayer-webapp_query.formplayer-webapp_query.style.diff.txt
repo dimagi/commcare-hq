@@ -5,7 +5,7 @@
  
  .sidebar-push {
 -  @media (min-width: @screen-md-min) {
-+  @media (min-width: $screen-md-min) {
++  @include media-breakpoint-up(lg) {
      margin-left: 310px;
    }
  }
@@ -13,12 +13,12 @@
  #sidebar-region {
    background: transparent;
 -  @media (min-width: @screen-md-min) {
-+  @media (min-width: $screen-md-min) {
++  @include media-breakpoint-up(lg) {
      width: 300px;
      position: absolute;
    }
 -  @media (max-width: @screen-sm-max) {
-+  @media (max-width: $screen-sm-max) {
++  @include media-breakpoint-down(lg) {
      max-width: 600px;
      margin: auto;
    }
