@@ -224,9 +224,13 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         return [root]
 
     def report_config_to_fixture(self, report_config, restore_user):
-        def _row_to_row_elem(deferred_fields, filter_options_by_field, row, index, is_total_row=False):
+        row_index_enabled = toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(restore_user.domain)
+
+        def _row_to_row_elem(
+            deferred_fields, filter_options_by_field, row, index, is_total_row=False,
+        ):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
-            if toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(restore_user.domain):
+            if row_index_enabled:
                 row_elem.append(E.column(str(index), id='row_index'))
             for k in sorted(row.keys()):
                 value = serialize(row[k])
