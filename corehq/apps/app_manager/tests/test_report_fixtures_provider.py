@@ -20,7 +20,6 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.test_report_config import (
     MAKE_REPORT_CONFIG,
-    mock_report_configuration_get,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.util.test_utils import flag_enabled
@@ -49,10 +48,9 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             filters={'computed_owner_name_40cc88a0_1': StaticChoiceListFilter()}
         )
         user = Mock(user_id='mock-user-id')
-
-        with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
-                patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
-                patch('corehq.apps.app_manager.fixtures.mobile_ucr._format_last_sync_time') as last_sync_time_patch:
+        provider.report_data_cache.reports = {report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}
+        with patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
+             patch('corehq.apps.app_manager.fixtures.mobile_ucr._format_last_sync_time') as last_sync_time_patch:
             mock = data_source or self.get_data_source_mock()
             mock.has_total_row = False
             mock.total_column_ids = ['baz']
@@ -88,11 +86,9 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             filters={'computed_owner_name_40cc88a0_1': StaticChoiceListFilter()}
         )
         user = Mock(user_id='mock-user-id')
-
-        with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
-             patch(
-                 'corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
-            patch('corehq.apps.app_manager.fixtures.mobile_ucr._format_last_sync_time') as last_sync_time_patch:
+        provider.report_data_cache.reports = {report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}
+        with patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
+             patch('corehq.apps.app_manager.fixtures.mobile_ucr._format_last_sync_time') as last_sync_time_patch:
             mock = self.get_data_source_mock()
             mock.has_total_row = True
             mock.total_column_ids = ['baz']
@@ -122,10 +118,9 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             restore_user=restore_user,
             last_sync_log=Mock(last_ucr_sync_times=()),
         )
-
-        with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
-                patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
-                patch('corehq.apps.app_manager.fixtures.mobile_ucr._utcnow') as utcnow_patch:
+        provider.report_data_cache.reports = {report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}
+        with patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
+             patch('corehq.apps.app_manager.fixtures.mobile_ucr._utcnow') as utcnow_patch:
 
             report_datasource.from_spec.return_value = self.get_data_source_mock()
             utcnow_patch.return_value = datetime(2017, 9, 11, 6, 35, 20)
