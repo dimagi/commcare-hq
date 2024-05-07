@@ -954,7 +954,8 @@ def paginate_mobile_workers(request, domain):
         user_es = get_search_users_in_domain_es_query(
             domain=domain, search_string=search_string,
             offset=page * limit, limit=limit)
-        return filter_user_query_by_locations_accessible_to_user(user_es, domain, request.couch_user)
+        return filter_user_query_by_locations_accessible_to_user(user_es,
+            domain, request.couch_user).mobile_users()
 
     # backend pages start at 0
     users_query = _user_query(query, page - 1, limit)
