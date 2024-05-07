@@ -409,15 +409,16 @@ class AppTranslations(BaseTranslationsView):
                 messages.error(request, _('Resources yet to be completely translated for all languages. '
                                           'Hence, the request for locking resources can not be performed.'))
                 return False
-
-        if 'yes' in form_data['pull_all_source_files_and_translations']:
-            backup_project_from_transifex.delay(request.domain, form_data, request.user.email)
-            messages.success(request, _('Successfully enqueued request to take backup.'))
-        else:
-            pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
-            messages.success(request, _('Successfully enqueued request to pull for translations. '
-                                        'You should receive an email shortly.'))
+        pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
+        messages.success(request, _('Successfully enqueued request to pull for translations. '
+                                    'You should receive an email shortly.'))
         return True
+
+    def perform_backup_request(self, request, form_data):
+        if not self.ensure_resources_present(request):
+            return False
+        backup_project_from_transifex.delay(request.domain, form_data, request.user.email)
+        messages.success(request, _('Successfully enqueued request to take backup.'))
 
     def perform_delete_request(self, request, form_data):
         if not self.ensure_resources_present(request):
@@ -441,6 +442,8 @@ class AppTranslations(BaseTranslationsView):
                 return self.perform_push_request(request, form_data)
             elif form_data['action'] == 'pull':
                 return self.perform_pull_request(request, form_data)
+            elif form_data['action'] == 'backup':
+                return self.perform_backup_request(request, form_data)
             elif form_data['action'] == 'delete':
                 return self.perform_delete_request(request, form_data)
 
@@ -493,6 +496,19 @@ class PullTranslations(AppTranslations):
         if context['transifex_details_available']:
             context['trans_form'] = AppTranslationsForm.form_for('pull')(self.domain)
             context['page_action'] = 'pull'
+        return context
+
+
+class BackupTranslations(AppTranslations):
+    page_title = gettext_lazy('Backup Translations')
+    urlname = 'backup_translations'
+
+    @property
+    def page_context(self):
+        context = super(BackupTranslations, self).page_context
+        if context['transifex_details_available']:
+            context['trans_form'] = AppTranslationsForm.form_for('backup')(self.domain)
+            context['page_action'] = 'backup'
         return context
 
 

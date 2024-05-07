@@ -37,7 +37,13 @@
           <p>
             {% blocktrans %}
               Pull all translations for a selected language, which will be emailed to you as an Excel file.
-              If you choose to pull all source files and translations, it will be emailed to you as a zip file.
+            {% endblocktrans %}
+          </p>
+        {% elif page_action == 'backup' %}
+          <legend>{% trans "Backup App Translations" %}</legend>
+          <p>
+            {% blocktrans %}
+              Pull all translations for all languages in the project, which will be emailed to you as a zip file.
             {% endblocktrans %}
           </p>
         {% elif page_action == 'delete' %}

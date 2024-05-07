@@ -219,6 +219,8 @@ class AppTranslationsForm(forms.Form):
             return PushAppTranslationsForm
         elif form_action == 'pull':
             return PullAppTranslationsForm
+        elif form_action == 'backup':
+            return BackUpAppTranslationsForm
         elif form_action == 'delete':
             return DeleteAppTranslationsForm
 
@@ -265,24 +267,19 @@ class PullAppTranslationsForm(AppTranslationsForm):
         help_text=gettext_lazy("Please note that this will lock the resource for all languages"),
         required=False,
         initial=False)
-    pull_all_source_files_and_translations = forms.MultipleChoiceField(
-        choices=[('yes', 'Pull everything from the resource. You can use this to create a backup of a '
-                         'particular resource. If checked, note that selections for the remaining fields '
-                         'below will be ignored.')],
-        widget=forms.CheckboxSelectMultiple(),
-        required=False,
-        initial='no',
-    )
 
     def form_fields(self):
         form_fields = super(PullAppTranslationsForm, self).form_fields()
         form_fields.extend([
-            'pull_all_source_files_and_translations',
             crispy.Field('target_lang', css_class="hqwebapp-select2"),
             'lock_translations',
             'perform_translated_check',
         ])
         return form_fields
+
+
+class BackUpAppTranslationsForm(AppTranslationsForm):
+    form_action = 'backup'
 
 
 class DeleteAppTranslationsForm(AppTranslationsForm):
