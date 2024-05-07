@@ -58,7 +58,7 @@
  
    .panel-body {
 -    @media (max-width: @screen-xs-max) {
-+    $media (max-width: $screen-xs-max) {
++    @include media-breakpoint-down(md) {
        padding-left: 0px;
        padding-right: 0px;
      }
