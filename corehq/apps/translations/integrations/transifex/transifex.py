@@ -100,7 +100,9 @@ class Transifex(object):
 
     def _send_files_to_transifex(self, generated_files, app_trans_generator):
         file_uploads = {}
+        current_project_resources = []
         for resource_slug, path_to_file in generated_files:
+            current_project_resources.append(resource_slug)
             resource_name = self._resource_name_in_project_lang(resource_slug, app_trans_generator)
             try:
                 if self.is_source_file:
@@ -119,6 +121,10 @@ class Transifex(object):
                 file_uploads[resource_name] = _("Successfully Uploaded")
             except TransifexApiException as e:
                 file_uploads[resource_name] = "Upload Error: {}".format(e)
+        resources_to_delete = self.client.get_resource_slugs_for_deleted_forms(current_project_resources)
+        if resources_to_delete:
+            delete_status = self.delete_resources(resources_to_delete)
+            file_uploads.update(delete_status)
         return file_uploads
 
     @cached_property
@@ -173,9 +179,11 @@ class Transifex(object):
         """
         return self.client.source_lang_is(hq_lang_code)
 
-    def delete_resources(self):
+    def delete_resources(self, resource_slugs=None):
         delete_status = {}
-        for resource_slug in self.resource_slugs:
+        if resource_slugs is None:
+            resource_slugs = self.resource_slugs
+        for resource_slug in resource_slugs:
             try:
                 self.client.delete_resource(resource_slug)
                 delete_status[resource_slug] = _("Successfully Removed")
