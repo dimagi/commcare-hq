@@ -215,5 +215,6 @@ def filter_user_query_by_locations_accessible_to_user(user_es, domain, couch_use
     return user_es
 
 
-def user_can_access_invite(domain, user, invite):
-    return invite.assigned_locations.all().accessible_to_user(domain, user).exists()
+def user_can_access_invite(domain, couch_user, invite):
+    return (couch_user.has_permission(domain, 'access_all_locations')
+        or invite.assigned_locations.all().accessible_to_user(domain, couch_user).exists())

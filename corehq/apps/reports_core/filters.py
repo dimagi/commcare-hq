@@ -112,7 +112,7 @@ class BaseFilter(object):
 
 
 class DatespanFilter(BaseFilter):
-    template = 'reports_core/filters/datespan_filter.html'
+    template = 'reports_core/filters/bootstrap3/datespan_filter.html'
 
     def __init__(self, name, label='Datespan Filter', css_id=None, compare_as_string=False):
         self.label = label
@@ -167,7 +167,7 @@ class DatespanFilter(BaseFilter):
 
 
 class QuarterFilter(BaseFilter):
-    template = 'reports_core/filters/quarter_filter.html'
+    template = 'reports_core/filters/bootstrap3/quarter_filter.html'
 
     def __init__(self, name, label=_('Quarter'), css_id=None, show_all=False):
         self.label = label
@@ -233,7 +233,7 @@ class QuarterFilter(BaseFilter):
 
 
 class NumericFilter(BaseFilter):
-    template = "reports_core/filters/numeric_filter.html"
+    template = "reports_core/filters/bootstrap3/numeric_filter.html"
 
     def __init__(self, name, label=_('Numeric Filter'), css_id=None):
         self.label = label
@@ -315,7 +315,7 @@ class ChoiceListFilter(BaseFilter):
     """
     Filter for a list of choices. Each choice should be a Choice object as per above.
     """
-    template = 'reports_core/filters/choice_list_filter.html'
+    template = 'reports_core/filters/bootstrap3/choice_list_filter.html'
 
     def __init__(self, name, field, datatype, label='Choice List Filter',
                  css_id=None, choices=None):
@@ -353,7 +353,7 @@ class DynamicChoiceListFilter(BaseFilter):
 
     The choices are generated dynamically based on the database.
     """
-    template = 'reports_core/filters/dynamic_choice_list.html'
+    template = 'reports_core/filters/bootstrap3/dynamic_choice_list.html'
 
     def __init__(self, name, field, datatype, label, show_all, url_generator, choice_provider,
                  ancestor_expression=None, css_id=None):
@@ -418,7 +418,7 @@ class MultiFieldDynamicChoiceListFilter(DynamicChoiceListFilter):
 
 
 class LocationDrilldownFilter(BaseFilter):
-    template = 'reports_core/filters/location_async.html'
+    template = 'reports_core/filters/bootstrap3/location_async.html'
     location_filter = True
 
     def __init__(self, name, field, datatype, label, domain, include_descendants,
