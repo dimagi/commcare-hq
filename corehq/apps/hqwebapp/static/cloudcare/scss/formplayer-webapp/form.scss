@@ -1,6 +1,6 @@
-@form-text-indent: 23px;
-@form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fit
-@group-indent: 15px;
+$form-text-indent: 23px;
+$form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fit
+$group-indent: 15px;
 
 .form-container {
   background-color: white;
@@ -24,8 +24,8 @@
   .form-actions {
     margin: 30px 0 0 0;
     &.form-group {
-      margin-left: -@form-text-indent;
-      margin-right: -@form-text-indent;
+      margin-left: -$form-text-indent;
+      margin-right: -$form-text-indent;
     }
 
     background-color: var(--bsprimary-bg-subtle);
