@@ -25,11 +25,16 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.util.test_utils import flag_enabled
 
 
+FORMAT_LAST_SYNC_TIME_PATCH = 'corehq.apps.app_manager.fixtures.mobile_ucr._format_last_sync_time'
+REPORT_DATA_SOURCE_PATCH = 'corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource'
+
+
 @flag_enabled('ADD_ROW_INDEX_TO_MOBILE_UCRS')
 class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
 
     file_path = ('data', 'fixtures')
     maxDiff = None
+
     @staticmethod
     def get_data_source_mock():
         data_source_mock = Mock()
@@ -49,8 +54,8 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
         )
         user = Mock(user_id='mock-user-id')
         provider.report_data_cache.reports = {report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}
-        with patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
-             patch('corehq.apps.app_manager.fixtures.mobile_ucr._format_last_sync_time') as last_sync_time_patch:
+        with patch(REPORT_DATA_SOURCE_PATCH) as report_datasource, \
+             patch(FORMAT_LAST_SYNC_TIME_PATCH) as last_sync_time_patch:
             mock = data_source or self.get_data_source_mock()
             mock.has_total_row = False
             mock.total_column_ids = ['baz']
@@ -87,8 +92,8 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
         )
         user = Mock(user_id='mock-user-id')
         provider.report_data_cache.reports = {report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}
-        with patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
-             patch('corehq.apps.app_manager.fixtures.mobile_ucr._format_last_sync_time') as last_sync_time_patch:
+        with patch(REPORT_DATA_SOURCE_PATCH) as report_datasource, \
+             patch(FORMAT_LAST_SYNC_TIME_PATCH) as last_sync_time_patch:
             mock = self.get_data_source_mock()
             mock.has_total_row = True
             mock.total_column_ids = ['baz']
@@ -119,8 +124,8 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             last_sync_log=Mock(last_ucr_sync_times=()),
         )
         provider.report_data_cache.reports = {report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}
-        with patch('corehq.apps.app_manager.fixtures.mobile_ucr.ConfigurableReportDataSource') as report_datasource, \
-             patch('corehq.apps.app_manager.fixtures.mobile_ucr._utcnow') as utcnow_patch:
+        with patch(REPORT_DATA_SOURCE_PATCH) as report_datasource, \
+                patch('corehq.apps.app_manager.fixtures.mobile_ucr._utcnow') as utcnow_patch:
 
             report_datasource.from_spec.return_value = self.get_data_source_mock()
             utcnow_patch.return_value = datetime(2017, 9, 11, 6, 35, 20)
@@ -141,7 +146,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             configs = provider._relevant_report_configs(restore_state, [])
             self.assertEqual(configs, ([], {report_app_config.uuid}))
 
-    @patch('corehq.apps.app_manager.fixtures.mobile_ucr._format_last_sync_time')
+    @patch(FORMAT_LAST_SYNC_TIME_PATCH)
     def test_get_report_index_fixture(self, last_sync_time_patch):
         last_sync_time_patch.return_value = datetime(2017, 9, 11, 6, 35, 20).isoformat()
         restore_user = Mock(domain='mock-domain', user_id='mock-user-id')
