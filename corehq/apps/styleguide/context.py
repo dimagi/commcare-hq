@@ -1,5 +1,6 @@
 import os
 from collections import namedtuple
+from django.conf import settings
 
 NavigationGroup = namedtuple('NavigationGroup', 'name pages')
 Page = namedtuple('Page', 'name urlname')
@@ -280,4 +281,20 @@ def get_python_example_context(filename):
 def get_js_example_context(filename):
     examples = os.path.join(os.path.dirname(__file__), 'static', 'styleguide', 'js_examples')
     with open(os.path.join(examples, filename), 'r', encoding='utf-8') as content:
+        return content.read()
+
+
+def get_react_example_context(filename):
+    react_example_root = os.path.join(settings.BASE_DIR, 'frontend')
+
+    path = os.path.join(react_example_root, filename)
+    with open(path, 'r', encoding='utf-8') as content:
+        return content.read()
+
+
+def get_local_react_example_context(*paths):
+    react_example_root = os.path.join(os.path.dirname(__file__), 'static', 'styleguide', 'js', 'react')
+
+    path = os.path.join(react_example_root, *paths)
+    with open(path, 'r', encoding='utf-8') as content:
         return content.read()
