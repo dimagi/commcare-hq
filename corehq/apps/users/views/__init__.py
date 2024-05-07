@@ -1173,7 +1173,9 @@ class InviteWebUserView(BaseManageWebUserView):
                 primary_location_id = data.pop("primary_location", None)
                 data["primary_location"] = (SQLLocation.by_location_id(primary_location_id)
                                         if primary_location_id else None)
-                assigned_location_ids = data.pop("assigned_locations", None)
+                assigned_location_ids = data.pop("assigned_locations", [])
+                if primary_location_id:
+                    assert primary_location_id in assigned_location_ids
                 self._assert_user_has_permission_to_access_locations(assigned_location_ids)
                 profile_id = data.get("profile", None)
                 data["profile"] = CustomDataFieldsProfile.objects.get(
