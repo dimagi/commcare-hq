@@ -206,9 +206,6 @@ class AppTranslationsForm(forms.Form):
             available_versions = get_available_versions_for_app(self.domain, app_id)
             if version not in available_versions:
                 self.add_error('version', gettext_lazy('Version not available for app'))
-        if (not cleaned_data['target_lang']
-                and (cleaned_data['action'] == "pull" and cleaned_data['perform_translated_check'])):
-            self.add_error('target_lang', gettext_lazy('Target lang required to confirm translation completion'))
         return cleaned_data
 
     @classmethod
@@ -253,6 +250,11 @@ class CreateUpdateAppTranslationsForm(AppTranslationsForm):
 
 class PushAppTranslationsForm(AppTranslationsForm):
     form_action = 'push'
+    target_lang = forms.ChoiceField(label=gettext_lazy("Translated Language"),
+                                    choices=([(None, gettext_lazy('Select Translated Language'))]
+                                             + langcodes.get_all_langs_for_select()),
+                                    required=True,
+                                    )
 
     def form_fields(self):
         form_fields = super(PushAppTranslationsForm, self).form_fields()
@@ -262,6 +264,11 @@ class PushAppTranslationsForm(AppTranslationsForm):
 
 class PullAppTranslationsForm(AppTranslationsForm):
     form_action = 'pull'
+    target_lang = forms.ChoiceField(label=gettext_lazy("Translated Language"),
+                                    choices=([(None, gettext_lazy('Select Translated Language'))]
+                                             + langcodes.get_all_langs_for_select()),
+                                    required=True,
+                                    )
     lock_translations = forms.BooleanField(
         label=gettext_lazy("Lock translations for resources that are being pulled"),
         help_text=gettext_lazy("Please note that this will lock the resource for all languages"),
@@ -284,6 +291,7 @@ class BackUpAppTranslationsForm(AppTranslationsForm):
 
 class DeleteAppTranslationsForm(AppTranslationsForm):
     form_action = 'delete'
+    app_id = forms.ChoiceField(label=gettext_lazy("Application"), choices=(), required=False)
 
     def form_fields(self):
         return [
