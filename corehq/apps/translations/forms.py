@@ -148,7 +148,7 @@ class AppTranslationsForm(forms.Form):
     target_lang = forms.ChoiceField(label=gettext_lazy("Translated Language"),
                                     choices=([(None, gettext_lazy('Select Translated Language'))]
                                              + langcodes.get_all_langs_for_select()),
-                                    required=False,
+                                    required=True,
                                     )
     action = forms.CharField(widget=forms.HiddenInput)
     perform_translated_check = forms.BooleanField(
@@ -206,17 +206,12 @@ class AppTranslationsForm(forms.Form):
             available_versions = get_available_versions_for_app(self.domain, app_id)
             if version not in available_versions:
                 self.add_error('version', gettext_lazy('Version not available for app'))
-        if (not cleaned_data['target_lang']
-                and (cleaned_data['action'] == "pull" and cleaned_data['perform_translated_check'])):
-            self.add_error('target_lang', gettext_lazy('Target lang required to confirm translation completion'))
         return cleaned_data
 
     @classmethod
     def form_for(cls, form_action):
-        if form_action == 'create':
-            return CreateAppTranslationsForm
-        elif form_action == 'update':
-            return UpdateAppTranslationsForm
+        if form_action == 'create_update':
+            return CreateUpdateAppTranslationsForm
         elif form_action == 'push':
             return PushAppTranslationsForm
         elif form_action == 'pull':
@@ -227,21 +222,30 @@ class AppTranslationsForm(forms.Form):
             return DeleteAppTranslationsForm
 
 
-class CreateAppTranslationsForm(AppTranslationsForm):
-    form_action = 'create'
+class CreateUpdateAppTranslationsForm(AppTranslationsForm):
+    form_action = 'create_update'
+    update_existing_resource = forms.MultipleChoiceField(
+        choices=[
+            ('yes', 'Update existing resources'),
+        ],
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+        initial='no',
+        help_text=gettext_lazy("Check this if you want to update an existing resource, instead of "
+                               "creating new ones. If you submit this form without this check, "
+                               "duplicate resources may be created.")
+    )
     source_lang = forms.ChoiceField(label=gettext_lazy("Source Language on Transifex"),
                                     choices=langcodes.get_all_langs_for_select(),
                                     initial="en"
                                     )
 
     def form_fields(self):
-        form_fields = super(CreateAppTranslationsForm, self).form_fields()
+        form_fields = super(CreateUpdateAppTranslationsForm, self).form_fields()
+        if self.form_action == 'create_update':
+            form_fields.append('update_existing_resource')
         form_fields.append(crispy.Field('source_lang', css_class="hqwebapp-select2"))
         return form_fields
-
-
-class UpdateAppTranslationsForm(CreateAppTranslationsForm):
-    form_action = 'update'
 
 
 class PushAppTranslationsForm(AppTranslationsForm):
@@ -255,12 +259,11 @@ class PushAppTranslationsForm(AppTranslationsForm):
 
 class PullAppTranslationsForm(AppTranslationsForm):
     form_action = 'pull'
-    lock_translations = forms.BooleanField(label=gettext_lazy("Lock translations for resources that are being "
-                                                              "pulled"),
-                                           help_text=gettext_lazy("Please note that this will lock the resource"
-                                                                  " for all languages"),
-                                           required=False,
-                                           initial=False)
+    lock_translations = forms.BooleanField(
+        label=gettext_lazy("Lock translations for resources that are being pulled"),
+        help_text=gettext_lazy("Please note that this will lock the resource for all languages"),
+        required=False,
+        initial=False)
 
     def form_fields(self):
         form_fields = super(PullAppTranslationsForm, self).form_fields()
@@ -272,23 +275,25 @@ class PullAppTranslationsForm(AppTranslationsForm):
         return form_fields
 
 
+class BackUpAppTranslationsForm(AppTranslationsForm):
+    form_action = 'backup'
+
+
 class DeleteAppTranslationsForm(AppTranslationsForm):
     form_action = 'delete'
 
     def form_fields(self):
-        form_fields = super(DeleteAppTranslationsForm, self).form_fields()
-        form_fields.append('perform_translated_check')
-        return form_fields
+        return [
+            crispy.Field('transifex_project_slug', css_class="hqwebapp-select2"),
+            'action',
+            'perform_translated_check'
+        ]
 
 
-class DownloadAppTranslationsForm(CreateAppTranslationsForm):
+class DownloadAppTranslationsForm(CreateUpdateAppTranslationsForm):
     """Used to download the files that are being uploaded to Transifex."""
 
     form_action = 'download'
-
-
-class BackUpAppTranslationsForm(AppTranslationsForm):
-    form_action = 'backup'
 
 
 class TransifexOrganizationForm(forms.ModelForm):
