@@ -25,7 +25,9 @@ class Command(BaseCommand):
         print("Accepting %s's invite to Project Space(%s)" % (username, domain))
 
         user.add_as_web_user(invitation.domain, role=invitation.role,
-                            location_id=getattr(invitation.location, "location_id", None),
+                            primary_location_id=getattr(invitation.primary_location, "location_id", None),
+                            assigned_location_ids=[getattr(loc, "location_id", None)
+                                                for loc in invitation.assigned_locations.all()],
                             program_id=invitation.program)
         invitation.is_accepted = True
         invitation.save()
