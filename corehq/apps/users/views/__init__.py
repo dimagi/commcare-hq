@@ -1053,6 +1053,7 @@ def delete_request(request, domain):
 @always_allow_project_access
 @require_POST
 @require_can_edit_web_users
+@location_safe
 def check_sso_trust(request, domain):
     username = request.POST['username']
     is_trusted = IdentityProvider.does_domain_trust_user(domain, username)
@@ -1084,6 +1085,7 @@ class BaseManageWebUserView(BaseUserSettingsView):
         }]
 
 
+@location_safe
 class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
@@ -1132,6 +1134,11 @@ class InviteWebUserView(BaseManageWebUserView):
             'registration_form': self.invite_web_user_form,
         }
 
+    def _assert_user_has_permission_to_access_locations(self, assigned_location_ids):
+        if not set(assigned_location_ids).issubset(set(SQLLocation.objects.accessible_to_user(
+                self.domain, self.request.couch_user).values_list('location_id', flat=True))):
+            raise Http404()
+
     def post(self, request, *args, **kwargs):
         if self.invite_web_user_form.is_valid():
             # If user exists and has already requested access, just add them to the project
@@ -1167,6 +1174,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["primary_location"] = (SQLLocation.by_location_id(primary_location_id)
                                         if primary_location_id else None)
                 assigned_location_ids = data.pop("assigned_locations", None)
+                self._assert_user_has_permission_to_access_locations(assigned_location_ids)
                 profile_id = data.get("profile", None)
                 data["profile"] = CustomDataFieldsProfile.objects.get(
                     id=profile_id,
