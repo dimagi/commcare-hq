@@ -62,7 +62,7 @@
   .btn {
     width: 100%;
     font-size: 16px;
-    .transition(all .5s);
+    transition: all .5s;
   }
 }
 
@@ -83,7 +83,7 @@
 }
 
 .form-group.required {
-  .transition(all .5s);
+  transition: all .5s;
   margin-bottom: 0;
   label:before {
     display: none;
@@ -102,7 +102,7 @@
 
 .form-group-required-label {
   opacity: 0;
-  .transition(all .5s);
+  transition: all .5s;
 }
 
 .form-group-required-label.on {

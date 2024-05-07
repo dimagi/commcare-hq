@@ -33,7 +33,7 @@ $group-indent: 15px;
     .submit .btn {
       font-size: 20px;
       padding: 13px 24px;
-      .transition(all .5s);
+      transition: all .5s;
     }
   }
 
@@ -156,7 +156,7 @@ $group-indent: 15px;
   }
 
   .form-group.required {
-    .transition(all .5s);
+    transition: all .5s;
     margin-bottom: 0;
     label:before {
       display: none;
@@ -179,7 +179,7 @@ $group-indent: 15px;
   .form-group-required-label {
     display: block;
     opacity: 0;
-    .transition(all .5s);
+    transition: all .5s;
   }
 
   .form-group-required-label.on {
