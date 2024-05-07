@@ -1841,8 +1841,16 @@ class TranslationsTab(UITab):
             if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
                 items.append((_('Translations'), [
                     {
-                        'url': reverse('app_translations', args=[self.domain]),
-                        'title': _('Manage App Translations')
+                        'url': reverse('create_update_translations', args=[self.domain]),
+                        'title': _('Create or Update Translations')
+                    },
+                    {
+                        'url': reverse('push_translations', args=[self.domain]),
+                        'title': _('Push Translations')
+                    },
+                    {
+                        'url': reverse('pull_translations', args=[self.domain]),
+                        'title': _('Pull Translations')
                     },
                     {
                         'url': reverse('pull_resource', args=[self.domain]),
@@ -1857,6 +1865,12 @@ class TranslationsTab(UITab):
                         'title': _('Download Translations')
                     },
                 ]))
+        if self._request.user.is_staff:
+            items.append((_('Translations'), [
+                {'url': reverse('delete_translations', args=[self.domain]),
+                 'title': 'Delete Translations'
+                 }
+            ]))
         return items
 
 
