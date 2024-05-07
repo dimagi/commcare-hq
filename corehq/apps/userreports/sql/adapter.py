@@ -208,6 +208,9 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.save_rows(rows)
 
     def bulk_delete(self, docs, use_shard_col=True):
+        if not self.table_exists():
+            return
+
         table = self.get_table()
         doc_ids = [doc['_id'] for doc in docs]
         delete = table.delete(table.c.doc_id.in_(doc_ids))
