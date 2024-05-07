@@ -7,6 +7,7 @@ from django.db import transaction
 
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
     ClosedParentDefinition, CustomActionDefinition,
@@ -407,6 +408,9 @@ def update_user_roles(domain_link, is_pull=False, overwrite=False):
         if role.upstream_id:
             downstream_roles_by_upstream_id[role.upstream_id] = role
 
+    downstream_apps = get_brief_apps_in_domain(domain_link.linked_domain)
+    app_id_map = {app.origin_id: app.upstream_app_id for app in downstream_apps}
+
     is_embedded_tableau_enabled = EMBEDDED_TABLEAU.enabled(domain_link.linked_domain)
     if is_embedded_tableau_enabled:
         visualizations_for_linked_domain = TableauVisualization.objects.filter(
@@ -429,6 +433,12 @@ def update_user_roles(domain_link, is_pull=False, overwrite=False):
             continue
 
         permissions = HqPermissions.wrap(upstream_role_def["permissions"])
+        if permissions.web_apps_list:
+            permissions.web_apps_list = [
+                downstream_id for downstream_id, upstream_id in app_id_map.items()
+                if upstream_id in permissions.web_apps_list
+            ]
+
         if is_embedded_tableau_enabled:
             permissions.view_tableau_list = _get_new_tableau_report_permissions(
                 visualizations_for_linked_domain, permissions, role.permissions)
