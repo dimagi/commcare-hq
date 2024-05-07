@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -1,6 +1,6 @@
+-{% extends "reports_core/filters/bootstrap3/filter_base.html" %}
++{% extends "reports_core/filters/bootstrap5/filter_base.html" %}
+ {% block filter-controls %}
+-  <div class="form-inline">
++  <div class="form-inline">  {# todo B5: css:form-inline #}
+     <select id="{{ filter.css_id }}-operator" class="form-control" name="{{ filter.css_id }}-operator">
+       <option value="=">=</option>
+       <option value="!=">&ne;</option>

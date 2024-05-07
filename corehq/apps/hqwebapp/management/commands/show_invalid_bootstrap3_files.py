@@ -1,14 +1,15 @@
 from django.core.management import BaseCommand
 
 from corehq.apps.hqwebapp.utils.bootstrap.changes import (
-    flag_bootstrap3_references_in_template,
-    flag_bootstrap3_references_in_javascript, get_spec,
+    check_bootstrap3_references_in_template,
+    check_bootstrap3_references_in_javascript, get_spec,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_template_paths_for_app,
     get_all_javascript_paths_for_app,
     get_short_path,
     is_split_path,
+    is_ignored_path,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.status import (
     get_apps_completed_or_in_progress,
@@ -18,62 +19,35 @@ from corehq.apps.hqwebapp.utils.bootstrap.status import (
 from corehq.apps.hqwebapp.utils.management_commands import get_break_line
 
 
-IGNORED_FILES = [
-    "hqwebapp/js/resource_versions.js",
-    "hqwebapp/base.html",
-    "hqwebapp/base_mobile.html",
-    "hqwebapp/crispy/checkbox_widget.html",
-    "hqwebapp/crispy/form_actions.html",
-    "hqwebapp/crispy/text_field.html",
-    "hqwebapp/crispy/accordion_group.html",
-    "hqwebapp/crispy/static_field.html",
-    "hqwebapp/crispy/radioselect.html",
-    "hqwebapp/crispy/multi_field.html",
-    "hqwebapp/crispy/field_with_help_bubble.html",
-    "hqwebapp/crispy/field_with_addons.html",
-    "hqwebapp/includes/inactivity_modal_data.html",
-    "hqwebapp/includes/core_libraries.html",
-    "hqwebapp/includes/ui_element_js.html",
-    "hqwebapp/partials/requirejs.html",
-    # todo, update these files:
-    "hqwebapp/iframe_domain_login.html",
-    "hqwebapp/bulk_upload.html",
-    "hqwebapp/crispy/single_crispy_form.html",
-    "hqwebapp/spec/mocha.html",
-    "hqwebapp/js/maintenance_alerts.js",
-    "hqwebapp/spec/widgets_spec.js",
-]
+def _is_relevant_path(app_name, path, completed_paths):
+    return not (is_split_path(path)
+                or str(path) in completed_paths
+                or is_ignored_path(app_name, path))
 
 
-def _is_relevant_path(path, completed_paths):
-    return not (is_split_path(path) or str(path) in completed_paths)
-
-
-def _get_bootstrap3_flags_from_file(file_path, is_template):
-    flagged_lines = []
+def _get_bootstrap3_references_from_file(file_path, is_template):
+    problem_lines = []
     with open(file_path, 'r') as current_file:
         lines = current_file.readlines()
         for line_number, line in enumerate(lines):
             if is_template:
-                flags = flag_bootstrap3_references_in_template(
+                issues = check_bootstrap3_references_in_template(
                     line, get_spec('bootstrap_3_to_5')
                 )
             else:
-                flags = flag_bootstrap3_references_in_javascript(line)
-            if flags:
-                flagged_lines.append([
-                    line_number, flags
+                issues = check_bootstrap3_references_in_javascript(line)
+            if issues:
+                problem_lines.append([
+                    line_number, issues
                 ])
-    return flagged_lines
+    return problem_lines
 
 
 def _get_flagged_files(app_name, paths, is_template):
     flagged_files = []
     for path in paths:
         short_path = get_short_path(app_name, path, is_template)
-        if short_path in IGNORED_FILES:
-            continue
-        flagged_lines = _get_bootstrap3_flags_from_file(path, is_template)
+        flagged_lines = _get_bootstrap3_references_from_file(path, is_template)
         if flagged_lines:
             flagged_files.append([
                 short_path,
@@ -85,7 +59,7 @@ def _get_flagged_files(app_name, paths, is_template):
 def _get_flagged_templates(app_name):
     completed_templates = [str(t) for t in get_completed_templates_for_app(app_name)]
     template_paths = [path for path in get_all_template_paths_for_app(app_name)
-                      if _is_relevant_path(path, completed_templates)]
+                      if _is_relevant_path(app_name, path, completed_templates)]
     flagged_templates = _get_flagged_files(app_name, template_paths, is_template=True)
     return flagged_templates
 
@@ -93,7 +67,7 @@ def _get_flagged_templates(app_name):
 def _get_flagged_javascript(app_name):
     completed_javascript = [str(j) for j in get_completed_javascript_for_app(app_name)]
     javascript_paths = [path for path in get_all_javascript_paths_for_app(app_name)
-                        if _is_relevant_path(path, completed_javascript)]
+                        if _is_relevant_path(app_name, path, completed_javascript)]
     flagged_javascript = _get_flagged_files(app_name, javascript_paths, is_template=False)
     return flagged_javascript
 

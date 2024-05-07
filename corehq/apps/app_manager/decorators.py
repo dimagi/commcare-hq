@@ -69,10 +69,13 @@ def _get_latest_enabled_build(domain, username, app_id, profile_id, location_fla
     latest_enabled_build = None
     if location_flag_enabled:
         user = CommCareUser.get_by_username(normalize_username(username, domain))
-        user_location_id = user.location_id
-        if user_location_id:
+        if user and user.location_id:
             parent_app_id = get_app(domain, app_id).copy_of
-            latest_enabled_build = get_latest_app_release_by_location(domain, user_location_id, parent_app_id)
+            latest_enabled_build = get_latest_app_release_by_location(
+                domain,
+                user.location_id,
+                parent_app_id,
+            )
     if not latest_enabled_build:
         # Fall back to the old logic to support migration
         # ToDo: Remove this block once migration is complete

@@ -111,6 +111,8 @@ accounting
  0089_dedupe_priv
  0090_custom_domain_alerts_priv
  0091_remove_custom_banner_alerts_feature_flag
+ 0092_revert_application_error_report_priv
+ 0093_defaultproductplan_is_annual_plan
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -128,6 +130,7 @@ api
  0004_rename_apiuser
 app_execution
  0001_initial
+ 0002_alter_appworkflowconfig_unique_together
 app_manager
  0001_linked_app_domain
  0002_latestenabledbuildprofiles
@@ -807,7 +810,8 @@ repeaters
  0006_int_state_add_next_check_rm_repeater_id
  0007_lengthen_payload_id
  0008_sqlrepeatrecords
- 0009_rm_couch_artifacts
+ 0009_add_domain_to_indexes
+ 0010_rm_couch_artifacts
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -1212,6 +1216,7 @@ users
  0059_copy_transient_invitation_supply_point
  0060_invitations_addtableau_roles_and_groupids
  0061_auto_20240423_0802
+ 0062_add_web_apps_groups_permission_flag
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

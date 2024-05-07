@@ -18,6 +18,8 @@ from corehq.apps.hqwebapp.utils.bootstrap.changes import (
     flag_changed_javascript_plugins,
     flag_crispy_forms_in_template,
     flag_inline_styles,
+    add_todo_comments_for_flags,
+    update_gruntfile,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.git import (
     has_pending_git_changes,
@@ -33,6 +35,8 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_javascript_paths_for_app,
     is_split_path,
     is_bootstrap5_path,
+    is_ignored_path,
+    GRUNTFILE_PATH,
 )
 from corehq.apps.hqwebapp.utils.bootstrap.references import (
     update_and_get_references,
@@ -147,12 +151,39 @@ class Command(BaseCommand):
             return
 
         app_templates = self.get_templates_for_migration(app_name, selected_filename)
-        self.migrate_files(app_templates, app_name, spec, is_template=True)
+        migrated_templates = self.migrate_files(app_templates, app_name, spec, is_template=True)
 
         app_javascript = self.get_js_files_for_migration(app_name, selected_filename)
         self.migrate_files(app_javascript, app_name, spec, is_template=False)
 
+        mocha_paths = [path for path in migrated_templates
+                       if f'{app_name}/spec/' in str(path)]
+        if mocha_paths:
+            mocha_paths = [get_short_path(app_name, path, True)
+                           for path in mocha_paths]
+            self.make_updates_to_gruntfile(app_name, mocha_paths)
+
         self.show_next_steps(app_name)
+
+    def make_updates_to_gruntfile(self, app_name, mocha_paths):
+        has_changes = has_pending_git_changes()
+        self.clear_screen()
+        self.stdout.write(self.style.WARNING(
+            self.format_header("Mocha (javascript test) files were split!")
+        ))
+        self.stdout.write(self.style.MIGRATE_LABEL(
+            "Updating Gruntfile.js...\n\n"
+        ))
+        with open(GRUNTFILE_PATH, 'r+') as file:
+            filedata = file.read()
+            file.seek(0)
+            file.write(update_gruntfile(
+                filedata, mocha_paths
+            ))
+        self.suggest_commit_message(
+            f"Updated 'Gruntfile.js' after splitting '{app_name}'.",
+            show_apply_commit=not has_changes
+        )
 
     def show_next_steps(self, app_name):
         self.clear_screen()
@@ -187,7 +218,7 @@ class Command(BaseCommand):
                           "and `bootstrap3_to_5_completed.json`.\n\n")
 
     @staticmethod
-    def _get_files_for_migration(files, file_name):
+    def _get_files_for_migration(app_name, files, file_name):
         if file_name:
             files = [path for path in files if file_name in str(path)]
             if len(files) > 1 and not is_bootstrap5_path(file_name):
@@ -195,11 +226,14 @@ class Command(BaseCommand):
                     path for path in files if not is_bootstrap5_path(path)
                 ]
             return files
-        return [path for path in files if not is_split_path(path)]
+        return [path for path in files
+                if not (is_split_path(path) or is_ignored_path(app_name, path))]
 
     def get_templates_for_migration(self, app_name, selected_filename):
         app_templates = get_all_template_paths_for_app(app_name)
-        available_templates = self._get_files_for_migration(app_templates, selected_filename)
+        available_templates = self._get_files_for_migration(
+            app_name, app_templates, selected_filename
+        )
         if selected_filename:
             return available_templates
         completed_templates = get_completed_templates_for_app(app_name)
@@ -207,13 +241,25 @@ class Command(BaseCommand):
 
     def get_js_files_for_migration(self, app_name, selected_filename):
         app_js_files = get_all_javascript_paths_for_app(app_name)
-        available_js_files = self._get_files_for_migration(app_js_files, selected_filename)
+        available_js_files = self._get_files_for_migration(
+            app_name, app_js_files, selected_filename
+        )
         if selected_filename:
             return available_js_files
         completed_js_files = get_completed_javascript_for_app(app_name)
         return set(available_js_files).difference(completed_js_files)
 
     def migrate_files(self, files, app_name, spec, is_template):
+        """
+        Migrates a list of files if there are changes.
+
+        :param app_name: string (app name that's being migrated)
+        :param files: list(Path) (object)
+        :param spec: dict
+        :param is_template: boolean (whether the file is a template or javascript file)
+        :return: list(Path) (list of all Paths that had changes)
+        """
+        migrated_files = []
         for index, file_path in enumerate(files):
             short_path = get_short_path(app_name, file_path, is_template)
             self.clear_screen()
@@ -234,9 +280,22 @@ class Command(BaseCommand):
                 )
             else:
                 review_changes = False
-            self.migrate_single_file(app_name, file_path, spec, is_template, review_changes)
+            if self.migrate_single_file(app_name, file_path, spec, is_template, review_changes):
+                migrated_files.append(file_path)
+        return migrated_files
 
     def migrate_single_file(self, app_name, file_path, spec, is_template, review_changes):
+        """
+        This runs through each line in a file and obtains flagged todos and changes for each line
+        and applies them, depending on user input (if skip-all isn't active).
+
+        :param app_name: string (app name that's being migrated)
+        :param file_path: Path (object)
+        :param spec: dict
+        :param is_template: boolean (whether the file is a template or javascript file)
+        :param review_changes: boolean (option of whether the user should review line-by-line)
+        :return: boolean (True if changes were made, False if no changes)
+        """
         is_fresh_migration = not is_bootstrap5_path(file_path)
         with open(file_path, 'r') as current_file:
             old_lines = current_file.readlines()
@@ -255,6 +314,7 @@ class Command(BaseCommand):
                 saved_line, line_changelog = self.confirm_and_get_line_changes(
                     line_number, old_line, new_line, renames, flags, review_changes
                 )
+                saved_line = add_todo_comments_for_flags(flags, saved_line, is_template)
 
                 new_lines.append(saved_line)
                 if saved_line != old_line or flags:
@@ -279,8 +339,10 @@ class Command(BaseCommand):
                     self.split_files_and_refactor(
                         app_name, file_path, old_lines, new_lines, is_template
                     )
+                return True
             else:
                 self.write_response(f"\nNo changes were needed for {short_path}. Skipping...\n\n")
+        return False
 
     def confirm_and_get_line_changes(self, line_number, old_line, new_line, renames, flags, review_changes):
         changelog = []
@@ -289,9 +351,10 @@ class Command(BaseCommand):
             self.clear_screen()
             self.stdout.write(changelog[-1])
             for flag in flags:
+                guidance = flag[1]
                 changelog.append("\nFlagged Code:")
                 changelog.append(self.format_code(old_line, break_length=len(old_line) + 5))
-                changelog.append(self.format_guidance(flag))
+                changelog.append(self.format_guidance(guidance))
                 if review_changes:
                     self.display_flag_summary(changelog)
                     enter_to_continue()
@@ -302,6 +365,11 @@ class Command(BaseCommand):
                 changelog.append("\n\n")
             if renames:
                 changelog.append("\nDiff of changes:")
+                if not old_line.endswith('\n'):
+                    # in case there isn't a new line at the end, add one to avoid errors
+                    # this will also fix linting in the new_line :)
+                    old_line = f'{old_line}\n'
+                    new_line = f'{new_line}\n'
                 changelog.extend(self.format_code(
                     f"-{old_line}+{new_line}",
                     split_lines=True,

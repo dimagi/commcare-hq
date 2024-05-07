@@ -1,0 +1,24 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/base_section.html" %}
++{% extends "hqwebapp/bootstrap5/base_section.html" %}
+ {% load case_tags %}
+ {% load timezone_tags %}
+ {% load hq_shared_tags %}
+@@ -8,7 +8,7 @@
+   <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
+ {% endblock %}
+ 
+-{% requirejs_main 'reports/js/bootstrap3/form_data_main' %}
++{% requirejs_main_b5 'reports/js/bootstrap5/form_data_main' %}
+ 
+ {% block title %}Form: {{ form_name }}{% if form_received_on %} ({% utc_to_timezone form_received_on timezone %}){% endif %}{% endblock %}
+ 
+@@ -26,5 +26,5 @@
+       <strong>{{ instance.problem }}</strong>
+     </div>
+   {% endif %}
+-  {% include "reports/form/partials/bootstrap3/single_form.html" %}
++  {% include "reports/form/partials/bootstrap5/single_form.html" %}
+ {% endblock %}
