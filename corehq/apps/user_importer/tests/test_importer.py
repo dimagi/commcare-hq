@@ -1009,7 +1009,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
 
     @patch('corehq.apps.user_importer.importer.Invitation')
     def test_upload_add_web_user(self, mock_invitation_class):
-        self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
+        self.setup_locations()
 
         username = 'a@a.com'
         web_user = WebUser.create(self.other_domain.name, username, 'password', None, None)
@@ -1017,7 +1017,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(web_user='a@a.com', is_account_confirmed='True', role=self.role.name,
-                            location_code=[self.loc1.site_code])],
+                            location_code=[self.loc1.site_code, self.loc2.site_code])],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
@@ -1035,6 +1035,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         change_messages.update(UserChangeMessage.added_as_web_user(self.domain.name))
         change_messages.update(UserChangeMessage.primary_location_info(self.loc1))
         change_messages.update(UserChangeMessage.role_change(self.role))
+        change_messages.update(UserChangeMessage.assigned_locations_info([self.loc1, self.loc2]))
         self.assertDictEqual(user_history.change_messages, change_messages)
         self.assertEqual(user_history.changes, {})
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
