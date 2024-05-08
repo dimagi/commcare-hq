@@ -28,7 +28,8 @@ class Command(BaseCommand):
                             primary_location_id=getattr(invitation.primary_location, "location_id", None),
                             assigned_location_ids=list(
                                 invitation.assigned_locations.all().values_list('location_id', flat=True)),
-                            program_id=invitation.program)
+                            program_id=invitation.program,
+                            profile=invitation.profile)
         invitation.is_accepted = True
         invitation.save()
         print("Operation completed")
