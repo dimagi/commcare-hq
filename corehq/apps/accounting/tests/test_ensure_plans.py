@@ -11,6 +11,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan,
     FeatureType,
     SoftwarePlanEdition,
+    SoftwarePlanVisibility,
 )
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.utils import clear_plan_version_cache
@@ -102,3 +103,8 @@ class TestEnsurePlans(BaseAccountingTest):
                 config['feature_rates'][FeatureType.SMS]['monthly_limit']
             )
             self.assertEqual(sms_feature_rate.per_excess_fee, 0)
+
+            expected_visibility = (SoftwarePlanVisibility.ANNUAL
+                                   if is_annual_plan else SoftwarePlanVisibility.PUBLIC)
+            self.assertEqual(software_plan_version.plan.visibility, expected_visibility)
+            self.assertEqual(software_plan_version.plan.is_annual_plan, is_annual_plan)
