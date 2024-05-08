@@ -235,7 +235,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'caseType': element.caseType,
                             'name': element.name,
                             'label': element.label() || element.name,
-                            'index': index,
+                            'index': group.toBeDeprecated() ? 0 : index,
                             'data_type': element.dataType(),
                             'group': group.toBeDeprecated() ? "" : group.name(),
                             'description': element.description(),
