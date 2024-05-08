@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import dataclasses
 from typing import ClassVar
 
@@ -210,6 +211,7 @@ STEP_MAP = {
 
 
 def _steps_from_json(data):
+    data = copy.deepcopy(data)
     return [STEP_MAP[child.pop("type")].from_json(child) for child in data]
 
 

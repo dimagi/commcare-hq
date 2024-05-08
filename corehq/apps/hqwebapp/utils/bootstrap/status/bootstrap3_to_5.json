@@ -42,7 +42,13 @@
     ]
   },
   "hqwebapp": {
-    "in_progress": true
+    "in_progress": true,
+    "templates": [
+      "maintenance_alerts.html",
+      "close_window.html",
+      "crispy/field/multifield.html",
+      "includes/create_item_form.html"
+    ]
   },
   "corehq.tabs": {
     "in_progress": true
@@ -70,5 +76,14 @@
   },
   "products": {
     "is_complete": true
+  },
+  "notifications": {
+    "in_progress": true
+  },
+  "reports": {
+    "in_progress": true
+  },
+  "reports_core": {
+    "in_progress": true
   }
 }
