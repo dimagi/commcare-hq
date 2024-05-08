@@ -1158,11 +1158,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         """
         from corehq.apps.locations.models import SQLLocation
 
-        yield from self.get_sql_locations(domain).filter(location_type__shares_cases=True)
-
-        yield from SQLLocation.objects.get_queryset_descendants(
-            self.get_sql_locations(domain).filter(location_type__view_descendants=True)
-        ).filter(location_type__shares_cases=True, is_archived=False)
+        if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(domain):
+            user_location_ids = list(self.get_sql_locations(domain).order_by().values_list("id", flat=True))
+            yield from SQLLocation.objects.raw(
+                """
+                    SELECT loc.*
+                    FROM locations_sqllocation loc
+                    INNER JOIN get_case_owning_locations(%s, %s) owned ON owned.id = loc.id;
+                """,
+                [domain, user_location_ids]
+            )
+        else:
+            yield from self.get_sql_locations(domain).filter(location_type__shares_cases=True)
+            yield from SQLLocation.objects.get_queryset_descendants(
+                self.get_sql_locations(domain).filter(location_type__view_descendants=True)
+            ).filter(location_type__shares_cases=True, is_archived=False)
 
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.users.model_log import UserModelAction
