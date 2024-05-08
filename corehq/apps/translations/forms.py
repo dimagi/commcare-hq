@@ -210,7 +210,7 @@ class AppTranslationsForm(forms.Form):
 
     @classmethod
     def form_for(cls, form_action):
-        if form_action == 'create_update':
+        if form_action == 'create_or_update':
             return CreateUpdateAppTranslationsForm
         elif form_action == 'push':
             return PushAppTranslationsForm
@@ -223,7 +223,7 @@ class AppTranslationsForm(forms.Form):
 
 
 class CreateUpdateAppTranslationsForm(AppTranslationsForm):
-    form_action = 'create_update'
+    form_action = 'create_or_update'
     update_existing_resource = forms.MultipleChoiceField(
         choices=[
             ('yes', 'Update existing resources'),
@@ -242,7 +242,7 @@ class CreateUpdateAppTranslationsForm(AppTranslationsForm):
 
     def form_fields(self):
         form_fields = super(CreateUpdateAppTranslationsForm, self).form_fields()
-        if self.form_action == 'create_update':
+        if self.form_action == 'create_or_update':
             form_fields.append('update_existing_resource')
         form_fields.append(crispy.Field('source_lang', css_class="hqwebapp-select2"))
         return form_fields
