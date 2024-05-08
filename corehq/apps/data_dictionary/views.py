@@ -131,7 +131,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                 "properties": grouped_properties.get(group.id, [])
             })
 
-        # Aggregate properties that dont have a group
+        # Aggregate properties that don't have a group
         p["groups"].append({
             "name": "",
             "properties": grouped_properties.get(None, [])
