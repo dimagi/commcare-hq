@@ -248,8 +248,6 @@ class HqPermissions(DocumentSchema):
         if not self.access_all_locations:
             # The following permissions cannot be granted to location-restricted
             # roles.
-            self.edit_web_users = False
-            self.view_web_users = False
             self.edit_groups = False
             self.view_groups = False
             self.edit_apps = False
