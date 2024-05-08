@@ -15,6 +15,7 @@ The `REUSE_DB` environment variable may be overridden with
 import logging
 import os
 import sys
+from contextlib import ExitStack, contextmanager
 from unittest.mock import patch
 
 import pytest
@@ -53,6 +54,7 @@ bootstrap: Restore database state such as software plan versions and currencies
 migrate: Migrate the test databases before running tests.
 teardown: Skip database setup; do normal teardown after running tests.
 """
+SETUP_DATABASES_FUNCTION_NAME = f"{__name__} setup_databases"
 
 
 @pytest.hookimpl
@@ -74,7 +76,7 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     config.reuse_db = reusedb = config.getoption("--reusedb")
     config.skip_setup_for_reuse_db = reusedb and reusedb != "reset"
-    config.skip_teardown_for_reuse_db = reusedb and reusedb != "teardown"
+    config.should_teardown = not reusedb or reusedb == "teardown"
     db_opt = config.getoption("--db")
     assert db_opt in ["both", "only", "skip"], db_opt
     config.should_run_database_tests = db_opt
@@ -138,7 +140,7 @@ def reorder(key):
     - 1 -> 3: TransactionTestCase last
     """
     def is_setup(item):
-        return item.name == "reusedb setup_databases"
+        return item.name == SETUP_DATABASES_FUNCTION_NAME
 
     new_order = {2: 0, 0: 2, 1: 3}
     return lambda item: 1 if is_setup(item) else new_order[key(item)]
@@ -157,7 +159,8 @@ class DeferredDatabaseContext:
 
     def __init__(self):
         self.did_setup = False
-        self.setup_cfg = None
+        self.django_setup_args = None
+        self._teardown = lambda: None
 
     def patch_django(self):
         self.django_setup_databases = djutils.setup_databases
@@ -169,7 +172,7 @@ class DeferredDatabaseContext:
     def session_setup(self, *args, **kw):
         """Preserve arguments, but do not setup databases initially"""
         db_cfg = []
-        self.setup_cfg = (db_cfg, args, kw)
+        self.django_setup_args = (args, kw)
         return db_cfg
 
     def setup_before_first_db_test(self, tests, is_db_test, session):
@@ -179,19 +182,10 @@ class DeferredDatabaseContext:
         tests included in the test run. Database tests will not be run if
         database setup fails.
         """
-        def setup_databases():
-            db_blocker = session.config.stash[blocking_manager_key]
-            with db_blocker.unblock():
-                try:
-                    self.setup_databases(session.config)
-                except BaseException:
-                    session.shouldfail = "Abort: database setup failed"
-                    raise
-
         setup = pytest.Function.from_parent(
             session,
-            name=f"{__name__} setup_databases",
-            callobj=setup_databases,
+            name=SETUP_DATABASES_FUNCTION_NAME,
+            callobj=lambda: self.setup_databases(session),
         )
         for i, test in enumerate(tests):
             if is_db_test(test):
@@ -199,14 +193,33 @@ class DeferredDatabaseContext:
                 break
 
     @timelimit(480)
-    def setup_databases(self, config):
+    def setup_databases(self, session):
         """Setup databases for tests"""
-        assert not self.did_setup, "already set up"
-        self.did_setup = True
-        db_cfg, args, kw = self.setup_cfg
-
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
-        self.blob_db = TemporaryFilesystemBlobDB()
+
+        def setup(enter, cleanup):
+            # NOTE teardowns will be called in reverse order
+            enter(TemporaryFilesystemBlobDB())
+            cleanup(self.delete_elastic_indexes)
+            enter(self._couch_sql_context(session.config))
+            if session.config.should_teardown:
+                cleanup(close_leaked_sql_connections)
+                cleanup(self.clear_redis)
+                cleanup(self.delete_couch_databases)
+
+        assert not self.did_setup, "already set up"
+        db_blocker = session.config.stash[blocking_manager_key]
+        with db_blocker.unblock(), ExitStack() as stack:
+            try:
+                setup(stack.enter_context, stack.callback)
+            except BaseException:
+                session.shouldfail = "Abort: database setup failed"
+                raise
+            self._teardown = stack.pop_all().close
+
+    @contextmanager
+    def _couch_sql_context(self, config):
+        args, kw = self.django_setup_args
 
         if config.skip_setup_for_reuse_db and self._databases_ok():
             if config.reuse_db == "migrate":
@@ -215,22 +228,24 @@ class DeferredDatabaseContext:
                 flush_databases()
             if config.reuse_db == "bootstrap":
                 bootstrap_migrated_db_state()
-            return  # skip remaining setup
+            if config.should_teardown:
+                dbs = self._databases
+        else:
+            if config.reuse_db == "reset":
+                self.reset_databases(config.option.verbose)
+            if config.skip_setup_for_reuse_db:
+                # avoid creating databases that already exist
+                kw["keepdb"] = True
+            dbs = self.django_setup_databases(*args, **kw)
 
-        if config.reuse_db == "reset":
-            self.reset_databases()
+        try:
+            yield
+        finally:
+            if config.should_teardown:
+                # reversed(dbs) -> tear down in reverse setup order
+                self.django_teardown_databases(reversed(dbs), verbosity=config.option.verbose)
 
-        print("", file=sys.__stdout__)  # newline for creating database message
-        if config.reuse_db:
-            print("REUSE_DB={} ".format(config.reuse_db), file=sys.__stdout__, end="")
-
-        if config.skip_setup_for_reuse_db:
-            # avoid creating databases that already exist
-            kw["keepdb"] = True
-        # reversed -> tear down in reverse order
-        db_cfg.extend(reversed(self.django_setup_databases(*args, **kw)))
-
-    def reset_databases(self):
+    def reset_databases(self, verbosity):
         self.delete_couch_databases()
         self.delete_elastic_indexes()
         self.clear_redis()
@@ -242,7 +257,7 @@ class DeferredDatabaseContext:
                 teardown.append((connection, db_name, is_first))
             except OperationalError:
                 pass  # ignore missing database
-        self.django_teardown_databases(reversed(teardown))
+        self.django_teardown_databases(reversed(teardown), verbosity=verbosity)
 
     def _databases_ok(self):
         for connection, db_name, _ in self._databases:
@@ -293,24 +308,9 @@ class DeferredDatabaseContext:
             redis.clear()
 
     def session_teardown(self, *args, **kw):
-        try:
-            if self.did_setup:
-                self.blob_db.close()
-                self.delete_elastic_indexes()
-
-            if self.skip_teardown_for_reuse_db:
-                return
-
-            self.delete_couch_databases()
-            self.clear_redis()
-
-            # HACK clean up leaked database connections
-            from corehq.sql_db.connections import connection_manager
-            connection_manager.dispose_all()
-
-            self.django_teardown_databases(*args, **kw)
-        finally:
-            assert self.setup_cfg is not None, "session_setup() not called"
+        # TODO teardown in a Function, similar to setup_databases
+        # advantage: isolate last test output from teardown errors
+        self._teardown()
 
 
 @nottest
@@ -322,6 +322,11 @@ def get_all_test_dbs():
         if '/test_' not in db.uri:
             raise ValueError("not a test db url: db=%s url=%r" % (db.dbname, db.uri))
     return all_dbs
+
+
+def close_leaked_sql_connections():
+    from corehq.sql_db.connections import connection_manager
+    connection_manager.dispose_all()
 
 
 @unit_testing_only
