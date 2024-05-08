@@ -144,6 +144,6 @@
         "postinstall": "yarn run -s build:modernizr",
         "build:modernizr": "modernizr -c modernizr-conf.json -d corehq/apps/hqwebapp/static/hqwebapp/js/lib",
         "dev": "webpack --mode development --watch",
-        "build:react": "webpack --mode development"
+        "build:webpack": "webpack --mode development"
     }
 }
