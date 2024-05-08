@@ -1,20 +1,10 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
-{# This is for editing information for the currently logged in WebUser #}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block stylesheets %}
-  <style>
-    #phone-numbers-list form {
-      display: inline;
-      padding-left: .1em;
-    }
-  </style>
-{% endblock %}
-
-{% requirejs_main 'settings/js/edit_my_account' %}
+{% requirejs_main_b5 'settings/js/edit_my_account' %}
 
 {% block modals %}{{ block.super }}
   {% if user_type == 'web' %}
@@ -25,11 +15,11 @@
 {% block page_content %}
   {% if user_type == 'web' %}
     <ul class="nav nav-tabs">
-      <li class="active">
-        <a data-bs-toggle="tab" href="#user-settings-tab">{% trans "My Settings" %}</a>
+      <li role="presentation" class="nav-item">
+        <a class="nav-link active" role="tab" data-bs-toggle="tab" href="#user-settings-tab">{% trans "My Settings" %}</a>
       </li>
-      <li>
-        <a data-bs-toggle="tab" href="#manage-phone-numbers-tab">{% trans "Phone Numbers" %}</a></li>
+      <li role="presentation" class="nav-item">
+        <a class="nav-link" role="tab" data-bs-toggle="tab" href="#manage-phone-numbers-tab">{% trans "Phone Numbers" %}</a></li>
     </ul>
     <div class="spacer"></div>
     <div class="tab-content">
@@ -37,7 +27,7 @@
         {% crispy form form.new_helper %}
       </div>
       <div class="tab-pane" id="manage-phone-numbers-tab">
-        {% include 'users/partials/manage_my_numbers.html' %}
+        {% include 'users/partials/bootstrap5/manage_my_numbers.html' %}
       </div>
     </div>
   {% else %}
