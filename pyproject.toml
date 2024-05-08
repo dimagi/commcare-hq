@@ -26,6 +26,9 @@ namespaces = false
 
 [tool.pytest.ini_options]
 minversion = "8.1"
+addopts = [
+    "-p", "no:warnings",  # HQ has its own (incompatible) warnings system
+]
 
 empty_parameter_set_mark = "xfail"
 xfail_strict = true
