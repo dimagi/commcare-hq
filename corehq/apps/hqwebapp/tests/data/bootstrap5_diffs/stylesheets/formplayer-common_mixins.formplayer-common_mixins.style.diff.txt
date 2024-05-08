@@ -2,7 +2,7 @@
 +++ 
 @@ -1,37 +1,35 @@
 -.make-module-size(@icon-size) {
-+.make-module-size($icon-size) {
++@mixin make-module-size($icon-size) {
    .module-icon-image,
    .module-icon-container {
 -    width: @icon-size;

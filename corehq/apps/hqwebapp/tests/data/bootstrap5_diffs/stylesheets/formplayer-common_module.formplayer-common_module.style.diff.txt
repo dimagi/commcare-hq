@@ -30,7 +30,7 @@
    }
  }
  
-@@ -70,19 +70,19 @@
+@@ -70,29 +70,29 @@
  
  .module-audio-control {
    .module-audio-icon {
@@ -50,19 +50,26 @@
    }
    &:hover {
 -    background-color: @cc-att-neg-hi;
+-  }
+-}
+-
+-.make-module-size(45px);
 +    background-color: $cc-att-neg-hi;
-   }
- }
- 
-@@ -91,7 +91,7 @@
++  }
++}
++
++@include make-module-size(45px);
+ .module-column-name h3 {
    font-size: 16px;
  }
  
 -@media (min-width: @screen-md) {
+-  .make-module-size(80px);
 +@include media-breakpoint-up(lg) {
-   .make-module-size(80px);
++  @include make-module-size(80px);
    .module-column-name h3 {
      font-size: 20px;
+   }
 @@ -107,7 +107,7 @@
  }
  
@@ -103,6 +110,15 @@
    color: black;
    padding-top: 1rem;
    padding-bottom: 1rem;
+@@ -206,7 +206,7 @@
+ 
+ .module-table-case-detail tbody tr:nth-child(odd) {
+   th, td {
+-    background-color: darken(@cc-brand-hi, 3);
++    background-color: darken($cc-brand-hi, 3);
+   }
+ }
+ 
 @@ -215,7 +215,7 @@
    font-weight: bold;
    .transition(1s all);
