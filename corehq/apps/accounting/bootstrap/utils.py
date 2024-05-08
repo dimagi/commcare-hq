@@ -17,7 +17,8 @@ def ensure_plans(config, verbose, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     Role = apps.get_model('django_prbac', 'Role')
-    PlanKey = namedtuple('PlanKey', ['edition', 'is_trial', 'is_report_builder_enabled'])
+    PlanKey = namedtuple('PlanKey', ['edition', 'is_trial', 'is_report_builder_enabled', 'is_annual_plan'],
+                     defaults=('is_annual_plan', None))
 
     for plan_key, plan_deets in config.items():
         plan_key = PlanKey(*plan_key)
@@ -164,12 +165,14 @@ def _ensure_feature_rates(feature_rates, features, edition, verbose, apps):
 
 def _ensure_software_plan(plan_key, product, product_rate, verbose, apps):
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
-
     plan_opts = {
-        'name': _software_plan_name(product, product_rate, plan_key.is_trial, plan_key.is_report_builder_enabled),
+        'name': _software_plan_name(plan_key, product, product_rate),
         'edition': plan_key.edition,
-        'visibility': SoftwarePlanVisibility.PUBLIC
+        'visibility': SoftwarePlanVisibility.ANNUAL if plan_key.is_annual_plan else SoftwarePlanVisibility.PUBLIC
     }
+    if plan_key.is_annual_plan is not None:
+        plan_opts['is_annual_plan'] = plan_key.is_annual_plan
+
     software_plan, created = SoftwarePlan.objects.get_or_create(**plan_opts)
     if verbose and created:
         log_accounting_info("Creating Software Plan: %s" % software_plan.name)
@@ -180,11 +183,13 @@ def _ensure_software_plan(plan_key, product, product_rate, verbose, apps):
     return software_plan
 
 
-def _software_plan_name(product, product_rate, is_trial, is_report_builder_enabled):
+def _software_plan_name(plan_key, product, product_rate):
     plan_name = (
-        (('%s Trial' % product_rate.name) if is_trial else ('%s Edition' % product_rate.name))
+        (('%s Trial' % product_rate.name) if plan_key.is_trial else ('%s Edition' % product_rate.name))
         if product is None else product.name)
-    if is_report_builder_enabled:
+    if plan_key.is_annual_plan:
+        plan_name = '%s - Pay Annually' % plan_name
+    if plan_key.is_report_builder_enabled:
         plan_name = '%s - Report Builder (5 Reports)' % plan_name
     return plan_name
 
@@ -204,7 +209,14 @@ def _ensure_software_plan_version(role, software_plan, product_rate, feature_rat
 
 def _ensure_default_product_plan(plan_key, software_plan, verbose, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
-    plan_opts = plan_key._asdict()
+    plan_opts = {
+        'edition': plan_key.edition,
+        'is_trial': plan_key.is_trial,
+        'is_report_builder_enabled': plan_key.is_report_builder_enabled,
+    }
+    if plan_key.is_annual_plan is not None:
+        plan_opts['is_annual_plan'] = plan_key.is_annual_plan
+
     try:
         default_product_plan = DefaultProductPlan.objects.get(**plan_opts)
         if verbose:
