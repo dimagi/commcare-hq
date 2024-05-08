@@ -5,7 +5,7 @@
    padding-right: 1.5rem;
    background-color: white;
 -  @media (max-width: @screen-sm-max) {
-+  @media (max-width: $screen-sm-max) {
++  @include media-breakpoint-down(lg) {
      min-height: 70px;
    }
    h1 {
@@ -52,7 +52,7 @@
 -    @media (max-width: @screen-sm-max) {
 +    height: calc(100vh - 65px);
 +
-+    @media (max-width: $screen-sm-max) {
++    @include media-breakpoint-down(lg) {
        height: 25vh;
      }
  
