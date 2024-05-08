@@ -145,7 +145,7 @@ def get_case_search_results(domain, case_types, criteria,
     if profiler:
         helper.profiler = profiler
 
-    cases = get_primary_case_search_results(helper, domain, case_types, criteria, commcare_sort)
+    cases = get_primary_case_search_results(helper, case_types, criteria, commcare_sort)
     helper.profiler.primary_count = len(cases)
     if app_id:
         related_cases = get_and_tag_related_cases(helper, app_id, case_types, cases,
@@ -156,8 +156,8 @@ def get_case_search_results(domain, case_types, criteria,
 
 
 @time_function()
-def get_primary_case_search_results(helper, domain, case_types, criteria, commcare_sort=None):
-    builder = CaseSearchQueryBuilder(domain, case_types, helper.profiler, helper.query_domains)
+def get_primary_case_search_results(helper, case_types, criteria, commcare_sort=None):
+    builder = CaseSearchQueryBuilder(helper, case_types)
     try:
         with helper.profiler.timing_context('build_query'):
             search_es = builder.build_query(criteria, commcare_sort)
@@ -241,11 +241,12 @@ class _RegistryQueryHelper:
 class CaseSearchQueryBuilder:
     """Compiles the case search object for the view"""
 
-    def __init__(self, domain, case_types, profiler, query_domains=None):
-        self.request_domain = domain
+    def __init__(self, helper, case_types):
+        self.request_domain = helper.domain
         self.case_types = case_types
-        self.profiler = profiler
-        self.query_domains = [domain] if query_domains is None else query_domains
+        self.helper = helper
+        self.profiler = helper.profiler
+        self.query_domains = helper.query_domains
 
     @cached_property
     def config(self):

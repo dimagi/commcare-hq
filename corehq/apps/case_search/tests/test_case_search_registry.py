@@ -311,8 +311,8 @@ class TestCaseSearchRegistry(TestCase):
     def test_primary_cases_not_included_with_related_cases(self):
         with patch_get_app_cached:
             registry_helper = _get_helper(None, self.domain_1, ["creative_work"], self.registry_slug)
-            primary_cases = get_primary_case_search_results(registry_helper, self.domain_1, ["creative_work"],
-                                                            [SearchCriteria("name", "Jane Eyre")])
+            primary_cases = get_primary_case_search_results(
+                registry_helper, ["creative_work"], [SearchCriteria("name", "Jane Eyre")])
             related_cases = registry_helper.get_all_related_live_cases(primary_cases)
 
             self.assertItemsEqual([
