@@ -1138,7 +1138,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 primary_location_id = data.pop("primary_location", None)
                 data["primary_location"] = (SQLLocation.by_location_id(primary_location_id)
                                         if primary_location_id else None)
-                assigned_location_ids = data.pop("assigned_locations", None)
+                assigned_location_ids = data.pop("assigned_locations", [])
                 profile_id = data.get("profile", None)
                 data["profile"] = CustomDataFieldsProfile.objects.get(
                     id=profile_id,
@@ -1147,8 +1147,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 invite.save()
 
                 assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
-                        if assigned_location_id else None
-                        for assigned_location_id in assigned_location_ids]
+                        for assigned_location_id in assigned_location_ids
+                        if assigned_location_id is not None]
                 invite.assigned_locations.set(assigned_locations)
                 invite.send_activation_email()
 
