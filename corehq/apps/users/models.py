@@ -2830,7 +2830,7 @@ class Invitation(models.Model):
             self.domain,
             role=self.role,
             primary_location_id=getattr(self.primary_location, "location_id", None),
-            assigned_location_ids=[getattr(loc, "location_id", None) for loc in self.assigned_locations.all()],
+            assigned_location_ids=list(self.assigned_locations.all().values_list('location_id', flat=True)),
             program_id=self.program,
             profile=self.profile,
         )

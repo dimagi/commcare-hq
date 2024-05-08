@@ -26,8 +26,8 @@ class Command(BaseCommand):
 
         user.add_as_web_user(invitation.domain, role=invitation.role,
                             primary_location_id=getattr(invitation.primary_location, "location_id", None),
-                            assigned_location_ids=[getattr(loc, "location_id", None)
-                                                for loc in invitation.assigned_locations.all()],
+                            assigned_location_ids=list(
+                                invitation.assigned_locations.all().values_list('location_id', flat=True)),
                             program_id=invitation.program,
                             profile=invitation.profile)
         invitation.is_accepted = True
