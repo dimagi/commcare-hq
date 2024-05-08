@@ -30,7 +30,6 @@ from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.db.utils import OperationalError
 from django.test import utils as djutils
 from django.test.utils import get_unique_databases_and_mirrors
-from django.utils.functional import cached_property
 
 from couchdbkit import ResourceNotFound
 from requests.exceptions import HTTPError
@@ -204,12 +203,12 @@ class DeferredDatabaseContext:
         def setup(enter, cleanup):
             # NOTE teardowns will be called in reverse order
             enter(TemporaryFilesystemBlobDB())
-            cleanup(self.delete_elastic_indexes)
-            enter(self._couch_sql_context(session.config))
+            cleanup(delete_elastic_indexes)
+            enter(couch_sql_context(session.config))
             if session.config.should_teardown:
                 cleanup(close_leaked_sql_connections)
-                cleanup(self.clear_redis)
-                cleanup(self.delete_couch_databases)
+                cleanup(clear_redis)
+                cleanup(delete_couch_databases)
 
         assert "teardown_databases" not in self.__dict__, "already set up"
         db_blocker = get_request().getfixturevalue("django_db_blocker")
@@ -224,61 +223,52 @@ class DeferredDatabaseContext:
     def teardown_databases(self):
         """No-op to be replaced with ExitStack.close by setup_databases"""
 
-    @contextmanager
-    def _couch_sql_context(self, config):
-        if config.skip_setup_for_reuse_db and self.sql_databases_ok():
-            if config.reuse_db == "migrate":
-                call_command('migrate_multi', interactive=False)
-            if config.reuse_db == "flush":
-                flush_databases()
-            if config.reuse_db == "bootstrap":
-                bootstrap_migrated_db_state()
-            if config.should_teardown:
-                dbs = self.sql_databases
-        else:
-            if config.reuse_db == "reset":
-                self.reset_databases(config.option.verbose)
-            self.sql_dbs = djutils.setup_databases(
-                interactive=False,
+
+@unit_testing_only
+@contextmanager
+def couch_sql_context(config):
+    if config.skip_setup_for_reuse_db and sql_databases_ok():
+        if config.reuse_db == "migrate":
+            call_command('migrate_multi', interactive=False)
+        if config.reuse_db == "flush":
+            flush_databases()
+        if config.reuse_db == "bootstrap":
+            bootstrap_migrated_db_state()
+        if config.should_teardown:
+            dbs = get_sql_databases()
+    else:
+        if config.reuse_db == "reset":
+            reset_databases(config.option.verbose)
+        dbs = djutils.setup_databases(
+            interactive=False,
+            verbosity=config.option.verbose,
+            # avoid re-creating databases that already exist
+            keepdb=config.skip_setup_for_reuse_db,
+        )
+
+    try:
+        yield
+    finally:
+        if config.should_teardown:
+            djutils.teardown_databases(
+                reversed(dbs),  # tear down in reverse setup order
                 verbosity=config.option.verbose,
-                # avoid re-creating databases that already exist
-                keepdb=config.skip_setup_for_reuse_db,
             )
 
+
+def sql_databases_ok():
+    for connection, db_name, _ in get_sql_databases():
         try:
-            yield
-        finally:
-            if config.should_teardown:
-                # reversed(dbs) -> tear down in reverse setup order
-                djutils.teardown_databases(reversed(dbs), verbosity=config.option.verbose)
+            connection.ensure_connection()
+        except OperationalError as e:
+            print(str(e), file=sys.__stderr__)
+            return False
+    return True
 
-    def reset_databases(self, verbosity):
-        self.delete_couch_databases()
-        self.delete_elastic_indexes()
-        self.clear_redis()
-        # tear down all databases together to avoid dependency issues
-        teardown = []
-        for connection, db_name, is_first in self.sql_databases:
-            try:
-                connection.ensure_connection()
-                teardown.append((connection, db_name, is_first))
-            except OperationalError:
-                pass  # ignore missing database
-        djutils.teardown_databases(reversed(teardown), verbosity=verbosity)
 
-    def sql_databases_ok(self):
-        for connection, db_name, _ in self.sql_databases:
-            try:
-                connection.ensure_connection()
-            except OperationalError as e:
-                print(str(e), file=sys.__stderr__)
-                return False
-        return True
-
-    @cached_property
-    def sql_databases(self):
+def get_sql_databases(*, _cache=[]):
+    if not _cache:
         from django.db import connections
-        dbs = []
         test_databases, mirrored_aliases = get_unique_databases_and_mirrors()
         assert not mirrored_aliases, "DB mirrors not supported"
         for signature, (db_name, aliases) in test_databases.items():
@@ -286,33 +276,54 @@ class DeferredDatabaseContext:
             connection = connections[alias]
             db = connection.settings_dict
             assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
-            dbs.append((connection, db_name, True))
-        return dbs
+            _cache.append((connection, db_name, True))
+    return _cache
 
-    def delete_couch_databases(self):
-        for db in get_all_couch_dbs():
-            try:
-                db.server.delete_db(db.dbname)
-                log.info("deleted database %s", db.dbname)
-            except ResourceNotFound:
-                log.info("database %s not found! it was probably already deleted.",
-                         db.dbname)
 
-    def delete_elastic_indexes(self):
-        from corehq.apps.es.client import manager as elastic_manager
-        # corehq.apps.es.client.create_document_adapter uses
-        # TEST_DATABASE_PREFIX when constructing test index names
-        for index_name in elastic_manager.get_indices():
-            if index_name.startswith(TEST_DATABASE_PREFIX):
-                elastic_manager.index_delete(index_name)
+@unit_testing_only
+def reset_databases(verbosity):
+    delete_couch_databases()
+    delete_elastic_indexes()
+    clear_redis()
+    # tear down all databases together to avoid dependency issues
+    teardown = []
+    for connection, db_name, is_first in get_sql_databases():
+        try:
+            connection.ensure_connection()
+            teardown.append((connection, db_name, is_first))
+        except OperationalError:
+            pass  # ignore missing database
+    djutils.teardown_databases(reversed(teardown), verbosity=verbosity)
 
-    def clear_redis(self):
-        config = settings.CACHES.get("redis", {})
-        loc = config.get("TEST_LOCATION")
-        if loc:
-            redis = cache.caches['redis']
-            assert redis.client._server == [loc], (redis.client._server, config)
-            redis.clear()
+
+@unit_testing_only
+def delete_couch_databases():
+    for db in get_all_couch_dbs():
+        try:
+            db.server.delete_db(db.dbname)
+            log.info("deleted database %s", db.dbname)
+        except ResourceNotFound:
+            log.info("database %s not found! it was probably already deleted.", db.dbname)
+
+
+@unit_testing_only
+def delete_elastic_indexes():
+    from corehq.apps.es.client import manager as elastic_manager
+    # corehq.apps.es.client.create_document_adapter uses
+    # TEST_DATABASE_PREFIX when constructing test index names
+    for index_name in elastic_manager.get_indices():
+        if index_name.startswith(TEST_DATABASE_PREFIX):
+            elastic_manager.index_delete(index_name)
+
+
+@unit_testing_only
+def clear_redis():
+    config = settings.CACHES.get("redis", {})
+    loc = config.get("TEST_LOCATION")
+    if loc:
+        redis = cache.caches['redis']
+        assert redis.client._server == [loc], (redis.client._server, config)
+        redis.clear()
 
 
 @nottest
