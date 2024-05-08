@@ -184,7 +184,7 @@ def get_primary_case_search_results(helper, case_types, criteria, commcare_sort=
 
 
 def _get_helper(couch_user, domain, case_types, registry_slug):
-    helper = _QueryHelper(domain)
+    helper = QueryHelper(domain)
     if registry_slug:
         try:
             registry_helper = DataRegistryHelper(domain, registry_slug=registry_slug)
@@ -192,11 +192,11 @@ def _get_helper(couch_user, domain, case_types, registry_slug):
         except (RegistryNotFound, RegistryAccessException):
             pass
         else:
-            helper = _RegistryQueryHelper(domain, couch_user, registry_helper)
+            helper = RegistryQueryHelper(domain, couch_user, registry_helper)
     return helper
 
 
-class _QueryHelper:
+class QueryHelper:
     def __init__(self, domain):
         self.domain = domain
         self.query_domains = [self.domain]
@@ -216,7 +216,7 @@ class _QueryHelper:
         return get_all_related_live_cases(self.domain, case_ids)
 
 
-class _RegistryQueryHelper:
+class RegistryQueryHelper:
     def __init__(self, domain, couch_user, registry_helper):
         self.domain = domain
         self.couch_user = couch_user
