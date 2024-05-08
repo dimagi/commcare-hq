@@ -226,7 +226,7 @@ class DeferredDatabaseContext:
 
     @contextmanager
     def _couch_sql_context(self, config):
-        if config.skip_setup_for_reuse_db and self._databases_ok():
+        if config.skip_setup_for_reuse_db and self.sql_databases_ok():
             if config.reuse_db == "migrate":
                 call_command('migrate_multi', interactive=False)
             if config.reuse_db == "flush":
@@ -234,7 +234,7 @@ class DeferredDatabaseContext:
             if config.reuse_db == "bootstrap":
                 bootstrap_migrated_db_state()
             if config.should_teardown:
-                dbs = self._databases
+                dbs = self.sql_databases
         else:
             if config.reuse_db == "reset":
                 self.reset_databases(config.option.verbose)
@@ -258,7 +258,7 @@ class DeferredDatabaseContext:
         self.clear_redis()
         # tear down all databases together to avoid dependency issues
         teardown = []
-        for connection, db_name, is_first in self._databases:
+        for connection, db_name, is_first in self.sql_databases:
             try:
                 connection.ensure_connection()
                 teardown.append((connection, db_name, is_first))
@@ -266,8 +266,8 @@ class DeferredDatabaseContext:
                 pass  # ignore missing database
         djutils.teardown_databases(reversed(teardown), verbosity=verbosity)
 
-    def _databases_ok(self):
-        for connection, db_name, _ in self._databases:
+    def sql_databases_ok(self):
+        for connection, db_name, _ in self.sql_databases:
             try:
                 connection.ensure_connection()
             except OperationalError as e:
@@ -276,7 +276,7 @@ class DeferredDatabaseContext:
         return True
 
     @cached_property
-    def _databases(self):
+    def sql_databases(self):
         from django.db import connections
         dbs = []
         test_databases, mirrored_aliases = get_unique_databases_and_mirrors()
@@ -290,7 +290,7 @@ class DeferredDatabaseContext:
         return dbs
 
     def delete_couch_databases(self):
-        for db in get_all_test_dbs():
+        for db in get_all_couch_dbs():
             try:
                 db.server.delete_db(db.dbname)
                 log.info("deleted database %s", db.dbname)
@@ -317,7 +317,7 @@ class DeferredDatabaseContext:
 
 @nottest
 @unit_testing_only
-def get_all_test_dbs():
+def get_all_couch_dbs():
     from corehq.util.couchdb_management import couch_config
     all_dbs = list(couch_config.all_dbs_by_db_name.values())
     for db in all_dbs:
@@ -339,7 +339,7 @@ def flush_databases():
     about 5 seconds to run when trying it out.
     """
     print("Flushing test databases, check yourself before you wreck yourself!", file=sys.__stdout__)
-    for db in get_all_test_dbs():
+    for db in get_all_couch_dbs():
         try:
             db.flush()
         except (ResourceNotFound, HTTPError):
