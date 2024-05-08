@@ -25,7 +25,7 @@ class TestEnsurePlans(BaseAccountingTest):
     def test_ensure_plans(self):
         self._test_plan_versions_ensured(BOOTSTRAP_CONFIG_TESTING)
         self._test_plan_versions_ensured({
-            (SoftwarePlanEdition.COMMUNITY, False, False): {
+            (SoftwarePlanEdition.COMMUNITY, False, False, False): {
                 'role': 'community_plan_v1',
                 'product_rate_monthly_fee': Decimal('0.00'),
                 'feature_rates': {
@@ -33,7 +33,7 @@ class TestEnsurePlans(BaseAccountingTest):
                     FeatureType.SMS: dict(monthly_limit=0),
                 }
             },
-            (SoftwarePlanEdition.STANDARD, False, False): {
+            (SoftwarePlanEdition.STANDARD, False, False, False): {
                 'role': 'standard_plan_v0',
                 'product_rate_monthly_fee': Decimal('301.00'),
                 'feature_rates': {
@@ -41,7 +41,7 @@ class TestEnsurePlans(BaseAccountingTest):
                     FeatureType.SMS: dict(monthly_limit=13),
                 }
             },
-            (SoftwarePlanEdition.PRO, False, False): {
+            (SoftwarePlanEdition.PRO, False, False, False): {
                 'role': 'pro_plan_v1',
                 'product_rate_monthly_fee': Decimal('601.00'),
                 'feature_rates': {
@@ -49,7 +49,7 @@ class TestEnsurePlans(BaseAccountingTest):
                     FeatureType.SMS: dict(monthly_limit=15),
                 }
             },
-            (SoftwarePlanEdition.ADVANCED, False, False): {
+            (SoftwarePlanEdition.ADVANCED, False, False, False): {
                 'role': 'advanced_plan_v0',
                 'product_rate_monthly_fee': Decimal('1201.00'),
                 'feature_rates': {
@@ -57,7 +57,7 @@ class TestEnsurePlans(BaseAccountingTest):
                     FeatureType.SMS: dict(monthly_limit=17),
                 }
             },
-            (SoftwarePlanEdition.ADVANCED, True, False): {
+            (SoftwarePlanEdition.ADVANCED, True, False, False): {
                 'role': 'advanced_plan_v0',
                 'product_rate_monthly_fee': Decimal('0.00'),
                 'feature_rates': {
@@ -65,7 +65,7 @@ class TestEnsurePlans(BaseAccountingTest):
                     FeatureType.SMS: dict(monthly_limit=0),
                 }
             },
-            (SoftwarePlanEdition.ENTERPRISE, False, False): {
+            (SoftwarePlanEdition.ENTERPRISE, False, False, False): {
                 'role': 'enterprise_plan_v0',
                 'product_rate_monthly_fee': Decimal('0.00'),
                 'feature_rates': {
@@ -77,9 +77,10 @@ class TestEnsurePlans(BaseAccountingTest):
 
     def _test_plan_versions_ensured(self, bootstrap_config):
         ensure_plans(bootstrap_config, True, apps)
-        for (edition, is_trial, has_report_builder), config in bootstrap_config.items():
+        for (edition, is_trial, has_report_builder, is_annual_plan), config in bootstrap_config.items():
             software_plan_version = DefaultProductPlan.get_default_plan_version(
-                edition=edition, is_trial=is_trial, is_report_builder_enabled=has_report_builder
+                edition=edition, is_trial=is_trial, is_report_builder_enabled=has_report_builder,
+                is_annual_plan=is_annual_plan
             )
 
             self.assertEqual(software_plan_version.role.slug, config['role'])
