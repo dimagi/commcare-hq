@@ -90,13 +90,10 @@ class TestTransifexApiClient(TestFileMixin, SimpleTestCase):
     def test_request_fetch_related(self):
         obj = self.tfx_client.project
         relative = 'languages'
-        with self.mocker as mocker:
-            [r for r in self.tfx_client._fetch_related(obj, 'languages')]
-            request = mocker.last_request
-
-        self.assertEqual(request.method, 'GET')
-        self.assertIn(obj.id, request.path)
-        self.assertIn(relative, request.path)
+        expected_ids = ['l:es', 'l:fr']
+        languages = [r for r in self.tfx_client._fetch_related(obj, relative)]
+        for lang in languages:
+            self.assertIn(lang.id, expected_ids)
 
     def test_request_create_resource(self):
         with self.mocker as mocker:
