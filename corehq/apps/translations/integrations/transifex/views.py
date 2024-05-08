@@ -354,14 +354,6 @@ class AppTranslations(BaseTranslationsView):
     @property
     def page_context(self):
         context = super(AppTranslations, self).page_context
-        if context['transifex_details_available']:
-            context['create_form'] = AppTranslationsForm.form_for('create')(self.domain)
-            context['update_form'] = AppTranslationsForm.form_for('update')(self.domain)
-            context['push_form'] = AppTranslationsForm.form_for('push')(self.domain)
-            context['pull_form'] = AppTranslationsForm.form_for('pull')(self.domain)
-            context['backup_form'] = AppTranslationsForm.form_for('backup')(self.domain)
-            if self.request.user.is_staff:
-                context['delete_form'] = AppTranslationsForm.form_for('delete')(self.domain)
         form_action = self.request.POST.get('action')
         if form_action:
             context[form_action + '_form'] = self.translations_form
@@ -376,7 +368,8 @@ class AppTranslations(BaseTranslationsView):
         return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
                          form_data['version'],
                          use_version_postfix='yes' in form_data['use_version_postfix'],
-                         update_resource=(form_data['action'] == 'update'))
+                         update_resource=('update_existing_resource' in form_data
+                                          and 'yes' in form_data['update_existing_resource']))
 
     def perform_push_request(self, request, form_data):
         if form_data['target_lang']:
@@ -424,7 +417,6 @@ class AppTranslations(BaseTranslationsView):
             return False
         backup_project_from_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to take backup.'))
-        return True
 
     def perform_delete_request(self, request, form_data):
         if not self.ensure_resources_present(request):
@@ -444,7 +436,7 @@ class AppTranslations(BaseTranslationsView):
             messages.error(request, _('Source lang selected not available for the project'))
             return False
         else:
-            if form_data['action'] in ['create', 'update', 'push']:
+            if form_data['action'] in ['create_update', 'push']:
                 return self.perform_push_request(request, form_data)
             elif form_data['action'] == 'pull':
                 return self.perform_pull_request(request, form_data)
@@ -464,6 +456,71 @@ class AppTranslations(BaseTranslationsView):
                 except TransifexApiException as e:
                     messages.error(request, e)
         return self.get(request, *args, **kwargs)
+
+
+class CreateUpdateTranslations(AppTranslations):
+    page_title = gettext_lazy('Create or Update Translations')
+    urlname = 'create_update_translations'
+
+    @property
+    def page_context(self):
+        context = super(CreateUpdateTranslations, self).page_context
+        if context['transifex_details_available']:
+            context['trans_form'] = AppTranslationsForm.form_for('create_update')(self.domain)
+            context['page_action'] = 'create_update'
+        return context
+
+
+class PushTranslations(AppTranslations):
+    page_title = gettext_lazy('Push Translations')
+    urlname = 'push_translations'
+
+    @property
+    def page_context(self):
+        context = super(PushTranslations, self).page_context
+        if context['transifex_details_available']:
+            context['trans_form'] = AppTranslationsForm.form_for('push')(self.domain)
+            context['page_action'] = 'push'
+        return context
+
+
+class PullTranslations(AppTranslations):
+    page_title = gettext_lazy('Pull Translations')
+    urlname = 'pull_translations'
+
+    @property
+    def page_context(self):
+        context = super(PullTranslations, self).page_context
+        if context['transifex_details_available']:
+            context['trans_form'] = AppTranslationsForm.form_for('pull')(self.domain)
+            context['page_action'] = 'pull'
+        return context
+
+
+class BackupTranslations(AppTranslations):
+    page_title = gettext_lazy('Backup Translations')
+    urlname = 'backup_translations'
+
+    @property
+    def page_context(self):
+        context = super(BackupTranslations, self).page_context
+        if context['transifex_details_available']:
+            context['trans_form'] = AppTranslationsForm.form_for('backup')(self.domain)
+            context['page_action'] = 'backup'
+        return context
+
+
+class DeleteTranslations(AppTranslations):
+    page_title = gettext_lazy('Delete Translations')
+    urlname = 'delete_translations'
+
+    @property
+    def page_context(self):
+        context = super(DeleteTranslations, self).page_context
+        if context['transifex_details_available']:
+            context['trans_form'] = AppTranslationsForm.form_for('delete')(self.domain)
+            context['page_action'] = 'delete'
+        return context
 
 
 class DownloadTranslations(BaseTranslationsView):
