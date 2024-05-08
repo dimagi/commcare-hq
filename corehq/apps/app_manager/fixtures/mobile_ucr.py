@@ -114,7 +114,8 @@ class ReportFixturesProvider(FixtureProvider):
         elif (
             toggles.RESTORE_ACCESSIBLE_REPORTS_ONLY.enabled(restore_user.domain)
             and restore_state.params.is_webapps
-            and restore_user.can_view_apps()  # only way to be sure this a web apps restore, not live preview
+            # only way to reliably know that this is a web apps restore, not live preview
+            and not restore_user.can_view_apps(restore_user.domain)
         ):
             for app in get_web_apps_available_to_user(restore_user.domain, restore_user._couch_user):
                 if not is_remote_app(app):
