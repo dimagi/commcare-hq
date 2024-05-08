@@ -230,7 +230,7 @@ class TestTransifexApiClient(TestFileMixin, SimpleTestCase):
         self.assertEqual(expected_translation, actual_translation)
 
     def test_get_project_langcodes(self):
-        expected_langcodes = ['es', 'fr', 'en']
+        expected_langcodes = ['es', 'fr']
         with self.mocker:
             actual_langcodes = self.tfx_client.get_project_langcodes()
 
