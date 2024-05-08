@@ -67,14 +67,13 @@ hqDefine("users/js/roles_and_permissions",[
             allowEdit: initialPageData.get("can_edit_roles"),
             canRestrictAccessByLocation: initialPageData.get("can_restrict_access_by_location"),
             landingPageChoices: initialPageData.get("landing_page_choices"),
-            webAppsPrivilege: initialPageData.get("web_apps_privilege"),
-            ermPrivilege: initialPageData.get("erm_privilege"),
-            mrmPrivilege: initialPageData.get("mrm_privilege"),
+            webAppsChoices: initialPageData.get("web_apps_choices"),
             attendanceTrackingPrivilege: initialPageData.get("attendance_tracking_privilege"),
             DataFileDownloadEnabled: initialPageData.get("data_file_download_enabled"),
             ExportOwnershipEnabled: initialPageData.get("export_ownership_enabled"),
             dataRegistryChoices: initialPageData.get("data_registry_choices"),
             canEditLinkedData: initialPageData.get("can_edit_linked_data"),
+            commcareAnalyticsRoles: initialPageData.get('commcare_analytics_roles'),
         });
     });
 });

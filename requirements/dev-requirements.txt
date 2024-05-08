@@ -104,6 +104,7 @@ cryptography==42.0.4
     # via
     #   -r base-requirements.in
     #   jwcrypto
+    #   msal
     #   oic
     #   pyjwt
     #   pyopenssl
@@ -137,7 +138,7 @@ diff-match-patch==20230430
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.25
+django==4.2.11
     # via
     #   -r base-requirements.in
     #   crispy-bootstrap3to5
@@ -248,7 +249,7 @@ executing==2.0.0
     # via stack-data
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==22.0.0
+faker==24.11.0
     # via -r test-requirements.in
 firebase-admin==6.1.0
     # via -r base-requirements.in
@@ -339,7 +340,7 @@ httplib2==0.20.4
     # via
     #   google-api-python-client
     #   google-auth-httplib2
-idna==3.4
+idna==3.7
     # via requests
 imagesize==1.4.1
     # via sphinx
@@ -423,6 +424,8 @@ mdit-py-plugins==0.4.0
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
+msal==1.26.0
+    # via -r sso-requirements.in
 msgpack==1.0.5
     # via cachecontrol
 myst-parser==2.0.0
@@ -546,6 +549,7 @@ pyjwt[crypto]==2.7.0
     # via
     #   -r base-requirements.in
     #   firebase-admin
+    #   msal
     #   pygithub
     #   twilio
 pynacl==1.5.0
@@ -584,7 +588,6 @@ pytz==2024.1
     #   -r base-requirements.in
     #   babel
     #   celery
-    #   django
     #   djangorestframework
     #   twilio
 pyyaml==6.0
@@ -625,6 +628,7 @@ requests==2.28.2
     #   dropbox
     #   google-api-core
     #   google-cloud-storage
+    #   msal
     #   oic
     #   pygithub
     #   pyjwkest
@@ -736,7 +740,7 @@ sqlalchemy==1.3.19
     #   sqlalchemy-postgres-copy
 sqlalchemy-postgres-copy==0.5.0
     # via -r test-requirements.in
-sqlparse==0.4.4
+sqlparse==0.5.0
     # via django
 stack-data==0.1.4
     # via ipython

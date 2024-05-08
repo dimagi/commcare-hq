@@ -266,7 +266,7 @@ def build_worksheet(title, headers, rows):
 class ProjectHealthDashboard(ProjectReport):
     slug = 'project_health'
     name = gettext_lazy("Project Performance")
-    report_template_path = "reports/async/project_health_dashboard.html"
+    report_template_path = "reports/async/bootstrap3/project_health_dashboard.html"
     description = gettext_lazy("A summary of the overall health of your project"
                                " based on how your users are doing over time.")
 
@@ -283,7 +283,7 @@ class ProjectHealthDashboard(ProjectReport):
     @memoized
     def template_report(self):
         if self.is_rendered_as_email:
-            self.report_template_path = "reports/project_health/project_health_email.html"
+            self.report_template_path = "reports/project_health/bootstrap3/project_health_email.html"
         return super(ProjectHealthDashboard, self).template_report
 
     @use_nvd3
