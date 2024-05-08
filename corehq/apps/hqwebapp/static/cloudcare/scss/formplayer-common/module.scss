@@ -86,13 +86,13 @@ button.clickable-icon {
   }
 }
 
-.make-module-size(45px);
+@include make-module-size(45px);
 .module-column-name h3 {
   font-size: 16px;
 }
 
 @include media-breakpoint-up(lg) {
-  .make-module-size(80px);
+  @include make-module-size(80px);
   .module-column-name h3 {
     font-size: 20px;
   }
@@ -206,7 +206,7 @@ button.clickable-icon {
 
 .module-table-case-detail tbody tr:nth-child(odd) {
   th, td {
-    background-color: darken(@cc-brand-hi, 3);
+    background-color: darken($cc-brand-hi, 3);
   }
 }
 

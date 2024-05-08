@@ -1,8 +1,17 @@
 --- 
 +++ 
-@@ -6,10 +6,10 @@
+@@ -1,15 +1,15 @@
+-@form-text-indent: 23px;
+-@form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fit
+-@group-indent: 15px;
++$form-text-indent: 23px;
++$form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fit
++$group-indent: 15px;
+ 
+ .form-container {
    background-color: white;
-   .box-shadow(0 0 10px 2px rgba(0,0,0,.1));
+-  .box-shadow(0 0 10px 2px rgba(0,0,0,.1));
++  box-shadow: 0 0 10px 2px rgba(0,0,0,.1);
    margin-bottom: 2rem;
 -  font-size: @form-text-size;   // Don't overshadow inputs
 +  font-size: $form-text-size;   // Don't overshadow inputs
@@ -13,7 +22,7 @@
    }
  
    .controls {
-@@ -18,7 +18,7 @@
+@@ -18,18 +18,17 @@
    }
  
    .form-control {
@@ -22,16 +31,23 @@
    }
  
    .form-actions {
-@@ -28,7 +28,7 @@
-       margin-right: -@form-text-indent;
-     }
- 
+     margin: 30px 0 0 0;
+     &.form-group {
+-      margin-left: -@form-text-indent;
+-      margin-right: -@form-text-indent;
+-    }
+-
 -    background-color: @call-to-action-extra-hi;
+-    .border-bottom-radius(0);
++      margin-left: -$form-text-indent;
++      margin-right: -$form-text-indent;
++    }
++
 +    background-color: var(--bsprimary-bg-subtle);
-     .border-bottom-radius(0);
  
      .submit .btn {
-@@ -48,8 +48,8 @@
+       font-size: 20px;
+@@ -48,8 +47,8 @@
      margin-right: 0px;
    }
    .question-container {
@@ -42,7 +58,7 @@
    }
  
    .form-group {
-@@ -61,8 +61,8 @@
+@@ -61,8 +60,8 @@
    }
  
    .group-body {
@@ -53,7 +69,7 @@
    }
  
    .gr.panel {
-@@ -94,7 +94,7 @@
+@@ -94,7 +93,7 @@
    }
  
    .panel-body {
@@ -62,7 +78,7 @@
        padding-left: 0px;
        padding-right: 0px;
      }
-@@ -103,19 +103,19 @@
+@@ -103,19 +102,19 @@
    .stripe-repeats {
      > .row, .panel-body > .children > .row {
        &:nth-of-type(odd) {
@@ -85,7 +101,7 @@
      border-radius: 8px;
      margin: 2px;
      padding-top: 5px;
-@@ -165,8 +165,8 @@
+@@ -165,8 +164,8 @@
    }
  
    .form-group.required.on {
@@ -96,7 +112,7 @@
      border-bottom: none;
      padding-top: 10px;
      padding-bottom: 10px;
-@@ -186,7 +186,7 @@
+@@ -186,7 +185,7 @@
    .form-group-required-label.on {
      opacity: 100;
      font-size: 1.6rem;

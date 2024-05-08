@@ -6,8 +6,7 @@
   border: none;
   .transition(all $transition-speed);
 
-  .border-top-radius(0);
-  .border-bottom-radius(0);
+  border-radius: 0;
 }
 
 .preview-tablet-mode {

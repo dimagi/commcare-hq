@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,10 +1,10 @@
+@@ -1,20 +1,19 @@
  .btn-formnav-submit {
 -  transition: width @transition-speed;
 -  width: @preview-phone-width - 46px;
@@ -12,9 +12,10 @@
 -  .transition(all @transition-speed);
 +  .transition(all $transition-speed);
  
-   .border-top-radius(0);
-   .border-bottom-radius(0);
-@@ -12,9 +12,9 @@
+-  .border-top-radius(0);
+-  .border-bottom-radius(0);
++  border-radius: 0;
+ }
  
  .preview-tablet-mode {
    .formnav-container {
