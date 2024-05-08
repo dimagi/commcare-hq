@@ -1185,8 +1185,8 @@ class InviteWebUserView(BaseManageWebUserView):
                 invite.save()
 
                 assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
-                        if assigned_location_id else None
-                        for assigned_location_id in assigned_location_ids]
+                        for assigned_location_id in assigned_location_ids
+                        if assigned_location_id is not None]
                 invite.assigned_locations.set(assigned_locations)
                 invite.send_activation_email()
 
