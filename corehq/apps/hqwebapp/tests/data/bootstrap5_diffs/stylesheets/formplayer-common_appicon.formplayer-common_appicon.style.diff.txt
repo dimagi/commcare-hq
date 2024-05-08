@@ -1,6 +1,41 @@
 --- 
 +++ 
-@@ -121,17 +121,17 @@
+@@ -67,10 +67,9 @@
+   box-sizing: border-box;
+   margin-bottom: 15px;
+ 
+-  .border-top-radius(5px);
+-  .border-bottom-radius(5px);
++  border-radius: 5px;
+   .transition(background 1s);
+-  .box-shadow(0 0 5px 0 rgba(0, 0, 0, 0.45));
++  box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.45);
+ 
+   .appicon-title {
+     width: 100%;
+@@ -100,7 +99,7 @@
+   }
+ 
+   &:hover {
+-    .box-shadow(0 0 2x 3px rgba(0, 0, 0, 0.45));
++    box-shadow: 0 0 2x 3px rgba(0, 0, 0, 0.45);
+   }
+ }
+ 
+@@ -110,28 +109,28 @@
+   background-repeat: no-repeat;
+   background-position: 50%;
+   // For icons with their own image, don't make assumptions about the shadowing
+-  .box-shadow(0 0 0 0 rgba(0, 0, 0, 0));
++  box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+ }
+ 
+ .gridicon.gridicon-circle {
+   background-color: @cc-neutral-mid;
+-  .box-shadow(0 0 5px 0 rgba(0, 0, 0, 0.45));
++  box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.45);
+ }
+ 
  .make-appicon-size(170px, 115px, 35px, 16px);
  .make-gridicon-size(70px);
  
@@ -21,3 +56,12 @@
    .make-appicon-size(230px, 150px, 45px, 20px);
    .make-gridicon-size(130px);
  }
+@@ -195,7 +194,7 @@
+ .appicon-default {
+   background-color: white;
+   color: lighten(@cc-text, 30);
+-  .box-shadow(0 0 10px 0 rgba(0, 0, 0, 0.2));
++  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
+   .appicon-icon { color: @cc-brand-mid; }
+   &:hover {
+     background-color: darken(white, 5);
