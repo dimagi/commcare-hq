@@ -174,7 +174,7 @@ Users
 
 These are HQ users, although the model has very few of the many attributes of CouchUser.
 
-Most of the time you're only concerned with the current user, who is accessible by requesting ``currentUser`` from the FormplayerFrontEnd's channel (see below for more on channels).
+Most of the time you're only concerned with the current user, who is accessible by calling ``getCurrentUser`` from ``users/models``.
 
 The users code also deals with the Log In As workflow. Log In As is often described as "restore as" in the code: the user has a ``restoreAs`` attribute with the username of the current Log In As user, the ``RestoreAsBanner`` is the yellow banner up top that shows who you're logged in as, and the ``RestoreAsView`` is the Log In As screen. The current Log In As user is stored in a cookie so that users do not need to repeat the workflow often.
 
@@ -249,7 +249,12 @@ config.js
 ---------
 
 This controls the UI for the Web Apps Permissions page, in the Users section of HQ.
-Web apps permissions are not part of the standard roles and permissions framework. They use their own model, which grants/denies permissions to apps based on user groups.
+
+This is a legacy approach to web apps permissions, which is outside of the standard roles and permissions framework.
+It uses its own model, ``ApplicationAccess``, which grants/denies permissions to specific apps based on user groups.
+
+This behavior is gated behind a feature flag, ``WEB_APPS_PERMISSIONS_VIA_GROUPS``. New projects should be using
+roles and permimissions to control Web Apps access.
 
 formplayer_inline.js
 --------------------

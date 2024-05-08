@@ -761,13 +761,6 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SSO_REMOTE_USER_MANAGEMENT = StaticToggle(
-    'sso_remote_user_management',
-    "Shows remote user management fields in SSO Identity Provider Form",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 BIOMETRIC_INTEGRATION = StaticToggle(
     'biometric_integration',
     "Enables biometric integration (simprints) features.",
@@ -944,6 +937,18 @@ USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     """
 )
 
+WEB_APPS_PERMISSIONS_VIA_GROUPS = StaticToggle(
+    'web_apps_permissions_via_groups',
+    "USH: Allow users to control access to specific web apps via mobile worker groups.",
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+    description="""
+        This is a legacy feature that allows setting app-specific permissions in Web Apps based on user
+        groups. This functionality is now available via the roles and permissions page, where the
+        permission for accessing web apps supports specifying a list of apps.
+    """,
+)
+
 DISABLE_WEB_APPS = StaticToggle(
     'disable_web_apps',
     'Disable access to Web Apps UI',
@@ -991,6 +996,19 @@ USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Allow+selecting+multiple+cases+from+the+case+list',  # noqa: E501
     description="""
     Allows user to select multiple cases and load them all into the form.
+    """
+)
+
+CASE_SEARCH_INDEXED_METADATA = StaticToggle(
+    'CASE_SEARCH_INDEXED_METADATA',
+    "Case Search: Search against indexed system metadata fields when possible",
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This is a performance optimization. When creating filters from CSQL
+    expressions and the property being queried is a standard system metadata
+    property, query against the top-level location of that property rather than
+    the nested document inside case_properties.
     """
 )
 
@@ -1129,14 +1147,6 @@ HIDE_SYNC_BUTTON = StaticToggle(
     "USH: Hide Sync Button in Web Apps",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-MULTI_VIEW_API_KEYS = StaticToggle(
-    'multi_view_api_keys',
-    "Multi-View API Keys",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="Allows users to view and copy API keys after creation",
 )
 
 
@@ -2729,14 +2739,12 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
     help_link='https://confluence.dimagi.com/display/commcarepublic/Bulk+User+Management'
 )
 
-APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
-    privileges.APPLICATION_ERROR_REPORT,
+APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     label='Show Application Error Report',
-    tag=TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
     description="Show Application Error Report.",
-    # TODO: Move to public wiki
     help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
 )
 

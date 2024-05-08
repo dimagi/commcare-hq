@@ -112,6 +112,7 @@ from corehq.apps.app_manager.xform import (
 from corehq.apps.data_dictionary.util import (
     add_properties_to_data_dictionary,
     get_case_property_description_dict,
+    get_case_property_deprecated_dict,
 )
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -790,6 +791,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'moduleCaseTypes': module_case_types,
         'propertiesMap': case_properties_map,
         'propertyDescriptions': get_case_property_description_dict(domain),
+        'deprecatedProperties': get_case_property_deprecated_dict(domain),
         'questions': xform_questions,
         'reserved_words': load_case_reserved_words(),
         'usercasePropertiesMap': usercase_properties_map,
