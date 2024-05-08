@@ -657,12 +657,8 @@ class CCUserRow(BaseUserRow):
                 elif not web_user or not web_user.is_member_of(self.domain):
                     profile = None
                     if cv["profile_name"]:
-                        if cv["profile_name"] in self.domain_info.profiles_by_name:
-                            profile = self.domain_info.profiles_by_name[cv["profile_name"]]
-                        else:
-                            raise UserUploadError(_(
-                                f"{cv['profile_name']} is not a valid profile"
-                            ))
+                        _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
+                        profile = self.domain_info.profiles_by_name[cv["profile_name"]]
                     create_or_update_web_user_invite(
                         web_user_username, self.domain, role_qualified_id, self.importer.upload_user,
                         self.user.location_id,
@@ -739,7 +735,8 @@ class WebUserRow(BaseUserRow):
                 )
             else:
                 profile = None
-                if self.column_values["profile_name"] in self.domain_info.profiles_by_name:
+                if self.column_values["profile_name"]:
+                    _check_profile(self.column_values["profile_name"], self.domain_info.profiles_by_name)
                     profile = self.domain_info.profiles_by_name[self.column_values["profile_name"]]
                 create_or_update_web_user_invite(
                     user.username, self.domain, role_qualified_id, self.importer.upload_user,
@@ -808,12 +805,8 @@ class WebUserRow(BaseUserRow):
                     user_invite_loc_id = user_invite_loc.location_id
             profile = None
             if cv["profile_name"]:
-                if cv["profile_name"] in self.domain_info.profiles_by_name:
-                    profile = self.domain_info.profiles_by_name[cv["profile_name"]]
-                else:
-                    raise UserUploadError(_(
-                        f"{cv['profile_name']} is not a valid profile"
-                    ))
+                _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
+                profile = self.domain_info.profiles_by_name[cv["profile_name"]]
             create_or_update_web_user_invite(
                 cv['username'], self.domain, self.domain_info.roles_by_name[cv['role']], self.importer.upload_user,
                 user_invite_loc_id,
@@ -1047,3 +1040,10 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         user.save()
         if user_change_logger:
             user_change_logger.add_info(UserChangeMessage.domain_removal(domain))
+
+
+def _check_profile(profile_name, valid_profiles_by_name):
+    if profile_name not in valid_profiles_by_name:
+        raise UserUploadError(_(
+            f"{profile_name} is not a valid profile"
+        ))
