@@ -438,7 +438,7 @@ class AppTranslations(BaseTranslationsView):
             messages.error(request, _('Source lang selected not available for the project'))
             return False
         else:
-            if form_data['action'] in ['create_update', 'push']:
+            if form_data['action'] in ['create_or_update', 'push']:
                 return self.perform_push_request(request, form_data)
             elif form_data['action'] == 'pull':
                 return self.perform_pull_request(request, form_data)
@@ -468,7 +468,7 @@ class CreateUpdateTranslations(AppTranslations):
     def page_context(self):
         context = super(CreateUpdateTranslations, self).page_context
         if context['transifex_details_available']:
-            context['trans_form'] = AppTranslationsForm.form_for('create_update')(self.domain)
+            context['trans_form'] = AppTranslationsForm.form_for('create_or_update')(self.domain)
             context['page_action'] = 'create_update'
         return context
 
