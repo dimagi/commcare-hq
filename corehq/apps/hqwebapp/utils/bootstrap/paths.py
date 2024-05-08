@@ -3,6 +3,7 @@ from pathlib import Path
 import corehq
 
 COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
+CUSTOM_BASE_DIR = COREHQ_BASE_DIR.parent / "custom"
 TRACKED_JS_FOLDERS = ["js", "spec"]
 
 

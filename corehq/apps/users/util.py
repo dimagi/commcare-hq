@@ -56,12 +56,12 @@ def generate_mobile_username(username, domain, is_unique=True):
     Example use: generate_mobile_username('username', 'domain') -> 'username@domain.commcarehq.org'
     """
     from .validation import validate_mobile_username
-    username = get_complete_mobile_username(username, domain)
+    username = get_complete_username(username, domain)
     validate_mobile_username(username, domain, is_unique)
     return username
 
 
-def get_complete_mobile_username(username, domain):
+def get_complete_username(username, domain):
     """
     :param username: accepts both incomplete ('example-user') or complete ('example-user@domain.commcarehq.org')
     :param domain: domain associated with the mobile user

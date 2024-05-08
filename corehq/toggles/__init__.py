@@ -1120,6 +1120,14 @@ HIDE_SYNC_BUTTON = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+MULTI_VIEW_API_KEYS = StaticToggle(
+    'multi_view_api_keys',
+    "Multi-View API Keys",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="Allows users to view and copy API keys after creation",
+)
+
 
 def _ensure_search_index_is_enabled(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
@@ -2488,6 +2496,15 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Provides access to views for report scheduling '
                 'such as schedule creation and deletion.'
+)
+
+WEB_USERS_IN_REPORTS = StaticToggle(
+    'web_users_in_reports',
+    'Adds web users to standard reports by default',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Adds web users to default filter selections, the [Project Data] filter for the '
+                'case list reports, and to the body of the Worker Activity and Project Health reports'
 )
 
 CUSTOM_EMAIL_GATEWAY = StaticToggle(
