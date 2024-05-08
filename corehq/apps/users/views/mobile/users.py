@@ -143,7 +143,9 @@ from corehq.apps.users.views import (
     UserUploadJobPollView,
     get_domain_languages,
 )
-from corehq.apps.users.views.utils import get_user_location_info
+from corehq.apps.users.views.utils import (
+    filter_user_query_by_locations_accessible_to_user, get_user_location_info
+)
 from corehq.const import (
     USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
@@ -276,7 +278,6 @@ class EditCommCareUserView(BaseEditUserView):
         if self.request.method == "POST" and self.request.POST['form_type'] == "commtrack":
             return CommtrackUserForm(self.request.POST, request=self.request, domain=self.domain)
 
-        # currently only support one location on the UI
         linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
         program_id = self.editable_user.get_domain_membership(self.domain).program_id
@@ -953,11 +954,8 @@ def paginate_mobile_workers(request, domain):
         user_es = get_search_users_in_domain_es_query(
             domain=domain, search_string=search_string,
             offset=page * limit, limit=limit)
-        if not request.couch_user.has_permission(domain, 'access_all_locations'):
-            loc_ids = (SQLLocation.objects.accessible_to_user(domain, request.couch_user)
-                                          .location_ids())
-            user_es = user_es.location(list(loc_ids))
-        return user_es.mobile_users()
+        return filter_user_query_by_locations_accessible_to_user(user_es,
+            domain, request.couch_user).mobile_users()
 
     # backend pages start at 0
     users_query = _user_query(query, page - 1, limit)
