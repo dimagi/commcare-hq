@@ -1,0 +1,20 @@
+--- 
++++ 
+@@ -22,7 +22,7 @@
+       </tr>
+     {% endif %}
+   {% endifchanged %}
+-  <tr class="form-data-question {% if question.response == None %}text-muted form-data-skipped{% endif %}">
++  <tr class="form-data-question {% if question.response == None %}text-body-secondary form-data-skipped{% endif %}">
+     {% if question.children %}
+       {% if question.type %}
+         <td colspan="2">
+@@ -33,7 +33,7 @@
+           </th>
+         </tr>
+       {% endif %}
+-    {% with template_name='reports/form/partials/bootstrap3/single_form_tree.html' questions=question.children %}
++    {% with template_name='reports/form/partials/bootstrap5/single_form_tree.html' questions=question.children %}
+       {% include template_name %}
+     {% endwith %}
+     {% if question.type %}

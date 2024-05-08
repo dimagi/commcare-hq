@@ -161,6 +161,8 @@ PARAMETERIZED_PERMISSIONS = {
     'view_data_registry_contents': 'view_data_registry_contents_list',
     'view_reports': 'view_report_list',
     'view_tableau': 'view_tableau_list',
+    'access_web_apps': 'web_apps_list',
+    'commcare_analytics_roles': 'commcare_analytics_roles_list',
 }
 
 
@@ -193,6 +195,7 @@ class HqPermissions(DocumentSchema):
     access_all_locations = BooleanProperty(default=True)
     access_api = BooleanProperty(default=False)
     access_web_apps = BooleanProperty(default=False)
+    web_apps_list = StringListProperty(default=[])
     edit_messaging = BooleanProperty(default=False)
     access_release_management = BooleanProperty(default=False)
     edit_linked_configurations = BooleanProperty(default=False)
@@ -224,6 +227,12 @@ class HqPermissions(DocumentSchema):
     manage_attendance_tracking = BooleanProperty(default=False)
 
     manage_domain_alerts = BooleanProperty(default=False)
+
+    view_commcare_analytics = BooleanProperty(default=False)
+    edit_commcare_analytics = BooleanProperty(default=False)
+
+    commcare_analytics_roles = BooleanProperty(default=False)
+    commcare_analytics_roles_list = StringListProperty(default=[])
 
     @classmethod
     def from_permission_list(cls, permission_list):
@@ -322,6 +331,9 @@ class HqPermissions(DocumentSchema):
 
     def view_report(self, report):
         return self.view_reports or report in self.view_report_list
+
+    def access_web_app(self, app_id):
+        return self.access_web_apps or app_id in self.web_apps_list
 
     def view_tableau_viz(self, viz_id):
         if not self.access_all_locations:
@@ -1140,11 +1152,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         """
         from corehq.apps.locations.models import SQLLocation
 
-        yield from self.get_sql_locations(domain).filter(location_type__shares_cases=True)
-
-        yield from SQLLocation.objects.get_queryset_descendants(
-            self.get_sql_locations(domain).filter(location_type__view_descendants=True)
-        ).filter(location_type__shares_cases=True, is_archived=False)
+        if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(domain):
+            user_location_ids = list(self.get_sql_locations(domain).order_by().values_list("id", flat=True))
+            yield from SQLLocation.objects.raw(
+                """
+                    SELECT loc.*
+                    FROM locations_sqllocation loc
+                    INNER JOIN get_case_owning_locations(%s, %s) owned ON owned.id = loc.id;
+                """,
+                [domain, user_location_ids]
+            )
+        else:
+            yield from self.get_sql_locations(domain).filter(location_type__shares_cases=True)
+            yield from SQLLocation.objects.get_queryset_descendants(
+                self.get_sql_locations(domain).filter(location_type__view_descendants=True)
+            ).filter(location_type__shares_cases=True, is_archived=False)
 
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.users.model_log import UserModelAction
@@ -1577,6 +1599,17 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             permission_slug for permission_slug in self._get_viewable_report_slugs(domain)
             if permission_slug in EXPORT_PERMISSIONS
         ])
+
+    def can_access_any_web_apps(self, domain=None):
+        if self.can_access_web_apps(domain):
+            return True
+        if domain:
+            try:
+                role = self.get_role(domain)
+                return bool(role.permissions.web_apps_list)
+            except DomainMembershipError:
+                pass
+        return False
 
     def can_view_some_tableau_viz(self, domain):
         if not self.can_access_all_locations(domain):

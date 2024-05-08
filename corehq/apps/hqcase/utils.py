@@ -10,7 +10,7 @@ from casexml.apps.case.util import property_changed_in_action
 from couchexport.deid import deid_date, deid_ID
 from dimagi.utils.parsing import json_format_datetime
 
-from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
+from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.data_interfaces.deduplication import DEDUPE_XMLNS
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
@@ -258,8 +258,8 @@ def get_case_value(case, value):
     if not value:
         return None, None
 
-    if value in SPECIAL_CASE_PROPERTIES_MAP:
-        return SPECIAL_CASE_PROPERTIES_MAP[value].value_getter(case.to_json()), False
+    if value in INDEXED_METADATA_BY_KEY:
+        return INDEXED_METADATA_BY_KEY[value].get_value(case.to_json()), False
     elif value in case.case_json:
         return case.case_json.get(value, None), True
     return None, None
