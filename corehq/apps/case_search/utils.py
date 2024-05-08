@@ -245,7 +245,6 @@ class CaseSearchQueryBuilder:
         self.request_domain = helper.domain
         self.case_types = case_types
         self.helper = helper
-        self.profiler = helper.profiler
         self.query_domains = helper.query_domains
 
     @cached_property
@@ -322,8 +321,8 @@ class CaseSearchQueryBuilder:
 
     def _build_filter_from_xpath(self, xpath, fuzzy=False):
         context = SearchFilterContext(self.query_domains, fuzzy, self.request_domain,
-                                      self.profiler, self.config)
-        with self.profiler.timing_context('_build_filter_from_xpath'):
+                                      self.helper, self.config)
+        with self.helper.profiler.timing_context('_build_filter_from_xpath'):
             return build_filter_from_xpath(xpath, context=context)
 
     def _get_daterange_query(self, criteria):
