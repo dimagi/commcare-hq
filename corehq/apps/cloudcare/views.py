@@ -205,7 +205,6 @@ class FormplayerMain(View):
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.couch_user.username,
             "formplayer_url": get_formplayer_url(for_js=True),
-            "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
