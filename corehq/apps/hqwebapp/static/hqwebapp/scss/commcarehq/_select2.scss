@@ -168,3 +168,7 @@
   border-color: $input-disabled-bg !important;
   background-color: $input-disabled-bg !important;
 }
+
+.select2-container--open .select2-dropdown {
+  z-index: $zindex-select2-results;
+}
