@@ -79,7 +79,7 @@ def _do_rename(line, change_map, regex_fn, replacement_fn):
 
 
 def _get_change_guide(css_class):
-    file_path = COREHQ_BASE_DIR / PATH_TO_CHANGES_GUIDE / f"{css_class}.txt"
+    file_path = COREHQ_BASE_DIR / PATH_TO_CHANGES_GUIDE / f"{css_class}.md"
     with open(file_path, 'r') as f:
         return f.read()
 
