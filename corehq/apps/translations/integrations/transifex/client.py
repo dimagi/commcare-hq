@@ -83,7 +83,12 @@ class TransifexApiClient(object):
 
     def _get_language_stats(self, resource, language_id):
         cls = self.api.ResourceLanguageStats
-        return self._get_object(cls, language=language_id, resource=resource, project=self.project)
+        try:
+            return self._get_object(cls, language=language_id, resource=resource, project=self.project)
+        except Exception:
+            for stats in cls.filter(language=language_id, resource=resource, project=self.project):
+                if language_id in stats.id:
+                    return stats
 
     @staticmethod
     def _list_objects(cls, **kwargs):
@@ -100,7 +105,8 @@ class TransifexApiClient(object):
         cls = self.api.ResourceLanguageStats
         return self._list_objects(cls, project=self.project, **kwargs)
 
-    def _fetch_related(self, obj, key):
+    @staticmethod
+    def _fetch_related(obj, key):
         return obj.fetch(key)
 
     @staticmethod
@@ -219,8 +225,7 @@ class TransifexApiClient(object):
         return [self._to_lang_code(language.id) for language in languages]
 
     def get_all_project_languages(self):
-        languages = self._fetch_related(self.project, 'languages')
-        return languages
+        return self._fetch_related(self.project, 'languages')
 
     def source_lang_is(self, hq_lang_code):
         """
