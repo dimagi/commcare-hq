@@ -334,8 +334,7 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
         },
     )
     assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
-            for assigned_location_id in assigned_location_ids
-            if assigned_location_id is not None]
+            for assigned_location_id in assigned_location_ids]
     invite.assigned_locations.set(assigned_locations)
     if invite_created and send_email:
         invite.send_activation_email()
