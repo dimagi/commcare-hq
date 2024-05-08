@@ -20,6 +20,7 @@ WHITELIST = [
 
     # warnings that may be resolved with a library upgrade
     ("couchdbkit.schema.properties", "'collections.abc'"),
+    ("eulxml", "pkg_resources is deprecated as an API"),
     ("nose.importer", "the imp module is deprecated"),
     ("nose.util", "inspect.getargspec() is deprecated"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
