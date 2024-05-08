@@ -349,10 +349,87 @@
   <p>
     The process for this step in the migration is not automated due to the rarity and complexity of this requirement.
     You can begin this process by creating parallel <code>scss</code> files for all the existing <code>less</code>
-    files. The contents can be copied over from <code>less</code> to <code>scss</code> and the syntax updated to
+    files. The contents can be copied over from <code>less</code> to <code>scss</code>.
+  </p>
+  <p>
+    The syntax will need to be updated to
     use SCSS style variables and mixins.
     <a href="https://www.martyfriedel.com/blog/moving-from-less-to-scss" target="_blank">Here is a guide</a> to
-    help with those changes.
+    help with those changes. Changes that are common in HQ code include:
+    <ul>
+      <li>
+        Updating variable names from <code>@thing</code> to <code>$thing</code>
+      </li>
+      <li>
+        Updating variable interpolation syntax:
+        <ul>
+          <li>
+            Changing <code>.@{my-prefix}-kind-of-text</code> to <code>.#{$my-prefix}-kind-of-text</code>.
+          </li>
+          <li>
+            In calcs, tildes can typically be removed without any other changes, so
+            <code>calc(~"100vh - 65px");</code> becomes <code>height: calc(100vh - 65px);</code>.
+          </li>
+        </ul>
+      </li>
+      <li>
+        Updating mixin definitions from <code>.my-mixin(@param1, @param2) { ... }</code> to <code>@mixin my-mixin { ... }</code>
+        and calls from <code>.my-mixin(170px, 115px);</code> to <code>@include my-mixin(170px, 115px);</code>
+      </li>
+      <li>
+        Removing bootstrap 3 browser support mixins, including `.transition`, `.box-shadow`, and border radius mixins.
+        These can be replaced with the plain CSS property, so <code>.box-shadow(0 0 10px 0 rgba(0, 0, 0, 0.2));</code>
+        becomes <code>box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2)</code>.
+      </li>
+      <li>
+        Updating responsive styling that depends on screen widths:
+        <ul>
+          <li>
+            min-width: <code>@media(min-width: @screen-xs)</code> becomes <code>@include media-breakpoint-up(sm)</code>
+          </li>
+          <li>
+            max-width: <code>@media(max-width: $screen-sm-max)</code> becomes <code>@include media-breakpoint-down(lg)</code>
+          </li>
+          <li>
+            Note that the screen size categories have changed from bootstrap 3 to 5, so see the
+            <a target="_blank" href="https://getbootstrap.com/docs/3.3/css/#responsive-utilities-classes">old docs</a>
+            and the
+            <a target="_blank" href="https://getbootstrap.com/docs/5.0/layout/breakpoints/">new docs</a>, and test
+            your changes.
+          </li>
+          <li>
+            Also note that using the B5 mixins requires imports: <code>@import "mixins";</code> which depends on
+            <code>@import "functions";</code>.
+          </li>
+        </ul>
+      </li>
+      <li>
+        Updating imports:
+        <ul>
+          <li>
+            <code>@import '../../hqwebapp/less/_hq/includes/variables.less';</code> becomes <code>includes/mixins.less'; @import "../../hqwebapp/scss/commcarehq/variables";</code>
+          </li>
+          <li>
+            <code>@b3-import-variables: '../../../../../../../../node_modules/bootstrap/less/variables';</code> may
+            require several new imports:
+            <ul>
+              <li><code>@import "../../hqwebapp/scss/commcarehq/variables";</code></li>
+              <li><code>@import "variables";</code></li>
+              <li><code>@import "../../hqwebapp/scss/commcarehq/variables_bootstrap3";</code></li>
+            </ul>
+          </li>
+          <li>
+            Look at how imports are done in other parts of HQ that use SCSS, such as
+            <a target="_blank" href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/scss/commcarehq.scss">hqwebapp</a> and
+            <a target="_blank" href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/cloudcare/scss/formplayer-common-main.scss">cloudcare</a>.
+          </li>
+        </ul>
+      </li>
+      <li>
+        Remember to update the <code>&lt;link&gt;</code> elements in HTML, including changing the <code>type</code>
+        from <code>text/less</code> to <code>text/scss</link>.
+      </li>
+    </ul>
   </p>
   <p>
     It is important to update any variables from the old Bootstrap 3 stylesheet to their Bootstrap 5 counterparts.
