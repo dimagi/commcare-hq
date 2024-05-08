@@ -26,6 +26,7 @@ from corehq import privileges
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException, TemplateTagJSONException
 from corehq.apps.hqwebapp.models import Alert
 from corehq.motech.utils import pformat_json
+from corehq.util.quickcache import quickcache
 
 register = template.Library()
 
@@ -106,6 +107,18 @@ def cachebuster(url):
     return resource_versions.get(url, "")
 
 
+@quickcache(['couch_user.username'])
+def get_domain_links_for_dropdown(couch_user):
+    from corehq.apps.domain.views.base import get_domain_links
+    return get_domain_links(couch_user)
+
+
+@quickcache(['couch_user.username'])
+def has_enterprise_links(couch_user):
+    from corehq.apps.domain.views.base import get_enterprise_links
+    return bool(get_enterprise_links(couch_user))
+
+
 @register.simple_tag(takes_context=True)
 def domains_for_user(context, request, selected_domain=None):
     """
@@ -113,12 +126,10 @@ def domains_for_user(context, request, selected_domain=None):
     Cache the entire string alongside the couch_user's doc_id that can get invalidated when
     the user doc updates via save.
     """
-
-    from corehq.apps.domain.views.base import get_domain_links_for_dropdown, get_enterprise_links_for_dropdown
     domain_links = get_domain_links_for_dropdown(request.couch_user)
 
     # Enterprise permissions projects aren't in the dropdown, but show a hint they exist
-    show_all_projects_link = bool(get_enterprise_links_for_dropdown(request.couch_user))
+    show_all_projects_link = has_enterprise_links(request.couch_user)
 
     # Too many domains and they won't all fit in the dropdown
     dropdown_limit = 20
