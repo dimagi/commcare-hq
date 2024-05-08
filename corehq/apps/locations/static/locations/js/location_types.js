@@ -317,7 +317,7 @@ hqDefine('locations/js/location_types', [
 
         self.getLevels = function (locs) {
             const locsSameLevels = self.view.types_by_index(locs);
-            const locsToReturn = []
+            const locsToReturn = [];
             for (const level in locsSameLevels) {
                 // Only display a single child at each level
                 const childToAdd = locsSameLevels[level][0];
@@ -328,7 +328,7 @@ hqDefine('locations/js/location_types', [
             }
             return locsToReturn;
 
-        }
+        };
 
         self.include_without_expanding_options = function () {
             if (self.expand_from() !== ROOT_LOCATION_ID) {
