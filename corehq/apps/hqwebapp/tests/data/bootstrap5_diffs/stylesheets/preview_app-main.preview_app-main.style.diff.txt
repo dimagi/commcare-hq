@@ -1,12 +1,11 @@
 --- 
 +++ 
-@@ -1,11 +1,8 @@
--@import '../../hqwebapp/less/_hq/includes/variables.less';
--@import '../../hqwebapp/less/_hq/includes/mixins.less';
--
+@@ -3,9 +3,9 @@
+ 
  /* this is included in cloudcare/preview_app.html */
  
- @import "preview_app/mixins";
+-@import "../../cloudcare/less/formplayer-common/mixins.less";
++@import "../../cloudcare/scss/formplayer-common/mixins";
  
 -@transition-speed: .5s;
 +$transition-speed: .5s;
