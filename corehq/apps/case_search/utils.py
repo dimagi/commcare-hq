@@ -279,8 +279,7 @@ class CaseSearchQueryBuilder:
         max_results = CASE_SEARCH_MAX_RESULTS
         if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
             max_results = 1500
-        return (CaseSearchES()
-                .domain(self.query_domains)
+        return (self.helper.get_base_queryset()
                 .case_type(self.case_types)
                 .is_closed(False)
                 .size(max_results))
