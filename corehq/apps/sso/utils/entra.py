@@ -20,30 +20,25 @@ def get_all_members_of_the_idp_from_entra(idp):
         config["client_id"], authority=config["authority"],
         client_credential=config["secret"],
     )
-    # looks up a token from cache
-    result = app.acquire_token_silent(config["scope"], account=None)
-    if not result:
-        result = app.acquire_token_for_client(scopes=config["scope"])
-    if "access_token" in result:
-        # Calling graph using the access token
-        response = requests.get(
-            config["endpoint"],
-            headers={'Authorization': 'Bearer ' + result['access_token']},
-        )
-        response.raise_for_status()  # Raises an error for bad status
-        assignments = response.json()
 
-        # microsoft.graph.appRoleAssignment's property doesn't have userPrincipalName
-        # Property principalType can either be User, Group or ServicePrincipal
-        principal_ids = {assignment["principalId"] for assignment in assignments["value"]
-                         if assignment["principalType"] == "User"}
+    token = get_access_token(app, config)
 
-        user_principal_names = get_user_principal_names(principal_ids, result['access_token'])
+    # Calling graph using the access token
+    response = requests.get(
+        config["endpoint"],
+        headers={'Authorization': 'Bearer ' + token},
+    )
+    response.raise_for_status()  # Raises an error for bad status
+    assignments = response.json()
 
-        return user_principal_names
-    else:
-        raise EntraVerificationFailed(result.get('error', {}),
-                                      result.get('error_description', 'No error description provided'))
+    # microsoft.graph.appRoleAssignment's property doesn't have userPrincipalName
+    # Property principalType can either be User, Group or ServicePrincipal
+    principal_ids = {assignment["principalId"] for assignment in assignments["value"]
+                    if assignment["principalType"] == "User"}
+
+    user_principal_names = get_user_principal_names(principal_ids, token)
+
+    return user_principal_names
 
 
 def configure_idp(idp):
@@ -90,3 +85,14 @@ def get_user_principal_names(user_ids, token):
         if 'body' in resp and 'userPrincipalName' in resp['body']
     ]
     return user_principal_names
+
+
+def get_access_token(app, config):
+    # looks up a token from cache
+    result = app.acquire_token_silent(config["scope"], account=None)
+    if not result:
+        result = app.acquire_token_for_client(scopes=config["scope"])
+    if "access_token" not in result:
+        raise EntraVerificationFailed(result.get('error', {}),
+                                      result.get('error_description', 'No error description provided'))
+    return result.get("access_token")
