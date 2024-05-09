@@ -33,7 +33,7 @@ def get_all_members_of_the_idp_from_entra(idp):
         response.raise_for_status()  # Raises an error for bad status
         assignments = response.json()
 
-        # microsoft.graph.appRoleAssignment's property doesn't  userPrincipalName
+        # microsoft.graph.appRoleAssignment's property doesn't have userPrincipalName
         # Property principalType can either be User, Group or ServicePrincipal
         principal_ids = {assignment["principalId"] for assignment in assignments["value"]
                          if assignment["principalType"] == "User"}
