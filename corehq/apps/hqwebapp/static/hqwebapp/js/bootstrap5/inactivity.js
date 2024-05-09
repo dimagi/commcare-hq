@@ -191,7 +191,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                             $body.html(content);
                             $body.find("iframe").on("load", pollToHideModal);
                         });
-                        $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
+                        $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i></h1>');
                         hideWarningModal(true);
                     } else {
                         log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
