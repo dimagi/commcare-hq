@@ -111,7 +111,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
         var hideWarningModal = function (showLogin) {
             $warningModal.modal('hide');
             if (showLogin) {
-                $modal.modal({backdrop: 'static', keyboard: false});
+                $modal.modal();
             }
             // This flag should already have been turned off when the warning modal was shown,
             // but just in case, make sure it's really off. Wait until the modal is fully hidden
