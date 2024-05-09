@@ -13,17 +13,7 @@ class MSGraphIssue:
 
 def get_all_members_of_the_idp_from_entra(idp):
     import msal
-    authority_base_url = "https://login.microsoftonline.com/"
-    authority = f"{authority_base_url}{idp.api_host}"
-
-    config = {
-        "authority": authority,
-        "client_id": idp.api_id,
-        "scope": ["https://graph.microsoft.com/.default"],
-        "secret": idp.api_secret,
-        "endpoint": f"https://graph.microsoft.com/v1.0/servicePrincipals(appId='{idp.api_id}')/"
-                    "appRoleAssignedTo?$select=principalId, principalType"
-    }
+    config = configure_idp(idp)
 
     # Create a preferably long-lived app instance which maintains a token cache.
     app = msal.ConfidentialClientApplication(
@@ -81,3 +71,17 @@ def get_all_members_of_the_idp_from_entra(idp):
     else:
         raise EntraVerificationFailed(result.get('error', {}),
                                       result.get('error_description', 'No error description provided'))
+
+
+def configure_idp(idp):
+    authority_base_url = "https://login.microsoftonline.com/"
+    authority = f"{authority_base_url}{idp.api_host}"
+
+    return {
+        "authority": authority,
+        "client_id": idp.api_id,
+        "scope": ["https://graph.microsoft.com/.default"],
+        "secret": idp.api_secret,
+        "endpoint": f"https://graph.microsoft.com/v1.0/servicePrincipals(appId='{idp.api_id}')/"
+                    "appRoleAssignedTo?$select=principalId, principalType"
+    }
