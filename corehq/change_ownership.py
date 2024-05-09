@@ -139,8 +139,9 @@ def transfer_case_ownership():
     print(f'Total Batches to Process: {batch_count}')
     case_blocks = []
     current_chunk = 0
-    start_time = end_time = total_time = 0
+    end_time = total_time = 0
     success_count = fail_count = 0
+    start_time = time.time()
     for case_obj in CommCareCase.objects.iter_cases(case_ids, domain=DOMAIN):
         try:
             user = CommCareUser.get_by_user_id(case_obj.opened_by)
@@ -164,10 +165,10 @@ def transfer_case_ownership():
             else:
                 fail_count += 1
             end_time = time.time()
-            time_diff = end_time - start_time
+            time_diff = round(end_time - start_time, 2)
             total_time += time_diff
             print(f'Time to Process Batch #{current_chunk}: {time_diff}s')
-            print(f'Estimated time remaining: {time_diff * (batch_count - current_chunk)}s')
+            print(f'Estimated time remaining: {round(time_diff * (batch_count - current_chunk), 1)}s')
             case_blocks = []
             current_chunk += 1
             start_time = time.time()
@@ -178,10 +179,10 @@ def transfer_case_ownership():
 
     print("All Cases Done Processing!")
     print(
-        f"Successful batches: {success_count}, 
-        Failed batches: {fail_count}, 
-        Total Batches: {batch_count}, 
-        Total Time: {round(total_time / 60, 2)} minutes"
+        f"Successful batches: {success_count}, " \
+        f"Failed batches: {fail_count}, " \
+        f"Total Batches: {batch_count}, " \
+        f"Total Time: {round(total_time / 60, 2)} minutes"
     )
 
 
