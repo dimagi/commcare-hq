@@ -291,14 +291,11 @@ class BackUpAppTranslationsForm(AppTranslationsForm):
 
 class DeleteAppTranslationsForm(AppTranslationsForm):
     form_action = 'delete'
-    app_id = forms.ChoiceField(label=gettext_lazy("Application"), choices=(), required=False)
 
     def form_fields(self):
-        return [
-            crispy.Field('transifex_project_slug', css_class="hqwebapp-select2"),
-            'action',
-            'perform_translated_check'
-        ]
+        form_fields = super(DeleteAppTranslationsForm, self).form_fields()
+        form_fields.append('perform_translated_check')
+        return form_fields
 
 
 class DownloadAppTranslationsForm(CreateUpdateAppTranslationsForm):
