@@ -142,8 +142,11 @@ class ReportDataCache(object):
 
     def fetch_reports(self, domain, report_configs):
         """Bulk fetch all reports for syncing"""
-        report_ids = [config.report_id for config in report_configs]
-        self.reports = _get_reports_and_data_source(report_ids, domain)
+        report_ids = [
+            config.report_id for config in report_configs
+            if config.report_id not in self.reports
+        ]
+        self.reports.update(_get_report_configs(report_ids, domain))
 
     def get_report_and_datasource(self, report_id):
         report = self.reports[report_id]
