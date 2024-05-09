@@ -142,12 +142,16 @@ class ReportDataCache(object):
             self.data_cache[key] = data_source.get_data()
         return self.data_cache[key]
 
-    def load_reports(self):
+    def load_reports(self, subset=None):
         """Bulk fetch all reports for syncing. Calling this multiple times will not duplicate reports.
+
+        Args:
+            subset (list[ReportConfig]): Subset of reports to fetch. If None, fetch all reports.
         """
+        subset_ids = {config.report_id for config in subset} if subset else None
         report_ids = [
             config.report_id for config in self.report_configs
-            if config.report_id not in self.reports
+            if config.report_id not in self.reports and (subset is None or config.report_id in subset_ids)
         ]
         self.reports.update(_get_report_configs(report_ids, self.domain))
 
@@ -277,7 +281,7 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
             fixtures.append(_get_report_index_fixture(restore_user, oldest_sync_time))
 
             try:
-                self.report_data_cache.load_reports()
+                self.report_data_cache.load_reports(synced_fixtures)
             except Exception:
                 logging.exception("Error fetching reports for domain", extra={
                     "domain": restore_user.domain,
