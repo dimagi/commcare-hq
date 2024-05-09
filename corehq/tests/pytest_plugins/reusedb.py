@@ -198,7 +198,7 @@ class DeferredDatabaseContext:
             # NOTE teardowns will be called in reverse order
             enter(TemporaryFilesystemBlobDB())
             cleanup(delete_elastic_indexes)
-            enter(self._couch_sql_context(session.config))
+            enter(couch_sql_context(session.config))
             if session.config.should_teardown:
                 cleanup(close_leaked_sql_connections)
                 cleanup(clear_redis)
@@ -217,49 +217,37 @@ class DeferredDatabaseContext:
     def teardown_databases(self):
         """No-op to be replaced with ExitStack.close by setup_databases"""
 
-    @contextmanager
-    def _couch_sql_context(self, config):
-        if config.skip_setup_for_reuse_db and sql_databases_ok():
-            if config.reuse_db == "migrate":
-                call_command('migrate_multi', interactive=False)
-            if config.reuse_db == "flush":
-                flush_databases()
-            if config.reuse_db == "bootstrap":
-                bootstrap_migrated_db_state()
-            if config.should_teardown:
-                dbs = get_sql_databases()
-        else:
-            if config.reuse_db == "reset":
-                self.reset_databases(config.option.verbose)
-            dbs = djutils.setup_databases(
-                interactive=False,
+
+@unit_testing_only
+@contextmanager
+def couch_sql_context(config):
+    if config.skip_setup_for_reuse_db and sql_databases_ok():
+        if config.reuse_db == "migrate":
+            call_command('migrate_multi', interactive=False)
+        if config.reuse_db == "flush":
+            flush_databases()
+        if config.reuse_db == "bootstrap":
+            bootstrap_migrated_db_state()
+        if config.should_teardown:
+            dbs = get_sql_databases()
+    else:
+        if config.reuse_db == "reset":
+            reset_databases(config.option.verbose)
+        dbs = djutils.setup_databases(
+            interactive=False,
+            verbosity=config.option.verbose,
+            # avoid re-creating databases that already exist
+            keepdb=config.skip_setup_for_reuse_db,
+        )
+
+    try:
+        yield
+    finally:
+        if config.should_teardown:
+            djutils.teardown_databases(
+                reversed(dbs),  # tear down in reverse setup order
                 verbosity=config.option.verbose,
-                # avoid re-creating databases that already exist
-                keepdb=config.skip_setup_for_reuse_db,
             )
-
-        try:
-            yield
-        finally:
-            if config.should_teardown:
-                djutils.teardown_databases(
-                    reversed(dbs),  # tear down in reverse setup order
-                    verbosity=config.option.verbose,
-                )
-
-    def reset_databases(self, verbosity):
-        delete_couch_databases()
-        delete_elastic_indexes()
-        clear_redis()
-        # tear down all databases together to avoid dependency issues
-        teardown = []
-        for connection, db_name, is_first in get_sql_databases():
-            try:
-                connection.ensure_connection()
-                teardown.append((connection, db_name, is_first))
-            except OperationalError:
-                pass  # ignore missing database
-        djutils.teardown_databases(reversed(teardown), verbosity=verbosity)
 
 
 def sql_databases_ok():
@@ -284,6 +272,22 @@ def get_sql_databases(*, _dbs=[]):
             assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
             _dbs.append((connection, db_name, True))
     return _dbs
+
+
+@unit_testing_only
+def reset_databases(verbosity):
+    delete_couch_databases()
+    delete_elastic_indexes()
+    clear_redis()
+    # tear down all databases together to avoid dependency issues
+    teardown = []
+    for connection, db_name, is_first in get_sql_databases():
+        try:
+            connection.ensure_connection()
+            teardown.append((connection, db_name, is_first))
+        except OperationalError:
+            pass  # ignore missing database
+    djutils.teardown_databases(reversed(teardown), verbosity=verbosity)
 
 
 @unit_testing_only
