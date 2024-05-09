@@ -226,7 +226,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                     }
 
                     if (error) {
-                        $button.removeClass("btn-default").addClass("btn-danger");
+                        $button.removeClass("btn-default").addClass("btn-outline-danger");
                         $button.text(error);
                     } else {
                         // Keeps the input value in the outer window in sync with newest token generated in
@@ -238,7 +238,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                             iframeInputValue = iframe.getElementsByTagName('input')[0].value;
                             outerCSRFInput.val(iframeInputValue);
                         } catch (err) {
-                            $button.removeClass("btn-default").addClass("btn-danger");
+                            $button.removeClass("btn-default").addClass("btn-outline-danger");
                             error = gettext("There was a problem, please refresh and try again");
                             $button.text(error);
                             return null;
