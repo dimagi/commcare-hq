@@ -199,11 +199,10 @@ def _get_helper(couch_user, domain, case_types, registry_slug):
 class QueryHelper:
     def __init__(self, domain):
         self.domain = domain
-        self.query_domains = [self.domain]
         self.profiler = CaseSearchProfiler()
 
     def get_base_queryset(self):
-        return CaseSearchES().domain(self.query_domains)
+        return CaseSearchES().domain(self.domain)
 
     def wrap_case(self, es_hit, include_score=False):
         return wrap_case_search_hit(es_hit, include_score=include_score)
@@ -221,10 +220,9 @@ class RegistryQueryHelper(QueryHelper):
         super().__init__(domain)
         self._couch_user = couch_user
         self._registry_helper = registry_helper
-        self.query_domains = self._registry_helper.visible_domains
 
     def get_base_queryset(self):
-        return CaseSearchES().domain(self.query_domains)
+        return CaseSearchES().domain(self._registry_helper.visible_domains)
 
     def wrap_case(self, es_hit, include_score=False):
         case = super().wrap_case(es_hit, include_score)
@@ -244,7 +242,6 @@ class CaseSearchQueryBuilder:
         self.request_domain = helper.domain
         self.case_types = case_types
         self.helper = helper
-        self.query_domains = helper.query_domains
 
     @cached_property
     def config(self):
@@ -318,8 +315,7 @@ class CaseSearchQueryBuilder:
         return search_es
 
     def _build_filter_from_xpath(self, xpath, fuzzy=False):
-        context = SearchFilterContext(self.query_domains, fuzzy, self.request_domain,
-                                      self.helper, self.config)
+        context = SearchFilterContext(self.request_domain, fuzzy, self.helper, self.config)
         with self.helper.profiler.timing_context('_build_filter_from_xpath'):
             return build_filter_from_xpath(xpath, context=context)
 

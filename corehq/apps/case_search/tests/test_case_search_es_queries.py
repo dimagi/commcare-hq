@@ -25,7 +25,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {'terms': {'domain.exact': [DOMAIN]}},
+                        {'term': {'domain.exact': DOMAIN}},
                         {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {
@@ -107,7 +107,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {'terms': {'domain.exact': [DOMAIN]}},
+                        {'term': {'domain.exact': DOMAIN}},
                         {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {"match_all": {}}
@@ -261,7 +261,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {"terms": {"domain.exact": [DOMAIN]}},
+                        {"term": {"domain.exact": DOMAIN}},
                         {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {"term": {"name.exact": "Frodo Baggins"}},
@@ -310,7 +310,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {'terms': {'domain.exact': [DOMAIN]}},
+                        {'term': {'domain.exact': DOMAIN}},
                         {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {"match_all": {}}
@@ -375,7 +375,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             "query": {
                 "bool": {
                     "filter": [
-                        {"terms": {"domain.exact": [DOMAIN]}},
+                        {"term": {"domain.exact": DOMAIN}},
                         {"terms": {"type.exact": ["case_type"]}},
                         {"term": {"closed": False}},
                         {"match_all": {}}
