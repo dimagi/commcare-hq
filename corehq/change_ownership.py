@@ -142,13 +142,19 @@ def transfer_case_ownership():
     start_time = end_time = total_time = 0
     success_count = fail_count = 0
     for case_obj in CommCareCase.objects.iter_cases(case_ids, domain=DOMAIN):
-        user = CommCareUser.get_by_user_id(case_obj.opened_by)
-        case_block = CaseBlock(
-            create=False,
-            case_id=case_obj.case_id,
-            owner_id = user.location_id,
-        )
-        case_blocks.append(case_block)
+        try:
+            user = CommCareUser.get_by_user_id(case_obj.opened_by)
+        except CommCareUser.AccountTypeError as e:
+            write_to_log([case_obj.case_id], is_success=False, message='Not a mobile worker account')
+            fail_count += 1
+            continue
+        else:
+            case_block = CaseBlock(
+                create=False,
+                case_id=case_obj.case_id,
+                owner_id=user.location_id,
+            )
+            case_blocks.append(case_block)
 
         # Process and submit batch of cases
         if len(case_blocks) == BATCH_SIZE:
