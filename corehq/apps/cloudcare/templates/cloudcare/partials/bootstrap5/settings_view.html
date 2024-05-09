@@ -18,8 +18,14 @@
   </div>
 </script>
 <script type="text/template" id="display-setting-template">
-  <th>{% trans "Use one question per screen" %}</th>
-  <td><input class="js-one-question-per-screen" type="checkbox" data-size="mini" /></td>  {# todo B5: css:checkbox #}
+  <th>
+    <label class="form-check-label" for="oqps-switch">{% trans "Use one question per screen" %}</label>
+  </th>
+  <td>
+    <div class="form-check form-switch">
+      <input class="js-one-question-per-screen" type="checkbox" id="oqps-switch"/>
+    </div>
+  </td>
 </script>
 <script type="text/template" id="lang-setting-template">
   <th>{% trans "Set the application language" %}</th>
