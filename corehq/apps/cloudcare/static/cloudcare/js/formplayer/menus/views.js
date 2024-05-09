@@ -1264,7 +1264,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     const BreadcrumbView = Marionette.View.extend({
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
-        className: "breadcrumb-text",
+        className: function () {
+            if (window.USE_BOOSTRAP5) {
+                return "breadcrumb-item";
+            } else {
+                return "breadcrumb-text";
+            }
+        },
         attributes: function () {
             let attributes = {
                 "role": "link",
