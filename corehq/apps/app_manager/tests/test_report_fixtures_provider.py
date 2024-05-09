@@ -70,28 +70,31 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             )
 
     def test_v1_report_fixtures_provider(self):
-        self._test_report_fixtures_provider(ReportFixturesProviderV1(), 'expected_v1_report')
+        cache = ReportDataCache("domain", [])
+        self._test_report_fixtures_provider(ReportFixturesProviderV1(cache), 'expected_v1_report')
 
     def test_v2_report_fixtures_provider(self):
-        self._test_report_fixtures_provider(ReportFixturesProviderV2(), 'expected_v2_report')
+        cache = ReportDataCache("domain", [])
+        self._test_report_fixtures_provider(ReportFixturesProviderV2(cache), 'expected_v2_report')
 
     def test_report_fixtures_data_cache(self):
         data_source = self.get_data_source_mock()
-        cache = ReportDataCache()
+        cache = ReportDataCache("domain", [])
         self._test_report_fixtures_provider(ReportFixturesProviderV1(cache), 'expected_v1_report', data_source)
         self._test_report_fixtures_provider(ReportFixturesProviderV2(cache), 'expected_v2_report', data_source)
         data_source.get_data.assert_called_once()
 
     def test_v2_report_fixtures_provider_iterative_total_row(self):
         report_id = 'deadbeef'
-        provider = ReportFixturesProviderV2()
+        cache = ReportDataCache("domain", [])
+        provider = ReportFixturesProviderV2(cache)
         report_app_config = ReportAppConfig(
             uuid='c0ffee',
             report_id=report_id,
             filters={'computed_owner_name_40cc88a0_1': StaticChoiceListFilter()}
         )
         user = Mock(user_id='mock-user-id')
-        provider.report_data_cache.reports = {report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}
+        cache.reports = {report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}
         with patch(REPORT_DATA_SOURCE_PATCH) as report_datasource, \
              patch(FORMAT_LAST_SYNC_TIME_PATCH) as last_sync_time_patch:
             mock = self.get_data_source_mock()
@@ -110,7 +113,8 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
 
     def test_v2_report_fixtures_provider_caching(self):
         report_id = 'deadbeef'
-        provider = ReportFixturesProviderV2()
+        cache = ReportDataCache("domain", [])
+        provider = ReportFixturesProviderV2(cache)
         report_app_config = ReportAppConfig(
             uuid='c0ffee',
             report_id=report_id,
@@ -123,7 +127,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             restore_user=restore_user,
             last_sync_log=Mock(last_ucr_sync_times=()),
         )
-        provider.report_data_cache.reports = {report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}
+        cache.reports = {report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}
         with patch(REPORT_DATA_SOURCE_PATCH) as report_datasource, \
                 patch('corehq.apps.app_manager.fixtures.mobile_ucr._utcnow') as utcnow_patch:
 

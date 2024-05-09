@@ -86,7 +86,7 @@ class ReportFixturesProvider(FixtureProvider):
             for app in apps
         }
 
-        report_data_cache = ReportDataCache()
+        report_data_cache = ReportDataCache(restore_user.domain, report_configs)
         providers = [
             ReportFixturesProviderV1(report_data_cache),
             ReportFixturesProviderV2(report_data_cache)
@@ -130,23 +130,26 @@ report_fixture_generator = ReportFixturesProvider()
 
 
 class ReportDataCache(object):
-    def __init__(self):
+    def __init__(self, domain, report_configs):
         self.data_cache = {}
         self.total_row_cache = {}
         self.reports = {}
+        self.domain = domain
+        self.report_configs = report_configs
 
     def get_data(self, key, data_source):
         if key not in self.data_cache:
             self.data_cache[key] = data_source.get_data()
         return self.data_cache[key]
 
-    def fetch_reports(self, domain, report_configs):
-        """Bulk fetch all reports for syncing"""
+    def load_reports(self):
+        """Bulk fetch all reports for syncing. Calling this multiple times will not duplicate reports.
+        """
         report_ids = [
-            config.report_id for config in report_configs
+            config.report_id for config in self.report_configs
             if config.report_id not in self.reports
         ]
-        self.reports.update(_get_report_configs(report_ids, domain))
+        self.reports.update(_get_report_configs(report_ids, self.domain))
 
     def get_report_and_datasource(self, report_id):
         report = self.reports[report_id]
@@ -162,8 +165,8 @@ def _get_report_index_fixture(restore_user, oldest_sync_time=None):
 
 
 class BaseReportFixtureProvider(metaclass=ABCMeta):
-    def __init__(self, report_data_cache=None):
-        self.report_data_cache = report_data_cache or ReportDataCache()
+    def __init__(self, report_data_cache):
+        self.report_data_cache = report_data_cache
 
     @abstractmethod
     def __call__(self, restore_state, restore_user, needed_versions, report_configs):
@@ -187,7 +190,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
             fixtures.append(_get_report_index_fixture(restore_user))
             try:
-                self.report_data_cache.fetch_reports(restore_user.domain, report_configs)
+                self.report_data_cache.load_reports()
             except Exception:
                 logging.exception("Error fetching reports for domain", extra={
                     "domain": restore_user.domain,
@@ -271,7 +274,7 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
             fixtures.append(_get_report_index_fixture(restore_user, oldest_sync_time))
 
             try:
-                self.report_data_cache.fetch_reports(restore_user.domain, synced_fixtures)
+                self.report_data_cache.load_reports()
             except Exception:
                 logging.exception("Error fetching reports for domain", extra={
                     "domain": restore_user.domain,
@@ -520,7 +523,7 @@ def _get_filters_elem(defer_filters, filter_options_by_field, couch_user):
     return filters_elem
 
 
-def _get_reports_and_data_source(report_ids, domain):
+def _get_report_configs(report_ids, domain):
     reports = get_report_configs(report_ids, domain)
     return {report._id: report for report in reports}
 
