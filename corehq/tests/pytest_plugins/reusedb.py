@@ -80,8 +80,6 @@ def pytest_configure(config):
     assert db_opt in ["both", "only", "skip"], db_opt
     config.should_run_database_tests = db_opt
 
-    _db_context.patch_django()
-
 
 @pytest.hookimpl(wrapper=True)
 def pytest_collection_modifyitems(session, items):
@@ -154,25 +152,25 @@ def is_still_sorted(items, key):
     return all(new_key(a) <= new_key(b) for a, b in zip(items, it))
 
 
+@pytest.fixture(scope="session")
+def django_db_setup(django_db_modify_db_settings):
+    """Override pytest_django's django_db_setup fixture
+
+    Replace pytest_django's database setup/teardown with
+    DeferredDatabaseContext, which handles other databases
+    including Couch, Elasticsearch, BlobDB, and Redis.
+
+    There appears to be no explicit dependency between this and the
+    pytest-django fixture. Is there a race to determine which will
+    override the other?
+    """
+    try:
+        yield
+    finally:
+        _db_context.teardown_databases()
+
+
 class DeferredDatabaseContext:
-
-    def __init__(self):
-        self.did_setup = False
-        self.django_setup_args = None
-        self._teardown = lambda: None
-
-    def patch_django(self):
-        self.django_setup_databases = djutils.setup_databases
-        self.django_teardown_databases = djutils.teardown_databases
-        # HACK monkey patch
-        djutils.setup_databases = self.session_setup
-        djutils.teardown_databases = self.session_teardown
-
-    def session_setup(self, *args, **kw):
-        """Preserve arguments, but do not setup databases initially"""
-        db_cfg = []
-        self.django_setup_args = (args, kw)
-        return db_cfg
 
     def setup_before_first_db_test(self, tests, is_db_test, session):
         """Inject database setup just before the first test that needs it
@@ -206,7 +204,7 @@ class DeferredDatabaseContext:
                 cleanup(clear_redis)
                 cleanup(delete_couch_databases)
 
-        assert not self.did_setup, "already set up"
+        assert "teardown_databases" not in self.__dict__, "already set up"
         db_blocker = session.config.stash[blocking_manager_key]
         with db_blocker.unblock(), ExitStack() as stack:
             try:
@@ -214,15 +212,13 @@ class DeferredDatabaseContext:
             except BaseException:
                 session.shouldfail = "Abort: database setup failed"
                 raise
-            self._teardown = stack.pop_all().close
+            self.teardown_databases = stack.pop_all().close
 
-    def session_teardown(self, *args, **kw):
-        self._teardown()
+    def teardown_databases(self):
+        """No-op to be replaced with ExitStack.close by setup_databases"""
 
     @contextmanager
     def _couch_sql_context(self, config):
-        args, kw = self.django_setup_args
-
         if config.skip_setup_for_reuse_db and sql_databases_ok():
             if config.reuse_db == "migrate":
                 call_command('migrate_multi', interactive=False)
@@ -235,17 +231,21 @@ class DeferredDatabaseContext:
         else:
             if config.reuse_db == "reset":
                 self.reset_databases(config.option.verbose)
-            if config.skip_setup_for_reuse_db:
-                # avoid creating databases that already exist
-                kw["keepdb"] = True
-            dbs = self.django_setup_databases(*args, **kw)
+            dbs = djutils.setup_databases(
+                interactive=False,
+                verbosity=config.option.verbose,
+                # avoid re-creating databases that already exist
+                keepdb=config.skip_setup_for_reuse_db,
+            )
 
         try:
             yield
         finally:
             if config.should_teardown:
-                # reversed(dbs) -> tear down in reverse setup order
-                self.django_teardown_databases(reversed(dbs), verbosity=config.option.verbose)
+                djutils.teardown_databases(
+                    reversed(dbs),  # tear down in reverse setup order
+                    verbosity=config.option.verbose,
+                )
 
     def reset_databases(self, verbosity):
         delete_couch_databases()
@@ -259,7 +259,7 @@ class DeferredDatabaseContext:
                 teardown.append((connection, db_name, is_first))
             except OperationalError:
                 pass  # ignore missing database
-        self.django_teardown_databases(reversed(teardown), verbosity=verbosity)
+        djutils.teardown_databases(reversed(teardown), verbosity=verbosity)
 
 
 def sql_databases_ok():
