@@ -216,24 +216,23 @@ class QueryHelper:
         return get_all_related_live_cases(self.domain, case_ids)
 
 
-class RegistryQueryHelper:
+class RegistryQueryHelper(QueryHelper):
     def __init__(self, domain, couch_user, registry_helper):
-        self.domain = domain
-        self.couch_user = couch_user
-        self.registry_helper = registry_helper
-        self.query_domains = self.registry_helper.visible_domains
-        self.profiler = CaseSearchProfiler()
+        super().__init__(domain)
+        self._couch_user = couch_user
+        self._registry_helper = registry_helper
+        self.query_domains = self._registry_helper.visible_domains
 
     def get_base_queryset(self):
         return CaseSearchES().domain(self.query_domains)
 
     def wrap_case(self, es_hit, include_score=False):
-        case = wrap_case_search_hit(es_hit, include_score=include_score)
+        case = super().wrap_case(es_hit, include_score)
         case.case_json[COMMCARE_PROJECT] = case.domain
         return case
 
     def get_all_related_live_cases(self, initial_cases):
-        all_cases = self.registry_helper.get_multi_domain_case_hierarchy(self.couch_user, initial_cases)
+        all_cases = self._registry_helper.get_multi_domain_case_hierarchy(self._couch_user, initial_cases)
         initial_case_ids = {case.case_id for case in initial_cases}
         return list(case for case in all_cases if case.case_id not in initial_case_ids)
 
