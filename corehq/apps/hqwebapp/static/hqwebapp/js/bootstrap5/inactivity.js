@@ -139,9 +139,9 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
 
         var showPageRefreshModal = function () {
             if ($('.webforms-nav-container').is(':visible')) {
-                $newVersionModal.find('#incompleteFormWarning').show();
+                $newVersionModal.find('#incompleteFormWarning').removeClass('d-none');
             } else {
-                $newVersionModal.find('#incompleteFormWarning').hide();
+                $newVersionModal.find('#incompleteFormWarning').addClass('d-none');
             }
             if (!isModalOpen($modal) && !isModalOpen($warningModal)) {
                 $newVersionModal.modal('show');
