@@ -152,6 +152,9 @@ class ReportDataCache(object):
         self.reports.update(_get_report_configs(report_ids, self.domain))
 
     def get_report_and_datasource(self, report_id):
+        if not self.reports:
+            self.load_reports()
+
         report = self.reports[report_id]
         return report, ConfigurableReportDataSource.from_spec(report, include_prefilters=True)
 
