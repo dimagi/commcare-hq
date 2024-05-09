@@ -5,11 +5,13 @@
 hqDefine('hqwebapp/js/bootstrap5/inactivity', [
     'jquery',
     'underscore',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,
     _,
+    bootstrap,
     assertProperties,
     initialPageData
 ) {
@@ -102,16 +104,16 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                 shouldShowWarning = false;
                 // Close the New version modal before showing warning modal
                 if (isModalOpen($newVersionModal)) {
-                    $newVersionModal.modal('hide');
+                    hideModal($newVersionModal);
                 }
-                $warningModal.modal('show');
+                showModal($warningModal);
             }
         };
 
         var hideWarningModal = function (showLogin) {
-            $warningModal.modal('hide');
+            hideModal($warningModal);
             if (showLogin) {
-                $modal.modal();
+                showModal($modal);
             }
             // This flag should already have been turned off when the warning modal was shown,
             // but just in case, make sure it's really off. Wait until the modal is fully hidden
@@ -122,6 +124,17 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
         var isModalOpen = function (element) {
             // https://stackoverflow.com/questions/19506672/how-to-check-if-bootstrap-modal-is-open-so-i-can-use-jquery-validate
             return (element.data('bs.modal') || {}).isShown;
+
+        const showModal = function ($element) {
+            if ($element.length) {
+                bootstrap.Modal.getOrCreateInstance($element).show();
+            }
+        };
+
+        const hideModal = function ($element) {
+            if ($element.length) {
+                bootstrap.Modal.getOrCreateInstance($element).hide();
+            }
         };
 
         var showPageRefreshModal = function () {
@@ -132,6 +145,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             }
             if (!isModalOpen($modal) && !isModalOpen($warningModal)) {
                 $newVersionModal.modal('show');
+                showModal($newVersionModal);
             }
         };
 
@@ -161,7 +175,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                             $(el).select2('close');
                         });
                         // Close the New version modal before showing login iframe
-                        $newVersionModal.modal('hide');
+                        hideModal($newVersionModal);
                         log("ping_login failed, showing login modal");
                         var $body = $modal.find(".modal-body");
                         var src = initialPageData.reverse('iframe_domain_login');
@@ -229,7 +243,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                             $button.text(error);
                             return null;
                         }
-                        $modal.modal('hide');
+                        hideModal($modal);
                         $button.text(gettext("Done"));
                         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
                     }
@@ -306,7 +320,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             if (message.isLoggedIn) {
                 log("session successfully extended via Single Sign On in external tab");
                 hideWarningModal();
-                $modal.modal('hide');
+                hideModal($modal);
                 localStorage.removeItem('ssoInactivityMessage');
             }
         };
