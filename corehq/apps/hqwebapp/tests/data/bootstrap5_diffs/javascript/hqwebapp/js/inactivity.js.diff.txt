@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -2,7 +2,7 @@
+@@ -2,14 +2,16 @@
   *  Handles inactvitiy timeout UI: a modal containing an iframe with the login screen,
   *  allowing users to re-login without leaving the page and losing their work.
   */
@@ -8,4 +8,132 @@
 +hqDefine('hqwebapp/js/bootstrap5/inactivity', [
      'jquery',
      'underscore',
++    'es6!hqwebapp/js/bootstrap5_loader',
      'hqwebapp/js/assert_properties',
+     'hqwebapp/js/initial_page_data',
+ ], function (
+     $,
+     _,
++    bootstrap,
+     assertProperties,
+     initialPageData
+ ) {
+@@ -102,16 +104,16 @@
+                 shouldShowWarning = false;
+                 // Close the New version modal before showing warning modal
+                 if (isModalOpen($newVersionModal)) {
+-                    $newVersionModal.modal('hide');
++                    hideModal($newVersionModal);
+                 }
+-                $warningModal.modal('show');
++                showModal($warningModal);
+             }
+         };
+ 
+         var hideWarningModal = function (showLogin) {
+-            $warningModal.modal('hide');
++            hideModal($warningModal);
+             if (showLogin) {
+-                $modal.modal({backdrop: 'static', keyboard: false});
++                showModal($modal);
+             }
+             // This flag should already have been turned off when the warning modal was shown,
+             // but just in case, make sure it's really off. Wait until the modal is fully hidden
+@@ -119,19 +121,31 @@
+             shouldShowWarning = false;
+         };
+ 
+-        var isModalOpen = function (element) {
+-            // https://stackoverflow.com/questions/19506672/how-to-check-if-bootstrap-modal-is-open-so-i-can-use-jquery-validate
+-            return (element.data('bs.modal') || {}).isShown;
++        var isModalOpen = function ($element) {
++            return $element.is(":visible");
++        };
++
++        const showModal = function ($element) {
++            if ($element.length) {
++                bootstrap.Modal.getOrCreateInstance($element).show();
++            }
++        };
++
++        const hideModal = function ($element) {
++            if ($element.length) {
++                bootstrap.Modal.getOrCreateInstance($element).hide();
++            }
+         };
+ 
+         var showPageRefreshModal = function () {
+             if ($('.webforms-nav-container').is(':visible')) {
+-                $newVersionModal.find('#incompleteFormWarning').show();
++                $newVersionModal.find('#incompleteFormWarning').removeClass('d-none');
+             } else {
+-                $newVersionModal.find('#incompleteFormWarning').hide();
++                $newVersionModal.find('#incompleteFormWarning').addClass('d-none');
+             }
+             if (!isModalOpen($modal) && !isModalOpen($warningModal)) {
+                 $newVersionModal.modal('show');
++                showModal($newVersionModal);
+             }
+         };
+ 
+@@ -145,7 +159,8 @@
+                     selectedAppId = urlParams.appId;
+                 }
+             } catch (error) {
+-                return;
++                // This will fail on the web apps home page, where the URL fragment is #apps
++                selectedAppId = null;
+             }
+             var domain = initialPageData.get('domain');
+             $.ajax({
+@@ -161,7 +176,7 @@
+                             $(el).select2('close');
+                         });
+                         // Close the New version modal before showing login iframe
+-                        $newVersionModal.modal('hide');
++                        hideModal($newVersionModal);
+                         log("ping_login failed, showing login modal");
+                         var $body = $modal.find(".modal-body");
+                         var src = initialPageData.reverse('iframe_domain_login');
+@@ -176,7 +191,7 @@
+                             $body.html(content);
+                             $body.find("iframe").on("load", pollToHideModal);
+                         });
+-                        $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
++                        $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i></h1>');
+                         hideWarningModal(true);
+                     } else {
+                         log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
+@@ -212,7 +227,7 @@
+                     }
+ 
+                     if (error) {
+-                        $button.removeClass("btn-default").addClass("btn-danger");
++                        $button.removeClass("btn-default").addClass("btn-outline-danger");
+                         $button.text(error);
+                     } else {
+                         // Keeps the input value in the outer window in sync with newest token generated in
+@@ -224,12 +239,12 @@
+                             iframeInputValue = iframe.getElementsByTagName('input')[0].value;
+                             outerCSRFInput.val(iframeInputValue);
+                         } catch (err) {
+-                            $button.removeClass("btn-default").addClass("btn-danger");
++                            $button.removeClass("btn-default").addClass("btn-outline-danger");
+                             error = gettext("There was a problem, please refresh and try again");
+                             $button.text(error);
+                             return null;
+                         }
+-                        $modal.modal('hide');
++                        hideModal($modal);
+                         $button.text(gettext("Done"));
+                         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
+                     }
+@@ -306,7 +321,7 @@
+             if (message.isLoggedIn) {
+                 log("session successfully extended via Single Sign On in external tab");
+                 hideWarningModal();
+-                $modal.modal('hide');
++                hideModal($modal);
+                 localStorage.removeItem('ssoInactivityMessage');
+             }
+         };
