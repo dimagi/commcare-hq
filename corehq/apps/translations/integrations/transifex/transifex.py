@@ -121,10 +121,11 @@ class Transifex(object):
                 file_uploads[resource_name] = _("Successfully Uploaded")
             except TransifexApiException as e:
                 file_uploads[resource_name] = "Upload Error: {}".format(e)
-        resources_to_delete = self.client.get_resource_slugs_for_deleted_forms(current_project_resources)
-        if resources_to_delete:
-            delete_status = self.delete_resources(resources_to_delete)
-            file_uploads.update(delete_status)
+        if self.update_resource:
+            resources_to_delete = self.client.get_resource_slugs_for_deleted_forms(current_project_resources)
+            if resources_to_delete:
+                delete_status = self.delete_resources(resources_to_delete)
+                file_uploads.update(delete_status)
         return file_uploads
 
     @cached_property
