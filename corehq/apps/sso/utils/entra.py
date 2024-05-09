@@ -38,35 +38,8 @@ def get_all_members_of_the_idp_from_entra(idp):
         principal_ids = {assignment["principalId"] for assignment in assignments["value"]
                          if assignment["principalType"] == "User"}
 
-        # Prepare batch request
-        batch_payload = {
-            "requests": [
-                {
-                    "id": str(i),
-                    "method": "GET",
-                    "url": f"/users/{principal_id}?$select=userPrincipalName"
-                } for i, principal_id in enumerate(principal_ids)
-            ]
-        }
+        user_principal_names = get_user_principal_names(principal_ids, result['access_token'])
 
-        # Send batch request
-        batch_response = requests.post(
-            'https://graph.microsoft.com/v1.0/$batch',
-            headers={'Authorization': 'Bearer ' + result['access_token'], 'Content-Type': 'application/json'},
-            data=json.dumps(batch_payload)
-        )
-        batch_response.raise_for_status()
-        batch_result = batch_response.json()
-
-        for resp in batch_result['responses']:
-            if 'body' in resp and 'error' in resp['body']:
-                raise EntraVerificationFailed(resp['body']['error']['code'], resp['body']['message'])
-
-        # Extract userPrincipalName from batch response
-        user_principal_names = [
-            resp['body']['userPrincipalName'] for resp in batch_result['responses']
-            if 'body' in resp and 'userPrincipalName' in resp['body']
-        ]
         return user_principal_names
     else:
         raise EntraVerificationFailed(result.get('error', {}),
@@ -85,3 +58,35 @@ def configure_idp(idp):
         "endpoint": f"https://graph.microsoft.com/v1.0/servicePrincipals(appId='{idp.api_id}')/"
                     "appRoleAssignedTo?$select=principalId, principalType"
     }
+
+
+def get_user_principal_names(user_ids, token):
+    # Prepare batch request
+    batch_payload = {
+        "requests": [
+            {
+                "id": str(i),
+                "method": "GET",
+                "url": f"/users/{principal_id}?$select=userPrincipalName"
+            } for i, principal_id in enumerate(user_ids)
+        ]
+    }
+    # Send batch request
+    batch_response = requests.post(
+        'https://graph.microsoft.com/v1.0/$batch',
+        headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+        data=json.dumps(batch_payload)
+    )
+    batch_response.raise_for_status()
+    batch_result = batch_response.json()
+
+    for resp in batch_result['responses']:
+        if 'body' in resp and 'error' in resp['body']:
+            raise EntraVerificationFailed(resp['body']['error']['code'], resp['body']['message'])
+
+    # Extract userPrincipalName from batch response
+    user_principal_names = [
+        resp['body']['userPrincipalName'] for resp in batch_result['responses']
+        if 'body' in resp and 'userPrincipalName' in resp['body']
+    ]
+    return user_principal_names
