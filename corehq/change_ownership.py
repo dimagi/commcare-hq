@@ -19,7 +19,7 @@ error_case_log_file_path = os.path.expanduser('~/script_error.log')
 BATCH_SIZE = 100
 SKIP_COUNT = 0
 
-def submit_case_blocks(case_blocks):
+def submit_cases(case_blocks):
     submit_case_blocks(
         [cb.as_text() for cb in case_blocks],
         domain=DOMAIN,
@@ -46,7 +46,7 @@ def process_batch(case_blocks, current_chunk, total_count):
     percentage_done = round((batch_start / total_count) * 100, 2)
     print(f'Submitting cases {batch_start}-{batch_end}/{total_count} ({percentage_done}%)')
     try:
-        submit_case_blocks(case_blocks)
+        submit_cases(case_blocks)
         write_to_log([cb.case_id for cb in case_blocks])
         return True
     except Exception as e:
