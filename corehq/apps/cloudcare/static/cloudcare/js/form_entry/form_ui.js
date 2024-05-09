@@ -246,6 +246,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             },
             children: {
                 create: function (options) {
+                    console.log(`children.create: ix=${ options.data.ix }, type= ${ options.data.type }`)
                     if (options.data.type === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
                         return new GroupedElementTileRow(options.data, self);
                     } else if (options.data.type === constants.QUESTION_TYPE) {
@@ -261,6 +262,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     }
                 },
                 update: function (options) {
+                    console.log(`children.update: ix=${ options.data.ix }, type= ${ options.data.type }`)
+                    if (options.data.type === constants.GROUP_TYPE && options.data.exists === "false") {
+                        return new AddGroup(options.data, self);
+                    }
                     if (options.target.pendingAnswer &&
                             options.target.pendingAnswer() !== constants.NO_PENDING_ANSWER) {
                         // There is a request in progress, check if the answer has changed since the request
@@ -292,7 +297,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     return options.target;
                 },
                 key: function (data) {
-                    return ko.utils.unwrapObservable(data.uuid) || ko.utils.unwrapObservable(data.ix);
+                    let key = ko.utils.unwrapObservable(data.uuid);
+                    if (key) {
+                        // console.log(`key: ${ key } (uuid)`);
+                        return key;
+                    }
+                    key = ko.utils.unwrapObservable(data.ix);
+                    // console.log(`key: ${ key } (ix)`);
+                    return key;
                 },
             },
         };
@@ -404,6 +416,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
      */
     function Form(json) {
         var self = this;
+        self.amIAForm = true;
         self.displayOptions = json.displayOptions || {};
         json.children = json.tree;
         delete json.tree;
@@ -649,7 +662,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
         self.isRepetition = parent.parent instanceof Repeat;
-        self.showDelete = self.delete();
+        if (self.hasOwnProperty('delete')) {
+            self.showDelete = self.delete();
+        } else {
+            self.showDelete = self.isRepetition;
+        }
         let parentForm = getParentForm(self);
         let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
 
