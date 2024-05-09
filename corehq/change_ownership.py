@@ -68,6 +68,7 @@ def move_mobile_workers():
     success_count = fail_count = skip_count = 0
     total_time = 0
     print(f"Total Users to Process: {user_count}")
+    user_to_save = []
     for idx, user in enumerate(users):
         start_time = time.time()
         percentage_done = round((idx / user_count) * 100, 2)
@@ -89,7 +90,7 @@ def move_mobile_workers():
             )
             # Set this new descendant location as user location
             user.location_id = loc.location_id
-            user.save(fire_signals=False)
+            user_to_save.append(user)
             write_to_log([user.user_id])
             success_count += 1
         except SQLLocation.DoesNotExist:
@@ -114,6 +115,8 @@ def move_mobile_workers():
             Skipped: {skip_count},
             Total Time: {round(total_time / 60, 2)} minutes"
         )
+    CommCareUser.bulk_save(user_to_save)
+    print("Saving Users Complete!")
 
 ### Task 2 & 3
 def transfer_case_ownership():
