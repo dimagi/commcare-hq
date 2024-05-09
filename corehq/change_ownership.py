@@ -1,11 +1,30 @@
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.models import CommCareCase
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.es import CaseSearchES
+from corehq.apps.es.cases import case_type
 import os
 import time
+import math
+
+from casexml.apps.case.mock import CaseBlock
+from corehq.apps.hqcase.utils import submit_case_blocks
+
+# DOMAIN = 'alafiacomm'
 DOMAIN = 'alafiacomm-prod'
 
 success_case_log_file_path = os.path.expanduser('~/script_success.log')
 error_case_log_file_path = os.path.expanduser('~/script_error.log')
+
+BATCH_SIZE = 100
+SKIP_COUNT = 0
+
+def submit_case_blocks(case_blocks):
+    submit_case_blocks(
+        [cb.as_text() for cb in case_blocks],
+        domain=DOMAIN,
+        device_id='system',
+    )
 
 def write_to_log(ids, is_success=True, message=None):
     if is_success:
@@ -20,6 +39,23 @@ def write_to_log(ids, is_success=True, message=None):
                 'Reason:' + message if message else ''
             )
         log.close()
+
+def process_batch(case_blocks, current_chunk, total_count):
+    batch_start = current_chunk * BATCH_SIZE + 1
+    batch_end = batch_start + len(case_blocks)
+    percentage_done = round((batch_start / total_count) * 100, 2)
+    print(f'Submitting cases {batch_start}-{batch_end}/{total_count} ({percentage_done}%)')
+    try:
+        submit_case_blocks(case_blocks)
+        write_to_log([cb.case_id for cb in case_blocks])
+        return True
+    except Exception as e:
+        write_to_log(
+            [cb.case_id for cb in case_blocks],
+            is_success=False,
+            message=str(e)
+        )
+        return False
 
 ### Task 1
 def move_mobile_workers():
@@ -78,3 +114,78 @@ def move_mobile_workers():
             Skipped: {skip_count},
             Total Time: {round(total_time / 60, 2)} minutes"
         )
+
+### Task 2 & 3
+def transfer_case_ownership():
+    print("---MOVING CASE OWNERSHIP---")
+    case_ids = (
+        CaseSearchES()
+        .domain(DOMAIN)
+        .OR(
+            case_type('menage'),
+            case_type('membre'),
+            case_type('seance_educative'),
+            case_type('fiche_pointage')
+        )
+        .sort('opened_on')  # sort so that we can continue
+    ).get_ids()
+
+    case_count = len(case_ids)
+    batch_count = math.ceil(case_count / BATCH_SIZE)
+    print(f'Total Cases to Process: {case_count}')
+    print(f'Total Batches to Process: {batch_count}')
+    case_blocks = []
+    current_chunk = 0
+    start_time = end_time = total_time = 0
+    success_count = fail_count = 0
+    for case_obj in CommCareCase.objects.iter_cases(case_ids, domain=DOMAIN):
+        case_block = CaseBlock(
+            create=False,
+            case_id=case_obj.case_id,
+            owner_id = '',
+        )
+        case_blocks.append(case_block)
+
+        # Process and submit batch of cases
+        if len(case_blocks) == BATCH_SIZE:
+            is_success = process_batch(case_blocks, current_chunk, case_count)
+            if is_success:
+                success_count += 1
+            else:
+                fail_count += 1
+            end_time = time.time()
+            time_diff = end_time - start_time
+            total_time += time_diff
+            print(f'Time to Process Batch #{current_chunk}: {time_diff}s')
+            print(f'Estimated time remaining: {time_diff * (batch_count - current_chunk)}s')
+            case_blocks = []
+            current_chunk += 1
+            start_time = time.time()
+    
+    # Submit any remaining cases after processing the last full batch
+    if len(case_blocks):
+        process_batch(case_blocks, current_chunk, case_count)
+
+    print("All Cases Done Processing!")
+    print(
+        f"Successful batches: {success_count}, 
+        Failed batches: {fail_count}, 
+        Total Batches: {batch_count}, 
+        Total Time: {round(total_time / 60, 2)} minutes"
+    )
+
+
+success_count = fail_count = 0
+for user in valid_users:
+    user_data = user.get_user_data(DOMAIN)
+    try:
+        loc = SQLLocation.objects.get(
+            domain=DOMAIN,
+            parent__location_id=user.location_id,
+            name=user_data['rc_number']
+        )
+    except SQLLocation.DoesNotExist:
+        fail_count += 1
+    else:
+        success_count += 1
+print(success_count, fail_count)
