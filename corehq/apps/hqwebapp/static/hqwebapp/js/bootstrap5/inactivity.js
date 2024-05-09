@@ -159,7 +159,8 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                     selectedAppId = urlParams.appId;
                 }
             } catch (error) {
-                return;
+                // This will fail on the web apps home page, where the URL fragment is #apps
+                selectedAppId = null;
             }
             var domain = initialPageData.get('domain');
             $.ajax({
