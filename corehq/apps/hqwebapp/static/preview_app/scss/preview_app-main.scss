@@ -3,9 +3,9 @@
 
 /* this is included in cloudcare/preview_app.html */
 
-@import "preview_app/mixins";
+@import "../../cloudcare/scss/formplayer-common/mixins";
 
-@transition-speed: .5s;
+$transition-speed: .5s;
 
 @import "preview_app/base";
 @import "preview_app/variables";

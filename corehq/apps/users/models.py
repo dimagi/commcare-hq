@@ -248,8 +248,6 @@ class HqPermissions(DocumentSchema):
         if not self.access_all_locations:
             # The following permissions cannot be granted to location-restricted
             # roles.
-            self.edit_web_users = False
-            self.view_web_users = False
             self.edit_groups = False
             self.view_groups = False
             self.edit_apps = False
@@ -531,14 +529,22 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domain_memberships.append(domain_membership)
         self.domains.append(domain)
 
-    def add_as_web_user(self, domain, role, location_id=None, program_id=None):
+    def add_as_web_user(self, domain, role, primary_location_id=None,
+                        assigned_location_ids=None, program_id=None, profile=None):
+        if assigned_location_ids is None:
+            assigned_location_ids = []
         domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
         if domain_obj.commtrack_enabled:
             self.get_domain_membership(domain).program_id = program_id
-        if domain_obj.uses_locations and location_id:
-            self.set_location(domain, location_id)
+        if domain_obj.uses_locations:
+            if primary_location_id:
+                self.set_location(domain, primary_location_id)
+            self.reset_locations(domain, assigned_location_ids)
+        if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
+            user_data = self.get_user_data(domain_obj.name)
+            user_data.update({}, profile_id=profile.id)
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
@@ -1152,11 +1158,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         """
         from corehq.apps.locations.models import SQLLocation
 
-        yield from self.get_sql_locations(domain).filter(location_type__shares_cases=True)
-
-        yield from SQLLocation.objects.get_queryset_descendants(
-            self.get_sql_locations(domain).filter(location_type__view_descendants=True)
-        ).filter(location_type__shares_cases=True, is_archived=False)
+        if toggles.USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION.enabled(domain):
+            user_location_ids = list(self.get_sql_locations(domain).order_by().values_list("id", flat=True))
+            yield from SQLLocation.objects.raw(
+                """
+                    SELECT loc.*
+                    FROM locations_sqllocation loc
+                    INNER JOIN get_case_owning_locations(%s, %s) owned ON owned.id = loc.id;
+                """,
+                [domain, user_location_ids]
+            )
+        else:
+            yield from self.get_sql_locations(domain).filter(location_type__shares_cases=True)
+            yield from SQLLocation.objects.get_queryset_descendants(
+                self.get_sql_locations(domain).filter(location_type__view_descendants=True)
+            ).filter(location_type__shares_cases=True, is_archived=False)
 
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.users.model_log import UserModelAction
@@ -2713,8 +2729,10 @@ class Invitation(models.Model):
     role = models.CharField(max_length=100, null=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
-    location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
+    primary_location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
                                  to_field='location_id', null=True)  # to replace supply_point
+    assigned_locations = models.ManyToManyField("locations.SQLLocation", symmetrical=False,
+                                                related_name='invitations')
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
                                 on_delete=models.SET_NULL, null=True)
     custom_user_data = models.JSONField(default=dict)
@@ -2819,8 +2837,10 @@ class Invitation(models.Model):
         web_user.add_as_web_user(
             self.domain,
             role=self.role,
-            location_id=getattr(self.location, "location_id", None),
+            primary_location_id=getattr(self.primary_location, "location_id", None),
+            assigned_location_ids=list(self.assigned_locations.all().values_list('location_id', flat=True)),
             program_id=self.program,
+            profile=self.profile,
         )
         self.is_accepted = True
         self.save()

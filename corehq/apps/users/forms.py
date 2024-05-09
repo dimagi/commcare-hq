@@ -7,7 +7,6 @@ import string
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
-from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
@@ -1164,7 +1163,7 @@ class PrimaryLocationWidget(forms.Widget):
         })
 
 
-class CommtrackUserForm(forms.Form):
+class BaseLocationForm(forms.Form):
     assigned_locations = forms.CharField(
         label=gettext_noop("Locations"),
         required=False,
@@ -1173,19 +1172,14 @@ class CommtrackUserForm(forms.Form):
     primary_location = forms.CharField(
         label=gettext_noop("Primary Location"),
         required=False,
-        help_text=gettext_lazy('Primary Location must always be set to one of above locations')
-    )
-    program_id = forms.ChoiceField(
-        label=gettext_noop("Program"),
-        choices=(),
-        required=False
+        help_text=_('Primary Location must always be set to one of above locations')
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, domain: str, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
         self.request = kwargs.pop('request')
-        self.domain = kwargs.pop('domain', None)
-        super(CommtrackUserForm, self).__init__(*args, **kwargs)
+        super(BaseLocationForm, self).__init__(*args, **kwargs)
+        self.domain = domain
         self.fields['assigned_locations'].widget = LocationSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations'
         )
@@ -1194,6 +1188,60 @@ class CommtrackUserForm(forms.Form):
             css_id='id_primary_location',
             source_css_id='id_assigned_locations',
         )
+
+    def clean_assigned_locations(self):
+        from corehq.apps.locations.models import SQLLocation
+        from corehq.apps.locations.util import get_locations_from_ids
+
+        location_ids = self.data.getlist('assigned_locations')
+        try:
+            locations = get_locations_from_ids(location_ids, self.domain)
+        except SQLLocation.DoesNotExist:
+            raise forms.ValidationError(_('One or more of the locations was not found.'))
+
+        return [location.location_id for location in locations]
+
+    def _user_has_permission_to_access_locations(self, new_location_ids):
+        assigned_locations = SQLLocation.objects.filter(location_id__in=new_location_ids)
+        return len(assigned_locations) == len(assigned_locations.accessible_to_user(
+            self.domain, self.request.couch_user))
+
+    def clean(self):
+        self.cleaned_data = super(BaseLocationForm, self).clean()
+
+        primary_location_id = self.cleaned_data['primary_location']
+        assigned_location_ids = self.cleaned_data.get('assigned_locations', [])
+        if not self._user_has_permission_to_access_locations(assigned_location_ids):
+            self.add_error(
+                'assigned_locations',
+                _("You do not have permissions to assign one of those locations.")
+            )
+        if primary_location_id:
+            if primary_location_id not in assigned_location_ids:
+                self.add_error(
+                    'primary_location',
+                    _("Primary location must be one of the user's locations")
+                )
+        if assigned_location_ids and not primary_location_id:
+            self.add_error(
+                'primary_location',
+                _("Primary location can't be empty if the user has any "
+                  "locations set")
+            )
+        return self.cleaned_data
+
+
+class CommtrackUserForm(BaseLocationForm):
+    program_id = forms.ChoiceField(
+        label=gettext_noop("Program"),
+        choices=(),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain', None)
+        super(CommtrackUserForm, self).__init__(self.domain, *args, **kwargs)
+
         if self.commtrack_enabled:
             programs = Program.by_domain(self.domain)
             choices = list((prog.get_id, prog.name) for prog in programs)
@@ -1234,17 +1282,15 @@ class CommtrackUserForm(forms.Form):
                 updated_program_id = program_id
             domain_membership.program_id = program_id
 
-        location_updates = self._update_location_data(user)
+        location_updates = self._update_location_data(user, self.cleaned_data['primary_location'],
+                                                      self.cleaned_data['assigned_locations'])
         if user.is_commcare_user():
             self._log_commcare_user_changes(user_change_logger, location_updates, updated_program_id)
         else:
             self._log_web_user_changes(user_change_logger, location_updates, updated_program_id)
 
-    def _update_location_data(self, user):
-        new_location_id = self.cleaned_data['primary_location']
-        new_location_ids = self.cleaned_data['assigned_locations']
+    def _update_location_data(self, user, new_location_id, new_location_ids):
         updates = {}
-
         if user.is_commcare_user():
             # fetch this before set_location is called
             old_assigned_location_ids = set(user.assigned_location_ids)
@@ -1351,36 +1397,6 @@ class CommtrackUserForm(forms.Form):
             self._log_program_changes(user_change_logger, program_id)
 
         user_change_logger.save()
-
-    def clean_assigned_locations(self):
-        from corehq.apps.locations.models import SQLLocation
-        from corehq.apps.locations.util import get_locations_from_ids
-
-        location_ids = self.data.getlist('assigned_locations')
-        try:
-            locations = get_locations_from_ids(location_ids, self.domain)
-        except SQLLocation.DoesNotExist:
-            raise ValidationError(_('One or more of the locations was not found.'))
-
-        return [location.location_id for location in locations]
-
-    def clean(self):
-        cleaned_data = super(CommtrackUserForm, self).clean()
-
-        primary_location_id = cleaned_data['primary_location']
-        assigned_location_ids = cleaned_data.get('assigned_locations', [])
-        if primary_location_id:
-            if primary_location_id not in assigned_location_ids:
-                self.add_error(
-                    'primary_location',
-                    _("Primary location must be one of the user's locations")
-                )
-        if assigned_location_ids and not primary_location_id:
-            self.add_error(
-                'primary_location',
-                _("Primary location can't be empty if the user has any "
-                  "locations set")
-            )
 
 
 class DomainRequestForm(forms.Form):
