@@ -426,18 +426,7 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
         Updating imports. Look at how imports are done in other parts of HQ that use SCSS, such as
         <a target="_blank" href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/scss/commcarehq.scss">hqwebapp</a> and
         <a target="_blank" href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/cloudcare/scss/formplayer-common-main.scss">cloudcare</a>.
-        <div class="card text-bg-light mb-3">
-          <div class="card-body">
-            <pre class="m-0">// LESS
-@import '../../hqwebapp/less/_hq/includes/variables.less';
-@b3-import-variables: '../../../../../../../../node_modules/bootstrap/less/variables';
-
-// SCSS - test which imports are necessary so that you include the minimum set
-@import "../../hqwebapp/scss/commcarehq/variables";
-@import "variables";
-@import "../../hqwebapp/scss/commcarehq/variables_bootstrap3";</pre>
-          </div>
-        </div>
+        Imports may not be one-for-one replacements, since B3 and B5 are organized differently, and you may have dropped some B3 styles or added some B5 styles.
       </li>
       <li>
         Remember to update the <code>&lt;link&gt;</code> elements in HTML, including changing the <code>type</code>
