@@ -5,7 +5,7 @@
     z-index: $zindex-navbar-cloudcare;
 }
 
-#breadcrumb-region .breadcrumb-text, .single-app-view .breadcrumb-text {
+#breadcrumb-region .breadcrumb-item, .single-app-view .breadcrumb-item {
     cursor: pointer;
 }
 
@@ -18,13 +18,13 @@
   box-shadow: 0 0 5px 2px rgba(0,0,0,.3);
   border: none;
 
-  .breadcrumb-text {
+  .breadcrumb-item {
     &:before {
       content: '\f054';
       font-family: 'FontAwesome';
     }
   }
-  .breadcrumb-text:first-child {
+  .breadcrumb-item:first-child {
     &:before {
       display: none;
     }
