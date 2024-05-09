@@ -121,9 +121,9 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             shouldShowWarning = false;
         };
 
-        var isModalOpen = function (element) {
-            // https://stackoverflow.com/questions/19506672/how-to-check-if-bootstrap-modal-is-open-so-i-can-use-jquery-validate
-            return (element.data('bs.modal') || {}).isShown;
+        var isModalOpen = function ($element) {
+            return $element.is(":visible");
+        };
 
         const showModal = function ($element) {
             if ($element.length) {
