@@ -157,6 +157,27 @@ class TestCheckDomainMigration(TestCase):
             r"^<\?xml version='1.0' encoding='UTF-8'\?>"
         )
 
+    @flag_enabled('DISABLE_MOBILE_ENDPOINTS')
+    def test_disable_endpoints_blocks_updates(self):
+        response = self._download_odk_media_profile()
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            'Service Temporarily Unavailable'
+        )
+
+    @flag_enabled('DISABLE_MOBILE_ENDPOINTS')
+    def test_redirect_overrides_disable(self):
+        with _set_redirect_url():
+            response = self._download_odk_media_profile()
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(
+                response.url,
+                f'https://example.com/a/{DOMAIN}/apps/download/{self.app._id}'
+                '/media_profile.ccpr?latest=true'
+                f'&username=user%40{DOMAIN}.commcarehq.org'
+            )
+
     def _download_odk_media_profile(self):
         return self.client.get(reverse(
             'download_odk_media_profile',
