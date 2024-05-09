@@ -669,7 +669,7 @@ cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
 
 
-def check_domain_migration(view_func):
+def check_domain_mobile_access(view_func):
     def wrapped_view(request, domain, *args, **kwargs):
         if (
             DATA_MIGRATION.enabled(domain)
