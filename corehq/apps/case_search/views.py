@@ -1,18 +1,21 @@
 import json
 import re
+from io import BytesIO
 
 from django.http import Http404
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
 
-from django.utils.decorators import method_decorator
 from dimagi.utils.web import json_response
 
 from corehq.apps.case_search.models import case_search_enabled_for_domain
 from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.decorators import cls_require_superuser_or_contractor
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqadmin.utils import get_download_url
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.view_utils import BadRequest, json_error
 
 
@@ -115,5 +118,16 @@ class ProfileCaseSearchView(_BaseCaseSearchView):
             'primary_count': profiler.primary_count,
             'related_count': profiler.related_count,
             'timing_data': profiler.timing_context.to_dict(),
-            'queries': profiler.queries,
+            'queries': [self._make_profile_downloadable(q) for q in profiler.queries],
         })
+
+    @staticmethod
+    def _make_profile_downloadable(query):
+        profile_json = query.pop('profile_json')
+        timestamp = get_timestamp_for_filename()
+        name = f"es_profile_{query['query_number']}_{query['slug']}_{timestamp}.json"
+        io = BytesIO()
+        io.write(json.dumps(profile_json).encode('utf-8'))
+        io.seek(0)
+        query['profile_url'] = get_download_url(io, name, content_type='application/json')
+        return query
