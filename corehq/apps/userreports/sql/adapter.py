@@ -211,8 +211,11 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         table = self.get_table()
         doc_ids = [doc['_id'] for doc in docs]
         delete = table.delete(table.c.doc_id.in_(doc_ids))
-        with self.session_context() as session:
-            session.execute(delete)
+        try:
+            with self.session_context() as session:
+                session.execute(delete)
+        except ProgrammingError:
+            return
 
         register_data_source_row_change(
             domain=self.config.domain,
