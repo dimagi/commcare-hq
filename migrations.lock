@@ -422,6 +422,7 @@ es
  0009_add_indices_for_reindex_in_es5
  0010_delete_reverted_indices
  0011_add_indices_for_es5_reindex
+ 0012_add_new_index_for_bha
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -762,7 +763,7 @@ phonelog
  0013_delete_olddevicereportentry
  0014_auto_20170718_2039
 phonenumber
- 0001_squashed_0001_initial (10 squashed migrations)
+ [-] 0001_squashed_0001_initial (10 squashed migrations) Run 'manage.py migrate' to finish recording.
 pillow_retry
  0001_initial
  0002_pillowerror_queued
