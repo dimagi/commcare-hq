@@ -1,10 +1,16 @@
 from collections import OrderedDict
+from unittest.mock import patch
 
 from django.test import TestCase
 
 from corehq.apps.case_search.const import CASE_SEARCH_MAX_RESULTS
-from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns, _parse_commcare_sort_properties
+from corehq.apps.case_search.models import (
+    CaseSearchConfig,
+    IgnorePatterns,
+    _parse_commcare_sort_properties,
+)
 from corehq.apps.case_search.tests.utils import get_case_search_query
+from corehq.apps.case_search.utils import QueryHelper
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.util.test_utils import flag_enabled
 
@@ -418,3 +424,11 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             get_case_search_query(DOMAIN, ['case_type'], criteria, commcare_sort=commcare_sort),
             expected
         )
+
+
+def test_use_custom_index():
+    helper = QueryHelper(DOMAIN)
+    helper.config = CaseSearchConfig(domain=DOMAIN, index_name="my_test_index")
+    with patch('corehq.apps.es.es_query.doc_adapter_from_cname') as get_adapter:
+        helper.get_base_queryset()
+    get_adapter.assert_called_once_with('my_test_index', for_export=False)

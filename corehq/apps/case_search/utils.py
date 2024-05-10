@@ -202,7 +202,7 @@ class QueryHelper:
         self.profiler = CaseSearchProfiler()
 
     def get_base_queryset(self):
-        return CaseSearchES().domain(self.domain)
+        return CaseSearchES(index=self.config.index_name or None).domain(self.domain)
 
     def wrap_case(self, es_hit, include_score=False):
         return wrap_case_search_hit(es_hit, include_score=include_score)
