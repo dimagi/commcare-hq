@@ -30,13 +30,10 @@ class Updater(object):
 
     def write_to_log(self, file_path, ids, message=''):
         # TODO: Add ability to write a reverse ID for reversing action
+        msg_out = f'|Reason: {message}' if message else ''
         with open(file_path, 'a') as log:
-            for id in ids:
-                log.write(
-                    f'{id}' \
-                    f' - Reason: {message}' if message else '' \
-                    '\n'
-                )
+            for id in ids:                
+                log.write(f'{id} {msg_out}\n')
             log.close()
 
 
