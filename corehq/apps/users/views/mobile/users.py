@@ -1229,6 +1229,7 @@ class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserV
         return super().get(request, domain, *args, **kwargs)
 
 
+@location_safe
 @method_decorator([require_can_use_filtered_user_download], name='dispatch')
 class FilteredWebUserDownload(FilteredUserDownload, BaseManageWebUserView):
     page_title = gettext_noop('Filter and Download Users')
@@ -1462,6 +1463,7 @@ def count_commcare_users(request, domain):
 
 @require_can_edit_web_users
 @require_can_use_filtered_user_download
+@location_safe
 def count_web_users(request, domain):
     return _count_users(request, domain, WEB_USER_TYPE)
 
