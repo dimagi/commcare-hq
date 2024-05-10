@@ -45,3 +45,10 @@ def run_app_workflows():
             log.output = session.log.getvalue()
             log.completed = timezone.now()
             log.save()
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0))  # run every day at midnight
+def clear_old_logs():
+    AppWorkflowConfig.objects.filter(
+        appexecutionlog__completed__lt=timezone.now() - timezone.timedelta(days=30)
+    ).delete()
