@@ -21,12 +21,11 @@ from corehq.apps.case_search.utils import (
     QueryHelper,
     RegistryQueryHelper,
     _get_helper,
-    get_and_tag_related_cases,
     get_case_search_results,
     get_primary_case_search_results,
 )
 from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
+from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import case_search_es_setup, es_test
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.tests.utils import (
@@ -320,6 +319,7 @@ class TestCaseSearchRegistry(TestCase):
                 (case.name, case.type, case.domain)
                 for case in related_cases
             ])
+
 
 class TestCaseSearchRegistryPermissions(TestCase):
     @classmethod

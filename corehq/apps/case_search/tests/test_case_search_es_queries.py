@@ -20,8 +20,8 @@ DOMAIN = 'mighty-search'
 @es_test
 class CaseSearchTests(ElasticTestMixin, TestCase):
     def setUp(self):
-        super(CaseSearchTests, self).setUp()
-        self.config, created = CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
+        super().setUp()
+        self.config, _ = CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
 
     def test_add_blacklisted_ids(self):
         criteria = {

@@ -9,6 +9,9 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
 from casexml.apps.case.fixtures import CaseDBFixture
+from casexml.apps.phone.data_providers.case.livequery import (
+    get_all_related_live_cases,
+)
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
@@ -199,9 +202,6 @@ class QueryHelper:
         return wrap_case_search_hit(es_hit, include_score=include_score)
 
     def get_all_related_live_cases(self, initial_cases):
-        from casexml.apps.phone.data_providers.case.livequery import (
-            get_all_related_live_cases,
-        )
         case_ids = {case.case_id for case in initial_cases}
         return get_all_related_live_cases(self.domain, case_ids)
 
