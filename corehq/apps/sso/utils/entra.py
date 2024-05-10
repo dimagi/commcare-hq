@@ -14,6 +14,11 @@ class MSGraphIssue:
 class MSOdataType:
     USER = "#microsoft.graph.user"
     GROUP = "#microsoft.graph.group"
+
+
+ENDPOINT_BASE_URL = "https://graph.microsoft.com/v1.0"
+
+
 def get_all_members_of_the_idp_from_entra(idp):
     import msal
     config = configure_idp(idp)
@@ -59,7 +64,7 @@ def get_user_principal_names(user_ids, token):
     }
     # Send batch request
     batch_response = requests.post(
-        'https://graph.microsoft.com/v1.0/$batch',
+        f'{ENDPOINT_BASE_URL}/$batch',
         headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
         data=json.dumps(batch_payload)
     )
@@ -90,7 +95,7 @@ def get_access_token(app, config):
 
 
 def get_all_user_ids_in_app(token, app_id):
-    endpoint = (f"https://graph.microsoft.com/v1.0/servicePrincipals(appId='{app_id}')/"
+    endpoint = (f"{ENDPOINT_BASE_URL}/servicePrincipals(appId='{app_id}')/"
                f"appRoleAssignedTo?$select=principalId, principalType")
     # Calling graph using the access token
     response = requests.get(
@@ -127,7 +132,7 @@ def get_all_user_ids_in_app(token, app_id):
 
 
 def get_group_members(group_id, token):
-    endpoint = f"https://graph.microsoft.com/v1.0/groups/{group_id}/members?$select=id"
+    endpoint = f"{ENDPOINT_BASE_URL}/groups/{group_id}/members?$select=id"
     headers = {'Authorization': 'Bearer ' + token}
     response = requests.get(endpoint, headers=headers)
     response.raise_for_status()
