@@ -2,6 +2,7 @@ import traceback
 
 from celery.schedules import crontab
 from django.utils import timezone
+from django.utils.html import format_html
 
 from corehq.apps.app_execution.api import execute_workflow
 from corehq.apps.app_execution.models import AppWorkflowConfig
@@ -19,11 +20,12 @@ def run_app_workflows():
             execute_workflow(session, config.workflow)
         except Exception as e:
             url = reverse('app_execution:edit_workflow', args=[config.pk], absolute=True)
-            message = f"""Error executing workflow: <a href='{url}'>{config.name}</a>
+            message = format_html("""Error executing workflow: <a href="url}">{name}</a>
             <br><br>
-            <p>Error: {e}</p>
-            <pre>{traceback.format_exc()}</pre>
-            """
+            <p><pre>{traceback}</pre></p>
+            <p>Error:</p>
+            <p>{error}</p>
+            """, url=url, name=config.name, error=e, traceback=traceback.format_exc())
             send_HTML_email(
                 f"App Execution Workflow Failure: {config.name}",
                 config.notification_emails,
