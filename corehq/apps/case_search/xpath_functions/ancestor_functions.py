@@ -90,8 +90,7 @@ def _is_ancestor_path_expression(node):
 def _child_case_lookup(context, case_ids, identifier):
     """returns a list of all case_ids who have parents `case_id` with the relationship `identifier`
     """
-    es_query = context.helper.get_base_queryset().get_child_cases(case_ids, identifier)
-    context.profiler.add_query('_child_case_lookup', es_query)
+    es_query = context.helper.get_base_queryset('_child_case_lookup').get_child_cases(case_ids, identifier)
     return es_query.get_ids()
 
 
@@ -144,8 +143,7 @@ def _get_case_ids_from_ast_filter(context, filter_node):
     else:
         from corehq.apps.case_search.filter_dsl import build_filter_from_ast
         es_filter = build_filter_from_ast(filter_node, context)
-        es_query = context.helper.get_base_queryset().filter(es_filter)
-        context.profiler.add_query('_get_case_ids_from_ast_filter', es_query)
+        es_query = context.helper.get_base_queryset('_get_case_ids_from_ast_filter').filter(es_filter)
         if es_query.count() > MAX_RELATED_CASES:
             new_query = serialize(filter_node)
             raise TooManyRelatedCasesError(
