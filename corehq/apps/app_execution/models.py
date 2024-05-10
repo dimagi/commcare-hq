@@ -67,5 +67,10 @@ class AppExecutionLog(models.Model):
     output = models.TextField(blank=True)
     error = models.TextField(blank=True)
 
+    @property
+    def duration(self):
+        if self.completed:
+            return self.completed - self.started
+
     def __str__(self):
         return f"{self.workflow.name} - {self.started}"

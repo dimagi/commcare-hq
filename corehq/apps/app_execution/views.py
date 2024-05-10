@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
@@ -119,6 +120,41 @@ def _get_context(request, title, url, add_parent=False, **kwargs):
 
 @require_superuser_or_contractor
 @use_bootstrap5
+def workflow_log_list(request, pk):
+    logs = AppExecutionLog.objects.filter(workflow_id=pk).order_by("-started").all()
+    context = _get_context(
+        request,
+        "Automatically Executed App Workflow Logs",
+        reverse("app_execution:workflow_logs", args=[pk]),
+        add_parent=True,
+        workflow=AppWorkflowConfig.objects.get(id=pk),
+        logs=logs,
+        total=logs.count(),
+    )
+    return render(request, "app_execution/workflow_log_list.html", context)
+
+
+@require_superuser_or_contractor
+@use_bootstrap5
+def workflow_logs_json(request, pk):
+    logs = AppExecutionLog.objects.filter(workflow_id=pk).order_by("-started").all()
+    return JsonResponse({
+        "logs": [
+            {
+                "id": log.id,
+                "started": log.started.strftime("%Y-%m-%d %H:%M:%SZ"),
+                "completed": log.completed.strftime("%Y-%m-%d %H:%M:%SZ") if log.completed else None,
+                "success": log.success,
+                "duration": str(log.duration) if log.duration else "",
+                "url": reverse("app_execution:workflow_log", args=[log.id])
+            }
+            for log in logs
+        ]
+    })
+
+
+@require_superuser_or_contractor
+@use_bootstrap5
 def workflow_log(request, pk):
     log = get_object_or_404(AppExecutionLog, pk=pk)
     return render(
@@ -129,6 +165,6 @@ def workflow_log(request, pk):
             reverse("app_execution:workflow_log", args=[pk]),
             add_parent=True,
             log=log,
-            workflow=log.workflow.workflow_json
+            workflow_json=log.workflow.workflow_json
         )
     )

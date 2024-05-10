@@ -38,7 +38,12 @@
         {% endfor %}
       </div>
     </td>
-    <td><a class="btn btn-primary" href="{% url "app_execution:test_workflow" workflow.id %}">Test</a></td>
+    <td>
+      <div class="btn-group" role="group" aria-label="Actions">
+        <a class="btn btn-primary" href="{% url "app_execution:test_workflow" workflow.id %}">Test</a>
+        <a class="btn btn-primary" href="{% url "app_execution:workflow_logs" workflow.id %}">Logs</a>
+      </div>
+    </td>
   </tr>
   {% endfor %}
   </tbody>
