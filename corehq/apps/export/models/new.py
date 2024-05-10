@@ -2413,7 +2413,8 @@ class CaseExportDataSchema(ExportDataSchema):
             CaseProperty.objects
                 .filter(**filter_kwargs)
                 .select_related('case_type').select_related('group')
-                .order_by('group__index', 'index')
+                # order by pk for properties with same index, likely for automatically added properties
+                .order_by('group__index', 'index', 'pk')
                 .values_list('name', flat=True)
         ):
             case_properties_indices[case_property_name] = case_property_index
