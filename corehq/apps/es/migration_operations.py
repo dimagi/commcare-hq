@@ -3,15 +3,15 @@ import sys
 from datetime import datetime
 from difflib import unified_diff
 from tempfile import NamedTemporaryFile
+from time import sleep
 
+from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import CommandError, OutputWrapper
 from django.core.management.color import color_style
 from django.db.migrations import RunPython
-from django.conf import settings
-from corehq.apps.es.client import manager
-from time import sleep
 
+from corehq.apps.es.client import manager
 from corehq.apps.es.index.settings import render_index_tuning_settings
 
 log = logging.getLogger(__name__)
