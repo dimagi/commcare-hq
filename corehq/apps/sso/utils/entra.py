@@ -11,6 +11,9 @@ class MSGraphIssue:
     OTHER_ERROR = "other_error"
 
 
+class MSOdataType:
+    USER = "#microsoft.graph.user"
+    GROUP = "#microsoft.graph.group"
 def get_all_members_of_the_idp_from_entra(idp):
     import msal
     config = configure_idp(idp)
@@ -23,20 +26,10 @@ def get_all_members_of_the_idp_from_entra(idp):
 
     token = get_access_token(app, config)
 
-    # Calling graph using the access token
-    response = requests.get(
-        config["endpoint"],
-        headers={'Authorization': 'Bearer ' + token},
-    )
-    response.raise_for_status()  # Raises an error for bad status
-    assignments = response.json()
-
     # microsoft.graph.appRoleAssignment's property doesn't have userPrincipalName
-    # Property principalType can either be User, Group or ServicePrincipal
-    principal_ids = {assignment["principalId"] for assignment in assignments["value"]
-                    if assignment["principalType"] == "User"}
+    user_principal_ids = get_all_user_ids_in_app(token, config["client_id"])
 
-    user_principal_names = get_user_principal_names(principal_ids, token)
+    user_principal_names = get_user_principal_names(user_principal_ids, token)
 
     return user_principal_names
 
@@ -50,8 +43,6 @@ def configure_idp(idp):
         "client_id": idp.api_id,
         "scope": ["https://graph.microsoft.com/.default"],
         "secret": idp.api_secret,
-        "endpoint": f"https://graph.microsoft.com/v1.0/servicePrincipals(appId='{idp.api_id}')/"
-                    "appRoleAssignedTo?$select=principalId, principalType"
     }
 
 
@@ -96,3 +87,48 @@ def get_access_token(app, config):
         raise EntraVerificationFailed(result.get('error', {}),
                                       result.get('error_description', 'No error description provided'))
     return result.get("access_token")
+
+
+def get_all_user_ids_in_app(token, app_id):
+    endpoint = (f"https://graph.microsoft.com/v1.0/servicePrincipals(appId='{app_id}')/"
+               f"appRoleAssignedTo?$select=principalId, principalType")
+    # Calling graph using the access token
+    response = requests.get(
+        endpoint,
+        headers={'Authorization': 'Bearer ' + token},
+    )
+    response.raise_for_status()  # Raises an error for bad status
+    assignments = response.json()
+
+    user_ids = set()
+    group_queue = []
+
+    # Property principalType can either be User, Group or ServicePrincipal
+    for assignment in assignments["value"]:
+        if assignment["principalType"] == "User":
+            user_ids.add(assignment["principalId"])
+        elif assignment["principalType"] == "Group":
+            group_queue.append(assignment["principalId"])
+        else:
+            # Service Principal represents an application
+            # Which make the query too complicated
+            raise NotImplementedError("The application have Service Principal member")
+
+    while group_queue:
+        group_id = group_queue.pop(0)
+        members_data = get_group_members(group_id, token)
+        for member in members_data.get("value", []):
+            if member["@odata.type"] == MSOdataType.USER:
+                user_ids.add(member["id"])
+            elif member["@odata.type"] == MSOdataType.GROUP:
+                group_queue.append(member["id"])
+
+    return user_ids
+
+
+def get_group_members(group_id, token):
+    endpoint = f"https://graph.microsoft.com/v1.0/groups/{group_id}/members?$select=id"
+    headers = {'Authorization': 'Bearer ' + token}
+    response = requests.get(endpoint, headers=headers)
+    response.raise_for_status()
+    return response.json()
