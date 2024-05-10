@@ -6,7 +6,7 @@ from corehq.apps.app_execution.api import execute_workflow
 from corehq.apps.app_execution.data_model import EXAMPLE_WORKFLOW
 from corehq.apps.app_execution.exceptions import AppExecutionError, FormplayerException
 from corehq.apps.app_execution.forms import AppWorkflowConfigForm
-from corehq.apps.app_execution.models import AppWorkflowConfig
+from corehq.apps.app_execution.models import AppExecutionLog, AppWorkflowConfig
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqadmin.views import get_hqadmin_base_context
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -75,9 +75,13 @@ def test_workflow(request, pk):
             execute_workflow(session, config.workflow)
         except (AppExecutionError, FormplayerException) as e:
             context["error"] = str(e)
+            context["success"] = False
+        else:
+            context["success"] = True
 
         context["result"] = True
-        context["log"] = session.log.getvalue()
+        context["output"] = session.log.getvalue()
+        context["workflow_json"] = config.workflow_json
 
     return render(request, "app_execution/workflow_test.html", context)
 
@@ -98,3 +102,20 @@ def _get_context(request, title, url, add_parent=False, **kwargs):
         "section": {"page_name": "Admin", "url": reverse("default_admin_report")},
     })
     return {**context, **kwargs}
+
+
+@require_superuser_or_contractor
+@use_bootstrap5
+def workflow_log(request, pk):
+    log = get_object_or_404(AppExecutionLog, pk=pk)
+    return render(
+        request, "app_execution/workflow_log.html",
+        _get_context(
+            request,
+            f"Workflow Log: {log.workflow.name}",
+            reverse("app_execution:workflow_log", args=[pk]),
+            add_parent=True,
+            log=log,
+            workflow=log.workflow.workflow_json
+        )
+    )
