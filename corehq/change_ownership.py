@@ -14,7 +14,8 @@ from corehq.form_processor.models import CommCareCase
 from corehq.util.log import with_progress_bar
 
 current_time = datetime.now().time()
-success_case_log_file_path = os.path.expanduser(f'~/script_success_{current_time}.log') # Use this if we ever need to rollback changes
+# TODO: Need to incorporate a format for success logs to make it easy to reverse
+success_case_log_file_path = os.path.expanduser(f'~/script_success_{current_time}.log')  # Use this if we ever need to rollback changes
 skipped_log_file_path = os.path.expanduser(f'~/script_skipped_{current_time}.log')
 error_log_file_path = os.path.expanduser(f'~/script_error_{current_time}.log')
 
@@ -28,6 +29,7 @@ class Updater(object):
     }
 
     def write_to_log(self, file_path, ids, message=''):
+        # TODO: Add ability to write a reverse ID for reversing action
         with open(file_path, 'a') as log:
             for id in ids:
                 log.write(
@@ -43,6 +45,8 @@ class UserUpdater(Updater):
     user_type_prop_name = 'usertype'
 
     def start(self):
+        # TODO: Implement code to reverse actions if needed
+
         print("---MOVING MOBILE WORKER LOCATIONS---")
         users = CommCareUser.by_domain(self.domain)
         user_count = len(users)
@@ -121,7 +125,10 @@ class CaseUpdater(Updater):
         )
 
     def start(self):
+        # TODO: Implement code to reverse actions if needed
+
         print("---MOVING CASE OWNERSHIP---")
+        # TODO: Look into paginating this
         case_ids = (
             CaseSearchES()
             .domain(self.domain)
