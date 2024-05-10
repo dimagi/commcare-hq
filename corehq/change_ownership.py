@@ -113,6 +113,27 @@ class UserUpdater(Updater):
 
 class CaseUpdater(Updater):
     device_id = 'system'
+    case_types = [
+        'menage',
+        'membre',
+        'seance_educative',
+        'fiche_pointage',
+    ]
+
+    def _fetch_case_ids(self):
+        query = Q(domain=self.domain) & Q(type__in=self.case_types)
+        for row in paginate_query_across_partitioned_databases(CommCareCase, query, values=['case_id'], load_source='all_case_ids'):
+            yield row[0]
+
+    def store_all_case_ids(self):
+        """
+        Fetch all relevant case IDs and store them in a file for later processing.
+        This will be run once at the start so that we have a list of all case IDs
+        to process. We will get IDs from this file in chunks, and won't rely on fetching
+        all case IDs through ES.
+        """
+        for id in self._fetch_case_ids():
+            self.write_to_log(all_case_ids_log_file_path, [id])
 
     def _submit_cases(self, case_blocks):
         submit_case_blocks(
@@ -125,7 +146,7 @@ class CaseUpdater(Updater):
         # TODO: Implement code to reverse actions if needed
 
         print("---MOVING CASE OWNERSHIP---")
-        # TODO: Look into paginating this
+        # TODO: Look into fetching chunks from all_cases file. Will need to compare with success_file to skip ones that are done
         case_ids = (
             CaseSearchES()
             .domain(self.domain)
