@@ -1,6 +1,5 @@
 import logging
 import time
-import gevent
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -128,12 +127,8 @@ class ESSyncUtil:
 
         self.perform_cleanup(adapter)
 
-        greenlets = gevent.joinall([
-            gevent.spawn(adapter.count, {}),
-            gevent.spawn(adapter.secondary.count, {})
-        ])
-        primary_count, secondary_count = [g.get() for g in greenlets]
-
+        primary_count = adapter.count({})
+        secondary_count = adapter.secondary.count({})
         print(f"\nDoc Count In Old Index '{adapter.primary.index_name}' - {primary_count}")
         print(f"\nDoc Count In New Index '{adapter.secondary.index_name}' - {secondary_count}\n\n")
 
