@@ -15,11 +15,24 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 @require_superuser_or_contractor
 @use_bootstrap5
 def workflow_list(request):
+    workflows = AppWorkflowConfig.objects.all()
+    _augment_with_logs(workflows)
     context = _get_context(
         request, "Automatically Executed App Workflows", reverse("app_execution:workflow_list"),
-        workflows=AppWorkflowConfig.objects.all()
+        workflows=workflows
     )
     return render(request, "app_execution/workflow_list.html", context)
+
+
+def _augment_with_logs(workflows):
+    """Add log records to each workflow object. Always at 10 even if there are less than 10 logs.
+    """
+    for workflow in workflows:
+        log_status = [{}] * 10
+        logs = AppExecutionLog.objects.filter(workflow=workflow).order_by("-started")[:10]
+        for i, log in enumerate(logs):
+            log_status[9 - i] = {"success": log.success, "id": log.id}
+        workflow.last_n = log_status
 
 
 @require_superuser_or_contractor
