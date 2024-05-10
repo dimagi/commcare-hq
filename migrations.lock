@@ -111,6 +111,8 @@ accounting
  0089_dedupe_priv
  0090_custom_domain_alerts_priv
  0091_remove_custom_banner_alerts_feature_flag
+ 0092_revert_application_error_report_priv
+ 0093_defaultproductplan_is_annual_plan
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -126,6 +128,9 @@ api
  0002_alter_permissions
  0003_populate_apiuser
  0004_rename_apiuser
+app_execution
+ 0001_initial
+ 0002_alter_appworkflowconfig_unique_together
 app_manager
  0001_linked_app_domain
  0002_latestenabledbuildprofiles
@@ -223,6 +228,7 @@ case_search
  0010_casesearchconfig_synchronous_web_apps
  0011_domainsnotincasesearchindex
  0012_casesearchconfig_sync_cases_on_form_entry
+ 0013_casesearchconfig_fuzzy_prefix_length
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
@@ -413,6 +419,9 @@ es
  0006_verify_es2_indices_reindexed
  0007_init_indices_for_fresh_es_5
  0008_add_doc_id_to_all_mappings
+ 0009_add_indices_for_reindex_in_es5
+ 0010_delete_reverted_indices
+ 0011_add_indices_for_es5_reindex
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -670,6 +679,7 @@ locations
  0018_auto_20200430_1601
  0019_auto_20200924_1753
  0020_delete_locationrelation
+ 0021_add_fixture_queryset_case_sync_restriction
 mobile_auth
  0001_initial
  0002_delete_sqlmobileauthkeyrecord
@@ -804,6 +814,7 @@ repeaters
  0006_int_state_add_next_check_rm_repeater_id
  0007_lengthen_payload_id
  0008_sqlrepeatrecords
+ 0009_add_domain_to_indexes
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -1205,6 +1216,11 @@ users
  0056_add_manage_domain_alerts_permission
  0057_populate_sql_user_data
  0058_createprofileanduserdata_copylocation
+ 0059_copy_transient_invitation_supply_point
+ 0060_invitations_addtableau_roles_and_groupids
+ 0061_auto_20240423_0802
+ 0062_add_web_apps_groups_permission_flag
+ 0063_rename_location_invitation_primary_location_and_more
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

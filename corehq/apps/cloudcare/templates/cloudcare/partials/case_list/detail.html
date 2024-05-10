@@ -1,0 +1,34 @@
+{% load i18n %}
+
+<script type="text/template" id="case-view-list-detail-template">
+  <div class="module-case-list-container">
+    <div class="module-case-list-table-container">
+      <table class="table module-table module-table-case-list">
+        <thead>
+        <tr>
+          <% _.each(headers, function(header, index) { %>
+          <% if (!(styles[index].widthHint === 0)) { %>
+          <th class="module-case-list-header"> <%= header %></th>
+          <% } %>
+          <% }); %>
+        </tr>
+        </thead>
+        <% if (hasNoItems) { %>
+        <tbody>
+        <tr>
+          <td class="module-case-list-column module-case-list-column-empty" colspan="<%-headers.length%>">
+            <div class="alert alert-info">{% trans "List is empty." %}</div>
+          </td>
+        </tr>
+        </tbody>
+        <% } %>
+        <tbody class="wrapper js-case-container">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</script>
+
+<script type="text/template" id="case-view-tile-detail-template">
+  <section class="js-case-container clearfix list-cell-container-style"></section>
+</script>

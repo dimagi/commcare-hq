@@ -11,6 +11,7 @@ from memoized import memoized
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
 
+from corehq import toggles
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.groups import GroupES
@@ -89,9 +90,10 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         base_queryset = MALTRow.objects.filter(
             domain_name=domain,
             month=month,
-            user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
             user_id__in=active_not_deleted_users,
         )
+        if not toggles.WEB_USERS_IN_REPORTS.enabled(domain):
+            base_queryset = base_queryset.filter(user_type__in=['CommCareUser', 'CommCareUser-Deleted'])
         if selected_users:
             base_queryset = base_queryset.filter(
                 user_id__in=selected_users,
@@ -264,7 +266,7 @@ def build_worksheet(title, headers, rows):
 class ProjectHealthDashboard(ProjectReport):
     slug = 'project_health'
     name = gettext_lazy("Project Performance")
-    report_template_path = "reports/async/project_health_dashboard.html"
+    report_template_path = "reports/async/bootstrap3/project_health_dashboard.html"
     description = gettext_lazy("A summary of the overall health of your project"
                                " based on how your users are doing over time.")
 
@@ -281,7 +283,7 @@ class ProjectHealthDashboard(ProjectReport):
     @memoized
     def template_report(self):
         if self.is_rendered_as_email:
-            self.report_template_path = "reports/project_health/project_health_email.html"
+            self.report_template_path = "reports/project_health/bootstrap3/project_health_email.html"
         return super(ProjectHealthDashboard, self).template_report
 
     @use_nvd3

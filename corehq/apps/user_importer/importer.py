@@ -2,7 +2,7 @@ import copy
 import logging
 import string
 import random
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from datetime import datetime
 from corehq.util.soft_assert.api import soft_assert
 
@@ -318,9 +318,11 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
-def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, location_id,
-                                     user_change_logger=None, send_email=True):
-    # Preparation for location to replace supply_point
+def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, primary_location_id=None,
+                                    assigned_location_ids=None, profile=None, user_change_logger=None,
+                                    send_email=True):
+    if assigned_location_ids is None:
+        assigned_location_ids = []
     invite, invite_created = Invitation.objects.update_or_create(
         email=email,
         domain=domain,
@@ -328,11 +330,14 @@ def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_us
         defaults={
             'invited_by': upload_user.user_id,
             'invited_on': datetime.utcnow(),
-            'supply_point': location_id,
-            'location': SQLLocation.by_location_id(location_id),
-            'role': role_qualified_id
+            'primary_location': SQLLocation.by_location_id(primary_location_id),
+            'role': role_qualified_id,
+            'profile': profile
         },
     )
+    assigned_locations = [SQLLocation.by_location_id(assigned_location_id)
+            for assigned_location_id in assigned_location_ids]
+    invite.assigned_locations.set(assigned_locations)
     if invite_created and send_email:
         invite.send_activation_email()
     if invite_created and user_change_logger:
@@ -386,16 +391,6 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
            sets Invitation with the CommCare user's role and primary location
     All changes to users only, are tracked using UserChangeLogger, as an audit trail.
     """
-    # HELPME
-    #
-    # This method has been flagged for refactoring due to its complexity and
-    # frequency of touches in changesets
-    #
-    # If you are writing code that touches this method, your changeset
-    # should leave the method better than you found it.
-    #
-    # Please remove this flag when this method no longer triggers an 'E' or 'F'
-    # classification from the radon code static analysis
     return CCImporter(
         upload_domain, user_specs, upload_user, upload_record_id,
         group_memoizer=group_memoizer,
@@ -408,6 +403,7 @@ class BaseUserRow:
         self.importer = importer
         self.row = row
         self.status_row = {
+            'username': row.get('username'),
             'row': copy.copy(row)
         }
         self.error = None
@@ -487,8 +483,10 @@ class CCUserRow(BaseUserRow):
     def _parse_username(self):
         username = self.row.get('username')
         try:
-            self.column_values['username'] = generate_mobile_username(str(username), self.domain, False) if username else None
-        except ValidationError as e:
+            self.column_values['username'] = (
+                generate_mobile_username(str(username), self.domain, False) if username else None
+            )
+        except ValidationError:
             self.status_row['flag'] = _("Username must not contain blank spaces or special characters.")
             self.column_values['username'] = username
             return False
@@ -527,7 +525,8 @@ class CCUserRow(BaseUserRow):
             "deactivate_after": self.row.get('deactivate_after', None)
         }
 
-        for v in ['is_active', 'is_account_confirmed', 'send_confirmation_email', 'remove_web_user', 'send_confirmation_sms']:
+        for v in ['is_active', 'is_account_confirmed', 'send_confirmation_email',
+                  'remove_web_user', 'send_confirmation_sms']:
             values[v] = spec_value_to_boolean_or_none(self.row, v)
 
         if values["send_confirmation_sms"] and not values["user_id"]:
@@ -625,10 +624,15 @@ class CCUserRow(BaseUserRow):
             check_can_upload_web_users(self.domain, self.importer.upload_user)
             web_user = CouchUser.get_by_username(web_user_username)
             if web_user:
-                web_user_importer = WebUserImporter(self.importer.upload_domain, self.domain, web_user, self.importer.upload_user,
-                                                    is_new_user=False,
-                                                    via=USER_CHANGE_VIA_BULK_IMPORTER,
-                                                    upload_record_id=self.importer.upload_record_id)
+                web_user_importer = WebUserImporter(
+                    upload_domain=self.importer.upload_domain,
+                    user_domain=self.domain,
+                    user=web_user,
+                    upload_user=self.importer.upload_user,
+                    is_new_user=False,
+                    via=USER_CHANGE_VIA_BULK_IMPORTER,
+                    upload_record_id=self.importer.upload_record_id,
+                )
                 user_change_logger = web_user_importer.logger
             else:
                 web_user_importer = None
@@ -647,11 +651,21 @@ class CCUserRow(BaseUserRow):
                 if web_user and not web_user.is_member_of(self.domain) and cv["is_account_confirmed"]:
                     # add confirmed account to domain
                     # role_qualified_id would be present here as confirmed in check_user_role
-                    web_user_importer.add_to_domain(role_qualified_id, self.user.location_id)
+                    web_user_importer.add_to_domain(role_qualified_id, self.user.location_id,
+                                                self.user.assigned_location_ids)
                 elif not web_user or not web_user.is_member_of(self.domain):
-                    create_or_update_web_user_invite(web_user_username, self.domain, role_qualified_id,
-                                                    self.importer.upload_user, self.user.location_id, user_change_logger,
-                                                    send_email=cv["send_confirmation_email"])
+                    profile = None
+                    if cv["profile_name"]:
+                        _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
+                        profile = self.domain_info.profiles_by_name[cv["profile_name"]]
+                    create_or_update_web_user_invite(
+                        web_user_username, self.domain, role_qualified_id, self.importer.upload_user,
+                        self.user.location_id,
+                        assigned_location_ids=self.user.assigned_location_ids,
+                        profile=profile,
+                        user_change_logger=user_change_logger,
+                        send_email=cv["send_confirmation_email"]
+                    )
                 elif web_user.is_member_of(self.domain):
                     # edit existing user in the domain
                     web_user_importer.update_role(role_qualified_id)
@@ -719,9 +733,16 @@ class WebUserRow(BaseUserRow):
                     membership, role_qualified_id, user, web_user_importer
                 )
             else:
+                profile = None
+                if self.column_values["profile_name"]:
+                    _check_profile(self.column_values["profile_name"], self.domain_info.profiles_by_name)
+                    profile = self.domain_info.profiles_by_name[self.column_values["profile_name"]]
                 create_or_update_web_user_invite(
                     user.username, self.domain, role_qualified_id, self.importer.upload_user,
-                    user.location_id, user_change_logger
+                    user.location_id,
+                    assigned_location_ids=user.assigned_location_ids,
+                    profile=profile,
+                    user_change_logger=user_change_logger
                 )
         web_user_importer.save_log()
         self.status_row['flag'] = 'updated'
@@ -770,16 +791,26 @@ class WebUserRow(BaseUserRow):
                 self.check_invitation_status(self.domain, cv['username'])
 
             user_invite_loc_id = None
+            user_invite_locs_ids = []
             if self.domain_info.can_assign_locations and cv['location_codes']:
                 if len(cv['location_codes']) > 0:
                     user_invite_loc = get_location_from_site_code(
                         cv['location_codes'][0], self.domain_info.location_cache
                     )
+                    user_invite_locs_ids = [
+                        get_location_from_site_code(loc, self.domain_info.location_cache).location_id
+                        for loc in cv['location_codes']
+                    ]
                     user_invite_loc_id = user_invite_loc.location_id
-
+            profile = None
+            if cv["profile_name"]:
+                _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
+                profile = self.domain_info.profiles_by_name[cv["profile_name"]]
             create_or_update_web_user_invite(
                 cv['username'], self.domain, self.domain_info.roles_by_name[cv['role']], self.importer.upload_user,
-                user_invite_loc_id
+                user_invite_loc_id,
+                assigned_location_ids=user_invite_locs_ids,
+                profile=profile
             )
             self.status_row['flag'] = 'invited'
 
@@ -816,7 +847,6 @@ class WebImporter:
 
     def run(self):
         ret = {"errors": [], "rows": []}
-        current = 0
         for i, row in enumerate(self.user_specs):
             if self.update_progress:
                 self.update_progress(i)
@@ -1009,3 +1039,10 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         user.save()
         if user_change_logger:
             user_change_logger.add_info(UserChangeMessage.domain_removal(domain))
+
+
+def _check_profile(profile_name, valid_profiles_by_name):
+    if profile_name not in valid_profiles_by_name:
+        raise UserUploadError(_(
+            f"{profile_name} is not a valid profile"
+        ))

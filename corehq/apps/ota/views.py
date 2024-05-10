@@ -16,6 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit import ResourceConflict
+from ddtrace import tracer
 from iso8601 import iso8601
 from looseversion import LooseVersion
 from memoized import memoized
@@ -47,7 +48,7 @@ from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, CASE_SEARCH_TAGS_MAPPING
 from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.auth import formplayer_auth
-from corehq.apps.domain.decorators import check_domain_migration
+from corehq.apps.domain.decorators import check_domain_mobile_access
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import (
     location_safe,
@@ -83,10 +84,11 @@ PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
 
+@tracer.wrap(name="ota.restore")
 @location_safe
 @handle_401_response
 @mobile_auth_or_formplayer
-@check_domain_migration
+@check_domain_mobile_access
 def restore(request, domain, app_id=None):
     """
     We override restore because we have to supply our own
@@ -100,19 +102,21 @@ def restore(request, domain, app_id=None):
     return response
 
 
+@tracer.wrap(name="ota.search")
 @location_safe_bypass
 @csrf_exempt
 @mobile_auth
-@check_domain_migration
+@check_domain_mobile_access
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def search(request, domain):
     return app_aware_search(request, domain, None)
 
 
+@tracer.wrap(name="ota.app_aware_search")
 @location_safe_bypass
 @csrf_exempt
 @mobile_auth
-@check_domain_migration
+@check_domain_mobile_access
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def app_aware_search(request, domain, app_id):
     """
@@ -162,11 +166,12 @@ def _log_search_timing(start_time, request_dict, domain, app_id):
         })
 
 
+@tracer.wrap(name="ota.claim")
 @location_safe_bypass
 @csrf_exempt
 @require_POST
 @mobile_auth
-@check_domain_migration
+@check_domain_mobile_access
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def claim(request, domain):
     """
@@ -485,6 +490,7 @@ def recovery_measures(request, domain, build_id):
     return JsonResponse(response)
 
 
+@tracer.wrap(name="ota.case_fixture")
 @location_safe_bypass
 @csrf_exempt
 @mobile_auth
@@ -560,6 +566,7 @@ def _data_registry_case_fixture(request, domain, app_id, case_types, case_ids, r
     return helper.get_multi_domain_case_hierarchy(request.couch_user, cases)
 
 
+@tracer.wrap(name="ota.case_restore")
 @formplayer_auth
 def case_restore(request, domain, case_id):
     """Restore endpoint used for SMS forms where the 'user' is a case.

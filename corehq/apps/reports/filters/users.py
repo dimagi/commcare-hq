@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy, gettext_noop
 
 from memoized import memoized
 
+from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import filters
@@ -19,7 +20,6 @@ from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
 from corehq.apps.users.util import cached_user_id_to_user_display
 from corehq.const import USER_DATETIME_FORMAT
-from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -44,7 +44,7 @@ class UserTypeFilter(BaseReportFilter):
     # note, don't use this as a guideline for anything.
     slug = "ufilter"
     label = gettext_lazy("User Type")
-    template = "reports/filters/filter_users.html"
+    template = "reports/filters/bootstrap3/filter_users.html"
 
     @property
     def filter_context(self):
@@ -268,6 +268,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             self.utils.user_type_tuple(HQUserType.ACTIVE),
             self.utils.user_type_tuple(HQUserType.DEACTIVATED),
         ]
+        if toggles.WEB_USERS_IN_REPORTS.enabled(self.domain):
+            defaults.append(self.utils.user_type_tuple(HQUserType.WEB))
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
         return defaults
@@ -400,7 +402,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
         group_id_filter = filters.term("__group_ids", group_ids)
 
-        if FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain) and group_ids and location_ids:
+        if toggles.FILTER_ON_GROUPS_AND_LOCATIONS.enabled(domain) and group_ids and location_ids:
             group_and_location_filter = filters.AND(
                 group_id_filter,
                 user_es.location(location_ids),
@@ -450,6 +452,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def for_reporting_group(cls, group_id):
         return {
             cls.slug: 'g__%s' % group_id
+        }
+
+    @classmethod
+    def for_reporting_location(cls, loc_id):
+        return {
+            cls.slug: 'l__%s' % loc_id
         }
 
 
@@ -525,7 +533,9 @@ class UserPropertyFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        from corehq.apps.reports.standard.users.reports import UserHistoryReport
+        from corehq.apps.reports.standard.users.reports import (
+            UserHistoryReport,
+        )
         properties = UserHistoryReport.get_primary_properties(self.domain)
         properties.pop("username", None)
         return list(properties.items())

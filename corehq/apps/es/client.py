@@ -22,6 +22,7 @@ from corehq.util.es.elasticsearch import (
     RequestError,
     bulk,
 )
+from corehq.toggles import ES_QUERY_PREFERENCE
 from corehq.util.global_request import get_request_domain
 from corehq.util.metrics import (
     limit_domains,
@@ -744,12 +745,19 @@ class ElasticDocumentAdapter(BaseAdapter):
         """Perform a "low-level" search and return the raw result. This is
         split into a separate method for ease of testing the result format.
         """
+        domain = get_request_domain()
+        if ES_QUERY_PREFERENCE.enabled(domain):
+            # Use domain as key to route to a consistent set of shards.kwargs
+            # See https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-request-preference.html
+            if 'preference' not in kw:
+                kw['preference'] = domain
+
         with metrics_histogram_timer(
                 'commcare.elasticsearch.search.timing',
                 timing_buckets=(1, 10),
                 tags={
                     'index': self.canonical_name,
-                    'domain': limit_domains(get_request_domain()),
+                    'domain': limit_domains(domain),
                 },
         ):
             return self._es.search(self.index_name, self.type, query, **kw)

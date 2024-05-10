@@ -196,6 +196,8 @@ class RepeaterSuperProxy(models.Model):
         self.clear_caches()
         self.repeater_type = self._repeater_type
         self.name = self.name or self.connection_settings.name
+        if 'update_fields' in kwargs:
+            kwargs['update_fields'].extend(['repeater_type', 'name'])
         return super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -1410,9 +1412,8 @@ class SQLRepeatRecord(SyncSQLToCouchMixin, models.Model):
     class Meta:
         db_table = 'repeaters_repeatrecord'
         indexes = [
-            models.Index(fields=['domain']),
+            models.Index(fields=['domain', 'registered_at']),
             models.Index(fields=['payload_id']),
-            models.Index(fields=['registered_at']),
             models.Index(
                 name="next_check_not_null",
                 fields=["next_check"],

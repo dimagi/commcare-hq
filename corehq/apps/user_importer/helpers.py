@@ -308,13 +308,18 @@ def _fmt_phone(phone_number):
 
 
 class WebUserImporter(BaseUserImporter):
-    def add_to_domain(self, role_qualified_id, location_id):
-        self.user.add_as_web_user(self.user_domain, role=role_qualified_id, location_id=location_id)
+    def add_to_domain(self, role_qualified_id, primary_location_id, assigned_location_ids):
+        self.user.add_as_web_user(self.user_domain, role=role_qualified_id,
+                                primary_location_id=primary_location_id,
+                                assigned_location_ids=assigned_location_ids)
         self.role_updated = bool(role_qualified_id)
 
         self.logger.add_info(UserChangeMessage.added_as_web_user(self.user_domain))
-        if location_id:
+        if primary_location_id:
             self._log_primary_location_info()
+        if assigned_location_ids:
+            assigned_locations = self.user.get_sql_locations(self.user_domain)
+            self.logger.add_info(UserChangeMessage.assigned_locations_info(assigned_locations))
 
     def _log_primary_location_info(self):
         primary_location = self.user.get_sql_location(self.user_domain)

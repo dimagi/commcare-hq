@@ -199,6 +199,7 @@ class TestRepeatRecordCouchToSQLDiff(BaseRepeatRecordCouchToSQLTest):
 
     def test_diff_attempts(self):
         doc, obj = self.create_repeat_record()
+        doc["_rev"] = "v0-fake"
         doc["attempts"][0]["succeeded"] = True
         doc["attempts"][0]["failure_reason"] = None
         doc["attempts"][1]["datetime"] = "2020-01-01T00:00:00.000000Z"
@@ -211,12 +212,14 @@ class TestRepeatRecordCouchToSQLDiff(BaseRepeatRecordCouchToSQLTest):
                 "attempts[0].state: couch value State.Success != sql value State.Fail",
                 "attempts[0].message: couch value '' != sql value 'something bad happened'",
                 f"attempts[1].created_at: couch value {couch_datetime} != sql value {sql_created_at}",
+                "couch['_rev']: v0-fake",
             ]
         else:
             expected_diff = [
                 "attempts[0].state: couch value <State.Success: 4> != sql value <State.Fail: 2>",
                 "attempts[0].message: couch value '' != sql value 'something bad happened'",
                 f"attempts[1].created_at: couch value {couch_datetime} != sql value {sql_created_at}",
+                "couch['_rev']: v0-fake",
             ]
         self.assertEqual(self.diff(doc, obj), expected_diff)
 

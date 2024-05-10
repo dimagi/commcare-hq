@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends 'reports/filters/bootstrap3/base.html' %}
++{% extends 'reports/filters/bootstrap5/base.html' %}
+ {% load hq_shared_tags %}
+ {% block filter_content %}
+   {% if help_title and help_content %}
+     <div class="row">
+-      <div class="col-xs-11">
++      <div class="col-sm-11">
+   {% endif %}
+       <input id="{{ css_id }}"
+              name="{{ slug }}"
+@@ -18,7 +18,7 @@
+       {% endif %}
+   {% if help_title and help_content %}
+       </div>
+-      <div class="col-xs-1">
++      <div class="col-sm-1">
+                 <span class="hq-help-template"
+                       data-title="{{ help_title }}"
+                       data-content="{{ help_content }}"
