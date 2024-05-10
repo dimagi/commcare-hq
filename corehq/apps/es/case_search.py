@@ -33,7 +33,7 @@ from corehq.util.dates import iso_string_to_datetime
 
 from . import filters, queries
 from .cases import case_adapter
-from .client import ElasticDocumentAdapter, create_document_adapter
+from .client import BulkActionItem, ElasticDocumentAdapter, create_document_adapter
 from .const import (
     HQ_CASE_SEARCH_INDEX_CANONICAL_NAME,
     HQ_CASE_SEARCH_INDEX_NAME,
@@ -174,6 +174,16 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         doc['_id'] = case_dict['_id']
         return super()._from_dict(doc)
 
+    def index(self, doc, refresh=False):
+        adapter = multiplex_to_adapter(doc['domain'])
+        if adapter:
+            # If we get a valid adapter then we multiplex writes
+            doc_obj = BulkActionItem.index(doc)
+            payload = [self._render_bulk_action(doc_obj), adapter._render_bulk_action(doc_obj)]
+            return self._bulk(payload, refresh=refresh)
+        # If adapter is None then simply index the docs
+        super().index(doc, refresh=refresh)
+
 
 case_search_adapter = create_document_adapter(
     ElasticCaseSearch,
@@ -181,6 +191,12 @@ case_search_adapter = create_document_adapter(
     case_adapter.type,
     secondary=HQ_CASE_SEARCH_SECONDARY_INDEX_NAME,
 )
+
+
+def multiplex_to_adapter(domain):
+    # Check if domain needs to multiplex writes
+    # And a util will return cname of the adapter where writes should be muliplexed
+    return None
 
 
 def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None,
