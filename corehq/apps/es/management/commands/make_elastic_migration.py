@@ -125,6 +125,7 @@ class Command(makemigrations.Command):
                     adapter.analysis,
                     adapter.settings_key,
                     es_versions=self.target_versions,
+                    creation_checks=True,
                 ))
             # build 'update' operations
             for adapter, properties in updates:
