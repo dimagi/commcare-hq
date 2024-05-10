@@ -1619,10 +1619,6 @@ crypto-js@4.2.0:
   resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.2.0.tgz#4d931639ecdfd12ff80e8186dba6af2c2e856631"
   integrity sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==
 
-css-grid-polyfill-binaries@FremyCompany/css-grid-polyfill-binaries#1.1.2:
-  version "0.0.0"
-  resolved "https://codeload.github.com/FremyCompany/css-grid-polyfill-binaries/tar.gz/d2414403355d7f49b10a6fa4a52c850972c5ab1d"
-
 cssesc@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/cssesc/-/cssesc-3.0.0.tgz#37741919903b868565e1c09ea747445cd18983ee"

@@ -1,0 +1,81 @@
+{% load i18n %}
+{% for question in questions %}
+  {% ifchanged %}
+    {% if question.type == 'DataBindOnly' %}
+      <tr class="info form-data-hidden-values">
+        <td colspan="2">
+          <strong>{% trans "Hidden Values (Form Calculations)" %}</strong>
+        </td>
+      </tr>
+    {% elif not question.type and not question.children %}
+      <tr class="info">
+        <td colspan="2">
+          <strong>{% trans "Unrecognized Data" %}</strong>
+        </td>
+      </tr>
+    {% endif %}
+  {% endifchanged %}
+  {% ifchanged %}
+    {% if question.response == None %}
+      <tr class="form-data-question form-data-skipped-spacer muted table-condensed">
+        <th colspan="2">{% trans '…' %}</th>
+      </tr>
+    {% endif %}
+  {% endifchanged %}
+  <tr class="form-data-question {% if question.response == None %}text-body-secondary form-data-skipped{% endif %}">
+    {% if question.children %}
+      {% if question.type %}
+        <td colspan="2">
+        <table class="table table-bordered form-data-group-table">
+        <tr class="form-data-group-spacer">
+          <th colspan="2">
+            {% include 'reports/form/partials/single_form_label.html' %}
+          </th>
+        </tr>
+      {% endif %}
+    {% with template_name='reports/form/partials/bootstrap5/single_form_tree.html' questions=question.children %}
+      {% include template_name %}
+    {% endwith %}
+    {% if question.type %}
+      <tr class="form-data-group-spacer"><th colspan="2"></th></tr>
+      </table>
+      </td>
+    {% else %}
+      {# This is for separators between repeat chunks #}
+      {% if not forloop.last %}
+        <tr class="form-data-group-spacer"><th colspan="2"></th></tr>
+      {% endif %}
+    {% endif %}
+    {% else %}
+      <td class="span6" title="{{ question.value }}">
+        {% include 'reports/form/partials/single_form_label.html' %}
+      </td>
+      <td class="span6" title="{{ question.get_formatted_response }}">
+        {% if question.options %}
+          <div class="form-data-readable">
+            {# Display all selected option labels #}
+            {% for option in question.options %}
+              {% if option.value in question.response.split %}
+                {{ option.label|linebreaksbr }}
+              {% endif %}
+            {% endfor %}
+
+            {# Fall back to raw data for any unknown responses #}
+            {% for response in question.response.split %}
+              {% if response not in question.option_values %}
+                {{ response }}
+              {% endif %}
+            {% endfor %}
+          </div>
+          <div class="form-data-raw">
+            {% if question.response %}{{ question.response|linebreaksbr }}{% endif %}
+          </div>
+        {% else %}
+          <div class="form-data-readable form-data-raw">
+            {% if question.response %}{{ question.get_formatted_response|linebreaksbr }}{% endif %}
+          </div>
+        {% endif %}
+      </td>
+    {% endif %}
+  </tr>
+{% endfor %}

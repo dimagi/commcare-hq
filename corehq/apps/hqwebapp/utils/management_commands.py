@@ -24,3 +24,7 @@ def select_option_from_prompt(prompt, options, default=None):
 def get_confirmation(prompt, default=None):
     option = select_option_from_prompt(prompt, ['y', 'n'], default=default)
     return option == 'y'
+
+
+def enter_to_continue():
+    input("\nENTER to continue...")

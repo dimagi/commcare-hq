@@ -20,7 +20,6 @@ hqDefine("cloudcare/js/formplayer/main", [
             username: initialPageData.get('username'),
             domain: initialPageData.get('domain'),
             formplayer_url: initialPageData.get('formplayer_url'),
-            gridPolyfillPath: initialPageData.get('grid_polyfill_path'),
             debuggerEnabled: initialPageData.get('debugger_enabled'),
             singleAppMode: initialPageData.get('single_app_mode'),
             environment: initialPageData.get('environment'),

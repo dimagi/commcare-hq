@@ -7,11 +7,9 @@ from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser
-from corehq.const import OPENROSA_VERSION_2
-from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'test-redirect-url'
@@ -57,8 +55,7 @@ class TestRedirectUrlCommand(TestCase):
         stdout = self._call_redirect_url('--set', 'https://example.com/')
         self.assertEqual(
             stdout,
-            'Form submissions and syncs are redirected to '
-            'https://example.com/\n'
+            'App updates are redirected to https://example.com/\n'
         )
 
     def test_unset_url_data_migration_not_enabled(self):
@@ -77,8 +74,7 @@ class TestRedirectUrlCommand(TestCase):
             stdout = self._call_redirect_url()
             self.assertEqual(
                 stdout,
-                'Form submissions and syncs are redirected to '
-                'https://example.com/\n'
+                'App updates are redirected to https://example.com/\n'
             )
 
     @flag_enabled('DATA_MIGRATION')
@@ -87,8 +83,7 @@ class TestRedirectUrlCommand(TestCase):
             stdout = self._call_redirect_url()
             self.assertEqual(
                 stdout,
-                'Form submissions and syncs are redirected to '
-                'https://example.com/\n'
+                'App updates are redirected to https://example.com/\n'
             )
 
     def test_return_unset_url_data_migration_not_enabled(self):
@@ -112,64 +107,82 @@ class TestRedirectUrlCommand(TestCase):
 
 class TestCheckDomainMigration(TestCase):
     """
-    Tests the ``receiver_post`` view, which is wrapped with the
-    ``corehq.apps.domain.decorators.check_domain_migration`` decorator.
+    Tests the ``download_odk_media_profile`` view, which is wrapped with
+    the ``corehq.apps.app_manager.decorators.check_redirect`` decorator.
 
-    All relevant views are protected by that decorator during and after
-    data migration. These tests verify that the decorator returns a 302
-    redirect response when the domain's ``redirect_url`` is set, and a
-    503 service unavailable response when it is not set.
+    All relevant views are protected by that decorator. These tests
+    verify that the decorator returns a 302 redirect response when the
+    domain's ``redirect_url`` is set, and a normal response when it is
+    not set.
     """
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(DOMAIN)
-        cls.user = WebUser.create(
-            None, 'admin', 'Passw0rd!',
-            None, None,
-        )
-        cls.user.add_domain_membership(DOMAIN, is_admin=True)
-        cls.user.save()
+        cls.app = Application.new_app(DOMAIN, "TestApp")
+        cls.app.save()
         cls.client = Client()
-        cls.client.login(username='admin', password='Passw0rd!')
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(DOMAIN, deleted_by=None)
         cls.domain_obj.delete()
         super().tearDownClass()
 
-    @flag_enabled('DATA_MIGRATION')
     def test_redirect_response(self):
         with _set_redirect_url():
-            response = self._submit_form()
+            response = self._download_odk_media_profile()
             self.assertEqual(response.status_code, 302)
             self.assertEqual(
                 response.url,
-                'https://example.com/a/test-redirect-url/receiver/'
+                f'https://example.com/a/{DOMAIN}/apps/download/{self.app._id}'
+                '/media_profile.ccpr?latest=true'
+                f'&username=user%40{DOMAIN}.commcarehq.org'
             )
 
+    def test_normal_response(self):
+        response = self._download_odk_media_profile()
+        self.assertEqual(response.status_code, 200)
+        self.assertRegex(
+            response.content.decode('utf-8'),
+            r"^<\?xml version='1.0' encoding='UTF-8'\?>"
+        )
+
     @flag_enabled('DATA_MIGRATION')
-    def test_service_unavailable_response(self):
-        response = self._submit_form()
+    def test_data_migration_doesnt_block_updates(self):
+        response = self._download_odk_media_profile()
+        self.assertEqual(response.status_code, 200)
+        self.assertRegex(
+            response.content.decode('utf-8'),
+            r"^<\?xml version='1.0' encoding='UTF-8'\?>"
+        )
+
+    @flag_enabled('DISABLE_MOBILE_ENDPOINTS')
+    def test_disable_endpoints_blocks_updates(self):
+        response = self._download_odk_media_profile()
         self.assertEqual(response.status_code, 503)
         self.assertEqual(
             response.content.decode('utf-8'),
-            'Service Temporarily Unavailable',
+            'Service Temporarily Unavailable'
         )
 
-    def _submit_form(self):
-        form = """<?xml version='1.0' ?>
-        <form>Not a real form</form>
-        """
-        with StringIO(form) as f:
-            response = self.client.post(
-                reverse("receiver_post", args=[DOMAIN]),
-                {"xml_submission_file": f},
-                **{OPENROSA_VERSION_HEADER: OPENROSA_VERSION_2}
+    @flag_enabled('DISABLE_MOBILE_ENDPOINTS')
+    def test_redirect_overrides_disable(self):
+        with _set_redirect_url():
+            response = self._download_odk_media_profile()
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(
+                response.url,
+                f'https://example.com/a/{DOMAIN}/apps/download/{self.app._id}'
+                '/media_profile.ccpr?latest=true'
+                f'&username=user%40{DOMAIN}.commcarehq.org'
             )
-        return response
+
+    def _download_odk_media_profile(self):
+        return self.client.get(reverse(
+            'download_odk_media_profile',
+            args=[DOMAIN, self.app._id],
+        ), {'latest': 'true', 'username': f'user@{DOMAIN}.commcarehq.org'})
 
 
 @contextmanager

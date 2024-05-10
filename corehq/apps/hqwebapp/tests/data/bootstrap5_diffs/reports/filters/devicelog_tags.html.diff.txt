@@ -1,0 +1,28 @@
+--- 
++++ 
+@@ -1,11 +1,11 @@
+-{% extends 'reports/filters/bootstrap3/base.html' %}
++{% extends 'reports/filters/bootstrap5/base.html' %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ {% block filter_content %}
+   {% if errors_only %}
+-    <div class="checkbox">
++    <div class="checkbox">  {# todo B5: css:checkbox #}
+       <label for="{{ errors_css_id }}">
+-        <input type="checkbox"
++        <input type="checkbox"  {# todo B5: css:checkbox #}
+                id="{{ errors_css_id }}"
+                value="True"
+                name="{{ errors_only_slug }}"
+@@ -14,8 +14,8 @@
+     </div>
+   {% endif %}
+   <select multiple="multiple"
+-          style="height:300px;{% if errors_only %} margin-top: 10px;{% endif %}"
+-          class="form-control{% if errors_only %} hide{% endif %} report-filter-logtag"
++          style="height:300px;{% if errors_only %} margin-top: 10px;{% endif %}"  {# todo B5: inline style #}
++          class="form-control{% if errors_only %} d-none{% endif %} report-filter-logtag"
+           {% if not errors_only %}name="{{ slug }}"{% endif %}
+           data-default-on='{{ default_on|JSON }}'
+           data-errors-only='{{ errors_only|JSON }}'>

@@ -22,7 +22,10 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     TRACKED_JS_FOLDERS,
     get_app_name_and_slug,
 )
-from corehq.apps.hqwebapp.utils.management_commands import get_confirmation
+from corehq.apps.hqwebapp.utils.management_commands import (
+    get_confirmation,
+    enter_to_continue,
+)
 
 DIFF_CONFIG_FILE = "apps/hqwebapp/tests/data/bootstrap5_diff_config.json"
 DIFF_STORAGE_FOLDER = "apps/hqwebapp/tests/data/bootstrap5_diffs/"
@@ -154,6 +157,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(
                 "You have un-committed changes. Please commit these changes before proceeding...\n"
             ))
+            enter_to_continue()
 
         if update_app:
             self.update_configuration_file_for_app(update_app)

@@ -12,6 +12,48 @@ PARENT_PATHS = {
     "casexml": COREHQ_BASE_DIR / "ex-submodules/casexml/apps",
     "ex-submodules": COREHQ_BASE_DIR / "ex-submodules",
 }
+GRUNTFILE_PATH = COREHQ_BASE_DIR.parent / "Gruntfile.js"
+IGNORED_PATHS_BY_APP = {
+    "hqwebapp": [
+        "hqwebapp/js/resource_versions.js",
+        "hqwebapp/base.html",
+        "hqwebapp/base_mobile.html",
+        "hqwebapp/includes/inactivity_modal_data.html",
+        "hqwebapp/includes/core_libraries.html",
+        "hqwebapp/includes/ui_element_js.html",
+        "hqwebapp/partials/requirejs.html",
+        # these need to be explicitly specified since we DO want to migrate
+        # hqwebapp/crispy/single_crispy_form.html
+        "hqwebapp/crispy/checkbox_widget.html",
+        "hqwebapp/crispy/form_actions.html",
+        "hqwebapp/crispy/text_field.html",
+        "hqwebapp/crispy/accordion_group.html",
+        "hqwebapp/crispy/static_field.html",
+        "hqwebapp/crispy/radioselect.html",
+        "hqwebapp/crispy/multi_field.html",
+        "hqwebapp/crispy/field_with_help_bubble.html",
+        "hqwebapp/crispy/field_with_addons.html",
+        "hqwebapp/crispy/field/field_with_text.html",
+        "hqwebapp/crispy/multi_inline_field.html",
+        "hqwebapp/crispy/field/hidden_with_errors.html",
+        "hqwebapp/js/daterangepicker.config.js",  # Todo B5: delete me after migration
+    ]
+}
+
+
+def is_split_path(path):
+    path = str(path)
+    return "/bootstrap3/" in path or "/bootstrap5/" in path
+
+
+def is_ignored_path(app_name, path):
+    path = str(path)
+    ignored_paths = IGNORED_PATHS_BY_APP.get(app_name, [])
+    return any(ignored_path in path for ignored_path in ignored_paths)
+
+
+def is_bootstrap5_path(path):
+    return '/bootstrap5/' in str(path)
 
 
 def get_app_name_and_slug(app_name):

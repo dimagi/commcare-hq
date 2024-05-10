@@ -10,7 +10,7 @@ from corehq.util import reverse
 from corehq.util.log import send_HTML_email
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0))
+@periodic_task(run_every=crontab())  # run every minute
 def run_app_workflows():
 
     for config in AppWorkflowConfig.objects.get_due():

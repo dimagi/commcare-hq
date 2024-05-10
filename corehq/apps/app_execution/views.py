@@ -4,7 +4,7 @@ from django.urls import reverse
 from corehq.apps.app_execution import const
 from corehq.apps.app_execution.api import execute_workflow
 from corehq.apps.app_execution.data_model import EXAMPLE_WORKFLOW
-from corehq.apps.app_execution.exceptions import AppExecutionError
+from corehq.apps.app_execution.exceptions import AppExecutionError, FormplayerException
 from corehq.apps.app_execution.forms import AppWorkflowConfigForm
 from corehq.apps.app_execution.models import AppWorkflowConfig
 from corehq.apps.domain.decorators import require_superuser_or_contractor
@@ -73,7 +73,7 @@ def test_workflow(request, pk):
         session = config.get_formplayer_session()
         try:
             execute_workflow(session, config.workflow)
-        except AppExecutionError as e:
+        except (AppExecutionError, FormplayerException) as e:
             context["error"] = str(e)
 
         context["result"] = True

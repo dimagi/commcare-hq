@@ -66,7 +66,8 @@ def data_dictionary_json(request, domain, case_type_name=None):
         queryset = queryset.filter(is_deprecated=False)
     queryset = queryset.prefetch_related(
         Prefetch('groups', queryset=CasePropertyGroup.objects.order_by('index')),
-        Prefetch('properties', queryset=CaseProperty.objects.order_by('group_id', 'index')),
+        # order by pk for properties with same index, likely for automatically added properties
+        Prefetch('properties', queryset=CaseProperty.objects.order_by('group_id', 'index', 'pk')),
         Prefetch('properties__allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
@@ -130,7 +131,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                 "properties": grouped_properties.get(group.id, [])
             })
 
-        # Aggregate properties that dont have a group
+        # Aggregate properties that don't have a group
         p["groups"].append({
             "name": "",
             "properties": grouped_properties.get(None, [])
@@ -448,7 +449,7 @@ class DataDictionaryView(BaseProjectDataView):
 
 class UploadDataDictionaryView(BaseProjectDataView):
     page_title = _("Upload Data Dictionary")
-    template_name = "hqwebapp/bulk_upload.html"
+    template_name = "hqwebapp/bootstrap3/bulk_upload.html"
     urlname = 'upload_data_dict'
 
     @method_decorator(login_and_domain_required)

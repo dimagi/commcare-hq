@@ -1,15 +1,15 @@
-@form-text-indent: 23px;
-@form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fit
-@group-indent: 15px;
+$form-text-indent: 23px;
+$form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fit
+$group-indent: 15px;
 
 .form-container {
   background-color: white;
-  .box-shadow(0 0 10px 2px rgba(0,0,0,.1));
+  box-shadow: 0 0 10px 2px rgba(0,0,0,.1);
   margin-bottom: 2rem;
-  font-size: @form-text-size;   // Don't overshadow inputs
+  font-size: $form-text-size;   // Don't overshadow inputs
 
   .page-header h1 {
-    padding-left: @form-text-indent - 8px;
+    padding-left: $form-text-indent - 8px;
   }
 
   .controls {
@@ -18,35 +18,27 @@
   }
 
   .form-control {
-    font-size: @form-text-size;
+    font-size: $form-text-size;
   }
 
   .form-actions {
     margin: 30px 0 0 0;
     &.form-group {
-      margin-left: -@form-text-indent;
-      margin-right: -@form-text-indent;
+      margin-left: -$form-text-indent;
+      margin-right: -$form-text-indent;
     }
 
-    background-color: lighten(@cc-brand-hi, 10);
-    .border-bottom-radius(0);
+    background-color: var(--bsprimary-bg-subtle);
 
-    .nonanchored-submit .btn {
+    .submit .btn {
       font-size: 20px;
       padding: 13px 24px;
       .transition(all .5s);
     }
   }
 
-  .anchored-submit {
-    background-color: @call-to-action-low;
-    width: 100vw;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    position: fixed;
-    bottom: 0px;
-    left: 0;
-    z-index: @zindex-formplayer-anchored-submit;
+  .sticky-submit {
+    position: sticky;
   }
 
   // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
@@ -55,8 +47,8 @@
     margin-right: 0px;
   }
   .question-container {
-    padding-left: @form-text-indent;
-    padding-right: @form-text-indent;
+    padding-left: $form-text-indent;
+    padding-right: $form-text-indent;
   }
 
   .form-group {
@@ -68,8 +60,8 @@
   }
 
   .group-body {
-    margin-left: @group-indent;
-    margin-right: @group-indent;
+    margin-left: $group-indent;
+    margin-right: $group-indent;
   }
 
   .gr.panel {
@@ -101,7 +93,7 @@
   }
 
   .panel-body {
-    @media (max-width: @screen-xs-max) {
+    @include media-breakpoint-down(md) {
       padding-left: 0px;
       padding-right: 0px;
     }
@@ -110,19 +102,19 @@
   .stripe-repeats {
     > .row, .panel-body > .children > .row {
       &:nth-of-type(odd) {
-        background-color: @table-bg-accent;
+        background-color: $table-bg-accent;
       }
       &:nth-of-type(even) {
         background-color: white;
       }
       &:hover {
-        background-color: @table-bg-hover;
+        background-color: $table-bg-hover;
       }
     }
   }
 
   .group-border {
-    border: solid 1px @cc-neutral-mid;
+    border: solid 1px $cc-neutral-mid;
     border-radius: 8px;
     margin: 2px;
     padding-top: 5px;
@@ -172,8 +164,8 @@
   }
 
   .form-group.required.on {
-    background-color: @cc-att-neg-hi;
-    border: 10px solid @cc-att-neg-mid;
+    background-color: $cc-att-neg-hi;
+    border: 10px solid $cc-att-neg-mid;
     border-bottom: none;
     padding-top: 10px;
     padding-bottom: 10px;
@@ -193,7 +185,7 @@
   .form-group-required-label.on {
     opacity: 100;
     font-size: 1.6rem;
-    background-color: @cc-att-neg-mid;
+    background-color: $cc-att-neg-mid;
     color: white;
     width: auto;
     line-height: 14px;

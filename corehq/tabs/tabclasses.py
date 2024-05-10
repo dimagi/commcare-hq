@@ -1153,7 +1153,7 @@ class CloudcareTab(UITab):
         return (
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
-            and (self.couch_user.can_access_web_apps() or self.couch_user.is_commcare_user())
+            and (self.couch_user.can_access_any_web_apps(self.domain) or self.couch_user.is_commcare_user())
         )
 
 
@@ -1563,10 +1563,11 @@ class ProjectUsersTab(UITab):
 
     def _web_apps_permissions(self):
         if has_privilege(self._request, privileges.CLOUDCARE) and self.couch_user.is_domain_admin():
-            return {
-                'title': _("Web Apps Permissions"),
-                'url': reverse('cloudcare_app_settings', args=[self.domain]),
-            }
+            if toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled_for_request(self._request):
+                return {
+                    'title': _("Web Apps Permissions"),
+                    'url': reverse('cloudcare_app_settings', args=[self.domain]),
+                }
 
     def _web_users(self):
         if self.couch_user.can_edit_web_users() or self.couch_user.can_view_web_users():
@@ -1839,8 +1840,20 @@ class TranslationsTab(UITab):
             if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
                 items.append((_('Translations'), [
                     {
-                        'url': reverse('app_translations', args=[self.domain]),
-                        'title': _('Manage App Translations')
+                        'url': reverse('create_update_translations', args=[self.domain]),
+                        'title': _('Create or Update Translations')
+                    },
+                    {
+                        'url': reverse('push_translations', args=[self.domain]),
+                        'title': _('Push Translations')
+                    },
+                    {
+                        'url': reverse('pull_translations', args=[self.domain]),
+                        'title': _('Pull Translations')
+                    },
+                    {
+                        'url': reverse('backup_translations', args=[self.domain]),
+                        'title': _('Backup Translations')
                     },
                     {
                         'url': reverse('pull_resource', args=[self.domain]),
@@ -1859,6 +1872,12 @@ class TranslationsTab(UITab):
                         'title': _('Migrate Project')
                     },
                 ]))
+        if self._request.user.is_staff:
+            items.append((_('Translations'), [
+                {'url': reverse('delete_translations', args=[self.domain]),
+                 'title': 'Delete Translations'
+                 }
+            ]))
         return items
 
 
