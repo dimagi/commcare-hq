@@ -208,20 +208,12 @@ class QueryHelper:
     @cached_property
     def config(self):
         try:
-            config = (CaseSearchConfig.objects
-                      .prefetch_related('fuzzy_properties')
-                      .prefetch_related('ignore_patterns')
-                      .get(domain=self.domain))
-        except CaseSearchConfig.DoesNotExist as e:
-            from corehq.util.soft_assert import soft_assert
-            _soft_assert = soft_assert(
-                to="{}@{}.com".format('frener', 'dimagi'),
-                notify_admins=False, send_to_ops=False
-            )
-            msg = f"Someone in domain: {self.domain} tried accessing case search without a config"
-            _soft_assert(False, msg, e)
-            config = CaseSearchConfig(domain=self.domain)
-        return config
+            return (CaseSearchConfig.objects
+                    .prefetch_related('fuzzy_properties')
+                    .prefetch_related('ignore_patterns')
+                    .get(domain=self.domain))
+        except CaseSearchConfig.DoesNotExist:
+            return CaseSearchConfig(domain=self.domain)
 
 
 class RegistryQueryHelper(QueryHelper):
