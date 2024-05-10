@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
@@ -15,7 +16,7 @@ from corehq.form_processor.utils import (
     TestFormMetadata,
     get_simple_wrapped_form,
 )
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import softer_assert, flag_enabled
 
 
 class UserModelTest(TestCase):
@@ -302,3 +303,30 @@ class TestWebUserRoles(TestCommCareUserRoles):
 
         self.check_role(user, self.role1, self.domain)
         self.check_role(user, self.role2, self.domain2)
+
+
+class TestWebUserTableauIntegration(BaseCommCareUserTestSetup):
+    user_class = WebUser
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestWebUserTableauIntegration, cls).setUpClass(domain="test-web-user-tableau-integration")
+
+    @flag_enabled('TABLEAU_USER_SYNCING')
+    @patch('corehq.apps.reports.util.add_tableau_user')
+    @patch('corehq.apps.reports.util.update_tableau_user')
+    @patch('corehq.apps.reports.util.get_tableau_groups_by_ids')
+    def test_add_as_web_user_with_tableau_params(self, mock_get_tableau_groups_by_ids, mock_update_tableau_user,
+                                                 mock_add_tableau_user):
+        user = self._create_user("test_user", include_domain_membership=False)
+
+        from corehq.apps.reports.util import TableauGroupTuple
+        groups = [TableauGroupTuple(name='group5', id='u908e'),
+                TableauGroupTuple(name='group1', id='1a2b3')]
+        mock_get_tableau_groups_by_ids.return_value = groups
+
+        user.add_as_web_user(self.domain, self.role1.get_qualified_id(),
+                            tableau_role="Viewer", tableau_group_ids=["u908e", "1a2b3"])
+        mock_add_tableau_user.assert_called_once_with(self.domain, user.username)
+        mock_update_tableau_user.assert_called_once_with(domain=self.domain, username=user.username,
+                                                        role="Viewer", groups=groups)
