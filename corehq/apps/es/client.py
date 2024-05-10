@@ -440,19 +440,28 @@ class ElasticManageAdapter(BaseAdapter):
             },
             "conflicts": "proceed"
         }
-        if purge_ids:
-            reindex_body["script"] = {"inline": "if (ctx._source._id) {ctx._source.remove('_id')}"}
 
-        # Should be removed after ES 5-6 migration
-        if copy_doc_ids:
-            reindex_body["script"] = {
-                "lang": "painless",
-                "source": """
-                if (!ctx._source.containsKey('doc_id')) {
-                    ctx._source['doc_id'] = ctx._id;
-                }
-                """
-            }
+        if purge_ids or copy_doc_ids:
+            reindex_body["script"] = {"source": "", "lang": "painless"}
+
+            if purge_ids:
+                reindex_body["script"]["source"].join(
+                    """
+                    if (ctx._source.containsKey('_id')) {
+                        ctx._source.remove('_id');
+                    }
+                    """
+                )
+
+            # Should be removed after ES 5-6 migration
+            if copy_doc_ids:
+                reindex_body["script"]["source"].join(
+                    """
+                    if (!ctx._source.containsKey('doc_id')) {
+                        ctx._source['doc_id'] = ctx._id;
+                    }
+                    """
+                )
 
         reindex_kwargs = {
             "wait_for_completion": wait_for_completion,
