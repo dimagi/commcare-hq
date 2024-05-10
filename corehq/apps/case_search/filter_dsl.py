@@ -33,16 +33,12 @@ class SearchFilterContext:
         'corehq.apps.case_search.utils.RegistryQueryHelper',
     ] = None
     profiler: 'corehq.apps.case_search.utils.CaseSearchProfiler' = None
-    config: 'corehq.apps.case_search.models.CaseSearchConfig' = None
 
     def __post_init__(self):
         from corehq.apps.case_search.utils import QueryHelper
-        from corehq.apps.case_search.models import CaseSearchConfig
         if self.helper is None:
             self.helper = QueryHelper(self.domain)
         self.profiler = self.helper.profiler
-        if self.config is None:
-            self.config = CaseSearchConfig(domain=self.domain)
 
 
 def print_ast(node):

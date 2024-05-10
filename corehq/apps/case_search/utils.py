@@ -214,6 +214,24 @@ class QueryHelper:
         case_ids = {case.case_id for case in initial_cases}
         return get_all_related_live_cases(self.domain, case_ids)
 
+    @cached_property
+    def config(self):
+        try:
+            config = (CaseSearchConfig.objects
+                      .prefetch_related('fuzzy_properties')
+                      .prefetch_related('ignore_patterns')
+                      .get(domain=self.domain))
+        except CaseSearchConfig.DoesNotExist as e:
+            from corehq.util.soft_assert import soft_assert
+            _soft_assert = soft_assert(
+                to="{}@{}.com".format('frener', 'dimagi'),
+                notify_admins=False, send_to_ops=False
+            )
+            msg = f"Someone in domain: {self.domain} tried accessing case search without a config"
+            _soft_assert(False, msg, e)
+            config = CaseSearchConfig(domain=self.domain)
+        return config
+
 
 class RegistryQueryHelper(QueryHelper):
     def __init__(self, domain, couch_user, registry_helper):
@@ -242,27 +260,7 @@ class CaseSearchQueryBuilder:
         self.request_domain = helper.domain
         self.case_types = case_types
         self.helper = helper
-
-    @cached_property
-    def config(self):
-        try:
-            config = (CaseSearchConfig.objects
-                      .prefetch_related('fuzzy_properties')
-                      .prefetch_related('ignore_patterns')
-                      .get(domain=self.request_domain))
-        except CaseSearchConfig.DoesNotExist as e:
-            from corehq.util.soft_assert import soft_assert
-            _soft_assert = soft_assert(
-                to="{}@{}.com".format('frener', 'dimagi'),
-                notify_admins=False, send_to_ops=False
-            )
-            _soft_assert(
-                False,
-                "Someone in domain: {} tried accessing case search without a config".format(self.request_domain),
-                e
-            )
-            config = CaseSearchConfig(domain=self.request_domain)
-        return config
+        self.config = helper.config
 
     def build_query(self, search_criteria, commcare_sort=None):
         search_es = self._get_initial_search_es()
@@ -315,7 +313,7 @@ class CaseSearchQueryBuilder:
         return search_es
 
     def _build_filter_from_xpath(self, xpath, fuzzy=False):
-        context = SearchFilterContext(self.request_domain, fuzzy, self.helper, self.config)
+        context = SearchFilterContext(self.request_domain, fuzzy, self.helper)
         with self.helper.profiler.timing_context('_build_filter_from_xpath'):
             return build_filter_from_xpath(xpath, context=context)
 
