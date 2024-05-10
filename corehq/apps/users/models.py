@@ -530,9 +530,12 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.domains.append(domain)
 
     def add_as_web_user(self, domain, role, primary_location_id=None,
-                        assigned_location_ids=None, program_id=None, profile=None):
+                        assigned_location_ids=None, program_id=None, profile=None,
+                        tableau_role=None, tableau_group_ids=None):
         if assigned_location_ids is None:
             assigned_location_ids = []
+        if tableau_group_ids is None:
+            tableau_group_ids = []
         domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
@@ -545,6 +548,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
         if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
             user_data = self.get_user_data(domain_obj.name)
             user_data.update({}, profile_id=profile.id)
+        if tableau_role or tableau_group_ids:
+            from corehq.apps.reports.util import get_tableau_groups_by_ids, update_tableau_user
+            update_tableau_user(domain=domain, username=self.username,
+                    role=tableau_role, groups=get_tableau_groups_by_ids(tableau_group_ids, domain))
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
@@ -2841,6 +2848,8 @@ class Invitation(models.Model):
             assigned_location_ids=list(self.assigned_locations.all().values_list('location_id', flat=True)),
             program_id=self.program,
             profile=self.profile,
+            tableau_role=self.tableau_role,
+            tableau_group_ids=self.tableau_group_ids
         )
         self.is_accepted = True
         self.save()

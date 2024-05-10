@@ -577,7 +577,7 @@ def _delete_user_remote(session, deleted_user_id):
 
 
 @atomic
-def update_tableau_user(domain, username, role=None, groups=[], session=None):
+def update_tableau_user(domain, username, role=None, groups: List[TableauGroupTuple] = [], session=None):
     '''
     Update the TableauUser object to have the given role and new group details. The `groups` arg should be a list
     of TableauGroupTuples.
