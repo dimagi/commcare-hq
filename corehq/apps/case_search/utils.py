@@ -165,19 +165,10 @@ def get_primary_case_search_results(helper, case_types, criteria, commcare_sort=
         raise CaseSearchUserError(_('Search has too many results. Please try a more specific search.'))
     except CaseFilterError as e:
         # This is an app building error, notify so we can track
-        notify_exception(None, str(e), details=dict(
-            exception_type=type(e),
-        ))
+        notify_exception(None, str(e), details={'exception_type': type(e)})
         raise CaseSearchUserError(str(e))
 
-    try:
-        results = helper.profiler.run_query('main', search_es)
-    except Exception as e:
-        notify_exception(None, str(e), details=dict(
-            exception_type=type(e),
-        ))
-        raise
-
+    results = helper.profiler.run_query('main', search_es)
     with helper.profiler.timing_context('wrap_cases'):
         cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
     return cases
