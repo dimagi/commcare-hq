@@ -97,6 +97,10 @@ class CreateIndex(BaseElasticOperation):
             self._validate_disk_under_watermark()
 
         log.info("Creating Elasticsearch index: %s" % self.name)
+
+        manager.cluster_routing(enabled=True)
+        log.info("Enabled cluster routing")
+
         manager.index_create(self.name, self.render_index_metadata(
             self.type,
             self.mapping,
@@ -108,6 +112,9 @@ class CreateIndex(BaseElasticOperation):
             self._wait_for_primary_shards_to_be_assigned()
 
         manager.index_configure_for_standard_ops(self.name)
+
+        log.info("Disabling cluster routing after index creation")
+        manager.cluster_routing(enabled=False)
 
     def _validate_disk_under_watermark(self):
         """
