@@ -24,7 +24,7 @@
     <td>{{ workflow.domain }}</td>
     <td>{{ workflow.app_name }}</td>
     <td>{{ workflow.django_user.username }}</td>
-    <td>{{ workflow.last_run|default:"" }}</td>
+    <td>{{ workflow.last_run|default:""|date:"DATETIME_FORMAT" }}</td>
     <td>
       <div class="row g-0 column-gap-1">
         {% for status in workflow.last_n %}

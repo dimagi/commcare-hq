@@ -15,7 +15,7 @@
   </thead>
   <tbody data-bind="foreach: items">
   <tr>
-    <td><span class="badge {% if log.success %}text-bg-success{% else %}text-bg-danger{% endif %}"
+    <td><span class="badge"
               data-bind="
                 text: success ? 'success' : 'error',
                 css: {'text-bg-success': success, 'text-bg-danger': !success}
