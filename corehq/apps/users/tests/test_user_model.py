@@ -178,19 +178,42 @@ class UserDeviceTest(SimpleTestCase):
         self.assertIsNotNone(app_meta)
 
 
-class TestCommCareUserRoles(TestCase):
-    user_class = CommCareUser
+class BaseCommCareUserTestSetup(TestCase):
 
     @classmethod
-    def setUpClass(cls):
-        super(TestCommCareUserRoles, cls).setUpClass()
-        cls.domain = 'test-user-role'
+    def setUpClass(cls, domain):
+        super(BaseCommCareUserTestSetup, cls).setUpClass()
+        cls.domain = domain
         cls.domain_obj = create_domain(cls.domain)
         cls.addClassCleanup(cls.domain_obj.get_db().delete_doc, cls.domain_obj)
 
         cls.role1 = UserRole.create(domain=cls.domain, name="role1")
         cls.role2 = UserRole.create(domain=cls.domain, name="role2")
         cls.mobile_worker_default_role = UserRole.commcare_user_default(cls.domain)
+
+    def _create_user(self, username, role_id=None, include_domain_membership=True):
+        if include_domain_membership:
+            domain = self.domain
+        else:
+            domain = None
+        user = self.user_class.create(
+            domain=domain,
+            username=username,
+            password='***',
+            created_by=None,
+            created_via=None,
+            role_id=role_id
+        )
+        self.addCleanup(user.delete, None, None)
+        return user
+
+
+class TestCommCareUserRoles(BaseCommCareUserTestSetup):
+    user_class = CommCareUser
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestCommCareUserRoles, cls).setUpClass(domain='test-user-role')
 
     def test_create_user_without_role(self):
         user = self._create_user('scotch game')
