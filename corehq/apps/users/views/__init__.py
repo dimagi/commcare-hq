@@ -592,12 +592,14 @@ class ListWebUsersView(BaseRoleAccessView):
 
 
 @require_can_edit_or_view_web_users
+@location_safe
 def download_web_users(request, domain):
     track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
     from corehq.apps.users.views.mobile.users import download_users
     return download_users(request, domain, user_type=WEB_USER_TYPE)
 
 
+@location_safe
 class DownloadWebUsersStatusView(BaseUserSettingsView):
     urlname = 'download_web_users_status'
     page_title = gettext_noop('Download Web Users Status')
