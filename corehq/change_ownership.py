@@ -184,19 +184,3 @@ def transfer_case_ownership():
         f"Total Batches: {batch_count}, " \
         f"Total Time: {round(total_time / 60, 2)} minutes"
     )
-
-
-success_count = fail_count = 0
-for user in valid_users:
-    user_data = user.get_user_data(DOMAIN)
-    try:
-        loc = SQLLocation.objects.get(
-            domain=DOMAIN,
-            parent__location_id=user.location_id,
-            name=user_data['rc_number']
-        )
-    except SQLLocation.DoesNotExist:
-        fail_count += 1
-    else:
-        success_count += 1
-print(success_count, fail_count)
