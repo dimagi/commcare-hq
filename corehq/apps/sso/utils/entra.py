@@ -34,6 +34,9 @@ def get_all_members_of_the_idp_from_entra(idp):
     # microsoft.graph.appRoleAssignment's property doesn't have userPrincipalName
     user_principal_ids = get_all_user_ids_in_app(token, config["client_id"])
 
+    if len(user_principal_ids) == 0:
+        return []
+
     user_principal_names = get_user_principal_names(user_principal_ids, token)
 
     return user_principal_names
