@@ -122,14 +122,13 @@ def get_all_user_ids_in_app(token, app_id):
             # Which make the query too complicated
             raise NotImplementedError("The application have Service Principal member")
 
-    while group_queue:
-        group_id = group_queue.pop(0)
+    for group_id in group_queue:
         members_data = get_group_members(group_id, token)
         for member in members_data.get("value", []):
+            # Only direct user in the group will have access to the application
+            # Nested group won't have access to the application
             if member["@odata.type"] == MSOdataType.USER:
                 user_ids.add(member["id"])
-            elif member["@odata.type"] == MSOdataType.GROUP:
-                group_queue.append(member["id"])
 
     return user_ids
 
