@@ -548,7 +548,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
             user_data = self.get_user_data(domain_obj.name)
             user_data.update({}, profile_id=profile.id)
-        if tableau_role or tableau_group_ids:
+        if TABLEAU_USER_SYNCING.enabled(domain) and (tableau_role or tableau_group_ids):
             from corehq.apps.reports.util import get_tableau_groups_by_ids, update_tableau_user
             update_tableau_user(domain=domain, username=self.username,
                     role=tableau_role, groups=get_tableau_groups_by_ids(tableau_group_ids, domain))
