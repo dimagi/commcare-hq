@@ -577,11 +577,12 @@ def _delete_user_remote(session, deleted_user_id):
 
 
 @atomic
-def update_tableau_user(domain, username, role=None, groups: List[TableauGroupTuple] = [], session=None):
+def update_tableau_user(domain, username, role=None, groups: List[TableauGroupTuple] = None, session=None):
     '''
     Update the TableauUser object to have the given role and new group details. The `groups` arg should be a list
     of TableauGroupTuples.
     '''
+    groups = groups or []
     session = session or TableauAPISession.create_session_for_domain(domain)
     user = TableauUser.objects.filter(
         server=session.tableau_connected_app.server
