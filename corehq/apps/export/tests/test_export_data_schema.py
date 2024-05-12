@@ -380,6 +380,38 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
             self.assertEqual(my_second_case_property_item.path, [PathNode(name='my_second_case_property')])
             self.assertEqual(my_second_case_property_item.case_property_group_name, 'AwesomeProps')
 
+    @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
+    def test_case_property_group_name_skipped_for_bulk_export(self, _):
+        case_property_mapping = {
+            'candy': ['my_case_property', 'my_second_case_property']
+        }
+
+        with (patch('corehq.apps.export.models.new.get_case_property_group_name_for_properties')
+              as get_case_property_group_name_for_properties_patch):
+            get_case_property_group_name_for_properties_patch.return_value = {
+                'my_case_property': None,
+                'my_second_case_property': 'AwesomeProps'
+            }
+            schema = CaseExportDataSchema._generate_schema_from_case_property_mapping(
+                self.domain,
+                case_property_mapping,
+                [],
+                self.app_id,
+                1,
+                is_bulk_case_export=True
+            )
+            self.assertEqual(len(schema.group_schemas), 1)
+            group_schema = schema.group_schemas[0]
+
+            my_case_property_item = group_schema.items[0]
+            my_second_case_property_item = group_schema.items[1]
+
+            self.assertEqual(my_case_property_item.path, [PathNode(name='my_case_property')])
+            self.assertEqual(my_case_property_item.case_property_group_name, None)
+
+            self.assertEqual(my_second_case_property_item.path, [PathNode(name='my_second_case_property')])
+            self.assertEqual(my_second_case_property_item.case_property_group_name, None)
+
 
 class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
     file_path = ['data']
