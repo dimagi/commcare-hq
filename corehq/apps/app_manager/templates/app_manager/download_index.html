@@ -36,7 +36,7 @@
           <td class="col-sm-2">
             {% if build_profile_id in enabled_build_profiles %}
               <a class="btn btn-default" href='{% url "toggle_build_profile" app.domain app.id build_profile_id %}?action=disable'>
-                <i class="fa fa-chain-broken"></i>
+                <i class="fa-solid fa-link-slash"></i>
                 {% trans 'Revoke restriction' %}
               </a>
             {% else %}
@@ -68,7 +68,7 @@
     <tr>
       <td>
         <a href="#download_ccz" data-toggle="modal"  class='download-zip'>
-          <i class="fa fa-file-zip-o"></i>
+          <i class="fa-regular fa-file-zipper"></i>
           CommCare.ccz
         </a>
       </td>
@@ -76,7 +76,7 @@
     <tr>
       <td>
         <a href="{% url "download_bulk_app_translations" app.domain app.id %}">
-          <i class="fa fa-file-excel-o"></i>
+          <i class="fa-regular fa-file-excel"></i>
           {% trans "Bulk application translations" %}
         </a>
       </td>
@@ -85,7 +85,7 @@
 {% endblock downloads %}
 
 {% block file_description %}
-  <a href="{{ file.name }}" target="_blank"><i class="fa fa-external-link"></i></a>
+  <a href="{{ file.name }}" target="_blank"><i class="fa-solid fa-up-right-from-square"></i></a>
 {% endblock file_description %}
 
 {% block file_source %}

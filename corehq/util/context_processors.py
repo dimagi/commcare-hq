@@ -176,6 +176,7 @@ def enterprise_mode(request):
     return {
         'enterprise_mode': settings.ENTERPRISE_MODE,
         'is_saas_environment': settings.IS_SAAS_ENVIRONMENT,
+        'is_dimagi_environment': settings.IS_DIMAGI_ENVIRONMENT,
     }
 
 
@@ -227,16 +228,16 @@ def _get_cc_name(request, var):
 def mobile_experience(request):
     show_mobile_ux_warning = False
     mobile_ux_cookie_name = ''
-    if (hasattr(request, 'couch_user') and
-            hasattr(request, 'user_agent') and
-            settings.SERVER_ENVIRONMENT in ['production', 'staging', settings.LOCAL_SERVER_ENVIRONMENT]):
+    if (hasattr(request, 'couch_user')
+            and hasattr(request, 'user_agent')
+            and settings.SERVER_ENVIRONMENT in ['production', 'staging', settings.LOCAL_SERVER_ENVIRONMENT]):
         mobile_ux_cookie_name = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
         show_mobile_ux_warning = (
-            not request.COOKIES.get(mobile_ux_cookie_name) and
-            request.user_agent.is_mobile and
-            request.user.is_authenticated and
-            request.user.is_active and
-            not mobile_experience_hidden_by_toggle(request)
+            not request.COOKIES.get(mobile_ux_cookie_name)
+            and request.user_agent.is_mobile
+            and request.user.is_authenticated
+            and request.user.is_active
+            and not mobile_experience_hidden_by_toggle(request)
         )
     return {
         'show_mobile_ux_warning': show_mobile_ux_warning,

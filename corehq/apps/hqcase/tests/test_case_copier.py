@@ -34,7 +34,7 @@ class TestCaseCopier(TestCase):
             self.assertEqual(case_id_pairs, [])
             self.assertEqual(errors, [
                 'Original case owner owner_id cannot copy case '
-                f'{case.case_id} to themselves.'
+                f'{case.case_id} to themselves'
             ])
 
     def test_copy_case_to_new_owner(self):
@@ -42,7 +42,7 @@ class TestCaseCopier(TestCase):
             'family_name': 'Nature',
         }
 
-        with get_mother_case('owner_id', update=properties) as case:
+        with get_mother_case(owner_id='owner_id', update=properties) as case:
             case_copier = CaseCopier(DOMAIN, to_owner='new_owner_id')
             case_id_pairs, errors = case_copier.copy_cases([case.case_id])
 
@@ -52,14 +52,14 @@ class TestCaseCopier(TestCase):
             self.assertEqual(new_case.owner_id, 'new_owner_id')
             self.assertEqual(new_case.case_json['family_name'], 'Nature')
             self.assertEqual(new_case.opened_by, SYSTEM_USER_ID)
-            self.assertTrue(new_case.case_json[CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME])
+            self.assertEqual(new_case.case_json[CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME], orig_case_id)
 
     def test_copy_case_with_sensitive_properties(self):
         properties = {
             'age': '34',
         }
 
-        with get_mother_case('owner_id', update=properties) as case:
+        with get_mother_case(owner_id='owner_id', update=properties) as case:
             case_copier = CaseCopier(
                 DOMAIN,
                 to_owner='new_owner_id',

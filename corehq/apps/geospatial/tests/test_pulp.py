@@ -3,6 +3,7 @@ from django.test import SimpleTestCase
 from corehq.apps.geospatial.routing_solvers.pulp import (
     RadialDistanceSolver
 )
+from corehq.apps.geospatial.models import GeoConfig
 
 
 class TestRadialDistanceSolver(SimpleTestCase):
@@ -27,7 +28,7 @@ class TestRadialDistanceSolver(SimpleTestCase):
                         {"id": "Jackson", "lat": 40.55517003526139, "lon": -106.34189549259928},
                     ],
                 },
-            ).solve(), (
+            ).solve(GeoConfig()), (
                 None,
                 {
                     'New York': ['New Hampshire', 'Newark', 'NY2'],

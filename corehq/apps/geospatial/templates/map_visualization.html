@@ -1,4 +1,4 @@
-{% extends "reports/tabular.html" %}
+{% extends "reports/bootstrap3/tabular.html" %}
 {% load i18n %}
 
 {% block reportcontent %}
@@ -8,7 +8,7 @@
             {% trans "Mobile Worker Filters" %}
         </legend>
         <div class="alert alert-danger" data-bind="visible: hasErrors()">
-            <i class="fa fa-exclamation-triangle"></i>
+            <i class="fa-solid fa-triangle-exclamation"></i>
             {% blocktrans %}
                 <strong>There was an issue retrieving mobile workers from the server.</strong>
                 If this problem continues, please
@@ -106,13 +106,19 @@
         Previous disbursement was cleared.
     {% endblocktrans %}
 </div>
-<div id="geospatial-map" style="height: 500px"></div>
+<div id="geospatial-map" style="height: 500px">
+    <div id="layer-toggle-menu" class="btn-group-vertical hidden">
+        <h4 class="text-center">
+            {% trans 'Layers' %}
+        </h4>
+    </div>
+</div>
 
 <!-- For Pagination -->
 <div class="panel-body-datatable">
   {% block reporttable %}
     {% if report.needs_filters %}
-      {% include 'reports/partials/description.html' %}
+      {% include 'reports/partials/bootstrap3/description.html' %}
     {% else %}
       <table id="report_table_{{ report.slug }}" class="table table-striped datatable" width="100%" {% if pagination.filter %} data-filter="true"{% endif %}>
       </table>

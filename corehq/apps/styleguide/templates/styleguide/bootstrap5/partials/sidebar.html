@@ -1,0 +1,32 @@
+<div class="offcanvas-lg offcanvas-start" tabindex="-1" id="guideSidebar">
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title" id="guideSidebarLabel">
+      Browse Guide
+    </h5>
+  </div>
+  <div class="offcanvas-body">
+    <nav class="sg-links w-100" id="bd-docs-nav" aria-label="Styleguide navigation">
+      <ul class="sg-links-nav list-unstyled mb-0 pb-3 pb-md-2 pe-lg-2">
+        {% for navigation_group in sidebar %}
+        <li class="sg-links-group py-2">
+          <strong class="sg-links-heading d-flex w-100 align-items-center fw-semibold">
+            {{ navigation_group.name }}
+          </strong>
+
+          <ul class="list-unstyled fw-normal pb-2 small">
+          {% for page in navigation_group.pages %}
+            <li>
+              <a href="{% url page.urlname %}"
+                 class="sg-links-link d-inline-block rounded {% if current_page == page.urlname %}active{% endif %}"
+                 {% if current_page == page.urlname %}aria-current="page"{% endif %}>
+                {{ page.name }}
+              </a>
+            </li>
+          {% endfor %}
+          </ul>
+        </li>
+        {% endfor %}
+      </ul>
+    </nav>
+  </div>
+</div>

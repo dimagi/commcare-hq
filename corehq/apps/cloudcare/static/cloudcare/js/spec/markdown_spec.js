@@ -1,10 +1,18 @@
+'use strict';
 /* eslint-env mocha */
-hqDefine("cloudcare/js/spec/markdown_spec", function () {
+hqDefine("cloudcare/js/spec/markdown_spec", [
+    "sinon/pkg/sinon",
+    "hqwebapp/js/initial_page_data",
+    "integration/js/hmac_callout",
+    "cloudcare/js/markdown",
+], function (
+    sinon,
+    initialPageData,
+    hmacCallout,
+    markdown
+) {
     describe('Markdown', function () {
-        let markdown = hqImport('cloudcare/js/markdown'),
-            render = markdown.render,
-            initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-            hmacCallout = hqImport("integration/js/hmac_callout");
+        let render = markdown.render;
 
         let sandbox;
         beforeEach(function () {
@@ -25,13 +33,6 @@ hqDefine("cloudcare/js/spec/markdown_spec", function () {
                 assert.equal(
                     render("[link](http://example.com)"),
                     "<p><a href=\"http://example.com\" target=\"_blank\"><u>link</u></a></p>\n"
-                );
-            });
-
-            it('should render headings with tabindex set', function () {
-                assert.equal(
-                    render("# heading"),
-                    "<h1 tabindex=\"0\">heading</h1>\n"
                 );
             });
 

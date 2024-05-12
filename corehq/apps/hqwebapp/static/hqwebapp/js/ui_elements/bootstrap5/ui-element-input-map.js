@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map', [
     'jquery',
     'underscore',
@@ -9,7 +10,6 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map', [
     hqMain,
     DOMPurify
 ) {
-    'use strict';
     var module = {};
 
     var InputMap = function (showDelButton, placeholders) {
@@ -20,7 +20,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map', [
             placeholders.key = gettext('key');
             placeholders.value = gettext('value');
         }
-        this.ui = $('<div class="form-group hq-input-map" />');
+        this.ui = $('<div class="hq-input-map" />');
         this.value = {
             key: "",
             val: "",
@@ -34,27 +34,32 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map', [
             this.ui.remove();
         });
 
-        this.$edit_view = $('<div class="form-inline" style="margin-left:5px;" />');
-        var keyInput = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="' + placeholders.key + '" />'),
-            valInput = $('<input type="text" class="form-control enum-value" style="width:220px;" placeholder="' + placeholders.value  + '" />');
-        keyInput.change(function () {
+        this.$edit_view = $('<div class="row mb-3"></div>');
+        var $keyInputWrapper = $('<div class="col-md-5"></div>'),
+            $keyInput = $('<input type="text" class="form-control enum-key" placeholder="' + placeholders.key + '" />'),
+            $valInputWrapper = $('<div class="col-md-5"></div>'),
+            $valInput = $('<input type="text" class="form-control enum-value" placeholder="' + placeholders.value  + '" />');
+        $keyInput.change(function () {
             that.fire('change');
         });
-        valInput.change(function () {
+        $valInput.change(function () {
             that.fire('change');
         });
-        this.$edit_view.append(keyInput);
-        this.$edit_view.append(' <i class="fa fa-arrow-right"></i> ');
-        this.$edit_view.append(valInput);
+        $keyInputWrapper.append($keyInput);
+        this.$edit_view.append($keyInputWrapper);
+        this.$edit_view.append('<div class="col-sm-1 px-0 mt-2" style="width: 15px;"><i class="fa fa-arrow-right"></i></div>');
+        $valInputWrapper.append($valInput);
+        this.$edit_view.append($valInputWrapper);
         if (this.show_delete) {
-            var $deleteButton = $('<a href="#" data-enum-action="remove" class="btn btn-danger" />');
-            $deleteButton.append('<i class="fa fa-remove"></i> ' + gettext('Delete'));
+            var $deleteButton = $('<a href="#" data-enum-action="remove" class="btn btn-outline-danger" />');
+            $deleteButton.append('<i class="fa fa-remove"></i> ');
             $deleteButton.click(function () {
                 that.fire('remove');
                 return false;
             });
-            this.$edit_view.append(' ');
-            this.$edit_view.append($deleteButton);
+            var $deleteButtonWrapper = $('<div class="col-md-1 px-0"></div>');
+            $deleteButtonWrapper.append($deleteButton);
+            this.$edit_view.append($deleteButtonWrapper);
         }
         this.$noedit_view = $('<div />');
 
@@ -78,10 +83,11 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-input-map', [
                     $langcodeButton.button.attr("style", "position: absolute; top: 6px; right: 6px;");
                     this.$edit_view.find(".enum-value").css("position", "relative").after($langcodeButton.button);
                     this.on('change', function () {
-                        if (this.$edit_view.find(".enum-value").val() === "")
+                        if (this.$edit_view.find(".enum-value").val() === "") {
                             $langcodeButton.button.show();
-                        else
+                        } else {
                             $langcodeButton.button.hide();
+                        }
                     });
 
                 }

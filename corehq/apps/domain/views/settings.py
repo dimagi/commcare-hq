@@ -18,6 +18,7 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from couchdbkit import ResourceNotFound
+from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
@@ -529,7 +530,7 @@ class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSe
     urlname = 'domain_manage_mobile_workers'
 
 
-@method_decorator([toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator(),
+@method_decorator([requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS),
                    require_can_manage_domain_alerts], name='dispatch')
 class BaseDomainAlertsView(BaseProjectSettingsView):
     @staticmethod
@@ -687,9 +688,9 @@ class EditDomainAlertView(BaseDomainAlertsView):
         alert.save()
 
 
-@toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
-@require_can_manage_domain_alerts
 @require_POST
+@requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS)
+@require_can_manage_domain_alerts
 def update_domain_alert_status(request, domain):
     alert_id = request.POST.get('alert_id')
     assert alert_id, 'Missing alert ID'
@@ -702,9 +703,9 @@ def update_domain_alert_status(request, domain):
     return HttpResponseRedirect(reverse(ManageDomainAlertsView.urlname, kwargs={'domain': domain}))
 
 
-@toggles.CUSTOM_DOMAIN_BANNER_ALERTS.required_decorator()
-@require_can_manage_domain_alerts
 @require_POST
+@requires_privilege_raise404(privileges.CUSTOM_DOMAIN_ALERTS)
+@require_can_manage_domain_alerts
 def delete_domain_alert(request, domain):
     alert_id = request.POST.get('alert_id')
     assert alert_id, 'Missing alert ID'
@@ -731,7 +732,7 @@ def _apply_update(request, alert):
     command = request.POST.get('command')
     if command == "activate":
         if Alert.objects.filter(created_by_domain=request.domain, active=True).count() >= MAX_ACTIVE_ALERTS:
-            messages.error(request, _("Alert not updated. Only 3 active alerts allowed."))
+            messages.error(request, _("Alert not activated. Only 3 active alerts allowed."))
             return
 
     if command in ['activate', 'deactivate']:

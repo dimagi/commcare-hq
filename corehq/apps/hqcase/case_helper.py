@@ -279,7 +279,7 @@ class CaseCopier:
             if orig_case.owner_id == self.to_owner:
                 errors.append(_(
                     'Original case owner {owner_id} cannot copy '
-                    'case {case_id} to themselves.'
+                    'case {case_id} to themselves'
                 ).format(
                     owner_id=orig_case.owner_id,
                     case_id=orig_case.case_id,

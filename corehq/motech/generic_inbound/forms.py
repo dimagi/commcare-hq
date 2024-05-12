@@ -79,7 +79,8 @@ ApiValidationFormSet = inlineformset_factory(
 
 def _expression_link(domain):
     return SafeString(
-        '<a href="{url}" target="_blank" title="{title}"><i class="fa fa-external-link"></i></a>'.format(
+        '<a href="{url}" target="_blank" title="{title}">'
+        '<i class="fa-solid fa-up-right-from-square"></i></a>'.format(
             url=reverse('ucr_expressions', args=(domain,)),
             title=_("Filters and Expressions")
         )

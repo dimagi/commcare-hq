@@ -4,48 +4,11 @@ import logging
 from django.conf import settings
 from django.db import migrations
 
-from corehq.apps.es.migration_operations import CreateIndex
+from corehq.apps.es.migration_operations import CreateIndexIfNotExists
 
 
 log = logging.getLogger(__name__)
 
-
-class CreateIndexIfNotExists(CreateIndex):
-    """
-    The class will skip creating indexes if they already exists and would setup indexes if they don't exist.
-    The utility of this class is in initializing the elasticsearch migrations
-    for the environments that already have live HQ indexes.
-
-    Because of the nature of the operation, this class is not integrated into `make_elastic_migration` command.
-    This class should to be manually added to the bootstrap migrations and
-    it should be ensured that the index names are identical to live indexes.
-
-    Lets take an example of bootstrapping a running groups index
-
-        - Generate boilerplate migrations with `make_elastic_migration`
-
-            ```
-            ./manage.py make_elastic_migration --name init_groups -c groups
-            ```
-
-        - The above command will generate a migration file let say 0001_init_groups.py
-
-        - Replace the index name passed into CreateIndex in operations with the one that is running on HQ.
-
-        - Replace `corehq.apps.es.migration_operations.CreateIndex` with
-        `CreateIndexIfNotExists`
-
-    """
-    def run(self, *args, **kwargs):
-        if self.es_versions and self._should_skip_operation(self.es_versions):
-            return
-        from corehq.apps.es.client import manager
-        if not manager.index_exists(self.name):
-            return super().run(*args, **kwargs)
-        log.info(f"ElasticSearch index {self.name} already exists. Skipping create index operation.")
-
-    def reverse_run(self, *args, **kw):
-        return None
 
 
 class Migration(migrations.Migration):

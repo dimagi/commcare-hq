@@ -629,6 +629,7 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             suite,
             "detail[@id='m0_case_short']/action[1]",
         )
+        self.assertXmlDoesNotHaveXpath(suite, "detail[@id='m0_case_short']/action[2]")
 
     def test_case_tile_without_register_from_case_list_because_of_person_simple(self, *args):
         factory = AppFactory()

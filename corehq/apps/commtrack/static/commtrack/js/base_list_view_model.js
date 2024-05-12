@@ -1,11 +1,14 @@
+"use strict";
 hqDefine("commtrack/js/base_list_view_model", [
     'jquery',
     'knockout',
     'underscore',
+    'es6!hqwebapp/js/bootstrap5_loader',
 ], function (
     $,
     ko,
-    _
+    _,
+    bootstrap
 ) {
     var BaseListViewModel = function (o) {
         'use strict';
@@ -44,10 +47,12 @@ hqDefine("commtrack/js/base_list_view_model", [
 
         self.all_pages = ko.computed(function () {
             var lastInd = self.max_page() + 1;
-            if (self.max_page() <= 5 || self.current_page() <= 3)
+            if (self.max_page() <= 5 || self.current_page() <= 3) {
                 return _.range(1, Math.min(lastInd, 6));
-            if (self.current_page() >= self.max_page() - 2)
+            }
+            if (self.current_page() >= self.max_page() - 2) {
                 return _.range(self.max_page() - 4, lastInd);
+            }
             return _.range(self.current_page() - 2, Math.min(lastInd, self.current_page() + 3));
         });
 
@@ -62,7 +67,7 @@ hqDefine("commtrack/js/base_list_view_model", [
         };
 
         self.takeArchiveAction = function (actionUrl, button, dataIndex) {
-            $(button).button('loading');
+            $(button).disableButton();
             dataIndex = ko.utils.unwrapObservable(dataIndex);
             $.ajax({
                 type: 'POST',
@@ -76,9 +81,11 @@ hqDefine("commtrack/js/base_list_view_model", [
         self.successfulArchiveAction = function (button, index) {
             return function (data) {
                 if (data.success) {
-                    var $modal = $(button).parent().parent().parent().parent();
-                    $modal.modal('hide');
-                    $modal.on('hidden.bs.modal', function () {
+                    $(button).enableButton();
+                    var $modal = $(button).closest(".modal"),
+                        modal = bootstrap.Modal.getOrCreateInstance($modal);
+                    modal.hide();
+                    $modal.one('hidden.bs.modal', function () {
                         var dataList = self.dataList(),
                             actioned = self.archiveActionItems();
                         actioned.push(dataList[index]);
@@ -95,7 +102,7 @@ hqDefine("commtrack/js/base_list_view_model", [
 
         self.unsuccessfulArchiveAction = function (button) {
             return function () {
-                $(button).button('unsuccessful');
+                $(button).enableButton();
             };
         };
 

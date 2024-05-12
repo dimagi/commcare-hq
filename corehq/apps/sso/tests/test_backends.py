@@ -24,12 +24,15 @@ class TestSsoBackend(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.account = generator.get_billing_account_for_idp()
+        cls.addClassCleanup(cls.account.delete)
         cls.domain = Domain.get_or_create_with_name("vaultwax-001", is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
 
         # this will be the user that's "logging in" with SAML2 via the SsoBackend
         cls.user = WebUser.create(
             cls.domain.name, 'b@vaultwax.com', 'testpwd', None, None
         )
+        cls.addClassCleanup(cls.user.delete, cls.domain.name, deleted_by=None)
         cls.idp = generator.create_idp('vaultwax', cls.account)
         cls.idp.is_active = True
         cls.idp.save()
@@ -48,25 +51,18 @@ class TestSsoBackend(TestCase):
     def tearDownClass(cls):
         AuthenticatedEmailDomain.objects.all().delete()
         IdentityProvider.objects.all().delete()
-        cls.user.delete(cls.domain.name, deleted_by=None)
-
-        # cleanup "new" users
-        for username in [
-            'm@vaultwax.com',
-            'isa@vaultwax.com',
-            'zee@vaultwax.com',
-            'exist@vaultwax.com',
-            'aart@vaultwax.com',
-            'liam@vaultwax.com',
-            'nile@vaultwax.com'
-        ]:
-            web_user = WebUser.get_by_username(username)
-            if web_user:
-                web_user.delete(cls.domain.name, deleted_by=None)
-
-        cls.domain.delete()
-        cls.account.delete()
         super().tearDownClass()
+
+    def authenticate(self, request, **kw):
+        def delete(user):
+            if user is not None and user.username != self.user.username:
+                if not isinstance(user, WebUser):
+                    user = WebUser.get_by_username(user.username)
+                user.delete(self.domain.name, deleted_by=None)
+
+        user = auth.authenticate(request, **kw)
+        self.addCleanup(delete, user)
+        return user
 
     def setUp(self):
         super().setUp()
@@ -85,7 +81,7 @@ class TestSsoBackend(TestCase):
         passed to authenticate()
         """
         with self.assertRaises(KeyError):
-            auth.authenticate(
+            self.authenticate(
                 request=self.request,
                 idp_slug=self.idp.slug,
                 is_handshake_successful=True,
@@ -96,7 +92,7 @@ class TestSsoBackend(TestCase):
         SsoBackend should fail to move past the first check because an idp_slug
          was not passed to authenticate()
         """
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username=self.user.username,
             is_handshake_successful=True,
@@ -110,7 +106,7 @@ class TestSsoBackend(TestCase):
         SsoBackend should fail to move past the first check because a
          samlSessionIndex is not present in request.session.
         """
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username=self.user.username,
             idp_slug=self.idp.slug
@@ -125,7 +121,7 @@ class TestSsoBackend(TestCase):
         slug associated with that user does not exist. It should also populate
         request.sso_login_error with an error message.
         """
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username=self.user.username,
             idp_slug='doesnotexist',
@@ -150,7 +146,7 @@ class TestSsoBackend(TestCase):
         self.addCleanup(self._activate_idp)
         self.idp.is_active = False
         self.idp.save()
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username=self.user.username,
             idp_slug=self.idp.slug,
@@ -168,7 +164,7 @@ class TestSsoBackend(TestCase):
         is not a valid email address (missing email domain / no `@`). It should
         also populate request.sso_login_error with an error message.
         """
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username='badusername',
             idp_slug=self.idp.slug,
@@ -186,7 +182,7 @@ class TestSsoBackend(TestCase):
         matches an email domain that is not mapped to any Identity Provider.
         It should also populate request.sso_login_error with an error message.
         """
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username='b@idonotexist.com',
             idp_slug=self.idp.slug,
@@ -206,7 +202,7 @@ class TestSsoBackend(TestCase):
         authenticate with the Identity Provider in the request. It should also
         populate request.sso_login_error with an error message.
         """
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username='b@vwx.link',
             idp_slug=self.idp.slug,  # note that this is self.idp, not idp_vwx
@@ -243,7 +239,7 @@ class TestSsoBackend(TestCase):
             'van der Berg'
         )
         AsyncSignupRequest.create_from_registration_form(reg_form)
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username=username,
             idp_slug=self.idp.slug,
@@ -264,7 +260,7 @@ class TestSsoBackend(TestCase):
 
     def test_new_user_displayname_is_used_if_first_and_last_are_missing(self):
         """
-        Azure AD does not mark the First and Last names as required, only the
+        Entra ID does not mark the First and Last names as required, only the
         Display Name. If First and Last are missing, ensure that this
         information is then obtained from the Display Name
         """
@@ -283,7 +279,7 @@ class TestSsoBackend(TestCase):
             'Vanessa van Beek'
         )
         AsyncSignupRequest.create_from_registration_form(reg_form)
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username=username,
             idp_slug=self.idp.slug,
@@ -302,7 +298,7 @@ class TestSsoBackend(TestCase):
 
     def test_new_user_displayname_with_one_name_is_used_as_first_name(self):
         """
-        Ensure that if the Azure AD "Display Name" has only one name/word in
+        Ensure that if the Entra ID "Display Name" has only one name/word in
         it that only the first name is populated.
         """
         username = 'test@vaultwax.com'
@@ -320,7 +316,7 @@ class TestSsoBackend(TestCase):
             'Test'
         )
         AsyncSignupRequest.create_from_registration_form(reg_form)
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username=username,
             idp_slug=self.idp.slug,
@@ -358,7 +354,7 @@ class TestSsoBackend(TestCase):
             'Isa',
             'Baas'
         )
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username=invitation.email,
             idp_slug=self.idp.slug,
@@ -394,7 +390,7 @@ class TestSsoBackend(TestCase):
             'Zee',
             'Bos'
         )
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username=invitation.email,
             idp_slug=self.idp.slug,
@@ -438,7 +434,7 @@ class TestSsoBackend(TestCase):
         )
         invitation.save()
         AsyncSignupRequest.create_from_invitation(invitation)
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username=invitation.email,
             idp_slug=self.idp.slug,
@@ -465,7 +461,7 @@ class TestSsoBackend(TestCase):
             'Liam',
             'Bakker'
         )
-        user = auth.authenticate(
+        user = self.authenticate(
             request=request,
             username=username,
             idp_slug=self.idp.slug,
@@ -493,7 +489,7 @@ class TestSsoBackend(TestCase):
             request,
             'Nile Jansen'
         )
-        user = auth.authenticate(
+        user = self.authenticate(
             request=request,
             username=username,
             idp_slug=self.idp.slug,
@@ -523,7 +519,7 @@ class TestSsoBackend(TestCase):
             'Aart',
             'Janssen'
         )
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username=username,
             idp_slug=self.idp.slug,
@@ -554,7 +550,7 @@ class TestSsoBackend(TestCase):
             'Hello',
             'World'
         )
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username=username,
             idp_slug=self.idp.slug,
@@ -576,7 +572,7 @@ class TestSsoBackend(TestCase):
         This test demonstrates the requirements necessary for a SsoBackend to
         successfully return a user and report no login error.
         """
-        user = auth.authenticate(
+        user = self.authenticate(
             request=self.request,
             username=self.user.username,
             idp_slug=self.idp.slug,
@@ -585,3 +581,121 @@ class TestSsoBackend(TestCase):
         self.assertIsNotNone(user)
         self.assertEqual(user.username, self.user.username)
         self.assertIsNone(self.request.sso_login_error)
+
+    def test_deactivated_user_is_reactivated_after_successful_sso_login(self):
+        web_user_to_be_reactivated = self._create_a_new_user_then_deactivate_user()
+
+        django_user = auth.authenticate(
+            request=self.request,
+            username=web_user_to_be_reactivated.username,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+
+        # refetch the WebUser object
+        web_user = WebUser.get_by_username(web_user_to_be_reactivated.username)
+        self.assertTrue(web_user.is_active)
+        django_user.refresh_from_db()
+        self.assertTrue(django_user.is_active)
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                f'User account for {web_user.username} has been re-activated.',
+            ]
+        )
+
+    def test_deactivated_user_is_reactivated_and_invitation_accepted(self):
+        web_user_to_be_reactivated = self._create_a_new_user_then_deactivate_user()
+        admin_role = StaticRole.domain_admin(self.domain.name)
+        invitation = Invitation(
+            domain=self.domain.name,
+            email=web_user_to_be_reactivated.username,
+            invited_by=self.user.couch_id,
+            invited_on=datetime.datetime.utcnow(),
+            role=admin_role.get_qualified_id(),
+        )
+        invitation.save()
+        AsyncSignupRequest.create_from_invitation(invitation)
+        django_user = auth.authenticate(
+            request=self.request,
+            username=invitation.email,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+
+        # refetch the WebUser object
+        web_user = WebUser.get_by_username(web_user_to_be_reactivated.username)
+        self.assertTrue(web_user.is_active)
+        django_user.refresh_from_db()
+        self.assertTrue(django_user.is_active)
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                f'User account for {invitation.email} has been re-activated.',
+                f'You have been added to the "{invitation.domain}" project space.',
+            ]
+        )
+
+    def test_deactivated_user_is_reactivated_and_expired_invitation_declined(self):
+        web_user_to_be_reactivated = self._create_a_new_user_then_deactivate_user()
+        invitation = Invitation(
+            domain=self.domain.name,
+            email=web_user_to_be_reactivated.username,
+            invited_by=self.user.couch_id,
+            invited_on=datetime.datetime.utcnow() - relativedelta(months=2),
+        )
+        invitation.save()
+        AsyncSignupRequest.create_from_invitation(invitation)
+
+        django_user = auth.authenticate(
+            request=self.request,
+            username=invitation.email,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+
+        # refetch the WebUser object
+        web_user = WebUser.get_by_username(web_user_to_be_reactivated.username)
+        self.assertTrue(web_user.is_active)
+        django_user.refresh_from_db()
+        self.assertTrue(django_user.is_active)
+        self.assertEqual(
+            self.request.sso_new_user_messages['success'],
+            [
+                f'User account for {invitation.email} has been re-activated.',
+            ]
+        )
+        self.assertEqual(
+            self.request.sso_new_user_messages['error'],
+            [
+                'Could not accept invitation because it is expired.',
+            ]
+        )
+
+    def test_failed_sso_login_does_not_reactivate_user(self):
+        """
+        This test ensures that a failed SSO login attempt does not reactivate a deactivated user.
+        """
+        deactivated_user = self._create_a_new_user_then_deactivate_user()
+
+        # When SSO authentication fails
+        user = auth.authenticate(
+            request=self.request,
+            username=deactivated_user.username,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=False,  # Simulate a failed handshake/authentication
+        )
+
+        # refetch the WebUser object
+        web_user = WebUser.get_by_username(deactivated_user.username)
+        self.assertFalse(web_user.is_active)
+        self.assertIsNone(user)
+
+    def _create_a_new_user_then_deactivate_user(self):
+        user = WebUser.create(
+            None, 'reactivate@vaultwax.com', 'testpwd', None, None
+        )
+        user.is_active = False
+        user.save()
+        self.addCleanup(user.delete, None, deleted_by=None)
+        return user

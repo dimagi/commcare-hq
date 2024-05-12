@@ -1,10 +1,16 @@
-hqDefine("cloudcare/js/formplayer/main", function () {
-
+'use strict';
+hqDefine("cloudcare/js/formplayer/main", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/sentry',
+], function (
+    $,
+    initialPageData,
+    FormplayerFrontEnd,
+    sentry
+) {
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-            FormplayerFrontEnd = hqImport("cloudcare/js/formplayer/app"),
-            sentry = hqImport("cloudcare/js/sentry");
-
         sentry.initSentry();
 
         window.MAPBOX_ACCESS_TOKEN = initialPageData.get('mapbox_access_token'); // maps api is loaded on-demand
@@ -14,7 +20,6 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             username: initialPageData.get('username'),
             domain: initialPageData.get('domain'),
             formplayer_url: initialPageData.get('formplayer_url'),
-            gridPolyfillPath: initialPageData.get('grid_polyfill_path'),
             debuggerEnabled: initialPageData.get('debugger_enabled'),
             singleAppMode: initialPageData.get('single_app_mode'),
             environment: initialPageData.get('environment'),

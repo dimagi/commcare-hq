@@ -8,7 +8,7 @@
     <a href="#module_confirm_delete_{{ module.unique_id }}"
        data-toggle="modal"
        class="appnav-delete">
-      <i class="fa fa-trash-o"></i>
+      <i class="fa-regular fa-trash-can"></i>
     </a>
   {% else %}
     <a class="appnav-delete">
@@ -22,9 +22,9 @@
         {% if module.module_type == 'advanced' %}
           <i class="fa fa-flask appmanager-icon-type appnav-primary-icon"
         {% elif module.module_type == 'report' %}
-          <i class="fa fa-bar-chart appmanager-icon-type appnav-primary-icon"
+          <i class="fa-regular fa-chart-bar appmanager-icon-type appnav-primary-icon"
         {% elif module.module_type == 'shadow' %}
-          <i class="fa fa-folder-open-o appmanager-icon-type appnav-primary-icon"
+          <i class="fa-regular fa-folder-open appmanager-icon-type appnav-primary-icon"
         {% elif module.is_training_module %}
           <i class="fa fa-book appnav-primary-icon"
         {% elif not module.is_surveys %}
@@ -103,7 +103,7 @@
                 {% trans "Cancel" %}
               </button>
               <button type="submit" class="disable-on-submit btn btn-danger">
-                  <i class="fa fa-trash"></i>
+                  <i class="fa-regular fa-trash-can"></i>
                   {% trans "Delete" %} {{ module.name|html_trans:langs }}
               </button>
             </div>

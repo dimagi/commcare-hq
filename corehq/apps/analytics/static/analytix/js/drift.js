@@ -1,5 +1,4 @@
-/* global Array, window */
-
+"use strict";
 /**
  * Instantiates the Drift analytics and customer support messaging platform.
  */
@@ -9,16 +8,13 @@ hqDefine('analytix/js/drift', [
     'analytix/js/logging',
     'analytix/js/utils',
     'analytix/js/hubspot',
-    'analytix/js/kissmetrix',
 ], function (
     _,
     initialAnalytics,
     logging,
     utils,
-    hubspot,
-    kissmetrics
+    hubspot
 ) {
-    'use strict';
     var _get = initialAnalytics.getFn('drift'),
         _drift = {},
         _logger = logging.getLoggerForApi('Drift'),

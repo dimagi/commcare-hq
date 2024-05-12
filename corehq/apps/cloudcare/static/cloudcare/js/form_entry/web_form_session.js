@@ -1,11 +1,25 @@
-hqDefine("cloudcare/js/form_entry/web_form_session", function () {
-    var cloudcareUtils = hqImport("cloudcare/js/utils"),
-        constants = hqImport("cloudcare/js/form_entry/const"),
-        errors = hqImport("cloudcare/js/form_entry/errors"),
-        taskQueue = hqImport("cloudcare/js/form_entry/task_queue"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
-        formUI = hqImport("cloudcare/js/form_entry/form_ui");
-
+'use strict';
+hqDefine("cloudcare/js/form_entry/web_form_session", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'cloudcare/js/utils',
+    'cloudcare/js/form_entry/const',
+    'cloudcare/js/form_entry/errors',
+    'cloudcare/js/form_entry/task_queue',
+    'cloudcare/js/form_entry/utils',
+    'cloudcare/js/form_entry/form_ui',
+], function (
+    $,
+    ko,
+    _,
+    cloudcareUtils,
+    constants,
+    errors,
+    taskQueue,
+    formEntryUtils,
+    formUI
+) {
     function WebFormSession(params) {
         var self = {};
 
@@ -331,7 +345,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
 
             // We revalidate any errored labels while answering any of the questions
             var erroredLabels = form.erroredLabels();
-
+            sessionStorage.answerQuestionInProgress = true;
             this.serverRequest(
                 _.extend({
                     'action': q.entry.xformAction,
@@ -341,8 +355,11 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                     'oneQuestionPerScreen': oneQuestionPerScreen,
                 }, q.entry.xformParams()),
                 function (resp) {
+                    sessionStorage.answerQuestionInProgress = false;
                     self.updateXformAction(q);
-                    q.formplayerProcessed = true;
+                    if (q.formplayerMediaRequest) {
+                        q.formplayerMediaRequest.resolve();
+                    }
                     $.publish('session.reconcile', [resp, q]);
                     if (self.answerCallback !== undefined) {
                         self.answerCallback(self.session_id);
@@ -354,7 +371,9 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 constants.BLOCK_SUBMIT,
                 function () {
                     self.updateXformAction(q);
-                    q.formplayerProcessed = false;
+                    if (q.formplayerMediaRequest) {
+                        q.formplayerMediaRequest.reject();
+                    }
                     q.serverError(
                         gettext("We were unable to save this answer. Please try again later."));
                     q.pendingAnswer(constants.NO_PENDING_ANSWER);
@@ -437,7 +456,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         };
 
         self.deleteRepeat = function (repetition) {
-            var juncture = formUI.getIx(repetition.parent);
+            var juncture = formUI.getIx(repetition.parent.parent);
             var repIx = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
             this.serverRequest(
                 {

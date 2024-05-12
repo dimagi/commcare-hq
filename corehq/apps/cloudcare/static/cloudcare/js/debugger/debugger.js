@@ -1,8 +1,25 @@
-/* globals ace, Clipboard */
-hqDefine('cloudcare/js/debugger/debugger', function () {
-    var kissmetrics = hqImport("analytix/js/kissmetrix"),
-        readableForm = hqImport("reports/js/readable_form");
-
+'use strict';
+hqDefine('cloudcare/js/debugger/debugger', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'clipboard/dist/clipboard',
+    'ace-builds/src-min-noconflict/ace',
+    'analytix/js/kissmetrix',
+    'reports/js/bootstrap3/readable_form',
+    'hqwebapp/js/atwho',    // $.atwho
+    'ace-builds/src-min-noconflict/mode-json',
+    'ace-builds/src-min-noconflict/mode-xml',
+    'ace-builds/src-min-noconflict/ext-searchbox',
+], function (
+    $,
+    ko,
+    _,
+    Clipboard,
+    ace,
+    kissmetrics,
+    readableForm
+) {
     /**
      * These define tabs that are availabe in the debugger.
      * {
@@ -445,11 +462,11 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             'Image': 'fa fa-camera',
             'Video': 'fa fa-video-camera',
             'Signature': 'fcc fcc-fd-signature',
-            'Geopoint': 'fa fa-map-marker',
+            'Geopoint': 'fa-solid fa-location-dot',
             'Barcode Scan': 'fa fa-barcode',
-            'Date': 'fa fa-calendar',
+            'Date': 'fa-solid fa-calendar-days',
             'Date and Time': 'fcc fcc-fd-datetime',
-            'Time': 'fcc fcc-fa-clock-o',
+            'Time': 'fa-regular fa-clock',
             'Select': 'fcc fcc-fd-single-select',
             'Double': 'fcc fcc-fd-decimal',
             'Label': 'fa fa-tag',

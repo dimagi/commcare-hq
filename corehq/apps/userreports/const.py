@@ -16,6 +16,12 @@ DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE = _(
     'In order to view this data using the Report Builder you will have to delete this report '
     'and then build it again. Click below to delete it.'
 )
+FORM_NOT_FOUND_ERROR_MESSAGE = _(
+    'Sorry! There was a problem trying to edit your report. '
+    'This likely occurred because the form associated with this report was deleted from the application. '
+    'You can go back and view historical data submitted. However, you may not edit this report again. '
+    'You also have the option of deleting this report by clicking the delete button below.'
+)
 DATA_SOURCE_MISSING_APP_ERROR_MESSAGE = _(
     "Report builder data source doesn't reference an application. "
     "It is likely this report has been customized and it is no longer editable. "
@@ -81,3 +87,5 @@ ALL_EXPRESSION_TYPES = (
     (UCR_NAMED_EXPRESSION, UCR_NAMED_EXPRESSION),
     (UCR_NAMED_FILTER, UCR_NAMED_FILTER),
 )
+
+DATA_SOURCE_REBUILD_RESTRICTED_AT = 1000000

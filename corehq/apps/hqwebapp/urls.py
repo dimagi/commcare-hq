@@ -1,4 +1,4 @@
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 
 from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 from two_factor.urls import urlpatterns as tf_urls
@@ -10,6 +10,7 @@ from corehq.apps.hqwebapp.session_details_endpoint.views import (
 )
 from corehq.apps.hqwebapp.views import (
     BugReportView,
+    SolutionsFeatureRequestView,
     MaintenanceAlertsView,
     create_alert,
     debug_notify,
@@ -60,6 +61,8 @@ urlpatterns = [
     url(r'^accounts/logout/$', logout, name="logout"),
     url(r'^reports/$', redirect_to_default),
     url(r'^bug_report/$', BugReportView.as_view(), name='bug_report'),
+    url(r'^solutions_feature_request/$', SolutionsFeatureRequestView.as_view(),
+        name=SolutionsFeatureRequestView.urlname),
     url(r'^debug/notify/$', debug_notify, name='debug_notify'),
     url(r'^search/$', quick_find, name="global_quick_find"),
     url(r'^searchDescription.xml$', osdd, name="osdd"),
@@ -76,9 +79,9 @@ urlpatterns = [
     url(r'^account/two_factor/backup/tokens/$', TwoFactorBackupTokensView.as_view(),
         name=TwoFactorBackupTokensView.urlname),
     url(r'^account/two_factor/disable/$', TwoFactorDisableView.as_view(), name=TwoFactorDisableView.urlname),
-    url(r'^account/two_factor/backup/phone/register/$', TwoFactorPhoneSetupView.as_view(),
+    url(r'^account/two_factor/phone/register/$', TwoFactorPhoneSetupView.as_view(),
         name=TwoFactorPhoneSetupView.urlname),
-    url(r'^account/two_factor/backup/phone/unregister/(?P<pk>\d+)/$', TwoFactorPhoneDeleteView.as_view(),
+    url(r'^account/two_factor/phone/unregister/(?P<pk>\d+)/$', TwoFactorPhoneDeleteView.as_view(),
         name=TwoFactorPhoneDeleteView.urlname),
     url(r'', include(tf_urls)),
     url(r'', include(tf_twilio_urls)),

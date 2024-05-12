@@ -1,11 +1,11 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
 {% block page_content %}
   <div class="row">
-    <div class="col-sm-6">
+    <div class="col-md-6">
       <p>
         {% blocktrans %}
           Use this page to edit the default monthly consumption
@@ -15,11 +15,14 @@
       </p>
     </div>
   </div>
-  <form class="form-horizontal" method="post">
+  <form method="post">
     {% csrf_token %}
     <fieldset>
       <legend>{% trans 'Edit Default Monthly Consumption' %}</legend>
       {% crispy form %}
     </fieldset>
+    <button type="submit" class="btn btn-primary">
+      {% trans "Update Default Consumption Info" %}
+    </button>
   </form>
 {% endblock %}

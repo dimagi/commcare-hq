@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,43 +1,94 @@
+@@ -1,44 +1,94 @@
 -@import "_hq/includes/variables.less";
 -@import "_hq/includes/mixins.less";
  
@@ -44,6 +44,7 @@
 -@import "_hq/typography.less";
 -@import "_hq/svg.less";
 -@import "_hq/utils.less";
+-@import "_hq/bootstrap5-temp.less";
 +// Configuration
 +@import "functions";
 +@import "commcarehq/variables";  // This comes before Bootstrap 5 variables to override the defaults

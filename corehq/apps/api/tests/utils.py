@@ -160,6 +160,8 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
             response = self.client.post(url, post_data, content_type=content_type)
         elif method == "PUT":
             response = self.client.put(url, post_data, content_type=content_type)
+        elif method == "PATCH":
+            response = self.client.patch(url, post_data, content_type=content_type)
         elif method == "DELETE":
             response = self.client.delete(url, post_data, content_type=content_type)
         self.assertEqual(response.status_code, failure_code)
@@ -170,6 +172,8 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
             response = self.client.post(url, post_data, content_type=content_type, **headers)
         elif method == "PUT":
             response = self.client.put(url, post_data, content_type=content_type, **headers)
+        elif method == "PATCH":
+            response = self.client.patch(url, post_data, content_type=content_type, **headers)
         elif method == "DELETE":
             response = self.client.delete(url, post_data, content_type=content_type, **headers)
         return response

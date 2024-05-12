@@ -1,0 +1,36 @@
+<div id="ko-demo-open-modal">
+  <button type="button"
+          class="btn btn-primary"
+          data-bind="openModal: 'ko-template-open-modal-demo'">
+    Open Modal
+  </button>
+</div>
+
+<script type="text/html" id="ko-template-open-modal-demo">
+  <div class="modal-dialog" aria-labelledby="exampleKoOpenModalLabel" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="exampleKoOpenModalLabel" data-bind="text: modalTitle"></h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p data-bind="text: modalText"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Okaaaaay</button>
+      </div>
+    </div>
+  </div>
+</script>
+
+<script>
+  $(function () {
+      $("#ko-demo-open-modal").koApplyBindings(function () {
+          return {
+              modalTitle: ko.observable("OpenModal Modal Example"),
+              modalText: ko.observable("The modal obtains its knockout context from the context of the triggering element"),
+          };
+      });
+  });
+</script>

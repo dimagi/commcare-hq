@@ -1,9 +1,16 @@
-hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
+'use strict';
+hqDefine("cloudcare/js/form_entry/spec/utils_spec", [
+    "hqwebapp/js/initial_page_data",
+    "cloudcare/js/form_entry/spec/fixtures",
+    "cloudcare/js/form_entry/form_ui",
+    "cloudcare/js/form_entry/utils",
+], function (
+    initialPageData,
+    fixtures,
+    formUI,
+    utils
+) {
     describe('Formplayer utils', function () {
-        var fixtures = hqImport("cloudcare/js/form_entry/spec/fixtures"),
-            formUI = hqImport("cloudcare/js/form_entry/form_ui"),
-            utils = hqImport("cloudcare/js/form_entry/utils");
-
         it('Should determine if two answers are equal', function () {
             var answersEqual = utils.answersEqual,
                 result;
@@ -24,13 +31,20 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
         it('Should get root form for questions', function () {
             /**
              *  Form's question tree:
-             *     text
-             *     group
-             *         textInGroup
-             *     repeat
-             *         groupInRepeat
-             *             textInRepeat
+             *      grouped-element-tile-row
+             *          text
+             *      grouped-element-tile-row
+             *          group
+             *              grouped-element-tile-row
+             *                  textInGroup
+             *      grouped-element-tile-row
+             *          repeat
+             *              grouped-element-tile-row
+             *                  groupInRepeat
+             *                      grouped-element-tile-row
+             *                          textInRepeat
              */
+            initialPageData.register("toggles_dict", { WEB_APPS_ANCHORED_SUBMIT: false });
             var text = fixtures.textJSON({ix: "0"}),
                 textInGroup = fixtures.textJSON({ix: "1,0"}),
                 group = fixtures.groupJSON({ix: "1", children: [textInGroup]}),
@@ -41,10 +55,9 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
                     tree: [text, group, repeat],
                 });
 
-            [text, group, repeat] = form.children();
-            [groupInRepeat] = repeat.children();
-            [textInRepeat] = groupInRepeat.children();
-
+            [text, group, repeat] = form.children().map(child => child.children()[0]);
+            [groupInRepeat] = repeat.children()[0].children();
+            [textInRepeat] = groupInRepeat.children()[0].children();
             assert.equal(groupInRepeat.caption(), null);
             assert.equal(utils.getRootForm(text), form);
             assert.equal(utils.getRootForm(groupInRepeat), form);
@@ -52,6 +65,8 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
 
             assert.equal(utils.getBroadcastContainer(text), form);
             assert.equal(utils.getBroadcastContainer(textInRepeat), groupInRepeat);
+
+            initialPageData.unregister("toggles_dict");
         });
     });
 });

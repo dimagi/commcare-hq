@@ -332,8 +332,8 @@ hqDefine("export/js/create_export", [
                     self._apps_by_type = data.apps_by_type || {};
                     self._modules_by_app = data.modules_by_app || {};
                     self._forms_by_app_by_module = data.forms_by_app_by_module || {};
-                    if(data.case_types_by_app) {
-                        self._all_case_types = data.case_types_by_app['_all_apps']
+                    if (data.case_types_by_app) {
+                        self._all_case_types = data.case_types_by_app['_all_apps'];
                     } else {
                         self._all_case_types = {};
                     }

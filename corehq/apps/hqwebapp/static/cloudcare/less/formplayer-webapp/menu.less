@@ -2,136 +2,13 @@
   background: transparent;
 }
 
-.sticky {
-  position: sticky !important;
-  z-index: 1; // keep sticky elements on top of case list
-  &-header {
-    top: 32px; // header scrolls excess padding under breadcrumbs
-  }
-  &-map {
-    top: 46px; // map sits directly against breadcrumbs
-  }
-}
-
-// override leaflet-fullscreen styles to fix icon alignment in mapbox.js
-.leaflet-touch {
-  .leaflet-control-fullscreen a {
-    background-position: 0px 0px !important;
-  }
-  &.leaflet-fullscreen-on .leaflet-control-fullscreen a {
-    background-position: 0px -26px !important;
-  }
-}
-
-.btn-circle {
-  border-radius: 50%;
-  aspect-ratio: 1;
-}
-
-#scroll-to-bottom {
-  position: fixed;
-  z-index: @zindex-formplayer-scroll-to-bottom;
-  bottom: 45px;
-  left: calc(100vw - 80px);
-}
-
 #menu-region .module-menu-container,
 #menu-region .module-case-list-container {
   background-color: white;
   .box-shadow(0 0 10px 2px rgba(0,0,0,.1));
   margin-bottom: 2rem;
-
-  .white-border {
-    border-right-color: transparent;
-    border-right-style: solid;
-    border-right-width: 5px;
-  }
-
-  #module-case-list-map {
-    height: calc(~"100vh - 65px");
-
-    @media (max-width: @screen-sm-max) {
-      height: 25vh;
-    }
-
-    .marker-pin {
-      text-align: center;
-      /* Horizontally center the text (icon) */
-      line-height: 12px;
-      /* Vertically center the text (icon) */
-      color: @call-to-action-hi;
-      text-shadow: -1px 0 @call-to-action-low, 0 1px @call-to-action-low, 1px 0 @call-to-action-low, 0 -1px @call-to-action-low;
-    }
-  }
-
-  .list-cell-wrapper-style {
-    margin: 10px 5px 0 5px;
-    border-collapse: collapse;
-    vertical-align: top;
-    background-color: @cc-bg;
-    container-type: inline-size;
-
-    a {
-      color: @cc-brand-mid;
-    }
-
-    .module-icon,
-    .webapp-markdown-output img {
-      max-height: 100%;
-      max-width: 100%;
-    }
-
-    &:hover {
-      background-color: darken(@cc-bg, 5);
-      transition: background 0.6s;
-    }
-  }
-
-  .highlighted-case {
-    border-style: solid;
-    border-color: @cc-brand-mid;
-  }
-
-  .case-tile-group{
-    margin: 10px;
-    padding: 10px 0;
-
-    .group-data{
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    .group-rows{
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: center;
-    }
-    .group-row{
-      background-color: white;
-      width: 95%;
-    }
-  }
 }
 
 #menu-region .module-menu-container {
   padding-bottom: 6px;
-}
-
-@media print {
-  #menu-region .module-menu-container,
-  #menu-region .module-case-list-container {
-    #module-case-list-container__results-container {
-      grid-template-columns: [tiles] 1fr !important;
-    }
-
-    .list-cell-wrapper-style {
-      border: 1px solid @cc-bg;
-    break-inside: avoid;
-    }
-  }
-}
-
-#case-list-menu-header div button {
-  margin-left: 12px;
 }

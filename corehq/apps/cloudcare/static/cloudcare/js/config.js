@@ -1,9 +1,10 @@
+'use strict';
 hqDefine("cloudcare/js/config", [
     'jquery',
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/main',
+    'hqwebapp/js/bootstrap5/main',
 ], function (
     $,
     _,

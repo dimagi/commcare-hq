@@ -1,0 +1,61 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Feedback</h1>
+  <p class="sg-lead">
+    Add a simple user feedback widget to any page.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#usage">Usage</a>
+        <ul>
+          <li><a href="#working-example">Working Example</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">Overview</h2>
+  <p>
+    HQ has a custom feedback component that uses
+    <a href="https://knockoutjs.com/documentation/component-overview.html"
+       target="_blank">Knockout Components</a>.
+    See
+    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/components/bootstrap5/feedback.js"
+       target="_blank">feedback.js</a>
+    for full documentation.
+  </p>
+
+  <h2 id="usage" class="pt-4">
+    Usage
+  </h2>
+  <p>
+    The best way to learn how to use this component is to look at existing code to
+    see how it's being used in HQ.
+  </p>
+  <p>
+    <a href="https://github.com/dimagi/commcare-hq/blob/5efceaabb619c437ff14301b757c6a3d0dc36004/corehq/apps/export/templates/export/export_list.html#L39"
+       target="_blank">OData Feeds</a> make use of the feedback component. In this use case the
+    component is placed outside of a knockout model, so <code>data-apply-bindings="false"</code> is not required, as in
+    example below.
+  </p>
+  <h3 id="working-example" class="pt-3">
+    A Working Example
+  </h3>
+  <p>
+    The example below demonstrates the feedback component inside of a knockout model. The feedback url is taken from
+    <code>initialPageData</code> which "reverses" the <code>styleguide_submit_feedback_demo</code> URL from the
+    <code>registerurl</code> template tag.
+  </p>
+  {% registerurl 'styleguide_submit_feedback_demo' %}
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.feedback %}
+{% endblock content %}

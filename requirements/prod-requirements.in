@@ -6,12 +6,6 @@ flower
 setproctitle
 uWSGI
 ipython  # for nicer django shell experience
-ndg-httpsclient
-pyasn1
 
-# ssl issue
-# https://urllib3.readthedocs.io/en/latest/user-guide.html#certificate-verification-in-python-2
-pyOpenSSL
-cryptography
 idna
 certifi

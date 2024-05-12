@@ -360,6 +360,26 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         self._dump_and_load(expected_object_counts)
 
+    def test_sqluserdata(self):
+        from corehq.apps.users.models import SQLUserData, WebUser
+        from django.contrib.auth.models import User
+
+        expected_object_counts = Counter({User: 1, SQLUserData: 1})
+
+        web_user = WebUser.create(
+            domain=self.domain_name,
+            username='webuser_t1',
+            password='secret',
+            created_by=None,
+            created_via=None,
+            email='webuser@example.com',
+        )
+        self.addCleanup(web_user.delete, self.domain_name, deleted_by=None)
+        user = web_user.get_django_user()
+        SQLUserData.objects.create(domain=self.domain_name, data={'test': 1}, django_user=user)
+
+        self._dump_and_load(expected_object_counts)
+
     def test_dump_roles(self):
         from corehq.apps.users.models import UserRole, HqPermissions, RoleAssignableBy, RolePermission
 

@@ -1,4 +1,4 @@
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 from corehq.apps.domain.views.tombstone import TombstoneManagement, create_tombstone
@@ -68,5 +68,6 @@ urlpatterns = [
     url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
         name=ReprocessMessagingCaseUpdatesView.urlname),
     url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
+    url(r'workflows/', include("corehq.apps.app_execution.urls")),
     AdminReportDispatcher.url_pattern(),
 ]

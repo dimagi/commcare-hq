@@ -88,6 +88,7 @@ EXCEL_DATA = (
     ('menu1',
      (('case_list_menu_item_label', 'list', 'Steth List'),
       ('no_items_text', 'list', 'Empty List'),
+      ('select_text', 'list', 'Continue'),
       ('name', 'list', 'Name'),
       ('name', 'detail', 'Name'))),
     ('menu1_form1',
@@ -98,13 +99,18 @@ EXCEL_DATA = (
                          'and "bad" &lt; xml.', '', '', ''),
       ('submit_label', 'Submit', '', '', ''),
       ('submit_notification_label', '', '', '', ''))),
-    ('menu2', (('no_items_text', 'list', 'List is empty.'), ('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
+    ('menu2',
+     (('no_items_text', 'list', 'List is empty.'),
+      ('select_text', 'list', 'Continue'),
+      ('name', 'list', 'Name'),
+      ('name', 'detail', 'Name'))),
     ('menu2_form1',
      (('name_of_series-label', 'Name of series', '', '', ''),
       ('submit_label', 'Submit', '', '', ''),
       ('submit_notification_label', '', '', '', ''))),
     ('menu3',
      (('no_items_text', 'list', 'List is empty.'),
+      ('select_text', 'list', 'Continue'),
       ('name', 'list', 'Name'),
       ('Tab 0', 'detail', 'Name'),
       ('Tab 1', 'detail', 'Graph'),
@@ -123,6 +129,7 @@ EXCEL_DATA = (
       ('submit_notification_label', '', '', '', ''))),
     ('menu4',
      (('no_items_text', 'list', 'List is empty.'),
+      ('select_text', 'list', 'Continue'),
       ('x', 'list', 'X'),
       ('y', 'list', 'Y'),
       ('x (ID Mapping Text)', 'detail', 'X Name'),
@@ -137,7 +144,11 @@ EXCEL_DATA = (
       ('submit_label', 'Submit', '', '', ''),
       ('submit_notification_label', '', '', '', ''))),
     ('menu5', ()),
-    ('menu6', (('no_items_text', 'list', 'List is empty.'), ('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
+    ('menu6',
+     (('no_items_text', 'list', 'List is empty.'),
+      ('select_text', 'list', 'Continue with Case(s)'),
+      ('name', 'list', 'Name'),
+      ('name', 'detail', 'Name'))),
     ('menu6_form1',
      (('this_form_does_nothing-label', 'This form does nothing.', '', '', ''),
       ('submit_label', 'Submit', '', '', ''),
@@ -361,6 +372,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ("search_again_label", "list", "Find Another Mother", "Mère! Encore!"),
             ("title_label", "list", "Find a Mom", "Maman!"),
             ("description", "list", "More information", "Plus d'information"),
+            ("select_text", "list", "Continue with case", "Continuer avec le cas"),
             ("no_items_text", "list", "Empty List", "Lista Vacía"),
             ("name", "list", "Name", "Nom"),
             ("Tab 0", "detail", "Name", "Nom"),
@@ -418,6 +430,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ("menu1", "search_again_label", "list", "", "Find Another Mother", "", "", "", ""),
             ("menu1", "title_label", "list", "Find a Mom", "Maman!", "", "", "", ""),
             ("menu1", "description", "list", "More information", "Plus d'information", "", "", "", ""),
+            ("menu1", "select_text", "list", "Continue with case", "Continuer avec le cas", "", "", "", ""),
             ("menu1", "no_items_text", "list", "Empty List", "Lista Vacía", "", "", "", ""),
             ("menu1", "name", "list", "", "Name", "", "", "", ""),
             ("menu1", "Tab 0", "detail", "", "Name", "", "", "", ""),
@@ -1141,6 +1154,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     def test_module_detail_rows(self):
         self.assertListEqual(get_module_detail_rows(self.app.langs, self.app.modules[0]), [
             ('no_items_text', 'list', 'Empty List'),
+            ('select_text', 'list', 'Continue'),
             ('name', 'list', 'Name'),
             ('name', 'detail', 'Name'),
         ])
@@ -1226,6 +1240,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu1', '', '', '', 'Stethoscope', 'jr://file/commcare/image/module0.png', None, '',
              '58ce5c9cf6eda401526973773ef216e7980bc6cc'],
             ['menu1', 'case_list_menu_item_label', 'list', '', 'Steth List', '', '', '', ''],
+            ['menu1', 'select_text', 'list', '', 'Continue', '', '', '', ''],
             ['menu1', 'name', 'list', '', 'Name', '', '', '', ''],
             ['menu1', 'name', 'detail', '', 'Name', '', '', '', ''],
 
@@ -1241,6 +1256,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu1_form1', '', '', 'submit_notification_label', '', '', '', '', ''],
 
             ['menu2', '', '', '', 'Register Series', '', '', '', 'b9c25abe21054632a3623199debd7cfa'],
+            ['menu2', 'select_text', 'list', '', 'Continue', '', '', '', ''],
             ['menu2', 'name', 'list', '', 'Name', '', '', '', ''],
             ['menu2', 'name', 'detail', '', 'Name', '', '', '', ''],
 
@@ -1250,6 +1266,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu2_form1', '', '', 'submit_notification_label', '', '', '', '', ''],
 
             ['menu3', '', '', '', 'Followup Series', '', '', '', '217e1c8de3dd46f98c7d2806bc19b580'],
+            ['menu3', 'select_text', 'list', '', 'Continue', '', '', '', ''],
             ['menu3', 'name', 'list', '', 'Name', '', '', '', ''],
             ['menu3', 'Tab 0', 'detail', '', 'Name', '', '', '', ''],
             ['menu3', 'Tab 1', 'detail', '', 'Graph', '', '', '', ''],
@@ -1269,6 +1286,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu3_form1', '', '', 'submit_notification_label', '', '', '', '', ''],
 
             ['menu4', '', '', '', 'Remove Point', '', '', '', '17195132472446ed94bd91ba19a2b379'],
+            ['menu4', 'select_text', 'list', '', 'Continue', '', '', '', ''],
             ['menu4', 'x', 'list', '', 'X', '', '', '', ''],
             ['menu4', 'y', 'list', '', 'Y', '', '', '', ''],
             ['menu4', 'x (ID Mapping Text)', 'detail', '', 'X Name', '', '', '', ''],
@@ -1287,6 +1305,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu5', '', '', '', 'Empty Reports Module', '', '', '', '703eb807ae584d1ba8bf9457d7ac7590'],
 
             ['menu6', '', '', '', 'Advanced Module', None, None, '', '7f75ed4c15be44509591f41b3d80746e'],
+            ['menu6', 'select_text', 'list', '', 'Continue with Case(s)', '', '', '', ''],
             ['menu6', 'name', 'list', '', 'Name', '', '', '', ''],
             ['menu6', 'name', 'detail', '', 'Name', '', '', '', ''],
 

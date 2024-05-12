@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list', [
     'jquery',
     'underscore',
@@ -9,7 +10,6 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list', [
     hqMain,
     uiInputMap
 ) {
-    'use strict';
     var module = {};
 
     var KeyValList = function (guid, modalTitle, subTitle, placeholders, maxDisplay) {
@@ -41,16 +41,16 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list', [
 
         $modalContent.prepend('<div class="modal-header"><a class="close" data-dismiss="modal">×</a><h4 class="modal-title">'
             + this.modal_title + '</h4>' + this.sub_title + '</div>');
-        var $modal_form = $('<form class="form-horizontal hq-enum-editor" action="" />'),
-            $modal_body = $('<div class="modal-body" style="max-height:372px; overflow-y: scroll;" />');
-        $modal_body.append($('<fieldset />'));
-        $modal_body.append('<a href="#" class="btn btn-primary" data-enum-action="add"><i class="fa fa-plus"></i> ' +
+        var $modalForm = $('<form class="form-horizontal hq-enum-editor" action="" />'),
+            $modalBody = $('<div class="modal-body" style="max-height:372px; overflow-y: scroll;" />');
+        $modalBody.append($('<fieldset />'));
+        $modalBody.append('<a href="#" class="btn btn-primary" data-enum-action="add"><i class="fa fa-plus"></i> ' +
             gettext('Add Item') + '</a>');
 
-        $modal_form.append($modal_body);
-        $modal_form.append('<div class="modal-footer"><button class="btn btn-primary" data-dismiss="modal">' +
+        $modalForm.append($modalBody);
+        $modalForm.append('<div class="modal-footer"><button class="btn btn-primary" data-dismiss="modal">' +
             gettext('Done') + '</button></div>');
-        $modalContent.append($modal_form);
+        $modalContent.append($modalForm);
         $modalDialog.append($modalContent);
         $enumModal.append($modalDialog);
 
@@ -78,24 +78,25 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list', [
                 $(this).parent().parent().find('fieldset').append(uiInputMap.new(true, placeholders).ui);
                 $(this).parent().parent().find('fieldset input.enum-key').last().focus();
             }
-            if (!$(this).attr('data-dismiss'))
+            if (!$(this).attr('data-dismiss')) {
                 return false;
+            }
         });
 
         this.setEdit(this.edit);
     };
     KeyValList.prototype = {
-        val: function (original_pairs, translated_pairs) {
-            if (original_pairs === undefined) {
+        val: function (originalPairs, translatedPairs) {
+            if (originalPairs === undefined) {
                 // this function is being invoked as a getter, just return the current value
                 return this.value;
             } else {
-                var $modal_fields = $('#' + this.modal_id + ' form fieldset');
-                $modal_fields.text('');
+                var $modalFields = $('#' + this.modal_id + ' form fieldset');
+                $modalFields.text('');
 
-                this.value = original_pairs;
-                if (translated_pairs !== undefined) {
-                    this.translated_value = translated_pairs;
+                this.value = originalPairs;
+                if (translatedPairs !== undefined) {
+                    this.translated_value = translatedPairs;
                 }
                 this.$formatted_view.val(JSON.stringify(this.value));
 
@@ -112,7 +113,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list', [
 
                 let i = 0;
                 for (var key in this.value) {
-                    $modal_fields.append(uiInputMap.new(true, this.placeholders).val(key, this.value[key], this.translated_value[key]).ui);
+                    $modalFields.append(uiInputMap.new(true, this.placeholders).val(key, this.value[key], this.translated_value[key]).ui);
                     if (this.max_display === undefined || i < this.max_display) {
                         let createUiInputMapView = () => uiInputMap.new(true, this.placeholders).val(key, this.value[key], this.translated_value[key]).setEdit(false).$noedit_view;
                         this.$edit_view.append(createUiInputMapView());

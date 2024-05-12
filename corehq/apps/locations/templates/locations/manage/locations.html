@@ -64,7 +64,7 @@
              href="{{ bulk_download_url }}"
             {% endif %}
           >
-            <i class="fa fa-cloud-download"></i> {% trans 'Download Organization Structure' %}
+            <i class="fa-solid fa-cloud-arrow-down"></i> {% trans 'Download Organization Structure' %}
           </a>
 
           {% if not request.is_view_only %}
@@ -75,7 +75,7 @@
                href="{% url "location_import" domain %}"
               {% endif %}
             >
-              <i class="fa fa-cloud-upload"></i> {% trans 'Bulk Upload' %}
+              <i class="fa-solid fa-cloud-arrow-up"></i> {% trans 'Bulk Upload' %}
             </a>
           {% endif %}
 

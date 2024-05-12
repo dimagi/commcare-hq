@@ -282,6 +282,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 'instance_name': module.search_config.instance_name or "",
                 'include_all_related_cases': module.search_config.include_all_related_cases,
                 'dynamic_search': app.split_screen_dynamic_search,
+                'search_on_clear': module.search_config.search_on_clear,
             },
         },
     }
@@ -1185,16 +1186,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     provided in the request. Components are short, long, filter, parent_select,
     fixture_select and sort_elements.
     """
-    # HELPME
-    #
-    # This method has been flagged for refactoring due to its complexity and
-    # frequency of touches in changesets
-    #
-    # If you are writing code that touches this method, your changeset
-    # should leave the method better than you found it.
-    #
-    # Please remove this flag when this method no longer triggers an 'E' or 'F'
-    # classification from the radon code static analysis
 
     params = json_request(request.POST)
     detail_type = params.get('type')
@@ -1206,8 +1197,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     parent_select = params.get('parent_select', None)
     fixture_select = params.get('fixture_select', None)
     sort_elements = params.get('sort_elements', None)
+    case_tile_template = params.get('caseTileTemplate', None)
     print_template = params.get('printTemplate', None)
-    search_properties = params.get("search_properties")
     custom_variables_dict = {
         'short': params.get("short_custom_variables_dict", None),
         'long': params.get("long_custom_variables_dict", None)
@@ -1242,6 +1233,11 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.
         detail.short.filter = filter
+    if case_tile_template is not None:
+        if short is not None:
+            detail.short.case_tile_template = case_tile_template
+        else:
+            detail.long.case_tile_template = case_tile_template
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
 
@@ -1276,127 +1272,138 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             return HttpResponseBadRequest(_("The case hierarchy contains a circular reference."))
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
-    if search_properties is not None:
-        if (
-            search_properties.get('properties') is not None
-            or search_properties.get('default_properties') is not None
-        ):
-            title_label = module.search_config.title_label
-            title_label[lang] = search_properties.get('title_label', '')
 
-            description = module.search_config.description
-            description[lang] = search_properties.get('description', '')
-
-            search_label = module.search_config.search_label
-            search_label.label[lang] = search_properties.get('search_label', '')
-            if search_properties.get('search_label_image_for_all'):
-                search_label.use_default_image_for_all = (
-                    search_properties.get('search_label_image_for_all') == 'true')
-            if search_properties.get('search_label_audio_for_all'):
-                search_label.use_default_audio_for_all = (
-                    search_properties.get('search_label_audio_for_all') == 'true')
-            search_label.set_media("media_image", lang, search_properties.get('search_label_image'))
-            search_label.set_media("media_audio", lang, search_properties.get('search_label_audio'))
-
-            search_again_label = module.search_config.search_again_label
-            search_again_label.label[lang] = search_properties.get('search_again_label', '')
-            if search_properties.get('search_again_label_image_for_all'):
-                search_again_label.use_default_image_for_all = (
-                    search_properties.get('search_again_label_image_for_all') == 'true')
-            if search_properties.get('search_again_label_audio_for_all'):
-                search_again_label.use_default_audio_for_all = (
-                    search_properties.get('search_again_label_audio_for_all') == 'true')
-            search_again_label.set_media("media_image", lang, search_properties.get('search_again_label_image'))
-            search_again_label.set_media("media_audio", lang, search_properties.get('search_again_label_audio'))
-
-            try:
-                properties = [
-                    CaseSearchProperty.wrap(p)
-                    for p in _update_search_properties(
-                        module,
-                        search_properties.get('properties'), lang
-                    )
-                ]
-            except CaseSearchConfigError as e:
-                return HttpResponseBadRequest(e)
-            xpath_props = [
-                "search_filter", "blacklisted_owner_ids_expression",
-                "search_button_display_condition", "additional_relevant"
-            ]
-
-            def _check_xpath(xpath, location):
-                is_valid, message = validate_xpath(xpath)
-                if not is_valid:
-                    raise ValueError(
-                        f"Please fix the errors in xpath expression '{xpath}' "
-                        f"in {location}. The error is {message}"
-                    )
-
-            for prop in xpath_props:
-                xpath = search_properties.get(prop, "")
-                if xpath:
-                    try:
-                        _check_xpath(xpath, "Search and Claim Options")
-                    except ValueError as e:
-                        return HttpResponseBadRequest(str(e))
-
-            additional_registry_cases = []
-            for case_id_xpath in search_properties.get('additional_registry_cases', []):
-                if not case_id_xpath:
-                    continue
-
-                try:
-                    _check_xpath(case_id_xpath, "the Case ID of Additional Data Registry Query")
-                except ValueError as e:
-                    return HttpResponseBadRequest(str(e))
-
-                additional_registry_cases.append(case_id_xpath)
-
-            data_registry_slug = search_properties.get('data_registry', "")
-            data_registry_workflow = search_properties.get('data_registry_workflow', "")
-            # force auto launch when data registry load case workflow selected
-            force_auto_launch = data_registry_slug and data_registry_workflow == REGISTRY_WORKFLOW_LOAD_CASE
-
-            instance_name = search_properties.get('instance_name', "")
-            if instance_name and not re.match(r"^[a-zA-Z]\w*$", instance_name):
-                return HttpResponseBadRequest(_(
-                    "'{}' is an invalid instance name. It can contain only letters, numbers, and underscores."
-                ).format(instance_name))
-
-            module.search_config = CaseSearch(
-                search_label=search_label,
-                search_again_label=search_again_label,
-                title_label=title_label,
-                description=description,
-                properties=properties,
-                additional_case_types=module.search_config.additional_case_types,
-                additional_relevant=search_properties.get('additional_relevant', ''),
-                auto_launch=force_auto_launch or bool(search_properties.get('auto_launch')),
-                default_search=bool(search_properties.get('default_search')),
-                search_filter=search_properties.get('search_filter', ""),
-                search_button_display_condition=search_properties.get('search_button_display_condition', ""),
-                blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),
-                default_properties=[
-                    DefaultCaseSearchProperty.wrap(p)
-                    for p in search_properties.get('default_properties')
-                ],
-                custom_sort_properties=[
-                    CaseSearchCustomSortProperty.wrap(p)
-                    for p in search_properties.get('custom_sort_properties')
-                ],
-                data_registry=data_registry_slug,
-                data_registry_workflow=data_registry_workflow,
-                additional_registry_cases=additional_registry_cases,
-                custom_related_case_property=search_properties.get('custom_related_case_property', ""),
-                inline_search=search_properties.get('inline_search', False),
-                instance_name=instance_name,
-                include_all_related_cases=search_properties.get('include_all_related_cases', False),
-                dynamic_search=app.split_screen_dynamic_search and not module.is_auto_select(),
-            )
+    _gather_and_update_search_properties(params, app, module, lang)
 
     resp = {}
     app.save(resp)
     return JsonResponse(resp)
+
+
+def _gather_and_update_search_properties(params, app, module, lang):
+    search_properties = params.get("search_properties")
+
+    def _has_search_properties(search_properties):
+        if search_properties is not None:
+            has_properties = search_properties.get('properties') is not None
+            has_default_properties = search_properties.get('default_properties') is not None
+            return has_properties or has_default_properties
+        return False
+
+    if _has_search_properties(search_properties):
+        title_label = module.search_config.title_label
+        title_label[lang] = search_properties.get('title_label', '')
+
+        description = module.search_config.description
+        description[lang] = search_properties.get('description', '')
+
+        search_label = module.search_config.search_label
+        search_label.label[lang] = search_properties.get('search_label', '')
+        if search_properties.get('search_label_image_for_all'):
+            search_label.use_default_image_for_all = (
+                search_properties.get('search_label_image_for_all') == 'true')
+        if search_properties.get('search_label_audio_for_all'):
+            search_label.use_default_audio_for_all = (
+                search_properties.get('search_label_audio_for_all') == 'true')
+        search_label.set_media("media_image", lang, search_properties.get('search_label_image'))
+        search_label.set_media("media_audio", lang, search_properties.get('search_label_audio'))
+
+        search_again_label = module.search_config.search_again_label
+        search_again_label.label[lang] = search_properties.get('search_again_label', '')
+        if search_properties.get('search_again_label_image_for_all'):
+            search_again_label.use_default_image_for_all = (
+                search_properties.get('search_again_label_image_for_all') == 'true')
+        if search_properties.get('search_again_label_audio_for_all'):
+            search_again_label.use_default_audio_for_all = (
+                search_properties.get('search_again_label_audio_for_all') == 'true')
+        search_again_label.set_media("media_image", lang, search_properties.get('search_again_label_image'))
+        search_again_label.set_media("media_audio", lang, search_properties.get('search_again_label_audio'))
+
+        try:
+            properties = [
+                CaseSearchProperty.wrap(p)
+                for p in _update_search_properties(
+                    module,
+                    search_properties.get('properties'), lang
+                )
+            ]
+        except CaseSearchConfigError as e:
+            return HttpResponseBadRequest(e)
+        xpath_props = [
+            "search_filter", "blacklisted_owner_ids_expression",
+            "search_button_display_condition", "additional_relevant"
+        ]
+
+        def _check_xpath(xpath, location):
+            is_valid, message = validate_xpath(xpath)
+            if not is_valid:
+                raise ValueError(
+                    f"Please fix the errors in xpath expression '{xpath}' "
+                    f"in {location}. The error is {message}"
+                )
+
+        for prop in xpath_props:
+            xpath = search_properties.get(prop, "")
+            if xpath:
+                try:
+                    _check_xpath(xpath, "Search and Claim Options")
+                except ValueError as e:
+                    return HttpResponseBadRequest(str(e))
+
+        additional_registry_cases = []
+        for case_id_xpath in search_properties.get('additional_registry_cases', []):
+            if not case_id_xpath:
+                continue
+
+            try:
+                _check_xpath(case_id_xpath, "the Case ID of Additional Data Registry Query")
+            except ValueError as e:
+                return HttpResponseBadRequest(str(e))
+
+            additional_registry_cases.append(case_id_xpath)
+
+        data_registry_slug = search_properties.get('data_registry', "")
+        data_registry_workflow = search_properties.get('data_registry_workflow', "")
+        # force auto launch when data registry load case workflow selected
+        force_auto_launch = data_registry_slug and data_registry_workflow == REGISTRY_WORKFLOW_LOAD_CASE
+
+        instance_name = search_properties.get('instance_name', "")
+        if instance_name and not re.match(r"^[a-zA-Z]\w*$", instance_name):
+            return HttpResponseBadRequest(_(
+                "'{}' is an invalid instance name. It can contain only letters, numbers, and underscores."
+            ).format(instance_name))
+
+        module.search_config = CaseSearch(
+            search_label=search_label,
+            search_again_label=search_again_label,
+            title_label=title_label,
+            description=description,
+            properties=properties,
+            additional_case_types=module.search_config.additional_case_types,
+            additional_relevant=search_properties.get('additional_relevant', ''),
+            auto_launch=force_auto_launch or bool(search_properties.get('auto_launch')),
+            default_search=bool(search_properties.get('default_search')),
+            search_filter=search_properties.get('search_filter', ""),
+            search_button_display_condition=search_properties.get('search_button_display_condition', ""),
+            blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),
+            default_properties=[
+                DefaultCaseSearchProperty.wrap(p)
+                for p in search_properties.get('default_properties')
+            ],
+            custom_sort_properties=[
+                CaseSearchCustomSortProperty.wrap(p)
+                for p in search_properties.get('custom_sort_properties')
+            ],
+            data_registry=data_registry_slug,
+            data_registry_workflow=data_registry_workflow,
+            additional_registry_cases=additional_registry_cases,
+            custom_related_case_property=search_properties.get('custom_related_case_property', ""),
+            inline_search=search_properties.get('inline_search', False),
+            instance_name=instance_name,
+            include_all_related_cases=search_properties.get('include_all_related_cases', False),
+            dynamic_search=app.split_screen_dynamic_search and not module.is_auto_select(),
+            search_on_clear=search_properties.get('search_on_clear', False),
+        )
 
 
 def _update_short_details(detail, short, params, lang):
@@ -1415,7 +1422,6 @@ def _update_short_details(detail, short, params, lang):
             if value is not None:
                 setattr(detail.short, attribute_name or param_name, value)
 
-        _set_if_not_none('caseTileTemplate', 'case_tile_template')
         _set_if_not_none('persistTileOnForms', 'persist_tile_on_forms')
         _set_if_not_none('persistentCaseTileFromModule', 'persistent_case_tile_from_module')
         _set_if_not_none('enableTilePullDown', 'pull_down_tile')

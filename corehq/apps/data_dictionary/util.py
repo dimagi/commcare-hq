@@ -17,6 +17,8 @@ from corehq.apps.data_dictionary.models import (
     CasePropertyGroup,
     CaseType,
 )
+from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
+from corehq.apps.es.case_search import CaseSearchES, CASE_PROPERTIES_PATH, PROPERTY_KEY
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
@@ -149,6 +151,26 @@ def get_case_property_label_dict(domain):
     return labels_dict
 
 
+def get_case_property_deprecated_dict(domain):
+    """
+    This returns a dictionary of the structure
+    {
+        case_type: [
+            case_property,
+            ...
+        ],
+        ...
+    }
+    for each case type and case property in the domain. Each case type
+    will contain a list of only deprecated case properties.
+    """
+    annotated_types = CaseType.objects.filter(domain=domain).prefetch_related('properties')
+    deprecated_dict = {}
+    for case_type in annotated_types:
+        deprecated_dict[case_type.name] = [prop.name for prop in case_type.properties.all() if prop.deprecated]
+    return deprecated_dict
+
+
 def get_values_hints_dict(domain, case_type_name):
     values_hints_dict = defaultdict(list)
     case_type = CaseType.objects.filter(domain=domain, name=case_type_name).first()
@@ -264,6 +286,14 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         return gettext('Unable to save valid values longer than {} characters').format(max_len)
 
 
+def delete_case_property(name, case_type, domain):
+    try:
+        prop = CaseProperty.objects.get(name=name, case_type__name=case_type, case_type__domain=domain)
+    except CaseProperty.DoesNotExist:
+        return gettext('Case property does not exist.')
+    prop.delete()
+
+
 @quickcache(vary_on=['domain', 'exclude_deprecated'], timeout=24 * 60 * 60)
 def get_data_dict_props_by_case_type(domain, exclude_deprecated=True):
     filter_kwargs = {'case_type__domain': domain}
@@ -310,19 +340,14 @@ def get_gps_properties(domain, case_type):
     ).values_list('name', flat=True))
 
 
-def get_column_headings(row, valid_values, sheet_name=None, case_prop_name=None):
+def get_column_headings(row, valid_values, sheet_name, case_prop_name=None):
     column_headings = []
     errors = []
     for index, cell in enumerate(row, start=1):
         if not cell.value:
-            if sheet_name:
-                errors.append(
-                    _("Column {} in \"{}\" sheet has an empty header").format(index, sheet_name)
-                )
-            else:
-                errors.append(
-                    _("Column {} has an empty header").format(index)
-                )
+            errors.append(
+                _('Column {} in "{}" sheet has an empty header').format(index, sheet_name)
+            )
             continue
 
         cell_value = cell.value.lower()
@@ -330,32 +355,30 @@ def get_column_headings(row, valid_values, sheet_name=None, case_prop_name=None)
             column_headings.append(valid_values[cell_value])
         else:
             formatted_valid_values = ', '.join(list(valid_values.keys())).title()
-            if sheet_name:
-                error = _("Invalid column \"{}\" in \"{}\" sheet. Valid column names are: {}").format(
-                    cell.value, sheet_name, formatted_valid_values)
-                errors.append(error)
-            else:
-                error = _("Invalid column \"{}\". Valid column names are: {}").format(
-                    cell.value, formatted_valid_values)
-                errors.append(error)
+            error = _('Invalid column "{}" in "{}" sheet. Valid column names are: {}').format(
+                cell.value, sheet_name, formatted_valid_values)
+            errors.append(error)
     if case_prop_name and case_prop_name not in column_headings:
-        if sheet_name:
-            errors.append(
-                _("Missing \"Case Property\" column header in \"{}\" sheet").format(sheet_name)
-            )
-        else:
-            errors.append(_("Missing \"Case Property\" column header"))
+        errors.append(
+            _('Missing "Case Property" column header in "{}" sheet').format(sheet_name)
+        )
 
     return column_headings, errors
 
 
-def map_row_values_to_column_names(row, column_headings, default_val=None):
+def map_row_values_to_column_names(row, column_headings, sheet_name, default_val=None):
     row_vals = defaultdict(lambda: default_val)
+    errors = []
     for index, cell in enumerate(row):
-        column_name = column_headings[index]
+        try:
+            column_name = column_headings[index]
+        except IndexError:
+            errors.append(
+                _('Column {} in "{}" sheet is missing a header').format(index + 1, sheet_name)
+            )
         cell_val = '' if cell.value is None else str(cell.value)
         row_vals[column_name] = cell_val
-    return row_vals
+    return row_vals, errors
 
 
 def is_case_type_deprecated(domain, case_type):
@@ -370,3 +393,27 @@ def is_case_type_or_prop_name_valid(case_prop_name):
     pattern = '^[a-zA-Z][a-zA-Z0-9-_]*$'
     match_obj = re.match(pattern, case_prop_name)
     return match_obj is not None
+
+
+@quickcache(vary_on=['domain'], timeout=60 * 10)
+def get_used_props_by_case_type(domain):
+    agg = TermsAggregation('case_types', 'type.exact').aggregation(
+        NestedAggregation('case_props', CASE_PROPERTIES_PATH).aggregation(
+            TermsAggregation('props', PROPERTY_KEY)
+        )
+    )
+    query = (
+        CaseSearchES()
+        .domain(domain)
+        .size(0)
+        .aggregation(agg)
+    )
+    case_type_buckets = query.run().aggregations.case_types.buckets_list
+    props_by_case_type = {}
+    for case_type_bucket in case_type_buckets:
+        prop_buckets = case_type_bucket.case_props.props.buckets_list
+        for prop_bucket in prop_buckets:
+            if case_type_bucket.key not in props_by_case_type:
+                props_by_case_type[case_type_bucket.key] = []
+            props_by_case_type[case_type_bucket.key].append(prop_bucket.key)
+    return props_by_case_type

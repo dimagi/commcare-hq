@@ -5,7 +5,7 @@ hqDefine("data_interfaces/js/case_management",[
     'knockout',
     'case/js/casexml',
     'hqwebapp/js/initial_page_data',
-    'reports/js/standard_hq_report',
+    'reports/js/bootstrap3/standard_hq_report',
     'hqwebapp/js/bootstrap3/alert_user',
 ], function ($, _, ko, casexmlModule, initialPageData, standardHqReport, alertUser) {
     var caseManagement = function (o) {

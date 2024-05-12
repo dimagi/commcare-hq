@@ -27,7 +27,7 @@ from .dispatcher import EditDataInterfaceDispatcher, BulkEditDataInterfaceDispat
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
     section_name = gettext_noop("Data")
-    base_template = "reports/standard/base_template.html"
+    base_template = "reports/standard/bootstrap3/base_template.html"
     asynchronous = True
     dispatcher = EditDataInterfaceDispatcher
     exportable = False
@@ -195,7 +195,7 @@ class CaseCopyInterface(CaseReassignmentInterface):
     @property
     def fields(self):
         return [
-            'corehq.apps.reports.filters.users.SelectMobileWorkerFilter',
+            'corehq.apps.reports.filters.case_list.CaseListFilter',
             'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
             'corehq.apps.reports.standard.cases.filters.CaseSearchFilter',
             'corehq.apps.reports.standard.cases.filters.SensitiveCaseProperties',

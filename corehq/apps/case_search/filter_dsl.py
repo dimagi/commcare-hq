@@ -10,6 +10,7 @@ from eulxml.xpath.ast import (
     serialize,
 )
 
+import corehq
 from corehq.apps.case_search.const import OPERATOR_MAPPING, COMPARISON_OPERATORS, ALL_OPERATORS
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
@@ -28,8 +29,12 @@ class SearchFilterContext:
     domain: Union[str, List[str]]  # query domain
     fuzzy: bool = False
     request_domain: str = None
+    profiler: 'corehq.apps.case_search.utils.CaseSearchProfiler' = None
+    config: 'corehq.apps.case_search.models.CaseSearchConfig' = None
 
     def __post_init__(self):
+        from corehq.apps.case_search.utils import CaseSearchProfiler
+        from corehq.apps.case_search.models import CaseSearchConfig
         if self.request_domain is None:
             if isinstance(self.domain, str):
                 self.request_domain = self.domain
@@ -37,6 +42,10 @@ class SearchFilterContext:
                 self.request_domain = self.domain[0]
             else:
                 raise ValueError("When domain is a list with more than one item, request_domain cannot be None.")
+        if self.profiler is None:
+            self.profiler = CaseSearchProfiler()
+        if self.config is None:
+            self.config = CaseSearchConfig(domain=self.request_domain)
 
 
 def print_ast(node):
@@ -125,7 +134,7 @@ def build_filter_from_ast(node, context):
     return visit(node)
 
 
-def build_filter_from_xpath(query_domain, xpath, fuzzy=False, request_domain=None):
+def build_filter_from_xpath(xpath, *, domain=None, context=None):
     """Given an xpath expression this function will generate an Elasticsearch
     filter"""
     error_message = _(
@@ -133,7 +142,10 @@ def build_filter_from_xpath(query_domain, xpath, fuzzy=False, request_domain=Non
         "Please try reformatting your query. "
         "The operators we accept are: {}"
     )
-    context = SearchFilterContext(query_domain, fuzzy, request_domain)
+    if bool(context) == bool(domain):
+        raise TypeError("build_filter_from_xpath takes either a context or a domain, but not both")
+    if not context:
+        context = SearchFilterContext(domain)
     try:
         return build_filter_from_ast(parse_xpath(xpath), context)
     except TypeError as e:

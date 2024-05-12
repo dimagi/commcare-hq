@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('hqwebapp/js/password_validators.ko', [
     'knockout',
     'zxcvbn/dist/zxcvbn',
@@ -6,11 +7,11 @@ hqDefine('hqwebapp/js/password_validators.ko', [
     ko,
     zxcvbn
 ) {
-    'use strict';
-
     ko.validation.rules['zxcvbnPassword'] = {
         validator: function (val, minScore, penalizedWords) {
-            if (val === undefined || val.length === 0) return true;  // do separate validation for required
+            if (val === undefined || val.length === 0) {
+                return true;  // do separate validation for required
+            }
             penalizedWords = penalizedWords || ['dimagi', 'commcare', 'hq', 'commcarehq'];
             var score = zxcvbn(val, penalizedWords).score;
             return score >= minScore;

@@ -1,6 +1,10 @@
-hqDefine("cloudcare/js/formplayer/spec/case_list_pagination_spec", function () {
+'use strict';
+hqDefine("cloudcare/js/formplayer/spec/case_list_pagination_spec", [
+    "cloudcare/js/formplayer/utils/utils",
+], function (
+    paginateItems
+) {
     describe('#paginateOptions', function () {
-        var paginateItems = hqImport("cloudcare/js/formplayer/utils/utils");
         it('Should return paginateOptions', function () {
             var case1 = paginateItems.paginateOptions(0, 15, 3);
             /**

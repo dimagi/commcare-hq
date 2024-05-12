@@ -105,18 +105,37 @@ $cc-dark-warm-accent-hi:  #ffe3c2;
 $cc-dark-warm-accent-mid: #ff8400;
 $cc-dark-warm-accent-low: #994f00;
 
+
+// Colors from the Dimagi color theme
+$dimagi-deep-purple: #16006D;
+$dimagi-sky: #8EA1FF;
+$dimagi-indigo: #3843D0;
+$dimagi-marigold: #FEAF31;
+$dimagi-sunset: #E44434;
+$dimagi-mango: #FC5F36;
+
+
+// Base color overrides
+$blue: #5D70D2;
+$green: #3FA12A;
+$red: $dimagi-sunset;
+$teal: #01A2A9;
+$yellow: $dimagi-marigold;
+$indigo: $dimagi-indigo;
+$purple: mix($dimagi-mango, $dimagi-indigo, 25%);
+$pink: mix($dimagi-mango, $dimagi-indigo, 50%);
+$salmon: mix($dimagi-mango, $dimagi-indigo, 75%);
+$orange: $dimagi-mango;
+
 // Grays from default stylesheet — needed for reference
 $gray-100: #f8f9fa;
 $gray-200: #e9ecef;
 $gray-600: #6c757d;
 $gray-800: #343a40;
 
-// Base color overrides
-$blue: #5D70D2;
-$green: #3FA12A;
-$red: #E73C27;
-$teal: #01A2A9;
-$yellow: #EEAE00;
+// Blues from default stylesheet - needed for reference
+$blue-600: shade-color($blue, 20%);
+$blue-900: shade-color($blue, 80%);
 
 // for determining when to show black or white text on top of color
 $min-contrast-ratio: 3;
@@ -143,9 +162,21 @@ $theme-colors: (
 );
 
 $body-color: $dark;
-$link-color: darken($primary, 10);
-$link-hover-color: darken($primary, 50);
+$link-color: $blue-600;
+$link-hover-color:$blue-900;
 $border-color: $gray-200;
+
+// New gradient for salmon
+
+$salmon-100: tint-color($salmon, 80%);
+$salmon-200: tint-color($salmon, 60%);
+$salmon-300: tint-color($salmon, 40%);
+$salmon-400: tint-color($salmon, 20%);
+$salmon-500: $salmon !default;
+$salmon-600: shade-color($salmon, 20%);
+$salmon-700: shade-color($salmon, 40%);
+$salmon-800: shade-color($salmon, 60%);
+$salmon-900: shade-color($salmon, 80%);
 
 
 // Form Sates

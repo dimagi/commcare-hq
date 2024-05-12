@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('geospatial/js/models', [
     'jquery',
     'knockout',
@@ -11,9 +12,10 @@ hqDefine('geospatial/js/models', [
     initialPageData,
     utils
 ) {
-    const HOVER_DELAY = 400;
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
+    const SELECTED_FEATURE_ID_QUERY_PARAM = 'selected_feature_id';
+    const MAX_URL_LENGTH = 4500;
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
 
@@ -30,7 +32,6 @@ hqDefine('geospatial/js/models', [
     };
 
     var MapItem = function (itemId, itemData, marker, markerColors) {
-        'use strict';
         var self = this;
         self.itemId = itemId;
         self.itemData = itemData;
@@ -43,8 +44,9 @@ hqDefine('geospatial/js/models', [
         self.groupCoordinates = null;
 
         self.setMarkerOpacity = function (opacity) {
-            let element = self.marker.getElement();
-            element.style.opacity = opacity;
+            const element = self.marker.getElement();
+            const svg = element.getElementsByTagName("svg")[0];
+            svg.setAttribute("opacity", opacity);
         };
 
         function changeMarkerColor(selectedCase, newColor) {
@@ -91,10 +93,11 @@ hqDefine('geospatial/js/models', [
         };
     };
 
-    var Map = function (usesClusters) {
+    var Map = function (usesClusters, usesStreetsLayers) {
         var self = this;
 
         self.usesClusters = usesClusters;
+        self.usesStreetsLayers = usesStreetsLayers;
 
         self.mapInstance;
         self.drawControls;
@@ -132,10 +135,127 @@ hqDefine('geospatial/js/models', [
             if (self.usesClusters) {
                 createClusterLayers();
             }
+
+            if (self.usesStreetsLayers) {
+                loadMapBoxStreetsLayers();
+                addLayersToPanel();
+            }
         };
 
+        function loadMapBoxStreetsLayers() {
+            self.mapInstance.on('load', () => {
+                self.mapInstance.addSource('mapbox-streets', {
+                    type: 'vector',
+                    url: 'mapbox://mapbox.mapbox-streets-v8',
+                });
+
+                self.mapInstance.addLayer({
+                    id: 'Landuse',
+                    source: 'mapbox-streets',
+                    'source-layer': 'landuse',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#695447', // brown land color
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'Road',
+                    source: 'mapbox-streets',
+                    'source-layer': 'road',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#000000', // black
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'Admin',
+                    source: 'mapbox-streets',
+                    'source-layer': 'admin',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#800080', // purple
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'Building',
+                    source: 'mapbox-streets',
+                    'source-layer': 'building',
+                    type: 'fill',
+                    paint: {
+                        'fill-color': '#808080', // grey
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+                self.mapInstance.addLayer({
+                    id: 'Waterway',
+                    source: 'mapbox-streets',
+                    'source-layer': 'waterway',
+                    type: 'line',
+                    paint: {
+                        'line-color': '#00008b', // darkblue
+                    },
+                    layout: {
+                        'visibility': 'none',
+                    },
+                });
+            });
+        }
+
+        function addLayersToPanel() {
+            self.mapInstance.on('idle', () => {
+                const toggleableLayerIds = [
+                    'Landuse',
+                    'Admin',
+                    'Road',
+                    'Building',
+                    'Waterway',
+                ];
+                const menuElement = document.getElementById('layer-toggle-menu');
+                for (const layerId of toggleableLayerIds) {
+                    // Skip if layer doesn't exist or button is already present
+                    if (!self.mapInstance.getLayer(layerId) || document.getElementById(layerId)) {
+                        continue;
+                    }
+
+                    const link = document.createElement('a');
+                    link.id = layerId;
+                    link.role = 'button';
+                    link.href = '#';
+                    link.textContent = layerId;
+                    link.className = 'btn btn-secondary';
+                    link.onclick = function (e) {
+                        const clickedLayer = this.textContent;
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const visibility = self.mapInstance.getLayoutProperty(clickedLayer, 'visibility');
+                        if (visibility === 'visible') {
+                            self.mapInstance.setLayoutProperty(clickedLayer, 'visibility', 'none');
+                            this.classList.remove('active');
+                        } else {
+                            this.classList.add('active');
+                            self.mapInstance.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+                        }
+                    };
+
+                    menuElement.appendChild(link);
+                }
+                menuElement.classList.remove('hidden');
+            });
+        }
+
         function createClusterLayers() {
-            // const mapInstance = self.mapInstance;
             self.mapInstance.on('load', () => {
                 self.mapInstance.addSource('caseWithGPS', {
                     type: 'geojson',
@@ -226,35 +346,15 @@ hqDefine('geospatial/js/models', [
             // Add the marker to the map
             marker.addTo(self.mapInstance);
 
-            let popupDiv = document.createElement("div");
-            popupDiv.setAttribute("data-bind", "template: 'select-case'");
-
-            let popup = new mapboxgl.Popup({ offset: 25, anchor: "bottom" })  // eslint-disable-line no-undef
-                .setLngLat(coordinates)
-                .setDOMContent(popupDiv);
+            const popupDiv = document.createElement("div");
+            const popup = utils.createMapPopup(
+                coordinates,
+                popupDiv,
+                () => highlightMarkerGroup(itemId),
+                resetMarkersOpacity
+            );
 
             marker.setPopup(popup);
-
-            const markerDiv = marker.getElement();
-            // Show popup on hover
-            markerDiv.addEventListener('mouseenter', () => marker.togglePopup());
-            markerDiv.addEventListener('mouseenter', () => highlightMarkerGroup(marker));
-            markerDiv.addEventListener('mouseleave', () => resetMarkersOpacity());
-
-            // Hide popup if mouse leaves marker and popup
-            var addLeaveEvent = function (fromDiv, toDiv) {
-                fromDiv.addEventListener('mouseleave', function () {
-                    setTimeout(function () {
-                        if (!$(toDiv).is(':hover')) {
-                            // mouse left toDiv as well
-                            marker.togglePopup();
-                        }
-                    }, 100);
-                });
-            };
-            addLeaveEvent(markerDiv, popupDiv);
-            addLeaveEvent(popupDiv, markerDiv);
-
             const mapItemInstance = new MapItem(itemId, itemData, marker, colors);
             $(popupDiv).koApplyBindings(mapItemInstance);
 
@@ -275,14 +375,10 @@ hqDefine('geospatial/js/models', [
             changeMarkersOpacity(markers, 1);
         }
 
-        function highlightMarkerGroup(marker) {
-            const markerCoords = marker.getLngLat();
-            const currentMarkerPosition = markerCoords.lng + " " + markerCoords.lat;
-            const markerItem = self.caseGroupsIndex[currentMarkerPosition];
-
+        function highlightMarkerGroup(itemId) {
+            const markerItem = self.caseGroupsIndex[itemId];
             if (markerItem) {
                 const groupId = markerItem.groupId;
-
                 let markersToHide = [];
                 Object.keys(self.caseGroupsIndex).forEach(itemCoordinates => {
                     const mapMarkerItem = self.caseGroupsIndex[itemCoordinates];
@@ -300,13 +396,9 @@ hqDefine('geospatial/js/models', [
         }
 
         function changeMarkersOpacity(markers, opacity) {
-            // It's necessary to delay obscuring the markers since mapbox does not play nice
-            // if we try to do it all at once.
-            setTimeout(function () {
-                markers.forEach(marker => {
-                    marker.setMarkerOpacity(opacity);
-                });
-            }, HOVER_DELAY);
+            markers.forEach(marker => {
+                marker.setMarkerOpacity(opacity);
+            });
         }
 
         self.getLineFeatureId = function (itemId) {
@@ -424,6 +516,7 @@ hqDefine('geospatial/js/models', [
 
         self.polygons = {};
         self.shouldRefreshPage = ko.observable(false);
+        self.hasUrlError = ko.observable(false);
 
         self.savedPolygons = ko.observableArray([]);
         self.selectedSavedPolygonId = ko.observable('');
@@ -453,13 +546,39 @@ hqDefine('geospatial/js/models', [
 
         function updatePolygonQueryParam() {
             const url = new URL(window.location.href);
-            if (Object.keys(self.polygons).length) {
+            if (Object.keys(self.polygons)) {
                 url.searchParams.set(FEATURE_QUERY_PARAM, JSON.stringify(self.polygons));
             } else {
                 url.searchParams.delete(FEATURE_QUERY_PARAM);
             }
-            window.history.replaceState({ path: url.href }, '', url.href);
-            self.shouldRefreshPage(true);
+            updateUrl(url);
+        }
+
+        function updateUrl(url) {
+            if (url.href.length <= MAX_URL_LENGTH) {
+                window.history.replaceState({ path: url.href }, '', url.href);
+                self.shouldRefreshPage(true);
+                self.hasUrlError(false);
+            } else {
+                self.shouldRefreshPage(false);
+                self.hasUrlError(true);
+            }
+        }
+
+        function updateSelectedSavedPolygonParam() {
+            const url = new URL(window.location.href);
+            const prevSelectedId = url.searchParams.get(SELECTED_FEATURE_ID_QUERY_PARAM);
+            if (prevSelectedId === self.selectedSavedPolygonId()) {
+                // If the user refreshes the page, we shouldn't prompt another refresh
+                return;
+            }
+
+            if (self.selectedSavedPolygonId()) {
+                url.searchParams.set(SELECTED_FEATURE_ID_QUERY_PARAM, self.selectedSavedPolygonId());
+            } else {
+                url.searchParams.delete(SELECTED_FEATURE_ID_QUERY_PARAM);
+            }
+            updateUrl(url);
         }
 
         self.loadPolygonFromQueryParam = function () {
@@ -472,6 +591,14 @@ hqDefine('geospatial/js/models', [
                     self.mapObj.drawControls.add(feature);
                     self.polygons[featureId] = feature;
                 }
+            }
+        };
+
+        self.loadSelectedPolygonFromQueryParam = function () {
+            const url = new URL(window.location.href);
+            const selectedFeatureParam = url.searchParams.get(SELECTED_FEATURE_ID_QUERY_PARAM);
+            if (selectedFeatureParam) {
+                self.selectedSavedPolygonId(selectedFeatureParam);
             }
         };
 
@@ -501,8 +628,6 @@ hqDefine('geospatial/js/models', [
 
         self.clearActivePolygon = function () {
             if (self.activeSavedPolygon) {
-                // self.selectedSavedPolygonId('');
-                self.removePolygonsFromFilterList(self.activeSavedPolygon.geoJson.features);
                 removeActivePolygonLayer();
                 self.activeSavedPolygon = null;
                 self.btnSaveDisabled(false);
@@ -554,7 +679,7 @@ hqDefine('geospatial/js/models', [
             createActivePolygonLayer(polygonObj);
 
             self.activeSavedPolygon = polygonObj;
-            self.addPolygonsToFilterList(polygonObj.geoJson.features);
+            updateSelectedSavedPolygonParam();
             self.btnExportDisabled(false);
             self.btnSaveDisabled(true);
             if (self.shouldSelectAfterFilter) {
@@ -576,6 +701,7 @@ hqDefine('geospatial/js/models', [
                 }
                 self.savedPolygons.push(new SavedPolygon(polygon));
             });
+            self.loadSelectedPolygonFromQueryParam();
         };
 
         self.exportGeoJson = function (exportButtonId) {

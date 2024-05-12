@@ -106,12 +106,34 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_datatables and not use_bootstrap5 %}
+    {% if request.use_datatables %}
+      {% if use_bootstrap5 %}
+        {% compress css %}
+          <link type="text/css"
+                rel="stylesheet"
+                media="all"
+                href="{% static 'datatables.net-bs5/css/dataTables.bootstrap5.min.css' %}" />
+          <link type="text/css"
+                rel="stylesheet"
+                media="all"
+                href="{% static 'datatables.net-fixedcolumns-bs5/css/fixedColumns.bootstrap5.min.css' %}" />
+        {% endcompress %}
+      {% else %}
+        {% compress css %}
+          <link type="text/css"
+                rel="stylesheet"
+                media="all"
+                href="{% static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
+        {% endcompress %}
+      {% endif %}
+    {% endif %}
+
+    {% if request.use_tempusdominus and use_bootstrap5 %}
       {% compress css %}
         <link type="text/css"
               rel="stylesheet"
-              media="all"
-              href="{% static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
+              media="screen"
+              href="{% static "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css" %}" />
       {% endcompress %}
     {% endif %}
 
@@ -151,6 +173,13 @@
         <script src="{% static 'moment/moment.js' %}"></script>
         <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
         <script src="{% static 'hqwebapp/js/daterangepicker.config.js' %}"></script>
+      {% endcompress %}
+    {% endif %}
+
+    {% if request.use_tempusdominus and not requirejs_main and use_bootstrap5 %}
+      {% compress js %}
+        <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
+        <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
       {% endcompress %}
     {% endif %}
 
@@ -211,6 +240,14 @@
           color: inherit;
         }
       </style>
+    {% endif %}
+
+    {% if request.couch_user.is_dimagi %}
+      {% if use_bootstrap5 %}
+        {% include 'hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html' %}
+      {% else %}
+        {% include 'hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html' %}
+      {% endif %}
     {% endif %}
 
     {% if EULA_COMPLIANCE %}
@@ -306,24 +343,24 @@
       {% if use_bootstrap5 %}
         {% compress js %}
           <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap5/hq-bug-report.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/email-request.js' %}"></script>
           <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
           <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
           <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
           <script src="{% static 'hqwebapp/js/bootstrap5/alert_user.js' %}"></script>
           <script src="{% static 'hqwebapp/js/bootstrap5/main.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/mobile_experience_warning.js' %}"></script>
         {% endcompress %}
       {% else %}
         {% compress js %}
           <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/bootstrap3/hq-bug-report.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap3/email-request.js' %}"></script>
           <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
           <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
           <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
           <script src="{% static 'hqwebapp/js/bootstrap3/alert_user.js' %}"></script>
           <script src="{% static 'hqwebapp/js/bootstrap3/main.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap3/mobile_experience_warning.js' %}"></script>
         {% endcompress %}
       {% endif %}
     {% endif %}
@@ -363,12 +400,21 @@
       {% endcompress %}
     {% endif %}
 
-    {% if request.use_datatables and not requirejs_main and not use_bootstrap5 %}
-      {% compress js %}
-        <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
-        <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
-        <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
-      {% endcompress %}
+    {% if request.use_datatables and not requirejs_main %}
+      {% if use_bootstrap5 %}
+        {% compress js %}
+          <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
+          <script src="{% static 'datatables.net-bs5/js/dataTables.bootstrap5.min.js' %}"></script>
+          <script src="{% static 'datatables.net-fixedcolumns/js/dataTables.fixedColumns.min.js' %}"></script>
+          <script src="{% static 'datatables.net-fixedcolumns-bs5/js/fixedColumns.bootstrap5.min.js' %}"></script>
+        {% endcompress %}
+      {% else %}
+        {% compress js %}
+          <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
+          <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
+          <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
+        {% endcompress %}
+      {% endif %}
     {% endif %}
 
     {% if request.use_typeahead and not requirejs_main and not use_bootstrap5 %}
@@ -395,7 +441,7 @@
 
     {% if request.use_maps and not requirejs_main %}
       {% compress js %}
-        <script src="{% static 'reports/js/maps_utils.js' %}"></script>
+        <script src="{% static 'reports/js/bootstrap3/maps_utils.js' %}"></script>
       {% endcompress %}
     {% endif %}
 

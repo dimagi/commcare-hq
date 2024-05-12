@@ -1,13 +1,18 @@
 from abc import ABCMeta, abstractmethod
+from collections import defaultdict
 
 from django.db.models import Q
 from django.db.models.fields.related import ForeignKey
 
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.database import iter_docs
 
+from corehq.apps.dump_reload.couch.dump import DOC_PROVIDERS_BY_DOC_TYPE
 from corehq.apps.dump_reload.util import get_model_class
+from corehq.blobs.models import BlobMeta
 from corehq.form_processor.models.cases import CommCareCase
 from corehq.sql_db.util import (
+    get_db_alias_for_partitioned_doc,
     get_db_aliases_for_partitioned_query,
     paginate_query,
 )
@@ -29,7 +34,7 @@ class SimpleFilter(DomainFilter):
     def __init__(self, filter_kwarg):
         self.filter_kwarg = filter_kwarg
 
-    def get_filters(self, domain_name, db_alias):
+    def get_filters(self, domain_name, db_alias=None):
         return [Q(**{self.filter_kwarg: domain_name})]
 
 
@@ -41,7 +46,7 @@ class ManyFilters(DomainFilter):
         assert filter_kwargs, 'Please set one of more filter_kwargs'
         self.filter_kwargs = filter_kwargs
 
-    def get_filters(self, domain_name, db_alias):
+    def get_filters(self, domain_name, db_alias=None):
         filter_ = Q(**{self.filter_kwargs[0]: domain_name})
         for filter_kwarg in self.filter_kwargs[1:]:
             filter_ &= Q(**{filter_kwarg: domain_name})
@@ -100,6 +105,7 @@ class UserIDFilter(IDFilter):
 
 
 class CaseIDFilter(IDFilter):
+
     def __init__(self, model_label, case_field='case'):
         _, self.model_cls = get_model_class(model_label)
         try:
@@ -125,6 +131,49 @@ class CaseIDFilter(IDFilter):
         for row in paginate_query(db_alias, CommCareCase, query, values=['case_id'], load_source=source):
             # there isn't a good way to return flattened results
             yield row[0]
+
+
+class MultimediaBlobMetaFilter(IDFilter):
+    """
+    BlobMeta for multimedia references the "<shared>" domain which is not the domain being dumped.
+    This borrows from the same logic used in ``run_blob_export`` by the ``ExportMultimedia`` exporter.
+    """
+    def __init__(self):
+        # 'id' is used in query (e.g., ...filter(id__in=blobmeta_ids))
+        super().__init__('id', None)
+        self.ids_by_db = None
+
+    def count(self, domain_name):
+        count = 0
+        for db in get_db_aliases_for_partitioned_query():
+            count += len(self.get_ids(domain_name, db_alias=db))
+        return count
+
+    def get_ids(self, domain_name, db_alias=None):
+        """
+        Rather than redo work for each db shard, the first time this is called it collects the blobmeta ids
+        for every db shard, and is ready to return the list on the next call. This does mean the map is held
+        in memory, but it only stores BlobMeta primary keys, and it doesn't seem likely that a domain will
+        have an unmanageable number of multimedia blobs.
+        """
+        if self.ids_by_db:
+            return self.ids_by_db[db_alias]
+
+        self.ids_by_db = defaultdict(list)
+        multimedia_provider = DOC_PROVIDERS_BY_DOC_TYPE['CommCareMultimedia']
+        for doc_class, doc_ids in multimedia_provider.get_doc_ids(domain_name):
+            couch_db = doc_class.get_db()
+            for doc in iter_docs(couch_db, doc_ids):
+                # BlobMeta is partitioned by parent_id, which is the CommCareMultimedia id
+                db_for_meta = get_db_alias_for_partitioned_doc(doc['_id'])
+                # wrapping ensures consistent interface for obtaining key attr from blob metas
+                obj = doc_class.get_doc_class(doc['doc_type']).wrap(doc)
+                for name, blob_meta in obj.blobs.items():
+                    meta = BlobMeta.objects.partitioned_query(doc["_id"]).get(
+                        parent_id=doc["_id"], key=blob_meta["key"]
+                    )
+                    self.ids_by_db[db_for_meta].append(meta.pk)
+        return self.ids_by_db[db_alias]
 
 
 class UnfilteredModelIteratorBuilder(object):

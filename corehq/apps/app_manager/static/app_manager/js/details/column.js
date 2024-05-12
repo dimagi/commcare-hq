@@ -48,6 +48,23 @@ hqDefine("app_manager/js/details/column", function () {
         });
         self.original.late_flag = _.isNumber(self.original.late_flag) ? self.original.late_flag : 30;
 
+        // Set up tab defaults
+        const tabDefaults = {
+            isTab: false,
+            hasNodeset: false,
+            nodeset: "",
+            nodesetCaseType: "",
+            nodesetFilter: "",
+            relevant: "",
+        };
+        self.original = _.defaults(self.original, tabDefaults);
+        let screenHasChildCaseTypes = screen.childCaseTypes && screen.childCaseTypes.length;
+        if (!self.original.nodeset && !self.original.nodesetCaseType && screenHasChildCaseTypes) {
+            // If there's no nodeset but there are child case types, default to showing a case type
+            self.original.nodesetCaseType = screen.childCaseTypes[0];
+        }
+        _.extend(self, _.pick(self.original, _.keys(tabDefaults)));
+
         self.original.case_tile_field = ko.utils.unwrapObservable(self.original.case_tile_field) || "";
         self.case_tile_field = ko.observable(self.original.case_tile_field);
 
@@ -99,29 +116,12 @@ hqDefine("app_manager/js/details/column", function () {
             return Number(self.tileColumnStart()) + Number(self.tileWidth());
         });
         self.showInTilePreview = ko.computed(function () {
-            return self.coordinatesVisible() && self.tileRowStart() && self.tileColumnStart() && self.tileWidth() && self.tileHeight();
+            return !self.isTab && self.coordinatesVisible() && self.tileRowStart() && self.tileColumnStart() && self.tileWidth() && self.tileHeight();
         });
         self.tileContent = ko.observable();
         self.setTileContent = function () {
             self.tileContent(self.header.val());
         };
-
-        // Set up tab defaults
-        const tabDefaults = {
-            isTab: false,
-            hasNodeset: false,
-            nodeset: "",
-            nodesetCaseType: "",
-            nodesetFilter: "",
-            relevant: "",
-        };
-        self.original = _.defaults(self.original, tabDefaults);
-        let screenHasChildCaseTypes = screen.childCaseTypes && screen.childCaseTypes.length;
-        if (!self.original.nodeset && !self.original.nodesetCaseType && screenHasChildCaseTypes) {
-            // If there's no nodeset but there are child case types, default to showing a case type
-            self.original.nodesetCaseType = screen.childCaseTypes[0];
-        }
-        _.extend(self, _.pick(self.original, _.keys(tabDefaults)));
 
         self.screen = screen;
         self.lang = screen.lang;

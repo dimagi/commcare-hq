@@ -245,6 +245,56 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             'jr://icons/10-year-old.png'
         )
 
+    def test_case_detail_alt_text_mapping(self, *args):
+        factory = AppFactory(domain='domain', name='Case list field actions', build_version='2.54.0')
+        m0, f0 = factory.new_basic_module("module1", "case")
+        factory.form_requires_case(f0)
+
+        f1 = factory.new_form(m0)
+        factory.form_requires_case(f1)
+
+        m0.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Starred'},
+                model='case',
+                field='starred',
+                format='enum-image',
+                enum=[
+                    MappingItem(key='1', value={'en': 'jr://icons/star-gold.png'}, alt_text={'en': 'gold star'}),
+                    MappingItem(key='0', value={'en': 'jr://icons/star-grey.png'}, alt_text={'en': 'grey star'}),
+                ],
+            ),
+        ]
+
+        key1 = '1'
+        key2 = '0'
+
+        alt_text_spec = """
+            <partial>
+              <alt_text>
+                <text>
+                  <xpath function="if(starred = '{key1}', $k{key1}, if(starred = '{key2}', $k{key2}, ''))">
+                    <variable name="k{key1}">
+                        <locale id="m0.case_short.case_starred_1.alt_text.k{key1}"/>
+                    </variable>
+                    <variable name="k{key2}">
+                        <locale id="m0.case_short.case_starred_1.alt_text.k{key2}"/>
+                    </variable>
+                  </xpath>
+                </text>
+              </alt_text>
+            </partial>
+        """.format(  # noqa: #501
+            key1=key1,
+            key2=key2
+        )
+        # check correct suite is generated
+        self.assertXmlPartialEqual(
+            alt_text_spec,
+            factory.app.create_suite(),
+            './detail[@id="m0_case_short"]/field[1]/alt_text'
+        )
+
     def test_case_detail_address_popup(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
 

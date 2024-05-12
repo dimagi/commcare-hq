@@ -709,7 +709,7 @@ CASE_LIST_TILE = StaticToggle(
 
 CASE_LIST_TILE_CUSTOM = StaticToggle(
     'case_list_tile_custom',
-    'USH: Configure custom case list tile',
+    'USH: Configure custom case tile for case list and case detail',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/pages/viewpage.action?'
@@ -740,6 +740,18 @@ SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
     'Allow toggling the persistent case context tile',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
+)
+
+FORM_LINK_ADVANCED_MODE = StaticToggle(
+    'form_link_advanced_mode',
+    'USH: Form linking advanced mode',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Switches manual datum configuration for form linking to a UI where app "
+        "builders must specify the datum IDs to provide. Allows for linking to "
+        "more targets, but is way harder to use."
+    ),
 )
 
 CASE_LIST_LOOKUP = StaticToggle(
@@ -925,6 +937,18 @@ USH_DONT_CLOSE_PATIENT_EXTENSIONS = StaticToggle(
     """
 )
 
+WEB_APPS_PERMISSIONS_VIA_GROUPS = StaticToggle(
+    'web_apps_permissions_via_groups',
+    "USH: Allow users to control access to specific web apps via mobile worker groups.",
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+    description="""
+        This is a legacy feature that allows setting app-specific permissions in Web Apps based on user
+        groups. This functionality is now available via the roles and permissions page, where the
+        permission for accessing web apps supports specifying a list of apps.
+    """,
+)
+
 DISABLE_WEB_APPS = StaticToggle(
     'disable_web_apps',
     'Disable access to Web Apps UI',
@@ -975,6 +999,19 @@ USH_CASE_LIST_MULTI_SELECT = StaticToggle(
     """
 )
 
+CASE_SEARCH_INDEXED_METADATA = StaticToggle(
+    'CASE_SEARCH_INDEXED_METADATA',
+    "Case Search: Search against indexed system metadata fields when possible",
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This is a performance optimization. When creating filters from CSQL
+    expressions and the property being queried is a standard system metadata
+    property, query against the top-level location of that property rather than
+    the nested document inside case_properties.
+    """
+)
+
 USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     "USH Specific toggle to support several different case search/claim workflows in web apps",
@@ -987,6 +1024,17 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     and other options in Webapps Case Search.
     """,
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
+)
+
+NO_SCROLL_IN_CASE_SEARCH = StaticToggle(
+    'no_scroll_in_case_search',
+    "Do not use scroll queries in case search elasticsearch queries",
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This toggle replaces scroll queries in case search ancestor functions with
+    normal search queries.
+    """
 )
 
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
@@ -1019,12 +1067,14 @@ GEOCODER_AUTOLOAD_USER_LOCATION = StaticToggle(
 
 GEOCODER_USER_PROXIMITY = StaticToggle(
     "geocoder_user_proximity",
-    "USH: Set the geocoder widget's proximity based on the user's location.",
+    "USH: Adjust geocoder result to be more relevant to user and project.",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
-    This has the effect of getting search results that are closer to the user's location. This will override
-    the domains default proximity setting ("Default project location").
+    This has two effects on getting geocoder search results:
+    1. Based on the bounding box of the project default location all result falling outside of it
+       will be filtered out when used in the case search.
+    2. Proximity to the users location will be taken into account for the results order.
     """,
     parent_toggles=[USH_CASE_CLAIM_UPDATES],
 )
@@ -1135,14 +1185,6 @@ ECD_MIGRATED_DOMAINS = StaticToggle(
     description='Domains that have undergone migration for Explore Case Data and have a '
     'CaseSearch elasticsearch index created.\n\n'
     'NOTE: enabling this Feature Flag will NOT enable the CaseSearch index.'
-)
-
-WEB_USER_ACTIVITY_REPORT = StaticToggle(
-    'web_user_activity_report',
-    'USH: Enable Web User Activity Report',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
-    help_link='https://confluence.dimagi.com/display/saas/USH%3A+Enable+Web+User+Activity+Report',
 )
 
 ECD_PREVIEW_ENTERPRISE_DOMAINS = StaticToggle(
@@ -1469,9 +1511,9 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-CASE_DEDUPE = StaticToggle(
-    'case_dedupe',
-    'Case deduplication feature',
+CASE_DEDUPE_UPDATES = StaticToggle(
+    'case_dedupe_updates',
+    'Allow Case deduplication update actions',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
@@ -1601,6 +1643,21 @@ DATA_MIGRATION = StaticToggle(
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN]
 )
+
+
+DISABLE_MOBILE_ENDPOINTS = StaticToggle(
+    'disable_mobile_endpoints',
+    'Disable mobile endpoints for form submissions and restores',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "This flag disables endpoints used by CommCare Mobile to submit forms "
+        "and sync cases, etc. It does NOT block web access. It does NOT "
+        "prevent data changes by case edits, data forwarding, etc. To do "
+        "that, use the DATA_MIGRATION feature flag."
+    )
+)
+
 
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
@@ -2155,11 +2212,17 @@ EMBEDDED_TABLEAU = StaticToggle(
 
 DETAILED_TAGGING = StaticToggle(
     'detailed_tagging',
-    'Send additional metrics to datadog and sentry. Currently only used in Formplayer.',
+    'Send additional metrics to datadog and sentry.',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+HIGH_COUNT_DETAILED_TAGGING = StaticToggle(
+    'HIGH_COUNT_DETAILED_TAGGING',
+    'Send additional metrics to datadog and sentry. These tags have a high number of combinations.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
 
 USER_HISTORY_REPORT = StaticToggle(
     'user_history_report',
@@ -2380,7 +2443,7 @@ EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
 APPLICATION_RELEASE_LOGS = StaticToggle(
     'application_release_logs',
     'Show Application release logs',
-    TAG_PRODUCT,
+    TAG_SOLUTIONS_OPEN,
     namespaces=[NAMESPACE_DOMAIN],
     description='This feature provides the release logs for application.'
 )
@@ -2467,8 +2530,17 @@ LOCATION_RESTRICTED_SCHEDULED_REPORTS = StaticToggle(
     'Allows access to report scheduling views for location restricted users',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Provides access to views for resport scheduling '
+    description='Provides access to views for report scheduling '
                 'such as schedule creation and deletion.'
+)
+
+WEB_USERS_IN_REPORTS = StaticToggle(
+    'web_users_in_reports',
+    'Adds web users to standard reports by default',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Adds web users to default filter selections, the [Project Data] filter for the '
+                'case list reports, and to the body of the Worker Activity and Project Health reports'
 )
 
 CUSTOM_EMAIL_GATEWAY = StaticToggle(
@@ -2490,6 +2562,28 @@ ALLOW_WEB_APPS_RESTRICTION = StaticToggle(
     When enabled, the domain is eligible to be restricted from using web apps/app preview. The intention is
     to only enable this for domains in extreme cases where their formplayer restores are resource intensive
     to the point where they can degrade web apps performance for the entire system.
+    """
+)
+
+ES_QUERY_PREFERENCE = StaticToggle(
+    'es_query_preference',
+    'Sets preference option on ES queries',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    When enabled, ES queries for this domain will be routed to the same shards for every request. This helps
+    ES queries take advantage of caching on ES nodes.
+    """
+)
+
+RESTORE_ACCESSIBLE_REPORTS_ONLY = StaticToggle(
+    'restore_accessible_reports_only',
+    'Only restore reports in apps that are accessible to the restoring user',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This is an optimization for web apps restores that limits the number of mobile reports included in the restore
+    based on which apps the user can access.
     """
 )
 
@@ -2671,14 +2765,12 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
     help_link='https://confluence.dimagi.com/display/commcarepublic/Bulk+User+Management'
 )
 
-APPLICATION_ERROR_REPORT = FrozenPrivilegeToggle(
-    privileges.APPLICATION_ERROR_REPORT,
+APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     label='Show Application Error Report',
-    tag=TAG_SOLUTIONS_OPEN,
-    namespaces=[NAMESPACE_DOMAIN],
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
     description="Show Application Error Report.",
-    # TODO: Move to public wiki
     help_link='https://confluence.dimagi.com/display/saas/Show+Application+Error+Report+Feature+Flag'
 )
 
@@ -2692,13 +2784,13 @@ DATA_DICTIONARY = FrozenPrivilegeToggle(
     help_link='https://confluence.dimagi.com/display/commcarepublic/Data+Dictionary'
 )
 
-
-CUSTOM_DOMAIN_BANNER_ALERTS = StaticToggle(
-    slug='custom_domain_banners',
-    label='Allow projects to add banners for their users on HQ',
-    tag=TAG_CUSTOM,
+CASE_DEDUPE = FrozenPrivilegeToggle(
+    privileges.CASE_DEDUPE,
+    'case_dedupe',
+    label='Case deduplication feature',
+    tag=TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    description='Allow projects to add banners visible to their users on HQ on every login',
+    help_link='https://confluence.dimagi.com/display/saas/Surfacing+Case+Duplicates+in+CommCare',
 )
 
 USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
@@ -2707,4 +2799,66 @@ USE_LOGO_IN_SYSTEM_EMAILS = StaticToggle(
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='The project logo replaces the CommCare logo.',
+)
+
+VELLUM_CASE_MICRO_IMAGE = StaticToggle(
+    slug='case_micro_image',
+    label='Add case micro images to case list',
+    tag=TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Add a micro image to cases in the case list.'
+)
+
+SUPPORT_GEO_JSON_EXPORT = StaticToggle(
+    slug='support_geo_json_export',
+    label='Support GeoJSON export in Case Exporter',
+    tag=TAG_SOLUTIONS_CONDITIONAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='The Case Export page now supports the exporting of GeoJSON data.',
+)
+
+USE_PROMINENT_PROGRESS_BAR = StaticToggle(
+    slug='use_prominent_progress_bar',
+    label='Use more prominent progress bar in place of NProgress',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Replaces NProgress bar with more prominent progress bar',
+)
+
+INCREASED_MAX_SEARCH_RESULTS = StaticToggle(
+    slug='increased_max_search_results',
+    label='Increases the maximum number of Elasticsearch results from 500 to 1500',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Temporary increase of the max number of search results.',
+)
+
+
+SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
+    slug='support_road_network_disbursement_algorithm',
+    label='Add Road Network disbursement algorithm on geospatial settings page',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
+)
+
+USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
+    'ush_restore_file_location_case_sync_restriction',
+    'USH: Limit the location-owned cases that show up in a user\'s restore file',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2252210196/Prevent+Syncing+of+Lower+Level+Locations',  # noqa: E501
+    description="""
+    In the 'Organizational Level' section of location management, web admins can specify which org level to
+    expand to when syncing the location-owned cases included in a user's restore file. Limits cases in a user's
+    restore file and thus can improve performance.
+    """
+)
+
+RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
+    slug='restrict_data_source_rebuilds',
+    label='Restrict data source rebuilt from UI',
+    tag=TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
 )

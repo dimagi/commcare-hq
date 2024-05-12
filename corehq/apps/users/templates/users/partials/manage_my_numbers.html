@@ -38,7 +38,8 @@
                       style="display: inline;">
                   {% csrf_token %}
                   <button type="submit"
-                          data-title="{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
+                          data-html="true"
+                          data-title="<div class='alert alert-warning'><i class='fa-solid fa-triangle-exclamation'></i> <strong>{% trans 'SMS charges will incur.' %}</strong></div>{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
                           class="btn btn-primary verify-button"><i class="fa fa-signal"></i> {% trans 'Verify' %}
                   </button>
                 </form>

@@ -1,4 +1,4 @@
-/* globals hqImport */
+"use strict";
 hqDefine("app_manager/js/add_ons", function () {
     var sectionChanger = hqImport("app_manager/js/section_changer");
 

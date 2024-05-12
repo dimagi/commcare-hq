@@ -484,6 +484,11 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_use_dedupe(self):
+        return domain_has_privilege(self.domain, privileges.CASE_DEDUPE)
+
+    @property
+    @memoized
     def can_export_data(self):
         return (self.project and not self.project.is_snapshot
                 and self.couch_user.can_access_any_exports(self.domain))
@@ -573,11 +578,6 @@ class ProjectDataTab(UITab):
     def can_view_ecd_preview(self):
         return (EXPLORE_CASE_DATA_PREVIEW.enabled_for_request(self._request)
                 and is_eligible_for_ecd_preview(self._request))
-
-    @property
-    @memoized
-    def can_deduplicate_cases(self):
-        return toggles.CASE_DEDUPE.enabled_for_request(self._request)
 
     @property
     def _can_view_geospatial(self):
@@ -731,7 +731,7 @@ class ProjectDataTab(UITab):
                         'url': reverse(FormExportListView.urlname,
                                        args=(self.domain,)),
                         'show_in_dropdown': True,
-                        'icon': 'icon icon-list-alt fa fa-list-alt',
+                        'icon': 'icon icon-list-alt fa-regular fa-rectangle-list',
                         'subpages': [_f for _f in [
                             {
                                 'title': _(CreateNewCustomFormExportView.page_title),
@@ -759,7 +759,7 @@ class ProjectDataTab(UITab):
                         'url': reverse(CaseExportListView.urlname,
                                        args=(self.domain,)),
                         'show_in_dropdown': True,
-                        'icon': 'icon icon-share fa fa-share-square-o',
+                        'icon': 'icon icon-share fa-solid fa-share-square',
                         'subpages': [_f for _f in [
                             {
                                 'title': _(CreateNewCustomCaseExportView.page_title),
@@ -792,7 +792,7 @@ class ProjectDataTab(UITab):
                         'title': _(DownloadNewSmsExportView.page_title),
                         'url': reverse(DownloadNewSmsExportView.urlname, args=(self.domain,)),
                         'show_in_dropdown': True,
-                        'icon': 'icon icon-share fa fa-commenting-o',
+                        'icon': 'icon icon-share fa-regular fa-comment-dots',
                         'subpages': []
                     })
 
@@ -807,7 +807,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     "title": _(DailySavedExportListView.page_title),
                     "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-calendar',
+                    'icon': 'fa-solid fa-calendar-days',
                     "show_in_dropdown": True,
                     "subpages": [_f for _f in [
                         {
@@ -832,7 +832,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DailySavedExportListView.page_title),
                     'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-calendar',
+                    'icon': 'fa-solid fa-calendar-days',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
@@ -860,7 +860,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-dashboard',
+                    'icon': 'fa-solid fa-gauge',
                     'show_in_dropdown': True,
                     'subpages': subpages
                 })
@@ -868,7 +868,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': _(DashboardFeedListView.page_title),
                     'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-dashboard',
+                    'icon': 'fa-solid fa-gauge',
                     'show_in_dropdown': True,
                     'subpages': []
                 })
@@ -906,7 +906,7 @@ class ProjectDataTab(UITab):
                 export_data_views.append({
                     'title': CommCareAnalyticsListView.page_title,
                     'url': reverse(CommCareAnalyticsListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-bar-chart',
+                    'icon': 'fa-regular fa-chart-bar',
                     'show_in_dropdown': False,
                     'subpages': []
                 })
@@ -917,7 +917,7 @@ class ProjectDataTab(UITab):
             export_data_views.append({
                 'title': _(DataFileDownloadList.page_title),
                 'url': reverse(DataFileDownloadList.urlname, args=(self.domain,)),
-                'icon': 'fa fa-file-text-o',
+                'icon': 'fa-regular fa-file-lines',
                 'show_in_dropdown': True,
                 'subpages': []
             })
@@ -943,7 +943,7 @@ class ProjectDataTab(UITab):
             else:
                 edit_section = [(gettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
 
-        if self.can_deduplicate_cases:
+        if self.can_use_dedupe:
             from corehq.apps.data_interfaces.views import (
                 DeduplicationRuleListView,
             )
@@ -952,6 +952,7 @@ class ProjectDataTab(UITab):
                 'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
             }
             edit_section[0][1].append(deduplication_list_view)
+
         return edit_section
 
     def _get_explore_data_views(self):
@@ -963,7 +964,7 @@ class ProjectDataTab(UITab):
                 'title': _(ExploreCaseDataView.page_title),
                 'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
                 'show_in_dropdown': False,
-                'icon': 'fa fa-map-marker',
+                'icon': 'fa-solid fa-location-dot',
                 'subpages': [],
             })
         if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):
@@ -971,14 +972,20 @@ class ProjectDataTab(UITab):
                 case_search_enabled_for_domain,
             )
             if case_search_enabled_for_domain(self.domain):
-                from corehq.apps.case_search.views import CaseSearchView
-                explore_data_views.append({
+                from corehq.apps.case_search.views import CaseSearchView, ProfileCaseSearchView
+                explore_data_views.extend([{
                     'title': _(CaseSearchView.page_title),
                     'url': reverse(CaseSearchView.urlname, args=(self.domain,)),
                     'icon': 'fa fa-search',
                     'show_in_dropdown': False,
                     'subpages': [],
-                })
+                }, {
+                    'title': _(ProfileCaseSearchView.page_title),
+                    'url': reverse(ProfileCaseSearchView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-clock',
+                    'show_in_dropdown': False,
+                    'subpages': [],
+                }])
         return explore_data_views
 
     def _get_geospatial_views(self):
@@ -1146,7 +1153,7 @@ class CloudcareTab(UITab):
         return (
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
-            and (self.couch_user.can_access_web_apps() or self.couch_user.is_commcare_user())
+            and (self.couch_user.can_access_any_web_apps(self.domain) or self.couch_user.is_commcare_user())
         )
 
 
@@ -1477,16 +1484,10 @@ class ProjectUsersTab(UITab):
         )
 
     @property
-    def can_view_cloudcare(self):
-        return (has_privilege(self._request, privileges.CLOUDCARE)
-                and self.couch_user.is_domain_admin())
-
-    @property
     def has_project_access(self):
         return has_privilege(self._request, privileges.PROJECT_ACCESS)
 
-    def _get_mobile_users_menu(self):
-        menu = []
+    def _mobile_workers(self):
         if ((self.couch_user.can_edit_commcare_users()
                 or self.couch_user.can_view_commcare_users())
                 and self.has_project_access):
@@ -1507,7 +1508,7 @@ class ProjectUsersTab(UITab):
                 MobileWorkerListView,
             )
 
-            menu.append({
+            return {
                 'title': _(MobileWorkerListView.page_title),
                 'url': reverse(MobileWorkerListView.urlname,
                                args=[self.domain]),
@@ -1522,8 +1523,6 @@ class ProjectUsersTab(UITab):
                      'urlname': 'delete_commcare_users'},
                     {'title': _('Bulk Lookup'),
                      'urlname': 'commcare_users_lookup'},
-                    {'title': _('Edit User Fields'),
-                     'urlname': 'user_fields_view'},
                     {'title': _('Filter and Download Mobile Workers'),
                      'urlname': 'filter_and_download_commcare_users'},
                     {'title': _(
@@ -1531,13 +1530,21 @@ class ProjectUsersTab(UITab):
                         'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
                 ],
                 'show_in_dropdown': True,
-            })
+            }
 
+    def _user_fields(self):
+        if self.can_access_all_locations and self.couch_user.can_edit_commcare_users():
+            return {
+                'title': _("Edit User Fields"),
+                'url': reverse('user_fields_view', args=[self.domain]),
+            }
+
+    def _groups(self):
         if ((self.couch_user.can_edit_groups() or self.couch_user.can_view_groups())
                 and self.has_project_access):
             is_view_only_subpage = (hasattr(self._request, 'is_view_only')
                                     and self._request.is_view_only)
-            menu.append({
+            return {
                 'title': _('Groups'),
                 'url': reverse('all_groups', args=[self.domain]),
                 'description': _("""Create and manage
@@ -1552,21 +1559,17 @@ class ProjectUsersTab(UITab):
                      'urlname': 'group_membership'}
                 ],
                 'show_in_dropdown': True,
-            })
+            }
 
-        if self.can_view_cloudcare:
-            title = _("Web Apps Permissions")
-            menu.append({
-                'title': title,
-                'url': reverse('cloudcare_app_settings',
-                               args=[self.domain])
-            })
+    def _web_apps_permissions(self):
+        if has_privilege(self._request, privileges.CLOUDCARE) and self.couch_user.is_domain_admin():
+            if toggles.WEB_APPS_PERMISSIONS_VIA_GROUPS.enabled_for_request(self._request):
+                return {
+                    'title': _("Web Apps Permissions"),
+                    'url': reverse('cloudcare_app_settings', args=[self.domain]),
+                }
 
-        return menu
-
-    def _get_project_users_menu(self):
-        menu = []
-
+    def _web_users(self):
         if self.couch_user.can_edit_web_users() or self.couch_user.can_view_web_users():
             def _get_web_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id
@@ -1578,23 +1581,12 @@ class ProjectUsersTab(UITab):
                 else:
                     return None
 
-            from corehq.apps.users.views import (
-                EditWebUserView,
-                EnterpriseUsersView,
-                ListWebUsersView,
-            )
+            from corehq.apps.users.views import EditWebUserView, ListWebUsersView
             from corehq.apps.users.views.mobile.users import (
                 FilteredWebUserDownload,
             )
 
-            if toggles.ENTERPRISE_USER_MANAGEMENT.enabled_for_request(self._request):
-                menu.append({
-                    'title': _(EnterpriseUsersView.page_title),
-                    'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
-                    'show_in_dropdown': True,
-                })
-
-            menu = menu + [{
+            return {
                 'title': _(ListWebUsersView.page_title),
                 'url': reverse(ListWebUsersView.urlname,
                                args=[self.domain]),
@@ -1619,22 +1611,28 @@ class ProjectUsersTab(UITab):
                     },
                 ],
                 'show_in_dropdown': True,
-            }]
+            }
 
+    def _enterprise_users(self):
+        from corehq.apps.users.views import EnterpriseUsersView
+        if toggles.ENTERPRISE_USER_MANAGEMENT.enabled_for_request(self._request):
+            return {
+                'title': _(EnterpriseUsersView.page_title),
+                'url': reverse(EnterpriseUsersView.urlname, args=[self.domain]),
+                'show_in_dropdown': True,
+            }
+
+    def _roles_and_permissions(self):
         if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
                 and self.has_project_access):
             from corehq.apps.users.views import ListRolesView
-            menu.append({
+            return {
                 'title': _(ListRolesView.page_title),
-                'url': reverse(ListRolesView.urlname,
-                               args=[self.domain]),
-                'description': _(
-                    "View and manage user roles."),
+                'url': reverse(ListRolesView.urlname, args=[self.domain]),
+                'description': _("View and manage user roles."),
                 'subpages': [],
                 'show_in_dropdown': True,
-            })
-
-        return menu
+            }
 
     def _get_locations_menu(self):
         if (not has_privilege(self._request, privileges.LOCATIONS)
@@ -1716,13 +1714,17 @@ class ProjectUsersTab(UITab):
     def sidebar_items(self):
         items = []
 
-        mobile_users_menu = self._get_mobile_users_menu()
-        if mobile_users_menu:
-            items.append((_('Application Users'), mobile_users_menu))
-
-        project_users_menu = self._get_project_users_menu()
-        if project_users_menu:
-            items.append((_('Project Users'), project_users_menu))
+        users_menu = filter(None, [
+            self._enterprise_users(),
+            self._mobile_workers(),
+            self._web_users(),
+            self._roles_and_permissions(),
+            self._user_fields(),
+            self._groups(),
+            self._web_apps_permissions(),
+        ])
+        if users_menu:
+            items.append((_('Users'), users_menu))
 
         locations_menu = self._get_locations_menu()
         if locations_menu:
@@ -1838,8 +1840,20 @@ class TranslationsTab(UITab):
             if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
                 items.append((_('Translations'), [
                     {
-                        'url': reverse('app_translations', args=[self.domain]),
-                        'title': _('Manage App Translations')
+                        'url': reverse('create_update_translations', args=[self.domain]),
+                        'title': _('Create or Update Translations')
+                    },
+                    {
+                        'url': reverse('push_translations', args=[self.domain]),
+                        'title': _('Push Translations')
+                    },
+                    {
+                        'url': reverse('pull_translations', args=[self.domain]),
+                        'title': _('Pull Translations')
+                    },
+                    {
+                        'url': reverse('backup_translations', args=[self.domain]),
+                        'title': _('Backup Translations')
                     },
                     {
                         'url': reverse('pull_resource', args=[self.domain]),
@@ -1858,6 +1872,12 @@ class TranslationsTab(UITab):
                         'title': _('Migrate Project')
                     },
                 ]))
+        if self._request.user.is_staff:
+            items.append((_('Translations'), [
+                {'url': reverse('delete_translations', args=[self.domain]),
+                 'title': 'Delete Translations'
+                 }
+            ]))
         return items
 
 
@@ -2071,7 +2091,7 @@ def _get_manage_domain_alerts_section(domain):
     from corehq.apps.domain.views.settings import ManageDomainAlertsView
     section = []
 
-    if toggles.CUSTOM_DOMAIN_BANNER_ALERTS.enabled(domain):
+    if domain_has_privilege(domain, privileges.CUSTOM_DOMAIN_ALERTS):
         section.append({
             'title': _(ManageDomainAlertsView.page_title),
             'url': reverse(ManageDomainAlertsView.urlname, args=[domain])
@@ -2080,6 +2100,7 @@ def _get_manage_domain_alerts_section(domain):
 
 
 def _get_integration_section(domain, couch_user):
+    from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
 
     def _get_forward_name(repeater_type=None, **context):
         if repeater_type == 'FormRepeater':
@@ -2114,7 +2135,7 @@ def _get_integration_section(domain, couch_user):
             {
                 'title': _('Data Forwarding Records'),
                 'url': reverse('domain_report_dispatcher',
-                               args=[domain, _get_repeat_record_report(domain)])
+                               args=[domain, DomainForwardingRepeatRecords.slug])
             },
             {
                 'title': _(MotechLogListView.page_title),
@@ -2479,6 +2500,9 @@ class AdminTab(UITab):
                 {'title': GlobalThresholds.page_title,
                  'url': reverse(GlobalThresholds.urlname),
                  'icon': 'fa fa-fire'},
+                {'title': 'Auto App Workflows',
+                 'url': reverse('app_execution:workflow_list'),
+                 'icon': 'fcc fcc-chart-report'},
             ]
             user_operations = user_operations + [
                 {'title': _('Grant superuser privileges'),
@@ -2608,15 +2632,3 @@ class AttendanceTrackingTab(UITab):
     def _is_viewable(self):
         # The FF check is temporary until the full feature is released
         return toggles.ATTENDANCE_TRACKING.enabled(self.domain) and self.couch_user.can_manage_events(self.domain)
-
-
-def _get_repeat_record_report(domain):
-    from corehq.motech.repeaters.models import are_repeat_records_migrated
-    from corehq.motech.repeaters.views import (
-        DomainForwardingRepeatRecords,
-        SQLRepeatRecordReport,
-    )
-
-    if are_repeat_records_migrated(domain):
-        return SQLRepeatRecordReport.slug
-    return DomainForwardingRepeatRecords.slug

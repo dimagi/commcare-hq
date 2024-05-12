@@ -106,7 +106,7 @@
                       css: {
                         'text-muted': hasEmailedExport && !isAutoRebuildEnabled()
                       }">
-          <i class="fa fa-file-o"></i>
+          <i class="fa-regular fa-file"></i>
           <strong>
             {% trans 'Form:' %}
           </strong>
@@ -232,7 +232,7 @@
 
         <!-- ko if: hasEmailedExport && !isAutoRebuildEnabled() -->
         <p class="text-warning">
-          <i class="fa fa-exclamation-triangle"></i>
+          <i class="fa-solid fa-triangle-exclamation"></i>
           {% blocktrans %}
             Automatic updates for this saved {{ export_type }} have been disabled. Click 'Enable'
             to re-enable automatic updates.
@@ -313,7 +313,7 @@
                           },
                           click: downloadRequested"
                class="btn btn-info btn-xs">
-              <i class="fa fa-cloud-download"></i>
+              <i class="fa-solid fa-cloud-arrow-down"></i>
               {% trans "Download" %}
             </a>
             <!-- ko if: isFeed -->
@@ -341,7 +341,7 @@
           <div data-bind="if: isLocationSafeForUser()">
             <p class="text-warning"
                data-bind="if: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning() && isAutoRebuildEnabled()">
-              <i class="fa fa-exclamation-triangle"></i>
+              <i class="fa-solid fa-triangle-exclamation"></i>
               {% blocktrans %}
                 This saved {{ export_type }} has expired because it has not been used in
                 the last 35 days. To renew daily updates, click the 'Update Data'
@@ -351,7 +351,7 @@
 
             <p class="text-danger"
                data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.failed() == 'too_large'">
-              <i class="fa fa-exclamation-triangle"></i>
+              <i class="fa-solid fa-triangle-exclamation"></i>
               {% blocktrans with max_rows=max_daily_export_size|intcomma %}
                 Your export exceeds the limit of {{ max_rows }} rows. Please see <a href="https://confluence.dimagi.com/display/commcarepublic/Selecting+Tools+for+CommCare+Data+Processing+and+Analysis" data-toggle="modal">documentation</a> for more information.
               {% endblocktrans %}
@@ -367,7 +367,7 @@
 
             <p class="text-danger"
                data-bind="if: emailedExport.taskStatus && emailedExport.taskStatus.justFinished() && emailedExport.taskStatus.failed() == 'unknown'">
-              <i class="fa fa-exclamation-triangle"></i>
+              <i class="fa-solid fa-triangle-exclamation"></i>
               <strong>
                 {% trans "Data update failed!" %}
               </strong>
@@ -382,7 +382,7 @@
             <div data-bind="if: !emailedExport.hasFile() && emailedExport.taskStatus && !emailedExport.taskStatus.justFinished()">
               <div class="alert alert-warning"
                    data-bind="visible: emailedExport.prepareExportError()">
-                <i class="fa fa-exclamation-triangle"></i>
+                <i class="fa-solid fa-triangle-exclamation"></i>
                 <span data-bind="text: emailedExport.prepareExportError"></span>
               </div>
 

@@ -1,11 +1,10 @@
-import ssl
 import sys
 
 from django.conf import settings
 
 import six
-from six.moves.urllib.parse import urlencode
-from six.moves.urllib.request import urlopen
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
 from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.sms.models import SQLSMSBackend
@@ -54,6 +53,10 @@ class SQLHttpBackend(SQLSMSBackend):
     def url(self):
         return self.config.url
 
+    @property
+    def extra_urlopen_kwargs(self):
+        return {}
+
     def send(self, msg, *args, **kwargs):
         config = self.config
         if config.additional_params:
@@ -74,19 +77,18 @@ class SQLHttpBackend(SQLSMSBackend):
 
         url_params = urlencode(params)
         try:
-            unverified = ssl._create_unverified_context()
             if config.method == "GET":
                 urlopen(
                     "%s?%s" % (config.url, url_params),
-                    context=unverified,
                     timeout=settings.SMS_GATEWAY_TIMEOUT,
+                    **self.extra_urlopen_kwargs,
                 ).read()
             else:
                 urlopen(
                     config.url,
                     url_params,
-                    context=unverified,
                     timeout=settings.SMS_GATEWAY_TIMEOUT,
+                    **self.extra_urlopen_kwargs,
                 ).read()
         except Exception as e:
             msg = "Error sending message from backend: '{}'\n\n{}".format(self.pk, str(e))

@@ -1,7 +1,7 @@
 <ul class="list-unstyled" data-bind="foreach: {{ detail }}">
   <li>
     <!-- ko if: error -->
-    <i class="fa fa-exclamation-triangle text-danger"
+    <i class="fa-solid fa-triangle-exclamation text-danger"
        data-bind="popover: { content: error, placement: 'bottom', trigger: 'hover' }"></i>
     <!-- /ko -->
     <span data-bind="html: $root.moduleReference($data.module_id)"></span>: <!-- ko text: $root.translate($data.header) --><!-- /ko -->

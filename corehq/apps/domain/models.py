@@ -449,6 +449,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     ga_opt_out = BooleanProperty(default=False)
     orphan_case_alerts_warning = BooleanProperty(default=False)
 
+    # For domains that have been migrated to a different environment
+    redirect_url = StringProperty()
+
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc
@@ -679,16 +682,21 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return name
 
     @classmethod
-    def get_all(cls, include_docs=True):
+    def get_all(cls, include_docs=True, include_snapshots=False):
         domains = Domain.view("domain/not_snapshots", include_docs=False).all()
+        if include_snapshots:
+            snapshots = Domain.get_db().view("domain/snapshots", include_docs=True, reduce=False).all()
+            # make snapshots look like items returned from domains/not_snapshots view
+            snapshots = [{'id': d['id'], 'key': d['doc']['name'], 'value': None} for d in snapshots]
+            domains = domains + snapshots
         if not include_docs:
             return domains
         else:
             return map(cls.wrap, iter_docs(cls.get_db(), [d['id'] for d in domains]))
 
     @classmethod
-    def get_all_names(cls):
-        return sorted({d['key'] for d in cls.get_all(include_docs=False)})
+    def get_all_names(cls, include_snapshots=False):
+        return sorted({d['key'] for d in cls.get_all(include_docs=False, include_snapshots=include_snapshots)})
 
     @classmethod
     def get_deleted_domain_names(cls):

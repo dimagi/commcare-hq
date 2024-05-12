@@ -65,7 +65,7 @@ from corehq.apps.app_manager import (
     remote_app,
 )
 from corehq.apps.app_manager.app_schemas.case_properties import (
-    all_case_properties_by_domain,
+    expire_case_properties_caches,
     get_all_case_properties,
     get_usercase_properties,
 )
@@ -964,6 +964,7 @@ class MappingItem(DocumentSchema):
     key = StringProperty()
     # lang => localized string
     value = DictProperty()
+    alt_text = LabelProperty()
 
     @property
     def treat_as_expression(self):
@@ -2024,6 +2025,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     #Only applies to 'short' details
     no_items_text = LabelProperty(default={'en': 'List is empty.'})
 
+    select_text = LabelProperty(default={'en': 'Continue'})
+
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'
         if value_is_the_default:
@@ -2188,6 +2191,7 @@ class CaseSearch(DocumentSchema):
     description = LabelProperty(default={})
     include_all_related_cases = BooleanProperty(default=False)
     dynamic_search = BooleanProperty(default=False)
+    search_on_clear = BooleanProperty(default=False)
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
@@ -4527,17 +4531,16 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def save(self, response_json=None, increment_version=None, **params):
         from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
+        from corehq.apps.case_search.utils import get_app_context_by_case_type
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
         if self.get_id:
             # expire cache unless new application
             self.global_app_config.clear_version_caches()
+            get_app_context_by_case_type.clear(self.domain, self.get_id)
         get_all_case_properties.clear(self)
-        all_case_properties_by_domain.clear(self.domain, True, True)
-        all_case_properties_by_domain.clear(self.domain, True, False)
-        all_case_properties_by_domain.clear(self.domain, False, True)
-        all_case_properties_by_domain.clear(self.domain, False, False)
+        expire_case_properties_caches(self.domain)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
         get_apps_in_domain.clear(self.domain, True)

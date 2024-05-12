@@ -81,6 +81,13 @@ class SsoBackend(ModelBackend):
             user, web_user = self._create_new_user(request, username, async_signup)
             is_new_user = True
 
+        if not is_new_user and not web_user.is_active:
+            web_user.is_active = True
+            web_user.save()
+            request.sso_new_user_messages['success'].append(
+                _("User account for {} has been re-activated.").format(web_user.username)
+            )
+
         if async_signup and async_signup.invitation:
             self._process_invitation(request, async_signup.invitation, web_user, is_new_user)
 

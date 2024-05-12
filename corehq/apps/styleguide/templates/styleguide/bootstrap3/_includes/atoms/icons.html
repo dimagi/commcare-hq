@@ -32,133 +32,14 @@
     All icons in FontAwesome are already built into HQ.
     Other icons have been custom created for HQ.
   </p>
-  {% include 'styleguide/bootstrap3/_includes/atoms/icons/panel.html' with prefix="fa" icons=common_icons %}
-  {% include 'styleguide/bootstrap3/_includes/atoms/icons/panel.html' with prefix="fcc" icons=custom_icons %}
+  {% include 'styleguide/bootstrap3/_includes/atoms/icons/panel.html' with icons=common_icons %}
+  {% include 'styleguide/bootstrap3/_includes/atoms/icons/panel.html' with icons=custom_icons %}
 
-  <h2>New Icons</h2>
+  <h2>Creating New Icons</h2>
   <p>
-    If a suitable icon doesn't exist in FontAwesome or HQ's custom set,
-    another great resource for icons is the
-    <a href="http://thenounproject.com/">Noun Project</a>.
-    Typically, once a Noun Project icon is chosen,
-    it is best practice to add that icon as a glyph in the CommCare HQ font.
-  </p>
-  <p>
-    On a Mac, the best program to edit this font is
-    <a href="http://www.glyphsapp.com/">Glyphs</a>. You should open the
-    <code>CommCareHQFont.glyphs</code> file in Glyphs and add your fonts to an available
-    private unicode space.
-  </p>
-  <p>
-    Glyphs has a great article on
-    <a href="http://www.glyphsapp.com/tutorials/creating-an-icon-webfont">creating an icon webfont</a>.
-    If you are adding a new glyph, this is a must read. Below are some
-    highlights of the process.
-  </p>
-  <div class="media">
-    <a class="media-left pull-left"
-       href="{% static 'styleguide/bootstrap3/images/font_docs/vector_version.png' %}">
-      <img width="100" src="{% static 'styleguide/bootstrap3/images/font_docs/vector_version.png' %}" />
-    </a>
-    <div class="media-body">
-      <h4 class="media-heading">Edit the icon in a vector graphics program first</h4>
-      Open the svg or eps file in either Adobe Illustrator or Inkscape and
-      make any fine edits necessary to make the icon fit the style of
-      the rest of the icons available to the CommCare HQ Font.
-    </div>
-  </div>
-  <div class="media">
-    <a class="media-left pull-left"
-       href="{% static 'styleguide/bootstrap3/images/font_docs/glyphs_overview.png' %}">
-      <img width="100" src="{% static 'styleguide/bootstrap3/images/font_docs/glyphs_overview.png' %}" />
-    </a>
-    <div class="media-body">
-      <h4 class="media-heading">Create a new private domain glyph in the CommCare HQ Font</h4>
-      Open <code>corehq/apps/hqwebapp/_fonts/commcarehq_font/CommCareHQFont.glyphs</code>
-      in Glyph.app and follow the steps in the
-      <a href="http://www.glyphsapp.com/tutorials/creating-an-icon-webfont">tutorial</a>
-      to add a new glyph in the private domain. Make sure the unicode
-      address you've chosen does not overlap with any existing glyphs or
-      public domain characters.
-    </div>
-  </div>
-  <div class="media">
-    <a class="media-left pull-left"
-       href="{% static 'styleguide/bootstrap3/images/font_docs/glyphs_character.png' %}">
-      <img width="100" src="{% static 'styleguide/bootstrap3/images/font_docs/glyphs_character.png' %}" />
-    </a>
-    <div class="media-body">
-      <h4 class="media-heading">Edit the New Glyph</h4>
-      Copy your vector graphic into the Glyphs glyph editor. Resize as necessary
-      so that the glyph is large enough to fit in with the rest of the HQ fonts.
-      Make sure that the <code>L</code> and <code>R</code> values in the glyph info
-      are never negative (ideally they are both 0).
-    </div>
-  </div>
-  <div class="media">
-    <a class="media-left pull-left"
-       href="{% static 'styleguide/bootstrap3/images/font_docs/glyphs_compare.png' %}">
-      <img width="100" src="{% static 'styleguide/bootstrap3/images/font_docs/glyphs_compare.png' %}" />
-    </a>
-    <div class="media-body">
-      <h4 class="media-heading">Check the Glyph's Scale and Width</h4>
-      A good way of checking whether your new glyph is sized properly
-      is to look at it in the Glyphs overview pane and compare it to the
-      existing glyphs in the font. Make sure that the baseline (bottom of the
-      glyph) looks natural and that the scale and height of glyph fit with
-      the rest of the glyphs in the font.
-    </div>
-  </div>
-  <h2>Saving the Edited Glyphs File</h2>
-  <p>
-    Once you've added your new glyph, you will need to export your font
-    to <code>*.otf</code>. Check <code>Use Production glyph names</code> and
-    <code>Remove Overlap</code>.
-  </p>
-  <p>
-    Update: <code>Remove Overlap</code> caused the bottom half of the
-    CommCare flower to be removed. Un-checking that setting seemed to
-    generate better results. YMMV
-  </p>
-  <p>
-    Save the final <code>*.otf</code> font to
-    <code>corehq/apps/hqwebapp/static/hqwebapp/font/CommCareHQFont-Regular.otf</code>.
-  </p>
-  <h2>Prepping the Font for Cross Browser Compatibility</h2>
-  <p>
-    To make the font universally readable across most browsers, you'll need
-    to have an <code>eot</code>, <code>svg</code>, <code>ttf</code>,
-    and <code>woff</code> version of it. Use the
-    <a href="http://www.fontsquirrel.com/tools/webfont-generator">Font Squirrel Webfont Generator</a>
-    to do this.
-  </p>
-  <p>
-    Here are some screenshots of settings for the font generator in
-    <strong>Expert Mode</strong>:
-  </p>
-  <ul>
-    <li><a href="{% static 'styleguide/bootstrap3/images/font_docs/font_squirrel_settings.jpg' %}">Settings</a><br />
-      NOTE: unlike in this settings image, select <strong>No Subsetting</strong>.
-      Otherwise the private use glyphs will be removed
-      (<a href="http://graphicdesign.stackexchange.com/a/17426">source</a>).
-    </li>
-  </ul>
-  <p>
-    Copy the resulting <code>eot</code>, <code>svg</code>, <code>ttf</code>,
-    and <code>woff</code> files to <code>corehq/apps/style/static/style/font/</code>
-    when you are done.
-  </p>
-  <h2>Adding the New Glyph to the Stylesheet</h2>
-  <p>
-    Add a reference to the icon's font unicode value as a variable in
-    <code>corehq/apps/style/static/hqwebapp/less/font-commcare/variables.less</code>.
-  </p>
-  <p>
-    Add the <code>:before</code> styling for the class of the icon in
-    <code>corehq/apps/style/static/hqwebapp/less/font-commcare/icons.less</code>.
-  </p>
-  <p>
-    Use your new icon! <i class="fcc fcc-fd-signature"></i>
-    <code>&lt;i class="fcc fcc-fd-signature"&gt;&lt;/i&gt;</code>
+    The
+    <a href="{% url "styleguide_atoms_icons_b5" %}#creating-an-icon">process for creating a new icon</a>
+    has been updated and can be found in the Bootstrap 5 styleguide,
+    as the process is the same for both Bootstrap 3 and Bootstrap 5.
   </p>
 </section>

@@ -752,7 +752,8 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         if date_filter:
             form_filters.append(date_filter)
         if not can_access_all_locations:
-            form_filters.append(self._scope_filter(accessible_location_ids))
+            show_inactive_users = HQUserType.DEACTIVATED in user_types
+            form_filters.append(self._scope_filter(accessible_location_ids, show_inactive_users))
 
         return form_filters
 
@@ -778,10 +779,10 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
 
         return all_user_filters
 
-    def _scope_filter(self, accessible_location_ids):
+    def _scope_filter(self, accessible_location_ids, include_inactive_users=False):
         # Filter to be applied in AND with filters for export for restricted user
         # Restricts to forms submitted by users at accessible locations
-        accessible_user_ids = mobile_user_ids_at_locations(list(accessible_location_ids))
+        accessible_user_ids = mobile_user_ids_at_locations(list(accessible_location_ids), include_inactive_users)
         return FormSubmittedByFilter(accessible_user_ids)
 
 

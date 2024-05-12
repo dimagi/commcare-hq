@@ -1,18 +1,41 @@
-/*global Backbone */
-
-hqDefine("cloudcare/js/formplayer/menus/controller", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        markdown = hqImport("cloudcare/js/markdown"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
-        views = hqImport("cloudcare/js/formplayer/menus/views"),
-        queryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
+'use strict';
+hqDefine("cloudcare/js/formplayer/menus/controller", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'DOMPurify/dist/purify.min',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'cloudcare/js/markdown',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/menus/utils',
+    'cloudcare/js/formplayer/menus/views/query',
+    'cloudcare/js/formplayer/menus/views',
+    'cloudcare/js/formplayer/menus/api',    // app:select:menus and entity:get:details
+], function (
+    $,
+    _,
+    Backbone,
+    DOMPurify,
+    initialPageData,
+    toggles,
+    markdown,
+    constants,
+    FormplayerFrontend,
+    UsersModels,
+    formplayerUtils,
+    Collection,
+    menusUtils,
+    queryView,
+    views
+) {
     var selectMenu = function (options) {
 
-        options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+        options.preview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
 
         var fetchingNextMenu = FormplayerFrontend.getChannel().request("app:select:menus", options);
 
@@ -44,6 +67,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
             var urlObject = formplayerUtils.currentUrlToObject();
             if (urlObject.endpointId) {
+                menuResponse.breadcrumbs = [];
                 urlObject.replaceEndpoint(menuResponse.selections);
                 formplayerUtils.setUrlToObject(urlObject);
             }
@@ -66,7 +90,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             if (urlObject.appId === undefined || urlObject.appId === null) {
                 if (menuResponse.appId === null || menuResponse.appId === undefined) {
                     FormplayerFrontend.trigger('showError', "Response did not contain appId even though it was" +
-                        "required. If this persists, please report an issue to CommCareHQ");
+                        "required. If this persists, please report an issue to CommCare HQ");
                     FormplayerFrontend.trigger("apps:list");
                     return;
                 }
@@ -105,53 +129,20 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
     var showMenu = function (menuResponse) {
         var menuListView = menusUtils.getMenuView(menuResponse);
-        var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var queryResponse = menuResponse.queryResponse;
+        var appPreview = UsersModels.getCurrentUser().displayOptions.singleAppMode;
         var sidebarEnabled = !appPreview && menusUtils.isSidebarEnabled(menuResponse);
-        if (sidebarEnabled && menuResponse.type === constants.QUERY) {
-            var menuData = menusUtils.getMenuData(menuResponse);
-            menuData["triggerEmptyCaseList"] = true;
-            menuData["sidebarEnabled"] = true;
-            menuData["description"] = menuResponse.description;
-
-            var caseListView = menusUtils.getCaseListView(menuResponse);
-            FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
-        } else if (menuListView) {
+        if (menuListView && !sidebarEnabled) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
+        }
+        if (sidebarEnabled) {
+            showSplitScreenQuery(menuResponse, menuListView);
+        } else {
+            FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
         if (menuResponse.persistentCaseTile && !appPreview) {
             showPersistentCaseTile(menuResponse.persistentCaseTile);
         } else {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
-        }
-
-        if (sidebarEnabled && menuResponse.type === constants.ENTITIES && queryResponse)  {
-            var queryCollection = new Collection(queryResponse.displays);
-            FormplayerFrontend.regions.getRegion('sidebar').show(
-                queryView.queryListView({
-                    collection: queryCollection,
-                    title: menuResponse.title,
-                    description: menuResponse.description,
-                    hasDynamicSearch: queryResponse.dynamicSearch,
-                    sidebarEnabled: true,
-                    disableDynamicSearch: !sessionStorage.submitPerformed,
-                    groupHeaders: queryResponse.groupHeaders,
-                }).render()
-            );
-        } else if (sidebarEnabled && menuResponse.type === constants.QUERY) {
-            FormplayerFrontend.regions.getRegion('sidebar').show(
-                queryView.queryListView({
-                    collection: menuResponse,
-                    title: menuResponse.title,
-                    description: menuResponse.description,
-                    hasDynamicSearch: menuResponse.dynamicSearch,
-                    sidebarEnabled: true,
-                    disableDynamicSearch: true,
-                    groupHeaders: menuResponse.groupHeaders,
-                }).render()
-            );
-        } else {
-            FormplayerFrontend.regions.getRegion('sidebar').empty();
         }
 
         if (menuResponse.breadcrumbs) {
@@ -170,6 +161,47 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         }
         if (menuResponse.appVersion) {
             FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
+        }
+    };
+
+    var showSplitScreenQuery = function (menuResponse, menuListView) {
+        var menuData = menusUtils.getMenuData(menuResponse);
+        var queryResponse = menuResponse.queryResponse;
+        if (menuResponse.type === constants.ENTITIES && queryResponse)  {
+            var queryCollection = new Collection(queryResponse.displays);
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                queryView.queryListView({
+                    collection: queryCollection,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    hasDynamicSearch: queryResponse.dynamicSearch,
+                    sidebarEnabled: true,
+                    disableDynamicSearch: !sessionStorage.submitPerformed,
+                    groupHeaders: queryResponse.groupHeaders,
+                    searchOnClear: queryResponse.searchOnClear,
+                }).render()
+            );
+            FormplayerFrontend.regions.getRegion('main').show(menuListView);
+        } else if (menuResponse.type === constants.QUERY) {
+            FormplayerFrontend.regions.getRegion('sidebar').show(
+                queryView.queryListView({
+                    collection: menuResponse,
+                    title: menuResponse.title,
+                    description: menuResponse.description,
+                    hasDynamicSearch: menuResponse.dynamicSearch,
+                    sidebarEnabled: true,
+                    disableDynamicSearch: true,
+                    groupHeaders: menuResponse.groupHeaders,
+                    searchOnClear: menuResponse.searchOnClear,
+                }).render()
+            );
+
+            menuData["triggerEmptyCaseList"] = true;
+            menuData["sidebarEnabled"] = true;
+            menuData["description"] = menuResponse.description;
+
+            var caseListView = menusUtils.getCaseListView(menuResponse);
+            FormplayerFrontend.regions.getRegion('main').show(caseListView(menuData));
         }
     };
 
@@ -194,14 +226,20 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             }
             return;
         }
-        var detailObject = detailObjects[detailTabIndex];
-        var menuListView = getDetailList(detailObject);
-
         var tabModels = _.map(detailObjects, function (detail, index) {
             return {title: detail.get('title'), id: index, active: index === detailTabIndex};
         });
         var tabCollection = new Backbone.Collection();
         tabCollection.reset(tabModels);
+
+        let contentView;
+        const detailObject = detailObjects[detailTabIndex],
+            usesCaseTiles = detailObject.get('usesCaseTiles');
+        if (usesCaseTiles && !detailObject.get('entities')) {
+            contentView = getCaseTile(detailObject.toJSON());
+        } else {
+            contentView = getDetailList(detailObject);
+        }
 
         var tabListView = views.DetailTabListView({
             collection: tabCollection,
@@ -215,7 +253,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             isMultiSelect: isMultiSelect,
         });
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
-        $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
+        $('#case-detail-modal').find('.js-detail-content').html(contentView.render().el);
         $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
         $('#case-detail-modal').modal('show');
 
@@ -240,8 +278,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 collection: listCollection,
                 headers: detailObject.get('headers'),
                 styles: detailObject.get('styles'),
+                tiles: detailObject.get('tiles'),
                 title: detailObject.get('title'),
             };
+            if (detailObject.get('usesCaseTiles')) {
+                return views.CaseTileDetailView(menuData);
+            }
             return views.CaseListDetailView(menuData);
         }
 
@@ -249,6 +291,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var headers = detailObject.get('headers');
         var details = detailObject.get('details');
         var styles = detailObject.get('styles');
+        var altText = detailObject.get('altText');
         var detailModel = [];
         // we need to map the details and headers JSON to a list for a Backbone Collection
         for (i = 0; i < headers.length; i++) {
@@ -256,6 +299,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.data = details[i];
             obj.header = headers[i];
             obj.style = styles[i];
+            obj.altText = altText[i];
             obj.id = i;
             if (obj.style.displayFormat === constants.FORMAT_MARKDOWN) {
                 obj.html = markdown.render(details[i]);
@@ -271,27 +315,49 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         });
     };
 
-    // return a case tile from a detail object (for persistent case tile)
+    const onlyVisibleColumns = function (detailObject) {
+        const indices = _.chain(detailObject.styles)
+            .map((value, index) => [value, index])
+            .filter(([s]) => s.displayFormat !== constants.FORMAT_ADDRESS_POPUP)
+            .map(([, index]) => index)
+            .value();
+
+        return {
+            styles: _.map(indices, index => detailObject.styles[index]),
+            altText: _.map(indices, index => detailObject.altText[index]),
+            tiles: _.map(indices, index => detailObject.tiles[index]),
+            details: _.map(indices, index => detailObject.details[index]),
+        };
+    };
+
+    // return a case tile from a detail object (for persistent case tile and case tile in case detail)
     var getCaseTile = function (detailObject) {
+        var {
+            styles,
+            altText,
+            tiles,
+            details,
+        } = onlyVisibleColumns(detailObject);
         var detailModel = new Backbone.Model({
-            data: detailObject.details,
+            data: details,
+            altText,
             id: 0,
         });
         var numEntitiesPerRow = detailObject.numEntitiesPerRow || 1;
         var numRows = detailObject.maxHeight;
         var numColumns = detailObject.maxWidth;
         var useUniformUnits = detailObject.useUniformUnits || false;
-        var caseTileStyles = views.buildCaseTileStyles(detailObject.tiles, detailObject.styles, numRows,
+
+        var caseTileStyles = views.buildCaseTileStyles(tiles, styles, numRows,
             numColumns, numEntitiesPerRow, useUniformUnits, 'persistent');
         // Style the positioning of the elements within a tile (IE element 1 at grid position 1 / 2 / 4 / 3
-        $("#persistent-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
+        $("#persistent-cell-layout-style").html(caseTileStyles.cellLayoutStyle);
         // Style the grid (IE each tile has 6 rows, 12 columns)
-        $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
+        $("#persistent-cell-grid-style").html(caseTileStyles.cellGridStyle);
         return views.PersistentCaseTileView({
             model: detailModel,
-            headers: detailObject.headers,
-            styles: detailObject.styles,
-            tiles: detailObject.tiles,
+            styles: styles,
+            tiles: tiles,
             maxWidth: detailObject.maxWidth,
             maxHeight: detailObject.maxHeight,
             prefix: 'persistent',

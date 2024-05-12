@@ -1,10 +1,11 @@
+"use strict";
 hqDefine("case_importer/js/main", [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
     'case_importer/js/import_history',
     'case_importer/js/excel_fields',
-    'hqwebapp/js/bootstrap3/widgets',
+    'hqwebapp/js/bootstrap5/widgets',
 ], function (
     $,
     _,

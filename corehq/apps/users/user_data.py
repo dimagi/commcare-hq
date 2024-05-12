@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, transaction
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
@@ -9,6 +9,7 @@ from corehq.apps.custom_data_fields.models import (
     COMMCARE_PROJECT,
     PROFILE_SLUG,
     CustomDataFieldsProfile,
+    CustomDataFieldsDefinition,
     is_system_key,
 )
 
@@ -25,33 +26,37 @@ class UserData:
         self._profile_id = profile_id or raw_user_data.get(PROFILE_SLUG, None)
 
     @classmethod
-    def lazy_init(cls, couch_user, domain):
-        # To be used during initial rollout - lazily create user_data objs from
-        # existing couch data
-        raw_user_data = couch_user.to_json().get('user_data', {}).copy()
-        raw_user_data.pop(COMMCARE_PROJECT, None)
-        profile_id = raw_user_data.pop(PROFILE_SLUG, None)
-        sql_data, _ = SQLUserData.objects.get_or_create(
-            user_id=couch_user.user_id,
-            domain=domain,
-            defaults={
-                'data': raw_user_data,
-                'django_user': couch_user.get_django_user,
-                'profile_id': profile_id,
-            }
-        )
+    def for_user(cls, couch_user, domain):
+        try:
+            sql_data = SQLUserData.objects.get(
+                user_id=couch_user.user_id,
+                domain=domain,
+            )
+        except SQLUserData.DoesNotExist:
+            return cls({}, couch_user, domain)
+
         return cls(sql_data.data, couch_user, domain, profile_id=sql_data.profile_id)
 
+    @transaction.atomic
     def save(self):
-        SQLUserData.objects.update_or_create(
-            user_id=self._couch_user.user_id,
-            domain=self.domain,
-            defaults={
-                'data': self._local_to_user,
-                'django_user': self._couch_user.get_django_user,
-                'profile_id': self.profile_id,
-            },
-        )
+        try:
+            sql_data = (SQLUserData.objects
+                        .select_for_update()
+                        .get(user_id=self._couch_user.user_id, domain=self.domain))
+        except SQLUserData.DoesNotExist:
+            # Only create db object if there's something to persist
+            if self._local_to_user or self.profile_id:
+                SQLUserData.objects.create(
+                    user_id=self._couch_user.user_id,
+                    domain=self.domain,
+                    data=self._local_to_user,
+                    django_user=self._couch_user.get_django_user(),
+                    profile_id=self.profile_id,
+                )
+        else:
+            sql_data.data = self._local_to_user
+            sql_data.profile_id = self.profile_id
+            sql_data.save()
 
     @property
     def _provided_by_system(self):
@@ -63,9 +68,30 @@ class UserData:
 
     def to_dict(self):
         return {
+            **self._schema_defaults,
             **self._local_to_user,
             **self._provided_by_system,
         }
+
+    @property
+    def _schema_defaults(self):
+        fields = self._schema_fields
+        return {field.slug: '' for field in fields}
+
+    @cached_property
+    def _schema_fields(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            CUSTOM_USER_DATA_FIELD_TYPE,
+        )
+
+        try:
+            definition = CustomDataFieldsDefinition.objects.get(
+                domain=self.domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
+            fields = definition.get_fields()
+        except CustomDataFieldsDefinition.DoesNotExist:
+            return []
+
+        return fields
 
     @property
     def raw(self):
@@ -192,12 +218,35 @@ class SQLUserData(models.Model):
         indexes = [models.Index(fields=['user_id', 'domain'])]
 
 
+def get_all_profiles_by_id(domain):
+    from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
+    return {
+        profile.id: profile for profile in CustomDataFieldsProfile.objects.filter(
+            definition__domain=domain, definition__field_type=CUSTOM_USER_DATA_FIELD_TYPE)
+    }
+
+
+def get_user_schema_fields(domain):
+    from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
+
+    try:
+        definition = CustomDataFieldsDefinition.objects.get(domain=domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
+    except CustomDataFieldsDefinition.DoesNotExist:
+        fields = []
+    else:
+        fields = definition.get_fields()
+    return fields
+
+
 def prime_user_data_caches(users, domain):
     """
     Enriches a set of users by looking up and priming user data caches in
     chunks, for use in bulk workflows.
     :return: generator that yields the enriched user objects
     """
+    profiles_by_id = get_all_profiles_by_id(domain)
+    schema_fields = get_user_schema_fields(domain)
+
     for chunk in chunked(users, 100):
         user_ids = [user.user_id for user in chunk]
         sql_data_by_user_id = {
@@ -213,4 +262,10 @@ def prime_user_data_caches(users, domain):
                 user_data = UserData({}, user, domain)
             # prime the user.get_user_data cache
             user._user_data_accessors[domain] = user_data
+
+            # prime the user schema data to avoid individual database calls
+            user_data._schema_fields = schema_fields
+            if user_data.profile_id and user_data.profile_id in profiles_by_id:
+                user_data.profile = profiles_by_id[user_data.profile_id]
+
             yield user

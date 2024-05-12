@@ -14,6 +14,7 @@ class Format(object):
     JSON = "json"
     PYTHON_DICT = "dict"
     UNZIPPED_CSV = 'unzipped-csv'
+    GEOJSON = 'geojson'
 
     FORMAT_DICT = {CSV: {"mimetype": "application/zip",
                          "extension": "zip",
@@ -41,7 +42,11 @@ class Format(object):
                           "download": False},
                    UNZIPPED_CSV: {"mimetype": "text/csv",
                                   "extension": "csv",
-                                  "download": True}}
+                                  "download": True},
+                   GEOJSON: {"mimetype": "application/geo+json",
+                          "extension": "geojson",
+                          "download": True},
+                   }
 
     VALID_FORMATS = list(FORMAT_DICT)
 

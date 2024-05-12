@@ -6,6 +6,7 @@ from django.utils.translation import gettext_noop as _
 
 from dateutil.relativedelta import relativedelta
 
+from corehq.apps.sso.models import IdentityProviderType
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.accounting.async_handlers import (
@@ -74,6 +75,13 @@ class CreditAdjustmentReasonFilter(BaseSingleOptionFilter):
     label = _("Credit Adjustment Reason")
     default_text = _("Any Reason")
     options = CreditAdjustmentReason.CHOICES
+
+
+class IdPServiceTypeFilter(BaseSingleOptionFilter):
+    slug = 'idp_service_type'
+    label = _("Service Type")
+    default_text = _("Any Service")
+    options = IdentityProviderType.CHOICES
 
 
 class CreditAdjustmentLinkFilter(BaseSingleOptionFilter):
@@ -223,7 +231,7 @@ class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
 
 
 class DateRangeFilter(BaseReportFilter):
-    template = 'reports/filters/daterange.html'
+    template = 'reports/filters/bootstrap3/daterange.html'
     default_days = 7
 
     START_DATE = 'startdate'
@@ -299,7 +307,7 @@ class OptionalFilterMixin(object):
 
 
 class OptionalDateRangeFilter(DateRangeFilter, OptionalFilterMixin):
-    template = 'reports/filters/optional_daterange.html'
+    template = 'reports/filters/bootstrap3/optional_daterange.html'
 
     @property
     def filter_context(self):
@@ -331,7 +339,7 @@ class EndDateFilter(OptionalDateRangeFilter):
 
 
 class OptionalMonthYearFilter(BaseReportFilter, OptionalFilterMixin):
-    template = 'reports/filters/optional_month_year.html'
+    template = 'reports/filters/bootstrap3/optional_month_year.html'
 
     @property
     def filter_context(self):

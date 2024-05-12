@@ -1,8 +1,6 @@
 from collections import defaultdict
 from functools import wraps
 
-from django.urls import get_resolver
-
 from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
 
 
@@ -234,6 +232,34 @@ def use_bootstrap5(view_func):
         set_bootstrap_version5()
         return view_func(request, *args, **kwargs)
     return _inner
+
+
+def use_tempusdominus(view_func):
+    """Use this decorator on the dispatch method of a TemplateView subclass
+    to include CSS for Tempus Dominus (Date and/or Time picking widget).
+    NOTE: Only available for Bootstrap 5 pages!
+
+    Example:
+        @use_tempusdominus
+        def dispatch(self, request, *args, **kwargs):
+            return super().dispatch(request, *args, **kwargs)
+
+    Or alternatively:
+        @method_decorator(use_tempusdominus, name='dispatch')
+        class MyViewClass(MyViewSubclass):
+            ...
+    """
+    @wraps(view_func)
+    def _wrapped(*args, **kwargs):
+        if hasattr(args[0], 'META'):
+            # function view
+            request = args[0]
+        else:
+            # class view
+            request = args[1]
+        request.use_tempusdominus = True
+        return view_func(*args, **kwargs)
+    return _wrapped
 
 
 def waf_allow(kind, hard_code_pattern=None):

@@ -15,7 +15,7 @@ hqDefine("app_manager/js/summary/utils",[
     };
 
     var formIcon = function (form) {
-        var formIcon = 'fa fa-file-o appnav-primary-icon';
+        var formIcon = 'fa-regular fa-file appnav-primary-icon';
         if (form.action_type === 'open') {
             formIcon = 'fcc fcc-app-createform appnav-primary-icon appnav-primary-icon-lg';
         } else if (form.action_type === 'close') {
@@ -31,9 +31,9 @@ hqDefine("app_manager/js/summary/utils",[
         if (module.module_type === 'advanced') {
             moduleIcon = 'fa fa-flask appnav-primary-icon';
         } else if (module.module_type === 'report') {
-            moduleIcon = 'fa fa-bar-chart appnav-primary-icon';
+            moduleIcon = 'fa-regular fa-chart-bar appnav-primary-icon';
         } else if (module.module_type === 'shadow') {
-            moduleIcon = 'fa fa-folder-open-o appnav-primary-icon';
+            moduleIcon = 'fa-regular fa-folder-open appnav-primary-icon';
         } else if (!module.is_surveys) {
             moduleIcon = 'fa fa-bars appnav-primary-icon';
         }

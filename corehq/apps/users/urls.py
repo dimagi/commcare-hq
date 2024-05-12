@@ -1,4 +1,4 @@
-from django.conf.urls import include, re_path as url
+from django.urls import include, re_path as url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
 from corehq.apps.reports.dispatcher import UserManagementReportDispatcher
@@ -149,7 +149,7 @@ urlpatterns = [
 ] + [
     url(r'^commcare/$', MobileWorkerListView.as_view(), name=MobileWorkerListView.urlname),
     url(r'^commcare/json/$', paginate_mobile_workers, name='paginate_mobile_workers'),
-    url(r'^commcare/fields/$', waf_allow('XSS_BODY')(UserFieldsView.as_view()), name=UserFieldsView.urlname),
+    url(r'^user_data/$', waf_allow('XSS_BODY')(UserFieldsView.as_view()), name=UserFieldsView.urlname),
     url(
         r'^commcare/account/(?P<couch_user_id>[ \w-]+)/$',
         EditCommCareUserView.as_view(),

@@ -1,14 +1,18 @@
+from contextlib import contextmanager
 from datetime import datetime
 
 from django.test import TestCase
-from contextlib import contextmanager
-from casexml.apps.case.mock import CaseFactory
-from corehq.apps.export.const import DEID_ID_TRANSFORM, DEID_DATE_TRANSFORM
 
+from casexml.apps.case.mock import CaseFactory
+
+from corehq.apps.export.const import DEID_DATE_TRANSFORM, DEID_ID_TRANSFORM
+from corehq.apps.hqcase.case_helper import CaseCopier
 from corehq.apps.hqcase.utils import (
     get_case_value,
     get_deidentified_data,
+    is_copied_case,
 )
+from corehq.form_processor.tests.utils import create_case
 
 DOMAIN = 'test-domain'
 
@@ -112,3 +116,20 @@ def get_case(*args, **kwargs):
         yield case
     finally:
         factory.close_case(case.case_id)
+
+
+class TestIsCopiedCase(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.case_1 = create_case(domain=DOMAIN, name='case_1', case_json={'type': 'original'})
+        cls.case_2 = create_case(
+            domain=DOMAIN,
+            name='case_2',
+            case_json={'type': 'copied', CaseCopier.COMMCARE_CASE_COPY_PROPERTY_NAME: cls.case_1.case_id}
+        )
+
+    def test_is_copied_case(self):
+        self.assertFalse(is_copied_case(self.case_1))
+        self.assertTrue(is_copied_case(self.case_2))

@@ -1,15 +1,35 @@
-/*globals Marionette */
-
-hqDefine("cloudcare/js/formplayer/menus/views", function () {
-    const kissmetrics = hqImport("analytix/js/kissmetrix"),
-        constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        cloudcareUtils = hqImport("cloudcare/js/utils"),
-        markdown = hqImport("cloudcare/js/markdown");
-
+'use strict';
+hqDefine("cloudcare/js/formplayer/menus/views", [
+    'jquery',
+    'underscore',
+    'backbone.marionette',
+    'DOMPurify/dist/purify.min',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/markdown',
+    'cloudcare/js/utils',
+    'leaflet-fullscreen/dist/Leaflet.fullscreen.min',   // adds L.control.fullscreen to L
+], function (
+    $,
+    _,
+    Marionette,
+    DOMPurify,
+    initialPageData,
+    toggles,
+    kissmetrics,
+    constants,
+    FormplayerFrontend,
+    UsersModels,
+    formplayerUtils,
+    markdown,
+    cloudcareUtils,
+    L
+) {
     const MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -113,9 +133,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return _.template($(id).html() || "");
         },
         templateContext: function () {
+            const environment = UsersModels.getCurrentUser().environment;
             return {
                 title: this.options.title,
-                environment: FormplayerFrontend.getChannel().request('currentUser').environment,
+                isAppPreview: environment === constants.PREVIEW_APP_ENVIRONMENT,
             };
         },
         childViewOptions: function (model) {
@@ -180,7 +201,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     // Dynamically generate the CSS style for the grid polyfill to use for the case tile
     // useUniformUnits - true if the grid's cells should have the same height as width
-    const buildCellGridStyle = function (numRows, numColumns, useUniformUnits, prefix) {
+    const buildCellGridStyle = function (numRows, numColumns, useUniformUnits, prefix, isMultiSelect) {
         let heightString;
 
         if (useUniformUnits) {
@@ -195,6 +216,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             numColumns: numColumns,
             heightString: heightString,
             prefix: prefix,
+            isMultiSelect: isMultiSelect,
         };
         const templateString = $("#cell-grid-style-template").html();
         const template = _.template(templateString);
@@ -236,7 +258,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         template: _.template($("#case-view-item-template").html() || ""),
 
         ui: {
-            clickIcon: ".module-icon.clickable-icon",
+            clickIcon: "button.clickable-icon",
             selectRow: ".select-row-checkbox",
             showMore: ".show-more",
         },
@@ -292,12 +314,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const temp = urlTemplate.substring(0, urlTemplate.indexOf('?') - 1);
             const endpointId = temp.substring(temp.lastIndexOf('/') + 1);
             const endpointArg = urlTemplate.substring(urlTemplate.indexOf('?') + 1, urlTemplate.lastIndexOf('='));
-            e.target.className += " disabled";
+            $(e.target).closest('button.clickable-icon').addClass('disabled');
             this.clickableIconRequest(e, endpointId, caseId, endpointArg, isBackground);
         },
 
         iconKeyAction: function (e) {
-            if (e.keyCode === 13) {
+            if (e.keyCode === 13 || e.keyCode === 32) {
+                e.preventDefault();
                 this.iconClick(e);
             }
         },
@@ -308,25 +331,28 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         clickableIconRequest: function (e, endpointId, caseId, endpointArg, isBackground) {
             const self = this;
-            const clickedIcon = e.target;
-            clickedIcon.classList.add("disabled");
-            clickedIcon.style.display = 'none';
-            const spinnerElement = $(clickedIcon).siblings('i');
-            spinnerElement[0].style.display = '';
+            const $moduleIcon = $(e.target).find('img.module-icon').addBack('img.module-icon');
+            const $iconButton = $(e.target).closest('button.clickable-icon');
+            const $spinnerElement = $iconButton.find('i');
+            $moduleIcon.css('display', 'none');
+            $iconButton.addClass('disabled');
+            $spinnerElement.css('display', '');
+
             const currentUrlToObject = formplayerUtils.currentUrlToObject();
             currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
             currentUrlToObject.endpointId = endpointId;
             currentUrlToObject.isBackground = isBackground;
-
+            currentUrlToObject.setRequestInitiatedByTag(constants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
             function resetIcon() {
-                clickedIcon.classList.remove("disabled");
-                clickedIcon.style.display = '';
-                spinnerElement[0].style.display = 'none';
+                $moduleIcon.css('display', '');
+                $iconButton.removeClass('disabled');
+                $spinnerElement.css('display', 'none');
             }
 
             $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
-                self.reloadCase(self.model.get('id'));
-                resetIcon();
+                self.reloadCase(self.model.get('id')).then(function () {
+                    resetIcon();
+                });
             }).fail(function () {
                 resetIcon();
             });
@@ -336,6 +362,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const self = this;
             const urlObject = formplayerUtils.currentUrlToObject();
             urlObject.addSelection(caseId);
+            urlObject.setRequestInitiatedByTag(constants.requestInitiatedByTagsMapping.CLICKABLE_ICON);
             urlObject.clickedIcon = true;
             const fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, false, true, true);
             $.when(fetchingDetails).done(function (detailResponse) {
@@ -343,6 +370,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }).fail(function () {
                 console.log('could not get case details');
             });
+            return fetchingDetails;
         },
 
         updateModelFromDetailResponse: function (caseId, detailResponse) {
@@ -350,6 +378,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 this.destroy();
             } else {
                 this.model.set("data", detailResponse.models[0].attributes.details);
+                this.model.set("altText", detailResponse.models[0].attributes.altText);
             }
         },
 
@@ -363,7 +392,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (!(
                 e.target.classList.contains('module-case-list-column-checkbox') ||  // multiselect checkbox
                 e.target.classList.contains("select-row-checkbox") ||               // multiselect select all
-                $(e.target).is('a') ||                                              // actual link, as in markdown
+                $(e.target).closest('a').length ||                                  // actual link, as in markdown
                 e.target.classList.contains('show-more') ||
                 $(e.target).parent().hasClass('show-more')
             )) {
@@ -418,8 +447,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const appId = formplayerUtils.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
+                altText: this.options.model.get('altText'),
                 styles: this.options.styles,
-                headers: this.options.headers,
                 isMultiSelect: this.options.isMultiSelect,
                 renderMarkdown: markdown.render,
                 resolveUri: function (uri) {
@@ -472,6 +501,30 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return $(e.currentTarget).parent().index();
         },
     });
+
+    const CaseTileViewUnclickable = CaseTileView.extend({
+        events: {},
+        className: "list-cell-wrapper-style panel panel-default",
+        rowClick: function () {},
+    });
+
+    const initCaseTileList = function (options) {
+        const numEntitiesPerRow = options.numEntitiesPerRow || 1;
+        const numRows = options.maxHeight;
+        const numColumns = options.maxWidth;
+        const useUniformUnits = options.useUniformUnits;
+
+        const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
+            numEntitiesPerRow, useUniformUnits, 'list', options.isMultiSelect);
+
+        $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle);
+        $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle);
+        // If we have multiple cases per line, need to generate the outer grid style as well
+        if (caseTileStyles.cellWrapperStyle && caseTileStyles.cellContainerStyle) {
+            $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle);
+            $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle);
+        }
+    };
 
     const CaseTileGroupedView = CaseTileView.extend({
         tagName: "div",
@@ -540,7 +593,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     const PersistentCaseTileView = CaseTileView.extend({
-        className: "formplayer-request persistent-sticky",
+        className: function () {
+            return "persistent-sticky" + (this.options.hasInlineTile ? " formplayer-request" : "");
+        },
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
@@ -593,17 +648,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
-                headers: this.options.headers,
                 endpointActions: this.options.endpointActions,
             };
         },
 
         initialize: function (options) {
-            const self = this;
-            var sidebarNoItemsText = gettext("Please perform a search.");
+            const self = this,
+                sidebarNoItemsText = gettext("Please perform a search.");
             self.styles = options.styles;
             self.hasNoItems = options.collection.length === 0 || options.triggerEmptyCaseList;
             self.noItemsText = options.triggerEmptyCaseList ? sidebarNoItemsText : this.options.collection.noItemsText;
+            self.selectText = options.collection.selectText;
             self.headers = options.triggerEmptyCaseList ? [] : this.options.headers;
             self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
@@ -612,7 +667,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 self.selectedCaseIds = [];
             }
-            const user = FormplayerFrontend.currentUser;
+            const user = UsersModels.getCurrentUser();
             const displayOptions = user.displayOptions;
             const appPreview = displayOptions.singleAppMode;
             const addressFieldPresent = !!_.find(this.styles, function (style) { return style.displayFormat === constants.FORMAT_ADDRESS; });
@@ -801,7 +856,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         fontAwesomeIcon: function (iconName) {
             return L.divIcon({
-                html: `<i class='fa ${iconName} fa-4x'></i>`,
+                html: `<i class='${iconName} fa-4x'></i>`,
                 iconSize: [12, 12],
                 className: 'marker-pin',
             });
@@ -811,9 +866,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             const token = initialPageData.get("mapbox_access_token");
 
             try {
-                const locationIcon = this.fontAwesomeIcon("fa-map-marker");
-                const selectedLocationIcon = this.fontAwesomeIcon("fa-star");
-                const homeLocationIcon = this.fontAwesomeIcon("fa-street-view");
+                const locationIcon = this.fontAwesomeIcon("fa-solid fa-location-dot");
+                const selectedLocationIcon = this.fontAwesomeIcon("fa fa-star");
+                const homeLocationIcon = this.fontAwesomeIcon("fa fa-street-view");
 
                 const lat = 30;
                 const lon = 15;
@@ -979,6 +1034,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return _.extend(paginateItems, {
                 title: title.trim(),
                 description: description === undefined ? "" : markdown.render(description.trim()),
+                selectText: this.selectText === undefined ? "" : this.selectText,
                 headers: this.headers,
                 widthHints: this.options.widthHints,
                 actions: this.options.actions,
@@ -995,6 +1051,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 isMultiSelect: false,
                 showMap: this.showMap,
                 sidebarEnabled: this.options.sidebarEnabled,
+                splitScreenToggleEnabled: toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 smallScreenEnabled: this.smallScreenEnabled,
                 triggerEmptyCaseList: this.options.triggerEmptyCaseList,
 
@@ -1063,10 +1120,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     // - shape and size of the tile's layout grid
     // - the tile's visual style and its outer boundary
     // - layout of the case tiles on the outer, visible grid
-    const buildCaseTileStyles = function (tiles, styles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
+    const buildCaseTileStyles = function (tiles, styles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix, isMultiSelect) {
         const caseTileStyles = {};
         caseTileStyles.cellLayoutStyle = buildCellLayout(tiles, styles, prefix);
-        caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix);
+        caseTileStyles.cellGridStyle = buildCellGridStyle(numRows, numColumns, useUniformUnits, prefix, isMultiSelect);
         if (numEntitiesPerRow > 1) {
             caseTileStyles.cellContainerStyle = buildCellContainerStyle(numEntitiesPerRow);
             caseTileStyles.cellWrapperStyle = $("#cell-wrapper-style-template");
@@ -1084,26 +1141,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         initialize: function (options) {
             CaseTileListView.__super__.initialize.apply(this, arguments);
-
-            const numEntitiesPerRow = options.numEntitiesPerRow || 1;
-            const numRows = options.maxHeight;
-            const numColumns = options.maxWidth;
-            const useUniformUnits = options.useUniformUnits;
-
-            const caseTileStyles = buildCaseTileStyles(options.tiles, options.styles, numRows, numColumns,
-                numEntitiesPerRow, useUniformUnits, 'list');
-
-            const gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
-
-            $("#list-cell-layout-style").html(caseTileStyles.cellLayoutStyle).data("css-polyfilled", false);
-            $("#list-cell-grid-style").html(caseTileStyles.cellGridStyle).data("css-polyfilled", false);
-            // If we have multiple cases per line, need to generate the outer grid style as well
-            if (caseTileStyles.cellWrapperStyle && caseTileStyles.cellContainerStyle) {
-                $("#list-cell-wrapper-style").html(caseTileStyles.cellWrapperStyle).data("css-polyfilled", false);
-                $("#list-cell-container-style").html(caseTileStyles.cellContainerStyle).data("css-polyfilled", false);
-            }
-
-            $.getScript(gridPolyfillPath);
+            initCaseTileList(options);
 
             registerContinueListener(this, options);
         },
@@ -1159,10 +1197,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        onBeforeDetach: function () {
-            CaseTileListView.__super__.onBeforeDetach.apply(this, arguments);
-            $('#content-container').removeClass('full-width');
-        },
     });
 
     const CaseTileGroupedListView = CaseTileListView.extend({
@@ -1210,6 +1244,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     const CaseListDetailView = CaseListView.extend({
         template: _.template($("#case-view-list-detail-template").html() || ""),
         childView: CaseViewUnclickable,
+    });
+    const CaseTileDetailView = CaseListView.extend({
+        template: _.template($("#case-view-tile-detail-template").html() || ""),
+        childView: CaseTileViewUnclickable,
+
+        initialize: function (options) {
+            CaseTileDetailView.__super__.initialize.apply(this, arguments);
+            initCaseTileList(options);
+        },
+
+        childViewOptions: function () {
+            const dict = CaseTileDetailView.__super__.childViewOptions.apply(this, arguments);
+            dict.prefix = 'list';
+            return dict;
+        },
     });
 
     const BreadcrumbView = Marionette.View.extend({
@@ -1443,6 +1492,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         CaseListDetailView: function (options) {
             return new CaseListDetailView(options);
+        },
+        CaseTileDetailView: function (options) {
+            return new CaseTileDetailView(options);
         },
         CaseListView: function (options) {
             return new CaseListView(options);

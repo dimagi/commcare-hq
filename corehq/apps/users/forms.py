@@ -7,11 +7,11 @@ import string
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
-from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
@@ -21,12 +21,9 @@ from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
-from memoized import memoized
 
 from dimagi.utils.dates import get_date_from_month_and_year_string
 
-from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
@@ -533,17 +530,6 @@ class CommCareUserActionForm(BaseUpdateUserForm):
         )
 
 
-class RoleForm(forms.Form):
-
-    def __init__(self, *args, **kwargs):
-        if 'role_choices' in kwargs:
-            role_choices = kwargs.pop('role_choices')
-        else:
-            role_choices = ()
-        super(RoleForm, self).__init__(*args, **kwargs)
-        self.fields['role'].choices = role_choices
-
-
 class SetUserPasswordForm(SetPasswordForm):
 
     new_password1 = forms.CharField(
@@ -685,11 +671,11 @@ class NewMobileWorkerForm(forms.Form):
         required=True,
         help_text="""
             <span data-bind="visible: $root.usernameAvailabilityStatus() !== $root.STATUS.NONE">
-                <i class="fa fa-circle-o-notch fa-spin"
+                <i class="fa fa-circle-notch fa-spin"
                    data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.PENDING"></i>
                 <i class="fa fa-check"
                    data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.SUCCESS"></i>
-                <i class="fa fa-exclamation-triangle"
+                <i class="fa-solid fa-triangle-exclamation"
                    data-bind="visible: $root.usernameAvailabilityStatus() === $root.STATUS.WARNING ||
                                        $root.usernameAvailabilityStatus() === $root.STATUS.ERROR"></i>
                 <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
@@ -724,7 +710,7 @@ class NewMobileWorkerForm(forms.Form):
         required=False,
         help_text="""
             <span data-bind="visible: $root.emailStatus() !== $root.STATUS.NONE">
-                <i class="fa fa-exclamation-triangle"
+                <i class="fa-solid fa-triangle-exclamation"
                    data-bind="visible: $root.emailStatus() === $root.STATUS.ERROR"></i>
                 <!-- ko text: $root.emailStatusMessage --><!-- /ko -->
             </span>
@@ -769,7 +755,7 @@ class NewMobileWorkerForm(forms.Form):
             </div>
             <div id="phone-error">
                 <span data-bind="visible: $root.phoneStatus() !== $root.STATUS.NONE">
-                    <i class="fa fa-exclamation-triangle"
+                    <i class="fa-solid fa-triangle-exclamation"
                     data-bind="visible: $root.phoneStatus() === $root.STATUS.ERROR"></i>
                     <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->
                 </span>
@@ -1078,8 +1064,7 @@ class MultipleSelectionForm(forms.Form):
     Usage::
 
         # views.py
-        @property
-        @memoized
+        @cached_property
         def users_form(self):
             form = MultipleSelectionForm(
                 initial={'selected_ids': self.users_at_location},
@@ -1178,7 +1163,7 @@ class PrimaryLocationWidget(forms.Widget):
         })
 
 
-class CommtrackUserForm(forms.Form):
+class BaseLocationForm(forms.Form):
     assigned_locations = forms.CharField(
         label=gettext_noop("Locations"),
         required=False,
@@ -1187,19 +1172,14 @@ class CommtrackUserForm(forms.Form):
     primary_location = forms.CharField(
         label=gettext_noop("Primary Location"),
         required=False,
-        help_text=gettext_lazy('Primary Location must always be set to one of above locations')
-    )
-    program_id = forms.ChoiceField(
-        label=gettext_noop("Program"),
-        choices=(),
-        required=False
+        help_text=_('Primary Location must always be set to one of above locations')
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, domain: str, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
         self.request = kwargs.pop('request')
-        self.domain = kwargs.pop('domain', None)
-        super(CommtrackUserForm, self).__init__(*args, **kwargs)
+        super(BaseLocationForm, self).__init__(*args, **kwargs)
+        self.domain = domain
         self.fields['assigned_locations'].widget = LocationSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations'
         )
@@ -1208,6 +1188,60 @@ class CommtrackUserForm(forms.Form):
             css_id='id_primary_location',
             source_css_id='id_assigned_locations',
         )
+
+    def clean_assigned_locations(self):
+        from corehq.apps.locations.models import SQLLocation
+        from corehq.apps.locations.util import get_locations_from_ids
+
+        location_ids = self.data.getlist('assigned_locations')
+        try:
+            locations = get_locations_from_ids(location_ids, self.domain)
+        except SQLLocation.DoesNotExist:
+            raise forms.ValidationError(_('One or more of the locations was not found.'))
+
+        return [location.location_id for location in locations]
+
+    def _user_has_permission_to_access_locations(self, new_location_ids):
+        assigned_locations = SQLLocation.objects.filter(location_id__in=new_location_ids)
+        return len(assigned_locations) == len(assigned_locations.accessible_to_user(
+            self.domain, self.request.couch_user))
+
+    def clean(self):
+        self.cleaned_data = super(BaseLocationForm, self).clean()
+
+        primary_location_id = self.cleaned_data['primary_location']
+        assigned_location_ids = self.cleaned_data.get('assigned_locations', [])
+        if not self._user_has_permission_to_access_locations(assigned_location_ids):
+            self.add_error(
+                'assigned_locations',
+                _("You do not have permissions to assign one of those locations.")
+            )
+        if primary_location_id:
+            if primary_location_id not in assigned_location_ids:
+                self.add_error(
+                    'primary_location',
+                    _("Primary location must be one of the user's locations")
+                )
+        if assigned_location_ids and not primary_location_id:
+            self.add_error(
+                'primary_location',
+                _("Primary location can't be empty if the user has any "
+                  "locations set")
+            )
+        return self.cleaned_data
+
+
+class CommtrackUserForm(BaseLocationForm):
+    program_id = forms.ChoiceField(
+        label=gettext_noop("Program"),
+        choices=(),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain', None)
+        super(CommtrackUserForm, self).__init__(self.domain, *args, **kwargs)
+
         if self.commtrack_enabled:
             programs = Program.by_domain(self.domain)
             choices = list((prog.get_id, prog.name) for prog in programs)
@@ -1225,8 +1259,7 @@ class CommtrackUserForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
-    @property
-    @memoized
+    @cached_property
     def commtrack_enabled(self):
         return Domain.get_by_name(self.domain).commtrack_enabled
 
@@ -1249,17 +1282,15 @@ class CommtrackUserForm(forms.Form):
                 updated_program_id = program_id
             domain_membership.program_id = program_id
 
-        location_updates = self._update_location_data(user)
+        location_updates = self._update_location_data(user, self.cleaned_data['primary_location'],
+                                                      self.cleaned_data['assigned_locations'])
         if user.is_commcare_user():
             self._log_commcare_user_changes(user_change_logger, location_updates, updated_program_id)
         else:
             self._log_web_user_changes(user_change_logger, location_updates, updated_program_id)
 
-    def _update_location_data(self, user):
-        new_location_id = self.cleaned_data['primary_location']
-        new_location_ids = self.cleaned_data['assigned_locations']
+    def _update_location_data(self, user, new_location_id, new_location_ids):
         updates = {}
-
         if user.is_commcare_user():
             # fetch this before set_location is called
             old_assigned_location_ids = set(user.assigned_location_ids)
@@ -1366,36 +1397,6 @@ class CommtrackUserForm(forms.Form):
             self._log_program_changes(user_change_logger, program_id)
 
         user_change_logger.save()
-
-    def clean_assigned_locations(self):
-        from corehq.apps.locations.models import SQLLocation
-        from corehq.apps.locations.util import get_locations_from_ids
-
-        location_ids = self.data.getlist('assigned_locations')
-        try:
-            locations = get_locations_from_ids(location_ids, self.domain)
-        except SQLLocation.DoesNotExist:
-            raise ValidationError(_('One or more of the locations was not found.'))
-
-        return [location.location_id for location in locations]
-
-    def clean(self):
-        cleaned_data = super(CommtrackUserForm, self).clean()
-
-        primary_location_id = cleaned_data['primary_location']
-        assigned_location_ids = cleaned_data.get('assigned_locations', [])
-        if primary_location_id:
-            if primary_location_id not in assigned_location_ids:
-                self.add_error(
-                    'primary_location',
-                    _("Primary location must be one of the user's locations")
-                )
-        if assigned_location_ids and not primary_location_id:
-            self.add_error(
-                'primary_location',
-                _("Primary location can't be empty if the user has any "
-                  "locations set")
-            )
 
 
 class DomainRequestForm(forms.Form):
@@ -1523,38 +1524,20 @@ class AddPhoneNumberForm(forms.Form):
         self.fields['phone_number'].label = gettext_lazy('Phone number')
 
 
-class CommCareUserFormSet(object):
-    """Combines the CommCareUser form and the Custom Data form"""
+class _UserFormSet(object):
 
-    def __init__(self, domain, editable_user, request_user, request, data=None, *args, **kwargs):
+    def __init__(self, domain, editable_user, request_user, request, data=None):
         self.domain = domain
         self.editable_user = editable_user
         self.request_user = request_user
         self.request = request
         self.data = data
-        self.loadtest_users_enabled = domain_has_privilege(
-            domain,
-            privileges.LOADTEST_USERS,
-        )
 
     @property
-    @memoized
     def user_form(self):
-        return UpdateCommCareUserInfoForm(
-            data=self.data, domain=self.domain, existing_user=self.editable_user, request=self.request)
+        raise NotImplementedError()
 
-    @property
-    @memoized
-    def action_form(self):
-        return CommCareUserActionForm(
-            data=self.data,
-            domain=self.domain,
-            existing_user=self.editable_user,
-            request=self.request,
-        )
-
-    @property
-    @memoized
+    @cached_property
     def custom_data(self):
         from corehq.apps.users.views.mobile.custom_data_fields import (
             UserFieldsView,
@@ -1577,10 +1560,39 @@ class CommCareUserFormSet(object):
         new_user_data = self.custom_data.get_data_to_save()
         new_profile_id = new_user_data.pop(PROFILE_SLUG, ...)
         changed = user_data.update(new_user_data, new_profile_id)
+        changed |= user_data.remove_unrecognized(
+            {f.slug for f in self.custom_data.model.get_fields()})
         return self.user_form.update_user(
             metadata_updated=changed,
             profile_updated=old_profile_id != new_profile_id
         )
+
+
+class CommCareUserFormSet(_UserFormSet):
+    """Combines the CommCareUser form and the Custom Data form"""
+
+    @cached_property
+    def user_form(self):
+        return UpdateCommCareUserInfoForm(
+            data=self.data, domain=self.domain, existing_user=self.editable_user, request=self.request)
+
+    @cached_property
+    def action_form(self):
+        return CommCareUserActionForm(
+            data=self.data,
+            domain=self.domain,
+            existing_user=self.editable_user,
+            request=self.request,
+        )
+
+
+class WebUserFormSet(_UserFormSet):
+    """Combines UpdateUserRoleForm and the Custom Data form"""
+
+    @cached_property
+    def user_form(self):
+        return UpdateUserRoleForm(data=self.data, domain=self.domain,
+                                  existing_user=self.editable_user, request=self.request)
 
 
 class UserFilterForm(forms.Form):
@@ -1686,23 +1698,23 @@ class UserFilterForm(forms.Form):
                 data_bind="slideVisible: !isCrossDomain()",
             ),
             crispy.Field("search_string", data_bind="value: search_string"),
+            crispy.Div(
+                "location_id",
+                data_bind="slideVisible: !isCrossDomain()",
+            ),
+            crispy.Div(
+                crispy.Field(
+                    "selected_location_only",
+                    data_bind="checked: selected_location_only"
+                ),
+                data_bind="slideVisible: !isCrossDomain() && location_id",
+            )
         ]
 
         fieldset_label = _('Filter and Download Users')
         if self.user_type == MOBILE_USER_TYPE:
             fieldset_label = _('Filter and Download Mobile Workers')
             fields += [
-                crispy.Div(
-                    "location_id",
-                    data_bind="slideVisible: !isCrossDomain()",
-                ),
-                crispy.Div(
-                    crispy.Field(
-                        "selected_location_only",
-                        data_bind="checked: selected_location_only"
-                    ),
-                    data_bind="slideVisible: !isCrossDomain() && location_id",
-                ),
                 "user_active_status",
                 crispy.Field("columns", data_bind="value: columns"),
             ]

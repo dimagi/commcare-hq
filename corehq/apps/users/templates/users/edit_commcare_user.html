@@ -61,7 +61,7 @@
         <div class="panel-body">
           {% if couch_user.user_location_id %}
             <a class="btn btn-default" href="{% url "edit_location" domain couch_user.user_location_id %}">
-              <i class="fa fa-external-link"></i> {% trans "User Location" %}
+              <i class="fa-solid fa-up-right-from-square"></i> {% trans "User Location" %}
             </a>
           {% endif %}
           {% include "users/partials/edit_commtrack_user_settings.html" %}
@@ -85,8 +85,8 @@
         <div class="panel-body">
           <div class="form form-horizontal">
 
-            {% if form_user_update.loadtest_users_enabled %}
-            {% crispy form_user_update.action_form %}
+            {% if request|request_has_privilege:"LOADTEST_USERS" %}
+              {% crispy form_user_update.action_form %}
             {% endif %}
 
             <fieldset>
@@ -114,10 +114,10 @@
             <fieldset>
               <legend>{% trans 'Delete Mobile Worker' %}</legend>
               <div class="alert alert-danger">
-                <p><i class="fa fa-exclamation-triangle"></i> {% trans 'The following action is permanent!' %}</p>
+                <p><i class="fa-solid fa-triangle-exclamation"></i> {% trans 'The following action is permanent!' %}</p>
                 <p>
                   <a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal">
-                    <i class="fa fa-trash"></i> {% trans "Delete Mobile Worker" %}
+                    <i class="fa-regular fa-trash-can"></i> {% trans "Delete Mobile Worker" %}
                   </a>
                 </p>
               </div>
@@ -180,7 +180,7 @@
 {% endblock %}
 
 {% block modals %} {{ block.super }}
-  {% include 'users/partials/basic_info_modals.html' with user_type='mobile' %}
+  {% include 'users/partials/bootstrap3/basic_info_modals.html' with user_type='mobile' %}
   {% if not is_currently_logged_in_user %}
     <div id="delete_user_{{ couch_user.user_id }}" class="modal fade">
       <div class="modal-dialog">
@@ -199,7 +199,7 @@
             {% csrf_token %}
             <div class="modal-body">
               <p class="alert alert-warning">
-                <i class="fa fa-exclamation-triangle"></i>
+                <i class="fa-solid fa-triangle-exclamation"></i>
                 {% blocktrans %}
                   It is important you read the entire message below thoroughly before completing this action.
                 {% endblocktrans %}
@@ -240,9 +240,11 @@
                              css: {disabled: disabled()},
                              attr: {disabled: disabled()}
                          ">
-                <i id="delete-user-icon" class="fa fa-trash" data-bind="
+                <i id="delete-user-icon" class="fa-regular fa-trash-can" data-bind="
                                  css: {
-                                     'fa-trash': !formDeleteUserSent(),
+                                     'fa-trash-can': !formDeleteUserSent(),
+                                     'fa-regular': !formDeleteUserSent(),
+                                     'fa': formDeleteUserSent,
                                      'fa-refresh': formDeleteUserSent,
                                      'fa-spin': formDeleteUserSent
                                  }

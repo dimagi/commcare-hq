@@ -69,7 +69,6 @@ from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
 from corehq.apps.accounting.utils.subscription import (
     assign_explicit_unpaid_subscription,
 )
-from corehq.apps.users.models import WebUser
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
@@ -554,13 +553,13 @@ def weekly_digest():
     in_forty_days = today + datetime.timedelta(days=40)
 
     ending_in_forty_days = [sub for sub in Subscription.visible_objects.filter(
-            date_end__lte=in_forty_days,
-            date_end__gte=today,
-            is_active=True,
-            is_trial=False,
-        ).exclude(
-            account__dimagi_contact='',
-        ) if not sub.is_renewed]
+        date_end__lte=in_forty_days,
+        date_end__gte=today,
+        is_active=True,
+        is_trial=False,
+    ).exclude(
+        account__dimagi_contact='',
+    ) if not sub.is_renewed]
 
     if not ending_in_forty_days:
         log_accounting_info(
@@ -833,11 +832,7 @@ def calculate_web_users_in_all_billing_accounts(today=None):
     today = today or datetime.date.today()
     for account in BillingAccount.objects.all():
         record_date = today - relativedelta(days=1)
-        domains = account.get_domains()
-        web_user_in_account = set()
-        for domain in domains:
-            [web_user_in_account.add(id) for id in WebUser.ids_by_domain(domain)]
-        num_users = len(web_user_in_account)
+        num_users = account.get_web_user_count()
         try:
             BillingAccountWebUserHistory.objects.create(
                 billing_account=account,

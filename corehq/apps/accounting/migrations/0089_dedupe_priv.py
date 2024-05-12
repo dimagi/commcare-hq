@@ -7,12 +7,12 @@ from corehq.util.django_migrations import skip_on_fresh_install
 
 
 @skip_on_fresh_install
-def _add_dedupe_to_pro_and_above(apps, schema_editor):
+def _add_dedupe_to_advanced_and_above(apps, schema_editor):
     call_command('cchq_prbac_bootstrap')
     call_command(
         'cchq_prbac_grandfather_privs',
         CASE_DEDUPE,
-        skip_edition='Paused,Community,Standard',
+        skip_edition='Paused,Community,Standard,Pro',
         noinput=True,
     )
 
@@ -21,7 +21,7 @@ def _reverse(apps, schema_editor):
     call_command(
         'cchq_prbac_revoke_privs',
         CASE_DEDUPE,
-        skip_edition='Paused,Community,Standard',
+        skip_edition='Paused,Community,Standard,Pro',
         delete_privs=False,
         check_privs_exist=True,
         noinput=True,
@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(
-            _add_dedupe_to_pro_and_above,
+            _add_dedupe_to_advanced_and_above,
             reverse_code=_reverse,
         ),
     ]

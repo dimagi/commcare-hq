@@ -1,0 +1,7 @@
+{% extends 'styleguide/bootstrap5/base_example.html' %}
+{% load crispy_forms_tags %}
+
+{% block working_code %}{% crispy content.form %}{% endblock %}
+{% block readable_code %}
+  {% include 'styleguide/bootstrap5/partials/readable_code_block.html' with content=content.code language="Python" %}
+{% endblock %}

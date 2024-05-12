@@ -22,6 +22,7 @@ from memoized import memoized
 from corehq.apps.accounting.utils.stripe import charge_through_stripe
 
 from corehq.apps.domain.shortcuts import publish_domain_saved
+from corehq.apps.users.dbaccessors import get_active_web_usernames_by_domain, get_web_user_count
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -546,6 +547,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
             billing_account=self.name)
 
         old_web_user = WebUser.get_by_username(old_username)
+        # Do not send email to inactive user
+        if old_web_user and not old_web_user.is_active:
+            return
         old_user_first_name = old_web_user.first_name if old_web_user else old_username
         email = old_web_user.get_email() if old_web_user else old_username
 
@@ -599,6 +603,22 @@ class BillingAccount(ValidateModelMixin, models.Model):
             domain=domain,
             use_domain_gateway=True,
         )
+
+    def get_web_user_usernames(self):
+        domains = self.get_domains()
+        web_users = set()
+
+        for domain in domains:
+            web_users.update(get_active_web_usernames_by_domain(domain))
+
+        return web_users
+
+    def get_web_user_count(self):
+        domains = self.get_domains()
+        count = 0
+        for domain in domains:
+            count += get_web_user_count(domain, include_inactive=False)
+        return count
 
     @staticmethod
     def should_show_sms_billable_report(domain):
@@ -832,6 +852,7 @@ class DefaultProductPlan(models.Model):
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
     is_trial = models.BooleanField(default=False)
     is_report_builder_enabled = models.BooleanField(default=False)
+    is_annual_plan = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta(object):
@@ -842,14 +863,14 @@ class DefaultProductPlan(models.Model):
     @quickcache(['edition', 'is_trial', 'is_report_builder_enabled'],
                 skip_arg=lambda *args, **kwargs: not settings.ENTERPRISE_MODE or settings.UNIT_TESTING)
     def get_default_plan_version(cls, edition=None, is_trial=False,
-                                 is_report_builder_enabled=False):
+                                 is_report_builder_enabled=False, is_annual_plan=False):
         if not edition:
             edition = (SoftwarePlanEdition.ENTERPRISE if settings.ENTERPRISE_MODE
                        else SoftwarePlanEdition.COMMUNITY)
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
                 edition=edition, is_trial=is_trial,
-                is_report_builder_enabled=is_report_builder_enabled
+                is_report_builder_enabled=is_report_builder_enabled, is_annual_plan=is_annual_plan
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:

@@ -410,7 +410,7 @@ class CommCareImage(CommCareMultimedia):
 
     @classmethod
     def get_icon_class(cls):
-        return "fa fa-picture-o"
+        return "fa-regular fa-image"
 
 
 class CommCareAudio(CommCareMultimedia):
