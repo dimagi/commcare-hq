@@ -183,6 +183,7 @@ class GenericReportView(object):
 
     # use for bootstrap5 migration
     use_bootstrap5 = False
+    debug_bootstrap5 = False
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
