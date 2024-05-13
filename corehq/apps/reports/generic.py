@@ -65,7 +65,7 @@ def _sanitize_col(col):
     return col
 
 
-def get_filter_classes(fields, request, domain, timezone):
+def get_filter_classes(fields, request, domain, timezone, use_bootstrap5=False):
     filters = []
     fields = fields
     for field in fields or []:
@@ -74,7 +74,7 @@ def get_filter_classes(fields, request, domain, timezone):
         else:
             klass = field
         filters.append(
-            klass(request, domain, timezone)
+            klass(request, domain, timezone, use_bootstrap5=use_bootstrap5)
         )
     return filters
 
@@ -350,7 +350,7 @@ class GenericReportView(object):
     @property
     @memoized
     def filter_classes(self):
-        return get_filter_classes(self.fields, self.request, self.domain, self.timezone)
+        return get_filter_classes(self.fields, self.request, self.domain, self.timezone, self.use_bootstrap5)
 
     @property
     @memoized
