@@ -31,6 +31,7 @@
           <li><a href="#un-split-view-files">Un-Split View Files</a></li>
           <li><a href="#deploy-to-staging">Deploy to Staging</a></li>
           <li><a href="#rebuild-diffs">Rebuild Diffs</a></li>
+          <li><a href="#migrating-report-views">Migrating Report Views</a></li>
         </ul>
       </li>
       <li><a href="#completing-migration">Step 4: Completing the App Migration</a></li>
@@ -464,6 +465,10 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
     The next step is to migrate the app's views one-by-one. It is recommended to make a pull request for each view
     or group of small related views, rather than migrating a lot of views and having a very large Pull Request.
   </p>
+  <div class="alert alert-primary">
+    If the type of view you are migrating is a <strong>Report View</strong>, please jump to the
+    <a href="#migrating-report-views">Migrating Report Views</a> section below.
+  </div>
   <p>
     The migration process begins by either applying <code>@use_bootstrap5</code> decorator the view function or
     <code>@method_decorator(use_bootstrap5, name='dispatch')</code> to the view class.
@@ -526,6 +531,95 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
   <p>
     Please follow the guidance of the <code>complete_bootstrap5_migration</code> management commands for suggested
     commit messages and when to commit changes.
+  </p>
+
+  <h3 id="migrating-report-views" class="pt-3">
+    Migrating Report Views
+  </h3>
+  <p>
+    If you are migrating a Report, you will quickly realize that there is no <code>dispatch</code> method to apply
+    the <code>@use_bootstrap5</code> decorator to. That's because reports are ultimately rendered by a
+    <code>ReportDispatcher</code>.
+  </p>
+  <p>
+    While there is a <code>decorator_dispatcher</code> method that you can apply the <code>@use_bootstrap5</code>
+    decorator to, you will soon find that many of the base template class variables will need to be overridden.
+    Instead, we recommend following this process:
+  </p>
+  <h4 class="pt-2">
+    1. Set the <code>use_bootstrap5</code> class variable to <code>True</code>
+  </h4>
+  <p>
+    For example, if we want to
+    migrate the <code>SubmitHistory</code> report, we would do the following:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">class SubmitHisrtory(...):
+    ...
+    use_bootstrap5 = True
+    ...</pre>
+    </div>
+  </div>
+  <h4 class="pt-2">2. Use the report debugging tool inside the <code>decorator_dispatcher</code> method</h4>
+  <p>
+    In order to figure out what filter templates and custom report templates need to be migrated for this report,
+    you can use the  <code>reports-bootstrap5_template_debugger</code> tool to print a list of affected templates
+    to your terminal when you load the report in your browser. We recommend running it inside the
+    <code>decorator_dispatcher</code> method.
+  </p>
+  <div class="alert alert-primary">
+    <strong>Important:</strong> Please ensure the code triggering the debugging tool is <strong>not committed</strong>.
+    It is only there to assist with local debugging.
+  </div>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">    def decorator_dispatcher(self, request, *args, **kwargs):
+        from corehq.apps.hqwebapp.utils.bootstrap.reports import reports_bootstrap5_template_debugger
+        reports_bootstrap5_template_debugger(self)
+        super().decorator_dispatcher(request, *args, **kwargs)</pre>
+    </div>
+  </div>
+  <h4 class="pt-2">3. Migrate report templates</h4>
+  <p>
+    The <code>reports_bootstrap5_template_debugger</code> will first list any <code>bootstrap3</code> templates
+    referenced by the report undergoing migration. If the template referenced by this report is unique, it's likely
+    that a class variable (for instance, <code>report_template_path</code>) will have this template assigned
+    to that report.
+  </p>
+  <p>
+    The report will likely automatically load the <code>bootstrap5</code> version of this template,
+    so you should already be able to migrate that template (if needed).
+  </p>
+  <p>
+    If this is the only report referencing that template, you can then follow the procedure
+    above to <a href="#un-split-view-files">un-split view files</a>. Prior to doing this, it is recommended
+    that you replace <code>bootstrap3</code> path of this template with the <code>bootstrap5</code> path.
+  </p>
+  <p>
+    If this template is referenced by several reports, consider adding that template to the
+    <code>COMMON_REPORT_TEMPLATES</code> list in <code>corehq.apps.hqwebapp.utils.bootstrap.reports</code>
+    after migrating it. Other reports will then automatically select the <code>bootstrap5</code> version
+    of this template when <code>use_bootstrap5</code> is set to <code>True</code>.
+  </p>
+  <p>
+    Cleanup of the common <code>bootstrap3</code> templates for reports will happen during the final stages
+    of the Bootstrap 5 migration.
+  </p>
+  <h4 class="pt-2">4. Migrate filter templates</h4>
+  <p>
+    The <code>reports_bootstrap5_template_debugger</code> next list any filter templates used by the report
+    that haven't yet been migrated to <code>bootstrap5</code>. The report automatically loads the
+    <code>bootstrap5</code> version of these templates, so you don't need to update any paths at this step.
+  </p>
+  <p>
+    Once you are done migrating a filter template to <code>bootstrap5</code>, please add that template to the
+    <code>MIGRATED_FILTER_TEMPLATES</code> list in <code>corehq.apps.hqwebapp.utils.bootstrap.reports</code>.
+    This will mark this template as complete for other reports that use a filter referencing it.
+  </p>
+  <p>
+    Cleanup of the <code>bootstrap3</code> paths of the filter templates will happen during the final stages
+    of the Bootstrap 5 migration.
   </p>
 
   <h3 id="deploy-to-staging" class="pt-3">
