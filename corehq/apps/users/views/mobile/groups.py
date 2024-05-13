@@ -16,7 +16,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.decorators import use_multiselect
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_multiselect
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reports.filters.api import MobileWorkersOptionsView
 from corehq.apps.reports.util import get_simplified_users
@@ -155,6 +155,7 @@ class GroupsListView(BaseGroupsView):
     urlname = 'all_groups'
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EditGroupMembersView(BaseGroupsView):
     urlname = 'group_members'
     page_title = gettext_noop("Edit Group")
