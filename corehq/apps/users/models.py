@@ -234,6 +234,9 @@ class HqPermissions(DocumentSchema):
     commcare_analytics_roles = BooleanProperty(default=False)
     commcare_analytics_roles_list = StringListProperty(default=[])
 
+    edit_user_tableau_config = BooleanProperty(default=False)
+    view_user_tableau_config = BooleanProperty(default=False)
+
     @classmethod
     def from_permission_list(cls, permission_list):
         """Converts a list of Permission objects into a Permissions object"""
