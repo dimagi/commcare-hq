@@ -11,7 +11,8 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods, require_POST
 
 from memoized import memoized
 
@@ -25,10 +26,10 @@ from corehq import toggles
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
-from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.decorators import domain_admin_required, api_auth
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, waf_allow
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
@@ -1131,3 +1132,56 @@ def count_locations(request, domain):
     return JsonResponse({
         'count': locations_count
     })
+
+
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@require_POST
+@api_auth()
+def bulk_location_upload_api(request, domain, **kwargs):
+    try:
+        return _bulk_location_upload_api(request, domain)
+    except Exception as e:
+        error = str(e)
+    # except ImportError as e:
+    #     except ImporterError as e:
+    #     error = get_importer_error_message(e)
+    # except SpreadsheetFileExtError:
+    #     error = "Please upload file with one of the following extensions: {}".format(
+    #         ', '.join(valid_extensions)
+    #     )
+    # except SpreadsheetFileInvalidError as e:
+    #     error = str(e)
+
+    return json_response({'code': 500, 'message': error}, status_code=500)
+
+
+def _bulk_location_upload_api(request, domain):
+    upload_file = request.FILES["file"]
+    if not upload_file:
+        raise Exception("No file was uploaded")
+
+    try:
+        get_workbook(upload_file)
+    except WorkbookJSONError as e:
+        messages.error(request, e)
+        #raise ImporterError(e)
+
+    ref = LocationImportView._cache_file(request, domain, upload_file)
+    if not isinstance(ref, LocationImportView.Ref):
+        # ref is HTTP response: lock could not be acquired
+        return ref
+    file_ref = ref.value
+    task = import_locations_async.delay(domain, file_ref.download_id, request.couch_user.user_id)
+    file_ref.set_task(task)
+    # return HttpResponseRedirect(
+    #     reverse(
+    #         LocationImportStatusView.urlname,
+    #         args=[domain, file_ref.download_id]
+    #     )
+    # )
+
+    return json_response({"code": 200, "message": "success", "status_url": reverse(
+        LocationImportStatusView.urlname,
+        args=[domain, file_ref.download_id]
+    )})
