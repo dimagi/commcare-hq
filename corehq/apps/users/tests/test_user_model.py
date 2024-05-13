@@ -267,18 +267,6 @@ class TestCommCareUserRoles(BaseCommCareUserTestSetup):
         self.assertIsNotNone(role)
         self.assertEqual(role.get_qualified_id(), expected.get_qualified_id())
 
-    def _create_user(self, username, role_id=None):
-        user = self.user_class.create(
-            domain=self.domain,
-            username=username,
-            password='***',
-            created_by=None,
-            created_via=None,
-            role_id=role_id
-        )
-        self.addCleanup(user.delete, None, None)
-        return user
-
 
 class TestWebUserRoles(TestCommCareUserRoles):
     user_class = WebUser
