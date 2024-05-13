@@ -128,8 +128,3 @@ BI_PREVIEW_UPDATE = StaticUINotify(
     'bi_preview_update_aug2019',
     ends_on=datetime(2019, 12, 31),
 )
-
-APP_USER_PROFILES_UPDATE = StaticUINotify(
-    'app_user_profiles_update_oct2020',
-    ends_on=datetime(2020, 10, 10),
-)
