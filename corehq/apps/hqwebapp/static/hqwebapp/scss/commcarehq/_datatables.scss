@@ -56,6 +56,19 @@ table.dataTable.table-hq-report {
       background-color: $gray-100;
     }
   }
+
+  tbody tr td[class^="sorting_"] {
+    background-color: $gray-200;
+    &:nth-child(odd) {
+      background-color: lighten($gray-200, 5%);
+    }
+  }
+}
+
+
+.table-hq-report tfoot tr td {
+  background-color: $blue-800;
+  color: $white;
 }
 
 .dtfc-right-top-blocker:last-child {
