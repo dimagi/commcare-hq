@@ -57,6 +57,7 @@ from corehq.apps.users.decorators import require_can_edit_or_view_web_users
 from corehq.const import USER_DATE_FORMAT
 
 
+@use_bootstrap5
 @always_allow_project_access
 @require_enterprise_admin
 @login_and_domain_required
