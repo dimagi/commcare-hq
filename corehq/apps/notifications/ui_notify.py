@@ -101,9 +101,3 @@ ABILITY_TO_HIDE_TRANSLATIONS = StaticUINotify(
     ends_on=datetime(2018, 7, 1),
     only_visible_for_users_created_before=datetime(2018, 5, 31),
 )
-
-DATA_FIND_BY_ID = StaticUINotify(
-    'data_find_by_id_sept2018',
-    ends_on=datetime(2018, 11, 1),
-    only_visible_for_users_created_before=datetime(2018, 9, 26),
-)
