@@ -3,6 +3,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import wraps
+from io import BytesIO
 
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
@@ -23,7 +24,7 @@ from corehq.apps.case_search.exceptions import (
     CaseSearchUserError,
     TooManyRelatedCasesError,
 )
-from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
+from corehq.apps.case_search.filter_dsl import build_filter_from_xpath, SearchFilterContext
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_XPATH_QUERY_KEY,
@@ -36,15 +37,17 @@ from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_missing,
     case_property_query,
-    case_property_range_query,
+    case_property_date_range,
     reverse_index_case_query,
     wrap_case_search_hit,
 )
+from corehq.apps.hqadmin.utils import get_download_url
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 
@@ -57,24 +60,47 @@ class CaseSearchProfiler:
     timing_context: TimingContext = field(
         default_factory=lambda: TimingContext('Case Search'))
     queries: list = field(default_factory=list)
-    profile_results: list = field(default_factory=list)
+    _query_number: int = 0
 
     def run_query(self, slug, es_query):
+        self._query_number += 1
         if self.debug_mode:
             es_query = es_query.enable_profiling()
 
-        with self.timing_context('run query'):
+        tc = self.timing_context(f'run query #{self._query_number}: {slug}')
+        timer = tc.peek()
+        with tc:
             results = es_query.run()
 
         if self.debug_mode:
-            self.queries.append({'slug': slug, 'query': es_query.raw_query})
-            self.profile_results.append({'slug': slug, 'results': results.raw.get('profile')})
-
+            self.queries.append({
+                'slug': slug,
+                'query_number': self._query_number,
+                'query': es_query.raw_query,
+                'duration': timer.duration,
+                'profile_url': self._get_profile_url(slug, self._query_number, results.raw.get('profile')),
+            })
         return results
 
     def add_query(self, slug, es_query):
+        self._query_number += 1
         if self.debug_mode:
-            self.queries.append({'slug': slug, 'query': es_query.raw_query})
+            self.queries.append({
+                'slug': slug,
+                'query_number': self._query_number,
+                'query': es_query.raw_query,
+                'duration': None,
+                'profile_url': None,
+            })
+
+    @staticmethod
+    def _get_profile_url(slug, query_number, profile_json):
+        timestamp = get_timestamp_for_filename()
+        name = f'es_profile_{query_number}_{slug}_{timestamp}.json'
+        io = BytesIO()
+        io.write(json.dumps(profile_json).encode('utf-8'))
+        io.seek(0)
+        return get_download_url(io, name, content_type='application/json')
 
 
 def time_function():
@@ -294,13 +320,14 @@ class CaseSearchQueryBuilder:
         return search_es
 
     def _build_filter_from_xpath(self, xpath, fuzzy=False):
+        context = SearchFilterContext(self.query_domains, fuzzy, self.request_domain,
+                                      self.profiler, self.config)
         with self.profiler.timing_context('_build_filter_from_xpath'):
-            return build_filter_from_xpath(self.query_domains, xpath, fuzzy,
-                                           self.request_domain, self.profiler)
+            return build_filter_from_xpath(xpath, context=context)
 
     def _get_daterange_query(self, criteria):
         startdate, enddate = criteria.get_date_range()
-        return case_property_range_query(criteria.key, gte=startdate, lte=enddate)
+        return case_property_date_range(criteria.key, gte=startdate, lte=enddate)
 
     def _get_case_property_query(self, criteria):
         if criteria.has_multiple_terms and criteria.has_missing_filter:
@@ -338,7 +365,8 @@ class CaseSearchQueryBuilder:
         elif criteria.is_index_query:
             return reverse_index_case_query(value, criteria.index_query_identifier)
         else:
-            return case_property_query(criteria.key, value, fuzzy=fuzzy)
+            return case_property_query(criteria.key, value, fuzzy=fuzzy,
+                                       fuzzy_prefix_length=self.config.fuzzy_prefix_length)
 
     def _remove_ignored_patterns(self, case_property, value):
         for to_remove in self._patterns_to_remove[case_property]:

@@ -99,13 +99,14 @@ def match(search_string, field, operator=None):
     }
 
 
-def fuzzy(search_string, field, fuzziness="AUTO"):
+def fuzzy(search_string, field, fuzziness="AUTO", **kwargs):
     return {
         "fuzzy": {
             field: {
                 "value": f"{search_string}".lower(),
                 "fuzziness": fuzziness,
-                "max_expansions": 100
+                "max_expansions": 100,
+                **kwargs
             }
         }
     }
@@ -117,13 +118,12 @@ def nested(path, query, *args, **kwargs):
 
     Keyword arguments such as score_mode and others can be added.
     """
-    nested = {
-        "path": path,
-        "query": query
-    }
-    nested.update(kwargs)
     return {
-        "nested": nested
+        "nested": {
+            "path": path,
+            "query": query,
+            **kwargs
+        }
     }
 
 
@@ -133,13 +133,12 @@ def nested_filter(path, filter_, *args, **kwargs):
 
     Keyword arguments such as score_mode and others can be added.
     """
-    nested = {
-        "path": path,
-        "filter": filter_
-    }
-    nested.update(kwargs)
     return {
-        "nested": nested
+        "nested": {
+            "path": path,
+            "filter": filter_,
+            **kwargs,
+        }
     }
 
 

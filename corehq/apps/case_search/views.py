@@ -35,8 +35,9 @@ class _BaseCaseSearchView(BaseDomainView):
         return self.render_to_response(self.get_context_data())
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class CaseSearchView(_BaseCaseSearchView):
-    template_name = 'case_search/bootstrap3/case_search.html'
+    template_name = 'case_search/case_search.html'
     urlname = 'case_search'
     page_title = gettext_lazy("Case Search")
 
@@ -115,5 +116,4 @@ class ProfileCaseSearchView(_BaseCaseSearchView):
             'related_count': profiler.related_count,
             'timing_data': profiler.timing_context.to_dict(),
             'queries': profiler.queries,
-            'profile_results': profiler.profile_results,
         })
