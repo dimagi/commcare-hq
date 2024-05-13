@@ -987,11 +987,10 @@ class GenericTabularReport(GenericReportView):
         total_filtered_records = self.total_filtered_records
         if not isinstance(total_filtered_records, int):
             raise ValueError("Property 'total_filtered_records' should return an int.")
-        ret = dict(
-            sEcho=self.pagination.echo,
-            iTotalRecords=total_records,
-            iTotalDisplayRecords=total_filtered_records if total_filtered_records >= 0 else total_records,
-            aaData=rows,
+        ret = self._get_datatables_json_dict(
+            total_records,
+            total_filtered_records if total_filtered_records >= 0 else total_records,
+            rows
         )
 
         if self.total_row:
@@ -1000,6 +999,26 @@ class GenericTabularReport(GenericReportView):
             ret["statistics_rows"] = list(self.statistics_rows)
 
         return ret
+
+    def _get_datatables_json_dict(self, records_total, records_filtered, data):
+        """Formats the data in a format that datatables expects.
+        see: https://datatables.net/manual/server-side#Example-data
+        default return is the < 1.9 version of datatables, which should be
+        phased out after the bootstrap 5 migration.
+        """
+        if self.use_bootstrap5:
+            return {
+                "draw": self.datatables_params.draw,
+                "recordsTotal": records_total,
+                "recordsFiltered": records_filtered,
+                "data": data,
+            }
+        return {
+            "sEcho": self.pagination.echo,
+            "iTotalRecords": records_total,
+            "iTotalDisplayRecords": records_filtered,
+            "aaData": data,
+        }
 
     @property
     def fixed_cols_spec(self):
