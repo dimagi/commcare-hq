@@ -149,6 +149,7 @@ class BaseGroupsView(BaseUserSettingsView):
         return context
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class GroupsListView(BaseGroupsView):
     template_name = "groups/all_groups.html"
     page_title = gettext_noop("Groups")
