@@ -114,6 +114,7 @@ hqDefine('cloudcare/js/utils', [
         var $container = $("<div />"),
             $alertDialog;
         $container.addClass("alert");
+        $container.addClass("alert-dismissible");
         $container.addClass(classes);
         if (isHTML) {
             $container.html(message);
@@ -123,13 +124,17 @@ hqDefine('cloudcare/js/utils', [
         // HTML errors may already have an alert dialog
         $alertDialog = $container.hasClass("alert") ? $container : $container.find('.alert');
         try {
-            $alertDialog
-                .prepend(
-                    $("<a />")
-                        .addClass("close")
-                        .attr("data-dismiss", "alert")
-                        .html("&times;")
-                );
+            if (window.USE_BOOTSTRAP5) {
+                $alertDialog.append($("<button />").addClass("btn-close").attr("data-bs-dismiss", "alert").attr("aria-label", gettext("Close")));
+            } else {
+                $alertDialog
+                    .prepend(
+                        $("<a />")
+                            .addClass("close")
+                            .attr("data-dismiss", "alert")
+                            .html("&times;")
+                    );
+            }
         } catch (e) {
             // escaping a DOM-related error from running mocha tests using grunt
             // in the command line. This passes just fine in the browser but
