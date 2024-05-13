@@ -2873,10 +2873,10 @@ class TriggerAutopaymentsForm(forms.Form):
         )
 
 
-class TriggerWebUserAutoDeactivationForm(forms.Form):
+class TriggerRemovedSsoUserAutoDeactivationForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        super(TriggerWebUserAutoDeactivationForm, self).__init__(*args, **kwargs)
+        super(TriggerRemovedSsoUserAutoDeactivationForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
@@ -2886,7 +2886,7 @@ class TriggerWebUserAutoDeactivationForm(forms.Form):
         self.helper.layout = crispy.Layout(
             hqcrispy.FormActions(
                 StrictButton(
-                    "Trigger Web User Auto Deactivation",
+                    "Trigger Auto Deactivation of Removed SSO Users",
                     css_class="btn-primary disable-on-submit",
                     type="submit",
                 ),

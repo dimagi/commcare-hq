@@ -86,7 +86,7 @@ from corehq.apps.accounting.forms import (
     TriggerDowngradeForm,
     TriggerAutopaymentsForm,
     BulkUpgradeToLatestVersionForm,
-    TriggerWebUserAutoDeactivationForm,
+    TriggerRemovedSsoUserAutoDeactivationForm,
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface,
@@ -1336,16 +1336,16 @@ class TriggerAutopaymentsView(BaseTriggerAccountingTestView):
         return self.get(request, *args, **kwargs)
 
 
-class TriggerWebUserAutoDeactivationView(BaseTriggerAccountingTestView):
+class TriggerRemovedSsoUserAutoDeactivationView(BaseTriggerAccountingTestView):
     urlname = 'accounting_test_deactivation'
-    page_title = "Trigger Web User Auto Deactivation"
+    page_title = "Trigger Auto Deactivation of Removed SSO Users"
 
     @property
     @memoized
     def trigger_form(self):
         if self.request.method == 'POST':
-            return TriggerWebUserAutoDeactivationForm(self.request.POST)
-        return TriggerWebUserAutoDeactivationForm()
+            return TriggerRemovedSsoUserAutoDeactivationForm(self.request.POST)
+        return TriggerRemovedSsoUserAutoDeactivationForm()
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
