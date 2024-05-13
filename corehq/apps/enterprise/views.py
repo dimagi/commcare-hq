@@ -447,6 +447,7 @@ def update_enterprise_permissions_source_domain(request, domain):
     return HttpResponseRedirect(redirect)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ManageEnterpriseMobileWorkersView(ManageMobileWorkersMixin, BaseEnterpriseAdminView):
     page_title = gettext_lazy("Manage Mobile Workers")
     template_name = 'enterprise/manage_mobile_workers.html'
