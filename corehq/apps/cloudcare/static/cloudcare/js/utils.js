@@ -59,7 +59,7 @@ hqDefine('cloudcare/js/utils', [
             message = 'Sorry, something went wrong. Please try again in a few minutes. ' +
             'If this problem persists, please report it to CommCare Support.';
         }
-        _show(message, $el, null, "alert alert-danger");
+        _show(message, $el, null, "alert-danger");
         if (reportToHq === undefined || reportToHq) {
             reportFormplayerErrorToHQ({
                 type: 'show_error_notification',
@@ -72,12 +72,12 @@ hqDefine('cloudcare/js/utils', [
         if (message === undefined) {
             return;
         }
-        _show(message, $el, null, "alert alert-danger");
+        _show(message, $el, null, "alert-danger");
     };
 
     var showHTMLError = function (message, $el, autoHideTime, reportToHq) {
         var htmlMessage = message = getErrorMessage(message);
-        var $container = _show(message, $el, autoHideTime, "alert alert-danger", true);
+        var $container = _show(message, $el, autoHideTime, "alert-danger", true);
         try {
             message = $container.text();  // pull out just the text the user sees
             message = message.replace(/\s+/g, ' ').trim();
@@ -113,6 +113,7 @@ hqDefine('cloudcare/js/utils', [
     var _show = function (message, $el, autoHideTime, classes, isHTML) {
         var $container = $("<div />"),
             $alertDialog;
+        $container.addClass("alert");
         $container.addClass(classes);
         if (isHTML) {
             $container.html(message);
