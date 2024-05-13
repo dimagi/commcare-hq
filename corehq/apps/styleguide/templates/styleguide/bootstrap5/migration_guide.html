@@ -704,10 +704,14 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
     Once these changes are complete, the <code>@use_bootstrap5</code> decorator can be removed from all the views.
   </p>
   <p>
-    Then, <code>build_requirejs</code> can be updated to only build <code>bootstrap5</code> version of files, with
-    the split <code>requirejs_config.js</code> files no longer needed, and the
-    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/management/commands/build_requirejs.py#L147-L149"
-       target="_blank">split_bundles</a> map in <code>build_requirejs</code> can be removed.
+    Additionally, the <code>use_bootstrap5</code> class variable can be removed from all the reports. Cleanup
+    of the <code>bootstrap3</code> templates listed in <code>COMMON_REPORT_TEMPLATES</code> and
+    <code>COMMON_FILTER_TEMPLATES</code> in <code>corehq.apps.hqwebapp.utils.bootstrap.reports</code> can
+    also be completed.
+  </p>
+  <p>
+    Lastly, the <code>requirejs_main_b5</code> template tag can finally be renamed back to <code>requirejs_main</code>,
+    and any <code>bootstrap3</code> related build files and processes can be removed from <code>build_requirejs</code>.
   </p>
   <p>
     Finally, LESS files can be removed from all parts of HQ and <code>COMPRESS_PRECOMPILERS</code> in
