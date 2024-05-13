@@ -120,6 +120,7 @@ def enterprise_dashboard_email(request, domain, slug):
     return JsonResponse({'message': message})
 
 
+@use_bootstrap5
 @require_enterprise_admin
 @login_and_domain_required
 def enterprise_settings(request, domain):
