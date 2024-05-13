@@ -15,10 +15,10 @@
 {% block stylesheets %}
   {{ block.super }}
   {% compress css %}
-    <link type="text/less"
+    <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'reports/less/reports.less' %}" />
+          href="{% static 'reports/scss/reports.scss' %}" />
   {% endcompress %}
   {% include 'reports/partials/filters_css.html' %}
 
