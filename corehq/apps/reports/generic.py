@@ -1218,6 +1218,11 @@ class PaginatedReportMixin(object):
     default_sort = None
 
     def get_sorting_block(self):
+        if self.use_bootstrap5:
+            return self._get_sorting_block_bootstrap5()
+        return self._get_sorting_block_bootstrap3()
+
+    def _get_sorting_block_bootstrap3(self):
         res = []
         #the NUMBER of cols sorting
         sort_cols = int(self.request.GET.get('iSortingCols', 0))
@@ -1233,6 +1238,19 @@ class PaginatedReportMixin(object):
         if len(res) == 0 and self.default_sort is not None:
             res.append(self.default_sort)
         return res
+
+    def _get_sorting_block_bootstrap5(self):
+        block = []
+        for col in self.datatables_params.order:
+            col_ind = col['column']
+            prop_name = self.datatables_params.columns[col_ind]['name']
+            if prop_name:
+                sort_dir = col['dir']
+                sort_dict = {prop_name: sort_dir}
+                block.append(sort_dict)
+        if len(block) == 0 and self.default_sort is not None:
+            block.append(self.default_sort)
+        return block
 
 
 class GetParamsMixin(object):
