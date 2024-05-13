@@ -3,9 +3,9 @@ from functools import wraps
 
 from django.conf import settings
 from django.contrib import messages
-from django.http import (
+from django.http import HttpRequest
+from django.http.response import (
     Http404,
-    HttpRequest,
     HttpResponse,
     HttpResponseForbidden,
     HttpResponseRedirect,
@@ -17,6 +17,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views import View
 
+from django_digest.decorators import httpdigest
 from django_otp import match_token
 from django_prbac.utils import has_privilege
 from oauth2_provider.oauth2_backends import get_oauthlib_core
@@ -52,11 +53,11 @@ from corehq.apps.sso.utils.view_helpers import (
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     DATA_MIGRATION,
+    DISABLE_MOBILE_ENDPOINTS,
     IS_CONTRACTOR,
     TWO_FACTOR_SUPERUSER_ROLLOUT,
 )
 from corehq.util.soft_assert import soft_assert
-from django_digest.decorators import httpdigest
 
 auth_logger = logging.getLogger("commcare_auth")
 
@@ -85,7 +86,10 @@ def login_and_domain_required(view_func):
     def _inner(req, domain, *args, **kwargs):
         user = req.user
         domain_name, domain_obj = load_domain(req, domain)
-        def call_view(): return view_func(req, domain_name, *args, **kwargs)
+
+        def call_view():
+            return view_func(req, domain_name, *args, **kwargs)
+
         if not domain_obj:
             msg = _('The domain "{domain}" was not found.').format(domain=domain_name)
             raise Http404(msg)
@@ -454,10 +458,10 @@ def two_factor_check(view_func, api_key):
             domain_obj = Domain.get_by_name(domain)
             _ensure_request_couch_user(request)
             if (
-                not api_key and
-                not getattr(request, 'skip_two_factor_check', False) and
-                domain_obj and
-                _two_factor_required(view_func, domain_obj, request)
+                not api_key
+                and not getattr(request, 'skip_two_factor_check', False)
+                and domain_obj
+                and _two_factor_required(view_func, domain_obj, request)
             ):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if not token and 'otp' in request.GET:
@@ -665,9 +669,12 @@ cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
 
 
-def check_domain_migration(view_func):
+def check_domain_mobile_access(view_func):
     def wrapped_view(request, domain, *args, **kwargs):
-        if DATA_MIGRATION.enabled(domain):
+        if (
+            DATA_MIGRATION.enabled(domain)
+            or DISABLE_MOBILE_ENDPOINTS.enabled(domain)
+        ):
             auth_logger.info(
                 "Request rejected domain=%s reason=%s request=%s",
                 domain, "flag:migration", request.path

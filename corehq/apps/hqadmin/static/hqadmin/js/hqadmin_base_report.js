@@ -1,7 +1,7 @@
 hqDefine('hqadmin/js/hqadmin_base_report', [
     'jquery',
     'hqwebapp/js/initial_page_data',
-    'reports/js/config.dataTables.bootstrap',
+    'reports/js/bootstrap3/config.dataTables.bootstrap',
 ], function (
     $,
     initialPageData,

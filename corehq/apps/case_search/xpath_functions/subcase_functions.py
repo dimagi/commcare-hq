@@ -57,13 +57,8 @@ def subcase(node, context):
     subcase_query = _parse_normalize_subcase_query(node)
     ids = _get_parent_case_ids_matching_subcase_query(subcase_query, context)
     if subcase_query.invert:
-        if not ids:
-            return filters.match_all()
-        return filters.NOT(filters.doc_id(ids))
-    # uncomment once we are on ES > 2.4
-    # if not ids:
-    #     return filters.match_none()
-    return filters.doc_id(ids)
+        return filters.NOT(filters.doc_id(ids)) if ids else filters.match_all()
+    return filters.doc_id(ids) if ids else filters.match_none()
 
 
 def _get_parent_case_ids_matching_subcase_query(subcase_query, context):
@@ -120,9 +115,8 @@ def _run_subcase_query(subcase_query, context):
         .source(['indices.referenced_id', 'indices.identifier'])
     )
 
-    context.profiler.add_query('subcase_query', es_query)
-    with context.profiler.timing_context('subcase_query'):
-        return es_query.run().hits
+    results = context.profiler.run_query('subcase_query', es_query)
+    return results.hits
 
 
 def _parse_normalize_subcase_query(node) -> SubCaseQuery:

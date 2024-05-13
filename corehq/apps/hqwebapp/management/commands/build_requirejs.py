@@ -254,29 +254,28 @@ class Command(ResourceStaticCommand):
                 else:
                     logger.warning("Could not copy {} to {}".format(os.path.relpath(src), os.path.relpath(dest)))
 
-    def _update_resource_hash(self, name, filename):
-        file_hash = self.get_hash(filename)
+    def _update_resource_hash(self, name, filename, file_hash=None):
+        if file_hash is None:
+            file_hash = self.get_hash(filename)
         self.resource_versions[name] = file_hash
-        return file_hash
 
     # Overwrite source map references. Source maps are accessed on the CDN, so they need the version hash
     def _update_source_maps(self, config):
-        if not self.optimize:
-            return
-
         logger.info("Updating resource_versions with hashes from newly minified bundles")
 
         for module in config['modules']:
             filename = self._staticfiles_path(module['name'] + ".js")
-            with open(filename, 'r') as fin:
-                lines = fin.readlines()
-            with open(filename, 'w') as fout:
-                for line in lines:
-                    match = re.search(BUNDLE_SOURCE_MAP_PATTERN, line)
-                    if match:
-                        file_hash = self._update_resource_hash(module['name'] + ".js", filename)
-                        line += f'?version={file_hash}'
-                    fout.write(line)
+            file_hash = self.get_hash(filename)
+            if self.optimize:
+                with open(filename, 'r') as fin:
+                    lines = fin.readlines()
+                with open(filename, 'w') as fout:
+                    for line in lines:
+                        match = re.search(BUNDLE_SOURCE_MAP_PATTERN, line)
+                        if match:
+                            line += f'?version={file_hash}'
+                        fout.write(line)
+            self._update_resource_hash(module['name'] + ".js", filename, file_hash=file_hash)
 
     def _write_resource_versions(self):
         logger.info("Writing out resource_versions.js")

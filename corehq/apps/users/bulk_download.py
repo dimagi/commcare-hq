@@ -203,7 +203,14 @@ def make_web_user_dict(user, location_cache, domain):
 def make_invited_web_user_dict(invite, location_cache):
     location_codes = []
     try:
-        location_codes.append(location_cache.get(invite.supply_point))
+        # The primary location must be the first value in the list. On import, it assigns
+        # the fist listed location as the primary location.
+        location_codes.append(location_cache.get(getattr(invite.primary_location, 'location_id', None)))
+        assigned_location_ids = invite.assigned_locations.all().values_list('location_id', flat=True)
+        for loc_id in assigned_location_ids:
+            location_code = location_cache.get(loc_id)
+            if location_code not in location_codes:
+                location_codes.append(location_code)
     except SQLLocation.DoesNotExist:
         pass
     return {

@@ -43,6 +43,7 @@ IGNORE_APPS = {
 
 IGNORE_MODELS = {
     'api.ApiUser',
+    'app_execution.AppWorkflowConfig',
     'app_manager.ExchangeApplication',
     'auth.Group',
     'auth.Permission',
