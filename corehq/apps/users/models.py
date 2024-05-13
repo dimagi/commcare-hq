@@ -534,8 +534,6 @@ class _AuthorizableMixin(IsMemberOfMixin):
                         tableau_role=None, tableau_group_ids=None):
         if assigned_location_ids is None:
             assigned_location_ids = []
-        if tableau_group_ids is None:
-            tableau_group_ids = []
         domain_obj = Domain.get_by_name(domain)
         self.add_domain_membership(domain=domain)
         self.set_role(domain, role)
@@ -549,6 +547,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
             user_data = self.get_user_data(domain_obj.name)
             user_data.update({}, profile_id=profile.id)
         if TABLEAU_USER_SYNCING.enabled(domain) and (tableau_role or tableau_group_ids):
+            if tableau_group_ids is None:
+                tableau_group_ids = []
             from corehq.apps.reports.util import get_tableau_groups_by_ids, update_tableau_user
             update_tableau_user(domain=domain, username=self.username,
                     role=tableau_role, groups=get_tableau_groups_by_ids(tableau_group_ids, domain))
