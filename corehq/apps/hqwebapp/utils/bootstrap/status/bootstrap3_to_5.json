@@ -28,7 +28,8 @@
       "change_my_password.html",
       "enable_superuser.html",
       "my_projects.html",
-      "user_api_keys.html"
+      "user_api_keys.html",
+      "edit_my_account.html"
     ],
     "javascript": [
       "js/user_api_keys.js"

@@ -29,7 +29,7 @@ from corehq.apps.domain.auth import (
 )
 from corehq.apps.domain.decorators import (
     api_auth,
-    check_domain_migration,
+    check_domain_mobile_access,
     login_or_basic_ex,
     login_or_digest_ex,
     login_or_api_key_ex,
@@ -231,7 +231,7 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
 @require_permission(HqPermissions.edit_data)
 @require_permission(HqPermissions.access_api)
 @require_POST
-@check_domain_migration
+@check_domain_mobile_access
 @set_request_duration_reporting_threshold(60)
 def post_api(request, domain):
     return _process_form(
@@ -248,7 +248,7 @@ def post_api(request, domain):
 @location_safe
 @csrf_exempt
 @require_POST
-@check_domain_migration
+@check_domain_mobile_access
 @set_request_duration_reporting_threshold(60)
 def post(request, domain, app_id=None):
     try:
@@ -401,7 +401,7 @@ def _secure_post_api_key(request, domain, app_id=None):
 @location_safe
 @csrf_exempt
 @require_POST
-@check_domain_migration
+@check_domain_mobile_access
 @set_request_duration_reporting_threshold(60)
 def secure_post(request, domain, app_id=None):
     authtype_map = {
