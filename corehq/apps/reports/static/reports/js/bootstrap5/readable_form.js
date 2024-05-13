@@ -42,7 +42,7 @@ hqDefine("reports/js/bootstrap5/readable_form", ["jquery"], function ($) {
             return false;
         });
 
-        $(document).on('change', '.showSkippedToggle', function () {
+        $(document).on('change', '#showSkippedToggle', function () {
             showSkipped($(this).is(':checked'));
         });
     }
