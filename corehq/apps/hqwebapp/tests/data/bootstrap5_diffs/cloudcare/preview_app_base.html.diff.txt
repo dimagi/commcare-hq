@@ -31,7 +31,16 @@
    {% endcompress %}
  
    {% if request.use_daterangepicker %}
-@@ -61,8 +61,8 @@
+@@ -35,8 +35,6 @@
+ 
+   {% block css %}{% endblock %}
+ 
+-  <link rel="stylesheet"
+-        href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
+   <link type="text/css"
+         rel="stylesheet"
+         media="screen"
+@@ -61,8 +59,8 @@
  <body>
  {% block body %}{% endblock %}
  
@@ -42,7 +51,7 @@
  
  {% block js %}{{ block.super }}
    {% include 'cloudcare/partials/dependencies.html' %}
-@@ -70,23 +70,23 @@
+@@ -70,23 +68,23 @@
  
  {% initial_page_data 'toggles_dict' toggles_dict %}
  {% initial_page_data 'previews_dict' previews_dict %}
