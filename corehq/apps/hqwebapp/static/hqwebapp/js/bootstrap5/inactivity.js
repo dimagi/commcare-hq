@@ -59,7 +59,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
     };
 
     $(function () {
-        var $modal = $("#inactivityModal"),     // won't be present on app preview or pages without a domain
+        var $loginModal = $("#inactivityModal"),     // won't be present on app preview or pages without a domain
             $warningModal = $("#inactivityWarningModal"),
             $newVersionModal = $('#newAppVersionModal');
 
@@ -73,11 +73,15 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             sessionExpiry = initialPageData.get('session_expiry');
 
         log("Page loaded, session expires at " + sessionExpiry);
-        if (!$modal.length) {
-            log("Could not find modal, returning");
+        if (!$loginModal.length) {
+            log("Could not find login modal, returning");
             return;
         }
+        const loginModal = new bootstrap.Modal($loginModal.get(0)),
+            warningModal = new bootstrap.Modal($warningModal.get(0));
+        let newVersionModal;
         if ($newVersionModal.length) {
+            newVersionModal = new bootstrap.Modal($newVersionModal.get(0));
             $('#refreshApp').click(function () {
                 document.location = document.location.origin + document.location.pathname;
             });
@@ -104,16 +108,16 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                 shouldShowWarning = false;
                 // Close the New version modal before showing warning modal
                 if (isModalOpen($newVersionModal)) {
-                    hideModal($newVersionModal);
+                    newVersionModal.hide();
                 }
-                showModal($warningModal);
+                warningModal.show();
             }
         };
 
         var hideWarningModal = function (showLogin) {
-            hideModal($warningModal);
+           $warningModal.hide();
             if (showLogin) {
-                showModal($modal);
+                loginModal.show();
             }
             // This flag should already have been turned off when the warning modal was shown,
             // but just in case, make sure it's really off. Wait until the modal is fully hidden
@@ -125,27 +129,14 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             return $element.is(":visible");
         };
 
-        const showModal = function ($element) {
-            if ($element.length) {
-                bootstrap.Modal.getOrCreateInstance($element).show();
-            }
-        };
-
-        const hideModal = function ($element) {
-            if ($element.length) {
-                bootstrap.Modal.getOrCreateInstance($element).hide();
-            }
-        };
-
         var showPageRefreshModal = function () {
             if ($('.webforms-nav-container').is(':visible')) {
                 $newVersionModal.find('#incompleteFormWarning').removeClass('d-none');
             } else {
                 $newVersionModal.find('#incompleteFormWarning').addClass('d-none');
             }
-            if (!isModalOpen($modal) && !isModalOpen($warningModal)) {
-                $newVersionModal.modal('show');
-                showModal($newVersionModal);
+            if (newVersionModal && !isModalOpen($loginModal) && !isModalOpen($warningModal)) {
+                newVersionModal.show();
             }
         };
 
@@ -176,13 +167,15 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                             $(el).select2('close');
                         });
                         // Close the New version modal before showing login iframe
-                        hideModal($newVersionModal);
+                        if (newVersionModal) {
+                            newVersionModal.hide();
+                        }
                         log("ping_login failed, showing login modal");
-                        var $body = $modal.find(".modal-body");
+                        var $body = $loginModal.find(".modal-body");
                         var src = initialPageData.reverse('iframe_domain_login');
                         src += "?next=" + initialPageData.reverse('domain_login_new_window');
                         src += "&username=" + initialPageData.get('secure_timeout_username');
-                        $modal.on('shown.bs.modal', function () {
+                        $loginModal.on('shown.bs.modal', function () {
                             var content = _.template('<iframe src="<%- src %>" height="<%- height %>" width="<%- width %>" style="border: none;"></iframe>')({
                                 src: src,
                                 width: $body.width(),
@@ -244,7 +237,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                             $button.text(error);
                             return null;
                         }
-                        hideModal($modal);
+                        $loginModal.hide();
                         $button.text(gettext("Done"));
                         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
                     }
@@ -271,7 +264,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             });
         };
 
-        $modal.find(".modal-footer .dismiss-button").click(pollToHideModal);
+        $loginModal.find(".modal-footer .dismiss-button").click(pollToHideModal);
         $warningModal.find(".modal-footer .dismiss-button").click(function (e) {
             extendSession($(e.currentTarget));
         });
@@ -321,7 +314,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             if (message.isLoggedIn) {
                 log("session successfully extended via Single Sign On in external tab");
                 hideWarningModal();
-                hideModal($modal);
+                loginModal.hide();
                 localStorage.removeItem('ssoInactivityMessage');
             }
         };
