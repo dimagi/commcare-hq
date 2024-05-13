@@ -10,7 +10,6 @@ from crispy_forms.bootstrap import PrependedText, StrictButton
 from crispy_forms.helper import FormHelper
 
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.export.models.export_settings import ExportFileType
 from corehq.privileges import DEFAULT_EXPORT_SETTINGS
@@ -289,9 +288,7 @@ class EnterpriseManageMobileWorkersForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.form_id = 'emw-settings-form'
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.label_class = 'form-label'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Manage Mobile Workers"),
@@ -301,12 +298,10 @@ class EnterpriseManageMobileWorkersForm(forms.Form):
                 ),
                 PrependedText('allow_custom_deactivation', ''),
             ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    _("Update Settings"),
-                    type="submit",
-                    css_class='btn-primary',
-                )
+            StrictButton(
+                _("Update Settings"),
+                type="submit",
+                css_class='btn-primary',
             )
         )
 
