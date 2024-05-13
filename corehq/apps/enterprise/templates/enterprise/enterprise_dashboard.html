@@ -13,20 +13,20 @@
   <div class="row">
     {% for report in reports %}
       <div class="col-md-6 col-lg-6 col-xl-3">
-        <div class="card card-default text-center report-panel" data-slug="{{ report.slug }}">  {# todo B5: css:panel #}
+        <div class="card text-center report-panel mb-3" data-slug="{{ report.slug }}">
           <div class="card-header">
-            <h3 class="card-title">{{ report.title }}</h3>
-            <small>{{ report.subtitle|default:"&nbsp;" }}</small>
+            <div class="fs-4">{{ report.title }}</div>
+            <div class="fs-6">{{ report.subtitle|default:"&nbsp;" }}</div>
           </div>
           <div class="card-body">
-            <h1 class="total">
+            <h1 class="card-text total">
               <i class="fa fa-spin fa-spinner"></i>
             </h1>
             <br>
-            <a class="btn btn-primary btn-lg">
+            <button class="btn btn-primary btn-lg">
               <i class="fa fa-envelope"></i>
               {% trans "Email Report" %}
-            </a>
+            </button>
           </div>
         </div>
       </div>
