@@ -19,6 +19,7 @@ from django.utils.html import conditional_escape
 from celery.utils.log import get_task_logger
 from memoized import memoized
 
+from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 from corehq.util.timezones.utils import get_timezone
 from couchexport.export import export_from_tables, get_writer
 from couchexport.shortcuts import export_response
@@ -175,6 +176,9 @@ class GenericReportView(object):
     deprecation_email_message = gettext("This report has been deprecated.")
     deprecation_message = gettext("This report has been deprecated.")
 
+    # use for bootstrap5 migration
+    use_bootstrap5 = False
+
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
             raise NotImplementedError(
@@ -294,19 +298,29 @@ class GenericReportView(object):
     @property
     @memoized
     def template_base(self):
+        if self.use_bootstrap5:
+            return get_bootstrap5_path(self.base_template)
         return self.base_template
 
     @property
     @memoized
     def template_async_base(self):
+        if self.use_bootstrap5:
+            default_path = "reports/async/bootstrap5/default.html"
+        else:
+            default_path = "reports/async/bootstrap3/default.html"
         if self.asynchronous:
-            return self.base_template_async or "reports/async/bootstrap3/default.html"
+            return self.base_template_async or default_path
         return self.template_base
 
     @property
     @memoized
     def template_report(self):
-        original_template = self.report_template_path or "reports/async/basic.html"
+        if self.use_bootstrap5:
+            template_path = get_bootstrap5_path(self.report_template_path)
+        else:
+            template_path = self.report_template_path
+        original_template = template_path or "reports/async/basic.html"
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
             return self.override_template
@@ -315,12 +329,18 @@ class GenericReportView(object):
     @property
     @memoized
     def template_report_partial(self):
+        if self.use_bootstrap5:
+            return get_bootstrap5_path(self.report_partial_path)
         return self.report_partial_path
 
     @property
     @memoized
     def template_filters(self):
-        return self.base_template_filters or "reports/async/bootstrap3/filters.html"
+        if self.use_bootstrap5:
+            default_path = "reports/async/bootstrap5/filters.html"
+        else:
+            default_path = "reports/async/bootstrap3/filters.html"
+        return self.base_template_filters or default_path
 
     @property
     @memoized
