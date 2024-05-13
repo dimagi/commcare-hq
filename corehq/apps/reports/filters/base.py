@@ -170,7 +170,7 @@ class BaseMultipleOptionFilter(BaseSingleOptionFilter):
         Displays a multiselect field.
     """
     template = "reports/filters/bootstrap3/multi_option.html"
-    default_options = [] # specify a list
+    default_options = []  # specify a list
 
     @classmethod
     def get_value(cls, request, domain):
@@ -298,7 +298,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             'val': val,
             'text': text,
             'next': next,
-            }
+        }
 
     @property
     def shared_pagination_GET_params(self):
