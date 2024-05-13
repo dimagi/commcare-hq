@@ -6,6 +6,7 @@ import pytz
 from memoized import memoized
 
 from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS, CSS_LABEL_CLASS
+from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 
 
 class BaseReportFilter(object):
@@ -24,8 +25,9 @@ class BaseReportFilter(object):
     is_cacheable = False
     help_style_bubble = False
 
-    def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None,
-                 css_label=None, css_field=None):
+    def __init__(self, request, domain=None, timezone=pytz.utc,
+                 parent_report=None, css_label=None, css_field=None,
+                 use_bootstrap5=False):
         self.domain = domain
         if self.slug is None:
             raise NotImplementedError("slug is required")
@@ -39,6 +41,8 @@ class BaseReportFilter(object):
         self.css_label = css_label or (CSS_LABEL_CLASS + ' control-label')
         self.css_field = css_field or CSS_FIELD_CLASS
         self.context = {}
+        if use_bootstrap5:
+            self.template = get_bootstrap5_path(self.template)
 
     @property
     def is_disabled(self):
