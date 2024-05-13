@@ -8,6 +8,7 @@ class MSGraphIssue:
     HTTP_ERROR = "http_error"
     VERIFICATION_ERROR = "verification_error"
     EMPTY_ERROR = "empty_error"
+    OTHER_ERROR = "other_error"
 
 
 def get_all_members_of_the_idp_from_entra(idp):
@@ -66,6 +67,10 @@ def get_all_members_of_the_idp_from_entra(idp):
         )
         batch_response.raise_for_status()
         batch_result = batch_response.json()
+
+        for resp in batch_result['responses']:
+            if 'body' in resp and 'error' in resp['body']:
+                raise EntraVerificationFailed(resp['body']['error']['code'], resp['body']['message'])
 
         # Extract userPrincipalName from batch response
         user_principal_names = [

@@ -3,7 +3,7 @@
   position: fixed;
   bottom: 0;
   left: 0;
-  z-index: @zindex-cloudcare-debugger;
+  z-index: $zindex-cloudcare-debugger;
   background-color: white;
   overflow: hidden;
 
@@ -45,13 +45,13 @@
 .debugger-navbar {
   border-radius: 0px;
   border: none;
-  background-color: @cc-bg;
+  background-color: $cc-bg;
 }
 
 .debugger-tab-title {
   line-height: 18px;
   color: white;
-  background-color: @cc-brand-low;
+  background-color: $cc-brand-low;
   border-bottom: #ddd solid 4px;
   border-top: 0;
   border-left: 0;
@@ -64,7 +64,7 @@
   }
 
   &:hover {
-    background-color: darken(@cc-brand-low, 5);
+    background-color: darken($cc-brand-low, 5);
   }
 
   -webkit-transition: background-color 0.5s;

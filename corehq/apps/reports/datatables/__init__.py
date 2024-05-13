@@ -49,7 +49,7 @@ class DataTablesColumn(object):
             expected=self.expected,
             width=self.width
         )
-        return render_to_string("reports/datatables/column.html", dict(
+        return render_to_string("reports/datatables/bootstrap3/column.html", dict(
             col=column_params
         ))
 

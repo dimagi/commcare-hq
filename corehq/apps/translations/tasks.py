@@ -66,7 +66,8 @@ def push_translation_files_to_transifex(domain, data, email):
                                   data.get('transifex_project_slug'),
                                   data.get('version'),
                                   use_version_postfix='yes' in data['use_version_postfix'],
-                                  update_resource=(data['action'] == 'update')
+                                  update_resource=('update_existing_resource' in data
+                                                   and 'yes' in data['update_existing_resource'])
                                   ).send_translation_files()
     data['language'] = data.get('target_lang') or data.get('source_lang')
     if upload_status:
