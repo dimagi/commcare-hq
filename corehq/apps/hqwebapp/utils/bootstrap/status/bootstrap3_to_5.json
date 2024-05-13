@@ -86,5 +86,8 @@
   },
   "reports_core": {
     "in_progress": true
+  },
+  "enterprise": {
+    "is_complete": true
   }
 }
