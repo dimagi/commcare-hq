@@ -150,7 +150,9 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                     selectedAppId = urlParams.appId;
                 }
             } catch (error) {
-                // This will fail on the web apps home page, where the URL fragment is #apps
+                // Parsing the app id out of URL hash will fail on the web apps home page, login as, etc.
+                // where the hash isn't a JSON object but instead a string like "#apps".
+                // In these cases, there's no app to check for a new version.
                 selectedAppId = null;
             }
             var domain = initialPageData.get('domain');
