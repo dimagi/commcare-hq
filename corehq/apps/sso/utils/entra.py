@@ -120,7 +120,7 @@ def get_all_user_ids_in_app(token, app_id):
         else:
             # Service Principal represents an application
             # Which make the query too complicated
-            raise NotImplementedError("The application have Service Principal member")
+            raise NotImplementedError("ServicePrincipal members are not supported. Please include only Users or Groups as members of this SSO application.")
 
     for group_id in group_queue:
         members_data = get_group_members(group_id, token)
