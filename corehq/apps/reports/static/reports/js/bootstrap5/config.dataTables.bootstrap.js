@@ -1,3 +1,5 @@
+'use strict';
+
 hqDefine("reports/js/bootstrap5/config.dataTables.bootstrap", [
     'jquery',
     'underscore',

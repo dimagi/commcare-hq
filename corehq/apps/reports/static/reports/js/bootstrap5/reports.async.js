@@ -1,6 +1,7 @@
+'use strict';
+
 hqDefine("reports/js/bootstrap5/reports.async", function () {
     return function (o) {
-        'use strict';
         var self = {};
         self.reportContent = $('#report-content');
         self.filterForm = o.filterForm || $('#paramSelectorForm');

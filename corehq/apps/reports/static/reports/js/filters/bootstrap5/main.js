@@ -1,3 +1,5 @@
+'use strict';
+
 hqDefine("reports/js/filters/bootstrap5/main", [
     'jquery',
     'underscore',
