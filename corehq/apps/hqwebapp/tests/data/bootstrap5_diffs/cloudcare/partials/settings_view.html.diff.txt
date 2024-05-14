@@ -11,7 +11,7 @@
 +  </th>
 +  <td>
 +    <div class="form-check form-switch">
-+      <input class="js-one-question-per-screen" type="checkbox" id="oqps-switch"/>
++      <input class="js-one-question-per-screen form-check-input" type="checkbox" id="oqps-switch"/>
 +    </div>
 +  </td>
  </script>
