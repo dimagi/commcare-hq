@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.case_search import case_search_adapter, BulkActionItem
 from corehq.apps.es.case_search_bha import case_search_bha_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.form_processor.tests.utils import create_case
@@ -56,6 +56,18 @@ class TestCaseSearchAdapterAlsoWritesToAnotherIndex(TestCase):
         super().setUpClass()
         cls.domain = 'casesearch-dual-writetests'
         cls.case = create_case(cls.domain, save=True)
+        cls.bulk_cases = [
+            create_case(cls.domain, save=True).to_json()
+            for i in range(2)
+        ]
+        cls.bulk_index_actions = [
+            BulkActionItem.index(case)
+            for case in cls.bulk_cases
+        ]
+        cls.bulk_delete_actions = [
+            BulkActionItem.delete(case)
+            for case in cls.bulk_cases
+        ]
 
     def _get_normalized_cases_from_hits(self, cases):
         normalised_cases = []
@@ -89,3 +101,33 @@ class TestCaseSearchAdapterAlsoWritesToAnotherIndex(TestCase):
 
         self.assertEqual(docs_in_bha, [])
         self.assertEqual(len(docs_in_case_search), 1)
+
+    def test_bulk_with_bha_mutliplexing(self):
+        with patch('corehq.apps.es.case_search.multiplex_to_adapter', return_value=case_search_bha_adapter):
+            case_search_adapter.bulk(self.bulk_index_actions, refresh=True)
+
+        # Cleanup
+        self.addCleanup(case_search_adapter.bulk, self.bulk_delete_actions, refresh=True)
+        self.addCleanup(case_search_bha_adapter.bulk, self.bulk_delete_actions, refresh=True)
+
+        docs_in_bha = self._get_normalized_cases_from_hits(case_search_bha_adapter.search({}))
+        docs_in_case_search = self._get_normalized_cases_from_hits(case_search_adapter.search({}))
+
+        self.assertEqual(docs_in_bha, docs_in_case_search)
+        self.assertEqual(len(docs_in_case_search), 2)
+
+    def test_bulk_without_bha_mutliplexing(self):
+        with patch('corehq.apps.es.case_search.multiplex_to_adapter', return_value=None):
+            case_search_adapter.bulk(self.bulk_index_actions, refresh=True)
+
+        # Cleanup
+        self.addCleanup(case_search_adapter.bulk, self.bulk_delete_actions, refresh=True)
+
+        docs_in_bha = self._get_normalized_cases_from_hits(case_search_bha_adapter.search({}))
+        docs_in_case_search = self._get_normalized_cases_from_hits(case_search_adapter.search({}))
+
+        self.assertEqual(docs_in_bha, [])
+        self.assertEqual(
+            {case["case_id"] for case in self.bulk_cases},
+            {case["_id"] for case in docs_in_case_search}
+        )
