@@ -1139,6 +1139,7 @@ def count_locations(request, domain):
 @require_POST
 @api_auth()
 def bulk_location_upload_api(request, domain, **kwargs):
+    return json_response({"code": 200, "message": "this is a test"})
     try:
         _bulk_location_upload_api(request, domain)
         return json_response({"code": 200, "message": "success"})
