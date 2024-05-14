@@ -1,3 +1,5 @@
+'use strict';
+
 hqDefine("reports/js/bootstrap5/hq_report", [
     'jquery',
     'knockout',
@@ -16,7 +18,6 @@ hqDefine("reports/js/bootstrap5/hq_report", [
     widgets  // eslint-disable-line no-unused-vars
 ) {
     var hqReport = function (options) {
-        'use strict';
         var self = {};
         self.domain = options.domain;
         self.datespan = options.datespan;
