@@ -23,20 +23,20 @@ from corehq.sql_db.config import plproxy_config
 
 APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
 [APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[iterator.model_label].append(iterator) for iterator in [
-    FilteredModelIteratorBuilder('locations.LocationType', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('locations.SQLLocation', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('blobs.BlobMeta', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('blobs.BlobMeta', MultimediaBlobMetaFilter()),
+    # FilteredModelIteratorBuilder('locations.LocationType', SimpleFilter('domain')),
+    # FilteredModelIteratorBuilder('locations.SQLLocation', SimpleFilter('domain')),
+    # FilteredModelIteratorBuilder('blobs.BlobMeta', SimpleFilter('domain')),
+    # FilteredModelIteratorBuilder('blobs.BlobMeta', MultimediaBlobMetaFilter()),
 
-    FilteredModelIteratorBuilder('form_processor.XFormInstance', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.XFormOperation', SimpleFilter('form__domain')),
+    # FilteredModelIteratorBuilder('form_processor.XFormInstance', SimpleFilter('domain')),
+    # FilteredModelIteratorBuilder('form_processor.XFormOperation', SimpleFilter('form__domain')),
 
-    FilteredModelIteratorBuilder('form_processor.CommCareCase', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.CommCareCaseIndex', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.CaseAttachment', SimpleFilter('case__domain')),
-    FilteredModelIteratorBuilder('form_processor.CaseTransaction', SimpleFilter('case__domain')),
-    FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain')),
+    # FilteredModelIteratorBuilder('form_processor.CommCareCase', SimpleFilter('domain')),
+    # FilteredModelIteratorBuilder('form_processor.CommCareCaseIndex', SimpleFilter('domain')),
+    # FilteredModelIteratorBuilder('form_processor.CaseAttachment', SimpleFilter('case__domain')),
+    # FilteredModelIteratorBuilder('form_processor.CaseTransaction', SimpleFilter('case__domain')),
+    # FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
+    # FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain')),
 
     FilteredModelIteratorBuilder('case_search.DomainsNotInCaseSearchIndex', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
