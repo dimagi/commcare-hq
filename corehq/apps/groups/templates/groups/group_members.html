@@ -19,7 +19,7 @@
   {% else %}
     {% trans "Editing Group" %}
   {% endif %}
-  "{{ group.name }}"{% if group.case_sharing %} ({% trans 'Case Sharing' %}){% endif %} ({% blocktrans count num_users=num_users %}{{ num_users }} member{% plural %}{{ num_users }} members{% endblocktrans %})
+  "{{ group.name }}"{% if group.case_sharing %} ({% trans 'Case Sharing' %}){% endif %}
 {% endblock %}
 
 {% block page_content %}
@@ -105,6 +105,7 @@
       <li role="presentation" class="nav-item">
         <a href="#membership-tab" aria-controls="home" role="tab" data-bs-toggle="tab" class="nav-link">
           {% trans "Group Membership" %}
+          <span class="badge bg-secondary">{{ num_users }}</span>
         </a>
       </li>
       <li role="presentation" class="nav-item">
