@@ -66,16 +66,10 @@
             {% trans "Edit Settings" %}
           </a>
         {% endif %}
-        <a class="btn btn-outline-danger float-end" style="margin-right: 45px;" data-bs-toggle="modal" href="#delete_group_modal">  {# todo B5: inline style #}
-          <i class="fa fa-remove"></i>
-          {% blocktrans with group.name as group_name %}
-            Delete Group "{{group_name}}"
-          {% endblocktrans %}
-        </a>
 
         {% if bulk_sms_verification_enabled %}
           <form id="initiate-verification-workflow"
-                class="form-inline"  {# todo B5: css:form-inline #}
+                class="mx-3"
                 method="post"
                 action="{% url "bulk_sms_verification" domain group.get_id %}">
             {% csrf_token %}
@@ -99,6 +93,13 @@
                 </span>
           </form>
         {% endif %}
+
+        <a class="btn btn-outline-danger ms-auto" data-bs-toggle="modal" href="#delete_group_modal">
+          <i class="fa fa-remove"></i>
+          {% blocktrans with group.name as group_name %}
+            Delete Group "{{group_name}}"
+          {% endblocktrans %}
+        </a>
       </div>
       <hr />
     {% endif %}
