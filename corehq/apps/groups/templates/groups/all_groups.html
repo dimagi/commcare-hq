@@ -38,24 +38,7 @@
       </li>
     </ul>
 
-    {% if not request.is_view_only %}
-      <form method="post" action="{% url "add_group" domain %}" id="create_group_form">
-        {% csrf_token %}
-        <div class="row">
-          <div class="col-md-4">
-            <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" class="form-control" />
-          </div>
-          <div class="col">
-            <button class="btn btn-primary" type="submit">
-              <i class="fa fa-plus"></i>
-              {% trans "Add Group" %}
-            </button>
-          </div>
-        </div>
-      </form>
-    {% endif %}
-
-    <div class="card card-default mt-3">
+    <div class="card card-default mb-3">
       <div class="card-body">
         <h3 class="card-title">{% trans "Project Groups" %}</h3>
         {% if all_groups %}
@@ -130,6 +113,23 @@
         {% endif %}
       </div>
     </div>
+
+    {% if not request.is_view_only %}
+      <form method="post" action="{% url "add_group" domain %}" id="create_group_form">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-md-4">
+            <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" class="form-control" />
+          </div>
+          <div class="col">
+            <button class="btn btn-primary" type="submit">
+              <i class="fa fa-plus"></i>
+              {% trans "Add Group" %}
+            </button>
+          </div>
+        </div>
+      </form>
+    {% endif %}
   {% endif %}
 {% endblock %}
 
