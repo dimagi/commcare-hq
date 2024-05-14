@@ -9,6 +9,9 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
 from casexml.apps.case.fixtures import CaseDBFixture
+from casexml.apps.phone.data_providers.case.livequery import (
+    get_all_related_live_cases,
+)
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
@@ -145,7 +148,7 @@ def get_case_search_results(domain, case_types, criteria,
     if profiler:
         helper.profiler = profiler
 
-    cases = get_primary_case_search_results(helper, domain, case_types, criteria, commcare_sort)
+    cases = get_primary_case_search_results(helper, case_types, criteria, commcare_sort)
     helper.profiler.primary_count = len(cases)
     if app_id:
         related_cases = get_and_tag_related_cases(helper, app_id, case_types, cases,
@@ -156,8 +159,8 @@ def get_case_search_results(domain, case_types, criteria,
 
 
 @time_function()
-def get_primary_case_search_results(helper, domain, case_types, criteria, commcare_sort=None):
-    builder = CaseSearchQueryBuilder(domain, case_types, helper.profiler, helper.query_domains)
+def get_primary_case_search_results(helper, case_types, criteria, commcare_sort=None):
+    builder = CaseSearchQueryBuilder(helper, case_types)
     try:
         with helper.profiler.timing_context('build_query'):
             search_es = builder.build_query(criteria, commcare_sort)
@@ -165,26 +168,17 @@ def get_primary_case_search_results(helper, domain, case_types, criteria, commca
         raise CaseSearchUserError(_('Search has too many results. Please try a more specific search.'))
     except CaseFilterError as e:
         # This is an app building error, notify so we can track
-        notify_exception(None, str(e), details=dict(
-            exception_type=type(e),
-        ))
+        notify_exception(None, str(e), details={'exception_type': type(e)})
         raise CaseSearchUserError(str(e))
 
-    try:
-        results = helper.profiler.run_query('main', search_es)
-    except Exception as e:
-        notify_exception(None, str(e), details=dict(
-            exception_type=type(e),
-        ))
-        raise
-
+    results = helper.profiler.run_query('main', search_es)
     with helper.profiler.timing_context('wrap_cases'):
         cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
     return cases
 
 
 def _get_helper(couch_user, domain, case_types, registry_slug):
-    helper = _QueryHelper(domain)
+    helper = QueryHelper(domain)
     if registry_slug:
         try:
             registry_helper = DataRegistryHelper(domain, registry_slug=registry_slug)
@@ -192,48 +186,52 @@ def _get_helper(couch_user, domain, case_types, registry_slug):
         except (RegistryNotFound, RegistryAccessException):
             pass
         else:
-            helper = _RegistryQueryHelper(domain, couch_user, registry_helper)
+            helper = RegistryQueryHelper(domain, couch_user, registry_helper)
     return helper
 
 
-class _QueryHelper:
+class QueryHelper:
     def __init__(self, domain):
         self.domain = domain
-        self.query_domains = [self.domain]
         self.profiler = CaseSearchProfiler()
 
     def get_base_queryset(self):
-        return CaseSearchES().domain(self.query_domains)
+        return CaseSearchES(index=self.config.index_name or None).domain(self.domain)
 
     def wrap_case(self, es_hit, include_score=False):
         return wrap_case_search_hit(es_hit, include_score=include_score)
 
     def get_all_related_live_cases(self, initial_cases):
-        from casexml.apps.phone.data_providers.case.livequery import (
-            get_all_related_live_cases,
-        )
         case_ids = {case.case_id for case in initial_cases}
         return get_all_related_live_cases(self.domain, case_ids)
 
+    @cached_property
+    def config(self):
+        try:
+            return (CaseSearchConfig.objects
+                    .prefetch_related('fuzzy_properties')
+                    .prefetch_related('ignore_patterns')
+                    .get(domain=self.domain))
+        except CaseSearchConfig.DoesNotExist:
+            return CaseSearchConfig(domain=self.domain)
 
-class _RegistryQueryHelper:
+
+class RegistryQueryHelper(QueryHelper):
     def __init__(self, domain, couch_user, registry_helper):
-        self.domain = domain
-        self.couch_user = couch_user
-        self.registry_helper = registry_helper
-        self.query_domains = self.registry_helper.visible_domains
-        self.profiler = CaseSearchProfiler()
+        super().__init__(domain)
+        self._couch_user = couch_user
+        self._registry_helper = registry_helper
 
     def get_base_queryset(self):
-        return CaseSearchES().domain(self.query_domains)
+        return CaseSearchES().domain(self._registry_helper.visible_domains)
 
     def wrap_case(self, es_hit, include_score=False):
-        case = wrap_case_search_hit(es_hit, include_score=include_score)
+        case = super().wrap_case(es_hit, include_score)
         case.case_json[COMMCARE_PROJECT] = case.domain
         return case
 
     def get_all_related_live_cases(self, initial_cases):
-        all_cases = self.registry_helper.get_multi_domain_case_hierarchy(self.couch_user, initial_cases)
+        all_cases = self._registry_helper.get_multi_domain_case_hierarchy(self._couch_user, initial_cases)
         initial_case_ids = {case.case_id for case in initial_cases}
         return list(case for case in all_cases if case.case_id not in initial_case_ids)
 
@@ -241,32 +239,11 @@ class _RegistryQueryHelper:
 class CaseSearchQueryBuilder:
     """Compiles the case search object for the view"""
 
-    def __init__(self, domain, case_types, profiler, query_domains=None):
-        self.request_domain = domain
+    def __init__(self, helper, case_types):
+        self.request_domain = helper.domain
         self.case_types = case_types
-        self.profiler = profiler
-        self.query_domains = [domain] if query_domains is None else query_domains
-
-    @cached_property
-    def config(self):
-        try:
-            config = (CaseSearchConfig.objects
-                      .prefetch_related('fuzzy_properties')
-                      .prefetch_related('ignore_patterns')
-                      .get(domain=self.request_domain))
-        except CaseSearchConfig.DoesNotExist as e:
-            from corehq.util.soft_assert import soft_assert
-            _soft_assert = soft_assert(
-                to="{}@{}.com".format('frener', 'dimagi'),
-                notify_admins=False, send_to_ops=False
-            )
-            _soft_assert(
-                False,
-                "Someone in domain: {} tried accessing case search without a config".format(self.request_domain),
-                e
-            )
-            config = CaseSearchConfig(domain=self.request_domain)
-        return config
+        self.helper = helper
+        self.config = helper.config
 
     def build_query(self, search_criteria, commcare_sort=None):
         search_es = self._get_initial_search_es()
@@ -279,8 +256,7 @@ class CaseSearchQueryBuilder:
         max_results = CASE_SEARCH_MAX_RESULTS
         if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
             max_results = 1500
-        return (CaseSearchES()
-                .domain(self.query_domains)
+        return (self.helper.get_base_queryset()
                 .case_type(self.case_types)
                 .is_closed(False)
                 .size(max_results))
@@ -320,9 +296,8 @@ class CaseSearchQueryBuilder:
         return search_es
 
     def _build_filter_from_xpath(self, xpath, fuzzy=False):
-        context = SearchFilterContext(self.query_domains, fuzzy, self.request_domain,
-                                      self.profiler, self.config)
-        with self.profiler.timing_context('_build_filter_from_xpath'):
+        context = SearchFilterContext(self.request_domain, fuzzy, self.helper)
+        with self.helper.profiler.timing_context('_build_filter_from_xpath'):
             return build_filter_from_xpath(xpath, context=context)
 
     def _get_daterange_query(self, criteria):
