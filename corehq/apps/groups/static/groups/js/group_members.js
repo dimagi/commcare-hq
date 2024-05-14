@@ -3,6 +3,7 @@ hqDefine("groups/js/group_members", [
     "underscore",
     "analytix/js/google",
     "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/bootstrap5/alert_user",
     "hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list",
     "hqwebapp/js/select_2_ajax_widget",     // "Group Membership" select2
     "hqwebapp/js/bootstrap5/components.ko",            // select toggle for "Edit Setings" popup
@@ -11,6 +12,7 @@ hqDefine("groups/js/group_members", [
     _,
     googleAnalytics,
     initialPageData,
+    alertUser,
     uiMapList
 ) {
     $(function () {
@@ -65,18 +67,15 @@ hqDefine("groups/js/group_members", [
 
         function outcome(isSuccess, name, id, gaEventLabel, additionalCallback) {
             return function () {
-                var alertClass, message;
+                var message;
                 if (isSuccess) {
-                    alertClass = 'alert-success';
                     message = gettext('Successfully saved ') + name.toLowerCase() + '.';
                     unsavedChanges[name] = false;
                 } else {
-                    alertClass = 'alert-danger';
                     message = gettext('Failed to save ') + name.toLowerCase() + '.';
                 }
                 $(id).find(':button').enableButton();
-                $('#save-alert').removeClass('alert-danger alert-success alert-info').addClass(alertClass);
-                $('#save-alert').html(message).show();
+                alertUser.alert_user(message, isSuccess ? 'success' : 'danger');
                 $('#editGroupSettings').modal('hide');  /* todo B5: plugin:modal */
 
                 if (_.isFunction(additionalCallback)) {
@@ -99,11 +98,11 @@ hqDefine("groups/js/group_members", [
             $('#edit_membership').submit(function () {
                 var _showMembershipUpdating = function () {
                         $('#edit_membership').fadeOut();
-                        $('#membership_updating').fadeIn();
+                        $('#membership_updating').removeClass("d-none");
                     },
                     _hideMembershipUpdating = function () {
                         $('#edit_membership').fadeIn();
-                        $('#membership_updating').fadeOut();
+                        $('#membership_updating').addClass("d-none");
                     };
                 _showMembershipUpdating();
                 $(this).find(':button').prop('disabled', true);

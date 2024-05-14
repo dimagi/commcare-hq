@@ -27,8 +27,6 @@
   {% initial_page_data "group_metadata" group.metadata %}
   {% initial_page_data "domain_uses_case_sharing" domain_uses_case_sharing %}
   {% initial_page_data "show_disable_case_sharing" show_disable_case_sharing %}
-  <p id="save-alert" class="alert" hidden="hidden">
-  </p>
   {% if group.is_deleted %}
     <div class="alert alert-info">
       {% blocktrans%}
@@ -145,7 +143,7 @@
           {% else %}
             <div class="row">
               <div class="col-md-12">
-                <div class="alert alert-info" id="membership_updating" style="display: none">  {# todo B5: inline style #}
+                <div class="alert alert-info d-none" id="membership_updating">
                   <p class="lead">
                     <i class="fa fa-spinner fa-spin"></i> {% trans 'Updating Group Membership, please wait...' %}
                   </p>
