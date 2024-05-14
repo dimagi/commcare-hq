@@ -40,7 +40,7 @@ def _reprocess_archive_stubs():
     reprocess_archive_stubs.delay()
 
 
-@serial_task("reprocess_archive_stubs", queue=settings.CELERY_PERIODIC_QUEUE, timeout=30 * 60)
+@serial_task("reprocess_archive_stubs", timeout=24 * 60 * 60, queue=settings.CELERY_PERIODIC_QUEUE)
 def reprocess_archive_stubs():
     # Check for archive stubs
     from couchforms.models import UnfinishedArchiveStub
