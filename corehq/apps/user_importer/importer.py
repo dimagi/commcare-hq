@@ -31,6 +31,7 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.util import get_tableau_group_ids_by_names
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import (
     spec_value_to_boolean_or_none,
@@ -660,11 +661,16 @@ class CCUserRow(BaseUserRow):
                     if cv["profile_name"]:
                         _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
                         profile = self.domain_info.profiles_by_name[cv["profile_name"]]
+                    tableau_group_ids = None
+                    if cv["tableau_groups"] is not None:
+                        tableau_group_ids = get_tableau_group_ids_by_names(cv["tableau_groups"], self.domain)
                     create_or_update_web_user_invite(
                         web_user_username, self.domain, role_qualified_id, self.importer.upload_user,
                         self.user.location_id,
                         assigned_location_ids=self.user.assigned_location_ids,
                         profile=profile,
+                        tableau_role=cv["tableau_role"],
+                        tableau_group_ids=tableau_group_ids,
                         user_change_logger=user_change_logger,
                         send_email=cv["send_confirmation_email"]
                     )
@@ -741,11 +747,19 @@ class WebUserRow(BaseUserRow):
                 if self.column_values["profile_name"]:
                     _check_profile(self.column_values["profile_name"], self.domain_info.profiles_by_name)
                     profile = self.domain_info.profiles_by_name[self.column_values["profile_name"]]
+                tableau_group_ids = None
+                if self.column_values["tableau_groups"] is not None:
+                    tableau_group_ids = get_tableau_group_ids_by_names(
+                        self.column_values["tableau_groups"],
+                        self.domain
+                    )
                 create_or_update_web_user_invite(
                     user.username, self.domain, role_qualified_id, self.importer.upload_user,
                     user.location_id,
                     assigned_location_ids=user.assigned_location_ids,
                     profile=profile,
+                    tableau_role=self.column_values['tableau_role'],
+                    tableau_group_ids=tableau_group_ids,
                     user_change_logger=user_change_logger
                 )
         web_user_importer.save_log()
@@ -810,11 +824,16 @@ class WebUserRow(BaseUserRow):
             if cv["profile_name"]:
                 _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
                 profile = self.domain_info.profiles_by_name[cv["profile_name"]]
+            tableau_group_ids = None
+            if cv["tableau_groups"] is not None:
+                tableau_group_ids = get_tableau_group_ids_by_names(cv["tableau_groups"], self.domain)
             create_or_update_web_user_invite(
                 cv['username'], self.domain, self.domain_info.roles_by_name[cv['role']], self.importer.upload_user,
                 user_invite_loc_id,
                 assigned_location_ids=user_invite_locs_ids,
-                profile=profile
+                profile=profile,
+                tableau_role=cv["tableau_role"],
+                tableau_group_ids=tableau_group_ids,
             )
             self.status_row['flag'] = 'invited'
 
