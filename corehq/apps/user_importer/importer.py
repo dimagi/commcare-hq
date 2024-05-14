@@ -843,7 +843,7 @@ class WebImporter:
 
     @memoized
     def domain_info(self, domain):
-        return DomainInfo(self, domain, is_web_upload=self.is_web_upload)
+        return DomainInfo(self, domain, is_web_upload=self.is_web_upload, upload_user=self.upload_user)
 
     def run(self):
         ret = {"errors": [], "rows": []}
@@ -877,10 +877,11 @@ class CCImporter(WebImporter):
 
 class DomainInfo:
 
-    def __init__(self, importer, domain, is_web_upload):
+    def __init__(self, importer, domain, is_web_upload, upload_user=None):
         self.importer = importer
         self.domain = domain
         self.is_web_upload = is_web_upload
+        self.upload_user = upload_user
 
     @property
     @memoized
@@ -957,6 +958,8 @@ class DomainInfo:
             allowed_roles=roles_by_name,
             profiles_by_name=self.profiles_by_name,
             upload_domain=self.importer.upload_domain,
+            upload_user=self.upload_user,
+            location_cache=self.location_cache
         )
 
 
