@@ -408,15 +408,13 @@ class LocationAccessValidator(ImportValidator):
         username = spec.get('username')
         current_locs = []
         if self.is_web_user_import:
-            editable_user = CouchUser.get_by_username(username, strict=True)
-            if not editable_user:
-                try:
-                    invitation = Invitation.objects.get(domain=self.domain, email=username, is_accepted=False)
-                    if not user_can_access_invite(self.domain, self.upload_user, invitation):
-                        return self.error_message_user_access.format(invitation.email)
-                    current_locs = invitation.assigned_locations.all()
-                except Invitation.DoesNotExist:
-                    pass
+            try:
+                invitation = Invitation.objects.get(domain=self.domain, email=username, is_accepted=False)
+                if not user_can_access_invite(self.domain, self.upload_user, invitation):
+                    return self.error_message_user_access.format(invitation.email)
+                current_locs = invitation.assigned_locations.all()
+            except Invitation.DoesNotExist:
+                editable_user = CouchUser.get_by_username(username, strict=True)
         else:
             if 'username' in spec:
                 editable_user = CouchUser.get_by_username(username, strict=True)
