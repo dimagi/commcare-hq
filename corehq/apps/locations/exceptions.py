@@ -6,3 +6,11 @@ class LocationImportError(Exception):
 
 class LocationConsistencyError(Exception):
     pass
+
+
+class LocationBulkImportError(Exception):
+    pass
+
+
+class LocationBulkImportInProgressException(Exception):
+    pass

@@ -50,7 +50,7 @@ from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
-from .exceptions import LocationConsistencyError
+from .exceptions import LocationConsistencyError, LocationBulkImportError, LocationBulkImportInProgressException
 from .forms import (
     LocationFilterForm,
     LocationFormSet,
@@ -943,7 +943,7 @@ class LocationImportView(BaseLocationView):
 
         domain = args[0]
 
-        ref = self._cache_file(request, domain, upload)
+        ref = self.cache_file(request, domain, upload)
         if not isinstance(ref, LocationImportView.Ref):
             # ref is HTTP response: lock could not be acquired
             return ref
@@ -959,7 +959,7 @@ class LocationImportView(BaseLocationView):
 
     @staticmethod
     @lock_locations
-    def _cache_file(request, domain, upload):
+    def cache_file(request, domain, upload):
         """Stash in soil for ten hours to make it easier to pass to celery
 
         :returns: `LocationImportView.Ref` object that can be identified
@@ -1140,18 +1140,14 @@ def count_locations(request, domain):
 @api_auth()
 def bulk_location_upload_api(request, domain, **kwargs):
     try:
-        return _bulk_location_upload_api(request, domain)
+        _bulk_location_upload_api(request, domain)
+        return json_response({"code": 200, "message": "success"})
+    except LocationBulkImportInProgressException as e:
+        return json_response({'code': 202, 'message': str(e)}, status_code=202)
+    except LocationBulkImportError as e:
+        error = str(e)
     except Exception as e:
         error = str(e)
-    # except ImportError as e:
-    #     except ImporterError as e:
-    #     error = get_importer_error_message(e)
-    # except SpreadsheetFileExtError:
-    #     error = "Please upload file with one of the following extensions: {}".format(
-    #         ', '.join(valid_extensions)
-    #     )
-    # except SpreadsheetFileInvalidError as e:
-    #     error = str(e)
 
     return json_response({'code': 500, 'message': error}, status_code=500)
 
@@ -1159,29 +1155,17 @@ def bulk_location_upload_api(request, domain, **kwargs):
 def _bulk_location_upload_api(request, domain):
     upload_file = request.FILES["file"]
     if not upload_file:
-        raise Exception("No file was uploaded")
+        raise LocationBulkImportError(_("no file uploaded"))
 
     try:
         get_workbook(upload_file)
     except WorkbookJSONError as e:
-        messages.error(request, e)
-        #raise ImporterError(e)
+        raise LocationBulkImportError(str(e))
 
-    ref = LocationImportView._cache_file(request, domain, upload_file)
-    if not isinstance(ref, LocationImportView.Ref):
-        # ref is HTTP response: lock could not be acquired
-        return ref
-    file_ref = ref.value
+    file_ref = LocationImportView.cache_file(request, domain, upload_file)
+    if not isinstance(file_ref, LocationImportView.Ref):
+        raise LocationBulkImportInProgressException(_("Importing your data. This may take some time..."))
+
+    file_ref = file_ref.value
     task = import_locations_async.delay(domain, file_ref.download_id, request.couch_user.user_id)
     file_ref.set_task(task)
-    # return HttpResponseRedirect(
-    #     reverse(
-    #         LocationImportStatusView.urlname,
-    #         args=[domain, file_ref.download_id]
-    #     )
-    # )
-
-    return json_response({"code": 200, "message": "success", "status_url": reverse(
-        LocationImportStatusView.urlname,
-        args=[domain, file_ref.download_id]
-    )})
