@@ -3,12 +3,14 @@
 hqDefine("reports/js/bootstrap5/tabular", [
     'jquery',
     'underscore',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'reports/js/bootstrap5/config.dataTables.bootstrap',
     'reports/js/bootstrap5/standard_hq_report',
 ], function (
     $,
     _,
+    bootstrap,
     initialPageData,
     datatablesConfig,
     standardHQReportModule
@@ -61,10 +63,14 @@ hqDefine("reports/js/bootstrap5/tabular", [
             reportTables.render();
         }
 
-        $('.header-popover').popover({  /* todo B5: plugin:popover */
-            trigger: 'hover',
-            placement: 'bottom',
-            container: 'body',
+        $('.header-popover').each(function () {
+            new bootstrap.Popover($(this).get(0), {
+                title: $(this).data('title'),
+                content: $(this).data('content'),
+                trigger: 'hover',
+                placement: 'bottom',
+                container: 'body',
+            });
         });
     }
 
