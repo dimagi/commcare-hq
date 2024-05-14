@@ -29,7 +29,11 @@ from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_request, json_response
 
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
+from corehq.apps.hqwebapp.crispy import (
+    CSS_ACTION_CLASS,
+    CSS_REPORT_LABEL_CLASS_BOOTSTRAP5,
+    CSS_REPORT_FIELD_CLASS_BOOTSTRAP5,
+)
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
@@ -561,8 +565,15 @@ class GenericReportView(object):
             Please override template_context instead.
         """
         self.context.update(rendered_as=self.rendered_as)
+
+        if self.use_bootstrap5:
+            action_class = f"{CSS_REPORT_LABEL_CLASS_BOOTSTRAP5.replace('col', 'offset')} " \
+                           f"{CSS_REPORT_FIELD_CLASS_BOOTSTRAP5}"
+        else:
+            action_class = CSS_ACTION_CLASS
+
         self.context.update({
-            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
+            'report_filter_form_action_css_class': action_class,
         })
         self.context['report'].update(
             show_filters=self.fields or not self.hide_filters,

@@ -5,7 +5,13 @@ from django.utils.translation import gettext_noop
 import pytz
 from memoized import memoized
 
-from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS, CSS_LABEL_CLASS
+from corehq.apps.hqwebapp.crispy import (
+    CSS_FIELD_CLASS,
+    CSS_LABEL_CLASS,
+    CSS_REPORT_LABEL_CLASS_BOOTSTRAP5,
+    CSS_REPORT_FIELD_CLASS_BOOTSTRAP5,
+)
+from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
 from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 
 
@@ -37,12 +43,22 @@ class BaseReportFilter(object):
             raise NotImplementedError("label is required")
         self.request = request
         self.timezone = timezone
-        self.parent_report = parent_report
-        self.css_label = css_label or (CSS_LABEL_CLASS + ' control-label')
-        self.css_field = css_field or CSS_FIELD_CLASS
-        self.context = {}
-        if use_bootstrap5:
+        self.use_bootstrap5 = use_bootstrap5
+        if self.use_bootstrap5:
+            set_bootstrap_version5()
             self.template = get_bootstrap5_path(self.template)
+        self.parent_report = parent_report
+
+        if self.use_bootstrap5:
+            default_label_class = f"col-form-label {CSS_REPORT_LABEL_CLASS_BOOTSTRAP5}"
+            default_field_class = CSS_REPORT_FIELD_CLASS_BOOTSTRAP5
+        else:
+            default_label_class = f"{CSS_LABEL_CLASS} control-label"
+            default_field_class = CSS_FIELD_CLASS
+        self.css_label = css_label or default_label_class
+        self.css_field = css_field or default_field_class
+
+        self.context = {}
 
     @property
     def is_disabled(self):
