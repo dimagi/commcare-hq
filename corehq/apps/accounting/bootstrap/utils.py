@@ -165,21 +165,25 @@ def _ensure_feature_rates(feature_rates, features, edition, verbose, apps):
 
 def _ensure_software_plan(plan_key, product, product_rate, verbose, apps):
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
-    plan_opts = {
-        'name': _software_plan_name(plan_key, product, product_rate),
-        'edition': plan_key.edition,
-        'visibility': SoftwarePlanVisibility.ANNUAL if plan_key.is_annual_plan else SoftwarePlanVisibility.PUBLIC
-    }
-    if plan_key.is_annual_plan is not None:
-        plan_opts['is_annual_plan'] = plan_key.is_annual_plan
-
-    software_plan, created = SoftwarePlan.objects.get_or_create(**plan_opts)
-    if verbose and created:
-        log_accounting_info("Creating Software Plan: %s" % software_plan.name)
-    if verbose and not created:
-        log_accounting_info(
-            "Plan '%s' already exists. Using existing plan to add version." % software_plan.name
-        )
+    plan_name = _software_plan_name(plan_key, product, product_rate)
+    try:
+        software_plan = SoftwarePlan.objects.get(name=plan_name)
+        if verbose:
+            log_accounting_info(
+                "Plan '%s' already exists. Using existing plan to add version." % software_plan.name
+            )
+    except SoftwarePlan.DoesNotExist:
+        plan_opts = {
+            'name': plan_name,
+            'edition': plan_key.edition,
+            'visibility': (SoftwarePlanVisibility.ANNUAL
+                           if plan_key.is_annual_plan else SoftwarePlanVisibility.PUBLIC),
+        }
+        if plan_key.is_annual_plan is not None:
+            plan_opts['is_annual_plan'] = plan_key.is_annual_plan
+        software_plan = SoftwarePlan.objects.create(**plan_opts)
+        if verbose:
+            log_accounting_info("Creating Software Plan: %s" % software_plan.name)
     return software_plan
 
 
