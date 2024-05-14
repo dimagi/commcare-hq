@@ -815,7 +815,7 @@ class GenericReportView(object):
 
             @use_nvd3
             def decorator_dispatcher(self, request, *args, **kwargs):
-                super(MyNewReport, self).decorator_dispatcher(request, *args, **kwargs)
+                super().decorator_dispatcher(request, *args, **kwargs)
 
         """
         pass
