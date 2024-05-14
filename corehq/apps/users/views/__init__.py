@@ -331,6 +331,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     @memoized
     def tableau_form(self):
+        user = CouchUser.get_by_user_id(self.couch_user._id)
         try:
             if self.request.method == "POST" and self.request.POST['form_type'] == "tableau":
                 return TableauUserForm(self.request.POST,
@@ -347,7 +348,8 @@ class BaseEditUserView(BaseUserSettingsView):
                 username=self.editable_user.username,
                 initial={
                     'role': tableau_user.role
-                }
+                },
+                readonly=(not user.has_permission(self.domain, 'edit_user_tableau_config'))
             )
         except (TableauAPIError, TableauUser.DoesNotExist) as e:
             messages.error(self.request, _('''There was an error getting data for this user's associated Tableau

@@ -1786,6 +1786,7 @@ class TableauUserForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        readonly = kwargs.pop('readonly', True)
         self.request = kwargs.pop('request')
         self.domain = kwargs.pop('domain', None)
         self.username = kwargs.pop('username', None)
@@ -1805,6 +1806,10 @@ class TableauUserForm(forms.Form):
                 self.fields['groups'].initial.append(i)
         if not self.fields['groups'].choices:
             del self.fields['groups']
+
+        if readonly:
+            self.fields['role'].widget.attrs['readonly'] = True
+            self.fields['groups'].widget.attrs['disabled'] = True
 
         self.helper = FormHelper()
 
