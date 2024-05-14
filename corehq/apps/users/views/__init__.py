@@ -585,8 +585,6 @@ class ListWebUsersView(BaseRoleAccessView):
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'bulk_download_url': bulk_download_url,
-            'user_can_access_all_locations': self.request.couch_user.has_permission(
-                self.domain, 'access_all_locations'),
             'from_address': settings.DEFAULT_FROM_EMAIL
         }
 
