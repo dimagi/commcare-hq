@@ -14,8 +14,6 @@ hqDefine("groups/js/group_members", [
     uiMapList
 ) {
     $(function () {
-        $('.verify-button').tooltip();  /* todo B5: plugin:tooltip */
-        // custom data
         var customDataEditor = uiMapList.new(initialPageData.get("group_id"), gettext("Edit Group Information"));
         customDataEditor.val(initialPageData.get("group_metadata"));
         customDataEditor.on("change", function () {

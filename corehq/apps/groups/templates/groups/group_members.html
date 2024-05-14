@@ -81,8 +81,6 @@
             {% csrf_token %}
             <button id="submit-verification"
                     type="submit"
-                    data-html="true"
-                    data-title="<div class='alert alert-warning'><i class='fa-solid fa-triangle-exclamation'></i> <strong>{% trans 'SMS charges will incur.' %}</strong></div>{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
                     class="btn btn-outline-primary verify-button">
               <i class="fa fa-signal"></i> {% trans 'Verify Phone Numbers' %}
             </button>
@@ -91,7 +89,8 @@
                   data-html="true"
                   data-content="{% blocktrans %}
                         For all active mobile workers in this group, and for each phone number, this will
-                        initiate an SMS verification workflow. If the phone number is already verified or
+                        initiate an SMS verification workflow. When a user replies to the SMS< their phone
+                        number will be verified.<br><br>If the phone number is already verified or
                         if the phone number is already in use by another contact in the system, nothing
                         will happen. If the phone number is pending verification, the verification SMS
                         will be resent.
