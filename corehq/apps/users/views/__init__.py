@@ -1276,6 +1276,7 @@ class BaseUploadUser(BaseUserSettingsView):
             )
 
 
+@location_safe
 class UploadWebUsers(BaseUploadUser):
     template_name = 'hqwebapp/bootstrap3/bulk_upload.html'
     urlname = 'upload_web_users'
@@ -1299,6 +1300,7 @@ class UploadWebUsers(BaseUploadUser):
         return super(UploadWebUsers, self).post(request, *args, **kwargs)
 
 
+@location_safe
 class WebUserUploadStatusView(BaseManageWebUserView):
     urlname = 'web_user_upload_status'
     page_title = gettext_noop('Web User Upload Status')
@@ -1339,6 +1341,7 @@ class UserUploadJobPollView(BaseUserSettingsView):
         return render(request, 'users/mobile/partials/user_upload_status.html', context)
 
 
+@location_safe
 class WebUserUploadJobPollView(UserUploadJobPollView, BaseManageWebUserView):
     urlname = "web_user_upload_job_poll"
     on_complete_long = 'Web Worker upload has finished'
