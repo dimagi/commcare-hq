@@ -662,14 +662,15 @@ class CCUserRow(BaseUserRow):
                         _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
                         profile = self.domain_info.profiles_by_name[cv["profile_name"]]
                     tableau_group_ids = None
-                    if cv["tableau_groups"] is not None:
+                    tableau_role = cv["tableau_role"] if "tableau_role" in cv else None
+                    if "tableau_groups" in cv and cv["tableau_groups"] is not None:
                         tableau_group_ids = get_tableau_group_ids_by_names(cv["tableau_groups"], self.domain)
                     create_or_update_web_user_invite(
                         web_user_username, self.domain, role_qualified_id, self.importer.upload_user,
                         self.user.location_id,
                         assigned_location_ids=self.user.assigned_location_ids,
                         profile=profile,
-                        tableau_role=cv["tableau_role"],
+                        tableau_role=tableau_role,
                         tableau_group_ids=tableau_group_ids,
                         user_change_logger=user_change_logger,
                         send_email=cv["send_confirmation_email"]
@@ -747,8 +748,9 @@ class WebUserRow(BaseUserRow):
                 if self.column_values["profile_name"]:
                     _check_profile(self.column_values["profile_name"], self.domain_info.profiles_by_name)
                     profile = self.domain_info.profiles_by_name[self.column_values["profile_name"]]
+                tableau_role = self.column_values["tableau_role"] if "tableau_role" in self.column_values else None
                 tableau_group_ids = None
-                if self.column_values["tableau_groups"] is not None:
+                if "tableau_groups" in self.column_values and self.column_values["tableau_groups"] is not None:
                     tableau_group_ids = get_tableau_group_ids_by_names(
                         self.column_values["tableau_groups"],
                         self.domain
@@ -758,7 +760,7 @@ class WebUserRow(BaseUserRow):
                     user.location_id,
                     assigned_location_ids=user.assigned_location_ids,
                     profile=profile,
-                    tableau_role=self.column_values['tableau_role'],
+                    tableau_role=tableau_role,
                     tableau_group_ids=tableau_group_ids,
                     user_change_logger=user_change_logger
                 )
@@ -824,6 +826,7 @@ class WebUserRow(BaseUserRow):
             if cv["profile_name"]:
                 _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
                 profile = self.domain_info.profiles_by_name[cv["profile_name"]]
+            tableau_role = cv["tableau_role"] if "tableau_role" in cv else None
             tableau_group_ids = None
             if cv["tableau_groups"] is not None:
                 tableau_group_ids = get_tableau_group_ids_by_names(cv["tableau_groups"], self.domain)
@@ -832,7 +835,7 @@ class WebUserRow(BaseUserRow):
                 user_invite_loc_id,
                 assigned_location_ids=user_invite_locs_ids,
                 profile=profile,
-                tableau_role=cv["tableau_role"],
+                tableau_role=tableau_role,
                 tableau_group_ids=tableau_group_ids,
             )
             self.status_row['flag'] = 'invited'
