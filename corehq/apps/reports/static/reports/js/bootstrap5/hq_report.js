@@ -58,7 +58,7 @@ hqDefine("reports/js/bootstrap5/hq_report", [
 
                 if (self.needsFilters) {
                     self.filterSubmitButton
-                        .button('reset')  /* todo B5: plugin:button */
+                        .changeButtonState('standard')
                         .addClass('btn-primary')
                         .removeClass('disabled')
                         .prop('disabled', false);
@@ -151,18 +151,18 @@ hqDefine("reports/js/bootstrap5/hq_report", [
 
         var checkFilterAccordionToggleState = function () {
             $(self.filterAccordion).addClass('in');
-            $(self.toggleFiltersButton).button('close');  /* todo B5: plugin:button */
+            $(self.toggleFiltersButton).changeButtonState('close');
 
             var hiddenFilterButtonStatus = function (data) {
                 if (!(data.target && $(data.target).hasClass('modal'))) {
-                    $(self.toggleFiltersButton).button('open');  /* todo B5: plugin:button */
+                    $(self.toggleFiltersButton).changeButtonState('open');
                 }
             };
 
             $(self.filterAccordion).on('hidden.bs.collapse', hiddenFilterButtonStatus);
 
             var showFilterButtonStatus = function () {
-                $(self.toggleFiltersButton).button('close');  /* todo B5: plugin:button */
+                $(self.toggleFiltersButton).changeButtonState('close');
             };
 
             $(self.filterAccordion).on('show.bs.collapse', showFilterButtonStatus);
@@ -180,14 +180,14 @@ hqDefine("reports/js/bootstrap5/hq_report", [
         self.resetFilterState = function () {
             $('#paramSelectorForm fieldset button, #paramSelectorForm fieldset span[data-dropdown="dropdown"]').click(function () {
                 $(self.filterSubmitSelector)
-                    .button('reset')  /* todo B5: plugin:button */
+                    .changeButtonState('standard')
                     .addClass('btn-primary')
                     .removeClass('disabled')
                     .prop('disabled', false);
             });
             $('#paramSelectorForm fieldset').on('change apply', function () {
                 $(self.filterSubmitSelector)
-                    .button('reset')  /* todo B5: plugin:button */
+                    .changeButtonState('standard')
                     .addClass('btn-primary')
                     .removeClass('disabled')
                     .prop('disabled', false);
@@ -256,7 +256,7 @@ hqDefine("reports/js/bootstrap5/hq_report", [
 
             self.sendEmail = function () {
                 var $sendButton = $(hqReport.emailReportModal).find('.send-button');
-                $sendButton.button('loading');  /* todo B5: plugin:button */
+                $sendButton.changeButtonState('loading');
 
                 $.post(getReportBaseUrl("email_onceoff"), $.param(self.unwrap()))
                     .done(function () {
@@ -275,7 +275,7 @@ hqDefine("reports/js/bootstrap5/hq_report", [
             };
 
             self.resetModal = function () {
-                $(hqReport.emailReportModal).find('.send-button').button('reset');  /* todo B5: plugin:button */
+                $(hqReport.emailReportModal).find('.send-button').changeButtonState('standard');
             };
         }
 
