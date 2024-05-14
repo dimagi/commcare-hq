@@ -1139,7 +1139,6 @@ def count_locations(request, domain):
 @require_POST
 @api_auth()
 def bulk_location_upload_api(request, domain, **kwargs):
-    return json_response({"code": 200, "message": "this is a test"})
     try:
         _bulk_location_upload_api(request, domain)
         return json_response({"code": 200, "message": "success"})
@@ -1164,8 +1163,13 @@ def _bulk_location_upload_api(request, domain):
         raise LocationBulkImportError(str(e))
 
     file_ref = LocationImportView.cache_file(request, domain, upload_file)
-    if not isinstance(file_ref, LocationImportView.Ref):
+    # if not isinstance(file_ref, LocationImportView.Ref):
+    #     raise LocationBulkImportInProgressException(_("Importing your data. This may take some time..."))
+
+    if isinstance(file_ref, HttpResponseRedirect):
         raise LocationBulkImportInProgressException(_("Importing your data. This may take some time..."))
+    elif not isinstance(file_ref, LocationImportView.Ref):
+        raise Exception("Unexpected return value from cache_file")
 
     file_ref = file_ref.value
     task = import_locations_async.delay(domain, file_ref.download_id, request.couch_user.user_id)
