@@ -174,13 +174,22 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         doc['_id'] = case_dict['_id']
         return super()._from_dict(doc)
 
+    def _get_domain_from_doc(self, doc):
+        """
+        `doc` can be CommcCareCase instance or dict. This util method extracts domain from doc.
+        This will fail hard if domain is not present in doc.
+        """
+        if isinstance(doc, dict):
+            return doc["domain"]
+        return doc.domain
+
     def index(self, doc, refresh=False):
-        adapter = multiplex_to_adapter(doc['domain'])
+        adapter = multiplex_to_adapter(self._get_domain_from_doc(doc))
         if adapter:
             # If we get a valid adapter then we multiplex writes
             doc_obj = BulkActionItem.index(doc)
             payload = [self._render_bulk_action(doc_obj), adapter._render_bulk_action(doc_obj)]
-            return self._bulk(payload, refresh=refresh)
+            return self._bulk(payload, refresh=refresh, raise_errors=True)
         # If adapter is None then simply index the docs
         super().index(doc, refresh=refresh)
 
