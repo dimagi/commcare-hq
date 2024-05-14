@@ -142,8 +142,8 @@ class BaseGroupsView(BaseUserSettingsView):
                 self.request, privileges.CASE_SHARING_GROUPS
             ),
             'needs_to_downgrade_locations': (
-                users_have_locations(self.domain) and
-                not has_privilege(self.request, privileges.LOCATIONS)
+                users_have_locations(self.domain)
+                and not has_privilege(self.request, privileges.LOCATIONS)
             ),
         })
         return context
@@ -215,12 +215,12 @@ class EditGroupMembersView(BaseGroupsView):
     @property
     def page_context(self):
         domain_has_reminders_or_keywords = (
-            domain_has_reminders(self.domain) or
-            Keyword.domain_has_keywords(self.domain)
+            domain_has_reminders(self.domain)
+            or Keyword.domain_has_keywords(self.domain)
         )
         bulk_sms_verification_enabled = (
-            domain_has_reminders_or_keywords and
-            domain_has_privilege(self.domain, privileges.INBOUND_SMS)
+            domain_has_reminders_or_keywords
+            and domain_has_privilege(self.domain, privileges.INBOUND_SMS)
         )
         return {
             'group': self.group,

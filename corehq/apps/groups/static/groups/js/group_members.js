@@ -1,3 +1,4 @@
+"use strict";
 hqDefine("groups/js/group_members", [
     "jquery",
     "underscore",
@@ -54,7 +55,7 @@ hqDefine("groups/js/group_members", [
             var ret = gettext("The following changes will not be saved: ");
 
             for (var key in unsavedChanges) {
-                if (unsavedChanges.hasOwnProperty(key) && unsavedChanges[key]) {
+                if (_.has(unsavedChanges, key) && unsavedChanges[key]) {
                     ret += "\n" + key;
                     someUnsavedChanges = true;
                 }

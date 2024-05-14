@@ -1,3 +1,4 @@
+"use strict";
 hqDefine("groups/js/all_groups", [
     'jquery',
     'analytix/js/google',
