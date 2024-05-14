@@ -1,6 +1,7 @@
 import json
 import logging
 import math
+from typing import List
 import warnings
 from collections import defaultdict, namedtuple
 from datetime import datetime
@@ -437,7 +438,7 @@ def tableau_username(HQ_username):
     return 'HQ/' + HQ_username
 
 
-def _group_json_to_tuples(group_json):
+def _group_json_to_tuples(group_json) -> TableauGroupTuple:
     group_tuples = [TableauGroupTuple(group_dict['name'], group_dict['id']) for group_dict in group_json]
     # Remove default Tableau group and HQ group:
     group_tuples_without_defaults = []
@@ -480,6 +481,14 @@ def _notify_tableau_exception(e, domain):
     notify_exception(None, str(e), details={
         'domain': domain
     })
+
+
+def get_tableau_groups_by_ids(interested_group_ids: List, domain: str,
+                            session: TableauAPISession = None) -> TableauGroupTuple:
+    session = session or TableauAPISession.create_session_for_domain(domain)
+    group_json = session.query_groups()
+    filtered_group_json = [group for group in group_json if group['id'] in interested_group_ids]
+    return _group_json_to_tuples(filtered_group_json)
 
 
 def get_matching_tableau_users_from_other_domains(user):
@@ -568,11 +577,12 @@ def _delete_user_remote(session, deleted_user_id):
 
 
 @atomic
-def update_tableau_user(domain, username, role=None, groups=[], session=None):
+def update_tableau_user(domain, username, role=None, groups: List[TableauGroupTuple] = None, session=None):
     '''
     Update the TableauUser object to have the given role and new group details. The `groups` arg should be a list
     of TableauGroupTuples.
     '''
+    groups = groups or []
     session = session or TableauAPISession.create_session_for_domain(domain)
     user = TableauUser.objects.filter(
         server=session.tableau_connected_app.server

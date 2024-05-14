@@ -1026,17 +1026,6 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
-NO_SCROLL_IN_CASE_SEARCH = StaticToggle(
-    'no_scroll_in_case_search',
-    "Do not use scroll queries in case search elasticsearch queries",
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    This toggle replaces scroll queries in case search ancestor functions with
-    normal search queries.
-    """
-)
-
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",

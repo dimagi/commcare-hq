@@ -18,8 +18,13 @@
      <% if (sidebarEnabled) { %>
 -      <button id="search-more" class="btn btn-primary visible-xs visible-sm pull-right" type="button"
 -        data-toggle="collapse" data-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
-+      <button id="search-more" class="btn btn-primary d-xs-block d-sm-block float-end" type="button"
++      <button id="search-more" class="btn btn-primary d-xs-block d-sm-block d-md-none float-end" type="button"
 +        data-bs-toggle="collapse" data-bs-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
          {% trans "Refine search" %}
        </button>
      <% } %>
+@@ -22,4 +22,4 @@
+   <% if (sidebarEnabled && description.length > 0) { %>
+     <div aria-label="<%- description %>" tabindex="0" class="query-description"><%= description %></div>
+   <% } %>
+-</div>+</div>
