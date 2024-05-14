@@ -1,13 +1,14 @@
 import json
 import requests
 
-from corehq.apps.sso.exceptions import EntraVerificationFailed
+from corehq.apps.sso.exceptions import EntraVerificationFailed, EntraUnsupportedType
 
 
 class MSGraphIssue:
     HTTP_ERROR = "http_error"
     VERIFICATION_ERROR = "verification_error"
     EMPTY_ERROR = "empty_error"
+    UNSUPPORTED_ERROR = "unsupported_error"
     OTHER_ERROR = "other_error"
 
 
@@ -118,10 +119,8 @@ def get_all_user_ids_in_app(token, app_id):
         elif assignment["principalType"] == "Group":
             group_queue.append(assignment["principalId"])
         else:
-            # Service Principal represents an application
-            # Which make the query too complicated
-            raise NotImplementedError("ServicePrincipal members are not supported. "
-                                      "Please include only Users or Groups as members of this SSO application.")
+            raise EntraUnsupportedType("Nested applications (ServicePrincipal members) are not supported. "
+                                       "Please include only Users or Groups as members of this SSO application")
 
     for group_id in group_queue:
         members_data = get_group_members(group_id, token)
