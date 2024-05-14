@@ -23,13 +23,17 @@
     ]
   },
   "settings": {
-    "in_progress": true,
     "templates": [
       "change_my_password.html",
       "enable_superuser.html",
       "my_projects.html",
+      "user_api_keys.html",
       "edit_my_account.html"
-    ]
+    ],
+    "javascript": [
+      "js/user_api_keys.js"
+    ],
+    "is_complete": true
   },
   "case_search": {
     "is_complete": true,

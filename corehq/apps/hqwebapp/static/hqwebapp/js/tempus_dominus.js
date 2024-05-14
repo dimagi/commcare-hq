@@ -19,6 +19,20 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     // https://github.com/Eonasdan/tempus-dominus/discussions/2698
     window.Popper = Popper;
 
+    let createDatePicker = function (el, extraOptions) {
+        return new tempusDominus.TempusDominus(el, _.extend({
+            display: {
+                theme: 'light',
+                components: {
+                    clock: false,
+                },
+            },
+            localization: {
+                format: 'yyyy-MM-dd',
+            },
+        }, extraOptions));
+    };
+
     // This replaces createBootstrap3DefaultDateRangePicker in hqwebapp/js/daterangepicker.config
     let createDefaultDateRangePicker = function (el) {
         return createDateRangePicker(el, getDateRangeSeparator());
@@ -91,6 +105,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     };
 
     return {
+        createDatePicker: createDatePicker,
         createDateRangePicker: createDateRangePicker,
         createDefaultDateRangePicker: createDefaultDateRangePicker,
         getDateRangeSeparator: getDateRangeSeparator,
