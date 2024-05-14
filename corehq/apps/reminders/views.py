@@ -24,6 +24,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
     template_name = 'reminders/keyword.html'
     process_structured_message = True
 
+    @use_bootstrap5
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, *args, **kwargs):
         return super(AddStructuredKeywordView, self).dispatch(*args, **kwargs)
