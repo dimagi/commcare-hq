@@ -58,22 +58,33 @@
 {% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
 
 {% block page_breadcrumbs %}
-  <a href="#" class="btn btn-link btn-invisible d-xs-block btn-report-menu" data-bs-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
-  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">  {# todo B5: css:breadcrumb #}
-    <li>
-      <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
-    </li>
-    {% if report.breadcrumbs %}
-      {% for crumb in report.breadcrumbs %}
-        <li>
-          <a href="{{ crumb.link }}">{{ crumb.title }}</a>
-        </li>
-      {% endfor %}
-    {% endif %}
-    <li class="active">
-      {% trans report.title|default:"Untitled Report" %}
-    </li>
-  </ol>
+{#  <a href="#"#}
+{#     class="btn btn-link btn-invisible d-xs-block btn-report-menu"#}
+{#     data-bs-toggle="collapse"#}
+{#     data-bs-target="#hq-sidebar"#}
+{#     aria-controls="hq-sidebar"#}
+{#     aria-expanded="false"#}
+{#     aria-label="{% trans "Toggle Section Menu" %}">#}
+{#    <i class="fa fa-bars"></i> {% trans "Reports Menu" %}#}
+{#  </a>#}
+  <nav aria-label="breadcrumb">
+    <ol id="hq-breadcrumbs"
+        class="breadcrumb breadcrumb-hq-section">
+      <li class="breadcrumb-item">
+        <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
+      </li>
+      {% if report.breadcrumbs %}
+        {% for crumb in report.breadcrumbs %}
+          <li class="breadcrumb-item">
+            <a href="{{ crumb.link }}">{{ crumb.title }}</a>
+          </li>
+        {% endfor %}
+      {% endif %}
+      <li class="breadcrumb-item active" aria-current="page">
+        {% trans report.title|default:"Untitled Report" %}
+      </li>
+    </ol>
+  </nav>
 {% endblock %}
 
 {% block page_content %}
@@ -127,7 +138,7 @@
   {% endif %}
 
   {% if report.special_notice %}
-    <div id="report-special-notice" class="alert alert-info" style="margin-bottom: 2px">  {# todo B5: inline style #}
+    <div id="report-special-notice" class="alert alert-info mb-2">
       <h4>{% trans 'Notice' %}</h4>
       <p>{{ report.special_notice }}</p>
     </div>

@@ -1,10 +1,11 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 <fieldset>
-  <legend><span data-bind="text: filterHeadingName">{% trans "Report Filters" %}</span></legend>
+  <h4 data-bind="text: filterHeadingName">{% trans "Report Filters" %}</h4>
   {% for field in report_filters %}
     <fieldset id="fieldset_{{ field.slug }}">
-      <div class="form-group" id="group_{{ field.slug }}">  {# todo B5: css:form-group #}
+      <div class="row mb-3"
+           id="group_{{ field.slug }}">
         {{ field.field }}
       </div>
     </fieldset>
