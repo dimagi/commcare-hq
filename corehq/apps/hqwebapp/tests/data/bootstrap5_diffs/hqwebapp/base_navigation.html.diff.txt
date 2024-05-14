@@ -146,7 +146,7 @@
 -          <div data-bind="attr: {'class': alert_class}">
 -            <a class="close"
 -               data-dismiss="alert" href="#">&times;</a>
-+          <div class="alert alert-dismissible fade show" data-bind="css: {true: alert_class}">
++          <div class="alert alert-dismissible fade show" data-bind="attr: {class: alert_class}">
              <span data-bind="html: message"></span>
 +            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans_html_attr "Close" %}"></button>
            </div>
