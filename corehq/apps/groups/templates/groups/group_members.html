@@ -209,13 +209,13 @@
     <div id="delete_group_modal" class="modal fade">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">  {# todo B5: css:modal-header #}
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css:close #}
+          <div class="modal-header">
             <h4 class="modal-title">
               {% blocktrans with group.name as group_name %}
                 Delete Group "{{group_name}}"?
               {% endblocktrans %}
             </h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
           </div>
           <form name="delete_group" action="{% url "delete_group" domain group.get_id %}" method="post">
             {% csrf_token %}
@@ -241,65 +241,59 @@
     <div class="modal fade" id="editGroupSettings">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">  {# todo B5: css:modal-header #}
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css:close #}
+          <div class="modal-header">
             <h4 class="modal-title">
               {% blocktrans with group.name as group_name %}
                 Edit Settings for Group "{{ group_name }}"
               {% endblocktrans %}
             </h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
           </div>
           <form id="edit-group-settings" class="form form-horizontal" method="post" action="{% url "edit_group" domain group.get_id %}">
             {% csrf_token %}
             <div class="modal-body">
-              <div class="form-group">  {# todo B5: css:form-group #}
-                <label class="form-label col-md-3" for="group-name-input">{% trans "Group Name" %}</label>
-                <div class="col-md-9">
-                  <input type="text" value="{{ group.name }}" class="form-control" name="name" id="group-name-input" />
+              <div class="mb-3">
+                <label class="form-label" for="group-name-input">{% trans "Group Name" %}</label>
+                <input type="text" value="{{ group.name }}" class="form-control" name="name" id="group-name-input" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="group-case-sharing-input">{% trans "Case Sharing" %}</label>
+                <select-toggle params="name: 'case_sharing',
+                                       id: 'group-case-sharing-input',
+                                       options: [
+                                         {
+                                           id: 'true',
+                                           text: '{% trans_html_attr 'On' %}',
+                                         },
+                                         {
+                                           id: 'false',
+                                           text: '{% trans_html_attr 'Off' %}',
+                                         },
+                                       ],
+                                       {% if not is_case_sharing_enabled %}disabled: true,{% endif %}
+                                       value: '{% if group.case_sharing %}true{% else %}false{% endif %}'"></select-toggle>
+                <p class="help-block">{% trans "Determines whether users within this group will share cases with each other." %}</p>
+                {% include 'groups/partials/case_sharing_upgrade_notice.html' %}
+                <div id="group-case-sharing-warning" hidden="true">
+                  <p class="help-block alert alert-warning">
+                    {% trans 'Warning: Case sharing will not work until enabled under application settings. Read more here: ' %}
+                    <a href="https://help.commcarehq.org/display/commcarepublic/Case+Sharing" target="_blank">Case Sharing</a>
+                  </p>
                 </div>
               </div>
-              <div class="form-group">  {# todo B5: css:form-group #}
-                <label class="form-label col-md-3" for="group-case-sharing-input">{% trans "Case Sharing" %}</label>
-                <div class="col-md-9">
-                  <select-toggle params="name: 'case_sharing',
-                                         id: 'group-case-sharing-input',
-                                         options: [
-                                           {
-                                             id: 'true',
-                                             text: '{% trans_html_attr 'On' %}',
-                                           },
-                                           {
-                                             id: 'false',
-                                             text: '{% trans_html_attr 'Off' %}',
-                                           },
-                                         ],
-                                         {% if not is_case_sharing_enabled %}disabled: true,{% endif %}
-                                         value: '{% if group.case_sharing %}true{% else %}false{% endif %}'"></select-toggle>
-                  <p class="help-block">{% trans "Determines whether users within this group will share cases with each other." %}</p>
-                  {% include 'groups/partials/case_sharing_upgrade_notice.html' %}
-                  <div id="group-case-sharing-warning" hidden="true">
-                    <p class="help-block alert alert-warning">
-                      {% trans 'Warning: Case sharing will not work until enabled under application settings. Read more here: ' %}
-                      <a href="https://help.commcarehq.org/display/commcarepublic/Case+Sharing" target="_blank">Case Sharing</a>
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div class="form-group">  {# todo B5: css:form-group #}
-                <label class="form-label col-md-3" for="group-reporting-input">{% trans "Reporting" %}</label>
-                <div class="col-md-6">
-                  <select-toggle params="name: 'reporting',
-                                                       id: 'group-reporting-input',
-                                                       options: [{
-                                                                    id: 'true',
-                                                                    text: '{% trans_html_attr 'On' %}',
-                                                                }, {
-                                                                    id: 'false',
-                                                                    text: '{% trans_html_attr 'Off' %}',
-                                                                }],
-                                                       value: '{% if group.reporting %}true{% else %}false{% endif %}'"></select-toggle>
-                  <p class="help-block">{% trans "Indicate whether this group's name should appear in the group filter for reports." %}</p>
-                </div>
+              <div class="mb-3">
+                <label class="form-label" for="group-reporting-input">{% trans "Reporting" %}</label>
+                <select-toggle params="name: 'reporting',
+                                       id: 'group-reporting-input',
+                                       options: [{
+                                           id: 'true',
+                                           text: '{% trans_html_attr 'On' %}',
+                                         }, {
+                                           id: 'false',
+                                           text: '{% trans_html_attr 'Off' %}',
+                                         }],
+                                       value: '{% if group.reporting %}true{% else %}false{% endif %}'"></select-toggle>
+                <p class="help-block">{% trans "Indicate whether this group's name should appear in the group filter for reports." %}</p>
               </div>
             </div>
             <div class="modal-footer">
@@ -317,13 +311,13 @@
          id="disableCaseSharing">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">  {# todo B5: css:modal-header #}
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css:close #}
+          <div class="modal-header">
             <h4 class="modal-title">
               {% blocktrans with group.name as group_name %}
                 Change Group Type for "{{ group_name }}" to Reporting Group
               {% endblocktrans %}
             </h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
           </div>
           <form id="edit-group-settings"
                 class="form form-horizontal"

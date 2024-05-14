@@ -2,6 +2,7 @@ hqDefine("groups/js/group_members", [
     "jquery",
     "underscore",
     "analytix/js/google",
+    "es6!hqwebapp/js/bootstrap5_loader",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap5/alert_user",
     "hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list",
@@ -11,6 +12,7 @@ hqDefine("groups/js/group_members", [
     $,
     _,
     googleAnalytics,
+    bootstrap,
     initialPageData,
     alertUser,
     uiMapList
@@ -76,7 +78,7 @@ hqDefine("groups/js/group_members", [
                 }
                 $(id).find(':button').enableButton();
                 alertUser.alert_user(message, isSuccess ? 'success' : 'danger');
-                $('#editGroupSettings').modal('hide');  /* todo B5: plugin:modal */
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('editGroupSettings')).hide();
 
                 if (_.isFunction(additionalCallback)) {
                     additionalCallback();
