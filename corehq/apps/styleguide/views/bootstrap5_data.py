@@ -100,9 +100,14 @@ def datatables_data(request):
     })
 
 
+def get_request_dict(request):
+    return request.POST if request.method == 'POST' else request.GET
+
+
 def paginated_table_data(request):
-    page = int(request.POST.get('page'))
-    limit = int(request.POST.get('limit'))
+    request_dict = get_request_dict(request)
+    page = int(request_dict.get('page', 1))
+    limit = int(request_dict.get('limit', 10))
     start = (page - 1) * limit
     fake_data = get_fake_tabular_data(100)
     total = len(fake_data)
