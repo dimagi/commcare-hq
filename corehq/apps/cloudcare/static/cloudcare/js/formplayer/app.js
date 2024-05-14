@@ -9,6 +9,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     'backbone',
     'backbone.marionette',
     'markdown-it/dist/markdown-it',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'analytix/js/appcues',
     'analytix/js/google',
@@ -30,6 +31,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     Backbone,
     Marionette,
     markdowner,
+    bootstrap,
     initialPageData,
     appcues,
     GGAnalytics,
@@ -130,8 +132,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         $('#webforms-nav').html("");
         $('#cloudcare-debugger').html("");
         $('.atwho-container').remove();
-        // todo B5: update to use B5 modal
-        $('#case-detail-modal').modal('hide');
+        bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).hide();
     });
 
     FormplayerFrontend.getChannel().reply('clearMenu', function () {
