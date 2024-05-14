@@ -208,6 +208,13 @@ hqDefine('users/js/roles',[
                 if (self.hasUnpermittedLocationRestriction) {
                     self.permissions.access_all_locations(true);
                 }
+                self.permissions.edit_web_users.subscribe(function (newValue) {
+                    self.permissions.edit_user_tableau_config(newValue);
+                });
+
+                self.permissions.view_web_users.subscribe(function (newValue) {
+                    self.permissions.view_user_tableau_config(newValue);
+                });
                 self.accessAreas = [
                     {
                         showOption: true,
