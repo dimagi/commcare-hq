@@ -757,7 +757,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
 
-    create_item_form_class = "form form-horizontal"
+    create_item_form_class = "form"
 
     def get_user_timezone(self):
         return ZoneInfo(self.request.couch_user.get_time_zone() or 'UTC')
