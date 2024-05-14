@@ -184,6 +184,9 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         return doc.domain
 
     def index(self, doc, refresh=False):
+        """
+        Selectively index docs to multiple ES indexes based on domain.
+        """
         adapter = multiplex_to_adapter(self._get_domain_from_doc(doc))
         if adapter:
             # If we get a valid adapter then we multiplex writes
@@ -194,6 +197,9 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         super().index(doc, refresh=refresh)
 
     def bulk(self, actions, refresh=False, raise_errors=True):
+        """
+        Multiplexes bulk request to appropriate adapters based on domain.
+        """
         payload = []
         for action in actions:
             payload.append(self._render_bulk_action(action))
