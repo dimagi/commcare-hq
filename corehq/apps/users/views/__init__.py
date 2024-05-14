@@ -367,13 +367,13 @@ class BaseEditUserView(BaseUserSettingsView):
                 saved = True
         elif self.request.POST['form_type'] == "update-user":
             if self.update_user():
-                messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
                 saved = True
         elif self.request.POST['form_type'] == "tableau":
             if self.tableau_form and self.tableau_form.is_valid():
                 self.tableau_form.save(self.editable_user.username)
                 saved = True
         if saved:
+            messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
             return HttpResponseRedirect(self.page_url)
         else:
             return self.get(request, *args, **kwargs)
