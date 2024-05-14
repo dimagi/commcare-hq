@@ -121,29 +121,17 @@
       <div role="tabpanel" class="tab-pane" id="membership-tab">
         <div class="card-body">
           {% if request.is_view_only or not can_edit_group_membership or show_disable_case_sharing %}
-            <div class="form form-horizontal">
-              <legend>
-                {% trans "View Group Membership" %}
-              </legend>
-              <div class="form-group">  {# todo B5: css:form-group #}
-                <label class="form-label col-sm-12 col-md-4 col-lg-4 col-xl-2">
-                  {% trans "Group Membership" %}
-                </label>
-                <div class="col-sm-12 col-md-8 col-lg-8 col-xl-6 controls-text">
-                  {% if not group_members %}
-                    {% blocktrans %}
-                      No Mobile Workers are currently assigned to this group.
-                    {% endblocktrans %}
-                  {% else %}
-                    <ul>
-                      {% for member in group_members %}
-                        <li>{{ member.username_in_report }}</li>
-                      {% endfor %}
-                    </ul>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
+            {% if not group_members %}
+              {% blocktrans %}
+                <p>No Mobile Workers are currently assigned to this group.</p>
+              {% endblocktrans %}
+            {% else %}
+              <ul>
+                {% for member in group_members %}
+                  <li>{{ member.username_in_report }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
             {% if not can_edit_group_membership %}
               <div class="alert alert-info">
                 {% blocktrans %}
@@ -163,10 +151,10 @@
                   </p>
                 </div>
 
-                <form class="form-horizontal disable-on-submit"
+                <form class="disable-on-submit"
                       id="edit_membership"
                       action="{% url "update_group_membership" domain group.get_id %}" method='post'>
-                  {% crispy group_membership_form %}  {# todo B5: check crispy #}
+                  {% crispy group_membership_form %}
                 </form>
 
               </div>
@@ -177,38 +165,26 @@
       <div role="tabpanel" class="tab-pane" id="groupdata-tab">
         <div class="card-body">
           {% if request.is_view_only or show_disable_case_sharing %}
-            <div class="form form-horizontal">
-              <legend>
-                {% trans "View Group Data" %}
-              </legend>
-              <div class="form-group">  {# todo B5: css:form-group #}
-                <label class="form-label col-sm-12 col-md-4 col-lg-4 col-xl-2">
-                  {% trans "Group Data" %}
-                </label>
-                <div class="controls-text col-sm-12 col-md-8 col-lg-8 col-xl-6">
-                  {% if not group.metadata %}
-                    {% trans "No Data Provided" %}
-                  {% else %}
-                    <ul>
-                      {% for key, val in group.metadata.items %}
-                        <li>
-                          <strong>{{ key }}</strong>
-                          &rarr;
-                          {{ val }}
-                        </li>
-                      {% endfor %}
-                    </ul>
-                  {% endif %}
-                </div>
-              </div>
+              {% if not group.metadata %}
+                {% trans "No Data Provided" %}
+              {% else %}
+                <ul>
+                  {% for key, val in group.metadata.items %}
+                    <li>
+                      <strong>{{ key }}</strong>
+                      &rarr;
+                      {{ val }}
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
               {% include "groups/partials/edit_group_disabled_case_sharing.html" %}
             </div>
           {% else %}
             <form id="group-data-form" class="form-horizontal disable-on-submit" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
               {% csrf_token %}
               <fieldset>
-                <legend>{% trans "Edit Group Data" %}</legend>
-                <div class="form-group">  {# todo B5: css:form-group #}
+                <div class="mb-3">
                   <label class="form-label col-md-2">
                     {% trans "Group Data" %}
                   </label>
@@ -217,12 +193,9 @@
                   </div>
                 </div>
                 <input name="group-data" id="group-data" type="hidden" value="{% html_attr group.metadata %}">
-                <div class="form-actions">
-                  <div class="col-md-9 offset-md-2">
-                    <button type="submit" class="btn btn-primary">{% trans "Update Group Data" %}</button>
-                  </div>
+                <div class="mb-3">
+                  <button type="submit" class="btn btn-primary">{% trans "Update Group Data" %}</button>
                 </div>
-
               </fieldset>
             </form>
           {% endif %}
