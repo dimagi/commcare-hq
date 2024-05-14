@@ -47,6 +47,7 @@ from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.reports.util import (
     DatatablesPagination,
     DatatablesServerSideParams,
+    HqFilterParams,
 )
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
@@ -301,6 +302,11 @@ class GenericReportView(object):
     @memoized
     def timezone(self):
         return get_timezone(self.request, self.domain)
+
+    @property
+    @memoized
+    def hq_filter_params(self):
+        return HqFilterParams.from_request(self.request)
 
     @property
     @memoized

@@ -570,6 +570,35 @@ class DatatablesServerSideParams:
         return order
 
 
+class HqFilterParams:
+    """These are how we get hq filter values from a request.
+    We need this because Datatables > 1.10 introduces prefixes and suffixes to the
+    keys that can make getting data from the request an inconsistent experience.
+    Please initialize with @classmethod `from_request`
+    """
+    def __init__(self, request_data, is_datatables_format):
+        self.request_data = request_data
+        self.is_datatables_format = is_datatables_format
+
+    @classmethod
+    def from_request(cls, request):
+        data = request.POST if request.method == 'POST' else request.GET
+        is_datatables_format = bool('hq[hq_filters][]' in data)
+        return cls(data, is_datatables_format)
+
+    def _format_key(self, key):
+        if self.is_datatables_format:
+            return f'hq[{key}][]'
+        return key
+
+    def get(self, key, default=None):
+        return self.request_data.get(
+            self._format_key(key),
+            default
+        )
+
+    def getlist(self, key):
+        return self.request_data.getlist(self._format_key(key))
 
 
 # --- Tableau API util methods ---
