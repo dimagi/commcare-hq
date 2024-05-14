@@ -1,6 +1,10 @@
 --- 
 +++ 
-@@ -4,9 +4,9 @@
+@@ -1,12 +1,12 @@
+-{% extends report_base|default:"reports/async/bootstrap3/default.html" %}
++{% extends report_base|default:"reports/async/bootstrap5/default.html" %}
+ 
+ {% load hq_shared_tags %}
  {% load i18n %}
  
  {% block reportcontent %}

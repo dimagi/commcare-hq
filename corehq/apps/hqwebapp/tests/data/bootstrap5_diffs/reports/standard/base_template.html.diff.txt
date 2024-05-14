@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,44 +1,44 @@
+@@ -1,54 +1,54 @@
 -{% extends "hqwebapp/bootstrap3/two_column.html" %}
 +{% extends "hqwebapp/bootstrap5/two_column.html" %}
  {% load compress %}
@@ -57,18 +57,69 @@
    {% endcompress %}
  {% endblock %}
  
-@@ -58,8 +58,8 @@
+ {% block stylesheets %}
+   {{ block.super }}
+   {% compress css %}
+-    <link type="text/less"
++    <link type="text/scss"
+           rel="stylesheet"
+           media="all"
+-          href="{% static 'reports/less/reports.less' %}" />
++          href="{% static 'reports/scss/reports.scss' %}" />
+   {% endcompress %}
+   {% include 'reports/partials/filters_css.html' %}
+ 
+@@ -58,22 +58,33 @@
  {% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
  
  {% block page_breadcrumbs %}
 -  <a href="#" class="btn btn-link btn-invisible visible-xs btn-report-menu" data-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
 -  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
-+  <a href="#" class="btn btn-link btn-invisible d-xs-block btn-report-menu" data-bs-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
-+  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">  {# todo B5: css:breadcrumb #}
-     <li>
-       <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
-     </li>
-@@ -98,17 +98,17 @@
+-    <li>
+-      <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
+-    </li>
+-    {% if report.breadcrumbs %}
+-      {% for crumb in report.breadcrumbs %}
+-        <li>
+-          <a href="{{ crumb.link }}">{{ crumb.title }}</a>
+-        </li>
+-      {% endfor %}
+-    {% endif %}
+-    <li class="active">
+-      {% trans report.title|default:"Untitled Report" %}
+-    </li>
+-  </ol>
++{#  <a href="#"#}
++{#     class="btn btn-link btn-invisible d-xs-block btn-report-menu"#}
++{#     data-bs-toggle="collapse"#}
++{#     data-bs-target="#hq-sidebar"#}
++{#     aria-controls="hq-sidebar"#}
++{#     aria-expanded="false"#}
++{#     aria-label="{% trans "Toggle Section Menu" %}">#}
++{#    <i class="fa fa-bars"></i> {% trans "Reports Menu" %}#}
++{#  </a>#}
++  <nav aria-label="breadcrumb">
++    <ol id="hq-breadcrumbs"
++        class="breadcrumb breadcrumb-hq-section">
++      <li class="breadcrumb-item">
++        <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
++      </li>
++      {% if report.breadcrumbs %}
++        {% for crumb in report.breadcrumbs %}
++          <li class="breadcrumb-item">
++            <a href="{{ crumb.link }}">{{ crumb.title }}</a>
++          </li>
++        {% endfor %}
++      {% endif %}
++      <li class="breadcrumb-item active" aria-current="page">
++        {% trans report.title|default:"Untitled Report" %}
++      </li>
++    </ol>
++  </nav>
+ {% endblock %}
+ 
+ {% block page_content %}
+@@ -98,17 +109,17 @@
    {% initial_page_data 'slug' report.slug %}
  
    {% block filter_panel %}
@@ -90,7 +141,7 @@
                      aria-label="Close"
                      data-bind="click: resetModal"><span aria-hidden="true">&times;</span></button>
              <h4 class="modal-title">
-@@ -120,14 +120,14 @@
+@@ -120,14 +131,14 @@
                {{ datespan.enddate|date:"Y-m-d" }}
              </h4>
            </div>
@@ -103,11 +154,11 @@
  
    {% if report.special_notice %}
 -    <div id="report-special-notice" class="alert alert-info" style="margin-bottom: 2px">
-+    <div id="report-special-notice" class="alert alert-info" style="margin-bottom: 2px">  {# todo B5: inline style #}
++    <div id="report-special-notice" class="alert alert-info mb-2">
        <h4>{% trans 'Notice' %}</h4>
        <p>{{ report.special_notice }}</p>
      </div>
-@@ -137,7 +137,7 @@
+@@ -137,7 +148,7 @@
        {% block reportcontent %}
        {% endblock %}
      {% else %}
