@@ -101,17 +101,16 @@
           {% endblocktrans %}
         </a>
       </div>
-      <hr />
     {% endif %}
 
-    <ul class="nav nav-tabs sticky-tabs" role="tablist" style="margin-bottom: 20px;">  {# todo B5: css:nav, inline style #}
-      <li role="presentation">
-        <a href="#membership-tab" aria-controls="home" role="tab" data-bs-toggle="tab">
+    <ul class="nav nav-tabs sticky-tabs mt-5 mb-3" role="tablist">
+      <li role="presentation" class="nav-item">
+        <a href="#membership-tab" aria-controls="home" role="tab" data-bs-toggle="tab" class="nav-link">
           {% trans "Group Membership" %}
         </a>
       </li>
-      <li role="presentation">
-        <a href="#groupdata-tab" aria-controls="profile" role="tab" data-bs-toggle="tab">
+      <li role="presentation" class="nav-item">
+        <a href="#groupdata-tab" aria-controls="profile" role="tab" data-bs-toggle="tab" class="nav-link">
           {% trans "Group Data" %}
         </a>
       </li>
