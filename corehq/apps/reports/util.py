@@ -491,6 +491,14 @@ def get_tableau_groups_by_ids(interested_group_ids: List, domain: str,
     return _group_json_to_tuples(filtered_group_json)
 
 
+def get_tableau_group_ids_by_names(group_names: List, domain: str,
+                              session: TableauAPISession = None) -> List[str]:
+    session = session or TableauAPISession.create_session_for_domain(domain)
+    group_json = session.query_groups()
+    filtered_group_json = [group for group in group_json if group['name'] in group_names]
+    return [tup.id for tup in _group_json_to_tuples(filtered_group_json)]
+
+
 def get_matching_tableau_users_from_other_domains(user):
     return list(TableauUser.objects.filter(
         username=user.username,
