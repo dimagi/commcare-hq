@@ -34,6 +34,24 @@
  }
  
  .form-container .gr-has-no-nested-questions {
+@@ -64,7 +62,7 @@
+   .btn {
+     width: 100%;
+     font-size: 16px;
+-    .transition(all .5s);
++    transition: all .5s;
+   }
+ }
+ 
+@@ -85,7 +83,7 @@
+ }
+ 
+ .form-group.required {
+-  .transition(all .5s);
++  transition: all .5s;
+   margin-bottom: 0;
+   label:before {
+     display: none;
 @@ -93,8 +91,8 @@
  }
  
@@ -45,7 +63,14 @@
    border-bottom: none;
    label {
      margin-left: 0;
-@@ -110,7 +108,7 @@
+@@ -104,13 +102,13 @@
+ 
+ .form-group-required-label {
+   opacity: 0;
+-  .transition(all .5s);
++  transition: all .5s;
+ }
+ 
  .form-group-required-label.on {
    opacity: 100;
    font-size: 10px;

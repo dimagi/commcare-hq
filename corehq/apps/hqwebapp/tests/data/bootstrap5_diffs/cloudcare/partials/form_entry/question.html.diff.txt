@@ -5,7 +5,7 @@
    <div data-bind="class:questionTileWidth">
    <!-- ko if: !isLabel && !isButton -->
 -  <div class="q form-group" data-bind="
-+  <div class="q form-group" data-bind="  {# todo B5: css:form-group #}
++  <div class="q row" data-bind="
              css: {
                  error: error,
                  required: $data.required,
@@ -58,7 +58,7 @@
    <!-- /ko -->
    <!-- ko if: isLabel -->
 -  <div class="form-group">
-+  <div class="form-group">  {# todo B5: css:form-group #}
++  <div class="row">
      {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
 -    <div class="info col-sm-12" data-bind="
 +    <div class="info col-md-12" data-bind="
@@ -74,7 +74,7 @@
    <!-- ko if: isButton -->
    {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
 -  <div class="q form-group" data-bind="
-+  <div class="q form-group" data-bind="  {# todo B5: css:form-group #}
++  <div class="q row" data-bind="
      css: {
        error: error,
        'text-center': stylesContains('text-align-center'),

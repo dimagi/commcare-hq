@@ -9,10 +9,11 @@
    border: none;
 -  background-color: @cc-brand-low;
 -  min-height: @cloudcare-nav-height;
+-  .transition(1s all);
+-  z-index: @zindex-navbar-cloudcare;
 +  background-color: $cc-brand-low;
 +  min-height: $cloudcare-nav-height;
-   .transition(1s all);
--  z-index: @zindex-navbar-cloudcare;
++  transition: 1s all;
 +  z-index: $zindex-navbar-cloudcare;
  }
  

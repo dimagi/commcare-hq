@@ -242,6 +242,7 @@ hqDefine("cloudcare/js/formplayer/router", [
         // Tags should not be included in set URL. Otherwise, it persists across menus we will need to handle clearing it.
         urlObject.setRequestInitiatedByTag(initiatedByTag);
         let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
+        sessionStorage.removeItem('selectedValues');
         API.listMenus(encodedUrl);
     });
 

@@ -229,6 +229,7 @@ case_search
  0011_domainsnotincasesearchindex
  0012_casesearchconfig_sync_cases_on_form_entry
  0013_casesearchconfig_fuzzy_prefix_length
+ 0014_casesearchconfig_index_name
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
@@ -419,6 +420,9 @@ es
  0006_verify_es2_indices_reindexed
  0007_init_indices_for_fresh_es_5
  0008_add_doc_id_to_all_mappings
+ 0009_add_indices_for_reindex_in_es5
+ 0010_delete_reverted_indices
+ 0011_add_indices_for_es5_reindex
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -1218,6 +1222,7 @@ users
  0061_auto_20240423_0802
  0062_add_web_apps_groups_permission_flag
  0063_rename_location_invitation_primary_location_and_more
+ 0064_add_edit_view_tableau_config_permissions
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
