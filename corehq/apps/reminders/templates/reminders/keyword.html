@@ -8,7 +8,7 @@
 {% block page_content %}
   {% initial_page_data 'current_values' form.current_values %}
   <div id="keywords-form">
-    {% crispy form %}  {# todo B5: check crispy #}
+    {% crispy form %}
   </div>
 
   <script type="text/html" id="ko-template-named-args">
@@ -43,7 +43,7 @@
       </tr>
       </tbody>
     </table>
-    <button class="btn btn-primary float-start"
+    <button class="btn btn-outline-primary"
             type="button"
             data-bind="click: addNamedArg">
       <i class="fa fa-plus"></i> {% trans 'Add Named Answer' %}
