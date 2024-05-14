@@ -35,10 +35,6 @@ from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import (
     spec_value_to_boolean_or_none,
 )
-from corehq.apps.user_importer.validation import (
-    get_user_import_validators,
-    is_password,
-)
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
@@ -419,6 +415,7 @@ class BaseUserRow:
 class CCUserRow(BaseUserRow):
 
     def process(self):
+        from corehq.apps.user_importer.validation import is_password
         if not self._process_column_values():
             return False
 
@@ -493,6 +490,7 @@ class CCUserRow(BaseUserRow):
         return True
 
     def _parse_password(self):
+        from corehq.apps.user_importer.validation import is_password
         if self.row.get('password'):
             password = str(self.row.get('password'))
         elif self.column_values["send_confirmation_sms"]:
@@ -562,6 +560,7 @@ class CCUserRow(BaseUserRow):
         )
 
     def _process_simple_fields(self):
+        from corehq.apps.user_importer.validation import is_password
         cv = self.column_values
         # process password
         if cv["user_id"] and is_password(cv["password"]):
@@ -941,6 +940,7 @@ class DomainInfo:
     @property
     @memoized
     def validators(self):
+        from corehq.apps.user_importer.validation import get_user_import_validators
         roles_by_name = list(self.roles_by_name)
         domain_user_specs = [
             spec
