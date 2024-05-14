@@ -89,7 +89,7 @@ def _ensure_product_rate(monthly_fee, edition, verbose, apps):
 
 
 def _get_software_product(product_name, verbose, apps):
-    # TODO - remove after squashing migrations
+    # SoftwareProduct no longer exists but is retained here to avoid breaking old migrations
     SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
     product = SoftwareProduct(name=product_name, product_type='CommCare')
     try:
