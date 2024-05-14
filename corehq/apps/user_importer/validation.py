@@ -12,6 +12,7 @@ from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.enterprise.models import EnterprisePermissions
+from corehq.apps.reports.const import TABLEAU_ROLES
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.util import normalize_username, raw_username
@@ -40,7 +41,7 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowe
     ]
     if is_web_user_import:
         return validators + [RequiredWebFieldsValidator(domain), DuplicateValidator(domain, 'email', all_specs),
-                             EmailValidator(domain, 'username')]
+                             EmailValidator(domain, 'username'), TableauRoleValidator(domain)]
     else:
         return validators + [
             UsernameValidator(domain),
@@ -130,6 +131,17 @@ class RequiredWebFieldsValidator(ImportValidator):
         role = spec.get('role')
         if not username or not role:
             return self.error_message
+
+
+class TableauRoleValidator(ImportValidator):
+    _error_message = _("Invalid tableau role: '{}'. Please choose one of the following: {}")
+
+    def validate_spec(self, spec):
+        valid_role_options = [option[1] for option in TABLEAU_ROLES]
+        tableau_role = spec.get('tableau_role')
+
+        if tableau_role is not None and tableau_role not in valid_role_options:
+            return self._error_message.format(tableau_role, ', '.join(valid_role_options))
 
 
 class DuplicateValidator(ImportValidator):
