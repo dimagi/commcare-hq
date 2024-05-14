@@ -263,9 +263,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 },
                 update: function (options) {
                     console.log(`children.update: ix=${ options.data.ix }, type= ${ options.data.type }`)
-                    if (options.data.type === constants.GROUP_TYPE && options.data.exists === "false") {
-                        return new AddGroup(options.data, self);
-                    }
                     if (options.target.pendingAnswer &&
                             options.target.pendingAnswer() !== constants.NO_PENDING_ANSWER) {
                         // There is a request in progress, check if the answer has changed since the request
@@ -299,11 +296,16 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 key: function (data) {
                     let key = ko.utils.unwrapObservable(data.uuid);
                     if (key) {
-                        // console.log(`key: ${ key } (uuid)`);
                         return key;
                     }
                     key = ko.utils.unwrapObservable(data.ix);
-                    // console.log(`key: ${ key } (ix)`);
+
+                    const isRepeatDummy = data.type === constants.GROUP_TYPE && data.exists === "false";
+                    if (isRepeatDummy) {
+                        // Without this a key that was previously used by a group would be used by the dummy.
+                        // This causes issues because the template and other fields would not be reset.
+                        key = key.substring(0, key.lastIndexOf('_') + 1) + 'r';
+                    }
                     return key;
                 },
             },

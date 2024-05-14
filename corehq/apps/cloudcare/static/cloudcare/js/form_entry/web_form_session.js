@@ -466,8 +466,8 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
             this.serverRequest(
                 {
                     'action': constants.DELETE_REPEAT,
-                    'ix': repIx,
-                    'form_ix': juncture,
+                    'ix': juncture,
+                    // 'form_ix': juncture,
                 },
                 function (resp) {
                     $.publish('session.reconcile', [resp, repetition]);
