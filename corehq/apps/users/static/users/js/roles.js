@@ -226,7 +226,9 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: null,
                     },
                     {
-                        showOption: self.permissions.view_web_users,
+                        showOption: ko.computed(function () {
+                            return self.permissions.edit_web_users() || self.permissions.view_web_users();
+                        }),
                         editPermission: self.permissions.edit_user_tableau_config,
                         viewPermission: self.permissions.view_user_tableau_config,
                         text: gettext("<strong>Manage Tableau Configuration</strong> &mdash; manage tableau configuration for web users"),
