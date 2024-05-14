@@ -319,14 +319,16 @@ def get_location_from_site_code(site_code, location_cache):
 
 
 def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, primary_location_id=None,
-                                    assigned_location_ids=None, profile=None, user_change_logger=None,
-                                    send_email=True):
+                                    assigned_location_ids=None, profile=None, tableau_role=None,
+                                    tableau_group_ids=None, user_change_logger=None, send_email=True):
     if assigned_location_ids is None:
         assigned_location_ids = []
     invite, invite_created = Invitation.objects.update_or_create(
         email=email,
         domain=domain,
         is_accepted=False,
+        tableau_role=tableau_role,
+        tableau_group_ids=tableau_group_ids,
         defaults={
             'invited_by': upload_user.user_id,
             'invited_on': datetime.utcnow(),
@@ -693,6 +695,8 @@ class WebUserRow(BaseUserRow):
             "data": self.row.get('data', {}),
             "uncategorized_data": self.row.get('uncategorized_data', {}),
             "profile_name": self.row.get('user_profile', None),
+            "tableau_role": self.row.get('tableau_role', None),
+            "tableau_groups": self.row.get('tableau_groups', None),
         }
 
     def process(self):
