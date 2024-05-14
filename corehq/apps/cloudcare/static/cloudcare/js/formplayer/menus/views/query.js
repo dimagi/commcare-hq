@@ -7,6 +7,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     'backbone.marionette',
     'moment',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/tempus_dominus',
     'hqwebapp/js/toggles',
     'analytix/js/kissmetrix',
     'cloudcare/js/markdown',
@@ -18,7 +19,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     'cloudcare/js/formplayer/menus/collections',
     'cloudcare/js/formplayer/utils/utils',
     'hqwebapp/js/bootstrap5/hq.helpers',   // needed for hqHelp
-    'bootstrap-daterangepicker/daterangepicker',  // needed for $.daterangepicker
     'cloudcare/js/formplayer/menus/api',    // needed for app:select:menus
     'select2/dist/js/select2.full.min',
 ], function (
@@ -29,6 +29,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     Marionette,
     moment,
     initialPageData,
+    hqTempusDominus,
     toggles,
     kissmetrics,
     markdown,
@@ -379,7 +380,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             self.model.set('searchForBlank', false);
             sessionStorage.removeItem('geocoderValues');
             if (self.ui.date.length) {
-                self.ui.date.data("DateTimePicker").clear();
+                self.ui.date.data("DateTimePicker").clear();    // todo B5
             }
             self._render();
             FormplayerFrontend.trigger('clearNotifications');
@@ -477,20 +478,23 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             }
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             // todo B5: move to tempus dominus
-            this.ui.dateRange.daterangepicker({
+            //hqTempusDominus.createDateRangePicker(this.ui.dateRange);
+            /*this.ui.dateRange.daterangepicker({
                 locale: {
                     format: dateFormat,
                     separator: separator,
                 },
                 autoUpdateInput: false,
                 "autoApply": true,
-            });
+            });*/
             this.ui.dateRange.attr("placeholder", dateFormat + separator + dateFormat);
             let separatorChars = _.unique(separator).join("");
             this.ui.dateRange.attr("pattern", "^[\\d\\/\\-" + separatorChars + "]*$");
+            // todo B5: replace/remove
             this.ui.dateRange.on('cancel.daterangepicker', function () {
                 $(this).val('').trigger('change');
             });
+            // todo B5: replace/remove
             this.ui.dateRange.on('apply.daterangepicker', function (ev, picker) {
                 $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
             });
