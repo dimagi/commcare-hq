@@ -5,7 +5,7 @@
          },
        "
 -      style="border: 1px solid #ccc; border-radius: 4px;"/>
-+      style="border: 1px solid #ccc; border-radius: 4px;"/>  {# todo B5: inline style #}
++      class="border rounded" />
      </canvas>
    </div>
 -  <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear">

@@ -300,7 +300,7 @@ class GenericReportView(object):
     @memoized
     def template_async_base(self):
         if self.asynchronous:
-            return self.base_template_async or "reports/async/default.html"
+            return self.base_template_async or "reports/async/bootstrap3/default.html"
         return self.template_base
 
     @property
@@ -320,7 +320,7 @@ class GenericReportView(object):
     @property
     @memoized
     def template_filters(self):
-        return self.base_template_filters or "reports/async/filters.html"
+        return self.base_template_filters or "reports/async/bootstrap3/filters.html"
 
     @property
     @memoized
@@ -844,7 +844,7 @@ class GenericTabularReport(GenericReportView):
     sortable = True
 
     # override old class properties
-    report_template_path = "reports/tabular.html"
+    report_template_path = "reports/bootstrap3/tabular.html"
     flush_layout = True
 
     # set to a list of functions that take in a report object

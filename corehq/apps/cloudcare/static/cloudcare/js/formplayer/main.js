@@ -21,7 +21,7 @@ hqDefine("cloudcare/js/formplayer/main", [
             domain: initialPageData.get('domain'),
             formplayer_url: initialPageData.get('formplayer_url'),
             debuggerEnabled: initialPageData.get('debugger_enabled'),
-            singleAppMode: initialPageData.get('single_app_mode'),
+            singleAppMode: false,
             environment: initialPageData.get('environment'),
         };
         FormplayerFrontEnd.start(options);

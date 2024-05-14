@@ -30,6 +30,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, HqPermissions
 from corehq.apps.users.util import normalize_username
+from corehq.toggles import DISABLE_MOBILE_ENDPOINTS
 
 
 def safe_download(f):
@@ -175,14 +176,17 @@ def avoid_parallel_build_request(fn):
     return new_fn
 
 
-def check_redirect(func):
+def check_access_and_redirect(func):
     """
+    If the DISABLE_MOBILE_ENDPOINTS toggle is enabled, return a 503
+    response.
+
     If ``Domain.redirect_url`` is set, return a "302 Found" temporary
     redirect response, so that CommCare Mobile can update an app from
     its new environment.
     """
     @wraps(func)
-    def _check_redirect(request, domain, *args, **kwargs):
+    def wrapped(request, domain, *args, **kwargs):
         domain_obj = Domain.get_by_name(domain)
         if domain_obj.redirect_url:
             if request.GET:
@@ -191,9 +195,19 @@ def check_redirect(func):
                 path = request.path
             url = urljoin(domain_obj.redirect_url, path)
             return HttpResponseRedirect(url)
+
+        # First checking `redirect_url` allows projects to transition
+        # from blocking mobile workers to redirecting them without
+        # allowing form submissions and restores.
+        elif DISABLE_MOBILE_ENDPOINTS.enabled(domain):
+            return HttpResponse(
+                'Service Temporarily Unavailable',
+                content_type='text/plain', status=503,
+            )
+
         else:
             return func(request, domain, *args, **kwargs)
-    return _check_redirect
+    return wrapped
 
 
 def _set_build_in_progress_lock(domain, app_id):

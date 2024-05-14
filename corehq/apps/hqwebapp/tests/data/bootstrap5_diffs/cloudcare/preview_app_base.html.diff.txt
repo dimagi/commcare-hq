@@ -9,15 +9,28 @@
  
  <!DOCTYPE html>
  <html lang="{{ LANGUAGE_CODE }}">
-@@ -12,7 +12,7 @@
+@@ -12,16 +12,16 @@
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta name="HandheldFriendly" content="True">
  
 -  {% include 'hqwebapp/includes/bootstrap3/core_stylesheets.html' %}
 +  {% include 'hqwebapp/includes/bootstrap5/core_stylesheets.html' %}
    {% compress css %}
-     <link type="text/less"
+-    <link type="text/less"
++    <link type="text/scss"
            rel="stylesheet"
+           media="all"
+-          href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+-    <link type="text/less"
++          href="{% static 'cloudcare/scss/font-formplayer.scss' %}" />
++    <link type="text/scss"
+           rel="stylesheet"
+           media="all"
+-          href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
++          href="{% static 'cloudcare/scss/formplayer-common.scss' %}"/>
+   {% endcompress %}
+ 
+   {% if request.use_daterangepicker %}
 @@ -61,8 +61,8 @@
  <body>
  {% block body %}{% endblock %}

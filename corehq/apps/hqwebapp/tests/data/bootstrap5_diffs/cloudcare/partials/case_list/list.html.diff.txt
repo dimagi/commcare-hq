@@ -23,18 +23,26 @@
      </div>
      <% } %>
  
-@@ -26,8 +26,8 @@
+@@ -26,13 +26,11 @@
                 class="form-control"
                 placeholder="Search"
                 id="searchText">
 -        <div class="input-group-btn">
 -          <button class="btn btn-default"
-+        <div class="input-group-btn">  {# todo B5: css:input-group-btn #}
-+          <button class="btn btn-outline-primary"
-                   type="button"
-                   id="case-list-search-button">
-             <i class="fa fa-search" aria-hidden="true"></i>
-@@ -41,30 +41,30 @@
+-                  type="button"
+-                  id="case-list-search-button">
+-            <i class="fa fa-search" aria-hidden="true"></i>
+-          </button>
+-        </div>
++        <button class="btn btn-outline-primary"
++                type="button"
++                id="case-list-search-button">
++          <i class="fa fa-search" aria-hidden="true"></i>
++        </button>
+       </div>
+     </div>
+     <% } %>
+@@ -41,30 +39,30 @@
           class="row row-no-gutters">
        <% if (showMap) { %>
          <div id="module-case-list-map"
@@ -70,7 +78,7 @@
              </div>
            <% }) %>
          <% } %>
-@@ -73,7 +73,7 @@
+@@ -73,7 +71,7 @@
  
      <% if (!hasNoItems) { %>
        {% block pagination_templates %}

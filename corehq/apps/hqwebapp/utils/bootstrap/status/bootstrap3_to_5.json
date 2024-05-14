@@ -27,7 +27,8 @@
     "templates": [
       "change_my_password.html",
       "enable_superuser.html",
-      "my_projects.html"
+      "my_projects.html",
+      "edit_my_account.html"
     ]
   },
   "case_search": {
@@ -42,7 +43,13 @@
     ]
   },
   "hqwebapp": {
-    "in_progress": true
+    "in_progress": true,
+    "templates": [
+      "maintenance_alerts.html",
+      "close_window.html",
+      "crispy/field/multifield.html",
+      "includes/create_item_form.html"
+    ]
   },
   "corehq.tabs": {
     "in_progress": true
@@ -68,10 +75,25 @@
   "casexml": {
     "is_complete": true
   },
+  "groups": {
+    "is_complete": true
+  },
   "programs": {
     "is_complete": true
   },
   "products": {
+    "is_complete": true
+  },
+  "notifications": {
+    "in_progress": true
+  },
+  "reports": {
+    "in_progress": true
+  },
+  "reports_core": {
+    "in_progress": true
+  },
+  "enterprise": {
     "is_complete": true
   }
 }

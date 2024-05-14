@@ -1644,6 +1644,21 @@ DATA_MIGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+
+DISABLE_MOBILE_ENDPOINTS = StaticToggle(
+    'disable_mobile_endpoints',
+    'Disable mobile endpoints for form submissions and restores',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "This flag disables endpoints used by CommCare Mobile to submit forms "
+        "and sync cases, etc. It does NOT block web access. It does NOT "
+        "prevent data changes by case edits, data forwarding, etc. To do "
+        "that, use the DATA_MIGRATION feature flag."
+    )
+)
+
+
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
     'Make the Worker Activity Report use the Groups or Users or Locations filter',
@@ -2561,6 +2576,17 @@ ES_QUERY_PREFERENCE = StaticToggle(
     """
 )
 
+RESTORE_ACCESSIBLE_REPORTS_ONLY = StaticToggle(
+    'restore_accessible_reports_only',
+    'Only restore reports in apps that are accessible to the restoring user',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This is an optimization for web apps restores that limits the number of mobile reports included in the restore
+    based on which apps the user can access.
+    """
+)
+
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
@@ -2816,6 +2842,18 @@ SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM = StaticToggle(
     description='Add support for the Road Network disbursement algorithm for the Geospatial feature',
 )
 
+USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
+    'ush_restore_file_location_case_sync_restriction',
+    'USH: Limit the location-owned cases that show up in a user\'s restore file',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2252210196/Prevent+Syncing+of+Lower+Level+Locations',  # noqa: E501
+    description="""
+    In the 'Organizational Level' section of location management, web admins can specify which org level to
+    expand to when syncing the location-owned cases included in a user's restore file. Limits cases in a user's
+    restore file and thus can improve performance.
+    """
+)
 
 RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
     slug='restrict_data_source_rebuilds',

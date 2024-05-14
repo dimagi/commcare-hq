@@ -1,17 +1,26 @@
 --- 
 +++ 
-@@ -14,8 +14,8 @@
+@@ -10,30 +10,28 @@
+         }
+         ">
+     <!-- Tab title -->
+-    <button class="btn-block debugger-tab-title" tabindex="0"
++    <div class="debugger-tab-title clickable" tabindex="0"
        data-bind="click: toggleState,
          attr: {'aria-label': isMinimized() ? expandAriaLabel : collapseAriaLabel}">
        <span class="sr-only">{% trans "Expand Data Preview Section." %}</span>
 -      <i class="fa-solid fa-xmark pull-right"></i>
 -      <div class="pull-left">
+-        <i class="fa fa-table"></i>
+-        <span class="debugger-title">{% trans "Data Preview" %}</span>
+-      </div>
+-    </button>
 +      <i class="fa-solid fa-xmark float-end"></i>
-+      <div class="float-start">
-         <i class="fa fa-table"></i>
-         <span class="debugger-title">{% trans "Data Preview" %}</span>
-       </div>
-@@ -25,15 +25,15 @@
++      <i class="fa fa-table"></i>
++      <span class="debugger-title">{% trans "Data Preview" %}</span>
++    </div>
+ 
+     <!-- Debugger content -->
      <div data-bind="visible: !isMinimized()" class="debugger-container">
        <!-- navigation tabs -->
  
@@ -30,7 +39,7 @@
                <span class="sr-only">Toggle navigation</span>
                <i class="fa fa-bars"></i> Menu
              </button>
-@@ -41,11 +41,11 @@
+@@ -41,11 +39,11 @@
  
            <!-- Tab links -->
            <div class="collapse navbar-collapse" id="debugger-navbar-collapse">
@@ -44,7 +53,7 @@
                    data-bind="
                                  attr: {
                                      id: $parent.tabs[$data].id,
-@@ -98,7 +98,7 @@
+@@ -98,7 +96,7 @@
    <!--ko if: xPathQuery.isSuccessTruncated() && options.showInFull-->
    <div>
      <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/> {% trans "lines..." %}</em>
@@ -53,7 +62,7 @@
        {% trans "Copy Full Evaluation to Clipboard" %}
      </a>
    </div>
-@@ -111,7 +111,7 @@
+@@ -111,7 +109,7 @@
    <!--ko if: xPathQuery.isTraceTruncated() && options.showInFull-->
    <div>
      <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/> {% trans "lines..." %}</em>
@@ -62,7 +71,7 @@
        {% trans "Copy Full Trace to Clipboard" %}
      </a>
    </div>
-@@ -129,8 +129,8 @@
+@@ -129,8 +127,8 @@
  <script type="text/html" id="debugger-evaluate-template">
    <!--ko with: evalXPath-->
    <form class="form-horizontal" data-bind="submit: onSubmitXPath">
@@ -73,7 +82,7 @@
                  <textarea
                    id="xpath"
                    class="form-control vertical-resize debugger-code at-who-input"
-@@ -141,20 +141,20 @@
+@@ -141,20 +139,20 @@
                    data-bind="value: xpath, event: { mouseup: onMouseUp }" ></textarea>
        </div>
      </div>
@@ -99,7 +108,7 @@
              name: 'debugger-evaluate-result-template',
              data: {xPathQuery: xPathQuery(), options: {showInFull: true}},
              if: xPathQuery()
-@@ -162,7 +162,7 @@
+@@ -162,7 +160,7 @@
      </div>
    </form>
    <div class="row">
@@ -108,16 +117,18 @@
        <h4>{% trans "Recent Queries" %}</h4>
      </div>
    </div>
-@@ -171,7 +171,7 @@
+@@ -170,8 +168,8 @@
+   <div class="table-responsive">
      <table class="table table-striped table-hover">
        <tbody data-bind="foreach: recentXPathQueries">
-       <tr class="query-container" data-bind="click: $parent.onClickSavedQuery">
+-      <tr class="query-container" data-bind="click: $parent.onClickSavedQuery">
 -        <td class="col-sm-1 query-status">
++      <tr class="clickable" data-bind="click: $parent.onClickSavedQuery">
 +        <td class="col-md-1 query-status">
                          <span><i class="fa" data-bind="
                              css: {
                                  'fa-check': success(),
-@@ -181,10 +181,10 @@
+@@ -181,10 +179,10 @@
                              }
                          "></i></span>
          </td>
@@ -130,7 +141,7 @@
                          name: 'debugger-evaluate-result-template',
                          data: {xPathQuery: $data, options: {showInFull: false}}
                      }"></td>
-@@ -195,7 +195,7 @@
+@@ -195,7 +193,7 @@
    <!-- /ko -->
    <!-- ko ifnot: recentXPathQueries().length -->
    <div class="row">
