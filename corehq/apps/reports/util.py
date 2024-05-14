@@ -484,7 +484,7 @@ def _notify_tableau_exception(e, domain):
 
 
 def get_tableau_groups_by_ids(interested_group_ids: List, domain: str,
-                            session: TableauAPISession = None) -> TableauGroupTuple:
+                            session: TableauAPISession = None) -> List[TableauGroupTuple]:
     session = session or TableauAPISession.create_session_for_domain(domain)
     group_json = session.query_groups()
     filtered_group_json = [group for group in group_json if group['id'] in interested_group_ids]

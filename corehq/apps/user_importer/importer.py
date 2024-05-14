@@ -824,8 +824,8 @@ class WebUserRow(BaseUserRow):
             )
 
         if invitation.email_status == InvitationStatus.BOUNCED and invitation.email == username:
-            raise UserUploadError(_("The email has bounced for this user's invite. "
-                                "Please try again with a different username").format(web_user=username))
+            raise UserUploadError(_("The email has bounced for this user's invite: {}. "
+                                "Please try again with a different username").format(username))
 
 
 class WebImporter:
