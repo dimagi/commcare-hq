@@ -88,6 +88,7 @@ class BaseReportFilter(object):
             'css_field_class': self.css_field,
             'help_text': self.help_text,
             'help_style_bubble': self.help_style_bubble,
+            'use_bootstrap5': self.use_bootstrap5,
         })
         filter_context = self.filter_context
         if not (filter_context, dict):
