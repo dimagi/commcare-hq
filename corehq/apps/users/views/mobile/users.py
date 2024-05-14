@@ -1104,6 +1104,7 @@ def get_user_upload_context(domain, request_params, download_url, adjective, plu
     return context
 
 
+@location_safe
 class UploadCommCareUsers(BaseUploadUser):
     template_name = 'hqwebapp/bootstrap3/bulk_upload.html'
     urlname = 'upload_commcare_users'
@@ -1125,6 +1126,7 @@ class UploadCommCareUsers(BaseUploadUser):
         return super(UploadCommCareUsers, self).post(request, *args, **kwargs)
 
 
+@location_safe
 class UserUploadStatusView(BaseManageCommCareUserView):
     urlname = 'user_upload_status'
     page_title = gettext_noop('Mobile Worker Upload Status')
@@ -1147,6 +1149,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@location_safe
 class CommcareUserUploadJobPollView(UserUploadJobPollView):
     urlname = "commcare_user_upload_job_poll"
     on_complete_long = 'Mobile Worker upload has finished'
