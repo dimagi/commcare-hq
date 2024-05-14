@@ -1020,27 +1020,17 @@ class GroupMembershipForm(forms.Form):
     )
 
     def __init__(self, group_api_url, *args, **kwargs):
-        submit_label = kwargs.pop('submit_label', "Update")
-        fieldset_title = kwargs.pop(
-            'fieldset_title', gettext_lazy("Edit Group Membership"))
-
         super(GroupMembershipForm, self).__init__(*args, **kwargs)
         self.fields['selected_ids'].widget.set_url(group_api_url)
 
         self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.label_class = 'form-label'
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                fieldset_title,
-                'selected_ids',
-            ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', submit_label)
-                )
+            crispy.Field('selected_ids'),
+            crispy.ButtonHolder(
+                Submit('submit', _('Update'))
             )
         )
 
