@@ -56,6 +56,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 picker.dates.setValue(picker.dates.picked[0], 1);
             }
         });
+        return picker;
     };
 
     let getDateRangeSeparator = function () {
@@ -96,5 +97,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
         createDateRangePicker: createDateRangePicker,
         createDefaultDateRangePicker: createDefaultDateRangePicker,
         getDateRangeSeparator: getDateRangeSeparator,
+        tempusDominus: tempusDominus,
+        Popper: Popper,
     };
 });

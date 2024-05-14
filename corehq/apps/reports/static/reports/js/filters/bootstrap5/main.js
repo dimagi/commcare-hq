@@ -15,6 +15,7 @@ hqDefine("reports/js/filters/bootstrap5/main", [
     'reports/js/filters/bootstrap5/drilldown_options',
     'reports_core/js/choice_list_utils',
     'reports/js/filters/case_list_explorer',
+    'hqwebapp/js/tempus_dominus',
     'select2/dist/js/select2.full.min',
     'reports/js/filters/case_list_explorer_knockout_bindings',
 ], function (
@@ -31,24 +32,37 @@ hqDefine("reports/js/filters/bootstrap5/main", [
     advancedFormsOptions,
     drilldownOptions,
     choiceListUtils,
-    caseListExplorer
+    caseListExplorer,
+    hqTempusDominus
 ) {
     var init = function () {
         // Datespans
         $('.report-filter-datespan').each(function () {
-            var $filterRange = $(this);
+            let $filterRange = $(this);
             if ($filterRange.data("init")) {
-                var separator = $filterRange.data('separator');
-                var reportLabels = $filterRange.data('reportLabels');
-                var standardHQReport = standardHQReportModule.getStandardHQReport();
+                let separator = $filterRange.data('separator') || " - ",
+                    reportLabels = $filterRange.data('reportLabels'), // todo: support date ranges again
+                    standardHQReport = standardHQReportModule.getStandardHQReport(),
+                    startDate = $filterRange.data('startDate'),
+                    endDate = $filterRange.data('endDate'),
+                    initialValue = '',
+                    picker;
 
-                $filterRange.createDateRangePicker(  /* todo B5: plugin:createDateRangePicker */
-                    reportLabels, separator,
-                    $filterRange.data('startDate'),
-                    $filterRange.data('endDate')
-                );
-                $filterRange.on('change apply', function () {
-                    var dates = $(this).val().split(separator);
+                if (startDate) {
+                    initialValue = startDate;
+                }
+                if (startDate && endDate) {
+                    initialValue = initialValue + separator + endDate;
+                }
+                if (initialValue) {
+                    $filterRange.val(initialValue);
+                }
+                picker = hqTempusDominus.createDateRangePicker($filterRange.get(0), separator);
+                picker.subscribe(hqTempusDominus.tempusDominus.Namespace.events.change, function (e) {
+                    // todo investigate better way of doing this with tempusDominus directly?
+                    let dates = $filterRange.val().split(separator);
+
+                    // todo investigate how to properly send change event to filters so "Apply" button re-activates
                     $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);
                     $('#report_filter_datespan_startdate').val(dates[0]);
                     $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.enddate', dates[1]);
