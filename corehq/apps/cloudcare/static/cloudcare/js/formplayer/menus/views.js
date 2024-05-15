@@ -1008,7 +1008,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.boundHandleScroll = self.handleScroll.bind(self);
             $(window).on('scroll', self.boundHandleScroll);
             if (self.shouldShowScrollButton()) {
-                $('#scroll-to-bottom').show();
+                $('#scroll-to-bottom').removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
             }
         },
 
