@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/bootstrap3/two_column.html' %}
+{% extends 'hqwebapp/bootstrap5/two_column.html' %}
 {% load compress %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
@@ -6,15 +6,15 @@
 
 {% block title %}Edit Config : DHIS2 :: {% endblock %}
 
-{% requirejs_main 'dhis2/js/dhis2_events_config' %}
+{% requirejs_main_b5 'dhis2/js/dhis2_events_config' %}
 
 {% block page_content %}
 {% initial_page_data 'form_configs' form_configs %}
 
 <script type="text/html" id="form-config-template">
   <fieldset>
-    <div class="form-group">
-      <div class="controls col-sm-9 col-md-8 col-lg-6">
+    <div class="form-group">  {# todo B5: css:form-group #}
+      <div class="controls col-md-9 col-lg-8 col-xl-6">
         <textarea name="formConfigs"
                   class="jsonwidget form-control"
                   required=""
@@ -42,8 +42,8 @@
   </p>
 
   <div class="form-actions">
-    <div class="col-sm-offset-3 col-md-offset-2
-                controls col-sm-9 col-md-8 col-lg-6">
+    <div class="offset-md-3 offset-lg-2
+                controls col-md-9 col-lg-8 col-xl-6">
       <button type="submit"
               class="btn btn-primary">
         {% trans "Save Changes" %}
