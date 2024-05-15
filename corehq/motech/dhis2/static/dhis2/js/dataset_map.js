@@ -2,8 +2,8 @@ hqDefine("dhis2/js/dataset_map", [
     "jquery",
     "underscore",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/bootstrap3/crud_paginated_list_init",
-    "hqwebapp/js/bootstrap3/widgets",
+    "hqwebapp/js/bootstrap5/crud_paginated_list_init",
+    "hqwebapp/js/bootstrap5/widgets",
 ], function (
     $,
     _,
