@@ -1231,14 +1231,16 @@ class BaseUploadUser(BaseUserSettingsView):
     def post(self, request, *args, **kwargs):
         """View's dispatch method automatically calls this"""
         try:
-            workbook = get_workbook(request.FILES.get('bulk_upload_file'))
+            workbook = get_workbook(request.FILES.get("bulk_upload_file"))
             user_specs, group_specs = self.process_workbook(workbook)
-            task_ref = BaseUploadUser.upload_users(
+            task_ref = self.upload_users(
                 request, user_specs, group_specs, self.domain, self.is_web_upload)
             return self.get_success_response(request, task_ref)
         except WorkbookJSONError as e:
             messages.error(request, str(e))
             return self.get(request, *args, **kwargs)
+        except WorksheetNotFound:
+            return HttpResponseBadRequest("Workbook has no worksheets")
         except UserUploadError as e:
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
@@ -1246,15 +1248,15 @@ class BaseUploadUser(BaseUserSettingsView):
     @staticmethod
     def process_workbook(workbook):
         try:
-            user_specs = workbook.get_worksheet(title='users')
+            user_specs = workbook.get_worksheet(title="users")
         except WorksheetNotFound:
             try:
                 user_specs = workbook.get_worksheet()
-            except WorksheetNotFound:
-                raise UserUploadError("Workbook has no worksheets")
+            except WorksheetNotFound as e:
+                raise WorksheetNotFound("Workbook has no worksheets") from e
 
         try:
-            group_specs = workbook.get_worksheet(title='groups')
+            group_specs = workbook.get_worksheet(title="groups")
         except WorksheetNotFound:
             group_specs = []
 

@@ -1690,13 +1690,11 @@ def link_connectid_user(request, domain):
 @api_auth()
 def bulk_user_upload_api(request, domain):
     try:
-        workbook = get_workbook(request.FILES.get('bulk_upload_file'))
+        workbook = get_workbook(request.FILES.get("bulk_upload_file"))
         user_specs, group_specs = BaseUploadUser.process_workbook(workbook)
-        task_ref = BaseUploadUser.upload_users(request, user_specs, group_specs, domain, is_web_upload=False)
-        return json_response({"success": True, "task_id": task_ref.download_id})
-    except WorkbookJSONError as e:
-        return json_response({"success": False, "message": str(e)}, status_code=400)
-    except UserUploadError as e:
-        return json_response({"success": False, "message": str(e)}, status_code=400)
+        BaseUploadUser.upload_users(request, user_specs, group_specs, domain, is_web_upload=False)
+        return json_response({"success": True})
+    except (WorkbookJSONError, WorksheetNotFound, UserUploadError) as e:
+        return json_response({"success": False, "message": _(str(e))}, status_code=400)
     except Exception as e:
         return json_response({"success": False, "message": str(e)}, status_code=500)
