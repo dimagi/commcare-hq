@@ -1162,14 +1162,15 @@ def _bulk_location_upload_api(request, domain):
     except WorkbookJSONError as e:
         raise LocationBulkImportError(str(e))
 
-    file_ref = None
-
     try:
         file_ref = LocationImportView.cache_file(request, domain, upload_file)
         if not isinstance(file_ref, LocationImportView.Ref):
             raise LocationBulkImportInProgressException(_("Importing your data. This may take some time..."))
     except Exception as e:
-        raise LocationBulkImportError(f"file_ref type is: {file_ref.__class__}" + str(e))
+        import traceback
+        exception_type = type(e).__name__
+        stack_trace = traceback.format_exc()
+        raise LocationBulkImportError(f"Exception type: {exception_type}\nStack trace:\n{stack_trace}")
 
     file_ref = file_ref.value
     task = import_locations_async.delay(domain, file_ref.download_id, request.couch_user.user_id)
