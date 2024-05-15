@@ -114,6 +114,7 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class DataSetMapJsonCreateView(BaseProjectSettingsView):
@@ -132,6 +133,7 @@ class DataSetMapJsonCreateView(BaseProjectSettingsView):
         return JsonResponse({'success': _('DataSet map updated successfully.')})
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class DataSetMapJsonEditView(BaseProjectSettingsView):
