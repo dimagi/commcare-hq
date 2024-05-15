@@ -37,6 +37,7 @@ from .repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from .tasks import send_dataset
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
