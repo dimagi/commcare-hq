@@ -90,6 +90,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
     repeater_form_class = GenericRepeaterForm
     template_name = 'repeaters/add_form_repeater.html'
 
+    @use_bootstrap5
     @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING))
     def dispatch(self, request, *args, **kwargs):
@@ -195,6 +196,7 @@ class AddRepeaterView(BaseRepeaterView):
         )
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EditRepeaterView(BaseRepeaterView):
     urlname = 'edit_repeater'
     template_name = 'repeaters/add_form_repeater.html'
