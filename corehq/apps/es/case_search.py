@@ -179,6 +179,8 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         `doc` can be CommcCareCase instance or dict. This util method extracts domain from doc.
         This will fail hard if domain is not present in doc.
         """
+        if not doc:
+            return None
         if isinstance(doc, dict):
             return doc["domain"]
         return doc.domain
