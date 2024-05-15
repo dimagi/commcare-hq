@@ -399,6 +399,7 @@ def config_dhis2_repeater(request, domain, repeater_id):
     })
 
 
+@use_bootstrap5
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
 def config_dhis2_entity_repeater(request, domain, repeater_id):
