@@ -232,6 +232,7 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
     empty_notification = _('This DataSet Map has no DataValue Maps')
     loading_message = _('Loading DataValue Maps')
 
+    @use_bootstrap5
     @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator())
     def dispatch(self, request, *args, **kwargs):
