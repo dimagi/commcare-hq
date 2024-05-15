@@ -4,6 +4,8 @@ import time
 
 from django.conf import settings
 
+from corehq.apps.es.case_search import multiplex_to_adapter
+from corehq.apps.es.const import HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
 from pillowtop.exceptions import BulkDocException, PillowtopIndexingError
 from pillowtop.logger import pillow_logging
 from pillowtop.utils import (
@@ -109,7 +111,11 @@ class ElasticProcessor(PillowProcessor):
                 data=doc,
             )
 
-    def _delete_doc_if_exists(self, doc_id):
+    def _delete_doc_if_exists(self, doc_id, domain=None):
+        if self.adapter.canonical_name == HQ_CASE_SEARCH_INDEX_CANONICAL_NAME:
+            index_adapter = multiplex_to_adapter(domain)
+            if index_adapter:
+                send_to_elasticsearch(doc_id=doc_id, adapter=index_adapter, name='ElasticProcessor', delete=True)
         send_to_elasticsearch(
             doc_id=doc_id,
             adapter=self.adapter,
