@@ -525,7 +525,9 @@ class CCUserRow(BaseUserRow):
             "profile_name": self.row.get('user_profile', None),
             "web_user_username": self.row.get('web_user'),
             "phone_numbers": self.row.get('phone-number', []) if 'phone-number' in self.row else None,
-            "deactivate_after": self.row.get('deactivate_after', None)
+            "deactivate_after": self.row.get('deactivate_after', None),
+            "tableau_role": self.row.get('tableau_role', None),
+            "tableau_groups": self.row.get('tableau_groups', None),
         }
 
         for v in ['is_active', 'is_account_confirmed', 'send_confirmation_email',
@@ -661,9 +663,9 @@ class CCUserRow(BaseUserRow):
                     if cv["profile_name"]:
                         _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
                         profile = self.domain_info.profiles_by_name[cv["profile_name"]]
+                    tableau_role = cv["tableau_role"]
                     tableau_group_ids = None
-                    tableau_role = cv["tableau_role"] if "tableau_role" in cv else None
-                    if "tableau_groups" in cv and cv["tableau_groups"] is not None:
+                    if cv["tableau_groups"] is not None:
                         tableau_group_ids = get_tableau_group_ids_by_names(cv["tableau_groups"], self.domain)
                     create_or_update_web_user_invite(
                         web_user_username, self.domain, role_qualified_id, self.importer.upload_user,
@@ -748,9 +750,9 @@ class WebUserRow(BaseUserRow):
                 if self.column_values["profile_name"]:
                     _check_profile(self.column_values["profile_name"], self.domain_info.profiles_by_name)
                     profile = self.domain_info.profiles_by_name[self.column_values["profile_name"]]
-                tableau_role = self.column_values["tableau_role"] if "tableau_role" in self.column_values else None
+                tableau_role = self.column_values["tableau_role"]
                 tableau_group_ids = None
-                if "tableau_groups" in self.column_values and self.column_values["tableau_groups"] is not None:
+                if self.column_values["tableau_groups"] is not None:
                     tableau_group_ids = get_tableau_group_ids_by_names(
                         self.column_values["tableau_groups"],
                         self.domain
