@@ -371,6 +371,7 @@ def send_dataset_now(request, domain, pk):
     return JsonResponse(result, status=result['status_code'] or 500)
 
 
+@use_bootstrap5
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
 def config_dhis2_repeater(request, domain, repeater_id):
