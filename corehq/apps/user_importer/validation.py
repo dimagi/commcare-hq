@@ -407,6 +407,7 @@ class LocationAccessValidator(ImportValidator):
         # 1. Get current locations for user or user invitation and ensure user can edit it
         username = spec.get('username')
         current_locs = []
+        editable_user = None
         if self.is_web_user_import:
             try:
                 invitation = Invitation.objects.get(domain=self.domain, email=username, is_accepted=False)
@@ -416,7 +417,7 @@ class LocationAccessValidator(ImportValidator):
             except Invitation.DoesNotExist:
                 editable_user = CouchUser.get_by_username(username, strict=True)
         else:
-            if 'username' in spec:
+            if username:
                 editable_user = CouchUser.get_by_username(username, strict=True)
             elif 'user_id' in spec:
                 editable_user = CouchUser.get_by_user_id(spec.get('user_id'))
