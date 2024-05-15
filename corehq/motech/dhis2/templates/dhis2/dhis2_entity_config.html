@@ -1,4 +1,4 @@
-{% extends 'hqwebapp/bootstrap3/two_column.html' %}
+{% extends 'hqwebapp/bootstrap5/two_column.html' %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
@@ -6,24 +6,24 @@
 
 {% block title %}{% trans "Edit Configuration" %}{% endblock %}
 
-{% requirejs_main 'dhis2/js/dhis2_entity_config' %}
+{% requirejs_main_b5 'dhis2/js/dhis2_entity_config' %}
 
 {% block page_content %}
 {% initial_page_data 'case_configs' case_configs %}
 
 <script type="text/html" id="case-config-template">
     <fieldset>
-        <div class="col-sm-8">&nbsp;</div>
-        <div class="col-sm-4">
+        <div class="col-md-8">&nbsp;</div>
+        <div class="col-md-4">
             <button type="button"
-                    class="btn btn-danger"
+                    class="btn btn-outline-danger"
                     data-bind="click: $root.removeCaseConfig">{% trans "Remove" %}</button>
         </div>
-        <div class="form-group">
-            <label class="control-label col-sm-3 col-md-2 requiredField">
+        <div class="form-group">  {# todo B5: css:form-group #}
+            <label class="form-label col-md-3 col-lg-2 requiredField">
                 {% trans "Case config" %}<span class="asteriskField">*</span>
             </label>
-            <div class="controls col-sm-9 col-md-8 col-lg-6">
+            <div class="controls col-md-9 col-lg-8 col-xl-6">
                 <textarea name="oCaseConfig"
                           class="jsonwidget form-control"
                           required=""
@@ -57,7 +57,7 @@
     </p>
 
     <div class="form-actions">
-        <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
+        <div class="offset-md-3 offset-lg-2 controls col-md-9 col-lg-8 col-xl-6">
             <button type="submit" class="btn btn-primary">{% trans "Update DHIS2 Tracked Entity configuration" %}</button>
         </div>
     </div>
