@@ -3,6 +3,8 @@
 import corehq.apps.es.migration_operations
 from django.db import migrations
 
+from corehq.apps.es.utils import index_runtime_name
+
 
 class Migration(migrations.Migration):
 
@@ -12,7 +14,7 @@ class Migration(migrations.Migration):
 
     operations = [
         corehq.apps.es.migration_operations.CreateIndex(
-            name='case-search-bha-2024-05-10',
+            name=index_runtime_name('case-search-bha-2024-05-10'),
             type_='case',
             mapping={
                 '_all': {'enabled': False},
