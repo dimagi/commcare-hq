@@ -70,7 +70,7 @@ class ElasticProcessor(PillowProcessor):
 
         if change.deleted and change.id:
             doc = change.get_document()
-            domain = doc.get('domain')
+            domain = doc.get('domain') if doc else None
             if doc and doc.get('doc_type'):
                 logger.info(
                     f'[process_change] Attempting to delete doc {change.id}')
