@@ -1154,7 +1154,7 @@ def bulk_location_upload_api(request, domain, **kwargs):
 
 
 def _bulk_location_upload_api(request, domain):
-    upload_file = request.FILES["file"]
+    upload_file = request.FILES.get("file")
     if not upload_file:
         raise LocationBulkImportError(_("no file uploaded"))
 
