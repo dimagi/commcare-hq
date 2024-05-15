@@ -69,19 +69,19 @@
     <td class="col-lg-2">
 
       <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
-        data-bind="enable: !upstream_id || $root.unlockLinkedData(), attr: {'data-target': '#' + deleteModalId}">
+        data-bind="enable: !upstream_id || $root.unlockLinkedData(), attr: {'data-bs-target': '#' + deleteModalId}">
          <i class="fa fa-remove"></i> {% trans 'Delete' %}</a>
       </button>
       <div class="modal fade" data-bind="attr: {id: deleteModalId}">
         <div class="modal-dialog">
           <div class="modal-content">
-            <div class="modal-header">  {# todo B5: css:modal-header #}
-              <a class="btn-close" data-bs-dismiss="modal">&times;</a>  {# todo B5: css:close #}
+            <div class="modal-header">
               <h4>
                 {% blocktrans %}
                   Delete the keyword '<span data-bind="text: keyword"></span>'.
                 {% endblocktrans %}
               </h4>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
             </div>
             <div class="modal-body">
               <p>
