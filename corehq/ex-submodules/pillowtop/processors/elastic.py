@@ -70,12 +70,13 @@ class ElasticProcessor(PillowProcessor):
 
         if change.deleted and change.id:
             doc = change.get_document()
+            domain = doc.get('domain')
             if doc and doc.get('doc_type'):
                 logger.info(
                     f'[process_change] Attempting to delete doc {change.id}')
                 current_meta = get_doc_meta_object_from_document(doc)
                 if current_meta.is_deletion:
-                    self._delete_doc_if_exists(change.id)
+                    self._delete_doc_if_exists(change.id, domain=domain)
                     logger.info(
                         f"[process_change] Deleted doc {change.id}")
                 else:
@@ -83,7 +84,7 @@ class ElasticProcessor(PillowProcessor):
                         f"[process_change] Not deleting doc {change.id} "
                         "because current_meta.is_deletion is false")
             else:
-                self._delete_doc_if_exists(change.id)
+                self._delete_doc_if_exists(change.id, domain=domain)
                 logger.info(
                     f"[process_change] Deleted doc {change.id}")
             return
@@ -99,7 +100,7 @@ class ElasticProcessor(PillowProcessor):
                 return
 
             if doc.get('doc_type') is not None and doc['doc_type'].endswith("-Deleted"):
-                self._delete_doc_if_exists(change.id)
+                self._delete_doc_if_exists(change.id, domain=doc.get('domain'))
                 return
 
         # send it across
