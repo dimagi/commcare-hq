@@ -348,7 +348,7 @@ def execute_workflow(session: FormplayerSession, workflow):
 
 
 def execute_step(session, step):
-    if step and (children := step.get_children()):
+    if children := step.get_children():
         for child in children:
             session.execute_step(child)
     else:
