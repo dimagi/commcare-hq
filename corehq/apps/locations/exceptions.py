@@ -10,7 +10,3 @@ class LocationConsistencyError(Exception):
 
 class LocationBulkImportError(Exception):
     pass
-
-
-class LocationBulkImportInProgressException(Exception):
-    pass

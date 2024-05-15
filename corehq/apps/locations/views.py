@@ -50,7 +50,7 @@ from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
-from .exceptions import LocationConsistencyError, LocationBulkImportError, LocationBulkImportInProgressException
+from .exceptions import LocationConsistencyError, LocationBulkImportError
 from .forms import (
     LocationFilterForm,
     LocationFormSet,
@@ -106,7 +106,11 @@ def lock_locations(func):
                 # handle delete_location view
                 return json_response({'success': False, 'message': message})
             else:
-                return HttpResponseRedirect(request.META['HTTP_REFERER'])
+                referer = request.META.get('HTTP_REFERER')
+                if referer:
+                    return HttpResponseRedirect(referer)
+                else:
+                    return json_response({'success': False, 'message': message})
 
     return func_wrapper
 
@@ -1140,16 +1144,13 @@ def count_locations(request, domain):
 @api_auth()
 def bulk_location_upload_api(request, domain, **kwargs):
     try:
-        _bulk_location_upload_api(request, domain)
-        return json_response({"code": 200, "message": "success"})
-    except LocationBulkImportInProgressException as e:
-        return json_response({'code': 202, 'message': str(e)}, status_code=202)
+        return _bulk_location_upload_api(request, domain)
     except LocationBulkImportError as e:
         error = str(e)
     except Exception as e:
         error = str(e)
 
-    return json_response({'code': 500, 'message': error}, status_code=500)
+    return json_response({'success': False, 'message': error}, status_code=500)
 
 
 def _bulk_location_upload_api(request, domain):
@@ -1162,16 +1163,12 @@ def _bulk_location_upload_api(request, domain):
     except WorkbookJSONError as e:
         raise LocationBulkImportError(str(e))
 
-    try:
-        file_ref = LocationImportView.cache_file(request, domain, upload_file)
-        if not isinstance(file_ref, LocationImportView.Ref):
-            raise LocationBulkImportInProgressException(_("Importing your data. This may take some time..."))
-    except Exception as e:
-        import traceback
-        exception_type = type(e).__name__
-        stack_trace = traceback.format_exc()
-        raise LocationBulkImportError(f"Exception type: {exception_type}\nStack trace:\n{stack_trace}")
+    file_ref = LocationImportView.cache_file(request, domain, upload_file)
+    if not isinstance(file_ref, LocationImportView.Ref):
+        return file_ref
 
     file_ref = file_ref.value
     task = import_locations_async.delay(domain, file_ref.download_id, request.couch_user.user_id)
     file_ref.set_task(task)
+
+    return json_response({"success": True})
