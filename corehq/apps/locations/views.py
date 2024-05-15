@@ -1162,6 +1162,8 @@ def _bulk_location_upload_api(request, domain):
     except WorkbookJSONError as e:
         raise LocationBulkImportError(str(e))
 
+    file_ref = None
+
     try:
         file_ref = LocationImportView.cache_file(request, domain, upload_file)
         if not isinstance(file_ref, LocationImportView.Ref):
