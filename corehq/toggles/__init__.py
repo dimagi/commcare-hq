@@ -1166,6 +1166,14 @@ EXPLORE_CASE_DATA = StaticToggle(
     'This will be deprecated once the Feature Preview is in full swing.',
 )
 
+SAAS_PROTOTYPE = StaticToggle(
+    'saas_prototype',
+    'Use allowed to view SaaS prototypes',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+    description='Use this for rapid prototypes developed by the SaaS product team.',
+)
+
 ECD_MIGRATED_DOMAINS = StaticToggle(
     'ecd_migrated_domains',
     'Explore Case Data for domains that have undergone migration',
