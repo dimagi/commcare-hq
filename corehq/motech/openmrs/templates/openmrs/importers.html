@@ -1,10 +1,10 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% block title %}OpenMRS Importers{% endblock %}
 
-{% requirejs_main 'openmrs/js/openmrs_importers' %}
+{% requirejs_main_b5 'openmrs/js/openmrs_importers' %}
 
 {% block page_content %}
 
@@ -35,11 +35,11 @@
   </p>
 
   <div class="form-actions">
-    <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
+    <div class="offset-md-3 offset-lg-2 controls col-md-9 col-lg-8 col-xl-6">
       <button class="btn btn-primary" type="submit">
         {% trans "Update OpenMRS Importers" %}
       </button>
-      <button class="btn btn-default"
+      <button class="btn btn-outline-primary"
               type="button"
               data-bind="click: importNow">
         {% trans "Import Now" %}
