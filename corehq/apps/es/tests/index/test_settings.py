@@ -198,6 +198,10 @@ class TestConstantValues(SimpleTestCase):
                     IndexTuningKey.REPLICAS: 0,
                     IndexTuningKey.SHARDS: 2,
                 },
+                IndexSettingsKey.CASE_SEARCH_BHA: {
+                    IndexTuningKey.REPLICAS: 1,
+                    IndexTuningKey.SHARDS: 2,
+                }
             },
             DEFAULT_TUNING_SETTINGS,
         )
