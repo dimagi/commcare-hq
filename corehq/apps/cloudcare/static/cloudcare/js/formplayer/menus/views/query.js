@@ -824,25 +824,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             urlObject.setRequestInitiatedByTag(initiatedByTag);
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
-                // Update models based on response
-                if (response.queryResponse) {
-                    _.each(response.queryResponse.displays, function (responseModel, i) {
-                        self._getChildModels()[i].set({
-                            error: responseModel.error,
-                            required: responseModel.required,
-                            required_msg: responseModel.required_msg,
-                        });
-                    });
-                } else {
-                    _.each(response.models, function (responseModel, i) {
-                        const childModels = self._getChildModels();
-                        childModels[i].set({
-                            error: responseModel.get('error'),
-                            required: responseModel.get('required'),
-                            required_msg: responseModel.get('required_msg'),
-                        });
-                    });
-                }
+                self.updateModels(response);
                 promise.resolve(response);
 
             });
@@ -870,6 +852,29 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 FormplayerFrontend.trigger('showError', errorHTML, true, false);
             }
             return invalidFields;
+        },
+
+        updateModels: function (response) {
+            var self = this;
+            // Update models based on response
+            if (response.queryResponse) {
+                _.each(response.queryResponse.displays, function (responseModel, i) {
+                    self._getChildModels()[i].set({
+                        error: responseModel.error,
+                        required: responseModel.required,
+                        required_msg: responseModel.required_msg,
+                    });
+                });
+            } else {
+                _.each(response.models, function (responseModel, i) {
+                    const childModels = self._getChildModels();
+                    childModels[i].set({
+                        error: responseModel.get('error'),
+                        required: responseModel.get('required'),
+                        required_msg: responseModel.get('required_msg'),
+                    });
+                });
+            }
         },
 
         setStickyQueryInputs: function () {
