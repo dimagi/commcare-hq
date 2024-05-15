@@ -4,19 +4,19 @@
     <fieldset>
         <legend>{% trans "OpenMRS Importer" %}</legend>
 
-        <div class="col-sm-8">&nbsp;</div>
-        <div class="col-sm-4">
+        <div class="col-md-8">&nbsp;</div>
+        <div class="col-md-4">
             <button type="button"
-                    class="btn btn-danger"
+                    class="btn btn-outline-danger"
                     data-bind="click: $root.removeOpenmrsImporter">{% trans "Remove" %}</button>
         </div>
 
         {% for field in form %}
-        <div class="form-group">
-            <label class="control-label col-sm-3 col-md-2{% if field.field.required %} requiredField{% endif %}">
+        <div class="form-group">  {# todo B5: css:form-group #}
+            <label class="form-label col-md-3 col-lg-2{% if field.field.required %} requiredField{% endif %}">
                 {{ field.label }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
             </label>
-            <div class="controls col-sm-9 col-md-8 col-lg-6">
+            <div class="controls col-md-9 col-lg-8 col-xl-6">
                 {% if field.field.widget.input_type == 'select' %}
                 <select name="{{ field.html_name }}"
                         class="select form-control"
