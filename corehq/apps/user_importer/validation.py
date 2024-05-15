@@ -13,6 +13,7 @@ from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.reports.const import TABLEAU_ROLES
+from corehq.apps.reports.util import get_allowed_tableau_groups_for_domain
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.util import normalize_username, raw_username
@@ -41,7 +42,8 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowe
     ]
     if is_web_user_import:
         return validators + [RequiredWebFieldsValidator(domain), DuplicateValidator(domain, 'email', all_specs),
-                             EmailValidator(domain, 'username'), TableauRoleValidator(domain)]
+                             EmailValidator(domain, 'username'), TableauRoleValidator(domain),
+                             TableauGroupsValidator(domain)]
     else:
         return validators + [
             UsernameValidator(domain),
@@ -136,12 +138,31 @@ class RequiredWebFieldsValidator(ImportValidator):
 class TableauRoleValidator(ImportValidator):
     _error_message = _("Invalid tableau role: '{}'. Please choose one of the following: {}")
 
-    def validate_spec(self, spec):
-        valid_role_options = [option[1] for option in TABLEAU_ROLES]
-        tableau_role = spec.get('tableau_role')
+    def __init__(self, domain):
+        super().__init__(domain)
+        self.valid_role_options = [option[1] for option in TABLEAU_ROLES]
 
-        if tableau_role is not None and tableau_role not in valid_role_options:
-            return self._error_message.format(tableau_role, ', '.join(valid_role_options))
+    def validate_spec(self, spec):
+        tableau_role = spec.get('tableau_role')
+        if tableau_role is not None and tableau_role not in self.valid_role_options:
+            return self._error_message.format(tableau_role, ', '.join(self.valid_role_options))
+
+
+class TableauGroupsValidator(ImportValidator):
+    _error_message = _("These groups, {}, are not valid for this domain. Please choose one of the following: {}")
+
+    def __init__(self, domain):
+        super().__init__(domain)
+        self.allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(self.domain)
+
+    def validate_spec(self, spec):
+        tableau_groups = spec.get('tableau_groups').split(',')
+        invalid_groups = []
+        for group in tableau_groups:
+            if group not in self.allowed_groups_for_domain:
+                invalid_groups.append(group)
+        if invalid_groups:
+            return self._error_message.format(', '.join(invalid_groups), ', '.join(self.allowed_groups_for_domain))
 
 
 class DuplicateValidator(ImportValidator):
