@@ -1146,11 +1146,11 @@ def bulk_location_upload_api(request, domain, **kwargs):
     try:
         return _bulk_location_upload_api(request, domain)
     except LocationBulkImportError as e:
-        error = str(e)
+        error, status_code = str(e), 400
     except Exception as e:
-        error = str(e)
+        error, status_code = str(e), 500
 
-    return json_response({'success': False, 'message': error}, status_code=500)
+    return json_response({'success': False, 'message': error}, status_code=status_code)
 
 
 def _bulk_location_upload_api(request, domain):
