@@ -796,34 +796,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         validateAllFields: function () {
             var self = this;
             var promise = $.Deferred();
-            var invalidFields = [];
             var updatingModels = self.updateModelsForValidation || self._updateModelsForValidation();
 
             $.when(updatingModels).done(function (response) {
-                // Gather error messages
-                self._getChildren().forEach(function (childView) {
-                    if (!childView.isValid()) {
-                        invalidFields.push(childView.model.get('text'));
-                    }
-                });
-
-                // Display error messages
-                FormplayerFrontend.trigger('clearNotifications');
-                if (invalidFields.length) {
-                    var errorHTML = gettext("Please check the following fields:");
-                    errorHTML += "<ul>" + _.map(invalidFields, function (f) {
-                        return "<li>" + DOMPurify.sanitize(f) + "</li>";
-                    }).join("") + "</ul>";
-                    FormplayerFrontend.trigger('showError', errorHTML, true, false);
-                }
-
+                var invalidFields = self.displayErrors();
                 if (invalidFields.length) {
                     promise.reject(response);
                 } else {
                     promise.resolve(response);
                 }
             });
-
             return promise;
         },
 
@@ -866,6 +848,28 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             });
             sessionStorage.validationInProgress = false;
             return promise;
+        },
+
+        displayErrors: function () {
+            var self = this;
+            // Gather error messages
+            var invalidFields = [];
+            self._getChildren().forEach(function (childView) {
+                if (!childView.isValid()) {
+                    invalidFields.push(childView.model.get('text'));
+                }
+            });
+
+            // Display error messages
+            FormplayerFrontend.trigger('clearNotifications');
+            if (invalidFields.length) {
+                var errorHTML = gettext("Please check the following fields:");
+                errorHTML += "<ul>" + _.map(invalidFields, function (f) {
+                    return "<li>" + DOMPurify.sanitize(f) + "</li>";
+                }).join("") + "</ul>";
+                FormplayerFrontend.trigger('showError', errorHTML, true, false);
+            }
+            return invalidFields;
         },
 
         setStickyQueryInputs: function () {
