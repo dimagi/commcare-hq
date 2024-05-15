@@ -15,6 +15,7 @@ from dimagi.utils.web import json_response
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
@@ -40,6 +41,7 @@ from corehq.motech.repeaters.views import AddCaseRepeaterView, EditRepeaterView
 from corehq.motech.utils import b64_aes_encrypt
 
 
+@use_bootstrap5
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
 def config_openmrs_repeater(request, domain, repeater_id):
