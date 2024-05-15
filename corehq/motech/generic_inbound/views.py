@@ -47,6 +47,7 @@ def can_administer_generic_inbound(view_fn):
     )
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(can_administer_generic_inbound, name='dispatch')
 class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("Inbound API Configurations")
