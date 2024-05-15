@@ -339,7 +339,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const $spinnerElement = $iconButton.find('i');
             $moduleIcon.css('display', 'none');
             $iconButton.addClass('disabled');
-            $spinnerElement.css('display', '');
+            $spinnerElement.removeClass("d-none");
 
             const currentUrlToObject = formplayerUtils.currentUrlToObject();
             currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
@@ -349,7 +349,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             function resetIcon() {
                 $moduleIcon.css('display', '');
                 $iconButton.removeClass('disabled');
-                $spinnerElement.css('display', 'none');
+                $spinnerElement.addClass("d-none");
             }
 
             $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {

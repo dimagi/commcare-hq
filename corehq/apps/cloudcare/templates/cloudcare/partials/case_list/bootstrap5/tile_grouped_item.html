@@ -13,7 +13,7 @@
           if(resolveUri(datum)) { %>
             <button class="clickable-icon">
               <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" />
-              <i class="fa fa-spin fa-spinner" style="display:none"></i>  {# todo B5: inline style #}
+              <i class="fa fa-spin fa-spinner d-none"></i>
             </button>
           <% } %>
           <% } else if (styles[index].displayFormat === 'Image') {
@@ -21,7 +21,7 @@
             <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
           <% } %>
           <% } else if(styles[index].widthHint === 0) { %>
-            <div style="display:none;"><%- datum %></div>  {# todo B5: inline style #}
+            <div class="d-none"><%- datum %></div>
           <% } else { %>
             <div class="webapp-markdown-output"><%= renderMarkdown(datum) %></div>
           <% } %>
@@ -43,7 +43,7 @@
                 if(resolveUri(datum)) { %>
                   <button class="clickable-icon">
                     <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" />
-                    <i class="fa fa-spin fa-spinner" style="display:none"></i>  {# todo B5: inline style #}
+                    <i class="fa fa-spin fa-spinner d-none"></i>
                   </button>
                 <% } %>
               <% } else { %>
