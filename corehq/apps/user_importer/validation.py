@@ -149,7 +149,7 @@ class TableauRoleValidator(ImportValidator):
 
 
 class TableauGroupsValidator(ImportValidator):
-    _error_message = _("These groups, {}, are not valid for this domain. Please choose one of the following: {}")
+    _error_message = _("These groups, {}, are not valid for this domain. Please choose from the following: {}")
 
     def __init__(self, domain):
         super().__init__(domain)
