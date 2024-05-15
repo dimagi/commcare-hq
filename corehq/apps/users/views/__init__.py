@@ -1153,7 +1153,7 @@ class InviteWebUserView(BaseManageWebUserView):
         return self.get(request, *args, **kwargs)
 
 
-class BaseUploadUser(BaseUserSettingsView):
+class BaseUploadUser2(BaseUserSettingsView):
     def post(self, request, *args, **kwargs):
         """View's dispatch method automatically calls this"""
         try:
@@ -1210,6 +1210,90 @@ class BaseUploadUser(BaseUserSettingsView):
                 self.is_web_upload
             )
         task_ref.set_task(task)
+        if self.is_web_upload:
+            return HttpResponseRedirect(
+                reverse(
+                    WebUserUploadStatusView.urlname,
+                    args=[self.domain, task_ref.download_id]
+                )
+            )
+        else:
+            from corehq.apps.users.views.mobile import UserUploadStatusView
+            return HttpResponseRedirect(
+                reverse(
+                    UserUploadStatusView.urlname,
+                    args=[self.domain, task_ref.download_id]
+                )
+            )
+
+
+class BaseUploadUser(BaseUserSettingsView):
+    def post(self, request, *args, **kwargs):
+        """View's dispatch method automatically calls this"""
+        try:
+            workbook = get_workbook(request.FILES.get('bulk_upload_file'))
+            user_specs, group_specs = self.process_workbook(workbook)
+            task_ref = BaseUploadUser.upload_users(
+                request, user_specs, group_specs, self.domain, self.is_web_upload)
+            return self.get_success_response(request, task_ref)
+        except WorkbookJSONError as e:
+            messages.error(request, str(e))
+            return self.get(request, *args, **kwargs)
+        except UserUploadError as e:
+            messages.error(request, _(str(e)))
+            return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+    @staticmethod
+    def process_workbook(workbook):
+        try:
+            user_specs = workbook.get_worksheet(title='users')
+        except WorksheetNotFound:
+            try:
+                user_specs = workbook.get_worksheet()
+            except WorksheetNotFound:
+                raise UserUploadError("Workbook has no worksheets")
+
+        try:
+            group_specs = workbook.get_worksheet(title='groups')
+        except WorksheetNotFound:
+            group_specs = []
+
+        return user_specs, group_specs
+
+    @staticmethod
+    def upload_users(request, user_specs, group_specs, domain, is_web_upload):
+        task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
+
+        if PARALLEL_USER_IMPORTS.enabled(domain) and not is_web_upload:
+            if list(group_specs):
+                raise UserUploadError(
+                    "Groups are not allowed with parallel user import. Please upload them separately")
+
+            task = parallel_user_import.delay(
+                domain,
+                list(user_specs),
+                request.couch_user.user_id
+            )
+        else:
+            upload_record = UserUploadRecord(
+                domain=domain,
+                user_id=request.couch_user.user_id
+            )
+            upload_record.save()
+
+            task = import_users_and_groups.delay(
+                domain,
+                list(user_specs),
+                list(group_specs),
+                request.couch_user.user_id,
+                upload_record.pk,
+                is_web_upload
+            )
+
+        task_ref.set_task(task)
+        return task_ref
+
+    def get_success_response(self, request, task_ref):
         if self.is_web_upload:
             return HttpResponseRedirect(
                 reverse(

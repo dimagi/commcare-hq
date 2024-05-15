@@ -79,6 +79,7 @@ from .views.mobile.users import (
     CommcareUserUploadJobPollView,
     ClearCommCareUsers,
     link_connectid_user,
+    bulk_user_upload_api,
 )
 from ..hqwebapp.decorators import waf_allow
 
@@ -194,6 +195,11 @@ urlpatterns = [
         r'^commcare/upload/$',
         waf_allow('XSS_BODY')(UploadCommCareUsers.as_view()),
         name=UploadCommCareUsers.urlname
+    ),
+    url(
+        r'^commcare/upload/bulk_user_upload_api/$',
+        bulk_user_upload_api,
+        name='bulk_user_upload_api'
     ),
     url(
         r'^commcare/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
