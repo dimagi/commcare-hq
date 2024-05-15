@@ -137,7 +137,7 @@ class QueryStep(Step):
     """Search inputs dict. Keys are field names and values are search values."""
 
     validate_inputs: bool = False
-    """Simulate a use updating search inputs on the UI. One request per update."""
+    """Simulate updating search inputs on the UI. One request per update."""
 
     def get_children(self):
         children = []
