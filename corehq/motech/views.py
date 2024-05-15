@@ -18,6 +18,7 @@ from requests import RequestException
 from corehq import privileges
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -71,6 +72,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
         return self.get_queryset()
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 class MotechLogDetailView(BaseProjectSettingsView, DetailView):
     urlname = 'motech_log_detail_view'
