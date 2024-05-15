@@ -22,13 +22,7 @@ $group-indent: 15px;
   }
 
   .form-actions {
-    margin: 30px 0 0 0;
-    &.form-group {
-      margin-left: -$form-text-indent;
-      margin-right: -$form-text-indent;
-    }
-
-    background-color: var(--bsprimary-bg-subtle);
+    margin: 30px -$form-text-indent 0 -$form-text-indent;
 
     .submit .btn {
       font-size: 20px;

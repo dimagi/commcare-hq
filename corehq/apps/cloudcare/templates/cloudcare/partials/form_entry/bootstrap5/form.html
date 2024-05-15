@@ -11,7 +11,7 @@
           css: { 'form-single-question': showInFormNavigation },
       ">
 
-    <div class="page-header">  {# todo B5: css:page-header #}
+    <div class="page-header">
       <h1 class="title" data-bind="text: title, visible: !showInFormNavigation()"></h1>
     </div>
 
@@ -42,7 +42,7 @@
           </div>
         </div>
       {% endif %}
-      <div id="submit-button" class="form-actions form-group noprint-sub-container"  {# todo B5: css:form-group #}
+      <div id="submit-button" class="form-actions noprint-sub-container"
            data-bind="
               visible: showSubmitButton,
               css: { 'sticky-submit': isAnchoredSubmitStyle },
