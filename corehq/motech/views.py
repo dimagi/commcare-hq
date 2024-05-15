@@ -187,6 +187,7 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
     page_title = _('Connection Settings')
     template_name = 'motech/connection_settings.html'
 
+    @use_bootstrap5
     @method_decorator(require_permission(HqPermissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
         if has_privilege(request, privileges.DATA_FORWARDING):
