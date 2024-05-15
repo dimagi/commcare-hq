@@ -50,8 +50,7 @@ def _ensure_role(role_slug, apps):
         role = Role.objects.get(slug=role_slug)
     except Role.DoesNotExist:
         log_accounting_error(
-            "Could not find the role '%s'. Did you forget to run cchq_prbac_bootstrap?"
-            % role_slug
+            f"Could not find the role '{role_slug}'. Did you forget to run cchq_prbac_bootstrap?"
         )
         log_accounting_error("Aborting. You should figure this out.")
         raise
@@ -67,24 +66,22 @@ def _ensure_product_rate(monthly_fee, edition, verbose, apps):
 
     SoftwareProductRate = apps.get_model('accounting', 'SoftwareProductRate')
 
-    product_name = 'CommCare %s' % edition
+    product_name = f"CommCare {edition}"
     if edition == SoftwarePlanEdition.ENTERPRISE:
-        product_name = "Dimagi Only %s" % product_name
+        product_name = f"Dimagi Only {product_name}"
 
     product_rate = SoftwareProductRate(monthly_fee=monthly_fee)
     try:
         product = _get_software_product(product_name, verbose, apps)
         product_rate.product = product
-        if verbose:
-            log_accounting_info("Corresponding product rate of $%d created." % product_rate.monthly_fee)
-
     except LookupError:
         product = None
         product_rate.name = product_name
-        if verbose:
-            log_accounting_info("Corresponding product rate of $%d created." % product_rate.monthly_fee)
 
     product_rate.save()
+    if verbose:
+        log_accounting_info(f"Corresponding product rate of {product_rate.monthly_fee} created.")
+
     return product, product_rate
 
 
@@ -96,12 +93,11 @@ def _get_software_product(product_name, verbose, apps):
         product = SoftwareProduct.objects.get(name=product.name)
         if verbose:
             log_accounting_info(
-                "Product '%s' already exists. Using existing product to add rate."
-                % product.name
+                f"Product '{product.name}' already exists. Using existing product to add rate."
             )
     except SoftwareProduct.DoesNotExist:
         if verbose:
-            log_accounting_info("Creating Product: %s" % product)
+            log_accounting_info(f"Creating Product: {product}")
         product.save()
     return product
 
@@ -113,7 +109,7 @@ def _ensure_features(edition, verbose, apps):
     Feature = apps.get_model('accounting', 'Feature')
 
     if verbose:
-        log_accounting_info('Ensuring Features for plan: %s' % edition)
+        log_accounting_info(f"Ensuring Features for plan: {edition}")
 
     features = []
     for feature_type in FEATURE_TYPES:
@@ -121,20 +117,19 @@ def _ensure_features(edition, verbose, apps):
         if feature_type == FeatureType.WEB_USER:
             feature = Feature(name=feature_type, feature_type=feature_type)
         else:
-            feature = Feature(name='%s %s' % (feature_type, edition), feature_type=feature_type)
+            feature = Feature(name=f"{feature_type} {edition}", feature_type=feature_type)
             if edition == SoftwarePlanEdition.ENTERPRISE:
-                feature.name = "Dimagi Only %s" % feature.name
+                feature.name = f"Dimagi Only {feature.name}"
         try:
             feature = Feature.objects.get(name=feature.name)
             if verbose:
                 log_accounting_info(
-                    "Feature '%s' already exists. Using existing feature to add rate."
-                    % feature.name
+                    f"Feature '{feature.name}' already exists. Using existing feature to add rate."
                 )
         except Feature.DoesNotExist:
             feature.save()
             if verbose:
-                log_accounting_info("Creating Feature: %s" % feature)
+                log_accounting_info(f"Creating Feature: {feature}")
         features.append(feature)
     return features
 
@@ -158,7 +153,7 @@ def _ensure_feature_rates(feature_rates, features, edition, verbose, apps):
             continue
         feature_rate.feature = feature
         if verbose:
-            log_accounting_info("Creating rate for feature '%s': %s" % (feature.name, feature_rate))
+            log_accounting_info(f"Creating rate for feature '{feature.name}': {feature_rate}")
         db_feature_rates.append(feature_rate)
     return db_feature_rates
 
@@ -170,7 +165,7 @@ def _ensure_software_plan(plan_key, product, product_rate, verbose, apps):
         software_plan = SoftwarePlan.objects.get(name=plan_name)
         if verbose:
             log_accounting_info(
-                "Plan '%s' already exists. Using existing plan to add version." % software_plan.name
+                f"Plan '{software_plan.name}' already exists. Using existing plan to add version."
             )
     except SoftwarePlan.DoesNotExist:
         plan_opts = {
@@ -183,18 +178,18 @@ def _ensure_software_plan(plan_key, product, product_rate, verbose, apps):
             plan_opts['is_annual_plan'] = plan_key.is_annual_plan
         software_plan = SoftwarePlan.objects.create(**plan_opts)
         if verbose:
-            log_accounting_info("Creating Software Plan: %s" % software_plan.name)
+            log_accounting_info(f"Creating Software Plan: {software_plan.name}")
     return software_plan
 
 
 def _software_plan_name(plan_key, product, product_rate):
     plan_name = (
-        (('%s Trial' % product_rate.name) if plan_key.is_trial else ('%s Edition' % product_rate.name))
+        (f"{product_rate.name} Trial" if plan_key.is_trial else f"{product_rate.name} Edition")
         if product is None else product.name)
     if plan_key.is_annual_plan:
-        plan_name = '%s - Pay Annually' % plan_name
+        plan_name = f"{plan_name} - Pay Annually"
     if plan_key.is_report_builder_enabled:
-        plan_name = '%s - Report Builder (5 Reports)' % plan_name
+        plan_name = f"{plan_name} - Report Builder (5 Reports)"
     return plan_name
 
 
@@ -225,8 +220,9 @@ def _ensure_default_product_plan(plan_key, software_plan, verbose, apps):
         default_product_plan = DefaultProductPlan.objects.get(**plan_opts)
         if verbose:
             log_accounting_info(
-                "Default for edition '%s' with is_trial='%s' already exists."
-                % (default_product_plan.edition, plan_key.is_trial)
+                f"Default for edition '{default_product_plan.edition}' "
+                f"with is_trial='{plan_key.is_trial}' "
+                f"and is_annual_plan='{plan_key.is_annual_plan}' already exists."
             )
     except DefaultProductPlan.DoesNotExist:
         default_product_plan = DefaultProductPlan(**plan_opts)
@@ -235,8 +231,9 @@ def _ensure_default_product_plan(plan_key, software_plan, verbose, apps):
         default_product_plan.save()
         if verbose:
             log_accounting_info(
-                "Setting plan as default for edition '%s' with is_trial='%s'."
-                % (default_product_plan.edition, plan_key.is_trial)
+                f"Setting plan as default for edition '{default_product_plan.edition}' "
+                f"with is_trial='{plan_key.is_trial}' "
+                f"and is_annual_plan='{plan_key.is_annual_plan}'."
             )
     return default_product_plan
 
