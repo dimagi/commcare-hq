@@ -37,6 +37,7 @@ class Http409(Http400):
     message = "Resource is in use."
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 class MotechLogListView(BaseProjectSettingsView, ListView):
     urlname = 'motech_log_list_view'
