@@ -3,6 +3,7 @@
 <script type="text/html" id="signature-entry-ko-template">
   <div data-bind="attr: { id: entryId + '-wrapper' }">
     <canvas data-bind="
+        css: { 'is-invalid': $parent.hasError() },
         attr: {
             id: entryId + '-canvas',
             'aria-required': $parent.required() ? 'true' : 'false',
@@ -14,7 +15,7 @@
   <button class="btn btn-outline-primary btn-sm float-end" data-bind="click: onClear">
     {% trans "Clear" %}
   </button>
-  <input type="file" class="hidden" data-bind="
+  <input type="file" class="d-none" data-bind="
       value: $data.rawAnswer,
       attr: {
           id: entryId,

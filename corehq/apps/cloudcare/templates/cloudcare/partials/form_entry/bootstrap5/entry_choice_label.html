@@ -12,6 +12,7 @@
                     id: 'group-' + $parent.entryId + '-choice-' + $index(),
                     'aria-labelledby': $parent.entryId + '-choice-' + $index() + '-sr',
                     name: $parent.entryId,
+                    css: { 'is-invalid': $root.hasError() },
                     class: 'group-' + $parent.entryId,
                 }
             "/>
