@@ -1543,6 +1543,16 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         )
 
     @property
+    def renewal_choices(self):
+        edition = self.subscription.plan_version.plan.edition
+        monthly_plan = DefaultProductPlan.get_default_plan_version(
+            edition=edition, is_annual_plan=False)
+        annual_plan = DefaultProductPlan.get_default_plan_version(
+            edition=edition, is_annual_plan=True)
+        return {'monthly_plan': monthly_plan.user_facing_description,
+                'annual_plan': annual_plan.user_facing_description}
+
+    @property
     def page_context(self):
         context = super(SubscriptionRenewalView, self).page_context
 
@@ -1560,6 +1570,13 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
             'tile_css': 'tile-{}'.format(current_edition.lower()),
             'is_renewal_page': True,
         })
+
+        from corehq.toggles import SELF_SERVICE_ANNUAL_RENEWALS
+        if SELF_SERVICE_ANNUAL_RENEWALS.enabled_for_request(self.request):
+            context.update({
+                'renewal_choices': self.renewal_choices,
+                'is_annual_plan': self.subscription.plan_version.plan.is_annual_plan,
+            })
         return context
 
 
