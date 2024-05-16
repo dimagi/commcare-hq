@@ -1821,5 +1821,7 @@ class TableauUserForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def save(self, username, commit=True):
+        if not self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config'):
+            raise forms.ValidationError(_("You do not have permission to edit Tableau Configuraion."))
         groups = [self.allowed_tableau_groups[int(i)] for i in self.cleaned_data['groups']]
         update_tableau_user(self.domain, username, self.cleaned_data['role'], groups)
