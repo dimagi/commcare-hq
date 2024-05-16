@@ -1,0 +1,29 @@
+@media screen and (max-width: map-get($container-max-widths, "sm")) {
+  .row-offcanvas {
+    position: relative;
+  }
+
+  .sidebar-offcanvas {
+    display: none;
+  }
+
+  .row-offcanvas-left {
+    left: 0;
+  }
+
+  .row-offcanvas-left.active {
+    .sidebar-offcanvas {
+      display: block;
+    }
+  }
+}
+
+.btn-report-menu {
+  float: left;
+  margin-right: 13px;
+  background: none;
+  font-size: 14px;
+  font-weight: bold;
+  padding-top: 5px;
+  border-right: 1px solid #eeeeee;
+}

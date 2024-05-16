@@ -1,12 +1,16 @@
 --- 
 +++ 
-@@ -1,4 +1,4 @@
+@@ -1,6 +1,7 @@
 -hqDefine("reports/js/bootstrap3/reports.async", function () {
++'use strict';
++
 +hqDefine("reports/js/bootstrap5/reports.async", function () {
      return function (o) {
-         'use strict';
+-        'use strict';
          var self = {};
-@@ -35,7 +35,7 @@
+         self.reportContent = $('#report-content');
+         self.filterForm = o.filterForm || $('#paramSelectorForm');
+@@ -35,11 +36,11 @@
              self.filterRequest = null;
              try {
                  $('#hq-report-filters').html(data.filters);
@@ -15,7 +19,12 @@
              } catch (e) {
                  console.log(e);
              }
-@@ -63,7 +63,7 @@
+-            $('#reportFiltersAccordion').removeClass('hide');
++            $('#reportFiltersAccordion').removeClass('d-none');
+             self.standardReport.resetFilterState();
+         };
+ 
+@@ -63,7 +64,7 @@
                      var url = window.location.href.replace(self.standardReport.urlRoot,
                          self.standardReport.urlRoot + 'async/') + "?" + "&" + params;
                      if (url.length > self.maxInputLimit) {
@@ -24,7 +33,20 @@
                      } else {
                          self.getQueryId(params, false, true, pathName);
                      }
-@@ -151,7 +151,7 @@
+@@ -135,9 +136,9 @@
+                 processFilters = processFilters + "&filterSet=" + setFilters;
+             }
+             if (setFilters) {
+-                $(self.standardReport.exportReportButton).removeClass('hide');
+-                $(self.standardReport.emailReportButton).removeClass('hide');
+-                $(self.standardReport.printReportButton).removeClass('hide');
++                $(self.standardReport.exportReportButton).removeClass('d-none');
++                $(self.standardReport.emailReportButton).removeClass('d-none');
++                $(self.standardReport.printReportButton).removeClass('d-none');
+             }
+ 
+             self.reportRequest = $.ajax({
+@@ -151,7 +152,7 @@
                      }
                      self.issueAttempts = 0;
                      if ($('loadingIssueModal').hasClass('show')) {
@@ -33,30 +55,43 @@
                      }
                      self.hqLoading = $(self.loaderClass);
                      self.reportContent.html(data.report);
-@@ -174,7 +174,7 @@
+@@ -161,10 +162,10 @@
+                         $(popover).remove();
+                     });
+                     self.reportContent.append(self.hqLoading);
+-                    self.hqLoading.removeClass('hide');
++                    self.hqLoading.removeClass('d-none');
+ 
+                     // Assorted UI cleanup/initialization
+-                    $('.hq-report-time-notice').removeClass('hide');
++                    $('.hq-report-time-notice').removeClass('d-none');
+                     if ($.timeago) {
+                         $(".timeago").timeago();
+                     }
+@@ -174,7 +175,7 @@
  
                      if (!initialLoad || !self.standardReport.needsFilters) {
                          self.standardReport.filterSubmitButton
 -                            .button('reset');
-+                            .button('reset');  /* todo B5: plugin:button */
++                            .changeButtonState('standard');
                          setTimeout(function () {
                              // Bootstrap clears all btn styles except btn on reset
                              // This gets around it by waiting 10ms.
-@@ -186,7 +186,7 @@
+@@ -186,7 +187,7 @@
                          }, 10);
                      } else {
                          self.standardReport.filterSubmitButton
 -                            .button('reset')
-+                            .button('reset')  /* todo B5: plugin:button */
++                            .changeButtonState('standard')
                              .addClass('btn-primary')
                              .removeClass('disabled')
                              .prop('disabled', false);
-@@ -205,10 +205,10 @@
+@@ -205,10 +206,10 @@
                          self.loadingIssueModal.find('.report-error-status').html('<strong>' + data.status + '</strong> ' +
                              ((humanReadable) ? humanReadable : ""));
                          if (self.issueAttempts > 0) {
 -                            self.loadingIssueModal.find('.btn-primary').button('fail');
-+                            self.loadingIssueModal.find('.btn-primary').button('fail');  /* todo B5: plugin:button */
++                            self.loadingIssueModal.find('.btn-primary').changeButtonState('fail');
                          }
                          self.issueAttempts += 1;
 -                        self.loadingIssueModal.modal('show');
@@ -64,21 +99,21 @@
                      } else {
                          self.hqLoading = $(self.loaderClass);
                          self.hqLoading.find('h4').text(gettext("Loading Stopped"));
-@@ -216,7 +216,7 @@
+@@ -216,7 +217,7 @@
                      }
                  },
                  beforeSend: function () {
 -                    self.standardReport.filterSubmitButton.button('loading');
-+                    self.standardReport.filterSubmitButton.button('loading');  /* todo B5: plugin:button */
++                    self.standardReport.filterSubmitButton.changeButtonState('loading');
                      $('.loading-backdrop').fadeIn();
                      if (self.hqLoading) {
                          self.hqLoading.attr('style', 'position: absolute; top: 30px; left: 40%;');
-@@ -228,7 +228,7 @@
+@@ -228,7 +229,7 @@
          };
  
          $(document).on('click', '.try-again', function () {
 -            self.loadingIssueModal.find('.btn-primary').button('loading');
-+            self.loadingIssueModal.find('.btn-primary').button('loading');  /* todo B5: plugin:button */
++            self.loadingIssueModal.find('.btn-primary').changeButtonState('loading');
              if (self.isCaseListRelated(window.location.pathname)) {
                  self.getQueryId(window.location.search.substr(1), true, true, window.location.pathname);
              } else {

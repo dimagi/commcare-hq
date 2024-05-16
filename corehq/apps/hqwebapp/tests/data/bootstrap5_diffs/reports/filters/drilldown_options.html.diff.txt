@@ -14,7 +14,7 @@
           data-drilldown-map='{% html_attr option_map %}'
           data-controls='{% html_attr controls %}'
           data-selected='{{ selected|JSON }}'
-@@ -13,11 +13,11 @@
+@@ -13,11 +13,12 @@
           data-is-empty='{{ is_empty|JSON }}'
           data-css-id='{{ css_id }}'>
        <div data-bind="foreach: controls">
@@ -24,13 +24,14 @@
 -          <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: label"
 -                 class="control-label col-xs-4 col-md-2"></label>
 -          <div class="col-xs-8 col-md-10">
-+          <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: badge"
-+                 class="form-label col-sm-4 col-lg-2"></label>
++          {# todo fix, commented out to avoid knockout binding error #}
++{#          <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: badge"#}
++{#                 class="form-label col-sm-4 col-lg-2"></label>#}
 +          <div class="col-sm-8 col-lg-10">
              <select  class="form-control" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
                  options: control_options, optionsText: 'text', optionsValue: 'val', optionsCaption: default_text,
                  value: selected,
-@@ -25,11 +25,11 @@
+@@ -25,11 +26,11 @@
            </div>
          </div>
          {% if use_last %}

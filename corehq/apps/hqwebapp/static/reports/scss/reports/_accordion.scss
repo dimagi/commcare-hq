@@ -1,0 +1,8 @@
+.report-accordion-header {
+  padding: $spacer;
+}
+
+.report-accordion-collapse.in {
+  border-bottom: 1px solid $border-color;
+  border-radius: 0 !important;
+}

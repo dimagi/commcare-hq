@@ -10,6 +10,7 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import (
     get_all_javascript_paths_for_app,
     get_split_paths,
     get_short_path,
+    get_bootstrap5_path,
 )
 from corehq.apps.hqwebapp.utils.management_commands import (
     get_confirmation,
@@ -142,7 +143,7 @@ class Command(BaseCommand):
                 f"You specified '{filename}', which appears to be a Bootstrap 3 path!\n"
                 f"This file cannot be marked as complete with this tool.\n\n"
             ))
-            filename = filename.replace('/bootstrap3/', '/bootstrap5/')
+            filename = get_bootstrap5_path(filename)
             confirm = get_confirmation(f"Did you mean '{filename}'?")
             if not confirm:
                 self.stdout.write("Ok, aborting operation.\n\n")

@@ -16,13 +16,22 @@ table.dataTable.table-hq-report {
     color: $white;
     white-space: nowrap;
 
+    &.sorting_asc,
+    &.sorting_desc {
+      background-color: $blue-600;
+    }
+
     &:nth-child(odd) {
       background-color: $blue-700;
+      &.sorting_asc,
+      &.sorting_desc {
+        background-color: $blue-500;
+      }
     }
 
     &.dtfc-fixed-left,
     &.dtfc-fixed-right {
-      background-color: $blue !important;
+      background-color: $purple !important;
     }
 
     &.sorting_asc::before,
@@ -47,6 +56,19 @@ table.dataTable.table-hq-report {
       background-color: $gray-100;
     }
   }
+
+  tbody tr td[class^="sorting_"] {
+    background-color: $gray-200;
+    &:nth-child(odd) {
+      background-color: lighten($gray-200, 5%);
+    }
+  }
+}
+
+
+.table-hq-report tfoot tr td {
+  background-color: $blue-800;
+  color: $white;
 }
 
 .dtfc-right-top-blocker:last-child {

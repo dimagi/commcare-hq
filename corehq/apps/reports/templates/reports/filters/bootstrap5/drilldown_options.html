@@ -15,8 +15,9 @@
       <div data-bind="foreach: controls">
         <div class="form-group"  {# todo B5: css:form-group #}
              data-bind="visible: is_visible">
-          <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: badge"
-                 class="form-label col-sm-4 col-lg-2"></label>
+          {# todo fix, commented out to avoid knockout binding error #}
+{#          <label data-bind="attr: {for: '{{ css_id }}_'+slug}, text: badge"#}
+{#                 class="form-label col-sm-4 col-lg-2"></label>#}
           <div class="col-sm-8 col-lg-10">
             <select  class="form-control" data-bind="attr: {id: '{{ css_id }}_'+slug, name: '{{ slug }}_'+slug},
                 options: control_options, optionsText: 'text', optionsValue: 'val', optionsCaption: default_text,

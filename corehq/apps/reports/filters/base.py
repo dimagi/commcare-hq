@@ -5,7 +5,14 @@ from django.utils.translation import gettext_noop
 import pytz
 from memoized import memoized
 
-from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS, CSS_LABEL_CLASS
+from corehq.apps.hqwebapp.crispy import (
+    CSS_FIELD_CLASS,
+    CSS_LABEL_CLASS,
+    CSS_REPORT_LABEL_CLASS_BOOTSTRAP5,
+    CSS_REPORT_FIELD_CLASS_BOOTSTRAP5,
+)
+from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
+from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 
 
 class BaseReportFilter(object):
@@ -24,8 +31,9 @@ class BaseReportFilter(object):
     is_cacheable = False
     help_style_bubble = False
 
-    def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None,
-                 css_label=None, css_field=None):
+    def __init__(self, request, domain=None, timezone=pytz.utc,
+                 parent_report=None, css_label=None, css_field=None,
+                 use_bootstrap5=False):
         self.domain = domain
         if self.slug is None:
             raise NotImplementedError("slug is required")
@@ -35,9 +43,21 @@ class BaseReportFilter(object):
             raise NotImplementedError("label is required")
         self.request = request
         self.timezone = timezone
+        self.use_bootstrap5 = use_bootstrap5
+        if self.use_bootstrap5:
+            set_bootstrap_version5()
+            self.template = get_bootstrap5_path(self.template)
         self.parent_report = parent_report
-        self.css_label = css_label or (CSS_LABEL_CLASS + ' control-label')
-        self.css_field = css_field or CSS_FIELD_CLASS
+
+        if self.use_bootstrap5:
+            default_label_class = f"col-form-label {CSS_REPORT_LABEL_CLASS_BOOTSTRAP5}"
+            default_field_class = CSS_REPORT_FIELD_CLASS_BOOTSTRAP5
+        else:
+            default_label_class = f"{CSS_LABEL_CLASS} control-label"
+            default_field_class = CSS_FIELD_CLASS
+        self.css_label = css_label or default_label_class
+        self.css_field = css_field or default_field_class
+
         self.context = {}
 
     @property
@@ -68,6 +88,7 @@ class BaseReportFilter(object):
             'css_field_class': self.css_field,
             'help_text': self.help_text,
             'help_style_bubble': self.help_style_bubble,
+            'use_bootstrap5': self.use_bootstrap5,
         })
         filter_context = self.filter_context
         if not (filter_context, dict):
@@ -166,7 +187,7 @@ class BaseMultipleOptionFilter(BaseSingleOptionFilter):
         Displays a multiselect field.
     """
     template = "reports/filters/bootstrap3/multi_option.html"
-    default_options = [] # specify a list
+    default_options = []  # specify a list
 
     @classmethod
     def get_value(cls, request, domain):
@@ -294,7 +315,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             'val': val,
             'text': text,
             'next': next,
-            }
+        }
 
     @property
     def shared_pagination_GET_params(self):

@@ -24,6 +24,7 @@ from corehq.apps.reports.exceptions import BadRequestError
 from corehq.util.quickcache import quickcache
 
 from .lookup import ReportLookup
+from ..hqwebapp.utils.bootstrap import set_bootstrap_version5
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -151,6 +152,8 @@ class ReportDispatcher(View):
                 report.decorator_dispatcher(
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
                 )
+                if report.use_bootstrap5:
+                    set_bootstrap_version5()
                 return getattr(report, '%s_response' % render_as)
             except BadRequestError as e:
                 return HttpResponseBadRequest(e)

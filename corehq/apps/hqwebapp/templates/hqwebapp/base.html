@@ -137,6 +137,16 @@
       {% endcompress %}
     {% endif %}
 
+    {# This is only valid for Bootstrap5 reports. We should eventually replace @use_daterangepicker in reports with @use_tempusdominus #}
+    {% if request.use_daterangepicker and use_bootstrap5 and report %}
+      {% compress css %}
+        <link type="text/css"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css" %}" />
+      {% endcompress %}
+    {% endif %}
+
     {% if request.use_multiselect %}
       {% compress css %}
         <link type="text/css"
@@ -173,6 +183,14 @@
         <script src="{% static 'moment/moment.js' %}"></script>
         <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
         <script src="{% static 'hqwebapp/js/daterangepicker.config.js' %}"></script>
+      {% endcompress %}
+    {% endif %}
+
+    {# This is only valid for Bootstrap5 reports. We should eventually replace @use_daterangepicker in reports with @use_tempusdominus #}
+    {% if request.use_daterangepicker and not requirejs_main and use_bootstrap5 and report %}
+      {% compress js %}
+        <script src="{% static '@popperjs/core/dist/umd/popper.min.js' %}"></script>
+        <script src="{% static '@eonasdan/tempus-dominus/dist/js/tempus-dominus.min.js' %}"></script>
       {% endcompress %}
     {% endif %}
 

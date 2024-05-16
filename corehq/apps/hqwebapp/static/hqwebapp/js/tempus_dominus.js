@@ -17,7 +17,9 @@ hqDefine("hqwebapp/js/tempus_dominus", [
     initialPageData
 ) {
     // https://github.com/Eonasdan/tempus-dominus/discussions/2698
-    window.Popper = Popper;
+    if (window.Popper === undefined) {
+        window.Popper = Popper;
+    }
 
     // This replaces createBootstrap3DefaultDateRangePicker in hqwebapp/js/daterangepicker.config
     let createDefaultDateRangePicker = function (el) {
@@ -54,6 +56,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 picker.dates.setValue(picker.dates.picked[0], 1);
             }
         });
+        return picker;
     };
 
     let getDateRangeSeparator = function () {
@@ -94,5 +97,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
         createDateRangePicker: createDateRangePicker,
         createDefaultDateRangePicker: createDefaultDateRangePicker,
         getDateRangeSeparator: getDateRangeSeparator,
+        tempusDominus: tempusDominus,
+        Popper: Popper,
     };
 });

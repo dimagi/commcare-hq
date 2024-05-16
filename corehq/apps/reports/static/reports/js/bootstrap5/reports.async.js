@@ -1,6 +1,7 @@
+'use strict';
+
 hqDefine("reports/js/bootstrap5/reports.async", function () {
     return function (o) {
-        'use strict';
         var self = {};
         self.reportContent = $('#report-content');
         self.filterForm = o.filterForm || $('#paramSelectorForm');
@@ -39,7 +40,7 @@ hqDefine("reports/js/bootstrap5/reports.async", function () {
             } catch (e) {
                 console.log(e);
             }
-            $('#reportFiltersAccordion').removeClass('hide');
+            $('#reportFiltersAccordion').removeClass('d-none');
             self.standardReport.resetFilterState();
         };
 
@@ -135,9 +136,9 @@ hqDefine("reports/js/bootstrap5/reports.async", function () {
                 processFilters = processFilters + "&filterSet=" + setFilters;
             }
             if (setFilters) {
-                $(self.standardReport.exportReportButton).removeClass('hide');
-                $(self.standardReport.emailReportButton).removeClass('hide');
-                $(self.standardReport.printReportButton).removeClass('hide');
+                $(self.standardReport.exportReportButton).removeClass('d-none');
+                $(self.standardReport.emailReportButton).removeClass('d-none');
+                $(self.standardReport.printReportButton).removeClass('d-none');
             }
 
             self.reportRequest = $.ajax({
@@ -161,10 +162,10 @@ hqDefine("reports/js/bootstrap5/reports.async", function () {
                         $(popover).remove();
                     });
                     self.reportContent.append(self.hqLoading);
-                    self.hqLoading.removeClass('hide');
+                    self.hqLoading.removeClass('d-none');
 
                     // Assorted UI cleanup/initialization
-                    $('.hq-report-time-notice').removeClass('hide');
+                    $('.hq-report-time-notice').removeClass('d-none');
                     if ($.timeago) {
                         $(".timeago").timeago();
                     }
@@ -174,7 +175,7 @@ hqDefine("reports/js/bootstrap5/reports.async", function () {
 
                     if (!initialLoad || !self.standardReport.needsFilters) {
                         self.standardReport.filterSubmitButton
-                            .button('reset');  /* todo B5: plugin:button */
+                            .changeButtonState('standard');
                         setTimeout(function () {
                             // Bootstrap clears all btn styles except btn on reset
                             // This gets around it by waiting 10ms.
@@ -186,7 +187,7 @@ hqDefine("reports/js/bootstrap5/reports.async", function () {
                         }, 10);
                     } else {
                         self.standardReport.filterSubmitButton
-                            .button('reset')  /* todo B5: plugin:button */
+                            .changeButtonState('standard')
                             .addClass('btn-primary')
                             .removeClass('disabled')
                             .prop('disabled', false);
@@ -205,7 +206,7 @@ hqDefine("reports/js/bootstrap5/reports.async", function () {
                         self.loadingIssueModal.find('.report-error-status').html('<strong>' + data.status + '</strong> ' +
                             ((humanReadable) ? humanReadable : ""));
                         if (self.issueAttempts > 0) {
-                            self.loadingIssueModal.find('.btn-primary').button('fail');  /* todo B5: plugin:button */
+                            self.loadingIssueModal.find('.btn-primary').changeButtonState('fail');
                         }
                         self.issueAttempts += 1;
                         self.loadingIssueModal.modal('show');  /* todo B5: plugin:modal */
@@ -216,7 +217,7 @@ hqDefine("reports/js/bootstrap5/reports.async", function () {
                     }
                 },
                 beforeSend: function () {
-                    self.standardReport.filterSubmitButton.button('loading');  /* todo B5: plugin:button */
+                    self.standardReport.filterSubmitButton.changeButtonState('loading');
                     $('.loading-backdrop').fadeIn();
                     if (self.hqLoading) {
                         self.hqLoading.attr('style', 'position: absolute; top: 30px; left: 40%;');
@@ -228,7 +229,7 @@ hqDefine("reports/js/bootstrap5/reports.async", function () {
         };
 
         $(document).on('click', '.try-again', function () {
-            self.loadingIssueModal.find('.btn-primary').button('loading');  /* todo B5: plugin:button */
+            self.loadingIssueModal.find('.btn-primary').changeButtonState('loading');
             if (self.isCaseListRelated(window.location.pathname)) {
                 self.getQueryId(window.location.search.substr(1), true, true, window.location.pathname);
             } else {

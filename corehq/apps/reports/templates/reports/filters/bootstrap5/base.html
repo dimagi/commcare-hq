@@ -1,5 +1,8 @@
 {% load i18n %}
-<label for="{{ css_id }}" class="{{ css_label_class }}">{{ badge }}</label>
+<label for="{{ css_id }}"
+       class="{{ css_label_class }}">
+  {{ label }}
+</label>
 <div class="{{ css_field_class }}">
   {% if help_text %}
     <div class="row">

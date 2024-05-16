@@ -20,6 +20,7 @@ from django.utils.html import conditional_escape
 from celery.utils.log import get_task_logger
 from memoized import memoized
 
+from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 from corehq.util.timezones.utils import get_timezone
 from couchexport.export import export_from_tables, get_writer
 from couchexport.shortcuts import export_response
@@ -28,7 +29,11 @@ from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_request, json_response
 
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
+from corehq.apps.hqwebapp.crispy import (
+    CSS_ACTION_CLASS,
+    CSS_REPORT_LABEL_CLASS_BOOTSTRAP5,
+    CSS_REPORT_FIELD_CLASS_BOOTSTRAP5,
+)
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
@@ -39,7 +44,11 @@ from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.tasks import export_all_rows_task
-from corehq.apps.reports.util import DatatablesParams
+from corehq.apps.reports.util import (
+    DatatablesPagination,
+    DatatablesServerSideParams,
+    HqFilterParams,
+)
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
 from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
@@ -64,7 +73,7 @@ def _sanitize_col(col):
     return col
 
 
-def get_filter_classes(fields, request, domain, timezone):
+def get_filter_classes(fields, request, domain, timezone, use_bootstrap5=False):
     filters = []
     fields = fields
     for field in fields or []:
@@ -73,7 +82,7 @@ def get_filter_classes(fields, request, domain, timezone):
         else:
             klass = field
         filters.append(
-            klass(request, domain, timezone)
+            klass(request, domain, timezone, use_bootstrap5=use_bootstrap5)
         )
     return filters
 
@@ -174,6 +183,9 @@ class GenericReportView(object):
     is_deprecated = False
     deprecation_email_message = gettext("This report has been deprecated.")
     deprecation_message = gettext("This report has been deprecated.")
+
+    # use for bootstrap5 migration
+    use_bootstrap5 = False
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
@@ -293,20 +305,37 @@ class GenericReportView(object):
 
     @property
     @memoized
+    def hq_filter_params(self):
+        return HqFilterParams.from_request(self.request)
+
+    @property
+    @memoized
     def template_base(self):
+        if self.use_bootstrap5:
+            return get_bootstrap5_path(self.base_template)
         return self.base_template
 
     @property
     @memoized
     def template_async_base(self):
+        if self.use_bootstrap5:
+            default_path = "reports/async/bootstrap5/default.html"
+        else:
+            default_path = "reports/async/bootstrap3/default.html"
         if self.asynchronous:
-            return self.base_template_async or "reports/async/bootstrap3/default.html"
+            return self.base_template_async or default_path
         return self.template_base
 
     @property
     @memoized
     def template_report(self):
-        original_template = self.report_template_path or "reports/async/basic.html"
+        if self.use_bootstrap5:
+            template_path = get_bootstrap5_path(self.report_template_path)
+            default_path = "reports/async/bootstrap5/basic.html"
+        else:
+            template_path = self.report_template_path
+            default_path = "reports/async/bootstrap3/basic.html"
+        original_template = template_path or default_path
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
             return self.override_template
@@ -315,12 +344,18 @@ class GenericReportView(object):
     @property
     @memoized
     def template_report_partial(self):
+        if self.use_bootstrap5:
+            return get_bootstrap5_path(self.report_partial_path)
         return self.report_partial_path
 
     @property
     @memoized
     def template_filters(self):
-        return self.base_template_filters or "reports/async/bootstrap3/filters.html"
+        if self.use_bootstrap5:
+            default_path = "reports/async/bootstrap5/filters.html"
+        else:
+            default_path = "reports/async/bootstrap3/filters.html"
+        return self.base_template_filters or default_path
 
     @property
     @memoized
@@ -330,7 +365,7 @@ class GenericReportView(object):
     @property
     @memoized
     def filter_classes(self):
-        return get_filter_classes(self.fields, self.request, self.domain, self.timezone)
+        return get_filter_classes(self.fields, self.request, self.domain, self.timezone, self.use_bootstrap5)
 
     @property
     @memoized
@@ -538,8 +573,15 @@ class GenericReportView(object):
             Please override template_context instead.
         """
         self.context.update(rendered_as=self.rendered_as)
+
+        if self.use_bootstrap5:
+            action_class = f"{CSS_REPORT_LABEL_CLASS_BOOTSTRAP5.replace('col', 'offset')} " \
+                           f"{CSS_REPORT_FIELD_CLASS_BOOTSTRAP5}"
+        else:
+            action_class = CSS_ACTION_CLASS
+
         self.context.update({
-            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
+            'report_filter_form_action_css_class': action_class,
         })
         self.context['report'].update(
             show_filters=self.fields or not self.hide_filters,
@@ -781,7 +823,7 @@ class GenericReportView(object):
 
             @use_nvd3
             def decorator_dispatcher(self, request, *args, **kwargs):
-                super(MyNewReport, self).decorator_dispatcher(request, *args, **kwargs)
+                super().decorator_dispatcher(request, *args, **kwargs)
 
         """
         pass
@@ -919,10 +961,26 @@ class GenericTabularReport(GenericReportView):
     @property
     def pagination(self):
         if self._pagination is None:
-            self._pagination = DatatablesParams.from_request_dict(
-                self.request.POST if self.request.method == 'POST' else self.request.GET
-            )
+            if self.use_bootstrap5:
+                self._pagination = DatatablesPagination.from_datatables_params(
+                    self.datatables_params
+                )
+            else:
+                self._pagination = DatatablesPagination.from_request_dict(
+                    self.request.POST if self.request.method == 'POST' else self.request.GET
+                )
         return self._pagination
+
+    @property
+    @memoized
+    def datatables_params(self):
+        """Use only for bootstrap 5 reports using Datatables > 1.10
+        """
+        if not self.use_bootstrap5:
+            raise NotImplementedError(
+                "'datatables_params' should only be used by Bootstrap 5 reports"
+            )
+        return DatatablesServerSideParams.from_request(self.request)
 
     @property
     def json_dict(self):
@@ -939,11 +997,10 @@ class GenericTabularReport(GenericReportView):
         total_filtered_records = self.total_filtered_records
         if not isinstance(total_filtered_records, int):
             raise ValueError("Property 'total_filtered_records' should return an int.")
-        ret = dict(
-            sEcho=self.pagination.echo,
-            iTotalRecords=total_records,
-            iTotalDisplayRecords=total_filtered_records if total_filtered_records >= 0 else total_records,
-            aaData=rows,
+        ret = self._get_datatables_json_dict(
+            total_records,
+            total_filtered_records if total_filtered_records >= 0 else total_records,
+            rows
         )
 
         if self.total_row:
@@ -952,6 +1009,26 @@ class GenericTabularReport(GenericReportView):
             ret["statistics_rows"] = list(self.statistics_rows)
 
         return ret
+
+    def _get_datatables_json_dict(self, records_total, records_filtered, data):
+        """Formats the data in a format that datatables expects.
+        see: https://datatables.net/manual/server-side#Example-data
+        default return is the < 1.9 version of datatables, which should be
+        phased out after the bootstrap 5 migration.
+        """
+        if self.use_bootstrap5:
+            return {
+                "draw": self.datatables_params.draw,
+                "recordsTotal": records_total,
+                "recordsFiltered": records_filtered,
+                "data": data,
+            }
+        return {
+            "sEcho": self.pagination.echo,
+            "iTotalRecords": records_total,
+            "iTotalDisplayRecords": records_filtered,
+            "aaData": data,
+        }
 
     @property
     def fixed_cols_spec(self):
@@ -1151,6 +1228,12 @@ class PaginatedReportMixin(object):
     default_sort = None
 
     def get_sorting_block(self):
+        if self.use_bootstrap5:
+            return self._get_sorting_block_bootstrap5()
+        res = self._get_sorting_block_bootstrap3()
+        return res
+
+    def _get_sorting_block_bootstrap3(self):
         res = []
         #the NUMBER of cols sorting
         sort_cols = int(self.request.GET.get('iSortingCols', 0))
@@ -1166,6 +1249,19 @@ class PaginatedReportMixin(object):
         if len(res) == 0 and self.default_sort is not None:
             res.append(self.default_sort)
         return res
+
+    def _get_sorting_block_bootstrap5(self):
+        block = []
+        for col in self.datatables_params.order:
+            col_ind = col['column']
+            prop_name = self.datatables_params.columns[col_ind]['name']
+            if prop_name:
+                sort_dir = col['dir']
+                sort_dict = {prop_name: sort_dir}
+                block.append(sort_dict)
+        if len(block) == 0 and self.default_sort is not None:
+            block.append(self.default_sort)
+        return block
 
 
 class GetParamsMixin(object):

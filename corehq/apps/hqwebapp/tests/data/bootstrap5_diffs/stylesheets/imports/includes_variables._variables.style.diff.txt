@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,123 +1,225 @@
+@@ -1,123 +1,228 @@
 -@import "@{b3-import-variables}";
 -
 -// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
@@ -43,6 +43,9 @@
 +
 +$caret-width: 4px;
 +$caret-vertical-align: $caret-width * .87;
++
++// Breadcrumbs
++$breadcrumb-divider: quote(">");
 +
 +// Dropdowns
 +$dropdown-border-radius: 3px;
