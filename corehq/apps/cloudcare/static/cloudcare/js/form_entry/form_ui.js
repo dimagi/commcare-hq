@@ -246,7 +246,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             },
             children: {
                 create: function (options) {
-                    console.log(`children.create: ix=${ options.data.ix }, type= ${ options.data.type }`)
+                    // console.log(`children.create: ix=${ options.data.ix }, type= ${ options.data.type }`)
                     if (options.data.type === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
                         return new GroupedElementTileRow(options.data, self);
                     } else if (options.data.type === constants.QUESTION_TYPE) {
@@ -625,8 +625,21 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             });
         };
 
+        const printIx = function (obj, depth = 0) {
+            if (obj.hasOwnProperty('ix') && obj.hasOwnProperty('children')) {
+                console.log(`${' '.repeat(depth)} ix: ${obj.ix}`);
+            }
+
+            if (Array.isArray(obj.children)) {
+                obj.children.forEach(child => {
+                    printIx(child, depth + 1);
+                });
+            }
+        }
+
+
         $.unsubscribe('session');
-        $.subscribe('session.reconcile', function (e, response, element) {
+        $.subscribe('session.reconcile', function (e, response, element, deletedGroup) {
             // TODO where does response status parsing belong?
             if (response.status === 'validation-error') {
                 if (response.type === 'required') {
@@ -636,9 +649,40 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 }
                 element.pendingAnswer(constants.NO_PENDING_ANSWER);
             } else {
-                response.children = response.tree;
+                console.log("reconsile");
+                const allChildren = response.tree;
                 delete response.tree;
+                printIx(response);
+                // Simple alternative. Causes more of a flicker since whole form is refreshed.
+                // if (deletedGroup) {
+                //     response.children = [];
+                //     self.fromJS(response);
+                // }
+
+                if (deletedGroup) {
+                    const ixParts = deletedGroup.split(",");
+                    response.children = JSON.parse(JSON.stringify(allChildren));
+                    let parentOfDeletedGroup = response;
+                    for (let i = 0; i < ixParts.length -1; i++) {
+                        parentOfDeletedGroup = parentOfDeletedGroup.children.find(c => c.ix.endsWith(ixParts[i]));
+                    }
+                    const siblingsOfDeletedGroup = parentOfDeletedGroup.children;
+                    const lastPart = ixParts[ixParts.length - 1];
+                    const lastPartPrefix = lastPart.substr(0, lastPart.lastIndexOf("_") + 1);
+                    parentOfDeletedGroup.children = siblingsOfDeletedGroup.filter(function (c) {
+                        const childIxParts = c.ix.split(",");
+                        return !childIxParts[childIxParts.length - 1].startsWith(lastPartPrefix);
+                    });
+                    console.log("about to clear children");
+                    printIx(response);
+                    self.fromJS(response);
+                }
+
                 if (element.serverError) { element.serverError(null); }
+
+                console.log("reset children");
+                response.children = allChildren;
+                printIx(response);
                 self.fromJS(response);
             }
         });
@@ -864,6 +908,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             return "add-group";
         }
         self.rel_ix = ko.observable(relativeIndex( json.ix) );
+        self.required = ko.observable(json.required);
+        self.hasError = ko.observable(json.hasError);
     }
 
     /**

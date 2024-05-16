@@ -470,7 +470,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                     // 'form_ix': juncture,
                 },
                 function (resp) {
-                    $.publish('session.reconcile', [resp, repetition]);
+                    $.publish('session.reconcile', [resp, repetition, juncture]);
                 },
                 constants.BLOCK_ALL);
         };
