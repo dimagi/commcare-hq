@@ -12,12 +12,24 @@
       You are renewing your <strong>{{ p }} Edition</strong> subscription.
     {% endblocktrans %}
   </p>
-  {% include 'accounting/partials/confirm_plan_summary.html' %}
 
   <form class="form"
         method="post"
         action="{% url 'domain_subscription_renewal_confirmation' domain %}">
     {% csrf_token %}
+
+    {% if request|toggle_enabled:'SELF_SERVICE_ANNUAL_RENEWALS' %}
+      <p class="switch-label text-center">
+        {% trans "Pay Monthly" %}
+        <label class="switch">
+          <input type="checkbox" id="pricing-toggle" name="is_annual_plan" value="true">
+          <span class="slider round slider-blue slider-blue-on"></span>
+        </label>
+        {% trans "Pay Annually" %}
+      </p>
+    {% endif %}
+
+    {% include 'accounting/partials/confirm_plan_summary.html' %}
 
     <input type="hidden" name="from_plan_page" value="true" />
     <input type="hidden" name="plan_edition" value="{{ current_edition }}">

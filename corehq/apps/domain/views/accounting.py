@@ -1601,7 +1601,8 @@ class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings,
     @property
     @memoized
     def next_plan_version(self):
-        plan_version = DefaultProductPlan.get_default_plan_version(self.new_edition)
+        plan_version = DefaultProductPlan.get_default_plan_version(self.new_edition,
+                                                                   is_annual_plan=self.is_annual_plan)
         if plan_version is None:
             try:
                 # needed for sending to sentry
@@ -1642,6 +1643,14 @@ class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings,
     @property
     def new_edition(self):
         return self.request.POST.get('plan_edition').title()
+
+    @property
+    def is_annual_plan(self):
+        from corehq.toggles import SELF_SERVICE_ANNUAL_RENEWALS
+        if SELF_SERVICE_ANNUAL_RENEWALS.enabled_for_request(self.request):
+            return self.request.POST.get('is_annual_plan', '').lower() == 'true'
+        else:
+            return False
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
