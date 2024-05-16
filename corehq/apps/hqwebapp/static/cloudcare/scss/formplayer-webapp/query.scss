@@ -1,5 +1,7 @@
 .full-width {
   width: 100%;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .sidebar-push {
@@ -85,7 +87,7 @@
   font-size: larger;
 }
 
-.search-query-group {
+.table .search-query-group {   // .table needed for specificity, to override .table stylings
   background-color: $cc-bg;
 }
 
