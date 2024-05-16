@@ -8,12 +8,12 @@ from casexml.apps.case.views import get_wrapped_case
 from corehq.apps.hqwebapp.templatetags.proptable_tags import get_display_data
 
 
-def case_hierarchy_context(case, get_case_url, timezone=None):
+def case_hierarchy_context(case, timezone=None):
     wrapped_case = get_wrapped_case(case)
     if timezone is None:
         timezone = pytz.utc
     columns = wrapped_case.related_cases_columns
-    descendant_case_list = _get_flat_descendant_case_list(case, get_case_url)
+    descendant_case_list = _get_flat_descendant_case_list(case)
 
     parent_cases = []
     if case.live_indices:
@@ -29,9 +29,6 @@ def case_hierarchy_context(case, get_case_url, timezone=None):
                 parent_cases.append(None)
         for parent_case in parent_cases:
             if parent_case:
-                parent_case.edit_data = {
-                    'view_url': get_case_url(parent_case.case_id)
-                }
                 last_parent_id = parent_case.case_id
             else:
                 last_parent_id = None
@@ -79,15 +76,11 @@ def _sortkey(child):
     return (0, case.opened_on or datetime.datetime.min)
 
 
-def _process_case_hierarchy(case_output, get_case_url):
+def _process_case_hierarchy(case_output):
     def process_output(case_output, depth=0):
         for c in case_output['child_cases']:
             process_output(c, depth=depth + 1)
-
         case = case_output['case']
-        case.edit_data = {
-            'view_url': get_case_url(case.case_id),
-        }
     process_output(case_output)
 
 
@@ -118,7 +111,7 @@ def get_case_hierarchy(case):
     return get_children(case, seen=set())
 
 
-def _get_flat_descendant_case_list(case, get_case_url):
+def _get_flat_descendant_case_list(case):
     hierarchy = get_case_hierarchy(case)
-    _process_case_hierarchy(hierarchy, get_case_url)
+    _process_case_hierarchy(hierarchy)
     return hierarchy['case_list']

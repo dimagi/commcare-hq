@@ -42,7 +42,8 @@
           {% endif %}
           {% if case.case_id != current_case.case_id %}
             <div class="pull-right btn-group">
-              <a class="btn btn-sm btn-default view-related-case-link" href="{{ case.edit_data.view_url }}">
+              <a class="btn btn-sm btn-default view-related-case-link"
+                 href="{% url 'case_data' domain case.case_id %}">
                 <i class="fa-solid fa-eye"></i> {% trans "View" %}
               </a>
             </div>

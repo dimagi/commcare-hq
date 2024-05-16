@@ -335,10 +335,6 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual('t1', case2.type)
 
 
-def _get_case_url_blank(case_id):
-    return ""
-
-
 @sharded
 class TestCaseHierarchyContext(TestCase):
     def setUp(self):
@@ -361,21 +357,21 @@ class TestCaseHierarchyContext(TestCase):
         self.child.delete()
 
     def test_case_hierarchy_context_parent(self):
-        hierarchy = case_hierarchy_context(self.parent, _get_case_url_blank)
+        hierarchy = case_hierarchy_context(self.parent)
         self.assertEqual(2, len(hierarchy['case_list']))
 
     def test_case_hierarchy_context_parent_deleted_index(self):
         self._delete_child_index()
-        hierarchy = case_hierarchy_context(self.parent, _get_case_url_blank)
+        hierarchy = case_hierarchy_context(self.parent)
         self.assertEqual(1, len(hierarchy['case_list']))
 
     def test_case_hierarchy_context_child(self):
-        hierarchy = case_hierarchy_context(self.child, _get_case_url_blank)
+        hierarchy = case_hierarchy_context(self.child)
         self.assertEqual(2, len(hierarchy['case_list']))
 
     def test_case_hierarchy_context_child_deleted_index(self):
         self._delete_child_index()
-        hierarchy = case_hierarchy_context(self.child, _get_case_url_blank)
+        hierarchy = case_hierarchy_context(self.child)
         self.assertEqual(1, len(hierarchy['case_list']))
 
     def _delete_child_index(self):
