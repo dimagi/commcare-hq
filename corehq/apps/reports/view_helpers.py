@@ -68,33 +68,25 @@ def _index_to_context(index, is_ancestor):
 
 def _sortkey(child):
     """Return sortkey based on open/closed and opened_on/closed_on dates"""
-    case = child['case']
-    if case.closed:
-        return (1, datetime.datetime.max - case.closed_on)
-    return (0, case.opened_on or datetime.datetime.min)
+    if child.closed:
+        return (1, datetime.datetime.max - child.closed_on)
+    return (0, child.opened_on or datetime.datetime.min)
 
 
 def get_case_hierarchy(case):
     def get_children(case, seen):
+        if case.case_id not in seen:
+            yield case
         seen.add(case.case_id)
+
         children = [
-            get_children(i.referenced_case, seen) for i in case.reverse_indices
+            i.referenced_case for i in case.reverse_indices
             if i.referenced_id and i.referenced_id not in seen
         ]
-        children = sorted(children, key=_sortkey)
-
-        # set parent_case_id used by flat display
-        for c in children:
-            if not hasattr(c['case'], 'treetable_parent_node_id'):
-                c['case'].treetable_parent_node_id = case.case_id
-
-        child_cases = []
-        for c in children:
-            child_cases.extend(c['case_list'])
-
-        return {
-            'case': case,
-            'case_list': [case] + child_cases
-        }
-
-    return get_children(case, seen=set())['case_list']
+        children.sort(key=_sortkey)
+        for child in children:
+            # set parent_case_id used by flat display
+            if not hasattr(child, 'treetable_parent_node_id'):
+                child.treetable_parent_node_id = case.case_id
+            yield from get_children(child, seen)
+    return list(get_children(case, seen=set()))
