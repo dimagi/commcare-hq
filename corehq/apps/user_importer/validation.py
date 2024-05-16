@@ -156,7 +156,9 @@ class TableauGroupsValidator(ImportValidator):
         self.allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(self.domain)
 
     def validate_spec(self, spec):
-        tableau_groups = spec.get('tableau_groups').split(',')
+        tableau_groups = spec.get('tableau_groups') or []
+        if tableau_groups:
+            tableau_groups = tableau_groups.split(',')
         invalid_groups = []
         for group in tableau_groups:
             if group not in self.allowed_groups_for_domain:
