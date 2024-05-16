@@ -209,11 +209,11 @@ hqDefine('users/js/roles',[
                     self.permissions.access_all_locations(true);
                 }
                 self.permissions.edit_web_users.subscribe(function (newValue) {
-                    self.permissions.edit_user_tableau_config(newValue);
+                    self.permissions.edit_user_tableau_config(newValue && toggles.toggleEnabled("TABLEAU_USER_SYNCING"));
                 });
 
                 self.permissions.view_web_users.subscribe(function (newValue) {
-                    self.permissions.view_user_tableau_config(newValue);
+                    self.permissions.view_user_tableau_config(newValue && toggles.toggleEnabled("TABLEAU_USER_SYNCING"));
                 });
                 self.accessAreas = [
                     {
@@ -234,7 +234,7 @@ hqDefine('users/js/roles',[
                     },
                     {
                         showOption: ko.computed(function () {
-                            return self.permissions.edit_web_users() || self.permissions.view_web_users();
+                            return toggles.toggleEnabled("TABLEAU_USER_SYNCING") && (self.permissions.edit_web_users() || self.permissions.view_web_users());
                         }),
                         editPermission: self.permissions.edit_user_tableau_config,
                         viewPermission: self.permissions.view_user_tableau_config,
