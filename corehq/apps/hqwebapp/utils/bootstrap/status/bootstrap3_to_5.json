@@ -72,6 +72,9 @@
   "casexml": {
     "is_complete": true
   },
+  "groups": {
+    "is_complete": true
+  },
   "programs": {
     "is_complete": true
   },
@@ -86,5 +89,11 @@
   },
   "reports_core": {
     "in_progress": true
+  },
+  "enterprise": {
+    "is_complete": true
+  },
+  "custom_data_fields": {
+    "is_complete": true
   }
 }

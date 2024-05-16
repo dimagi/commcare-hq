@@ -6,7 +6,7 @@ from celery.schedules import crontab
 
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.sso.exceptions import EntraVerificationFailed
+from corehq.apps.sso.exceptions import EntraVerificationFailed, EntraUnsupportedType
 from corehq.apps.sso.models import (
     AuthenticatedEmailDomain,
     IdentityProvider,
@@ -141,6 +141,11 @@ def auto_deactivate_removed_sso_users():
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.HTTP_ERROR)
             continue
+        except EntraUnsupportedType as e:
+            notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.UNSUPPORTED_ERROR,
+                                            error_description=e.message)
+            continue
         except Exception as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.OTHER_ERROR)
@@ -184,6 +189,9 @@ def send_deactivation_skipped_email(idp, failure_code, error=None, error_descrip
                            "indicates an issue with Microsoft's servers.")
     elif failure_code == MSGraphIssue.EMPTY_ERROR:
         failure_reason = _("We received an empty list of users from your Microsoft Entra ID instance.")
+    elif failure_code == MSGraphIssue.UNSUPPORTED_ERROR:
+        failure_reason = _("We encountered an issue when connecting to your Microsoft Graph API: "
+                           f"{error_description}")
     elif failure_code == MSGraphIssue.OTHER_ERROR:
         failure_reason = _("We encountered an unknown issue, please contact Commcare HQ Support.")
 

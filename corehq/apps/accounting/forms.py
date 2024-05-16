@@ -2871,3 +2871,24 @@ class TriggerAutopaymentsForm(forms.Form):
                 ),
             )
         )
+
+
+class TriggerRemovedSsoUserAutoDeactivationForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        super(TriggerRemovedSsoUserAutoDeactivationForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form form-horizontal'
+
+        self.helper.layout = crispy.Layout(
+            hqcrispy.FormActions(
+                StrictButton(
+                    "Trigger Auto Deactivation of Removed SSO Users",
+                    css_class="btn-primary disable-on-submit",
+                    type="submit",
+                ),
+            )
+        )

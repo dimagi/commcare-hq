@@ -1,21 +1,24 @@
+"use strict";
 hqDefine("groups/js/group_members", [
     "jquery",
     "underscore",
     "analytix/js/google",
+    "es6!hqwebapp/js/bootstrap5_loader",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list",
+    "hqwebapp/js/bootstrap5/alert_user",
+    "hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list",
     "hqwebapp/js/select_2_ajax_widget",     // "Group Membership" select2
-    "hqwebapp/js/bootstrap3/components.ko",            // select toggle for "Edit Setings" popup
+    "hqwebapp/js/bootstrap5/components.ko",            // select toggle for "Edit Setings" popup
 ], function (
     $,
     _,
     googleAnalytics,
+    bootstrap,
     initialPageData,
+    alertUser,
     uiMapList
 ) {
     $(function () {
-        $('.verify-button').tooltip();
-        // custom data
         var customDataEditor = uiMapList.new(initialPageData.get("group_id"), gettext("Edit Group Information"));
         customDataEditor.val(initialPageData.get("group_metadata"));
         customDataEditor.on("change", function () {
@@ -52,7 +55,7 @@ hqDefine("groups/js/group_members", [
             var ret = gettext("The following changes will not be saved: ");
 
             for (var key in unsavedChanges) {
-                if (unsavedChanges.hasOwnProperty(key) && unsavedChanges[key]) {
+                if (_.has(unsavedChanges, key) && unsavedChanges[key]) {
                     ret += "\n" + key;
                     someUnsavedChanges = true;
                 }
@@ -67,19 +70,16 @@ hqDefine("groups/js/group_members", [
 
         function outcome(isSuccess, name, id, gaEventLabel, additionalCallback) {
             return function () {
-                var alertClass, message;
+                var message;
                 if (isSuccess) {
-                    alertClass = 'alert-success';
                     message = gettext('Successfully saved ') + name.toLowerCase() + '.';
                     unsavedChanges[name] = false;
                 } else {
-                    alertClass = 'alert-danger';
                     message = gettext('Failed to save ') + name.toLowerCase() + '.';
                 }
                 $(id).find(':button').enableButton();
-                $('#save-alert').removeClass('alert-danger alert-success alert-info').addClass(alertClass);
-                $('#save-alert').html(message).show();
-                $('#editGroupSettings').modal('hide');
+                alertUser.alert_user(message, isSuccess ? 'success' : 'danger');
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('editGroupSettings')).hide();
 
                 if (_.isFunction(additionalCallback)) {
                     additionalCallback();
@@ -101,11 +101,11 @@ hqDefine("groups/js/group_members", [
             $('#edit_membership').submit(function () {
                 var _showMembershipUpdating = function () {
                         $('#edit_membership').fadeOut();
-                        $('#membership_updating').fadeIn();
+                        $('#membership_updating').removeClass("d-none");
                     },
                     _hideMembershipUpdating = function () {
                         $('#edit_membership').fadeIn();
-                        $('#membership_updating').fadeOut();
+                        $('#membership_updating').addClass("d-none");
                     };
                 _showMembershipUpdating();
                 $(this).find(':button').prop('disabled', true);

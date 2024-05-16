@@ -52,16 +52,7 @@
  
  {% block js %} {{ block.super }}
    {% include "cloudcare/partials/dependencies.html" %}
-@@ -95,7 +94,7 @@
-   <!-- For now we won't touch this since the form entry code is coupled with it  -->
- 
-   <div id="cloudcare-main" class="cloudcare-home-content">
--    <section id="case-crumbs" style="width: 800px"></section>
-+    <section id="case-crumbs" style="width: 800px"></section>  {# todo B5: inline style #}
-     <section id="cases"></section>
-     <div id="menu-container">
-       <section id="formplayer-progress-container"></section>
-@@ -130,8 +129,8 @@
+@@ -128,8 +127,8 @@
    {% if not request.session.secure_session %}
      {% include 'hqwebapp/includes/inactivity_modal_data.html' %}
    {% endif %}
