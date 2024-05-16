@@ -44,6 +44,12 @@ hqDefine("settings/js/user_api_keys", [
             }, KeyModel
         );
 
+        self.createItemForm.subscribe(function () {
+            // calling widgets.init() directly doesn't seem to create a new date picker,
+            // so we have to delay the call
+            setTimeout(self.initDatePicker);
+        });
+
         self.initDatePicker = function () {
             hqTempusDominus.createDatePicker($('.date-picker').get(0), {
                 restrictions: {
