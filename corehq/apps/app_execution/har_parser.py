@@ -1,0 +1,133 @@
+import json
+
+from corehq.apps.app_execution import data_model
+from corehq.apps.app_execution.api import ScreenType, get_screen_type_and_data
+from corehq.apps.app_execution.models import AppWorkflowConfig
+
+NON_FORM_ENDPOINTS = {"navigate_menu_start", "navigate_menu", "get_details"}
+FORM_ENDPOINTS = {"answer", "submit-all"}
+ENDPOINTS = NON_FORM_ENDPOINTS | FORM_ENDPOINTS
+
+
+class HarParser:
+    def __init__(self):
+        self.domain = None
+        self.app_id = None
+        self.steps = []
+        self.current_screen = None
+        self.screen_data = None
+        self.form_step = None
+
+    def parse(self, har_data):
+        """
+        Extracts a workflow from a HAR file and returns it as a dictionary.
+        """
+        for endpoint, entry in _get_formplayer_entries(har_data['log']['entries']):
+            if not self.current_screen and endpoint != 'navigate_menu_start':
+                # Skip until we get the first navigate_menu_start
+                continue
+
+            request_data = json.loads(entry['request']['postData']['text'])
+            response = json.loads(entry['response']['content']['text'])
+
+            if endpoint in FORM_ENDPOINTS:
+                self.set_form_step()
+            else:
+                self.clear_form_step()
+
+            if endpoint == 'navigate_menu_start' or self.current_screen == ScreenType.START:
+                if self.current_screen:
+                    assert self.domain == request_data["domain"]
+                    assert self.app_id == request_data["app_id"]
+                else:
+                    self.current_screen = ScreenType.START
+                    self.domain = request_data["domain"]
+                    self.app_id = request_data["app_id"]
+
+            elif endpoint == 'navigate_menu':
+                step = self._extract_navigation_step(request_data)
+                if step:
+                    self.steps.append(step)
+            elif endpoint == 'answer':
+                self.form_step.children.append(self._extract_form_answer_step(request_data))
+            elif endpoint == 'submit-all':
+                self.form_step.children.append(data_model.SubmitFormStep())
+            elif endpoint == 'get_details':
+                # skip over detail screens and don't update current screen and screen data
+                continue
+
+            self.current_screen, self.screen_data = get_screen_type_and_data(response)
+
+        return AppWorkflowConfig(
+            domain=self.domain, app_id=self.app_id, workflow=data_model.AppWorkflow(steps=self.steps)
+        )
+
+    def _extract_navigation_step(self, request_data):
+        if self.current_screen == ScreenType.MENU:
+            last_selection = _get_last_selection(request_data, int)
+            command = self.screen_data[last_selection]["displayText"]
+            return data_model.CommandStep(value=command)
+        elif self.current_screen == ScreenType.CASE_LIST:
+            # TODO: handle split screen search
+            last_selection = _get_last_selection(request_data)
+            if is_action(last_selection):
+                return data_model.CommandStep(id=last_selection)
+            elif is_multi_select(last_selection):
+                return data_model.CommandStep(selected_values=request_data["selectedValues"])
+            else:
+                return data_model.EntitySelectStep(value=last_selection)
+        elif self.current_screen == ScreenType.SEARCH:
+            query_key = self.screen_data["queryKey"]
+            query_data = request_data["query_data"][query_key]
+            if query_data["execute"]:
+                return data_model.QueryStep(inputs=query_data["inputs"])
+            else:
+                return data_model.QueryInputValidationStep(inputs=query_data["inputs"])
+        elif self.current_screen == ScreenType.DETAIL:
+            pass
+        else:
+            raise Exception(f"Unexpected screen type: {self.current_screen}")
+
+    def _extract_form_answer_step(self, request_data):
+        tree_item = [question for question in self.screen_data if question["ix"] == request_data["ix"]][0]
+        step = data_model.AnswerQuestionStep(question_text=tree_item["caption"],
+                                             question_id=tree_item["question_id"],
+                                             value=request_data["answer"])
+        return step
+
+    def set_form_step(self):
+        if not self.form_step:
+            self.form_step = data_model.FormStep(children=[])
+            self.steps.append(self.form_step)
+
+    def clear_form_step(self):
+        self.form_step = None
+
+
+def _get_last_selection(data, cast=None):
+    selections = data["selections"]
+    if not selections:
+        return None
+    selection = selections[-1]
+    return cast(selection) if cast else selection
+
+
+def is_action(selection):
+    return selection.startswith("action")
+
+
+def is_multi_select(selection):
+    return selection == "use_selected_values"
+
+
+def _get_formplayer_entries(entries):
+    for entry in entries:
+        request = entry['request']
+        if request['method'] != 'POST':
+            continue
+
+        endpoint = request['url'].split("/")[-1]
+        if endpoint not in ENDPOINTS:
+            continue
+
+        yield endpoint, entry

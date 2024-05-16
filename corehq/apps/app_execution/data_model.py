@@ -51,10 +51,24 @@ class CommandStep(Step):
     type: ClassVar[str] = "command"
     is_form_step: ClassVar[bool] = False
 
-    value: str
+    value: str = ""
     """Display text of the command to execute"""
 
+    id: str = ""
+    """ID of the command to execute"""
+
+    selected_values: list[str] = None
+    """Selected values for multi-select commands"""
+
     def get_request_data(self, session, data):
+        if self.selected_values:
+            data = _append_selection(data, "use_selected_values")
+            data["selectedValues"] = self.selected_values
+            return data
+
+        if self.id:
+            return _append_selection(data, self.id)
+
         commands = {c["displayText"].lower(): c for c in session.data.get("commands", [])}
 
         try:
@@ -222,8 +236,8 @@ class SubmitFormStep(Step):
 @define
 class FormStep(Step):
     type: ClassVar[str] = "form"
-    children: list[AnswerQuestionStep | SubmitFormStep]
     is_form_step: ClassVar[bool] = True
+    children: list[AnswerQuestionStep | SubmitFormStep]
 
     def to_json(self):
         return {

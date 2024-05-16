@@ -209,31 +209,7 @@ class FormplayerSession:
         return self.get_screen_and_data()[0]
 
     def get_screen_and_data(self):
-        return self._get_screen_and_data(self.data)
-
-    def _get_screen_and_data(self, current_data):
-        if not current_data:
-            return ScreenType.START, None
-
-        type_ = current_data.get("type")
-        if type_ == "commands":
-            return ScreenType.MENU, current_data["commands"]
-        if type_ == "entities":
-            return ScreenType.CASE_LIST, current_data["entities"]
-        if type_ == "query":
-            return ScreenType.SEARCH, current_data.get("displays")
-        data = current_data.get("details")
-        if data:
-            return ScreenType.DETAIL, data
-        data = current_data.get("tree")
-        if data:
-            return ScreenType.FORM, data
-        if current_data.get("submitResponseMessage"):
-            return self._get_screen_and_data(current_data["nextScreen"])
-
-        if current_data.get("errors"):
-            raise AppExecutionError(current_data["errors"])
-        raise AppExecutionError(f"Unknown screen type: {current_data}")
+        return get_screen_type_and_data(self.data)
 
     def request_url(self, step):
         screen = self.current_screen
@@ -353,3 +329,31 @@ def execute_step(session, step):
             session.execute_step(child)
     else:
         session.execute_step(step)
+
+
+def get_screen_type_and_data(current_data):
+    if not current_data:
+        return ScreenType.START, None
+
+    type_ = current_data.get("type")
+    if type_ == "commands":
+        return ScreenType.MENU, current_data["commands"]
+    if type_ == "entities":
+        if current_data.get("queryResponse"):
+            # TODO: split screen case search
+            pass
+        return ScreenType.CASE_LIST, current_data["entities"]
+    if type_ == "query":
+        return ScreenType.SEARCH, current_data.get("displays")
+    data = current_data.get("details")
+    if data:
+        return ScreenType.DETAIL, data
+    data = current_data.get("tree")
+    if data:
+        return ScreenType.FORM, data
+    if current_data.get("submitResponseMessage"):
+        return get_screen_type_and_data(current_data["nextScreen"])
+
+    if current_data.get("errors"):
+        raise AppExecutionError(current_data["errors"])
+    raise AppExecutionError(f"Unknown screen type: {current_data}")
