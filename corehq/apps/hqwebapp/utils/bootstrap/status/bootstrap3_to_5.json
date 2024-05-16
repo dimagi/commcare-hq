@@ -95,5 +95,8 @@
   },
   "enterprise": {
     "is_complete": true
+  },
+  "custom_data_fields": {
+    "is_complete": true
   }
 }
