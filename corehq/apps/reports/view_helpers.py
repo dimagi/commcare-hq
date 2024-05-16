@@ -13,7 +13,7 @@ def case_hierarchy_context(case, timezone=None):
     if timezone is None:
         timezone = pytz.utc
     columns = wrapped_case.related_cases_columns
-    descendant_case_list = _get_flat_descendant_case_list(case)
+    descendant_case_list = get_case_hierarchy(case)
 
     parent_cases = []
     if case.live_indices:
@@ -97,9 +97,4 @@ def get_case_hierarchy(case):
             'case_list': [case] + child_cases
         }
 
-    return get_children(case, seen=set())
-
-
-def _get_flat_descendant_case_list(case):
-    hierarchy = get_case_hierarchy(case)
-    return hierarchy['case_list']
+    return get_children(case, seen=set())['case_list']

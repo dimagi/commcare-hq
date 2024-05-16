@@ -208,12 +208,12 @@ class TestCaseHierarchy(TestCase):
         ))
 
         hierarchy = get_case_hierarchy(cp)
-        self.assertEqual(2, len(hierarchy['case_list']))
+        self.assertEqual(2, len(hierarchy))
         return hierarchy
 
     def test_deleted_index(self):
         hierarchy = self.test_normal_index()
-        parent, child = hierarchy['case_list']
+        parent, child = hierarchy
 
         factory = CaseFactory()
         ref = CaseStructure()
@@ -229,7 +229,7 @@ class TestCaseHierarchy(TestCase):
         # re-fetch case to clear memoized properties
         parent = CommCareCase.objects.get_case(parent.case_id, parent.domain)
         hierarchy = get_case_hierarchy(parent)
-        self.assertEqual(1, len(hierarchy['case_list']))
+        self.assertEqual(1, len(hierarchy))
 
     def test_extension_index(self):
         factory = CaseFactory()
@@ -255,7 +255,7 @@ class TestCaseHierarchy(TestCase):
         )
 
         hierarchy = get_case_hierarchy(case)
-        self.assertEqual(2, len(hierarchy['case_list']))
+        self.assertEqual(2, len(hierarchy))
 
     def test_recursive_indexes(self):
         factory = CaseFactory()
@@ -269,7 +269,7 @@ class TestCaseHierarchy(TestCase):
 
         # this call used to fail with infinite recursion
         hierarchy = get_case_hierarchy(case)
-        self.assertEqual(1, len(hierarchy['case_list']))
+        self.assertEqual(1, len(hierarchy))
 
     def test_complex_index(self):
         factory = CaseFactory()
@@ -300,7 +300,7 @@ class TestCaseHierarchy(TestCase):
         ))
 
         hierarchy = get_case_hierarchy(cp)
-        self.assertEqual(3, len(hierarchy['case_list']))
+        self.assertEqual(3, len(hierarchy))
 
     @softer_assert()
     def test_missing_transactions(self):
