@@ -4,10 +4,10 @@
 
 {% block css %}
   {% compress css %}
-    <link type="text/less"
+    <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'preview_app/less/preview_app.less' %}"/>
+          href="{% static 'preview_app/scss/preview_app.scss' %}"/>
       <link type="text/css"
             rel="stylesheet"
             media="all"
@@ -52,7 +52,6 @@
     {% registerurl 'gaen_otp_view' request.domain %}
   {% endif %}
 
-  <section id="case-crumbs" style="width: 800px"></section>  {# todo B5: inline style #}
   <section id="cases"></section>
   <div id="menu-container">
     <div id="formplayer-progress-container"></div>

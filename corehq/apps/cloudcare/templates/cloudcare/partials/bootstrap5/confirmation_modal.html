@@ -1,9 +1,11 @@
+{% load hq_shared_tags %}
+
 <div id="js-confirmation-modal" class="modal fade module-modal" role="dialog" tabindex='-1'>
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header">  {# todo B5: css:modal-header #}
-        <button type="button" class="btn-close" data-bs-dismiss="modal">&times;</button>  {# todo B5: css:close #}
-        <h3 class="js-modal-title modal-title"></h3>
+      <div class="modal-header">
+        <h4 class="js-modal-title modal-title"></h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
       </div>
       <div class="js-modal-body modal-body">
       </div>

@@ -18,10 +18,10 @@
           rel="stylesheet"
           media="all"
           href="{% static 'cloudcare/scss/font-formplayer.scss' %}" />
-    <link type="text/less"
+    <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
+          href="{% static 'cloudcare/scss/formplayer-common.scss' %}"/>
   {% endcompress %}
 
   {% if request.use_daterangepicker %}
@@ -35,8 +35,6 @@
 
   {% block css %}{% endblock %}
 
-  <link rel="stylesheet"
-        href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
   <link type="text/css"
         rel="stylesheet"
         media="screen"

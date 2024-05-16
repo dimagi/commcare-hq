@@ -1416,7 +1416,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     const DetailTabView = Marionette.View.extend({
         tagName: "li",
         className: function () {
-            return this.options.model.get('active') ? 'active' : '';
+            if (window.USE_BOOTSTRAP5) {
+                return "nav-item";
+            } else {
+                return this.options.model.get('active') ? 'active' : '';
+            }
+        },
+        attributes: {
+            role: "presentation",
         },
         template: _.template($("#detail-view-tab-item-template").html() || ""),
         events: {
