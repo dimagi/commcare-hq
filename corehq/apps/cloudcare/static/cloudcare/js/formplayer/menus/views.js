@@ -31,8 +31,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     L
 ) {
     const MenuView = Marionette.View.extend({
+        isGrid: function () {
+            return this.model.collection.layoutStyle === constants.LayoutStyles.GRID;
+        },
         tagName: function () {
-            if (this.model.collection.layoutStyle === 'grid') {
+            if (this.isGrid()) {
                 return 'div';
             } else {
                 return 'tr';
@@ -60,7 +63,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         getTemplate: function () {
             let id = "#menu-view-row-template";
-            if (this.model.collection.layoutStyle === constants.LayoutStyles.GRID) {
+            if (this.isGrid()) {
                 id = "#menu-view-grid-item-template";
             } else if (this.model.get('audioUri')) {
                 id = "#menu-view-row-audio-template";

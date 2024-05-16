@@ -101,7 +101,13 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
     var GridView = Marionette.CollectionView.extend({
         template: _.template($("#grid-template").html() || ""),
         childView: GridItem,
-        childViewContainer: ".js-application-container",
+        childViewContainer: function () {
+            if (window.USE_BOOTSTRAP5) {
+                return ".row";
+            } else {
+                return ".js-application-container";
+            }
+        },
 
         events: _.extend(BaseAppView.events),
         incompleteSessionsClick: _.extend(BaseAppView.incompleteSessionsClick),
