@@ -18,11 +18,7 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
     if timezone is None:
         timezone = pytz.utc
     columns = wrapped_case.related_cases_columns
-    type_info = wrapped_case.related_type_info
-
-    descendant_case_list = get_flat_descendant_case_list(
-        case, get_case_url, type_info=type_info
-    )
+    descendant_case_list = get_flat_descendant_case_list(case, get_case_url)
 
     parent_cases = []
     if case.live_indices:
@@ -235,8 +231,7 @@ def get_case_hierarchy(case, type_info):
     return get_children(case)
 
 
-def get_flat_descendant_case_list(case, get_case_url, type_info=None):
-    type_info = type_info or {}
-    hierarchy = get_case_hierarchy(case, type_info)
-    process_case_hierarchy(hierarchy, get_case_url, type_info)
+def get_flat_descendant_case_list(case, get_case_url):
+    hierarchy = get_case_hierarchy(case, {})
+    process_case_hierarchy(hierarchy, get_case_url, {})
     return hierarchy['case_list']

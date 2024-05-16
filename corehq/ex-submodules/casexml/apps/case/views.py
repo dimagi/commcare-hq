@@ -69,10 +69,6 @@ class CaseDisplayWrapper(object):
             DisplayConfig(name=_('Date Modified'), expr='modified_on', process="date", is_phone_time=True),
         ]
 
-    @property
-    def related_type_info(self):
-        return None
-
 
 class SupplyPointDisplayWrapper(CaseDisplayWrapper):
 
