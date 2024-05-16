@@ -23,15 +23,13 @@ def case_hierarchy_context(case, timezone=None):
         for idx in case.live_indices:
             try:
                 parent_case = idx.referenced_case
-                parent_case.index_info = _index_to_context(idx, is_ancestor=True)
-                parent_cases.append(parent_case)
             except ResourceNotFound:
                 parent_cases.append(None)
-        for parent_case in parent_cases:
-            if parent_case:
-                last_parent_id = parent_case.case_id
-            else:
                 last_parent_id = None
+            else:
+                parent_case.index_info = _index_to_context(idx, is_ancestor=True)
+                parent_cases.append(parent_case)
+                last_parent_id = parent_case.case_id
 
         for c in descendant_case_list:
             if not getattr(c, 'treetable_parent_node_id', None) and last_parent_id:
