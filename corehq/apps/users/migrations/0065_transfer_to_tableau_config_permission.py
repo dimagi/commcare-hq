@@ -23,7 +23,7 @@ This migration cannot be performed automatically and must instead be run manuall
 before this environment can be upgraded to the latest version of CommCare HQ.
 Instructions for running the migration can be found at this link:
 
-TODO: Update with changelog link
+https://commcare-cloud.readthedocs.io/en/latest/changelog/0081-copy_web_user_permissions_to_tableau_config_permission.html
 """
 
 
