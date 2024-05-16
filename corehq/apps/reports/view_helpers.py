@@ -84,25 +84,14 @@ def _sortkey(child):
     return (0, case.opened_on or datetime.datetime.min)
 
 
-TREETABLE_INDENT_PX = 19
-
-
 def _process_case_hierarchy(case_output, get_case_url):
-    current_case = case_output['case']
-    submit_url_root = reverse('receiver_post', args=[current_case.domain])
-    form_url_root = reverse('formplayer_main', args=[current_case.domain])
-
     def process_output(case_output, depth=0):
         for c in case_output['child_cases']:
             process_output(c, depth=depth + 1)
 
         case = case_output['case']
         case.edit_data = {
-            'indent_px': depth * TREETABLE_INDENT_PX,
-            'submit_url_root': submit_url_root,
-            'form_url_root': form_url_root,
             'view_url': get_case_url(case.case_id),
-            'session_data': {'case_id': case.case_id},  # TODO is this needed?
         }
     process_output(case_output)
 
