@@ -76,52 +76,12 @@ def _index_to_context(index, is_ancestor):
     }
 
 
-def normalize_date(val):
-    # Can't use isinstance since datetime is a subclass of date.
-    if type(val) == datetime.date:
-        return datetime.datetime.combine(val, datetime.time.min)
-
-    return val
-
-
-def get_inverse(val):
-    if isinstance(val, (datetime.datetime, datetime.date)):
-        return datetime.datetime.max - val
-    elif isinstance(val, numbers.Number):
-        return 10 ** 20
-    elif val is None or isinstance(val, bool):
-        return not val
-    else:
-        raise Exception("%r has uninversable type: %s" % (val, type(val)))
-
-
-def sortkey(child):
-    """Return sortkey based on sort order defined in type_info, or use default
-    based on open/closed and opened_on/closed_on dates.
-    """
-    type_info = {}  # TODO
+def _sortkey(child):
+    """Return sortkey based on open/closed and opened_on/closed_on dates"""
     case = child['case']
     if case.closed:
-        key = [1]
-        try:
-            for attr, direction in type_info[case.type]['closed_sortkeys']:
-                val = normalize_date(getattr(case, attr))
-                if direction.lower() == 'desc':
-                    val = get_inverse(val)
-                key.append(val)
-        except KeyError:
-            key.append(datetime.datetime.max - case.closed_on)
-    else:
-        key = [0]
-        try:
-            for attr, direction in type_info[case.type]['open_sortkeys']:
-                val = normalize_date(getattr(case, attr))
-                if direction.lower() == 'desc':
-                    val = get_inverse(val)
-                key.append(val)
-        except KeyError:
-            key.append(case.opened_on or datetime.datetime.min)
-    return key
+        return (1, datetime.datetime.max - case.closed_on)
+    return (0, case.opened_on or datetime.datetime.min)
 
 
 def get_session_data(case, current_case, type_info):
@@ -200,7 +160,7 @@ def get_case_hierarchy(case):
             descendant_types.extend(c['descendant_types'])
         descendant_types = list(set(descendant_types))
 
-        children = sorted(children, key=sortkey)
+        children = sorted(children, key=_sortkey)
 
         # set parent_case_id used by flat display
         for c in children:
