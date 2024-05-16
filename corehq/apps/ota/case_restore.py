@@ -19,7 +19,7 @@ from corehq.toggles import ADD_LIMITED_FIXTURES_TO_CASE_RESTORE
 def get_case_hierarchy_for_restore(case):
     from corehq.apps.reports.view_helpers import get_case_hierarchy
     return [
-        c for c in get_case_hierarchy(case, {})['case_list']
+        c for c in get_case_hierarchy(case)['case_list']
         if not c.closed
     ]
 

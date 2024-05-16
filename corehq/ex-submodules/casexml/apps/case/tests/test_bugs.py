@@ -207,7 +207,7 @@ class TestCaseHierarchy(TestCase):
             walk_related=False
         ))
 
-        hierarchy = get_case_hierarchy(cp, {})
+        hierarchy = get_case_hierarchy(cp)
         self.assertEqual(2, len(hierarchy['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases']))
         return hierarchy
@@ -229,7 +229,7 @@ class TestCaseHierarchy(TestCase):
 
         # re-fetch case to clear memoized properties
         parent = CommCareCase.objects.get_case(parent.case_id, parent.domain)
-        hierarchy = get_case_hierarchy(parent, {})
+        hierarchy = get_case_hierarchy(parent)
         self.assertEqual(1, len(hierarchy['case_list']))
         self.assertEqual(0, len(hierarchy['child_cases']))
 
@@ -256,7 +256,7 @@ class TestCaseHierarchy(TestCase):
             )
         )
 
-        hierarchy = get_case_hierarchy(case, {})
+        hierarchy = get_case_hierarchy(case)
         self.assertEqual(2, len(hierarchy['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases']))
 
@@ -271,7 +271,7 @@ class TestCaseHierarchy(TestCase):
         ))
 
         # this call used to fail with infinite recursion
-        hierarchy = get_case_hierarchy(case, {})
+        hierarchy = get_case_hierarchy(case)
         self.assertEqual(1, len(hierarchy['case_list']))
 
     def test_complex_index(self):
@@ -302,15 +302,7 @@ class TestCaseHierarchy(TestCase):
             walk_related=False,
         ))
 
-        # with 'ignore_relationship_types' if a case got processed along the ignored relationship first
-        # then it got marked as 'seen' and would be not be processed again when it came to the correct relationship
-        type_info = {
-            'task': {
-                'ignore_relationship_types': ['parent']
-            },
-        }
-
-        hierarchy = get_case_hierarchy(cp, type_info)
+        hierarchy = get_case_hierarchy(cp)
         self.assertEqual(3, len(hierarchy['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases']))
         self.assertEqual(2, len(hierarchy['child_cases'][0]['case_list']))

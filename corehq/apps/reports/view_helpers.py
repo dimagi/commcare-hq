@@ -1,7 +1,5 @@
 import datetime
 import numbers
-from functools import partial
-
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
@@ -97,11 +95,11 @@ def get_inverse(val):
         raise Exception("%r has uninversable type: %s" % (val, type(val)))
 
 
-def sortkey(child, type_info=None):
+def sortkey(child):
     """Return sortkey based on sort order defined in type_info, or use default
     based on open/closed and opened_on/closed_on dates.
     """
-    type_info = type_info or {}
+    type_info = {}  # TODO
     case = child['case']
     if case.closed:
         key = [1]
@@ -188,21 +186,13 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
     process_output(case_output)
 
 
-def get_case_hierarchy(case, type_info):
-    def get_children(case, referenced_type=None, seen=None):
-        seen = seen or set()
-
-        ignore_types = type_info.get(case.type, {}).get("ignore_relationship_types", [])
-        if referenced_type and referenced_type in ignore_types:
-            return None
-
+def get_case_hierarchy(case):
+    def get_children(case, seen):
         seen.add(case.case_id)
         children = [
-            get_children(i.referenced_case, i.referenced_type, seen) for i in case.reverse_indices
+            get_children(i.referenced_case, seen) for i in case.reverse_indices
             if i.referenced_id and i.referenced_id not in seen
         ]
-
-        children = [c for c in children if c is not None]
 
         # non-first-level descendants
         descendant_types = []
@@ -210,7 +200,7 @@ def get_case_hierarchy(case, type_info):
             descendant_types.extend(c['descendant_types'])
         descendant_types = list(set(descendant_types))
 
-        children = sorted(children, key=partial(sortkey, type_info=type_info))
+        children = sorted(children, key=sortkey)
 
         # set parent_case_id used by flat display
         for c in children:
@@ -228,10 +218,10 @@ def get_case_hierarchy(case, type_info):
             'case_list': [case] + child_cases
         }
 
-    return get_children(case)
+    return get_children(case, seen=set())
 
 
 def get_flat_descendant_case_list(case, get_case_url):
-    hierarchy = get_case_hierarchy(case, {})
+    hierarchy = get_case_hierarchy(case)
     process_case_hierarchy(hierarchy, get_case_url, {})
     return hierarchy['case_list']
