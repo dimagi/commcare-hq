@@ -41,7 +41,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 return 'tr';
             }
         },
-        className: "formplayer-request",
+        className: function () {
+            let classNames = "formplayer-request";
+            if (this.isGrid()) {
+                classNames += " col-sm-6 col-md-4 col-lg-3";
+            }
+            return classNames;
+        },
         attributes: function () {
             const displayText = this.options.model.attributes.displayText;
             return {
