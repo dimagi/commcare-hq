@@ -1,0 +1,90 @@
+{
+  "log": {
+    "entries": [
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://staging.commcarehq.org/formplayer/navigate_menu_start",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"skelly\",\"app_id\":\"85243995d0274a6699ba92650df77787\",\"locale\":\"en\",\"offset\":null,\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Stale case search data test\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"85243995d0274a6699ba92650df77787\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 1\",\"selections\":null,\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"Stale case search data test\"],\"persistentCaseTile\":null,\"queryKey\":null,\"commands\":[{\"index\":0,\"displayText\":\"Registration\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"},{\"index\":1,\"displayText\":\"Pending Cases\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"},{\"index\":2,\"displayText\":\"Case List\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"}],\"type\":\"commands\",\"layoutStyle\":null}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://staging.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"skelly\",\"app_id\":\"85243995d0274a6699ba92650df77787\",\"locale\":\"en\",\"selections\":[\"1\"],\"offset\":0,\"search_text\":null,\"query_data\":{},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Search All Cases\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"85243995d0274a6699ba92650df77787\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 1\",\"selections\":[\"1\"],\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"Stale case search data test\",\"Pending Cases\"],\"persistentCaseTile\":null,\"queryKey\":\"search_command.m1_results\",\"entities\":[{\"id\":\"0da3e5c6-f069-49be-aab3-53f2b9b7ebd0\",\"data\":[\"stale1\",\"pending\",\"pending\"],\"groupKey\":null,\"altText\":[null,null,null]}],\"actions\":[],\"redoLast\":null,\"styles\":[{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null},{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null},{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null}],\"endpointActions\":[null,null,null],\"headers\":[\"Name\",\"Current Status\",\"casedb status\"],\"tiles\":null,\"widthHints\":[33,33,33],\"numEntitiesPerRow\":0,\"useUniformUnits\":false,\"sortIndices\":[0],\"noItemsText\":null,\"selectText\":null,\"pageCount\":0,\"currentPage\":0,\"type\":\"entities\",\"usesCaseTiles\":false,\"maxWidth\":0,\"maxHeight\":0,\"maxSelectValue\":-1,\"hasDetails\":true,\"queryResponse\":{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Case Claim\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":null,\"appVersion\":null,\"selections\":null,\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":true,\"metaData\":null,\"locales\":[\"default\",\"en\"],\"breadcrumbs\":null,\"persistentCaseTile\":null,\"queryKey\":\"search_command.m1_results\",\"displays\":[{\"text\":\"Name\",\"id\":\"name\",\"input\":null,\"value\":null,\"receive\":null,\"hidden\":null,\"itemsetChoices\":null,\"itemsetChoicesKey\":null,\"hint\":null,\"error\":null,\"groupKey\":null,\"audio_uri\":null,\"image_uri\":null,\"allow_blank_value\":false,\"required\":false,\"required_msg\":\"Sorry, this response is required!\"}],\"type\":\"query\",\"description\":\"\u00a0\",\"groupHeaders\":{},\"searchOnClear\":false},\"groupHeaderRows\":-1,\"multiSelect\":false}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://staging.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"skelly\",\"app_id\":\"85243995d0274a6699ba92650df77787\",\"locale\":\"en\",\"selections\":[\"1\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m1_results\":{\"inputs\":{\"name\":\"stale1\"},\"execute\":false,\"force_manual_search\":true,\"selections\":[\"1\"]}},\"cases_per_page\":10,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\",\"requestInitiatedByTag\":\"field_change\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Case Claim\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"85243995d0274a6699ba92650df77787\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 1\",\"selections\":[\"1\"],\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":true,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"Stale case search data test\",\"Pending Cases\"],\"persistentCaseTile\":null,\"queryKey\":\"search_command.m1_results\",\"displays\":[{\"text\":\"Name\",\"id\":\"name\",\"input\":null,\"value\":\"stale1\",\"receive\":null,\"hidden\":null,\"itemsetChoices\":null,\"itemsetChoicesKey\":null,\"hint\":null,\"error\":null,\"groupKey\":null,\"audio_uri\":null,\"image_uri\":null,\"allow_blank_value\":false,\"required\":false,\"required_msg\":\"Sorry, this response is required!\"}],\"type\":\"query\",\"description\":\"\u00a0\",\"groupHeaders\":{},\"searchOnClear\":false}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://staging.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"skelly\",\"app_id\":\"85243995d0274a6699ba92650df77787\",\"locale\":\"en\",\"selections\":[\"1\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m1_results\":{\"execute\":true,\"force_manual_search\":true,\"selections\":[\"1\"],\"inputs\":{\"name\":\"stale1\"}}},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Search All Cases\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"85243995d0274a6699ba92650df77787\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 1\",\"selections\":[\"1\"],\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"Stale case search data test\",\"Pending Cases\"],\"persistentCaseTile\":null,\"queryKey\":\"search_command.m1_results\",\"entities\":[{\"id\":\"0da3e5c6-f069-49be-aab3-53f2b9b7ebd0\",\"data\":[\"stale1\",\"pending\",\"pending\"],\"groupKey\":null,\"altText\":[null,null,null]}],\"actions\":[],\"redoLast\":null,\"styles\":[{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null},{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null},{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null}],\"endpointActions\":[null,null,null],\"headers\":[\"Name\",\"Current Status\",\"casedb status\"],\"tiles\":null,\"widthHints\":[33,33,33],\"numEntitiesPerRow\":0,\"useUniformUnits\":false,\"sortIndices\":[0],\"noItemsText\":null,\"selectText\":null,\"pageCount\":0,\"currentPage\":0,\"type\":\"entities\",\"usesCaseTiles\":false,\"maxWidth\":0,\"maxHeight\":0,\"maxSelectValue\":-1,\"hasDetails\":true,\"queryResponse\":{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Case Claim\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":null,\"appVersion\":null,\"selections\":null,\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":true,\"metaData\":null,\"locales\":[\"default\",\"en\"],\"breadcrumbs\":null,\"persistentCaseTile\":null,\"queryKey\":\"search_command.m1_results\",\"displays\":[{\"text\":\"Name\",\"id\":\"name\",\"input\":null,\"value\":\"stale1\",\"receive\":null,\"hidden\":null,\"itemsetChoices\":null,\"itemsetChoicesKey\":null,\"hint\":null,\"error\":null,\"groupKey\":null,\"audio_uri\":null,\"image_uri\":null,\"allow_blank_value\":false,\"required\":false,\"required_msg\":\"Sorry, this response is required!\"}],\"type\":\"query\",\"description\":\"\u00a0\",\"groupHeaders\":{},\"searchOnClear\":false},\"groupHeaderRows\":-1,\"multiSelect\":false}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://staging.commcarehq.org/formplayer/get_details",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"skelly\",\"app_id\":\"85243995d0274a6699ba92650df77787\",\"locale\":\"en\",\"selections\":[\"1\",\"0da3e5c6-f069-49be-aab3-53f2b9b7ebd0\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m1_results\":{\"execute\":true,\"force_manual_search\":true,\"selections\":[\"1\"],\"inputs\":{\"name\":\"stale1\"}}},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\",\"isShortDetail\":false}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"details\":[{\"details\":[\"stale1\"],\"entities\":null,\"styles\":[{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null}],\"headers\":[\"Name\"],\"altText\":[null],\"title\":\"Case\",\"usesCaseTiles\":false,\"maxWidth\":0,\"maxHeight\":0,\"numEntitiesPerRow\":0,\"tiles\":null,\"useUniformUnits\":false,\"hasInlineTile\":false,\"useNodeset\":false}],\"isPersistentDetail\":false}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://staging.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"skelly@dimagi.com\",\"restoreAs\":null,\"domain\":\"skelly\",\"app_id\":\"85243995d0274a6699ba92650df77787\",\"locale\":\"en\",\"selections\":[\"1\",\"0da3e5c6-f069-49be-aab3-53f2b9b7ebd0\"],\"offset\":0,\"search_text\":null,\"query_data\":{\"search_command.m1_results\":{\"execute\":true,\"force_manual_search\":true,\"selections\":[\"1\"],\"inputs\":{\"name\":\"stale1\"}}},\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Pending Cases\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"85243995d0274a6699ba92650df77787\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 1\",\"selections\":[\"1\",\"0da3e5c6-f069-49be-aab3-53f2b9b7ebd0\"],\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"Stale case search data test\",\"Pending Cases\",\"stale1\"],\"persistentCaseTile\":null,\"queryKey\":null,\"commands\":[{\"index\":0,\"displayText\":\"Followup Form Pending\",\"navigationState\":\"JUMP\",\"badgeText\":\"\"},{\"index\":1,\"displayText\":\"Duplicate search\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"}],\"type\":\"commands\",\"layoutStyle\":null}"
+          }
+        }
+      }
+    ]
+  }
+}

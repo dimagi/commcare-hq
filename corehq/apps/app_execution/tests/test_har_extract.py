@@ -1,4 +1,3 @@
-import json
 import os
 
 from django.test import SimpleTestCase
@@ -13,22 +12,22 @@ class TestHarExtraction(SimpleTestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def test_extraction_reg_form(self):
-        har_data = json.loads(self.get_file("reg_form", "har"))
+        har_data = self.get_json("reg_form")
         config = HarParser().parse(har_data)
         self.assertEqual(config.domain, "demo_domain")
         self.assertEqual(config.app_id, "demo_app_id")
         self.assertEqual(config.workflow.steps, get_reg_form_steps())
 
     def test_extraction_case_list(self):
-        har_data = json.loads(self.get_file("case_list", "har"))
+        har_data = self.get_json("case_list")
         config = HarParser().parse(har_data)
         self.assertEqual(config.domain, "demo_domain")
         self.assertEqual(config.app_id, "demo_app_id")
         self.assertEqual(config.workflow.steps, get_case_list_steps())
 
     def test_extraction_combined(self):
-        reg_form_har_data = json.loads(self.get_file("reg_form", "har"))
-        case_list_har_data = json.loads(self.get_file("case_list", "har"))
+        reg_form_har_data = self.get_json("reg_form")
+        case_list_har_data = self.get_json("case_list")
         combined = {
             'log': {
                 'entries': reg_form_har_data['log']['entries'] + case_list_har_data['log']['entries']
@@ -38,6 +37,24 @@ class TestHarExtraction(SimpleTestCase, TestFileMixin):
         self.assertEqual(config.domain, "demo_domain")
         self.assertEqual(config.app_id, "demo_app_id")
         self.assertEqual(config.workflow.steps, get_reg_form_steps() + get_case_list_steps())
+
+    def test_split_screen_case_search_select(self):
+        har = self.get_json("split_case_search_select")
+        config = HarParser().parse(har)
+        self.assertEqual(config.workflow.steps, [
+            data_model.CommandStep(value='Pending Cases'),
+            data_model.EntitySelectStep(value='0da3e5c6-f069-49be-aab3-53f2b9b7ebd0')
+        ])
+
+    def test_split_screen_case_search_search(self):
+        har = self.get_json("split_case_search_search")
+        config = HarParser().parse(har)
+        self.assertEqual(config.workflow.steps, [
+            data_model.CommandStep(value='Pending Cases'),
+            data_model.QueryInputValidationStep(inputs={'name': 'stale1'}),
+            data_model.QueryStep(inputs={'name': 'stale1'}),
+            data_model.EntitySelectStep(value='0da3e5c6-f069-49be-aab3-53f2b9b7ebd0'),
+        ])
 
 
 def get_reg_form_steps():

@@ -1,7 +1,7 @@
 import json
 
 from corehq.apps.app_execution import data_model
-from corehq.apps.app_execution.api import ScreenType, get_screen_type_and_data
+from corehq.apps.app_execution.api import ScreenType, get_screen_type
 from corehq.apps.app_execution.models import AppWorkflowConfig
 
 NON_FORM_ENDPOINTS = {"navigate_menu_start", "navigate_menu", "get_details"}
@@ -22,7 +22,7 @@ class HarParser:
         """
         Extracts a workflow from a HAR file and returns it as a dictionary.
         """
-        for endpoint, entry in _get_formplayer_entries(har_data['log']['entries']):
+        for endpoint, entry in get_formplayer_entries(har_data['log']['entries']):
             if not self.current_screen and endpoint != 'navigate_menu_start':
                 # Skip until we get the first navigate_menu_start
                 continue
@@ -56,7 +56,8 @@ class HarParser:
                 # skip over detail screens and don't update current screen and screen data
                 continue
 
-            self.current_screen, self.screen_data = get_screen_type_and_data(response)
+            self.current_screen = get_screen_type(response)
+            self.screen_data = response
 
         return AppWorkflowConfig(
             domain=self.domain, app_id=self.app_id, workflow=data_model.AppWorkflow(steps=self.steps)
@@ -65,31 +66,43 @@ class HarParser:
     def _extract_navigation_step(self, request_data):
         if self.current_screen == ScreenType.MENU:
             last_selection = _get_last_selection(request_data, int)
-            command = self.screen_data[last_selection]["displayText"]
+            command = self.screen_data["commands"][last_selection]["displayText"]
             return data_model.CommandStep(value=command)
         elif self.current_screen == ScreenType.CASE_LIST:
-            # TODO: handle split screen search
-            last_selection = _get_last_selection(request_data)
-            if is_action(last_selection):
-                return data_model.CommandStep(id=last_selection)
-            elif is_multi_select(last_selection):
-                return data_model.CommandStep(selected_values=request_data["selectedValues"])
-            else:
-                return data_model.EntitySelectStep(value=last_selection)
+            return self._get_entity_select_step(request_data)
         elif self.current_screen == ScreenType.SEARCH:
-            query_key = self.screen_data["queryKey"]
-            query_data = request_data["query_data"][query_key]
-            if query_data["execute"]:
-                return data_model.QueryStep(inputs=query_data["inputs"])
+            return self._get_search_step(request_data)
+        elif self.current_screen == ScreenType.SPLIT_SEARCH:
+            if request_data["selections"] == self.screen_data["selections"]:
+                return self._get_search_step(request_data)
             else:
-                return data_model.QueryInputValidationStep(inputs=query_data["inputs"])
+                return self._get_entity_select_step(request_data)
+
         elif self.current_screen == ScreenType.DETAIL:
             pass
         else:
             raise Exception(f"Unexpected screen type: {self.current_screen}")
 
+    def _get_entity_select_step(self, request_data):
+        last_selection = _get_last_selection(request_data)
+        if is_action(last_selection):
+            return data_model.CommandStep(id=last_selection)
+        elif is_multi_select(last_selection):
+            return data_model.CommandStep(selected_values=request_data["selectedValues"])
+        else:
+            return data_model.EntitySelectStep(value=last_selection)
+
+    def _get_search_step(self, request_data):
+        query_key = self.screen_data["queryKey"]
+        query_data = request_data["query_data"].get(query_key)
+        if query_data and query_data["execute"]:
+            return data_model.QueryStep(inputs=query_data["inputs"])
+        else:
+            return data_model.QueryInputValidationStep(inputs=query_data["inputs"])
+
     def _extract_form_answer_step(self, request_data):
-        tree_item = [question for question in self.screen_data if question["ix"] == request_data["ix"]][0]
+        tree = self.screen_data["tree"]
+        tree_item = [question for question in tree if question["ix"] == request_data["ix"]][0]
         step = data_model.AnswerQuestionStep(question_text=tree_item["caption"],
                                              question_id=tree_item["question_id"],
                                              value=request_data["answer"])
@@ -120,7 +133,7 @@ def is_multi_select(selection):
     return selection == "use_selected_values"
 
 
-def _get_formplayer_entries(entries):
+def get_formplayer_entries(entries):
     for entry in entries:
         request = entry['request']
         if request['method'] != 'POST':
