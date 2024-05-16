@@ -11,7 +11,7 @@ from casexml.apps.case.views import get_wrapped_case
 from corehq.apps.hqwebapp.templatetags.proptable_tags import get_display_data
 
 
-def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=None):
+def case_hierarchy_context(case, get_case_url, timezone=None):
     wrapped_case = get_wrapped_case(case)
     if timezone is None:
         timezone = pytz.utc
@@ -64,7 +64,6 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
         'domain': case.domain,
         'case_list': case_list,
         'columns': columns,
-        'show_view_buttons': show_view_buttons,
     }
 
 
