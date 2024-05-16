@@ -8,12 +8,6 @@
 <link rel="stylesheet" type="text/css" href="{% static "jquery-treetable/css/jquery.treetable.css" %}">
 <link rel="stylesheet" type="text/css" href="{% static "case/css/jquery.treetable.css" %}">
 
-<style>
-  .case-tree-spacer {
-    width: 10px;
-  }
-</style>
-
 <table id="related_cases" class="table table-striped case_history">
   <thead>
     <tr>
@@ -46,7 +40,6 @@
           {% else %}
             {{ case.name }}
           {% endif %}
-          <span class="case-tree-spacer"></span>
           {% if show_view_buttons and case.case_id != current_case.case_id %}
             <div class="pull-right btn-group">
               <a class="btn btn-sm btn-default view-related-case-link" href="{{ case.edit_data.view_url }}">
