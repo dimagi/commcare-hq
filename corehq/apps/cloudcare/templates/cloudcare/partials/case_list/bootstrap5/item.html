@@ -1,6 +1,6 @@
 <script type="text/template" id="case-view-item-template">
   <% if (isMultiSelect) { %>
-    <td class="module-case-list-column-checkbox"><input type="checkbox" class="select-row-checkbox"/></td>  {# todo B5: css:checkbox #}
+    <td class="module-case-list-column-checkbox"><input type="checkbox" class="select-row-checkbox"/></td>
   <% } %>
   <% _.each(data, function(datum, index) { %>
     <% if (!(styles[index].widthHint === 0)) { %>
