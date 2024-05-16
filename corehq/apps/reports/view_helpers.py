@@ -114,13 +114,6 @@ def get_case_hierarchy(case):
             get_children(i.referenced_case, seen) for i in case.reverse_indices
             if i.referenced_id and i.referenced_id not in seen
         ]
-
-        # non-first-level descendants
-        descendant_types = []
-        for c in children:
-            descendant_types.extend(c['descendant_types'])
-        descendant_types = list(set(descendant_types))
-
         children = sorted(children, key=_sortkey)
 
         # set parent_case_id used by flat display
@@ -135,7 +128,6 @@ def get_case_hierarchy(case):
         return {
             'case': case,
             'child_cases': children,
-            'descendant_types': list(set(descendant_types + [c['case'].type for c in children])),
             'case_list': [case] + child_cases
         }
 
