@@ -19,17 +19,10 @@
     {% csrf_token %}
 
     {% if request|toggle_enabled:'SELF_SERVICE_ANNUAL_RENEWALS' %}
-      <p class="switch-label text-center">
-        {% trans "Pay Monthly" %}
-        <label class="switch">
-          <input type="checkbox" id="pricing-toggle" name="is_annual_plan" value="true">
-          <span class="slider round slider-blue slider-blue-on"></span>
-        </label>
-        {% trans "Pay Annually" %}
-      </p>
+      {% include 'accounting/partials/renew_plan_selection.html' %}
+    {% else %}
+      {% include 'accounting/partials/confirm_plan_summary.html' %}
     {% endif %}
-
-    {% include 'accounting/partials/confirm_plan_summary.html' %}
 
     <input type="hidden" name="from_plan_page" value="true" />
     <input type="hidden" name="plan_edition" value="{{ current_edition }}">

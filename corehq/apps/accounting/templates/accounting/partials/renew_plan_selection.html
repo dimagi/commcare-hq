@@ -1,0 +1,44 @@
+{% load i18n %}
+
+<div id="renew-plan-selection">
+  <p class="switch-label text-center">
+    {% trans "Pay Monthly" %}
+    <label class="switch">
+      <input type="checkbox" id="pricing-toggle" name="is_annual_plan" value="true">
+      <span class="slider round slider-blue slider-blue-on"></span>
+    </label>
+    {% trans "Pay Annually" %}
+  </p>
+  <p class="text-center">
+    {% blocktrans %}
+      Save close to 20% when you pay annually.
+    {% endblocktrans %}
+  </p>
+
+  <div class="confirm-plan-summary">
+    <div class="tile {{ tile_css }}">
+      <h3>{{ plan.name }}</h3>
+      <p class="plan-price">{{ plan.monthly_fee }}</p>
+
+      <p class="plan-monthly-label">
+        <strong>
+          {% trans "Monthly Fee" %}
+        </strong>
+      </p>
+
+      <h4>
+        {% trans 'Included each month' %}
+      </h4>
+      <div class="plan-included well well-sm">
+        <dl class="dl-horizontal">
+          {% for rate in plan.rates %}
+            <dt>{{ rate.name }}</dt>
+            <dd>{{ rate.included }}</dd>
+          {% endfor %}
+        </dl>
+      </div>
+
+      <p class="plan-desc">{{ plan.description }}</p>
+    </div>
+  </div>
+</div>
