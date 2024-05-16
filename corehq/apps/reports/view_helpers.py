@@ -20,7 +20,7 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
     columns = wrapped_case.related_cases_columns
     type_info = wrapped_case.related_type_info
 
-    descendent_case_list = get_flat_descendant_case_list(
+    descendant_case_list = get_flat_descendant_case_list(
         case, get_case_url, type_info=type_info
     )
 
@@ -43,11 +43,11 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
             else:
                 last_parent_id = None
 
-        for c in descendent_case_list:
+        for c in descendant_case_list:
             if not getattr(c, 'treetable_parent_node_id', None) and last_parent_id:
                 c.treetable_parent_node_id = last_parent_id
 
-    case_list = parent_cases + descendent_case_list
+    case_list = parent_cases + descendant_case_list
 
     for c in case_list:
         if not c:
