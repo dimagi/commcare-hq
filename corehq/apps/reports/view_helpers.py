@@ -1,7 +1,4 @@
 import datetime
-import numbers
-from django.urls import reverse
-from django.utils.translation import gettext as _
 
 import pytz
 from couchdbkit import ResourceNotFound
@@ -56,8 +53,7 @@ def case_hierarchy_context(case, get_case_url, timezone=None):
         c.columns = []
         case_dict = get_wrapped_case(c).to_full_dict()
         for column in columns:
-            c.columns.append(get_display_data(
-                case_dict, column, timezone=timezone))
+            c.columns.append(get_display_data(case_dict, column, timezone=timezone))
 
     return {
         'current_case': case,
