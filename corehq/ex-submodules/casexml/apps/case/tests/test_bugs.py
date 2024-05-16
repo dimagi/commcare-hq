@@ -209,7 +209,6 @@ class TestCaseHierarchy(TestCase):
 
         hierarchy = get_case_hierarchy(cp)
         self.assertEqual(2, len(hierarchy['case_list']))
-        self.assertEqual(1, len(hierarchy['child_cases']))
         return hierarchy
 
     def test_deleted_index(self):
@@ -231,7 +230,6 @@ class TestCaseHierarchy(TestCase):
         parent = CommCareCase.objects.get_case(parent.case_id, parent.domain)
         hierarchy = get_case_hierarchy(parent)
         self.assertEqual(1, len(hierarchy['case_list']))
-        self.assertEqual(0, len(hierarchy['child_cases']))
 
     def test_extension_index(self):
         factory = CaseFactory()
@@ -258,7 +256,6 @@ class TestCaseHierarchy(TestCase):
 
         hierarchy = get_case_hierarchy(case)
         self.assertEqual(2, len(hierarchy['case_list']))
-        self.assertEqual(1, len(hierarchy['child_cases']))
 
     def test_recursive_indexes(self):
         factory = CaseFactory()
@@ -304,9 +301,6 @@ class TestCaseHierarchy(TestCase):
 
         hierarchy = get_case_hierarchy(cp)
         self.assertEqual(3, len(hierarchy['case_list']))
-        self.assertEqual(1, len(hierarchy['child_cases']))
-        self.assertEqual(2, len(hierarchy['child_cases'][0]['case_list']))
-        self.assertEqual(1, len(hierarchy['child_cases'][0]['child_cases']))
 
     @softer_assert()
     def test_missing_transactions(self):

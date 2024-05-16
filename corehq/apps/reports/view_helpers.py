@@ -74,14 +74,6 @@ def _sortkey(child):
     return (0, case.opened_on or datetime.datetime.min)
 
 
-def _process_case_hierarchy(case_output):
-    def process_output(case_output, depth=0):
-        for c in case_output['child_cases']:
-            process_output(c, depth=depth + 1)
-        case = case_output['case']
-    process_output(case_output)
-
-
 def get_case_hierarchy(case):
     def get_children(case, seen):
         seen.add(case.case_id)
@@ -102,7 +94,6 @@ def get_case_hierarchy(case):
 
         return {
             'case': case,
-            'child_cases': children,
             'case_list': [case] + child_cases
         }
 
@@ -111,5 +102,4 @@ def get_case_hierarchy(case):
 
 def _get_flat_descendant_case_list(case):
     hierarchy = get_case_hierarchy(case)
-    _process_case_hierarchy(hierarchy)
     return hierarchy['case_list']
