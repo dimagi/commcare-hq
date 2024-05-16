@@ -48,7 +48,11 @@ class AppWorkflowConfig(models.Model):
 
     @property
     def workflow_json(self):
-        return AppWorkflowConfig._meta.get_field("workflow").formfield().prepare_value(self.workflow)
+        return AppWorkflowConfig.workflow_object_to_json_string(self.workflow)
+
+    @staticmethod
+    def workflow_object_to_json_string(workflow):
+        return AppWorkflowConfig._meta.get_field("workflow").formfield().prepare_value(workflow)
 
     def get_formplayer_session(self):
         client = LocalUserClient(

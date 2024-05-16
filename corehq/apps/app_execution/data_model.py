@@ -60,6 +60,13 @@ class CommandStep(Step):
     selected_values: list[str] = None
     """Selected values for multi-select commands"""
 
+    def to_json(self):
+        data = super().to_json()
+        for key in ["value", "id", "selected_values"]:
+            if not getattr(self, key):
+                data.pop(key)
+        return data
+
     def get_request_data(self, session, data):
         if self.selected_values:
             data = _append_selection(data, "use_selected_values")
@@ -264,6 +271,7 @@ STEP_MAP = {
     "entity_select": EntitySelectStep,
     "entity_select_index": EntitySelectIndexStep,
     "query": QueryStep,
+    "query_input_validation": QueryInputValidationStep,
     "answer_question": AnswerQuestionStep,
     "submit_form": SubmitFormStep,
     "form": FormStep,

@@ -9,6 +9,10 @@ FORM_ENDPOINTS = {"answer", "submit-all"}
 ENDPOINTS = NON_FORM_ENDPOINTS | FORM_ENDPOINTS
 
 
+def parse_har_from_string(har_string):
+    return HarParser().parse(json.loads(har_string))
+
+
 class HarParser:
     def __init__(self):
         self.domain = None
