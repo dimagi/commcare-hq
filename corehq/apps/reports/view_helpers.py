@@ -16,7 +16,7 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
     if timezone is None:
         timezone = pytz.utc
     columns = wrapped_case.related_cases_columns
-    descendant_case_list = get_flat_descendant_case_list(case, get_case_url)
+    descendant_case_list = _get_flat_descendant_case_list(case, get_case_url)
 
     parent_cases = []
     if case.live_indices:
@@ -84,25 +84,10 @@ def _sortkey(child):
     return (0, case.opened_on or datetime.datetime.min)
 
 
-def get_session_data(case, current_case, type_info):
-    # this logic should ideally be implemented in subclasses of
-    # CommCareCase
-    if type_info and case.type in type_info:
-        attr = type_info[case.type]['case_id_attr']
-        return {
-            attr: case.case_id,
-            'case_id': current_case.case_id
-        }
-    else:
-        return {
-            'case_id': case.case_id
-        }
-
-
 TREETABLE_INDENT_PX = 19
 
 
-def process_case_hierarchy(case_output, get_case_url, type_info):
+def _process_case_hierarchy(case_output, get_case_url):
     current_case = case_output['case']
     submit_url_root = reverse('receiver_post', args=[current_case.domain])
     form_url_root = reverse('formplayer_main', args=[current_case.domain])
@@ -112,37 +97,13 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
             process_output(c, depth=depth + 1)
 
         case = case_output['case']
-        common_data = {
+        case.edit_data = {
             'indent_px': depth * TREETABLE_INDENT_PX,
             'submit_url_root': submit_url_root,
             'form_url_root': form_url_root,
             'view_url': get_case_url(case.case_id),
-            'session_data': get_session_data(case, current_case, type_info)
+            'session_data': {'case_id': case.case_id},  # TODO is this needed?
         }
-        data = type_info.get(case.type, {})
-        if 'description_property' in data:
-            data['description'] = getattr(case, data['description_property'], None)
-        if 'edit_session_data' in data:
-            data['session_data'].update(data['edit_session_data'])
-        data.update(common_data)
-
-        case.edit_data = data
-
-        if 'child_type' in data and not case.closed:
-            child_type = data['child_type']
-            child_data = type_info.get(child_type, {})
-            child_data.update(common_data)
-            child_data.update({
-                "link_text": _("Add %(case_type)s") % {
-                    'case_type': child_data.get('type_name', child_type)
-                },
-                "parent_node_id": case.case_id,
-            })
-
-            if 'create_session_data' in child_data:
-                child_data['session_data'].update(child_data['create_session_data'])
-            case.add_child_data = child_data
-
     process_output(case_output)
 
 
@@ -181,7 +142,7 @@ def get_case_hierarchy(case):
     return get_children(case, seen=set())
 
 
-def get_flat_descendant_case_list(case, get_case_url):
+def _get_flat_descendant_case_list(case, get_case_url):
     hierarchy = get_case_hierarchy(case)
-    process_case_hierarchy(hierarchy, get_case_url, {})
+    _process_case_hierarchy(hierarchy, get_case_url)
     return hierarchy['case_list']
