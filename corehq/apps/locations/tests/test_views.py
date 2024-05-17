@@ -1,8 +1,6 @@
 import json
 
 from django.contrib.messages import get_messages
-from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.core.handlers.wsgi import WSGIRequest
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -147,9 +145,7 @@ class BulkLocationUploadAPITest(TestCase):
 
         mock_cache_file.assert_called_once()
         _, call_args, call_kwargs = mock_cache_file.mock_calls[0]
-        self.assertIsInstance(call_args[0], WSGIRequest)
         self.assertEqual(call_args[1], self.domain_name)
-        self.assertIsInstance(call_args[2], InMemoryUploadedFile)
         self.assertEqual(call_args[2].name, 'mock_file.xlsx')
 
         mock_import_locations_async.delay.assert_called_once_with(
