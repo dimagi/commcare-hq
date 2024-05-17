@@ -393,7 +393,7 @@ class DeleteOnlyIfIndexExists(DeleteIndex):
         from corehq.apps.es.client import manager
         if manager.index_exists(self.name):
             return super().run(*args, **kwargs)
-        log.info(f"ElasticSearch index {self.name} does not exists. Skipping delete index operation.")
+        log.info(f"ElasticSearch index {self.name} does not exist. Skipping delete index operation.")
 
     def reverse_run(self, *args, **kw):
         return None
