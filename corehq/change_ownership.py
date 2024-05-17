@@ -79,7 +79,8 @@ class DBManager(object):
         )
         ids = res.fetchmany(count)
         cur.close()
-        return ids
+        flattened_ids = list(itertools.chain.from_iterable(ids))
+        return flattened_ids
 
     def update_row(self, id, value_dict):
         """
