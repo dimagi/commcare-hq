@@ -324,7 +324,6 @@ class TestLocationAccessValidator(LocationHierarchyTestCase):
         cls.upload_user.set_location(cls.domain, cls.locations['Middlesex'])
         restrict_user_by_location(cls.domain, cls.upload_user)
         cls.editable_user = WebUser.create(cls.domain, 'editable-user', 'password', None, None)
-        # cls.upload_user.reset_locations(cls.domain, [cls.locations['Middlesex'].location_id])
         cls.validator = LocationAccessValidator(cls.domain, cls.upload_user,
                                                 SiteCodeToLocationCache(cls.domain), True)
 
@@ -334,7 +333,6 @@ class TestLocationAccessValidator(LocationHierarchyTestCase):
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
         validation_result = self.validator.validate_spec(user_spec)
-        print(validation_result)
         assert validation_result is None
 
     def testCantEditWebUser(self):
