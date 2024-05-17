@@ -12,7 +12,10 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
+from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from corehq.util.log import with_progress_bar
+
+from django.db.models import Q
 
 current_time = datetime.now().time()
 db_file_path = os.path.expanduser('~/script_items_to_process.db')
@@ -217,27 +220,26 @@ class UserUpdater(Updater):
 
 class CaseUpdater(Updater):
     device_id = 'system'
-    case_types = [
-        'menage',
-        'membre',
-        'seance_educative',
-        'fiche_pointage',
-    ]
 
     def _fetch_case_ids(self):
-        query = Q(domain=self.domain) & Q(type__in=self.case_types)
+        case_types = [
+            'menage',
+            'membre',
+            'seance_educative',
+            'fiche_pointage',
+        ]
+        query = Q(domain=self.domain) & Q(type__in=case_types)
         for row in paginate_query_across_partitioned_databases(CommCareCase, query, values=['case_id'], load_source='all_case_ids'):
             yield row[0]
 
     def store_all_case_ids(self):
         """
-        Fetch all relevant case IDs and store them in a file for later processing.
-        This will be run once at the start so that we have a list of all case IDs
-        to process. We will get IDs from this file in chunks, and won't rely on fetching
-        all case IDs through ES.
+        Fetch all relevant case IDs and store them in a SQLite database for later 
+        processing. This should be run once at the start so that we have all the case
+        IDs to process. We will retrieve IDs from this DB in chunks
         """
         for id in self._fetch_case_ids():
-            self.write_to_log(all_case_ids_log_file_path, [id])
+            self.db_manager.create_row(id)
 
     def _submit_cases(self, case_blocks):
         submit_case_blocks(
@@ -246,32 +248,28 @@ class CaseUpdater(Updater):
             device_id=self.device_id,
         )
 
-    def start(self):
+    def start(self, dry_run=False):
         # TODO: Implement code to reverse actions if needed
 
         print("---MOVING CASE OWNERSHIP---")
-        # TODO: Look into fetching chunks from all_cases file. Will need to compare with success_file to skip ones that are done
-        case_ids = (
-            CaseSearchES()
-            .domain(self.domain)
-            .OR(
-                case_type('menage'),
-                case_type('membre'),
-                case_type('seance_educative'),
-                case_type('fiche_pointage')
-            )
-            .sort('opened_on')  # sort so that we can continue
-        ).get_ids()
-
+        case_ids = self.db_manager.get_ids(self.batch_size)
         case_count = len(case_ids)
-        batch_count = math.ceil(case_count / self.batch_size)
+        chunk_count = math.ceil(case_count / self.batch_size)
         print(f'Total Cases to Process: {case_count}')
-        print(f'Total Batches to Process: {batch_count}')
-
+        print(f'Total Chunks to Process: {chunk_count}')
         case_gen = CommCareCase.objects.iter_cases(case_ids, domain=self.domain)
-        for case_chunk in with_progress_bar(chunked(case_gen, self.batch_size), length=case_count, oneline=False):
-            cases_to_save = self._process_chunk(case_chunk)
-            self._submit_cases(cases_to_save)
+        for case_chunk in with_progress_bar(chunked(case_gen, self.chunk_size), length=case_count, oneline=False):
+            cases_to_save, reverse_ids = self._process_chunk(case_chunk)
+            if not dry_run:
+                self._submit_cases(cases_to_save)
+            for case_obj in cases_to_save:
+                self.db_manager.update_row(
+                    case_obj.case_id,
+                    value_dict={
+                        'status': self.db_manager.STATUS_SUCCESS,
+                        'reverse_id': reverse_ids[case_obj.case_id],
+                    }
+                )
 
         print("All Cases Done Processing!")
         print(
@@ -282,24 +280,29 @@ class CaseUpdater(Updater):
 
     def _process_chunk(self, case_chunk):
         cases_to_save = []
+        reverse_ids = {}
         for case_obj in case_chunk:
             try:
                 user = CommCareUser.get_by_user_id(case_obj.opened_by)
             except CommCareUser.AccountTypeError as e:
-                self.write_to_log(
-                    skipped_log_file_path,
-                    [case_obj.case_id],
-                    message='Not owned by a mobile worker'
+                self.db_manager.update_row(
+                    case_obj.case_id,
+                    value_dict={
+                        'status': self.db_manager.STATUS_SKIPPED,
+                        'message': 'Not owned by a mobile worker',
+                    }
                 )
                 self.stat_counts['skipped'] += 1
                 continue
             
             if user.location_id == case_obj.owner_id:
                 # Skip and don't update case if already owned by location
-                self.write_to_log(
-                    skipped_log_file_path,
-                    [case_obj.case_id],
-                    message='Already owned by correct location'
+                self.db_manager.update_row(
+                    case_obj.case_id,
+                    value_dict={
+                        'status': self.db_manager.STATUS_SKIPPED,
+                        'message': 'Already owned by correct location',
+                    }
                 )
                 self.stat_counts['skipped'] += 1
                 continue
@@ -309,6 +312,9 @@ class CaseUpdater(Updater):
                 case_id=case_obj.case_id,
                 owner_id=user.location_id,
             )
+            reverse_ids[case_obj.case_id] = case_obj.owner_id
             cases_to_save.append(case_block)
 
-        return cases_to_save
+        return cases_to_save, reverse_ids
+
+
