@@ -5,9 +5,9 @@ import sqlite3
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.database import iter_docs
 
-from corehq.apps.es import CaseSearchES
-from corehq.apps.es.cases import case_type
+from corehq.apps.es import UserES
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
@@ -18,7 +18,8 @@ current_time = datetime.now().time()
 db_file_path = os.path.expanduser('~/script_items_to_process.db')
 
 class Updater(object):
-    batch_size = 100  # Could potentially increase this
+    chunk_size = 100 # Could potentially increase this
+    batch_size = 20000 # Maximum number of cases to process in a single script run
     domain = 'alafiacomm'
     stat_counts = {
         'success': 0,
@@ -98,20 +99,58 @@ class UserUpdater(Updater):
     rc_num_prop_name = 'rc_number'
     user_type_prop_name = 'usertype'
 
-    def start(self):
+    def store_all_user_ids(self):
+        """
+        Store all users for later processing. This is useful mainly to store reverse_id,
+        which can be used to revert changes made. This should be run at the start.
+        """
+        user_ids = (
+            UserES()
+            .domain(self.domain)
+            .mobile_users()
+        ).get_ids()
+        for user_id in user_ids:
+            self.db_manager.create_row(user_id)
+
+    def start(self, dry_run=False):
         # TODO: Implement code to reverse actions if needed
 
         print("---MOVING MOBILE WORKER LOCATIONS---")
-        users = CommCareUser.by_domain(self.domain)
-        user_count = len(users)
+        user_ids = self.db_manager.get_ids(self.batch_size)
+        # TODO: Get CommCareUser by user_ids
+        user_count = len(user_ids)
+        chunk_count = math.ceil(user_count / self.batch_size)
         print(f"Total Users to Process: {user_count}")
-        for user_chunk in with_progress_bar(chunked(users, self.batch_size), length=user_count, oneline=False):
-            users_to_save = self._process_chunk(user_chunk)
-            CommCareUser.bulk_save(users_to_save)
-            self.write_to_log(
-                success_case_log_file_path,
-                [u.user_id for u in users_to_save]
-            )
+        print(f"Total Chunks to Process: {chunk_count}")
+        user_gen = iter_docs(CommCareUser.get_db(), user_ids)
+        for user_chunk in with_progress_bar(chunked(user_gen, self.chunk_size), length=user_count, oneline=False):
+            users_to_save, reverse_ids = self._process_chunk(user_chunk)
+            if not dry_run:
+                try:
+                    CommCareUser.bulk_save(users_to_save)
+                except Exception as e:
+                    is_success = False
+                else:
+                    is_success = True
+            for user in users_to_save:
+                # TODO: Add reverse ID to row
+                if is_success:
+                    self.db_manager.update_row(
+                        user.user_id,
+                        value_dict={
+                            'status': self.db_manager.STATUS_SUCCESS,
+                            'reverse_id': reverse_ids[user.user_id],
+                        }
+                    )
+                else:
+                    self.db_manager.update_row(
+                        user.user_id,
+                        value_dict={
+                            'status': self.db_manager.STATUS_FAILURE,
+                            'reverse_id': reverse_ids[user.user_id],  # Just in case some users were saved
+                            'message': 'Failed to save user in bulk save',
+                        }
+                    )
 
         print("Processing Users Complete!")
         print(
@@ -122,15 +161,18 @@ class UserUpdater(Updater):
 
     def _process_chunk(self, user_chunk):
         users_to_save = []
+        reverse_ids = {}
         for user in user_chunk:
             user_data = user.get_user_data(self.domain)
 
             # First make sure that the user type is rc
             if user_data[self.user_type_prop_name] != 'rc':
-                self.write_to_log(
-                    skipped_log_file_path,
-                    [user.user_id],
-                    message='User Type not RC'
+                self.db_manager.update_row(
+                    user.user_id, 
+                    value_dict={
+                        'status': self.db_manager.STATUS_SKIPPED,
+                        'message': 'User Type not RC',
+                    }
                 )
                 self.stat_counts['skipped'] += 1
                 continue     
@@ -143,29 +185,34 @@ class UserUpdater(Updater):
                     name=user_data[self.rc_num_prop_name]
                 )
             except SQLLocation.DoesNotExist as e:
-                self.write_to_log(
-                    error_log_file_path,
-                    [user.user_id],
-                    message=f'({user_data[self.rc_num_prop_name]}) does not exist as child of location with id ({loc.location_id})'
+                self.db_manager.update_row(
+                    user.user_id,
+                    value_dict={
+                        'status': self.db_manager.STATUS_FAILURE,
+                        'message': f'({user_data[self.rc_num_prop_name]}) does not exist as child of location with id ({loc.location_id})'
+                    }
                 )
                 self.stat_counts['failed'] += 1
                 continue
 
             if loc.location_id == user.location_id:
                 # Skip and don't update user if already at location
-                self.write_to_log(
-                    skipped_log_file_path,
-                    [user.user_id],
-                    message=f'Skipped as already at RC location with ID {loc.location_id}'
+                self.db_manager.update_row(
+                    user.user_id,
+                    value_dict={
+                        'status': self.db_manager.STATUS_SKIPPED,
+                        'message': f'Skipped as already at RC location with ID {loc.location_id}',
+                    }
                 )
                 self.stat_counts['skipped'] += 1
                 continue
             else:
+                reverse_ids[user.user_id] = user.location_id
                 user.location_id = loc.location_id
                 self.stat_counts['success'] += 1
                 users_to_save.append(user)
 
-        return users_to_save
+        return users_to_save, reverse_ids
 
 
 class CaseUpdater(Updater):
