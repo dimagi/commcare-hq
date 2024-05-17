@@ -9,7 +9,7 @@
        </td>
      </tr>
      </tbody>
-@@ -21,14 +21,10 @@
+@@ -21,14 +21,13 @@
    </div>
    <div>
      <form data-bind="submit: search">
@@ -23,7 +23,10 @@
 -          </div>
 +      <div class="mt-1" data-bind="css: control_width">
 +        <div class="input-group">
-+          <input class="query form-control" type="text" />
++          <input class="query form-control"
++                 type="text"
++                 data-bind="css: { 'is-invalid': $parent.hasError() }"
++          />
 +          <button class="btn btn-outline-primary search">{% trans "Search" %}</button>
          </div>
        </div>

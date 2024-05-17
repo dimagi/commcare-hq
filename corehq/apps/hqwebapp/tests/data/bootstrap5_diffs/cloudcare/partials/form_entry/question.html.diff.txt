@@ -44,16 +44,19 @@
                </div>
              </div>
            </div>
-@@ -63,7 +63,7 @@
+@@ -62,9 +62,8 @@
+     </label>
      <div class="widget-container controls" data-bind="css: controlWidth">
        <div class="widget" data-bind="
-                 template: { name: entryTemplate, data: entry, afterRender: afterRender },
+-                template: { name: entryTemplate, data: entry, afterRender: afterRender },
 -                css: { 'has-error': hasError }
-+                css: { 'has-error': hasError }  {# todo B5: css:has-error #}
-             ">
+-            ">
++        template: { name: entryTemplate, data: entry, afterRender: afterRender },
++      ">
        </div>
        <div class="widget-multimedia" data-bind="
-@@ -89,12 +89,12 @@
+                 template: { name: 'widget-multimedia-ko-template', data: $data }"
+@@ -89,12 +88,12 @@
                      }">{% trans 'Sorry, this response is required!' %}</div>
    <!-- /ko -->
    <!-- ko if: isLabel -->
@@ -69,24 +72,29 @@
          },
          attr: {
              id: entry.entryId + '-label',
-@@ -120,16 +120,16 @@
+@@ -120,16 +119,15 @@
    <!-- /ko -->
    <!-- ko if: isButton -->
    {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
 -  <div class="q form-group" data-bind="
-+  <div class="q row" data-bind="
-     css: {
-       error: error,
-       'text-center': stylesContains('text-align-center'),
+-    css: {
+-      error: error,
+-      'text-center': stylesContains('text-align-center'),
 -      'text-right': stylesContains('text-align-right')
-+      'text-end': stylesContains('text-align-right')
-     }">
+-    }">
 -    <div class="widget-container controls col-sm-12">
-+    <div class="widget-container controls col-md-12">
-       <div class="widget" data-bind="
-         template: { name: entryTemplate, data: entry, afterRender: afterRender },
+-      <div class="widget" data-bind="
+-        template: { name: entryTemplate, data: entry, afterRender: afterRender },
 -        css: { 'has-error': hasError }
-+        css: { 'has-error': hasError }  {# todo B5: css:has-error #}
++    <div class="q row" data-bind="
++      css: {
++        error: error,
++        'text-center': stylesContains('text-align-center'),
++        'text-end': stylesContains('text-align-right')
++      }">
++      <div class="widget-container controls col-md-12">
++        <div class="widget" data-bind="
++          template: { name: entryTemplate, data: entry, afterRender: afterRender },
          "></div>
        </div>
      </div>
