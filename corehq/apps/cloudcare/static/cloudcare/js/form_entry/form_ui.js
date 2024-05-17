@@ -246,7 +246,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             },
             children: {
                 create: function (options) {
-                    // console.log(`children.create: ix=${ options.data.ix }, type= ${ options.data.type }`)
                     if (options.data.type === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
                         return new GroupedElementTileRow(options.data, self);
                     } else if (options.data.type === constants.QUESTION_TYPE) {
@@ -262,7 +261,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     }
                 },
                 update: function (options) {
-                    console.log(`children.update: ix=${ options.data.ix }, type= ${ options.data.type }`)
                     if (options.target.pendingAnswer &&
                             options.target.pendingAnswer() !== constants.NO_PENDING_ANSWER) {
                         // There is a request in progress, check if the answer has changed since the request
@@ -418,7 +416,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
      */
     function Form(json) {
         var self = this;
-        self.amIAForm = true;
         self.displayOptions = json.displayOptions || {};
         json.children = json.tree;
         delete json.tree;
@@ -625,19 +622,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             });
         };
 
-        const printIx = function (obj, depth = 0) {
-            if (obj.hasOwnProperty('ix') && obj.hasOwnProperty('children')) {
-                console.log(`${' '.repeat(depth)} ix: ${obj.ix}`);
-            }
-
-            if (Array.isArray(obj.children)) {
-                obj.children.forEach(child => {
-                    printIx(child, depth + 1);
-                });
-            }
-        }
-
-
         $.unsubscribe('session');
         $.subscribe('session.reconcile', function (e, response, element, deletedGroup) {
             // TODO where does response status parsing belong?
@@ -649,21 +633,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 }
                 element.pendingAnswer(constants.NO_PENDING_ANSWER);
             } else {
-                console.log("reconsile");
                 const allChildren = response.tree;
                 delete response.tree;
-                printIx(response);
-                // Simple alternative. Causes more of a flicker since whole form is refreshed.
-                // if (deletedGroup) {
-                //     response.children = [];
-                //     self.fromJS(response);
-                // }
 
                 if (deletedGroup) {
                     const ixParts = deletedGroup.split(",");
                     response.children = JSON.parse(JSON.stringify(allChildren));
                     let parentOfDeletedGroup = response;
-                    for (let i = 0; i < ixParts.length -1; i++) {
+                    for (let i = 0; i < ixParts.length - 1; i++) {
                         parentOfDeletedGroup = parentOfDeletedGroup.children.find(c => c.ix.endsWith(ixParts[i]));
                     }
                     const siblingsOfDeletedGroup = parentOfDeletedGroup.children;
@@ -673,16 +650,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                         const childIxParts = c.ix.split(",");
                         return !childIxParts[childIxParts.length - 1].startsWith(lastPartPrefix);
                     });
-                    console.log("about to clear children");
-                    printIx(response);
                     self.fromJS(response);
                 }
 
                 if (element.serverError) { element.serverError(null); }
 
-                console.log("reset children");
                 response.children = allChildren;
-                printIx(response);
                 self.fromJS(response);
             }
         });
@@ -708,7 +681,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
         self.isRepetition = parent.parent instanceof Repeat;
-        if (self.hasOwnProperty('delete')) {
+        if (Object.hasOwn(self, 'delete')) {
             self.showDelete = self.delete();
         } else {
             self.showDelete = self.isRepetition;
@@ -815,7 +788,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
      */
-    // User controlled repeat groups
     function Repeat(json, parent) {
         var self = this;
         self.parent = parent;
@@ -889,25 +861,21 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         return itemsPerRow !== null ? Math.round(constants.GRID_COLUMNS / itemsPerRow) : constants.GRID_COLUMNS;
     };
 
-    function AddGroup (json, parent) {
+    function AddGroup(json, parent) {
         var self = this;
         self.parent = parent;
-        self.hasError = function () {
-            return false;
-        }
-        self.children = function () {
-            return [];
-        }
+        self.hasError = ko.observable(false);
+        self.children = ko.observable([]);
         self.newRepeat = function () {
             $.publish('formplayer.' + constants.NEW_REPEAT, self);
             $.publish('formplayer.dirty');
             $('.add').trigger('blur');
-        }
+        };
         self.entryTemplate = "add-group-entry-ko-template";
         self.type = function () {
             return "add-group";
-        }
-        self.rel_ix = ko.observable(relativeIndex( json.ix) );
+        };
+        self.rel_ix = ko.observable(relativeIndex(json.ix));
         self.required = ko.observable(json.required);
         self.hasError = ko.observable(json.hasError);
     }
@@ -1107,6 +1075,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         Question: function (json, parent) {
             return new Question(json, parent);
         },
-        Repeat: Repeat
+        Repeat: Repeat,
     };
 });
