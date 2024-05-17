@@ -16,12 +16,11 @@ from corehq.apps.app_execution.har_parser import parse_har_from_string
 from corehq.apps.app_execution.models import AppExecutionLog, AppWorkflowConfig
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqadmin.views import get_hqadmin_base_context
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_nvd3
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 
 
 @require_superuser_or_contractor
 @use_bootstrap5
-@use_nvd3
 def workflow_list(request):
     workflows = AppWorkflowConfig.objects.all()
     _augment_with_logs(workflows)
@@ -155,7 +154,6 @@ def _get_context(request, title, url, add_parent=False, **kwargs):
 
 @require_superuser_or_contractor
 @use_bootstrap5
-@use_nvd3
 def workflow_log_list(request, pk):
     utcnow = datetime.utcnow()
     chart_data = get_avg_duration_data(

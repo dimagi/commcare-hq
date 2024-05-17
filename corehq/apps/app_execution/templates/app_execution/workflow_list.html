@@ -3,12 +3,16 @@
 {% load compress %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-  {% compress js %}
-  <script src="{% static 'moment/moment.js' %}"></script>
-  <script src="{% static 'app_execution/js/workflow_timing_chart.js' %}"></script>
+{% block stylesheets %}{{ block.super }}
+{% compress css %}
+    <link type="text/css"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'nvd3-1.8.6/build/nv.d3.css' %}" />
   {% endcompress %}
 {% endblock %}
+
+{% requirejs_main_b5 'app_execution/js/workflow_timing_chart' %}
 
 {% block page_content %}
   <div>
