@@ -173,12 +173,16 @@ class UserUpdater(Updater):
         users_to_save = []
         reverse_ids = {}
         for user in user_chunk:
-            user_data = user.get_user_data(self.domain)
+            user_obj = CommCareUser.wrap(user)
+            user_data = user_obj.get_user_data(self.domain)
 
             # First make sure that the user type is rc
-            if user_data[self.user_type_prop_name] != 'rc':
+            if (
+                self.user_type_prop_name not in user_data
+                or user_data[self.user_type_prop_name] != "rc"
+            ):
                 self.db_manager.update_row(
-                    user.user_id, 
+                    user_obj.user_id, 
                     value_dict={
                         'status': self.db_manager.STATUS_SKIPPED,
                         'message': 'User Type not RC',
@@ -191,12 +195,12 @@ class UserUpdater(Updater):
                 # Get a descendant of user location which has the same rc number
                 loc = SQLLocation.objects.get(
                     domain=self.domain,
-                    parent__location_id=user.location_id,
+                    parent__location_id=user_obj.location_id,
                     name=user_data[self.rc_num_prop_name]
                 )
             except SQLLocation.DoesNotExist as e:
                 self.db_manager.update_row(
-                    user.user_id,
+                    user_obj.user_id,
                     value_dict={
                         'status': self.db_manager.STATUS_FAILURE,
                         'message': f'({user_data[self.rc_num_prop_name]}) does not exist as child of location with id ({loc.location_id})'
@@ -205,10 +209,10 @@ class UserUpdater(Updater):
                 self.stat_counts['failed'] += 1
                 continue
 
-            if loc.location_id == user.location_id:
+            if loc.location_id == user_obj.location_id:
                 # Skip and don't update user if already at location
                 self.db_manager.update_row(
-                    user.user_id,
+                    user_obj.user_id,
                     value_dict={
                         'status': self.db_manager.STATUS_SKIPPED,
                         'message': f'Skipped as already at RC location with ID {loc.location_id}',
@@ -217,10 +221,10 @@ class UserUpdater(Updater):
                 self.stat_counts['skipped'] += 1
                 continue
             else:
-                reverse_ids[user.user_id] = user.location_id
-                user.location_id = loc.location_id
+                reverse_ids[user_obj.user_id] = user_obj.location_id
+                user_obj.location_id = loc.location_id
                 self.stat_counts['success'] += 1
-                users_to_save.append(user)
+                users_to_save.append(user_obj)
 
         return users_to_save, reverse_ids
 
