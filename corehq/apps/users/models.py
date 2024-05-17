@@ -1010,22 +1010,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         pass
 
     def __repr__(self):
-        # copied from jsonobject/base.py
-        name = self.__class__.__name__
-        predefined_properties = set(self._properties_by_attr)
-        predefined_property_keys = set(self._properties_by_attr[p].name
-                                       for p in predefined_properties)
-        dynamic_properties = set(self._wrapped) - predefined_property_keys
-
-        # redact hashed password
-        properties = sorted(predefined_properties - {'password'}) + sorted(dynamic_properties - {'password'})
-
-        return '{name}({keyword_args})'.format(
-            name=name,
-            keyword_args=', '.join('{key}={value!r}'.format(
-                key=key,
-                value=getattr(self, key)
-            ) for key in properties),
+        return "{class_name}(username={self.username})".format(
+            class_name=self.__class__.__name__,
+            self=self,
         )
 
     @property
@@ -2315,12 +2302,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             user_fixture_sync.save()
         get_fixture_statuses.clear(self._id)
 
-    def __repr__(self):
-        return ("{class_name}(username={self.username!r})".format(
-            class_name=self.__class__.__name__,
-            self=self
-        ))
-
     @property
     @memoized
     def memoized_usercase(self):
@@ -2431,6 +2412,12 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     # such as those going through the recruiting pipeline
     # to better mark them in our analytics
     atypical_user = BooleanProperty(default=False)
+
+    def __repr__(self):
+        return "{class_name}(username={self.username}, domains={self.domains})".format(
+            class_name=self.__class__.__name__,
+            self=self,
+        )
 
     def is_global_admin(self):
         # override this function to pass global admin rights off to django
