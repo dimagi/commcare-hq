@@ -1,6 +1,7 @@
 import math
 import os
 from datetime import datetime
+import sqlite3
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
@@ -14,10 +15,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.util.log import with_progress_bar
 
 current_time = datetime.now().time()
-# TODO: Need to incorporate a format for success logs to make it easy to reverse
-success_case_log_file_path = os.path.expanduser(f'~/script_success_{current_time}.log')  # Use this if we ever need to rollback changes
-skipped_log_file_path = os.path.expanduser(f'~/script_skipped_{current_time}.log')
-error_log_file_path = os.path.expanduser(f'~/script_error_{current_time}.log')
+db_file_path = os.path.expanduser('~/script_items_to_process.db')
 
 class Updater(object):
     batch_size = 100  # Could potentially increase this
@@ -28,13 +26,72 @@ class Updater(object):
         'failed': 0,
     }
 
-    def write_to_log(self, file_path, ids, message=''):
-        # TODO: Add ability to write a reverse ID for reversing action
-        msg_out = f'|Reason: {message}' if message else ''
-        with open(file_path, 'a') as log:
-            for id in ids:                
-                log.write(f'{id} {msg_out}\n')
-            log.close()
+    def __init__(self):
+        self.db_manager = DBManager()
+
+
+class DBManager(object):
+
+    STATUS_PENDING = 'pending'
+    STATUS_SUCCESS = 'success'
+    STATUS_FAILURE = 'failure'
+    STATUS_SKIPPED = 'skipped'
+
+    VALID_STATUS = [
+        STATUS_PENDING,
+        STATUS_SUCCESS,
+        STATUS_FAILURE,
+        STATUS_SKIPPED,
+    ]
+
+    def _get_db_cur(self):
+        con = sqlite3.connect(db_file_path)
+        return con.cursor()
+    
+    def setup_db(self):
+        cur = self._get_db_cur()
+        cur.execute("CREATE TABLE case_list (id, revert_id, status, message)")
+        cur.connection.commit()
+        cur.close()
+
+    def create_row(self, id):
+        # TODO: Catch status that's not pending?
+        cur = self._get_db_cur()
+        cur.execute("INSERT INTO case_list VALUES (?, ?, ?, ?)", (id, '', self.STATUS_PENDING, ''))
+        cur.connection.commit()
+        cur.close()
+
+    def get_ids(self, count):
+        cur = self._get_db_cur()
+        res = cur.execute(
+            "SELECT id FROM case_list WHERE status IN ({}, {})".format(
+                self.STATUS_PENDING, self.STATUS_FAILURE
+            )
+        )
+        ids = res.fetchmany(count)
+        cur.close()
+        return ids
+
+    def update_row(self, id, value_dict):
+        """
+        value_dict: Has following format:
+        {
+            'col_name': 'col_val',
+            ...
+        }
+        Valid column names are reverse_id, status, message
+        """
+        query = 'UPDATE case_list SET '
+        expr_list = []
+        for key, val in value_dict.items():
+            expr = f"{key} = '{val}'"
+            expr_list.append(expr)
+        query += ', '.join(expr_list)
+
+        cur = self._get_db_cur()
+        cur.execute(f'{query} WHERE id = ?', (id))
+        cur.connection.commit()
+        cur.close()
 
 
 class UserUpdater(Updater):
