@@ -376,7 +376,7 @@ class DeleteOnlyIfIndexExists(DeleteIndex):
     """
     The class will not error out if trying to delete the indices that don't exist.
     The utility of this class would generally be in case of exceptions where a migration
-    has be rolled back which were already applied on some of the environments.
+    has to be rolled back which were already applied on some of the environments.
 
     Because of the nature of the operation, this class is not integrated into `make_elastic_migration` command.
 
