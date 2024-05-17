@@ -1,6 +1,7 @@
 import math
 import os
 from datetime import datetime
+import itertools
 import sqlite3
 
 from casexml.apps.case.mock import CaseBlock
@@ -29,9 +30,10 @@ class Updater(object):
         'skipped': 0,
         'failed': 0,
     }
+    db_table_name = 'default'
 
     def __init__(self):
-        self.db_manager = DBManager()
+        self.db_manager = DBManager(self.db_table_name)
 
 
 class DBManager(object):
@@ -48,28 +50,31 @@ class DBManager(object):
         STATUS_SKIPPED,
     ]
 
+    def __init__(self, table_name):
+        self.table_name = table_name
+
     def _get_db_cur(self):
         con = sqlite3.connect(db_file_path)
         return con.cursor()
     
     def setup_db(self):
         cur = self._get_db_cur()
-        cur.execute("CREATE TABLE case_list (id, revert_id, status, message)")
+        cur.execute(f"CREATE TABLE {self.table_name} (id, revert_id, status, message)")
         cur.connection.commit()
         cur.close()
 
     def create_row(self, id):
         # TODO: Catch status that's not pending?
         cur = self._get_db_cur()
-        cur.execute("INSERT INTO case_list VALUES (?, ?, ?, ?)", (id, '', self.STATUS_PENDING, ''))
+        cur.execute(f"INSERT INTO {self.table_name} VALUES (?, ?, ?, ?)", (id, '', self.STATUS_PENDING, ''))
         cur.connection.commit()
         cur.close()
 
     def get_ids(self, count):
         cur = self._get_db_cur()
         res = cur.execute(
-            "SELECT id FROM case_list WHERE status IN ({}, {})".format(
-                self.STATUS_PENDING, self.STATUS_FAILURE
+            "SELECT id FROM {} WHERE status IN ('{}', '{}')".format(
+                self.table_name, self.STATUS_PENDING, self.STATUS_FAILURE
             )
         )
         ids = res.fetchmany(count)
@@ -85,7 +90,7 @@ class DBManager(object):
         }
         Valid column names are reverse_id, status, message
         """
-        query = 'UPDATE case_list SET '
+        query = f'UPDATE {self.table_name} SET '
         expr_list = []
         for key, val in value_dict.items():
             expr = f"{key} = '{val}'"
@@ -101,6 +106,7 @@ class DBManager(object):
 class UserUpdater(Updater):
     rc_num_prop_name = 'rc_number'
     user_type_prop_name = 'usertype'
+    db_table_name = 'user_list'
 
     def store_all_user_ids(self):
         """
@@ -220,6 +226,7 @@ class UserUpdater(Updater):
 
 class CaseUpdater(Updater):
     device_id = 'system'
+    db_table_name = 'case_list'
 
     def _fetch_case_ids(self):
         case_types = [
