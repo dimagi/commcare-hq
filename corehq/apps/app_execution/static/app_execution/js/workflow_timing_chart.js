@@ -1,54 +1,58 @@
-/* globals moment */
+/* globals moment, nv */
 hqDefine("app_execution/js/workflow_timing_chart", function () {
-    function setupLineChart(data) {
-        const timingSeries = [
-            {
-                key: 'Avg Timing',
-                values: _.map(data, function (item) {
+    function getSeries(data, includeSeries) {
+        return includeSeries.map((seriesMeta) => {
+            return {
+                // include key in the label to differentiate between series with the same label
+                label: `${data.label}${seriesMeta.label}`,
+                key: `${data.label}${seriesMeta.label}[${data.key}]`,
+                values: data.values.map((item) => {
                     return {
                         x: moment(item.date),
-                        y: item.avg_duration,
+                        y: item[seriesMeta.key],
                     };
-                }),
-            },
-            {
-                key: 'Max Timing',
-                values: _.map(data, function (item) {
-                    return {
-                        x: moment(item.date),
-                        y: item.max_duration,
-                    };
-                }),
-            },
-        ];
+                }).filter((item) => item.x && item.y),
+            };
+        });
+    }
+
+    function setupLineChart(data, includeSeries) {
+        const timingSeries = data.flatMap((series) => getSeries(series, includeSeries));
         nv.addGraph(function () {
             let chart = nv.models.lineChart()
                 .showYAxis(true)
                 .showXAxis(true);
 
-            chart.yAxis.tickFormat(d3.format(".1fs"));
+            chart.yAxis
+                .axisLabel('Seconds')
+                .tickFormat(d3.format(".1f"));
             chart.forceY(0);
             chart.xScale(d3.time.scale());
-            chart.margin({bottom: 60});
+            chart.margin({left: 50, bottom: 60});
             chart.xAxis.rotateLabels(-45)
                 .tickFormat(function (d) {
                     return moment(d).format("MMM DD [@] HH");
                 });
+            // remove the key from the label
+            chart.legend.key((d) => d.key.split("[")[0]);
+            chart.tooltipContent(function (key, x, y) {
+                return '<h3>' + key.split("[")[0] + '</h3>' +
+                       '<p>' +  y + ' at ' + x + '</p>';
+            });
+
             d3.select('#timing_linechart svg')
                 .datum(timingSeries)
                 .call(chart);
 
-            nv.utils.windowResize(function () {
-                chart.update();
-            });
-
+            nv.utils.windowResize(chart.update);
             return chart;
-
         });
+
     }
 
     $(document).ready(function () {
         const chartData = JSON.parse(document.getElementById('chart_data').textContent);
-        setupLineChart(chartData);
+        const includeSeries = JSON.parse(document.getElementById('includeSeries').textContent);
+        setupLineChart(chartData, includeSeries);
     });
 });

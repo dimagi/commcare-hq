@@ -1,16 +1,19 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
+{% load compress %}
 {% load i18n %}
 
 
 {% block js %}{{ block.super }}
+  {% compress js %}
   <script src="{% static 'moment/moment.js' %}"></script>
   <script src="{% static 'app_execution/js/workflow_timing_chart.js' %}"></script>
+  {% endcompress %}
 {% endblock %}
 
 {% block page_content %}
   <h2>Logs for workflow "<a href="{% url "app_execution:edit_workflow" workflow.id %}">{{ workflow.name }}</a>"</h2>
-  <div class="">
+  <div>
     <h3>{% trans "Average Timings Per Hour" %}</h3>
     <div id="timing_linechart"><svg height="300px"></svg></div>
   </div>
@@ -42,6 +45,9 @@
               params="goToPage: goToPage, totalItems: totalItems, perPage: perPage, onLoad: onLoad"></pagination>
 </div>
 {{ chart_data|json_script:"chart_data" }}
+<script id="includeSeries" type="application/json">
+  [{"label": "- Avg Timings", "key": "avg_duration"}, {"label": "- Max Timings", "key": "max_duration"}]
+</script>
 {% endblock %}
 {% block js-inline %} {{ block.super }}
 <script>

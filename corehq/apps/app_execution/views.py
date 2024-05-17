@@ -21,12 +21,16 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_nvd3
 
 @require_superuser_or_contractor
 @use_bootstrap5
+@use_nvd3
 def workflow_list(request):
     workflows = AppWorkflowConfig.objects.all()
     _augment_with_logs(workflows)
+    utcnow = datetime.utcnow()
+    chart_data = get_avg_duration_data(start=utcnow - relativedelta(months=1), end=utcnow)
     context = _get_context(
         request, "Automatically Executed App Workflows", reverse("app_execution:workflow_list"),
-        workflows=workflows
+        workflows=workflows,
+        chart_data=chart_data
     )
     return render(request, "app_execution/workflow_list.html", context)
 
@@ -155,7 +159,7 @@ def _get_context(request, title, url, add_parent=False, **kwargs):
 def workflow_log_list(request, pk):
     utcnow = datetime.utcnow()
     chart_data = get_avg_duration_data(
-        workflow_id=pk, start=utcnow - relativedelta(months=1), end=utcnow
+        start=utcnow - relativedelta(months=1), end=utcnow, workflow_id=pk
     )
     context = _get_context(
         request,
