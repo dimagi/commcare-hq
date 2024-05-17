@@ -15,7 +15,7 @@
    .input-group-lg .form-control,
    .input-group-lg .btn{
      font-size: 11px;
-@@ -45,18 +45,15 @@
+@@ -45,18 +45,14 @@
    }
  }
  
@@ -23,7 +23,6 @@
 -  width: 140px;
 -}
 -
-+// todo B5: pagination looks terrible in app preview, not overriding -lg styles properly
  .module-per-page-container {
 -  .input-group-lg .form-control,
 -  .input-group-lg .btn{
@@ -38,7 +37,7 @@
      font-size: 11px;
    }
  }
-@@ -76,13 +73,6 @@
+@@ -76,13 +72,6 @@
    }
  }
  
@@ -52,7 +51,7 @@
  .module-case-detail-modal {
    padding: 0 !important;
    width: 251px;
-@@ -99,8 +89,7 @@
+@@ -99,8 +88,7 @@
    .modal-content {
      height: 442px;
      overflow-x: hidden;
@@ -62,7 +61,7 @@
    }
  }
  
-@@ -110,8 +99,7 @@
+@@ -110,8 +98,7 @@
    }
  
    .modal-content {
