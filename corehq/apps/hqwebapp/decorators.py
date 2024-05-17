@@ -82,7 +82,11 @@ def use_nvd3(view_func):
     def dispatch(self, request, *args, **kwargs):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
-    return get_wrapped_view(view_func, set_request_attr('use_nvd3', True))
+    @wraps(view_func)
+    def _wrapped(class_based_view, request, *args, **kwargs):
+        request.use_nvd3 = True
+        return view_func(class_based_view, request, *args, **kwargs)
+    return _wrapped
 
 
 def use_nvd3_v3(view_func):
@@ -247,7 +251,12 @@ def use_tempusdominus(view_func):
     """
     @wraps(view_func)
     def _wrapped(*args, **kwargs):
-        request = _get_request_from_args(*args, **kwargs)
+        if hasattr(args[0], 'META'):
+            # function view
+            request = args[0]
+        else:
+            # class view
+            request = args[1]
         request.use_tempusdominus = True
         return view_func(*args, **kwargs)
     return _wrapped
@@ -286,29 +295,3 @@ def waf_allow(kind, hard_code_pattern=None):
 
 
 waf_allow.views = defaultdict(set)
-
-
-def set_request_attr(attr_name, attr_value):
-    def _set_attr(request):
-        setattr(request, attr_name, attr_value)
-
-    return _set_attr
-
-
-def get_wrapped_view(view_func, request_modifier):
-    @wraps(view_func)
-    def _wrapped(*args, **kwargs):
-        request = _get_request_from_args(*args, **kwargs)
-        request_modifier(request)
-        return view_func(*args, **kwargs)
-
-    return _wrapped
-
-
-def _get_request_from_args(*args, **kwargs):
-    if hasattr(args[0], 'META'):
-        # function view
-        return args[0]
-    else:
-        # class view
-        return args[1]
