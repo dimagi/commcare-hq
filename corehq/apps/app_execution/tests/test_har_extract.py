@@ -56,6 +56,18 @@ class TestHarExtraction(SimpleTestCase, TestFileMixin):
             data_model.EntitySelectStep(value='0da3e5c6-f069-49be-aab3-53f2b9b7ebd0'),
         ])
 
+    def test_search_again(self):
+        har = self.get_json("search_again")
+        config = HarParser().parse(har)
+        self.assertEqual(config.workflow.steps, [
+            data_model.CommandStep(value='Include Related Cases'),
+            data_model.ClearQueryStep(),
+            data_model.QueryInputValidationStep(inputs={'first_name': 'Lucca'}),
+            data_model.QueryInputValidationStep(inputs={'first_name': 'Lucca', 'last_name': 'Mcpherson'}),
+            data_model.QueryStep(inputs={'first_name': 'Lucca', 'last_name': 'Mcpherson'}),
+            data_model.EntitySelectStep(value='18e434037dae4d87b98e77687a2aeff4'),
+        ])
+
 
 def get_reg_form_steps():
     return [

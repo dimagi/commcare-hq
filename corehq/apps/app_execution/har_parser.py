@@ -68,16 +68,20 @@ class HarParser:
         )
 
     def _extract_navigation_step(self, request_data):
+        selections_changed = request_data.get("selections") != self.screen_data.get("selections")
         if self.current_screen == ScreenType.MENU:
             last_selection = _get_last_selection(request_data, int)
             command = self.screen_data["commands"][last_selection]["displayText"]
             return data_model.CommandStep(value=command)
         elif self.current_screen == ScreenType.CASE_LIST:
-            return self._get_entity_select_step(request_data)
+            if selections_changed:
+                return self._get_entity_select_step(request_data)
+            elif self._get_query_data(request_data).get("inputs") is None:
+                return data_model.ClearQueryStep()
         elif self.current_screen == ScreenType.SEARCH:
             return self._get_search_step(request_data)
         elif self.current_screen == ScreenType.SPLIT_SEARCH:
-            if request_data["selections"] == self.screen_data["selections"]:
+            if not selections_changed:
                 return self._get_search_step(request_data)
             else:
                 return self._get_entity_select_step(request_data)
@@ -97,12 +101,16 @@ class HarParser:
             return data_model.EntitySelectStep(value=last_selection)
 
     def _get_search_step(self, request_data):
-        query_key = self.screen_data["queryKey"]
-        query_data = request_data["query_data"].get(query_key)
+        query_data = self._get_query_data(request_data)
         if query_data and query_data["execute"]:
             return data_model.QueryStep(inputs=query_data["inputs"])
         else:
             return data_model.QueryInputValidationStep(inputs=query_data["inputs"])
+
+    def _get_query_data(self, request_data):
+        query_key = self.screen_data["queryKey"]
+        query_data = request_data["query_data"].get(query_key)
+        return query_data
 
     def _extract_form_answer_step(self, request_data):
         tree = self.screen_data["tree"]

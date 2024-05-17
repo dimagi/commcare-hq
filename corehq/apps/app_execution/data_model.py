@@ -188,6 +188,31 @@ class QueryStep(Step):
 
 
 @define
+class ClearQueryStep(Step):
+    """This is implemented in the suite file with `redo_last="true"` and appears on the UI
+    as "Search Again"
+    """
+    type: ClassVar[str] = "clear_query"
+    is_form_step: ClassVar[bool] = False
+
+    def get_request_data(self, session, data):
+        query_key = session.data["queryKey"]
+        return {
+            **data,
+            "query_data": {
+                query_key: {
+                    "inputs": None,
+                    "execute": False,
+                    "force_manual_search": True,
+                }
+            },
+        }
+
+    def __str__(self):
+        return "ClearQuery"
+
+
+@define
 class AnswerQuestionStep(Step):
     type: ClassVar[str] = "answer_question"
     is_form_step: ClassVar[bool] = True
@@ -272,6 +297,7 @@ STEP_MAP = {
     "entity_select_index": EntitySelectIndexStep,
     "query": QueryStep,
     "query_input_validation": QueryInputValidationStep,
+    "clear_query": ClearQueryStep,
     "answer_question": AnswerQuestionStep,
     "submit_form": SubmitFormStep,
     "form": FormStep,
