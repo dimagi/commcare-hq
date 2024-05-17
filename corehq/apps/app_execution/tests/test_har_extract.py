@@ -68,6 +68,14 @@ class TestHarExtraction(SimpleTestCase, TestFileMixin):
             data_model.EntitySelectStep(value='18e434037dae4d87b98e77687a2aeff4'),
         ])
 
+    def test_case_list_action(self):
+        har = self.get_json("case_list_action")
+        config = HarParser().parse(har)
+        self.assertEqual(config.workflow.steps, [
+            data_model.CommandStep(value='Baby Log'),
+            data_model.CommandStep(id='action 0')
+        ])
+
 
 def get_reg_form_steps():
     return [
