@@ -99,7 +99,7 @@ class DBManager(object):
         query += ', '.join(expr_list)
 
         cur = self._get_db_cur()
-        cur.execute(f'{query} WHERE id = ?', (id))
+        cur.execute(f'{query} WHERE id = ?', (id,))
         cur.connection.commit()
         cur.close()
 
