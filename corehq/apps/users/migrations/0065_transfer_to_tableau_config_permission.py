@@ -15,20 +15,15 @@ from corehq.apps.domain_migration_flags.exceptions import (
     DomainMigrationProgressError,
 )
 from corehq.apps.domain_migration_flags.models import MigrationStatus
-from corehq.apps.users.models import UserRole
+
 
 MIGRATION_SLUG = "mirror_web_users_permissions_to_tableau_config_permissions"
-AUTO_MIGRATE_FAILED_MESSAGE = """
-This migration cannot be performed automatically and must instead be run manually
-before this environment can be upgraded to the latest version of CommCare HQ.
-Instructions for running the migration can be found at this link:
-
-https://commcare-cloud.readthedocs.io/en/latest/changelog/0081-copy_web_user_permissions_to_tableau_config_permission.html
-"""
 
 
 @skip_on_fresh_install
 def _assert_migrated(apps, schema_editor):
+    UserRole = apps.get_model('users', 'UserRole')
+    Permission = apps.get_model('users', 'Permission')
 
     def transfer_web_user_permission_to_tableau_config_permission():
         status = get_migration_status(ALL_DOMAINS, MIGRATION_SLUG)
@@ -38,15 +33,20 @@ def _assert_migrated(apps, schema_editor):
         if status not in (MigrationStatus.IN_PROGRESS, MigrationStatus.COMPLETE):
             set_migration_started(ALL_DOMAINS, MIGRATION_SLUG)
 
-        for role in UserRole.objects.filter(domain__in=TABLEAU_USER_SYNCING.get_enabled_domains()):
-            permissions = role.permissions
-            if permissions.edit_web_users:
-                permissions.edit_user_tableau_config = True
-                permissions.view_user_tableau_config = True
-            elif permissions.view_web_users:
-                permissions.view_user_tableau_config = True
+        edit_web_users_permission = Permission.objects.get(value='edit_web_users')
+        view_web_users_permission = Permission.objects.get(value='view_web_users')
+        edit_user_tableau_config_permission = Permission.objects.get(value='edit_user_tableau_config')
+        view_user_tableau_config_permission = Permission.objects.get(value='view_user_tableau_config')
 
-            role.set_permissions(permissions.to_list())
+        for role in UserRole.objects.filter(domain__in=TABLEAU_USER_SYNCING.get_enabled_domains()):
+            has_edit_web_users_permission = role.rolepermission_set.filter(permission_fk=edit_web_users_permission).exists()
+            has_view_web_users_permission = role.rolepermission_set.filter(permission_fk=view_web_users_permission).exists()
+
+            if has_edit_web_users_permission:
+                role.rolepermission_set.get_or_create(permission_fk=edit_user_tableau_config_permission, defaults={"allow_all": True})
+                role.rolepermission_set.get_or_create(permission_fk=view_user_tableau_config_permission, defaults={"allow_all": True})
+            elif has_view_web_users_permission:
+                role.rolepermission_set.get_or_create(permission_fk=view_user_tableau_config_permission, defaults={"allow_all": True})
 
         try:
             set_migration_complete(ALL_DOMAINS, MIGRATION_SLUG)
@@ -58,7 +58,7 @@ def _assert_migrated(apps, schema_editor):
     except Exception:
         traceback.print_exc()
         print("")
-        print(AUTO_MIGRATE_FAILED_MESSAGE)
+        print("Auto migrate failed")
         sys.exit(1)
 
 
