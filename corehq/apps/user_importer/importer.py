@@ -850,7 +850,7 @@ class WebImporter:
 
     def run(self):
         ret = {"errors": [], "rows": []}
-        column_headers = self.user_specs[0].keys()
+        column_headers = self.user_specs[0].keys() if self.user_specs else []
         check_field_edit_permissions(column_headers, self.upload_user, self.upload_domain)
         for i, row in enumerate(self.user_specs):
             if self.update_progress:
