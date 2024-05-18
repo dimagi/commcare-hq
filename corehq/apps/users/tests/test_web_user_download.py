@@ -113,7 +113,7 @@ class TestDownloadWebUsers(TestCase):
         super().tearDownClass()
 
     def test_download(self):
-        (headers, rows) = parse_web_users(self.domain_obj.name, {})
+        (headers, rows) = parse_web_users(self.domain_obj.name, {}, {})
 
         rows = list(rows)
         self.assertEqual(3, len(rows))
@@ -136,7 +136,7 @@ class TestDownloadWebUsers(TestCase):
         self.assertEqual('Invited', spec['status'])
 
     def test_search_string(self):
-        (headers, rows) = parse_web_users(self.domain_obj.name, {"search_string": "Edith"})
+        (headers, rows) = parse_web_users(self.domain_obj.name, {"search_string": "Edith"}, {})
         rows = list(rows)
         self.assertEqual(1, len(rows))
 
@@ -144,7 +144,7 @@ class TestDownloadWebUsers(TestCase):
         self.assertEqual('Edith', spec['first_name'])
 
     def test_multi_domain_download(self):
-        (headers, rows) = parse_web_users(self.domain_obj.name, {"domains": [self.domain, self.other_domain]})
+        (headers, rows) = parse_web_users(self.domain_obj.name, {"domains": [self.domain, self.other_domain]}, {})
 
         rows = list(rows)
         self.assertEqual(6, len(rows))
@@ -184,7 +184,7 @@ class TestDownloadWebUsers(TestCase):
             self.tableau_instance.query_groups_response(),
             self.tableau_instance.failure_response()
         ]
-        (headers, rows) = parse_web_users(self.domain_obj.name, {})
+        (headers, rows) = parse_web_users(self.domain_obj.name, {}, {"view_user_tableau_config": True})
 
         rows = list(rows)
         self.assertEqual(3, len(rows))
@@ -197,7 +197,7 @@ class TestDownloadWebUsers(TestCase):
         spec = dict(zip(headers, rows[1]))
         self.assertEqual(TableauUser.Roles.EXPLORER.value, spec['tableau_role'])
 
-        (headers, rows) = parse_web_users(self.domain_obj.name, {})
+        (headers, rows) = parse_web_users(self.domain_obj.name, {}, {"view_user_tableau_config": True})
         spec = dict(zip(headers, list(rows)[0]))
         # Should be ERROR since the second get_groups_for_user_id response fails
         self.assertEqual('ERROR', spec['tableau_groups'])
