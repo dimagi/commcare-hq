@@ -395,8 +395,10 @@ hqDefine('cloudcare/js/utils', [
             parseInputDate: parseInputDate,*/
         });
 
+        $el.on("focusout", function () {
+            tempus.hide();
+        });
         // todo B5: update for tempus dominus
-        //$el.on("focusout", $el.data("DateTimePicker").hide);
         //$el.attr("placeholder", dateFormat);
         //$el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
     };
@@ -418,8 +420,9 @@ hqDefine('cloudcare/js/utils', [
             debug: true,*/
         });
 
-        // todo B5: update for tempus dominus
-        //$el.on("focusout", $el.data("DateTimePicker").hide);
+        $el.on("focusout", function () {
+            tempus.hide();
+        });
     };
 
     var smallScreenIsEnabled = function () {
