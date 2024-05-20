@@ -378,7 +378,6 @@ hqDefine('cloudcare/js/utils', [
             return;
         }
 
-        // todo B5: move to tempus dominus
         let tempus = hqTempusDominus.createDatePicker($el.get(0), {
             display: {
                 buttons: {
@@ -390,6 +389,7 @@ hqDefine('cloudcare/js/utils', [
             localization: {
                 format: dateFormat,
             },
+            // todo B5: move to tempus dominus
             /*date: selectedDate,
             useCurrent: false,
             debug: true,
@@ -412,7 +412,6 @@ hqDefine('cloudcare/js/utils', [
         }
 
         let date = moment(selectedTime, timeFormat);
-        // todo B5: move to tempus dominus
         let tempus = hqTempusDominus.createTimePicker($el.get(0), {
             display: {
                 buttons: {
@@ -423,6 +422,7 @@ hqDefine('cloudcare/js/utils', [
             localization: {
                 format: timeFormat,
             },
+            // todo B5: move to tempus dominus
             /*date: date.isValid() ? date : null,
             useStrict: true,
             useCurrent: false,
