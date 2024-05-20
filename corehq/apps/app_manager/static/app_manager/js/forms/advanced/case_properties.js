@@ -31,6 +31,14 @@ hqDefine('app_manager/js/forms/advanced/case_properties', function () {
                     self.updatedDescription(value);
                 },
             });
+            self.isDeprecated = ko.computed(function () {
+                const config = self.action.caseConfig;
+                const depProps = config.deprecatedPropertiesDict[self.caseType()];
+                if (depProps && self.key() !== 'name') {
+                    return depProps.includes(self.key());
+                }
+                return false;
+            });
             return self;
         },
     };
