@@ -379,9 +379,8 @@ hqDefine('cloudcare/js/utils', [
         }
 
         // todo B5: move to tempus dominus
-        //hqTempusDominus.createDatePicker($el);
-        /*$el.datetimepicker({
-            date: selectedDate,
+        let tempus = hqTempusDominus.createDatePicker($el.get(0), {
+            /*date: selectedDate,
             useCurrent: false,
             showClear: true,
             showClose: true,
@@ -393,13 +392,13 @@ hqDefine('cloudcare/js/utils', [
             icons: {
                 today: 'glyphicon glyphicon-calendar',
             },
-            parseInputDate: parseInputDate,
+            parseInputDate: parseInputDate,*/
         });
 
-        $el.on("focusout", $el.data("DateTimePicker").hide);
-        $el.attr("placeholder", dateFormat);
-        $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
-        */
+        // todo B5: update for tempus dominus
+        //$el.on("focusout", $el.data("DateTimePicker").hide);
+        //$el.attr("placeholder", dateFormat);
+        //$el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
     };
 
     var initTimePicker = function ($el, selectedTime, timeFormat) {
@@ -409,18 +408,18 @@ hqDefine('cloudcare/js/utils', [
 
         let date = moment(selectedTime, timeFormat);
         // todo B5: move to tempus dominus
-        //hqTempusDominus.createTimePicker($el);
-        /*$el.datetimepicker({
-            date: date.isValid() ? date : null,
+        let tempus = hqTempusDominus.createTimePicker($el.get(0), {
+            /*date: date.isValid() ? date : null,
             format: timeFormat,
             useStrict: true,
             useCurrent: false,
             showClear: true,
             showClose: true,
-            debug: true,
+            debug: true,*/
         });
 
-        $el.on("focusout", $el.data("DateTimePicker").hide);*/
+        // todo B5: update for tempus dominus
+        //$el.on("focusout", $el.data("DateTimePicker").hide);
     };
 
     var smallScreenIsEnabled = function () {
