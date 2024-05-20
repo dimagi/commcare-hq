@@ -1454,7 +1454,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseDetailFooterView = Marionette.View.extend({
         tagName: "div",
-        className: "",
+        className: function () {
+            if (window.USE_BOOTSTRAP5) {
+                return "d-flex gap-2 justify-content-center";
+            } else {
+                return "";
+            }
+        },
         events: {
             "click #select-case": "selectCase",
         },
