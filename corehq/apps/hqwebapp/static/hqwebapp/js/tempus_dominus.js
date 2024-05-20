@@ -27,9 +27,9 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                     clock: false,
                 },
             },
-            localization: {
+            localization: _.extend(defaultTranslations, {
                 format: 'yyyy-MM-dd',
-            },
+            }),
         }, extraOptions || {}));
     };
 
@@ -78,9 +78,9 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                     calendar: false,
                 },
             },
-            localization: {
+            localization: _.extend(defaultTranslations, {
                 format: 'yyyy-MM-dd',
-            },
+            }),
         }, extraOptions || {}));
     };
 
