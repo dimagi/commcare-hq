@@ -1782,6 +1782,7 @@ class TableauUserForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        readonly = kwargs.pop('readonly', True)
         self.request = kwargs.pop('request')
         self.domain = kwargs.pop('domain', None)
         self.username = kwargs.pop('username', None)
@@ -1802,6 +1803,10 @@ class TableauUserForm(forms.Form):
         if not self.fields['groups'].choices:
             del self.fields['groups']
 
+        if readonly:
+            self.fields['role'].widget.attrs['readonly'] = True
+            self.fields['groups'].widget.attrs['disabled'] = True
+
         self.helper = FormHelper()
 
         self.helper.form_method = 'POST'
@@ -1812,5 +1817,7 @@ class TableauUserForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def save(self, username, commit=True):
+        if not self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config'):
+            raise forms.ValidationError(_("You do not have permission to edit Tableau Configuraion."))
         groups = [self.allowed_tableau_groups[int(i)] for i in self.cleaned_data['groups']]
         update_tableau_user(self.domain, username, self.cleaned_data['role'], groups)

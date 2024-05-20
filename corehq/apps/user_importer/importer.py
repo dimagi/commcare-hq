@@ -4,12 +4,15 @@ import string
 import random
 from collections import defaultdict
 from datetime import datetime
+from typing import List
 from corehq.util.soft_assert.api import soft_assert
 
 from memoized import memoized
 from django.db import DEFAULT_DB_ALIAS
 
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
+from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.util import generate_mobile_username
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import gettext as _
@@ -877,6 +880,8 @@ class WebImporter:
 
     def run(self):
         ret = {"errors": [], "rows": []}
+        column_headers = self.user_specs[0].keys() if self.user_specs else []
+        check_field_edit_permissions(column_headers, self.upload_user, self.upload_domain)
         for i, row in enumerate(self.user_specs):
             if self.update_progress:
                 self.update_progress(i)
@@ -1024,6 +1029,18 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
         upload_domain, user_specs, upload_user, upload_record_id,
         update_progress=update_progress
     ).run()
+
+
+def check_field_edit_permissions(field_names: List, upload_couch_user, domain: str):
+    if "tableau_role" in field_names or "tableau_groups" in field_names:
+        if not upload_couch_user.has_permission(
+            domain,
+            get_permission_name(HqPermissions.edit_user_tableau_config)
+        ):
+            raise UserUploadError(_(
+                "Only users with 'Manage Tableau Configuration' edit permission can upload files with"
+                "'Tableau Role and/or 'Tableau Groups' fields. Please remove those fields from your file."
+            ))
 
 
 def check_user_role(username, role):
