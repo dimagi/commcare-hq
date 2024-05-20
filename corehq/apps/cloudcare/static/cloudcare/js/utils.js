@@ -387,10 +387,12 @@ hqDefine('cloudcare/js/utils', [
                     today: true,
                 },
             },
+            localization: {
+                format: dateFormat,
+            },
             /*date: selectedDate,
             useCurrent: false,
             debug: true,
-            format: dateFormat,
             extraFormats: dateFormats,
             useStrict: true,
             parseInputDate: parseInputDate,*/
@@ -418,8 +420,10 @@ hqDefine('cloudcare/js/utils', [
                     close: true,
                 },
             },
+            localization: {
+                format: timeFormat,
+            },
             /*date: date.isValid() ? date : null,
-            format: timeFormat,
             useStrict: true,
             useCurrent: false,
             debug: true,*/

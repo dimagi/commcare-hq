@@ -28,7 +28,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 },
             },
             localization: _.extend(defaultTranslations, {
-                format: 'yyyy-MM-dd',
+                format: _getFormat(extraOptions, 'yyyy-MM-dd'),
             }),
         }, extraOptions || {}));
     };
@@ -82,6 +82,13 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 format: 'yyyy-MM-dd',
             }),
         }, extraOptions || {}));
+    };
+
+    let _getFormat = function (options, defaultFormat) {
+        if (options && options.localization && options.localization.format) {
+            return options.localization.format;
+        }
+        return defaultFormat;
     };
 
     let getDateRangeSeparator = function () {
