@@ -624,6 +624,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 const allChildren = response.tree;
                 delete response.tree;
 
+                // this argument is only set for responses from delete-repeat
+                // because ko.mapping does not like reassigning keys we need to remove all repeat group siblings and
+                // add them back in to force proper refresh. Setting reponse.children to [] would also work but was
+                // quite slow for larger forms.
                 if (deletedGroup) {
                     const ixParts = deletedGroup.split(",");
                     response.children = JSON.parse(JSON.stringify(allChildren));
