@@ -680,6 +680,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
+        // USH-4332: after FP deploy isRepetition can be removed
         self.isRepetition = parent.parent instanceof Repeat;
         if (Object.hasOwn(self, 'delete')) {
             self.showDelete = self.delete();
@@ -688,6 +689,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         }
         let parentForm = getParentForm(self);
         let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
+
+        self.hasNoPendingAnswer = ko.pureComputed(function () {
+            return !self.parent.hasAnyNestedQuestionWithPendingAnswer();
+        });
 
         // Header and captions
         self.showHeader = oneQuestionPerScreen || self.isRepetition || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown);
@@ -761,6 +766,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             });
         };
 
+        self.hasAnyNestedQuestionWithPendingAnswer = ko.pureComputed(function () {
+            return _.any(self.children(), function (d) {
+                if (d.type() === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
+                    return d.hasAnyNestedQuestionWithPendingAnswer();
+                }
+            });
+        });
+
         self.isVisibleGroup = function () {
             const hasChildren = self.children().length !== 0;
             const hasLabel = !!ko.utils.unwrapObservable(self.caption_markdown) || !!self.caption();
@@ -827,9 +840,20 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.parent = parent;
         Container.call(self, json);
 
+        self.hasAnyNestedQuestionWithPendingAnswer = ko.pureComputed(function () {
+            return _.any(self.children(), function (d) {
+                if (d.type() === constants.QUESTION_TYPE) {
+                    return d.pendingAnswer();
+                } else if (d.type() === constants.GROUP_TYPE) {
+                    return d.hasAnyNestedQuestionWithPendingAnswer();
+                }
+                return false;
+            });
+        });
+
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
-                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE || d.type() === "add-group") {
+                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE) {
                     return true;
                 } else if (d.type() === constants.GROUP_TYPE) {
                     return d.hasAnyNestedQuestions();
