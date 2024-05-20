@@ -4,7 +4,7 @@
  {% load i18n %}
  
  <script type="text/template" id="query-view-item-template">
-+  {# todo B5: Field grouping spacing and hover effects are a mess #}
++  <% if (contentTag !== 'td') { %><td><% } %>
    <<%- contentTag %>
      class="<% if (contentTag === 'td') { %>col-sm-6 <% } %>query-caption
 -           <% if (required) { %> required<% } %>
@@ -12,7 +12,7 @@
 +           <% if (required) { %> required<% } %>">
      <div class="d-flex justify-content-between">
 -      <label class="control-label" for="<%- text ? text : "" %>">
-+      <label class="form-label" for="<%- text ? text : "" %>">
++      <label class="form-label fw-bold" for="<%- text ? text : "" %>">
          <%- text ? text : "" %>
        </label>
        <% if (typeof hint !== "undefined" && hint !== null) { %>
@@ -52,7 +52,7 @@
            <%- itemsetChoicesDict[key] %>
          </label>
        </div>
-@@ -81,17 +84,19 @@
+@@ -81,17 +84,20 @@
      <% } else { %>
      <input id="<%- text ? text : "" %>"
             type="text"
@@ -77,4 +77,5 @@
 +            </div>
              <% } %>
    </<%- contentTag %>>
++  <% if (contentTag !== 'td') { %></td><% } %>
  </script>

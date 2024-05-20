@@ -1,6 +1,10 @@
 --- 
 +++ 
-@@ -3,18 +3,18 @@
+@@ -1,20 +1,22 @@
+ .full-width {
+   width: 100%;
++  margin-left: 0;
++  margin-right: 0;
  }
  
  .sidebar-push {
@@ -22,7 +26,7 @@
      max-width: 600px;
      margin: auto;
    }
-@@ -66,10 +66,10 @@
+@@ -66,10 +68,10 @@
  
  .query-description {
    a {
@@ -35,11 +39,13 @@
    }
  }
  
-@@ -86,7 +86,7 @@
+@@ -85,8 +87,8 @@
+   font-size: larger;
  }
  
- .search-query-group {
+-.search-query-group {
 -  background-color: @cc-bg;
++.table .search-query-group {   // .table needed for specificity, to override .table stylings
 +  background-color: $cc-bg;
  }
  

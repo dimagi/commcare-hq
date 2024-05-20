@@ -23,7 +23,7 @@
      </div>
      <% } %>
  
-@@ -26,13 +26,11 @@
+@@ -26,45 +26,43 @@
                 class="form-control"
                 placeholder="Search"
                 id="searchText">
@@ -42,12 +42,14 @@
        </div>
      </div>
      <% } %>
-@@ -41,30 +39,30 @@
-          class="row row-no-gutters">
+ 
+     <div id="module-case-list-container__results-container"
+-         class="row row-no-gutters">
++         class="row g-0">
        <% if (showMap) { %>
          <div id="module-case-list-map"
 -             class="sticky sticky-map col-md-5 col-md-push-9<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
-+             class="sticky sticky-map col-lg-5 col-md-push-9<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
++             class="sticky sticky-map col-lg-5 order-md-1<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
        <% } %>
        <div id="module-case-list" class="col-md<% if (showMap) { %>-7 col-md-pull-5<% } %>">
          <% if (useTiles) { %>
