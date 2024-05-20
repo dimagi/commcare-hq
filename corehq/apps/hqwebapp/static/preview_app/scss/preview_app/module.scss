@@ -33,7 +33,7 @@
   background-color: white;
 }
 
-.module-search-container, .module-go-container{
+.module-search-container {
   .input-group-lg .form-control,
   .input-group-lg .btn{
     font-size: 11px;
@@ -45,18 +45,14 @@
   }
 }
 
-.module-go-container {
-  width: 140px;
-}
-
 .module-per-page-container {
-  .input-group-lg .form-control,
-  .input-group-lg .btn{
+  .pagination-lg .form-control,
+  .pagination-lg .btn{
     font-size: 11px;
     height: 30px;
     padding: 5px 10px;
   }
-  .input-group-lg .btn [class*='fa-'] {
+  .pagination-lg .btn [class*='fa-'] {
     font-size: 11px;
   }
 }
@@ -73,13 +69,6 @@
 
   .module-icon {
     max-height: 30px;
-  }
-}
-
-.module-pagination-container .pagination {
-  font-size: 10px;
-  [class*='fa-'] {
-    font-size: 14px;
   }
 }
 
