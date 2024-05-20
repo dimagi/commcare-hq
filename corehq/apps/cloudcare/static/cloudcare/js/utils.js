@@ -380,18 +380,19 @@ hqDefine('cloudcare/js/utils', [
 
         // todo B5: move to tempus dominus
         let tempus = hqTempusDominus.createDatePicker($el.get(0), {
+            display: {
+                buttons: {
+                    clear: true,
+                    close: true,
+                    today: true,
+                },
+            },
             /*date: selectedDate,
             useCurrent: false,
-            showClear: true,
-            showClose: true,
-            showTodayButton: true,
             debug: true,
             format: dateFormat,
             extraFormats: dateFormats,
             useStrict: true,
-            icons: {
-                today: 'glyphicon glyphicon-calendar',
-            },
             parseInputDate: parseInputDate,*/
         });
 
@@ -411,12 +412,16 @@ hqDefine('cloudcare/js/utils', [
         let date = moment(selectedTime, timeFormat);
         // todo B5: move to tempus dominus
         let tempus = hqTempusDominus.createTimePicker($el.get(0), {
+            display: {
+                buttons: {
+                    clear: true,
+                    close: true,
+                },
+            },
             /*date: date.isValid() ? date : null,
             format: timeFormat,
             useStrict: true,
             useCurrent: false,
-            showClear: true,
-            showClose: true,
             debug: true,*/
         });
 
