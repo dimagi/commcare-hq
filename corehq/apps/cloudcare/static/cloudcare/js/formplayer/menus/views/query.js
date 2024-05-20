@@ -41,7 +41,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     Collection,
     formplayerUtils
 ) {
-    var separator = " to ",
+    var separator = hqTempusDominus.getDateRangeSeparator(),
         serverSeparator = "__",
         serverPrefix = "__range__",
         dateFormat = cloudcareUtils.dateFormat,
@@ -379,9 +379,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             self.errorMessage = null;
             self.model.set('searchForBlank', false);
             sessionStorage.removeItem('geocoderValues');
-            if (self.ui.date.length) {
-                self.ui.date.data("DateTimePicker").clear();    // todo B5
-            }
             self._render();
             FormplayerFrontend.trigger('clearNotifications');
         },
@@ -477,27 +474,16 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 this.ui.hqHelp.hqHelp({placement: 'auto ' + fallback});
             }
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
-            // todo B5: move to tempus dominus
-            //hqTempusDominus.createDateRangePicker(this.ui.dateRange);
-            /*this.ui.dateRange.daterangepicker({
-                locale: {
-                    format: dateFormat,
-                    separator: separator,
-                },
-                autoUpdateInput: false,
-                "autoApply": true,
-            });*/
+            this.ui.dateRange.each(function (index, el) {
+                hqTempusDominus.createDefaultDateRangePicker(el, {
+                    localization: {
+                        format: dateFormat,
+                    },
+                });
+            });
             this.ui.dateRange.attr("placeholder", dateFormat + separator + dateFormat);
             let separatorChars = _.unique(separator).join("");
             this.ui.dateRange.attr("pattern", "^[\\d\\/\\-" + separatorChars + "]*$");
-            // todo B5: replace/remove
-            this.ui.dateRange.on('cancel.daterangepicker', function () {
-                $(this).val('').trigger('change');
-            });
-            // todo B5: replace/remove
-            this.ui.dateRange.on('apply.daterangepicker', function (ev, picker) {
-                $(this).val(picker.startDate.format(dateFormat) + separator + picker.endDate.format(dateFormat)).trigger('change');
-            });
             this.ui.dateRange.on('change', function () {
                 // Validate free-text input
                 var start, end,

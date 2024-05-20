@@ -320,34 +320,6 @@ hqDefine('cloudcare/js/utils', [
         }
     };
 
-    var dateTimePickerTooltips = {     // use default text, but enable translations
-        today: gettext('Go to today'),
-        clear: gettext('Clear selection'),
-        close: gettext('Close the picker'),
-        selectMonth: gettext('Select Month'),
-        prevMonth: gettext('Previous Month'),
-        nextMonth: gettext('Next Month'),
-        selectYear: gettext('Select Year'),
-        prevYear: gettext('Previous Year'),
-        nextYear: gettext('Next Year'),
-        selectDecade: gettext('Select Decade'),
-        prevDecade: gettext('Previous Decade'),
-        nextDecade: gettext('Next Decade'),
-        prevCentury: gettext('Previous Century'),
-        nextCentury: gettext('Next Century'),
-        pickHour: gettext('Pick Hour'),
-        incrementHour: gettext('Increment Hour'),
-        decrementHour: gettext('Decrement Hour'),
-        pickMinute: gettext('Pick Minute'),
-        incrementMinute: gettext('Increment Minute'),
-        decrementMinute: gettext('Decrement Minute'),
-        pickSecond: gettext('Pick Second'),
-        incrementSecond: gettext('Increment Second'),
-        decrementSecond: gettext('Decrement Second'),
-        togglePeriod: gettext('Toggle Period'),
-        selectTime: gettext('Select Time'),
-    };
-
     /**
      *  Convert two-digit year to four-digit year.
      *  Differs from JavaScript's two-year parsing to better match CommCare,
@@ -376,6 +348,15 @@ hqDefine('cloudcare/js/utils', [
     var dateFormat = 'MM/DD/YYYY';
     var dateFormats = ['MM/DD/YYYY', 'YYYY-MM-DD', 'M/D/YYYY', 'M/D/YY', 'M-D-YYYY', 'M-D-YY', moment.defaultFormat];
 
+    // Annoyingly, moment and tempus dominus use different formats.
+    // Moment: https://momentjs.com/docs/#/parsing/string-format/
+    // TD: https://getdatepicker.com/6/plugins/customDateFormat.html
+    // TD does have a plugin to integrate with moment, but since other usages of TD in HQ
+    // don't need it, instead of enabling that, hack around this.
+    const _momentFormatToTempusFormat = function (momentFormat) {
+        return momentFormat.replaceAll("D", "d").replaceAll("Y", "y");
+    };
+
     /** Coerce an input date string to a moment object */
     var parseInputDate = function (dateString) {
         if (!moment.isMoment(dateString)) {
@@ -390,29 +371,29 @@ hqDefine('cloudcare/js/utils', [
             return;
         }
 
-        // todo B5: move to tempus dominus
-        //hqTempusDominus.createDatePicker($el);
-        /*$el.datetimepicker({
-            date: selectedDate,
-            useCurrent: false,
-            showClear: true,
-            showClose: true,
-            showTodayButton: true,
-            debug: true,
-            format: dateFormat,
-            extraFormats: dateFormats,
-            useStrict: true,
-            icons: {
-                today: 'glyphicon glyphicon-calendar',
+        let options = {
+            display: {
+                buttons: {
+                    clear: true,
+                    close: true,
+                    today: true,
+                },
             },
-            tooltips: dateTimePickerTooltips,
-            parseInputDate: parseInputDate,
-        });
+            localization: {
+                format: _momentFormatToTempusFormat(dateFormat),
+            },
+            useCurrent: false,
+        };
+        if (selectedDate) {
+            options.viewDate = new hqTempusDominus.tempusDominus.DateTime(selectedDate);
+        }
+        let tempus = hqTempusDominus.createDatePicker($el.get(0), options);
 
-        $el.on("focusout", $el.data("DateTimePicker").hide);
+        $el.on("focusout", function () {
+            tempus.hide();
+        });
         $el.attr("placeholder", dateFormat);
         $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
-        */
     };
 
     var initTimePicker = function ($el, selectedTime, timeFormat) {
@@ -421,20 +402,26 @@ hqDefine('cloudcare/js/utils', [
         }
 
         let date = moment(selectedTime, timeFormat);
-        // todo B5: move to tempus dominus
-        //hqTempusDominus.createTimePicker($el);
-        /*$el.datetimepicker({
-            date: date.isValid() ? date : null,
-            format: timeFormat,
-            useStrict: true,
+        let options = {
+            display: {
+                buttons: {
+                    clear: true,
+                    close: true,
+                },
+            },
+            localization: {
+                format: timeFormat,
+            },
             useCurrent: false,
-            showClear: true,
-            showClose: true,
-            debug: true,
-            tooltips: dateTimePickerTooltips,
-        });
+        };
+        if (date.isValid()) {
+            options.viewDate = new hqTempusDominus.tempusDominus.DateTime(date.format(timeFormat));
+        }
+        let tempus = hqTempusDominus.createTimePicker($el.get(0), options);
 
-        $el.on("focusout", $el.data("DateTimePicker").hide);*/
+        $el.on("focusout", function () {
+            tempus.hide();
+        });
     };
 
     var smallScreenIsEnabled = function () {
