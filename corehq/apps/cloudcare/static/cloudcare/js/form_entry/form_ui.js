@@ -208,7 +208,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
          * @param {Object} child - The child object to be rendered, either Group, Repeat, or Question
          */
         self.childTemplate = function (child) {
-            return ko.utils.unwrapObservable(child.type()) + '-fullform-ko-template';
+            return child.type() + '-fullform-ko-template';
         };
 
         self.hasError = ko.computed(function () {
@@ -884,9 +884,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             $('.add').trigger('blur');
         };
         self.entryTemplate = "add-group-entry-ko-template";
-        self.type = function () {
-            return "add-group";
-        };
+        self.type = ko.observable("add-group");
         self.rel_ix = ko.observable(relativeIndex(json.ix));
         self.required = ko.observable(json.required);
         self.hasError = ko.observable(json.hasError);
