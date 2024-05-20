@@ -457,7 +457,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
 
         self.deleteRepeat = function (repetition) {
             // USH-4332: after FP deploy keep only else clause
-            if (repetition.parent instanceof formUI.Repeat) {
+            if (repetition.parent.parent instanceof formUI.Repeat) {
                 var juncture = formUI.getIx(repetition.parent.parent);
                 var repIx = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
                 this.serverRequest(
