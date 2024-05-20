@@ -41,7 +41,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     Collection,
     formplayerUtils
 ) {
-    var separator = " to ",
+    var separator = hqTempusDominus.getDateRangeSeparator(),
         serverSeparator = "__",
         serverPrefix = "__range__",
         dateFormat = cloudcareUtils.dateFormat,
