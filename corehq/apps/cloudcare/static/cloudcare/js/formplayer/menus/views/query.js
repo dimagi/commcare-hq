@@ -477,16 +477,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 this.ui.hqHelp.hqHelp({placement: 'auto ' + fallback});
             }
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
-            // todo B5: move to tempus dominus
-            //hqTempusDominus.createDateRangePicker(this.ui.dateRange);
-            /*this.ui.dateRange.daterangepicker({
-                locale: {
-                    format: dateFormat,
-                    separator: separator,
-                },
-                autoUpdateInput: false,
-                "autoApply": true,
-            });*/
+            this.ui.dateRange.each(function (index, el) {
+                hqTempusDominus.createDefaultDateRangePicker(el, {
+                    localization: {
+                        format: dateFormat,
+                    },
+                });
+            });
             this.ui.dateRange.attr("placeholder", dateFormat + separator + dateFormat);
             let separatorChars = _.unique(separator).join("");
             this.ui.dateRange.attr("pattern", "^[\\d\\/\\-" + separatorChars + "]*$");
