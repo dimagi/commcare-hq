@@ -1747,11 +1747,17 @@ class UserFilterForm(forms.Form):
             return False
         return None
 
+    def clean_location_id(self):
+        location_id = self.cleaned_data['location_id']
+        if location_id and not user_can_access_location_id(self.domain, self.couch_user, location_id):
+            raise forms.ValidationError("You do not have access to that location.")
+        return location_id
+
     def clean(self):
         data = self.cleaned_data
         user = self.couch_user
 
-        if not user.has_permission(self.domain, 'access_all_locations') and not data.get('location_id'):
+        if not data.get('location_id') and not user.has_permission(self.domain, 'access_all_locations'):
             # Add (web) user assigned_location_ids so as to
             # 1) reflect all locations user is assigned to ('All' option)
             # 2) restrict user access
