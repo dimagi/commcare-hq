@@ -292,19 +292,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     return options.target;
                 },
                 key: function (data) {
-                    let key = ko.utils.unwrapObservable(data.uuid);
-                    if (key) {
-                        return key;
-                    }
-                    key = ko.utils.unwrapObservable(data.ix);
-
-                    const isRepeatDummy = data.type === constants.GROUP_TYPE && data.exists === "false";
-                    if (isRepeatDummy) {
-                        // Without this a key that was previously used by a group would be used by the dummy.
-                        // This causes issues because the template and other fields would not be reset.
-                        key = key.substring(0, key.lastIndexOf('_') + 1) + 'r';
-                    }
-                    return key;
+                    return ko.utils.unwrapObservable(data.uuid) || ko.utils.unwrapObservable(data.ix);
                 },
             },
         };
