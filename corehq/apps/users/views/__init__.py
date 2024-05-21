@@ -471,7 +471,10 @@ class EditWebUserView(BaseEditUserView):
             ),
             'idp_name': idp.name if idp else '',
         })
-
+        if toggles.SUPPORT.enabled(self.request.couch_user.username):
+            ctx["support_info"] = {
+                'locations': self.editable_user.get_sql_locations(self.domain)
+            }
         return ctx
 
     @method_decorator(always_allow_project_access)
