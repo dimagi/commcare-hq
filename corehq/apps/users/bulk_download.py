@@ -27,7 +27,6 @@ from corehq.apps.users.dbaccessors import (
     get_web_users_by_filters,
 )
 from corehq.apps.users.models import DeactivateMobileWorkerTrigger, UserRole, CouchUser, HqPermissions
-from corehq.apps.users.permissions import get_user_has_permissions_dict
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
@@ -302,7 +301,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
     return user_headers, get_user_rows(user_dicts, user_headers)
 
 
-def parse_web_users(domain, user_filters, owner_permissions_filters, task=None, total_count=None):
+def parse_web_users(domain, user_filters, owner, task=None, total_count=None):
     user_dicts = []
     max_location_length = 0
     (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
@@ -335,7 +334,7 @@ def parse_web_users(domain, user_filters, owner_permissions_filters, task=None, 
     if is_cross_domain:
         user_headers += ['domain']
     if (TABLEAU_USER_SYNCING.enabled(domain)
-            and owner_permissions_filters.get(get_permission_name(HqPermissions.view_user_tableau_config))):
+            and owner.has_permission(domain, get_permission_name(HqPermissions.view_user_tableau_config))):
         user_headers += ['tableau_role', 'tableau_groups']
         user_dicts = add_on_tableau_details(domain, user_dicts)
     return user_headers, get_user_rows(user_dicts, user_headers)
@@ -486,7 +485,7 @@ def dump_web_users(domain, download_id, user_filters, task, owner_id):
 
     owner = CouchUser.get_by_user_id(owner_id, domain)
     user_headers, user_rows = parse_web_users(domain, user_filters,
-                                            get_user_has_permissions_dict(owner, domain), task, total_count)
+                                            owner, task, total_count)
 
     headers = [('users', [user_headers])]
     rows = [('users', user_rows)]

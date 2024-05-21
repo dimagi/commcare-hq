@@ -75,13 +75,3 @@ def has_permission_to_view_report(couch_user, domain, report_to_check):
         get_permission_name(HqPermissions.view_report),
         data=report_to_check
     )
-
-
-def get_user_has_permissions_dict(couch_user, domain: str):
-    from corehq.apps.users.models import HqPermissions
-
-    permissions_status = {}
-    for permission_name in HqPermissions.permission_names():
-        permissions_status[permission_name] = couch_user.has_permission(domain, permission_name)
-
-    return permissions_status
