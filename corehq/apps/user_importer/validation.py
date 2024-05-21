@@ -443,18 +443,17 @@ class LocationAccessValidator(ImportValidator):
         # 1. Get current locations for user or user invitation and ensure user can edit it
         username = spec.get('username')
         current_locs = []
+        editable_user = None
         if self.is_web_user_import:
-            editable_user = CouchUser.get_by_username(username, strict=True)
-            if not editable_user:
-                try:
-                    invitation = Invitation.objects.get(domain=self.domain, email=username, is_accepted=False)
-                    if not user_can_access_invite(self.domain, self.upload_user, invitation):
-                        return self.error_message_user_access.format(invitation.email)
-                    current_locs = invitation.assigned_locations.all()
-                except Invitation.DoesNotExist:
-                    pass
+            try:
+                invitation = Invitation.objects.get(domain=self.domain, email=username, is_accepted=False)
+                if not user_can_access_invite(self.domain, self.upload_user, invitation):
+                    return self.error_message_user_access.format(invitation.email)
+                current_locs = invitation.assigned_locations.all()
+            except Invitation.DoesNotExist:
+                editable_user = CouchUser.get_by_username(username, strict=True)
         else:
-            if 'username' in spec:
+            if username:
                 editable_user = CouchUser.get_by_username(username, strict=True)
             elif 'user_id' in spec:
                 editable_user = CouchUser.get_by_user_id(spec.get('user_id'))
@@ -466,7 +465,8 @@ class LocationAccessValidator(ImportValidator):
         # 2. Ensure the user is only adding the user to/removing from *new locations* that they have permission
         # to access.
         if 'location_code' in spec:
-            location_codes = spec['location_code']
+            location_codes = (spec['location_code'] if isinstance(spec['location_code'], list)
+                              else [spec['location_code']])
             locs_being_assigned = find_location_id(location_codes, self.location_cache)
             problem_location_ids = user_can_change_locations(self.domain, self.upload_user,
                                                             current_locs, locs_being_assigned)
