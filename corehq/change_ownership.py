@@ -127,7 +127,6 @@ class UserUpdater(Updater):
 
         print("---MOVING MOBILE WORKER LOCATIONS---")
         user_ids = self.db_manager.get_ids(self.batch_size)
-        # TODO: Get CommCareUser by user_ids
         user_count = len(user_ids)
         chunk_count = math.ceil(user_count / self.batch_size)
         print(f"Total Users to Process: {user_count}")
@@ -142,7 +141,6 @@ class UserUpdater(Updater):
                 except Exception as e:
                     is_success = False
             for user in users_to_save:
-                # TODO: Add reverse ID to row
                 if is_success:
                     self.db_manager.update_row(
                         user.user_id,
@@ -230,16 +228,21 @@ class UserUpdater(Updater):
 
 class CaseUpdater(Updater):
     device_id = 'system'
-    db_table_name = 'case_list'
+    db_table_name_root = 'case_list'
+
+    def __init__(self, case_type):
+        """
+        case_type: Should be one of [menage, membre, seance_educative, fiche_pointage]
+        """
+        self.case_type = case_type
+        super(CaseUpdater, self).__init__()
+
+    @property
+    def db_table_name(self):
+        return f'{self.db_table_name_root}_{self.case_type}'
 
     def _fetch_case_ids(self):
-        case_types = [
-            'menage',
-            'membre',
-            'seance_educative',
-            'fiche_pointage',
-        ]
-        query = Q(domain=self.domain) & Q(type__in=case_types)
+        query = Q(domain=self.domain) & Q(type=self.case_type)
         for row in paginate_query_across_partitioned_databases(CommCareCase, query, values=['case_id'], load_source='all_case_ids'):
             yield row[0]
 
