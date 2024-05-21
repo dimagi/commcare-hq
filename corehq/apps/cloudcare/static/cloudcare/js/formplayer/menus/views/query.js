@@ -469,7 +469,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
 
         onRender: function () {
             this._initializeSelect2Dropdown();
-            const fallback = this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled ?  'bottom': 'right';
+            const fallback = this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled ?  'bottom' : 'right';
             if (window.USE_BOOTSTRAP5) {
                 this.ui.hqHelp.hqHelp({placement: 'auto', fallbackPlacements: [fallback]});
             } else {
