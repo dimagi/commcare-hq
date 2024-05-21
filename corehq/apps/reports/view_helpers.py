@@ -84,7 +84,7 @@ def _index_to_context(index, is_ancestor):
 
 def normalize_date(val):
     # Can't use isinstance since datetime is a subclass of date.
-    if type(val) == datetime.date:
+    if type(val) is datetime.date:
         return datetime.datetime.combine(val, datetime.time.min)
 
     return val
