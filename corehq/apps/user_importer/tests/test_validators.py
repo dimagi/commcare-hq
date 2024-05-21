@@ -1,8 +1,11 @@
+from datetime import datetime
 from faker import Faker
 from unittest.mock import patch
 from testil import assert_raises
 
+from corehq.apps.locations.tests.util import LocationHierarchyTestCase, restrict_user_by_location
 from corehq.apps.user_importer.exceptions import UserUploadError
+from corehq.apps.user_importer.importer import SiteCodeToLocationCache
 from corehq.apps.user_importer.validation import (
     DuplicateValidator,
     EmailValidator,
@@ -16,7 +19,10 @@ from corehq.apps.user_importer.validation import (
     RequiredFieldsValidator,
     UsernameValidator,
     BooleanColumnValidator,
-    ConfirmationSmsValidator)
+    ConfirmationSmsValidator,
+    LocationAccessValidator)
+from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.models import CommCareUser, WebUser, Invitation
 
 factory = Faker()
 Faker.seed(1571040848)
@@ -292,3 +298,100 @@ def test_validating_sms_confirmation_entry():
     validation_result = validator.validate_spec(user_spec)
     assert validation_result == "When 'send_confirmation_sms' is True for a new user, "\
         "is_active and is_account_confirmed must be either empty or set to False."
+
+
+class TestLocationAccessValidator(LocationHierarchyTestCase):
+
+    domain = 'test-domain'
+    location_type_names = ['state', 'county', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+            ('Suffolk', [
+                ('Boston', []),
+            ])
+        ])
+    ]
+
+    @classmethod
+    def setUpClass(cls):
+        delete_all_users()
+        super(TestLocationAccessValidator, cls).setUpClass()
+        cls.upload_user = WebUser.create(cls.domain, 'username', 'password', None, None)
+        cls.upload_user.set_location(cls.domain, cls.locations['Middlesex'])
+        restrict_user_by_location(cls.domain, cls.upload_user)
+        cls.editable_user = WebUser.create(cls.domain, 'editable-user', 'password', None, None)
+        # cls.upload_user.reset_locations(cls.domain, [cls.locations['Middlesex'].location_id])
+        cls.validator = LocationAccessValidator(cls.domain, cls.upload_user,
+                                                SiteCodeToLocationCache(cls.domain), True)
+
+    def testSuccess(self):
+        self.editable_user.reset_locations(self.domain, [self.locations['Cambridge'].location_id])
+        user_spec = {'username': self.editable_user.username,
+                     'location_code': [self.locations['Middlesex'].site_code,
+                                       self.locations['Cambridge'].site_code]}
+        validation_result = self.validator.validate_spec(user_spec)
+        print(validation_result)
+        assert validation_result is None
+
+    def testCantEditWebUser(self):
+        self.editable_user.reset_locations(self.domain, [self.locations['Suffolk'].location_id])
+        user_spec = {'username': self.editable_user.username,
+                     'location_code': [self.locations['Middlesex'].site_code,
+                                       self.locations['Cambridge'].site_code]}
+        validation_result = self.validator.validate_spec(user_spec)
+        assert validation_result == ("Based on your locations do not have permission to edit this user or user "
+                                     "invitation")
+
+    def testCantEditCommCareUser(self):
+        self.cc_user_validator = LocationAccessValidator(self.domain, self.upload_user,
+                                                SiteCodeToLocationCache(self.domain), False)
+        self.editable_cc_user = CommCareUser.create(self.domain, 'cc-username', 'password', None, None)
+        self.editable_cc_user.reset_locations([self.locations['Suffolk'].location_id])
+        user_spec = {'user_id': self.editable_cc_user._id,
+                     'location_code': [self.locations['Middlesex'].site_code,
+                                       self.locations['Cambridge'].site_code]}
+        validation_result = self.cc_user_validator.validate_spec(user_spec)
+        assert validation_result == ("Based on your locations do not have permission to edit this user or user "
+                                     "invitation")
+
+    def testCantEditInvitation(self):
+        self.invitation = Invitation.objects.create(
+            domain=self.domain,
+            email='invite-user@dimagi.com',
+            invited_by='a@dimagi.com',
+            invited_on=datetime.utcnow()
+        )
+        self.invitation.assigned_locations.set([self.locations['Suffolk']])
+        user_spec = {'username': self.invitation.email,
+                     'location_code': [self.locations['Middlesex'].site_code,
+                                       self.locations['Cambridge'].site_code]}
+        validation_result = self.validator.validate_spec(user_spec)
+        assert validation_result == ("Based on your locations do not have permission to edit this user or user "
+                                     "invitation")
+
+    def testCantAddLocation(self):
+        self.editable_user.reset_locations(self.domain, [self.locations['Cambridge'].location_id])
+        user_spec = {'username': self.editable_user.username,
+                     'location_code': [self.locations['Suffolk'].site_code,
+                                       self.locations['Cambridge'].site_code]}
+        validation_result = self.validator.validate_spec(user_spec)
+        assert validation_result == ("You do not have permission to assign or remove these locations: "
+                                     "suffolk")
+
+    def testCantRemoveLocation(self):
+        self.editable_user.reset_locations(self.domain, [self.locations['Suffolk'].location_id,
+                                                         self.locations['Cambridge'].location_id])
+        user_spec = {'username': self.editable_user.username,
+                     'location_code': [self.locations['Cambridge'].site_code]}
+        validation_result = self.validator.validate_spec(user_spec)
+        assert validation_result == ("You do not have permission to assign or remove these locations: "
+                                     "suffolk")
+
+    @classmethod
+    def tearDownClass(cls):
+        super(LocationHierarchyTestCase, cls).tearDownClass()
+        delete_all_users()
