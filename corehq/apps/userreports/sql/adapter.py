@@ -214,8 +214,11 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         try:
             with self.session_context() as session:
                 session.execute(delete)
-        except ProgrammingError:
-            return
+        except ProgrammingError as e:
+            if not self.table_exists:
+                return
+            else:
+                raise e
 
         register_data_source_row_change(
             domain=self.config.domain,
