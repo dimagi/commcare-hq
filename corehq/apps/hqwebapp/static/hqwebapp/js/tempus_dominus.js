@@ -122,7 +122,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
         createDatePicker: createDatePicker,
         createDateRangePicker: createDateRangePicker,
         createDefaultDateRangePicker: createDefaultDateRangePicker,
-        createTimePicker: createDatePicker,
+        createTimePicker: createTimePicker,
         getDateRangeSeparator: getDateRangeSeparator,
     };
 });
