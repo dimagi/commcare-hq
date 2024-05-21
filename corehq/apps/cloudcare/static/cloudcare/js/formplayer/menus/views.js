@@ -31,8 +31,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     L
 ) {
     const MenuView = Marionette.View.extend({
+        isGrid: function () {
+            return this.model.collection.layoutStyle === constants.LayoutStyles.GRID;
+        },
         tagName: function () {
-            if (this.model.collection.layoutStyle === 'grid') {
+            if (this.isGrid()) {
                 return 'div';
             } else {
                 return 'tr';
@@ -60,7 +63,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         getTemplate: function () {
             let id = "#menu-view-row-template";
-            if (this.model.collection.layoutStyle === constants.LayoutStyles.GRID) {
+            if (this.isGrid()) {
                 id = "#menu-view-grid-item-template";
             } else if (this.model.get('audioUri')) {
                 id = "#menu-view-row-audio-template";
@@ -1008,7 +1011,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.boundHandleScroll = self.handleScroll.bind(self);
             $(window).on('scroll', self.boundHandleScroll);
             if (self.shouldShowScrollButton()) {
-                $('#scroll-to-bottom').show();
+                $('#scroll-to-bottom').removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
             }
         },
 
@@ -1264,7 +1267,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     const BreadcrumbView = Marionette.View.extend({
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
-        className: "breadcrumb-text",
+        className: function () {
+            if (window.USE_BOOSTRAP5) {
+                return "breadcrumb-item";
+            } else {
+                return "breadcrumb-text";
+            }
+        },
         attributes: function () {
             let attributes = {
                 "role": "link",
@@ -1454,7 +1463,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseDetailFooterView = Marionette.View.extend({
         tagName: "div",
-        className: "",
+        className: function () {
+            if (window.USE_BOOTSTRAP5) {
+                return "d-flex gap-2 justify-content-center";
+            } else {
+                return "";
+            }
+        },
         events: {
             "click #select-case": "selectCase",
         },
