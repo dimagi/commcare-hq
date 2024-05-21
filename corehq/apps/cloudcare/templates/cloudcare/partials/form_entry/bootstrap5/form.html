@@ -64,9 +64,9 @@
     </form>
   </div>
   <div data-bind="visible: erroredQuestions().length > 0">
-    <div id="scroll-bottom" class="btn btn-outline-danger" style="position: fixed; bottom: 35px" title="{% trans_html_attr "Jump between required/errored questions" %}" data-bind="click: jumpToErrors">  {# todo B5: inline style #}
-      <i class='fa fa-fast-forward'> </i>
-          {% trans "Next Error" %}
+    <div id="next-error" class="btn btn-outline-danger" title="{% trans_html_attr "Jump between required/errored questions" %}" data-bind="click: jumpToErrors">
+      <i class='fa fa-fast-forward'></i>
+      {% trans "Next Error" %}
     </div>
   </div>
 </script>
