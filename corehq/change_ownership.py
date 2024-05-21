@@ -89,7 +89,7 @@ class DBManager(object):
             'col_name': 'col_val',
             ...
         }
-        Valid column names are reverse_id, status, message
+        Valid column names are revert_id, status, message
         """
         query = f'UPDATE {self.table_name} SET '
         expr_list = []
@@ -111,7 +111,7 @@ class UserUpdater(Updater):
 
     def store_all_user_ids(self):
         """
-        Store all users for later processing. This is useful mainly to store reverse_id,
+        Store all users for later processing. This is useful mainly to store revert_id,
         which can be used to revert changes made. This should be run at the start.
         """
         user_ids = (
@@ -149,7 +149,7 @@ class UserUpdater(Updater):
                         user.user_id,
                         value_dict={
                             'status': self.db_manager.STATUS_SUCCESS,
-                            'reverse_id': reverse_ids[user.user_id],
+                            'revert_id': reverse_ids[user.user_id],
                         }
                     )
                 else:
@@ -157,7 +157,7 @@ class UserUpdater(Updater):
                         user.user_id,
                         value_dict={
                             'status': self.db_manager.STATUS_FAILURE,
-                            'reverse_id': reverse_ids[user.user_id],  # Just in case some users were saved
+                            'revert_id': reverse_ids[user.user_id],  # Just in case some users were saved
                             'message': 'Failed to save user in bulk save',
                         }
                     )
@@ -279,7 +279,7 @@ class CaseUpdater(Updater):
                     case_obj.case_id,
                     value_dict={
                         'status': self.db_manager.STATUS_SUCCESS,
-                        'reverse_id': reverse_ids[case_obj.case_id],
+                        'revert_id': reverse_ids[case_obj.case_id],
                     }
                 )
 
