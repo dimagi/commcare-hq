@@ -92,6 +92,7 @@ domain_specific = [
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
     url(r'^integration/', include('corehq.apps.integration.urls')),
     url(r'^registries/', include('corehq.apps.registry.urls')),
+    url(r'^apps/testing/', include("corehq.apps.app_execution.urls")),
 ]
 
 for url_module in extension_points.domain_specific_urls():

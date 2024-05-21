@@ -16,9 +16,9 @@
 
 {% block page_content %}
   {% initial_page_data 'total_items' total %}
-  {% registerurl "app_execution:logs_json" workflow.id %}
+  {% registerurl "app_execution:logs_json" request.domain workflow.id %}
 
-  <h2>Logs for workflow "<a href="{% url "app_execution:edit_workflow" workflow.id %}">{{ workflow.name }}</a>"</h2>
+  <h2>Logs for workflow "<a href="{% url "app_execution:edit_workflow" request.domain workflow.id %}">{{ workflow.name }}</a>"</h2>
   <div>
     <h3>{% trans "Average Timings Per Hour" %}</h3>
     <div id="timing_linechart"><svg height="300px"></svg></div>

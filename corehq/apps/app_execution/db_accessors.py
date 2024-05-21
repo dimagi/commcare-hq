@@ -4,8 +4,8 @@ from django.db.models.functions import Trunc
 from corehq.apps.app_execution.models import AppExecutionLog, AppWorkflowConfig
 
 
-def get_avg_duration_data(start, end, workflow_id=None):
-    query = AppExecutionLog.objects.filter(started__gte=start, started__lt=end)
+def get_avg_duration_data(domain, start, end, workflow_id=None):
+    query = AppExecutionLog.objects.filter(workflow__domain=domain, started__gte=start, started__lt=end)
     if workflow_id:
         query = query.filter(workflow_id=workflow_id)
 

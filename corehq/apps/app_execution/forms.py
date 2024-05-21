@@ -21,7 +21,6 @@ class AppWorkflowConfigForm(forms.ModelForm):
         model = AppWorkflowConfig
         fields = (
             "name",
-            "domain",
             "app_id",
             "workflow",
             "sync_before_run",
@@ -33,8 +32,9 @@ class AppWorkflowConfigForm(forms.ModelForm):
             "form_mode": forms.RadioSelect(),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, request, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.request = request
         if self.instance.id:
             self.fields["username"].initial = self.instance.django_user.username
         self.helper = hqcrispy.HQFormHelper()
@@ -43,7 +43,6 @@ class AppWorkflowConfigForm(forms.ModelForm):
             crispy.Div(
                 crispy.Div(
                     "name",
-                    "domain",
                     "app_id",
                     "username",
                     "sync_before_run",
@@ -71,13 +70,8 @@ class AppWorkflowConfigForm(forms.ModelForm):
             ),
         )
 
-    def clean(self):
-        self.final_clean_app_id()
-        self.final_clean_username()
-        return self.cleaned_data
-
-    def final_clean_username(self):
-        domain = self.cleaned_data.get("domain")
+    def clean_username(self):
+        domain = self.request.domain
         username = self.cleaned_data.get("username")
         if username and "@" not in username:
             try:
@@ -89,17 +83,22 @@ class AppWorkflowConfigForm(forms.ModelForm):
         except ResourceNotFound:
             self.add_error("username", "User not found")
 
-        if self.commcare_user.domain != domain:
-            self.add_error("username", f"User not found in domain: {domain}")
+        if not self.commcare_user or self.commcare_user.domain != domain:
+            self.add_error("username", f"User not found: {domain}")
 
-    def final_clean_app_id(self):
-        domain = self.cleaned_data.get("domain")
+        return username
+
+    def clean_app_id(self):
+        domain = self.request.domain
         app_id = self.cleaned_data.get("app_id")
         try:
             get_brief_app(domain, app_id)
         except NoResultFound:
             raise forms.ValidationError(f"App not found in domain: {domain}:{app_id}")
 
+        return app_id
+
     def save(self, commit=True):
+        self.instance.domain = self.request.domain
         self.instance.django_user = self.commcare_user.get_django_user()
         return super().save(commit=commit)

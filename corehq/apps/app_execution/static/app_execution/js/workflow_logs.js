@@ -13,7 +13,7 @@ hqDefine("app_execution/js/workflow_logs", [
         self.perPage = ko.observable(25);
         self.goToPage = function (page) {
             let params = {page: page, per_page: self.perPage()};
-            const url = initialPageData.reverse('app_execution:logs_json', [initialPageData.get('workflow_id')]);
+            const url = initialPageData.reverse('app_execution:logs_json');
             $.getJSON(url, params, function (data) {
                 self.items(data.logs);
             });

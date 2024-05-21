@@ -83,7 +83,6 @@ class MainMenuNode(template.Node):
                                 project=project)
 
         active_tab = _get_active_tab(all_tabs, request.get_full_path())
-
         if active_tab:
             active_tab.is_active_tab = True
 

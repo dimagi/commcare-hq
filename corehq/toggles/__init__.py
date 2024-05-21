@@ -2851,3 +2851,11 @@ RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
 )
+
+APP_TESTING = StaticToggle(
+    slug='app_testing',
+    label='App Testing feature',
+    tag=TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=''
+)

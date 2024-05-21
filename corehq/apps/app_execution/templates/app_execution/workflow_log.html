@@ -3,7 +3,7 @@
 {% block page_content %}
   <div class="mb-3">
     <h2>Workflow Execution Log for {{ log.config.name }}: {{ log.started|date }}</h2>
-    <a class='btn btn-primary' href="{% url 'app_execution:edit_workflow' log.workflow_id %}">Edit Workflow</a>
+    <a class='btn btn-primary' href="{% url 'app_execution:edit_workflow' request.domain log.workflow_id %}">Edit Workflow</a>
   </div>
   <h3>Details</h3>
   <p>
