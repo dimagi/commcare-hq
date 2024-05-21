@@ -55,7 +55,7 @@
                     </label>
                   </div>
                 </div>
-                <div class="col-sm-2 controls" data-bind="visible: !showEditCheckbox">
+                <div class="col-sm-2 controls" data-bind="visible: !ko.utils.unwrapObservable(showEditCheckbox)">
                   <div class="form-check-placeholder">
                     <label></label>
                   </div>

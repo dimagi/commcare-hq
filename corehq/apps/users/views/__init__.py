@@ -331,6 +331,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     @memoized
     def tableau_form(self):
+        user = CouchUser.get_by_user_id(self.couch_user._id)
         try:
             if self.request.method == "POST" and self.request.POST['form_type'] == "tableau":
                 return TableauUserForm(self.request.POST,
@@ -347,7 +348,8 @@ class BaseEditUserView(BaseUserSettingsView):
                 username=self.editable_user.username,
                 initial={
                     'role': tableau_user.role
-                }
+                },
+                readonly=(not user.has_permission(self.domain, 'edit_user_tableau_config'))
             )
         except (TableauAPIError, TableauUser.DoesNotExist) as e:
             messages.error(self.request, _('''There was an error getting data for this user's associated Tableau
@@ -365,13 +367,13 @@ class BaseEditUserView(BaseUserSettingsView):
                 saved = True
         elif self.request.POST['form_type'] == "update-user":
             if self.update_user():
-                messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
                 saved = True
         elif self.request.POST['form_type'] == "tableau":
             if self.tableau_form and self.tableau_form.is_valid():
                 self.tableau_form.save(self.editable_user.username)
                 saved = True
         if saved:
+            messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
             return HttpResponseRedirect(self.page_url)
         else:
             return self.get(request, *args, **kwargs)
@@ -448,7 +450,12 @@ class EditWebUserView(BaseEditUserView):
         if self.request.project.commtrack_enabled or self.request.project.uses_locations:
             ctx.update({'update_form': self.commtrack_form})
         if TABLEAU_USER_SYNCING.enabled(self.domain):
-            ctx.update({'tableau_form': self.tableau_form})
+            user = CouchUser.get_by_user_id(self.couch_user._id)
+            ctx.update({
+                'tableau_form': self.tableau_form,
+                'view_user_tableau_config': user.has_permission(self.domain, 'view_user_tableau_config'),
+                'edit_user_tableau_config': user.has_permission(self.domain, 'edit_user_tableau_config')
+            })
         if self.can_grant_superuser_access:
             ctx.update({'update_permissions': True})
 

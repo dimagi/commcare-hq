@@ -102,7 +102,7 @@
     </form>
   {% endif %}
 
-  {% if tableau_form %}
+  {% if tableau_form and view_user_tableau_config %}
     <hr />
     <form id="tableau_form" class="form form-horizontal" name="" method="post">
       {% csrf_token %}
@@ -111,7 +111,7 @@
         <legend>{% trans 'Tableau Configuration' %}</legend>
         {% crispy tableau_form %}
       </fieldset>
-      {% if not request.is_view_only %}
+      {% if not request.is_view_only and edit_user_tableau_config%}
         <div class="form-actions">
           <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
             <button type="submit" class="btn btn-primary">{% trans 'Update Tableau Configuration' %}</button>
