@@ -48,8 +48,8 @@ hqDefine('analytix/js/kissmetrix', [
     $(function () {
         var apiId = _get('apiId'),
             scriptUrls = [
-                '//i.kissmetrics.com/i.js',
-                '//doug1izaerwt3.cloudfront.net/' + apiId + '.1.js',
+                '//i.kissmetrics.io/i.js',
+                '//scripts.kissmetrics.io/' + apiId + '.2.js',
             ];
 
         _logger = logging.getLoggerForApi('Kissmetrics');
