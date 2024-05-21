@@ -188,7 +188,19 @@ class UserUpdater(Updater):
                     }
                 )
                 self.stat_counts['skipped'] += 1
-                continue     
+                continue
+
+            if user_obj.location and user_obj.location.name == user_data[self.rc_num_prop_name]:
+                # Skip and don't update user if already at location
+                self.db_manager.update_row(
+                    user_obj.user_id,
+                    value_dict={
+                        'status': self.db_manager.STATUS_SKIPPED,
+                        'message': f'Skipped as user already at RC location with ID {user_obj.location.location_id}'
+                    }
+                )
+                self.stat_counts['skipped'] += 1
+                continue
 
             try:
                 # Get a descendant of user location which has the same rc number
@@ -208,22 +220,10 @@ class UserUpdater(Updater):
                 self.stat_counts['failed'] += 1
                 continue
 
-            if loc.location_id == user_obj.location_id:
-                # Skip and don't update user if already at location
-                self.db_manager.update_row(
-                    user_obj.user_id,
-                    value_dict={
-                        'status': self.db_manager.STATUS_SKIPPED,
-                        'message': f'Skipped as already at RC location with ID {loc.location_id}',
-                    }
-                )
-                self.stat_counts['skipped'] += 1
-                continue
-            else:
-                reverse_ids[user_obj.user_id] = user_obj.location_id
-                user_obj.location_id = loc.location_id
-                self.stat_counts['success'] += 1
-                users_to_save.append(user_obj)
+            reverse_ids[user_obj.user_id] = user_obj.location_id
+            user_obj.location_id = loc.location_id
+            self.stat_counts['success'] += 1
+            users_to_save.append(user_obj)
 
         return users_to_save, reverse_ids
 
