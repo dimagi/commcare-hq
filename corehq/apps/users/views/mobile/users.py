@@ -879,6 +879,12 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             raise InvalidRequestException(_("Check your request: {}").format(e))
 
 
+class ReactMobileWorkerListView(MobileWorkerListView):
+    template_name = 'users/react_mobile_workers.html'
+    urlname = 'react_mobile_workers'
+    page_title = gettext_noop("React Mobile Workers")
+
+
 @require_can_edit_commcare_users
 @require_POST
 @location_safe
