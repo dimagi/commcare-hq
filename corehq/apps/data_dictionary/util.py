@@ -151,6 +151,13 @@ def get_case_property_label_dict(domain):
     return labels_dict
 
 
+def get_case_property_label_dict_for_case_type(domain, case_type):
+    labels_dict = {}
+    for case_property in CaseType.objects.get(domain=domain, name=case_type).properties.all():
+        labels_dict[case_property.name] = case_property.label
+    return labels_dict
+
+
 def get_case_property_deprecated_dict(domain):
     """
     This returns a dictionary of the structure
