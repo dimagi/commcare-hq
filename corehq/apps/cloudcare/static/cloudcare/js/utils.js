@@ -418,7 +418,7 @@ hqDefine('cloudcare/js/utils', [
         }
 
         let date = moment(selectedTime, timeFormat);
-        let tempus = hqTempusDominus.createTimePicker($el.get(0), {
+        let options = {
             display: {
                 buttons: {
                     clear: true,
@@ -428,12 +428,12 @@ hqDefine('cloudcare/js/utils', [
             localization: {
                 format: timeFormat,
             },
-            // todo B5: move to tempus dominus
-            /*date: date.isValid() ? date : null,
-            useStrict: true,
             useCurrent: false,
-            debug: true,*/
-        });
+        };
+        if (date.isValid()) {
+            options.viewDate = new hqTempusDominus.tempusDominus.DateTime(date.format(timeFormat));
+        }
+        let tempus = hqTempusDominus.createTimePicker($el.get(0), options);
 
         $el.on("focusout", function () {
             tempus.hide();
