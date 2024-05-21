@@ -209,8 +209,8 @@ def location_safe(view):
 
 
 # Use this decorator for views that need to be marked location safe but do not actually
-# apply location restrictions to the data they return e.g. case search. This is generally only applicable to endpoints
-# whose client is expected to be the application engine (mobile / web apps).
+# apply location restrictions to the data they return e.g. case search. This is generally only applicable to
+# endpoints whose client is expected to be the application engine (mobile / web apps).
 location_safe_bypass = location_safe
 
 
@@ -342,3 +342,12 @@ def can_edit_or_view_location(view_fn):
         return location_restricted_response(request)
 
     return require_can_edit_or_view_locations(_inner)
+
+
+def can_edit_workers_location(web_user, mobile_worker):
+    if web_user.has_permission(mobile_worker.domain, 'access_all_locations'):
+        return True
+    loc_id = mobile_worker.location_id
+    if not loc_id:
+        return False
+    return user_can_access_location_id(mobile_worker.domain, web_user, loc_id)

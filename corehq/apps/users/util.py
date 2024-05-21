@@ -20,6 +20,7 @@ from casexml.apps.case.const import (
 
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
+from corehq.apps.users.exceptions import ModifyUserStatusException
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 from corehq.util.quickcache import quickcache
 
@@ -499,3 +500,21 @@ def is_username_available(username):
 
     exists = user_exists(username)
     return not exists.exists
+
+
+def verify_modify_user_conditions(request, user, is_active) -> None:
+    """
+    Check if the user can modify the user object
+    :param request: request object
+    :param user: user object
+    :param is_active: boolean, True if user is being activated, False if user is being deactivated
+    :return: None
+    """
+    from corehq.apps.locations.permissions import can_edit_workers_location
+
+    if (not can_edit_workers_location(request.couch_user, user)
+            or (is_active and not can_add_extra_mobile_workers(request))):
+        raise ModifyUserStatusException("No Permission.")
+    if not is_active and user.user_location_id:
+        raise ModifyUserStatusException("This is a location user, archive or delete the "
+                                        "corresponding location to deactivate it.")
