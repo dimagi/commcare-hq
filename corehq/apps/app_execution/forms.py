@@ -12,7 +12,7 @@ from corehq.apps.users.util import normalize_username
 
 
 class AppWorkflowConfigForm(forms.ModelForm):
-    run_every = forms.IntegerField(min_value=1)
+    run_every = forms.IntegerField(min_value=1, required=False, label="Run Every (minutes)")
     username = forms.CharField(max_length=255, label="Username",
                                help_text="Username of the user to run the workflow")
     har_file = forms.FileField(label="HAR File", required=False)
@@ -30,6 +30,7 @@ class AppWorkflowConfigForm(forms.ModelForm):
         )
         widgets = {
             "form_mode": forms.RadioSelect(),
+            "workflow": forms.Textarea(attrs={"rows": 20}),
         }
 
     def __init__(self, request, *args, **kwargs):
@@ -39,16 +40,21 @@ class AppWorkflowConfigForm(forms.ModelForm):
             self.fields["username"].initial = self.instance.django_user.username
         self.helper = hqcrispy.HQFormHelper()
 
+        fields = [
+            "name",
+            "app_id",
+            "username",
+            "sync_before_run",
+            "form_mode",
+        ]
+        if request.user.is_superuser:
+            fields += ["run_every", "notification_emails"]
+
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Div(
-                    "name",
-                    "app_id",
-                    "username",
-                    "sync_before_run",
-                    "form_mode",
-                    "run_every",
-                    "notification_emails",
+                    crispy.HTML("<p>&nbsp;</p>"),
+                    *fields,
                     css_class="col",
                 ),
                 crispy.Div(
@@ -56,7 +62,7 @@ class AppWorkflowConfigForm(forms.ModelForm):
                     InlineField("workflow"),
                     css_class="col"
                 ),
-                css_class="row"
+                css_class="row mb-3"
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton("Save", type='submit', css_class='btn-primary')
