@@ -146,13 +146,25 @@ def is_multi_select(selection):
 
 
 def get_formplayer_entries(entries):
+    base_url = None
     for entry in entries:
         request = entry['request']
         if request['method'] != 'POST':
             continue
 
-        endpoint = request['url'].split("/")[-1]
-        if endpoint not in ENDPOINTS:
+        url = request['url']
+        if not base_url:
+            base_url = _get_formplayer_base_url(url)
+
+        if not base_url:
             continue
 
+        endpoint = url.removeprefix(base_url)
         yield endpoint, entry
+
+
+def _get_formplayer_base_url(url):
+    endpoint = url.split("/")[-1]
+    if endpoint not in ENDPOINTS:
+        return None
+    return "/".join(url.split("/")[:-1]) + "/"
