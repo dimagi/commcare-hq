@@ -4040,6 +4040,16 @@ msgstr "Seleccione una Ubicación"
 msgid "Choose a primary location"
 msgstr "Elegir una ubicación principal"
 
+#: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
+#, fuzzy
+#| msgid "Could not clear user data. Please report an issue if this persists."
+msgid ""
+"Could not load data. Please try again later or report an issue if this "
+"problem persists."
+msgstr ""
+"No es posible borrar los datos del usuario. Por favor reporte un problema si "
+"esto continúa."
+
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
