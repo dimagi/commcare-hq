@@ -1097,6 +1097,7 @@ def get_user_upload_context(domain, request_params, download_url, adjective, plu
     return context
 
 
+@location_safe
 class UploadCommCareUsers(BaseUploadUser):
     template_name = 'hqwebapp/bootstrap3/bulk_upload.html'
     urlname = 'upload_commcare_users'
@@ -1118,6 +1119,7 @@ class UploadCommCareUsers(BaseUploadUser):
         return super(UploadCommCareUsers, self).post(request, *args, **kwargs)
 
 
+@location_safe
 class UserUploadStatusView(BaseManageCommCareUserView):
     urlname = 'user_upload_status'
     page_title = gettext_noop('Mobile Worker Upload Status')
@@ -1140,6 +1142,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@location_safe
 class CommcareUserUploadJobPollView(UserUploadJobPollView):
     urlname = "commcare_user_upload_job_poll"
     on_complete_long = 'Mobile Worker upload has finished'
@@ -1222,6 +1225,7 @@ class FilteredCommCareUserDownload(FilteredUserDownload, BaseManageCommCareUserV
         return super().get(request, domain, *args, **kwargs)
 
 
+@location_safe
 @method_decorator([require_can_use_filtered_user_download], name='dispatch')
 class FilteredWebUserDownload(FilteredUserDownload, BaseManageWebUserView):
     page_title = gettext_noop('Filter and Download Users')
@@ -1455,6 +1459,7 @@ def count_commcare_users(request, domain):
 
 @require_can_edit_web_users
 @require_can_use_filtered_user_download
+@location_safe
 def count_web_users(request, domain):
     return _count_users(request, domain, WEB_USER_TYPE)
 
