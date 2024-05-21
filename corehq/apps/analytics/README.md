@@ -103,3 +103,10 @@ Generally available in areas of interest to the product and growth teams: signup
 ### Facebook Pixel
 
 Their script is included in [signup](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/registration/templates/registration/register_new_user.html), but we don't do any event tracking or other interaction with it. Very little related code, just the script inclusion.
+
+### Google Tag Manager (GTM)
+
+This script is available in the [gtm.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/gtm.js).Related code is just for sending the user properties to GTM.
+Any tracking of events should be configured at the GTM console end in tandem with the desired analytics tooling. The purpose is to track specific features in HQ and also disable them when there is no need via the GTM console itself.
+Any `id` attribute added to html element for tracking through console should be prefixed with `gtm-` to indicate that this element is likely being tracked in GTM.
+This should potentially avoid accidental removal of id attribute from these elements. (Similar approach may be followed for any tooling in case of tracking of elements through console.)
