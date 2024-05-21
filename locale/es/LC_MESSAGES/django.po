@@ -13318,14 +13318,6 @@ msgid "%(entity_string)s Property"
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                                  Should cases that don't "
-#| "have a value for the sort property\n"
-#| "                                                  appear at the top or "
-#| "the bottom of the case list?\n"
-#| "                                              "
 msgid ""
 "\n"
 "                            The unique ID you can use to reference this "
@@ -13335,18 +13327,9 @@ msgid ""
 "                            contain spaces.\n"
 "                          "
 msgstr ""
-"\n"
-"Los casos que no tienen un valor en la propiedad de clasificación, ¿deberían "
-"de aparecer al inicio o al final de la lista de caso?"
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            To continue accessing %(feat_name)s after the "
-#| "trial period,\n"
-#| "                            subscribe to the %(req_plan)s Plan.\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "                            The field label that users will see when adding "
@@ -13354,20 +13337,9 @@ msgid ""
 "                            a %(entity_string)s in CommCare HQ.\n"
 "                          "
 msgstr ""
-"\n"
-"Para continuar accediendo a %(feat_name)s después del período de prueba,\n"
-"suscríbase al Plan %(req_plan)s."
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            <strong>%(feat_name)s</strong> is only "
-#| "available for the %(req_plan)s\n"
-#| "                            Plan and higher. Your subscription to "
-#| "%(current_plan)s Plan is under a\n"
-#| "                            trial period.\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "                            A value for this field must be provided when "
@@ -13377,12 +13349,6 @@ msgid ""
 "                            unless this field is provided.\n"
 "                          "
 msgstr ""
-"\n"
-"\n"
-"<strong>%(feat_name)s</strong> solo está disponible para el Plan  "
-"%(req_plan)s\n"
-"y superiores. Su suscripción al Plan %(current_plan)s está bajo período de "
-"prueba. "
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #, python-brace-format
@@ -13405,13 +13371,6 @@ msgid "Choices"
 msgstr "Opciones"
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            To continue accessing %(feat_name)s after the "
-#| "trial period,\n"
-#| "                            subscribe to the %(req_plan)s Plan.\n"
-#| "                        "
 msgid ""
 "\n"
 "                              Provides a drop-down list of choices for this "
@@ -13419,9 +13378,6 @@ msgid ""
 "                              instead of free text entry.\n"
 "                            "
 msgstr ""
-"\n"
-"Para continuar accediendo a %(feat_name)s después del período de prueba,\n"
-"suscríbase al Plan %(req_plan)s."
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 msgid "Regex"
@@ -47088,10 +47044,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid ""
-#~ "This is a location user, archive or delete the corresponding location to "
-#~ "deactivate it."
-#~ msgstr ""
-#~ "Este es un usuario de ubicación, archivar o borrar la ubicación "
-#~ "correspondiente para desactivarlo. "
