@@ -13,11 +13,11 @@
 
 #sidebar-region {
   background: transparent;
-  @include media-breakpoint-up(lg) {
+  @include media-breakpoint-up(md) {
     width: 300px;
     position: absolute;
   }
-  @include media-breakpoint-down(lg) {
+  @include media-breakpoint-down(md) {
     max-width: 600px;
     margin: auto;
   }
