@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -2,12 +2,12 @@
+@@ -2,17 +2,17 @@
  {% load i18n %}
  
  <script type="text/template" id="query-view-item-template">
@@ -16,6 +16,13 @@
          <%- text ? text : "" %>
        </label>
        <% if (typeof hint !== "undefined" && hint !== null) { %>
+-      <div class="hq-help">
+-        <a href="#" tabindex="-1"  data-title="<%- text ? text : "" %>" data-content="<%- hint ? hint : "" %>">
++      <div class="hq-help" data-bs-toggle="popover">
++        <a href="#" tabindex="-1" title="<%- text ? text : "" %>" data-bs-content="<%- hint ? hint : "" %>">
+           <i class="fa fa-question-circle icon-question-sign"></i>
+         </a>
+       </div>
 @@ -20,8 +20,7 @@
      </div>
    </<%- contentTag %>>
