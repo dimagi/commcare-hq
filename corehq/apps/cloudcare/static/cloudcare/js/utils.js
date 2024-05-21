@@ -364,6 +364,15 @@ hqDefine('cloudcare/js/utils', [
     var dateFormat = 'MM/DD/YYYY';
     var dateFormats = ['MM/DD/YYYY', 'YYYY-MM-DD', 'M/D/YYYY', 'M/D/YY', 'M-D-YYYY', 'M-D-YY', moment.defaultFormat];
 
+    // Annoyingly, moment and tempus dominus use different formats.
+    // Moment: https://momentjs.com/docs/#/parsing/string-format/
+    // TD: https://getdatepicker.com/6/plugins/customDateFormat.html
+    // TD does have a plugin to integrate with moment, but since other usages of TD in HQ
+    // don't need it, instead of enabling that, hack around this.
+    const _momentFormatToTempusFormat = function (momentFormat) {
+        return momentFormat.replaceAll("D", "d").replaceAll("Y", "y");
+    };
+
     /** Coerce an input date string to a moment object */
     var parseInputDate = function (dateString) {
         if (!moment.isMoment(dateString)) {
@@ -378,7 +387,7 @@ hqDefine('cloudcare/js/utils', [
             return;
         }
 
-        let tempus = hqTempusDominus.createDatePicker($el.get(0), {
+        let options = {
             display: {
                 buttons: {
                     clear: true,
@@ -387,23 +396,20 @@ hqDefine('cloudcare/js/utils', [
                 },
             },
             localization: {
-                format: dateFormat,
+                format: _momentFormatToTempusFormat(dateFormat),
             },
-            // todo B5: move to tempus dominus
-            /*date: selectedDate,
             useCurrent: false,
-            debug: true,
-            extraFormats: dateFormats,
-            useStrict: true,
-            parseInputDate: parseInputDate,*/
-        });
+        };
+        if (selectedDate) {
+            options.viewDate = new hqTempusDominus.tempusDominus.DateTime(selectedDate);
+        }
+        let tempus = hqTempusDominus.createDatePicker($el.get(0), options);
 
         $el.on("focusout", function () {
             tempus.hide();
         });
-        // todo B5: update for tempus dominus
-        //$el.attr("placeholder", dateFormat);
-        //$el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
+        $el.attr("placeholder", dateFormat);
+        $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
     };
 
     var initTimePicker = function ($el, selectedTime, timeFormat) {
