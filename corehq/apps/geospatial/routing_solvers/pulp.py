@@ -70,10 +70,9 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         # Solve the problem
         problem.solve()
 
-        solution = {loc['id']: [] for loc in self.user_locations}
-
         # Process the solution
         if pulp.LpStatus[problem.status] == "Optimal":
+            solution = {loc['id']: [] for loc in self.user_locations}
             if print_solution:
                 print(f"Total cost = {pulp.value(problem.objective)}\n")
             for i in range(user_count):
@@ -84,10 +83,11 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
                             print(f"Case {self.case_locations[j]['id']} assigned to "
                                   f"user {self.user_locations[i]['id']}. "
                                   f"Cost: {costs[i][j]}")
-        else:
-            if print_solution:
-                print("No solution found.")
-        return None, solution
+            return None, solution
+
+        if print_solution:
+            print("No solution found.")
+        return None, None
 
     @staticmethod
     def get_decision_variables(x_dim, y_dim):

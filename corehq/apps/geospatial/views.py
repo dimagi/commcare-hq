@@ -107,6 +107,13 @@ class CaseDisbursementAlgorithm(BaseDomainView):
         solver_class = config.disbursement_solver
         poll_id, result = solver_class(request_json).solve(config=config)
 
+        if not result:
+            return json_response({
+                'error': _("We couldn't find a solution with the current settings. Please ensure that "
+                           "your geospatial settings are correct or try reducing the number of users "
+                           "and/or cases for the algorithm to process such that all cases can be assigned.")
+            })
+
         if poll_id is None:
             return json_response(
                 {'result': result}

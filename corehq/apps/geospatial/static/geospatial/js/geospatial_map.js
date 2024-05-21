@@ -75,7 +75,7 @@ hqDefine("geospatial/js/geospatial_map", [
         self.pollUrl = ko.observable('');
         self.isBusy = ko.observable(false);
 
-        self.hasMissingData = ko.observable(false);  // True if the user attemps disbursement with polygon filtering that includes no cases/users.
+        self.hasMissingData = ko.observable(false);  // True if the user attempts disbursement with polygon filtering that includes no cases/users.
 
         self.setBusy = function (isBusy) {
             self.isBusy(isBusy);
@@ -145,10 +145,16 @@ hqDefine("geospatial/js/geospatial_map", [
                 data: JSON.stringify({'users': userData, "cases": caseData}),
                 contentType: "application/json; charset=utf-8",
                 success: function (ret) {
-                    if (ret['poll_url'] !== undefined) {
-                        self.startPoll(ret['poll_url']);
-                    } else {
-                        self.handleDisbursementResults(ret['result']);
+                    if (ret.error) {
+                        alertUser.alert_user(ret.error, 'danger');
+                        self.setBusy(false);
+                    }
+                    else {
+                        if (ret['poll_url'] !== undefined) {
+                            self.startPoll(ret['poll_url']);
+                        } else {
+                            self.handleDisbursementResults(ret['result']);
+                        }
                     }
                 },
                 error: function () {
