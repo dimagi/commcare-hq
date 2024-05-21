@@ -15,7 +15,7 @@ msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017,2024\n"
+"Last-Translator: Sravan Reddy <sreddy@dimagi.com>, 2017\n"
 "Language-Team: Spanish (http://app.transifex.com/dimagi/commcare-hq/language/"
 "es/)\n"
 "Language: es\n"
@@ -7286,8 +7286,7 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
 #: corehq/apps/sms/templates/sms/global_gateway_list.html
 #: corehq/apps/translations/templates/blacklist_translations.html
@@ -7996,7 +7995,6 @@ msgstr "Cargar"
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_paginated_crud.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_paginated_crud.html
 #: corehq/apps/smsbillables/filters.py
 #: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html
 msgid "Show"
@@ -13310,8 +13308,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"          %(entity_string)s Property\n"
-"        "
+"        %(entity_string)s Property\n"
+"      "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
@@ -13320,52 +13318,86 @@ msgid "%(entity_string)s Property"
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                                                  Should cases that don't "
+#| "have a value for the sort property\n"
+#| "                                                  appear at the top or "
+#| "the bottom of the case list?\n"
+#| "                                              "
 msgid ""
 "\n"
-"                              The unique ID you can use to reference this "
+"                            The unique ID you can use to reference this "
 "property\n"
-"                              in the application builder. The property may "
+"                            in the application builder. The property may "
 "not\n"
-"                              contain spaces.\n"
-"                            "
+"                            contain spaces.\n"
+"                          "
 msgstr ""
+"\n"
+"Los casos que no tienen un valor en la propiedad de clasificación, ¿deberían "
+"de aparecer al inicio o al final de la lista de caso?"
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                            To continue accessing %(feat_name)s after the "
+#| "trial period,\n"
+#| "                            subscribe to the %(req_plan)s Plan.\n"
+#| "                        "
 msgid ""
 "\n"
-"                              The field label that users will see when "
-"adding or editing\n"
-"                              a %(entity_string)s in CommCare HQ.\n"
-"                            "
+"                            The field label that users will see when adding "
+"or editing\n"
+"                            a %(entity_string)s in CommCare HQ.\n"
+"                          "
 msgstr ""
+"\n"
+"Para continuar accediendo a %(feat_name)s después del período de prueba,\n"
+"suscríbase al Plan %(req_plan)s."
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                            <strong>%(feat_name)s</strong> is only "
+#| "available for the %(req_plan)s\n"
+#| "                            Plan and higher. Your subscription to "
+#| "%(current_plan)s Plan is under a\n"
+#| "                            trial period.\n"
+#| "                        "
 msgid ""
 "\n"
-"                              A value for this field must be provided when "
+"                            A value for this field must be provided when "
 "creating or\n"
-"                              editing a %(entity_string)s.  Bulk import will "
+"                            editing a %(entity_string)s.  Bulk import will "
 "fail\n"
-"                              unless this field is provided.\n"
-"                            "
+"                            unless this field is provided.\n"
+"                          "
 msgstr ""
+"\n"
+"\n"
+"<strong>%(feat_name)s</strong> solo está disponible para el Plan  "
+"%(req_plan)s\n"
+"y superiores. Su suscripción al Plan %(current_plan)s está bajo período de "
+"prueba. "
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #, python-brace-format
 msgid ""
 "\n"
-"                                Specify a means of validating user input to "
+"                              Specify a means of validating user input to "
 "this field.\n"
-"                                You can provide a drop-down list of choices "
-"or specify\n"
-"                                a regular expression to be applied to the "
+"                              You can provide a drop-down list of choices or "
+"specify\n"
+"                              a regular expression to be applied to the "
 "input. For\n"
-"                                example, ^[1-9]{10}$ will match only 10 "
+"                              example, ^[1-9]{10}$ will match only 10 "
 "character\n"
-"                                numeric input.\n"
-"                              "
+"                              numeric input.\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
@@ -13373,13 +13405,23 @@ msgid "Choices"
 msgstr "Opciones"
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "                            To continue accessing %(feat_name)s after the "
+#| "trial period,\n"
+#| "                            subscribe to the %(req_plan)s Plan.\n"
+#| "                        "
 msgid ""
 "\n"
-"                                Provides a drop-down list of choices for "
-"this field\n"
-"                                instead of free text entry.\n"
-"                              "
+"                              Provides a drop-down list of choices for this "
+"field\n"
+"                              instead of free text entry.\n"
+"                            "
 msgstr ""
+"\n"
+"Para continuar accediendo a %(feat_name)s después del período de prueba,\n"
+"suscríbase al Plan %(req_plan)s."
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 msgid "Regex"
@@ -13414,6 +13456,23 @@ msgid ""
 "            will be removed the next time the %(entity_string)s is saved.\n"
 "          </p>\n"
 "        "
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_edit.html
+msgid "Unlock Linked Fields?"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_edit.html
+msgid ""
+"\n"
+"                <p>Linked Fields are fields that are controlled by a "
+"separate project space linked to this project.\n"
+"                    Click here to learn more.</p>\n"
+"                <p>Changes made to Linked Fields may be overwritten by the "
+"next updates from the linked project space,\n"
+"                    and may also affect solutions on this project space.</"
+"p>\n"
+"              "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_edit.html
@@ -14695,8 +14754,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
@@ -14708,6 +14766,7 @@ msgstr "Activo"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -14721,8 +14780,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 msgid "Activate"
@@ -14731,8 +14789,7 @@ msgstr "Activo"
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -23057,10 +23114,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
-#, fuzzy
-#| msgid "Case Sharing Groups"
 msgid "Case Sharing Group"
-msgstr "Grupos de Casos Compartidos"
+msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
 msgid "Case Sharing Groups"
@@ -23150,19 +23205,6 @@ msgstr ""
 "en este Grupo"
 
 #: corehq/apps/groups/templates/groups/group_members.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                        For all active mobile workers in this group, and "
-#| "for each phone number, this will\n"
-#| "                        initiate an SMS verification workflow. If the "
-#| "phone number is already verified or\n"
-#| "                        if the phone number is already in use by another "
-#| "contact in the system, nothing\n"
-#| "                        will happen. If the phone number is pending "
-#| "verification, the verification SMS\n"
-#| "                        will be resent.\n"
-#| "                        "
 msgid ""
 "\n"
 "                        For all active mobile workers in this group, and for "
@@ -23178,12 +23220,6 @@ msgid ""
 "                        will be resent.\n"
 "                        "
 msgstr ""
-"\n"
-"Para todos los usuarios móviles activos en este grupo, y para cada número de "
-"teléfono, esto iniciará un flujo de trabajo de verificación de SMS. Si el "
-"número de teléfono ya está verificado o si el número de teléfono ya está en "
-"uso por otro contacto en el sistema, no pasará nada. Si el número de "
-"teléfono está pendiente de verificación, se reenviará el SMS de verificación."
 
 #: corehq/apps/groups/templates/groups/group_members.html
 #, python-format
@@ -27647,10 +27683,8 @@ msgstr ""
 "detalles.</p>"
 
 #: corehq/apps/locations/templates/locations/location_types.html
-#, fuzzy
-#| msgid "View Child Data"
 msgid "View Child Data to Level"
-msgstr "Ver Datos del Hijo"
+msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
 msgid ""
@@ -31432,10 +31466,8 @@ msgid "Ever"
 msgstr "Siempre"
 
 #: corehq/apps/reports/standard/monitoring.py
-#, fuzzy
-#| msgid "Groups"
 msgid "All Groups"
-msgstr "Grupos"
+msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "All Users"
@@ -32695,10 +32727,8 @@ msgid "…"
 msgstr "..."
 
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/readable_form.html
-#, fuzzy
-#| msgid "Use question ids"
 msgid "Show question ids"
-msgstr "Utilizar ids de preguntas"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/messaging/bootstrap3/event_detail.html
 #: corehq/apps/reports/templates/reports/messaging/bootstrap5/event_detail.html
@@ -33777,36 +33807,6 @@ msgstr ""
 msgid "Your Identity Provider does not allow expiration dates beyond {}"
 msgstr ""
 
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-msgid "Copy Full Key"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-msgid "Inctive"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-#: corehq/apps/users/templates/users/web_users.html
-msgid "Expired"
-msgstr "Expirado"
-
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-msgid "Delete Key"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-msgid ""
-"\n"
-"                  Deleting this key will prevent any future API requests "
-"that use this key. This action cannot be undone. Are you sure?\n"
-"                "
-msgstr ""
-
 #: corehq/apps/settings/templates/settings/change_my_password.html
 msgid ""
 "\n"
@@ -33918,6 +33918,27 @@ msgstr "Usted es el administrador de este proyecto."
 #: corehq/apps/settings/templates/settings/my_projects.html
 msgid "Create a New Project"
 msgstr "Crear un Nuevo Proyecto"
+
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+msgid "Copy Full Key"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/web_users.html
+msgid "Expired"
+msgstr "Expirado"
+
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+msgid "Delete Key"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+msgid ""
+"\n"
+"                  Deleting this key will prevent any future API requests "
+"that use this key. This action cannot be undone. Are you sure?\n"
+"                "
+msgstr ""
 
 #: corehq/apps/settings/validators.py
 msgid ""
@@ -36216,6 +36237,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/tasks.py
+msgid "We encountered an issue when connecting to your Microsoft Graph API: "
+msgstr ""
+
+#: corehq/apps/sso/tasks.py
 msgid "We encountered an unknown issue, please contact Commcare HQ Support."
 msgstr ""
 
@@ -37775,37 +37800,27 @@ msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "CommCare Translations"
 msgid "Create or Update Translations"
-msgstr "Traducciones CommCare"
+msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "app translations"
 msgid "Push Translations"
-msgstr "Traducciones de aplicación"
+msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "app translations"
 msgid "Pull Translations"
-msgstr "Traducciones de aplicación"
+msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "app translations"
 msgid "Backup Translations"
-msgstr "Traducciones de aplicación"
+msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
-#, fuzzy
-#| msgid "Delete Version"
 msgid "Delete Translations"
-msgstr "Eliminar Versión"
+msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
 #: corehq/apps/translations/templates/download_translations.html
@@ -37864,10 +37879,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
-#, fuzzy
-#| msgid "app translations"
 msgid "Backup App Translations"
-msgstr "Traducciones de aplicación"
+msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
 msgid ""
@@ -37878,10 +37891,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
-#, fuzzy
-#| msgid "Project Reports"
 msgid "Delete Project Resources"
-msgstr "Reportes de Proyecto"
+msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
 msgid ""
@@ -39933,10 +39944,8 @@ msgstr ""
 "ubicaciones de arriba "
 
 #: corehq/apps/users/forms.py
-#, fuzzy
-#| msgid "You don't have permission to access this page."
 msgid "You do not have permissions to assign one of those locations."
-msgstr "Usted no tiene permiso para acceder a esta página."
+msgstr ""
 
 #: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/domain_request.html
@@ -41080,10 +41089,9 @@ msgid "Mark as primary"
 msgstr "Marcar como principal"
 
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
-#, fuzzy, python-format
-#| msgid "Verify +%(number)s?"
+#, python-format
 msgid "Delete +%(number)s ?"
-msgstr "¿Verificar +%(number)s?"
+msgstr ""
 
 #: corehq/apps/users/templates/users/partials/commcare_user_groups.html
 msgid "No groups created yet."
@@ -41943,14 +41951,6 @@ msgstr "Por favor provea datos de usuario móvil."
 #: corehq/apps/users/views/mobile/users.py
 msgid "Check your request: {}"
 msgstr "Revise su solicitud: {}"
-
-#: corehq/apps/users/views/mobile/users.py
-msgid ""
-"This is a location user, archive or delete the corresponding location to "
-"deactivate it."
-msgstr ""
-"Este es un usuario de ubicación, archivar o borrar la ubicación "
-"correspondiente para desactivarlo. "
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Deactivated"
@@ -47089,30 +47089,9 @@ msgstr ""
 msgid "Enter valid JSON"
 msgstr ""
 
-#~ msgid "New App Builder Officially Released"
-#~ msgstr "Nuevo Desarrollador de Aplicaciones Lanzado Oficialmente"
-
-#~ msgid "Updates to Publishing Apps"
-#~ msgstr "Actualizaciones para Aplicaciones de Publicación"
-
-#~ msgid "New Add-ons tab"
-#~ msgstr "Pestaña de Nuevos Complementos"
-
-#, python-format
-#~ msgid "%(num_users)s member"
-#~ msgid_plural "%(num_users)s members"
-#~ msgstr[0] "%(num_users)s miembro"
-#~ msgstr[1] "%(num_users)s miembros"
-#~ msgstr[2] "%(num_users)s miembros"
-
-#~ msgid "Edit Group Data"
-#~ msgstr "Editar Datos de Grupo"
-
 #~ msgid ""
-#~ "This report currently does not support case sharing. There might be "
-#~ "inconsistencies in case totals if the user is part of a case sharing "
-#~ "group."
+#~ "This is a location user, archive or delete the corresponding location to "
+#~ "deactivate it."
 #~ msgstr ""
-#~ "Este reporte actualmente no permite compartir casos. Pueden haber "
-#~ "inconsistencias en el total de casos si el usuario es parte de un grupo "
-#~ "que comparte casos."
+#~ "Este es un usuario de ubicación, archivar o borrar la ubicación "
+#~ "correspondiente para desactivarlo. "

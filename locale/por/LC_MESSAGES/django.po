@@ -6924,8 +6924,7 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
 #: corehq/apps/sms/templates/sms/global_gateway_list.html
 #: corehq/apps/translations/templates/blacklist_translations.html
@@ -7622,7 +7621,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_paginated_crud.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_paginated_crud.html
 #: corehq/apps/smsbillables/filters.py
 #: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html
 msgid "Show"
@@ -12768,8 +12766,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"          %(entity_string)s Property\n"
-"        "
+"        %(entity_string)s Property\n"
+"      "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
@@ -12780,50 +12778,50 @@ msgstr ""
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 msgid ""
 "\n"
-"                              The unique ID you can use to reference this "
+"                            The unique ID you can use to reference this "
 "property\n"
-"                              in the application builder. The property may "
+"                            in the application builder. The property may "
 "not\n"
-"                              contain spaces.\n"
-"                            "
+"                            contain spaces.\n"
+"                          "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #, python-format
 msgid ""
 "\n"
-"                              The field label that users will see when "
-"adding or editing\n"
-"                              a %(entity_string)s in CommCare HQ.\n"
-"                            "
+"                            The field label that users will see when adding "
+"or editing\n"
+"                            a %(entity_string)s in CommCare HQ.\n"
+"                          "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #, python-format
 msgid ""
 "\n"
-"                              A value for this field must be provided when "
+"                            A value for this field must be provided when "
 "creating or\n"
-"                              editing a %(entity_string)s.  Bulk import will "
+"                            editing a %(entity_string)s.  Bulk import will "
 "fail\n"
-"                              unless this field is provided.\n"
-"                            "
+"                            unless this field is provided.\n"
+"                          "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #, python-brace-format
 msgid ""
 "\n"
-"                                Specify a means of validating user input to "
+"                              Specify a means of validating user input to "
 "this field.\n"
-"                                You can provide a drop-down list of choices "
-"or specify\n"
-"                                a regular expression to be applied to the "
+"                              You can provide a drop-down list of choices or "
+"specify\n"
+"                              a regular expression to be applied to the "
 "input. For\n"
-"                                example, ^[1-9]{10}$ will match only 10 "
+"                              example, ^[1-9]{10}$ will match only 10 "
 "character\n"
-"                                numeric input.\n"
-"                              "
+"                              numeric input.\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
@@ -12833,10 +12831,10 @@ msgstr ""
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 msgid ""
 "\n"
-"                                Provides a drop-down list of choices for "
-"this field\n"
-"                                instead of free text entry.\n"
-"                              "
+"                              Provides a drop-down list of choices for this "
+"field\n"
+"                              instead of free text entry.\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
@@ -12872,6 +12870,23 @@ msgid ""
 "            will be removed the next time the %(entity_string)s is saved.\n"
 "          </p>\n"
 "        "
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_edit.html
+msgid "Unlock Linked Fields?"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_edit.html
+msgid ""
+"\n"
+"                <p>Linked Fields are fields that are controlled by a "
+"separate project space linked to this project.\n"
+"                    Click here to learn more.</p>\n"
+"                <p>Changes made to Linked Fields may be overwritten by the "
+"next updates from the linked project space,\n"
+"                    and may also affect solutions on this project space.</"
+"p>\n"
+"              "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_edit.html
@@ -14145,8 +14160,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
@@ -14158,6 +14172,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -14171,8 +14186,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 msgid "Activate"
@@ -14181,8 +14195,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -22386,10 +22399,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
-#, fuzzy
-#| msgid "Case Sharing Groups"
 msgid "Case Sharing Group"
-msgstr "Grupos que Partilham Casos"
+msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
 msgid "Case Sharing Groups"
@@ -26807,10 +26818,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
-#, fuzzy
-#| msgid "View Child Data"
 msgid "View Child Data to Level"
-msgstr "Visualizar Dados Descendentes"
+msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
 msgid ""
@@ -30494,10 +30503,8 @@ msgid "Ever"
 msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
-#, fuzzy
-#| msgid "Groups"
 msgid "All Groups"
-msgstr "Grupos"
+msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "All Users"
@@ -32788,36 +32795,6 @@ msgstr ""
 msgid "Your Identity Provider does not allow expiration dates beyond {}"
 msgstr ""
 
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-msgid "Copy Full Key"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-msgid "Inctive"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-#: corehq/apps/users/templates/users/web_users.html
-msgid "Expired"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-msgid "Delete Key"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-msgid ""
-"\n"
-"                  Deleting this key will prevent any future API requests "
-"that use this key. This action cannot be undone. Are you sure?\n"
-"                "
-msgstr ""
-
 #: corehq/apps/settings/templates/settings/change_my_password.html
 msgid ""
 "\n"
@@ -32928,6 +32905,27 @@ msgstr ""
 
 #: corehq/apps/settings/templates/settings/my_projects.html
 msgid "Create a New Project"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+msgid "Copy Full Key"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/web_users.html
+msgid "Expired"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+msgid "Delete Key"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+msgid ""
+"\n"
+"                  Deleting this key will prevent any future API requests "
+"that use this key. This action cannot be undone. Are you sure?\n"
+"                "
 msgstr ""
 
 #: corehq/apps/settings/validators.py
@@ -35147,6 +35145,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/tasks.py
+msgid "We encountered an issue when connecting to your Microsoft Graph API: "
+msgstr ""
+
+#: corehq/apps/sso/tasks.py
 msgid "We encountered an unknown issue, please contact Commcare HQ Support."
 msgstr ""
 
@@ -36706,37 +36708,27 @@ msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "CommCare Translations"
 msgid "Create or Update Translations"
-msgstr "Traduções do CommCare"
+msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "app translations"
 msgid "Push Translations"
-msgstr "traduções de aplicativos"
+msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "app translations"
 msgid "Pull Translations"
-msgstr "traduções de aplicativos"
+msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "app translations"
 msgid "Backup Translations"
-msgstr "traduções de aplicativos"
+msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
-#, fuzzy
-#| msgid "Delete Application"
 msgid "Delete Translations"
-msgstr "Apagar aplicação"
+msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
 #: corehq/apps/translations/templates/download_translations.html
@@ -36795,10 +36787,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
-#, fuzzy
-#| msgid "app translations"
 msgid "Backup App Translations"
-msgstr "traduções de aplicativos"
+msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
 msgid ""
@@ -36809,10 +36799,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
-#, fuzzy
-#| msgid "Project Reports"
 msgid "Delete Project Resources"
-msgstr "Relatórios do Projecto"
+msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
 msgid ""
@@ -40743,12 +40731,6 @@ msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Check your request: {}"
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid ""
-"This is a location user, archive or delete the corresponding location to "
-"deactivate it."
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
@@ -45877,24 +45859,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid ""
-#~ "This report currently does not support case sharing. There might be "
-#~ "inconsistencies in case totals if the user is part of a case sharing "
-#~ "group."
-#~ msgstr ""
-#~ "Este relatório, neste momento, não suporta partilha de caso. Podem "
-#~ "existir inconsistiências nos valores totais se o usuário fizer parte de "
-#~ "um grupo de partilha de caso."
-
-#~ msgid "New feature: Bulk Download for Web Users"
-#~ msgstr "Novo recurso: Descarregamento em Massa para Usuários Web"
-
-#~ msgid ""
-#~ "\n"
-#~ "            Quickly and easily download web users into a file. Check it "
-#~ "out!\n"
-#~ "          "
-#~ msgstr ""
-#~ "\n"
-#~ "Descarregue usuários web num ficheiro rápido e facilmente. Dê uma olhada!"
