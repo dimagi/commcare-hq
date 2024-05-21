@@ -1543,8 +1543,15 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         )
 
     @property
+    def plan_is_self_renewable(self):
+        return self.subscription.plan_version.plan.edition in SoftwarePlanEdition.SELF_RENEWABLE_EDITIONS
+
+    @property
     def renewal_choices(self):
         edition = self.subscription.plan_version.plan.edition
+        if not self.plan_is_self_renewable:
+            return {}
+
         monthly_plan = DefaultProductPlan.get_default_plan_version(
             edition=edition, is_annual_plan=False)
         annual_plan = DefaultProductPlan.get_default_plan_version(
@@ -1576,6 +1583,7 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
             context.update({
                 'renewal_choices': self.renewal_choices,
                 'is_annual_plan': self.subscription.plan_version.plan.is_annual_plan,
+                'is_self_renewable_plan': self.plan_is_self_renewable,
             })
         return context
 
