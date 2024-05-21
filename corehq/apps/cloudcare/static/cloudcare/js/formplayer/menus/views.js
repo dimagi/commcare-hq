@@ -1008,7 +1008,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.boundHandleScroll = self.handleScroll.bind(self);
             $(window).on('scroll', self.boundHandleScroll);
             if (self.shouldShowScrollButton()) {
-                $('#scroll-to-bottom').show();
+                $('#scroll-to-bottom').removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
             }
         },
 
@@ -1264,7 +1264,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     const BreadcrumbView = Marionette.View.extend({
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
-        className: "breadcrumb-text",
+        className: function () {
+            if (window.USE_BOOSTRAP5) {
+                return "breadcrumb-item";
+            } else {
+                return "breadcrumb-text";
+            }
+        },
         attributes: function () {
             let attributes = {
                 "role": "link",
@@ -1454,7 +1460,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseDetailFooterView = Marionette.View.extend({
         tagName: "div",
-        className: "",
+        className: function () {
+            if (window.USE_BOOTSTRAP5) {
+                return "d-flex gap-2 justify-content-center";
+            } else {
+                return "";
+            }
+        },
         events: {
             "click #select-case": "selectCase",
         },
