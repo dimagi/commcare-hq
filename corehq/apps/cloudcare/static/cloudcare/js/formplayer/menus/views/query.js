@@ -379,9 +379,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
             self.errorMessage = null;
             self.model.set('searchForBlank', false);
             sessionStorage.removeItem('geocoderValues');
-            if (self.ui.date.length) {
-                self.ui.date.data("DateTimePicker").clear();    // todo B5
-            }
             self._render();
             FormplayerFrontend.trigger('clearNotifications');
         },
