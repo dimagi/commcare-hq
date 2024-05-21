@@ -38,24 +38,31 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         user_count = len(costs)
         case_count = len(costs[0])
 
-        # Create a linear programming problem
-        problem = pulp.LpProblem("assign_user_cases", pulp.LpMinimize)
-
         # Define decision variables
-        x = {}
-        for i in range(user_count):
-            for j in range(case_count):
-                x[i, j] = pulp.LpVariable(f"x_{i}_{j}", 0, 1, pulp.LpBinary)
+        decision_variables = self.get_decision_variables(x_dim=user_count, y_dim=case_count)
+
+        # Create a linear programming problem
+        problem = pulp.LpProblem("assign_user_cases", sense=pulp.LpMinimize)
 
         # Add constraints
-        for i in range(user_count):
-            problem += pulp.lpSum([x[i, j] for j in range(case_count)]) <= int(case_count / user_count) + 1
-
-        for j in range(case_count):
-            problem += pulp.lpSum([x[i, j] for i in range(user_count)]) == 1
+        problem = self.add_user_case_assignment_constraint(
+            lp_problem=problem,
+            decision_variables=decision_variables,
+            user_count=user_count,
+            case_count=case_count,
+        )
+        problem = self.add_case_owner_constraint(
+            lp_problem=problem,
+            decision_variables=decision_variables,
+            user_count=user_count,
+            case_count=case_count,
+        )
 
         # Define the objective function
-        objective_terms = [costs[i][j] * x[i, j] for i in range(user_count) for j in range(case_count)]
+        objective_terms = [
+            costs[i][j] * decision_variables[i, j]
+            for i in range(user_count) for j in range(case_count)
+        ]
         problem += pulp.lpSum(objective_terms)
 
         # Solve the problem
@@ -69,7 +76,7 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
                 print(f"Total cost = {pulp.value(problem.objective)}\n")
             for i in range(user_count):
                 for j in range(case_count):
-                    if pulp.value(x[i, j]) > 0.5:
+                    if pulp.value(decision_variables[i, j]) > 0.5:
                         solution[self.user_locations[i]['id']].append(self.case_locations[j]['id'])
                         if print_solution:
                             print(f"Case {self.case_locations[j]['id']} assigned to "
@@ -79,6 +86,32 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
             if print_solution:
                 print("No solution found.")
         return None, solution
+
+    @staticmethod
+    def get_decision_variables(x_dim, y_dim):
+        matrix = {}
+        for i in range(x_dim):
+            for j in range(y_dim):
+                matrix[i, j] = pulp.LpVariable(f"x_{i}_{j}", lowBound=0, upBound=1, cat=pulp.LpBinary)
+        return matrix
+
+    @staticmethod
+    def add_user_case_assignment_constraint(
+        lp_problem, decision_variables, user_count, case_count
+    ):
+        # This constrain enforces cases being split equally between users.
+        max_constraint = int(case_count / user_count) + 1
+        for i in range(user_count):
+            lp_problem += pulp.lpSum([decision_variables[i, j] for j in range(case_count)]) <= max_constraint
+
+        return lp_problem
+
+    @staticmethod
+    def add_case_owner_constraint(lp_problem, decision_variables, user_count, case_count):
+        # This constraint ensures that every case can only ever have one user assigned to it
+        for j in range(case_count):
+            lp_problem += pulp.lpSum([decision_variables[i, j] for i in range(user_count)]) == 1
+        return lp_problem
 
 
 class RoadNetworkSolver(RadialDistanceSolver):
