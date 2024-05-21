@@ -334,6 +334,10 @@
                                 <span data-bind="text: tag,
                                  attr: { class: $root.getTagCSSClass(tag) }"></span>
               </span>
+              <span
+                data-bind="text: column.item.case_property_group_name"
+                class="label label-primary"
+              ></span>
 
               <!-- ko if: !column.isEditable() -->
               <code data-toggle="tooltip"
