@@ -59,7 +59,7 @@ def check_for_sql_cases_without_existing_domain():
             'There exist SQL cases belonging to deleted domain(s)',
             f'{case_count_by_deleted_domain}\nConsider hard_delete_forms_and_cases_in_domain'
         )
-    elif is_monday():
+    elif is_monday() and settings.IS_SAAS_ENVIRONMENT:
         mail_admins_async.delay(
             'All SQL cases belong to valid domains', ''
         )
@@ -73,7 +73,7 @@ def check_for_sql_forms_without_existing_domain():
             'There exist SQL forms belonging to deleted domain(s)',
             f'{form_count_by_deleted_domain}\nConsider hard_delete_forms_and_cases_in_domain'
         )
-    elif is_monday():
+    elif is_monday() and settings.IS_SAAS_ENVIRONMENT:
         mail_admins_async.delay(
             'All SQL forms belong to valid domains', ''
         )
@@ -88,7 +88,7 @@ def check_for_elasticsearch_data_without_existing_domain():
                 f'Deleted domain "{domain}" has remaining ES docs',
                 f'{es_docs}\nConsider delete_es_docs_for_domain'
             )
-    elif is_monday():
+    elif is_monday() and settings.IS_SAAS_ENVIRONMENT:
         mail_admins_async.delay(
             'All data in ES belongs to valid domains', ''
         )
@@ -103,7 +103,7 @@ def check_for_ucr_tables_without_existing_domain():
                 f'Deleted domain "{deleted_domain}" has remaining UCR tables',
                 f'{deleted_domains_to_tables[deleted_domain]}\nConsider manage_orphaned_ucrs'
             )
-    elif is_monday():
+    elif is_monday() and settings.IS_SAAS_ENVIRONMENT:
         mail_admins_async.delay('All UCR tables belong to valid domains', '')
 
 
