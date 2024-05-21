@@ -4,6 +4,7 @@ USER_QUERY_LIMIT = 5000
 DEFAULT_PAGE_LIMIT = 10
 
 TABLEAU_ROLES = (
+    (_('Explorer'), 'Explorer'),
     (_('Explorer - Can Publish'), 'ExplorerCanPublish'),
     (_('Server Administrator'), 'ServerAdministrator'),
     (_('Site Administrator - Explorer'), 'SiteAdministratorExplorer'),
