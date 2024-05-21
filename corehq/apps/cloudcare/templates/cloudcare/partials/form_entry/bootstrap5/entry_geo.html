@@ -21,14 +21,13 @@
   </div>
   <div>
     <form data-bind="submit: search">
-      <div class="form-group">  {# todo B5: css:form-group #}
-        <div class="controls" data-bind="css: control_width">
-          <div class="input-group">
-            <input class="query form-control" type="text" />
-            <span class="input-group-btn">  {# todo B5: css:input-group-btn #}
-              <button class="btn btn-outline-primary search">{% trans "Search" %}</button>
-            </span>
-          </div>
+      <div class="mt-1" data-bind="css: control_width">
+        <div class="input-group">
+          <input class="query form-control"
+                 type="text"
+                 data-bind="css: { 'is-invalid': $parent.hasError() }"
+          />
+          <button class="btn btn-outline-primary search">{% trans "Search" %}</button>
         </div>
       </div>
     </form>

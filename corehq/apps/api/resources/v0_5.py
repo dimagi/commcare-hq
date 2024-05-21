@@ -113,6 +113,7 @@ from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
     get_user_id_by_username,
 )
+from corehq.apps.users.exceptions import ModifyUserStatusException
 from corehq.apps.users.models import (
     CommCareUser,
     ConnectIDUserLink,
@@ -120,7 +121,12 @@ from corehq.apps.users.models import (
     HqPermissions,
     WebUser,
 )
-from corehq.apps.users.util import generate_mobile_username, raw_username
+from corehq.apps.users.util import (
+    generate_mobile_username,
+    raw_username,
+    log_user_change,
+    verify_modify_user_conditions,
+)
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
@@ -137,7 +143,6 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
-
 
 MOCK_BULK_USER_ES = None
 EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 1000
@@ -325,6 +330,45 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 errors.append(e.message)
 
         return errors
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/activate/$" % self._meta.resource_name,
+                self.wrap_view('activate_user'), name="api_activate_user"),
+            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/deactivate/$" % self._meta.resource_name,
+                self.wrap_view('deactivate_user'), name="api_deactivate_user"),
+        ]
+
+    @location_safe
+    def activate_user(self, request, **kwargs):
+        return self._modify_user_status(request, **kwargs, active=True)
+
+    @location_safe
+    def deactivate_user(self, request, **kwargs):
+        return self._modify_user_status(request, **kwargs, active=False)
+
+    def _modify_user_status(self, request, active, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+        self.throttle_check(request)
+
+        user = CommCareUser.get_by_user_id(kwargs['pk'], kwargs["domain"])
+        if not user:
+            raise NotFound()
+
+        try:
+            verify_modify_user_conditions(request, user, active)
+        except ModifyUserStatusException as e:
+            raise BadRequest(_(str(e)))
+
+        user.is_active = active
+        user.save(spawn_task=True)
+        log_user_change(by_domain=request.domain, for_domain=user.domain,
+                        couch_user=user, changed_by_user=request.couch_user,
+                        changed_via=USER_CHANGE_VIA_API, fields_changed={'is_active': user.is_active})
+
+        self.log_throttled_access(request)
+        return self.create_response(request, {}, response_class=http.HttpAccepted)
 
 
 class WebUserResource(v0_1.WebUserResource):

@@ -71,9 +71,7 @@
             {% if question.response %}{{ question.response|linebreaksbr }}{% endif %}
           </div>
         {% else %}
-          <div class="form-data-readable form-data-raw">
-            {% if question.response %}{{ question.get_formatted_response|linebreaksbr }}{% endif %}
-          </div>
+          {% if question.response %}{{ question.get_formatted_response|linebreaksbr }}{% endif %}
         {% endif %}
       </td>
     {% endif %}

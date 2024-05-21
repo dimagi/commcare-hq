@@ -341,6 +341,60 @@ class TestCommCareUserResource(APIResourceTest):
             "non-editable field 'username', 'default_phone_number' must be a string\"}"
         )
 
+    def test_activate_user(self):
+        """Activate the user through the API"""
+        user = CommCareUser.create(domain=self.domain.name, username='inactive_user', password='*****',
+                                   created_by=None, created_via=None, is_active=False)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+        activate_url = self.single_endpoint(user.get_id) + 'activate/'
+        response = self._assert_auth_post_resource(activate_url, json.dumps({}), content_type='application/json',
+                                                   method='POST')
+        updated_user = CommCareUser.get(user.get_id)
+        changes = UserHistory.objects.filter(user_id=user.get_id, changed_via=USER_CHANGE_VIA_API)
+
+        self.assertEqual(response.status_code, 202)
+        self.assertTrue(updated_user.is_active)
+        self.assertEqual(changes.count(), 1)
+
+    def test_deactivate_user(self):
+        """Deactivate the user through the API"""
+        user = CommCareUser.create(domain=self.domain.name, username='active_user', password='*****',
+                                   created_by=None, created_via=None, is_active=True)
+
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+        user_deactivate_url = self.single_endpoint(user.get_id) + 'deactivate/'
+
+        response = self._assert_auth_post_resource(user_deactivate_url, json.dumps({}),
+                                                   content_type='application/json', method='POST')
+
+        updated_user = CommCareUser.get(user.get_id)
+        changes = UserHistory.objects.filter(user_id=user.get_id, changed_via=USER_CHANGE_VIA_API)
+
+        self.assertEqual(response.status_code, 202)
+        self.assertFalse(updated_user.is_active)
+        self.assertEqual(changes.count(), 1)
+
+    def test_cant_deactivate_location_user(self):
+        """Test that a location user cannot be deactivated through the API"""
+        location_user = CommCareUser.create(domain=self.domain.name, username='location_user', password='*****',
+                                            created_by=None, created_via=None, is_active=True)
+        location_user.user_location_id = 'some-location-id'
+        location_user.save()
+
+        self.addCleanup(location_user.delete, self.domain.name, deleted_by=None)
+
+        location_user_deactivate_url = self.single_endpoint(location_user.get_id) + 'deactivate/'
+
+        location_response = self._assert_auth_post_resource(location_user_deactivate_url, json.dumps({}),
+                                                            content_type='application/json', method='POST')
+
+        updated_location_user = CommCareUser.get(location_user.get_id)
+
+        self.assertEqual(location_response.status_code, 400)
+        self.assertTrue(updated_location_user.is_active)
+
 
 class TestWebUserResource(APIResourceTest):
     """

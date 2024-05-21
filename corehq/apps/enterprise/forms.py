@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -9,7 +10,6 @@ from crispy_forms.bootstrap import PrependedText, StrictButton
 from crispy_forms.helper import FormHelper
 
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.export.models.export_settings import ExportFileType
 from corehq.privileges import DEFAULT_EXPORT_SETTINGS
@@ -19,13 +19,21 @@ class EnterpriseSettingsForm(forms.Form):
     restrict_domain_creation = forms.BooleanField(
         label=gettext_lazy("Restrict Project Space Creation"),
         required=False,
-        help_text=gettext_lazy("Do not allow current web users, other than enterprise admins, "
-                               "to create new project spaces."),
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy(
+                "Do not allow current web users, other than enterprise admins, "
+                "to create new project spaces."
+            ),
+        ),
     )
     restrict_signup = forms.BooleanField(
         label=gettext_lazy("Restrict User Signups"),
         required=False,
-        help_text=gettext_lazy("<span data-bind='html: restrictSignupHelp'></span>"),
+        widget=BootstrapCheckboxInput(
+            inline_label=mark_safe(gettext_lazy(
+                "<span data-bind='html: restrictSignupHelp'></span>"
+            )),
+        ),
     )
     restrict_signup_message = forms.CharField(
         label="Signup Restriction Message",
@@ -125,10 +133,8 @@ class EnterpriseSettingsForm(forms.Form):
         super(EnterpriseSettingsForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.form_id = 'enterprise-settings-form'
-        self.helper.form_class = 'form-horizontal'
         self.helper.form_action = reverse("edit_enterprise_settings", args=[self.domain])
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.label_class = 'form-label'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Edit Enterprise Settings"),
@@ -170,12 +176,10 @@ class EnterpriseSettingsForm(forms.Form):
             )
 
         self.helper.layout.append(
-            hqcrispy.FormActions(
-                StrictButton(
-                    _("Update Enterprise Settings"),
-                    type="submit",
-                    css_class='btn-primary',
-                )
+            StrictButton(
+                _("Update Enterprise Settings"),
+                type="submit",
+                css_class='btn-primary',
             )
         )
 
@@ -284,9 +288,7 @@ class EnterpriseManageMobileWorkersForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.form_id = 'emw-settings-form'
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.label_class = 'form-label'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Manage Mobile Workers"),
@@ -296,12 +298,10 @@ class EnterpriseManageMobileWorkersForm(forms.Form):
                 ),
                 PrependedText('allow_custom_deactivation', ''),
             ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    _("Update Settings"),
-                    type="submit",
-                    css_class='btn-primary',
-                )
+            StrictButton(
+                _("Update Settings"),
+                type="submit",
+                css_class='btn-primary',
             )
         )
 

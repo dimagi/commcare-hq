@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,43 +1,43 @@
+@@ -1,44 +1,44 @@
 -{% extends "hqwebapp/bootstrap3/two_column.html" %}
 +{% extends "hqwebapp/bootstrap5/two_column.html" %}
  {% load compress %}
@@ -51,12 +51,13 @@
 +    <script src="{% static 'reports/js/bootstrap5/project_health_dashboard.js' %}"></script>
 +    <script src="{% static 'reports/js/bootstrap5/aggregate_user_status.js' %}"></script>
      <script src="{% static 'reports/js/user_history.js' %}"></script>
+     <script src="{% static 'reports/js/case_activity.js' %}"></script>
 -    <script src="{% static 'hqwebapp/js/bootstrap3/widgets.js' %}"></script>
 +    <script src="{% static 'hqwebapp/js/bootstrap5/widgets.js' %}"></script>
    {% endcompress %}
  {% endblock %}
  
-@@ -57,8 +57,8 @@
+@@ -58,8 +58,8 @@
  {% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
  
  {% block page_breadcrumbs %}
@@ -67,22 +68,7 @@
      <li>
        <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
      </li>
-@@ -78,11 +78,11 @@
- {% block modals %}{{ block.super }}
-   {% if request|ui_notify_enabled:"REPORT_BUILDER_V2" %}
-     <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
--         style="margin-left: 12px"
--         data-target="#create-new-report-left-nav"
-+         style="margin-left: 12px"  {# todo B5: inline style #}
-+         data-bs-target="#create-new-report-left-nav"
-          data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
-          role="alert">
--      {% include 'notifications/partials/bootstrap3/report_builder_v2_oct2017.html' %}
-+      {% include 'notifications/partials/bootstrap5/report_builder_v2_oct2017.html' %}
-     </div>
-   {% endif %}
- {% endblock %}
-@@ -109,17 +109,17 @@
+@@ -98,17 +98,17 @@
    {% initial_page_data 'slug' report.slug %}
  
    {% block filter_panel %}
@@ -104,7 +90,7 @@
                      aria-label="Close"
                      data-bind="click: resetModal"><span aria-hidden="true">&times;</span></button>
              <h4 class="modal-title">
-@@ -131,14 +131,14 @@
+@@ -120,14 +120,14 @@
                {{ datespan.enddate|date:"Y-m-d" }}
              </h4>
            </div>
@@ -116,12 +102,12 @@
    {% endif %}
  
    {% if report.special_notice %}
--    <div class="alert alert-info" style="margin-bottom: 2px">
-+    <div class="alert alert-info" style="margin-bottom: 2px">  {# todo B5: inline style #}
+-    <div id="report-special-notice" class="alert alert-info" style="margin-bottom: 2px">
++    <div id="report-special-notice" class="alert alert-info" style="margin-bottom: 2px">  {# todo B5: inline style #}
        <h4>{% trans 'Notice' %}</h4>
        <p>{{ report.special_notice }}</p>
      </div>
-@@ -148,7 +148,7 @@
+@@ -137,7 +137,7 @@
        {% block reportcontent %}
        {% endblock %}
      {% else %}
