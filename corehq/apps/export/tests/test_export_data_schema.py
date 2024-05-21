@@ -492,10 +492,17 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(group_schema2.items), 1)
 
 
+@patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
+@patch('corehq.apps.export.models.new.get_case_property_group_name_for_properties')
 class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
     domain = 'test'
 
-    def test_basic_case_prop_merge(self):
+    def test_basic_case_prop_merge(self, get_case_property_group_name_for_properties_patch, *args):
+        get_case_property_group_name_for_properties_patch.return_value = {
+            'my_case_property': None,
+            'my_second_case_property': 'AwesomeProps'
+        }
+
         app_id = '1234'
         case_property_mapping = {
             'candy': ['my_case_property', 'my_second_case_property']
@@ -541,7 +548,12 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
             len(case_property_mapping['candy']) + len(KNOWN_CASE_PROPERTIES),
         )
 
-    def test_inferred_schema_merge(self):
+    def test_inferred_schema_merge(self, get_case_property_group_name_for_properties_patch, *args):
+        get_case_property_group_name_for_properties_patch.return_value = {
+            'my_case_property': None,
+            'my_second_case_property': 'AwesomeProps'
+        }
+
         schema = CaseExportDataSchema(
             domain='my-domain',
             group_schemas=[
