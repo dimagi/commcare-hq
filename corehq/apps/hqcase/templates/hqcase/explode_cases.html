@@ -1,7 +1,7 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 
-{% requirejs_main 'hqcase/js/explode_cases' %}
+{% requirejs_main_b5 'hqcase/js/explode_cases' %}
 
 {% block page_content %}
   {% registerurl "users_select2_options" domain %}
@@ -10,33 +10,33 @@
     <h1>Explode Cases 💣</h1>
     <h2><small>Use at your own risk 🙃</small></h2>
     <div class="row">
-      <div class="col-sm-12">
+      <div class="col-md-12">
         <p>This feature multiplies all the cases in a user's restore by <code>factor</code>.</p>
       </div>
     </div>
     <div class="row">
-      <div class="col-sm-8">
-        <div class="panel panel-danger">
-          <div class="panel-heading">Warning!</div>
-          <div class="panel-body">
+      <div class="col-md-8">
+        <div class="card text-bg-danger">  {# todo B5: css:panel #}
+          <div class="card-header">Warning!</div>
+          <div class="card-body">
             <p>The case exploder will multiply all cases in the user's restore  by the explode factor entered below. So, for example, if you're exploding a test user with 20 cases, and set the factor to be 200, it will actually give you <strong>4,000</strong> cases, NOT 200. Be careful! For this reason, it's best to create a new test user with only one case to explode.</p>
           </div>
         </div>
-        <div class="panel panel-default">
-          <div class="panel-body">
+        <div class="card card-default">  {# todo B5: css:panel #}
+          <div class="card-body">
             <form class="form" action="" method="POST">
               {% csrf_token %}
-              <div class="form-group">
+              <div class="form-group">  {# todo B5: css:form-group #}
                 <label for="explode-user_id">User</label>
                 <select id="explode-user_id"
                         name="user_id"
                         class="input form-control report-filter-single-option-paginated"
                         data-bind="value: user_id"
-                        style="width: 100%"
+                        style="width: 100%"  {# todo B5: inline style #}
                         placeholder="Select a User"></select>
               </div>
-              <div class="form-group" id="explode-factor-input" data-bind="css: {
-                                        'has-error': factor() < 2 || factor() >= 150 ,
+              <div class="form-group" id="explode-factor-input" data-bind="css: {  {# todo B5: css:form-group #}
+                                        'has-error': factor() < 2 || factor() >= 150 ,  {# todo B5: css:has-error #}
                                         'has-warning': factor() >= 10 && factor() <= 150  }">
                 <label for="explode-factor">Factor</label>
                 <input class="form-control" id="explode-factor" data-bind="value: factor" name="factor" />
@@ -47,7 +47,7 @@
                                     That number is too high! Please try smaller increments to get to the number of cases you require.
                                 </span>
               </div>
-              <button type="submit" class="btn btn-danger"
+              <button type="submit" class="btn btn-outline-danger"
                       data-bind="attr: {disabled: !user_id() || factor() < 2 || factor() > 150 }">Explode Cases</button>
             </form>
           </div>
@@ -61,11 +61,11 @@
       <h2><small>Delete all cases created by previous explosions</small></h2>
       <p>Find this ID on one of your exploded cases under the property 'cc_explosion_id'</p>
       <div class="row">
-        <div class="col-sm-8">
+        <div class="col-md-8">
           <form class="form" action="" method="POST">
             {% csrf_token %}
             <input id="explosion_id" name="explosion_id" type="text" placeholder="cc_explosion_id" />
-            <button type="submit" class="btn btn-danger">
+            <button type="submit" class="btn btn-outline-danger">
               <i class="fa-regular fa-trash-can"></i>
             </button>
           </form>
