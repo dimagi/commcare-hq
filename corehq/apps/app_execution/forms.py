@@ -1,6 +1,7 @@
 from couchdbkit import NoResultFound, ResourceNotFound
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import InlineField
 from django import forms
 
 from corehq.apps.app_execution.models import AppWorkflowConfig
@@ -39,15 +40,25 @@ class AppWorkflowConfigForm(forms.ModelForm):
         self.helper = hqcrispy.HQFormHelper()
 
         self.helper.layout = crispy.Layout(
-            "name",
-            "domain",
-            "app_id",
-            "username",
-            "workflow",
-            "sync_before_run",
-            "form_mode",
-            "run_every",
-            "notification_emails",
+            crispy.Div(
+                crispy.Div(
+                    "name",
+                    "domain",
+                    "app_id",
+                    "username",
+                    "sync_before_run",
+                    "form_mode",
+                    "run_every",
+                    "notification_emails",
+                    css_class="col",
+                ),
+                crispy.Div(
+                    crispy.HTML("<p>Workflow:</p>"),
+                    InlineField("workflow"),
+                    css_class="col"
+                ),
+                css_class="row"
+            ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton("Save", type='submit', css_class='btn-primary')
             ),
