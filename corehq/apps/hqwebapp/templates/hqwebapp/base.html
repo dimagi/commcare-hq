@@ -1,6 +1,7 @@
 {% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
 {% requirejs_main %}
+{% webpack_main %}
 <!--[if lt IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8 lt-ie7"><![endif]-->
 <!--[if IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8"><![endif]-->
 <!--[if IE 8]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9"><![endif]-->
@@ -335,6 +336,7 @@
     {# javascript below this line #}
 
     {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
+    {% include "hqwebapp/partials/webpack.html" %}
 
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
