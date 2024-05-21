@@ -179,7 +179,7 @@ $salmon-800: shade-color($salmon, 60%);
 $salmon-900: shade-color($salmon, 80%);
 
 
-// Form Sates
+// Form States
 
 $form-feedback-valid-color:         $success;
 $form-feedback-invalid-color:       $danger;
@@ -223,3 +223,7 @@ $form-validation-states: (
     "border-color": $dark,
   )
 );
+
+// Make pagination-lg the same height as other lg inputs
+$pagination-padding-x-lg: 1.0rem;
+$pagination-padding-y-lg: 0.5rem;

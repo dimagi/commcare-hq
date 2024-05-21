@@ -1,3 +1,5 @@
+'use strict';
+
 hqDefine('users/js/roles',[
     'jquery',
     'underscore',
@@ -77,7 +79,6 @@ hqDefine('users/js/roles',[
     };
 
     var RolesViewModel = function (o) {
-        'use strict';
         var self, root;
         self = root = {};
 
@@ -142,14 +143,14 @@ hqDefine('users/js/roles',[
                         };
                     }),
                 };
-
                 data.manageRoleAssignments = {
                     all: data.is_non_admin_editable,
                     specific: ko.utils.arrayMap(o.nonAdminRoles, function (role) {
                         return {
                             path: role._id,
                             name: role.name,
-                            value: data.assignable_by.indexOf(role._id) !== -1,
+                            value: ko.observable(data.assignable_by.indexOf(role._id) !== -1),
+                            access_all_locations: role.permissions.access_all_locations,
                         };
                     }),
                 };
@@ -191,12 +192,25 @@ hqDefine('users/js/roles',[
                 };
                 self.preventRoleDelete = data.preventRoleDelete;
                 self.hasUnpermittedLocationRestriction = data.has_unpermitted_location_restriction || false;
+
+                self.restrictRoleChecked = ko.computed(function () {
+                    return data.manageRoleAssignments.specific.some(role => role.value() && !role.access_all_locations);
+                });
+                self.showRestrictedLocationRoleAssignmentWarning = ko.computed(function () {
+                    return self.permissions.access_all_locations() && self.restrictRoleChecked();
+                });
+                self.cantAccessAllLocations = ko.computed(function () {
+                    return !self.hasUnpermittedLocationRestriction && !self.permissions.access_all_locations();
+                });
+                self.unrestrictedButRestrictedRoleCanAssign = ko.computed(function () {
+                    return self.permissions.access_all_locations() && self.restrictRoleChecked();
+                });
                 if (self.hasUnpermittedLocationRestriction) {
                     self.permissions.access_all_locations(true);
                 }
                 self.accessAreas = [
                     {
-                        showOption: self.permissions.access_all_locations,
+                        showOption: true,
                         editPermission: self.permissions.edit_web_users,
                         viewPermission: self.permissions.view_web_users,
                         text: gettext("<strong>Web Users</strong> &mdash; invite new web users, manage account settings, remove membership"),

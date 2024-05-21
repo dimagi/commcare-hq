@@ -50,7 +50,9 @@ class AppWorkflow:
 class CommandStep(Step):
     type: ClassVar[str] = "command"
     is_form_step: ClassVar[bool] = False
+
     value: str
+    """Display text of the command to execute"""
 
     def get_request_data(self, session, data):
         commands = {c["displayText"].lower(): c for c in session.data.get("commands", [])}
@@ -66,7 +68,9 @@ class CommandStep(Step):
 class EntitySelectStep(Step):
     type: ClassVar[str] = "entity_select"
     is_form_step: ClassVar[bool] = False
+
     value: str
+    """ID of the entity to select."""
 
     def get_request_data(self, session, data):
         entities = {entity["id"] for entity in session.data.get("entities", [])}
@@ -84,7 +88,9 @@ class EntitySelectStep(Step):
 class EntitySelectIndexStep(Step):
     type: ClassVar[str] = "entity_select_index"
     is_form_step: ClassVar[bool] = False
+
     value: int
+    """Zero-based index of the entity to select."""
 
     def get_request_data(self, session, data):
         entities = [entity["id"] for entity in session.data.get("entities", [])]
@@ -99,10 +105,50 @@ class EntitySelectIndexStep(Step):
 
 
 @define
+class QueryInputValidationStep(Step):
+    type: ClassVar[str] = "query_input_validation"
+    is_form_step: ClassVar[bool] = False
+
+    inputs: dict
+    """Search inputs dict. Keys are field names and values are search values."""
+
+    def get_request_data(self, session, data):
+        query_key = session.data["queryKey"]
+        return {
+            **data,
+            # DataDog tag value
+            "requestInitiatedByTag": "field_change",
+            "query_data": {
+                query_key: {
+                    "execute": False,
+                    "force_manual_search": True,
+                    "inputs": self.inputs,
+                }
+            },
+        }
+
+
+@define
 class QueryStep(Step):
     type: ClassVar[str] = "query"
     is_form_step: ClassVar[bool] = False
+
     inputs: dict
+    """Search inputs dict. Keys are field names and values are search values."""
+
+    validate_inputs: bool = False
+    """Simulate updating search inputs on the UI. One request per update."""
+
+    def get_children(self):
+        children = []
+        if self.validate_inputs:
+            # children will be executed instead of the parent
+            inputs = {}
+            for field, value in self.inputs.items():
+                inputs[field] = value
+                children.append(QueryInputValidationStep(inputs=inputs.copy()))
+            children.append(QueryStep(inputs=self.inputs))  # execute query
+        return children
 
     def get_request_data(self, session, data):
         query_key = session.data["queryKey"]

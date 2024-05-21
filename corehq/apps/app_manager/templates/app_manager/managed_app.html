@@ -42,30 +42,6 @@
       {% endif %}
     </nav>
   {% endif %}
-  {% if show_ui_notification_to_hide_translations %}
-    {% if request|ui_notify_enabled:"ABILITY_TO_HIDE_TRANSLATIONS" %}
-      <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
-           data-slug="{{ 'ABILITY_TO_HIDE_TRANSLATIONS'|ui_notify_slug }}"
-           role="alert">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <p class="lead">{% trans 'New setting to hide translations' %}</p>
-        <p>
-          {% blocktrans %}
-            Working with multiple languages but want to just focus on app building?
-          {% endblocktrans %}
-        </p>
-        <p>
-          <a class="btn btn-primary-dark"
-             target="_blank"
-             href="https://confluence.dimagi.com/display/commcarepublic/Hide+languages+in+forms">
-            {% trans "Learn More" %}
-          </a>
-        </p>
-      </div>
-    {% endif %}
-  {% endif %}
 {% endblock %}
 
 {% block pre_page_content %}

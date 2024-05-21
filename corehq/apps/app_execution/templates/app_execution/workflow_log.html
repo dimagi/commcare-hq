@@ -1,0 +1,20 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+{% block page_content %}
+  <div class="mb-3">
+    <h2>Workflow Execution Log for {{ log.config.name }}: {{ log.started|date }}</h2>
+    <a class='btn btn-primary' href="{% url 'app_execution:edit_workflow' log.workflow_id %}">Edit Workflow</a>
+  </div>
+  <h3>Details</h3>
+  <p>
+  <ul>
+    <li>Started: {{ log.started|date:"DATETIME_FORMAT" }}</li>
+    <li>Ended: {{ log.completed|date:"DATETIME_FORMAT" }}</li>
+    <li>Duration: {{ log.duration }}</li>
+    <li>Status: <span class="badge {% if log.success %}text-bg-success{% else %}text-bg-danger{% endif %}">
+      {% if log.success %}Success{% else %}Error{% endif %}
+    </span></li>
+  </ul>
+  </p>
+  {% include "app_execution/components/logs.html" with output=log.output success=log.success error=log.error %}
+{% endblock page_content %}

@@ -13,7 +13,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.case_search.const import IS_RELATED_CASE
 from corehq.apps.case_search.utils import (
     _get_all_related_cases,
-    _QueryHelper,
+    QueryHelper,
     get_and_tag_related_cases,
     get_child_case_results,
     get_path_related_cases_results,
@@ -152,7 +152,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         def get_related_cases_helper(include_all_related_cases):
             with patch("corehq.apps.case_search.utils.get_app_context",
                        return_value=({"parent", "parent/parent"}, {"c", "d"})):
-                return get_and_tag_related_cases(_QueryHelper(self.domain), None, {"c"}, source_cases, None,
+                return get_and_tag_related_cases(QueryHelper(self.domain), None, {"c"}, source_cases, None,
                     include_all_related_cases)
 
         partial_related_cases = get_related_cases_helper(include_all_related_cases=False)
@@ -203,7 +203,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         with patch("corehq.apps.case_search.utils.get_app_context",
                    return_value=({"parent"}, {"c"})):
             include_all_related_cases = False
-            partial_related_cases = get_and_tag_related_cases(_QueryHelper(self.domain), None, {"a"}, source_cases,
+            partial_related_cases = get_and_tag_related_cases(QueryHelper(self.domain), None, {"a"}, source_cases,
                 'custom_related_case_id', include_all_related_cases)
 
         EXPECTED_PARTIAL_RELATED_CASES = (source_cases_related["EXPANDED_CASE_ID"]
@@ -237,10 +237,10 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         CHILD_CASE_TYPE_FILTER = {'b'}
         WITH_FILTER_RESULT_CHILD_CASE_ID = {'b1'}
 
-        result_cases = get_child_case_results(_QueryHelper(self.domain), SOURCE_CASE_ID)
+        result_cases = get_child_case_results(QueryHelper(self.domain), SOURCE_CASE_ID)
         self._assert_case_ids(RESULT_CHILD_CASE_ID, result_cases)
 
-        result_cases = get_child_case_results(_QueryHelper(self.domain), SOURCE_CASE_ID, CHILD_CASE_TYPE_FILTER)
+        result_cases = get_child_case_results(QueryHelper(self.domain), SOURCE_CASE_ID, CHILD_CASE_TYPE_FILTER)
         self._assert_case_ids(WITH_FILTER_RESULT_CHILD_CASE_ID, result_cases)
 
     def test__get_all_related_cases(self):
@@ -285,7 +285,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         }
 
         EXPECTED_ALL_RELATED_CASES = set().union(*source_cases_related.values())
-        all_related_cases = _get_all_related_cases(_QueryHelper(self.domain), source_cases)
+        all_related_cases = _get_all_related_cases(QueryHelper(self.domain), source_cases)
         self._assert_case_ids(EXPECTED_ALL_RELATED_CASES, all_related_cases)
 
     def test_get_related_cases_result(self):
@@ -323,7 +323,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         def get_related_cases_result_helper(include_all_related_cases):
             with patch("corehq.apps.case_search.utils.get_app_context",
                     return_value=({"parent"}, {"c"})):
-                return get_related_cases_result(_QueryHelper(self.domain), 'app_id', {'teacher'},
+                return get_related_cases_result(QueryHelper(self.domain), 'app_id', {'teacher'},
                     source_cases, include_all_related_cases)
 
         EXPECTED_PARTIAL_RELATED_CASES = (source_cases_related["PATH_RELATED_CASE_ID"]
@@ -336,7 +336,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         self._assert_case_ids(EXPECTED_ALL_RELATED_CASES, all_related_cases)
 
     def _assert_related_case_ids(self, cases, paths, expected_case_ids):
-        results = get_path_related_cases_results(_QueryHelper(self.domain), cases, paths)
+        results = get_path_related_cases_results(QueryHelper(self.domain), cases, paths)
         self._assert_case_ids(expected_case_ids, results)
 
     def _assert_case_ids(self, expected_case_ids, result_cases):

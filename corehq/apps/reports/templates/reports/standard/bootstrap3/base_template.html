@@ -37,6 +37,7 @@
     <script src="{% static 'reports/js/bootstrap3/project_health_dashboard.js' %}"></script>
     <script src="{% static 'reports/js/bootstrap3/aggregate_user_status.js' %}"></script>
     <script src="{% static 'reports/js/user_history.js' %}"></script>
+    <script src="{% static 'reports/js/case_activity.js' %}"></script>
     <script src="{% static 'hqwebapp/js/bootstrap3/widgets.js' %}"></script>
   {% endcompress %}
 {% endblock %}
@@ -73,18 +74,6 @@
       {% trans report.title|default:"Untitled Report" %}
     </li>
   </ol>
-{% endblock %}
-
-{% block modals %}{{ block.super }}
-  {% if request|ui_notify_enabled:"REPORT_BUILDER_V2" %}
-    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-         style="margin-left: 12px"
-         data-target="#create-new-report-left-nav"
-         data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
-         role="alert">
-      {% include 'notifications/partials/bootstrap3/report_builder_v2_oct2017.html' %}
-    </div>
-  {% endif %}
 {% endblock %}
 
 {% block page_content %}
@@ -138,7 +127,7 @@
   {% endif %}
 
   {% if report.special_notice %}
-    <div class="alert alert-info" style="margin-bottom: 2px">
+    <div id="report-special-notice" class="alert alert-info" style="margin-bottom: 2px">
       <h4>{% trans 'Notice' %}</h4>
       <p>{{ report.special_notice }}</p>
     </div>

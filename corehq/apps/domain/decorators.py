@@ -53,6 +53,7 @@ from corehq.apps.sso.utils.view_helpers import (
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     DATA_MIGRATION,
+    DISABLE_MOBILE_ENDPOINTS,
     IS_CONTRACTOR,
     TWO_FACTOR_SUPERUSER_ROLLOUT,
 )
@@ -668,9 +669,12 @@ cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
 
 
-def check_domain_migration(view_func):
+def check_domain_mobile_access(view_func):
     def wrapped_view(request, domain, *args, **kwargs):
-        if DATA_MIGRATION.enabled(domain):
+        if (
+            DATA_MIGRATION.enabled(domain)
+            or DISABLE_MOBILE_ENDPOINTS.enabled(domain)
+        ):
             auth_logger.info(
                 "Request rejected domain=%s reason=%s request=%s",
                 domain, "flag:migration", request.path

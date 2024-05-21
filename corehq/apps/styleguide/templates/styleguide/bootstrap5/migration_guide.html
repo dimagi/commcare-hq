@@ -349,10 +349,90 @@
   <p>
     The process for this step in the migration is not automated due to the rarity and complexity of this requirement.
     You can begin this process by creating parallel <code>scss</code> files for all the existing <code>less</code>
-    files. The contents can be copied over from <code>less</code> to <code>scss</code> and the syntax updated to
+    files. The contents can be copied over from <code>less</code> to <code>scss</code>.
+  </p>
+  <p>
+    The syntax will need to be updated to
     use SCSS style variables and mixins.
     <a href="https://www.martyfriedel.com/blog/moving-from-less-to-scss" target="_blank">Here is a guide</a> to
-    help with those changes.
+    help with those changes. Changes that are common in HQ code include:
+    <ul>
+      <li>
+        Variables and string interpolation
+        <div class="card text-bg-light mb-3">
+          <div class="card-body">
+            <pre class="m-0">// LESS
+@thing: 10px;
+.@{my-prefix}-kind-of-text: 10px;
+height: calc(~"100vh - 65px");
+
+// SCSS
+$thing: 10px;
+.#{$my-prefix}-kind-of-text: 10px;
+height: calc(100vh - 65px);  // tildes typically weren't necessary</pre>
+          </div>
+        </div>
+      </li>
+      <li>
+        Mixins
+        <div class="card text-bg-light mb-3">
+          <div class="card-body">
+            <pre class="m-0">// LESS
+.my-mixin(@param1, @param2) { ... }
+.my-mixin(170px, 115px);
+
+// SCSS
+@mixin my-mixin { ... }
+@include my-mixin(170px, 115px);</pre>
+          </div>
+        </div>
+      </li>
+      <li>
+        Removing bootstrap 3 browser support mixins, including <code>.transition</code>, <code>.box-shadow</code>, and border radius mixins.
+        <div class="card text-bg-light mb-3">
+          <div class="card-body">
+            <pre class="m-0">// LESS
+.box-shadow(0 0 10px 0 rgba(0, 0, 0, 0.2));
+
+// SCSS
+box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
+          </div>
+        </div>
+      </li>
+      <li>
+        Updating responsive styling that depends on screen widths:
+        <div class="card text-bg-light mb-3">
+          <div class="card-body">
+            <pre class="m-0">// LESS
+@media(min-width: @screen-xs) { ... }
+@media(max-width: $screen-sm-max) { ... }
+
+// SCSS
+@include media-breakpoint-up(sm) { ... }
+@include media-breakpoint-down(lg) { ... }</pre>
+          </div>
+        </div>
+        Note that the screen size categories have changed from bootstrap 3 to 5, so see the
+        <a target="_blank" href="https://getbootstrap.com/docs/3.3/css/#responsive-utilities-classes">old docs</a>
+        and the
+        <a target="_blank" href="https://getbootstrap.com/docs/5.0/layout/breakpoints/">new docs</a>, and test
+        your changes. Also note that using the B5 mixins requires imports:
+        <div class="card text-bg-light mb-3">
+          <div class="card-body">
+            <pre class="m-0">@import "mixins";
+@import "functions";</pre>
+      </li>
+      <li>
+        Updating imports. Look at how imports are done in other parts of HQ that use SCSS, such as
+        <a target="_blank" href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/scss/commcarehq.scss">hqwebapp</a> and
+        <a target="_blank" href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/cloudcare/scss/formplayer-common-main.scss">cloudcare</a>.
+        Imports may not be one-for-one replacements, since B3 and B5 are organized differently, and you may have dropped some B3 styles or added some B5 styles.
+      </li>
+      <li>
+        Remember to update the <code>&lt;link&gt;</code> elements in HTML, including changing the <code>type</code>
+        from <code>text/less</code> to <code>text/scss</code>.
+      </li>
+    </ul>
   </p>
   <p>
     It is important to update any variables from the old Bootstrap 3 stylesheet to their Bootstrap 5 counterparts.

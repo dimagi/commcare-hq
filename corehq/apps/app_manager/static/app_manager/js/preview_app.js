@@ -39,7 +39,7 @@ hqDefine('app_manager/js/preview_app', [
     module.DATA = {
         OPEN: 'preview-isopen',
         POSITION: 'position',
-        TABLET: 'preview-tablet',
+        TABLET: 'preview-tablet',   // also referenced in cloudcare/js/preview_app/preview_app
     };
 
     _private.isFormdesigner = false;
