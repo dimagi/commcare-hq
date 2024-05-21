@@ -284,11 +284,12 @@ class CaseUpdater(Updater):
                         'revert_id': reverse_ids[case_obj.case_id],
                     }
                 )
+                self.stat_counts['success'] += 1
 
         print("All Cases Done Processing!")
         print(
             f"Successful: {self.stat_counts['success']}, " \
-            f"Failed: {self.stat_counts['fail']}, " \
+            f"Failed: {self.stat_counts['failed']}, " \
             f"Skipped: {self.stat_counts['skipped']}"
         )
 
