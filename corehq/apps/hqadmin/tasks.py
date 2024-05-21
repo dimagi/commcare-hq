@@ -19,13 +19,12 @@ from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_static_url_prefix
 from pillowtop.utils import get_couch_pillow_instances
 
-from corehq.apps.celery import periodic_task, task
+from corehq.apps.celery import periodic_task, periodic_task_when_true, task
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.blobs import CODES, get_blob_db
 from corehq.elastic import get_es_new
-from corehq.util.celery_utils import periodic_task_when_true
 from corehq.util.files import TransientTempfile
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.soft_assert import soft_assert
