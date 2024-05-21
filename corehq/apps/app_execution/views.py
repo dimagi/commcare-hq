@@ -45,7 +45,7 @@ def new_workflow(request):
         "workflow": EXAMPLE_WORKFLOW, "run_every": 1, "form_mode": const.FORM_MODE_HUMAN
     })
     if request.method == "POST":
-        import_har = request.POST.get("import-har")
+        import_har = request.POST.get("import_har")
         har_file = request.FILES.get("har_file")
         if import_har and har_file:
             form = _get_form_from_har(har_file.read(), request)
@@ -69,7 +69,7 @@ def edit_workflow(request, pk):
     form = AppWorkflowConfigForm(instance=config)
     if request.method == "POST":
         form = AppWorkflowConfigForm(request.POST, instance=config)
-        import_har = request.POST.get("import-har")
+        import_har = request.POST.get("import_har")
         har_file = request.FILES.get("har_file")
         if import_har and har_file:
             form = _get_form_from_har(har_file.read(), request, instance=config)
