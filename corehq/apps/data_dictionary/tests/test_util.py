@@ -8,7 +8,7 @@ from casexml.apps.case.mock import CaseBlock
 
 from corehq.util.workbook_reading.datamodels import Cell
 
-from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType, CasePropertyGroup
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.data_dictionary.util import (
     generate_data_dictionary,
@@ -23,6 +23,7 @@ from corehq.apps.data_dictionary.util import (
     get_case_property_description_dict,
     get_case_property_label_dict,
     get_case_property_deprecated_dict,
+    get_case_property_group_name_for_properties,
 )
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import (
@@ -153,10 +154,15 @@ class MiscUtilTest(TestCase):
             domain=cls.domain,
             is_deprecated=True
         )
+        cls.case_type_group = CasePropertyGroup.objects.create(
+            case_type=cls.case_type_obj,
+            name='TestGroup'
+        )
         CaseProperty.objects.create(
             name='case_prop_1',
             case_type=cls.case_type_obj,
             description='foo',
+            group=cls.case_type_group,
         )
         CaseProperty.objects.create(
             name='case_prop_2',
@@ -313,6 +319,14 @@ class MiscUtilTest(TestCase):
             ]
         }
         self.assertEqual(dep_dict, expected_response)
+
+    def test_get_case_property_group_name_for_properties(self):
+        case_group_name_for_property = get_case_property_group_name_for_properties(self.domain,
+                                                                                   self.case_type_name)
+        self.assertEqual(
+            case_group_name_for_property,
+            {'case_prop_1': 'TestGroup', 'case_prop_2': None}
+        )
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
