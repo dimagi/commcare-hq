@@ -203,7 +203,7 @@ class UserUpdater(Updater):
                     user_obj.user_id,
                     value_dict={
                         'status': self.db_manager.STATUS_FAILURE,
-                        'message': f'({user_data[self.rc_num_prop_name]}) does not exist as child of location with id ({loc.location_id})'
+                        'message': f'({user_data[self.rc_num_prop_name]}) does not exist as child of location with id ({user_obj.location_id})'
                     }
                 )
                 self.stat_counts['failed'] += 1
