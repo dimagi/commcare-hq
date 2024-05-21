@@ -135,13 +135,12 @@ class UserUpdater(Updater):
         user_gen = iter_docs(CommCareUser.get_db(), user_ids)
         for user_chunk in with_progress_bar(chunked(user_gen, self.chunk_size), length=user_count, oneline=False):
             users_to_save, reverse_ids = self._process_chunk(user_chunk)
+            is_success = True
             if not dry_run:
                 try:
                     CommCareUser.bulk_save(users_to_save)
                 except Exception as e:
                     is_success = False
-                else:
-                    is_success = True
             for user in users_to_save:
                 # TODO: Add reverse ID to row
                 if is_success:
