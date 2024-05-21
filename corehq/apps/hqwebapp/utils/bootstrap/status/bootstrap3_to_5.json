@@ -99,5 +99,8 @@
   },
   "custom_data_fields": {
     "is_complete": true
+  },
+  "hqcase": {
+    "in_progress": true
   }
 }
