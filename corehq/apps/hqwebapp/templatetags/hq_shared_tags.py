@@ -736,6 +736,7 @@ class WebpackMainNode(template.Node):
     def render(self, context):
         if self.name not in context:
             # set name in block parent context
+            context.dicts[-2]['use_js_bundler'] = True
             context.dicts[-2][self.name] = f'webpack/{self.value}.js'
         return ''
 
@@ -752,6 +753,7 @@ class RequireJSMainNode(template.Node):
     def render(self, context):
         if self.name not in context:
             # set name in block parent context
+            context.dicts[-2]['use_js_bundler'] = True
             context.dicts[-2][self.name] = self.value
         return ''
 
