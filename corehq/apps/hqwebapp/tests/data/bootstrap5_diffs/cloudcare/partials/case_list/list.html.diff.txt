@@ -1,15 +1,18 @@
 --- 
 +++ 
-@@ -4,18 +4,18 @@
+@@ -1,20 +1,21 @@
++{% load hq_shared_tags %}
+ {% load i18n %}
+ 
+ <script type="text/template" id="case-view-list-template">
    <div class="module-case-list-container">
  
      <button id="scroll-to-bottom"
--            class="btn btn-lg btn-circle btn-primary hidden-md hidden-lg"
-+            class="btn btn-lg btn-circle btn-primary d-md-none d-lg-none"
+-            class="btn btn-lg btn-circle btn-primary hidden-md hidden-lg hide"
++            class="btn btn-lg btn-circle btn-primary d-md-none d-lg-none d-none"
              type="button"
-             aria-label="{% trans 'Scroll to bottom' %}"
--            style="display: none;">
-+            style="display: none;">  {# todo B5: inline style #}
+-            aria-label="{% trans 'Scroll to bottom' %}">
++            aria-label="{% trans_html_attr 'Scroll to bottom' %}">
        <i class="fa fa-lg fa-arrow-down" aria-hidden="true"></i>
      </button>
  
@@ -23,7 +26,7 @@
      </div>
      <% } %>
  
-@@ -26,45 +26,43 @@
+@@ -25,45 +26,43 @@
                 class="form-control"
                 placeholder="Search"
                 id="searchText">
@@ -80,7 +83,7 @@
              </div>
            <% }) %>
          <% } %>
-@@ -73,7 +71,7 @@
+@@ -72,7 +71,7 @@
  
      <% if (!hasNoItems) { %>
        {% block pagination_templates %}
