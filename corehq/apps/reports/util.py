@@ -491,8 +491,12 @@ def get_tableau_groups_by_ids(interested_group_ids: List, domain: str,
     return _group_json_to_tuples(filtered_group_json)
 
 
+@quickcache(['domain'], timeout=2 * 60)
 def get_tableau_group_ids_by_names(group_names: List, domain: str,
                               session: TableauAPISession = None) -> List[str]:
+    '''
+    Returns a list of all Tableau group ids on the site derived from tableau group names passed in.
+    '''
     session = session or TableauAPISession.create_session_for_domain(domain)
     group_json = session.query_groups()
     filtered_group_json = [group for group in group_json if group['name'] in group_names]
