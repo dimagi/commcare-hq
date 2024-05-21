@@ -1268,7 +1268,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
         className: function () {
-            if (window.USE_BOOSTRAP5) {
+            if (window.USE_BOOTSTRAP5) {
                 return "breadcrumb-item";
             } else {
                 return "breadcrumb-text";
