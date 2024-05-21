@@ -27,10 +27,10 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                     clock: false,
                 },
             },
-            localization: {
+            localization: _.extend(defaultTranslations, {
                 format: 'yyyy-MM-dd',
-            },
-        }, extraOptions));
+            }),
+        }, extraOptions || {}));
     };
 
     // This replaces createBootstrap3DefaultDateRangePicker in hqwebapp/js/daterangepicker.config
@@ -68,6 +68,20 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 picker.dates.setValue(picker.dates.picked[0], 1);
             }
         });
+    };
+
+    let createTimePicker = function (el, extraOptions) {
+        return new tempusDominus.TempusDominus(el, _.extend({
+            display: {
+                theme: 'light',
+                components: {
+                    calendar: false,
+                },
+            },
+            localization: _.extend(defaultTranslations, {
+                format: 'yyyy-MM-dd',
+            }),
+        }, extraOptions || {}));
     };
 
     let getDateRangeSeparator = function () {
@@ -108,6 +122,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
         createDatePicker: createDatePicker,
         createDateRangePicker: createDateRangePicker,
         createDefaultDateRangePicker: createDefaultDateRangePicker,
+        createTimePicker: createTimePicker,
         getDateRangeSeparator: getDateRangeSeparator,
     };
 });
