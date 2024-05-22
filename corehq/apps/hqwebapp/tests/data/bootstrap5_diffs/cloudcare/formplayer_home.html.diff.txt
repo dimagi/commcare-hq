@@ -6,20 +6,23 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  {% load compress %}
-@@ -20,10 +20,10 @@
+@@ -20,11 +20,11 @@
  {% endblock %}
  
  {% block navigation %}{{ block.super }}
 -  <div class="navbar navbar-inverse navbar-cloudcare navbar-static-top">
-+  <div class="navbar navbar-inverse navbar-cloudcare navbar-static-top">  {# todo B5: css:navbar #}
++  <div class="navbar navbar-cloudcare">
      <div class="container-fluid">
-       <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> Web Apps</a>
+-      <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> Web Apps</a>
 -      <ul class="nav navbar-nav navbar-right" >
-+      <ul class="nav navbar-nav navbar-right" >  {# todo B5: css:nav #}
-         <li><a href="#" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
+-        <li><a href="#" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
++      <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> {% trans "Web Apps" %}</a>
++      <ul class="nav navbar-nav navbar-right">
++        <li class="nav-item"><a href="#" class="nav-link" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
        </ul>
      </div>
-@@ -34,13 +34,12 @@
+   </div>
+@@ -34,25 +34,24 @@
    {% compress css %}
      <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
      <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
@@ -31,11 +34,19 @@
            rel="stylesheet"
            media="all"
 -          href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+-    <link type="text/less"
 +          href="{% static 'cloudcare/scss/font-formplayer.scss' %}" />
-     <link type="text/less"
++    <link type="text/scss"
            rel="stylesheet"
            media="all"
-@@ -52,7 +51,7 @@
+-          href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
+-    <link type="text/less"
++          href="{% static 'cloudcare/scss/formplayer-common.scss' %}"/>
++    <link type="text/scss"
+           rel="stylesheet"
+           media="all"
+-          href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
++          href="{% static 'cloudcare/scss/formplayer-webapp.scss' %}"/>
    {% endcompress %}
  {% endblock %}
  
@@ -44,16 +55,7 @@
  
  {% block js %} {{ block.super }}
    {% include "cloudcare/partials/dependencies.html" %}
-@@ -95,7 +94,7 @@
-   <!-- For now we won't touch this since the form entry code is coupled with it  -->
- 
-   <div id="cloudcare-main" class="cloudcare-home-content">
--    <section id="case-crumbs" style="width: 800px"></section>
-+    <section id="case-crumbs" style="width: 800px"></section>  {# todo B5: inline style #}
-     <section id="cases"></section>
-     <div id="menu-container">
-       <section id="formplayer-progress-container"></section>
-@@ -130,8 +129,8 @@
+@@ -128,8 +127,8 @@
    {% if not request.session.secure_session %}
      {% include 'hqwebapp/includes/inactivity_modal_data.html' %}
    {% endif %}

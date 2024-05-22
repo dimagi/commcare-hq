@@ -1,7 +1,9 @@
 --- 
 +++ 
-@@ -3,9 +3,9 @@
- 
+@@ -1,11 +1,8 @@
+-@import '../../hqwebapp/less/_hq/includes/variables.less';
+-@import '../../hqwebapp/less/_hq/includes/mixins.less';
+-
  /* this is included in cloudcare/preview_app.html */
  
 -@import "../../cloudcare/less/formplayer-common/mixins.less";

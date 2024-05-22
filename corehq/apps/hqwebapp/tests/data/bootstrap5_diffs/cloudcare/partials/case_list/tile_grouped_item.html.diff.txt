@@ -5,7 +5,7 @@
    <% if (isMultiSelect) { %>
      <div class="select-row-checkbox-div">
 -      <input type="checkbox" class="select-row-checkbox"/>
-+      <input type="checkbox" class="select-row-checkbox"/>  {# todo B5: css:checkbox #}
++      <input type="checkbox" class="select-row-checkbox form-check-input" />
      </div>
    <% } %>
  
@@ -15,14 +15,14 @@
              <button class="clickable-icon">
 -              <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" style="max-width:100%; max-height:100%;"/>
 -              <i class="fa fa-spin fa-spinner" style="display:none"></i>
-+              <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" style="max-width:100%; max-height:100%;"/>  {# todo B5: inline style #}
++              <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" />
 +              <i class="fa fa-spin fa-spinner" style="display:none"></i>  {# todo B5: inline style #}
              </button>
            <% } %>
            <% } else if (styles[index].displayFormat === 'Image') {
            if(resolveUri(datum)) { %>
 -            <img alt="<%- altText[index] %>" class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
-+            <img alt="<%- altText[index] %>" class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>  {# todo B5: inline style #}
++            <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
            <% } %>
            <% } else if(styles[index].widthHint === 0) { %>
 -            <div style="display:none;"><%- datum %></div>
@@ -35,14 +35,14 @@
                <% if (styles[index].displayFormat === 'Image') {
                  if(resolveUri(datum)) { %>
 -                  <img alt="<%- altText[index] %>" class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>
-+                  <img alt="<%- altText[index] %>" class="module-icon" style="max-width:100%; max-height:100%;" src="<%- resolveUri(datum) %>"/>  {# todo B5: inline style #}
++                  <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>"/>
                  <% } %>
                <% } else if (styles[index].displayFormat === 'ClickableIcon') {
                  if(resolveUri(datum)) { %>
                    <button class="clickable-icon">
 -                    <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" style="max-width:100%; max-height:100%;"/>
 -                    <i class="fa fa-spin fa-spinner" style="display:none"></i>
-+                    <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" style="max-width:100%; max-height:100%;"/>  {# todo B5: inline style #}
++                    <img alt="<%- altText[index] %>" class="module-icon" src="<%- resolveUri(datum) %>" />
 +                    <i class="fa fa-spin fa-spinner" style="display:none"></i>  {# todo B5: inline style #}
                    </button>
                  <% } %>

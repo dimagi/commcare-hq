@@ -20,11 +20,11 @@
 {% endblock %}
 
 {% block navigation %}{{ block.super }}
-  <div class="navbar navbar-inverse navbar-cloudcare navbar-static-top">  {# todo B5: css:navbar #}
+  <div class="navbar navbar-cloudcare">
     <div class="container-fluid">
-      <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> Web Apps</a>
-      <ul class="nav navbar-nav navbar-right" >  {# todo B5: css:nav #}
-        <li><a href="#" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
+      <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> {% trans "Web Apps" %}</a>
+      <ul class="nav navbar-nav navbar-right">
+        <li class="nav-item"><a href="#" class="nav-link" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
       </ul>
     </div>
   </div>
@@ -40,14 +40,14 @@
           rel="stylesheet"
           media="all"
           href="{% static 'cloudcare/scss/font-formplayer.scss' %}" />
-    <link type="text/less"
+    <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
-    <link type="text/less"
+          href="{% static 'cloudcare/scss/formplayer-common.scss' %}"/>
+    <link type="text/scss"
           rel="stylesheet"
           media="all"
-          href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
+          href="{% static 'cloudcare/scss/formplayer-webapp.scss' %}"/>
   {% endcompress %}
 {% endblock %}
 
@@ -68,7 +68,6 @@
   {% initial_page_data 'language' language %}
   {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
   {% initial_page_data 'default_geocoder_location' default_geocoder_location %}
-  {% initial_page_data 'single_app_mode' single_app_mode %}
   {% initial_page_data 'username' username %}
   {% initial_page_data 'has_geocoder_privs' has_geocoder_privs %}
   {% initial_page_data 'dialer_enabled' integrations.dialer_enabled %}
@@ -94,7 +93,6 @@
   <!-- For now we won't touch this since the form entry code is coupled with it  -->
 
   <div id="cloudcare-main" class="cloudcare-home-content">
-    <section id="case-crumbs" style="width: 800px"></section>  {# todo B5: inline style #}
     <section id="cases"></section>
     <div id="menu-container">
       <section id="formplayer-progress-container"></section>

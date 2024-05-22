@@ -14,6 +14,7 @@ class AppWorkflowConfigForm(forms.ModelForm):
     run_every = forms.IntegerField(min_value=1)
     username = forms.CharField(max_length=255, label="Username",
                                help_text="Username of the user to run the workflow")
+    har_file = forms.FileField(label="HAR File", required=False)
 
     class Meta:
         model = AppWorkflowConfig
@@ -49,6 +50,13 @@ class AppWorkflowConfigForm(forms.ModelForm):
             "notification_emails",
             hqcrispy.FormActions(
                 twbscrispy.StrictButton("Save", type='submit', css_class='btn-primary')
+            ),
+            "har_file",
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    "Import HAR", type='submit', css_class='btn-secondary', name="import_har", value="1",
+                    formnovalidate=True,
+                )
             ),
         )
 

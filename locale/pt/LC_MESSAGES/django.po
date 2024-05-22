@@ -1839,7 +1839,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_subscription_ending_reminder.html
-#: corehq/apps/sso/templates/sso/email/api_secret_expiring_reminder.html
 #: corehq/apps/sso/templates/sso/email/idp_cert_expiring_reminder.html
 #, python-format
 msgid ""
@@ -5409,33 +5408,6 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/apps_base.html
-msgid "New App Builder Officially Released"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/apps_base.html
-msgid ""
-"\n"
-"            After months of testing and feedback, we are happy to announce "
-"the\n"
-"            official release of the new CommCare App Builder. The previous "
-"App Builder\n"
-"            interface is now no longer available.\n"
-"          "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/apps_base.html
-#: corehq/apps/app_manager/templates/app_manager/managed_app.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/module_actions.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/form.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/form.html
-#: corehq/apps/domain/templates/domain/select_plan.html
-#: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/description.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/description.html
-msgid "Learn More"
-msgstr ""
-
 #: corehq/apps/app_manager/templates/app_manager/base_summary.html
 msgid "High Level Summary"
 msgstr ""
@@ -5452,13 +5424,11 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/base_summary.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap5/readable_form.html
 msgid "Labels"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/base_summary.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/readable_form.html
-#: corehq/apps/reports/templates/reports/form/partials/bootstrap5/readable_form.html
 msgid "Question IDs"
 msgstr ""
 
@@ -5827,18 +5797,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/languages.html
 msgid "Bulk Application Translations"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/managed_app.html
-msgid "New setting to hide translations"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/managed_app.html
-msgid ""
-"\n"
-"            Working with multiple languages but want to just focus on app "
-"building?\n"
-"          "
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/managed_app.html
@@ -6897,16 +6855,15 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
 #: corehq/apps/sms/templates/sms/global_gateway_list.html
-#: corehq/apps/translations/templates/app_translations.html
 #: corehq/apps/translations/templates/blacklist_translations.html
 #: corehq/apps/users/models.py
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
@@ -7595,7 +7552,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/add_ons.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_paginated_crud.html
-#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_paginated_crud.html
 #: corehq/apps/smsbillables/filters.py
 #: corehq/messaging/scheduling/templates/scheduling/schedule_instance_filter.html
 msgid "Show"
@@ -8593,7 +8549,6 @@ msgid "Search against the following case properties."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
-#: corehq/apps/users/forms.py
 msgid "Other Options"
 msgstr ""
 
@@ -9230,21 +9185,17 @@ msgid "Add Report"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_actions.html
-msgid "New feature to overwrite case lists/case details in bulk."
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/module_actions.html
-msgid ""
-"\n"
-"          Please select the case lists/detail menu(s) that needs to be "
-"overwritten.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/module_actions.html
 msgid ""
 "To save time when building large applications, it can be useful to copy one "
 "menu's entire case list or case details configuration to another menu."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/module_actions.html
+#: corehq/apps/domain/templates/domain/select_plan.html
+#: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/description.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/description.html
+msgid "Learn More"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_actions.html
@@ -9624,21 +9575,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
-msgid "Updates to Publishing Apps"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
-msgid ""
-"\n"
-"          Instead of starring versions of your app, you can now mark them\n"
-"          as \"Released\" or \"In Test.\" \"Released\" has the same effect "
-"as\n"
-"          starring a version.  Any version you do not mark as \"Released\"\n"
-"          will default to \"In Test.\"\n"
-"        "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Versions"
 msgstr ""
 
@@ -9791,8 +9727,9 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal_sms.html
 #: corehq/apps/groups/templates/groups/group_members.html
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 msgid "SMS charges will incur."
 msgstr ""
@@ -10018,21 +9955,6 @@ msgid "User Interface Translations"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-msgid "New Add-ons tab"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-msgid ""
-"\n"
-"        Intermediate functionality, such as child cases, can now be enabled "
-"or disabled using the\n"
-"        <strong>Add-Ons</strong> tab below. Several feature previews, such "
-"as icons in the case list,\n"
-"        are also now accessible in this tab.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 msgid "Linked Application"
 msgstr ""
 
@@ -10090,8 +10012,7 @@ msgstr ""
 #: corehq/apps/reports/filters/users.py corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/bootstrap3/tableau_visualization.html
 #: corehq/apps/reports/templates/reports/bootstrap5/tableau_visualization.html
-#: corehq/apps/translations/templates/app_translations.html
-#: corehq/apps/users/models.py
+#: corehq/apps/users/forms.py corehq/apps/users/models.py
 #: corehq/messaging/scheduling/templates/scheduling/dashboard.html
 msgid "Update"
 msgstr ""
@@ -12238,7 +12159,6 @@ msgid "Sync User Data"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap3/list.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap5/list.html
 msgid "Scroll to bottom"
 msgstr ""
 
@@ -12308,22 +12228,6 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/form.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/form.html
 msgid "An answer is required."
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/form.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/form.html
-msgid "Navigate Across Required Questions"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/form.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/form.html
-msgid ""
-"\n"
-"              You can use this button to navigate between questions that are "
-"required but missing or that contain errors.\n"
-"              You will also see a summary of questions that need attention "
-"at the bottom of the form.\n"
-"            "
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/form.html
@@ -12780,8 +12684,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"          %(entity_string)s Property\n"
-"        "
+"        %(entity_string)s Property\n"
+"      "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
@@ -12792,50 +12696,50 @@ msgstr ""
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 msgid ""
 "\n"
-"                              The unique ID you can use to reference this "
+"                            The unique ID you can use to reference this "
 "property\n"
-"                              in the application builder. The property may "
+"                            in the application builder. The property may "
 "not\n"
-"                              contain spaces.\n"
-"                            "
+"                            contain spaces.\n"
+"                          "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #, python-format
 msgid ""
 "\n"
-"                              The field label that users will see when "
-"adding or editing\n"
-"                              a %(entity_string)s in CommCare HQ.\n"
-"                            "
+"                            The field label that users will see when adding "
+"or editing\n"
+"                            a %(entity_string)s in CommCare HQ.\n"
+"                          "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #, python-format
 msgid ""
 "\n"
-"                              A value for this field must be provided when "
+"                            A value for this field must be provided when "
 "creating or\n"
-"                              editing a %(entity_string)s.  Bulk import will "
+"                            editing a %(entity_string)s.  Bulk import will "
 "fail\n"
-"                              unless this field is provided.\n"
-"                            "
+"                            unless this field is provided.\n"
+"                          "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #, python-brace-format
 msgid ""
 "\n"
-"                                Specify a means of validating user input to "
+"                              Specify a means of validating user input to "
 "this field.\n"
-"                                You can provide a drop-down list of choices "
-"or specify\n"
-"                                a regular expression to be applied to the "
+"                              You can provide a drop-down list of choices or "
+"specify\n"
+"                              a regular expression to be applied to the "
 "input. For\n"
-"                                example, ^[1-9]{10}$ will match only 10 "
+"                              example, ^[1-9]{10}$ will match only 10 "
 "character\n"
-"                                numeric input.\n"
-"                              "
+"                              numeric input.\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
@@ -12845,10 +12749,10 @@ msgstr ""
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 msgid ""
 "\n"
-"                                Provides a drop-down list of choices for "
-"this field\n"
-"                                instead of free text entry.\n"
-"                              "
+"                              Provides a drop-down list of choices for this "
+"field\n"
+"                              instead of free text entry.\n"
+"                            "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
@@ -12884,6 +12788,23 @@ msgid ""
 "            will be removed the next time the %(entity_string)s is saved.\n"
 "          </p>\n"
 "        "
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_edit.html
+msgid "Unlock Linked Fields?"
+msgstr ""
+
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_edit.html
+msgid ""
+"\n"
+"                <p>Linked Fields are fields that are controlled by a "
+"separate project space linked to this project.\n"
+"                    Click here to learn more.</p>\n"
+"                <p>Changes made to Linked Fields may be overwritten by the "
+"next updates from the linked project space,\n"
+"                    and may also affect solutions on this project space.</"
+"p>\n"
+"              "
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_edit.html
@@ -12943,41 +12864,6 @@ msgid ""
 "            <a href=\"https://forum.dimagi.com/\"\n"
 "               target=\"_blank\">CommCare User Forums</a>.\n"
 "          "
-msgstr ""
-
-#: corehq/apps/dashboard/templates/dashboard/base.html
-msgid "Check out the new Dashboard for Messaging!"
-msgstr ""
-
-#: corehq/apps/dashboard/templates/dashboard/base.html
-msgid ""
-"Have you ever needed to find a form or a case by its ID? Check out the new "
-"\"Find Data by ID\" page!"
-msgstr ""
-
-#: corehq/apps/dashboard/templates/dashboard/base.html
-msgid ""
-"\n"
-"          We have improved our Web User Roles and Permissions to give you "
-"more control on your project space. Check it out!\n"
-"        "
-msgstr ""
-
-#: corehq/apps/dashboard/templates/dashboard/base.html
-msgid ""
-"\n"
-"          Ever wanted to explore your case data right within CommCare?\n"
-"          Check out our new feature!\n"
-"        "
-msgstr ""
-
-#: corehq/apps/dashboard/templates/dashboard/base.html
-msgid ""
-"\n"
-"          Analyze your data in Power BI and Tableau! Easily connect "
-"CommCare\n"
-"          to both Power BI and Tableau with the new OData feed integration.\n"
-"        "
 msgstr ""
 
 #: corehq/apps/dashboard/views.py
@@ -14186,8 +14072,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
@@ -14199,6 +14084,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -14212,8 +14098,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 msgid "Activate"
@@ -14222,8 +14107,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -18993,9 +18877,7 @@ msgstr ""
 
 #: corehq/apps/events/templates/event_attendees.html
 #: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py
-#: corehq/apps/translations/templates/app_translations.html
-#: corehq/apps/users/models.py
+#: corehq/apps/reports/filters/users.py corehq/apps/users/models.py
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid "Create"
 msgstr ""
@@ -20100,12 +19982,6 @@ msgid ""
 "            <a href=\"https://www.commcarehq.org/pricing/\" "
 "target=\"_blank\">plan level</a>.\n"
 "          "
-msgstr ""
-
-#: corehq/apps/export/templates/export/export_list.html
-msgid ""
-"Now access forms and cases directly from your exports. Check out the new "
-"\"form_link\" and \"case_link\" fields in your export settings!"
 msgstr ""
 
 #: corehq/apps/export/templates/export/partials/customize_export_header.html
@@ -22034,6 +21910,15 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/templates/case_grouping_map.html
+msgid ""
+"\n"
+"      There are too many polygons on the map. Please remove some before "
+"refreshing the page, otherwise the\n"
+"      newly added polygons will be lost.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/case_grouping_map.html
 msgid "Summary of Case Grouping"
 msgstr ""
 
@@ -22300,6 +22185,7 @@ msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
 #: corehq/apps/reports/filters/users.py
+#: corehq/apps/reports/standard/monitoring.py
 #: corehq/apps/reports/templates/reports/project_health/bootstrap3/user_details.html
 #: corehq/apps/reports/templates/reports/project_health/bootstrap5/user_details.html
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
@@ -22372,6 +22258,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/all_groups.html
+msgid "Case Sharing Group"
+msgstr ""
+
+#: corehq/apps/groups/templates/groups/all_groups.html
 msgid "Case Sharing Groups"
 msgstr ""
 
@@ -22419,13 +22309,6 @@ msgid "Editing Group"
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/group_members.html
-#, python-format
-msgid "%(num_users)s member"
-msgid_plural "%(num_users)s members"
-msgstr[0] ""
-msgstr[1] ""
-
-#: corehq/apps/groups/templates/groups/group_members.html
 msgid ""
 "\n"
 "        This group has been deleted already.\n"
@@ -22456,22 +22339,6 @@ msgid "Edit Settings"
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/group_members.html
-#, python-format
-msgid ""
-"\n"
-"            Delete Group \"%(group_name)s\"\n"
-"          "
-msgstr ""
-
-#: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-msgid ""
-"Send a verification SMS to this phone. When the user replies to this SMS, "
-"the phone number will be verified."
-msgstr ""
-
-#: corehq/apps/groups/templates/groups/group_members.html
 msgid "Verify Phone Numbers"
 msgstr ""
 
@@ -22484,14 +22351,24 @@ msgid ""
 "\n"
 "                        For all active mobile workers in this group, and for "
 "each phone number, this will\n"
-"                        initiate an SMS verification workflow. If the phone "
-"number is already verified or\n"
+"                        initiate an SMS verification workflow. When a user "
+"replies to the SMS< their phone\n"
+"                        number will be verified.<br><br>If the phone number "
+"is already verified or\n"
 "                        if the phone number is already in use by another "
 "contact in the system, nothing\n"
 "                        will happen. If the phone number is pending "
 "verification, the verification SMS\n"
 "                        will be resent.\n"
 "                        "
+msgstr ""
+
+#: corehq/apps/groups/templates/groups/group_members.html
+#, python-format
+msgid ""
+"\n"
+"            Delete Group \"%(group_name)s\"\n"
+"          "
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/group_members.html
@@ -22505,15 +22382,11 @@ msgid "Group Data"
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/group_members.html
-msgid "View Group Membership"
-msgstr ""
-
-#: corehq/apps/groups/templates/groups/group_members.html
 msgid ""
 "\n"
-"                      No Mobile Workers are currently assigned to this "
-"group.\n"
-"                    "
+"                <p>No Mobile Workers are currently assigned to this group.</"
+"p>\n"
+"              "
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/group_members.html
@@ -22533,15 +22406,7 @@ msgid "Updating Group Membership, please wait..."
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/group_members.html
-msgid "View Group Data"
-msgstr ""
-
-#: corehq/apps/groups/templates/groups/group_members.html
 msgid "No Data Provided"
-msgstr ""
-
-#: corehq/apps/groups/templates/groups/group_members.html
-msgid "Edit Group Data"
 msgstr ""
 
 #: corehq/apps/groups/templates/groups/group_members.html
@@ -22636,9 +22501,9 @@ msgid ""
 "longer supports\n"
 "        Case Sharing Groups. Editing this group will be disabled until you "
 "either upgrade to our Pro plan or\n"
-"        <a href=\"#disableCaseSharing\"\n"
-"           data-toggle=\"modal\">change the group type to <strong>Reporting "
-"Group</strong> only</a>.\n"
+"        <a href=\"#\" data-bs-target=\"#disableCaseSharing\"\n"
+"           data-bs-toggle=\"modal\">change the group type to "
+"<strong>Reporting Group</strong> only</a>.\n"
 "      "
 msgstr ""
 
@@ -25225,10 +25090,6 @@ msgctxt "twilio_locale"
 msgid "en"
 msgstr ""
 
-#: corehq/apps/hqwebapp/utils/bootstrap/changes_guide/checkbox.txt
-msgid "Create new records"
-msgstr ""
-
 #: corehq/apps/hqwebapp/views.py
 #, python-format
 msgid "Welcome back to %s!"
@@ -25409,7 +25270,7 @@ msgid "Enter the base URL for callouts that should be signed"
 msgstr ""
 
 #: corehq/apps/integration/forms.py corehq/apps/settings/views.py
-#: corehq/apps/users/forms.py corehq/messaging/smsbackends/telerivet/forms.py
+#: corehq/messaging/smsbackends/telerivet/forms.py
 #: corehq/messaging/smsbackends/trumpia/forms.py
 msgid "API Key"
 msgstr ""
@@ -26394,6 +26255,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/locations/bulk_management.py
+#, python-brace-format
+msgid ""
+"Cannot delete location type '{deleted_type.code}'. It is referenced by the "
+"type "
+msgstr ""
+
+#: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
 msgstr ""
 
@@ -26797,6 +26665,18 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
+msgid "View Child Data to Level"
+msgstr ""
+
+#: corehq/apps/locations/templates/locations/location_types.html
+msgid ""
+"\n"
+"                          <p>Only include cases that show up in the user's "
+"restore file down to this level (inclusive).</p>\n"
+"                      "
+msgstr ""
+
+#: corehq/apps/locations/templates/locations/location_types.html
 msgid "This field must be unique"
 msgstr ""
 
@@ -27195,19 +27075,6 @@ msgstr ""
 #: corehq/apps/notifications/templates/notifications/partials/bootstrap3/global_notifications.html
 #: corehq/apps/notifications/templates/notifications/partials/bootstrap5/global_notifications.html
 msgid "Please see our blog for service updates."
-msgstr ""
-
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/report_builder_v2_oct2017.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/report_builder_v2_oct2017.html
-msgid ""
-"\n"
-"    Try Out Our New Report Builder!\n"
-"  "
-msgstr ""
-
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap3/report_builder_v2_oct2017.html
-#: corehq/apps/notifications/templates/notifications/partials/bootstrap5/report_builder_v2_oct2017.html
-msgid "Read More"
 msgstr ""
 
 #: corehq/apps/notifications/views.py
@@ -30457,8 +30324,9 @@ msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid ""
-"This report currently does not support case sharing. There might be "
-"inconsistencies in case totals if the user is part of a case sharing group."
+"Note that when viewing this report by group it will only include cases which "
+"are assigned to a Case Sharing Group/Location. To learn more about Case "
+"Sharing click <a href='{}' target='blank'>here</a>."
 msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
@@ -30467,6 +30335,10 @@ msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "Ever"
+msgstr ""
+
+#: corehq/apps/reports/standard/monitoring.py
+msgid "All Groups"
 msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
@@ -31687,6 +31559,10 @@ msgstr ""
 msgid "…"
 msgstr ""
 
+#: corehq/apps/reports/templates/reports/form/partials/bootstrap5/readable_form.html
+msgid "Show question ids"
+msgstr ""
+
 #: corehq/apps/reports/templates/reports/messaging/bootstrap3/event_detail.html
 #: corehq/apps/reports/templates/reports/messaging/bootstrap5/event_detail.html
 msgid "Processed Date"
@@ -32731,50 +32607,6 @@ msgstr ""
 msgid "Your Identity Provider does not allow expiration dates beyond {}"
 msgstr ""
 
-#: corehq/apps/settings/templates/settings/bootstrap3/edit_my_account.html
-#: corehq/apps/settings/templates/settings/bootstrap5/edit_my_account.html
-#: corehq/tabs/tabclasses.py
-msgid "My Settings"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/bootstrap3/edit_my_account.html
-#: corehq/apps/settings/templates/settings/bootstrap5/edit_my_account.html
-#: corehq/apps/sms/forms.py
-#: corehq/apps/users/templates/users/edit_web_user.html
-#: corehq/apps/users/templates/users/web_users.html
-msgid "Phone Numbers"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-msgid "Copy Full Key"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-msgid "Inctive"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-#: corehq/apps/users/templates/users/web_users.html
-msgid "Expired"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-msgid "Delete Key"
-msgstr ""
-
-#: corehq/apps/settings/templates/settings/bootstrap3/user_api_keys.html
-#: corehq/apps/settings/templates/settings/bootstrap5/user_api_keys.html
-msgid ""
-"\n"
-"                  Deleting this key will prevent any future API requests "
-"that use this key. This action cannot be undone. Are you sure?\n"
-"                "
-msgstr ""
-
 #: corehq/apps/settings/templates/settings/change_my_password.html
 msgid ""
 "\n"
@@ -32790,6 +32622,18 @@ msgid ""
 "        Please see your organization's documentation for how to change\n"
 "        your Single Sign-On password.\n"
 "      "
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/edit_my_account.html
+#: corehq/tabs/tabclasses.py
+msgid "My Settings"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/edit_my_account.html
+#: corehq/apps/sms/forms.py
+#: corehq/apps/users/templates/users/edit_web_user.html
+#: corehq/apps/users/templates/users/web_users.html
+msgid "Phone Numbers"
 msgstr ""
 
 #: corehq/apps/settings/templates/settings/email/about_to_expire_api_key.html
@@ -32873,6 +32717,27 @@ msgstr ""
 
 #: corehq/apps/settings/templates/settings/my_projects.html
 msgid "Create a New Project"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+msgid "Copy Full Key"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/web_users.html
+msgid "Expired"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+msgid "Delete Key"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+msgid ""
+"\n"
+"                  Deleting this key will prevent any future API requests "
+"that use this key. This action cannot be undone. Are you sure?\n"
+"                "
 msgstr ""
 
 #: corehq/apps/settings/validators.py
@@ -35085,6 +34950,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/sso/tasks.py
+msgid "We encountered an issue when connecting to your Microsoft Graph API: "
+msgstr ""
+
+#: corehq/apps/sso/tasks.py
 msgid "We encountered an unknown issue, please contact Commcare HQ Support."
 msgstr ""
 
@@ -35649,12 +35518,6 @@ msgstr ""
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid ""
-"CommCare HQ Alert: SSO Remote User Management - Issue Connecting to "
-"Microsoft Graph API"
-msgstr ""
-
-#: corehq/apps/sso/utils/context_helpers.py
-msgid ""
 "CommCare HQ Alert: Temporarily skipped automatic deactivation of SSO Web "
 "Users (Remote User Management)"
 msgstr ""
@@ -36028,6 +35891,7 @@ msgid "Enable Tracking"
 msgstr ""
 
 #: corehq/apps/styleguide/examples/bootstrap5/switch_form.py
+#: corehq/apps/users/forms.py
 msgid "Allow Dimagi to collect usage information to improve CommCare."
 msgstr ""
 
@@ -36490,7 +36354,10 @@ msgid "Version not available for app"
 msgstr ""
 
 #: corehq/apps/translations/forms.py
-msgid "Target lang required to confirm translation completion"
+msgid ""
+"Check this if you want to update an existing resource, instead of creating "
+"new ones. If you submit this form without this check, duplicate resources "
+"may be created."
 msgstr ""
 
 #: corehq/apps/translations/forms.py
@@ -36645,6 +36512,30 @@ msgid "Source lang selected not available for the project"
 msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
+#: corehq/tabs/tabclasses.py
+msgid "Create or Update Translations"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py
+#: corehq/tabs/tabclasses.py
+msgid "Push Translations"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py
+#: corehq/tabs/tabclasses.py
+msgid "Pull Translations"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py
+#: corehq/tabs/tabclasses.py
+msgid "Backup Translations"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py
+msgid "Delete Translations"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py
 #: corehq/apps/translations/templates/download_translations.html
 #: corehq/tabs/tabclasses.py
 msgid "Download Translations"
@@ -36667,23 +36558,14 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
-msgid "Push"
+msgid "Set Up or Update Resource"
 msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
-msgid "Pull"
-msgstr ""
-
-#: corehq/apps/translations/templates/app_translations.html
-msgid "BackUp"
-msgstr ""
-
-#: corehq/apps/translations/templates/app_translations.html
-msgid "Set Up New Project"
-msgstr ""
-
-#: corehq/apps/translations/templates/app_translations.html
-msgid "Update Source Files"
+msgid ""
+"\n"
+"              Create a new resource or update an existing one in Transifex.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
@@ -36691,19 +36573,45 @@ msgid "Push Target Language"
 msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
+msgid ""
+"\n"
+"              Push translations for a target language to Transifex.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/translations/templates/app_translations.html
 msgid "Pull App Translations"
 msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
-msgid "BackUp Translations"
+msgid ""
+"\n"
+"              Pull all translations for a selected language, which will be "
+"emailed to you as an Excel file.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
-msgid "Delete Project"
+msgid "Backup App Translations"
 msgstr ""
 
 #: corehq/apps/translations/templates/app_translations.html
-msgid "Action permitted to only users with staff access"
+msgid ""
+"\n"
+"              Pull all translations for all languages in the project, which "
+"will be emailed to you as a zip file.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/translations/templates/app_translations.html
+msgid "Delete Project Resources"
+msgstr ""
+
+#: corehq/apps/translations/templates/app_translations.html
+msgid ""
+"\n"
+"                Delete all resources for the selected project. Use caution!\n"
+"              "
 msgstr ""
 
 #: corehq/apps/translations/templates/blacklist_translations.html
@@ -36832,6 +36740,13 @@ msgid "You can only set 'Is Account Confirmed' to 'False' on a new User."
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
+msgid ""
+"Only users with 'Manage Tableau Configuration' edit permission can upload "
+"files with'Tableau Role and/or 'Tableau Groups' fields. Please remove those "
+"fields from your file."
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
 #, python-brace-format
 msgid ""
 "You cannot upload a web user without a role. {username} does not have a role"
@@ -36862,6 +36777,11 @@ msgstr ""
 
 #: corehq/apps/user_importer/importer.py
 msgid "You cannot remove yourself from a domain via bulk upload"
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
+#, python-brace-format
+msgid "{profile_name} is not a valid profile"
 msgstr ""
 
 #: corehq/apps/user_importer/tests/test_importer.py
@@ -38490,10 +38410,6 @@ msgid "This email is managed by {} and cannot be edited."
 msgstr ""
 
 #: corehq/apps/users/forms.py
-msgid "API key management has moved <a href=\"{}\">here</a>."
-msgstr ""
-
-#: corehq/apps/users/forms.py
 msgid "Update My Information"
 msgstr ""
 
@@ -38641,6 +38557,10 @@ msgid "Primary Location must always be set to one of above locations"
 msgstr ""
 
 #: corehq/apps/users/forms.py
+msgid "You do not have permissions to assign one of those locations."
+msgstr ""
+
+#: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/domain_request.html
 #: corehq/apps/users/views/web.py
 msgid "Request Access"
@@ -38712,6 +38632,10 @@ msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid "* and ? are not allowed"
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid "You do not have permission to edit Tableau Configuraion."
 msgstr ""
 
 #: corehq/apps/users/landing_pages.py corehq/messaging/scheduling/views.py
@@ -39437,20 +39361,6 @@ msgid "However, we ran into problems with the following users:"
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-msgid "New feature: App User Profiles"
-msgstr ""
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid ""
-"\n"
-"          Save time when creating and updating users by creating App User "
-"Profiles! Eliminate the need\n"
-"                  to set every individual field for a user! Available "
-"through our Enterprise Subscription\n"
-"        "
-msgstr ""
-
-#: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
 "\n"
 "            Mobile Workers can log into applications in this project space "
@@ -39470,20 +39380,6 @@ msgid ""
 "Create+and+Manage+CommCare+Mobile+Workers\" target=\"_blank\">Help Site</"
 "a>.\n"
 "          "
-msgstr ""
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid "New feature: Project Spaces filter on Filtered Download"
-msgstr ""
-
-#: corehq/apps/users/templates/users/mobile_workers.html
-msgid ""
-"\n"
-"                Download mobile workers from all or a select number of "
-"project spaces\n"
-"                using the 'Project Spaces' filter on the 'Filter and "
-"Download Mobile Workers' page!\n"
-"              "
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
@@ -39705,7 +39601,6 @@ msgid "Update CommCare Supply Settings"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
 #, python-format
 msgid ""
 "Delete +%(number)s\n"
@@ -39739,10 +39634,66 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/bootstrap3/basic_info_modals.html
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
 msgid "Verify"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid "Registered Phone Numbers"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid "VERIFIED"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid "VERIFICATION PENDING"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid "ALREADY IN USE"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid "INVALID FORMAT"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid ""
+"Send a verification SMS to this phone. When the user replies to this SMS, "
+"the phone number will be verified."
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid "Verify (retry)"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap3/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/bootstrap5/manage_my_numbers.html
+#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
+msgid "Mark as primary"
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/bootstrap5/basic_info_modals.html
+#, python-format
+msgid "Delete +%(number)s ?"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/commcare_user_groups.html
@@ -39923,6 +39874,15 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                    With the current configuration, this role will have full "
+"organization access and roles that can assign it will not.\n"
+"                    This is not recommended.\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Login-As All Users"
 msgstr ""
 
@@ -39983,46 +39943,21 @@ msgid "Select which other roles can assign this role:"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
+msgid ""
+"\n"
+"                    If the highlighted roles are selected, this role will "
+"have full organization access and be assignable\n"
+"                    by a role that does not. This is not recommended "
+"configuration.\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Allow this role to manage project alerts."
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid "Please select at least one item."
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-msgid "Registered Phone Numbers"
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-msgid "VERIFIED"
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-msgid "VERIFICATION PENDING"
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-msgid "ALREADY IN USE"
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-msgid "INVALID FORMAT"
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-msgid "Verify (retry)"
-msgstr ""
-
-#: corehq/apps/users/templates/users/partials/manage_my_numbers.html
-#: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
-msgid "Mark as primary"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/manage_phone_numbers.html
@@ -40161,18 +40096,6 @@ msgid ""
 "      However, these users cannot submit forms from phones\n"
 "      using the %(cc_name)s Application.\n"
 "    "
-msgstr ""
-
-#: corehq/apps/users/templates/users/web_users.html
-msgid "New feature: Bulk Download for Web Users"
-msgstr ""
-
-#: corehq/apps/users/templates/users/web_users.html
-msgid ""
-"\n"
-"            Quickly and easily download web users into a file. Check it "
-"out!\n"
-"          "
 msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html corehq/tabs/tabclasses.py
@@ -40604,12 +40527,6 @@ msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Check your request: {}"
-msgstr ""
-
-#: corehq/apps/users/views/mobile/users.py
-msgid ""
-"This is a location user, archive or delete the corresponding location to "
-"deactivate it."
 msgstr ""
 
 #: corehq/apps/users/views/mobile/users.py
@@ -44669,10 +44586,6 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "View project spaces where users receive automatic access"
-msgstr ""
-
-#: corehq/tabs/tabclasses.py
-msgid "Manage App Translations"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py

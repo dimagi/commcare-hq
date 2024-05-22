@@ -145,7 +145,9 @@ hqDefine("users/js/web_users",[
     };
 
     $(function () {
-        $("#invitations-panel").koApplyBindings(invitationsList(initialPageData.get('invitations')));
+        if (initialPageData.get('invitations').length !== 0) {
+            $("#invitations-panel").koApplyBindings(invitationsList(initialPageData.get('invitations')));
+        }
     });
 
     /* "Copy and paste admin emails" panel */

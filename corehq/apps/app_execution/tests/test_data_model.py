@@ -34,7 +34,11 @@ def _get_workflow_json():
     return {
         "steps": [
             {"type": "command", "value": "Case Search"},
-            {"type": "query", "inputs": {"first_name": "query value", "last_name": "query value"}},
+            {
+                "type": "query",
+                "inputs": {"first_name": "query value", "last_name": "query value"},
+                "validate_inputs": False,
+            },
             {"type": "entity_select", "value": "123"},
             {"type": "command", "value": "Followup Case"},
             {

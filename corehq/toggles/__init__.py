@@ -1026,17 +1026,6 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
-NO_SCROLL_IN_CASE_SEARCH = StaticToggle(
-    'no_scroll_in_case_search',
-    "Do not use scroll queries in case search elasticsearch queries",
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    This toggle replaces scroll queries in case search ancestor functions with
-    normal search queries.
-    """
-)
-
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
@@ -1175,6 +1164,14 @@ EXPLORE_CASE_DATA = StaticToggle(
     'the Case List Explorer toggle or doing a manual migration.\n\n'
     'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
     'This will be deprecated once the Feature Preview is in full swing.',
+)
+
+SAAS_PROTOTYPE = StaticToggle(
+    'saas_prototype',
+    'Use allowed to view SaaS prototypes',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+    description='Use this for rapid prototypes developed by the SaaS product team.',
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(
@@ -1643,6 +1640,21 @@ DATA_MIGRATION = StaticToggle(
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN]
 )
+
+
+DISABLE_MOBILE_ENDPOINTS = StaticToggle(
+    'disable_mobile_endpoints',
+    'Disable mobile endpoints for form submissions and restores',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "This flag disables endpoints used by CommCare Mobile to submit forms "
+        "and sync cases, etc. It does NOT block web access. It does NOT "
+        "prevent data changes by case edits, data forwarding, etc. To do "
+        "that, use the DATA_MIGRATION feature flag."
+    )
+)
+
 
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
@@ -2558,6 +2570,17 @@ ES_QUERY_PREFERENCE = StaticToggle(
     description="""
     When enabled, ES queries for this domain will be routed to the same shards for every request. This helps
     ES queries take advantage of caching on ES nodes.
+    """
+)
+
+RESTORE_ACCESSIBLE_REPORTS_ONLY = StaticToggle(
+    'restore_accessible_reports_only',
+    'Only restore reports in apps that are accessible to the restoring user',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    This is an optimization for web apps restores that limits the number of mobile reports included in the restore
+    based on which apps the user can access.
     """
 )
 

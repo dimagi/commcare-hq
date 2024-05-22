@@ -46,6 +46,14 @@ class AppWorkflowConfig(models.Model):
         app = get_brief_app(self.domain, self.app_id)
         return app.name
 
+    @property
+    def workflow_json(self):
+        return AppWorkflowConfig.workflow_object_to_json_string(self.workflow)
+
+    @staticmethod
+    def workflow_object_to_json_string(workflow):
+        return AppWorkflowConfig._meta.get_field("workflow").formfield().prepare_value(workflow)
+
     def get_formplayer_session(self):
         client = LocalUserClient(
             domain=self.domain,
@@ -53,3 +61,20 @@ class AppWorkflowConfig(models.Model):
             user_id=self.user_id
         )
         return FormplayerSession(client, self.app_id, self.form_mode, self.sync_before_run)
+
+
+class AppExecutionLog(models.Model):
+    workflow = models.ForeignKey(AppWorkflowConfig, on_delete=models.CASCADE)
+    started = models.DateTimeField(auto_now_add=True)
+    completed = models.DateTimeField(null=True, blank=True)
+    success = models.BooleanField(default=False)
+    output = models.TextField(blank=True)
+    error = models.TextField(blank=True)
+
+    @property
+    def duration(self):
+        if self.completed:
+            return self.completed - self.started
+
+    def __str__(self):
+        return f"{self.workflow.name} - {self.started}"

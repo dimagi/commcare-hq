@@ -1799,6 +1799,7 @@ msgid "Use of each question"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list.js
 msgid "Close"
 msgstr ""
@@ -3893,6 +3894,12 @@ msgstr ""
 msgid "Choose a primary location"
 msgstr ""
 
+#: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
+msgid ""
+"Could not load data. Please try again later or report an issue if this "
+"problem persists."
+msgstr ""
+
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
@@ -4665,6 +4672,20 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Mobile Workers"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
+"configuration for web users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View tableau configuration for web users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only tableau configuration for web users"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js

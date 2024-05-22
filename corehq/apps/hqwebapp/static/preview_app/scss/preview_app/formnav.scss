@@ -4,7 +4,7 @@
   text-transform: uppercase;
   padding: 8px 10px;
   border: none;
-  .transition(all $transition-speed);
+  transition: all $transition-speed;
 
   border-radius: 0;
 }
