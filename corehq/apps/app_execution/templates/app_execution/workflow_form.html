@@ -27,9 +27,11 @@
         </div>
         <div data-bind="visible: simpleMode">
           {{ form.workflow_simple }}
+          <a href="#TODO" target="_blank">Help</a>
         </div>
         <div data-bind="css: {'d-none': simpleMode}" class="d-none">
           {{ form.workflow }}
+          <a href="#TODO" target="_blank">Help</a>
         </div>
         {{ form.workflow_simple.errors }}
         {{ form.workflow.errors }}
