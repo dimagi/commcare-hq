@@ -178,7 +178,8 @@ def get_primary_case_search_results(helper, case_types, criteria, commcare_sort=
 
 
 def _get_helper(couch_user, domain, case_types, registry_slug):
-    helper = QueryHelper(domain)
+    allow = couch_user and toggles.PILOT_DEDICATED_CASE_SEARCH_INDEX.enabled(couch_user.username)
+    helper = QueryHelper(domain, allow_dedicated_index=allow)
     if registry_slug:
         try:
             registry_helper = DataRegistryHelper(domain, registry_slug=registry_slug)
@@ -191,12 +192,15 @@ def _get_helper(couch_user, domain, case_types, registry_slug):
 
 
 class QueryHelper:
-    def __init__(self, domain):
+    def __init__(self, domain, allow_dedicated_index=False):
         self.domain = domain
+        self._allow_dedicated_index = allow_dedicated_index
         self.profiler = CaseSearchProfiler()
 
     def get_base_queryset(self):
-        return CaseSearchES(index=self.config.index_name or None).domain(self.domain)
+        if self._allow_dedicated_index:
+            return CaseSearchES(index=self.config.index_name or None).domain(self.domain)
+        return CaseSearchES().domain(self.domain)
 
     def wrap_case(self, es_hit, include_score=False):
         return wrap_case_search_hit(es_hit, include_score=include_score)

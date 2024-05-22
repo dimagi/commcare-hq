@@ -427,7 +427,7 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
 
 
 def test_use_custom_index():
-    helper = QueryHelper(DOMAIN)
+    helper = QueryHelper(DOMAIN, allow_dedicated_index=True)
     helper.config = CaseSearchConfig(domain=DOMAIN, index_name="my_test_index")
     with patch('corehq.apps.es.es_query.doc_adapter_from_cname') as get_adapter:
         helper.get_base_queryset()

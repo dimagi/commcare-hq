@@ -1012,6 +1012,18 @@ CASE_SEARCH_INDEXED_METADATA = StaticToggle(
     """
 )
 
+PILOT_DEDICATED_CASE_SEARCH_INDEX = StaticToggle(
+    'PILOT_DEDICATED_CASE_SEARCH_INDEX',
+    "Pilot test the new dedicated case search index",
+    TAG_INTERNAL,
+    description="""
+    When enabled for a particular user, that user's case search requests will
+    go to a dedicated case search index, if configured for the domain. This
+    will let us test out the new index on a per-user basis before enabling it
+    for everyone.
+    """
+)
+
 USH_CASE_CLAIM_UPDATES = StaticToggle(
     'case_claim_autolaunch',
     "USH Specific toggle to support several different case search/claim workflows in web apps",
