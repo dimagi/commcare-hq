@@ -399,6 +399,28 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     };
 
     /**
+     * Remove all nodes from the root that share the same prefix in the ix as the deleted repeat
+     * group. Changes the rootNode in place.
+     *
+     * @param rootNode
+     * @param deletedGroupIx
+     */
+    function removeSiblingsOfRepeatGroup(rootNode, deletedGroupIx) {
+        const ixParts = deletedGroupIx.split(",");
+        let parentOfDeletedGroup = rootNode;
+        for (let i = 0; i < ixParts.length - 1; i++) {
+            parentOfDeletedGroup = parentOfDeletedGroup.children.find(c => c.ix.endsWith(ixParts[i]));
+        }
+        const siblingsOfDeletedGroup = parentOfDeletedGroup.children;
+        const lastPart = ixParts[ixParts.length - 1];
+        const lastPartPrefix = lastPart.substr(0, lastPart.lastIndexOf("_") + 1);
+        parentOfDeletedGroup.children = siblingsOfDeletedGroup.filter(function (c) {
+            const childIxParts = c.ix.split(",");
+            return !childIxParts[childIxParts.length - 1].startsWith(lastPartPrefix);
+        });
+    }
+
+    /**
      * Represents the entire form. There is only one of these on a page.
      * @param {Object} json - The JSON returned from touchforms to represent a Form
      */
@@ -624,24 +646,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 const allChildren = response.tree;
                 delete response.tree;
 
-                // this argument is only set for responses from delete-repeat
-                // because ko.mapping does not like reassigning keys we need to remove all repeat group siblings and
-                // add them back in to force proper refresh. Setting reponse.children to [] would also work but was
-                // quite slow for larger forms.
                 if (deletedGroup) {
-                    const ixParts = deletedGroup.split(",");
+                    // deletedGroup is only set for responses from delete-repeat.
+                    // because ko.mapping does not like reassigning keys we need to remove all repeat group siblings and
+                    // add them back in to force proper refresh. Setting response.children to [] would also work but was
+                    // quite slow for larger forms.
+                    // self.fromJS makes changes to the response. So create a copy first.
                     response.children = JSON.parse(JSON.stringify(allChildren));
-                    let parentOfDeletedGroup = response;
-                    for (let i = 0; i < ixParts.length - 1; i++) {
-                        parentOfDeletedGroup = parentOfDeletedGroup.children.find(c => c.ix.endsWith(ixParts[i]));
-                    }
-                    const siblingsOfDeletedGroup = parentOfDeletedGroup.children;
-                    const lastPart = ixParts[ixParts.length - 1];
-                    const lastPartPrefix = lastPart.substr(0, lastPart.lastIndexOf("_") + 1);
-                    parentOfDeletedGroup.children = siblingsOfDeletedGroup.filter(function (c) {
-                        const childIxParts = c.ix.split(",");
-                        return !childIxParts[childIxParts.length - 1].startsWith(lastPartPrefix);
-                    });
+                    removeSiblingsOfRepeatGroup(response, deletedGroup);
                     self.fromJS(response);
                 }
 
@@ -1090,5 +1102,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             return new Question(json, parent);
         },
         Repeat: Repeat,
+        removeSiblingsOfRepeatGroup: removeSiblingsOfRepeatGroup,
     };
 });
