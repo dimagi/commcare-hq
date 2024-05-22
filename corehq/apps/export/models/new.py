@@ -126,6 +126,10 @@ from corehq.apps.userreports.util import get_indicator_adapter
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
+GPS_SPLIT_COLUMN_LATITUDE_TEMPLATE = '{}: latitude (degrees)'
+GPS_SPLIT_COLUMN_LONGITUDE_TEMPLATE = '{}: longitude (degrees)'
+GPS_SPLIT_COLUMN_ALTITUDE_TEMPLATE = '{}: altitude (meters)'
+GPS_SPLIT_COLUMN_ACCURACY_TEMPLATE = '{}: accuracy (meters)'
 
 ExcelFormatValue = namedtuple('ExcelFormatValue', 'format value')
 
@@ -834,12 +838,6 @@ class ExportInstance(BlobMixin, Document):
     @classmethod
     def wrap(cls, data):
         from corehq.apps.export.views.utils import clean_odata_columns
-        # This is a temporary solution to make sure geojson exports have split_multiselects set to false,
-        # otherwise it won't work. Ticket SC-3569 is for making geojson form exports compatible with
-        # the split_multiselects option.
-        if data.get('export_format', '') == 'geojson':
-            data['split_multiselects'] = False
-
         export_instance = super(ExportInstance, cls).wrap(data)
         if export_instance.is_odata_config:
             clean_odata_columns(export_instance)
@@ -2809,14 +2807,18 @@ class SplitGPSExportColumn(ExportColumn):
     def get_headers(self, split_column=False):
         if not split_column:
             return super(SplitGPSExportColumn, self).get_headers()
+
         header = self.label
-        header_templates = [
-            _('{}: latitude (degrees)'),
-            _('{}: longitude (degrees)'),
-            _('{}: altitude (meters)'),
-            _('{}: accuracy (meters)'),
+        return [header_template.format(header) for header_template in self.split_column_header_templates]
+
+    @property
+    def split_column_header_templates(self):
+        return [
+            _(GPS_SPLIT_COLUMN_LATITUDE_TEMPLATE),
+            _(GPS_SPLIT_COLUMN_LONGITUDE_TEMPLATE),
+            _(GPS_SPLIT_COLUMN_ALTITUDE_TEMPLATE),
+            _(GPS_SPLIT_COLUMN_ACCURACY_TEMPLATE),
         ]
-        return [header_template.format(header) for header_template in header_templates]
 
     def get_value(self, domain, doc_id, doc, base_path, split_column=False, **kwargs):
         coord_string = super().get_value(
