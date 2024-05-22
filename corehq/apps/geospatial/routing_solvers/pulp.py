@@ -33,7 +33,7 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
 
         return distance_matrix
 
-    def solve(self, config, print_solution=False):
+    def solve(self, config):
         costs = self.calculate_distance_matrix(config)
         user_count = len(costs)
         case_count = len(costs[0])
@@ -73,20 +73,13 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         # Process the solution
         if pulp.LpStatus[problem.status] == "Optimal":
             solution = {loc['id']: [] for loc in self.user_locations}
-            if print_solution:
-                print(f"Total cost = {pulp.value(problem.objective)}\n")
+
             for i in range(user_count):
                 for j in range(case_count):
                     if pulp.value(decision_variables[i, j]) > 0.5:
                         solution[self.user_locations[i]['id']].append(self.case_locations[j]['id'])
-                        if print_solution:
-                            print(f"Case {self.case_locations[j]['id']} assigned to "
-                                  f"user {self.user_locations[i]['id']}. "
-                                  f"Cost: {costs[i][j]}")
             return None, solution
 
-        if print_solution:
-            print("No solution found.")
         return None, None
 
     @staticmethod
