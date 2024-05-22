@@ -50,8 +50,8 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
             decision_variables=decision_variables,
             user_count=user_count,
             case_count=case_count,
-            min_cases=config.min_cases_per_group,
-            max_cases=config.max_cases_per_group,
+            min_cases=config.min_cases_per_user,
+            max_cases=config.max_cases_per_user,
         )
         problem = self.add_case_owner_constraint(
             lp_problem=problem,
@@ -103,8 +103,9 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
     ):
         # This constrain enforces the min/max amount of cases that could be assigned to each user,
         # with the default being the cases split equally between users.
-        max_constraint = int(user_count / case_count) + 1
+        max_constraint = int(case_count / user_count) + 1
         min_constraint = 0
+
         if min_cases:
             min_constraint = min_cases
         if max_cases:
