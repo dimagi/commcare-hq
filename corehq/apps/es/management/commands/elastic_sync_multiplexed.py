@@ -565,6 +565,19 @@ class Command(BaseCommand):
         display_shard_info_cmd = subparsers.add_parser("display_shard_info")
         display_shard_info_cmd.set_defaults(func=self.es_helper.display_shard_info)
 
+        # Partial Reindex
+        partial_reindex_cmd = subparsers.add_parser("partial_reindex")
+        partial_reindex_cmd.set_defaults(func=self.es_helper.reindex_partial_index)
+        partial_reindex_cmd.add_argument(
+            'index_cname',
+            choices=INDEXES,
+            help="""Cannonical Name of the index""",
+        )
+        partial_reindex_cmd.add_argument(
+            'domain',
+            help="""Only includes documents from this domain""",
+        )
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
