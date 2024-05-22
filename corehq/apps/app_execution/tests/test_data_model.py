@@ -43,21 +43,21 @@ class DataModelTest(SimpleTestCase):
 
 def _get_dsl(with_raw=True):
     lines = [
-        'select menu "Case Search"',
-        'update search parameters first_name="query value"',
-        'update search parameters last_name="query value"',
-        'search with parameters first_name="query value", last_name="query value"',
-        'select entity with id "123"',
-        'select entity at index 2',
-        'clear search',
-        'select menu "Followup Case"',
-        'select entities with ids "xyz, abc"',
-        'select entities at indexes "0, 2"',
-        'answer question "Name" with "str"',
-        'submit form',
+        'Select menu "Case Search"',
+        'Update search parameters first_name="query value"',
+        'Update search parameters last_name="query value"',
+        'Search with parameters first_name="query value", last_name="query value"',
+        'Select entity with ID "123"',
+        'Select entity at index 2',
+        'Clear search',
+        'Select menu "Followup Case"',
+        'Select entities with IDs "xyz, abc"',
+        'Select entities at indexes "0, 2"',
+        'Answer question "Name" with "str"',
+        'Submit form',
     ]
     if with_raw:
-        lines = ['navigate using raw request data'] + lines
+        lines = ['Navigate using raw request data'] + lines
     return '\n'.join(lines)
 
 

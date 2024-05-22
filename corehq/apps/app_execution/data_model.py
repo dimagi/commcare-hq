@@ -50,7 +50,7 @@ class AppWorkflow:
         steps = []
         for line in lines:
             for step_cls in STEP_MAP.values():
-                if step := step_cls.from_dsl(line):
+                if step := step_cls.from_dsl(line.strip()):
                     if step.is_form_step:
                         if not isinstance(steps[-1], FormStep):
                             steps.append(FormStep(children=[]))
@@ -91,9 +91,9 @@ class CommandStep(Step):
 
     @classmethod
     def from_dsl(cls, line):
-        if match := re.match(r'select menu with id\s+"(.+)"', line, re.IGNORECASE):
+        if match := re.match(r'^select menu with id\s+"(.+)"$', line, re.IGNORECASE):
             return cls(id=match.group(1))
-        elif match := re.match(r'select menu\s+"(.+)"', line, re.IGNORECASE):
+        elif match := re.match(r'^select menu\s+"(.+)"$', line, re.IGNORECASE):
             return cls(value=match.group(1))
 
     def to_dsl(self):
@@ -137,7 +137,7 @@ class EntitySelectStep(Step):
 
     @classmethod
     def from_dsl(cls, line):
-        if match := re.match(r'select entity with id\s+"(.+)"', line, re.IGNORECASE):
+        if match := re.match(r'^select entity with id\s+"(.+)"$', line, re.IGNORECASE):
             return cls(value=match.group(1))
 
     def to_dsl(self):
@@ -160,7 +160,7 @@ class MultipleEntitySelectStep(Step):
 
     @classmethod
     def from_dsl(cls, line):
-        if match := re.match(r'select entities with ids\s+"(.+)"', line, re.IGNORECASE):
+        if match := re.match(r'^select entities with ids\s+"(.+)"$', line, re.IGNORECASE):
             ids = [id_.strip() for id_ in match.group(1).split(",")]
             return cls(values=ids)
 
@@ -193,7 +193,7 @@ class EntitySelectIndexStep(Step):
 
     @classmethod
     def from_dsl(cls, line):
-        if match := re.match(r'select entity at index\s+(\d+)', line, re.IGNORECASE):
+        if match := re.match(r'^select entity at index\s+(\d+)$', line, re.IGNORECASE):
             return cls(value=int(match.group(1)))
 
     def to_dsl(self):
@@ -216,7 +216,7 @@ class MultipleEntitySelectByIndexStep(Step):
 
     @classmethod
     def from_dsl(cls, line):
-        if match := re.match(r'select entities at indexes\s+"([\d,\s]+)"', line, re.IGNORECASE):
+        if match := re.match(r'^select entities at indexes\s+"([\d,\s]+)"$', line, re.IGNORECASE):
             ids = [int(id_.strip()) for id_ in match.group(1).split(",")]
             return cls(values=ids)
 
@@ -249,7 +249,7 @@ class QueryInputValidationStep(Step):
 
     @classmethod
     def from_dsl(cls, line):
-        if re.match(r'update search parameters', line, re.IGNORECASE):
+        if re.match(r'^update search parameters', line, re.IGNORECASE):
             return cls(inputs=_get_key_value_pairs(line))
 
     def to_dsl(self):
@@ -292,7 +292,7 @@ class QueryStep(Step):
 
     @classmethod
     def from_dsl(cls, line):
-        if re.match(r'search with parameters', line, re.IGNORECASE):
+        if re.match(r'^search with parameters', line, re.IGNORECASE):
             return cls(inputs=_get_key_value_pairs(line))
 
     def to_dsl(self):
@@ -336,7 +336,7 @@ class ClearQueryStep(Step):
 
     @classmethod
     def from_dsl(cls, line):
-        if re.match(r'clear search', line, re.IGNORECASE):
+        if re.match(r'^clear search$', line, re.IGNORECASE):
             return cls()
 
     def to_dsl(self):
@@ -369,9 +369,9 @@ class AnswerQuestionStep(Step):
 
     @classmethod
     def from_dsl(cls, line):
-        if match := re.match(r'answer question "(.+?)" with "(.+?)"', line, re.IGNORECASE):
+        if match := re.match(r'^answer question "(.+?)" with "(.+?)"$', line, re.IGNORECASE):
             return cls(question_text=match.group(1), value=match.group(2))
-        elif match := re.match(r'answer question with id "(.+?)" with "(.+?)"', line, re.IGNORECASE):
+        elif match := re.match(r'^answer question with id "(.+?)" with "(.+?)"$', line, re.IGNORECASE):
             return cls(question_id=match.group(1), value=match.group(2))
 
     def to_dsl(self):
@@ -412,7 +412,7 @@ class SubmitFormStep(Step):
 
     @classmethod
     def from_dsl(cls, line):
-        if re.match(r'submit form', line, re.IGNORECASE):
+        if re.match(r'^submit form$', line, re.IGNORECASE):
             return cls()
 
     def to_dsl(self):
@@ -469,7 +469,7 @@ class RawNavigationStep(Step):
 
     @classmethod
     def from_dsl(cls, line):
-        if re.match(r'navigate using raw request data', line, re.IGNORECASE):
+        if re.match(r'^navigate using raw request data$', line, re.IGNORECASE):
             raise AppExecutionError("Raw navigation step not supported in DSL")
 
     def to_dsl(self):
