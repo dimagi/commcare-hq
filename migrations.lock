@@ -425,6 +425,7 @@ es
  0009_add_indices_for_reindex_in_es5
  0010_delete_reverted_indices
  0011_add_indices_for_es5_reindex
+ 0012_add_new_index_for_bha
 events
  0001_add_events_model
  0002_attendancetrackingconfig
