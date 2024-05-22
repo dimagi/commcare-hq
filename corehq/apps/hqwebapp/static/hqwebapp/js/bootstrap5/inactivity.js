@@ -106,11 +106,10 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                 shouldShowWarning = true;
             } else {
                 shouldShowWarning = false;
-                // Close the New version modal before showing warning modal
-                if (isModalOpen($newVersionModal)) {
-                    newVersionModal.hide();
+                // Don't show if the new version modal is already showing
+                if (!isModalOpen($newVersionModal)) {
+                    warningModal.show();
                 }
-                warningModal.show();
             }
         };
 
@@ -135,7 +134,10 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             } else {
                 $newVersionModal.find('#incompleteFormWarning').addClass('d-none');
             }
-            if (newVersionModal && !isModalOpen($loginModal) && !isModalOpen($warningModal)) {
+            if (!isModalOpen($modal)) {
+                if (isModalOpen($warningModal)) {
+                    warningModal.hide();
+                }
                 newVersionModal.show();
             }
         };
