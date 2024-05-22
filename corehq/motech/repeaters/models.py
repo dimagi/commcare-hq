@@ -253,9 +253,9 @@ class RepeaterManager(models.Manager):
     def get_queryset(self):
         repeater_obj = self.model()
         if type(repeater_obj).__name__ == "Repeater":
-            return super().get_queryset().filter(is_deleted=False)
+            return super().get_queryset().filter(is_deleted=True)
         else:
-            return super().get_queryset().filter(repeater_type=repeater_obj._repeater_type, is_deleted=False)
+            return super().get_queryset().filter(repeater_type=repeater_obj._repeater_type, is_deleted=True)
 
     def by_domain(self, domain):
         return list(self.filter(domain=domain))

@@ -156,7 +156,7 @@ class UnfilteredModelIteratorBuilder(object):
 
     def _base_queryset(self):
         assert self.domain and self.model_class and self.db_alias, "Unprepared IteratorBuilder"
-        objects = self.model_class._default_manager
+        objects = self.model_class.objects
         return objects.using(self.db_alias)
 
     def querysets(self):
