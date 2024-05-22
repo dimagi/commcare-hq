@@ -153,6 +153,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                 // Parsing the app id out of URL hash will fail on the web apps home page, login as, etc.
                 // where the hash isn't a JSON object but instead a string like "#apps".
                 // In these cases, there's no app to check for a new version.
+                log("Could not parse app id out of " + window.location.hash)
                 selectedAppId = null;
             }
             var domain = initialPageData.get('domain');
@@ -189,7 +190,6 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                         $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i></h1>');
                         hideWarningModal(true);
                     } else {
-                        log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
                         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
                     }
                     if (
@@ -209,6 +209,10 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
                 url: initialPageData.reverse('ping_login'),
                 type: 'GET',
                 success: function (data) {
+                    log(
+                        "ping_login response: " + (data.success ? "User is logged in" : "User is logged out")
+                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version")
+                    );
                     $button.enableButton();
                     var error = "";
                     if (data.success) {
