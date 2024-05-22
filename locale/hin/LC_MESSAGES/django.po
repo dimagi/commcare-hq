@@ -12173,7 +12173,6 @@ msgid "Sync User Data"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap3/list.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/bootstrap5/list.html
 msgid "Scroll to bottom"
 msgstr ""
 
@@ -36755,6 +36754,13 @@ msgid "You can only set 'Is Account Confirmed' to 'False' on a new User."
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
+msgid ""
+"Only users with 'Manage Tableau Configuration' edit permission can upload "
+"files with'Tableau Role and/or 'Tableau Groups' fields. Please remove those "
+"fields from your file."
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
 #, python-brace-format
 msgid ""
 "You cannot upload a web user without a role. {username} does not have a role"
@@ -38640,6 +38646,10 @@ msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid "* and ? are not allowed"
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid "You do not have permission to edit Tableau Configuraion."
 msgstr ""
 
 #: corehq/apps/users/landing_pages.py corehq/messaging/scheduling/views.py
