@@ -31,7 +31,10 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.web import get_site_domain
 
-from corehq.apps.accounting.emails import send_subscription_change_alert
+from corehq.apps.accounting.emails import (
+    send_subscription_change_alert,
+    send_subscription_renewal_alert,
+)
 from corehq.apps.accounting.exceptions import (
     AccountingError,
     CreditLineError,
@@ -1631,6 +1634,12 @@ class Subscription(models.Model):
             self, method=adjustment_method, note=note, web_user=web_user,
             reason=SubscriptionAdjustmentReason.RENEW,
         )
+
+        from corehq.toggles import SELF_SERVICE_ANNUAL_RENEWALS
+        from corehq.util.global_request import get_request
+        request = get_request()
+        if request is not None and SELF_SERVICE_ANNUAL_RENEWALS.enabled_for_request(request):
+            send_subscription_renewal_alert(self.subscriber.domain, renewed_subscription, self)
 
         return renewed_subscription
 
