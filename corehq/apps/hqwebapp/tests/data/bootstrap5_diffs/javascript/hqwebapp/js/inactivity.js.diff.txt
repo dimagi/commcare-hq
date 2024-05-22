@@ -45,15 +45,13 @@
              $('#refreshApp').click(function () {
                  document.location = document.location.origin + document.location.pathname;
              });
-@@ -102,16 +108,16 @@
+@@ -102,15 +108,15 @@
                  shouldShowWarning = false;
-                 // Close the New version modal before showing warning modal
-                 if (isModalOpen($newVersionModal)) {
--                    $newVersionModal.modal('hide');
-+                    newVersionModal.hide();
+                 // Don't show if the new version modal is already showing
+                 if (!isModalOpen($newVersionModal)) {
+-                    $warningModal.modal('show');
++                    warningModal.show();
                  }
--                $warningModal.modal('show');
-+                warningModal.show();
              }
          };
  
@@ -66,7 +64,7 @@
              }
              // This flag should already have been turned off when the warning modal was shown,
              // but just in case, make sure it's really off. Wait until the modal is fully hidden
-@@ -119,19 +125,18 @@
+@@ -118,22 +124,21 @@
              shouldShowWarning = false;
          };
  
@@ -83,29 +81,41 @@
 +                $newVersionModal.find('#incompleteFormWarning').removeClass('d-none');
              } else {
 -                $newVersionModal.find('#incompleteFormWarning').hide();
--            }
--            if (!isModalOpen($modal) && !isModalOpen($warningModal)) {
--                $newVersionModal.modal('show');
 +                $newVersionModal.find('#incompleteFormWarning').addClass('d-none');
-+            }
-+            if (newVersionModal && !isModalOpen($loginModal) && !isModalOpen($warningModal)) {
+             }
+             if (!isModalOpen($modal)) {
+                 if (isModalOpen($warningModal)) {
+-                    $warningModal.modal('hide');
++                    warningModal.hide();
+                 }
+-                $newVersionModal.modal('show');
 +                newVersionModal.show();
              }
          };
  
-@@ -145,7 +150,10 @@
+@@ -147,8 +152,11 @@
                      selectedAppId = urlParams.appId;
                  }
              } catch (error) {
--                return;
 +                // Parsing the app id out of URL hash will fail on the web apps home page, login as, etc.
 +                // where the hash isn't a JSON object but instead a string like "#apps".
 +                // In these cases, there's no app to check for a new version.
+                 log("Could not parse app id out of " + window.location.hash)
+-                return;
 +                selectedAppId = null;
              }
              var domain = initialPageData.get('domain');
              $.ajax({
-@@ -161,13 +169,15 @@
+@@ -159,22 +167,20 @@
+                     domain: domain,
+                 },
+                 success: function (data) {
+-                    log(
+-                        "ping_login response: " + (data.success ? "User is logged in" : "User is logged out")
+-                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version")
+-                    );
+                     if (!data.success) {
+                         _.each($(".select2-hidden-accessible"), function (el) {
                              $(el).select2('close');
                          });
                          // Close the New version modal before showing login iframe
@@ -124,7 +134,7 @@
                              var content = _.template('<iframe src="<%- src %>" height="<%- height %>" width="<%- width %>" style="border: none;"></iframe>')({
                                  src: src,
                                  width: $body.width(),
-@@ -176,7 +186,7 @@
+@@ -183,7 +189,7 @@
                              $body.html(content);
                              $body.find("iframe").on("load", pollToHideModal);
                          });
@@ -132,8 +142,19 @@
 +                        $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i></h1>');
                          hideWarningModal(true);
                      } else {
-                         log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
-@@ -212,7 +222,7 @@
+                         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
+@@ -205,6 +211,10 @@
+                 url: initialPageData.reverse('ping_login'),
+                 type: 'GET',
+                 success: function (data) {
++                    log(
++                        "ping_login response: " + (data.success ? "User is logged in" : "User is logged out")
++                        + ", " + (data.new_app_version_available ? "new app version available" : "no new app version")
++                    );
+                     $button.enableButton();
+                     var error = "";
+                     if (data.success) {
+@@ -218,7 +228,7 @@
                      }
  
                      if (error) {
@@ -142,7 +163,7 @@
                          $button.text(error);
                      } else {
                          // Keeps the input value in the outer window in sync with newest token generated in
-@@ -224,12 +234,12 @@
+@@ -230,12 +240,12 @@
                              iframeInputValue = iframe.getElementsByTagName('input')[0].value;
                              outerCSRFInput.val(iframeInputValue);
                          } catch (err) {
@@ -157,7 +178,7 @@
                          $button.text(gettext("Done"));
                          _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
                      }
-@@ -256,7 +266,7 @@
+@@ -262,7 +272,7 @@
              });
          };
  
@@ -166,7 +187,7 @@
          $warningModal.find(".modal-footer .dismiss-button").click(function (e) {
              extendSession($(e.currentTarget));
          });
-@@ -306,7 +316,7 @@
+@@ -312,7 +322,7 @@
              if (message.isLoggedIn) {
                  log("session successfully extended via Single Sign On in external tab");
                  hideWarningModal();
