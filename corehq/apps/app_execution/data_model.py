@@ -62,17 +62,12 @@ class CommandStep(Step):
 
     def to_json(self):
         data = super().to_json()
-        for key in ["value", "id", "selected_values"]:
+        for key in ["value", "id"]:
             if not getattr(self, key):
                 data.pop(key)
         return data
 
     def get_request_data(self, session, data):
-        if self.selected_values:
-            data = _append_selection(data, "use_selected_values")
-            data["selectedValues"] = self.selected_values
-            return data
-
         if self.id:
             return _append_selection(data, self.id)
 
@@ -94,15 +89,34 @@ class EntitySelectStep(Step):
     """ID of the entity to select."""
 
     def get_request_data(self, session, data):
-        entities = {entity["id"] for entity in session.data.get("entities", [])}
-        if not entities:
-            raise AppExecutionError("No entities found")
-        if self.value not in entities:
-            raise AppExecutionError(f"Entity not found: {self.value}: {list(entities)}")
+        _validate_entity_ids(session, [self.value])
         return _append_selection(data, self.value)
 
     def __str__(self):
         return f"Entity Select: {self.value}"
+
+
+@define
+class MultipleEntitySelectStep(Step):
+    type: ClassVar[str] = "multiple_entity_select"
+    is_form_step: ClassVar[bool] = False
+
+    values: list[str]
+
+    def get_request_data(self, session, data):
+        _validate_entity_ids(session, self.values)
+        data = _append_selection(data, "use_selected_values")
+        data["selectedValues"] = self.values
+        return data
+
+
+def _validate_entity_ids(session, entity_ids):
+    entities = {entity["id"] for entity in session.data.get("entities", [])}
+    if not entities:
+        raise AppExecutionError("No entities found")
+    missing = set(entity_ids) - entities
+    if missing:
+        raise AppExecutionError(f"Entities not found: {missing}: {list(entities)}")
 
 
 @define
@@ -114,15 +128,34 @@ class EntitySelectIndexStep(Step):
     """Zero-based index of the entity to select."""
 
     def get_request_data(self, session, data):
-        entities = [entity["id"] for entity in session.data.get("entities", [])]
-        if not entities:
-            raise AppExecutionError("No entities found")
-        if self.value >= len(entities):
-            raise AppExecutionError(f"Entity index out of range: {self.value}: {list(entities)}")
-        return _append_selection(data, entities[self.value])
+        selected = _select_entities_by_index(session, [self.value])
+        return _append_selection(data, selected[0])
 
     def __str__(self):
         return f"Entity Select: {self.value}"
+
+
+@define
+class MultipleEntitySelectByIndexStep(Step):
+    type: ClassVar[str] = "multiple_entity_select_by_index"
+    is_form_step: ClassVar[bool] = False
+
+    values: list[int]
+
+    def get_request_data(self, session, data):
+        selected = _select_entities_by_index(session, self.values)
+        data = _append_selection(data, "use_selected_values")
+        data["selectedValues"] = selected
+        return data
+
+
+def _select_entities_by_index(session, indexes):
+    entities = [entity["id"] for entity in session.data.get("entities", [])]
+    if not entities:
+        raise AppExecutionError("No entities found")
+    if max(indexes) >= len(entities):
+        raise AppExecutionError(f"Entity index out of range: {max(indexes)}: {list(entities)}")
+    return [entities[index] for index in indexes]
 
 
 @define

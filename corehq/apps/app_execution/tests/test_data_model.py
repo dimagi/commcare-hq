@@ -42,6 +42,8 @@ def _get_workflow():
         data_model.ClearQueryStep(),
         data_model.RawNavigationStep(request_data={"selections": ["0", "1", "123abc"]}),
         data_model.CommandStep("Followup Case"),
+        data_model.MultipleEntitySelectStep(values=["xyz", "abc"]),
+        data_model.MultipleEntitySelectByIndexStep(values=[0, 2]),
         data_model.FormStep(children=[
             data_model.AnswerQuestionStep(question_text='Name', question_id='name', value='str'),
             data_model.SubmitFormStep()
@@ -65,6 +67,8 @@ def _get_workflow_json():
             {"type": "clear_query"},
             {"type": "raw_navigation", "request_data": {"selections": ["0", "1", "123abc"]}},
             {"type": "command", "value": "Followup Case"},
+            {"type": "multiple_entity_select", "values": ["xyz", "abc"]},
+            {"type": "multiple_entity_select_by_index", "values": [0, 2]},
             {
                 "type": "form",
                 "children": [
