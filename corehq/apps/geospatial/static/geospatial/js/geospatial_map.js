@@ -1,3 +1,5 @@
+'use strict';
+
 hqDefine("geospatial/js/geospatial_map", [
     "jquery",
     "hqwebapp/js/initial_page_data",
@@ -148,8 +150,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     if (ret.error) {
                         alertUser.alert_user(ret.error, 'danger');
                         self.setBusy(false);
-                    }
-                    else {
+                    } else {
                         if (ret['poll_url'] !== undefined) {
                             self.startPoll(ret['poll_url']);
                         } else {
