@@ -14,6 +14,7 @@ from corehq.apps.es.exceptions import (
     IndexAlreadySwappedException,
     IndexMultiplexedException,
     IndexNotMultiplexedException,
+    IndexNotPartialException,
     TaskMissing,
 )
 from corehq.apps.es.index.settings import render_index_tuning_settings
@@ -79,6 +80,43 @@ class ESSyncUtil:
         print("\n\t"
             + f"cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "
             + f"\"grep '{task_number}.*ReindexResponse' /opt/data/elasticsearch*/logs/*.log\""
+            + "\n\n")
+
+    def reindex_partial_index(self, cname, domain):
+        adapter = doc_adapter_from_cname(cname)
+        if not adapter.parent_index_name:
+            raise IndexNotPartialException(f"Adapter for {cname} is not a partial index")
+
+        source_index = adapter.parent_index_name
+        destination_index = adapter.primary.index_name
+
+        logger.info(f"Preparing index {destination_index} for reindex")
+        self._prepare_index_for_reindex(destination_index)
+
+        logger.info("Starting partial reindex process")
+        task_id = es_manager.reindex(source_index, destination_index, query={"term": domain})
+
+        logger.info(f"Copying docs from index {source_index} to index {destination_index} for {domain}")
+        task_number = task_id.split(':')[1]
+        print("\n\n\n")
+        logger.info("-----------------IMPORTANT-----------------")
+        logger.info(f"TASK NUMBER - {task_number}")
+        logger.info("-------------------------------------------")
+        logger.info("Save this Task Number, You will need it later for verifying your partial reindex process")
+        print("\n\n\n")
+        # This would display progress untill reindex process is completed
+        check_task_progress(task_id)
+
+        print("\n\n")
+
+        self.display_source_destination_doc_count(adapter)
+
+        logger.info(f"Verify this partial reindex process from elasticsearch logs using task id - {task_id}")
+        print("\n\n")
+        logger.info("You can use commcare-cloud to extract reindex logs from cluster")
+        print("\n\t"
+            + f"cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "
+            + f"\"grep '{task_number}' /opt/data/elasticsearch*/logs/*.log\""
             + "\n\n")
 
     def _get_source_destination_indexes(self, adapter):
