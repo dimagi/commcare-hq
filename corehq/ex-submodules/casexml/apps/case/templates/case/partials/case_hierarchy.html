@@ -43,6 +43,9 @@
   <thead>
     <tr>
       <th>{% trans "Name" %}</th>
+      {% if request|toggle_enabled:"SUPPORT" %}
+        <th>{% trans "Index" %}</th>
+      {% endif %}
       {% for column in columns %}
         <th>{{ column.name }}</th>
       {% endfor %}
@@ -124,7 +127,17 @@
             </div>
           {% endif %}
         </td>
-
+        {% if request|toggle_enabled:"SUPPORT" %}
+          <td>
+            {% if case.case_id == current_case.case_id %}
+              <em>(current case)</em>
+            {% elif case.index_info.is_ancestor %}
+              <strong>{{ case.index_info.identifier }}</strong> / {{ case.index_info.relationship }}
+            {% elif case.index_info %}
+              {{ case.index_info.identifier }} / <strong>{{ case.index_info.relationship }}</strong>
+            {% endif %}
+          </td>
+        {% endif %}
         {% for column in case.columns %}
           <td>{{ column.value }}</td>
         {% endfor %}

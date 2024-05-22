@@ -100,6 +100,17 @@
         </div>
       {% endif %}
     </form>
+
+    {% if support_info.locations %}
+      <h4>[Support only] Assigned Locations</h4>
+      <div class="list-group">
+        {% for location in support_info.locations %}
+          <a href="{% url "edit_location" domain location.location_id %}" class="list-group-item">
+            {{ location.get_path_display }} <span class="badge">{{ location.location_type.name }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
   {% endif %}
 
   {% if tableau_form and view_user_tableau_config %}
