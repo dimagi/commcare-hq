@@ -50,7 +50,10 @@ def _augment_with_logs(workflows):
 @use_bootstrap5
 def new_workflow(request, domain):
     form = AppWorkflowConfigForm(request, initial={
-        "workflow": EXAMPLE_WORKFLOW, "run_every": 1, "form_mode": const.FORM_MODE_HUMAN
+        "workflow": EXAMPLE_WORKFLOW,
+        "workflow_simple": EXAMPLE_WORKFLOW.to_dsl(),
+        "run_every": 1,
+        "form_mode": const.FORM_MODE_HUMAN,
     })
     if request.method == "POST":
         import_har = request.POST.get("import-har")

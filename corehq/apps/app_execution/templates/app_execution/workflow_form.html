@@ -1,10 +1,13 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+
+{% requirejs_main_b5 'app_execution/js/workflow_form' %}
+
 {% block page_content %}
-  {#  {% crispy form %}#}
-  <form autocomplete="off" class="form form-horizontal" method="post" enctype="multipart/form-data">
+  <form id="workflow-form" autocomplete="off" class="form form-horizontal" method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    <div class="row">
+    <div class="row mb-2">
       <div class="col">
         <p>&nbsp;</p>
         {{ form.name|as_crispy_field }}
@@ -18,8 +21,20 @@
       </div>
       <div class="col">
         <p>Workflow*</p>
-        {{ form.workflow }}
-        {{ form.workflow.errors }}
+        <div class="my-2">
+          <button class="btn btn-secondary btn-sm" data-bind="enable: !simpleMode(), click: toggleMode">Simple Mode</button>
+          <button class="btn btn-secondary btn-sm" data-bind="enable: simpleMode, click: toggleMode">Advanced mode</button>
+        </div>
+        <div data-bind="visible: simpleMode">
+          {{ form.workflow_simple }}
+          {{ form.workflow_simple.errors }}
+        </div>
+        <div data-bind="css: {'d-none': simpleMode}" class="d-none">
+          {{ form.workflow }}
+          {{ form.workflow.errors }}
+        </div>
+        {{ form.edit_mode }}
+        <input type="hidden" name="edit_mode" data-bind="value: editMode">
       </div>
     </div>
     <div class="form-actions row">
