@@ -22,7 +22,7 @@
             The case exploder will multiply all cases in the user's restore  by the explode factor entered below. So, for example, if you're exploding a test user with 20 cases, and set the factor to be 200, it will actually give you <strong>4,000</strong> cases, NOT 200. Be careful! For this reason, it's best to create a new test user with only one case to explode.
           </div>
         </div>
-        <div class="card card-default mb-3">
+        <div class="card mb-3">
           <div class="card-body">
             <form class="form" action="" method="POST">
               {% csrf_token %}
@@ -53,7 +53,7 @@
         </div>
       </div>
     </div>
-  {% if True or request|toggle_enabled:"SYNC_SEARCH_CASE_CLAIM" %}
+  {% if request|toggle_enabled:"SYNC_SEARCH_CASE_CLAIM" %}
     <div id="delete-exploded">
       <h1>Delete exploded cases</h1>
       <h2><small>Delete all cases created by previous explosions</small></h2>
