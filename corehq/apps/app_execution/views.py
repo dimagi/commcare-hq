@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -7,6 +8,7 @@ from corehq.apps.app_execution.api import execute_workflow
 from corehq.apps.app_execution.data_model import EXAMPLE_WORKFLOW
 from corehq.apps.app_execution.exceptions import AppExecutionError, FormplayerException
 from corehq.apps.app_execution.forms import AppWorkflowConfigForm
+from corehq.apps.app_execution.har_parser import parse_har_from_string
 from corehq.apps.app_execution.models import AppExecutionLog, AppWorkflowConfig
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqadmin.views import get_hqadmin_base_context
@@ -43,10 +45,15 @@ def new_workflow(request):
         "workflow": EXAMPLE_WORKFLOW, "run_every": 1, "form_mode": const.FORM_MODE_HUMAN
     })
     if request.method == "POST":
-        form = AppWorkflowConfigForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect("app_execution:workflow_list")
+        import_har = request.POST.get("import_har")
+        har_file = request.FILES.get("har_file")
+        if import_har and har_file:
+            form = _get_form_from_har(har_file.read(), request)
+        else:
+            form = AppWorkflowConfigForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect("app_execution:workflow_list")
 
     context = _get_context(
         request, "New App Workflow", reverse("app_execution:new_workflow"),
@@ -62,15 +69,35 @@ def edit_workflow(request, pk):
     form = AppWorkflowConfigForm(instance=config)
     if request.method == "POST":
         form = AppWorkflowConfigForm(request.POST, instance=config)
-        if form.is_valid():
-            form.save()
-            return redirect("app_execution:workflow_list")
+        import_har = request.POST.get("import_har")
+        har_file = request.FILES.get("har_file")
+        if import_har and har_file:
+            form = _get_form_from_har(har_file.read(), request, instance=config)
+        elif har_file:
+            messages.error(request, "You must use the 'Import HAR' button to upload a HAR file.")
+        else:
+            if form.is_valid():
+                form.save()
+                return redirect("app_execution:workflow_list")
 
     context = _get_context(
         request, f"Edit App Workflow: {config.name}", reverse("app_execution:edit_workflow", args=[pk]),
         add_parent=True, form=form
     )
     return render(request, "app_execution/workflow_form.html", context)
+
+
+def _get_form_from_har(har_data_string, request, instance=None):
+    post_data = request.POST.copy()
+    try:
+        config = parse_har_from_string(har_data_string)
+        post_data["domain"] = config.domain
+        post_data["app_id"] = config.app_id
+        post_data["workflow"] = AppWorkflowConfig.workflow_object_to_json_string(config.workflow)
+    except Exception as e:
+        messages.error(request, "Unable to process HAR file: " + str(e))
+
+    return AppWorkflowConfigForm(post_data, instance=instance)
 
 
 @require_superuser_or_contractor
