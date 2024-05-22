@@ -77,7 +77,7 @@ hqDefine("geospatial/js/geospatial_map", [
         self.pollUrl = ko.observable('');
         self.isBusy = ko.observable(false);
 
-        self.hasMissingData = ko.observable(false);  // True if the user attempts disbursement with polygon filtering that includes no cases/users.
+        self.disbursementErrorMessage = ko.observable('');
 
         self.setBusy = function (isBusy) {
             self.isBusy(isBusy);
@@ -148,7 +148,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 contentType: "application/json; charset=utf-8",
                 success: function (ret) {
                     if (ret.error) {
-                        alertUser.alert_user(ret.error, 'danger');
+                        self.disbursementErrorMessage(ret.error);
                         self.setBusy(false);
                     } else {
                         if (ret['poll_url'] !== undefined) {
@@ -308,7 +308,13 @@ hqDefine("geospatial/js/geospatial_map", [
                 // User might do polygon filtering on an area with no cases/users. We should not do
                 // disbursement if this is the case
                 const hasValidData = selectedCases.length && selectedUsers.length;
-                disbursementRunner.hasMissingData(!hasValidData);
+                if (!hasValidData) {
+                    const errorMessage = gettext("Please ensure that the filtered area includes both cases" +
+                                                 "and mobile workers before attempting to run disbursement.");
+                    disbursementRunner.disbursementErrorMessage(errorMessage);
+                } else {
+                    disbursementRunner.disbursementErrorMessage('');
+                }
                 if (hasValidData) {
                     disbursementRunner.runCaseDisbursementAlgorithm(selectedCases, selectedUsers);
                 }
