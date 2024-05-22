@@ -733,7 +733,7 @@ class WebpackMainNode(template.Node):
         return "<RequireJSMain Node: %r>" % (self.value,)
 
     def render(self, context):
-        if self.name not in context:
+        if self.name not in context and self.value:
             # set name in block parent context
             context.dicts[-2]['use_js_bundler'] = True
             context.dicts[-2][self.name] = f'webpack/{self.value}.js'
