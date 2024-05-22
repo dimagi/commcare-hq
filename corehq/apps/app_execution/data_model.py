@@ -57,6 +57,9 @@ class AppWorkflow:
                         steps[-1].children.append(step)
                     else:
                         steps.append(step)
+                    break
+            else:
+                raise AppExecutionError(f"Invalid step: {line}")
         return AppWorkflow(steps=steps)
 
     def to_json(self):
@@ -88,7 +91,7 @@ class CommandStep(Step):
 
     @classmethod
     def from_dsl(cls, line):
-        if match := re.match(r'select menu with ID\s+"(.+)"', line, re.IGNORECASE):
+        if match := re.match(r'select menu with id\s+"(.+)"', line, re.IGNORECASE):
             return cls(id=match.group(1))
         elif match := re.match(r'select menu\s+"(.+)"', line, re.IGNORECASE):
             return cls(value=match.group(1))
@@ -97,7 +100,7 @@ class CommandStep(Step):
         if self.value:
             return f'Select menu "{self.value}"'
         if self.id:
-            return f'Select menu with id "{self.id}"'
+            return f'Select menu with ID "{self.id}"'
 
     def to_json(self):
         data = super().to_json()

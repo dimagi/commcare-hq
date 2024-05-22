@@ -2,6 +2,7 @@ from couchdbkit import NoResultFound, ResourceNotFound
 from django import forms
 
 from corehq.apps.app_execution.data_model import AppWorkflow
+from corehq.apps.app_execution.exceptions import AppExecutionError
 from corehq.apps.app_execution.models import AppWorkflowConfig
 from corehq.apps.app_manager.dbaccessors import get_brief_app
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -79,7 +80,7 @@ class AppWorkflowConfigForm(forms.ModelForm):
         if self.cleaned_data.get("edit_mode") == "simple":
             try:
                 workflow = AppWorkflow.from_dsl(self.cleaned_data.get("workflow_simple"))
-            except Exception as e:
+            except AppExecutionError as e:
                 self.add_error("workflow_simple", str(e))
             else:
                 self.cleaned_data["workflow"] = workflow.to_json()
