@@ -285,23 +285,24 @@ class FormStep(Step):
         return cls(children=_steps_from_json(data["children"]))
 
 
+@define
+class RawNavigationStep(Step):
+    type: ClassVar[str] = "raw_navigation"
+    is_form_step: ClassVar[bool] = False
+
+    request_data: dict
+
+    def get_request_data(self, session, data):
+        return self.request_data
+
+
 def _append_selection(data, selection):
     selections = data.get("selections", [])
     selections.append(selection)
     return {**data, "selections": selections}
 
 
-STEP_MAP = {
-    "command": CommandStep,
-    "entity_select": EntitySelectStep,
-    "entity_select_index": EntitySelectIndexStep,
-    "query": QueryStep,
-    "query_input_validation": QueryInputValidationStep,
-    "clear_query": ClearQueryStep,
-    "answer_question": AnswerQuestionStep,
-    "submit_form": SubmitFormStep,
-    "form": FormStep,
-}
+STEP_MAP = {step.type: step for step in Step.__subclasses__()}
 
 
 def _steps_from_json(data):
