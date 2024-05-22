@@ -1762,7 +1762,7 @@ class UserFilterForm(forms.Form):
         return data
 
 
-class TableauUserForm(forms.Form):
+class BaseTableauUserForm(forms.Form):
     role = forms.ChoiceField(
         label=gettext_noop("Role"),
         choices=TableauUser.Roles.choices,
@@ -1776,26 +1776,35 @@ class TableauUserForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        readonly = kwargs.pop('readonly', True)
-        self.request = kwargs.pop('request')
         self.domain = kwargs.pop('domain', None)
-        self.username = kwargs.pop('username', None)
-        super(TableauUserForm, self).__init__(*args, **kwargs)
+        super(BaseTableauUserForm, self).__init__(*args, **kwargs)
 
         self.allowed_tableau_groups = [
             TableauGroupTuple(group.name, group.id) for group in get_all_tableau_groups(self.domain)
             if group.name in get_allowed_tableau_groups_for_domain(self.domain)]
-        user_group_names = [group.name for group in get_tableau_groups_for_user(self.domain, self.username)]
         self.fields['groups'].choices = []
         self.fields['groups'].initial = []
         for i, group in enumerate(self.allowed_tableau_groups):
             # Add a choice for each tableau group on the server
             self.fields['groups'].choices.append((i, group.name))
-            if group.name in user_group_names:
-                # Pre-choose groups that the user already belongs to
-                self.fields['groups'].initial.append(i)
         if not self.fields['groups'].choices:
             del self.fields['groups']
+
+
+class TableauUserForm(BaseTableauUserForm):
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        readonly = kwargs.pop('readonly', True)
+        self.username = kwargs.pop('username', None)
+        super(TableauUserForm, self).__init__(*args, **kwargs)
+
+        if 'groups' in self.fields:
+            user_group_names = [group.name for group in get_tableau_groups_for_user(self.domain, self.username)]
+            for i, group_name in self.fields['groups'].choices:
+                if group_name in user_group_names:
+                    # Pre-choose groups that the user already belongs to
+                    self.fields['groups'].initial.append(i)
 
         if readonly:
             self.fields['role'].widget.attrs['readonly'] = True
