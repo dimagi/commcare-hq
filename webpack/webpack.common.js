@@ -117,7 +117,7 @@ module.exports = {
                 test: /\.js$/,
                 loader: 'string-replace-loader',
                 options: {
-                    search: /\bes6!hqwebapp\/js\/bootstrap5_loader\b/g,
+                    search: /\b(es6!)?hqwebapp\/js\/bootstrap5_loader\b/g,
                     replace: 'bootstrap5',
                 },
             },
