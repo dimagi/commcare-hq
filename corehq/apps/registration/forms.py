@@ -24,7 +24,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.programs.models import Program
-from corehq.apps.users.forms import BaseLocationForm
+from corehq.apps.users.forms import BaseLocationForm, BaseTableauUserForm
 from corehq.apps.users.models import CouchUser
 
 
@@ -512,6 +512,9 @@ class AdminInvitesUserForm(BaseLocationForm):
                 choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
                 self.fields['program'].choices = choices
         self.excluded_emails = excluded_emails or []
+
+        self._initialize_tableau_fields(data, domain)
+
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
         self.helper.form_class = 'form-horizontal form-ko-validation'
@@ -530,6 +533,8 @@ class AdminInvitesUserForm(BaseLocationForm):
                 'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
                 'assigned_locations' if should_show_location else None,
                 'primary_location' if should_show_location else None,
+                'tableau_role',
+                'tableau_group_ids'
             ),
             crispy.HTML(
                 render_to_string(
@@ -569,3 +574,10 @@ class AdminInvitesUserForm(BaseLocationForm):
             if isinstance(cleaned_data[field], str):
                 cleaned_data[field] = cleaned_data[field].strip()
         return cleaned_data
+
+    def _initialize_tableau_fields(self, data, domain):
+        tableau_form = BaseTableauUserForm(data, domain=domain)
+        self.fields['tableau_group_ids'] = tableau_form.fields["groups"]
+        self.fields['tableau_group_ids'].label = _('Tableau Groups')
+        self.fields['tableau_role'] = tableau_form.fields['role']
+        self.fields['tableau_role'].label = _('Tableau Role')
