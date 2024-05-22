@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import dataclasses
+import re
 from typing import ClassVar
 
 from attr import define
@@ -28,10 +29,38 @@ class Step:
     def from_json(cls, data):
         return cls(**data)
 
+    def to_dsl(self):
+        raise NotImplementedError
+
+    @classmethod
+    def from_dsl(cls, line):
+        raise NotImplementedError(cls.__name__)
+
 
 @define
 class AppWorkflow:
     steps: list[Step] = dataclasses.field(default_factory=list)
+
+    def to_dsl(self):
+        return "\n".join(step.to_dsl() for step in self.steps)
+
+    @classmethod
+    def from_dsl(cls, dsl_str):
+        lines = dsl_str.splitlines()
+        steps = []
+        for line in lines:
+            for step_cls in STEP_MAP.values():
+                if step := step_cls.from_dsl(line):
+                    if step.is_form_step:
+                        if not isinstance(steps[-1], FormStep):
+                            steps.append(FormStep(children=[]))
+                        steps[-1].children.append(step)
+                    else:
+                        steps.append(step)
+        return AppWorkflow(steps=steps)
+
+    def to_json(self):
+        return self.__jsonattrs_to_json__()
 
     def __jsonattrs_to_json__(self):
         return {
@@ -57,8 +86,18 @@ class CommandStep(Step):
     id: str = ""
     """ID of the command to execute"""
 
-    selected_values: list[str] = None
-    """Selected values for multi-select commands"""
+    @classmethod
+    def from_dsl(cls, line):
+        if match := re.match(r'select menu with ID\s+"(.+)"', line, re.IGNORECASE):
+            return cls(id=match.group(1))
+        elif match := re.match(r'select menu\s+"(.+)"', line, re.IGNORECASE):
+            return cls(value=match.group(1))
+
+    def to_dsl(self):
+        if self.value:
+            return f'Select menu "{self.value}"'
+        if self.id:
+            return f'Select menu with id "{self.id}"'
 
     def to_json(self):
         data = super().to_json()
@@ -66,6 +105,11 @@ class CommandStep(Step):
             if not getattr(self, key):
                 data.pop(key)
         return data
+
+    @classmethod
+    def from_json(cls, data):
+        data.pop("selected_values", None)  # remove legacy field
+        return cls(**data)
 
     def get_request_data(self, session, data):
         if self.id:
@@ -88,6 +132,14 @@ class EntitySelectStep(Step):
     value: str
     """ID of the entity to select."""
 
+    @classmethod
+    def from_dsl(cls, line):
+        if match := re.match(r'select entity with id\s+"(.+)"', line, re.IGNORECASE):
+            return cls(value=match.group(1))
+
+    def to_dsl(self):
+        return f'Select entity with ID "{self.value}"'
+
     def get_request_data(self, session, data):
         _validate_entity_ids(session, [self.value])
         return _append_selection(data, self.value)
@@ -102,6 +154,15 @@ class MultipleEntitySelectStep(Step):
     is_form_step: ClassVar[bool] = False
 
     values: list[str]
+
+    @classmethod
+    def from_dsl(cls, line):
+        if match := re.match(r'select entities with ids\s+"(.+)"', line, re.IGNORECASE):
+            ids = [id_.strip() for id_ in match.group(1).split(",")]
+            return cls(values=ids)
+
+    def to_dsl(self):
+        return f'Select entities with IDs "{", ".join(self.values)}"'
 
     def get_request_data(self, session, data):
         _validate_entity_ids(session, self.values)
@@ -127,6 +188,14 @@ class EntitySelectIndexStep(Step):
     value: int
     """Zero-based index of the entity to select."""
 
+    @classmethod
+    def from_dsl(cls, line):
+        if match := re.match(r'select entity at index\s+(\d+)', line, re.IGNORECASE):
+            return cls(value=int(match.group(1)))
+
+    def to_dsl(self):
+        return f'Select entity at index {self.value}'
+
     def get_request_data(self, session, data):
         selected = _select_entities_by_index(session, [self.value])
         return _append_selection(data, selected[0])
@@ -141,6 +210,15 @@ class MultipleEntitySelectByIndexStep(Step):
     is_form_step: ClassVar[bool] = False
 
     values: list[int]
+
+    @classmethod
+    def from_dsl(cls, line):
+        if match := re.match(r'select entities at indexes\s+"([\d,\s]+)"', line, re.IGNORECASE):
+            ids = [int(id_.strip()) for id_ in match.group(1).split(",")]
+            return cls(values=ids)
+
+    def to_dsl(self):
+        return f'Select entities at indexes "{", ".join(map(str, self.values))}"'
 
     def get_request_data(self, session, data):
         selected = _select_entities_by_index(session, self.values)
@@ -166,6 +244,15 @@ class QueryInputValidationStep(Step):
     inputs: dict
     """Search inputs dict. Keys are field names and values are search values."""
 
+    @classmethod
+    def from_dsl(cls, line):
+        if re.match(r'update search parameters', line, re.IGNORECASE):
+            return cls(inputs=_get_key_value_pairs(line))
+
+    def to_dsl(self):
+        params = ", ".join(f'{k}="{v}"' for k, v in self.inputs.items())
+        return f'Update search parameters {params}'
+
     def get_request_data(self, session, data):
         query_key = session.data["queryKey"]
         return {
@@ -182,6 +269,13 @@ class QueryInputValidationStep(Step):
         }
 
 
+def _get_key_value_pairs(line):
+    inputs = {}
+    for match in re.finditer(r'([\w-]+)="(.+?)"', line):
+        inputs[match.group(1)] = match.group(2)
+    return inputs
+
+
 @define
 class QueryStep(Step):
     type: ClassVar[str] = "query"
@@ -192,6 +286,15 @@ class QueryStep(Step):
 
     validate_inputs: bool = False
     """Simulate updating search inputs on the UI. One request per update."""
+
+    @classmethod
+    def from_dsl(cls, line):
+        if re.match(r'search with parameters', line, re.IGNORECASE):
+            return cls(inputs=_get_key_value_pairs(line))
+
+    def to_dsl(self):
+        params = ", ".join(f'{k}="{v}"' for k, v in self.inputs.items())
+        return f'Search with parameters {params}'
 
     def get_children(self):
         children = []
@@ -228,6 +331,14 @@ class ClearQueryStep(Step):
     type: ClassVar[str] = "clear_query"
     is_form_step: ClassVar[bool] = False
 
+    @classmethod
+    def from_dsl(cls, line):
+        if re.match(r'clear search', line, re.IGNORECASE):
+            return cls()
+
+    def to_dsl(self):
+        return "Clear search"
+
     def get_request_data(self, session, data):
         query_key = session.data["queryKey"]
         return {
@@ -249,9 +360,22 @@ class ClearQueryStep(Step):
 class AnswerQuestionStep(Step):
     type: ClassVar[str] = "answer_question"
     is_form_step: ClassVar[bool] = True
-    question_text: str
-    question_id: str
     value: str
+    question_text: str = None
+    question_id: str = None
+
+    @classmethod
+    def from_dsl(cls, line):
+        if match := re.match(r'answer question "(.+?)" with "(.+?)"', line, re.IGNORECASE):
+            return cls(question_text=match.group(1), value=match.group(2))
+        elif match := re.match(r'answer question with id "(.+?)" with "(.+?)"', line, re.IGNORECASE):
+            return cls(question_id=match.group(1), value=match.group(2))
+
+    def to_dsl(self):
+        if self.question_text:
+            return f'Answer question "{self.question_text}" with "{self.value}"'
+        if self.question_id:
+            return f'Answer question with ID "{self.question_id}" with "{self.value}"'
 
     def get_request_data(self, session, data):
         try:
@@ -283,6 +407,14 @@ class SubmitFormStep(Step):
     type: ClassVar[str] = "submit_form"
     is_form_step: ClassVar[bool] = True
 
+    @classmethod
+    def from_dsl(cls, line):
+        if re.match(r'submit form', line, re.IGNORECASE):
+            return cls()
+
+    def to_dsl(self):
+        return "Submit form"
+
     def get_request_data(self, session, data):
         answers = {
             node["ix"]: node["answer"]
@@ -304,6 +436,13 @@ class FormStep(Step):
     is_form_step: ClassVar[bool] = True
     children: list[AnswerQuestionStep | SubmitFormStep]
 
+    @classmethod
+    def from_dsl(cls, line):
+        return None
+
+    def to_dsl(self):
+        return "\n".join(child.to_dsl() for child in self.children)
+
     def to_json(self):
         return {
             "type": self.type,
@@ -324,6 +463,14 @@ class RawNavigationStep(Step):
     is_form_step: ClassVar[bool] = False
 
     request_data: dict
+
+    @classmethod
+    def from_dsl(cls, line):
+        if re.match(r'navigate using raw request data', line, re.IGNORECASE):
+            raise AppExecutionError("Raw navigation step not supported in DSL")
+
+    def to_dsl(self):
+        return "Navigate using raw request data"
 
     def get_request_data(self, session, data):
         return self.request_data
