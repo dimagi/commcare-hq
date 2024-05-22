@@ -12,7 +12,7 @@ from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.enterprise.models import EnterprisePermissions
-from corehq.apps.reports.const import TABLEAU_ROLES
+from corehq.apps.reports.models import TableauUser
 from corehq.apps.reports.util import get_allowed_tableau_groups_for_domain
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
@@ -140,7 +140,7 @@ class TableauRoleValidator(ImportValidator):
 
     def __init__(self, domain):
         super().__init__(domain)
-        self.valid_role_options = [option[1] for option in TABLEAU_ROLES]
+        self.valid_role_options = [e.value for e in TableauUser.Roles]
 
     def validate_spec(self, spec):
         tableau_role = spec.get('tableau_role')
