@@ -424,7 +424,7 @@ hqDefine('cloudcare/js/utils', [
 
         $el.on("focusout", $el.data("DateTimePicker").hide);
         $el.attr("placeholder", dateFormat);
-        $el.attr("pattern", "[0-9-/]+");
+        $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
     };
 
     var initTimePicker = function ($el, selectedTime, timeFormat) {

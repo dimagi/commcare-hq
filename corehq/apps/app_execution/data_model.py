@@ -51,10 +51,31 @@ class CommandStep(Step):
     type: ClassVar[str] = "command"
     is_form_step: ClassVar[bool] = False
 
-    value: str
+    value: str = ""
     """Display text of the command to execute"""
 
+    id: str = ""
+    """ID of the command to execute"""
+
+    selected_values: list[str] = None
+    """Selected values for multi-select commands"""
+
+    def to_json(self):
+        data = super().to_json()
+        for key in ["value", "id", "selected_values"]:
+            if not getattr(self, key):
+                data.pop(key)
+        return data
+
     def get_request_data(self, session, data):
+        if self.selected_values:
+            data = _append_selection(data, "use_selected_values")
+            data["selectedValues"] = self.selected_values
+            return data
+
+        if self.id:
+            return _append_selection(data, self.id)
+
         commands = {c["displayText"].lower(): c for c in session.data.get("commands", [])}
 
         try:
@@ -167,6 +188,31 @@ class QueryStep(Step):
 
 
 @define
+class ClearQueryStep(Step):
+    """This is implemented in the suite file with `redo_last="true"` and appears on the UI
+    as "Search Again"
+    """
+    type: ClassVar[str] = "clear_query"
+    is_form_step: ClassVar[bool] = False
+
+    def get_request_data(self, session, data):
+        query_key = session.data["queryKey"]
+        return {
+            **data,
+            "query_data": {
+                query_key: {
+                    "inputs": None,
+                    "execute": False,
+                    "force_manual_search": True,
+                }
+            },
+        }
+
+    def __str__(self):
+        return "ClearQuery"
+
+
+@define
 class AnswerQuestionStep(Step):
     type: ClassVar[str] = "answer_question"
     is_form_step: ClassVar[bool] = True
@@ -222,8 +268,8 @@ class SubmitFormStep(Step):
 @define
 class FormStep(Step):
     type: ClassVar[str] = "form"
-    children: list[AnswerQuestionStep | SubmitFormStep]
     is_form_step: ClassVar[bool] = True
+    children: list[AnswerQuestionStep | SubmitFormStep]
 
     def to_json(self):
         return {
@@ -250,6 +296,8 @@ STEP_MAP = {
     "entity_select": EntitySelectStep,
     "entity_select_index": EntitySelectIndexStep,
     "query": QueryStep,
+    "query_input_validation": QueryInputValidationStep,
+    "clear_query": ClearQueryStep,
     "answer_question": AnswerQuestionStep,
     "submit_form": SubmitFormStep,
     "form": FormStep,

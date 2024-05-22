@@ -16,6 +16,7 @@ from corehq.apps.es.migration_operations import (
     CreateIndex,
     CreateIndexIfNotExists,
     DeleteIndex,
+    DeleteOnlyIfIndexExists,
     MappingUpdateFailed,
     UpdateIndexMapping,
     make_mapping_meta,
@@ -372,6 +373,38 @@ class TestCreateIndexIfNotExists(BaseCase):
         self.assertIndexExists(self.index)
         migration.unapply()
         self.assertIndexExists(self.index)
+
+
+@es_test
+class TestDeleteOnlyIfIndexExists(BaseCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.DeleteOnlyIfIndexExists = DeleteOnlyIfIndexExists
+
+    def test_deletes_index_if_exists(self):
+        migration = TestMigration(self.DeleteOnlyIfIndexExists(self.index))
+        manager.index_create(self.index)
+        self.assertIndexExists(self.index)
+        migration.apply()
+        # Index is deleted after running the migrations
+        self.assertIndexDoesNotExist(self.index)
+
+    def test_does_not_fail_if_index_does_not_exists(self):
+        self.assertIndexDoesNotExist(self.index)
+        migration = TestMigration(self.DeleteOnlyIfIndexExists(self.index))
+        migration.apply()
+        # Index still does not exist and no errors were raised in the tests.
+        self.assertIndexDoesNotExist(self.index)
+
+    def test_reverse_is_noop(self):
+        manager.index_create(self.index)
+        migration = TestMigration(self.DeleteOnlyIfIndexExists(self.index))
+        migration.apply()
+        self.assertIndexDoesNotExist(self.index)
+        migration.unapply()
+        self.assertIndexDoesNotExist(self.index)
 
 
 @es_test

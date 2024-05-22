@@ -1,19 +1,21 @@
 'use strict';
 
-hqDefine("settings/js/bootstrap3/user_api_keys", [
+hqDefine("settings/js/user_api_keys", [
     "jquery",
     "knockout",
-    'underscore',
+    "underscore",
+    "moment",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/bootstrap3/crud_paginated_list",
-    'hqwebapp/js/bootstrap3/widgets',
+    "hqwebapp/js/bootstrap5/crud_paginated_list",
+    "hqwebapp/js/tempus_dominus",
 ], function (
     $,
     ko,
     _,
+    moment,
     initialPageData,
     CRUDPaginatedList,
-    widgets
+    hqTempusDominus
 ) {
 
     var ApiKeyListModel = function (showAPIKeys, maximumKeyExpirationWindow) {
@@ -49,11 +51,12 @@ hqDefine("settings/js/bootstrap3/user_api_keys", [
         });
 
         self.initDatePicker = function () {
-            let options = { dateFormat: 'yy-mm-dd', minDate: new Date() };
-            if (maximumKeyExpirationWindow) {
-                options['maxDate'] = maximumKeyExpirationWindow;
-            }
-            $('.date-picker').datepicker(options);
+            hqTempusDominus.createDatePicker($('.date-picker').get(0), {
+                restrictions: {
+                    minDate: new Date(),
+                    maxDate: maximumKeyExpirationWindow ? moment().add(maximumKeyExpirationWindow, 'days').toDate() : undefined,
+                }
+            });
         };
 
         var updateApiKey = function (action, apiKeyId) {
@@ -90,7 +93,6 @@ hqDefine("settings/js/bootstrap3/user_api_keys", [
         ko.applyBindings(paginatedListModel, $('#editable-paginated-list').get(0));
         paginatedListModel.init();
         paginatedListModel.initDatePicker();
-        widgets.init();
     });
 
     return 1;

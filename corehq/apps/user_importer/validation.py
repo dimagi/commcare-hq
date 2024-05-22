@@ -14,9 +14,15 @@ from corehq.apps.domain.forms import clean_password
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.reports.models import TableauUser
 from corehq.apps.reports.util import get_allowed_tableau_groups_for_domain
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import user_can_access_other_user, user_can_change_locations
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
+from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import normalize_username, raw_username
+from corehq.apps.users.views.utils import (
+    user_can_access_invite
+)
 from corehq.util.workbook_json.excel import (
     StringTypeRequiredError,
     enforce_string_type,
@@ -24,7 +30,7 @@ from corehq.util.workbook_json.excel import (
 
 
 def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowed_groups=None, allowed_roles=None,
-                               profiles_by_name=None, upload_domain=None):
+                               profiles_by_name=None, upload_domain=None, upload_user=None, location_cache=None):
     domain = domain_obj.name
     validate_passwords = domain_obj.strong_mobile_passwords
     noop = NoopValidator(domain)
@@ -39,6 +45,7 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowe
         ExistingUserValidator(domain, all_specs),
         TargetDomainValidator(upload_domain),
         ProfileValidator(domain, list(profiles_by_name)),
+        LocationAccessValidator(domain, upload_user, location_cache, is_web_user_import)
     ]
     if is_web_user_import:
         return validators + [RequiredWebFieldsValidator(domain), DuplicateValidator(domain, 'email', all_specs),
@@ -418,3 +425,52 @@ class ConfirmationSmsValidator(ImportValidator):
                 if error_values:
                     errors_formatted = ' and '.join(error_values)
                     return self.error_existing_user.format(self.confirmation_sms_header, errors_formatted)
+
+
+class LocationAccessValidator(ImportValidator):
+    error_message_user_access = _("Based on your locations do not have permission to edit this user or user "
+                                  "invitation")
+    error_message_location_access = _("You do not have permission to assign or remove these locations: {}")
+
+    def __init__(self, domain, upload_user, location_cache, is_web_user_import):
+        super().__init__(domain)
+        self.upload_user = upload_user
+        self.location_cache = location_cache
+        self.is_web_user_import = is_web_user_import
+
+    def validate_spec(self, spec):
+        from corehq.apps.user_importer.importer import find_location_id
+        # 1. Get current locations for user or user invitation and ensure user can edit it
+        username = spec.get('username')
+        current_locs = []
+        editable_user = None
+        if self.is_web_user_import:
+            try:
+                invitation = Invitation.objects.get(domain=self.domain, email=username, is_accepted=False)
+                if not user_can_access_invite(self.domain, self.upload_user, invitation):
+                    return self.error_message_user_access.format(invitation.email)
+                current_locs = invitation.assigned_locations.all()
+            except Invitation.DoesNotExist:
+                editable_user = CouchUser.get_by_username(username, strict=True)
+        else:
+            if username:
+                editable_user = CouchUser.get_by_username(username, strict=True)
+            elif 'user_id' in spec:
+                editable_user = CouchUser.get_by_user_id(spec.get('user_id'))
+        if editable_user:
+            if not user_can_access_other_user(self.domain, self.upload_user, editable_user):
+                return self.error_message_user_access.format(editable_user.username)
+            current_locs = editable_user.get_location_ids(self.domain)
+
+        # 2. Ensure the user is only adding the user to/removing from *new locations* that they have permission
+        # to access.
+        if 'location_code' in spec:
+            location_codes = (spec['location_code'] if isinstance(spec['location_code'], list)
+                              else [spec['location_code']])
+            locs_being_assigned = find_location_id(location_codes, self.location_cache)
+            problem_location_ids = user_can_change_locations(self.domain, self.upload_user,
+                                                            current_locs, locs_being_assigned)
+            if problem_location_ids:
+                return self.error_message_location_access.format(
+                    ', '.join(SQLLocation.objects.filter(
+                        location_id__in=problem_location_ids).values_list('site_code', flat=True)))

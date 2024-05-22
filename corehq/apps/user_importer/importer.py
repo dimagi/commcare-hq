@@ -4,12 +4,15 @@ import string
 import random
 from collections import defaultdict
 from datetime import datetime
+from typing import List
 from corehq.util.soft_assert.api import soft_assert
 
 from memoized import memoized
 from django.db import DEFAULT_DB_ALIAS
 
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
+from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.util import generate_mobile_username
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import gettext as _
@@ -35,10 +38,6 @@ from corehq.apps.reports.util import get_tableau_group_ids_by_names
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import (
     spec_value_to_boolean_or_none,
-)
-from corehq.apps.user_importer.validation import (
-    get_user_import_validators,
-    is_password,
 )
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.account_confirmation import (
@@ -422,6 +421,7 @@ class BaseUserRow:
 class CCUserRow(BaseUserRow):
 
     def process(self):
+        from corehq.apps.user_importer.validation import is_password
         if not self._process_column_values():
             return False
 
@@ -496,6 +496,7 @@ class CCUserRow(BaseUserRow):
         return True
 
     def _parse_password(self):
+        from corehq.apps.user_importer.validation import is_password
         if self.row.get('password'):
             password = str(self.row.get('password'))
         elif self.column_values["send_confirmation_sms"]:
@@ -567,6 +568,7 @@ class CCUserRow(BaseUserRow):
         )
 
     def _process_simple_fields(self):
+        from corehq.apps.user_importer.validation import is_password
         cv = self.column_values
         # process password
         if cv["user_id"] and is_password(cv["password"]):
@@ -874,10 +876,12 @@ class WebImporter:
 
     @memoized
     def domain_info(self, domain):
-        return DomainInfo(self, domain, is_web_upload=self.is_web_upload)
+        return DomainInfo(self, domain, is_web_upload=self.is_web_upload, upload_user=self.upload_user)
 
     def run(self):
         ret = {"errors": [], "rows": []}
+        column_headers = self.user_specs[0].keys() if self.user_specs else []
+        check_field_edit_permissions(column_headers, self.upload_user, self.upload_domain)
         for i, row in enumerate(self.user_specs):
             if self.update_progress:
                 self.update_progress(i)
@@ -908,10 +912,11 @@ class CCImporter(WebImporter):
 
 class DomainInfo:
 
-    def __init__(self, importer, domain, is_web_upload):
+    def __init__(self, importer, domain, is_web_upload, upload_user=None):
         self.importer = importer
         self.domain = domain
         self.is_web_upload = is_web_upload
+        self.upload_user = upload_user
 
     @property
     @memoized
@@ -971,6 +976,7 @@ class DomainInfo:
     @property
     @memoized
     def validators(self):
+        from corehq.apps.user_importer.validation import get_user_import_validators
         roles_by_name = list(self.roles_by_name)
         domain_user_specs = [
             spec
@@ -988,6 +994,8 @@ class DomainInfo:
             allowed_roles=roles_by_name,
             profiles_by_name=self.profiles_by_name,
             upload_domain=self.importer.upload_domain,
+            upload_user=self.upload_user,
+            location_cache=self.location_cache
         )
 
 
@@ -1021,6 +1029,18 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
         upload_domain, user_specs, upload_user, upload_record_id,
         update_progress=update_progress
     ).run()
+
+
+def check_field_edit_permissions(field_names: List, upload_couch_user, domain: str):
+    if "tableau_role" in field_names or "tableau_groups" in field_names:
+        if not upload_couch_user.has_permission(
+            domain,
+            get_permission_name(HqPermissions.edit_user_tableau_config)
+        ):
+            raise UserUploadError(_(
+                "Only users with 'Manage Tableau Configuration' edit permission can upload files with"
+                "'Tableau Role and/or 'Tableau Groups' fields. Please remove those fields from your file."
+            ))
 
 
 def check_user_role(username, role):

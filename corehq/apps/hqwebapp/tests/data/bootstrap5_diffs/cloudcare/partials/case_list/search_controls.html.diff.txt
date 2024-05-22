@@ -1,15 +1,13 @@
 --- 
 +++ 
-@@ -4,21 +4,23 @@
+@@ -4,21 +4,21 @@
  <div id="case-list-search-controls">
    <div>
      <% if (isMultiSelect) { %>
 -      <input type="checkbox" id="select-all-tile-checkbox"/>
 -      <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox">{% trans "Select All" %}</label>
-+      <div class="form-check">
-+        <input type="checkbox" id="select-all-tile-checkbox" class="form-check-input" />
-+        <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox" class="form-check-label">{% trans "Select All" %}</label>
-+      </div>
++      <input type="checkbox" id="select-all-tile-checkbox" class="form-check-input" />
++      <label id="select-all-tile-checkbox-label" for="select-all-tile-checkbox" class="mt-2 clickable">{% trans "Select All" %}</label>
      <% } %>
    </div>
    <div class="dropdown">
