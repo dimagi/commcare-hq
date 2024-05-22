@@ -3,8 +3,10 @@
 <script type="text/template" id="session-view-list-template">
   <% if(isPreviewEnv) { %>
   <div class="breadcrumb-form-container">
-    <ol class="breadcrumb breadcrumb-form">  {# todo B5: css:breadcrumb #}
-      <li class="breadcrumb-text">{% trans "Incomplete Forms" %}</li>
+    <ol class="breadcrumb breadcrumb-form">
+      <li class="breadcrumb-item">
+        {% trans "Incomplete Forms" %}
+      </li>
     </ol>
   </div>
   <% } else { %>

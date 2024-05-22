@@ -3,12 +3,12 @@
 
 <script type="text/html" id="repeat-juncture-fullform-ko-template">
   <div data-bind="class: elementTile">
-    <div class="card card-default rep">  {# todo B5: css:panel #}
+    <div class="card rep">
       <div class="card-header" data-bind="style: {
           'background-color': headerBackgroundColor(),
           'color': headerBackgroundColor() ? 'white' : '',
         }">
-        <h3 class="caption" data-bind="html: header"></h3>
+        <div class="caption fs-3" data-bind="html: header"></div>
         <span class="ix" data-bind="text: ixInfo($data)"></span>
       </div>
       <div class="card-body">

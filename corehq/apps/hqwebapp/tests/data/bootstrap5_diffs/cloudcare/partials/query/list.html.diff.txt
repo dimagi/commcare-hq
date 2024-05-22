@@ -16,7 +16,13 @@
            <div>{% trans "Clear" %}</div>
          </button>
          <button class="btn btn-primary" type="submit" id="query-submit-button">
-@@ -29,7 +28,7 @@
+@@ -24,12 +23,12 @@
+         <%= description %>
+       </div>
+     <% } %>
+-    <table class="table table-hover <%= grouped ? '' : 'table-striped table-bordered' %>" role="presentation">
++    <table class="table <%= grouped ? '' : 'table-striped table-bordered' %>" role="presentation">
+       <tbody id="query-properties">
        </tbody>
      </table>
      <% if (!sidebarEnabled) {%>

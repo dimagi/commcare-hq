@@ -17,25 +17,26 @@
        css: labelWidth,
        attr: {
          id: entry.entryId + '-label',
-@@ -21,14 +21,14 @@
+@@ -19,16 +19,12 @@
+       visible: hasLabelContent">
+       {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
        <div data-bind="css: {
-           'row': help(),
+-          'row': help(),
            'text-center': stylesContains('text-align-center'),
 -          'text-right': stylesContains('text-align-right'),
 +          'text-end': stylesContains('text-align-right'),
          }">
-         <span class="webapp-markdown-output" data-bind="
-             html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
+-        <span class="webapp-markdown-output" data-bind="
+-            html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
 -            css: {'col-md-11' : help()}"></span>
-+            css: {'col-lg-11' : help()}"></span>
          <!-- ko if: help() -->
          <a
 -          class="help-text-trigger col-md-1"
-+          class="help-text-trigger col-lg-1"
++          class="help-text-trigger float-end ms-3 mb-1"
            role="button"
            href="javascript:void(0)"
            title="{% trans 'Show help dialog' %}"
-@@ -45,7 +45,7 @@
+@@ -45,12 +41,13 @@
                      } "></div>
                </div>
                <div class="modal-footer">
@@ -44,24 +45,32 @@
                </div>
              </div>
            </div>
-@@ -63,7 +63,7 @@
+         </div>
+         <!-- /ko -->
++        <span class="webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+       </div>
+       <span class="hint-text" data-bind="
+               text: ko.utils.unwrapObservable($data.hint),
+@@ -62,9 +59,8 @@
+     </label>
      <div class="widget-container controls" data-bind="css: controlWidth">
        <div class="widget" data-bind="
-                 template: { name: entryTemplate, data: entry, afterRender: afterRender },
+-                template: { name: entryTemplate, data: entry, afterRender: afterRender },
 -                css: { 'has-error': hasError }
-+                css: { 'has-error': hasError }  {# todo B5: css:has-error #}
-             ">
+-            ">
++        template: { name: entryTemplate, data: entry, afterRender: afterRender },
++      ">
        </div>
        <div class="widget-multimedia" data-bind="
-@@ -89,12 +89,12 @@
+                 template: { name: 'widget-multimedia-ko-template', data: $data }"
+@@ -89,12 +85,11 @@
                      }">{% trans 'Sorry, this response is required!' %}</div>
    <!-- /ko -->
    <!-- ko if: isLabel -->
 -  <div class="form-group">
-+  <div class="row">
      {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
 -    <div class="info col-sm-12" data-bind="
-+    <div class="info col-md-12" data-bind="
++    <div class="info" data-bind="
          css: {
              'text-center': stylesContains('text-align-center'),
 -            'text-right': stylesContains('text-align-right'),
@@ -69,24 +78,33 @@
          },
          attr: {
              id: entry.entryId + '-label',
-@@ -120,16 +120,16 @@
+@@ -116,20 +111,18 @@
+           "></div>
+       </div>
+     </div>
+-  </div>
    <!-- /ko -->
    <!-- ko if: isButton -->
    {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
 -  <div class="q form-group" data-bind="
-+  <div class="q row" data-bind="
-     css: {
-       error: error,
-       'text-center': stylesContains('text-align-center'),
+-    css: {
+-      error: error,
+-      'text-center': stylesContains('text-align-center'),
 -      'text-right': stylesContains('text-align-right')
-+      'text-end': stylesContains('text-align-right')
-     }">
+-    }">
 -    <div class="widget-container controls col-sm-12">
-+    <div class="widget-container controls col-md-12">
-       <div class="widget" data-bind="
-         template: { name: entryTemplate, data: entry, afterRender: afterRender },
+-      <div class="widget" data-bind="
+-        template: { name: entryTemplate, data: entry, afterRender: afterRender },
 -        css: { 'has-error': hasError }
-+        css: { 'has-error': hasError }  {# todo B5: css:has-error #}
++    <div class="q row" data-bind="
++      css: {
++        error: error,
++        'text-center': stylesContains('text-align-center'),
++        'text-end': stylesContains('text-align-right')
++      }">
++      <div class="widget-container controls col-md-12">
++        <div class="widget" data-bind="
++          template: { name: entryTemplate, data: entry, afterRender: afterRender },
          "></div>
        </div>
      </div>

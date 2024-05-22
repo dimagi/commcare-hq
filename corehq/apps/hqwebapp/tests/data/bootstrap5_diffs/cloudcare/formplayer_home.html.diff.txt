@@ -6,19 +6,22 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  {% load compress %}
-@@ -20,10 +20,10 @@
+@@ -20,11 +20,11 @@
  {% endblock %}
  
  {% block navigation %}{{ block.super }}
 -  <div class="navbar navbar-inverse navbar-cloudcare navbar-static-top">
-+  <div class="navbar navbar-inverse navbar-cloudcare navbar-static-top">  {# todo B5: css:navbar #}
++  <div class="navbar navbar-cloudcare">
      <div class="container-fluid">
-       <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> Web Apps</a>
+-      <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> Web Apps</a>
 -      <ul class="nav navbar-nav navbar-right" >
-+      <ul class="nav navbar-nav navbar-right" >  {# todo B5: css:nav #}
-         <li><a href="#" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
+-        <li><a href="#" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
++      <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> {% trans "Web Apps" %}</a>
++      <ul class="nav navbar-nav navbar-right">
++        <li class="nav-item"><a href="#" class="nav-link" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
        </ul>
      </div>
+   </div>
 @@ -34,25 +34,24 @@
    {% compress css %}
      <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
