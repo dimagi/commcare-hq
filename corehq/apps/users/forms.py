@@ -1787,8 +1787,6 @@ class BaseTableauUserForm(forms.Form):
         for i, group in enumerate(self.allowed_tableau_groups):
             # Add a choice for each tableau group on the server
             self.fields['groups'].choices.append((i, group.name))
-        if not self.fields['groups'].choices:
-            del self.fields['groups']
 
 
 class TableauUserForm(BaseTableauUserForm):
@@ -1799,12 +1797,11 @@ class TableauUserForm(BaseTableauUserForm):
         self.username = kwargs.pop('username', None)
         super(TableauUserForm, self).__init__(*args, **kwargs)
 
-        if 'groups' in self.fields:
-            user_group_names = [group.name for group in get_tableau_groups_for_user(self.domain, self.username)]
-            for i, group_name in self.fields['groups'].choices:
-                if group_name in user_group_names:
-                    # Pre-choose groups that the user already belongs to
-                    self.fields['groups'].initial.append(i)
+        user_group_names = [group.name for group in get_tableau_groups_for_user(self.domain, self.username)]
+        for i, group_name in self.fields['groups'].choices:
+            if group_name in user_group_names:
+                # Pre-choose groups that the user already belongs to
+                self.fields['groups'].initial.append(i)
 
         if readonly:
             self.fields['role'].widget.attrs['readonly'] = True
@@ -1818,6 +1815,14 @@ class TableauUserForm(BaseTableauUserForm):
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('Tableau Configuration'),
+                'role',
+                'groups' if len(self.fields['groups'].choices) > 0 else None
+            )
+        )
 
     def save(self, username, commit=True):
         if not self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config'):
