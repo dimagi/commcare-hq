@@ -287,6 +287,17 @@ def user_can_access_any_location_id(domain, user, location_ids):
             .exists())
 
 
+def user_can_change_locations(domain, couch_user, current_loc_ids, loc_ids_being_assigned):
+    from corehq.apps.locations.models import SQLLocation
+    locs_accessible_to_user = set(SQLLocation.objects.accessible_to_user(
+        domain, couch_user).values_list('location_id', flat=True))
+    # symmetric_difference = XOR, represents the locations that are being added/removed. All of these locations
+    # must be accessible to user
+    problem_location_ids = (set(current_loc_ids).symmetric_difference(set(loc_ids_being_assigned))
+                            - locs_accessible_to_user)
+    return list(problem_location_ids)
+
+
 def user_can_access_other_user(domain, user, other_user):
     if user.has_permission(domain, 'access_all_locations'):
         return True
