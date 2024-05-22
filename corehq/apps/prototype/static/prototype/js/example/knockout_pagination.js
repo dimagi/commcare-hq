@@ -1,12 +1,9 @@
-'use strict';
+import ko from 'knockout';
+import $ from 'jquery';
+import _ from 'underscore';
+import initialPageData from 'hqwebapp/js/initial_page_data';
+import 'hqwebapp/js/bootstrap5/components.ko';  // for pagination
 
-hqDefine("prototype/js/example/knockout_pagination",[
-    'jquery',
-    'knockout',
-    'underscore',
-    'hqwebapp/js/initial_page_data',
-    "hqwebapp/js/bootstrap5/components.ko", // for pagination
-], function ($, ko, _, initialPageData) {
     $(function () {
         let rowData = function (data) {
             let self = {};
@@ -59,4 +56,3 @@ hqDefine("prototype/js/example/knockout_pagination",[
 
         $('#prototype-example-knockout-pagination').koApplyBindings(new exampleModel());
     });
-});
