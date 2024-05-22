@@ -718,7 +718,6 @@ def webpack_main(parser, token):
 class WebpackMainNode(template.Node):
 
     def __init__(self, name, value):
-        print(f"name: {name}\tvalue: {value}")
         self.name = name
         self.value = value
 
