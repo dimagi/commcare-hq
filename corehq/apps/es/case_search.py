@@ -13,6 +13,8 @@ from corehq.apps.es import case_search as case_search_es
 from copy import deepcopy
 from datetime import datetime
 
+from django.conf import settings
+
 from memoized import memoized
 
 from dimagi.utils.parsing import json_format_datetime
@@ -29,6 +31,7 @@ from corehq.apps.case_search.const import (
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
+from corehq.apps.es.transient_util import doc_adapter_from_cname
 from corehq.util.dates import iso_string_to_datetime
 
 from . import filters, queries
@@ -220,8 +223,14 @@ case_search_adapter = create_document_adapter(
 
 
 def multiplex_to_adapter(domain):
-    # Check if domain needs to multiplex writes
-    # And a util will return cname of the adapter where writes should be muliplexed
+    """
+    Reads `CASE_SEARCH_SUB_INDICES` from settings to see if we should multiplex writes for case_search index.
+    Returns the appropriate adapter based on the domain passed.
+    """
+    multiplex_info = settings.CASE_SEARCH_SUB_INDICES
+    domain_multiplex_settings = multiplex_info.get(domain, None)
+    if domain_multiplex_settings and domain_multiplex_settings['multiplex_writes']:
+        return doc_adapter_from_cname(domain_multiplex_settings['index_cname'])
     return None
 
 
