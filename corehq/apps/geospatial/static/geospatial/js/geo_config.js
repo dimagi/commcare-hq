@@ -1,3 +1,5 @@
+'use strict';
+
 hqDefine("geospatial/js/geo_config", [
     "jquery",
     "knockout",
@@ -12,7 +14,6 @@ hqDefine("geospatial/js/geo_config", [
     const ROAD_NETWORK_ALGORITHM = initialPageData.get('road_network_algorithm_slug');
 
     var geoConfigViewModel = function (configData) {
-        'use strict';
         var self = {};
 
         var data = configData.get('config');
