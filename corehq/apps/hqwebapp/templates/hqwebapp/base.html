@@ -336,9 +336,10 @@
     {# javascript below this line #}
 
     {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
-    {% include "hqwebapp/partials/webpack.html" %}
 
     <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+
+    {% include "hqwebapp/partials/webpack.html" %}
 
     {# HQ Specific Libraries #}
     {% if not use_js_bundler %}
