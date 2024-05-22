@@ -1,3 +1,6 @@
+from datetime import datetime
+
+from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -6,6 +9,7 @@ from django.urls import reverse
 from corehq.apps.app_execution import const
 from corehq.apps.app_execution.api import execute_workflow
 from corehq.apps.app_execution.data_model import EXAMPLE_WORKFLOW
+from corehq.apps.app_execution.db_accessors import get_avg_duration_data
 from corehq.apps.app_execution.exceptions import AppExecutionError, FormplayerException
 from corehq.apps.app_execution.forms import AppWorkflowConfigForm
 from corehq.apps.app_execution.har_parser import parse_har_from_string
@@ -20,9 +24,12 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 def workflow_list(request):
     workflows = AppWorkflowConfig.objects.all()
     _augment_with_logs(workflows)
+    utcnow = datetime.utcnow()
+    chart_data = get_avg_duration_data(start=utcnow - relativedelta(months=1), end=utcnow)
     context = _get_context(
         request, "Automatically Executed App Workflows", reverse("app_execution:workflow_list"),
-        workflows=workflows
+        workflows=workflows,
+        chart_data=chart_data
     )
     return render(request, "app_execution/workflow_list.html", context)
 
@@ -148,15 +155,18 @@ def _get_context(request, title, url, add_parent=False, **kwargs):
 @require_superuser_or_contractor
 @use_bootstrap5
 def workflow_log_list(request, pk):
-    logs = AppExecutionLog.objects.filter(workflow_id=pk).order_by("-started").all()
+    utcnow = datetime.utcnow()
+    chart_data = get_avg_duration_data(
+        start=utcnow - relativedelta(months=1), end=utcnow, workflow_id=pk
+    )
     context = _get_context(
         request,
         "Automatically Executed App Workflow Logs",
         reverse("app_execution:workflow_logs", args=[pk]),
         add_parent=True,
         workflow=AppWorkflowConfig.objects.get(id=pk),
-        logs=logs,
-        total=logs.count(),
+        total=AppExecutionLog.objects.filter(workflow_id=pk).count(),
+        chart_data=chart_data
     )
     return render(request, "app_execution/workflow_log_list.html", context)
 
@@ -164,7 +174,10 @@ def workflow_log_list(request, pk):
 @require_superuser_or_contractor
 @use_bootstrap5
 def workflow_logs_json(request, pk):
-    logs = AppExecutionLog.objects.filter(workflow_id=pk).order_by("-started").all()
+    limit = int(request.GET.get('per_page', 10))
+    page = int(request.GET.get('page', 1))
+    skip = limit * (page - 1)
+    logs = AppExecutionLog.objects.filter(workflow_id=pk).order_by("-started")[skip:skip + limit]
     return JsonResponse({
         "logs": [
             {
