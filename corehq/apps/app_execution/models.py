@@ -52,6 +52,10 @@ class AppWorkflowConfig(models.Model):
     def workflow_json(self):
         return AppWorkflowConfig.workflow_object_to_json_string(self.workflow)
 
+    @property
+    def workflow_dsl(self):
+        return self.workflow.to_dsl()
+
     @staticmethod
     def workflow_object_to_json_string(workflow):
         return AppWorkflowConfig._meta.get_field("workflow").formfield().prepare_value(workflow)
