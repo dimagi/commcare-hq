@@ -1,7 +1,4 @@
 from couchdbkit import NoResultFound, ResourceNotFound
-from crispy_forms import bootstrap as twbscrispy
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import InlineField
 from django import forms
 
 from corehq.apps.app_execution.models import AppWorkflowConfig
@@ -30,7 +27,7 @@ class AppWorkflowConfigForm(forms.ModelForm):
         )
         widgets = {
             "form_mode": forms.RadioSelect(),
-            "workflow": forms.Textarea(attrs={"rows": 20}),
+            "workflow": forms.Textarea(attrs={"rows": 20, "class": "textarea form-control"}),
         }
 
     def __init__(self, request, *args, **kwargs):
@@ -39,42 +36,7 @@ class AppWorkflowConfigForm(forms.ModelForm):
         if self.instance.id:
             self.fields["username"].initial = self.instance.django_user.username
         self.helper = hqcrispy.HQFormHelper()
-
-        fields = [
-            "name",
-            "app_id",
-            "username",
-            "sync_before_run",
-            "form_mode",
-        ]
-        if request.user.is_superuser:
-            fields += ["run_every", "notification_emails"]
-
-        self.helper.layout = crispy.Layout(
-            crispy.Div(
-                crispy.Div(
-                    crispy.HTML("<p>&nbsp;</p>"),
-                    *fields,
-                    css_class="col",
-                ),
-                crispy.Div(
-                    crispy.HTML("<p>Workflow:</p>"),
-                    InlineField("workflow"),
-                    css_class="col"
-                ),
-                css_class="row mb-3"
-            ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton("Save", type='submit', css_class='btn-primary')
-            ),
-            "har_file",
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    "Import HAR", type='submit', css_class='btn-secondary', name="import_har", value="1",
-                    formnovalidate=True,
-                )
-            ),
-        )
+        self.helper.form_class = "form-horizontal"
 
     def clean_username(self):
         domain = self.request.domain
