@@ -746,18 +746,25 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
 
         performSubmit: function (initiatedBy) {
             var self = this;
-            self.validateAllFields().done(function () {
-                FormplayerFrontend.trigger(
-                    "menu:query",
-                    self.getAnswers(),
-                    self.options.sidebarEnabled,
-                    initiatedBy
-                );
-                if (self.smallScreenEnabled && self.options.sidebarEnabled) {
-                    $('#sidebar-region').collapse('hide');
-                }
-                sessionStorage.submitPerformed = true;
+            self.executeSearch(initiatedBy).done(function (response) {
+                self.updateModels(response);
+                self.displayErrors();
             });
+        },
+
+        executeSearch: function (initiatedBy) {
+            var request = FormplayerFrontend.getChannel().request(
+                "menu:query",
+                self.getAnswers(),
+                self.options.sidebarEnabled,
+                initiatedBy
+            );
+
+            if (self.smallScreenEnabled && self.options.sidebarEnabled) {
+                $('#sidebar-region').collapse('hide');
+            }
+            sessionStorage.submitPerformed = true;
+            return request;
         },
 
         updateSearchResults: function () {
