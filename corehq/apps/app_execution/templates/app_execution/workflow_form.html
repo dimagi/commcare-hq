@@ -1,5 +1,41 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load crispy_forms_tags %}
 {% block page_content %}
-  {% crispy form %}
+  {#  {% crispy form %}#}
+  <form autocomplete="off" class="form form-horizontal" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col">
+        <p>&nbsp;</p>
+        {{ form.name|as_crispy_field }}
+        {{ form.app_id|as_crispy_field }}
+        {{ form.username|as_crispy_field }}
+        {{ form.form_mode|as_crispy_field }}
+        {% if request.user.is_superuser %}
+        {{ form.run_every|as_crispy_field }}
+        {{ form.notification_emails|as_crispy_field }}
+        {% endif %}
+      </div>
+      <div class="col">
+        <p>Workflow*</p>
+        {{ form.workflow }}
+        {{ form.workflow.errors }}
+      </div>
+    </div>
+    <div class="form-actions row">
+      <div class="offset-xs-12 offset-sm-4 offset-md-4 offset-lg-3 col-xs-12 col-sm-8 col-md-8 col-lg-9">
+        <button class="btn btn-primary" type="submit">Save</button>
+      </div>
+    </div>
+
+    <div>
+      <h4>HAR File import</h4>
+      {{ form.har_file|as_crispy_field }}
+      <div class="form-actions row">
+        <div class="offset-xs-12 offset-sm-4 offset-md-4 offset-lg-3 col-xs-12 col-sm-8 col-md-8 col-lg-9">
+          <button class="btn btn-secondary" type="submit" name="import_har" formnovalidate>Import HAR File</button>
+        </div>
+      </div>
+    </div>
+  </form>
 {% endblock %}
