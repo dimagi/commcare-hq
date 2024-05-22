@@ -481,7 +481,7 @@ class ElasticDocumentAdapter(BaseAdapter):
 
     # For adapter of sub indices,
     # this property is the cname of the parent index
-    parent_index_cname = None
+    parent_index_name = None
 
     def __init__(self, index_name, type_):
         """A document adapter for a single index.
