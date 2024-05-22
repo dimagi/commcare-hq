@@ -28,7 +28,7 @@ from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
@@ -274,6 +274,7 @@ class LocationsSearchView(EmwfOptionsView):
         return LocationOptionsController(self.request, self.domain, self.search)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     urlname = 'location_fields_view'
     field_type = 'LocationFields'

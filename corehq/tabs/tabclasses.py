@@ -24,6 +24,7 @@ from corehq.apps.accounting.utils.subscription import is_domain_enterprise
 from corehq.apps.accounting.views import (
     TriggerAutopaymentsView,
     TriggerDowngradeView,
+    TriggerRemovedSsoUserAutoDeactivationView,
 )
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
@@ -1867,10 +1868,6 @@ class TranslationsTab(UITab):
                         'url': reverse('download_translations', args=[self.domain]),
                         'title': _('Download Translations')
                     },
-                    {
-                        'url': reverse('migrate_transifex_project', args=[self.domain]),
-                        'title': _('Migrate Project')
-                    },
                 ]))
         if self._request.user.is_staff:
             items.append((_('Translations'), [
@@ -2374,6 +2371,10 @@ class AccountingTab(UITab):
                     'title': _(TriggerAutopaymentsView.page_title),
                     'url': reverse(TriggerAutopaymentsView.urlname),
                 },
+                {
+                    'title': _(TriggerRemovedSsoUserAutoDeactivationView.page_title),
+                    'url': reverse(TriggerRemovedSsoUserAutoDeactivationView.urlname),
+                }
             ])
         items.append(('Other Actions', other_actions))
         return items

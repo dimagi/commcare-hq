@@ -140,6 +140,7 @@ urlpatterns = [
     url(r'^builds/', include('corehq.apps.builds.urls')),
     url(r'^downloads/temp/', include('soil.urls')),
     url(r'^styleguide/', include('corehq.apps.styleguide.urls')),
+    url(r'^prototype/', include('corehq.apps.prototype.urls')),
     url(r'^500/$', use_bootstrap5(TemplateView.as_view(template_name='500.html'))),
     url(r'^404/$', use_bootstrap5(TemplateView.as_view(template_name='404.html'))),
     url(r'^403/$', use_bootstrap5(TemplateView.as_view(template_name='403.html'))),

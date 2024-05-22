@@ -8,7 +8,7 @@
   <div class="col col-md-2">
     <span id="lock-groups-controls">
       <div class="controls">
-        <button data-bind="visible: !groupsLocked(), click: toggleGroupLock" class="btn-default form-control">
+        <button id="gtm-lock-case-grouping-btn" data-bind="visible: !groupsLocked(), click: toggleGroupLock" class="btn-default form-control">
           <i class="fa fa-lock"></i>
           {% trans "Lock Case Grouping for Me" %}
         </button>
@@ -22,7 +22,7 @@
   <div class="col col-md-2">
     <span id="export-controls">
       <div class="controls">
-        <button class="btn-default form-control" data-bind="click: downloadCSV, disable: !groupsReady()">
+        <button id="gtm-export-groups-btn" class="btn-default form-control" data-bind="click: downloadCSV, disable: !groupsReady()">
           {% trans "Export Groups" %}
         </button>
       </div>

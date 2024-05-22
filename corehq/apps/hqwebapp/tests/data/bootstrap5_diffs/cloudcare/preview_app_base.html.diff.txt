@@ -9,7 +9,7 @@
  
  <!DOCTYPE html>
  <html lang="{{ LANGUAGE_CODE }}">
-@@ -12,12 +12,12 @@
+@@ -12,16 +12,16 @@
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta name="HandheldFriendly" content="True">
  
@@ -21,11 +21,26 @@
            rel="stylesheet"
            media="all"
 -          href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+-    <link type="text/less"
 +          href="{% static 'cloudcare/scss/font-formplayer.scss' %}" />
-     <link type="text/less"
++    <link type="text/scss"
            rel="stylesheet"
            media="all"
-@@ -61,8 +61,8 @@
+-          href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
++          href="{% static 'cloudcare/scss/formplayer-common.scss' %}"/>
+   {% endcompress %}
+ 
+   {% if request.use_daterangepicker %}
+@@ -35,8 +35,6 @@
+ 
+   {% block css %}{% endblock %}
+ 
+-  <link rel="stylesheet"
+-        href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
+   <link type="text/css"
+         rel="stylesheet"
+         media="screen"
+@@ -61,8 +59,8 @@
  <body>
  {% block body %}{% endblock %}
  
@@ -36,7 +51,7 @@
  
  {% block js %}{{ block.super }}
    {% include 'cloudcare/partials/dependencies.html' %}
-@@ -70,23 +70,23 @@
+@@ -70,23 +68,23 @@
  
  {% initial_page_data 'toggles_dict' toggles_dict %}
  {% initial_page_data 'previews_dict' previews_dict %}

@@ -12,7 +12,7 @@
         <span class="ix" data-bind="text: ixInfo($data)"></span>
       </div>
       <div class="panel-body">
-        <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+        <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"></div>
         <div class="alert alert-info empty" data-bind="visible: !children().length">
           {% trans "This repeatable group is empty" %}
         </div>

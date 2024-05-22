@@ -68,22 +68,7 @@
      <li>
        <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
      </li>
-@@ -79,11 +79,11 @@
- {% block modals %}{{ block.super }}
-   {% if request|ui_notify_enabled:"REPORT_BUILDER_V2" %}
-     <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
--         style="margin-left: 12px"
--         data-target="#create-new-report-left-nav"
-+         style="margin-left: 12px"  {# todo B5: inline style #}
-+         data-bs-target="#create-new-report-left-nav"
-          data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
-          role="alert">
--      {% include 'notifications/partials/bootstrap3/report_builder_v2_oct2017.html' %}
-+      {% include 'notifications/partials/bootstrap5/report_builder_v2_oct2017.html' %}
-     </div>
-   {% endif %}
- {% endblock %}
-@@ -110,17 +110,17 @@
+@@ -98,17 +98,17 @@
    {% initial_page_data 'slug' report.slug %}
  
    {% block filter_panel %}
@@ -105,7 +90,7 @@
                      aria-label="Close"
                      data-bind="click: resetModal"><span aria-hidden="true">&times;</span></button>
              <h4 class="modal-title">
-@@ -132,14 +132,14 @@
+@@ -120,14 +120,14 @@
                {{ datespan.enddate|date:"Y-m-d" }}
              </h4>
            </div>
@@ -122,7 +107,7 @@
        <h4>{% trans 'Notice' %}</h4>
        <p>{{ report.special_notice }}</p>
      </div>
-@@ -149,7 +149,7 @@
+@@ -137,7 +137,7 @@
        {% block reportcontent %}
        {% endblock %}
      {% else %}

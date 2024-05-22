@@ -22,18 +22,12 @@ $group-indent: 15px;
   }
 
   .form-actions {
-    margin: 30px 0 0 0;
-    &.form-group {
-      margin-left: -$form-text-indent;
-      margin-right: -$form-text-indent;
-    }
-
-    background-color: var(--bsprimary-bg-subtle);
+    margin: 30px -$form-text-indent 0 -$form-text-indent;
 
     .submit .btn {
       font-size: 20px;
       padding: 13px 24px;
-      .transition(all .5s);
+      transition: all .5s;
     }
   }
 
@@ -102,13 +96,13 @@ $group-indent: 15px;
   .stripe-repeats {
     > .row, .panel-body > .children > .row {
       &:nth-of-type(odd) {
-        background-color: $table-bg-accent;
+        background-color: $table-accent-bg;
       }
       &:nth-of-type(even) {
         background-color: white;
       }
       &:hover {
-        background-color: $table-bg-hover;
+        background-color: $table-hover-bg;
       }
     }
   }
@@ -156,7 +150,7 @@ $group-indent: 15px;
   }
 
   .form-group.required {
-    .transition(all .5s);
+    transition: all .5s;
     margin-bottom: 0;
     label:before {
       display: none;
@@ -179,7 +173,7 @@ $group-indent: 15px;
   .form-group-required-label {
     display: block;
     opacity: 0;
-    .transition(all .5s);
+    transition: all .5s;
   }
 
   .form-group-required-label.on {
@@ -263,4 +257,9 @@ $group-indent: 15px;
   // Overrides Bootstrap defaults
   padding-top: 0px !important;
   padding-bottom: 7px;
+}
+
+#next-error {
+  position: fixed;
+  bottom: 35px;
 }

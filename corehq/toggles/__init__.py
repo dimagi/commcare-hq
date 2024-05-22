@@ -1026,17 +1026,6 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
-NO_SCROLL_IN_CASE_SEARCH = StaticToggle(
-    'no_scroll_in_case_search',
-    "Do not use scroll queries in case search elasticsearch queries",
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    This toggle replaces scroll queries in case search ancestor functions with
-    normal search queries.
-    """
-)
-
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
@@ -1175,6 +1164,14 @@ EXPLORE_CASE_DATA = StaticToggle(
     'the Case List Explorer toggle or doing a manual migration.\n\n'
     'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
     'This will be deprecated once the Feature Preview is in full swing.',
+)
+
+SAAS_PROTOTYPE = StaticToggle(
+    'saas_prototype',
+    'Use allowed to view SaaS prototypes',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+    description='Use this for rapid prototypes developed by the SaaS product team.',
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(

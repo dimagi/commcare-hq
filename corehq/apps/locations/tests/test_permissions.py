@@ -20,7 +20,7 @@ from corehq.form_processor.utils.xform import (
 from corehq.util.test_utils import create_and_save_a_case
 
 from ..forms import LocationFilterForm
-from ..permissions import can_edit_form_location, user_can_access_case
+from ..permissions import can_edit_form_location, can_edit_workers_location, user_can_access_case
 from ..views import EditLocationView, LocationsListView
 from .util import LocationHierarchyTestCase
 
@@ -201,11 +201,11 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
 
     def test_can_edit_workers_location(self):
         self.assertTrue(
-            user_views._can_edit_workers_location(
+            can_edit_workers_location(
                 self.suffolk_user, self.boston_worker)
         )
         self.assertFalse(
-            user_views._can_edit_workers_location(
+            can_edit_workers_location(
                 self.suffolk_user, self.cambridge_worker)
         )
 

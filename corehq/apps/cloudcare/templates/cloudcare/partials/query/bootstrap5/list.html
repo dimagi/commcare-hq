@@ -3,9 +3,8 @@
 <script type="text/template" id="query-view-list-template">
   <form>
     <% if (sidebarEnabled) { %>
-      <button type="button" class="btn-close d-xs-block d-sm-block" aria-label="{% trans "Close" %}"  {# todo B5: css:close #}
+      <button type="button" class="btn-close d-xs-block d-sm-block d-md-none float-end" aria-label="{% trans "Close" %}"
         data-bs-toggle="collapse" data-bs-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
-        <span aria-hidden="true">&times;</span>
       </button>
       <div class="query-button-container">
         <button class="btn btn-outline-primary" type="button" id="query-clear-button">
@@ -24,7 +23,7 @@
         <%= description %>
       </div>
     <% } %>
-    <table class="table table-hover <%= grouped ? '' : 'table-striped table-bordered' %>" role="presentation">
+    <table class="table <%= grouped ? '' : 'table-striped table-bordered' %>" role="presentation">
       <tbody id="query-properties">
       </tbody>
     </table>

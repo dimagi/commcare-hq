@@ -1,24 +1,23 @@
 --- 
 +++ 
-@@ -3,7 +3,7 @@
- 
- <script type="text/template" id="settings-template">
-   <div class="module-menu-container module-menu-bar-offset">
--    <div class="page-header menu-header">
-+    <div class="page-header menu-header">  {# todo B5: css:page-header #}
-       <h1 class="page-title">Settings</h1>
-     </div>
-     <table class="table module-table">
-@@ -19,7 +19,7 @@
+@@ -18,8 +18,14 @@
+   </div>
  </script>
  <script type="text/template" id="display-setting-template">
-   <th>{% trans "Use one question per screen" %}</th>
+-  <th>{% trans "Use one question per screen" %}</th>
 -  <td><input class="js-one-question-per-screen" type="checkbox" data-size="mini" /></td>
-+  <td><input class="js-one-question-per-screen" type="checkbox" data-size="mini" /></td>  {# todo B5: css:checkbox #}
++  <th>
++    <label class="form-check-label" for="oqps-switch">{% trans "Use one question per screen" %}</label>
++  </th>
++  <td>
++    <div class="form-check form-switch">
++      <input class="js-one-question-per-screen form-check-input" type="checkbox" id="oqps-switch"/>
++    </div>
++  </td>
  </script>
  <script type="text/template" id="lang-setting-template">
    <th>{% trans "Set the application language" %}</th>
-@@ -35,13 +35,13 @@
+@@ -35,13 +41,13 @@
  </script>
  <script type="text/template" id="clear-user-data-setting-template">
    <th>{% trans "Clear user data" %}</th>

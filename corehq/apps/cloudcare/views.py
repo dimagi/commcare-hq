@@ -43,7 +43,6 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_current_app,
     get_current_app_doc,
 )
 from corehq.apps.cloudcare.const import (
@@ -58,7 +57,6 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
 from corehq.apps.cloudcare.utils import (
-    can_user_access_web_app,
     get_latest_build_for_web_apps,
     get_latest_build_id_for_web_apps,
     get_mobile_ucr_count,
@@ -207,7 +205,6 @@ class FormplayerMain(View):
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.couch_user.username,
             "formplayer_url": get_formplayer_url(for_js=True),
-            "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
@@ -232,51 +229,6 @@ class FormplayerMainPreview(FormplayerMain):
     def wrap_get_current_app_doc(self, domain, username, app_id):
         # ignore username as it is only here to confirm to fetch_app_fn signature
         return get_current_app_doc(domain, app_id)
-
-
-class FormplayerPreviewSingleApp(View):
-
-    urlname = 'formplayer_single_app'
-
-    @method_decorator(require_cloudcare_access)
-    @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
-    def dispatch(self, request, *args, **kwargs):
-        return super(FormplayerPreviewSingleApp, self).dispatch(request, *args, **kwargs)
-
-    def get(self, request, domain, app_id, **kwargs):
-        app = get_current_app(domain, app_id)
-        app_json = app.to_json()
-        has_access = can_user_access_web_app(request.couch_user, app_json)
-        if not has_access:
-            raise Http404()
-
-        def _default_lang():
-            try:
-                return app_json['langs'][0]
-            except Exception:
-                return 'en'
-
-        # default language to user's preference, followed by
-        # first app's default, followed by english
-        language = request.couch_user.language or _default_lang()
-        domain_obj = Domain.get_by_name(domain)
-
-        context = {
-            "domain": domain,
-            "default_geocoder_location": domain_obj.default_geocoder_location,
-            "language": language,
-            "apps": [_format_app_doc(app_json)],
-            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
-            "username": request.user.username,
-            "formplayer_url": get_formplayer_url(for_js=True),
-            "single_app_mode": True,
-            "home_url": reverse(self.urlname, args=[domain, app_id]),
-            "environment": WEB_APPS_ENVIRONMENT,
-            "integrations": integration_contexts(domain),
-            "has_geocoder_privs": has_geocoder_privs(domain),
-            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
-        }
-        return render(request, "cloudcare/bootstrap3/formplayer_home.html", context)
 
 
 class PreviewAppView(TemplateView):
