@@ -42,7 +42,7 @@ def _email_error(config, e, log):
     log_url = reverse('app_execution:workflow_log', args=[config.domain, log.pk], absolute=True)
     all_logs_url = reverse('app_execution:workflow_logs', args=[config.domain, config.pk], absolute=True)
     message = format_html(
-        """Error executing workflow: <a href="url}">{name}</a>
+        """Error executing workflow: <a href="{url}">{name}</a>
         <br><br>
         <p>Log: {log_url}</p>
         <p>All Logs: {all_logs_url}</p>
@@ -54,8 +54,8 @@ def _email_error(config, e, log):
         name=config.name,
         log_url=log_url,
         all_logs_url=all_logs_url,
+        traceback=traceback.format_exc(),
         error=e,
-        traceback=traceback.format_exc()
     )
     send_HTML_email(
         f"App Execution Workflow Failure: {config.name}",

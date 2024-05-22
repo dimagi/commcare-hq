@@ -92,7 +92,7 @@
                             <button type="button" class="btn btn-default" data-bind="event: {click: $root.captureLocationForItem.bind($data)}, disable: $root.isCreatingCase">
                                 {% trans "Capture on Map" %}
                             </button>
-                            <button type="button" class="btn btn-primary" data-bind="enable: canSaveRow, event: {click: $root.saveDataRow.bind($data)}">
+                            <button id="gtm-save-row-btn" type="button" class="btn btn-primary" data-bind="enable: canSaveRow, event: {click: $root.saveDataRow.bind($data)}">
                                 {% trans "Save" %}
                             </button>
                         </td>

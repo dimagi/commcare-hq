@@ -263,6 +263,14 @@ class HqPermissions(DocumentSchema):
         if self.edit_web_users:
             self.view_web_users = True
 
+        if not self.edit_web_users:
+            self.edit_user_tableau_config = False
+        if not self.view_web_users:
+            self.view_user_tableau_config = False
+
+        if self.edit_user_tableau_config:
+            self.view_user_tableau_config = True
+
         if self.edit_commcare_users:
             self.view_commcare_users = True
 
@@ -1161,6 +1169,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         })
         return session_data
 
+    def get_owner_ids(self, domain):
+        owner_ids = [self.user_id]
+        owner_ids.extend(g._id for g in self.get_case_sharing_groups(domain=domain))
+        return owner_ids
+
+    def _get_case_sharing_groups_for_locations(self, domain):
+        # get faked location group objects
+        return [
+            location.case_sharing_group_object(self._id)
+            for location in self._get_case_owning_locations(domain)
+        ]
+
     def _get_case_owning_locations(self, domain):
         """
         :return: queryset of case-owning locations either directly assigned to the
@@ -1865,11 +1885,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def _get_deleted_case_ids(self):
         return CommCareCase.objects.get_deleted_case_ids_by_owner(self.domain, self.user_id)
 
-    def get_owner_ids(self, domain):
-        owner_ids = [self.user_id]
-        owner_ids.extend(g._id for g in self.get_case_sharing_groups())
-        return owner_ids
-
     def unretire(self, unretired_by_domain, unretired_by, unretired_via=None):
         """
         This un-deletes a user, but does not fully restore the state to
@@ -1968,17 +1983,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.set_password(password)
         self.save()
 
-    def get_case_sharing_groups(self):
+    def get_case_sharing_groups(self, domain=None):
         from corehq.apps.groups.models import Group
         from corehq.apps.events.models import (
             get_user_case_sharing_groups_for_events,
         )
 
-        # get faked location group objects
-        groups = [
-            location.case_sharing_group_object(self._id)
-            for location in self._get_case_owning_locations(self.domain)
-        ]
+        groups = self._get_case_sharing_groups_for_locations(self.domain)
         groups += [group for group in Group.by_user_id(self._id) if group.case_sharing]
 
         has_at_privilege = domain_has_privilege(self.domain, privileges.ATTENDANCE_TRACKING)
@@ -2473,10 +2484,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             request_user=request_user
         )
 
-    def get_owner_ids(self, domain):
-        owner_ids = [self.user_id]
-        owner_ids.extend(loc.location_id for loc in self._get_case_owning_locations(domain))
-        return owner_ids
+    def get_case_sharing_groups(self, domain=None):
+        assert domain  # fail loudly
+        return self._get_case_sharing_groups_for_locations(domain)
 
     @quickcache(['self._id', 'domain'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self, domain):

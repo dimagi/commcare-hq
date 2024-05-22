@@ -303,7 +303,7 @@ importlib-metadata==6.0.0
     #   sphinx
 iso8601==2.0.0
     # via -r base-requirements.in
-jinja2==3.1.3
+jinja2==3.1.4
     # via
     #   -r base-requirements.in
     #   myst-parser
@@ -663,7 +663,7 @@ webencodings==0.5.1
     # via
     #   bleach
     #   tinycss2
-werkzeug==3.0.1
+werkzeug==3.0.3
     # via -r base-requirements.in
 wrapt==1.12.1
     # via deprecated

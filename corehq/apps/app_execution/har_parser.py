@@ -32,7 +32,7 @@ class HarParser:
                 continue
 
             request_data = json.loads(entry['request']['postData']['text'])
-            response = json.loads(entry['response']['content']['text'])
+            response_data = json.loads(entry['response']['content']['text'])
 
             if endpoint in FORM_ENDPOINTS:
                 self.set_form_step()
@@ -60,8 +60,8 @@ class HarParser:
                 # skip over detail screens and don't update current screen and screen data
                 continue
 
-            self.current_screen = get_screen_type(response)
-            self.screen_data = response
+            self.current_screen = get_screen_type(response_data)
+            self.screen_data = response_data
 
         return AppWorkflowConfig(
             domain=self.domain, app_id=self.app_id, workflow=data_model.AppWorkflow(steps=self.steps)
@@ -146,13 +146,25 @@ def is_multi_select(selection):
 
 
 def get_formplayer_entries(entries):
+    base_url = None
     for entry in entries:
         request = entry['request']
         if request['method'] != 'POST':
             continue
 
-        endpoint = request['url'].split("/")[-1]
-        if endpoint not in ENDPOINTS:
+        url = request['url']
+        if not base_url:
+            base_url = _get_formplayer_base_url(url)
+
+        if not base_url:
             continue
 
+        endpoint = url.removeprefix(base_url)
         yield endpoint, entry
+
+
+def _get_formplayer_base_url(url):
+    endpoint = url.split("/")[-1]
+    if endpoint not in ENDPOINTS:
+        return None
+    return "/".join(url.split("/")[:-1]) + "/"

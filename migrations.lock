@@ -113,6 +113,7 @@ accounting
  0091_remove_custom_banner_alerts_feature_flag
  0092_revert_application_error_report_priv
  0093_defaultproductplan_is_annual_plan
+ 0094_add_annual_softwareplans
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -1225,6 +1226,7 @@ users
  0062_add_web_apps_groups_permission_flag
  0063_rename_location_invitation_primary_location_and_more
  0064_add_edit_view_tableau_config_permissions
+ 0065_transfer_to_tableau_config_permission
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

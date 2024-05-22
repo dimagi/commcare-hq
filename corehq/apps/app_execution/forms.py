@@ -70,7 +70,7 @@ class AppWorkflowConfigForm(forms.ModelForm):
             "har_file",
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    "Import HAR", type='submit', css_class='btn-secondary', name="import-har", value="1",
+                    "Import HAR", type='submit', css_class='btn-secondary', name="import_har", value="1",
                     formnovalidate=True,
                 )
             ),
