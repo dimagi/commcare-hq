@@ -20,11 +20,11 @@ def _assert_migrated(apps, schema_editor):
 
     def default_profile_permissions_on_for_existing_roles():
         # All existing roles should be allowed to edit profiles since that was the default behavior
-        edit_all_user_profiles = Permission.objects.get(value='edit_all_user_profiles')
+        edit_user_profile = Permission.objects.get(value='edit_user_profile')
         for chunk in with_progress_bar(chunked(UserRole.objects.values_list('id', flat=True).iterator(), 1000),
                                        length=UserRole.objects.count()):
             for role in UserRole.objects.filter(id__in=chunk):
-                role.rolepermission_set.get_or_create(permission_fk=edit_all_user_profiles, defaults={"allow_all": True})
+                role.rolepermission_set.get_or_create(permission_fk=edit_user_profile, defaults={"allow_all": True})
 
     try:
         default_profile_permissions_on_for_existing_roles()
