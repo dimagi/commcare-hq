@@ -493,6 +493,7 @@ class AdminInvitesUserForm(BaseLocationForm):
     def __init__(self, data=None, excluded_emails=None, is_add_user=None,
                  role_choices=(), should_show_location=False, *, domain, **kwargs):
         super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
+        self.request = kwargs.get('request')
         domain_obj = Domain.get_by_name(domain)
         self.fields['role'].choices = role_choices
         if domain_obj:
@@ -513,7 +514,8 @@ class AdminInvitesUserForm(BaseLocationForm):
                 self.fields['program'].choices = choices
         self.excluded_emails = excluded_emails or []
 
-        self._initialize_tableau_fields(data, domain)
+        if self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config'):
+            self._initialize_tableau_fields(data, domain)
 
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
@@ -533,8 +535,8 @@ class AdminInvitesUserForm(BaseLocationForm):
                 'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
                 'assigned_locations' if should_show_location else None,
                 'primary_location' if should_show_location else None,
-                'tableau_role',
-                'tableau_group_ids'
+                'tableau_role' if 'tableau_role' in self.fields else None,
+                'tableau_group_indices' if 'tableau_group_indices' in self.fields else None
             ),
             crispy.HTML(
                 render_to_string(
@@ -570,14 +572,26 @@ class AdminInvitesUserForm(BaseLocationForm):
 
     def clean(self):
         cleaned_data = super(AdminInvitesUserForm, self).clean()
+
+        if (('tableau_role' in cleaned_data or 'tableau_group_indices' in cleaned_data)
+        and not self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config')):
+            raise forms.ValidationError(_("You do not have permission to edit Tableau Configuraion."))
+
+        if 'tableau_group_indices' in cleaned_data:
+            cleaned_data['tableau_group_ids'] = [
+                self.tableau_form.allowed_tableau_groups[int(i)].id
+                for i in cleaned_data['tableau_group_indices']
+            ]
+            del cleaned_data['tableau_group_indices']
+
         for field in cleaned_data:
             if isinstance(cleaned_data[field], str):
                 cleaned_data[field] = cleaned_data[field].strip()
         return cleaned_data
 
     def _initialize_tableau_fields(self, data, domain):
-        tableau_form = BaseTableauUserForm(data, domain=domain)
-        self.fields['tableau_group_ids'] = tableau_form.fields["groups"]
-        self.fields['tableau_group_ids'].label = _('Tableau Groups')
-        self.fields['tableau_role'] = tableau_form.fields['role']
+        self.tableau_form = BaseTableauUserForm(data, domain=domain)
+        self.fields['tableau_group_indices'] = self.tableau_form.fields["groups"]
+        self.fields['tableau_group_indices'].label = _('Tableau Groups')
+        self.fields['tableau_role'] = self.tableau_form.fields['role']
         self.fields['tableau_role'].label = _('Tableau Role')
