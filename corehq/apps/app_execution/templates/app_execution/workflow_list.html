@@ -16,7 +16,7 @@
 
 {% block page_content %}
   <div>
-    <a class='btn btn-primary' href="{% url 'app_execution:new_workflow' %}">Create New</a>
+    <a class='btn btn-primary' href="{% url 'app_execution:new_workflow' request.domain %}">Create New</a>
   </div>
   <div>
     <h3>{% trans "Average Timings Per Hour" %}</h3>
@@ -26,8 +26,7 @@
   <thead>
   <tr>
     <th>Name</th>
-    <th>Domain</th>
-    <th>App</th>
+    <th>App Name</th>
     <th>User</th>
     <th>Last Run</th>
     <th>Last 10 Runs</th>
@@ -37,8 +36,7 @@
   <tbody>
   {% for workflow in workflows %}
   <tr>
-    <td><a href="{% url "app_execution:edit_workflow" workflow.id %}">{{ workflow.name }}</a></td>
-    <td>{{ workflow.domain }}</td>
+    <td><a href="{% url "app_execution:edit_workflow" request.domain workflow.id %}">{{ workflow.name }}</a></td>
     <td>{{ workflow.app_name }}</td>
     <td>{{ workflow.django_user.username }}</td>
     <td>{{ workflow.last_run|default:""|date:"DATETIME_FORMAT" }}</td>
@@ -49,7 +47,7 @@
           <div class="col col-sm-1 bg-secondary-subtle" style="width: 10px">&nbsp;</div>
           {% else %}
            <div class="col col-sm-1 {% if status.success %}bg-success{% else %}bg-danger{% endif %}" style="width: 10px">
-             <a href="{% url "app_execution:workflow_log" status.id %}" class="w-100 h-100 d-block">&nbsp;</a>
+             <a href="{% url "app_execution:workflow_log" request.domain status.id %}" class="w-100 h-100 d-block">&nbsp;</a>
            </div>
           {% endif %}
         {% endfor %}
@@ -57,8 +55,8 @@
     </td>
     <td>
       <div class="btn-group" role="group" aria-label="Actions">
-        <a class="btn btn-primary" href="{% url "app_execution:test_workflow" workflow.id %}">Test</a>
-        <a class="btn btn-primary" href="{% url "app_execution:workflow_logs" workflow.id %}">Logs</a>
+        <a class="btn btn-primary" href="{% url "app_execution:test_workflow" request.domain workflow.id %}">Test</a>
+        <a class="btn btn-primary" href="{% url "app_execution:workflow_logs" request.domain workflow.id %}">Logs</a>
       </div>
     </td>
   </tr>

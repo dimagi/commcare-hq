@@ -20,8 +20,9 @@
 +    {% include "cloudcare/partials/case_list/bootstrap5/menu_header.html" %}
  
      <% if (isMultiSelect) { %>
-     <div class="case-list-actions">
+-    <div class="case-list-actions">
 -      {% include 'cloudcare/partials/case_list/bootstrap3/multi_select_continue_button.html' %}
++    <div class="case-list-actions d-grid gap-2 d-md-block">
 +      {% include 'cloudcare/partials/case_list/bootstrap5/multi_select_continue_button.html' %}
      </div>
      <% } %>
@@ -70,7 +71,8 @@
        </div>
      </div>
      <% if (actions || isMultiSelect) { %>
-       <div class="case-list-actions">
+-      <div class="case-list-actions">
++      <div class="case-list-actions d-grid gap-2 d-md-block">
          <% if (isMultiSelect) { %>
 -          {% include 'cloudcare/partials/case_list/bootstrap3/multi_select_continue_button.html' %}
 +          {% include 'cloudcare/partials/case_list/bootstrap5/multi_select_continue_button.html' %}

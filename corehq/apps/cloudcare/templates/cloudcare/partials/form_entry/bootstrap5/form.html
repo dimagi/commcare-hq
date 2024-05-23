@@ -17,7 +17,7 @@
 
     <form class="form form-horizontal" data-bind="submit: submitForm">
       <div class="question-container">
-        <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+        <div class="mb-3" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
       </div>
       {% if environment == "web-apps" %}
         <div class="row" data-bind="visible: erroredQuestions().length > 0">

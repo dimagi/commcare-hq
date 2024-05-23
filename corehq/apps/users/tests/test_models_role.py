@@ -319,7 +319,7 @@ class HqPermissionsTest(SimpleTestCase):
         self.permissions = {name: getattr(self.hq_permissions, name) for name in self.permission_names}
 
     def test_permissions_default(self):
-        default_true_permissions = ['access_all_locations', 'report_an_issue']
+        default_true_permissions = ['access_all_locations', 'report_an_issue', 'edit_user_profile']
         for name, value in self.permissions.items():
             if name not in default_true_permissions:
                 self.assertFalse(value)

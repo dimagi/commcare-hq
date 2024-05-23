@@ -22,7 +22,7 @@
         "panel-modern-gray": "card-modern-gray",
         "panel-form-only": "card-form-only",
         "panel-heading": "card-header",
-        "panel-default": "card-default",
+        "panel-default": "",
         "panel-info": "text-bg-info",
         "panel-danger": "text-bg-danger",
         "panel": "card",

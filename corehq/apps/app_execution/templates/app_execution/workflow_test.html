@@ -15,7 +15,7 @@
 {% block page_content %}
   <div class="mb-3">
     <h2>Testing {{ workflow.name }}</h2>
-    <a class='btn btn-primary' href="{% url 'app_execution:edit_workflow' workflow.id %}">Edit</a>
+    <a class='btn btn-primary' href="{% url 'app_execution:edit_workflow' request.domain workflow.id %}">Edit</a>
   </div>
   {% if result %}
     {% include "app_execution/components/logs.html" %}
