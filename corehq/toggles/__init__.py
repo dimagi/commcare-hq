@@ -2862,7 +2862,7 @@ RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
 
 APP_TESTING = StaticToggle(
     slug='app_testing',
-    label='App Testing feature',
+    label='App Testing UI',
     tag=TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     description=''

@@ -3,12 +3,13 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField
 from django import forms
+from django.utils.translation import gettext as _
 
 from corehq.apps.app_execution.models import AppWorkflowConfig
 from corehq.apps.app_manager.dbaccessors import get_brief_app
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import normalize_username
+from corehq.apps.users.util import generate_mobile_username
 
 
 class AppWorkflowConfigForm(forms.ModelForm):
@@ -39,6 +40,7 @@ class AppWorkflowConfigForm(forms.ModelForm):
         if self.instance.id:
             self.fields["username"].initial = self.instance.django_user.username
         self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_class = "form-horizontal"
 
         fields = [
             "name",
@@ -78,19 +80,14 @@ class AppWorkflowConfigForm(forms.ModelForm):
 
     def clean_username(self):
         domain = self.request.domain
-        username = self.cleaned_data.get("username")
-        if username and "@" not in username:
-            try:
-                username = normalize_username(self.cleaned_data.get("username"), domain)
-            except ValueError:
-                self.add_error("username", "Invalid username")
+        username = generate_mobile_username(self.cleaned_data.get("username"), domain, is_unique=False)
         try:
             self.commcare_user = CommCareUser.get_by_username(username)
         except ResourceNotFound:
-            self.add_error("username", "User not found")
+            raise forms.ValidationError(_("User not found"))
 
         if not self.commcare_user or self.commcare_user.domain != domain:
-            self.add_error("username", f"User not found: {domain}")
+            raise forms.ValidationError(_("User not found"))
 
         return username
 
