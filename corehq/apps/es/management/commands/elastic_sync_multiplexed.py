@@ -20,7 +20,6 @@ from corehq.apps.es.exceptions import (
 from corehq.apps.es.index.settings import render_index_tuning_settings
 from corehq.apps.es.transient_util import (
     doc_adapter_from_cname,
-    doc_adapter_from_index_name,
     iter_index_cnames,
 )
 from corehq.apps.es.utils import check_task_progress
@@ -84,12 +83,13 @@ class ESSyncUtil:
             + "\n\n")
 
     def reindex_partial_index(self, cname, domain):
-        adapter = doc_adapter_from_cname(cname)
-        if not adapter.parent_index_cname:
+        destination_adapter = doc_adapter_from_cname(cname)
+        if not destination_adapter.parent_index_cname:
             raise IndexNotPartialException(f"Adapter for {cname} is not a partial index")
 
-        source_index = adapter.parent_index_name
-        destination_index = adapter.primary.index_name
+        source_adapter = doc_adapter_from_cname(destination_adapter.parent_index_cname)
+        source_index = source_adapter.index_name
+        destination_index = destination_adapter.index_name
 
         logger.info(f"Preparing index {destination_index} for reindex")
         self._prepare_index_for_reindex(destination_index)
@@ -110,7 +110,7 @@ class ESSyncUtil:
 
         print("\n\n")
 
-        self.display_partial_index_doc_count_for_domain(adapter, domain)
+        self.display_partial_index_doc_count_for_domain(source_adapter, destination_adapter, domain)
 
         logger.info(f"Verify this partial reindex process from elasticsearch logs using task id - {task_id}")
         print("\n\n")
@@ -176,24 +176,19 @@ class ESSyncUtil:
         print(f"\nDoc Count In Old Index '{adapter.primary.index_name}' - {primary_count}")
         print(f"\nDoc Count In New Index '{adapter.secondary.index_name}' - {secondary_count}\n\n")
 
-    def display_partial_index_doc_count_for_domain(self, adapter, domain):
-        if not adapter.parent_index_name:
-            raise IndexNotPartialException(f"Adapter for {adapter.primary.index_name} is not a partial index")
+    def display_partial_index_doc_count_for_domain(self, source_adapter, destination_adapter, domain):
+        if not destination_adapter.parent_index_cname:
+            raise IndexNotPartialException(f"Adapter for {destination_adapter.index_cname} is not a partial index")
 
-        es_manager.index_refresh(adapter.primary.index_name)
-        es_manager.index_refresh(adapter.parent_index_name)
-
-        self.perform_cleanup(adapter)
+        es_manager.index_refresh(destination_adapter.index_name)
+        es_manager.index_refresh(source_adapter.index_name)
 
         query = {"query": {"term": {"domain": domain}}}
-        parent_adapter = doc_adapter_from_index_name(adapter.parent_index_name)
-        parent_count = parent_adapter.count(query)
-        partial_count = adapter.primary.count(query)
+        source_count = source_adapter.count(query)
+        destination_count = destination_adapter.count(query)
 
-        print(f"\nDoc Count In Parent Index '{adapter.parent_index_name}' in domain '{domain}' - {parent_count}")
-        print(
-            f"\nDoc Count In Partial Index '{adapter.primary.index_name}' in domain '{domain}' - {partial_count}\n"
-        )
+        print(f"\nDoc Count In Source Index '{source_adapter.parent_index_name}' in domain '{domain}' - {source_count}")  # noqa: E501
+        print(f"\nDoc Count In Partial Index '{destination_adapter.index_name}' in domain '{domain}' - {destination_count}\n")  # noqa: E501
 
     def perform_cleanup(self, adapter):
         logger.info("Performing required cleanup!")
