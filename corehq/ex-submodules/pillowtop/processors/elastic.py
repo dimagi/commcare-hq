@@ -72,7 +72,7 @@ class ElasticProcessor(PillowProcessor):
             doc = change.get_document()
             domain = doc.get('domain') if doc else None
             if not domain:
-                meta = getattr(change, 'metadata')
+                meta = getattr(change, 'metadata', None)
                 domain = meta.domain if meta else None
             if doc and doc.get('doc_type'):
                 logger.info(
