@@ -540,16 +540,16 @@ class AdminInvitesUserForm(BaseLocationForm):
             fields.append(
                 crispy.Fieldset(
                     gettext("Location Settings"),
-                    'assigned_locations' if should_show_location else None,
-                    'primary_location' if should_show_location else None,
+                    'assigned_locations',
+                    'primary_location',
                 )
             )
         if self.can_edit_tableau_config:
             fields.append(
                 crispy.Fieldset(
                     gettext("Tableau Configuration"),
-                    'tableau_role' if 'tableau_role' in self.fields else None,
-                    'tableau_group_indices' if 'tableau_group_indices' in self.fields else None
+                    'tableau_role',
+                    'tableau_group_indices' if len(self.fields['tableau_group_indices'].choices) > 0 else None
                 ),
             )
         self.helper.layout = crispy.Layout(
