@@ -208,7 +208,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
          * @param {Object} child - The child object to be rendered, either Group, Repeat, or Question
          */
         self.childTemplate = function (child) {
-            return ko.utils.unwrapObservable(child.type) + '-fullform-ko-template';
+            return child.type() + '-fullform-ko-template';
         };
 
         self.hasError = ko.computed(function () {
@@ -250,6 +250,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                         return new GroupedElementTileRow(options.data, self);
                     } else if (options.data.type === constants.QUESTION_TYPE) {
                         return new Question(options.data, self);
+                    } else if (options.data.type === constants.GROUP_TYPE && options.data.exists === "false") {
+                        return new AddGroup(options.data, self);
                     } else if (options.data.type === constants.GROUP_TYPE) {
                         return new Group(options.data, self);
                     } else if (options.data.type === constants.REPEAT_TYPE) {
@@ -395,6 +397,28 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         json.children = newChildren;
         return json;
     };
+
+    /**
+     * Remove all nodes from the root that share the same prefix in the ix as the deleted repeat
+     * group. Changes the rootNode in place.
+     *
+     * @param rootNode
+     * @param deletedGroupIx
+     */
+    function removeSiblingsOfRepeatGroup(rootNode, deletedGroupIx) {
+        const ixParts = deletedGroupIx.split(",");
+        let parentOfDeletedGroup = rootNode;
+        for (let i = 0; i < ixParts.length - 1; i++) {
+            parentOfDeletedGroup = parentOfDeletedGroup.children.find(c => c.ix.endsWith(ixParts[i]));
+        }
+        const siblingsOfDeletedGroup = parentOfDeletedGroup.children;
+        const lastPart = ixParts[ixParts.length - 1];
+        const lastPartPrefix = lastPart.substr(0, lastPart.lastIndexOf("_") + 1);
+        parentOfDeletedGroup.children = siblingsOfDeletedGroup.filter(function (c) {
+            const childIxParts = c.ix.split(",");
+            return !childIxParts[childIxParts.length - 1].startsWith(lastPartPrefix);
+        });
+    }
 
     /**
      * Represents the entire form. There is only one of these on a page.
@@ -609,7 +633,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         };
 
         $.unsubscribe('session');
-        $.subscribe('session.reconcile', function (e, response, element) {
+        $.subscribe('session.reconcile', function (e, response, element, deletedGroup) {
             // TODO where does response status parsing belong?
             if (response.status === 'validation-error') {
                 if (response.type === 'required') {
@@ -619,9 +643,23 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 }
                 element.pendingAnswer(constants.NO_PENDING_ANSWER);
             } else {
-                response.children = response.tree;
+                const allChildren = response.tree;
                 delete response.tree;
+
+                if (deletedGroup) {
+                    // deletedGroup is only set for responses from delete-repeat.
+                    // because ko.mapping does not like reassigning keys we need to remove all repeat group siblings and
+                    // add them back in to force proper refresh. Setting response.children to [] would also work but was
+                    // quite slow for larger forms.
+                    // self.fromJS makes changes to the response. So create a copy first.
+                    response.children = JSON.parse(JSON.stringify(allChildren));
+                    removeSiblingsOfRepeatGroup(response, deletedGroup);
+                    self.fromJS(response);
+                }
+
                 if (element.serverError) { element.serverError(null); }
+
+                response.children = allChildren;
                 self.fromJS(response);
             }
         });
@@ -646,9 +684,19 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
+        // USH-4332: after FP deploy isRepetition can be removed
         self.isRepetition = parent.parent instanceof Repeat;
+        if (Object.hasOwn(self, 'delete')) {
+            self.showDelete = self.delete();
+        } else {
+            self.showDelete = self.isRepetition;
+        }
         let parentForm = getParentForm(self);
         let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
+
+        self.hasNoPendingAnswer = ko.pureComputed(function () {
+            return !self.parent.hasAnyNestedQuestionWithPendingAnswer();
+        });
 
         // Header and captions
         self.showHeader = oneQuestionPerScreen || self.isRepetition || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown);
@@ -722,6 +770,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             });
         };
 
+        self.hasAnyNestedQuestionWithPendingAnswer = ko.pureComputed(function () {
+            return _.any(self.children(), function (d) {
+                if (d.type() === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
+                    return d.hasAnyNestedQuestionWithPendingAnswer();
+                }
+            });
+        });
+
         self.isVisibleGroup = function () {
             const hasChildren = self.children().length !== 0;
             const hasLabel = !!ko.utils.unwrapObservable(self.caption_markdown) || !!self.caption();
@@ -788,6 +844,17 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.parent = parent;
         Container.call(self, json);
 
+        self.hasAnyNestedQuestionWithPendingAnswer = ko.pureComputed(function () {
+            return _.any(self.children(), function (d) {
+                if (d.type() === constants.QUESTION_TYPE) {
+                    return d.pendingAnswer();
+                } else if (d.type() === constants.GROUP_TYPE) {
+                    return d.hasAnyNestedQuestionWithPendingAnswer();
+                }
+                return false;
+            });
+        });
+
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
                 if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE) {
@@ -821,6 +888,23 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         return itemsPerRow !== null ? Math.round(constants.GRID_COLUMNS / itemsPerRow) : constants.GRID_COLUMNS;
     };
+
+    function AddGroup(json, parent) {
+        var self = this;
+        self.parent = parent;
+        self.hasError = ko.observable(false);
+        self.children = ko.observable([]);
+        self.newRepeat = function () {
+            $.publish('formplayer.' + constants.NEW_REPEAT, self);
+            $.publish('formplayer.dirty');
+            $('.add').trigger('blur');
+        };
+        self.entryTemplate = "add-group-entry-ko-template";
+        self.type = ko.observable("add-group");
+        self.rel_ix = ko.observable(relativeIndex(json.ix));
+        self.required = ko.observable(json.required);
+        self.hasError = ko.observable(json.hasError);
+    }
 
     /**
      * Represents a Question. A Question contains an Entry which is the widget that is displayed for that question
@@ -1017,5 +1101,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         Question: function (json, parent) {
             return new Question(json, parent);
         },
+        Repeat: Repeat,
+        removeSiblingsOfRepeatGroup: removeSiblingsOfRepeatGroup,
     };
 });
