@@ -1153,6 +1153,10 @@ class InviteWebUserView(BaseManageWebUserView):
             create_invitation = True
             data = self.invite_web_user_form.cleaned_data
             domain_request = DomainRequest.by_email(self.domain, data["email"])
+            profile_id = data.get("profile", None)
+            profile = CustomDataFieldsProfile.objects.get(
+                id=profile_id,
+                definition__domain=self.domain) if profile_id else None
             if domain_request is not None:
                 domain_request.is_approved = True
                 domain_request.save()
@@ -1164,6 +1168,7 @@ class InviteWebUserView(BaseManageWebUserView):
                                          primary_location_id=data.get("primary_location", None),
                                          program_id=data.get("program", None),
                                          assigned_location_ids=data.get("assigned_locations", None),
+                                         profile=profile
                                          )
                 messages.success(request, "%s added." % data["email"])
             else:
@@ -1184,10 +1189,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 if primary_location_id:
                     assert primary_location_id in assigned_location_ids
                 self._assert_user_has_permission_to_access_locations(assigned_location_ids)
-                profile_id = data.get("profile", None)
-                data["profile"] = CustomDataFieldsProfile.objects.get(
-                    id=profile_id,
-                    definition__domain=self.domain) if profile_id else None
+                data["profile"] = profile
                 invite = Invitation(**data)
                 invite.save()
 
