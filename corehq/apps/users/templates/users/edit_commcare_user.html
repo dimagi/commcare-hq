@@ -69,7 +69,7 @@
           {% endif %}
           {% include "users/partials/edit_commtrack_user_settings.html" %}
           {% if support_info.locations %}
-            <h4>[Support only] Assigned Locations</h4>
+            <h4>{% trans "[Support only] Assigned Locations" %}</h4>
             <div class="list-group">
               {% for location in support_info.locations %}
                 <a href="{% url "edit_location" domain location.location_id %}" class="list-group-item">
@@ -195,19 +195,27 @@
           <table class="table table-striped table-hover">
             <tbody>
               <tr>
-                <td>Created On</td>
+                <td>{% trans "Created On" %}</td>
                 <td>{{ couch_user.created_on }}</td>
               </tr>
               <tr>
-                <td>Last Modified</td>
+                <td>{% trans "Last Modified" %}</td>
                 <td>{{ couch_user.last_modified }}</td>
               </tr>
               <tr>
-                <td>Last Login</td>
+                <td>{% trans "Last Login" %}</td>
                 <td>{{ couch_user.last_login }}</td>
               </tr>
               <tr>
-                <td>Devices</td>
+                  <td>{% trans "Last Sync" %}</td>
+                  <td>{{ couch_user.reporting_metadata.last_sync_for_user.sync_date }}</td>
+              </tr>
+              <tr>
+                  <td>{% trans "Last Form Submission" %}</td>
+                  <td>{{ couch_user.reporting_metadata.last_submission_for_user.submission_date }}</td>
+              </tr>
+              <tr>
+                <td>{% trans "Devices" %}</td>
                 <td>
                   <ul class="list-unstyled">
                     {% for device in couch_user.devices %}
@@ -215,14 +223,6 @@
                     {% endfor %}
                   </ul>
                 </td>
-              </tr>
-              <tr>
-                <td>Last Sync</td>
-                <td>{{ couch_user.reporting_metadata.last_sync_for_user.sync_date }}</td>
-              </tr>
-              <tr>
-                <td>Last Form Submission</td>
-                <td>{{ couch_user.reporting_metadata.last_submission_for_user.submission_date }}</td>
               </tr>
             </tbody>
           </table>
