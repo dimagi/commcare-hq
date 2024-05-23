@@ -48,6 +48,14 @@ def _augment_with_logs(workflows):
 
 @require_superuser_or_contractor
 @use_bootstrap5
+def delete_workflow(request, domain, pk):
+    workflow = get_object_or_404(AppWorkflowConfig, domain=domain, pk=pk)
+    workflow.delete()
+    return redirect("app_execution:workflow_list", domain)
+
+
+@require_superuser_or_contractor
+@use_bootstrap5
 def new_workflow(request, domain):
     form = AppWorkflowConfigForm(request, initial={
         "workflow": EXAMPLE_WORKFLOW, "run_every": 1, "form_mode": const.FORM_MODE_HUMAN
