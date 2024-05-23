@@ -16,6 +16,13 @@ def knockout_pagination(request):
     return render(request, 'prototype/example/knockout_pagination.html', {})
 
 
+@login_required
+@use_bootstrap5
+@toggles.SAAS_PROTOTYPE.required_decorator()
+def knockout_pagination_webpack(request):
+    return render(request, 'prototype/example/knockout_pagination_webpack.html', {})
+
+
 @quickcache(['num_entries'])
 def _generate_example_paginated_data(num_entries):
     rows = []

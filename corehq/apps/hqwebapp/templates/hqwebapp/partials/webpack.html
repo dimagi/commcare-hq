@@ -1,0 +1,9 @@
+{% load hq_shared_tags %}
+
+{% if webpack_main %}
+  <script>
+    window.USE_WEBPACK = {{ webpack_main|BOOL }};
+    console.log("Loaded webpack main module: {{ webpack_main }}");
+  </script>
+  <script src="{% static webpack_main %}"></script>
+{% endif %}
