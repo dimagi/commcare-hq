@@ -217,8 +217,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         except ProgrammingError as e:
             if not self.table_exists:
                 return
-            else:
-                raise e
+            raise e
 
         register_data_source_row_change(
             domain=self.config.domain,
