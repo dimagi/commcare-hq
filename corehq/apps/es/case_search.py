@@ -13,6 +13,8 @@ from corehq.apps.es import case_search as case_search_es
 from copy import deepcopy
 from datetime import datetime
 
+from django.conf import settings
+
 from memoized import memoized
 
 from dimagi.utils.parsing import json_format_datetime
@@ -29,11 +31,12 @@ from corehq.apps.case_search.const import (
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
+from corehq.apps.es.transient_util import doc_adapter_from_cname
 from corehq.util.dates import iso_string_to_datetime
 
 from . import filters, queries
 from .cases import case_adapter
-from .client import ElasticDocumentAdapter, create_document_adapter
+from .client import BulkActionItem, ElasticDocumentAdapter, create_document_adapter
 from .const import (
     HQ_CASE_SEARCH_INDEX_CANONICAL_NAME,
     HQ_CASE_SEARCH_INDEX_NAME,
@@ -174,6 +177,41 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         doc['_id'] = case_dict['_id']
         return super()._from_dict(doc)
 
+    def _get_domain_from_doc(self, doc):
+        """
+        `doc` can be CommcCareCase instance or dict. This util method extracts domain from doc.
+        This will fail hard if domain is not present in doc.
+        """
+        if isinstance(doc, dict):
+            return doc["domain"]
+        if hasattr(doc, 'domain'):
+            return doc.domain
+
+    def index(self, doc, refresh=False):
+        """
+        Selectively multiplexes writes to a sub index based on the domain of the doc.
+        """
+        adapter = multiplex_to_adapter(self._get_domain_from_doc(doc))
+        if adapter:
+            # If we get a valid adapter then we multiplex writes
+            doc_obj = BulkActionItem.index(doc)
+            payload = [self._render_bulk_action(doc_obj), adapter._render_bulk_action(doc_obj)]
+            return self._bulk(payload, refresh=refresh, raise_errors=True)
+        # If adapter is None then simply index the docs
+        super().index(doc, refresh=refresh)
+
+    def bulk(self, actions, refresh=False, raise_errors=True):
+        """
+        Iterates over the list of actions and multiplexes writes to a sub index based on the domain of the doc.
+        """
+        payload = []
+        for action in actions:
+            payload.append(self._render_bulk_action(action))
+            adapter = multiplex_to_adapter(self._get_domain_from_doc(action.doc))
+            if adapter:
+                payload.append(adapter._render_bulk_action(action))
+        return self._bulk(payload, refresh=refresh, raise_errors=raise_errors)
+
 
 case_search_adapter = create_document_adapter(
     ElasticCaseSearch,
@@ -181,6 +219,18 @@ case_search_adapter = create_document_adapter(
     case_adapter.type,
     secondary=HQ_CASE_SEARCH_SECONDARY_INDEX_NAME,
 )
+
+
+def multiplex_to_adapter(domain):
+    """
+    Reads `CASE_SEARCH_SUB_INDICES` from settings to see if we should multiplex writes for case_search index.
+    Returns the appropriate adapter based on the domain passed.
+    """
+    multiplex_info = settings.CASE_SEARCH_SUB_INDICES
+    domain_multiplex_settings = multiplex_info.get(domain, None)
+    if domain_multiplex_settings and domain_multiplex_settings.get('multiplex_writes'):
+        return doc_adapter_from_cname(domain_multiplex_settings['index_cname'])
+    return None
 
 
 def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None,
