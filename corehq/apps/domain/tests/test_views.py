@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from unittest.mock import patch
 
 from corehq import privileges
-from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.models import DefaultProductPlan, Subscription, SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import Application
@@ -476,6 +476,66 @@ class TestSubscriptionRenewalViews(TestCase, DomainSubscriptionMixin):
         self.domain.delete()
         clear_plan_version_cache()
         super().tearDown()
+
+    def test_renewal_page_context(self):
+        edition = SoftwarePlanEdition.PRO
+        self.setup_subscription(self.domain.name, edition, use_annual_plan=False)
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+
+        with patch('corehq.toggles.SELF_SERVICE_ANNUAL_RENEWALS.enabled_for_request', return_value=True):
+            response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
+
+        self.assertEqual(response.status_code, 200)
+
+        expected_monthly_plan = DefaultProductPlan.get_default_plan_version(edition, is_annual_plan=False)
+        expected_annual_plan = DefaultProductPlan.get_default_plan_version(edition, is_annual_plan=True)
+        expected_renewal_choices = {
+            'monthly_plan': expected_monthly_plan.user_facing_description,
+            'annual_plan': expected_annual_plan.user_facing_description,
+        }
+
+        self.assertEqual(response.context['current_edition'], edition)
+        self.assertEqual(response.context['plan'], subscription.plan_version.user_facing_description)
+        self.assertEqual(response.context['renewal_choices'], expected_renewal_choices)
+        self.assertEqual(response.context['is_annual_plan'], False)
+        self.assertEqual(response.context['is_self_renewable_plan'], True)
+
+    def test_non_paid_edition_raises_404(self):
+        self.setup_subscription(self.domain.name, SoftwarePlanEdition.COMMUNITY)
+        response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
+
+        self.assertEqual(404, response.status_code)
+
+    def test_non_self_renewable_edition(self):
+        # a billing admin may still view the renewal page even if their plan is not self-renewable
+        self.setup_subscription(self.domain.name, SoftwarePlanEdition.ENTERPRISE)
+
+        with patch('corehq.toggles.SELF_SERVICE_ANNUAL_RENEWALS.enabled_for_request', return_value=True):
+            response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['renewal_choices'], {})
+        self.assertEqual(response.context['is_self_renewable_plan'], False)
+
+    def test_confirm_renewal_page_context(self):
+        edition = SoftwarePlanEdition.PRO
+        self.setup_subscription(self.domain.name, edition, use_annual_plan=True)
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+
+        is_annual_plan = True
+        with patch('corehq.toggles.SELF_SERVICE_ANNUAL_RENEWALS.enabled_for_request', return_value=True):
+            response = self.client.post(
+                reverse('domain_subscription_renewal_confirmation', args=[self.domain.name]),
+                data={'is_annual_plan': is_annual_plan, 'plan_edition': edition, 'from_plan_page': True}
+            )
+
+        expected_next_plan = DefaultProductPlan.get_default_plan_version(edition, is_annual_plan=is_annual_plan)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['subscription'], subscription)
+        self.assertEqual(response.context['plan'], subscription.plan_version.user_facing_description)
+        self.assertEqual(response.context['next_plan'], expected_next_plan.user_facing_description)
+
 
 @contextmanager
 def domain_fixture(domain_name, allow_domain_requests=False):
