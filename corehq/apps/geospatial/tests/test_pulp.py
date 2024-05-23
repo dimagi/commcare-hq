@@ -50,8 +50,29 @@ class TestRadialDistanceSolver(SimpleTestCase):
             )
         )
 
-    def test_with_no_solution_found(self):
+    def test_more_cases_than_is_assignable(self):
         # If max_cases_per_user * n_users < n_cases, that would result in an infeasible solution.
         self.assertEqual(
             RadialDistanceSolver(self._problem_data).solve(GeoConfig(max_cases_per_user=2)), (None, None)
+        )
+
+    def test_too_few_cases_for_minimum_criteria(self):
+        self.assertEqual(
+            RadialDistanceSolver(self._problem_data).solve(GeoConfig(min_cases_per_user=5)), (None, None)
+        )
+
+    def test_no_cases_is_infeasible_solution(self):
+        problem_data = self._problem_data
+        problem_data['cases'] = []
+
+        self.assertEqual(
+            RadialDistanceSolver(problem_data).solve(GeoConfig()), (None, None)
+        )
+
+    def test_no_users_is_infeasible_solution(self):
+        problem_data = self._problem_data
+        problem_data['users'] = []
+
+        self.assertEqual(
+            RadialDistanceSolver(problem_data).solve(GeoConfig()), (None, None)
         )

@@ -35,6 +35,11 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
 
     def solve(self, config):
         costs = self.calculate_distance_matrix(config)
+
+        if not costs:
+            # Infeasible solution
+            return None, None
+
         user_count = len(costs)
         case_count = len(costs[0])
 
