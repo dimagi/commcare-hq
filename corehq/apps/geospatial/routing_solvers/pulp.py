@@ -101,13 +101,8 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
     ):
         # This constrain enforces the min/max amount of cases that could be assigned to each user,
         # with the default being the cases split equally between users.
-        max_constraint = int(case_count / user_count) + 1
-        min_constraint = 0
-
-        if min_cases:
-            min_constraint = min_cases
-        if max_cases:
-            max_constraint = max_cases
+        max_constraint = max_cases or int(case_count / user_count) + 1
+        min_constraint = min_cases or 0
 
         for i in range(user_count):
             lp_problem += pulp.lpSum([decision_variables[i, j] for j in range(case_count)]) <= max_constraint
