@@ -2,8 +2,18 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from corehq.apps.es.case_search import case_search_adapter, BulkActionItem
+from corehq.apps.es import const
+from corehq.apps.es.case_search import (
+    BulkActionItem,
+    ElasticCaseSearch,
+    case_search_adapter,
+)
 from corehq.apps.es.case_search_bha import case_search_bha_adapter
+from corehq.apps.es.client import (
+    ElasticMultiplexAdapter,
+    create_document_adapter,
+)
+from corehq.apps.es.migration_operations import CreateIndex
 from corehq.apps.es.tests.utils import es_test
 from corehq.form_processor.tests.utils import create_case
 
@@ -131,3 +141,84 @@ class TestCaseSearchAdapterAlsoWritesToAnotherIndex(TestCase):
             {case["case_id"] for case in self.bulk_cases},
             {case["_id"] for case in docs_in_case_search}
         )
+
+    @patch.object(const, 'ES_CASE_SEARCH_INDEX_MULTIPLEXED', True)
+    @patch('corehq.apps.es.case_search.multiplex_to_adapter', return_value=case_search_bha_adapter)
+    def test_index_with_multiplexed_adapter(self, _):
+        SECONDARY_INDEX = 'test_secondary_case_search_index'
+        index_create_op = CreateIndex(
+            SECONDARY_INDEX,
+            case_search_adapter.type,
+            case_search_adapter.mapping,
+            case_search_adapter.analysis,
+            case_search_adapter.settings_key,
+        )
+        index_create_op.run()
+        self.addCleanup(index_create_op.reverse_run)
+        cs_multiplex_adapter = create_document_adapter(
+            ElasticCaseSearch,
+            const.HQ_CASE_SEARCH_INDEX_NAME,
+            case_search_adapter.type,
+            # create document adapter appends test_ to the index name
+            secondary=SECONDARY_INDEX[5:]
+        )
+
+        # Test we are using the multiplex adapter
+        self.assertTrue(isinstance(cs_multiplex_adapter, ElasticMultiplexAdapter))
+
+        # Index the case in ES
+        cs_multiplex_adapter.index(self.case, refresh=True)
+        self.addCleanup(case_search_adapter.delete, self.case.case_id)
+        self.addCleanup(case_search_bha_adapter.delete, self.case.case_id, refresh=True)
+
+        # Test index writes to all three indices i.e
+        # primary, secondary and sub index
+        docs_in_bha = self._get_normalized_cases_from_hits(case_search_bha_adapter.search({}))
+        docs_in_case_search = self._get_normalized_cases_from_hits(case_search_adapter.search({}))
+        docs_in_secondary_case_search = self._get_normalized_cases_from_hits(
+            cs_multiplex_adapter.secondary.search({})
+        )
+
+        self.assertEqual(len(docs_in_case_search), 1)
+        self.assertEqual(docs_in_bha, docs_in_case_search)
+        self.assertEqual(docs_in_secondary_case_search, docs_in_case_search)
+
+    @patch.object(const, 'ES_CASE_SEARCH_INDEX_MULTIPLEXED', True)
+    @patch('corehq.apps.es.case_search.multiplex_to_adapter', return_value=None)
+    def test_index_with_multiplexed_adapter_without_sub_index_settings(self, _):
+        SECONDARY_INDEX = 'test_secondary_case_search_index'
+        index_create_op = CreateIndex(
+            SECONDARY_INDEX,
+            case_search_adapter.type,
+            case_search_adapter.mapping,
+            case_search_adapter.analysis,
+            case_search_adapter.settings_key,
+        )
+        index_create_op.run()
+        self.addCleanup(index_create_op.reverse_run)
+        cs_multiplex_adapter = create_document_adapter(
+            ElasticCaseSearch,
+            const.HQ_CASE_SEARCH_INDEX_NAME,
+            case_search_adapter.type,
+            # create document adapter appends test_ to the index name
+            secondary=SECONDARY_INDEX[5:]
+        )
+
+        # Test we are using the multiplex adapter
+        self.assertTrue(isinstance(cs_multiplex_adapter, ElasticMultiplexAdapter))
+
+        # Index the case in ES
+        cs_multiplex_adapter.index(self.case, refresh=True)
+        self.addCleanup(case_search_adapter.delete, self.case.case_id)
+
+        docs_in_bha = self._get_normalized_cases_from_hits(case_search_bha_adapter.search({}))
+        docs_in_case_search = self._get_normalized_cases_from_hits(case_search_adapter.search({}))
+        docs_in_secondary_case_search = self._get_normalized_cases_from_hits(
+            cs_multiplex_adapter.secondary.search({})
+        )
+
+        # Test index writes to only two indices i.e
+        # primary and secondary
+        self.assertEqual(docs_in_bha, [])
+        self.assertEqual(len(docs_in_case_search), 1)
+        self.assertEqual(docs_in_secondary_case_search, docs_in_case_search)
