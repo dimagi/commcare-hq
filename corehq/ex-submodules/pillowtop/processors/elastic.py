@@ -72,7 +72,8 @@ class ElasticProcessor(PillowProcessor):
             doc = change.get_document()
             domain = doc.get('domain') if doc else None
             if not domain:
-                domain = change.metadata.domain
+                meta = getattr(change, 'metadata')
+                domain = meta.domain if meta else None
             if doc and doc.get('doc_type'):
                 logger.info(
                     f'[process_change] Attempting to delete doc {change.id}')
