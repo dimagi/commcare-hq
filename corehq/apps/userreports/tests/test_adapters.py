@@ -8,15 +8,6 @@ from corehq.apps.userreports.app_manager.helpers import clean_table_name
 
 class TestIndicatorSqlAdapter(SimpleTestCase):
 
-    def setUp(self):
-        super().setUp()
-        config = self._create_data_source_config("domain")
-        self.adapter = IndicatorSqlAdapter(config)
-
-    def tearDown(self):
-        self.adapter.drop_table()
-        super().tearDown()
-
     @staticmethod
     def _create_data_source_config(domain):
         indicator = {
@@ -39,17 +30,23 @@ class TestIndicatorSqlAdapter(SimpleTestCase):
 
     @patch("corehq.apps.userreports.sql.adapter.register_data_source_row_change")
     def test_bulk_delete_table_dont_exist(self, register_data_source_row_change_mock):
-        docs = [{'_id': '1'}]
-        self.assertFalse(self.adapter.table_exists)
+        config = self._create_data_source_config("test-domain")
+        adapter = IndicatorSqlAdapter(config)
 
-        self.adapter.bulk_delete(docs)
+        docs = [{'_id': '1'}]
+        self.assertFalse(adapter.table_exists)
+
+        adapter.bulk_delete(docs)
         register_data_source_row_change_mock.assert_not_called()
 
     @patch("corehq.apps.userreports.sql.adapter.register_data_source_row_change")
     def test_bulk_delete_table_exists(self, register_data_source_row_change_mock):
-        docs = [{'_id': '1'}]
-        self.adapter.build_table()
-        self.assertTrue(self.adapter.table_exists)
+        config = self._create_data_source_config("test-domain2")
+        adapter = IndicatorSqlAdapter(config)
 
-        self.adapter.bulk_delete(docs)
+        docs = [{'_id': '1'}]
+        adapter.build_table()
+        self.assertTrue(adapter.table_exists)
+
+        adapter.bulk_delete(docs)
         register_data_source_row_change_mock.assert_called()
