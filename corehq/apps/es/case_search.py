@@ -36,7 +36,7 @@ from corehq.util.dates import iso_string_to_datetime
 
 from . import filters, queries
 from .cases import case_adapter
-from .client import ElasticDocumentAdapter, create_document_adapter
+from .client import BulkActionItem, ElasticDocumentAdapter, create_document_adapter
 from .const import (
     HQ_CASE_SEARCH_INDEX_CANONICAL_NAME,
     HQ_CASE_SEARCH_INDEX_NAME,
@@ -176,6 +176,29 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         doc['case_properties'] = _get_case_properties(case_dict)
         doc['_id'] = case_dict['_id']
         return super()._from_dict(doc)
+
+    def _get_domain_from_doc(self, doc):
+        """
+        `doc` can be CommcCareCase instance or dict. This util method extracts domain from doc.
+        This will fail hard if domain is not present in doc.
+        """
+        if isinstance(doc, dict):
+            return doc["domain"]
+        if hasattr(doc, 'domain'):
+            return doc.domain
+
+    def index(self, doc, refresh=False):
+        """
+        Selectively multiplexes writes to a sub index based on the domain of the doc.
+        """
+        adapter = multiplex_to_adapter(self._get_domain_from_doc(doc))
+        if adapter:
+            # If we get a valid adapter then we multiplex writes
+            doc_obj = BulkActionItem.index(doc)
+            payload = [self._render_bulk_action(doc_obj), adapter._render_bulk_action(doc_obj)]
+            return self._bulk(payload, refresh=refresh, raise_errors=True)
+        # If adapter is None then simply index the docs
+        super().index(doc, refresh=refresh)
 
 
 case_search_adapter = create_document_adapter(
