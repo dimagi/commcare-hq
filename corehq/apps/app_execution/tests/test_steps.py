@@ -46,7 +46,8 @@ def _get_workflow():
         steps.MultipleEntitySelectStep(values=["xyz", "abc"]),
         steps.MultipleEntitySelectByIndexStep(values=[0, 2]),
         steps.FormStep(children=[
-            steps.AnswerQuestionStep(question_text='Name', question_id='name', value='str'),
+            steps.AnswerQuestionStep(question_text='Name', value='str'),
+            steps.AnswerQuestionIdStep(question_id='name', value='str'),
             steps.SubmitFormStep()
         ]),
     ])
@@ -77,6 +78,10 @@ def _get_workflow_json():
                     {
                         "type": "answer_question",
                         "question_text": "Name",
+                        "value": "str",
+                    },
+                    {
+                        "type": "answer_question_id",
                         "question_id": "name",
                         "value": "str",
                     },

@@ -115,9 +115,9 @@ class HarParser:
     def _extract_form_answer_step(self, request_data):
         tree = self.screen_data["tree"]
         tree_item = [question for question in tree if question["ix"] == request_data["ix"]][0]
-        step = steps.AnswerQuestionStep(question_text=tree_item["caption"],
-                                        question_id=tree_item["question_id"],
-                                        value=request_data["answer"])
+        step = steps.AnswerQuestionIdStep(
+            question_id=tree_item["question_id"],
+            value=request_data["answer"])
         return step
 
     def set_form_step(self):

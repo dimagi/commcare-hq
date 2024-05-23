@@ -228,32 +228,51 @@ class AnswerQuestionStep(Step):
     type: ClassVar[str] = "answer_question"
     is_form_step: ClassVar[bool] = True
     question_text: str
+    value: str
+
+    def get_request_data(self, session, data):
+        return {
+            **data,
+            **_get_answer_data(session, "caption", self.question_text, self.value)
+        }
+
+    def __str__(self):
+        return f"Answer Question: {self.question_text} = {self.value}"
+
+
+@define
+class AnswerQuestionIdStep(Step):
+    type: ClassVar[str] = "answer_question_id"
+    is_form_step: ClassVar[bool] = True
     question_id: str
     value: str
 
     def get_request_data(self, session, data):
-        try:
-            question = [
-                node for node in session.data["tree"]
-                if (
-                    (self.question_text and node["caption"] == self.question_text)
-                    or (self.question_id and node["question_id"] == self.question_id)
-                )
-            ][0]
-        except IndexError:
-            raise AppExecutionError(f"Question not found: {self.question_text or self.question_id}")
-
         return {
             **data,
-            "action": "answer",
-            "answersToValidate": {},
-            "answer": self.value,
-            "ix": question["ix"],
-            "session_id": session.data["session_id"]
+            **_get_answer_data(session, "question_id", self.question_id, self.value)
         }
 
     def __str__(self):
-        return f"Answer Question: {self.question_text or self.question_id} = {self.value}"
+        return f"Answer Question: {self.question_id} = {self.value}"
+
+
+def _get_answer_data(session, node_field_name, node_value, answer):
+    try:
+        question = [
+            node for node in session.data["tree"]
+            if node[node_field_name] == node_value
+        ][0]
+    except IndexError:
+        raise AppExecutionError(f"Question not found: {node_value}")
+
+    return {
+        "action": "answer",
+        "answersToValidate": {},
+        "answer": answer,
+        "ix": question["ix"],
+        "session_id": session.data["session_id"]
+    }
 
 
 @define
