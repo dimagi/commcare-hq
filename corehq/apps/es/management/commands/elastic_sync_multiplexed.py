@@ -82,10 +82,10 @@ class ESSyncUtil:
             + f"\"grep '{task_number}.*ReindexResponse' /opt/data/elasticsearch*/logs/*.log\""
             + "\n\n")
 
-    def reindex_partial_index(self, cname, domain):
-        destination_adapter = doc_adapter_from_cname(cname)
+    def reindex_partial_index(self, partial_index_cname, domain):
+        destination_adapter = doc_adapter_from_cname(partial_index_cname)
         if not destination_adapter.parent_index_cname:
-            raise IndexNotPartialException(f"Adapter for {cname} is not a partial index")
+            raise IndexNotPartialException(f"Adapter for {partial_index_cname} is not a partial index")
 
         source_adapter = doc_adapter_from_cname(destination_adapter.parent_index_cname)
         source_index = source_adapter.index_name
