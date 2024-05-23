@@ -200,6 +200,18 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         # If adapter is None then simply index the docs
         super().index(doc, refresh=refresh)
 
+    def bulk(self, actions, refresh=False, raise_errors=True):
+        """
+        Iterates over the list of actions and multiplexes writes to a sub index based on the domain of the doc.
+        """
+        payload = []
+        for action in actions:
+            payload.append(self._render_bulk_action(action))
+            adapter = multiplex_to_adapter(self._get_domain_from_doc(action.doc))
+            if adapter:
+                payload.append(adapter._render_bulk_action(action))
+        self._bulk(payload, refresh=refresh, raise_errors=raise_errors)
+
 
 case_search_adapter = create_document_adapter(
     ElasticCaseSearch,
