@@ -524,7 +524,7 @@ class AdminInvitesUserForm(BaseLocationForm):
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.layout = crispy.Layout(
+        fields = [
             crispy.Fieldset(
                 gettext("Information for new Web User"),
                 crispy.Field(
@@ -534,11 +534,26 @@ class AdminInvitesUserForm(BaseLocationForm):
                 ),
                 'role',
                 'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
-                'assigned_locations' if should_show_location else None,
-                'primary_location' if should_show_location else None,
-                'tableau_role' if 'tableau_role' in self.fields else None,
-                'tableau_group_indices' if 'tableau_group_indices' in self.fields else None
-            ),
+            )
+        ]
+        if should_show_location:
+            fields.append(
+                crispy.Fieldset(
+                    gettext("Location Settings"),
+                    'assigned_locations' if should_show_location else None,
+                    'primary_location' if should_show_location else None,
+                )
+            )
+        if self.can_edit_tableau_config:
+            fields.append(
+                crispy.Fieldset(
+                    gettext("Tableau Configuration"),
+                    'tableau_role' if 'tableau_role' in self.fields else None,
+                    'tableau_group_indices' if 'tableau_group_indices' in self.fields else None
+                ),
+            )
+        self.helper.layout = crispy.Layout(
+            *fields,
             crispy.HTML(
                 render_to_string(
                     'users/partials/confirm_trust_identity_provider_message.html',
