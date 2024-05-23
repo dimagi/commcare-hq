@@ -479,6 +479,10 @@ class ElasticDocumentAdapter(BaseAdapter):
     # Name of the index as referred in HQ world
     canonical_name = None
 
+    # For adapter of sub indices,
+    # this property is the cname of the parent index
+    parent_index_cname = None
+
     def __init__(self, index_name, type_):
         """A document adapter for a single index.
 

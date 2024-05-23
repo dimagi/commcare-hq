@@ -133,6 +133,7 @@ app_execution
  0001_initial
  0002_alter_appworkflowconfig_unique_together
  0003_appexecutionlog_updated
+ 0004_alter_appworkflowconfig_notification_emails_and_more
 app_manager
  0001_linked_app_domain
  0002_latestenabledbuildprofiles
@@ -425,6 +426,7 @@ es
  0009_add_indices_for_reindex_in_es5
  0010_delete_reverted_indices
  0011_add_indices_for_es5_reindex
+ 0012_add_new_index_for_bha
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -1227,7 +1229,8 @@ users
  0063_rename_location_invitation_primary_location_and_more
  0064_add_edit_view_tableau_config_permissions
  0065_transfer_to_tableau_config_permission
- 0066_alter_invitation_tableau_role
+ 0066_add_profile_permissions
+ 0067_alter_invitation_tableau_role
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

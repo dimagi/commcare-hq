@@ -130,7 +130,7 @@
         {% if request|toggle_enabled:"SUPPORT" %}
           <td>
             {% if case.case_id == current_case.case_id %}
-              <em>(current case)</em>
+              <em>{% trans "(current case)" %}</em>
             {% elif case.index_info.is_ancestor %}
               <strong>{{ case.index_info.identifier }}</strong> / {{ case.index_info.relationship }}
             {% elif case.index_info %}
