@@ -2,12 +2,9 @@
 Case Search Query Language (CSQL)
 =================================
 
-Underpinning some of the advanced search capabilities of `Case Search`_ and `Case List Explorer`_ is
-the Case Search Query Language. This page describes the syntax and capabilities of the language as
-well as it's limitations.
-
-.. _Case Search: https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606528
-.. _Case List Explorer: https://dimagi.atlassian.net/wiki/x/KTXKfw
+Underpinning some of the advanced search capabilities of Case Search and Case List Explorer is the
+Case Search Query Language. This page describes the syntax and capabilities of the language as well
+as it's limitations.
 
 .. contents::
    :local:
@@ -159,27 +156,21 @@ The following functions are supported:
 
 ``within-distance``
 -------------------
-* **Requirements**: GPS case properties set up as described in this page: `Storing GPS Case
-  Properties in Elasticsearch as GeoPoints <geopoints_>`_
+* **Requirements**: GPS case properties
 * **Behavior**: Match cases within a certain geographic distance (as the crow flies) of the provided
   point
 * **Return**: True if that case is within range, otherwise false
 * **Arguments**:
     * ``property_name``: The GPS case property on the cases being searched
-    * ``coordinates``: This can be the output of a "geopoint" receiver from a geocoder question as
-      described in `Address Geocoding in Web Apps <address_geocoding_>`_
+    * ``coordinates``: This can be the output of a "geopoint" receiver from a geocoder question
     * ``distance``: The distance from ``coordinates`` to search
     * ``unit``: The units for that distance. Options are: miles, yards, feet, inch, kilometers,
       meters, centimeters, millimeters, nauticalmiles
 * **Usage**: ``within-distance(location, '42.4402967 -71.1453275', 30, 'miles')``
 
-.. _geopoints: https://dimagi.atlassian.net/wiki/x/dgf4fw
-.. _address_geocoding: https://dimagi.atlassian.net/wiki/x/dALKfw
-
 ``fuzzy-match``
 ---------------
-* **Behavior**: Determines if a given value is a fuzzy match for a given case property. This ignores
-  the `domain-level case search fuzziness settings <fuzziness_settings_>`_.
+* **Behavior**: Determines if a given value is a fuzzy match for a given case property.
 * **Return**: True if that particular value matches the case property.  Otherwise False.
 * **Arguments**:  Two arguments: the case property and the value to check.
 * **Usage**: ``fuzzy-match(first_name, "Sara")``
@@ -189,7 +180,6 @@ The following functions are supported:
    to gauge similarity. To consider something a match, it requires an exact prefix match and an edit
    distance based on the length of the string (longer strings can have more edits).
 
-.. _fuzziness_settings: https://dimagi.atlassian.net/wiki/spaces/GS/pages/2146606704/Project+Case+Search+Configuration#Configure-Fuzzy-Properties-(optional)
 .. _Fuzzy Query: https://www.elastic.co/guide/en/elasticsearch/reference/8.11/query-dsl-fuzzy-query.html
 .. _Levenshtein distance: https://en.wikipedia.org/wiki/Levenshtein_distance
 
@@ -288,10 +278,6 @@ Special functions are provided to support filtering based on the properties of s
     subcase functions and search results increases, the time required to perform the search will
     also increase.
 
-    **Performance testing is required** when using this function in your app.
-        * `Link to performance testing in HQ's case search (not Web Apps) <perf_testing_>`_
-        * `Link to performance testing in HQ's case search (WebApps - BHA) <bha_perf_testing_>`_
-
     Keep in mind that a higher number of search results will lead to longer execution times for the
     search query. The threshold is around 400K to 500K search results, after which a timeout error
     may occur. It is recommended to keep your search results well below this number for optimal
@@ -302,16 +288,9 @@ Special functions are provided to support filtering based on the properties of s
     by both first and last name is more effective than just using the first name. Including more
     required fields in the search form is likely to reduce the number of search results returned.
 
-    If you have any questions regarding the limitation usage of this subcase function, please reach
-    out to the AE team.
-
-
-.. _perf_testing: https://docs.google.com/spreadsheets/d/1T4tX1tbFaiTBFWpJoi_4p4_UtnRL3_SRoXJgADraXo8/edit#gid=1095465676
-.. _bha_perf_testing: https://docs.google.com/spreadsheets/d/1B9ySwSahf4qUKWEmX0FfdK0uArOBnJ6pXWh7eYvnaiA/edit#gid=671814666
-
 **Examples**
 
-A very common implementation of subcase-exists search queries involves utilizing the user's
+A very common implementation of ``subcase-exists`` search queries involves utilizing the user's
 'search-input'. Please see an example of this configuration below.
 
 .. code-block::
