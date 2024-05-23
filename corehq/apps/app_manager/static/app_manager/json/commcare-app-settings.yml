@@ -181,7 +181,7 @@
 
 - id: persistent_menu
   name: Show Persistent Menu
-  description: Show a persistent menu instead of the bread crumbs bar. This feature is work in progress.
+  description: Show a persistent menu instead of breadcrumbs.
   toggle: PERSISTENT_MENU_SETTING
   widget: bool
   default: false

@@ -50,7 +50,7 @@
     - hq.target_commcare_flavor
     - features.dependencies  # Required Android apps
 
-- title: 'Web App Settings'
+- title: 'Web Apps Settings'
   id: app-settings-web-app
   collapse: true
   settings:
