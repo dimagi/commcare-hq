@@ -85,7 +85,7 @@ class ESSyncUtil:
 
     def reindex_partial_index(self, cname, domain):
         adapter = doc_adapter_from_cname(cname)
-        if not adapter.parent_index_name:
+        if not adapter.parent_index_cname:
             raise IndexNotPartialException(f"Adapter for {cname} is not a partial index")
 
         source_index = adapter.parent_index_name
