@@ -183,8 +183,7 @@ case_search_adapter = create_document_adapter(
 )
 
 
-def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None,
-                        fuzzy_prefix_length=None):
+def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None):
     """
     Search for all cases where case property with name `case_property_name`` has text value `value`
     """
@@ -195,15 +194,12 @@ def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=
     if value == '':
         return case_property_missing(case_property_name)
     if fuzzy:
-        kwargs = {'fuzziness': 'AUTO'}
-        if fuzzy_prefix_length:
-            kwargs['prefix_length'] = fuzzy_prefix_length
         return _base_property_query(
             case_property_name,
             filters.OR(
                 # fuzzy match. This portion of this query OR's together multi-word case
                 # property values and doesn't respect multivalue_mode
-                queries.fuzzy(value, PROPERTY_VALUE, **kwargs),
+                queries.fuzzy(value, PROPERTY_VALUE, fuzziness='AUTO', prefix_length=2),
                 # non-fuzzy match. added to improve the score of exact matches
                 queries.match(value, PROPERTY_VALUE, operator=multivalue_mode)
             ),

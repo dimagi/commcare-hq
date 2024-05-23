@@ -166,6 +166,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                                     "case_properties.value": {
                                                                         "value": "polly",
                                                                         "fuzziness": "AUTO",
+                                                                        "prefix_length": 2,
                                                                         "max_expansions": 100
                                                                     }
                                                                 }
@@ -219,7 +220,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
     def test_fuzzy_property_query(self):
         query = self.es.domain('swashbucklers').filter(
-            case_property_query("foo", "backbeard", fuzzy=True, fuzzy_prefix_length=2)
+            case_property_query("foo", "backbeard", fuzzy=True)
         )
         expected = {
             "query": {
@@ -424,23 +425,11 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             [
                 {'_id': 'c1', 'foo': 'redbeard'},
                 {'_id': 'c2', 'foo': 'blackbeard'},
-            ],
-            CaseSearchES().domain(self.domain).case_property_query("foo", "backbeard", fuzzy=True),
-            None,
-            ['c2']
-        )
-
-    def test_fuzzy_case_property_query_with_prefix(self):
-        self._assert_query_runs_correctly(
-            self.domain,
-            [
-                {'_id': 'c1', 'foo': 'redbeard'},
-                {'_id': 'c2', 'foo': 'blackbeard'},
                 {'_id': 'c3', 'foo': 'backbird'},
             ],
-            CaseSearchES().domain(self.domain).filter(
-                case_property_query("foo", "backbeard", fuzzy=True, fuzzy_prefix_length=2)
-            ),
+            # 'backbird' is a fuzzy match - off by two edits
+            # 'blackbeard' is even closer, but it is omitted because of prefix_length=2
+            CaseSearchES().domain(self.domain).case_property_query("foo", "backbeard", fuzzy=True),
             None,
             ['c3']
         )
