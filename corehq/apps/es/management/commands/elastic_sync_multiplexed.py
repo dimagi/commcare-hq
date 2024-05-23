@@ -610,5 +610,7 @@ class Command(BaseCommand):
             cmd_func(options['index_cname'])
         elif sub_cmd == 'set_replicas':
             cmd_func(options["index_cname"])
+        elif sub_cmd == 'partial_reindex':
+            cmd_func(options["index_cname"], options["domain"])
         elif sub_cmd in ['remove_residual_indices', 'display_shard_info']:
             cmd_func()
