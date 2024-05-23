@@ -458,7 +458,7 @@ class ElasticManageAdapter(BaseAdapter):
             reindex_kwargs["requests_per_second"] = requests_per_second
 
         if query:
-            reindex_kwargs["query"] = {"term": query}
+            reindex_body["source"]["query"] = {"term": query}
 
         reindex_info = self._es.reindex(reindex_body, **reindex_kwargs)
         if not wait_for_completion:

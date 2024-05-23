@@ -187,8 +187,8 @@ class ESSyncUtil:
         source_count = source_adapter.count(query)
         destination_count = destination_adapter.count(query)
 
-        print(f"\nDoc Count In Source Index '{source_adapter.parent_index_name}' in domain '{domain}' - {source_count}")  # noqa: E501
-        print(f"\nDoc Count In Partial Index '{destination_adapter.index_name}' in domain '{domain}' - {destination_count}\n")  # noqa: E501
+        print(f"\nDoc Count In Source Index '{source_adapter.parent_index_cname}' in domain '{domain}' - {source_count}")  # noqa: E501
+        print(f"\nDoc Count In Partial Index '{destination_adapter.canonical_name}' in domain '{domain}' - {destination_count}\n")  # noqa: E501
 
     def perform_cleanup(self, adapter):
         logger.info("Performing required cleanup!")
