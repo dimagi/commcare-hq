@@ -163,6 +163,7 @@ PARAMETERIZED_PERMISSIONS = {
     'view_tableau': 'view_tableau_list',
     'access_web_apps': 'web_apps_list',
     'commcare_analytics_roles': 'commcare_analytics_roles_list',
+    'edit_user_profile': 'edit_user_profile_list',
 }
 
 
@@ -236,6 +237,9 @@ class HqPermissions(DocumentSchema):
 
     edit_user_tableau_config = BooleanProperty(default=False)
     view_user_tableau_config = BooleanProperty(default=False)
+
+    edit_user_profile = BooleanProperty(default=True)
+    edit_user_profile_list = StringListProperty(default=[])  # List of profile obj IDs
 
     @classmethod
     def from_permission_list(cls, permission_list):
