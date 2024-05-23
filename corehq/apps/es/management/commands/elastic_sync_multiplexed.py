@@ -95,7 +95,7 @@ class ESSyncUtil:
         self._prepare_index_for_reindex(destination_index)
 
         logger.info("Starting partial reindex process")
-        task_id = es_manager.reindex(source_index, destination_index, query={"term": domain})
+        task_id = es_manager.reindex(source_index, destination_index, query={"domain": domain})
 
         logger.info(f"Copying docs from index {source_index} to index {destination_index} for {domain}")
         task_number = task_id.split(':')[1]
