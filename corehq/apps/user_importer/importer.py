@@ -34,6 +34,7 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.util import get_tableau_group_ids_by_names
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import (
     spec_value_to_boolean_or_none,
@@ -318,14 +319,16 @@ def get_location_from_site_code(site_code, location_cache):
 
 
 def create_or_update_web_user_invite(email, domain, role_qualified_id, upload_user, primary_location_id=None,
-                                    assigned_location_ids=None, profile=None, user_change_logger=None,
-                                    send_email=True):
+                                    assigned_location_ids=None, profile=None, tableau_role=None,
+                                    tableau_group_ids=None, user_change_logger=None, send_email=True):
     if assigned_location_ids is None:
         assigned_location_ids = []
     invite, invite_created = Invitation.objects.update_or_create(
         email=email,
         domain=domain,
         is_accepted=False,
+        tableau_role=tableau_role,
+        tableau_group_ids=tableau_group_ids,
         defaults={
             'invited_by': upload_user.user_id,
             'invited_on': datetime.utcnow(),
@@ -523,7 +526,9 @@ class CCUserRow(BaseUserRow):
             "profile_name": self.row.get('user_profile', None),
             "web_user_username": self.row.get('web_user'),
             "phone_numbers": self.row.get('phone-number', []) if 'phone-number' in self.row else None,
-            "deactivate_after": self.row.get('deactivate_after', None)
+            "deactivate_after": self.row.get('deactivate_after', None),
+            "tableau_role": self.row.get('tableau_role', None),
+            "tableau_groups": self.row.get('tableau_groups', None),
         }
 
         for v in ['is_active', 'is_account_confirmed', 'send_confirmation_email',
@@ -660,11 +665,18 @@ class CCUserRow(BaseUserRow):
                     if cv["profile_name"]:
                         _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
                         profile = self.domain_info.profiles_by_name[cv["profile_name"]]
+                    tableau_role = cv["tableau_role"]
+                    tableau_group_ids = None
+                    if cv["tableau_groups"] is not None:
+                        groups_list = cv["tableau_groups"].split(',')
+                        tableau_group_ids = get_tableau_group_ids_by_names(groups_list, self.domain)
                     create_or_update_web_user_invite(
                         web_user_username, self.domain, role_qualified_id, self.importer.upload_user,
                         self.user.location_id,
                         assigned_location_ids=self.user.assigned_location_ids,
                         profile=profile,
+                        tableau_role=tableau_role,
+                        tableau_group_ids=tableau_group_ids,
                         user_change_logger=user_change_logger,
                         send_email=cv["send_confirmation_email"]
                     )
@@ -695,6 +707,8 @@ class WebUserRow(BaseUserRow):
             "data": self.row.get('data', {}),
             "uncategorized_data": self.row.get('uncategorized_data', {}),
             "profile_name": self.row.get('user_profile', None),
+            "tableau_role": self.row.get('tableau_role', None),
+            "tableau_groups": self.row.get('tableau_groups', None),
         }
 
     def process(self):
@@ -739,11 +753,21 @@ class WebUserRow(BaseUserRow):
                 if self.column_values["profile_name"]:
                     _check_profile(self.column_values["profile_name"], self.domain_info.profiles_by_name)
                     profile = self.domain_info.profiles_by_name[self.column_values["profile_name"]]
+                tableau_role = self.column_values["tableau_role"]
+                tableau_group_ids = None
+                if self.column_values["tableau_groups"] is not None:
+                    groups_list = self.column_values["tableau_groups"].split(',')
+                    tableau_group_ids = get_tableau_group_ids_by_names(
+                        groups_list,
+                        self.domain
+                    )
                 create_or_update_web_user_invite(
                     user.username, self.domain, role_qualified_id, self.importer.upload_user,
                     user.location_id,
                     assigned_location_ids=user.assigned_location_ids,
                     profile=profile,
+                    tableau_role=tableau_role,
+                    tableau_group_ids=tableau_group_ids,
                     user_change_logger=user_change_logger
                 )
         web_user_importer.save_log()
@@ -808,11 +832,18 @@ class WebUserRow(BaseUserRow):
             if cv["profile_name"]:
                 _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
                 profile = self.domain_info.profiles_by_name[cv["profile_name"]]
+            tableau_role = cv["tableau_role"] if "tableau_role" in cv else None
+            tableau_group_ids = None
+            if cv["tableau_groups"] is not None:
+                groups_list = cv["tableau_groups"].split(',')
+                tableau_group_ids = get_tableau_group_ids_by_names(groups_list, self.domain)
             create_or_update_web_user_invite(
                 cv['username'], self.domain, self.domain_info.roles_by_name[cv['role']], self.importer.upload_user,
                 user_invite_loc_id,
                 assigned_location_ids=user_invite_locs_ids,
-                profile=profile
+                profile=profile,
+                tableau_role=tableau_role,
+                tableau_group_ids=tableau_group_ids,
             )
             self.status_row['flag'] = 'invited'
 
@@ -826,8 +857,8 @@ class WebUserRow(BaseUserRow):
             )
 
         if invitation.email_status == InvitationStatus.BOUNCED and invitation.email == username:
-            raise UserUploadError(_("The email has bounced for this user's invite. "
-                                "Please try again with a different username").format(web_user=username))
+            raise UserUploadError(_("The email has bounced for this user's invite: {}. "
+                                "Please try again with a different username").format(username))
 
 
 class WebImporter:
