@@ -329,6 +329,10 @@ class EditCommCareUserView(BaseEditUserView):
                     'update_form': self.commtrack_form,
                 },
             })
+        if toggles.SUPPORT.enabled(self.request.couch_user.username):
+            context["support_info"] = {
+                'locations': self.editable_user.get_sql_locations(self.domain)
+            }
         return context
 
     @property

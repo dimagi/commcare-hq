@@ -4723,6 +4723,20 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
+"<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
+"configuration for web users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View tableau configuration for web users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only tableau configuration for web users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
 "<strong>Mobile Workers</strong> &mdash; create new accounts, manage account "
 "settings, deactivate or delete mobile workers."
 msgstr ""
