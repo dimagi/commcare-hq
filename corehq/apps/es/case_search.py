@@ -210,7 +210,7 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
             adapter = multiplex_to_adapter(self._get_domain_from_doc(action.doc))
             if adapter:
                 payload.append(adapter._render_bulk_action(action))
-        self._bulk(payload, refresh=refresh, raise_errors=raise_errors)
+        return self._bulk(payload, refresh=refresh, raise_errors=raise_errors)
 
 
 case_search_adapter = create_document_adapter(
