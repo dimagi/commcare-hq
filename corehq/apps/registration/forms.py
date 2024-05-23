@@ -590,7 +590,7 @@ class AdminInvitesUserForm(BaseLocationForm):
         cleaned_data = super(AdminInvitesUserForm, self).clean()
 
         if (('tableau_role' in cleaned_data or 'tableau_group_indices' in cleaned_data)
-        and self.can_edit_tableau_config):
+        and not self.can_edit_tableau_config):
             raise forms.ValidationError(_("You do not have permission to edit Tableau Configuraion."))
 
         if 'tableau_group_indices' in cleaned_data:
