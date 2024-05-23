@@ -25,9 +25,9 @@
 -          <button class="btn btn-danger del pull-right" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
 +          <button class="btn btn-outline-danger del float-end" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
                    data-bind="
-                       visible: isRepetition,
-                       click: deleteRepeat
-@@ -54,8 +54,8 @@
+                       visible: showDelete,
+                       enabled: hasNoPendingAnswer(),
+@@ -55,8 +55,8 @@
              "></i>
            </div>
            <span class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
@@ -38,7 +38,7 @@
                    data-bind="
                        visible: isRepetition,
                        click: deleteRepeat
-@@ -75,7 +75,7 @@
+@@ -76,7 +76,7 @@
                  afterRender: focusNewRepeat,
                },
                css: {
