@@ -455,6 +455,28 @@ class TestEditDomainAlertView(TestBaseDomainAlertView):
         self.assertEqual(response.status_code, 200)
 
 
+class TestSubscriptionRenewalViews(TestCase, DomainSubscriptionMixin):
+    def setUp(self):
+        super().setUp()
+        self.domain = Domain(name='subscription-renewal', is_active=True)
+        self.domain.save()
+
+        username = 'clifford'
+        password = '*******'
+        self.user = WebUser.create(self.domain.name, username, password,
+                                   created_by=None, created_via=None, is_admin=True)
+        self.user.save()
+
+        self.client = Client()
+        self.client.login(username=username, password=password)
+
+    def tearDown(self):
+        self.teardown_subscriptions()
+        self.user.delete(self.domain.name, deleted_by=None)
+        self.domain.delete()
+        clear_plan_version_cache()
+        super().tearDown()
+
 @contextmanager
 def domain_fixture(domain_name, allow_domain_requests=False):
     domain = Domain(name=domain_name, is_active=True)
