@@ -59,6 +59,8 @@ class AppWorkflowConfigForm(forms.ModelForm):
                     css_class="col",
                 ),
                 crispy.Div(
+                    crispy.HTML("<p>HAR file recording should start with the "
+                                "selection of the app (navigate_menu_start).</p>"),
                     "har_file",
                     twbscrispy.StrictButton(
                         "Populate workflow from HAR file",
