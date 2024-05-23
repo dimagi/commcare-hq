@@ -191,11 +191,11 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         """
         Selectively multiplexes writes to a sub index based on the domain of the doc.
         """
-        adapter = multiplex_to_adapter(self._get_domain_from_doc(doc))
-        if adapter:
-            # If we get a valid adapter then we multiplex writes
+        sub_index_adapter = multiplex_to_adapter(self._get_domain_from_doc(doc))
+        if sub_index_adapter:
+            # If we get a valid sub index adapter then we multiplex writes
             doc_obj = BulkActionItem.index(doc)
-            payload = [self._render_bulk_action(doc_obj), adapter._render_bulk_action(doc_obj)]
+            payload = [self._render_bulk_action(doc_obj), sub_index_adapter._render_bulk_action(doc_obj)]
             return self._bulk(payload, refresh=refresh, raise_errors=True)
         # If adapter is None then simply index the docs
         super().index(doc, refresh=refresh)
