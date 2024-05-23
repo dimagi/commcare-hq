@@ -41,7 +41,8 @@
                 "></span>
           <button class="btn btn-outline-danger del float-end" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
                   data-bind="
-                      visible: isRepetition,
+                      visible: showDelete,
+                      enabled: hasNoPendingAnswer(),
                       click: deleteRepeat
                   "><i class="fa fa-remove"></i></button>
         </legend>
