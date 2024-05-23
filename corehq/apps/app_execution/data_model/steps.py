@@ -36,20 +36,7 @@ class CommandStep(Step):
     value: str = ""
     """Display text of the command to execute"""
 
-    id: str = ""
-    """ID of the command to execute"""
-
-    def to_json(self):
-        data = super().to_json()
-        for key in ["value", "id"]:
-            if not getattr(self, key):
-                data.pop(key)
-        return data
-
     def get_request_data(self, session, data):
-        if self.id:
-            return _append_selection(data, self.id)
-
         commands = {c["displayText"].lower(): c for c in session.data.get("commands", [])}
 
         try:
@@ -57,6 +44,18 @@ class CommandStep(Step):
         except KeyError:
             raise AppExecutionError(f"Command not found: {self.value}: {commands.keys()}")
         return _append_selection(data, command["index"])
+
+
+@define
+class CommandIdStep(Step):
+    type: ClassVar[str] = "command_id"
+    is_form_step: ClassVar[bool] = False
+
+    value: str = ""
+    """ID of the command to execute"""
+
+    def get_request_data(self, session, data):
+        return _append_selection(data, self.value)
 
 
 @define

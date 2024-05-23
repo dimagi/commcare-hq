@@ -73,7 +73,7 @@ class TestHarExtraction(SimpleTestCase, TestFileMixin):
         config = HarParser().parse(har)
         self.assertEqual(config.workflow.steps, [
             steps.CommandStep(value='Baby Log'),
-            steps.CommandStep(id='action 0')
+            steps.CommandIdStep(value='action 0')
         ])
 
 

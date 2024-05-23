@@ -34,6 +34,7 @@ class StepModelTest(SimpleTestCase):
 def _get_workflow():
     return AppWorkflow(steps=[
         steps.CommandStep("Case Search"),
+        steps.CommandIdStep("action 0"),
         steps.QueryInputValidationStep({"first_name": "query value"}),
         steps.QueryInputValidationStep({"last_name": "query value"}),
         steps.QueryStep({"first_name": "query value", "last_name": "query value"}),
@@ -55,6 +56,7 @@ def _get_workflow_json():
     return {
         "steps": [
             {"type": "command", "value": "Case Search"},
+            {"type": "command_id", "value": "action 0"},
             {"type": "query_input_validation", "inputs": {"first_name": "query value"}},
             {"type": "query_input_validation", "inputs": {"last_name": "query value"}},
             {
