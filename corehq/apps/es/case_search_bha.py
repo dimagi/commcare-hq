@@ -19,7 +19,7 @@ class ElasticCaseSearchBha(ElasticCaseSearch):
 
     settings_key = IndexSettingsKey.CASE_SEARCH_BHA
     canonical_name = HQ_CASE_SEARCH_BHA_INDEX_CANONICAL_NAME
-    parent_index_name = HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
+    parent_index_cname = HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
 
     def index(self, doc, refresh=False):
         """
