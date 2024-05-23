@@ -403,7 +403,7 @@ class ElasticManageAdapter(BaseAdapter):
 
     def reindex(
             self, source, dest, wait_for_completion=False,
-            refresh=False, batch_size=1000, requests_per_second=None, copy_doc_ids=True
+            refresh=False, batch_size=1000, requests_per_second=None, copy_doc_ids=True, query=None,
     ):
         """
         Starts the reindex process in elastic search cluster
@@ -418,6 +418,8 @@ class ElasticManageAdapter(BaseAdapter):
                            batches may process more quickly but risk errors if the documents are too
                            large. 1000 is the recommended maximum and elasticsearch default,
                            and can be reduced if you encounter scroll timeouts.
+        :param query: ``dict`` optional parameter to include a term query to filter which documents are included in
+                      the reindex
         :returns: None if wait_for_completion is True else would return task_id of reindex task
         """
 
@@ -455,6 +457,9 @@ class ElasticManageAdapter(BaseAdapter):
 
         if requests_per_second:
             reindex_kwargs["requests_per_second"] = requests_per_second
+
+        if query:
+            reindex_body["source"]["query"] = {"term": query}
 
         reindex_info = self._es.reindex(reindex_body, **reindex_kwargs)
         if not wait_for_completion:
