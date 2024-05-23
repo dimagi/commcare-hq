@@ -5,6 +5,9 @@
     "description": "CommCare HQ Javascript Libraries",
     "private": true,
     "dependencies": {
+        "@babel/core": "^7.24.5",
+        "@babel/preset-env": "^7.24.5",
+        "@babel/preset-react": "^7.24.1",
         "@babel/standalone": "^7.21.4",
         "@ckeditor/ckeditor5-alignment": "^40.1.0",
         "@ckeditor/ckeditor5-build-classic": "^40.1.0",
@@ -21,6 +24,7 @@
         "Caret.js": "INTELOGIE/Caret.js#0.3.1",
         "DOMPurify": "npm:dompurify#2.3.6",
         "ace-builds": "1.5.0",
+        "babel-loader": "^9.1.3",
         "babel-plugin-transform-modules-requirejs-babel": "^0.1.0",
         "backbone": "npm:backbone#~1.3.2",
         "backbone.marionette": "4.1.3",
@@ -76,15 +80,23 @@
         "nvd3": "1.1.10",
         "nvd3-1.8.6": "npm:nvd3#1.8.6",
         "quicksearch": "DeuxHuitHuit/quicksearch#2.2.1",
+        "react": "^18.2.0",
+        "react-bootstrap": "^2.10.2",
+        "react-data-table-component": "^7.6.2",
+        "react-dom": "^18.2.0",
         "requirejs": "2.3.6",
         "requirejs-babel7": "^1.3.2",
         "select2": "4.1.0-rc.0",
         "signature_pad": "^4.1.6",
+        "styled-components": "^6.1.8",
         "topojson": "3.0.2",
         "uglify-js": "3",
         "ui-select": "npm:ui-select#0.13.2",
         "underscore": "1.13.1",
+        "universal-cookie": "^7.1.4",
         "url-polyfill": "1.1.10",
+        "webpack": "^5.91.0",
+        "webpack-cli": "^5.1.4",
         "xpath": "dimagi/js-xpath#v0.0.8",
         "zxcvbn": "4.4.2"
     },
@@ -92,6 +104,7 @@
         "chai": "4.3.6",
         "colors": "1.4.0",
         "eslint": "8.15.0",
+        "eslint-plugin-react": "^7.34.1",
         "grunt": "1.5.3",
         "grunt-cli": "1.4.3",
         "grunt-contrib-watch": "1.1.0",
@@ -128,6 +141,8 @@
     },
     "scripts": {
         "postinstall": "yarn run -s build:modernizr",
-        "build:modernizr": "modernizr -c modernizr-conf.json -d corehq/apps/hqwebapp/static/hqwebapp/js/lib"
+        "build:modernizr": "modernizr -c modernizr-conf.json -d corehq/apps/hqwebapp/static/hqwebapp/js/lib",
+        "dev": "webpack --mode development --watch",
+        "build:webpack": "webpack --mode development"
     }
 }
