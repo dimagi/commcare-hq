@@ -1107,6 +1107,8 @@ class InviteWebUserView(BaseManageWebUserView):
         initial = {
             'email': domain_request.email if domain_request else None,
         }
+        can_edit_tableau_config = (self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config')
+                                and toggles.TABLEAU_USER_SYNCING.enabled(self.domain))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
             pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
@@ -1117,6 +1119,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 domain=self.domain,
                 is_add_user=is_add_user,
                 should_show_location=self.request.project.uses_locations,
+                can_edit_tableau_config=can_edit_tableau_config,
                 request=self.request
             )
         return AdminInvitesUserForm(
@@ -1125,6 +1128,7 @@ class InviteWebUserView(BaseManageWebUserView):
             domain=self.domain,
             is_add_user=is_add_user,
             should_show_location=self.request.project.uses_locations,
+            can_edit_tableau_config=can_edit_tableau_config,
             request=self.request
         )
 

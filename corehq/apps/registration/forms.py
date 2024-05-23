@@ -491,9 +491,10 @@ class AdminInvitesUserForm(BaseLocationForm):
     role = forms.ChoiceField(choices=(), label="Project Role")
 
     def __init__(self, data=None, excluded_emails=None, is_add_user=None,
-                 role_choices=(), should_show_location=False, *, domain, **kwargs):
+                 role_choices=(), should_show_location=False, can_edit_tableau_config=False,
+                 *, domain, **kwargs):
         super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
-        self.request = kwargs.get('request')
+        self.can_edit_tableau_config = can_edit_tableau_config
         domain_obj = Domain.get_by_name(domain)
         self.fields['role'].choices = role_choices
         if domain_obj:
@@ -514,7 +515,7 @@ class AdminInvitesUserForm(BaseLocationForm):
                 self.fields['program'].choices = choices
         self.excluded_emails = excluded_emails or []
 
-        if self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config'):
+        if self.can_edit_tableau_config:
             self._initialize_tableau_fields(data, domain)
 
         self.helper = FormHelper()
@@ -574,7 +575,7 @@ class AdminInvitesUserForm(BaseLocationForm):
         cleaned_data = super(AdminInvitesUserForm, self).clean()
 
         if (('tableau_role' in cleaned_data or 'tableau_group_indices' in cleaned_data)
-        and not self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config')):
+        and self.can_edit_tableau_config):
             raise forms.ValidationError(_("You do not have permission to edit Tableau Configuraion."))
 
         if 'tableau_group_indices' in cleaned_data:
