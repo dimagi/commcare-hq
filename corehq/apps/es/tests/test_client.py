@@ -503,26 +503,6 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
                 self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
 
-    def test_partial_reindex_with_all_params(self):
-        PARTIAL_INDEX = 'partial_index'
-        partial_adapter = create_document_adapter(test_adapter.__class__, PARTIAL_INDEX, test_adapter.type)
-
-        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
-
-            self._index_test_docs_for_reindex()
-
-            with temporary_index(PARTIAL_INDEX, partial_adapter.type, partial_adapter.mapping):
-
-                manager.reindex(
-                    test_adapter.index_name, PARTIAL_INDEX,
-                    wait_for_completion=True,
-                    refresh=True,
-                    requests_per_second=2,
-                    query={"value": "val_7"},
-                )
-
-                self.assertCountEqual(list(self._get_all_doc_ids_in_index(PARTIAL_INDEX)), ['7'])
-
     def test_reindex_with_copy_doc_ids(self):
         SECONDARY_INDEX = 'secondary_index'
 
@@ -581,6 +561,28 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
                     check_task_progress(task_id)
 
                 self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
+
+    def test_reindex_with_query_parameter_set(self):
+        SUBINDEX = 'subindex'
+        subindex_adapter = create_document_adapter(test_adapter.__class__, SUBINDEX, test_adapter.type)
+
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+
+            all_ids = self._index_test_docs_for_reindex()
+            self.assertEqual(len(all_ids), 9)
+
+            with temporary_index(SUBINDEX, subindex_adapter.type, subindex_adapter.mapping):
+
+                manager.reindex(
+                    test_adapter.index_name, SUBINDEX,
+                    wait_for_completion=True,
+                    refresh=True,
+                    requests_per_second=2,
+                    # only index documents that match this query
+                    query={"value": "val_7"},
+                )
+
+                self.assertEqual(list(self._get_all_doc_ids_in_index(SUBINDEX)), ['7'])
 
     def _index_test_docs_for_reindex(self):
         all_ids = set([str(i) for i in range(1, 10)])

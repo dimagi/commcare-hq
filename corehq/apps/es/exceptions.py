@@ -29,5 +29,5 @@ class IndexAlreadySwappedException(Exception):
     pass
 
 
-class IndexNotPartialException(Exception):
+class IndexNotSubindexException(Exception):
     pass

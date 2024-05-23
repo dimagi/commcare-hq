@@ -14,7 +14,7 @@ from corehq.apps.es.exceptions import (
     IndexAlreadySwappedException,
     IndexMultiplexedException,
     IndexNotMultiplexedException,
-    IndexNotPartialException,
+    IndexNotSubindexException,
     TaskMissing,
 )
 from corehq.apps.es.index.settings import render_index_tuning_settings
@@ -82,39 +82,39 @@ class ESSyncUtil:
             + f"\"grep '{task_number}.*ReindexResponse' /opt/data/elasticsearch*/logs/*.log\""
             + "\n\n")
 
-    def reindex_partial_index(self, partial_index_cname, domain):
-        destination_adapter = doc_adapter_from_cname(partial_index_cname)
+    def backfill_subindex(self, subindex_cname, domain):
+        destination_adapter = doc_adapter_from_cname(subindex_cname)
         if not destination_adapter.parent_index_cname:
-            raise IndexNotPartialException(f"Adapter for {partial_index_cname} is not a partial index")
+            raise IndexNotSubindexException(f"Adapter for {subindex_cname} does not have parent_index_cname set.")
 
         source_adapter = doc_adapter_from_cname(destination_adapter.parent_index_cname)
         source_index = source_adapter.index_name
         destination_index = destination_adapter.index_name
 
-        logger.info(f"Preparing index {destination_index} for reindex")
+        logger.info(f"Preparing subindex {destination_index} for backfill")
         self._prepare_index_for_reindex(destination_index)
 
-        logger.info("Starting partial reindex process")
+        logger.info("Starting process to backfill subindex")
         task_id = es_manager.reindex(source_index, destination_index, query={"domain": domain})
 
-        logger.info(f"Copying docs from index {source_index} to index {destination_index} for {domain}")
+        logger.info(f"Copying docs from index {source_index} to subindex {destination_index} for {domain}")
         task_number = task_id.split(':')[1]
         print("\n\n\n")
         logger.info("-----------------IMPORTANT-----------------")
         logger.info(f"TASK NUMBER - {task_number}")
         logger.info("-------------------------------------------")
-        logger.info("Save this Task Number, You will need it later for verifying your partial reindex process")
+        logger.info("Save this Task Number, You will need it later for verifying your backfill process")
         print("\n\n\n")
-        # This would display progress untill reindex process is completed
+        # This would display progress untill backfill process is completed
         check_task_progress(task_id)
 
         print("\n\n")
 
-        self.display_partial_index_doc_count_for_domain(source_adapter, destination_adapter, domain)
+        self.display_backfill_subindex_doc_counts_for_domain(source_adapter, destination_adapter, domain)
 
-        logger.info(f"Verify this partial reindex process from elasticsearch logs using task id - {task_id}")
+        logger.info(f"Verify this backfill subindex process from elasticsearch logs using task id - {task_id}")
         print("\n\n")
-        logger.info("You can use commcare-cloud to extract reindex logs from cluster")
+        logger.info("You can use commcare-cloud to extract logs from cluster")
         print("\n\t"
             + f"cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "
             + f"\"grep '{task_number}' /opt/data/elasticsearch*/logs/*.log\""
@@ -176,9 +176,11 @@ class ESSyncUtil:
         print(f"\nDoc Count In Old Index '{adapter.primary.index_name}' - {primary_count}")
         print(f"\nDoc Count In New Index '{adapter.secondary.index_name}' - {secondary_count}\n\n")
 
-    def display_partial_index_doc_count_for_domain(self, source_adapter, destination_adapter, domain):
+    def display_backfill_subindex_doc_counts_for_domain(self, source_adapter, destination_adapter, domain):
         if not destination_adapter.parent_index_cname:
-            raise IndexNotPartialException(f"Adapter for {destination_adapter.index_cname} is not a partial index")
+            raise IndexNotSubindexException(
+                f"Adapter for {destination_adapter.index_cname} does not have parent_index_cname set."
+            )
 
         es_manager.index_refresh(destination_adapter.index_name)
         es_manager.index_refresh(source_adapter.index_name)
@@ -580,15 +582,15 @@ class Command(BaseCommand):
         display_shard_info_cmd = subparsers.add_parser("display_shard_info")
         display_shard_info_cmd.set_defaults(func=self.es_helper.display_shard_info)
 
-        # Partial Reindex
-        partial_reindex_cmd = subparsers.add_parser("partial_reindex")
-        partial_reindex_cmd.set_defaults(func=self.es_helper.reindex_partial_index)
-        partial_reindex_cmd.add_argument(
+        # Backfill subindex
+        backfill_subindex_cmd = subparsers.add_parser("backfill_subindex")
+        backfill_subindex_cmd.set_defaults(func=self.es_helper.backfill_subindex)
+        backfill_subindex_cmd.add_argument(
             'index_cname',
             choices=INDEXES,
             help="""Cannonical Name of the index""",
         )
-        partial_reindex_cmd.add_argument(
+        backfill_subindex_cmd.add_argument(
             'domain',
             help="""Only includes documents from this domain""",
         )
@@ -610,7 +612,7 @@ class Command(BaseCommand):
             cmd_func(options['index_cname'])
         elif sub_cmd == 'set_replicas':
             cmd_func(options["index_cname"])
-        elif sub_cmd == 'partial_reindex':
+        elif sub_cmd == 'backfill_subindex':
             cmd_func(options["index_cname"], options["domain"])
         elif sub_cmd in ['remove_residual_indices', 'display_shard_info']:
             cmd_func()
