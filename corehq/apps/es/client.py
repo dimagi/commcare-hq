@@ -30,6 +30,7 @@ from corehq.util.metrics import (
 )
 
 from .const import (
+    HQ_CASE_SEARCH_INDEX_CANONICAL_NAME,
     INDEX_CONF_REINDEX,
     INDEX_CONF_STANDARD,
     SCROLL_KEEPALIVE,
@@ -1155,6 +1156,12 @@ class ElasticMultiplexAdapter(BaseAdapter):
     def search(self, *args, **kw):
         return self.primary.search(*args, **kw)
 
+    def _get_case_search_sub_index_docs(self, action):
+        from corehq.apps.es.case_search import multiplex_to_adapter
+        if self.canonical_name == HQ_CASE_SEARCH_INDEX_CANONICAL_NAME:
+            sub_index_adapter = multiplex_to_adapter(self.primary._get_domain_from_doc(action.doc))
+            return sub_index_adapter._render_bulk_action(action) if sub_index_adapter else None
+
     # Elastic index write methods (multiplexed between both adapters)
     def bulk(self, actions, refresh=False, raise_errors=True):
         """Apply bulk actions on the primary and secondary.
@@ -1189,6 +1196,10 @@ class ElasticMultiplexAdapter(BaseAdapter):
                     )
                 else:
                     payload.append(self.secondary._render_bulk_action(action))
+                    sub_index_docs = self._get_case_search_sub_index_docs(action)
+                    if sub_index_docs:
+                        payload.append(sub_index_docs)
+
             _, chunk_errs = bulk(self._es, payload, chunk_size=len(payload),
                                  refresh=refresh, raise_on_error=False,
                                  raise_on_exception=raise_errors)
