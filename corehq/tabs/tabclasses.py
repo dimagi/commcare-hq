@@ -1126,6 +1126,11 @@ class ApplicationsTab(UITab):
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
             ))
+        if toggles.APP_TESTING.enabled_for_request(self._request):
+            submenu_context.append(dropdown_dict(
+                _('Application Testing'),
+                url=(reverse('app_execution:workflow_list', args=[self.domain])),
+            ))
 
         return submenu_context
 
@@ -2501,9 +2506,6 @@ class AdminTab(UITab):
                 {'title': GlobalThresholds.page_title,
                  'url': reverse(GlobalThresholds.urlname),
                  'icon': 'fa fa-fire'},
-                {'title': 'Auto App Workflows',
-                 'url': reverse('app_execution:workflow_list'),
-                 'icon': 'fcc fcc-chart-report'},
             ]
             user_operations = user_operations + [
                 {'title': _('Grant superuser privileges'),

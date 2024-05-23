@@ -16,7 +16,7 @@ from corehq.util.jsonattrs import AttrsObject
 class AppWorkflowManager(models.Manager):
     def get_due(self):
         cutoff = functions.Now() - MakeInterval("mins", models.F("run_every"))
-        return self.filter(last_run__isnull=True) | self.filter(
+        return self.filter(run_every__isnull=False, last_run__isnull=True) | self.filter(
             last_run__lt=cutoff
         )
 
@@ -35,9 +35,11 @@ class AppWorkflowConfig(models.Model):
     workflow = AttrsObject(AppWorkflow)
     form_mode = models.CharField(max_length=255, choices=FORM_MODE_CHOICES)
     sync_before_run = models.BooleanField(default=False, help_text="Sync user data before running")
-    run_every = models.IntegerField(default=0, help_text="Number of minutes between runs")
+    run_every = models.IntegerField(help_text="Number of minutes between runs", null=True, blank=True)
     last_run = models.DateTimeField(null=True, blank=True)
-    notification_emails = ArrayField(models.EmailField(), default=list, help_text="Emails to notify on failure")
+    notification_emails = ArrayField(
+        models.EmailField(), default=list, help_text="Emails to notify on failure", blank=True
+    )
 
     objects = AppWorkflowManager()
 

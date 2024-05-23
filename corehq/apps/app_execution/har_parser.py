@@ -96,7 +96,7 @@ class HarParser:
         if is_action(last_selection):
             return data_model.CommandStep(id=last_selection)
         elif is_multi_select(last_selection):
-            return data_model.CommandStep(selected_values=request_data["selectedValues"])
+            return data_model.MultipleEntitySelectStep(values=request_data["selectedValues"])
         else:
             return data_model.EntitySelectStep(value=last_selection)
 

@@ -133,6 +133,7 @@ app_execution
  0001_initial
  0002_alter_appworkflowconfig_unique_together
  0003_appexecutionlog_updated
+ 0004_alter_appworkflowconfig_notification_emails_and_more
 app_manager
  0001_linked_app_domain
  0002_latestenabledbuildprofiles
