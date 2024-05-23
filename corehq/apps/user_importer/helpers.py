@@ -308,10 +308,12 @@ def _fmt_phone(phone_number):
 
 
 class WebUserImporter(BaseUserImporter):
-    def add_to_domain(self, role_qualified_id, primary_location_id, assigned_location_ids):
+    def add_to_domain(self, role_qualified_id, primary_location_id, assigned_location_ids,
+                      tableau_role, tableau_group_ids):
         self.user.add_as_web_user(self.user_domain, role=role_qualified_id,
                                 primary_location_id=primary_location_id,
-                                assigned_location_ids=assigned_location_ids)
+                                assigned_location_ids=assigned_location_ids,
+                                tableau_role=tableau_role, tableau_group_ids=tableau_group_ids)
         self.role_updated = bool(role_qualified_id)
 
         self.logger.add_info(UserChangeMessage.added_as_web_user(self.user_domain))
