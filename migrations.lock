@@ -834,6 +834,7 @@ reports
  0013_tableau_various_20221205
  0014_querystringhash
  0015_tableauserver_allowed_tableau_groups
+ 0016_alter_tableauuser_role
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -1226,6 +1227,7 @@ users
  0063_rename_location_invitation_primary_location_and_more
  0064_add_edit_view_tableau_config_permissions
  0065_transfer_to_tableau_config_permission
+ 0066_alter_invitation_tableau_role
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
