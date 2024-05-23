@@ -4,6 +4,8 @@ import time
 
 from django.conf import settings
 
+from dimagi.utils.logging import notify_error
+
 from corehq.apps.es.case_search import multiplex_to_adapter
 from corehq.apps.es.const import HQ_CASE_SEARCH_INDEX_CANONICAL_NAME
 from pillowtop.exceptions import BulkDocException, PillowtopIndexingError
@@ -117,12 +119,16 @@ class ElasticProcessor(PillowProcessor):
 
     def _delete_doc_if_exists(self, doc_id, domain=None):
         if self.adapter.canonical_name == HQ_CASE_SEARCH_INDEX_CANONICAL_NAME:
-            sub_index_adapter = multiplex_to_adapter(domain)
-            if sub_index_adapter:
-                send_to_elasticsearch(
-                    doc_id=doc_id, adapter=sub_index_adapter,
-                    name='ElasticProcessor', delete=True
-                )
+            if domain:
+                sub_index_adapter = multiplex_to_adapter(domain)
+                if sub_index_adapter:
+                    send_to_elasticsearch(
+                        doc_id=doc_id, adapter=sub_index_adapter,
+                        name='ElasticProcessor', delete=True
+                    )
+            else:
+                notify_error(f"Domain not specified when deleting case {doc_id} from case search index")
+
         send_to_elasticsearch(
             doc_id=doc_id,
             adapter=self.adapter,
