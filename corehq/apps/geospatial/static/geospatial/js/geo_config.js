@@ -55,22 +55,7 @@ hqDefine("geospatial/js/geo_config", [
         self.minCasesPerUser = ko.observable(data.min_cases_per_user);
         self.maxCasesPerUser = ko.observable(data.max_cases_per_user);
 
-        if (!data.max_cases_per_user) {
-            $("#div_id_max_cases_per_user").hide();
-        }
-
         self.plaintext_api_token = ko.observable(data.plaintext_api_token);
-
-        self.onSpecifyMaxCasesPerUser = function () {
-            var $maxCasesPerUserInput = $("#div_id_max_cases_per_user");
-            var $maxCasesPerUserCheckbox = $("#max_cases_per_user_checkbox_id");
-
-            if ($maxCasesPerUserCheckbox.is(":checked")) {
-                $maxCasesPerUserInput.show();
-            } else {
-                $maxCasesPerUserInput.hide();
-            }
-        };
 
         self.captureApiToken = ko.computed(function () {
             return self.selectedAlgorithm() === ROAD_NETWORK_ALGORITHM;

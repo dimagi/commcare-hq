@@ -93,13 +93,12 @@ class GeospatialConfigForm(forms.ModelForm):
         required=True,
         min_value=1,
     )
-    max_cases_per_user_select = forms.BooleanField(
-        label=_("Specify a maximum number of cases per user"),
-        required=False,
-    )
     max_cases_per_user = forms.IntegerField(
         label=_("Maximum cases assigned per user"),
-        help_text=_("The maximum number of cases each user can be assigned"),
+        help_text=_(
+            "The maximum number of cases each user can be assigned. "
+            "Leave blank in case you don't want to specify any upper limit."
+        ),
         required=False,
     )
     plaintext_api_token = forms.CharField(
@@ -182,11 +181,6 @@ class GeospatialConfigForm(forms.ModelForm):
                         data_bind='value: minCasesPerUser',
                     ),
                     crispy.Field(
-                        'max_cases_per_user_select',
-                        data_bind='event: {change: onSpecifyMaxCasesPerUser}',
-                        id="max_cases_per_user_checkbox_id",
-                    ),
-                    crispy.Field(
                         'max_cases_per_user',
                         data_bind='value: maxCasesPerUser',
                     ),
@@ -244,9 +238,8 @@ class GeospatialConfigForm(forms.ModelForm):
         if algorithm == GeoConfig.ROAD_NETWORK_ALGORITHM and not token:
             raise ValidationError(_("Mapbox API token required"))
 
-        if not cleaned_data['max_cases_per_user_select']:
-            cleaned_data['max_cases_per_user'] = None
-        elif cleaned_data['max_cases_per_user'] < cleaned_data['min_cases_per_user']:
+        max_cases_per_user_value = cleaned_data['max_cases_per_user']
+        if max_cases_per_user_value and max_cases_per_user_value < cleaned_data['min_cases_per_user']:
             raise ValidationError(_("The maximum cases per user cannot be less than the minimum specified"))
 
         return cleaned_data
