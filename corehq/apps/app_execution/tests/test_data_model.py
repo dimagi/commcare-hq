@@ -1,10 +1,12 @@
 import itertools
+import json
 
 from django.test import SimpleTestCase
 from testil import eq
 
 from corehq.apps.app_execution import data_model
 from corehq.apps.app_execution.data_model import STEP_MAP
+from corehq.apps.app_manager.tests.views.test_apply_patch import assert_no_diff
 
 
 class DataModelTest(SimpleTestCase):
@@ -24,11 +26,16 @@ class DataModelTest(SimpleTestCase):
             raise AssertionError(f"Missing step types: {missing}")
 
     def test_to_json(self):
-        eq(_get_workflow().__jsonattrs_to_json__(), _get_workflow_json())
+        assert_json_dict_equal(_get_workflow().__jsonattrs_to_json__(), _get_workflow_json())
 
     def test_from_json(self):
         workflow = data_model.AppWorkflow.__jsonattrs_from_json__(_get_workflow_json())
         eq(workflow, _get_workflow())
+
+
+def assert_json_dict_equal(expected, actual):
+    if expected != actual:
+        assert_no_diff(json.dumps(expected, indent=2), json.dumps(actual, indent=2))
 
 
 def _get_workflow():

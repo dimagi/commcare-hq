@@ -57,9 +57,6 @@ class CommandStep(Step):
     id: str = ""
     """ID of the command to execute"""
 
-    selected_values: list[str] = None
-    """Selected values for multi-select commands"""
-
     def to_json(self):
         data = super().to_json()
         for key in ["value", "id"]:
