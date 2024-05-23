@@ -1168,7 +1168,9 @@ class InviteWebUserView(BaseManageWebUserView):
                                          primary_location_id=data.get("primary_location", None),
                                          program_id=data.get("program", None),
                                          assigned_location_ids=data.get("assigned_locations", None),
-                                         profile=profile
+                                         profile=profile,
+                                         tableau_role=data.get("tableau_role", None),
+                                         tableau_group_ids=data.get("tableau_group_ids", None)
                                          )
                 messages.success(request, "%s added." % data["email"])
             else:
