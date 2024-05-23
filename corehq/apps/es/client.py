@@ -402,7 +402,7 @@ class ElasticManageAdapter(BaseAdapter):
 
     def reindex(
             self, source, dest, wait_for_completion=False,
-            refresh=False, batch_size=1000, requests_per_second=None, copy_doc_ids=True, query={},
+            refresh=False, batch_size=1000, requests_per_second=None, copy_doc_ids=True, query=None,
     ):
         """
         Starts the reindex process in elastic search cluster
