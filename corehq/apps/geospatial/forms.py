@@ -143,7 +143,7 @@ class GeospatialConfigForm(forms.ModelForm):
                 hqcrispy.FieldsetAccordionGroup(
                     _('Advanced Settings'),
                     crispy.Fieldset(
-                        _("Configure Geospatial Settings"),
+                        _("Location Data Properties"),
                         crispy.Field(
                             'user_location_property_name',
                             data_bind="value: customUserFieldName"
