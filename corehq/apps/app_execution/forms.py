@@ -55,11 +55,19 @@ class AppWorkflowConfigForm(forms.ModelForm):
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Div(
-                    crispy.HTML("<p>&nbsp;</p>"),
                     *fields,
                     css_class="col",
                 ),
                 crispy.Div(
+                    crispy.HTML("<p>HAR file recording should start with the "
+                                "selection of the app (navigate_menu_start).</p>"),
+                    "har_file",
+                    twbscrispy.StrictButton(
+                        "Populate workflow from HAR file",
+                        type='submit', css_class='btn-secondary', name="import_har", value="1",
+                        formnovalidate=True,
+                    ),
+                    crispy.HTML("<p>&nbsp;</p>"),
                     crispy.HTML("<p>Workflow:</p>"),
                     InlineField("workflow"),
                     css_class="col"
@@ -68,13 +76,6 @@ class AppWorkflowConfigForm(forms.ModelForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton("Save", type='submit', css_class='btn-primary')
-            ),
-            "har_file",
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    "Import HAR", type='submit', css_class='btn-secondary', name="import_har", value="1",
-                    formnovalidate=True,
-                )
             ),
         )
 
