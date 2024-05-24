@@ -55,8 +55,9 @@
     </td>
     <td>
       <div class="btn-group" role="group" aria-label="Actions">
-        <a class="btn btn-primary" href="{% url "app_execution:test_workflow" request.domain workflow.id %}">Test</a>
-        <a class="btn btn-primary" href="{% url "app_execution:workflow_logs" request.domain workflow.id %}">Logs</a>
+        <a class="btn btn-outline-primary" href="{% url "app_execution:test_workflow" request.domain workflow.id %}">Test</a>
+        <a class="btn btn-outline-primary" href="{% url "app_execution:workflow_logs" request.domain workflow.id %}">Logs</a>
+        <a class="btn btn-outline-primary" href="{% url "app_execution:delete_workflow" request.domain workflow.id %}">Delete</a>
       </div>
     </td>
   </tr>
