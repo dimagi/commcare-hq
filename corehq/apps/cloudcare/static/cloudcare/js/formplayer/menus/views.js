@@ -804,12 +804,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const displayClass = window.USE_BOOTSTRAP5 ? "d-none" : "hide";
             if (!mapDiv.hasClass(displayClass)) {
                 mapDiv.addClass(displayClass);
-                moduleCaseList.removeClass('col-md-7 col-md-pull-5').addClass('col-md');
+                moduleCaseList.removeClass('col-lg-7').addClass('col-lg');
                 hideButton.text(gettext('Show Map'));
                 $(e.target).attr('aria-expanded', 'false');
             } else {
                 mapDiv.removeClass(displayClass);
-                moduleCaseList.addClass('col-md-7 col-md-pull-5').removeClass('col-md');
+                moduleCaseList.addClass('col-lg-7').removeClass('col-lg');
                 hideButton.text(gettext('Hide Map'));
                 $(e.target).attr('aria-expanded', 'true');
             }
