@@ -210,8 +210,27 @@ The following functions are supported:
     * Matches cases that have a property ``first_name`` equal to ``"Julia"``
 
 
-Filtering on parent (ancestor) cases
-====================================
+Filtering on related cases
+==========================
+
+CSQL includes utilities for searching against ancestor cases (such as parents) and subcases (such as children)
+
+.. warning::
+    When utilizing related cases function, be mindful that the *quantity of search results* and the
+    *number of subcase or ancestor functions* in a single search are important factors. As the
+    number of related case functions and search results increases, the time required to perform the
+    search will also increase.
+
+    Keep in mind that a higher number of search results will lead to longer execution times for the
+    search query. The threshold is around 400K to 500K search results, after which a timeout error
+    may occur. It is recommended to keep your search results well below this number for optimal
+    performance.
+
+    To manage the number of search results when incorporating subcase or ancestor functions in your
+    search query, you can apply required fields in the search form. For instance, requiring users to
+    search by both first and last name is more effective than just using the first name. Including
+    more required fields in the search form is likely to reduce the number of search results
+    returned.
 
 Searches may be performed against ancestor cases (e.g. parent cases) using the ``/`` operator
 
@@ -238,16 +257,6 @@ Searches may be performed against ancestor cases (e.g. parent cases) using the `
         * This will *not* work: ``ancestor-exists(parent, selected(city, 'SF'))``
         * This will work:  ``ancestor-exists(parent, city != '' and selected(city, 'SF'))``
     * The ancestor filter expression may not include ``subcase-exists`` or ``subcase-count``
-      * **Best Practices**:
-    * Limit multiple uses of this function in your query to avoid performance implications
-    * Add as many arguments to ``ancestor-exists()`` as possible to help narrow down results (i.e.,
-      by ``@case_type`` or ``@status``)
-
-
-Filtering on child cases (subcases)
-===================================
-
-Special functions are provided to support filtering based on the properties of subcases. These are:
 
 ``subcase-exists``
 ------------------
@@ -256,10 +265,6 @@ Special functions are provided to support filtering based on the properties of s
 * **Arguments**: Two arguments, the subcase relationship (usually one of 'parent' or 'host') and the
   subcase filter expression.
 * **Usage**: ``subcase-exists('parent', lab_type = 'blood' and result = 1)``
-* **Best Practices**:
-    * Limit multiple uses of this function in your query to avoid performance implications
-    * Add as many arguments to ``subcase-exists()`` as possible to help narrow down results (i.e.,
-      by ``@case_type`` or ``@status``)
 
 ``subcase-count``
 -----------------
@@ -269,24 +274,6 @@ Special functions are provided to support filtering based on the properties of s
 * **Usage**: ``subcase-count('parent', lab_type = 'blood' and result = 1) > 3``
     * The count function must be used in conjunction with a comparison operator. All operators are
       supported (``=``, ``!=``, ``<``, ``<=``, ``>``, ``>=``)
-* **Best Practices**:
-    * Limit multiple uses of this function in your query to avoid performance implications
-
-.. warning::
-    When utilizing the special subcase function, be mindful that the *quantity of search results*
-    and the *number of subcase functions* in a single search are important factors. As the number of
-    subcase functions and search results increases, the time required to perform the search will
-    also increase.
-
-    Keep in mind that a higher number of search results will lead to longer execution times for the
-    search query. The threshold is around 400K to 500K search results, after which a timeout error
-    may occur. It is recommended to keep your search results well below this number for optimal
-    performance.
-
-    To manage the number of search results when incorporating subcase functions in your search
-    query, you can apply required fields in the search form. For instance, requiring users to search
-    by both first and last name is more effective than just using the first name. Including more
-    required fields in the search form is likely to reduce the number of search results returned.
 
 **Examples**
 
