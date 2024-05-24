@@ -39,9 +39,9 @@
          class="row g-0">
       <% if (showMap) { %>
         <div id="module-case-list-map"
-             class="sticky sticky-map col-lg-5 order-md-1<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
+             class="sticky sticky-map col-lg-5 order-lg-1<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
       <% } %>
-      <div id="module-case-list" class="col-md<% if (showMap) { %>-7 col-md-pull-5<% } %>">
+      <div id="module-case-list" class="col-lg<% if (showMap) { %>-7<% } %>">
         <% if (useTiles) { %>
           <% if (hasNoItems) { %>
             {% include 'cloudcare/partials/case_list/no_items_text.html' %}
