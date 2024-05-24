@@ -128,7 +128,7 @@ hqDefine("cloudcare/js/formplayer/app", [
 
     FormplayerFrontend.on('clearForm', function () {
         $('#webforms').html("");
-        $('.menu-scrollable-container').removeClass('hide');
+        $('.menu-scrollable-container').removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
         $('#webforms-nav').html("");
         $('#cloudcare-debugger').html("");
         $('.atwho-container').remove();
@@ -293,7 +293,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         };
         var sess = WebFormSession.WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
-        $('.menu-scrollable-container').addClass('hide');
+        $('.menu-scrollable-container').addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
     });
 
     FormplayerFrontend.on("start", function (model, options) {

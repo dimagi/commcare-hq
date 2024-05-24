@@ -91,14 +91,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             e.preventDefault();
             const $playBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-play');
             const $pauseBtn = $playBtn.parent().find('.js-module-audio-pause');
-            $pauseBtn.removeClass('hide');
-            $playBtn.addClass('hide');
+            const displayClass = window.USE_BOOTSTRAP5 ? "d-none" : "hide";
+            $pauseBtn.removeClass(displayClass);
+            $playBtn.addClass(displayClass);
             const $audioElem = $playBtn.parent().find('.js-module-audio');
             if ($audioElem.data('isFirstPlay') !== 'yes') {
                 $audioElem.data('isFirstPlay', 'yes');
                 $audioElem.one('ended', function () {
-                    $playBtn.removeClass('hide');
-                    $pauseBtn.addClass('hide');
+                    $playBtn.removeClass(displayClass);
+                    $pauseBtn.addClass(displayClass);
                     $audioElem.data('isFirstPlay', 'no');
                 });
             }
@@ -107,8 +108,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         audioPause: function (e) {
             e.preventDefault();
             const $pauseBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-pause');
-            $pauseBtn.parent().find('.js-module-audio-play').removeClass('hide');
-            $pauseBtn.addClass('hide');
+            const displayClass = window.USE_BOOTSTRAP5 ? "d-none" : "hide";
+            $pauseBtn.parent().find('.js-module-audio-play').removeClass(displayClass);
+            $pauseBtn.addClass(displayClass);
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
         },
         rowKeyAction: function (e) {
@@ -799,13 +801,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const mapDiv = $('#module-case-list-map');
             const moduleCaseList = $('#module-case-list');
             const hideButton = $('#hide-map-button');
-            if (!mapDiv.hasClass('hide')) {
-                mapDiv.addClass('hide');
+            const displayClass = window.USE_BOOTSTRAP5 ? "d-none" : "hide";
+            if (!mapDiv.hasClass(displayClass)) {
+                mapDiv.addClass(displayClass);
                 moduleCaseList.removeClass('col-md-7 col-md-pull-5').addClass('col-md');
                 hideButton.text(gettext('Show Map'));
                 $(e.target).attr('aria-expanded', 'false');
             } else {
-                mapDiv.removeClass('hide');
+                mapDiv.removeClass(displayClass);
                 moduleCaseList.addClass('col-md-7 col-md-pull-5').removeClass('col-md');
                 hideButton.text(gettext('Hide Map'));
                 $(e.target).attr('aria-expanded', 'true');
