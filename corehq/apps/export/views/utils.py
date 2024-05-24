@@ -335,7 +335,6 @@ class DataFileDownloadList(BaseProjectDataView):
     def get_context_data(self, **kwargs):
         context = super(DataFileDownloadList, self).get_context_data(**kwargs)
         context.update({
-            'timezone': get_timezone_for_user(self.request.couch_user, self.domain),
             'data_files': DataFile.get_all(self.domain),
             'is_admin': can_upload_data_files(self.domain, self.request.couch_user),
             'url_base': get_url_base(),

@@ -1,6 +1,5 @@
 {% extends "hqwebapp/bootstrap3/base_section.html" %}
 {% load hq_shared_tags %}
-{% load timezone_tags %}
 {% load i18n %}
 {% load compress %}
 
@@ -33,7 +32,7 @@
                   <textarea id="url_{{ data_file.id }}" style="display: none">{{ url_base }}{% url 'download_data_file' domain data_file.id data_file.filename %}</textarea>
                 </td>
                 <td>
-                  {% trans "Available until" %}: {% utc_to_timezone data_file.delete_after timezone %}
+                  {% trans "Available until" %}: {{ data_file.delete_after|to_user_time:request }}
                 </td>
                 <td style="width: 6em; text-align: right;">
                   <a href="#"
