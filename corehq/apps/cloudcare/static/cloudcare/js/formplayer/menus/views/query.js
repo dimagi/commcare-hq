@@ -514,7 +514,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 }
             });
             if (this.model.get('hidden') === 'true') {
-                this.$el.hide();
+                this.$el.addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
             }
         },
 
