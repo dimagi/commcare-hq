@@ -794,7 +794,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         };
 
         let columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
-        this.elementTile = `col-sm-${columnWidth}`;
+        this.elementTile = `col-md-${columnWidth}`;
     }
 
     Group.prototype = Object.create(Container.prototype);
@@ -830,7 +830,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         };
 
         const columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
-        this.elementTile = `col-sm-${columnWidth}`;
+        this.elementTile = `col-md-${columnWidth}`;
     }
     Repeat.prototype = Object.create(Container.prototype);
     Repeat.prototype.constructor = Container;
@@ -1078,7 +1078,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         if (self.stylesContains(constants.PER_ROW_PATTERN)) {
             self.controlWidth = constants.FULL_WIDTH;
             self.labelWidth = constants.FULL_WIDTH;
-            self.questionTileWidth = `col-sm-${columnWidth}`;
+            self.questionTileWidth = `col-md-${columnWidth}`;
         } else {
             self.controlWidth = constants.CONTROL_WIDTH;
             self.labelWidth = constants.LABEL_WIDTH;
