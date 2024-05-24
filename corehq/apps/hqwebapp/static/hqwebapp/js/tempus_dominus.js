@@ -79,7 +79,8 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                 },
             },
             localization: _.extend(defaultTranslations, {
-                format: 'yyyy-MM-dd',
+                hourCycle: 'h23',
+                format: 'H:mm',
             }),
         }));
     };
