@@ -55,19 +55,9 @@ from corehq.apps.users.permissions import (
 from corehq.blobs.exceptions import NotFound
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
-from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.timezones.utils import get_timezone
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
-
-
-def get_timezone(domain, couch_user):
-    if not domain:
-        return pytz.utc
-    else:
-        try:
-            return get_timezone_for_user(couch_user, domain)
-        except AttributeError:
-            return get_timezone_for_user(None, domain)
 
 
 def user_can_view_deid_exports(domain, couch_user):
@@ -162,7 +152,7 @@ class DailySavedExportMixin(object):
         )
         instance.is_daily_saved_export = True
 
-        span = datespan_from_beginning(self.domain_object, get_timezone(self.domain, self.request.couch_user))
+        span = datespan_from_beginning(self.domain_object, get_timezone(self.request, self.domain))
         instance.filters.date_period = DatePeriod(
             period_type="since", begin=span.startdate.date()
         )
