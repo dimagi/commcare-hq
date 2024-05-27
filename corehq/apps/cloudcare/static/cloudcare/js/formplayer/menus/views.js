@@ -41,7 +41,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 return 'tr';
             }
         },
-        className: "formplayer-request",
+        className: function () {
+            let classNames = "formplayer-request";
+            if (this.isGrid()) {
+                classNames += " col-sm-6 col-md-4 col-lg-3";
+            }
+            return classNames;
+        },
         attributes: function () {
             const displayText = this.options.model.attributes.displayText;
             return {
@@ -85,14 +91,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             e.preventDefault();
             const $playBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-play');
             const $pauseBtn = $playBtn.parent().find('.js-module-audio-pause');
-            $pauseBtn.removeClass('hide');
-            $playBtn.addClass('hide');
+            $pauseBtn.removeClass("d-none");
+            $playBtn.addClass("d-none");
             const $audioElem = $playBtn.parent().find('.js-module-audio');
             if ($audioElem.data('isFirstPlay') !== 'yes') {
                 $audioElem.data('isFirstPlay', 'yes');
                 $audioElem.one('ended', function () {
-                    $playBtn.removeClass('hide');
-                    $pauseBtn.addClass('hide');
+                    $playBtn.removeClass("d-none");
+                    $pauseBtn.addClass("d-none");
                     $audioElem.data('isFirstPlay', 'no');
                 });
             }
@@ -101,8 +107,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         audioPause: function (e) {
             e.preventDefault();
             const $pauseBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-pause');
-            $pauseBtn.parent().find('.js-module-audio-play').removeClass('hide');
-            $pauseBtn.addClass('hide');
+            $pauseBtn.parent().find('.js-module-audio-play').removeClass("d-none");
+            $pauseBtn.addClass("d-none");
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
         },
         rowKeyAction: function (e) {
@@ -339,7 +345,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const $spinnerElement = $iconButton.find('i');
             $moduleIcon.css('display', 'none');
             $iconButton.addClass('disabled');
-            $spinnerElement.css('display', '');
+            $spinnerElement.removeClass("d-none");
 
             const currentUrlToObject = formplayerUtils.currentUrlToObject();
             currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
@@ -349,7 +355,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             function resetIcon() {
                 $moduleIcon.css('display', '');
                 $iconButton.removeClass('disabled');
-                $spinnerElement.css('display', 'none');
+                $spinnerElement.addClass("d-none");
             }
 
             $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
@@ -793,14 +799,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const mapDiv = $('#module-case-list-map');
             const moduleCaseList = $('#module-case-list');
             const hideButton = $('#hide-map-button');
-            if (!mapDiv.hasClass('hide')) {
-                mapDiv.addClass('hide');
-                moduleCaseList.removeClass('col-md-7 col-md-pull-5').addClass('col-md');
+            if (!mapDiv.hasClass("d-none")) {
+                mapDiv.addClass("d-none");
+                moduleCaseList.removeClass('col-lg-7').addClass('col-lg');
                 hideButton.text(gettext('Show Map'));
                 $(e.target).attr('aria-expanded', 'false');
             } else {
-                mapDiv.removeClass('hide');
-                moduleCaseList.addClass('col-md-7 col-md-pull-5').removeClass('col-md');
+                mapDiv.removeClass("d-none");
+                moduleCaseList.addClass('col-lg-7').removeClass('col-lg');
                 hideButton.text(gettext('Hide Map'));
                 $(e.target).attr('aria-expanded', 'true');
             }
@@ -851,7 +857,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
                     "of <%- value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
-                hqRequire(["hqwebapp/js/bootstrap3/alert_user"], function (alertUser) {
+                hqRequire(["hqwebapp/js/bootstrap5/alert_user"], function (alertUser) {
                     alertUser.alert_user(errorMessage, 'danger');
                 });
             }
@@ -1011,7 +1017,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.boundHandleScroll = self.handleScroll.bind(self);
             $(window).on('scroll', self.boundHandleScroll);
             if (self.shouldShowScrollButton()) {
-                $('#scroll-to-bottom').removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+                $('#scroll-to-bottom').removeClass("d-none");
             }
         },
 
@@ -1267,13 +1273,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     const BreadcrumbView = Marionette.View.extend({
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
-        className: function () {
-            if (window.USE_BOOTSTRAP5) {
-                return "breadcrumb-item";
-            } else {
-                return "breadcrumb-text";
-            }
-        },
+        className: "breadcrumb-item",
         attributes: function () {
             let attributes = {
                 "role": "link",
@@ -1424,13 +1424,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const DetailTabView = Marionette.View.extend({
         tagName: "li",
-        className: function () {
-            if (window.USE_BOOTSTRAP5) {
-                return "nav-item";
-            } else {
-                return this.options.model.get('active') ? 'active' : '';
-            }
-        },
+        className: "nav-item",
         attributes: {
             role: "presentation",
         },
@@ -1463,13 +1457,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseDetailFooterView = Marionette.View.extend({
         tagName: "div",
-        className: function () {
-            if (window.USE_BOOTSTRAP5) {
-                return "d-flex gap-2 justify-content-center";
-            } else {
-                return "";
-            }
-        },
+        className: "d-flex gap-2 justify-content-center",
         events: {
             "click #select-case": "selectCase",
         },
