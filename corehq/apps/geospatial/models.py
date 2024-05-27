@@ -60,6 +60,8 @@ class GeoConfig(models.Model):
 
     max_cases_per_user = models.IntegerField(null=True)
     min_cases_per_user = models.IntegerField(default=1)
+    max_case_distance = models.IntegerField(null=True)  # km
+    max_case_travel_time = models.IntegerField(null=True)  # minutes
     selected_disbursement_algorithm = models.CharField(
         choices=VALID_DISBURSEMENT_ALGORITHMS,
         default=RADIAL_ALGORITHM,
@@ -80,6 +82,10 @@ class GeoConfig(models.Model):
 
         get_geo_case_property.clear(self.domain)
         get_geo_user_property.clear(self.domain)
+
+    @property
+    def max_travel_time_seconds(self):
+        return self.max_case_travel_time * 60
 
     @property
     def disbursement_solver(self):
