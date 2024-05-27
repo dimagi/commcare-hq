@@ -1,5 +1,6 @@
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
@@ -11,7 +12,6 @@ from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.reports.extension_points import customize_user_query
@@ -198,7 +198,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_types = emwf.selected_user_types(mobile_user_and_group_slugs)
         group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
-    location_search_help = mark_safe_lazy(gettext_lazy(  # nosec: no user input
+    location_search_help = mark_safe(gettext_lazy(  # nosec: no user input
         'When searching by location, put your location name in quotes to show only exact matches. '
         'To more easily find a location, you may specify multiple levels by separating with a "/". '
         'For example, "Massachusetts/Suffolk/Boston". '
@@ -212,7 +212,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     placeholder = gettext_lazy("Add users and groups to filter this report.")
     is_cacheable = False
     options_url = 'emwf_options_all_users'
-    filter_help_inline = mark_safe_lazy(gettext_lazy(  # nosec: no user input
+    filter_help_inline = mark_safe(gettext_lazy(  # nosec: no user input
         '<i class="fa fa-info-circle"></i> See '
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
         ' target="_blank"> Filter Definitions</a>.'))
