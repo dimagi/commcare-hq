@@ -58,6 +58,7 @@ class GeoConfig(models.Model):
     min_cases_per_group = models.IntegerField(null=True)
     target_group_count = models.IntegerField(null=True)
     max_case_distance = models.IntegerField(null=True)  # km
+    max_case_travel_time = models.IntegerField(null=True)  # minutes
     selected_disbursement_algorithm = models.CharField(
         choices=VALID_DISBURSEMENT_ALGORITHMS,
         default=RADIAL_ALGORITHM,
