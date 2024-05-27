@@ -83,7 +83,7 @@ class GeospatialConfigForm(forms.ModelForm):
     )
     max_case_travel_time = forms.IntegerField(
         label=_("Max travel time (minutes) to case"),
-        help_text=_("The maximum travel time (in minutes) from the user to the case. Leave blank to skip."),
+        help_text=_("The maximum driving time (in minutes) from the user to the case. Leave blank to skip."),
         required=False,
         min_value=0,
     )

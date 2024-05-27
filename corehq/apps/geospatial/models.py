@@ -81,6 +81,10 @@ class GeoConfig(models.Model):
         get_geo_user_property.clear(self.domain)
 
     @property
+    def max_travel_time_seconds(self):
+        return self.max_case_travel_time * 60
+
+    @property
     def disbursement_solver(self):
         return self.VALID_DISBURSEMENT_ALGORITHM_CLASSES[
             self.selected_disbursement_algorithm

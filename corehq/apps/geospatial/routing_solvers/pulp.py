@@ -31,12 +31,12 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
 
             distance_matrix.append(user_distances)
 
-        return distance_matrix
+        return distance_matrix, None
 
     def solve(self, config, print_solution=False):
-        costs = self.calculate_distance_matrix(config)
-        user_count = len(costs)
-        case_count = len(costs[0])
+        distance_costs, duration_costs = self.calculate_distance_matrix(config)
+        user_count = len(distance_costs)
+        case_count = len(distance_costs[0])
 
         # Create a linear programming problem
         problem = pulp.LpProblem("assign_user_cases", pulp.LpMinimize)
@@ -55,7 +55,7 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
             problem += pulp.lpSum([x[i, j] for i in range(user_count)]) == 1
 
         # Define the objective function
-        objective_terms = [costs[i][j] * x[i, j] for i in range(user_count) for j in range(case_count)]
+        objective_terms = [distance_costs[i][j] * x[i, j] for i in range(user_count) for j in range(case_count)]
         problem += pulp.lpSum(objective_terms)
 
         # Solve the problem
@@ -70,17 +70,33 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
             for i in range(user_count):
                 for j in range(case_count):
                     if pulp.value(x[i, j]) > 0.5:
-                        if config.max_case_distance and costs[i][j] > config.max_case_distance:
-                            continue
-                        solution[self.user_locations[i]['id']].append(self.case_locations[j]['id'])
+                        case_is_valid = self.is_valid_user_case(
+                            config,
+                            distance_to_case=distance_costs[i][j],
+                            travel_secs_to_case=None if duration_costs is None else duration_costs[i][j],
+                        )
+                        if case_is_valid:
+                            solution[self.user_locations[i]['id']].append(self.case_locations[j]['id'])
                         if print_solution:
                             print(f"Case {self.case_locations[j]['id']} assigned to "
                                   f"user {self.user_locations[i]['id']}. "
-                                  f"Cost: {costs[i][j]}")
+                                  f"Cost: {distance_costs[i][j]}")
         else:
             if print_solution:
                 print("No solution found.")
         return None, solution
+
+    @staticmethod
+    def is_valid_user_case(config, distance_to_case=None, travel_secs_to_case=None):
+        should_check_distance = distance_to_case and config.max_case_distance
+        if should_check_distance and distance_to_case > config.max_case_distance:
+            return False
+
+        should_check_duration = travel_secs_to_case and config.max_case_travel_time
+        if should_check_duration and travel_secs_to_case > config.max_travel_time_seconds:
+            return False
+
+        return True
 
 
 class RoadNetworkSolver(RadialDistanceSolver):
@@ -104,18 +120,28 @@ class RoadNetworkSolver(RadialDistanceSolver):
         destinations = ";".join(map(str, list(range(sources_count, sources_count + destinations_count))))
 
         url = f'https://api.mapbox.com/directions-matrix/v1/mapbox/driving/{coordinates}'
+
+        if config.max_case_travel_time:
+            annotations = "distance,duration"
+        else:
+            annotations = "distance"
+
         params = {
             'sources': sources,
             'destinations': destinations,
-            'annotations': 'distance',
+            'annotations': annotations,
             'access_token': config.plaintext_api_token,
         }
 
         response = requests.get(url, params=params)
         response.raise_for_status()
-        return self._convert_m_to_km(
-            response.json()['distances']
-        )
+
+        return self.sanitize_response(response.json())
+
+    def sanitize_response(self, response):
+        distances_km = self._convert_m_to_km(response['distances'])
+        durations_sec = response.get('durations', None)
+        return distances_km, durations_sec
 
     @staticmethod
     def _convert_m_to_km(distances_m):
