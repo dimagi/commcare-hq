@@ -71,8 +71,8 @@ class Command(makemigrations.Command):
             with patch_migration_autodetector(self):
                 super().handle(*app_labels, **options)
 
-    def write_migration_files(self, changes):
-        super().write_migration_files(changes)
+    def write_migration_files(self, *args):
+        super().write_migration_files(*args)
         if not self.dry_run:
             self.write_migrations_lock()
 

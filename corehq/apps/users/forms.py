@@ -7,7 +7,6 @@ import string
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
-from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
@@ -39,7 +38,7 @@ from corehq.apps.enterprise.models import (
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
-from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
+from corehq.apps.hqwebapp.widgets import BootstrapSwitchInput, Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
@@ -329,6 +328,11 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     analytics_enabled = forms.BooleanField(
         required=False,
         label=gettext_lazy("Enable Tracking"),
+        widget=BootstrapSwitchInput(
+            inline_label=gettext_lazy(
+                "Allow Dimagi to collect usage information to improve CommCare."
+            ),
+        ),
         help_text=gettext_lazy(
             "Allow Dimagi to collect usage information to improve CommCare. "
             "You can learn more about the information we collect and the ways "
@@ -338,7 +342,6 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     )
 
     def __init__(self, *args, **kwargs):
-        from corehq.apps.settings.views import ApiKeyView
         self.user = kwargs['existing_user']
         self.is_using_sso = is_request_using_sso(kwargs['request'])
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
@@ -354,12 +357,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
         self.new_helper = FormHelper()
         self.new_helper.form_method = 'POST'
-        self.new_helper.form_class = 'form-horizontal'
         self.new_helper.attrs = {
             'name': 'user_information',
         }
-        self.new_helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.new_helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         basic_fields = [
             crispy.Div(*username_controls),
@@ -385,37 +385,23 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         if self.set_analytics_enabled:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
 
+        basic_fields.append('language')
+
         self.new_helper.layout = crispy.Layout(
             crispy.Fieldset(
                 gettext_lazy("Basic"),
                 *basic_fields
             ),
-            (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else crispy.Fieldset)(
-                gettext_lazy("Other Options"),
-                'language',
-                crispy.Div(hqcrispy.StaticField(
-                    gettext_lazy('API Key'),
-                    format_html_lazy(
-                        gettext_lazy('API key management has moved <a href="{}">here</a>.'),
-                        reverse(ApiKeyView.urlname)),
-                )),
-            ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    gettext_lazy("Update My Information"),
-                    type='submit',
-                    css_class='btn-primary',
-                )
+            twbscrispy.StrictButton(
+                gettext_lazy("Update My Information"),
+                type='submit',
+                css_class='btn-primary',
             )
         )
 
     @property
     def set_analytics_enabled(self):
         return not settings.ENTERPRISE_MODE
-
-    @property
-    def collapse_other_options(self):
-        return self.user.is_commcare_user()
 
     @property
     def direct_properties(self):
@@ -1034,27 +1020,17 @@ class GroupMembershipForm(forms.Form):
     )
 
     def __init__(self, group_api_url, *args, **kwargs):
-        submit_label = kwargs.pop('submit_label', "Update")
-        fieldset_title = kwargs.pop(
-            'fieldset_title', gettext_lazy("Edit Group Membership"))
-
         super(GroupMembershipForm, self).__init__(*args, **kwargs)
         self.fields['selected_ids'].widget.set_url(group_api_url)
 
         self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.label_class = 'form-label'
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                fieldset_title,
-                'selected_ids',
-            ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', submit_label)
-                )
+            crispy.Field('selected_ids'),
+            crispy.ButtonHolder(
+                Submit('submit', _('Update'))
             )
         )
 
@@ -1164,7 +1140,7 @@ class PrimaryLocationWidget(forms.Widget):
         })
 
 
-class CommtrackUserForm(forms.Form):
+class BaseLocationForm(forms.Form):
     assigned_locations = forms.CharField(
         label=gettext_noop("Locations"),
         required=False,
@@ -1173,19 +1149,14 @@ class CommtrackUserForm(forms.Form):
     primary_location = forms.CharField(
         label=gettext_noop("Primary Location"),
         required=False,
-        help_text=gettext_lazy('Primary Location must always be set to one of above locations')
-    )
-    program_id = forms.ChoiceField(
-        label=gettext_noop("Program"),
-        choices=(),
-        required=False
+        help_text=_('Primary Location must always be set to one of above locations')
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, domain: str, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
         self.request = kwargs.pop('request')
-        self.domain = kwargs.pop('domain', None)
-        super(CommtrackUserForm, self).__init__(*args, **kwargs)
+        super(BaseLocationForm, self).__init__(*args, **kwargs)
+        self.domain = domain
         self.fields['assigned_locations'].widget = LocationSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations'
         )
@@ -1194,6 +1165,60 @@ class CommtrackUserForm(forms.Form):
             css_id='id_primary_location',
             source_css_id='id_assigned_locations',
         )
+
+    def clean_assigned_locations(self):
+        from corehq.apps.locations.models import SQLLocation
+        from corehq.apps.locations.util import get_locations_from_ids
+
+        location_ids = self.data.getlist('assigned_locations')
+        try:
+            locations = get_locations_from_ids(location_ids, self.domain)
+        except SQLLocation.DoesNotExist:
+            raise forms.ValidationError(_('One or more of the locations was not found.'))
+
+        return [location.location_id for location in locations]
+
+    def _user_has_permission_to_access_locations(self, new_location_ids):
+        assigned_locations = SQLLocation.objects.filter(location_id__in=new_location_ids)
+        return len(assigned_locations) == len(assigned_locations.accessible_to_user(
+            self.domain, self.request.couch_user))
+
+    def clean(self):
+        self.cleaned_data = super(BaseLocationForm, self).clean()
+
+        primary_location_id = self.cleaned_data['primary_location']
+        assigned_location_ids = self.cleaned_data.get('assigned_locations', [])
+        if not self._user_has_permission_to_access_locations(assigned_location_ids):
+            self.add_error(
+                'assigned_locations',
+                _("You do not have permissions to assign one of those locations.")
+            )
+        if primary_location_id:
+            if primary_location_id not in assigned_location_ids:
+                self.add_error(
+                    'primary_location',
+                    _("Primary location must be one of the user's locations")
+                )
+        if assigned_location_ids and not primary_location_id:
+            self.add_error(
+                'primary_location',
+                _("Primary location can't be empty if the user has any "
+                  "locations set")
+            )
+        return self.cleaned_data
+
+
+class CommtrackUserForm(BaseLocationForm):
+    program_id = forms.ChoiceField(
+        label=gettext_noop("Program"),
+        choices=(),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain', None)
+        super(CommtrackUserForm, self).__init__(self.domain, *args, **kwargs)
+
         if self.commtrack_enabled:
             programs = Program.by_domain(self.domain)
             choices = list((prog.get_id, prog.name) for prog in programs)
@@ -1234,17 +1259,15 @@ class CommtrackUserForm(forms.Form):
                 updated_program_id = program_id
             domain_membership.program_id = program_id
 
-        location_updates = self._update_location_data(user)
+        location_updates = self._update_location_data(user, self.cleaned_data['primary_location'],
+                                                      self.cleaned_data['assigned_locations'])
         if user.is_commcare_user():
             self._log_commcare_user_changes(user_change_logger, location_updates, updated_program_id)
         else:
             self._log_web_user_changes(user_change_logger, location_updates, updated_program_id)
 
-    def _update_location_data(self, user):
-        new_location_id = self.cleaned_data['primary_location']
-        new_location_ids = self.cleaned_data['assigned_locations']
+    def _update_location_data(self, user, new_location_id, new_location_ids):
         updates = {}
-
         if user.is_commcare_user():
             # fetch this before set_location is called
             old_assigned_location_ids = set(user.assigned_location_ids)
@@ -1352,36 +1375,6 @@ class CommtrackUserForm(forms.Form):
 
         user_change_logger.save()
 
-    def clean_assigned_locations(self):
-        from corehq.apps.locations.models import SQLLocation
-        from corehq.apps.locations.util import get_locations_from_ids
-
-        location_ids = self.data.getlist('assigned_locations')
-        try:
-            locations = get_locations_from_ids(location_ids, self.domain)
-        except SQLLocation.DoesNotExist:
-            raise ValidationError(_('One or more of the locations was not found.'))
-
-        return [location.location_id for location in locations]
-
-    def clean(self):
-        cleaned_data = super(CommtrackUserForm, self).clean()
-
-        primary_location_id = cleaned_data['primary_location']
-        assigned_location_ids = cleaned_data.get('assigned_locations', [])
-        if primary_location_id:
-            if primary_location_id not in assigned_location_ids:
-                self.add_error(
-                    'primary_location',
-                    _("Primary location must be one of the user's locations")
-                )
-        if assigned_location_ids and not primary_location_id:
-            self.add_error(
-                'primary_location',
-                _("Primary location can't be empty if the user has any "
-                  "locations set")
-            )
-
 
 class DomainRequestForm(forms.Form):
     full_name = forms.CharField(label=gettext_lazy('Full Name'), required=True,
@@ -1488,21 +1481,17 @@ class AddPhoneNumberForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(AddPhoneNumberForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form'
         self.helper.layout = crispy.Layout(
             Fieldset(
                 _('Add a Phone Number'),
                 'form_type',
                 twbscrispy.PrependedText('phone_number', '+', type='tel', pattern=r'\d+')
             ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    _('Add Number'),
-                    css_class='btn-primary disable-on-submit',
-                    type='submit',
-                )
+            StrictButton(
+                _('Add Number'),
+                css_class='btn-primary disable-on-submit',
+                type='submit',
             )
         )
         self.fields['phone_number'].label = gettext_lazy('Phone number')
@@ -1758,11 +1747,17 @@ class UserFilterForm(forms.Form):
             return False
         return None
 
+    def clean_location_id(self):
+        location_id = self.cleaned_data['location_id']
+        if location_id and not user_can_access_location_id(self.domain, self.couch_user, location_id):
+            raise forms.ValidationError("You do not have access to that location.")
+        return location_id
+
     def clean(self):
         data = self.cleaned_data
         user = self.couch_user
 
-        if not user.has_permission(self.domain, 'access_all_locations') and not data.get('location_id'):
+        if not data.get('location_id') and not user.has_permission(self.domain, 'access_all_locations'):
             # Add (web) user assigned_location_ids so as to
             # 1) reflect all locations user is assigned to ('All' option)
             # 2) restrict user access
@@ -1787,6 +1782,7 @@ class TableauUserForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        readonly = kwargs.pop('readonly', True)
         self.request = kwargs.pop('request')
         self.domain = kwargs.pop('domain', None)
         self.username = kwargs.pop('username', None)
@@ -1807,6 +1803,10 @@ class TableauUserForm(forms.Form):
         if not self.fields['groups'].choices:
             del self.fields['groups']
 
+        if readonly:
+            self.fields['role'].widget.attrs['readonly'] = True
+            self.fields['groups'].widget.attrs['disabled'] = True
+
         self.helper = FormHelper()
 
         self.helper.form_method = 'POST'
@@ -1817,5 +1817,7 @@ class TableauUserForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def save(self, username, commit=True):
+        if not self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config'):
+            raise forms.ValidationError(_("You do not have permission to edit Tableau Configuraion."))
         groups = [self.allowed_tableau_groups[int(i)] for i in self.cleaned_data['groups']]
         update_tableau_user(self.domain, username, self.cleaned_data['role'], groups)

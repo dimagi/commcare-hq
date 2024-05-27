@@ -1,182 +1,197 @@
-import json
 import os
 import tempfile
 
 import polib
 import requests
-from memoized import memoized
+from transifex.api import TransifexApi
+from transifex.api.exceptions import DownloadException
+from transifex.api.jsonapi.exceptions import DoesNotExist, JsonApiException
 
-from corehq.apps.translations.integrations.transifex.const import (
-    API_USER,
-    SOURCE_LANGUAGE_MAPPING,
-)
-from corehq.apps.translations.integrations.transifex.exceptions import (
-    ResourceMissing,
-)
+from corehq.apps.translations.integrations.transifex.const import SOURCE_LANGUAGE_MAPPING
+from corehq.apps.translations.integrations.transifex.exceptions import TransifexApiException
 
 
 class TransifexApiClient(object):
     def __init__(self, token, organization, project, use_version_postfix=True):
-        self.username = API_USER
-        self.token = token
-        self.organization = organization
-        self.project = project
         self.use_version_postfix = use_version_postfix
+        self.api = TransifexApi(auth=token)
+        self.organization = self._get_organization(organization)
+        self.project = self._get_project(project)
 
     @property
-    def _auth(self):
-        return self.username, self.token
+    def _i18n_format(self):
+        return self.api.I18nFormat(id="PO")
 
-    def list_resources(self):
-        url = "https://api.transifex.com/organizations/{}/projects/{}/resources".format(
-            self.organization,
-            self.project
-        )
-        return requests.get(url, auth=self._auth)
+    @property
+    def project_name(self):
+        return self.project.name
+
+    @property
+    def source_language_id(self):
+        return self.project.source_language.id
+
+    @property
+    def source_lang_code(self):
+        return self._to_lang_code(self.source_language_id)
+
+    def _create_resource(self, resource_slug, resource_name):
+        try:
+            return self.api.Resource.create(
+                name=resource_name,
+                slug=resource_slug,
+                project=self.project,
+                i18n_format=self._i18n_format
+            )
+        except JsonApiException as e:
+            raise TransifexApiException(e)
+
+    @staticmethod
+    def _upload_content(cls, content, **kwargs):
+        # TransifexApi.upload() waits for async upload which we don't need, so create the upload manually
+        upload = cls.create_with_form(data=kwargs, files={"content": content})
+
+        # mirror TransifexApi error handling
+        if hasattr(upload, "errors") and len(upload.errors) > 0:
+            raise TransifexApiException(upload.errors[0]["detail"], upload.errors)
+
+    def _upload_resource_strings(self, content, resource_id):
+        cls = self.api.ResourceStringsAsyncUpload
+        self._upload_content(cls, content, resource=resource_id)
+
+    def _upload_resource_translations(self, content, resource_id, language_id):
+        cls = self.api.ResourceTranslationsAsyncUpload
+        self._upload_content(cls, content, resource=resource_id, language=language_id)
+
+    @staticmethod
+    def _get_object(cls, **kwargs):
+        try:
+            return cls.get(**kwargs)
+        except (DoesNotExist, JsonApiException) as e:
+            raise TransifexApiException(e)
+
+    def _get_organization(self, organization_slug):
+        cls = self.api.Organization
+        return self._get_object(cls, slug=organization_slug)
+
+    def _get_project(self, project_slug):
+        cls = self.api.Project
+        return self._get_object(cls, slug=project_slug, organization=self.organization)
+
+    def _get_resource(self, resource_slug):
+        cls = self.api.Resource
+        return self._get_object(cls, slug=resource_slug, project=self.project)
+
+    def _get_language_stats(self, resource, language_id):
+        cls = self.api.ResourceLanguageStats
+        try:
+            return self._get_object(cls, language=language_id, resource=resource, project=self.project)
+        except Exception:
+            for stats in cls.filter(language=language_id, resource=resource, project=self.project):
+                if language_id in stats.id:
+                    return stats
+
+    @staticmethod
+    def _list_objects(cls, **kwargs):
+        try:
+            return cls.filter(**kwargs)
+        except JsonApiException as e:
+            raise TransifexApiException(e)
+
+    def _list_resources(self):
+        cls = self.api.Resource
+        return self._list_objects(cls, project=self.project)
+
+    def _list_language_stats(self, **kwargs):
+        cls = self.api.ResourceLanguageStats
+        return self._list_objects(cls, project=self.project, **kwargs)
+
+    @staticmethod
+    def _fetch_related(obj, key):
+        return obj.fetch(key)
+
+    @staticmethod
+    def _download_content(cls, **kwargs):
+        try:
+            download = cls.download(**kwargs)
+        except (DownloadException, JsonApiException) as e:
+            raise TransifexApiException(e)
+        response = requests.get(download, stream=True)
+        return response.content
+
+    def _download_resource_translations(self, resource, language):
+        cls = self.api.ResourceTranslationsAsyncDownload
+        return self._download_content(cls, resource=resource, language=language)
+
+    def _lock_resource(self, resource):
+        return resource.save(accept_translations=False)
+
+    def delete_resource(self, resource_slug):
+        resource = self._get_resource(resource_slug)
+        resource.delete()
+
+    def update_resource_slug(self, old_resource_slug, new_resource_slug):
+        # TODO: rework ProjectMigrator to be compatible with Transifex API v3, or remove this functionality
+        # v3 makes 'slug' an immutable attribute
+        # meaning we can no longer simply change the path to a resource while retaining its history
+        pass
+
+    def upload_resource(self, path_to_po_file, resource_slug, resource_name, update_resource):
+        """
+        Upload source language file
+
+        :param path_to_po_file: path to po file
+        :param resource_slug: resource slug
+        :param resource_name: resource name, mostly same as resource slug itself
+        :param update_resource: update resource
+        """
+        create_missing_resource = False
+        if update_resource:
+            try:
+                resource = self._get_resource(resource_slug)
+            except TransifexApiException:
+                create_missing_resource = True
+        if not update_resource or create_missing_resource:
+            # must create the new resource first
+            if resource_name is None:
+                __, filename = os.path.split(path_to_po_file)
+                resource_name = filename
+            resource = self._create_resource(resource_slug, resource_name)
+        with open(path_to_po_file, 'r', encoding="utf-8") as po_file:
+            content = po_file.read()
+        self._upload_resource_strings(content, resource.id)
+
+    def upload_translation(self, path_to_po_file, resource_slug, hq_lang_code):
+        """
+        Upload translated files
+
+        :param path_to_po_file: path to po file
+        :param resource_slug: resource slug
+        :param hq_lang_code: lang code on hq
+        """
+        language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
+        resource = self._get_resource(resource_slug)
+        with open(path_to_po_file, 'r', encoding="utf-8") as po_file:
+            content = po_file.read()
+        self._upload_resource_translations(content, resource.id, language_id)
 
     def get_resource_slugs(self, version):
         """
         :return: list of resource slugs corresponding to version
         """
-        all_resources = self.list_resources().json()
+        all_resources = self._list_resources()
         if version and self.use_version_postfix:
             # get all slugs with version postfix
-            return [r['slug']
+            return [r.slug
                     for r in all_resources
-                    if r['slug'].endswith("v%s" % version)]
+                    if r.slug.endswith("v%s" % version)]
         elif version and not self.use_version_postfix:
             # get all slugs that don't have version postfix
-            return [r['slug']
+            return [r.slug
                     for r in all_resources
-                    if not r['slug'].endswith("v%s" % version)]
+                    if not r.slug.endswith("v%s" % version)]
         else:
             # get all slugs
-            return [r['slug'] for r in all_resources]
-
-    def update_resource_slug(self, old_resource_slug, new_resource_slug):
-        url = "https://www.transifex.com/api/2/project/{}/resource/{}".format(
-            self.project, old_resource_slug)
-        data = {'slug': new_resource_slug}
-        headers = {'content-type': 'application/json'}
-        return requests.put(
-            url, data=json.dumps(data), auth=self._auth, headers=headers,
-        )
-
-    def lock_resource(self, resource_slug):
-        """
-        lock a resource so that it can't be translated/reviewed anymore.
-
-        :param resource_slug:
-        """
-        url = "https://www.transifex.com/api/2/project/{}/resource/{}".format(
-            self.project, resource_slug)
-        data = {
-            'accept_translations': False
-        }
-        headers = {'content-type': 'application/json'}
-        return requests.put(
-            url, data=json.dumps(data), auth=self._auth, headers=headers,
-        )
-
-    def delete_resource(self, resource_slug):
-        url = "https://www.transifex.com/api/2/project/{}/resource/{}".format(
-            self.project, resource_slug)
-        return requests.delete(url, auth=self._auth)
-
-    def upload_resource(self, path_to_pofile, resource_slug, resource_name, update_resource):
-        """
-        Upload source language file
-
-        :param path_to_pofile: path to pofile
-        :param resource_slug: resource slug
-        :param resource_name: resource name, mostly same as resource slug itself
-        :param update_resource: update resource
-        """
-        content = open(path_to_pofile, 'r', encoding="utf-8").read()
-        if resource_name is None:
-            __, filename = os.path.split(path_to_pofile)
-            resource_name = filename
-        headers = {'content-type': 'application/json'}
-        data = {
-            'name': resource_name, 'slug': resource_slug, 'content': content,
-            'i18n_type': 'PO'
-        }
-        if update_resource:
-            url = "https://www.transifex.com/api/2/project/{}/resource/{}/content".format(
-                self.project, resource_slug)
-            return requests.put(
-                url, data=json.dumps(data), auth=self._auth, headers=headers,
-            )
-        else:
-            url = "https://www.transifex.com/api/2/project/{}/resources".format(self.project)
-            return requests.post(
-                url, data=json.dumps(data), auth=self._auth, headers=headers,
-            )
-
-    def upload_translation(self, path_to_pofile, resource_slug, resource_name, hq_lang_code):
-        """
-        Upload translated files
-
-        :param path_to_pofile: path to pofile
-        :param resource_slug: resource slug
-        :param resource_name: resource name, mostly same as resource slug itself
-        :param hq_lang_code: lang code on hq
-        """
-        target_lang_code = self.transifex_lang_code(hq_lang_code)
-        url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}".format(
-            self.project, resource_slug, target_lang_code)
-        content = open(path_to_pofile, 'r', encoding="utf-8").read()
-        headers = {'content-type': 'application/json'}
-        data = {
-            'name': resource_name, 'slug': resource_slug, 'content': content,
-            'i18n_type': 'PO'
-        }
-        return requests.put(
-            url, data=json.dumps(data), auth=self._auth, headers=headers,
-        )
-
-    def project_details(self):
-        url = "https://www.transifex.com/api/2/project/{}/?details".format(self.project)
-        response = requests.get(
-            url, auth=self._auth,
-        )
-        if response.status_code == 404:
-            raise ResourceMissing("Project not found with slug {}".format(self.project))
-        else:
-            return response
-
-    @memoized
-    def _resource_details(self, resource_slug):
-        """
-        get details for a resource corresponding to a lang
-
-        :param resource_slug: resource slug
-        """
-        url = "https://www.transifex.com/api/2/project/{}/resource/{}/stats/".format(
-            self.project, resource_slug)
-        response = requests.get(url, auth=self._auth)
-        if response.status_code == 200:
-            return response.json()
-        elif response.status_code == 404:
-            raise ResourceMissing("Resource {} not found".format(resource_slug))
-        raise Exception(response.content)
-
-    def translation_completed(self, resource_slug, hq_lang_code=None):
-        """
-        check if a resource has been completely translated for
-        all langs or a specific target lang
-        """
-        def completed(details):
-            return not bool(details.get('untranslated_words'))
-
-        if hq_lang_code:
-            lang = self.transifex_lang_code(hq_lang_code)
-            return completed(self._resource_details(resource_slug).get(lang, {}))
-        else:
-            for lang, detail in self._resource_details(resource_slug).items():
-                if not completed(detail):
-                    return False
-            return True
+            return [r.slug for r in all_resources]
 
     def get_translation(self, resource_slug, hq_lang_code, lock_resource):
         """
@@ -188,19 +203,52 @@ class TransifexApiClient(object):
         :param lock_resource: lock resource after pulling translation
         :return: list of POEntry objects
         """
-        lang = self.transifex_lang_code(hq_lang_code)
-        url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}/?file".format(
-            self.project, resource_slug, lang
-        )
-        response = requests.get(url, auth=self._auth, stream=True)
-        if response.status_code != 200:
-            raise ResourceMissing
+        resource = self._get_resource(resource_slug)
+        language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
+        language = None
+        for lang in self.get_all_project_languages():
+            if lang.id == language_id:
+                language = lang
+                break
+        if language is None:
+            raise TransifexApiException("Target language does not exist on resource")
+        content = self._download_resource_translations(resource, language)
         temp_file = tempfile.NamedTemporaryFile()
         with open(temp_file.name, 'w', encoding='utf-8') as f:
-            f.write(response.content.decode(encoding='utf-8'))
+            f.write(content.decode(encoding='utf-8'))
         if lock_resource:
-            self.lock_resource(resource_slug)
+            self._lock_resource(resource)
         return polib.pofile(temp_file.name)
+
+    def get_project_langcodes(self):
+        languages = self.get_all_project_languages()
+        return [self._to_lang_code(language.id) for language in languages]
+
+    def get_all_project_languages(self):
+        return self._fetch_related(self.project, 'languages')
+
+    def source_lang_is(self, hq_lang_code):
+        """
+        confirm is source lang on transifex is same as hq lang code
+        """
+        return self.transifex_lang_code(hq_lang_code) == self.source_lang_code
+
+    def is_translation_completed(self, resource_slug, hq_lang_code=None):
+        """
+        check if a resource has been completely translated for
+        all langs or a specific target lang
+        """
+        def completed(stats):
+            return not bool(stats.untranslated_words)
+
+        resource = self._get_resource(resource_slug)
+        if hq_lang_code:
+            language_id = self._to_language_id(self.transifex_lang_code(hq_lang_code))
+            language_stats = self._get_language_stats(resource, language_id)
+            return completed(language_stats)
+        else:
+            language_stats_list = self._list_language_stats(resource=resource)
+            return all(completed(stats) for stats in language_stats_list)
 
     @staticmethod
     def transifex_lang_code(hq_lang_code):
@@ -211,51 +259,18 @@ class TransifexApiClient(object):
         """
         return SOURCE_LANGUAGE_MAPPING.get(hq_lang_code, hq_lang_code)
 
-    def source_lang_is(self, hq_lang_code):
-        """
-        confirm is source lang on transifex is same as hq lang code
-        """
-        return self.transifex_lang_code(hq_lang_code) == self.get_source_lang()
+    @staticmethod
+    def _to_language_id(lang_code):
+        return f"l:{lang_code}"
 
-    def get_source_lang(self):
-        """
-        :return: source lang code on transifex
-        """
-        return self.project_details().json().get('source_language_code')
+    @staticmethod
+    def _to_lang_code(language_id):
+        return language_id.replace("l:", "")
 
-    def move_resources(self, hq_lang_code, target_project, version=None, use_version_postfix=True):
-        """
-        ability to move resources from one project to another
-
-        :param hq_lang_code: lang code on hq
-        :param target_project: target project slug on transifex
-        :param version: version if needed on parent resource slugs
-        :param use_version_postfix: to use version postfix in new project
-        :return: responses per resource slug
-        """
-        responses = {}
-        for resource_slug in self.get_resource_slugs(version):
-            lang = self.transifex_lang_code(hq_lang_code)
-            url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}/?file".format(
-                self.project, resource_slug, lang
-            )
-            response = requests.get(url, auth=self._auth, stream=True)
-            if response.status_code != 200:
-                raise ResourceMissing
-            if use_version_postfix:
-                upload_resource_slug = resource_slug
-            else:
-                upload_resource_slug = resource_slug.split("_v")[0]
-            upload_url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}".format(
-                target_project, upload_resource_slug, lang)
-            content = response.content
-            headers = {'content-type': 'application/json'}
-            data = {
-                'name': upload_resource_slug, 'slug': upload_resource_slug, 'content': content,
-                'i18n_type': 'PO'
-            }
-            upload_response = requests.put(
-                upload_url, data=json.dumps(data), auth=self._auth, headers=headers,
-            )
-            responses[resource_slug] = upload_response
-        return responses
+    def get_resource_slugs_for_deleted_forms(self, project_resources):
+        # this could be a problem if you're using two completely different apps for the same project....
+        # but we won't do that in practice....?
+        transifex_resources = self._list_resources()
+        if len(transifex_resources) > len(project_resources):
+            return list(set([r.slug for r in transifex_resources]) - set(project_resources))
+        return None

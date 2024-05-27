@@ -1,0 +1,13 @@
+<script type="text/html" id="text-entry-ko-template">
+  <textarea class="textfield form-control vertical-resize" data-bind="
+        value: $data.rawAnswer,
+        valueUpdate: valueUpdate,
+        css: { 'is-invalid': $parent.hasError() },
+        attr: {
+            placeholder: placeholderText,
+            maxlength: lengthLimit,
+            id: entryId,
+            'aria-required': $parent.required() ? 'true' : 'false',
+        },
+    "></textarea>
+</script>

@@ -5,7 +5,7 @@
            'gr-no-children': $data.children().length === 0,
            'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
 -          'panel panel-default': collapsible,
-+          'card card-default': collapsible,  {# todo B5: css:panel #}
++          'card': collapsible,
            'repetition': isRepetition,
            'required-group': !showChildren() && childrenRequired(),
            'stripe-repeats': stripeRepeats,

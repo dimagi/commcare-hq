@@ -1,0 +1,39 @@
+--- 
++++ 
+@@ -3,16 +3,16 @@
+     also in the single form view page that's accessible from the submit history report or the "View standalone
+     form" button when looking at a form in case history.
+ */
+-hqDefine("reports/js/bootstrap3/single_form", [
++hqDefine("reports/js/bootstrap5/single_form", [
+     "jquery",
+     "underscore",
+     "hqwebapp/js/assert_properties",
+     "hqwebapp/js/initial_page_data",
+-    "hqwebapp/js/bootstrap3/main",
++    "hqwebapp/js/bootstrap5/main",
+     "analytix/js/google",
+     "analytix/js/kissmetrix",
+-    "reports/js/bootstrap3/readable_form",
+-    "reports/js/bootstrap3/data_corrections",
++    "reports/js/bootstrap5/readable_form",
++    "reports/js/bootstrap5/data_corrections",
+     "clipboard/dist/clipboard",
+ ], function (
+     $,
+@@ -100,12 +100,12 @@
+ 
+         var clipboard = new Clipboard('.copy-xml', { text: function () { return $('#form-xml pre', $container).text(); } }),
+             $copyBtn = $('.copy-xml', $container);
+-        $copyBtn.tooltip({
++        $copyBtn.tooltip({  /* todo B5: plugin:tooltip */
+             title: gettext("Copied!"),
+         });
+         clipboard.on('success', function () {
+-            $copyBtn.tooltip('show');
+-            window.setTimeout(function () { $copyBtn.tooltip('hide'); }, 1000);
++            $copyBtn.tooltip('show');  /* todo B5: plugin:tooltip */
++            window.setTimeout(function () { $copyBtn.tooltip('hide'); }, 1000);  /* todo B5: plugin:tooltip */
+         });
+     };
+ 

@@ -857,7 +857,7 @@ class DefaultProductPlan(models.Model):
 
     class Meta(object):
         app_label = 'accounting'
-        unique_together = ('edition', 'is_trial', 'is_report_builder_enabled')
+        unique_together = ('edition', 'is_trial', 'is_report_builder_enabled', 'is_annual_plan')
 
     @classmethod
     @quickcache(['edition', 'is_trial', 'is_report_builder_enabled'],

@@ -15,7 +15,7 @@ from corehq import privileges
 from memoized import memoized
 from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 
 from .models import (
@@ -261,6 +261,7 @@ class CustomDataModelMixin(object):
     show_purge_existing = False
     entity_string = None  # User, Group, Location, Product...
 
+    @use_bootstrap5
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(CustomDataModelMixin, self).dispatch(request, *args, **kwargs)

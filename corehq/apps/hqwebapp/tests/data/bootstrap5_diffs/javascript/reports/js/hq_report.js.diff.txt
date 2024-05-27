@@ -1,0 +1,94 @@
+--- 
++++ 
+@@ -1,11 +1,11 @@
+-hqDefine("reports/js/bootstrap3/hq_report", [
++hqDefine("reports/js/bootstrap5/hq_report", [
+     'jquery',
+     'knockout',
+     'underscore',
+-    'hqwebapp/js/bootstrap3/alert_user',
++    'hqwebapp/js/bootstrap5/alert_user',
+     'analytix/js/kissmetrix',
+     'hqwebapp/js/initial_page_data',
+-    'hqwebapp/js/bootstrap3/widgets', //multi-emails
++    'hqwebapp/js/bootstrap5/widgets', //multi-emails
+ ], function (
+     $,
+     ko,
+@@ -57,7 +57,7 @@
+ 
+                 if (self.needsFilters) {
+                     self.filterSubmitButton
+-                        .button('reset')
++                        .button('reset')  /* todo B5: plugin:button */
+                         .addClass('btn-primary')
+                         .removeClass('disabled')
+                         .prop('disabled', false);
+@@ -150,18 +150,18 @@
+ 
+         var checkFilterAccordionToggleState = function () {
+             $(self.filterAccordion).addClass('in');
+-            $(self.toggleFiltersButton).button('close');
++            $(self.toggleFiltersButton).button('close');  /* todo B5: plugin:button */
+ 
+             var hiddenFilterButtonStatus = function (data) {
+                 if (!(data.target && $(data.target).hasClass('modal'))) {
+-                    $(self.toggleFiltersButton).button('open');
++                    $(self.toggleFiltersButton).button('open');  /* todo B5: plugin:button */
+                 }
+             };
+ 
+             $(self.filterAccordion).on('hidden.bs.collapse', hiddenFilterButtonStatus);
+ 
+             var showFilterButtonStatus = function () {
+-                $(self.toggleFiltersButton).button('close');
++                $(self.toggleFiltersButton).button('close');  /* todo B5: plugin:button */
+             };
+ 
+             $(self.filterAccordion).on('show.bs.collapse', showFilterButtonStatus);
+@@ -179,14 +179,14 @@
+         self.resetFilterState = function () {
+             $('#paramSelectorForm fieldset button, #paramSelectorForm fieldset span[data-dropdown="dropdown"]').click(function () {
+                 $(self.filterSubmitSelector)
+-                    .button('reset')
++                    .button('reset')  /* todo B5: plugin:button */
+                     .addClass('btn-primary')
+                     .removeClass('disabled')
+                     .prop('disabled', false);
+             });
+             $('#paramSelectorForm fieldset').on('change apply', function () {
+                 $(self.filterSubmitSelector)
+-                    .button('reset')
++                    .button('reset')  /* todo B5: plugin:button */
+                     .addClass('btn-primary')
+                     .removeClass('disabled')
+                     .prop('disabled', false);
+@@ -255,16 +255,16 @@
+ 
+             self.sendEmail = function () {
+                 var $sendButton = $(hqReport.emailReportModal).find('.send-button');
+-                $sendButton.button('loading');
++                $sendButton.button('loading');  /* todo B5: plugin:button */
+ 
+                 $.post(getReportBaseUrl("email_onceoff"), $.param(self.unwrap()))
+                     .done(function () {
+-                        $(hqReport.emailReportModal).modal('hide');
++                        $(hqReport.emailReportModal).modal('hide');  /* todo B5: plugin:modal */
+                         self.resetModal();
+                         alertUser.alert_user(hqReport.emailSuccessMessage, "success");
+                     })
+                     .fail(function (response) {
+-                        $(hqReport.emailReportModal).modal('hide');
++                        $(hqReport.emailReportModal).modal('hide');  /* todo B5: plugin:modal */
+                         self.resetModal();
+                         const errors = JSON.parse(response.responseText);
+                         let messages = [hqReport.emailErrorMessage].concat(errors);
+@@ -274,7 +274,7 @@
+             };
+ 
+             self.resetModal = function () {
+-                $(hqReport.emailReportModal).find('.send-button').button('reset');
++                $(hqReport.emailReportModal).find('.send-button').button('reset');  /* todo B5: plugin:button */
+             };
+         }
+ 

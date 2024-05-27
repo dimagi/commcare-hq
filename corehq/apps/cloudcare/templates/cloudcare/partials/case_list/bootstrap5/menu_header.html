@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div class="page-header menu-header clearfix" id="case-list-menu-header">  {# todo B5: css:page-header #}
+<div class="page-header menu-header d-none d-md-block clearfix" id="case-list-menu-header">
   <div class="float-end">
     <% if (showMap) { %>
       <button id="hide-map-button" class="btn btn-primary float-end" type="button"
@@ -10,7 +10,7 @@
       </button>
     <% } %>
     <% if (sidebarEnabled) { %>
-      <button id="search-more" class="btn btn-primary d-xs-block d-sm-block float-end" type="button"
+      <button id="search-more" class="btn btn-primary d-xs-block d-sm-block d-md-none float-end" type="button"
         data-bs-toggle="collapse" data-bs-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
         {% trans "Refine search" %}
       </button>

@@ -19,7 +19,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
     consult docs/maps.html for instructions
     """
 
-    report_partial_path = "reports/partials/maps.html"
+    report_partial_path = "reports/partials/bootstrap3/maps.html"
     flush_layout = True
 
     # override on subclass. It must be a dict with keys:

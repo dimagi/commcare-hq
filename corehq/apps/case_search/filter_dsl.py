@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass
-from typing import Union, List
+from typing import Union
 
 from django.utils.translation import gettext as _
 from eulxml.xpath import parse as parse_xpath
@@ -26,26 +26,19 @@ from corehq.apps.case_search.xpath_functions.comparison import property_comparis
 
 @dataclass
 class SearchFilterContext:
-    domain: Union[str, List[str]]  # query domain
+    domain: str
     fuzzy: bool = False
-    request_domain: str = None
+    helper: Union[
+        'corehq.apps.case_search.utils.QueryHelper',
+        'corehq.apps.case_search.utils.RegistryQueryHelper',
+    ] = None
     profiler: 'corehq.apps.case_search.utils.CaseSearchProfiler' = None
-    config: 'corehq.apps.case_search.models.CaseSearchConfig' = None
 
     def __post_init__(self):
-        from corehq.apps.case_search.utils import CaseSearchProfiler
-        from corehq.apps.case_search.models import CaseSearchConfig
-        if self.request_domain is None:
-            if isinstance(self.domain, str):
-                self.request_domain = self.domain
-            elif len(self.domain) == 1:
-                self.request_domain = self.domain[0]
-            else:
-                raise ValueError("When domain is a list with more than one item, request_domain cannot be None.")
-        if self.profiler is None:
-            self.profiler = CaseSearchProfiler()
-        if self.config is None:
-            self.config = CaseSearchConfig(domain=self.request_domain)
+        from corehq.apps.case_search.utils import QueryHelper
+        if self.helper is None:
+            self.helper = QueryHelper(self.domain)
+        self.profiler = self.helper.profiler
 
 
 def print_ast(node):

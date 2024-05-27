@@ -557,9 +557,11 @@ hqDefine("geospatial/js/case_grouping_map",[
                 $("#lock-groups-controls").koApplyBindings(groupLockModelInstance);
                 initMap();
                 $("#clusterStats").koApplyBindings(clusterStatsInstance);
-                polygonFilterInstance = new models.PolygonFilter(mapModel, true, false);
-                polygonFilterInstance.loadPolygons(initialPageData.get('saved_polygons'));
-                $("#polygon-filters").koApplyBindings(polygonFilterInstance);
+                mapModel.mapInstance.on('load', () => {
+                    polygonFilterInstance = new models.PolygonFilter(mapModel, true, false);
+                    polygonFilterInstance.loadPolygons(initialPageData.get('saved_polygons'));
+                    $("#polygon-filters").koApplyBindings(polygonFilterInstance);
+                });
 
                 $("#caseGroupSelect").koApplyBindings(caseGroupsInstance);
                 return;

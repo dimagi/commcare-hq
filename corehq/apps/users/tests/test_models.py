@@ -218,8 +218,6 @@ class DeviceAppMetaLatestRequestTests(SimpleTestCase):
 class HQPermissionsTests(SimpleTestCase):
     def test_normalize_removes_permissions_from_location_restricted_user(self):
         permissions = HqPermissions(
-            edit_web_users=True,
-            view_web_users=True,
             edit_groups=True,
             view_groups=True,
             edit_apps=True,
@@ -231,8 +229,6 @@ class HQPermissionsTests(SimpleTestCase):
 
         permissions.normalize()
 
-        self.assertFalse(permissions.edit_web_users)
-        self.assertFalse(permissions.view_web_users)
         self.assertFalse(permissions.edit_groups)
         self.assertFalse(permissions.view_groups)
         self.assertFalse(permissions.edit_apps)
