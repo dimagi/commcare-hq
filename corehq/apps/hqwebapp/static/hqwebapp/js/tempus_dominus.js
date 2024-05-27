@@ -104,7 +104,7 @@ hqDefine("hqwebapp/js/tempus_dominus", [
                     });
                 }
             }
-        })
+        });
         return options;
     };
 
