@@ -31,17 +31,17 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
 
             distance_matrix.append(user_distances)
 
-        return distance_matrix
+        return distance_matrix, None
 
-    def solve(self, config):
-        costs = self.calculate_distance_matrix(config)
+    def solve(self, config, print_solution=False):
+        distance_costs, duration_costs = self.calculate_distance_matrix(config)
 
-        if not costs:
+        if not distance_costs:
             # Infeasible solution
             return None, None
 
-        user_count = len(costs)
-        case_count = len(costs[0])
+        user_count = len(distance_costs)
+        case_count = len(distance_costs[0])
 
         # Define decision variables
         decision_variables = self.get_decision_variables(x_dim=user_count, y_dim=case_count)
@@ -67,7 +67,7 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
 
         # Define the objective function
         objective_terms = [
-            costs[i][j] * decision_variables[i, j]
+            distance_costs[i][j] * decision_variables[i, j]
             for i in range(user_count) for j in range(case_count)
         ]
         problem += pulp.lpSum(objective_terms)
@@ -82,8 +82,26 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
             for i in range(user_count):
                 for j in range(case_count):
                     if pulp.value(decision_variables[i, j]) > 0.5:
-                        solution[self.user_locations[i]['id']].append(self.case_locations[j]['id'])
+                        case_is_valid = self.is_valid_user_case(
+                            config,
+                            distance_to_case=distance_costs[i][j],
+                            travel_secs_to_case=None if duration_costs is None else duration_costs[i][j],
+                        )
+                        if case_is_valid:
+                            solution[self.user_locations[i]['id']].append(self.case_locations[j]['id'])
             return None, solution
+
+    @staticmethod
+    def is_valid_user_case(config, distance_to_case=None, travel_secs_to_case=None):
+        should_check_distance = distance_to_case and config.max_case_distance
+        if should_check_distance and distance_to_case > config.max_case_distance:
+            return False
+
+        should_check_duration = travel_secs_to_case and config.max_case_travel_time
+        if should_check_duration and travel_secs_to_case > config.max_travel_time_seconds:
+            return False
+
+        return True
 
         return None, None
 
@@ -139,13 +157,34 @@ class RoadNetworkSolver(RadialDistanceSolver):
         destinations = ";".join(map(str, list(range(sources_count, sources_count + destinations_count))))
 
         url = f'https://api.mapbox.com/directions-matrix/v1/mapbox/driving/{coordinates}'
+
+        if config.max_case_travel_time:
+            annotations = "distance,duration"
+        else:
+            annotations = "distance"
+
         params = {
             'sources': sources,
             'destinations': destinations,
-            'annotations': 'distance',
+            'annotations': annotations,
             'access_token': config.plaintext_api_token,
         }
 
         response = requests.get(url, params=params)
         response.raise_for_status()
-        return response.json()['distances']
+
+        return self.sanitize_response(response.json())
+
+    def sanitize_response(self, response):
+        distances_km = self._convert_m_to_km(response['distances'])
+        durations_sec = response.get('durations', None)
+        return distances_km, durations_sec
+
+    @staticmethod
+    def _convert_m_to_km(distances_m):
+        distances_km = []
+        for row in distances_m:
+            distances_km.append(
+                [value_m / 1000 for value_m in row]
+            )
+        return distances_km
