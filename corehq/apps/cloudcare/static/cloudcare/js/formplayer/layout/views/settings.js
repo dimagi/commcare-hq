@@ -7,7 +7,6 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
     'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
-    'bootstrap-switch/dist/js/bootstrap-switch', // bootstrapSwitch: only when window.USE_BOOTSTRAP5 is false
 ], function (
     $,
     _,
@@ -68,14 +67,6 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
         },
         events: {
             'change @ui.oneQuestionPerScreen': 'onChangeOneQuestionPerScreen',
-        },
-        onRender: function () {
-            if (!window.USE_BOOTSTRAP5) {
-                this.ui.oneQuestionPerScreen.bootstrapSwitch(
-                    'state',
-                    this.currentUser.displayOptions.oneQuestionPerScreen
-                );
-            }
         },
         onChangeOneQuestionPerScreen: function (e, switchValue) {
             this.currentUser.displayOptions.oneQuestionPerScreen = switchValue;
