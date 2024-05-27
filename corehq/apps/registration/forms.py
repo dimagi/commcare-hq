@@ -22,7 +22,6 @@ from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.programs.models import Program
 from corehq.apps.users.forms import BaseLocationForm
 from corehq.apps.users.models import CouchUser
@@ -61,7 +60,7 @@ class RegisterWebUserForm(forms.Form):
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
         required=False,
-        label=mark_safe_lazy(_(
+        label=mark_safe(_(
             """I have read and agree to Dimagi's
             <a href="http://www.dimagi.com/terms/latest/privacy/"
                target="_blank">Privacy Policy</a>,
@@ -369,7 +368,7 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
     eula_confirmed = forms.BooleanField(
         required=False,
         label="",
-        help_text=mark_safe_lazy(_(
+        help_text=mark_safe(_(
             """I have read and agree to Dimagi's
                 <a href="http://www.dimagi.com/terms/latest/privacy/"
                     target="_blank">Privacy Policy</a>,
@@ -511,6 +510,7 @@ class AdminInvitesUserForm(BaseLocationForm):
                 programs = Program.by_domain(domain_obj.name)
                 choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
                 self.fields['program'].choices = choices
+
         self.excluded_emails = excluded_emails or []
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
