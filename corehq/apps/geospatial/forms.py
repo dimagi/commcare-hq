@@ -35,6 +35,7 @@ class GeospatialConfigForm(forms.ModelForm):
             "target_group_count",
             "selected_disbursement_algorithm",
             "plaintext_api_token",
+            "max_case_distance",
         ]
 
     user_location_property_name = forms.CharField(
@@ -70,6 +71,12 @@ class GeospatialConfigForm(forms.ModelForm):
     target_group_count = forms.IntegerField(
         label=_("Target group count"),
         help_text=_("The desired number of groups. Cases will be divided equally to create this many groups"),
+        required=False,
+        min_value=1,
+    )
+    max_case_distance = forms.IntegerField(
+        label=_("Max distance to case"),
+        help_text=_("The maximum distance (in kilometer) from the user to the case. Leave blank to skip."),
         required=False,
         min_value=1,
     )
@@ -158,6 +165,10 @@ class GeospatialConfigForm(forms.ModelForm):
                     crispy.Field(
                         'selected_disbursement_algorithm',
                         data_bind='value: selectedAlgorithm',
+                    ),
+                    crispy.Field(
+                        'max_case_distance',
+                        data_bind='value: maxCaseDistance',
                     ),
                     crispy.Div(
                         crispy.Field('plaintext_api_token', data_bind="value: plaintext_api_token"),
