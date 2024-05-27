@@ -215,7 +215,7 @@ class FormplayerMain(View):
         }
 
         return set_cookie(
-            render(request, "cloudcare/bootstrap5/formplayer_home.html", context)
+            render(request, "cloudcare/formplayer_home.html", context)
         )
 
 
@@ -235,7 +235,7 @@ class FormplayerMainPreview(FormplayerMain):
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(use_tempusdominus, name='dispatch')
 class PreviewAppView(TemplateView):
-    template_name = 'cloudcare/bootstrap5/preview_app.html'
+    template_name = 'cloudcare/preview_app.html'
     urlname = 'preview_app'
 
     @xframe_options_sameorigin
@@ -243,7 +243,7 @@ class PreviewAppView(TemplateView):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
         if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
             context = BlockWebAppsView.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
-            return render(request, 'cloudcare/bootstrap5/block_preview_app.html', context)
+            return render(request, 'cloudcare/block_preview_app.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),

@@ -11,11 +11,11 @@
       <i class="fa fa-lg fa-arrow-down" aria-hidden="true"></i>
     </button>
 
-    {% include "cloudcare/partials/case_list/bootstrap5/menu_header.html" %}
+    {% include "cloudcare/partials/case_list/menu_header.html" %}
 
     <% if (isMultiSelect) { %>
     <div class="case-list-actions d-grid gap-2 d-md-block">
-      {% include 'cloudcare/partials/case_list/bootstrap5/multi_select_continue_button.html' %}
+      {% include 'cloudcare/partials/case_list/multi_select_continue_button.html' %}
     </div>
     <% } %>
 
@@ -46,18 +46,18 @@
           <% if (hasNoItems) { %>
             {% include 'cloudcare/partials/case_list/no_items_text.html' %}
           <% } else { %>
-            {% include 'cloudcare/partials/case_list/bootstrap5/search_controls.html' %}
+            {% include 'cloudcare/partials/case_list/search_controls.html' %}
           <% } %>
           <section class="js-case-container clearfix list-cell-container-style"></section>
         <% } else { %>
-          {% include 'cloudcare/partials/case_list/bootstrap5/table_container.html' %}
+          {% include 'cloudcare/partials/case_list/table_container.html' %}
         <% } %>
       </div>
     </div>
     <% if (actions || isMultiSelect) { %>
       <div class="case-list-actions d-grid gap-2 d-md-block">
         <% if (isMultiSelect) { %>
-          {% include 'cloudcare/partials/case_list/bootstrap5/multi_select_continue_button.html' %}
+          {% include 'cloudcare/partials/case_list/multi_select_continue_button.html' %}
         <% } %>
         <% if (actions) { %>
           <% _.each(actions, function(action, index) { %>
@@ -71,7 +71,7 @@
 
     <% if (!hasNoItems) { %>
       {% block pagination_templates %}
-        {% include 'cloudcare/partials/bootstrap5/pagination.html' %}
+        {% include 'cloudcare/partials/pagination.html' %}
       {% endblock %}
     <% } %>
   </div>
