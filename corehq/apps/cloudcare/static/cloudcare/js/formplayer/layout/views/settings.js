@@ -67,7 +67,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
             oneQuestionPerScreen: '.js-one-question-per-screen',
         },
         events: {
-            'switchChange.bootstrapSwitch @ui.oneQuestionPerScreen': 'onChangeOneQuestionPerScreen',
+            'change @ui.oneQuestionPerScreen': 'onChangeOneQuestionPerScreen',
         },
         onRender: function () {
             if (!window.USE_BOOTSTRAP5) {
