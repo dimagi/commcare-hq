@@ -1,14 +1,16 @@
 --- 
 +++ 
-@@ -3,7 +3,7 @@
+@@ -3,8 +3,8 @@
  
  <script type="text/template" id="settings-template">
    <div class="module-menu-container module-menu-bar-offset">
 -    <div class="page-header menu-header">
+-      <h1 class="page-title">Settings</h1>
 +    <div class="page-header menu-header d-none d-md-block">
-       <h1 class="page-title">Settings</h1>
++      <h1 class="page-title">{% trans "Settings" %}</h1>
      </div>
      <table class="table module-table">
+       <tbody>
 @@ -18,8 +18,14 @@
    </div>
  </script>
