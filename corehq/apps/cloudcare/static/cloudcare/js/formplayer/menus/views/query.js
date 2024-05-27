@@ -468,11 +468,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         onRender: function () {
             this._initializeSelect2Dropdown();
             const fallback = this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled ?  'bottom' : 'right';
-            if (window.USE_BOOTSTRAP5) {
-                this.ui.hqHelp.hqHelp({placement: 'auto', fallbackPlacements: [fallback]});
-            } else {
-                this.ui.hqHelp.hqHelp({placement: 'auto ' + fallback});
-            }
+            this.ui.hqHelp.hqHelp({
+                placement: 'auto',
+                fallbackPlacements: [fallback],
+            });
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.each(function (index, el) {
                 hqTempusDominus.createDefaultDateRangePicker(el, {
@@ -505,7 +504,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
                 }
             });
             if (this.model.get('hidden') === 'true') {
-                this.$el.addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+                this.$el.addClass("d-none");
             }
         },
 
