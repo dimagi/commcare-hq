@@ -1,11 +1,26 @@
+from datetime import datetime, timedelta
+
 from django.test import SimpleTestCase, TestCase
 from unittest.mock import Mock, patch
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+)
+from corehq.apps.accounting.utils import clear_plan_version_cache
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.domain.models import SMSAccountConfirmationSettings, Domain, OperatorCallLimitSettings
+from corehq.apps.users.models import WebUser
 
 from corehq.toggles import NAMESPACE_DOMAIN, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.toggles.shortcuts import set_toggle
 
-from ..forms import DomainGlobalSettingsForm, PrivacySecurityForm
+from ..forms import (
+    ConfirmSubscriptionRenewalForm,
+    DomainGlobalSettingsForm,
+    PrivacySecurityForm,
+)
 from .. import forms
 
 
@@ -215,3 +230,78 @@ class TestAppReleaseModeSettingForm(TestCase):
         form.full_clean()
         saved = form.save(Mock(), self.domain_obj)
         self.assertEqual(True, saved)  # No error during form save
+
+
+class TestConfirmSubscriptionRenewalForm(TestCase, DomainSubscriptionMixin):
+    def setUp(self):
+        super().setUp()
+        self.domain = Domain(name='subscription-renewal', is_active=True)
+        self.domain.save()
+
+        username = 'clifford'
+        password = '*******'
+        self.user = WebUser.create(self.domain.name, username, password,
+                                   created_by=None, created_via=None, is_admin=True)
+        self.user.save()
+
+        self.setup_subscription(self.domain.name, SoftwarePlanEdition.STANDARD)
+        self.subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        self.subscription.date_end = datetime.today() + timedelta(days=7)
+        self.subscription.save()
+
+    def tearDown(self):
+        self.teardown_subscriptions()
+        self.user.delete(self.domain.name, deleted_by=None)
+        self.domain.delete()
+        clear_plan_version_cache()
+        super().tearDown()
+
+    def setup_form(self, plan_version):
+        # initialize form to set initial values
+        form = self.create_form(plan_version)
+        form_data = form.data
+
+        # populate required fields and those with initial values
+        form_data.update({
+            **{key: form[key].value() for key in form.fields},
+            'email_list': 'clifford@example.com',
+            'first_line': '123 Fake Street',
+            'city': 'Cambridge',
+            'state_province_region': 'MA',
+            'postal_code': '02139',
+            'country': 'US',
+        })
+        return self.create_form(plan_version, data=form_data)
+
+    def create_form(self, plan_version, **kwargs):
+        account = BillingAccount.get_account_by_domain('subscription-renewal')
+        args = (account, self.domain, self.user, self.subscription, plan_version)
+        return ConfirmSubscriptionRenewalForm(*args, **kwargs)
+
+    def test_form_initial_values(self):
+        next_plan_version = self.subscription.plan_version
+        form = self.create_form(next_plan_version)
+
+        self.assertEqual(form['plan_edition'].value(), SoftwarePlanEdition.STANDARD)
+        self.assertFalse(form['is_annual_plan'].value())
+
+    def test_form_renews_same_subscription(self):
+        next_plan_version = self.subscription.plan_version
+        form = self.setup_form(next_plan_version)
+        form.save()
+
+        self.assertTrue(form.is_valid())
+        self.assertTrue(self.subscription.is_renewed)
+        self.assertEqual(self.subscription.next_subscription.plan_version, next_plan_version)
+
+    def test_form_renews_alternate_subscription(self):
+        next_plan_version = DefaultProductPlan.get_default_plan_version(
+            edition=SoftwarePlanEdition.STANDARD,
+            is_annual_plan=True,
+        )
+        form = self.setup_form(next_plan_version)
+        form.save()
+
+        self.assertTrue(form.is_valid())
+        self.assertTrue(self.subscription.is_renewed)
+        self.assertEqual(self.subscription.next_subscription.plan_version, next_plan_version)
