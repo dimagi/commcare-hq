@@ -36,6 +36,7 @@ class GeospatialConfigForm(forms.ModelForm):
             "selected_disbursement_algorithm",
             "plaintext_api_token",
             "max_case_distance",
+            "max_case_travel_time",
         ]
 
     user_location_property_name = forms.CharField(
@@ -79,6 +80,12 @@ class GeospatialConfigForm(forms.ModelForm):
         help_text=_("The maximum distance (in kilometer) from the user to the case. Leave blank to skip."),
         required=False,
         min_value=1,
+    )
+    max_case_travel_time = forms.IntegerField(
+        label=_("Max travel time (minutes) to case"),
+        help_text=_("The maximum travel time (in minutes) from the user to the case. Leave blank to skip."),
+        required=False,
+        min_value=0,
     )
     selected_disbursement_algorithm = forms.ChoiceField(
         label=_("Disbursement algorithm"),
@@ -169,6 +176,13 @@ class GeospatialConfigForm(forms.ModelForm):
                     crispy.Field(
                         'max_case_distance',
                         data_bind='value: maxCaseDistance',
+                    ),
+                    crispy.Div(
+                        crispy.Field(
+                            'max_case_travel_time',
+                            data_bind='value: maxTravelTime',
+                        ),
+                        data_bind='visible: captureApiToken',
                     ),
                     crispy.Div(
                         crispy.Field('plaintext_api_token', data_bind="value: plaintext_api_token"),

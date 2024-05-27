@@ -53,6 +53,7 @@ hqDefine("geospatial/js/geo_config", [
         self.selectedAlgorithm = ko.observable();
         self.plaintext_api_token = ko.observable(data.plaintext_api_token);
         self.maxCaseDistance = ko.observable(data.max_case_distance);
+        self.maxTravelTime = ko.observable(data.max_case_travel_time);
 
         self.captureApiToken = ko.computed(function () {
             return self.selectedAlgorithm() === ROAD_NETWORK_ALGORITHM;
