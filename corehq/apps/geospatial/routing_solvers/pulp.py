@@ -70,6 +70,8 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
             for i in range(user_count):
                 for j in range(case_count):
                     if pulp.value(x[i, j]) > 0.5:
+                        if config.max_case_distance and costs[i][j] > config.max_case_distance:
+                            continue
                         solution[self.user_locations[i]['id']].append(self.case_locations[j]['id'])
                         if print_solution:
                             print(f"Case {self.case_locations[j]['id']} assigned to "
@@ -111,4 +113,15 @@ class RoadNetworkSolver(RadialDistanceSolver):
 
         response = requests.get(url, params=params)
         response.raise_for_status()
-        return response.json()['distances']
+        return self._convert_m_to_km(
+            response.json()['distances']
+        )
+
+    @staticmethod
+    def _convert_m_to_km(distances_m):
+        distances_km = []
+        for row in distances_m:
+            distances_km.append(
+                [value_m / 1000 for value_m in row]
+            )
+        return distances_km
