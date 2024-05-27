@@ -1,27 +1,31 @@
 from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
-from unittest.mock import Mock, patch
+
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
     SoftwarePlanEdition,
     Subscription,
 )
-from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.domain.models import SMSAccountConfirmationSettings, Domain, OperatorCallLimitSettings
+from corehq.apps.accounting.utils import clear_plan_version_cache
+from corehq.apps.domain.models import (
+    Domain,
+    OperatorCallLimitSettings,
+    SMSAccountConfirmationSettings,
+)
 from corehq.apps.users.models import WebUser
-
 from corehq.toggles import NAMESPACE_DOMAIN, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.toggles.shortcuts import set_toggle
 
+from .. import forms
 from ..forms import (
     ConfirmSubscriptionRenewalForm,
     DomainGlobalSettingsForm,
     PrivacySecurityForm,
 )
-from .. import forms
 
 
 class PrivacySecurityFormTests(SimpleTestCase):

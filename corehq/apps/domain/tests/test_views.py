@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from unittest.mock import patch
 
 from django.contrib.messages import get_messages
 from django.test import TestCase
@@ -6,15 +7,22 @@ from django.test.client import Client
 from django.urls import reverse
 
 from bs4 import BeautifulSoup
-from unittest.mock import patch
 
 from corehq import privileges
-from corehq.apps.accounting.models import DefaultProductPlan, Subscription, SoftwarePlanEdition
+from corehq.apps.accounting.models import (
+    DefaultProductPlan,
+    SoftwarePlanEdition,
+    Subscription,
+)
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views.settings import EditDomainAlertView, ManageDomainAlertsView, MAX_ACTIVE_ALERTS
+from corehq.apps.domain.views.settings import (
+    MAX_ACTIVE_ALERTS,
+    EditDomainAlertView,
+    ManageDomainAlertsView,
+)
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.users.models import WebUser
 from corehq.motech.models import ConnectionSettings
