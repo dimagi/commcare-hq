@@ -753,6 +753,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         },
 
         executeSearch: function (initiatedBy) {
+            var self = this;
             var request = FormplayerFrontend.getChannel().request(
                 "menu:query",
                 self.getAnswers(),
