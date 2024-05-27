@@ -63,13 +63,13 @@ def clear_enterprise_permissions_cache_for_all_users(config_id, domain=None):
         config = EnterprisePermissions.objects.get(id=config_id)
     except EnterprisePermissions.DoesNotExist:
         return
-    from corehq.apps.domain.views.base import get_enterprise_links_for_dropdown
+    from corehq.apps.hqwebapp.templatetags.hq_shared_tags import has_enterprise_links
     from corehq.apps.users.models import CouchUser
     domains = [domain] if domain else config.account.get_domains()
     for domain in domains:
         for user_id in CouchUser.ids_by_domain(domain):
             user = CouchUser.get_by_user_id(user_id)
-            get_enterprise_links_for_dropdown.clear(user)
+            has_enterprise_links.clear(user)
 
 
 @task()
