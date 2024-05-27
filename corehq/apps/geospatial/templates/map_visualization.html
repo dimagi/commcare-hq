@@ -95,7 +95,7 @@
     {% trans "Running disbursement algorithm..." %}
   </h4>
 </div>
-<div id="disbursement-error" class="alert alert-danger" data-bind="visible: disbursementErrorMessage(), text: disbursementErrorMessage">
+<div id="disbursement-error" class="alert alert-danger" data-bind="visible: disbursementErrorMessage(), html: disbursementErrorMessage">
 </div>
 <div id="disbursement-clear-message" class="alert alert-info" style="display: none">
     {% blocktrans %}
