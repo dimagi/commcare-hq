@@ -1,7 +1,7 @@
 import haversine
-
 import requests
 import pulp
+import copy
 
 from .mapbox_optimize import validate_routing_request
 from corehq.apps.geospatial.routing_solvers.base import DisbursementAlgorithmSolverInterface
@@ -37,8 +37,7 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         distance_costs, duration_costs = self.calculate_distance_matrix(config)
 
         if not distance_costs:
-            # Infeasible solution
-            return None, None
+            return None, self.solution_results(assigned=[], unassigned=self.case_locations)
 
         user_count = len(distance_costs)
         case_count = len(distance_costs[0])
@@ -75,6 +74,9 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         # Solve the problem
         problem.solve()
 
+        assigned_cases = []
+        unassigned_cases = copy.deepcopy(self.case_locations)
+
         # Process the solution
         if pulp.LpStatus[problem.status] == "Optimal":
             solution = {loc['id']: [] for loc in self.user_locations}
@@ -89,21 +91,14 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
                         )
                         if case_is_valid:
                             solution[self.user_locations[i]['id']].append(self.case_locations[j]['id'])
-            return None, solution
+                            unassigned_cases.remove(self.case_locations[j])
+            assigned_cases = solution
+
+        return None, self.solution_results(assigned=assigned_cases, unassigned=unassigned_cases)
 
     @staticmethod
-    def is_valid_user_case(config, distance_to_case=None, travel_secs_to_case=None):
-        should_check_distance = distance_to_case and config.max_case_distance
-        if should_check_distance and distance_to_case > config.max_case_distance:
-            return False
-
-        should_check_duration = travel_secs_to_case and config.max_case_travel_time
-        if should_check_duration and travel_secs_to_case > config.max_travel_time_seconds:
-            return False
-
-        return True
-
-        return None, None
+    def solution_results(assigned, unassigned):
+        return {"assigned": assigned, "unassigned": unassigned}
 
     @staticmethod
     def get_decision_variables(x_dim, y_dim):
@@ -134,6 +129,18 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         for j in range(case_count):
             lp_problem += pulp.lpSum([decision_variables[i, j] for i in range(user_count)]) == 1
         return lp_problem
+
+    @staticmethod
+    def is_valid_user_case(config, distance_to_case=None, travel_secs_to_case=None):
+        should_check_distance = distance_to_case and config.max_case_distance
+        if should_check_distance and distance_to_case > config.max_case_distance:
+            return False
+
+        should_check_duration = travel_secs_to_case and config.max_case_travel_time
+        if should_check_duration and travel_secs_to_case > config.max_travel_time_seconds:
+            return False
+
+        return True
 
 
 class RoadNetworkSolver(RadialDistanceSolver):
