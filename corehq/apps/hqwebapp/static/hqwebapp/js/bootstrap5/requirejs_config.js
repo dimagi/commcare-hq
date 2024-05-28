@@ -22,6 +22,7 @@ requirejs.config({
         "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
         "tempusDominus": "@eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
         "underscore": "underscore/underscore",
+        "nvd3/nv.d3.latest.min": "nvd3-1.8.6/build/nv.d3.min",
     },
     shim: {
         "accounting/js/lib/stripe": { exports: 'Stripe' },
@@ -91,6 +92,10 @@ requirejs.config({
         },
         "mapbox.js/dist/mapbox.uncompressed": { exports: "L" },
         "nvd3/nv.d3.min": {
+            deps: ['d3/d3.min'],
+            exports: 'nv',
+        },
+        "nvd3/nv.d3.latest.min": {
             deps: ['d3/d3.min'],
             exports: 'nv',
         },

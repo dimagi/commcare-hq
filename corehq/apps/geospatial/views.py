@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
+from django.utils.safestring import mark_safe
 
 import jsonschema
 from memoized import memoized
@@ -106,6 +107,18 @@ class CaseDisbursementAlgorithm(BaseDomainView):
 
         solver_class = config.disbursement_solver
         poll_id, result = solver_class(request_json).solve(config=config)
+
+        if not result:
+            html = _(
+                "We couldn't match every case to a user with the current disbursement settings. "
+                "Please follow any of the below steps to rectify this."
+                "<ul><li>Ensure that your min/max cases per user setting is correct</li>"
+                "<li>Allocate more users to the area</li>"
+                "<li>Use filtered areas to reduce the number of cases such that the algorithm "
+                "can ensure all cases are assigned.</li></ul>"
+            )
+            html_message = mark_safe(html)
+            return json_response({'error': html_message})
 
         if poll_id is None:
             return json_response(

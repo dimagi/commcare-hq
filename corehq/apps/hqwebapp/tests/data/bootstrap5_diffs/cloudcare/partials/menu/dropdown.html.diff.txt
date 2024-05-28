@@ -6,7 +6,7 @@
    <div class="btn-group" id="menu-dropdown">
 -    <button class="btn btn-primary-dark dropdown-toggle" role="button"
 -            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-+    <button class="btn btn-light dropdown-toggle" role="button"
++    <button class="btn btn-dark dropdown-toggle" role="button"
 +            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
        <i class="fa fa-bars"></i>
        <span class="sr-only">{% trans 'Dropdown toggle' %}</span>

@@ -20,7 +20,7 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
     columns = wrapped_case.related_cases_columns
     type_info = wrapped_case.related_type_info
 
-    descendent_case_list = get_flat_descendant_case_list(
+    descendant_case_list = get_flat_descendant_case_list(
         case, get_case_url, type_info=type_info
     )
 
@@ -31,7 +31,9 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
         # relationships)
         for idx in case.live_indices:
             try:
-                parent_cases.append(idx.referenced_case)
+                parent_case = idx.referenced_case
+                parent_case.index_info = _index_to_context(idx, is_ancestor=True)
+                parent_cases.append(parent_case)
             except ResourceNotFound:
                 parent_cases.append(None)
         for parent_case in parent_cases:
@@ -43,11 +45,16 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
             else:
                 last_parent_id = None
 
-        for c in descendent_case_list:
+        for c in descendant_case_list:
             if not getattr(c, 'treetable_parent_node_id', None) and last_parent_id:
                 c.treetable_parent_node_id = last_parent_id
 
-    case_list = parent_cases + descendent_case_list
+    reverse_indices = {index.case_id: index for index in case.reverse_indices}
+    for descendant in descendant_case_list:
+        if idx := reverse_indices.get(descendant.case_id):
+            descendant.index_info = _index_to_context(idx, is_ancestor=False)
+
+    case_list = parent_cases + descendant_case_list
 
     for c in case_list:
         if not c:
@@ -63,14 +70,21 @@ def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=
         'domain': case.domain,
         'case_list': case_list,
         'columns': columns,
-        'num_columns': len(columns) + 1,
         'show_view_buttons': show_view_buttons,
+    }
+
+
+def _index_to_context(index, is_ancestor):
+    return {
+        'identifier': index.identifier,
+        'relationship': index.relationship,
+        'is_ancestor': is_ancestor,
     }
 
 
 def normalize_date(val):
     # Can't use isinstance since datetime is a subclass of date.
-    if type(val) == datetime.date:
+    if type(val) is datetime.date:
         return datetime.datetime.combine(val, datetime.time.min)
 
     return val

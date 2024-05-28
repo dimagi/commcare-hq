@@ -38,9 +38,9 @@ def run_app_workflows():
 
 
 def _email_error(config, e, log):
-    url = reverse('app_execution:edit_workflow', args=[config.pk], absolute=True)
-    log_url = reverse('app_execution:workflow_log', args=[log.pk], absolute=True)
-    all_logs_url = reverse('app_execution:workflow_logs', args=[config.pk], absolute=True)
+    url = reverse('app_execution:edit_workflow', args=[config.domain, config.pk], absolute=True)
+    log_url = reverse('app_execution:workflow_log', args=[config.domain, log.pk], absolute=True)
+    all_logs_url = reverse('app_execution:workflow_logs', args=[config.domain, config.pk], absolute=True)
     message = format_html(
         """Error executing workflow: <a href="{url}">{name}</a>
         <br><br>
