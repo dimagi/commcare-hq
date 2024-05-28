@@ -50,9 +50,24 @@ class AppWorkflow:
 class CommandStep(Step):
     type: ClassVar[str] = "command"
     is_form_step: ClassVar[bool] = False
-    value: str
+
+    value: str = ""
+    """Display text of the command to execute"""
+
+    id: str = ""
+    """ID of the command to execute"""
+
+    def to_json(self):
+        data = super().to_json()
+        for key in ["value", "id"]:
+            if not getattr(self, key):
+                data.pop(key)
+        return data
 
     def get_request_data(self, session, data):
+        if self.id:
+            return _append_selection(data, self.id)
+
         commands = {c["displayText"].lower(): c for c in session.data.get("commands", [])}
 
         try:
@@ -66,14 +81,12 @@ class CommandStep(Step):
 class EntitySelectStep(Step):
     type: ClassVar[str] = "entity_select"
     is_form_step: ClassVar[bool] = False
+
     value: str
+    """ID of the entity to select."""
 
     def get_request_data(self, session, data):
-        entities = {entity["id"] for entity in session.data.get("entities", [])}
-        if not entities:
-            raise AppExecutionError("No entities found")
-        if self.value not in entities:
-            raise AppExecutionError(f"Entity not found: {self.value}: {list(entities)}")
+        _validate_entity_ids(session, [self.value])
         return _append_selection(data, self.value)
 
     def __str__(self):
@@ -81,28 +94,112 @@ class EntitySelectStep(Step):
 
 
 @define
+class MultipleEntitySelectStep(Step):
+    type: ClassVar[str] = "multiple_entity_select"
+    is_form_step: ClassVar[bool] = False
+
+    values: list[str]
+
+    def get_request_data(self, session, data):
+        _validate_entity_ids(session, self.values)
+        data = _append_selection(data, "use_selected_values")
+        data["selectedValues"] = self.values
+        return data
+
+
+def _validate_entity_ids(session, entity_ids):
+    entities = {entity["id"] for entity in session.data.get("entities", [])}
+    if not entities:
+        raise AppExecutionError("No entities found")
+    missing = set(entity_ids) - entities
+    if missing:
+        raise AppExecutionError(f"Entities not found: {missing}: {list(entities)}")
+
+
+@define
 class EntitySelectIndexStep(Step):
     type: ClassVar[str] = "entity_select_index"
     is_form_step: ClassVar[bool] = False
+
     value: int
+    """Zero-based index of the entity to select."""
 
     def get_request_data(self, session, data):
-        entities = [entity["id"] for entity in session.data.get("entities", [])]
-        if not entities:
-            raise AppExecutionError("No entities found")
-        if self.value >= len(entities):
-            raise AppExecutionError(f"Entity index out of range: {self.value}: {list(entities)}")
-        return _append_selection(data, entities[self.value])
+        selected = _select_entities_by_index(session, [self.value])
+        return _append_selection(data, selected[0])
 
     def __str__(self):
         return f"Entity Select: {self.value}"
 
 
 @define
+class MultipleEntitySelectByIndexStep(Step):
+    type: ClassVar[str] = "multiple_entity_select_by_index"
+    is_form_step: ClassVar[bool] = False
+
+    values: list[int]
+
+    def get_request_data(self, session, data):
+        selected = _select_entities_by_index(session, self.values)
+        data = _append_selection(data, "use_selected_values")
+        data["selectedValues"] = selected
+        return data
+
+
+def _select_entities_by_index(session, indexes):
+    entities = [entity["id"] for entity in session.data.get("entities", [])]
+    if not entities:
+        raise AppExecutionError("No entities found")
+    if max(indexes) >= len(entities):
+        raise AppExecutionError(f"Entity index out of range: {max(indexes)}: {list(entities)}")
+    return [entities[index] for index in indexes]
+
+
+@define
+class QueryInputValidationStep(Step):
+    type: ClassVar[str] = "query_input_validation"
+    is_form_step: ClassVar[bool] = False
+
+    inputs: dict
+    """Search inputs dict. Keys are field names and values are search values."""
+
+    def get_request_data(self, session, data):
+        query_key = session.data["queryKey"]
+        return {
+            **data,
+            # DataDog tag value
+            "requestInitiatedByTag": "field_change",
+            "query_data": {
+                query_key: {
+                    "execute": False,
+                    "force_manual_search": True,
+                    "inputs": self.inputs,
+                }
+            },
+        }
+
+
+@define
 class QueryStep(Step):
     type: ClassVar[str] = "query"
     is_form_step: ClassVar[bool] = False
+
     inputs: dict
+    """Search inputs dict. Keys are field names and values are search values."""
+
+    validate_inputs: bool = False
+    """Simulate updating search inputs on the UI. One request per update."""
+
+    def get_children(self):
+        children = []
+        if self.validate_inputs:
+            # children will be executed instead of the parent
+            inputs = {}
+            for field, value in self.inputs.items():
+                inputs[field] = value
+                children.append(QueryInputValidationStep(inputs=inputs.copy()))
+            children.append(QueryStep(inputs=self.inputs))  # execute query
+        return children
 
     def get_request_data(self, session, data):
         query_key = session.data["queryKey"]
@@ -118,6 +215,31 @@ class QueryStep(Step):
 
     def __str__(self):
         return f"Query: {self.inputs}"
+
+
+@define
+class ClearQueryStep(Step):
+    """This is implemented in the suite file with `redo_last="true"` and appears on the UI
+    as "Search Again"
+    """
+    type: ClassVar[str] = "clear_query"
+    is_form_step: ClassVar[bool] = False
+
+    def get_request_data(self, session, data):
+        query_key = session.data["queryKey"]
+        return {
+            **data,
+            "query_data": {
+                query_key: {
+                    "inputs": None,
+                    "execute": False,
+                    "force_manual_search": True,
+                }
+            },
+        }
+
+    def __str__(self):
+        return "ClearQuery"
 
 
 @define
@@ -176,8 +298,8 @@ class SubmitFormStep(Step):
 @define
 class FormStep(Step):
     type: ClassVar[str] = "form"
-    children: list[AnswerQuestionStep | SubmitFormStep]
     is_form_step: ClassVar[bool] = True
+    children: list[AnswerQuestionStep | SubmitFormStep]
 
     def to_json(self):
         return {
@@ -193,21 +315,24 @@ class FormStep(Step):
         return cls(children=_steps_from_json(data["children"]))
 
 
+@define
+class RawNavigationStep(Step):
+    type: ClassVar[str] = "raw_navigation"
+    is_form_step: ClassVar[bool] = False
+
+    request_data: dict
+
+    def get_request_data(self, session, data):
+        return self.request_data
+
+
 def _append_selection(data, selection):
     selections = data.get("selections", [])
     selections.append(selection)
     return {**data, "selections": selections}
 
 
-STEP_MAP = {
-    "command": CommandStep,
-    "entity_select": EntitySelectStep,
-    "entity_select_index": EntitySelectIndexStep,
-    "query": QueryStep,
-    "answer_question": AnswerQuestionStep,
-    "submit_form": SubmitFormStep,
-    "form": FormStep,
-}
+STEP_MAP = {step.type: step for step in Step.__subclasses__()}
 
 
 def _steps_from_json(data):

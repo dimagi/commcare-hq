@@ -1,0 +1,90 @@
+{
+  "log": {
+    "entries": [
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu_start",
+          "postData": {
+            "text": "{\"username\":\"user@example.com\",\"restoreAs\":null,\"domain\":\"demo_domain\",\"app_id\":\"demo_app_id\",\"locale\":\"en\",\"offset\":null,\"cases_per_page\":10,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"\\\">\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"demo_app_id\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 144\",\"selections\":null,\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"\\\">\"],\"persistentCaseTile\":null,\"queryKey\":null,\"commands\":[{\"index\":0,\"displayText\":\"Register\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"},{\"index\":1,\"displayText\":\"Format test\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"},{\"index\":2,\"displayText\":\"Case List\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"},{\"index\":3,\"displayText\":\"Child cases from repeat 1\",\"navigationState\":\"JUMP\",\"badgeText\":\"\"},{\"index\":4,\"displayText\":\"Child cases from repeat 2\",\"navigationState\":\"JUMP\",\"badgeText\":\"\"},{\"index\":5,\"displayText\":\"Child cases from repeat 3\",\"navigationState\":\"JUMP\",\"badgeText\":\"\"},{\"index\":6,\"displayText\":\"define cat_owner casetype\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"}],\"type\":\"commands\",\"layoutStyle\":null}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"user@example.com\",\"restoreAs\":null,\"domain\":\"demo_domain\",\"app_id\":\"demo_app_id\",\"locale\":\"en\",\"selections\":[\"0\"],\"offset\":0,\"search_text\":null,\"form_session_id\":null,\"query_data\":{},\"cases_per_page\":10,\"sortIndex\":null,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Register\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"demo_app_id\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 144\",\"selections\":[\"0\"],\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"\\\">\",\"Register\"],\"persistentCaseTile\":null,\"queryKey\":null,\"commands\":[{\"index\":0,\"displayText\":\"Register cat\",\"navigationState\":\"JUMP\",\"badgeText\":\"\"},{\"index\":1,\"displayText\":\"Cat sighting\",\"navigationState\":\"NEXT\",\"badgeText\":\"\"}],\"type\":\"commands\",\"layoutStyle\":null}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"user@example.com\",\"restoreAs\":null,\"domain\":\"demo_domain\",\"app_id\":\"demo_app_id\",\"locale\":\"en\",\"selections\":[\"0\",\"1\"],\"offset\":0,\"search_text\":null,\"form_session_id\":null,\"query_data\":{},\"cases_per_page\":10,\"sortIndex\":null,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Cat sighting\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"demo_app_id\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 144\",\"selections\":[\"0\",\"1\"],\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"locales\":[\"default\",\"en\"],\"breadcrumbs\":[\"\\\">\",\"Register\",\"Cat sighting\"],\"persistentCaseTile\":null,\"queryKey\":null,\"entities\":[{\"id\":\"7a6d6f96-9bd4-41c0-8e52-e499497c4991\",\"data\":[\"fluffy\"],\"groupKey\":null,\"altText\":[null]}],\"actions\":[],\"redoLast\":null,\"styles\":[{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null}],\"endpointActions\":[null],\"headers\":[\"Name\"],\"tiles\":null,\"widthHints\":[100],\"numEntitiesPerRow\":0,\"useUniformUnits\":false,\"sortIndices\":[0],\"noItemsText\":null,\"selectText\":null,\"pageCount\":0,\"currentPage\":0,\"type\":\"entities\",\"usesCaseTiles\":false,\"maxWidth\":0,\"maxHeight\":0,\"maxSelectValue\":-1,\"hasDetails\":true,\"queryResponse\":null,\"groupHeaderRows\":-1,\"multiSelect\":false}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/get_details",
+          "postData": {
+            "text": "{\"username\":\"user@example.com\",\"restoreAs\":null,\"domain\":\"demo_domain\",\"app_id\":\"demo_app_id\",\"locale\":\"en\",\"selections\":[\"0\",\"1\",\"7a6d6f96-9bd4-41c0-8e52-e499497c4991\"],\"offset\":0,\"search_text\":null,\"form_session_id\":null,\"query_data\":{},\"cases_per_page\":10,\"sortIndex\":null,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\",\"isShortDetail\":false}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"details\":[{\"details\":[\"fluffy\"],\"entities\":null,\"styles\":[{\"fontSize\":0,\"widthHint\":-1,\"horizontalAlign\":null,\"verticalAlign\":null,\"showBorder\":false,\"showShading\":false,\"displayFormat\":null}],\"headers\":[\"Name\"],\"altText\":[null],\"title\":\"Case\",\"usesCaseTiles\":false,\"maxWidth\":0,\"maxHeight\":0,\"numEntitiesPerRow\":0,\"tiles\":null,\"useUniformUnits\":false,\"hasInlineTile\":false,\"useNodeset\":false}],\"isPersistentDetail\":false}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/navigate_menu",
+          "postData": {
+            "text": "{\"username\":\"user@example.com\",\"restoreAs\":null,\"domain\":\"demo_domain\",\"app_id\":\"demo_app_id\",\"locale\":\"en\",\"selections\":[\"0\",\"1\",\"7a6d6f96-9bd4-41c0-8e52-e499497c4991\"],\"offset\":0,\"search_text\":null,\"form_session_id\":null,\"query_data\":{},\"cases_per_page\":10,\"sortIndex\":null,\"preview\":false,\"geo_location\":null,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":\"Cat sighting\",\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":\"demo_app_id\",\"appVersion\":\"Formplayer Version: 2.53, App Version: 144\",\"selections\":[\"0\",\"1\",\"7a6d6f96-9bd4-41c0-8e52-e499497c4991\"],\"translations\":{\"forms.m0f1.submit_label\":\"Submit\"},\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":{\"attemptRestore\":false,\"appInstall\":false},\"instanceXml\":{\"output\":\"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?><data xmlns=\\\"http://openrosa.org/formdesigner/3335FAB3-1936-4C6A-9373-37F9F88AFBD4\\\" uiVersion=\\\"1\\\" version=\\\"144\\\" name=\\\"Cat sighting\\\" xmlns:jrm=\\\"http://dev.commcarehq.org/jr/xforms\\\">\\n  <label/>\\n  <time_of_sighting/>\\n  <name>fluffy</name>\\n  <question1/>\\n  <n0:case xmlns:n0=\\\"http://commcarehq.org/case/transaction/v2\\\" case_id=\\\"7a6d6f96-9bd4-41c0-8e52-e499497c4991\\\" date_modified=\\\"\\\" user_id=\\\"655a8581da22f05fb953b19d8561b079\\\">\\n    <n0:update>\\n      <n0:last_sighting/>\\n    </n0:update>\\n  </n0:case>\\n  <n1:meta xmlns:n1=\\\"http://openrosa.org/jr/xforms\\\">\\n    <n1:deviceID>Formplayer</n1:deviceID>\\n    <n1:timeStart>2024-05-14T13:39:14.292+02</n1:timeStart>\\n    <n1:timeEnd/>\\n    <n1:username>user@example.com</n1:username>\\n    <n1:userID>655a8581da22f05fb953b19d8561b079</n1:userID>\\n    <n1:instanceID>8c680880-dd1b-48b3-89e5-36271229e9f5</n1:instanceID>\\n    <n2:appVersion xmlns:n2=\\\"http://commcarehq.org/xforms\\\">Formplayer Version: 2.53</n2:appVersion>\\n    <n1:drift/>\\n  </n1:meta>\\n</data>\\n\"},\"tree\":[{\"caption_audio\":null,\"caption_video\":null,\"caption_image\":null,\"caption_markdown\":null,\"caption\":\"Confirmed sighting of fluffy\",\"binding\":\"/data/label\",\"question_id\":\"label\",\"required\":0,\"relevant\":0,\"answer\":null,\"datatype\":\"info\",\"style\":{\"raw\":\"minimal\"},\"type\":\"question\",\"ix\":\"0\",\"choices\":null,\"repeatable\":null,\"exists\":null,\"header\":null,\"control\":9,\"help\":null,\"help_image\":null,\"help_audio\":null,\"help_video\":null,\"hint\":null,\"output\":null,\"add-choice\":null},{\"caption_audio\":null,\"caption_video\":null,\"caption_image\":null,\"caption_markdown\":null,\"caption\":\"When?\",\"binding\":\"/data/time_of_sighting\",\"question_id\":\"time_of_sighting\",\"required\":0,\"relevant\":0,\"answer\":null,\"datatype\":\"datetime\",\"style\":null,\"type\":\"question\",\"ix\":\"1\",\"choices\":null,\"repeatable\":null,\"exists\":null,\"header\":null,\"control\":1,\"help\":null,\"help_image\":null,\"help_audio\":null,\"help_video\":null,\"hint\":null,\"output\":null,\"add-choice\":null},{\"caption_audio\":null,\"caption_video\":null,\"caption_image\":null,\"caption_markdown\":null,\"caption\":null,\"binding\":null,\"question_id\":null,\"required\":0,\"relevant\":0,\"answer\":null,\"datatype\":null,\"style\":{},\"type\":\"repeat-juncture\",\"ix\":\"2_-10\",\"choices\":null,\"repeatable\":null,\"exists\":null,\"header\":null,\"control\":0,\"help\":null,\"help_image\":null,\"help_audio\":null,\"help_video\":null,\"hint\":null,\"children\":[],\"output\":null,\"add-choice\":\"None - Add null\"},{\"caption_audio\":null,\"caption_video\":null,\"caption_image\":null,\"caption_markdown\":null,\"caption\":null,\"binding\":\"/data/question1\",\"question_id\":\"question1\",\"required\":0,\"relevant\":0,\"answer\":null,\"datatype\":\"select\",\"style\":null,\"type\":\"question\",\"ix\":\"3\",\"choices\":[],\"repeatable\":null,\"exists\":null,\"header\":null,\"control\":2,\"help\":null,\"help_image\":null,\"help_audio\":null,\"help_video\":null,\"hint\":null,\"output\":null,\"add-choice\":null}],\"langs\":[\"en\"],\"breadcrumbs\":[\"\\\">\",\"Register\",\"Cat sighting\",\"fluffy\"],\"persistentCaseTile\":null,\"event\":null,\"session_id\":\"0bd6b52b-f6ff-4112-bef3-66f04e57475b\",\"seq_id\":0}"
+          }
+        }
+      },
+      {
+        "request": {
+          "method": "POST",
+          "url": "https://www.commcarehq.org/formplayer/submit-all",
+          "postData": {
+            "text": "{\"action\":\"submit-all\",\"answers\":{\"0\":\"OK\",\"1\":\"Not Supported by Web Entry\",\"3\":null},\"prevalidated\":true,\"domain\":\"demo_domain\",\"username\":\"user@example.com\",\"restoreAs\":null,\"session-id\":\"0bd6b52b-f6ff-4112-bef3-66f04e57475b\",\"session_id\":\"0bd6b52b-f6ff-4112-bef3-66f04e57475b\",\"debuggerEnabled\":true,\"tz_offset_millis\":7200000,\"tz_from_browser\":\"Africa/Johannesburg\"}"
+          }
+        },
+        "response": {
+          "content": {
+            "text": "{\"shouldRequestLocation\":false,\"shouldWatchLocation\":false,\"notification\":null,\"title\":null,\"clearSession\":false,\"shouldAutoSubmit\":false,\"appId\":null,\"appVersion\":null,\"selections\":null,\"translations\":null,\"smartLinkRedirect\":null,\"dynamicSearch\":false,\"metaData\":null,\"instanceXml\":null,\"status\":\"success\",\"submitResponseMessage\":\"'Register cat' successfully saved!\\n\\nYou submitted [this form](/a/demo_domain/reports/form_data/c0812de6-d8cc-4123-8204-3dda5b2b87a6/), which affected [this case](/a/demo_domain/reports/case_data/7a6d6f96-9bd4-41c0-8e52-e499497c4991/).\\n\\nClick to export your [case](/a/demo_domain/data/export/custom/case/) or [form](/a/demo_domain/data/export/custom/form/) data.\",\"errors\":{},\"nextScreen\":null,\"session_id\":null,\"seq_id\":0}"
+          }
+        }
+      }
+    ]
+  }
+}

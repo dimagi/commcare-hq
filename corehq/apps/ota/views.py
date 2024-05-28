@@ -48,7 +48,7 @@ from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, CASE_SEARCH_TAGS_MAPPING
 from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.auth import formplayer_auth
-from corehq.apps.domain.decorators import check_domain_migration
+from corehq.apps.domain.decorators import check_domain_mobile_access
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import (
     location_safe,
@@ -88,7 +88,7 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @location_safe
 @handle_401_response
 @mobile_auth_or_formplayer
-@check_domain_migration
+@check_domain_mobile_access
 def restore(request, domain, app_id=None):
     """
     We override restore because we have to supply our own
@@ -106,7 +106,7 @@ def restore(request, domain, app_id=None):
 @location_safe_bypass
 @csrf_exempt
 @mobile_auth
-@check_domain_migration
+@check_domain_mobile_access
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def search(request, domain):
     return app_aware_search(request, domain, None)
@@ -116,7 +116,7 @@ def search(request, domain):
 @location_safe_bypass
 @csrf_exempt
 @mobile_auth
-@check_domain_migration
+@check_domain_mobile_access
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def app_aware_search(request, domain, app_id):
     """
@@ -171,7 +171,7 @@ def _log_search_timing(start_time, request_dict, domain, app_id):
 @csrf_exempt
 @require_POST
 @mobile_auth
-@check_domain_migration
+@check_domain_mobile_access
 @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
 def claim(request, domain):
     """

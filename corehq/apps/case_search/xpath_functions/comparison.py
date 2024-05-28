@@ -40,9 +40,9 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
     if meta_property := INDEXED_METADATA_BY_KEY.get(case_property_name):
         if meta_property.is_datetime:
             return _create_system_datetime_query(
-                context.request_domain, meta_property, op, value, node,
+                context.domain, meta_property, op, value, node,
             )
-        if (CASE_SEARCH_INDEXED_METADATA.enabled(context.request_domain)
+        if (CASE_SEARCH_INDEXED_METADATA.enabled(context.domain)
                 and op in [EQ, NEQ] and not context.fuzzy):  # We can filter better at the top level
             return _create_system_query(meta_property, op, value)
     return _create_query(context, case_property_name, op, value, node)

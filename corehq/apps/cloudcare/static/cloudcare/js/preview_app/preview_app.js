@@ -14,6 +14,12 @@ hqDefine('cloudcare/js/preview_app/preview_app', [
         });
 
         FormplayerFrontend.start(options);
+
+        if (localStorage.getItem("preview-tablet")) {
+            FormplayerFrontend.trigger('view:tablet');
+        } else {
+            FormplayerFrontend.trigger('view:phone');
+        }
     };
 
     return {

@@ -404,6 +404,15 @@
       "file_type": "template",
       "label": "users/partials",
       "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "users/partials",
+      "compare_all_files": true
     }
   ],
   "apps/cloudcare/templates/cloudcare": [

@@ -3,7 +3,7 @@
 <script type="text/html" id="question-fullform-ko-template">
   <div data-bind="class:questionTileWidth">
   <!-- ko if: !isLabel && !isButton -->
-  <div class="q form-group" data-bind="  {# todo B5: css:form-group #}
+  <div class="q row" data-bind="
             css: {
                 error: error,
                 required: $data.required,
@@ -19,16 +19,12 @@
       visible: hasLabelContent">
       {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
       <div data-bind="css: {
-          'row': help(),
           'text-center': stylesContains('text-align-center'),
           'text-end': stylesContains('text-align-right'),
         }">
-        <span class="webapp-markdown-output" data-bind="
-            html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
-            css: {'col-lg-11' : help()}"></span>
         <!-- ko if: help() -->
         <a
-          class="help-text-trigger col-lg-1"
+          class="help-text-trigger float-end ms-3 mb-1"
           role="button"
           href="javascript:void(0)"
           title="{% trans 'Show help dialog' %}"
@@ -51,6 +47,7 @@
           </div>
         </div>
         <!-- /ko -->
+        <span class="webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
       </div>
       <span class="hint-text" data-bind="
               text: ko.utils.unwrapObservable($data.hint),
@@ -62,9 +59,8 @@
     </label>
     <div class="widget-container controls" data-bind="css: controlWidth">
       <div class="widget" data-bind="
-                template: { name: entryTemplate, data: entry, afterRender: afterRender },
-                css: { 'has-error': hasError }  {# todo B5: css:has-error #}
-            ">
+        template: { name: entryTemplate, data: entry, afterRender: afterRender },
+      ">
       </div>
       <div class="widget-multimedia" data-bind="
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
@@ -89,9 +85,8 @@
                     }">{% trans 'Sorry, this response is required!' %}</div>
   <!-- /ko -->
   <!-- ko if: isLabel -->
-  <div class="form-group">  {# todo B5: css:form-group #}
     {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
-    <div class="info col-md-12" data-bind="
+    <div class="info" data-bind="
         css: {
             'text-center': stylesContains('text-align-center'),
             'text-end': stylesContains('text-align-right'),
@@ -116,20 +111,18 @@
           "></div>
       </div>
     </div>
-  </div>
   <!-- /ko -->
   <!-- ko if: isButton -->
   {# appearance attributes TEXT_ALIGN_CENTER TEXT_ALIGN_RIGHT #}
-  <div class="q form-group" data-bind="  {# todo B5: css:form-group #}
-    css: {
-      error: error,
-      'text-center': stylesContains('text-align-center'),
-      'text-end': stylesContains('text-align-right')
-    }">
-    <div class="widget-container controls col-md-12">
-      <div class="widget" data-bind="
-        template: { name: entryTemplate, data: entry, afterRender: afterRender },
-        css: { 'has-error': hasError }  {# todo B5: css:has-error #}
+    <div class="q row" data-bind="
+      css: {
+        error: error,
+        'text-center': stylesContains('text-align-center'),
+        'text-end': stylesContains('text-align-right')
+      }">
+      <div class="widget-container controls col-md-12">
+        <div class="widget" data-bind="
+          template: { name: entryTemplate, data: entry, afterRender: afterRender },
         "></div>
       </div>
     </div>

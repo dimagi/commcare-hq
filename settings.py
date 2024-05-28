@@ -370,6 +370,7 @@ HQ_APPS = (
     'pillowtop',
     'pillow_retry',
     'corehq.apps.styleguide',
+    'corehq.apps.prototype',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
     'corehq.motech',
@@ -1074,6 +1075,17 @@ CUSTOM_LANDING_TEMPLATE = {
 
 # used to override low-level index settings (number_of_replicas, number_of_shards, etc)
 ES_SETTINGS = None
+
+"""
+The CASE_SEARCH_SUB_INDICES should look like this:
+{
+    'co-carecoordination-perf': {
+        'index_cname': 'case_search_bha',
+        'multiplex_writes': True,
+    }
+}
+"""
+CASE_SEARCH_SUB_INDICES = {}
 
 PHI_API_KEY = None
 PHI_PASSWORD = None

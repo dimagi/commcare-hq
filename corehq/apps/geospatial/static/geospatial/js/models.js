@@ -14,6 +14,8 @@ hqDefine('geospatial/js/models', [
 ) {
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
+    const SELECTED_FEATURE_ID_QUERY_PARAM = 'selected_feature_id';
+    const MAX_URL_LENGTH = 4500;
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
 
@@ -514,6 +516,7 @@ hqDefine('geospatial/js/models', [
 
         self.polygons = {};
         self.shouldRefreshPage = ko.observable(false);
+        self.hasUrlError = ko.observable(false);
 
         self.savedPolygons = ko.observableArray([]);
         self.selectedSavedPolygonId = ko.observable('');
@@ -543,13 +546,39 @@ hqDefine('geospatial/js/models', [
 
         function updatePolygonQueryParam() {
             const url = new URL(window.location.href);
-            if (Object.keys(self.polygons).length) {
+            if (Object.keys(self.polygons)) {
                 url.searchParams.set(FEATURE_QUERY_PARAM, JSON.stringify(self.polygons));
             } else {
                 url.searchParams.delete(FEATURE_QUERY_PARAM);
             }
-            window.history.replaceState({ path: url.href }, '', url.href);
-            self.shouldRefreshPage(true);
+            updateUrl(url);
+        }
+
+        function updateUrl(url) {
+            if (url.href.length <= MAX_URL_LENGTH) {
+                window.history.replaceState({ path: url.href }, '', url.href);
+                self.shouldRefreshPage(true);
+                self.hasUrlError(false);
+            } else {
+                self.shouldRefreshPage(false);
+                self.hasUrlError(true);
+            }
+        }
+
+        function updateSelectedSavedPolygonParam() {
+            const url = new URL(window.location.href);
+            const prevSelectedId = url.searchParams.get(SELECTED_FEATURE_ID_QUERY_PARAM);
+            if (prevSelectedId === self.selectedSavedPolygonId()) {
+                // If the user refreshes the page, we shouldn't prompt another refresh
+                return;
+            }
+
+            if (self.selectedSavedPolygonId()) {
+                url.searchParams.set(SELECTED_FEATURE_ID_QUERY_PARAM, self.selectedSavedPolygonId());
+            } else {
+                url.searchParams.delete(SELECTED_FEATURE_ID_QUERY_PARAM);
+            }
+            updateUrl(url);
         }
 
         self.loadPolygonFromQueryParam = function () {
@@ -562,6 +591,14 @@ hqDefine('geospatial/js/models', [
                     self.mapObj.drawControls.add(feature);
                     self.polygons[featureId] = feature;
                 }
+            }
+        };
+
+        self.loadSelectedPolygonFromQueryParam = function () {
+            const url = new URL(window.location.href);
+            const selectedFeatureParam = url.searchParams.get(SELECTED_FEATURE_ID_QUERY_PARAM);
+            if (selectedFeatureParam) {
+                self.selectedSavedPolygonId(selectedFeatureParam);
             }
         };
 
@@ -591,8 +628,6 @@ hqDefine('geospatial/js/models', [
 
         self.clearActivePolygon = function () {
             if (self.activeSavedPolygon) {
-                // self.selectedSavedPolygonId('');
-                self.removePolygonsFromFilterList(self.activeSavedPolygon.geoJson.features);
                 removeActivePolygonLayer();
                 self.activeSavedPolygon = null;
                 self.btnSaveDisabled(false);
@@ -644,7 +679,7 @@ hqDefine('geospatial/js/models', [
             createActivePolygonLayer(polygonObj);
 
             self.activeSavedPolygon = polygonObj;
-            self.addPolygonsToFilterList(polygonObj.geoJson.features);
+            updateSelectedSavedPolygonParam();
             self.btnExportDisabled(false);
             self.btnSaveDisabled(true);
             if (self.shouldSelectAfterFilter) {
@@ -666,6 +701,7 @@ hqDefine('geospatial/js/models', [
                 }
                 self.savedPolygons.push(new SavedPolygon(polygon));
             });
+            self.loadSelectedPolygonFromQueryParam();
         };
 
         self.exportGeoJson = function (exportButtonId) {
