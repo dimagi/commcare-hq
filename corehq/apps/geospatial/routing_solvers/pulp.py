@@ -1,7 +1,7 @@
 import haversine
-
 import requests
 import pulp
+import copy
 
 from .mapbox_optimize import validate_routing_request
 from corehq.apps.geospatial.routing_solvers.base import DisbursementAlgorithmSolverInterface
@@ -37,7 +37,7 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         distance_costs, duration_costs = self.calculate_distance_matrix(config)
 
         if not distance_costs:
-            return None, None
+            return None, self.solution_results(assigned=[], unassigned=self.case_locations)
 
         user_count = len(distance_costs)
         case_count = len(distance_costs[0])
@@ -74,6 +74,9 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         # Solve the problem
         problem.solve()
 
+        assigned_cases = []
+        unassigned_cases = copy.deepcopy(self.case_locations)
+
         # Process the solution
         if pulp.LpStatus[problem.status] == "Optimal":
             solution = {loc['id']: [] for loc in self.user_locations}
@@ -88,10 +91,14 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
                         )
                         if case_is_valid:
                             solution[self.user_locations[i]['id']].append(self.case_locations[j]['id'])
+                            unassigned_cases.remove(self.case_locations[j])
+            assigned_cases = solution
 
-            return None, solution
+        return None, self.solution_results(assigned=assigned_cases, unassigned=unassigned_cases)
 
-        return None, None
+    @staticmethod
+    def solution_results(assigned, unassigned):
+        return {"assigned": assigned, "unassigned": unassigned}
 
     @staticmethod
     def get_decision_variables(x_dim, y_dim):
