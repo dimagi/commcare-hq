@@ -16,10 +16,17 @@ import logging
 import os
 import sys
 from contextlib import ExitStack, contextmanager
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+from pytest_django.fixtures import (
+    db as django_db,
+    django_db_modify_db_settings,
+    transactional_db,
+)
 from pytest_django.plugin import DjangoDbBlocker, blocking_manager_key
+from unmagic import get_fixture_value, use
 
 from django.conf import settings
 from django.core import cache
@@ -53,7 +60,7 @@ bootstrap: Restore database state such as software plan versions and currencies
 migrate: Migrate the test databases before running tests.
 teardown: Skip database setup; do normal teardown after running tests.
 """
-SETUP_DATABASES_FUNCTION_NAME = f"{__name__} setup_databases"
+SETUP_DATABASES_FUNCTION_NAME = "setup_databases "
 
 
 @pytest.hookimpl
@@ -143,8 +150,16 @@ def reorder(key):
     def is_setup(item):
         return item.name == SETUP_DATABASES_FUNCTION_NAME
 
+    def new_key(item):
+        unmagic_fixtures = getattr(item.obj, "unmagic_fixtures", [])
+        if transactional_db in unmagic_fixtures:
+            return 3
+        if django_db in unmagic_fixtures:
+            return 2
+        return 1 if is_setup(item) else new_order[key(item)]
+
     new_order = {2: 0, 0: 2, 1: 3}
-    return lambda item: 1 if is_setup(item) else new_order[key(item)]
+    return new_key
 
 
 def is_still_sorted(items, key):
@@ -157,7 +172,8 @@ def is_still_sorted(items, key):
 
 
 @pytest.fixture(scope="session")
-def django_db_setup(django_db_modify_db_settings):
+@use(django_db_modify_db_settings)
+def django_db_setup():
     """Override pytest_django's django_db_setup fixture
 
     Replace pytest_django's database setup/teardown with
@@ -166,7 +182,7 @@ def django_db_setup(django_db_modify_db_settings):
 
     There appears to be no explicit dependency between this and the
     pytest-django fixture. Is there a race to determine which will
-    override the other?
+    override the other? Beware of magic.
     """
     try:
         yield
@@ -184,7 +200,7 @@ class DeferredDatabaseContext:
         database setup fails.
         """
         setup = pytest.Function.from_parent(
-            session,
+            pytest.Module.from_parent(session, path=Path(__file__), nodeid="reusedb"),
             name=SETUP_DATABASES_FUNCTION_NAME,
             callobj=lambda: self.setup_databases(session),
         )
@@ -209,7 +225,7 @@ class DeferredDatabaseContext:
                 cleanup(delete_couch_databases)
 
         assert "teardown_databases" not in self.__dict__, "already set up"
-        db_blocker = session.config.stash[blocking_manager_key]
+        db_blocker = get_fixture_value("django_db_blocker")
         with db_blocker.unblock(), ExitStack() as stack:
             try:
                 setup(stack.enter_context, stack.callback)
