@@ -56,8 +56,7 @@
     <pagination data-apply-bindings="false"
                 params="goToPage: goToPage, totalItems: totalItems, perPage: perPage, onLoad: onLoad"></pagination>
 </div>
-{{ timing_chart_data|json_script:"timing_chart_data" }}
-{{ status_chart_data|json_script:"status_chart_data" }}
+{{ chart_data|json_script:"chart_data" }}
 <script id="timingSeries" type="application/json">
   [{"label": "- Avg Timings", "key": "avg_duration"}, {"label": "- Max Timings", "key": "max_duration"}]
 </script>

@@ -30,8 +30,10 @@ def workflow_list(request, domain):
         "Automatically Executed App Workflows",
         reverse("app_execution:workflow_list", args=[domain]),
         workflows=workflows,
-        timing_chart_data=get_avg_duration_data(domain, start=start, end=utcnow),
-        status_chart_data=get_status_data(domain, start=start, end=utcnow)
+        chart_data={
+            "timing": get_avg_duration_data(domain, start=start, end=utcnow),
+            "status": get_status_data(domain, start=start, end=utcnow),
+        }
     )
     return render(request, "app_execution/workflow_list.html", context)
 
@@ -174,8 +176,10 @@ def workflow_log_list(request, domain, pk):
         add_parent=True,
         workflow=AppWorkflowConfig.objects.get(id=pk),
         total=AppExecutionLog.objects.filter(workflow__domain=domain, workflow_id=pk).count(),
-        timing_chart_data=get_avg_duration_data(domain, start=start, end=utcnow, workflow_id=pk),
-        status_chart_data=get_status_data(domain, start=start, end=utcnow, workflow_id=pk),
+        chart_data={
+            "timing": get_avg_duration_data(domain, start=start, end=utcnow, workflow_id=pk),
+            "status": get_status_data(domain, start=start, end=utcnow, workflow_id=pk),
+        }
     )
     return render(request, "app_execution/workflow_log_list.html", context)
 

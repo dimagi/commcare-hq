@@ -24,7 +24,7 @@ hqDefine("app_execution/js/workflow_charts", [
     }
 
     function setupTimingChart(data, includeSeries) {
-        const timingSeries = data.flatMap((series) => getSeries(series, includeSeries));
+        const timingSeries = data.timing.flatMap((series) => getSeries(series, includeSeries));
         nv.addGraph(function () {
             let chart = nv.models.lineChart()
                 .showYAxis(true)
@@ -62,7 +62,7 @@ hqDefine("app_execution/js/workflow_charts", [
             "Success": "#6dcc66",
             "Error": "#f44",
         };
-        data = data.map((series) => {
+        let seriesData = data.status.map((series) => {
             return {
                 key: series.key,
                 values: series.values.map((item) => {
@@ -91,7 +91,7 @@ hqDefine("app_execution/js/workflow_charts", [
                 });
 
             d3.select('#status_barchart svg')
-                .datum(data)
+                .datum(seriesData)
                 .call(chart);
 
             nv.utils.windowResize(chart.update);
@@ -100,10 +100,9 @@ hqDefine("app_execution/js/workflow_charts", [
     }
 
     $(document).ready(function () {
-        const timingData = JSON.parse(document.getElementById('timing_chart_data').textContent);
-        const statusData = JSON.parse(document.getElementById('status_chart_data').textContent);
+        const data = JSON.parse(document.getElementById('chart_data').textContent);
         const includeSeries = JSON.parse(document.getElementById('timingSeries').textContent);
-        setupTimingChart(timingData, includeSeries);
-        setupStatusChart(statusData);
+        setupTimingChart(data, includeSeries);
+        setupStatusChart(data);
     });
 });

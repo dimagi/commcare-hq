@@ -71,8 +71,7 @@
   </tbody>
 </table>
 
-{{ timing_chart_data|json_script:"timing_chart_data" }}
-{{ status_chart_data|json_script:"status_chart_data" }}
+{{ chart_data|json_script:"chart_data" }}
 <script id="timingSeries" type="application/json">
   [{"label": "", "key": "avg_duration"}]
 </script>
