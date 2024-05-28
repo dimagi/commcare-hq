@@ -25,6 +25,9 @@ class GeoConfig(models.Model):
     ROAD_NETWORK_ALGORITHM = 'road_network_algorithm'
     MIN_MAX_GROUPING = 'min_max_grouping'
     TARGET_SIZE_GROUPING = 'target_size_grouping'
+    WALKING = "walking"
+    CYCLING = "cycling"
+    DRIVING = "driving"
 
     VALID_DISBURSEMENT_ALGORITHM_CLASSES = {
         RADIAL_ALGORITHM: pulp.RadialDistanceSolver,
@@ -42,6 +45,11 @@ class GeoConfig(models.Model):
     VALID_GROUPING_METHODS = [
         (MIN_MAX_GROUPING, _('Min/Max Grouping')),
         (TARGET_SIZE_GROUPING, _('Target Size Grouping')),
+    ]
+    VALID_TRAVEL_MODES = [
+        (WALKING, _("Walking")),
+        (CYCLING, _("Cycling")),
+        (DRIVING, _("Driving")),
     ]
 
     domain = models.CharField(max_length=256, db_index=True, primary_key=True)
@@ -62,6 +70,7 @@ class GeoConfig(models.Model):
     min_cases_per_user = models.IntegerField(default=1)
     max_case_distance = models.IntegerField(null=True)  # km
     max_case_travel_time = models.IntegerField(null=True)  # minutes
+    travel_mode = models.CharField(choices=VALID_TRAVEL_MODES, default=DRIVING, max_length=50)
     selected_disbursement_algorithm = models.CharField(
         choices=VALID_DISBURSEMENT_ALGORITHMS,
         default=RADIAL_ALGORITHM,
@@ -86,6 +95,11 @@ class GeoConfig(models.Model):
     @property
     def max_travel_time_seconds(self):
         return self.max_case_travel_time * 60
+
+    @property
+    def mapbox_travel_mode(self):
+        assert self.travel_mode in [self.WALKING, self.CYCLING, self.DRIVING]
+        return self.travel_mode
 
     @property
     def disbursement_solver(self):
