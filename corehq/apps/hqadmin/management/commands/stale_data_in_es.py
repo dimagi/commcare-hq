@@ -11,7 +11,7 @@ import dateutil
 from dimagi.utils.chunked import chunked
 from dimagi.utils.retry import retry_on
 
-from corehq.apps.es import CaseES, CaseSearchES, FormES
+from corehq.apps.es import CaseES, CaseSearchBhaES, FormES
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
     FormReindexAccessor,
@@ -228,7 +228,7 @@ class CaseHelper:
     @retry_on_es_timeout
     def _get_case_search_es_modified_dates(case_ids):
         results = (
-            CaseSearchES(for_export=True)
+            CaseSearchBhaES(for_export=True)
             .case_ids(case_ids)
             .values_list('_id', 'server_modified_on', 'domain')
         )
