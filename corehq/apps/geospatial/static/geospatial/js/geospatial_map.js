@@ -1,3 +1,5 @@
+'use strict';
+
 hqDefine("geospatial/js/geospatial_map", [
     "jquery",
     "hqwebapp/js/initial_page_data",
@@ -75,7 +77,7 @@ hqDefine("geospatial/js/geospatial_map", [
         self.pollUrl = ko.observable('');
         self.isBusy = ko.observable(false);
 
-        self.hasMissingData = ko.observable(false);  // True if the user attemps disbursement with polygon filtering that includes no cases/users.
+        self.disbursementErrorMessage = ko.observable('');
 
         self.setBusy = function (isBusy) {
             self.isBusy(isBusy);
@@ -145,10 +147,15 @@ hqDefine("geospatial/js/geospatial_map", [
                 data: JSON.stringify({'users': userData, "cases": caseData}),
                 contentType: "application/json; charset=utf-8",
                 success: function (ret) {
-                    if (ret['poll_url'] !== undefined) {
-                        self.startPoll(ret['poll_url']);
+                    if (ret.error) {
+                        self.disbursementErrorMessage(ret.error);
+                        self.setBusy(false);
                     } else {
-                        self.handleDisbursementResults(ret['result']);
+                        if (ret['poll_url'] !== undefined) {
+                            self.startPoll(ret['poll_url']);
+                        } else {
+                            self.handleDisbursementResults(ret['result']);
+                        }
                     }
                 },
                 error: function () {
@@ -301,7 +308,13 @@ hqDefine("geospatial/js/geospatial_map", [
                 // User might do polygon filtering on an area with no cases/users. We should not do
                 // disbursement if this is the case
                 const hasValidData = selectedCases.length && selectedUsers.length;
-                disbursementRunner.hasMissingData(!hasValidData);
+                if (!hasValidData) {
+                    const errorMessage = gettext("Please ensure that the filtered area includes both cases" +
+                                                 "and mobile workers before attempting to run disbursement.");
+                    disbursementRunner.disbursementErrorMessage(errorMessage);
+                } else {
+                    disbursementRunner.disbursementErrorMessage('');
+                }
                 if (hasValidData) {
                     disbursementRunner.runCaseDisbursementAlgorithm(selectedCases, selectedUsers);
                 }

@@ -58,6 +58,8 @@ class GeoConfig(models.Model):
     min_cases_per_group = models.IntegerField(null=True)
     target_group_count = models.IntegerField(null=True)
 
+    max_cases_per_user = models.IntegerField(null=True)
+    min_cases_per_user = models.IntegerField(default=1)
     selected_disbursement_algorithm = models.CharField(
         choices=VALID_DISBURSEMENT_ALGORITHMS,
         default=RADIAL_ALGORITHM,
