@@ -155,6 +155,23 @@ class BulkLocationUploadAPITest(TestCase):
         self.client = Client()
         self.url = reverse('bulk_location_upload_api', args=[self.domain_name])
 
+    @staticmethod
+    def _create_mock_file():
+        workbook = Workbook()
+        file = BytesIO()
+        workbook.save(file)
+        file.seek(0)
+        file.name = 'mock_file.xlsx'
+        return file
+
+    def _make_post_request(self, file):
+        return self.client.post(
+            self.url,
+            {'bulk_upload_file': file},
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
+            format='multipart'
+        )
+
     @mock.patch('corehq.apps.locations.views.import_locations_async')
     @mock.patch('corehq.apps.locations.views.LocationImportView.cache_file')
     def test_success(self, mock_cache_file, mock_import_locations_async):
@@ -164,18 +181,10 @@ class BulkLocationUploadAPITest(TestCase):
         mock_cache_file.return_value = LocationImportView.Ref(mock_file_ref)
         mock_import_locations_async.delay.return_value = None
 
-        workbook = Workbook()
-        file = BytesIO()
-        workbook.save(file)
-        file.seek(0)
-        file.name = 'mock_file.xlsx'
+        file = self._create_mock_file()
 
-        response = self.client.post(
-            self.url,
-            {'bulk_upload_file': file},
-            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
-            format='multipart'
-        )
+        response = self._make_post_request(file)
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {'success': True})
 
@@ -216,12 +225,9 @@ class BulkLocationUploadAPITest(TestCase):
         mock_get_workbook.side_effect = WorkbookJSONError('Invalid file format')
         file = BytesIO(b'invalid file content')
         file.name = 'invalid_file.txt'
-        response = self.client.post(
-            self.url,
-            {'bulk_upload_file': file},
-            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
-            format='multipart'
-        )
+
+        response = self._make_post_request(file)
+
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), {'success': False, 'message': 'Invalid file format'})
 
@@ -231,18 +237,9 @@ class BulkLocationUploadAPITest(TestCase):
         mock_lock.acquire.return_value = False
         mock_get_redis_lock.return_value = mock_lock
 
-        workbook = Workbook()
-        file = BytesIO()
-        workbook.save(file)
-        file.seek(0)
-        file.name = 'file.xlsx'
+        file = self._create_mock_file()
 
-        response = self.client.post(
-            self.url,
-            {'bulk_upload_file': file},
-            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
-            format='multipart'
-        )
+        response = self._make_post_request(file)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {
@@ -250,3 +247,15 @@ class BulkLocationUploadAPITest(TestCase):
             'message': 'Some of the location edits are still in progress, '
                        'please wait until they finish and then try again'
         })
+
+    @mock.patch('corehq.apps.locations.views.notify_exception')
+    @mock.patch('corehq.apps.locations.views.get_workbook')
+    def test_exception_notification(self, mock_get_workbook, mock_notify_exception):
+        mock_get_workbook.side_effect = Exception('Some error')
+        file = self._create_mock_file()
+
+        response = self._make_post_request(file)
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.json(), {'success': False, 'message': 'Some error'})
+        mock_notify_exception.assert_called_once_with(None, message='Some error')

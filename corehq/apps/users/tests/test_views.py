@@ -458,7 +458,8 @@ class BulkUserUploadAPITest(TestCase):
         self.client = Client()
         self.url = reverse('bulk_user_upload_api', args=[self.domain_name])
 
-    def test_success(self):
+    @staticmethod
+    def _create_valid_workbook():
         workbook = Workbook()
         users_sheet = workbook.create_sheet(title='users')
         users_sheet.append(['username', 'email', 'password'])
@@ -469,13 +470,21 @@ class BulkUserUploadAPITest(TestCase):
         file.seek(0)
         file.name = 'users.xlsx'
 
+        return file
+
+    def _make_post_request(self, file):
+        return self.client.post(
+            self.url,
+            {'bulk_upload_file': file},
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
+            format='multipart'
+        )
+
+    def test_success(self):
+        file = self._create_valid_workbook()
+
         with patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users'):
-            response = self.client.post(
-                self.url,
-                {'bulk_upload_file': file},
-                HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
-                format='multipart'
-            )
+            response = self._make_post_request(file)
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json(), {'success': True})
 
@@ -506,47 +515,49 @@ class BulkUserUploadAPITest(TestCase):
         mock_get_workbook.side_effect = WorkbookJSONError('Invalid file format')
         file = BytesIO(b'invalid file content')
         file.name = 'invalid_file.txt'
-        response = self.client.post(
-            self.url,
-            {'bulk_upload_file': file},
-            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
-            format='multipart'
-        )
+        response = self._make_post_request(file)
+
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), {'success': False, 'message': 'Invalid file format'})
+
+    def test_invalid_workbook_headers(self):
+        workbook = Workbook()
+        users_sheet = workbook.create_sheet(title='users')
+        users_sheet.append(['invalid_header', 'email', 'password'])
+        users_sheet.append(['test_user', 'test@example.com', 'password'])
+
+        file = BytesIO()
+        workbook.save(file)
+        file.seek(0)
+        file.name = 'users.xlsx'
+
+        response = self._make_post_request(file)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {
+            'message': 'The following are required column headers: username.\n'
+                       'The following are illegal column headers: invalid_header.',
+            'success': False
+        })
 
     @patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users')
     def test_user_upload_error(self, mock_upload_users):
         mock_upload_users.side_effect = UserUploadError('User upload error')
-        workbook = Workbook()
-        file = BytesIO()
-        workbook.save(file)
-        file.seek(0)
-        file.name = 'users.xlsx'
+        file = self._create_valid_workbook()
 
-        response = self.client.post(
-            self.url,
-            {'bulk_upload_file': file},
-            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
-            format='multipart'
-        )
+        response = self._make_post_request(file)
+
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), {'success': False, 'message': 'User upload error'})
 
+    @patch('corehq.apps.users.views.mobile.users.notify_exception')
     @patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users')
-    def test_exception(self, mock_upload_users):
+    def test_exception(self, mock_upload_users, mock_notify_exception):
         mock_upload_users.side_effect = Exception('Unexpected error')
-        workbook = Workbook()
-        file = BytesIO()
-        workbook.save(file)
-        file.seek(0)
-        file.name = 'users.xlsx'
+        file = self._create_valid_workbook()
 
-        response = self.client.post(
-            self.url,
-            {'bulk_upload_file': file},
-            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
-            format='multipart'
-        )
+        response = self._make_post_request(file)
+
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.json(), {'success': False, 'message': 'Unexpected error'})
+        mock_notify_exception.assert_called_once_with(None, message='Unexpected error')

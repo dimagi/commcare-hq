@@ -1207,7 +1207,7 @@ class BaseUploadUser(BaseUserSettingsView):
         """View's dispatch method automatically calls this"""
         try:
             workbook = get_workbook(request.FILES.get("bulk_upload_file"))
-            user_specs, group_specs = self.process_workbook(workbook)
+            user_specs, group_specs = self.process_workbook(workbook, self.domain, self.is_web_upload)
             task_ref = self.upload_users(
                 request, user_specs, group_specs, self.domain, self.is_web_upload)
             return self.get_success_response(request, task_ref)
@@ -1221,7 +1221,9 @@ class BaseUploadUser(BaseUserSettingsView):
             return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
 
     @staticmethod
-    def process_workbook(workbook):
+    def process_workbook(workbook, domain, is_web_upload):
+        from corehq.apps.user_importer.importer import check_headers
+
         try:
             user_specs = workbook.get_worksheet(title="users")
         except WorksheetNotFound:
@@ -1229,6 +1231,8 @@ class BaseUploadUser(BaseUserSettingsView):
                 user_specs = workbook.get_worksheet()
             except WorksheetNotFound as e:
                 raise WorksheetNotFound("Workbook has no worksheets") from e
+
+        check_headers(user_specs, domain, is_web_upload=is_web_upload)
 
         try:
             group_specs = workbook.get_worksheet(title="groups")
@@ -1270,7 +1274,7 @@ class BaseUploadUser(BaseUserSettingsView):
         task_ref.set_task(task)
         return task_ref
 
-    def get_success_response(self, request, task_ref):
+    def _get_success_response(self, request, task_ref):
         if self.is_web_upload:
             return HttpResponseRedirect(
                 reverse(

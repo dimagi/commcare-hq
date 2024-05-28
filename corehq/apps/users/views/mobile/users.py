@@ -33,6 +33,7 @@ from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.web import json_response
+from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
@@ -1679,10 +1680,11 @@ def bulk_user_upload_api(request, domain):
         if file is None:
             raise UserUploadError(_('no file uploaded'))
         workbook = get_workbook(file)
-        user_specs, group_specs = BaseUploadUser.process_workbook(workbook)
+        user_specs, group_specs = BaseUploadUser.process_workbook(workbook, domain, is_web_upload=False)
         BaseUploadUser.upload_users(request, user_specs, group_specs, domain, is_web_upload=False)
         return json_response({'success': True})
     except (WorkbookJSONError, WorksheetNotFound, UserUploadError) as e:
         return json_response({'success': False, 'message': _(str(e))}, status_code=400)
     except Exception as e:
+        notify_exception(None, message=str(e))
         return json_response({'success': False, 'message': str(e)}, status_code=500)

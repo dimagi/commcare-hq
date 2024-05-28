@@ -17,6 +17,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from memoized import memoized
 
 from dimagi.utils.couch import get_redis_lock, release_lock
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -1170,6 +1171,7 @@ def bulk_location_upload_api(request, domain, **kwargs):
     except LocationBulkImportError as e:
         error, status_code = str(e), 400
     except Exception as e:
+        notify_exception(None, message=str(e))
         error, status_code = str(e), 500
 
     return json_response({'success': False, 'message': error}, status_code=status_code)
