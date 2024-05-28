@@ -1,7 +1,8 @@
 from django.test import RequestFactory, SimpleTestCase
 
 from corehq.apps.hqwebapp import decorators
-from corehq.apps.hqwebapp.utils.bootstrap import BOOTSTRAP_3, BOOTSTRAP_5, get_bootstrap_version
+from corehq.apps.hqwebapp.utils.bootstrap import BOOTSTRAP_3, BOOTSTRAP_5, get_bootstrap_version, \
+    set_bootstrap_version3
 from corehq.util.test_utils import generate_cases
 from inspect import getmembers, isfunction
 
@@ -23,6 +24,7 @@ class TestDecorators(SimpleTestCase):
         def dummy_view(request):
             self.assertEqual(get_bootstrap_version(), BOOTSTRAP_5)
 
+        set_bootstrap_version3()
         self.assertEqual(get_bootstrap_version(), BOOTSTRAP_3)
         dummy_view(self.factory.get('/'))
 
