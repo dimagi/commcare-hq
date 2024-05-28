@@ -2,6 +2,7 @@ import os
 import sys
 
 import pytest
+from unmagic import fence
 
 if type(sys.modules).__module__.split(".")[0] == "ddtrace" and hasattr(sys.modules, "uninstall"):
     # Remove ddtrace cruft from tracebacks. ModuleWatchdog is installed
@@ -9,7 +10,10 @@ if type(sys.modules).__module__.split(".")[0] == "ddtrace" and hasattr(sys.modul
     # in pytest startup because of ddtrace's pytest11 entry point(s).
     sys.modules.uninstall()
 
+fence.install({"corehq", "custom", "dimagi", "testapps"})
+
 pytest_plugins = [
+    'unmagic.fence',
     #'corehq.tests.pytest_plugins.dbtransaction',  # FIXME
     'corehq.tests.pytest_plugins.patches',
     'corehq.tests.pytest_plugins.redislocks',
