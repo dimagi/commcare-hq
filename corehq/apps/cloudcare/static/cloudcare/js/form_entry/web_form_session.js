@@ -1,12 +1,25 @@
 'use strict';
-hqDefine("cloudcare/js/form_entry/web_form_session", function () {
-    var cloudcareUtils = hqImport("cloudcare/js/utils"),
-        constants = hqImport("cloudcare/js/form_entry/const"),
-        errors = hqImport("cloudcare/js/form_entry/errors"),
-        taskQueue = hqImport("cloudcare/js/form_entry/task_queue"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
-        formUI = hqImport("cloudcare/js/form_entry/form_ui");
-
+hqDefine("cloudcare/js/form_entry/web_form_session", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'cloudcare/js/utils',
+    'cloudcare/js/form_entry/const',
+    'cloudcare/js/form_entry/errors',
+    'cloudcare/js/form_entry/task_queue',
+    'cloudcare/js/form_entry/utils',
+    'cloudcare/js/form_entry/form_ui',
+], function (
+    $,
+    ko,
+    _,
+    cloudcareUtils,
+    constants,
+    errors,
+    taskQueue,
+    formEntryUtils,
+    formUI
+) {
     function WebFormSession(params) {
         var self = {};
 

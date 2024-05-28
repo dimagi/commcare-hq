@@ -4,7 +4,6 @@ import uuid
 from django.test import TestCase
 
 from couchforms.analytics import (
-    app_has_been_submitted_to_in_last_30_days,
     domain_has_submission_in_last_30_days,
     get_all_xmlns_app_id_pairs_submitted_to_in_domain,
     get_exports_by_form,
@@ -174,11 +173,6 @@ class CouchformsESAnalyticsTest(TestCase):
     def test_get_last_form_submission_received(self):
         self.assertEqual(
             get_last_form_submission_received(self.domain), self.now)
-
-    def test_app_has_been_submitted_to_in_last_30_days(self):
-        self.assertEqual(
-            app_has_been_submitted_to_in_last_30_days(self.domain, self.app_id),
-            True)
 
     def test_get_all_xmlns_app_id_pairs_submitted_to_in_domain(self):
         self.assertEqual(

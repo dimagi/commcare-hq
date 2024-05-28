@@ -1,0 +1,10 @@
+<script type="text/template" id="menu-view-grid-template">
+  <div class="module-menu-container">
+    <div class="page-header menu-header d-none d-md-block">
+      <h1 class="page-title"><%- title %></h1>
+    </div>
+    <div class="<% if (isAppPreview) { %>container<% } %>">
+      <div class="row menus-container<% if (isAppPreview) { %> row-cols-2<% } %>"></div>
+    </div>
+  </div>
+</script>

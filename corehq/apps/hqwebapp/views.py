@@ -463,12 +463,16 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
 @xframe_options_sameorigin
 @location_safe
 def iframe_domain_login(req, domain):
-    return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
-        'current_page': {'page_name': _('Your session has expired')},
-        'restrict_domain_creation': True,
-        'is_session_expiration': True,
-        'ANALYTICS_IDS': {},
-    })
+    return domain_login(
+        req,
+        domain,
+        custom_template_name="hqwebapp/bootstrap3/iframe_domain_login.html",
+        extra_context={
+            'current_page': {'page_name': _('Your session has expired')},
+            'restrict_domain_creation': True,
+            'is_session_expiration': True,
+            'ANALYTICS_IDS': {},
+        })
 
 
 @xframe_options_sameorigin
@@ -588,6 +592,7 @@ def ping_response(request):
 
 @location_safe
 @login_required
+@use_bootstrap5
 def login_new_window(request):
     return render_static(request, "hqwebapp/close_window.html", _("Thank you for logging in!"))
 
@@ -1211,7 +1216,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_update_form_response(self, update_form):
         return render_to_string(
-            'hqwebapp/partials/update_item_form.html', {
+            'hqwebapp/partials/bootstrap3/update_item_form.html', {
                 'form': update_form
             }
         )

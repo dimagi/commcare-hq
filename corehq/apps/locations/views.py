@@ -28,7 +28,7 @@ from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
@@ -265,6 +265,7 @@ class LocationOptionsController(EmwfOptionsController):
 
 
 @method_decorator(locations_access_required, name='dispatch')
+@location_safe
 class LocationsSearchView(EmwfOptionsView):
 
     @property
@@ -273,6 +274,7 @@ class LocationsSearchView(EmwfOptionsView):
         return LocationOptionsController(self.request, self.domain, self.search)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     urlname = 'location_fields_view'
     field_type = 'LocationFields'
@@ -339,6 +341,7 @@ class LocationTypesView(BaseDomainView):
             'include_without_expanding': (loc_type.include_without_expanding_id
                                           if loc_type.include_without_expanding_id else None),
             'include_only': list(loc_type.include_only.values_list('pk', flat=True)),
+            'expand_view_child_data_to': loc_type.expand_view_child_data_to_id,
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     @method_decorator(lock_locations)
@@ -392,7 +395,7 @@ class LocationTypesView(BaseDomainView):
         payload_loc_type_code_by_pk = {}
         for loc_type in loc_types:
             for prop in ['name', 'parent_type', 'administrative',
-                         'shares_cases', 'view_descendants', 'pk']:
+                         'shares_cases', 'view_descendants', 'pk', 'expand_view_child_data_to']:
                 if prop not in loc_type:
                     raise LocationConsistencyError("Missing an organization level property!")
             pk = loc_type['pk']
@@ -436,13 +439,13 @@ class LocationTypesView(BaseDomainView):
     def _attach_sync_boundaries_to_location_type(loc_type_data, loc_type_db):
         """Store the sync expansion boundaries along with the location type. i.e. where
         the user's locations start expanding from, and where they expand to
-
         """
         loc_type = loc_type_db[loc_type_data['pk']]
         expand_from_id = loc_type_data['expand_from']
         expand_to_id = loc_type_data['expand_to']
         include_without_expanding_id = loc_type_data['include_without_expanding']
         include_only_ids = loc_type_data['include_only']
+        expand_view_child_data_to_id = loc_type_data['expand_view_child_data_to']
         try:
             loc_type.expand_from = loc_type_db[expand_from_id] if expand_from_id else None
         except KeyError:        # expand_from location type was deleted
@@ -459,7 +462,26 @@ class LocationTypesView(BaseDomainView):
             loc_type.include_without_expanding = None
         include_only = LocationTypesView._get_include_only(include_only_ids, loc_type_db)
         loc_type.include_only.set(include_only)
+        try:
+            if LocationTypesView._is_descendent_loc_type(loc_type.pk, expand_view_child_data_to_id, loc_type_db):
+                loc_type.expand_view_child_data_to = loc_type_db[expand_view_child_data_to_id] \
+                    if expand_view_child_data_to_id else None
+            else:
+                raise LocationConsistencyError("Inconsistency in View Child Data")
+        except KeyError:        # expand_view_child_data_to location type was deleted
+            loc_type.expand_view_child_data_to = None
+
         loc_type.save()
+
+    @staticmethod
+    def _is_descendent_loc_type(possible_ancestor_id, descendent_id, loc_type_db):
+        parent_id = loc_type_db[descendent_id].parent_type_id
+        if parent_id is None:
+            return False
+        if parent_id == possible_ancestor_id:
+            return True
+        else:
+            return LocationTypesView._is_descendent_loc_type(possible_ancestor_id, parent_id, loc_type_db)
 
     @staticmethod
     def _get_include_only(include_only_ids, loc_type_db):

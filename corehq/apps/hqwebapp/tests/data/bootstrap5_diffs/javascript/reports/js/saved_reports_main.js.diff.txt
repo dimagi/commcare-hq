@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,10 +1,10 @@
+-hqDefine("reports/js/bootstrap3/saved_reports_main", [
++hqDefine("reports/js/bootstrap5/saved_reports_main", [
+     'jquery',
+     'knockout',
+     'hqwebapp/js/initial_page_data',
+-    'reports/js/bootstrap3/report_config_models',
+-    'reports/js/bootstrap3/scheduled_reports_list',
+-    'hqwebapp/js/bootstrap3/knockout_bindings.ko', // modal binding
++    'reports/js/bootstrap5/report_config_models',
++    'reports/js/bootstrap5/scheduled_reports_list',
++    'hqwebapp/js/bootstrap5/knockout_bindings.ko', // modal binding
+ ], function (
+     $,
+     ko,

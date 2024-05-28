@@ -178,3 +178,11 @@
   widget: bool
   default: false
   since: '2.54'
+
+- id: persistent_menu
+  name: Show Persistent Menu
+  description: Show a persistent menu instead of breadcrumbs.
+  toggle: PERSISTENT_MENU_SETTING
+  widget: bool
+  default: false
+  since: '2.54'

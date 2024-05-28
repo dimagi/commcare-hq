@@ -6,7 +6,6 @@ from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import gettext as _, gettext_lazy
 
-from corehq import toggles
 from corehq.apps.enterprise.views import BaseEnterpriseAdminView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
@@ -71,7 +70,6 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             'edit_idp_form': self.edit_enterprise_idp_form,
             'idp_slug': self.idp_slug,
             'is_oidc': self.identity_provider.protocol == IdentityProviderProtocol.OIDC,
-            'show_remote_user_management': self.show_remote_user_management,
         }
 
     @property
@@ -109,16 +107,17 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
             SsoSamlEnterpriseSettingsForm if self.identity_provider.protocol == IdentityProviderProtocol.SAML
             else SsoOidcEnterpriseSettingsForm
         )
+
         if self.request.method == 'POST':
             return form_class(
-                self.identity_provider, self.request.POST, self.request.FILES,
-                show_remote_user_management=self.show_remote_user_management
+                self.identity_provider,
+                self.request.POST,
+                self.request.FILES,
             )
-        return form_class(self.identity_provider, show_remote_user_management=self.show_remote_user_management)
 
-    @property
-    def show_remote_user_management(self):
-        return toggles.SSO_REMOTE_USER_MANAGEMENT.enabled_for_request(self.request)
+        return form_class(
+            self.identity_provider,
+        )
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:

@@ -2,8 +2,8 @@ from django.utils.translation import gettext_lazy
 
 from corehq import toggles
 from corehq.apps.case_search.const import (
-    CASE_COMPUTED_METADATA,
-    SPECIAL_CASE_PROPERTIES_MAP,
+    COMPUTED_METADATA,
+    INDEXED_METADATA_BY_KEY,
 )
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.es import CaseSearchES
@@ -67,7 +67,7 @@ class ExploreCaseDataReport(BaseReport):
         DateXpathColumnFilter,
     ]
 
-    unsortable_column_names = CASE_COMPUTED_METADATA
+    unsortable_column_names = COMPUTED_METADATA
 
     report_filters = [
         CaseOwnerReportFilter,
@@ -124,12 +124,10 @@ class ExploreCaseDataReport(BaseReport):
                 prop_name = column_context['name']
 
                 try:
-                    special_property = SPECIAL_CASE_PROPERTIES_MAP[prop_name]
-                    query = query.sort(special_property.sort_property,
-                                       desc=descending)
+                    system_property = INDEXED_METADATA_BY_KEY[prop_name]
+                    query = query.sort(system_property.es_field_name, desc=descending)
                 except KeyError:
-                    query = query.sort_by_case_property(prop_name,
-                                                        desc=descending)
+                    query = query.sort_by_case_property(prop_name, desc=descending)
 
             expression_builder = ColumnXpathExpressionBuilder(
                 self.request,

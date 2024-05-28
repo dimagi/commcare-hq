@@ -183,6 +183,6 @@ def _get_filter(domain, key, val):
 
 def _get_query_filter(domain, query):
     try:
-        return build_filter_from_xpath(domain, query)
+        return build_filter_from_xpath(query, domain=domain)
     except CaseFilterError as e:
         raise UserError(f'Bad query: {e}')

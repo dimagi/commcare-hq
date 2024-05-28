@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,124 +1,225 @@
+@@ -1,123 +1,229 @@
 -@import "@{b3-import-variables}";
 -
 -// Nunito Sans is used on dimagi.com and embedded in hqwebapp/base.html
@@ -198,7 +198,6 @@
 -@zindex-formplayer-progress:          990;
 -@zindex-cloudcare-debugger:           1005;
 -@zindex-formplayer-scroll-to-bottom:    5;
--@zindex-formplayer-anchored-submit:     2;
 -
 -
 -@input-border-radius-large:       5px;
@@ -286,7 +285,7 @@
 +$salmon-900: shade-color($salmon, 80%);
 +
 +
-+// Form Sates
++// Form States
 +
 +$form-feedback-valid-color:         $success;
 +$form-feedback-invalid-color:       $danger;
@@ -330,3 +329,7 @@
 +    "border-color": $dark,
 +  )
 +);
++
++// Make pagination-lg the same height as other lg inputs
++$pagination-padding-x-lg: 1.0rem;
++$pagination-padding-y-lg: 0.5rem;

@@ -48,6 +48,11 @@ class Command(PopulateSQLCommand):
             return couch_state == State.Pending or couch_state == State.Fail
 
         from ...models import State
+        is_very_old_pending_record = (
+            'registered_at' not in couch
+            and (get_state(couch) == State.Pending or get_state(couch) == State.Fail)
+            and (couch.get('next_check') or '2018-03-12') < '2018-03-12'
+        )
         fields = ["domain", "payload_id"]
         diffs = [cls.diff_attr(name, couch, sql) for name in fields]
         diffs.append(cls.diff_value(
@@ -57,18 +62,18 @@ class Command(PopulateSQLCommand):
         ))
         diffs.append(cls.diff_value(
             "state",
-            get_state(couch),
+            State.Cancelled if is_very_old_pending_record else get_state(couch),
             sql.state,
         ))
         diffs.append(cls.diff_value(
             "registered_at",
-            couch.get("registered_on") or '1970-01-01T00:00:00.000000Z',
+            (couch.get("next_check" if is_very_old_pending_record else "registered_on") or EPOCH),
             json_format_datetime(sql.registered_at),
         ))
         if sql_may_have_next_check():
             diffs.append(cls.diff_value(
                 "next_check",
-                couch["next_check"],
+                None if is_very_old_pending_record else couch["next_check"],
                 json_format_datetime(sql.next_check) if sql.next_check else sql.next_check,
             ))
         if couch.get("failure_reason") and not couch.get("succeeded"):
@@ -93,6 +98,9 @@ class Command(PopulateSQLCommand):
                 sql.attempts,
                 transforms,
             ))
+        if any(d for d in diffs) and '_rev' in couch:
+            # possibly useful for detecting Couch data corruption
+            diffs.append(f"couch['_rev']: {couch['_rev']}")
         return diffs
 
     def get_ids_to_ignore(self, docs):
@@ -110,7 +118,7 @@ class Command(PopulateSQLCommand):
         rare condition, it is not handled. It should be sufficient to
         rerun the migration to recover from that error.
         """
-        existing_ids = {id_.hex for id_ in Repeater.objects.filter(
+        existing_ids = {id_.hex for id_ in Repeater.all_objects.filter(
             id__in=list({d["repeater_id"] for d in docs})
         ).values_list("id", flat=True)}
         return {d["_id"] for d in docs if d["repeater_id"] not in existing_ids}
@@ -195,7 +203,7 @@ def get_state(doc):
         return State.Success
     if doc.get('cancelled'):
         return State.Cancelled
-    if doc['failure_reason']:
+    if doc.get('failure_reason'):
         return State.Fail
     return State.Pending
 
@@ -205,7 +213,7 @@ ATTEMPT_TRANSFORMS = {
     "message": (lambda doc: (
         doc.get("success_response") if doc.get("succeeded") else doc.get("failure_reason")
     ) or ''),
-    "created_at": (lambda doc: string_to_utc_datetime(doc["datetime"])),
+    "created_at": (lambda doc: string_to_utc_datetime(doc["datetime"] or EPOCH)),
 }
 
 
@@ -215,7 +223,7 @@ def _attempt_to_preserve_failure_reason(doc, obj):
             repeat_record=obj,
             state=doc.state,
             message=doc.failure_reason,
-            created_at=doc.registered_on or doc.next_check,
+            created_at=doc.registered_on or doc.next_check or EPOCH_DATETIME,
         )
         assert not obj._new_submodels[SQLRepeatRecordAttempt][0], 'unexpected attempts'
         obj._new_submodels[SQLRepeatRecordAttempt][0].append(attempt)
@@ -232,3 +240,7 @@ def patch_couch_to_sql(couch_model):
             yield
     finally:
         couch_model._migration_get_custom_couch_to_sql_functions = original_functions
+
+
+EPOCH = '1970-01-01T00:00:00.000000Z'
+EPOCH_DATETIME = string_to_utc_datetime(EPOCH)

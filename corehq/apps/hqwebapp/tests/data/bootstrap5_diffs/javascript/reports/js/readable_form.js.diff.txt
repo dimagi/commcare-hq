@@ -1,0 +1,82 @@
+--- 
++++ 
+@@ -1,24 +1,24 @@
+-hqDefine("reports/js/bootstrap3/readable_form", ["jquery"], function ($) {
+-    function showReadable() {
+-        $('.form-data-raw').hide();
+-        $('.form-data-readable').show();
+-    }
+-
+-    function showRaw() {
+-        $('.form-data-readable').hide();
+-        $('.form-data-raw').show();
++hqDefine("reports/js/bootstrap5/readable_form", ["jquery"], function ($) {
++    function showReadable(show) {
++        if (show) {
++            $('.form-data-raw').removeClass("d-none");
++            $('.form-data-readable').addClass("d-none");
++        } else {
++            $('.form-data-raw').addClass("d-none");
++            $('.form-data-readable').removeClass("d-none");
++        }
+     }
+ 
+     function showSkipped(show) {
+         if (show) {
+-            $('.form-data-skipped').show();
+-            $('.form-data-skipped-spacer').hide();
++            $('.form-data-skipped').removeClass("d-none");
++            $('.form-data-skipped-spacer').addClass("d-none");
+             $('.form-data-hidden-values').each(function () {
+-                $(this).show();
++                $(this).removeClass("d-none");
+             });
+         } else {
+-            $('.form-data-skipped').hide();
+-            $('.form-data-skipped-spacer').show();
++            $('.form-data-skipped').addClass("d-none");
++            $('.form-data-skipped-spacer').removeClass("d-none");
+             $('.form-data-hidden-values').each(function () {
+                 var current = $(this).next();
+                 while (current.is('.form-data-question')) {
+@@ -27,33 +27,28 @@
+                     }
+                     current = current.next();
+                 }
+-                $(this).hide();
++                $(this).addClass("d-none");
+             });
+         }
+     }
+ 
+     function attachEvents() {
+-        $(document).on('click', '.showReadable', showReadable);
+-        $(document).on('click', '.showRaw', showRaw);
+-
+-        $(document).on('click', '.formDisplayToggle a', function () {
+-            // activate the correct 'tab' header
+-            $(this).tab('show');
+-            return false;
++        $(document).on('change', '#showReadable', function () {
++            showReadable($(this).is(':checked'));
+         });
+ 
+-        $(document).on('change', '.showSkippedToggle', function () {
++        $(document).on('change', '#showSkippedToggle', function () {
+             showSkipped($(this).is(':checked'));
+         });
+     }
+ 
+     function init() {
+-        $('.showSkippedToggle').each(function () {
++        $('#showSkippedToggle').each(function () {
+             if (!$('.form-data-skipped').length) {
+-                $(this).parent('label').hide();
++                $(this).parent('label').addClass("d-none");
+             }
+         });
+-        showReadable();
++        showReadable(true);
+         showSkipped(false);
+     }
+ 

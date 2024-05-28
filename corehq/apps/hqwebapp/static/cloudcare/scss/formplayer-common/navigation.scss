@@ -1,0 +1,15 @@
+.nav-list > li > a, .nav-list > li > a:hover {
+    cursor: pointer;
+}
+
+.nav-list > li.disabled > a, .nav-list > li.disabled > a:hover {
+    cursor: wait;
+}
+
+#hq-navigation .navbar {
+  margin-bottom: 0;
+}
+
+#hq-navigation {
+  transition: all 1s;
+}

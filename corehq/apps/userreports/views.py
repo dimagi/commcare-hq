@@ -6,7 +6,6 @@ import tempfile
 from collections import OrderedDict, namedtuple
 from urllib.parse import unquote, urlparse
 
-from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.contrib import messages
 from django.db import IntegrityError
@@ -14,15 +13,17 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404, JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
+from django.utils.html import format_html
 from django.utils.http import urlencode
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import View
-from django.utils.html import format_html
 
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
+from no_exceptions.exceptions import HttpException
 from sqlalchemy import exc, types
 from sqlalchemy.exc import ProgrammingError
 
@@ -30,7 +31,6 @@ from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
-
 from dimagi.utils.couch.undo import (
     get_deleted_doc_type,
     is_deleted,
@@ -39,7 +39,6 @@ from dimagi.utils.couch.undo import (
 )
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
-from no_exceptions.exceptions import HttpException
 from pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq import toggles
@@ -57,12 +56,10 @@ from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
-from corehq.apps.domain.decorators import (
-    api_auth,
-    login_and_domain_required,
-)
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.es import CaseSearchES, FormES
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
@@ -72,8 +69,8 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.hqwebapp.utils.html import safe_replace
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.registry.helper import DataRegistryHelper
@@ -93,6 +90,7 @@ from corehq.apps.userreports.app_manager.helpers import (
 from corehq.apps.userreports.const import (
     DATA_SOURCE_MISSING_APP_ERROR_MESSAGE,
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
+    DATA_SOURCE_REBUILD_RESTRICTED_AT,
     FORM_NOT_FOUND_ERROR_MESSAGE,
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
@@ -101,7 +99,7 @@ from corehq.apps.userreports.const import (
 )
 from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
-    get_report_and_registry_report_configs_for_domain
+    get_report_and_registry_report_configs_for_domain,
 )
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -174,14 +172,14 @@ from corehq.apps.users.decorators import (
     require_permission,
 )
 from corehq.apps.users.models import HqPermissions
+from corehq.motech.const import OAUTH2_CLIENT
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.models import DataSourceRepeater
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
-from corehq.motech.repeaters.models import DataSourceRepeater
-from corehq.motech.models import ConnectionSettings
-from corehq.motech.const import OAUTH2_CLIENT
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -1309,6 +1307,18 @@ def undelete_data_source(request, domain, config_id):
 @require_POST
 def rebuild_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
+
+    if toggles.RESTRICT_DATA_SOURCE_REBUILD.enabled(domain):
+        number_of_records = _number_of_records_to_be_iterated_for_rebuild(config=config)
+        if number_of_records and number_of_records > DATA_SOURCE_REBUILD_RESTRICTED_AT:
+            messages.error(
+                request,
+                _error_message_for_restricting_rebuild(number_of_records)
+            )
+            return HttpResponseRedirect(reverse(
+                EditDataSourceView.urlname, args=[domain, config_id]
+            ))
+
     if config.is_deactivated:
         config.is_deactivated = False
         config.save()
@@ -1324,6 +1334,40 @@ def rebuild_data_source(request, domain, config_id):
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
+
+
+def _number_of_records_to_be_iterated_for_rebuild(config):
+    count_of_records = None
+
+    case_types_or_xmlns = config.get_case_type_or_xmlns_filter()
+    # case_types_or_xmlns could also be [None]
+    case_types_or_xmlns = list(filter(None, case_types_or_xmlns))
+
+    if config.referenced_doc_type == 'CommCareCase':
+        if case_types_or_xmlns:
+            count_of_records = CaseSearchES().domain(config.domain).case_type(case_types_or_xmlns).count()
+        else:
+            count_of_records = CaseSearchES().domain(config.domain).count()
+    elif config.referenced_doc_type == 'XFormInstance':
+        if case_types_or_xmlns:
+            count_of_records = FormES().domain().xmlns(case_types_or_xmlns)
+        else:
+            count_of_records = FormES().domain().count()
+
+    return count_of_records
+
+
+def _error_message_for_restricting_rebuild(number_of_records_to_be_iterated):
+    return _(
+        'Rebuilt was not initiated due to high number of records this data source is expected to '
+        'iterate during a rebuild. Expected records to be processed is currently {number_of_records} '
+        'which is above the limit of {rebuild_limit}. '
+        'Please consider creating a new data source instead or reach out to support if '
+        'you need to rebuild this data source.'
+    ).format(
+        number_of_records=number_of_records_to_be_iterated,
+        rebuild_limit=DATA_SOURCE_REBUILD_RESTRICTED_AT
+    )
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()

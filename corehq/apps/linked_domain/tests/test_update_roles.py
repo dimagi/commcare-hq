@@ -3,6 +3,7 @@ import uuid
 from django.test import TestCase
 from unittest.mock import patch
 
+from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.updates import update_user_roles
@@ -219,6 +220,47 @@ class TestUpdateRoles(TestCase):
                 ' downstream project space: "Test". Please edit the roles to resolve the matching or click'
                 ' "Sync & Overwrite" to overwrite and link the matching ones.'):
             update_user_roles(self.domain_link, is_pull=True)
+
+    @patch('corehq.apps.linked_domain.updates.get_brief_apps_in_domain')
+    def test_web_apps_permissions(self, get_brief_apps_in_domain):
+        self._create_user_role(self.upstream_domain, name='Linked & unlinked', permissions=HqPermissions(
+            edit_data=True,
+            edit_reports=True,
+            access_web_apps=False,
+            web_apps_list=['123', '456']
+        ))
+
+        downstream_app = LinkedApplication(
+            _id='789', domain=self.upstream_domain, version=1, name='linked-app', upstream_app_id='123'
+        )
+        get_brief_apps_in_domain.return_value = [downstream_app]
+
+        update_user_roles(self.domain_link)
+
+        role = UserRole.objects.get_by_domain(self.downstream_domain)[0]
+        self.assertListEqual(role.permissions.web_apps_list, [downstream_app.id])
+
+    @flag_enabled('EMBEDDED_TABLEAU')
+    def test_tableau_report_permission_does_not_raise_error_if_downstream_role_is_newly_created(self):
+        """
+        Regression test for https://github.com/dimagi/commcare-hq/pull/34536
+        """
+        server = TableauServer.objects.create(
+            domain=self.upstream_domain,
+            server_type="server",
+            server_name="my_server",
+            target_site="my_site",
+        )
+        upstream_viz = TableauVisualization.objects.create(
+            domain=self.upstream_domain,
+            server=server,
+        )
+        self.upstream_tableau_role = UserRole.create(
+            self.upstream_domain, "tableau_test", HqPermissions(view_tableau_list=[str(upstream_viz.id)])
+        )
+
+        # successful if a ValueError isn't raised
+        update_user_roles(self.domain_link)
 
     @flag_enabled('EMBEDDED_TABLEAU')
     def test_tableau_report_permissions(self):

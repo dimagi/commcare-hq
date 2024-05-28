@@ -1,6 +1,7 @@
 import uuid
 from unittest.mock import patch
 
+from django.contrib.messages import get_messages
 from django.http import HttpRequest
 from django.test import TestCase
 from django.urls import reverse
@@ -10,6 +11,8 @@ from casexml.apps.case.tests.util import delete_all_cases
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.tests.utils import es_test, populate_case_search_index
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
@@ -19,15 +22,18 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.apps.users.models import HqPermissions, UserRole, WebUser, HQApiKey
+from corehq.apps.userreports.views import (
+    _number_of_records_to_be_iterated_for_rebuild,
+)
+from corehq.apps.users.models import HQApiKey, HqPermissions, UserRole, WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.signals import sql_case_post_save
+from corehq.motech.const import OAUTH2_CLIENT
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.models import DataSourceRepeater
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import flag_enabled
-from corehq.motech.repeaters.models import DataSourceRepeater
-from corehq.motech.models import ConnectionSettings
-from corehq.motech.const import OAUTH2_CLIENT
 
 
 class ConfigurableReportTestMixin(object):
@@ -35,32 +41,9 @@ class ConfigurableReportTestMixin(object):
     case_type = "CASE_TYPE"
 
     @classmethod
-    def _new_case(cls, properties):
-        id = uuid.uuid4().hex
-        case_block = CaseBlock(
-            create=True,
-            case_id=id,
-            case_type=cls.case_type,
-            update=properties,
-        ).as_text()
-        with drop_connected_signals(sql_case_post_save):
-            submit_case_blocks(case_block, domain=cls.domain)
-        return CommCareCase.objects.get_case(id, cls.domain)
-
-    @classmethod
-    def _delete_everything(cls):
-        delete_all_cases()
-        for config in DataSourceConfiguration.all():
-            config.delete()
-        delete_all_report_configs()
-
-
-class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
-
-    def _build_report_and_view(self, request=HttpRequest()):
-        # Create report
-        data_source_config = DataSourceConfiguration(
-            domain=self.domain,
+    def _sample_data_source_config(cls):
+        return DataSourceConfiguration(
+            domain=cls.domain,
             display_name='foo',
             referenced_doc_type='CommCareCase',
             table_id="woop_woop",
@@ -71,7 +54,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
                     "type": "property_name",
                     "property_name": "type"
                 },
-                "property_value": self.case_type,
+                "property_value": cls.case_type,
             },
             configured_indicators=[
                 {
@@ -104,6 +87,33 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
                 },
             ],
         )
+
+    @classmethod
+    def _new_case(cls, properties):
+        id = uuid.uuid4().hex
+        case_block = CaseBlock(
+            create=True,
+            case_id=id,
+            case_type=cls.case_type,
+            update=properties,
+        ).as_text()
+        with drop_connected_signals(sql_case_post_save):
+            submit_case_blocks(case_block, domain=cls.domain)
+        return CommCareCase.objects.get_case(id, cls.domain)
+
+    @classmethod
+    def _delete_everything(cls):
+        delete_all_cases()
+        for config in DataSourceConfiguration.all():
+            config.delete()
+        delete_all_report_configs()
+
+
+class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
+
+    def _build_report_and_view(self, request=HttpRequest()):
+        # Create report
+        data_source_config = self._sample_data_source_config()
         data_source_config.validate()
         data_source_config.save()
         self.addCleanup(data_source_config.delete)
@@ -441,6 +451,84 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(can_edit_view.page_context['can_edit_report'], True)
 
 
+@es_test(requires=[case_search_adapter], setup_class=True)
+class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cases = [
+            cls._new_case({'fruit': 'apple', 'num1': 4, 'num2': 6}),
+            cls._new_case({'fruit': 'mango', 'num1': 7, 'num2': 4}),
+            cls._new_case({'fruit': 'unknown', 'num1': 1, 'num2': 0})
+        ]
+        populate_case_search_index(cases)
+
+        cls.data_source_config = cls._sample_data_source_config()
+        cls.data_source_config.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._delete_everything()
+        super().tearDownClass()
+
+    def _send_data_source_rebuild_request(self):
+        path = reverse("rebuild_configurable_data_source", args=(self.domain, self.data_source_config.get_id))
+        return self.client.post(path)
+
+    def test_number_of_records_to_be_iterated_for_rebuild(self):
+        number_of_cases = _number_of_records_to_be_iterated_for_rebuild(self.data_source_config)
+        self.assertEqual(number_of_cases, 3)
+
+    def test_feature_flag(self):
+        response = self._send_data_source_rebuild_request()
+        self.assertEqual(response.status_code, 404)
+
+    @flag_enabled('USER_CONFIGURABLE_REPORTS')
+    def test_successful_rebuilt(self):
+        response = self._send_data_source_rebuild_request()
+        self.assertEqual(response.status_code, 302)
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(
+            str(messages[0]),
+            'Table "foo" is now being rebuilt. Data should start showing up soon'
+        )
+
+    @flag_enabled('USER_CONFIGURABLE_REPORTS')
+    @flag_enabled('RESTRICT_DATA_SOURCE_REBUILD')
+    def test_blocked_rebuild_for_restricted_data_source(self):
+        with patch('corehq.apps.userreports.views.DATA_SOURCE_REBUILD_RESTRICTED_AT', 2):
+            response = self._send_data_source_rebuild_request()
+
+            self.assertEqual(response.status_code, 302)
+
+            messages = list(get_messages(response.wsgi_request))
+            self.assertEqual(
+                str(messages[0]),
+                (
+                    'Rebuilt was not initiated due to high number of records this data source is expected to '
+                    'iterate during a rebuild. Expected records to be processed is currently 3 '
+                    'which is above the limit of 2. '
+                    'Please consider creating a new data source instead or reach out to support if '
+                    'you need to rebuild this data source.'
+                )
+            )
+
+    @flag_enabled('USER_CONFIGURABLE_REPORTS')
+    @flag_enabled('RESTRICT_DATA_SOURCE_REBUILD')
+    def test_successful_rebuild_for_restricted_data_source(self):
+        response = self._send_data_source_rebuild_request()
+
+        self.assertEqual(response.status_code, 302)
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(
+            str(messages[0]),
+            'Table "foo" is now being rebuilt. Data should start showing up soon'
+        )
+
+
 class TestSubscribeToDataSource(TestCase):
 
     urlname = "subscribe_to_configurable_data_source"
@@ -488,14 +576,14 @@ class TestSubscribeToDataSource(TestCase):
             'token_url': 'https://hostname.com/token',
             'refresh_url': 'https://hostname.com/refresh',
         }
-        request = self._post_request(
+        response = self._post_request(
             domain=self.domain,
             data_source_id=data_source_id,
             data=post_data,
             HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
         )
 
-        self.assertEqual(request.status_code, 201)
+        self.assertEqual(response.status_code, 201)
 
         conn_settings = ConnectionSettings.objects.get(client_id=client_id)
         self.assertEqual(conn_settings.name, "CommCare Analytics on hostname.com")

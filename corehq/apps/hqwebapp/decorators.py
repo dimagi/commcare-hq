@@ -250,10 +250,16 @@ def use_tempusdominus(view_func):
             ...
     """
     @wraps(view_func)
-    def _inner(request, *args, **kwargs):
+    def _wrapped(*args, **kwargs):
+        if hasattr(args[0], 'META'):
+            # function view
+            request = args[0]
+        else:
+            # class view
+            request = args[1]
         request.use_tempusdominus = True
-        return view_func(request, *args, **kwargs)
-    return _inner
+        return view_func(*args, **kwargs)
+    return _wrapped
 
 
 def waf_allow(kind, hard_code_pattern=None):

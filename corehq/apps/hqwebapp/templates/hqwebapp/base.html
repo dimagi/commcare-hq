@@ -349,7 +349,7 @@
           <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
           <script src="{% static 'hqwebapp/js/bootstrap5/alert_user.js' %}"></script>
           <script src="{% static 'hqwebapp/js/bootstrap5/main.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap5/mobile_experience_warning.js' %}"></script>
         {% endcompress %}
       {% else %}
         {% compress js %}
@@ -360,7 +360,7 @@
           <script src="{% static 'hqwebapp/js/privileges.js' %}"></script>
           <script src="{% static 'hqwebapp/js/bootstrap3/alert_user.js' %}"></script>
           <script src="{% static 'hqwebapp/js/bootstrap3/main.js' %}"></script>
-          <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/bootstrap3/mobile_experience_warning.js' %}"></script>
         {% endcompress %}
       {% endif %}
     {% endif %}
@@ -441,7 +441,7 @@
 
     {% if request.use_maps and not requirejs_main %}
       {% compress js %}
-        <script src="{% static 'reports/js/maps_utils.js' %}"></script>
+        <script src="{% static 'reports/js/bootstrap3/maps_utils.js' %}"></script>
       {% endcompress %}
     {% endif %}
 

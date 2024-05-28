@@ -141,10 +141,8 @@ class TestRepeatRecordCouchToSQLDiff(BaseRepeatRecordCouchToSQLTest):
     def test_diff_state(self):
         doc, obj = self.create_repeat_record()
         obj.state = models.State.Empty
-        self.assertEqual(
-            self.diff(doc, obj),
-            ["state: couch value <State.Pending: 1> != sql value <State.Empty: 16>"],
-        )
+        expected_diff = ["state: couch value State.Pending != sql value State.Empty"]
+        self.assertEqual(self.diff(doc, obj), expected_diff)
 
     def test_diff_registered_at(self):
         doc, obj = self.create_repeat_record()
@@ -197,6 +195,7 @@ class TestRepeatRecordCouchToSQLDiff(BaseRepeatRecordCouchToSQLTest):
 
     def test_diff_attempts(self):
         doc, obj = self.create_repeat_record()
+        doc["_rev"] = "v0-fake"
         doc["attempts"][0]["succeeded"] = True
         doc["attempts"][0]["failure_reason"] = None
         doc["attempts"][1]["datetime"] = "2020-01-01T00:00:00.000000Z"
@@ -204,14 +203,13 @@ class TestRepeatRecordCouchToSQLDiff(BaseRepeatRecordCouchToSQLTest):
         obj.attempts[1].message = ''
         couch_datetime = repr(datetime(2020, 1, 1, 0, 0))
         sql_created_at = repr(obj.attempts[1].created_at)
-        self.assertEqual(
-            self.diff(doc, obj),
-            [
-                "attempts[0].state: couch value <State.Success: 4> != sql value <State.Fail: 2>",
-                "attempts[0].message: couch value '' != sql value 'something bad happened'",
-                f"attempts[1].created_at: couch value {couch_datetime} != sql value {sql_created_at}",
-            ],
-        )
+        expected_diff = [
+            "attempts[0].state: couch value State.Success != sql value State.Fail",
+            "attempts[0].message: couch value '' != sql value 'something bad happened'",
+            f"attempts[1].created_at: couch value {couch_datetime} != sql value {sql_created_at}",
+            "couch['_rev']: v0-fake",
+        ]
+        self.assertEqual(self.diff(doc, obj), expected_diff)
 
     def diff(self, doc, obj):
         return do_diff(Command, doc, obj)
@@ -226,7 +224,8 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
 
     def tearDown(self):
         delete_all_repeat_records()
-        Command.discard_resume_state()
+        Command.discard_resume_state(verify_only=False)
+        Command.discard_resume_state(verify_only=True)
         super().tearDown()
 
     def test_sync_to_couch(self):
@@ -385,7 +384,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
             self.assertIn(f"payload_id: couch value {payload_id!r} != sql value {obj.payload_id!r}\n", log.content)
             self.assertIn(
                 f"repeater_id: couch value '{REPEATER_ID_2}' != sql value '{REPEATER_ID_1}'\n", log.content)
-            self.assertIn("state: couch value <State.Fail: 2> != sql value 1\n", log.content)
+            self.assertIn("state: couch value State.Fail != sql value 1\n", log.content)
             self.assertIn("registered_at: couch value '", log.content)
 
             call_command('populate_repeatrecords', fixup_diffs=log.path)
@@ -469,6 +468,7 @@ class TestRepeatRecordCouchToSQLMigration(BaseRepeatRecordCouchToSQLTest):
         doc.pop("attempts")
         doc.pop("registered_on")
         doc["succeeded"] = False
+        doc["registered_at"] = json_format_datetime(when)
         doc["next_check"] = json_format_datetime(when)
         doc["failure_reason"] = "A tree fell in the forest"
         doc_id = self.db.save_doc(doc)["id"]

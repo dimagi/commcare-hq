@@ -1,11 +1,24 @@
 'use strict';
-/*global MapboxGeocoder*/
-hqDefine("cloudcare/js/form_entry/utils", function () {
-    var errors = hqImport("cloudcare/js/form_entry/errors"),
-        formEntryConst = hqImport("cloudcare/js/form_entry/const"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
+hqDefine("cloudcare/js/form_entry/utils", [
+    'jquery',
+    'knockout',
+    'underscore',
+    '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'cloudcare/js/form_entry/const',
+    'cloudcare/js/form_entry/errors',
+    'cloudcare/js/formplayer/constants',
+], function (
+    $,
+    ko,
+    _,
+    MapboxGeocoder,
+    initialPageData,
+    toggles,
+    formEntryConst,
+    errors
+) {
     var module = {
         resourceMap: undefined,
     };

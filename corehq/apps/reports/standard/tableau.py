@@ -16,7 +16,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 
 class TableauView(BaseDomainView):
     urlname = 'tableau'
-    template_name = 'reports/tableau_template.html'
+    template_name = 'reports/bootstrap3/tableau_template.html'
 
     section_name = gettext_lazy("Tableau Reports")
 

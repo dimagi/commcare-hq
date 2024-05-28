@@ -27,7 +27,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
 
     var _renderAction = function (buttonId, buttonClass, buttonIcon, text, disabled = false) {
         var action = _.template(
-            '<button class="btn <%-actionButtonClass %> btn-xs pull-right" id="<%- actionButtonId %>" <% if (actionDisabled) { %> disabled <% } %>>' +
+            '<button class="btn <%-actionButtonClass %> btn-xs <%- floatClass %>" id="<%- actionButtonId %>" <% if (actionDisabled) { %> disabled <% } %>>' +
                 '<i class="<%- actionButtonIcon %>"></i> <%- actionButtonText %>' +
             '</button>'
         );
@@ -37,6 +37,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
             actionButtonIcon: buttonIcon,
             actionButtonText: text,
             actionDisabled: disabled,
+            floatClass: window.USE_BOOTSTRAP5 ? "float-end" : "pull-right",
         });
     };
 

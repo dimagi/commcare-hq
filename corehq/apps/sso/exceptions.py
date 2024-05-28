@@ -20,3 +20,22 @@ class OidcSsoError(Exception):
         super().__init__()
         self.code = error_code
         self.message = message
+
+
+class EntraVerificationFailed(Exception):
+    def __init__(self, error, message):
+        super().__init__(f"{error}: {message}")
+        self.error = error
+        self.message = message
+
+    def __str__(self):
+        return f"EntraVerificationFailed({self.error}, {self.message})"
+
+
+class EntraUnsupportedType(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+
+    def __str__(self):
+        return f"EntraUnsupportedTypeReceived({self.message})"

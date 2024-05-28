@@ -28,25 +28,18 @@
       margin-right: -@form-text-indent;
     }
 
-    background-color: lighten(@cc-brand-hi, 10);
+    background-color: @call-to-action-extra-hi;
     .border-bottom-radius(0);
 
-    .nonanchored-submit .btn {
+    .submit .btn {
       font-size: 20px;
       padding: 13px 24px;
       .transition(all .5s);
     }
   }
 
-  .anchored-submit {
-    background-color: @call-to-action-low;
-    width: 100vw;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    position: fixed;
-    bottom: 0px;
-    left: 0;
-    z-index: @zindex-formplayer-anchored-submit;
+  .sticky-submit {
+    position: sticky;
   }
 
   // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.

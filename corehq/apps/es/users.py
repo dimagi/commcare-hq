@@ -51,13 +51,13 @@ class UserES(HQESQuery):
             web_users,
             user_ids,
             location,
+            login_as_user,
             last_logged_in,
             analytics_enabled,
             is_practice_user,
             role_id,
             is_active,
             username,
-            user_data,
             missing_or_empty_user_data_property,
         ] + super(UserES, self).builtin_filters
 
@@ -221,48 +221,32 @@ def is_active(active=True):
     return filters.term("is_active", active)
 
 
-def user_data(key, value):
+def _user_data(key, filter_):
+    # Note: user data does not exist in ES for web users
     return queries.nested(
         'user_data_es',
         filters.AND(
             filters.term(field='user_data_es.key', value=key),
-            queries.match(field='user_data_es.value', search_string=value),
+            filter_
         )
     )
 
 
-def _missing_user_data_property(property_name):
-    """
-    A user_data property doesn't exist.
-    """
-    return filters.NOT(
-        queries.nested(
-            'user_data_es',
-            filters.term(field='user_data_es.key', value=property_name),
-        )
-    )
+def query_user_data(key, value):
+    return _user_data(key, queries.match(field='user_data_es.value', search_string=value))
 
 
-def _missing_user_data_value(property_name):
-    """
-    A user_data property exists but has an empty string value.
-    """
-    return queries.nested(
-        'user_data_es',
-        filters.AND(
-            filters.term('user_data_es.key', property_name),
-            filters.NOT(
-                filters.wildcard(field='user_data_es.value', value='*')
-            )
-        )
-    )
+def login_as_user(value):
+    return _user_data('login_as_user', filters.term('user_data_es.value', value))
 
 
 def missing_or_empty_user_data_property(property_name):
     """
     A user_data property doesn't exist, or does exist but has an empty string value.
     """
-    return filters.OR(
-        _missing_user_data_property(property_name),
-        _missing_user_data_value(property_name),
-    )
+    missing_property = filters.NOT(queries.nested(
+        'user_data_es',
+        filters.term(field='user_data_es.key', value=property_name),
+    ))
+    empty_value = _user_data(property_name, filters.term('user_data_es.value', ''))
+    return filters.OR(missing_property, empty_value)

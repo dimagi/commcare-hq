@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-hqDefine('reports/js/filters/bootstrap3/drilldown_options', [
++hqDefine('reports/js/filters/bootstrap5/drilldown_options', [
+     'jquery',
+     'knockout',
+     'underscore',
+@@ -61,7 +61,7 @@
+ 
+         self.changeMessage = function (key) {
+             self.message(self.notifications[key]);
+-            $('.drilldown-notification-tooltip').tooltip();
++            $('.drilldown-notification-tooltip').tooltip();  /* todo B5: plugin:tooltip */
+         };
+         return self;
+     };

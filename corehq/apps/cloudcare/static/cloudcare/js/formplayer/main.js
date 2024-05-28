@@ -1,11 +1,16 @@
 'use strict';
-hqDefine("cloudcare/js/formplayer/main", function () {
-
+hqDefine("cloudcare/js/formplayer/main", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/sentry',
+], function (
+    $,
+    initialPageData,
+    FormplayerFrontEnd,
+    sentry
+) {
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-            FormplayerFrontEnd = hqImport("cloudcare/js/formplayer/app"),
-            sentry = hqImport("cloudcare/js/sentry");
-
         sentry.initSentry();
 
         window.MAPBOX_ACCESS_TOKEN = initialPageData.get('mapbox_access_token'); // maps api is loaded on-demand
@@ -15,9 +20,8 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             username: initialPageData.get('username'),
             domain: initialPageData.get('domain'),
             formplayer_url: initialPageData.get('formplayer_url'),
-            gridPolyfillPath: initialPageData.get('grid_polyfill_path'),
             debuggerEnabled: initialPageData.get('debugger_enabled'),
-            singleAppMode: initialPageData.get('single_app_mode'),
+            singleAppMode: false,
             environment: initialPageData.get('environment'),
         };
         FormplayerFrontEnd.start(options);
@@ -27,14 +31,14 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             $trialBanner = $('#cta-trial-banner');
         var hideMenu = function () {
             $menuToggle.data('minimized', 'yes');
-            $navbar.hide();
-            $trialBanner.hide();
+            $navbar.addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+            $trialBanner.addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
             $menuToggle.text(gettext('Show Full Menu'));
         };
         var showMenu = function () {
             $menuToggle.data('minimized', 'no');
-            $navbar.show();
-            $trialBanner.show();
+            $navbar.removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+            $trialBanner.removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
             $navbar.css('margin-top', '');
             $menuToggle.text(gettext('Hide Full Menu'));
         };

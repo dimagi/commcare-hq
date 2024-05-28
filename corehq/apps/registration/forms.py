@@ -15,15 +15,15 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
-from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.programs.models import Program
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
-from corehq.apps.users.forms import RoleForm
+from corehq.apps.users.forms import BaseLocationForm
 from corehq.apps.users.models import CouchUser
 
 
@@ -60,7 +60,7 @@ class RegisterWebUserForm(forms.Form):
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
         required=False,
-        label=mark_safe_lazy(_(
+        label=mark_safe(_(
             """I have read and agree to Dimagi's
             <a href="http://www.dimagi.com/terms/latest/privacy/"
                target="_blank">Privacy Policy</a>,
@@ -368,7 +368,7 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
     eula_confirmed = forms.BooleanField(
         required=False,
         label="",
-        help_text=mark_safe_lazy(_(
+        help_text=mark_safe(_(
             """I have read and agree to Dimagi's
                 <a href="http://www.dimagi.com/terms/latest/privacy/"
                     target="_blank">Privacy Policy</a>,
@@ -484,56 +484,40 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
         return ""
 
 
-# From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager
-#
-# I'll put this in each app, so they can be standalone, but it should really go in some centralized
-# part of the distro
-
-class _BaseForm(object):
-
-    def clean(self):
-        for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], str):
-                self.cleaned_data[field] = self.cleaned_data[field].strip()
-        return self.cleaned_data
-
-
-class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
-    # As above. Need email now; still don't need domain. Don't need TOS. Do need the is_active flag,
-    # and do need to relabel some things.
+class AdminInvitesUserForm(BaseLocationForm):
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
 
-    def __init__(self, data=None, excluded_emails=None, is_add_user=None, *args, **kwargs):
-        domain_obj = None
-        location = None
-        if 'domain' in kwargs:
-            domain_obj = Domain.get_by_name(kwargs['domain'])
-            del kwargs['domain']
-        if 'location' in kwargs:
-            location = kwargs['location']
-            del kwargs['location']
-        super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
-        if domain_obj and domain_obj.commtrack_enabled:
-            self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
-                                                          widget=LocationSelectWidget(domain_obj.name),
-                                                          help_text=EMWF.location_search_help,
-                                                          initial=location.location_id if location else '')
-            self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
-            programs = Program.by_domain(domain_obj.name)
-            choices = list((prog.get_id, prog.name) for prog in programs)
-            choices.insert(0, ('', ''))
-            self.fields['program'].choices = choices
-        self.excluded_emails = excluded_emails or []
+    def __init__(self, data=None, excluded_emails=None, is_add_user=None,
+                 role_choices=(), should_show_location=False, *, domain, **kwargs):
+        super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
+        domain_obj = Domain.get_by_name(domain)
+        self.fields['role'].choices = role_choices
+        if domain_obj:
+            if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
+                self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)
+                from corehq.apps.users.views.mobile import UserFieldsView
+                definition = CustomDataFieldsDefinition.get(domain_obj.name, UserFieldsView.field_type)
+                if definition:
+                    profiles = definition.get_profiles()
+                    if len(profiles) > 0:
+                        self.fields['profile'].choices = [('', '')] + [
+                            (profile.id, profile.name) for profile in profiles
+                        ]
+            if domain_obj.commtrack_enabled:
+                self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
+                programs = Program.by_domain(domain_obj.name)
+                choices = [('', '')] + list((prog.get_id, prog.name) for prog in programs)
+                self.fields['program'].choices = choices
 
+        self.excluded_emails = excluded_emails or []
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
         self.helper.form_class = 'form-horizontal form-ko-validation'
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 gettext("Information for new Web User"),
@@ -543,6 +527,9 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
                     data_bind="textInput: email",
                 ),
                 'role',
+                'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
+                'assigned_locations' if should_show_location else None,
+                'primary_location' if should_show_location else None,
             ),
             crispy.HTML(
                 render_to_string(
@@ -575,3 +562,10 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             raise forms.ValidationError(_("A user with this email address is already in "
                                           "this project or has a pending invitation."))
         return email
+
+    def clean(self):
+        cleaned_data = super(AdminInvitesUserForm, self).clean()
+        for field in cleaned_data:
+            if isinstance(cleaned_data[field], str):
+                cleaned_data[field] = cleaned_data[field].strip()
+        return cleaned_data

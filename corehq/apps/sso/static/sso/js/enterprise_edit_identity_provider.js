@@ -1,4 +1,5 @@
 'use strict';
+
 hqDefine('sso/js/enterprise_edit_identity_provider', [
     'jquery',
     'knockout',
@@ -54,36 +55,57 @@ hqDefine('sso/js/enterprise_edit_identity_provider', [
                 };
             }
 
-            if (initialPageData.get('show_remote_user_management')) {
-                self.isCancelUpdateVisible = ko.observable(false);
-                self.apiExpirationDate = "";
+            self.isCancelUpdateVisible = ko.observable(false);
+            self.apiExpirationDate = "";
 
-                self.dateApiSecretExpiration = ko.observable($('#id_date_api_secret_expiration').val());
-                self.isAPISecretVisible = ko.observable($('#masked-api-value').text() === '');
-                self.apiSecret = ko.observable();
+            self.dateApiSecretExpiration = ko.observable($('#id_date_api_secret_expiration').val());
+            self.isAPISecretVisible = ko.observable($('#masked-api-value').text() === '');
+            self.apiSecret = ko.observable();
 
-                self.startEditingAPISecret = function () {
-                    self.isAPISecretVisible(true);
-                    self.isCancelUpdateVisible(true);
-                    // Store the current expiration date before clearing them for editing.
-                    self.apiExpirationDate = self.dateApiSecretExpiration();
-                    self.dateApiSecretExpiration('');
-                };
+            self.startEditingAPISecret = function () {
+                self.isAPISecretVisible(true);
+                self.isCancelUpdateVisible(true);
+                // Store the current expiration date before clearing them for editing.
+                self.apiExpirationDate = self.dateApiSecretExpiration();
+                self.dateApiSecretExpiration('');
+            };
 
-                self.cancelEditingAPISecret = function () {
-                    self.isAPISecretVisible(false);
-                    self.isCancelUpdateVisible(false);
-                    // Reset the api secret to blank if user cancel editing
-                    self.apiSecret('');
-                    // Restore the original values of expiration date after canceling editing.
-                    self.dateApiSecretExpiration(self.apiExpirationDate);
-                };
+            self.cancelEditingAPISecret = function () {
+                self.isAPISecretVisible(false);
+                self.isCancelUpdateVisible(false);
+                // Reset the api secret to blank if user cancel editing
+                self.apiSecret('');
+                // Restore the original values of expiration date after canceling editing.
+                self.dateApiSecretExpiration(self.apiExpirationDate);
+            };
+
+
+            const initialEnforce = $('#id_enforce_user_api_key_expiration').is(':checked');
+            self.initialExpirationLength =
+                $('#id_max_days_until_user_api_key_expiration').val();
+            if (self.initialExpirationLength) {
+                self.initialExpirationLength = parseInt(self.initialExpirationLength, 10);
             }
+            self.enforceExpiration = ko.observable(initialEnforce);
+            self.expirationLengthValue = ko.observable(self.initialExpirationLength);
+            self.expirationLength = ko.observable(null);
+            self.expirationLengthValue.subscribe(function (newValue) {
+                if (newValue) {
+                    const selValue = $('#id_max_days_until_user_api_key_expiration option:selected').text();
+                    self.expirationLength(selValue);
+                }
+            });
+            self.showExpirationWarning = ko.pureComputed(function () {
+                return (
+                    (self.initialExpirationLength === '' && self.expirationLengthValue() !== '') ||
+                    (self.expirationLengthValue() < self.initialExpirationLength)
+                );
+            });
 
             return self;
 
         };
         let formManager = new editEnterpriseIdPFormManager();
-        $('#idp').koApplyBindings(formManager);
+        $('#idp form').koApplyBindings(formManager);
     });
 });

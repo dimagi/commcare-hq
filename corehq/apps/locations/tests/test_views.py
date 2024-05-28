@@ -22,6 +22,7 @@ OTHER_DETAILS = {
     'administrative': '',
     'shares_cases': False,
     'view_descendants': False,
+    'expand_view_child_data_to': None,
 }
 
 
@@ -98,3 +99,38 @@ class LocationTypesViewTest(TestCase):
         response = self.send_request(data)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, self.url)
+
+    def test_hierarchy(self):
+        loc_type1 = OTHER_DETAILS.copy()
+        loc_type2 = OTHER_DETAILS.copy()
+        loc_type1.update({'name': "new name", 'pk': self.loc_type1.pk, 'code': self.loc_type1.code})
+        loc_type2.update({'name': "new name 2", 'pk': self.loc_type2.pk, 'parent_type': self.loc_type1.pk,
+                          'code': self.loc_type2.code})
+        data = {'loc_types': [loc_type1, loc_type2]}
+        response = self.send_request(data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.url)
+
+    def test_child_data(self):
+        loc_type1 = OTHER_DETAILS.copy()
+        loc_type2 = OTHER_DETAILS.copy()
+        loc_type1.update({'name': "new name", 'pk': self.loc_type1.pk,
+                          'view_descendants': True, 'expand_view_child_data_to': self.loc_type2.pk,
+                          'code': self.loc_type1.code})
+        loc_type2.update({'name': "new name 2", 'pk': self.loc_type2.pk, 'parent_type': self.loc_type1.pk,
+                          'code': self.loc_type2.code})
+        data = {'loc_types': [loc_type1, loc_type2]}
+        response = self.send_request(data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.url)
+
+    def test_invalid_child_data(self):
+        loc_type1 = OTHER_DETAILS.copy()
+        loc_type2 = OTHER_DETAILS.copy()
+        loc_type1.update({'name': "new name", 'pk': self.loc_type1.pk, 'code': self.loc_type1.code})
+        loc_type2.update({'name': "new name 2", 'pk': self.loc_type2.pk, 'parent_type': self.loc_type1.pk,
+                          'view_descendants': True, 'expand_view_child_data_to': self.loc_type1.pk,
+                          'code': self.loc_type2.code})
+        data = {'loc_types': [loc_type1, loc_type2]}
+        with self.assertRaises(LocationConsistencyError):
+            self.send_request(data)

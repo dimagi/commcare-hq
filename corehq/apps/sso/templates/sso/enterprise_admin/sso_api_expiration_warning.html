@@ -1,0 +1,6 @@
+{% load hq_shared_tags %}
+<div class="{% css_action_class %}" data-bind="visible: showExpirationWarning">
+    <p class="alert alert-warning">
+        <i class="fa-solid fa-warning"></i> {{ warning_message }}
+    </p>
+</div>

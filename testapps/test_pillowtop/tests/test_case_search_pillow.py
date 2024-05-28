@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
-from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
+from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.change_feed import topics
@@ -172,7 +172,7 @@ class CaseSearchPillowTest(TestCase):
             key = case_property['key']
             try:
                 self.assertEqual(
-                    SPECIAL_CASE_PROPERTIES_MAP[key].value_getter(case.to_json()),
+                    INDEXED_METADATA_BY_KEY[key].get_value(case.to_json()),
                     case_property['value'],
                 )
             except KeyError:

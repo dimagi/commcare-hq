@@ -1,0 +1,12 @@
+<script id="row-template" type="text/template">
+  <div class="appicon appicon-default" role="link" tabindex="0" aria-label="<%- name %>">
+    <% if (!imageUrl) { %>
+      <i class="fcc fcc-flower appicon-icon" aria-hidden="true"></i>
+    <% } else { %>
+      <i class="fcc appicon-custom appicon-icon" style="background-image: url('<%- imageUrl %>');" aria-hidden="true"></i>
+    <% } %>
+    <div class="appicon-title">
+      <h3><%- name %></h3>
+    </div>
+  </div>
+</script>

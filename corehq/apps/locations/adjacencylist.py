@@ -5,26 +5,24 @@ from django.db.models.query import Q, QuerySet
 
 from django_cte import With
 
-field = models.Field()  # generic output field type
-
 
 class str_array(Func):
     function = "Array"
     # HACK fool postgres with concat
     # https://stackoverflow.com/a/12488455/10840 (see comment by KajMagnus)
     template = "%(function)s[%(expressions)s || '']::varchar[]"
-    output_field = field
+    output_field = models.Field()
 
 
 class array_append(Func):
     function = "array_append"
-    output_field = field
+    output_field = models.Field()
 
 
 class array_length(Func):
     function = "array_length"
     template = "%(function)s(%(expressions)s, 1)"
-    output_field = field
+    output_field = models.Field()
 
 
 class AdjListManager(models.Manager):
@@ -60,13 +58,13 @@ class AdjListManager(models.Manager):
 
         def make_cte_query(cte):
             return self.filter(where).order_by().annotate(
-                _depth=Value(0, output_field=field),
+                _depth=Value(0, output_field=models.IntegerField()),
             ).union(
                 cte.join(
                     self.all().order_by(),
                     id=cte.col.parent_id,
                 ).annotate(
-                    _depth=cte.col._depth + Value(1, output_field=field),
+                    _depth=cte.col._depth + Value(1, output_field=models.IntegerField()),
                 ),
             )
 
@@ -136,7 +134,7 @@ class AdjListManager(models.Manager):
                 cte.queryset().annotate(
                     max_len=array_length(
                         F("_cte_ordering"),
-                        output_field=field
+                        output_field=models.Field()
                     ),
                 ).distinct("id").order_by(
                     "id",

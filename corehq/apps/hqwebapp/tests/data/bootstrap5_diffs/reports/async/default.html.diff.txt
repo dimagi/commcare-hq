@@ -1,0 +1,54 @@
+--- 
++++ 
+@@ -1,6 +1,6 @@
+ {% load hq_shared_tags %}
+ {% load i18n %}
+-{% if show_time_notice %}{% include "hqwebapp/partials/bootstrap3/time_notice.html" with hide=1 %}{% endif %}
++{% if show_time_notice %}{% include "hqwebapp/partials/bootstrap5/time_notice.html" with hide=1 %}{% endif %}
+ 
+ {% block reportcontent %}
+   {% if report.slug %}
+@@ -12,7 +12,7 @@
+       </div>
+     </div>
+   {% else %}
+-    <h6 style="text-align: center; margin-top: 200px;">{{ report.title }}</h6>
++    <h6 style="text-align: center; margin-top: 200px;">{{ report.title }}</h6>  {# todo B5: inline style #}
+   {% endif %}
+ {% endblock %}
+ 
+@@ -28,8 +28,8 @@
+   <div class="modal fade" tabindex="-1" role="dialog" id="loadingReportIssueModal">
+     <div class="modal-dialog">
+       <div class="modal-content">
+-        <div class="modal-header">
+-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
++        <div class="modal-header">  {# todo B5: css:modal-header #}
++          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>  {# todo B5: css:close #}
+           <h4 class="modal-title">{% trans 'Problem Loading Report' %} "{{ report.title }}"</h4>
+         </div>
+         <div class="modal-body">
+@@ -40,18 +40,18 @@
+             {% blocktrans %}
+               If this problem persists, we encourage you to
+               <a href="#modalReportIssue"
+-                 data-target="#modalReportIssue"
+-                 data-toggle="modal">Report an Issue</a>.
++                 data-bs-target="#modalReportIssue"
++                 data-bs-toggle="modal">Report an Issue</a>.
+             {% endblocktrans %}
+           </p>
+         </div>
+         <div class="modal-footer">
+           <button
+              class="btn btn-primary try-again"
+-             data-loading-text="{% trans 'Trying Again...' %}"
+-             data-fail-text="{% trans 'Loading Failed. Try Again?' %}">{% trans 'Try Again' %}
++             data-loading-text="{% trans 'Trying Again...' %}"  {# todo B5: stateful button #}
++             data-fail-text="{% trans 'Loading Failed. Try Again?' %}">{% trans 'Try Again' %}  {# todo B5: stateful button #}
+           </button>
+-          <button class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
++          <button class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
+         </div>
+       </div>
+     </div>

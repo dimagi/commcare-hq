@@ -10,7 +10,7 @@ hqDefine('users/js/edit_commcare_user', [
     'jquery-textchange/jquery.textchange',
     'hqwebapp/js/bootstrap3/knockout_bindings.ko',
     'hqwebapp/js/bootstrap3/widgets',
-    'registration/js/password',
+    'registration/js/bootstrap3/password',
     'select2/dist/js/select2.full.min',
     'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
 ], function (

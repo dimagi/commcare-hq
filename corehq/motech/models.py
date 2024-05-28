@@ -110,6 +110,9 @@ class ConnectionSettings(models.Model):
     objects = ConnectionSoftDeleteManager.from_queryset(ConnectionQuerySet)()
     all_objects = ConnectionQuerySet.as_manager()
 
+    # Used when serializing data to ensure encrypted fields are reset
+    encrypted_fields = {"password": PASSWORD_PLACEHOLDER, "client_secret": PASSWORD_PLACEHOLDER}
+
     def __str__(self):
         return self.name
 

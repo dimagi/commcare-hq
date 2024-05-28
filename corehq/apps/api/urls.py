@@ -1,5 +1,6 @@
-from django.urls import path, include, re_path as url
 from django.http import HttpResponseNotFound
+from django.urls import include, path
+from django.urls import re_path as url
 
 from tastypie.api import Api
 
@@ -28,12 +29,7 @@ from corehq.apps.api.resources.v0_5 import (
     UserDomainsResource,
 )
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
-from corehq.apps.fixtures.resources.v0_1 import (
-    FixtureResource,
-    InternalFixtureResource,
-    LookupTableItemResource,
-    LookupTableResource,
-)
+from corehq.apps.fixtures import resources as fixtures
 from corehq.apps.hqcase.views import case_api, case_api_bulk_fetch
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations import resources as locations
@@ -52,7 +48,7 @@ API_LIST = (
         v0_4.GroupResource,
         v0_4.XFormInstanceResource,
         v0_4.SingleSignOnResource,
-        FixtureResource,
+        fixtures.v0_1.FixtureResource,
         DomainMetadataResource,
     )),
     ((0, 5), (
@@ -64,8 +60,8 @@ API_LIST = (
         v0_5.WebUserResource,
         v0_5.GroupResource,
         v0_5.BulkUserResource,
-        InternalFixtureResource,
-        FixtureResource,
+        fixtures.v0_1.InternalFixtureResource,
+        fixtures.v0_1.FixtureResource,
         v0_5.DeviceReportResource,
         DomainMetadataResource,
         locations.v0_5.LocationResource,
@@ -79,12 +75,13 @@ API_LIST = (
         locations.v0_1.InternalLocationResource,
         v0_5.ODataCaseResource,
         v0_5.ODataFormResource,
-        LookupTableResource,
-        LookupTableItemResource,
+        fixtures.v0_1.LookupTableResource,
+        fixtures.v0_1.LookupTableItemResource,
         v0_5.NavigationEventAuditResource,
     )),
     ((0, 6), (
         locations.v0_6.LocationResource,
+        fixtures.v0_6.LookupTableItemResource,
     ))
 )
 

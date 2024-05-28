@@ -4,6 +4,9 @@ requirejs.config({
     paths: {
         "babel": "@babel/standalone/babel.min",
         "babel-plugin-transform-modules-requirejs-babel": "babel-plugin-transform-modules-requirejs-babel/index",
+        "backbone": "backbone/backbone-min",
+        "backbone.radio": "backbone.radio/build/backbone.radio.min",
+        "backbone.marionette": "backbone.marionette/lib/backbone.marionette.min",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
         "bootstrap5": "bootstrap5/dist/js/bootstrap.bundle.min",
         "datatables": "datatables.net/js/jquery.dataTables.min",
@@ -19,10 +22,50 @@ requirejs.config({
         "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
         "tempusDominus": "@eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
         "underscore": "underscore/underscore",
+        "nvd3/nv.d3.latest.min": "nvd3-1.8.6/build/nv.d3.min",
     },
     shim: {
         "accounting/js/lib/stripe": { exports: 'Stripe' },
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
+        "ace-builds/src-min-noconflict/mode-json": { deps: ["ace-builds/src-min-noconflict/ace"] },
+        "ace-builds/src-min-noconflict/mode-xml": { deps: ["ace-builds/src-min-noconflict/ace"] },
+        "ace-builds/src-min-noconflict/ext-searchbox": { deps: ["ace-builds/src-min-noconflict/ace"] },
+        "At.js/dist/js/jquery.atwho": { deps: ['jquery', 'Caret.js/dist/jquery.caret'] },
+        "backbone": { exports: "backbone" },
+        "calendars/dist/js/jquery.calendars.picker": {
+            deps: [
+                "calendars/dist/js/jquery.plugin",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.ethiopian": {
+            deps: [
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.plus": {
+            deps: [
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.picker-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.ethiopian-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars.ethiopian",
+            ],
+        },
         "datatables.bootstrap": { deps: ['datatables'] },
         "datatables.fixedColumns.bootstrap": { deps: ['datatables.fixedColumns'] },
         "tempusDominus": {
@@ -40,12 +83,25 @@ requirejs.config({
             exports: 'RMI',
         },
         "ko.mapping": { deps: ['knockout'] },
+        // Use the uncompressed version of mapbox, because the compressed version lacks an ending semicolon,
+        // which can interfere with whatever modules is included after it in bundle files.
+        // During deploy, build_requirejs will minify it.
+        "leaflet-fullscreen/dist/Leaflet.fullscreen.min": {
+            deps: ["mapbox.js/dist/mapbox.uncompressed"],
+            exports: "L",
+        },
+        "mapbox.js/dist/mapbox.uncompressed": { exports: "L" },
         "nvd3/nv.d3.min": {
+            deps: ['d3/d3.min'],
+            exports: 'nv',
+        },
+        "nvd3/nv.d3.latest.min": {
             deps: ['d3/d3.min'],
             exports: 'nv',
         },
         "sentry_browser": { exports: "Sentry" },
     },
+    wrapShim: true,
     packages: [{
         name: 'moment',
         location: 'moment',

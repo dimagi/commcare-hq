@@ -1009,7 +1009,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
 
     @patch('corehq.apps.user_importer.importer.Invitation')
     def test_upload_add_web_user(self, mock_invitation_class):
-        self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
+        self.setup_locations()
 
         username = 'a@a.com'
         web_user = WebUser.create(self.other_domain.name, username, 'password', None, None)
@@ -1017,7 +1017,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(web_user='a@a.com', is_account_confirmed='True', role=self.role.name,
-                            location_code=[self.loc1.site_code])],
+                            location_code=[self.loc1.site_code, self.loc2.site_code])],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
@@ -1035,6 +1035,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         change_messages.update(UserChangeMessage.added_as_web_user(self.domain.name))
         change_messages.update(UserChangeMessage.primary_location_info(self.loc1))
         change_messages.update(UserChangeMessage.role_change(self.role))
+        change_messages.update(UserChangeMessage.assigned_locations_info([self.loc1, self.loc2]))
         self.assertDictEqual(user_history.change_messages, change_messages)
         self.assertEqual(user_history.changes, {})
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_BULK_IMPORTER)
@@ -2052,7 +2053,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
             self.upload_record.pk,
             True
         )
-        self.assertEqual(self.user_invite.supply_point, self.loc1._id)
+        self.assertEqual(getattr(self.user_invite.primary_location, 'location_id', None), self.loc1._id)
 
     def setup_locations(self):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
@@ -2113,6 +2114,39 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertEqual(local_tableau_users.get(username='edith@wharton.com').role,
             TableauUser.Roles.UNLICENSED.value)
         local_tableau_users.get(username='george@eliot.com')
+
+        # Test user without permission to edit Tableau Configs
+        self.uploading_user.is_superuser = False
+        role_with_upload_permission = UserRole.create(
+            self.domain, 'edit-web-users', permissions=HqPermissions(edit_web_users=True)
+        )
+        self.uploading_user.set_role(self.domain_name, role_with_upload_permission.get_qualified_id())
+        self.uploading_user.save()
+        with self.assertRaises(UserUploadError):
+            import_users_and_groups(
+                self.domain.name,
+                [
+                    self._get_spec(
+                        username='edith@wharton.com',
+                        tableau_role=TableauUser.Roles.EXPLORER.value,
+                        tableau_groups="""group1,group2"""
+                    ),
+                ],
+                [],
+                self.uploading_user.get_id,
+                self.upload_record.pk,
+                True
+            )
+
+        # Test user with permission to edit Tableau Configs
+        role_with_upload_and_edit_tableau_permission = UserRole.create(
+            self.domain, 'edit-tableau', permissions=HqPermissions(edit_web_users=True,
+                                                                   edit_user_tableau_config=True)
+        )
+        self.uploading_user.set_role(self.domain_name,
+                                     role_with_upload_and_edit_tableau_permission.get_qualified_id())
+        self.uploading_user.save()
+
         import_users_and_groups(
             self.domain.name,
             [

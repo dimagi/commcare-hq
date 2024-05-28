@@ -41,15 +41,9 @@ class Command(ResourceStaticCommand):
                  'Does not allow you to mimic CDN.')
         parser.add_argument('--no_optimize', action='store_true',
             help='Don\'t minify files. Runs much faster. Useful when running on a local environment.')
-        parser.add_argument('--bootstrap_version', default="bootstrap3",
-            help="Specify bootstrap3 or bootstrap5 (bootstrap3 is default)")
 
     def handle(self, **options):
         logger.setLevel('DEBUG')
-
-        if options.get('bootstrap_version') == "bootstrap5":
-            logger.info("Running with bootstrap5 is no longer necessary")
-            exit()
 
         self.local = options['local']
         self.verbose = options['verbosity'] > 1
@@ -196,10 +190,10 @@ class Command(ResourceStaticCommand):
         logger.info(f"{log_prefix}r.js complete, bundle config output written to staticfiles/build.txt")
 
         # Copy requirejs_config.js back into corehq, since r.js added all of the bundles to it
+        bootstrap_dir = f'bootstrap{bootstrap_version}'
+        self._update_resource_hash(f"hqwebapp/js/{bootstrap_dir}/requirejs_config.js", filename)
         if self.local:
-            bootstrap_dir = f'bootstrap{bootstrap_version}'
             filename = self._staticfiles_path('hqwebapp', 'js', bootstrap_dir, 'requirejs_config.js')
-            self._update_resource_hash(f"hqwebapp/js/{bootstrap_dir}/requirejs_config.js", filename)
             dest = os.path.join(settings.BASE_DIR, 'corehq', 'apps', 'hqwebapp', 'static',
                                 'hqwebapp', 'js', bootstrap_dir, 'requirejs_config.js')
             logger.info(f"{log_prefix}Copying {bootstrap_dir}/requirejs_config.js back to {os.path.relpath(dest)}")
@@ -260,29 +254,28 @@ class Command(ResourceStaticCommand):
                 else:
                     logger.warning("Could not copy {} to {}".format(os.path.relpath(src), os.path.relpath(dest)))
 
-    def _update_resource_hash(self, name, filename):
-        file_hash = self.get_hash(filename)
+    def _update_resource_hash(self, name, filename, file_hash=None):
+        if file_hash is None:
+            file_hash = self.get_hash(filename)
         self.resource_versions[name] = file_hash
-        return file_hash
 
     # Overwrite source map references. Source maps are accessed on the CDN, so they need the version hash
     def _update_source_maps(self, config):
-        if not self.optimize:
-            return
-
         logger.info("Updating resource_versions with hashes from newly minified bundles")
 
         for module in config['modules']:
             filename = self._staticfiles_path(module['name'] + ".js")
-            with open(filename, 'r') as fin:
-                lines = fin.readlines()
-            with open(filename, 'w') as fout:
-                for line in lines:
-                    match = re.search(BUNDLE_SOURCE_MAP_PATTERN, line)
-                    if match:
-                        file_hash = self._update_resource_hash(module['name'] + ".js", filename)
-                        line += f'?version={file_hash}'
-                    fout.write(line)
+            file_hash = self.get_hash(filename)
+            if self.optimize:
+                with open(filename, 'r') as fin:
+                    lines = fin.readlines()
+                with open(filename, 'w') as fout:
+                    for line in lines:
+                        match = re.search(BUNDLE_SOURCE_MAP_PATTERN, line)
+                        if match:
+                            line += f'?version={file_hash}'
+                        fout.write(line)
+            self._update_resource_hash(module['name'] + ".js", filename, file_hash=file_hash)
 
     def _write_resource_versions(self):
         logger.info("Writing out resource_versions.js")

@@ -3,7 +3,7 @@ hqDefine("hqwebapp/js/maintenance_alerts",[
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/widgets',
+    'hqwebapp/js/bootstrap5/widgets',
 ], function ($, ko, initialPageData) {
     $(function () {
         var alertFormModel = {
