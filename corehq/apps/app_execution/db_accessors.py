@@ -1,4 +1,6 @@
-from django.db.models import Avg, DateTimeField, DurationField, ExpressionWrapper, F, Max
+from datetime import timedelta
+
+from django.db.models import Avg, Count, DateTimeField, DurationField, ExpressionWrapper, F, Max
 from django.db.models.functions import Trunc
 
 from corehq.apps.app_execution.models import AppExecutionLog, AppWorkflowConfig
@@ -41,3 +43,45 @@ def get_avg_duration_data(domain, start, end, workflow_id=None):
     for workflow_data in data:
         workflow_data["label"] = workflow_names[workflow_data["key"]]
     return data
+
+
+def get_status_data(domain, start, end, workflow_id=None):
+    query = AppExecutionLog.objects.filter(workflow__domain=domain, started__gte=start, started__lt=end)
+    if workflow_id:
+        query = query.filter(workflow_id=workflow_id)
+
+    chart_logs = (
+        query.annotate(date=Trunc("started", "hour", output_field=DateTimeField()))
+        .values("date", "success")
+        .annotate(count=Count("success"))
+    )
+
+    success = []
+    error = []
+    seen_success_dates = set()
+    seen_error_dates = set()
+    for row in chart_logs:
+        item = {
+            "date": row["date"].isoformat(),
+            "count": row["count"],
+        }
+        if row["success"]:
+            success.append(item)
+            seen_success_dates.add(row["date"])
+        else:
+            error.append(item)
+            seen_error_dates.add(row["date"])
+
+    start = start.replace(minute=0, second=0, microsecond=0)
+    current = start
+    while current < end:
+        if current not in seen_error_dates:
+            error.append({"date": current.isoformat(), "count": 0})
+        if current not in seen_success_dates:
+            success.append({"date": current.isoformat(), "count": 0})
+        current += timedelta(hours=1)
+
+    return [
+        {"key": "Success", "values": sorted(success, key=lambda x: x["date"])},
+        {"key": "Error", "values": sorted(error, key=lambda x: x["date"])},
+    ]

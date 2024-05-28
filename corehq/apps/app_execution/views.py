@@ -9,7 +9,7 @@ from django.urls import reverse
 from corehq.apps.app_execution import const
 from corehq.apps.app_execution.api import execute_workflow
 from corehq.apps.app_execution.data_model import EXAMPLE_WORKFLOW
-from corehq.apps.app_execution.db_accessors import get_avg_duration_data
+from corehq.apps.app_execution.db_accessors import get_avg_duration_data, get_status_data
 from corehq.apps.app_execution.exceptions import AppExecutionError, FormplayerException
 from corehq.apps.app_execution.forms import AppWorkflowConfigForm
 from corehq.apps.app_execution.har_parser import parse_har_from_string
@@ -24,13 +24,14 @@ def workflow_list(request, domain):
     workflows = AppWorkflowConfig.objects.filter(domain=domain)
     _augment_with_logs(workflows)
     utcnow = datetime.utcnow()
-    chart_data = get_avg_duration_data(domain, start=utcnow - relativedelta(months=1), end=utcnow)
+    start = utcnow - relativedelta(months=1)
     context = _get_context(
         request,
         "Automatically Executed App Workflows",
         reverse("app_execution:workflow_list", args=[domain]),
         workflows=workflows,
-        chart_data=chart_data
+        timing_chart_data=get_avg_duration_data(domain, start=start, end=utcnow),
+        status_chart_data=get_status_data(domain, start=start, end=utcnow)
     )
     return render(request, "app_execution/workflow_list.html", context)
 
@@ -165,9 +166,7 @@ def _get_context(request, title, url, add_parent=False, **kwargs):
 @use_bootstrap5
 def workflow_log_list(request, domain, pk):
     utcnow = datetime.utcnow()
-    chart_data = get_avg_duration_data(
-        domain, start=utcnow - relativedelta(months=1), end=utcnow, workflow_id=pk
-    )
+    start = utcnow - relativedelta(months=1)
     context = _get_context(
         request,
         "Automatically Executed App Workflow Logs",
@@ -175,7 +174,8 @@ def workflow_log_list(request, domain, pk):
         add_parent=True,
         workflow=AppWorkflowConfig.objects.get(id=pk),
         total=AppExecutionLog.objects.filter(workflow__domain=domain, workflow_id=pk).count(),
-        chart_data=chart_data
+        timing_chart_data=get_avg_duration_data(domain, start=start, end=utcnow, workflow_id=pk),
+        status_chart_data=get_status_data(domain, start=start, end=utcnow, workflow_id=pk),
     )
     return render(request, "app_execution/workflow_log_list.html", context)
 

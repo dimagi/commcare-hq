@@ -12,15 +12,21 @@
   {% endcompress %}
 {% endblock %}
 
-{% requirejs_main_b5 'app_execution/js/workflow_timing_chart' %}
+{% requirejs_main_b5 'app_execution/js/workflow_charts' %}
 
 {% block page_content %}
   <div>
     <a class='btn btn-primary' href="{% url 'app_execution:new_workflow' request.domain %}">Create New</a>
   </div>
-  <div>
-    <h3>{% trans "Average Timings Per Hour" %}</h3>
-    <div id="timing_linechart"><svg height="300px"></svg></div>
+  <div class="row">
+    <div id="timing_linechart" class="col">
+      <h4 class="text-center">{% trans "Average Timings" %}</h4>
+      <svg height="300px"></svg>
+    </div>
+    <div id="status_barchart" class="col">
+      <h4 class="text-center">{% trans "Status" %}</h4>
+      <svg height="300px"></svg>
+    </div>
   </div>
   <table class="table table-striped table-hover">
   <thead>
@@ -65,8 +71,9 @@
   </tbody>
 </table>
 
-{{ chart_data|json_script:"chart_data" }}
-<script id="includeSeries" type="application/json">
+{{ timing_chart_data|json_script:"timing_chart_data" }}
+{{ status_chart_data|json_script:"status_chart_data" }}
+<script id="timingSeries" type="application/json">
   [{"label": "", "key": "avg_duration"}]
 </script>
 {% endblock %}

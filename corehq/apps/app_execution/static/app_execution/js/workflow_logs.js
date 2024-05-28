@@ -2,7 +2,7 @@ hqDefine("app_execution/js/workflow_logs", [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'app_execution/js/workflow_timing_chart',
+    'app_execution/js/workflow_charts',
     'hqwebapp/js/bootstrap5/components.ko',
 ], function ($, ko, initialPageData) {
     let logsModel = function () {

@@ -1,5 +1,5 @@
 // /* globals moment */
-hqDefine("app_execution/js/workflow_timing_chart", [
+hqDefine("app_execution/js/workflow_charts", [
     'jquery',
     'moment/moment',
     'd3/d3.min',
@@ -12,7 +12,6 @@ hqDefine("app_execution/js/workflow_timing_chart", [
         return includeSeries.map((seriesMeta) => {
             return {
                 // include key in the label to differentiate between series with the same label
-                label: `${data.label}${seriesMeta.label}`,
                 key: `${data.label}${seriesMeta.label}[${data.key}]`,
                 values: data.values.map((item) => {
                     return {
@@ -24,7 +23,7 @@ hqDefine("app_execution/js/workflow_timing_chart", [
         });
     }
 
-    function setupLineChart(data, includeSeries) {
+    function setupTimingChart(data, includeSeries) {
         const timingSeries = data.flatMap((series) => getSeries(series, includeSeries));
         nv.addGraph(function () {
             let chart = nv.models.lineChart()
@@ -58,9 +57,53 @@ hqDefine("app_execution/js/workflow_timing_chart", [
 
     }
 
+    function setupStatusChart(data) {
+        const colors = {
+            "Success": "#6dcc66",
+            "Error": "#f44",
+        };
+        data = data.map((series) => {
+            return {
+                key: series.key,
+                values: series.values.map((item) => {
+                    return {
+                        x: moment(item.date),
+                        y: item.count,
+                    };
+                }),
+                color: colors[series.key],
+            };
+        });
+
+        nv.addGraph(function () {
+            let chart = nv.models.lineChart()
+                .showYAxis(true)
+                .showXAxis(true);
+
+            chart.yAxis
+                .axisLabel('Count');
+            chart.forceY(0);
+            chart.xScale(d3.time.scale());
+            chart.margin({left: 80, bottom: 100});
+            chart.xAxis.rotateLabels(-45)
+                .tickFormat(function (d) {
+                    return moment(d).format("MMM DD [@] HH");
+                });
+
+            d3.select('#status_barchart svg')
+                .datum(data)
+                .call(chart);
+
+            nv.utils.windowResize(chart.update);
+            return chart;
+        });
+    }
+
     $(document).ready(function () {
-        const chartData = JSON.parse(document.getElementById('chart_data').textContent);
-        const includeSeries = JSON.parse(document.getElementById('includeSeries').textContent);
-        setupLineChart(chartData, includeSeries);
+        const timingData = JSON.parse(document.getElementById('timing_chart_data').textContent);
+        const statusData = JSON.parse(document.getElementById('status_chart_data').textContent);
+        const includeSeries = JSON.parse(document.getElementById('timingSeries').textContent);
+        setupTimingChart(timingData, includeSeries);
+        setupStatusChart(statusData);
     });
 });
