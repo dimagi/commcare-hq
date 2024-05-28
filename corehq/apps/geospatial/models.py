@@ -68,6 +68,9 @@ class GeoConfig(models.Model):
     max_case_distance = models.IntegerField(null=True)  # km
     max_case_travel_time = models.IntegerField(null=True)  # minutes
     travel_mode = models.CharField(choices=VALID_TRAVEL_MODES, default=DRIVING, max_length=50)
+
+    max_cases_per_user = models.IntegerField(null=True)
+    min_cases_per_user = models.IntegerField(default=1)
     selected_disbursement_algorithm = models.CharField(
         choices=VALID_DISBURSEMENT_ALGORITHMS,
         default=RADIAL_ALGORITHM,

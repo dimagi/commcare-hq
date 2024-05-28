@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('geospatial', '0006_geoconfig_max_case_distance_and_more'),
+        ('geospatial', '0007_geoconfig_max_case_distance_and_more'),
     ]
 
     operations = [
