@@ -9,6 +9,10 @@
           rel="stylesheet"
           media="all"
           href="{% static 'nvd3-1.8.6/build/nv.d3.css' %}" />
+    <link type="text/css"
+              rel="stylesheet"
+              media="screen"
+              href="{% static "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css" %}" />
   {% endcompress %}
 {% endblock %}
 
@@ -30,6 +34,19 @@
     </div>
   </div>
   <div id="workflow-logs">
+    <div class="row">
+      <label for="status" class="col-sm-1 col-form-label">Filter</label>
+      <div class="col col-sm-3">
+        <select class="form-select" name="status" data-bind="value: statusFilter">
+          <option value="">All Status</option>
+          <option value="success">Success</option>
+          <option value="error">Error</option>
+        </select>
+      </div>
+      <div class="col col-sm-3">
+        <input type="text" name="date_range" class="form-control" id="id_date_range" data-bind="value: dateRange">
+      </div>
+    </div>
     <table class="table table-striped table-hover">
     <thead>
     <tr>

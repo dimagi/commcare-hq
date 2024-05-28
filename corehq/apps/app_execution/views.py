@@ -16,6 +16,8 @@ from corehq.apps.app_execution.har_parser import parse_har_from_string
 from corehq.apps.app_execution.models import AppExecutionLog, AppWorkflowConfig
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.view_utils import get_date_param
 
 
 @require_superuser_or_contractor
@@ -179,7 +181,7 @@ def workflow_log_list(request, domain, pk):
         chart_data={
             "timing": get_avg_duration_data(domain, start=start, end=utcnow, workflow_id=pk),
             "status": get_status_data(domain, start=start, end=utcnow, workflow_id=pk),
-        }
+        },
     )
     return render(request, "app_execution/workflow_log_list.html", context)
 
@@ -187,12 +189,27 @@ def workflow_log_list(request, domain, pk):
 @require_superuser_or_contractor
 @use_bootstrap5
 def workflow_logs_json(request, domain, pk):
+    status = request.GET.get('status', None)
     limit = int(request.GET.get('per_page', 10))
     page = int(request.GET.get('page', 1))
     skip = limit * (page - 1)
-    logs = AppExecutionLog.objects.filter(
-        workflow__domain=domain, workflow_id=pk
-    ).order_by("-started")[skip:skip + limit]
+
+    timezone = get_timezone_for_user(request.couch_user, domain)
+    try:
+        start_date = get_date_param(request, 'startDate', timezone=timezone)
+        end_date = get_date_param(request, 'endDate', timezone=timezone)
+    except ValueError:
+        return JsonResponse({"error": "Invalid date parameter"})
+
+    query = AppExecutionLog.objects.filter(workflow__domain=domain, workflow_id=pk)
+    if status:
+        query = query.filter(success=status == "success")
+    if start_date:
+        query = query.filter(started__gte=start_date)
+    if end_date:
+        query = query.filter(started__lte=datetime.combine(end_date, datetime.max.time()))
+
+    logs = query.order_by("-started")[skip:skip + limit]
     return JsonResponse({
         "logs": [
             {
