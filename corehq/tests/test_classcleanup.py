@@ -1,64 +1,89 @@
-from functools import wraps
-from unittest import TestCase
+import inspect
+import os
 
-from nose.plugins import PluginTester
 from testil import eq
+from unmagic import fixture
 
-from .noseplugins import classcleanup as mod
+pytest_plugins = ["pytester"]
+log = []
 
 
-class TestClassCleanupPlugin(PluginTester, TestCase):
-    activate = ''  # Activate option not needed. Plugin is always enabled.
-    plugins = [mod.ClassCleanupPlugin()]
+class TestClassCleanupPlugin:
 
-    def setUp(self):
-        pass  # super().setUp() is called by self.run_with_errors(...)
+    def run_suite(self, **kwargs):
+        @get_source
+        def test_py():
+            from functools import wraps
+            from unittest import TestCase
 
-    def makeSuite(self):
+            import corehq.tests.test_classcleanup as mod
 
-        def log_call_and_maybe_error(func):
-            @wraps(func)
-            def wrapper(self_):
-                func(self_)
-                self.call_log.append(func.__name__)
-                if func.__name__ in self.errors:
-                    self.call_log[-1] += f" {self.error_class.__name__}"
-                    raise self.error_class
-            return wrapper
+            def log(value):
+                mod.log.append(value)
 
-        class Test(TestCase):
-            @classmethod
-            @log_call_and_maybe_error
-            def setUpClass(cls):
-                cls.addClassCleanup(self.call_log.append, "classCleanup")
+            def log_call_and_maybe_error(func):
+                @wraps(func)
+                def wrapper(self_):
+                    func(self_)
+                    if func.__name__ in '__ERRORS__':
+                        log(func.__name__ + " '__ERROR_CLASS_NAME__'")
+                        raise '__ERROR_CLASS_NAME__'
+                    log(func.__name__)
+                return wrapper
 
-            @log_call_and_maybe_error
-            def setUp(self):
-                pass
+            class Test(TestCase):
+                @classmethod
+                @log_call_and_maybe_error
+                def setUpClass(cls):
+                    cls.addClassCleanup(cls.classCleanup)
 
-            @log_call_and_maybe_error
-            def runTest(self):
-                pass
+                @classmethod
+                @log_call_and_maybe_error
+                def classCleanup(cls):
+                    pass
 
-            @log_call_and_maybe_error
-            def tearDown(self):
-                pass
+                @log_call_and_maybe_error
+                def setUp(self):
+                    pass
 
-            @classmethod
-            @log_call_and_maybe_error
-            def tearDownClass(cls):
-                pass
+                @log_call_and_maybe_error
+                def runTest(self):
+                    pass
 
-        return [Test()]
+                @log_call_and_maybe_error
+                def tearDown(self):
+                    pass
 
-    def run_with_errors(self, *errors, error_class=Exception):
-        self.call_log = []
+                @classmethod
+                @log_call_and_maybe_error
+                def tearDownClass(cls):
+                    pass
+
+        pytester = fixture("pytester")()
+        pytester.makepyfile(
+            test_py
+            .replace("'__ERRORS__'", repr(self.errors))
+            .replace("'__ERROR_CLASS_NAME__'", self.error_class.__name__)
+        )
+
+        assert not log
+        os.environ['TestClassCleanupPlugin_data'] = '[]'
+        # fragile! other pytest plugins could break this
+        result = pytester.runpytest('-qs', '-pno:django', '-pno:corehq', '-pno:warnings')
+        result.assert_outcomes(**kwargs)
+        # sharing via os.environ works because runpytest runs in the same process
+        self.call_log = log[:]
+        del log[:]
+
+    def run_with_errors(self, *errors, error_class=Exception, **kwargs):
+        if not kwargs:
+            kwargs = {"failed": 1}
         self.errors = errors
         self.error_class = error_class
-        super().setUp()
+        self.run_suite(**kwargs)
 
     def test_cleanup_in_happy_path(self):
-        self.run_with_errors()
+        self.run_with_errors(passed=1)
         eq(self.call_log, [
             "setUpClass",
             "setUp",
@@ -69,7 +94,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
         ])
 
     def test_cleanup_on_error_in_set_up_class(self):
-        self.run_with_errors("setUpClass")
+        self.run_with_errors("setUpClass", errors=1)
         eq(self.call_log, [
             "setUpClass Exception",
             "classCleanup"
@@ -118,7 +143,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
         ])
 
     def test_cleanup_on_error_in_tearDownClass(self):
-        self.run_with_errors("tearDownClass")
+        self.run_with_errors("tearDownClass", passed=1, errors=1)
         eq(self.call_log, [
             "setUpClass",
             "setUp",
@@ -129,7 +154,7 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
         ])
 
     def test_cleanup_on_error_in_tearDown_and_tearDownClass(self):
-        self.run_with_errors("tearDown", "tearDownClass")
+        self.run_with_errors("tearDown", "tearDownClass", failed=1, errors=1)
         eq(self.call_log, [
             "setUpClass",
             "setUp",
@@ -138,3 +163,23 @@ class TestClassCleanupPlugin(PluginTester, TestCase):
             "tearDownClass Exception",
             "classCleanup",
         ])
+
+    def test_error_in_classCleanup(self):
+        self.run_with_errors("classCleanup", passed=1, errors=1)
+        eq(self.call_log, [
+            "setUpClass",
+            "setUp",
+            "runTest",
+            "tearDown",
+            "tearDownClass",
+            "classCleanup Exception",
+        ])
+
+
+def get_source(func):
+    src = inspect.getsource(func)
+    while True:
+        firstline, src = src.split("\n", 1)
+        if f'def {func.__name__}(' in firstline:
+            return src
+        assert src
