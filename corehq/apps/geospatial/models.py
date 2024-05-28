@@ -97,6 +97,11 @@ class GeoConfig(models.Model):
         return self.max_case_travel_time * 60
 
     @property
+    def mapbox_travel_mode(self):
+        assert self.travel_mode in [self.WALKING, self.CYCLING, self.DRIVING]
+        return self.travel_mode
+
+    @property
     def disbursement_solver(self):
         return self.VALID_DISBURSEMENT_ALGORITHM_CLASSES[
             self.selected_disbursement_algorithm
