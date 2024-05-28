@@ -99,3 +99,34 @@ class TestRadialDistanceSolver(SimpleTestCase):
         self.assertEqual(
             RadialDistanceSolver(problem_data).solve(GeoConfig()), (None, expected_results)
         )
+
+    def test_cases_too_far_distance(self):
+        expected_results = {
+            'assigned': {'New York': [], 'Los Angeles': []},
+            'unassigned': self._problem_data['cases'],
+        }
+        self.assertEqual(
+            RadialDistanceSolver(
+                self._problem_data
+            ).solve(GeoConfig(max_case_distance=1)), (None, expected_results)
+        )
+
+    def test_massive_distance_disburses_normally(self):
+        # This test just shows that, given a big enough radius from the user, the results will look
+        # the same as if there was no radius at all
+        results_from_normal = RadialDistanceSolver(self._problem_data).solve(GeoConfig())
+        results_massive_max_distance = RadialDistanceSolver(self._problem_data).solve(
+            GeoConfig(max_case_distance=10000)
+        )
+        self.assertEqual(
+            results_from_normal, results_massive_max_distance
+        )
+
+    def test_radial_solver_does_not_take_travel_time_into_account(self):
+        results_from_normal = RadialDistanceSolver(self._problem_data).solve(GeoConfig())
+        results_with_travel_time = RadialDistanceSolver(self._problem_data).solve(
+            GeoConfig(max_case_travel_time=5)
+        )
+        self.assertEqual(
+            results_from_normal, results_with_travel_time
+        )
