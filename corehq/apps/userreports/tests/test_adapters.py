@@ -1,4 +1,4 @@
-from django.test import SimpleTestCase
+from django.test import TestCase
 from unittest.mock import patch
 
 from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter
@@ -6,7 +6,7 @@ from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 
 
-class TestIndicatorSqlAdapter(SimpleTestCase):
+class TestIndicatorSqlAdapter(TestCase):
 
     @staticmethod
     def _create_data_source_config(domain):
