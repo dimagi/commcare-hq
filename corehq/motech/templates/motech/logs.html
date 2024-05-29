@@ -5,8 +5,8 @@
 {% block page_content %}
   <fieldset>
     <legend>{% trans "Remote API Logs" %}</legend>
-    <div class="form-group">  {# todo B5: css:form-group #}
-      <form method="GET">
+    <form method="GET">
+      <div class="row">
         <span class="col-md-2">
           <label for="filter_from_date">From date*</label>
           <input id="filter_from_date"
@@ -74,8 +74,8 @@
                  formaction="{% url 'motech_log_export_view' domain %}"
                  value="Export"/>
         </span>
-      </form>
-    </div>
+      </div>
+    </form>
   </fieldset>
   <div class="spacer"></div>
 
@@ -92,16 +92,16 @@
       <tbody>
       {% for log in logs %}
         <tr>
-          <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">  {# todo B5: inline style #}
+          <td><a href="{% url 'motech_log_detail_view' domain log.id %}">
             {{ log.timestamp }}
           </a></td>
-          <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">  {# todo B5: inline style #}
+          <td><a href="{% url 'motech_log_detail_view' domain log.id %}">
             {% if log.payload_id %}{{ log.payload_id }}{% else %}&nbsp;{% endif %}
           </a></td>
-          <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">  {# todo B5: inline style #}
+          <td><a href="{% url 'motech_log_detail_view' domain log.id %}">
             {{ log.request_method }} {{ log.request_url }}
           </a></td>
-          <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">  {# todo B5: inline style #}
+          <td><a href="{% url 'motech_log_detail_view' domain log.id %}">
             {{ log.response_status }}
           </a></td>
         </tr>
