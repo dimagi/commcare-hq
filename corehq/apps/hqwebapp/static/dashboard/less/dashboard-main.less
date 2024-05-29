@@ -1,8 +1,8 @@
 @import '../../hqwebapp/less/_hq/includes/variables.less';
 @import '../../hqwebapp/less/_hq/includes/mixins.less';
 
-@panel-dashboard-border: darken(@navbar-default-bg, 5);
-@panel-dashboard-header-bg: @navbar-default-bg;
+@card-dashboard-border: darken(@navbar-default-bg, 5);
+@card-dashboard-header-bg: @navbar-default-bg;
 
 .dashboard-icon {
   display: block;
@@ -53,17 +53,15 @@
   }
 }
 
-.panel-dashboard {
-  .panel-variant(@panel-dashboard-border; @navbar-default-color; @panel-dashboard-header-bg; @panel-dashboard-border);
-
-  .panel-heading {
+.card-dashboard {
+  .card-heading {
     font-weight: bold;
     font-size: @font-size-large;
     text-align: center;
   }
 }
 
-.panel-dashboard-medium {
+.card-dashboard-medium {
   height: 263px;
   font-size: @font-size-small;
   position: relative;
