@@ -18,21 +18,19 @@
   {% registerurl 'dashboard_tile' domain '---' %}
   {% registerurl 'dashboard_tile_total' domain '---' %}
   <div class="container" id="hq-content">
-    <div class="page-header">  {# todo B5: css:page-header #}
-      <h1>
-        {% blocktrans with cc_name=commcare_hq_names.COMMCARE_HQ_NAME %}
-          Welcome Back to {{ cc_name }}
-        {% endblocktrans %}
-      </h1>
-    </div>
+    <h1 class="mb-3 mt-5">
+      {% blocktrans with cc_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+        Welcome Back to {{ cc_name }}
+      {% endblocktrans %}
+    </h1>
     {% if is_paused %}
       {% include 'hqwebapp/partials/bootstrap5/paused_plan_notice.html' %}
     {% endif %}
     <div id="dashboard-tiles">
       <div class="row" data-bind="foreach: tiles">
         <div class="col-lg-3">
-          <div class="card panel-dashboard panel-dashboard-medium">  {# todo B5: css:panel #}
-            <div class="card-header">
+          <div class="card card-dashboard card-dashboard-medium mb-3">
+            <div class="card-header text-center fs-5">
               <a data-bind="
                                visible: url,
                                text: title,
@@ -54,7 +52,7 @@
               <!-- Spinner -->
               <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
 
-              <!-- List of items, with pagination if there are multiple pages -->  {# todo B5: css:pagination #}
+              <!-- List of items, with pagination if there are multiple pages -->
               <!-- ko if: hasItemList() -->
               <div data-bind="visible: showItemList">
                 <div class="list-group" data-bind="foreach: items">
@@ -100,7 +98,7 @@
           </div>
         </div>
       </div>
-      <p class="lead text-center" style="margin-bottom: 5em;">  {# todo B5: inline style #}
+      <p class="lead text-center mb-5">
         {% if enterprise_mode %}
           {% blocktrans with cc_name=commcare_hq_names.COMMCARE_NAME %}
             Thanks for using {{ cc_name }}!
