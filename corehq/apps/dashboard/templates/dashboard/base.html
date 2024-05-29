@@ -1,8 +1,8 @@
-{% extends 'hqwebapp/bootstrap3/base_navigation.html' %}
+{% extends 'hqwebapp/bootstrap5/base_navigation.html' %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% requirejs_main 'dashboard/js/dashboard' %}
+{% requirejs_main_b5 'dashboard/js/dashboard' %}
 
 {% block stylesheets %}
   {% compress css %}
@@ -18,21 +18,19 @@
   {% registerurl 'dashboard_tile' domain '---' %}
   {% registerurl 'dashboard_tile_total' domain '---' %}
   <div class="container" id="hq-content">
-    <div class="page-header">
-      <h1>
-        {% blocktrans with cc_name=commcare_hq_names.COMMCARE_HQ_NAME %}
-          Welcome Back to {{ cc_name }}
-        {% endblocktrans %}
-      </h1>
-    </div>
+    <h1 class="my-3">
+      {% blocktrans with cc_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+        Welcome Back to {{ cc_name }}
+      {% endblocktrans %}
+    </h1>
     {% if is_paused %}
-      {% include 'hqwebapp/partials/bootstrap3/paused_plan_notice.html' %}
+      {% include 'hqwebapp/partials/bootstrap5/paused_plan_notice.html' %}
     {% endif %}
     <div id="dashboard-tiles">
       <div class="row" data-bind="foreach: tiles">
-        <div class="col-md-3">
-          <div class="panel panel-dashboard panel-dashboard-medium">
-            <div class="panel-heading">
+        <div class="col-lg-3">
+          <div class="card card-dashboard card-dashboard-medium mb-3">
+            <div class="card-header text-center fs-5">
               <a data-bind="
                                visible: url,
                                text: title,
@@ -46,7 +44,7 @@
                            "></a>
               <span data-bind="text: title, visible: !url"></span>
             </div>
-            <div class="panel-body">
+            <div class="card-body">
 
               <!-- Icon in a watermark style, displayed under item list -->
               <i data-bind="css: icon, visible: showBackgroundIcon" class="dashboard-icon dashboard-icon-medium dashboard-icon-bg"></i>
@@ -100,7 +98,7 @@
           </div>
         </div>
       </div>
-      <p class="lead text-center" style="margin-bottom: 5em;">
+      <p class="lead text-center mb-5">
         {% if enterprise_mode %}
           {% blocktrans with cc_name=commcare_hq_names.COMMCARE_NAME %}
             Thanks for using {{ cc_name }}!
