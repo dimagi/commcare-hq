@@ -857,7 +857,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
-                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE || d.type() === "add-group") {
+                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE || d.type() === constants.ADD_GROUP_TYPE) {
                     return true;
                 } else if (d.type() === constants.GROUP_TYPE) {
                     return d.hasAnyNestedQuestions();
@@ -900,6 +900,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             $('.add').trigger('blur');
         };
         self.entryTemplate = "add-group-entry-ko-template";
+        self.addChoice = ko.observable(json['add-choice']);
         self.type = ko.observable("add-group");
         self.rel_ix = ko.observable(relativeIndex(json.ix));
         self.required = ko.observable(json.required);
