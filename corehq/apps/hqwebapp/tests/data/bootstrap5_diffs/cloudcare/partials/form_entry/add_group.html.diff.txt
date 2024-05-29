@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -2,7 +2,7 @@
+ 
+ <script type="text/html" id="add-group-fullform-ko-template">
+   <div>
+-        <button class="btn btn-default add" href="#"
++        <button class="btn btn-outline-primary add" href="#"
+                 data-bind="click: newRepeat"
+                 id="repeat-add-new">
+                 <i class="fa fa-plus"></i>
