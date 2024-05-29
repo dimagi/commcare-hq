@@ -78,6 +78,9 @@
                         ">
         </select>
     </div>
+    <button class="btn btn-default" data-bind="click: clearSelectedPolygonFilter, visible: selectedSavedPolygonId">
+      {% trans 'Clear' %}
+    </button>
     <a id="btnExportDrawnArea" class="col-sm-2 btn btn-default" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnExportDisabled }">
         {% trans 'Export Area' %}
     </a>
