@@ -91,6 +91,17 @@
   "reports": {
     "in_progress": true
   },
+  "repeaters": {
+    "is_progress": true,
+    "templates": [
+      "add_form_repeater.html",
+      "repeaters.html",
+      "partials/repeater_row.html"
+    ],
+    "javascript": [
+      "js/add_form_repeater.js"
+    ]
+  },
   "reports_core": {
     "in_progress": true
   },
