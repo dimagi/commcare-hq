@@ -348,7 +348,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             }
 
             activeCaseType.deprecated = shouldDeprecate;
-            $("#case-type-error").hide();
+            $("#case-type-error").addClass("d-none");
             $.ajax({
                 url: initialPageData.reverse('deprecate_or_restore_case_type', activeCaseType.name),
                 method: 'POST',
@@ -359,13 +359,13 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     window.location.reload(true);
                 },
                 error: function () {
-                    $("#case-type-error").show();
+                    $("#case-type-error").removeClass("d-none");
                 },
             });
         };
 
         self.deleteCaseType = function () {
-            $("#case-type-error").hide();
+            $("#case-type-error").addClass("d-none");
             $.ajax({
                 url: initialPageData.reverse('delete_case_type', self.getActiveCaseType().name),
                 method: 'POST',
@@ -373,7 +373,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     window.location.href = initialPageData.reverse('data_dictionary');
                 },
                 error: function () {
-                    $("#case-type-error").show();
+                    $("#case-type-error").removeClass("d-none");
                 },
             });
         };
