@@ -87,7 +87,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
                 message: _.template($('#user-data-template').html())(
                     { user: this.model.toJSON() }
                 ),
-                confirmText: gettext('Yes, log in as this user'),
+                confirmText: gettext('Log in'),
                 onConfirm: function () {
                     usersUtils.Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
