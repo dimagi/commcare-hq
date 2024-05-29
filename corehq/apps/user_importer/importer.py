@@ -832,7 +832,7 @@ class WebUserRow(BaseUserRow):
             if cv["profile_name"]:
                 _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
                 profile = self.domain_info.profiles_by_name[cv["profile_name"]]
-            tableau_role = cv["tableau_role"] if "tableau_role" in cv else None
+            tableau_role = cv["tableau_role"]
             tableau_group_ids = None
             if cv["tableau_groups"] is not None:
                 groups_list = cv["tableau_groups"].split(',')
