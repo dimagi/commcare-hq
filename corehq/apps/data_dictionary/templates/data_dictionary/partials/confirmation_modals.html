@@ -6,8 +6,8 @@
 <script type="text/html" id="deprecate-case-type">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">
+        <div class="modal-header">  {# todo B5: css:modal-header #}
+          <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css:close #}
             <span aria-hidden="true">&times;</span>
           </button>
           <h4 class="modal-title">
@@ -44,8 +44,8 @@
           {% endblocktrans %}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-          <button type="button" class="btn btn-primary" id="gtm-deprecate-case-type-confirm" data-dismiss="modal" data-bind="click: $root.deprecateCaseType">{% trans "Confirm" %}</button>
+          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="button" class="btn btn-primary" id="gtm-deprecate-case-type-confirm" data-bs-dismiss="modal" data-bind="click: $root.deprecateCaseType">{% trans "Confirm" %}</button>
         </div>
       </div>
     </div>
@@ -55,8 +55,8 @@
 <div id="deprecate-geospatial-prop-modal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <div class="modal-header">  {# todo B5: css:modal-header #}
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">  {# todo B5: css:close #}
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <h4 class="modal-title">
@@ -87,7 +87,7 @@
                 </p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">
+                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
                     {% trans 'Cancel' %}
                 </button>
                 <button id="deprecate-geospatial-prop-btn" type="button" class="btn btn-primary">
@@ -102,8 +102,8 @@
 <div id="delete-case-prop-modal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <div class="modal-header">  {# todo B5: css:modal-header #}
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">  {# todo B5: css:close #}
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <h4 class="modal-title">
@@ -137,10 +137,10 @@
                 </p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">
+                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
                     {% trans 'Cancel' %}
                 </button>
-                <button id="delete-case-prop-btn" type="button" class="btn btn-danger">
+                <button id="delete-case-prop-btn" type="button" class="btn btn-outline-danger">
                     <i class="fa fa-trash"></i>
                     {% trans 'Confirm' %}
                 </button>
@@ -153,8 +153,8 @@
 <div id="delete-case-type-modal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <div class="modal-header">  {# todo B5: css:modal-header #}
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">  {# todo B5: css:close #}
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <h4 class="modal-title">
@@ -189,10 +189,10 @@
                 </p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">
+                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
                     {% trans 'Cancel' %}
                 </button>
-                <button id="delete-case-type-btn" type="button" class="btn btn-danger" data-dismiss="modal" data-bind="click: $root.deleteCaseType">
+                <button id="delete-case-type-btn" type="button" class="btn btn-outline-danger" data-bs-dismiss="modal" data-bind="click: $root.deleteCaseType">
                     <i class="fa fa-trash"></i>
                     {% trans 'Delete' %}
                 </button>
