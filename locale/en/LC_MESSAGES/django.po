@@ -3431,6 +3431,15 @@ msgstr ""
 msgid "Cannot parse datetime '{val}'"
 msgstr ""
 
+#: corehq/apps/app_execution/forms.py
+msgid "User not found"
+msgstr ""
+
+#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
+#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
+msgid "Average Timings Per Hour"
+msgstr ""
+
 #: corehq/apps/app_manager/add_ons.py
 msgid "Case Detail Overwrite"
 msgstr ""
@@ -4903,6 +4912,14 @@ msgid "Short"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "Show a persistent menu instead of breadcrumbs."
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
+msgid "Show Persistent Menu"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid ""
 "Simple (FOR TESTING ONLY: crashes with any unrecognized user-defined "
 "translations)"
@@ -5059,6 +5076,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "Web Apps Logo"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
+msgid "Web Apps Settings"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -5399,6 +5420,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/mobile_report_configs.html
+#: corehq/apps/cloudcare/templates/cloudcare/partials/bootstrap5/settings_view.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap3/grid.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap3/single_app.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/grid_view/bootstrap5/grid.html
@@ -21750,6 +21772,10 @@ msgid "The maximum number of cases that can be in a group"
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
+msgid "Minimum group size"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
 msgid "The minimum number of cases that can be in a group"
 msgstr ""
 
@@ -21765,6 +21791,28 @@ msgstr ""
 
 #: corehq/apps/geospatial/forms.py
 msgid "Disbursement algorithm"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "The algorithm which will be used to disburse cases between users"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Minimum cases assigned per user"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "The minimum number of cases each user can be assigned"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Maximum cases assigned per user"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The maximum number of cases each user can be assigned. Leave blank in case "
+"you don't want to specify any upper limit."
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
@@ -21829,6 +21877,10 @@ msgstr ""
 
 #: corehq/apps/geospatial/forms.py
 msgid "Mapbox API token required"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "The maximum cases per user cannot be less than the minimum specified"
 msgstr ""
 
 #: corehq/apps/geospatial/models.py
@@ -22133,15 +22185,6 @@ msgstr ""
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid ""
 "\n"
-"        Please ensure that the filtered area includes both cases and mobile "
-"workers before\n"
-"        attempting to run disbursement.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/map_visualization.html
-msgid ""
-"\n"
 "        Previous disbursement was cleared.\n"
 "    "
 msgstr ""
@@ -22172,6 +22215,16 @@ msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "All Cases on Map"
+msgstr ""
+
+#: corehq/apps/geospatial/views.py
+msgid ""
+"We couldn't match every case to a user with the current disbursement "
+"settings. Please follow any of the below steps to rectify this."
+"<ul><li>Ensure that your min/max cases per user setting is correct</"
+"li><li>Allocate more users to the area</li><li>Use filtered areas to reduce "
+"the number of cases such that the algorithm can ensure all cases are "
+"assigned.</li></ul>"
 msgstr ""
 
 #: corehq/apps/geospatial/views.py
@@ -36551,7 +36604,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
-#: corehq/tabs/tabclasses.py
 msgid "Migrate Project"
 msgstr ""
 
@@ -36858,6 +36910,16 @@ msgstr ""
 
 #: corehq/apps/user_importer/validation.py
 msgid "When '{}' is True for an existing user, {}."
+msgstr ""
+
+#: corehq/apps/user_importer/validation.py
+msgid ""
+"Based on your locations do not have permission to edit this user or user "
+"invitation"
+msgstr ""
+
+#: corehq/apps/user_importer/validation.py
+msgid "You do not have permission to assign or remove these locations: {}"
 msgstr ""
 
 #: corehq/apps/userreports/columns.py
@@ -39054,6 +39116,10 @@ msgid "Security"
 msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
+msgid "Support"
+msgstr ""
+
+#: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid "User Location"
 msgstr ""
 
@@ -40720,7 +40786,15 @@ msgid "File Size"
 msgstr ""
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
+msgid "Index"
+msgstr ""
+
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
 msgid "Parent case not found"
+msgstr ""
+
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
+msgid "(current case)"
 msgstr ""
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
@@ -44506,6 +44580,10 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "New Application"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Application Testing"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py

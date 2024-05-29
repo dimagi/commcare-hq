@@ -3553,6 +3553,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid ""
+"Please ensure that the filtered area includes both casesand mobile workers "
+"before attempting to run disbursement."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "All locations"
 msgstr ""
 
