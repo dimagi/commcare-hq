@@ -375,6 +375,12 @@ def write_export_instance(writer, export_instance, documents,
                 if ALL_CASE_TYPE_TABLE in table.path and doc['type'] not in path_names:
                     continue
 
+                # For geojson exports it is important to reliably know whether
+                # the split_multiselects setting is enabled at the point when the
+                # table's rows are handled
+                if writer.format == "geojson":
+                    table.split_multiselects = export_instance.split_multiselects
+
                 try:
                     rows = table.get_rows(
                         doc,
