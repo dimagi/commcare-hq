@@ -24,7 +24,7 @@
       <!-- ko ifnot: usedBy -->
       <button type="button"
               class="btn btn-outline-danger"
-              data-bind="attr: {'data-target': '#delete-connection-settings-' + id}"
+              data-bind="attr: {'data-bs-target': '#delete-connection-settings-' + id}"
               data-bs-toggle="modal">
         <i class="fa fa-remove"></i> {% trans "Delete" %}
       </button>
@@ -33,11 +33,11 @@
            data-bind="attr: {'id': 'delete-connection-settings-' + id}">
         <div class="modal-dialog">
           <div class="modal-content">
-            <div class="modal-header">  {# todo B5: css:modal-header #}
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>  {# todo B5: css:close #}
-              <h3>
+            <div class="modal-header">
+              <h4 class="modal-title">
                 {% trans "Delete Connection Settings" %} <strong data-bind="text: name"></strong>?
-              </h3>
+              </h4>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
             </div>
             <div class="modal-footer">
               <button type="button"
