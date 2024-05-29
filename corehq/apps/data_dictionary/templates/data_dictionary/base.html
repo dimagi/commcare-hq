@@ -280,11 +280,10 @@
                 <div class="w-100">
                 <span data-bind="text: name"></span>
                 <div class="row mt-3">
-                  <label class="col-sm-2 py-2" for="prop-label">Label </label>
                   <span class="col-sm-9">
                     <input class="form-control"
-                          data-bind="value: $data.label, attr: {'placeholder': 'Click here to add Label'}"
-                          id="prop-label"
+                          placeholder="{% trans_html_attr "Click here to add label" %}"
+                          data-bind="value: $data.label"
                     />
                   </span>
                 </div>
