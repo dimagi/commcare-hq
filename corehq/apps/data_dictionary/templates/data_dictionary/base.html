@@ -140,6 +140,7 @@
     </p>
   </div>
   {% if not request.is_view_only %}
+    {# TODO: this takes up too much space #}
     <div id="gtm-save-btn" data-bind="saveButton: saveButton, visible: $root.activeCaseType()"></div>
   {% endif %}
   <div class="row">
@@ -226,6 +227,7 @@
               {% if not request.is_view_only %}
               <i class="sortable-handle fa-solid fa-up-down"></i>
               {% endif %}
+              {# todo: fix alignment #}
               <i class="fa-solid ms-2 fa-lg"
                 data-bind="css: { 'fa-square-plus': !expanded(), 'fa-square-minus': expanded() }, click: toggleExpanded"></i>
             </div>
@@ -290,6 +292,7 @@
               </div>
               {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
                 <div class="row-item main-form">
+                  {# TODO: fix height and vertical alignment #}
                   <select class="form-control"
                           data-bind="
                             options: $root.availableDataTypes,
@@ -341,6 +344,8 @@
                 <button title="{% trans_html_attr 'Delete Property' %}"
                         data-bind="click: confirmDeleteProperty, visible: isSafeToDelete"
                         class="btn btn-outline-danger">
+                  {# TODO: nowrap #}
+                  {# TODO: fix height and vertical alignment #}
                   <i class="fa fa-trash"></i>
                   {% trans 'Delete' %}
                 </button>
@@ -348,12 +353,16 @@
               <div class="row-item-small m-auto">
                 <!-- ko if: !deprecated() -->
                 <button id="gtm-deprecate-case-property" title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="btn btn-outline-primary">
+                  {# TODO: nowrap #}
+                  {# TODO: fix height and vertical alignment #}
                   <i class="fa fa-archive"></i>
                   {% trans 'Deprecate' %}
                 </button>
                 <!-- /ko -->
                 <!-- ko if: deprecated() -->
                 <button title="{% trans_html_attr 'Restore Property' %}" data-bind="click: restoreProperty" class="btn btn-outline-primary">
+                  {# TODO: nowrap #}
+                  {# TODO: fix height and vertical alignment #}
                   <i class="fa fa-undo"></i>
                   {% trans 'Restore' %}
                 </button>

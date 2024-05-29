@@ -124,6 +124,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         }
         self.allowedValues = uiElementKeyValueList.new(
             String(Math.random()).slice(2), /* guid */
+            /* TODO subtitle displays next to title */
             interpolate('Edit valid values for "%s"', [name]), /* modalTitle */
             subTitle, /* subTitle */
             {"key": gettext("valid value"), "value": gettext("description")}, /* placeholders */
@@ -203,6 +204,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         const params = new URLSearchParams(document.location.search);
         self.showDeprecatedCaseTypes = ko.observable(params.get("load_deprecated_case_types") !== null);
 
+        // todo
         // Elements with this class have a hidden class to hide them on page load. If we don't do this, then the elements
         // will flash on the page for a bit while the KO bindings are being applied.
         $(".deprecate-case-type").removeClass('hidden');
