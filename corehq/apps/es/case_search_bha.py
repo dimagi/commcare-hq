@@ -14,8 +14,8 @@ Code reads from the new index when directed there by use of the CaseSearchBhaES
 class, or by passing the proper index cname to CaseSearchES constructor. Case
 search code uses a shared base queryset (QueryHelper.get_base_queryset) which
 checks CaseSearchConfig.index_name to see whether to read from a dedicated
-index. This is edited in the Django admin, which allows us to easily switch app
-users to the dedicated index or back without a deploy.
+index. This is edited in the Django admin, which allows us to easily switch domains
+to the dedicated index or back without a deploy.
 """
 from corehq.apps.es.case_search import CaseSearchES, ElasticCaseSearch
 
