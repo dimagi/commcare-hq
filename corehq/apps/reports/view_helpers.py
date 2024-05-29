@@ -25,15 +25,11 @@ def case_hierarchy_context(case, timezone=None):
                 parent_case = idx.referenced_case
             except ResourceNotFound:
                 parent_cases.append(None)
-                last_parent_id = None
             else:
                 parent_case.index_info = _index_to_context(idx, is_ancestor=True)
                 parent_cases.append(parent_case)
-                last_parent_id = parent_case.case_id
 
-        for c in descendant_case_list:
-            if not getattr(c, 'treetable_parent_node_id', None) and last_parent_id:
-                c.treetable_parent_node_id = last_parent_id
+        case.treetable_parent_node_id = parent_cases[-1].case_id if parent_cases[-1] else None
 
     reverse_indices = {index.case_id: index for index in case.reverse_indices}
     for descendant in descendant_case_list:
