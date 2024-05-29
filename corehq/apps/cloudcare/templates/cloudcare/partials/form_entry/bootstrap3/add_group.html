@@ -1,12 +1,11 @@
 {% load hq_shared_tags %}
 
 <script type="text/html" id="add-group-fullform-ko-template">
-  <div>
+  <div style="margin-bottom: 10px">
         <button class="btn btn-default add" href="#"
-                data-bind="click: newRepeat"
+                data-bind="click: newRepeat, text: addChoice"
                 id="repeat-add-new">
                 <i class="fa fa-plus"></i>
-           <!-- ko text: $root.getTranslation('repeat.dialog.add.new', '{% trans_html_attr 'Add new repeat' %}') --><!-- /ko -->
         </button>
   </div>
 </script>
