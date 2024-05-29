@@ -27,10 +27,13 @@ namespaces = false
 [tool.pytest.ini_options]
 minversion = "8.1"
 addopts = [
+    "--strict-markers",
     "-p", "no:warnings",  # HQ has its own (incompatible) warnings system
 ]
-
-empty_parameter_set_mark = "xfail"
+markers = [
+    "slow: marks tests as slow (deselect with -m 'not slow')",
+]
+empty_parameter_set_mark = "fail_at_collect"
 xfail_strict = true
 
 norecursedirs = [
