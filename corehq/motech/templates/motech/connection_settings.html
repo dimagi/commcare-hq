@@ -66,13 +66,9 @@
 {% endblock %}
 
 {% block pagination_footer %}
-  <div class="row" style="margin-top: 50px;">  {# todo B5: inline style #}
-    <div class="col-md-12">
-      <a href="{% url 'connection_settings_detail_view' domain %}">
-        <button type="button" class="btn btn-primary">
-          {% trans "Add Connection Settings" %}
-        </button>
-      </a>
-    </div>
-  </div>
+  <a href="{% url 'connection_settings_detail_view' domain %}">
+    <button type="button" class="btn btn-primary">
+      {% trans "Add Connection Settings" %}
+    </button>
+  </a>
 {% endblock %}
