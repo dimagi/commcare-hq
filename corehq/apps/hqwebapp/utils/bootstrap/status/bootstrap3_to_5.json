@@ -79,6 +79,9 @@
   "groups": {
     "is_complete": true
   },
+  "motech.openmrs": {
+    "is_complete": true
+  },
   "programs": {
     "is_complete": true
   },
