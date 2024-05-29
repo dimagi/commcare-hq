@@ -16,25 +16,26 @@
 
 {% block page_navigation %}
   <h2 class="text-hq-nav-header">{% trans "Data Dictionary" %}</h2>
-  <ul class="nav nav-hq-sidebar">  {# todo B5: css:nav #}
+  {# TODO: items are displayed inline (because they aren't direct children of the ul? #}
+  <ul class="nav nav-hq-sidebar">
     <!-- ko foreach: caseTypes -->
-    <li data-bind="css: { active: $data.name == $root.activeCaseType() }">
+    <li class="nav-item">
       {# navigation handle by URL hash #}
-      <a data-bind="attr: {href: $data.url}">
-        <span data-bind="text: $data.name" style="display: d-inline-block"></span>  {# todo B5: inline style #}
+      <a class="nav-link" data-bind="attr: {href: $data.url}, css: { active: $data.name == $root.activeCaseType() }">
+        <span data-bind="text: $data.name" class="d-inline-block"></span>
         <span data-bind="visible: $data.deprecated" class="hidden deprecate-case-type badge text-bg-warning">{% trans "deprecated" %}</span>
       </a>
     </li>
     <!-- /ko -->
     {% if not request.is_view_only %}
-      <li>
-        <a href="#" data-bind="openModal: 'create-case-type'">
+      <li class="nav-item">
+        <a class="nav-link" href="#" data-bind="openModal: 'create-case-type'">
           <i class="fa fa-plus"></i>
           {% trans "Add Case Type" %}
         </a>
       </li>
-      <li>
-        <a class="hidden deprecate-case-type" data-bind="click: $root.toggleShowDeprecatedCaseTypes">
+      <li class="nav-item">
+        <a class="nav-link hidden deprecate-case-type" data-bind="click: $root.toggleShowDeprecatedCaseTypes">
             <i class="fa fa-archive"></i>
             <span data-bind="hidden: $root.showDeprecatedCaseTypes">
               {% trans 'Show Deprecated Case Types' %}
