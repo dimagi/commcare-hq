@@ -196,6 +196,7 @@ class QueryHelper:
         self.profiler = CaseSearchProfiler()
 
     def get_base_queryset(self):
+        # See case_search_bha.py docstring for context on index_name
         return CaseSearchES(index=self.config.index_name or None).domain(self.domain)
 
     def wrap_case(self, es_hit, include_score=False):
