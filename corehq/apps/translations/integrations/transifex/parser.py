@@ -87,8 +87,10 @@ class TranslationsParser(object):
         ws.append(["case_property", "list_or_detail", self.key_lang_str, self.source_lang_str])
         for po_entry in self._get_rows_for_module_sheet(po_entries):
             context = po_entry.msgctxt
-            _case_property, _list_or_detail = re.match(context_regex, context).groups()
-            ws.append([_case_property, _list_or_detail, po_entry.msgid, po_entry.msgstr])
+            regex_match = re.match(context_regex, context)
+            if regex_match is not None:
+                _case_property, _list_or_detail = regex_match.groups()
+                ws.append([_case_property, _list_or_detail, po_entry.msgid, po_entry.msgstr])
 
     def _add_form_sheet(self, ws, po_entries):
         # add header
