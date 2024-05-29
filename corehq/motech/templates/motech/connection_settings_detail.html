@@ -11,13 +11,6 @@
   <h2>{% trans "Add Connection Settings" %}</h2>
   <div class="spacer"></div>
 
-  {% crispy form %}  {# todo B5: check crispy #}
-
-  {# crispy.CSS_ACTION_CLASS to match the "Test Connection" button #}
-  <div class="col-sm-12 col-md-8 col-lg-8 col-xl-6
-              offset-md-4 offset-lg-4 offset-xl-2">
-    <div id="test-connection-result"
-         class="text-success d-none"></div>
-  </div>
+  {% crispy form %}
 
 {% endblock %}
