@@ -50,7 +50,7 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowe
     if is_web_user_import:
         return validators + [RequiredWebFieldsValidator(domain), DuplicateValidator(domain, 'email', all_specs),
                              EmailValidator(domain, 'username'), TableauRoleValidator(domain),
-                             TableauGroupsValidator(domain)]
+                             TableauGroupsValidator(domain, all_specs)]
     else:
         return validators + [
             UsernameValidator(domain),
@@ -158,15 +158,16 @@ class TableauRoleValidator(ImportValidator):
 class TableauGroupsValidator(ImportValidator):
     _error_message = _("These groups, {}, are not valid for this domain. Please choose from the following: {}")
 
-    def __init__(self, domain):
+    def __init__(self, domain, all_specs):
         super().__init__(domain)
-        self.allowed_groups_for_domain = None
+        self.allowed_groups_for_domain = []
+        if 'tableau_groups' in all_specs[0]:
+            self.allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(self.domain) or []
 
     def validate_spec(self, spec):
         tableau_groups = spec.get('tableau_groups') or []
         if tableau_groups:
             tableau_groups = tableau_groups.split(',')
-            self.allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(self.domain)
         invalid_groups = []
         for group in tableau_groups:
             if group not in self.allowed_groups_for_domain:
