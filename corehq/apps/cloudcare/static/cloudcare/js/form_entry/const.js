@@ -1,6 +1,7 @@
 'use strict';
 hqDefine("cloudcare/js/form_entry/const", [], function () {
     return {
+        ADD_GROUP_TYPE: 'add-group',
         GROUP_TYPE: 'sub-group',
         REPEAT_TYPE: 'repeat-juncture',
         QUESTION_TYPE: 'question',
