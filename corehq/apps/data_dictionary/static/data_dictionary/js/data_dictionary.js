@@ -3,6 +3,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "jquery",
     "knockout",
     "underscore",
+    "es6!hqwebapp/js/bootstrap5_loader",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/bootstrap5/main",
     "analytix/js/google",
@@ -17,6 +18,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     $,
     ko,
     _,
+    bootstrap,
     initialPageData,
     hqMain,
     googleAnalytics,
@@ -145,11 +147,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
             }
         };
 
+        const geospatialModal = new bootstrap.Modal(document.getElementById('deprecate-geospatial-prop-modal'));
         self.confirmGeospatialDeprecation = function () {
-            const $modal = $("#deprecate-geospatial-prop-modal").modal('show');  /* todo B5: plugin:modal */
+            geospatialModal.show();
             $("#deprecate-geospatial-prop-btn").off('click').on('click', function () {
                 self.deprecated(true);
-                $modal.modal('hide');  /* todo B5: plugin:modal */
+                geospatialModal.hide();
             });
         };
 
@@ -171,12 +174,13 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return self.dataType() === 'select';
         });
 
+        const deletePropertyModal = new bootstrap.Modal(document.getElementById('delete-case-prop-modal'));
         self.confirmDeleteProperty = function () {
-            const $modal = $("#delete-case-prop-modal").modal('show');  /* todo B5: plugin:modal */
+            deletePropertyModal.show();
             $("#delete-case-prop-name").text(self.name);
             $("#delete-case-prop-btn").off("click").on("click", () => {
                 self.deleted(true);
-                $modal.modal('hide');  /* todo B5: plugin:modal */
+                deletePropertyModal.hide();
             });
         };
 
