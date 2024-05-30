@@ -86,11 +86,6 @@ def view_generic(
     module, form = _get_module_and_form(
         app, module_id, form_id, module_unique_id, form_unique_id
     )
-    if module:
-        module_id = module.id
-    if form:
-        form_id = form.id
-
     _handle_bad_states(
         request,
         domain,
@@ -152,112 +147,6 @@ def view_generic(
     # update multimedia context for forms and modules.
     menu_host = form or module
     if menu_host:
-        default_file_name = 'module%s' % module_id
-        if form:
-            default_file_name = '%s_form%s' % (default_file_name, form_id)
-
-        specific_media = [{
-            'menu_refs': app.get_menu_media(
-                module,
-                form=form,
-                form_index=form_id,
-                to_language=lang,
-            ),
-            'default_file_name': '{name}_{lang}'.format(
-                name=default_file_name,
-                lang=lang,
-            ),
-        }]
-
-        if (
-            not form
-            and module
-            and not isinstance(module, ReportModule)
-            and module.uses_media()
-        ):
-            specific_media.append({
-                'menu_refs': app.get_case_list_form_media(
-                    module,
-                    to_language=lang,
-                ),
-                'default_file_name': _make_file_name(
-                    default_file_name,
-                    'case_list_form',
-                    lang,
-                ),
-                'qualifier': 'case_list_form_',
-            })
-            specific_media.append({
-                'menu_refs': app.get_case_list_menu_item_media(
-                    module,
-                    to_language=lang,
-                ),
-                'default_file_name': _make_file_name(
-                    default_file_name,
-                    'case_list_menu_item',
-                    lang,
-                ),
-                'qualifier': 'case_list-menu_item_',
-            })
-            if (
-                module
-                and hasattr(module, 'search_config')
-                and module.uses_media()
-                and toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)
-            ):
-                specific_media.extend([
-                    {
-                        'menu_refs': app.get_case_search_label_media(
-                            module,
-                            module.search_config.search_label,
-                            to_language=lang,
-                        ),
-                        'default_file_name': _make_file_name(
-                            default_file_name,
-                            'case_search_label_item',
-                            lang,
-                        ),
-                        'qualifier': 'case_search-search_label_media_'
-                    },
-                    {
-                        'menu_refs': app.get_case_search_label_media(
-                            module,
-                            module.search_config.search_again_label,
-                            to_language=lang,
-                        ),
-                        'default_file_name': _make_file_name(
-                            default_file_name,
-                            'case_search_again_label_item',
-                            lang,
-                        ),
-                        'qualifier': 'case_search-search_again_label_media_'
-                    }
-                ])
-            if (
-                toggles.CASE_LIST_LOOKUP.enabled(request.user.username)
-                or toggles.CASE_LIST_LOOKUP.enabled(app.domain)
-                or toggles.BIOMETRIC_INTEGRATION.enabled(app.domain)
-            ):
-                specific_media.append({
-                    'menu_refs': app.get_case_list_lookup_image(module),
-                    'default_file_name': '{}_case_list_lookup'.format(
-                        default_file_name
-                    ),
-                    'qualifier': 'case-list-lookupcase',
-                })
-
-                if hasattr(module, 'product_details'):
-                    specific_media.append({
-                        'menu_refs': app.get_case_list_lookup_image(
-                            module,
-                            type='product',
-                        ),
-                        'default_file_name': '{}_product_list_lookup'.format(
-                            default_file_name
-                        ),
-                        'qualifier': 'case-list-lookupproduct',
-                    })
-
         uploaders = {
             'icon': MultimediaImageUploadController(
                 "hqimage",
@@ -288,7 +177,14 @@ def view_generic(
                 context['module_icon'] = module.custom_icon
             else:
                 context['module_icon'] = CustomIcon()
-        context['nav_menu_media_specifics'] = specific_media
+        context['nav_menu_media_specifics'] = _get_specific_media(
+            request.user.username,
+            domain,
+            app,
+            module,
+            form,
+            lang,
+        )
 
     error = request.GET.get('error', '')
 
@@ -457,6 +353,119 @@ def _handle_bad_states(
             'form_id': form.id,
             'form_unique_id': form_unique_id,
         })
+
+
+def _get_specific_media(
+    username,
+    domain,
+    app,
+    module,
+    form,
+    lang,
+):
+    module_id = module.id if module else None
+    form_id = form.id if form else None
+    default_file_name = f'module{module_id}'
+    if form:
+        default_file_name = f'{default_file_name}_form{form_id}'
+
+    specific_media = [{
+        'menu_refs': app.get_menu_media(
+            module,
+            form=form,
+            form_index=form_id,
+            to_language=lang,
+        ),
+        'default_file_name': f'{default_file_name}_{lang}',
+    }]
+
+    if (
+        not form
+        and module
+        and not isinstance(module, ReportModule)
+        and module.uses_media()
+    ):
+        specific_media.append({
+            'menu_refs': app.get_case_list_form_media(
+                module,
+                to_language=lang,
+            ),
+            'default_file_name': _make_file_name(
+                default_file_name,
+                'case_list_form',
+                lang,
+            ),
+            'qualifier': 'case_list_form_',
+        })
+        specific_media.append({
+            'menu_refs': app.get_case_list_menu_item_media(
+                module,
+                to_language=lang,
+            ),
+            'default_file_name': _make_file_name(
+                default_file_name,
+                'case_list_menu_item',
+                lang,
+            ),
+            'qualifier': 'case_list-menu_item_',
+        })
+        if (
+            module
+            and hasattr(module, 'search_config')
+            and module.uses_media()
+            and toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)
+        ):
+            specific_media.extend([
+                {
+                    'menu_refs': app.get_case_search_label_media(
+                        module,
+                        module.search_config.search_label,
+                        to_language=lang,
+                    ),
+                    'default_file_name': _make_file_name(
+                        default_file_name,
+                        'case_search_label_item',
+                        lang,
+                    ),
+                    'qualifier': 'case_search-search_label_media_'
+                },
+                {
+                    'menu_refs': app.get_case_search_label_media(
+                        module,
+                        module.search_config.search_again_label,
+                        to_language=lang,
+                    ),
+                    'default_file_name': _make_file_name(
+                        default_file_name,
+                        'case_search_again_label_item',
+                        lang,
+                    ),
+                    'qualifier': 'case_search-search_again_label_media_'
+                }
+            ])
+
+        if (
+            toggles.CASE_LIST_LOOKUP.enabled(username)
+            or toggles.CASE_LIST_LOOKUP.enabled(app.domain)
+            or toggles.BIOMETRIC_INTEGRATION.enabled(app.domain)
+        ):
+            specific_media.append({
+                'menu_refs': app.get_case_list_lookup_image(module),
+                'default_file_name': f'{default_file_name}_case_list_lookup',
+                'qualifier': 'case-list-lookupcase',
+            })
+
+            if hasattr(module, 'product_details'):
+                specific_media.append({
+                    'menu_refs': app.get_case_list_lookup_image(
+                        module,
+                        type='product',
+                    ),
+                    'default_file_name':
+                        f'{default_file_name}_product_list_lookup',
+                    'qualifier': 'case-list-lookupproduct',
+                })
+    return specific_media
 
 
 def _make_file_name(default_name, suffix, lang):
