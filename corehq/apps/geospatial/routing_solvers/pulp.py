@@ -3,7 +3,7 @@ import requests
 import pulp
 import copy
 
-from .mapbox_optimize import validate_routing_request
+from .mapbox_utils import validate_routing_request
 from corehq.apps.geospatial.routing_solvers.base import DisbursementAlgorithmSolverInterface
 
 
@@ -94,7 +94,7 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
                             unassigned_cases.remove(self.case_locations[j])
             assigned_cases = solution
 
-        return None, self.solution_results(assigned=assigned_cases, unassigned=unassigned_cases)
+        return self.solution_results(assigned=assigned_cases, unassigned=unassigned_cases)
 
     @staticmethod
     def solution_results(assigned, unassigned):
