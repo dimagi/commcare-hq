@@ -592,6 +592,8 @@ geospatial
  0004_auto_20230920_0821
  0005_auto_20240202_0807
  0006_geoconfig_max_cases_per_user_and_more
+ 0007_geoconfig_max_case_distance_and_more
+ 0008_geoconfig_travel_mode
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
