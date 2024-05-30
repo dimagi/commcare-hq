@@ -392,7 +392,7 @@ def config_dhis2_repeater(request, domain, repeater_id):
             errors = [err for errlist in form.errors.values() for err in errlist]
             return JsonResponse({'errors': errors}, status=400)
     else:
-        form_configs = json.dumps(repeater.dhis2_config['form_configs'])
+        form_configs = json.dumps(repeater.dhis2_config.get('form_configs', []))
     return render(request, 'dhis2/dhis2_events_config.html', {
         'domain': domain,
         'repeater_id': repeater_id,
