@@ -97,13 +97,13 @@ def view_generic(
         form_unique_id,
     )
 
-    context = get_apps_base_context(request, domain, app)
     if app.copy_of:
         # redirect to "main" app rather than specific build
         return HttpResponseRedirect(reverse(
             "view_app", args=[domain, app.copy_of]
         ))
 
+    context = get_apps_base_context(request, domain, app)
     context.update({
         'module': module,
         'form': form,
@@ -133,61 +133,28 @@ def view_generic(
         template = get_module_template(request.user, module)
         context.update(get_module_view_context(request, app, module, lang))
     else:
+        template = 'app_manager/app_view_settings.html'
         context.update(get_app_view_context(request, app))
 
-        template = 'app_manager/app_view_settings.html'
         if release_manager:
             template = 'app_manager/app_view_release_manager.html'
-        if release_manager:
             context.update(get_releases_context(request, domain, app_id))
+
         context.update({
             'is_app_settings_page': not release_manager,
         })
 
-    # update multimedia context for forms and modules.
-    menu_host = form or module
-    if menu_host:
-        uploaders = {
-            'icon': MultimediaImageUploadController(
-                "hqimage",
-                reverse(ProcessImageFileUploadView.urlname,
-                        args=[app.domain, app.get_id])
-            ),
-            'audio': MultimediaAudioUploadController(
-                "hqaudio", reverse(ProcessAudioFileUploadView.urlname,
-                        args=[app.domain, app.get_id])
-            ),
-        }
-
-        multimedia_map = app.multimedia_map
-        if form or module:
-            multimedia_map = (form or module).get_relevant_multimedia_map(app)
-        context.update({
-            'multimedia': {
-                "object_map": app.get_object_map(multimedia_map=multimedia_map),
-                'upload_managers': uploaders,
-                'upload_managers_js': {type: u.js_options
-                                       for type, u in uploaders.items()},
-            }
-        })
-
-        context['module_icon'] = None
-        if toggles.CUSTOM_ICON_BADGES.enabled(domain):
-            if module.custom_icon:
-                context['module_icon'] = module.custom_icon
-            else:
-                context['module_icon'] = CustomIcon()
-        context['nav_menu_media_specifics'] = _get_specific_media(
+    if form or module:
+        context.update(_get_multimedia_context(
             request.user.username,
             domain,
             app,
             module,
             form,
             lang,
-        )
+        ))
 
     error = request.GET.get('error', '')
-
     context.update({
         'error': error,
         'app': app,
@@ -353,6 +320,62 @@ def _handle_bad_states(
             'form_id': form.id,
             'form_unique_id': form_unique_id,
         })
+
+
+def _get_multimedia_context(
+    username,
+    domain,
+    app,
+    module,
+    form,
+    lang,
+):
+    """
+    Returns multimedia context for forms and modules.
+    """
+    multimedia_context = {}
+    uploaders = {
+        'icon': MultimediaImageUploadController(
+            "hqimage",
+            reverse(ProcessImageFileUploadView.urlname,
+                    args=[app.domain, app.get_id])
+        ),
+        'audio': MultimediaAudioUploadController(
+            "hqaudio",
+            reverse(ProcessAudioFileUploadView.urlname,
+                    args=[app.domain, app.get_id])
+        ),
+    }
+    multimedia_map = app.multimedia_map
+    if form or module:
+        multimedia_map = (form or module).get_relevant_multimedia_map(app)
+    multimedia_context.update({
+        'multimedia': {
+            "object_map": app.get_object_map(multimedia_map=multimedia_map),
+            'upload_managers': uploaders,
+            'upload_managers_js': {
+                type_: u.js_options for type_, u in uploaders.items()
+            },
+        }
+    })
+
+    if toggles.CUSTOM_ICON_BADGES.enabled(domain):
+        if module.custom_icon:
+            multimedia_context['module_icon'] = module.custom_icon
+        else:
+            multimedia_context['module_icon'] = CustomIcon()
+    else:
+        multimedia_context['module_icon'] = None
+
+    multimedia_context['nav_menu_media_specifics'] = _get_specific_media(
+        username,
+        domain,
+        app,
+        module,
+        form,
+        lang,
+    )
+    return multimedia_context
 
 
 def _get_specific_media(
