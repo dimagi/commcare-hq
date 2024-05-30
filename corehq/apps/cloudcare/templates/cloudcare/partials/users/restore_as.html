@@ -14,7 +14,7 @@
           value="<%- query %>"
           placeholder="{% trans_html_attr "Filter workers" %}" />
           <button class="btn btn-outline-primary" type="submit">
-            <i class="fa fa-search" aria-hidden="true"></i>
+            <i class="fa fa-search<% if (isAppPreview) { %> align-top<% } %>" aria-hidden="true"></i>
           </button>
       </div>
     </form>
