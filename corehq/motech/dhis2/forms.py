@@ -132,20 +132,18 @@ class DataSetMapForm(forms.ModelForm):
                 crispy.Field('complete_date_option'),
                 crispy.Field('complete_date_column'),
             ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Save"),
-                    type="submit",
-                    css_class="btn btn-primary",
+            twbscrispy.StrictButton(
+                _("Save"),
+                type="submit",
+                css_class="btn btn-primary",
+            ),
+            hqcrispy.LinkButton(
+                _("Cancel"),
+                reverse(
+                    DataSetMapListView.urlname,
+                    kwargs={'domain': self.domain},
                 ),
-                hqcrispy.LinkButton(
-                    _("Cancel"),
-                    reverse(
-                        DataSetMapListView.urlname,
-                        kwargs={'domain': self.domain},
-                    ),
-                    css_class="btn btn-default",
-                ),
+                css_class="btn btn-outline-primary",
             ),
         )
 
