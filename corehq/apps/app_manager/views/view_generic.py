@@ -83,59 +83,24 @@ def view_generic(
         return bail(request, domain, app_id)
 
     app = get_app(domain, app_id)
-    module = form = None
-
-    if module_id:
-        try:
-            module = app.get_module(module_id)
-        except ModuleNotFoundException:
-            raise Http404()
-        if not module.unique_id:
-            module.get_or_create_unique_id()
-            app.save()
-    elif module_unique_id:
-        try:
-            module = app.get_module_by_unique_id(module_unique_id)
-        except ModuleNotFoundException:
-            raise Http404()
+    module, form = _get_module_and_form(
+        app, module_id, form_id, module_unique_id, form_unique_id
+    )
+    if module:
         module_id = module.id
-
-    if form_id and module is not None:
-        try:
-            form = module.get_form(form_id)
-        except IndexError:
-            raise Http404()
-    elif form_unique_id:
-        try:
-            form = app.get_form(form_unique_id)
-        except FormNotFoundException:
-            raise Http404()
+    if form:
         form_id = form.id
 
-    if form is not None and module is None:
-        # this is the case where only the form_unique_id is given
-        module = form.get_module()
-        module_id = module.id
-
-    # Application states that should no longer exist
-    if app.application_version == APP_V1:
-        _assert = soft_assert()
-        _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-        return render(request, "app_manager/no_longer_supported.html", {
-            'domain': domain,
-            'app': app,
-        })
-    if (form is not None and "usercase_preload" in getattr(form, "actions", {})
-            and form.actions.usercase_preload.preload):
-        _assert = soft_assert(['dmiller' + '@' + 'dimagi.com'])
-        _assert(False, 'User property easy refs + old-style config = bad', {
-            'domain': domain,
-            'app_id': app_id,
-            'module_id': module_id,
-            'module_unique_id': module_unique_id,
-            'form_id': form_id,
-            'form_unique_id': form_unique_id,
-        })
+    _handle_bad_states(
+        request,
+        domain,
+        app_id,
+        app,
+        module,
+        form,
+        module_unique_id,
+        form_unique_id,
+    )
 
     context = get_apps_base_context(request, domain, app)
     if app.copy_of:
@@ -162,16 +127,16 @@ def view_generic(
 
     if form:
         template = "app_manager/form_view.html"
-        form_context = get_form_view_context(
-            request, domain, form, context['langs'], current_lang=lang
-        )
-        context.update(form_context)
+        context.update(get_form_view_context(
+            request,
+            domain,
+            form,
+            langs=context['langs'],
+            current_lang=lang,
+        ))
     elif module:
         template = get_module_template(request.user, module)
-        # make sure all modules have unique ids
-        app.ensure_module_unique_ids(should_save=True)
-        module_context = get_module_view_context(request, app, module, lang)
-        context.update(module_context)
+        context.update(get_module_view_context(request, app, module, lang))
     else:
         context.update(get_app_view_context(request, app))
 
@@ -411,3 +376,79 @@ def view_generic(
 
     set_lang_cookie(response, lang)
     return response
+
+
+def _get_module_and_form(
+    app,
+    module_id,
+    form_id,
+    module_unique_id,
+    form_unique_id,
+):
+    module = form = None
+
+    if module_id:
+        try:
+            module = app.get_module(module_id)
+        except ModuleNotFoundException:
+            raise Http404()
+        if not module.unique_id:
+            module.get_or_create_unique_id()
+            app.save()
+    elif module_unique_id:
+        try:
+            module = app.get_module_by_unique_id(module_unique_id)
+        except ModuleNotFoundException:
+            raise Http404()
+
+    if form_id and module is not None:
+        try:
+            form = module.get_form(form_id)
+        except IndexError:
+            raise Http404()
+    elif form_unique_id:
+        try:
+            form = app.get_form(form_unique_id)
+        except FormNotFoundException:
+            raise Http404()
+
+    if form is not None and module is None:
+        # this is the case where only the form_unique_id is given
+        module = form.get_module()
+
+    return module, form
+
+
+def _handle_bad_states(
+    request,
+    domain,
+    app_id,
+    app,
+    module,
+    form,
+    module_unique_id,
+    form_unique_id,
+):
+    # Application states that should no longer exist
+    if app.application_version == APP_V1:
+        _assert = soft_assert()
+        _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
+        return render(request, "app_manager/no_longer_supported.html", {
+            'domain': domain,
+            'app': app,
+        })
+
+    if (
+        form is not None
+        and "usercase_preload" in getattr(form, "actions", {})
+        and form.actions.usercase_preload.preload
+    ):
+        _assert = soft_assert(['dmiller' + '@' + 'dimagi.com'])
+        _assert(False, 'User property easy refs + old-style config = bad', {
+            'domain': domain,
+            'app_id': app_id,
+            'module_id': module.id,
+            'module_unique_id': module_unique_id,
+            'form_id': form.id,
+            'form_unique_id': form_unique_id,
+        })
