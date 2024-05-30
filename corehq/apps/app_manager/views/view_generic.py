@@ -177,37 +177,7 @@ def view_generic(
         not is_remote_app(app)
         and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER)
     ):
-        from corehq.apps.hqmedia.controller import (
-            MultimediaLogoUploadController,
-        )
-        from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
-
-        uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
-        uploaders = [
-            MultimediaLogoUploadController(
-                slug,
-                reverse(
-                    ProcessLogoFileUploadView.urlname,
-                    args=[domain, app_id, slug],
-                )
-            )
-            for slug in uploader_slugs
-        ]
-        context.update({
-            "uploaders": uploaders,
-            "uploaders_js": [u.js_options for u in uploaders],
-            "refs": {
-                slug: ApplicationMediaReference(
-                    app.logo_refs.get(slug, {}).get("path", slug),
-                    media_class=CommCareImage,
-                ).as_dict()
-                for slug in uploader_slugs
-            },
-            "media_info": {
-                slug: app.logo_refs.get(slug)
-                for slug in uploader_slugs if app.logo_refs.get(slug)
-            },
-        })
+        context.update(_get_logo_uploader_context(domain, app_id, app))
 
     context.update({
         'show_live_preview': should_show_preview_app(
@@ -495,6 +465,40 @@ def _get_domain_context(domain, request_domain, couch_user):
         'domain_names': sorted(domain_names),
         'linkable_domains': sorted(linkable_domains),
         'limit_to_linked_domains': limit_to_linked_domains,
+    }
+
+
+def _get_logo_uploader_context(domain, app_id, app):
+    from corehq.apps.hqmedia.controller import (
+        MultimediaLogoUploadController,
+    )
+    from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
+
+    uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
+    uploaders = [
+        MultimediaLogoUploadController(
+            slug,
+            reverse(
+                ProcessLogoFileUploadView.urlname,
+                args=[domain, app_id, slug],
+            )
+        )
+        for slug in uploader_slugs
+    ]
+    return {
+        "uploaders": uploaders,
+        "uploaders_js": [u.js_options for u in uploaders],
+        "refs": {
+            slug: ApplicationMediaReference(
+                app.logo_refs.get(slug, {}).get("path", slug),
+                media_class=CommCareImage,
+            ).as_dict()
+            for slug in uploader_slugs
+        },
+        "media_info": {
+            slug: app.logo_refs.get(slug)
+            for slug in uploader_slugs if app.logo_refs.get(slug)
+        },
     }
 
 
