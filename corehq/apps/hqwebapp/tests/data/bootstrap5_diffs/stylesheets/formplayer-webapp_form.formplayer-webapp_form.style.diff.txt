@@ -22,7 +22,7 @@
    }
  
    .controls {
-@@ -18,18 +18,17 @@
+@@ -18,23 +18,16 @@
    }
  
    .form-control {
@@ -31,23 +31,25 @@
    }
  
    .form-actions {
-     margin: 30px 0 0 0;
-     &.form-group {
+-    margin: 30px 0 0 0;
+-    &.form-group {
 -      margin-left: -@form-text-indent;
 -      margin-right: -@form-text-indent;
 -    }
 -
 -    background-color: @call-to-action-extra-hi;
 -    .border-bottom-radius(0);
-+      margin-left: -$form-text-indent;
-+      margin-right: -$form-text-indent;
-+    }
-+
-+    background-color: var(--bsprimary-bg-subtle);
++    margin: 30px -$form-text-indent 0 -$form-text-indent;
  
      .submit .btn {
        font-size: 20px;
-@@ -48,8 +47,8 @@
+       padding: 13px 24px;
+-      .transition(all .5s);
++      transition: all .5s;
+     }
+   }
+ 
+@@ -48,8 +41,8 @@
      margin-right: 0px;
    }
    .question-container {
@@ -58,7 +60,7 @@
    }
  
    .form-group {
-@@ -61,8 +60,8 @@
+@@ -61,8 +54,8 @@
    }
  
    .group-body {
@@ -69,7 +71,7 @@
    }
  
    .gr.panel {
-@@ -94,7 +93,7 @@
+@@ -94,7 +87,7 @@
    }
  
    .panel-body {
@@ -78,19 +80,19 @@
        padding-left: 0px;
        padding-right: 0px;
      }
-@@ -103,19 +102,19 @@
+@@ -103,19 +96,19 @@
    .stripe-repeats {
      > .row, .panel-body > .children > .row {
        &:nth-of-type(odd) {
 -        background-color: @table-bg-accent;
-+        background-color: $table-bg-accent;
++        background-color: $table-accent-bg;
        }
        &:nth-of-type(even) {
          background-color: white;
        }
        &:hover {
 -        background-color: @table-bg-hover;
-+        background-color: $table-bg-hover;
++        background-color: $table-hover-bg;
        }
      }
    }
@@ -101,7 +103,16 @@
      border-radius: 8px;
      margin: 2px;
      padding-top: 5px;
-@@ -165,8 +164,8 @@
+@@ -157,7 +150,7 @@
+   }
+ 
+   .form-group.required {
+-    .transition(all .5s);
++    transition: all .5s;
+     margin-bottom: 0;
+     label:before {
+       display: none;
+@@ -165,8 +158,8 @@
    }
  
    .form-group.required.on {
@@ -112,7 +123,14 @@
      border-bottom: none;
      padding-top: 10px;
      padding-bottom: 10px;
-@@ -186,7 +185,7 @@
+@@ -180,13 +173,13 @@
+   .form-group-required-label {
+     display: block;
+     opacity: 0;
+-    .transition(all .5s);
++    transition: all .5s;
+   }
+ 
    .form-group-required-label.on {
      opacity: 100;
      font-size: 1.6rem;
@@ -121,3 +139,12 @@
      color: white;
      width: auto;
      line-height: 14px;
+@@ -265,3 +258,8 @@
+   padding-top: 0px !important;
+   padding-bottom: 7px;
+ }
++
++#next-error {
++  position: fixed;
++  bottom: 35px;
++}

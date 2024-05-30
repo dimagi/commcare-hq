@@ -208,9 +208,16 @@ hqDefine('users/js/roles',[
                 if (self.hasUnpermittedLocationRestriction) {
                     self.permissions.access_all_locations(true);
                 }
+                self.permissions.edit_web_users.subscribe(function (newValue) {
+                    self.permissions.edit_user_tableau_config(newValue && toggles.toggleEnabled("TABLEAU_USER_SYNCING"));
+                });
+
+                self.permissions.view_web_users.subscribe(function (newValue) {
+                    self.permissions.view_user_tableau_config(newValue && toggles.toggleEnabled("TABLEAU_USER_SYNCING"));
+                });
                 self.accessAreas = [
                     {
-                        showOption: self.permissions.access_all_locations,
+                        showOption: true,
                         editPermission: self.permissions.edit_web_users,
                         viewPermission: self.permissions.view_web_users,
                         text: gettext("<strong>Web Users</strong> &mdash; invite new web users, manage account settings, remove membership"),
@@ -220,6 +227,26 @@ hqDefine('users/js/roles',[
                         viewCheckboxLabel: "view-web-users-checkbox",
                         screenReaderEditAndViewText: gettext("Edit & View Mobile Workers"),
                         screenReaderViewOnlyText: gettext("View-Only Mobile Workers"),
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
+                    },
+                    {
+                        showOption: ko.computed(function () {
+                            return toggles.toggleEnabled("TABLEAU_USER_SYNCING") && (self.permissions.edit_web_users() || self.permissions.view_web_users());
+                        }),
+                        editPermission: self.permissions.edit_user_tableau_config,
+                        viewPermission: self.permissions.view_user_tableau_config,
+                        text: gettext("<strong>Manage Tableau Configuration</strong> &mdash; manage tableau configuration for web users"),
+                        showEditCheckbox: ko.computed(function () {
+                            return self.permissions.edit_web_users();
+                        }),
+                        editCheckboxLabel: "edit-user-tableau-config-checkbox",
+                        showViewCheckbox: true,
+                        viewCheckboxLabel: "view-user-tableau-config-checkbox",
+                        screenReaderEditAndViewText: gettext("Edit & View tableau configuration for web users"),
+                        screenReaderViewOnlyText: gettext("View-Only tableau configuration for web users"),
                         showAllowCheckbox: false,
                         allowCheckboxText: null,
                         allowCheckboxId: null,

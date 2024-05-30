@@ -1,3 +1,5 @@
+'use strict';
+
 hqDefine("geospatial/js/geo_config", [
     "jquery",
     "knockout",
@@ -12,7 +14,6 @@ hqDefine("geospatial/js/geo_config", [
     const ROAD_NETWORK_ALGORITHM = initialPageData.get('road_network_algorithm_slug');
 
     var geoConfigViewModel = function (configData) {
-        'use strict';
         var self = {};
 
         var data = configData.get('config');
@@ -51,6 +52,9 @@ hqDefine("geospatial/js/geo_config", [
         });
 
         self.selectedAlgorithm = ko.observable();
+        self.minCasesPerUser = ko.observable(data.min_cases_per_user);
+        self.maxCasesPerUser = ko.observable(data.max_cases_per_user);
+
         self.plaintext_api_token = ko.observable(data.plaintext_api_token);
 
         self.captureApiToken = ko.computed(function () {

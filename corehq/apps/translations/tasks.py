@@ -66,7 +66,8 @@ def push_translation_files_to_transifex(domain, data, email):
                                   data.get('transifex_project_slug'),
                                   data.get('version'),
                                   use_version_postfix='yes' in data['use_version_postfix'],
-                                  update_resource=(data['action'] == 'update')
+                                  update_resource=('update_existing_resource' in data
+                                                   and 'yes' in data['update_existing_resource'])
                                   ).send_translation_files()
     data['language'] = data.get('target_lang') or data.get('source_lang')
     if upload_status:
@@ -140,8 +141,8 @@ def backup_project_from_transifex(domain, data, email):
                           data.get('transifex_project_slug'),
                           version,
                           use_version_postfix='yes' in data['use_version_postfix'])
-    project_details = transifex.client.project_details().json()
-    target_lang_codes = project_details.get('teams')
+    project_name = transifex.client.project_name
+    target_lang_codes = transifex.client.get_project_langcodes()
     with NamedTemporaryFile(mode='w+b', suffix='.zip') as tmp:
         with ZipFile(tmp, 'w') as zipfile:
             for target_lang in target_lang_codes:
@@ -158,9 +159,9 @@ def backup_project_from_transifex(domain, data, email):
         tmp.seek(0)
         send_mail_async(
             subject='[{}] - Transifex backup translations'.format(settings.SERVER_ENVIRONMENT),
-            body="PFA Translations backup from transifex.",
+            message="PFA Translations backup from transifex.",
             recipient_list=[email],
-            filename="%s-TransifexBackup.zip" % project_details.get('name'),
+            filename="%s-TransifexBackup.zip" % project_name,
             content=tmp.read(),
             domain=domain,
             use_domain_gateway=True,
@@ -201,14 +202,12 @@ def email_project_from_hq(domain, data, email):
 def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, target_app_id, mappings, email):
     def consolidate_errors_messages():
         error_messages = []
-        for old_id, response in slug_update_responses.items():
-            if response.status_code != 200:
-                error_messages.append("Slug update failed for %s with message %s" % (old_id, response.content))
-        for lang_code, response in menus_and_forms_sheet_update_responses.items():
-            if response.status_code != 200:
-                error_messages.append(
-                    "Menus and forms sheet update failed for lang %s with message %s" % (
-                        lang_code, response.content))
+        for old_id, response in slug_update_errors.items():
+            error_messages.append("Slug update failed for %s with message %s" % (old_id, response))
+        for lang_code, response in menus_and_forms_sheet_update_errors.items():
+            error_messages.append(
+                "Menus and forms sheet update failed for lang %s with message %s" % (
+                    lang_code, response))
         return error_messages
 
     def generate_email_body():
@@ -220,7 +219,7 @@ def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, 
                 email_body += error_message + "\n"
         return email_body
 
-    slug_update_responses, menus_and_forms_sheet_update_responses = ProjectMigrator(
+    slug_update_errors, menus_and_forms_sheet_update_errors = ProjectMigrator(
         domain,
         transifex_project_slug,
         source_app_id, target_app_id,
@@ -229,7 +228,7 @@ def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, 
 
     send_mail_async(
         subject='[{}] - Transifex Project Migration Status'.format(settings.SERVER_ENVIRONMENT),
-        body=linebreaksbr(generate_email_body()),
+        message=linebreaksbr(generate_email_body()),
         recipient_list=[email],
         domain=domain,
         use_domain_gateway=True,

@@ -10,6 +10,7 @@ from corehq.apps.reports.models import (
 from corehq.apps.reports.util import (
     TableauGroupTuple,
     get_all_tableau_groups,
+    get_tableau_groups_by_ids,
     get_tableau_groups_for_user,
     get_matching_tableau_users_from_other_domains,
     add_tableau_user,
@@ -72,6 +73,18 @@ class TestTableauAPIUtil(TestTableauAPISession):
         self.assertEqual(len(group_tuples), 3)
         self.assertEqual(group_tuples[0].name, 'group1')
         self.assertEqual(group_tuples[2].id, 'zx39n')
+
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_get_tableau_groups_by_ids(self, mock_request):
+        mock_request.side_effect = _mock_create_session_responses(self) + [
+            self.tableau_instance.query_groups_response()
+        ]
+
+        interested_group_ids = ["1a2b3", "zx39n"]
+        group_tuples = get_tableau_groups_by_ids(interested_group_ids, self.domain)
+        self.assertEqual(len(group_tuples), 2)
+        self.assertEqual(group_tuples[0].name, 'group1')
+        self.assertEqual(group_tuples[1].name, 'group3')
 
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_get_tableau_groups_for_user(self, mock_request):

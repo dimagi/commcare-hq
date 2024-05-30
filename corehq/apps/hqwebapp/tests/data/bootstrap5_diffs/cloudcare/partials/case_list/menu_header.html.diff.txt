@@ -1,12 +1,10 @@
 --- 
 +++ 
-@@ -1,17 +1,17 @@
- {% load hq_shared_tags %}
+@@ -2,24 +2,24 @@
  {% load i18n %}
  
--<div class="page-header menu-header clearfix" id="case-list-menu-header">
+ <div class="page-header menu-header clearfix" id="case-list-menu-header">
 -  <div class="pull-right">
-+<div class="page-header menu-header clearfix" id="case-list-menu-header">  {# todo B5: css:page-header #}
 +  <div class="float-end">
      <% if (showMap) { %>
 -      <button id="hide-map-button" class="btn btn-primary pull-right" type="button"
@@ -18,8 +16,17 @@
      <% if (sidebarEnabled) { %>
 -      <button id="search-more" class="btn btn-primary visible-xs visible-sm pull-right" type="button"
 -        data-toggle="collapse" data-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
-+      <button id="search-more" class="btn btn-primary d-xs-block d-sm-block float-end" type="button"
++      <button id="search-more" class="btn btn-primary d-xs-block d-sm-block d-md-none float-end" type="button"
 +        data-bs-toggle="collapse" data-bs-target="#sidebar-region" aria-expanded="false" aria-controls="sidebar-region">
          {% trans "Refine search" %}
        </button>
      <% } %>
+   </div>
+   <% if (title.length > 0) { %>
+-    <h1  aria-label="<%- title %>" tabindex="0" class="page-title"><%- title %></h1>
++    <h1 aria-label="<%- title %>" tabindex="0" class="page-title d-none d-md-block"><%- title %></h1>
+   <% } %>
+   <% if (sidebarEnabled && description.length > 0) { %>
+     <div aria-label="<%- description %>" tabindex="0" class="query-description"><%= description %></div>
+   <% } %>
+-</div>+</div>

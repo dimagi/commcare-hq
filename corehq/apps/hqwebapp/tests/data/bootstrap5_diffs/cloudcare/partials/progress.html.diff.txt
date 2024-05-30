@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -6,11 +6,11 @@
+@@ -6,13 +6,12 @@
            <i class="fa fa-spinner fa-spin js-loading"></i>
            <%- progressMessage %>
          </h1>
@@ -8,10 +8,12 @@
 +        <h2 class="subtext text-start js-subtext"><small></small></h2>
        </div>
 -      <div class="progress hide">
-+      <div class="progress d-none">  {# todo B5: css:progress #}
++      <div class="progress d-none" role="progressbar">
          <div
--          style="width: 0%"
-+          style="width: 0%"  {# todo B5: inline style #}
-           class="js-progress-bar progress-bar progress-bar-striped active"
-           role="progressbar">
+           style="width: 0%"
+-          class="js-progress-bar progress-bar progress-bar-striped active"
+-          role="progressbar">
++          class="js-progress-bar progress-bar progress-bar-striped active">
          </div>
+       </div>
+     </div>

@@ -15,20 +15,10 @@
 {% block page_content %}
   <div class="mb-3">
     <h2>Testing {{ workflow.name }}</h2>
-    <a class='btn btn-primary' href="{% url 'app_execution:edit_workflow' workflow.id %}">Edit</a>
+    <a class='btn btn-primary' href="{% url 'app_execution:edit_workflow' request.domain workflow.id %}">Edit</a>
   </div>
   {% if result %}
-    <h3>Logs</h3>
-    <pre class="text-bg-light border rounded-3 p-3">{{ log }}</pre>
-    {% if error %}
-      <div class="text-bg-danger p-3">
-        <strong>Error:</strong> {{ error }}
-      </div>
-    {% else %}
-      <div class="text-bg-success p-3">
-        <strong>Success</strong>
-      </div>
-    {% endif %}
+    {% include "app_execution/components/logs.html" %}
   {% endif %}
   <form method="post" class="mt-3">
     {% csrf_token %}

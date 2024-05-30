@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,9 +1,8 @@
+@@ -1,13 +1,12 @@
  .notifications-container {
    .alert  {
 -    .box-shadow(none);
@@ -10,8 +10,15 @@
 -    .border-bottom-radius(0);
 +    border-radius: 0;
      padding: 9px;
-     .close {
-       vertical-align: top;
+-    .close {
+-      vertical-align: top;
+-      margin-top: -4px;
++
++    .btn-close {
++      margin-top: -10px;
+     }
+   }
+ }
 @@ -17,6 +16,6 @@
      font-size: 11px;
      margin-bottom: 5px;

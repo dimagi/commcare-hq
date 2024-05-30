@@ -1,7 +1,7 @@
 <script type="text/template" id="menu-view-grid-item-template">
   <div class="col-sm-6 col-md-4 col-lg-3">
     <% if (imageUrl) { %>
-    <div class="gridicon badge-container" style="background-image: url('<%- imageUrl %>');">  {# todo B5: inline style #}
+    <div class="gridicon badge-container" style="background-image: url('<%- imageUrl %>');">
       <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>{# maybe-custom-badge-template output is already escaped #}
     </div>
     <% } else { %>

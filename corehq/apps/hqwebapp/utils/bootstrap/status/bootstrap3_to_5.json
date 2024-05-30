@@ -23,12 +23,17 @@
     ]
   },
   "settings": {
-    "in_progress": true,
     "templates": [
       "change_my_password.html",
       "enable_superuser.html",
-      "my_projects.html"
-    ]
+      "my_projects.html",
+      "user_api_keys.html",
+      "edit_my_account.html"
+    ],
+    "javascript": [
+      "js/user_api_keys.js"
+    ],
+    "is_complete": true
   },
   "case_search": {
     "is_complete": true,
@@ -71,6 +76,12 @@
   "casexml": {
     "is_complete": true
   },
+  "groups": {
+    "is_complete": true
+  },
+  "motech.openmrs": {
+    "is_complete": true
+  },
   "programs": {
     "is_complete": true
   },
@@ -85,5 +96,14 @@
   },
   "reports_core": {
     "in_progress": true
+  },
+  "enterprise": {
+    "is_complete": true
+  },
+  "custom_data_fields": {
+    "is_complete": true
+  },
+  "hqcase": {
+    "is_complete": true
   }
 }
