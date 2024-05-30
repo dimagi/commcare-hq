@@ -22,25 +22,25 @@
   {% initial_page_data 'total_items' total %}
   {% registerurl "app_execution:logs_json" request.domain workflow.id %}
 
-  <h2>Logs for workflow "<a href="{% url "app_execution:edit_workflow" request.domain workflow.id %}">{{ workflow.name }}</a>"</h2>
+  <h2>{% translate 'Logs for workflow' %} "<a href="{% url "app_execution:edit_workflow" request.domain workflow.id %}">{{ workflow.name }}</a>"</h2>
   <div class="row">
     <div id="timing_linechart" class="col">
-      <h4 class="text-center">{% trans "Average Timings" %}</h4>
+      <h4 class="text-center">{% translate "Average Timings" %}</h4>
       <svg height="300px"></svg>
     </div>
     <div id="status_barchart" class="col">
-      <h4 class="text-center">{% trans "Log Status" %}</h4>
+      <h4 class="text-center">{% translate "Log Status" %}</h4>
       <svg height="300px"></svg>
     </div>
   </div>
   <div id="workflow-logs">
     <div class="row">
-      <label for="status" class="col-sm-1 col-form-label">Filter</label>
+      <label for="status" class="col-sm-1 col-form-label">{% translate 'Filter' %}</label>
       <div class="col col-sm-3">
         <select class="form-select" name="status" data-bind="value: statusFilter">
-          <option value="">All Status</option>
-          <option value="success">Success</option>
-          <option value="error">Error</option>
+          <option value="">{% translate 'All Status' %}</option>
+          <option value="success">{% translate 'Success' %}</option>
+          <option value="error">{% translate 'Error' %}</option>
         </select>
       </div>
       <div class="col col-sm-3">
@@ -50,9 +50,9 @@
     <table class="table table-striped table-hover">
     <thead>
     <tr>
-      <th>Status</th>
-      <th>Started</th>
-      <th>Duration</th>
+      <th>{% translate 'Status' %}</th>
+      <th>{% translate 'Started' %}</th>
+      <th>{% translate 'Duration' %}</th>
       <th></th>
     </tr>
     </thead>
@@ -66,7 +66,7 @@
       </span></td>
       <td data-bind="text: started"></td>
       <td data-bind="text: duration"></td>
-      <td><a class="btn btn-primary" data-bind="attr: {href: url}">Details</a></td>
+      <td><a class="btn btn-primary" data-bind="attr: {href: url}">{% translate 'Details' %}</a></td>
     </tr>
     </tbody>
     </table>
@@ -75,6 +75,9 @@
 </div>
 {{ chart_data|json_script:"chart_data" }}
 <script id="timingSeries" type="application/json">
-  [{"label": "- Avg Timings", "key": "avg_duration"}, {"label": "- Max Timings", "key": "max_duration"}]
+  [
+    {"label": "- {% translate 'Avg Timings' %}", "key": "avg_duration"},
+    {"label": "- {% translate 'Max Timings' %}", "key": "max_duration"}
+  ]
 </script>
 {% endblock %}

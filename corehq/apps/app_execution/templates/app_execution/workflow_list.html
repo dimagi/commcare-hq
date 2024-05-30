@@ -31,11 +31,11 @@
   <table class="table table-striped table-hover">
   <thead>
   <tr>
-    <th>Name</th>
-    <th>App Name</th>
-    <th>User</th>
-    <th>Last Run</th>
-    <th>Last 10 Runs</th>
+    <th>{% translate 'Name' %}</th>
+    <th>{% translate 'App Name' %}</th>
+    <th>{% translate 'User' %}</th>
+    <th>{% translate 'Last Run' %}</th>
+    <th>{% translate 'Last 10 Runs' %}</th>
     <th></th>
   </tr>
   </thead>
@@ -60,10 +60,10 @@
       </div>
     </td>
     <td>
-      <div class="btn-group" role="group" aria-label="Actions">
-        <a class="btn btn-outline-primary" href="{% url "app_execution:test_workflow" request.domain workflow.id %}">Test</a>
-        <a class="btn btn-outline-primary" href="{% url "app_execution:workflow_logs" request.domain workflow.id %}">Logs</a>
-        <a class="btn btn-outline-primary" href="{% url "app_execution:delete_workflow" request.domain workflow.id %}">Delete</a>
+      <div class="btn-group" role="group" aria-label="{% trans "Actions" %}">
+        <a class="btn btn-outline-primary" href="{% url "app_execution:test_workflow" request.domain workflow.id %}">{% translate 'Test' %}</a>
+        <a class="btn btn-outline-primary" href="{% url "app_execution:workflow_logs" request.domain workflow.id %}">{% translate 'Logs' %}</a>
+        <a class="btn btn-outline-primary" href="{% url "app_execution:delete_workflow" request.domain workflow.id %}">{% translate 'Delete' %}</a>
       </div>
     </td>
   </tr>
