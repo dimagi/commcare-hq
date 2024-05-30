@@ -68,17 +68,7 @@
     "is_complete": true
   },
   "motech.generic_inbound": {
-    "in_progress": true,
-    "templates": [
-        "api_edit.html",
-        "api_list.html"
-    ],
-    "javascript": [
-        "js/api_edit.js",
-        "js/api_list.js",
-        "js/copy_data.js",
-        "js/manage_links.js"
-    ]
+    "is_complete": true
   },
   "user_importer": {
     "is_complete": true
