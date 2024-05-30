@@ -17,6 +17,9 @@ class MochaView(TemplateView):
             template_name = f"{bootstrap_version}/{template_name}"
             if bootstrap_version == BOOTSTRAP_5:
                 set_bootstrap_version5()
+        elif app in ['cloudcare']:
+            set_bootstrap_version5()
+
         if config:
             template_name = f"{config}/{template_name}"
         template_name = f"{app}/spec/{template_name}"
