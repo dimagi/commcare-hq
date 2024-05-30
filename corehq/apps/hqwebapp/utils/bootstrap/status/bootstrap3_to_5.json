@@ -91,7 +91,7 @@
   "reports": {
     "in_progress": true
   },
-  "repeaters": {
+  "motech.repeaters": {
     "is_progress": true,
     "templates": [
       "add_form_repeater.html",
