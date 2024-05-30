@@ -22,40 +22,29 @@
 
 <script type="text/html" id="dataSetMap-config-template">
   <fieldset>
-    <div class="form-group">  {# todo B5: css:form-group #}
-      <div class="controls col-md-9 col-lg-8 col-xl-6">
-        <textarea name="dataSetMap"
-                  class="jsonwidget form-control"
-                  required=""
-                  data-bind="value: dataSetMap"></textarea>
-      </div>
-    </div>
+    <textarea name="dataSetMap"
+              class="jsonwidget form-control"
+              required=""
+              data-bind="value: dataSetMap"></textarea>
   </fieldset>
 </script>
 
 <form id="dataset-map"
-      class="form-horizontal ko-template"
+      class="ko-template"
       method="post"
       data-bind="submit: submit">
   <div data-bind="template: {
                         name: 'dataSetMap-config-template',
                         afterRender: initMapConfigTemplate
                     }"></div>
-  <p>
-    <div data-bind="visible: isError()">
-        <pre data-bind="text: errorMessage()" class="alert message-alert alert-danger"></pre>
-    </div>
-  </p>
-
-  <div class="form-actions">
-    <div class="offset-md-3 offset-lg-2
-                controls col-md-9 col-lg-8 col-xl-6">
-      <button type="submit"
-              class="btn btn-primary">
-        {% trans "Save DataSet map" %}
-      </button>
-    </div>
+  <div data-bind="visible: isError()">
+      <pre data-bind="text: errorMessage()" class="alert message-alert alert-danger"></pre>
   </div>
+
+  <button type="submit"
+          class="btn btn-outline-primary">
+    {% trans "Save DataSet map" %}
+  </button>
 </form>
 
 {% endblock %}
