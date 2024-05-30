@@ -11,26 +11,18 @@
 {% endblock %}
 
 {% block pagination_footer %}
-  <div class="row" style="margin-top: 50px;">  {# todo B5: inline style #}
-    <div class="col-md-12">
-      <a href="{% url 'dataset_map_create_view' domain %}">
-        <button type="button" class="btn btn-primary">
-          {% trans "Add DataSet Map" %}
-        </button></a>
+  <a href="{% url 'dataset_map_create_view' domain %}">
+    <button type="button" class="btn btn-primary">
+      {% trans "Add DataSet Map" %}
+    </button></a>
 
-      <a href="{% url 'dataset_map_json_create_view' domain %}">
-        <button type="button" class="btn btn-outline-primary">
-          {% trans "Add DataSet Map (JSON UI)" %}
-        </button></a>
-    </div>
-  </div>
-  <div class="spacer"></div>
+  <a href="{% url 'dataset_map_json_create_view' domain %}">
+  <button type="button" class="btn btn-outline-primary">
+    {% trans "Add DataSet Map (JSON UI)" %}
+  </button></a>
 
-  <div class="col-sm-12 col-md-8 col-lg-8 col-xl-6">
-    <div id="send-now-result"
-         class="text-success d-none"></div>
-    <a id="remote-logs" href="#">{% trans "View log" %}</a>
-  </div>
+  <div id="send-now-result" class="mt-3 text-success d-none"></div>
+  <a id="remote-logs" href="#">{% trans "View log" %}</a>
 {% endblock %}
 
 {% block pagination_templates %}
@@ -57,7 +49,7 @@
 
       <button type="button"
               class="btn btn-outline-danger"
-              data-bind="attr: {'data-target': '#delete-dataset-map-' + id}"
+              data-bind="attr: {'data-bs-target': '#delete-dataset-map-' + id}"
               data-bs-toggle="modal">
         <i class="fa fa-remove"></i> {% trans "Delete" %}
       </button>
@@ -65,11 +57,11 @@
            data-bind="attr: {'id': 'delete-dataset-map-' + id}">
         <div class="modal-dialog">
           <div class="modal-content">
-            <div class="modal-header">  {# todo B5: css:modal-header #}
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true">&times;</button>  {# todo B5: css:close #}
+            <div class="modal-header">
               <h3>
                 {% trans "Delete DataSet Map" %} <strong data-bind="text: description"></strong>?
               </h3>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
             </div>
             <div class="modal-footer">
               <button type="button"
@@ -78,8 +70,7 @@
                 {% trans "Cancel" %}
               </button>
               <button type="button"
-                      class="btn btn-outline-danger delete-item-confirm"
-                      data-loading-text="{% trans 'Deleting DataSet Map' %}">  {# todo B5: stateful button #}
+                      class="btn btn-outline-danger delete-item-confirm">
                 <i class="fa fa-remove"></i> {% trans "Delete" %}
               </button>
             </div>
