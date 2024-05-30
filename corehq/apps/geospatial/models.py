@@ -25,6 +25,9 @@ class GeoConfig(models.Model):
     ROAD_NETWORK_ALGORITHM = 'road_network_algorithm'
     MIN_MAX_GROUPING = 'min_max_grouping'
     TARGET_SIZE_GROUPING = 'target_size_grouping'
+    WALKING = "walking"
+    CYCLING = "cycling"
+    DRIVING = "driving"
 
     VALID_DISBURSEMENT_ALGORITHM_CLASSES = {
         RADIAL_ALGORITHM: pulp.RadialDistanceSolver,
@@ -43,6 +46,11 @@ class GeoConfig(models.Model):
         (MIN_MAX_GROUPING, _('Min/Max Grouping')),
         (TARGET_SIZE_GROUPING, _('Target Size Grouping')),
     ]
+    VALID_TRAVEL_MODES = [
+        (WALKING, _("Walking")),
+        (CYCLING, _("Cycling")),
+        (DRIVING, _("Driving")),
+    ]
 
     domain = models.CharField(max_length=256, db_index=True, primary_key=True)
     location_data_source = models.CharField(max_length=126, default=CUSTOM_USER_PROPERTY)
@@ -60,6 +68,9 @@ class GeoConfig(models.Model):
 
     max_cases_per_user = models.IntegerField(null=True)
     min_cases_per_user = models.IntegerField(default=1)
+    max_case_distance = models.IntegerField(null=True)  # km
+    max_case_travel_time = models.IntegerField(null=True)  # minutes
+    travel_mode = models.CharField(choices=VALID_TRAVEL_MODES, default=DRIVING, max_length=50)
     selected_disbursement_algorithm = models.CharField(
         choices=VALID_DISBURSEMENT_ALGORITHMS,
         default=RADIAL_ALGORITHM,
@@ -68,6 +79,7 @@ class GeoConfig(models.Model):
     api_token = models.CharField(max_length=255, blank=True, null=True, db_column="api_token")
 
     def save(self, *args, **kwargs):
+        assert self.travel_mode in [self.WALKING, self.CYCLING, self.DRIVING]
         super().save(*args, **kwargs)
         self._clear_caches()
 
@@ -80,6 +92,10 @@ class GeoConfig(models.Model):
 
         get_geo_case_property.clear(self.domain)
         get_geo_user_property.clear(self.domain)
+
+    @property
+    def max_travel_time_seconds(self):
+        return self.max_case_travel_time * 60
 
     @property
     def disbursement_solver(self):

@@ -78,6 +78,7 @@ hqDefine("geospatial/js/geospatial_map", [
         self.isBusy = ko.observable(false);
 
         self.disbursementErrorMessage = ko.observable('');
+        self.showUnassignedCasesError = ko.observable(false);
 
         self.setBusy = function (isBusy) {
             self.isBusy(isBusy);
@@ -147,15 +148,15 @@ hqDefine("geospatial/js/geospatial_map", [
                 data: JSON.stringify({'users': userData, "cases": caseData}),
                 contentType: "application/json; charset=utf-8",
                 success: function (ret) {
-                    if (ret.error) {
-                        self.disbursementErrorMessage(ret.error);
-                        self.setBusy(false);
+                    if (ret['unassigned'].length) {
+                        self.showUnassignedCasesError(true);
+                    }
+                    if (ret['poll_url'] !== undefined) {
+                        self.startPoll(ret['poll_url']);
+                    } else if (ret['assignments']) {
+                        self.handleDisbursementResults(ret['assignments']);
                     } else {
-                        if (ret['poll_url'] !== undefined) {
-                            self.startPoll(ret['poll_url']);
-                        } else {
-                            self.handleDisbursementResults(ret['result']);
-                        }
+                        self.setBusy(false);
                     }
                 },
                 error: function () {
@@ -314,6 +315,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     disbursementRunner.disbursementErrorMessage(errorMessage);
                 } else {
                     disbursementRunner.disbursementErrorMessage('');
+                    disbursementRunner.showUnassignedCasesError(false);
                 }
                 if (hasValidData) {
                     disbursementRunner.runCaseDisbursementAlgorithm(selectedCases, selectedUsers);
