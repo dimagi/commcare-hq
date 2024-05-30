@@ -105,5 +105,8 @@
   },
   "hqcase": {
     "is_complete": true
+  },
+  "dashboard": {
+    "is_complete": true
   }
 }
