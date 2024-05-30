@@ -154,50 +154,35 @@ def view_generic(
             lang,
         ))
 
-    error = request.GET.get('error', '')
+    context.update(_get_domain_context(
+        domain,
+        request.domain,
+        request.couch_user,
+    ))
+
     context.update({
-        'error': error,
+        'error': request.GET.get('error', ''),
     })
 
     # Pass form for Copy Application to template
     if copy_app_form is None:
         copy_app_form = CopyApplicationForm(domain, app)
-
-    domain_names = {
-        d.name for d in Domain.active_for_user(request.couch_user)
-        if not (
-            is_active_downstream_domain(request.domain)
-            and get_upstream_domain_link(request.domain).master_domain == d.name
-        )
-    }
-    domain_names.add(request.domain)
-    # NOTE: The CopyApplicationForm checks for access to linked domains
-    #       before displaying
-    linkable_domains = []
-    limit_to_linked_domains = True
-    if can_domain_access_linked_domains(request.domain):
-        linkable_domains = get_accessible_downstream_domains(
-            domain,
-            request.couch_user,
-        )
-        limit_to_linked_domains = not request.couch_user.is_superuser
-    context.update({
-        'domain_names': sorted(domain_names),
-        'linkable_domains': sorted(linkable_domains),
-        'limit_to_linked_domains': limit_to_linked_domains
-    })
     context.update({
         'copy_app_form': copy_app_form,
+
+        'latest_commcare_version': get_commcare_versions(request.user)[-1],
     })
 
-    context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
-
-    if not is_remote_app(app) and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
-        uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
+    if (
+        not is_remote_app(app)
+        and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER)
+    ):
         from corehq.apps.hqmedia.controller import (
             MultimediaLogoUploadController,
         )
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
+
+        uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
         uploaders = [
             MultimediaLogoUploadController(
                 slug,
@@ -230,17 +215,14 @@ def view_generic(
             app,
             request.couch_user.username
         ),
-    })
 
-    confirm = request.session.pop('CONFIRM', False)
-    context.update({'confirm': confirm})
-    context.update({
+        'confirm': request.session.pop('CONFIRM', False),
+
         'show_release_mode':
             AppReleaseModeSetting.get_settings(domain).is_visible
     })
 
     response = render(request, template, context)
-
     set_lang_cookie(response, lang)
     return response
 
@@ -488,6 +470,32 @@ def _get_specific_media(
                     'qualifier': 'case-list-lookupproduct',
                 })
     return specific_media
+
+
+def _get_domain_context(domain, request_domain, couch_user):
+    domain_names = {
+        d.name for d in Domain.active_for_user(couch_user)
+        if not (
+            is_active_downstream_domain(request_domain)
+            and get_upstream_domain_link(request_domain).master_domain == d.name
+        )
+    }
+    domain_names.add(request_domain)
+    # NOTE: The CopyApplicationForm checks for access to linked domains
+    #       before displaying
+    linkable_domains = []
+    limit_to_linked_domains = True
+    if can_domain_access_linked_domains(request_domain):
+        linkable_domains = get_accessible_downstream_domains(
+            domain,
+            couch_user,
+        )
+        limit_to_linked_domains = not couch_user.is_superuser
+    return {
+        'domain_names': sorted(domain_names),
+        'linkable_domains': sorted(linkable_domains),
+        'limit_to_linked_domains': limit_to_linked_domains,
+    }
 
 
 def _make_file_name(default_name, suffix, lang):
