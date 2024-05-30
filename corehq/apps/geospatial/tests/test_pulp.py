@@ -30,30 +30,20 @@ class TestRadialDistanceSolver(SimpleTestCase):
 
     def test_basic(self):
         self.assertEqual(
-            RadialDistanceSolver(self._problem_data).solve(GeoConfig()), (
-                None,
-                {
-                    'assigned': {
-                        'New York': ['New Hampshire', 'Newark', 'NY2'],
-                        'Los Angeles': ['Phoenix', 'LA2', 'LA3', 'Dallas', 'Jackson']
-                    },
-                    'unassigned': [],
-                }
-            )
+            RadialDistanceSolver(self._problem_data).solve(GeoConfig()), {
+                'assigned': {
+                    'New York': ['New Hampshire', 'Newark', 'NY2'],
+                    'Los Angeles': ['Phoenix', 'LA2', 'LA3', 'Dallas', 'Jackson']
+                }, 'unassigned': []}
         )
 
     def test_with_max_criteria(self):
         self.assertEqual(
-            RadialDistanceSolver(self._problem_data).solve(GeoConfig(max_cases_per_user=4)), (
-                None,
-                {
-                    'assigned': {
-                        'New York': ['New Hampshire', 'Newark', 'NY2', 'Dallas'],
-                        'Los Angeles': ['Phoenix', 'LA2', 'LA3', 'Jackson']
-                    },
-                    'unassigned': [],
-                }
-            )
+            RadialDistanceSolver(self._problem_data).solve(GeoConfig(max_cases_per_user=4)), {
+                'assigned': {
+                    'New York': ['New Hampshire', 'Newark', 'NY2', 'Dallas'],
+                    'Los Angeles': ['Phoenix', 'LA2', 'LA3', 'Jackson']
+                }, 'unassigned': []}
         )
 
     def test_more_cases_than_is_assignable(self):
@@ -65,7 +55,7 @@ class TestRadialDistanceSolver(SimpleTestCase):
         self.assertEqual(
             RadialDistanceSolver(
                 self._problem_data
-            ).solve(GeoConfig(max_cases_per_user=2)), (None, expected_results)
+            ).solve(GeoConfig(max_cases_per_user=2)), expected_results
         )
 
     def test_too_few_cases_for_minimum_criteria(self):
@@ -76,7 +66,7 @@ class TestRadialDistanceSolver(SimpleTestCase):
         self.assertEqual(
             RadialDistanceSolver(
                 self._problem_data
-            ).solve(GeoConfig(min_cases_per_user=5)), (None, expected_results)
+            ).solve(GeoConfig(min_cases_per_user=5)), expected_results
         )
 
     def test_no_cases_is_infeasible_solution(self):
@@ -85,7 +75,7 @@ class TestRadialDistanceSolver(SimpleTestCase):
         expected_results = {'assigned': [], 'unassigned': []}
 
         self.assertEqual(
-            RadialDistanceSolver(problem_data).solve(GeoConfig()), (None, expected_results)
+            RadialDistanceSolver(problem_data).solve(GeoConfig()), expected_results
         )
 
     def test_no_users_is_infeasible_solution(self):
@@ -95,9 +85,8 @@ class TestRadialDistanceSolver(SimpleTestCase):
             'assigned': [],
             'unassigned': self._problem_data['cases'],
         }
-
         self.assertEqual(
-            RadialDistanceSolver(problem_data).solve(GeoConfig()), (None, expected_results)
+            RadialDistanceSolver(problem_data).solve(GeoConfig()), expected_results
         )
 
     def test_cases_too_far_distance(self):
@@ -108,7 +97,7 @@ class TestRadialDistanceSolver(SimpleTestCase):
         self.assertEqual(
             RadialDistanceSolver(
                 self._problem_data
-            ).solve(GeoConfig(max_case_distance=1)), (None, expected_results)
+            ).solve(GeoConfig(max_case_distance=1)), expected_results
         )
 
     def test_massive_distance_disburses_normally(self):

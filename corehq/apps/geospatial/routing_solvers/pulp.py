@@ -37,7 +37,7 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         distance_costs, duration_costs = self.calculate_distance_matrix(config)
 
         if not distance_costs:
-            return None, self.solution_results(assigned=[], unassigned=self.case_locations)
+            return self.solution_results(assigned=[], unassigned=self.case_locations)
 
         user_count = len(distance_costs)
         case_count = len(distance_costs[0])
