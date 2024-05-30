@@ -24,7 +24,7 @@ from corehq.apps.app_manager.views.apps import (
     get_apps_base_context,
 )
 from corehq.apps.app_manager.views.forms import (
-    get_form_view_context_and_template,
+    get_form_view_context,
 )
 from corehq.apps.app_manager.views.modules import (
     get_module_template,
@@ -161,7 +161,8 @@ def view_generic(
         })
 
     if form:
-        template, form_context = get_form_view_context_and_template(
+        template = "app_manager/form_view.html"
+        form_context = get_form_view_context(
             request, domain, form, context['langs'], current_lang=lang
         )
         context.update(form_context)
