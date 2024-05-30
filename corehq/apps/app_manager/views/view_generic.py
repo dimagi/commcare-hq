@@ -66,19 +66,7 @@ def view_generic(
 ):
     """
     This is the main view for the app. All other views redirect to here.
-
     """
-    # HELPME
-    #
-    # This method has been flagged for refactoring due to its complexity and
-    # frequency of touches in changesets
-    #
-    # If you are writing code that touches this method, your changeset
-    # should leave the method better than you found it.
-    #
-    # Please remove this flag when this method no longer triggers an 'E' or 'F'
-    # classification from the radon code static analysis
-
     if form_id and not module_id and module_unique_id is None:
         return bail(request, domain, app_id)
 
@@ -103,6 +91,9 @@ def view_generic(
             "view_app", args=[domain, app.copy_of]
         ))
 
+    if copy_app_form is None:
+        copy_app_form = CopyApplicationForm(domain, app)
+
     context = get_apps_base_context(request, domain, app)
     context.update({
         'module': module,
@@ -111,7 +102,7 @@ def view_generic(
 
     lang = context['lang']
     if not module and hasattr(app, 'translations'):
-        context.update({"translations": app.translations.get(lang, {})})
+        context["translations"] = app.translations.get(lang, {})
 
     if not app.is_remote_app():
         context.update({
@@ -140,9 +131,7 @@ def view_generic(
             template = 'app_manager/app_view_release_manager.html'
             context.update(get_releases_context(request, domain, app_id))
 
-        context.update({
-            'is_app_settings_page': not release_manager,
-        })
+        context['is_app_settings_page'] = not release_manager
 
     if form or module:
         context.update(_get_multimedia_context(
@@ -160,19 +149,6 @@ def view_generic(
         request.couch_user,
     ))
 
-    context.update({
-        'error': request.GET.get('error', ''),
-    })
-
-    # Pass form for Copy Application to template
-    if copy_app_form is None:
-        copy_app_form = CopyApplicationForm(domain, app)
-    context.update({
-        'copy_app_form': copy_app_form,
-
-        'latest_commcare_version': get_commcare_versions(request.user)[-1],
-    })
-
     if (
         not is_remote_app(app)
         and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER)
@@ -180,14 +156,15 @@ def view_generic(
         context.update(_get_logo_uploader_context(domain, app_id, app))
 
     context.update({
+        'error': request.GET.get('error', ''),
+        'confirm': request.session.pop('CONFIRM', False),
+        'copy_app_form': copy_app_form,
+        'latest_commcare_version': get_commcare_versions(request.user)[-1],
         'show_live_preview': should_show_preview_app(
             request,
             app,
             request.couch_user.username
         ),
-
-        'confirm': request.session.pop('CONFIRM', False),
-
         'show_release_mode':
             AppReleaseModeSetting.get_settings(domain).is_visible
     })
