@@ -74,8 +74,10 @@
         "api_list.html"
     ],
     "javascript": [
+        "js/api_edit.js",
         "js/api_list.js",
-        "js/copy_data.js"
+        "js/copy_data.js",
+        "js/manage_links.js"
     ]
   },
   "user_importer": {
