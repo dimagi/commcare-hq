@@ -23,24 +23,31 @@ hqDefine("app_execution/js/workflow_charts", [
         });
     }
 
+    function buildChart(yLabel) {
+        let chart = nv.models.lineChart()
+            .showYAxis(true)
+            .showXAxis(true);
+
+        chart.yAxis
+            .axisLabel(yLabel);
+        chart.forceY(0);
+        chart.xScale(d3.time.scale());
+        chart.margin({left: 80, bottom: 100});
+        chart.xAxis.rotateLabels(-45)
+            .tickFormat(function (d) {
+                return moment(d).format("MMM DD [@] HH");
+            });
+
+        nv.utils.windowResize(chart.update);
+        return chart;
+    }
+
     function setupTimingChart(data, includeSeries) {
         const timingSeries = data.timing.flatMap((series) => getSeries(series, includeSeries));
-        nv.addGraph(function () {
-            let chart = nv.models.lineChart()
-                .showYAxis(true)
-                .showXAxis(true);
 
-            chart.yAxis
-                .axisLabel('Seconds')
-                .tickFormat(d3.format(".1f"));
-            chart.forceY(0);
-            chart.xScale(d3.time.scale());
-            chart.margin({left: 80, bottom: 100});
-            chart.xAxis.rotateLabels(-45)
-                .tickFormat(function (d) {
-                    return moment(d).format("MMM DD [@] HH");
-                });
-
+        nv.addGraph(() => {
+            let chart = buildChart(gettext("Seconds"));
+            chart.yAxis.tickFormat(d3.format(".1f"));
             // remove the key from the label
             chart.legend.key((d) => d.key.split("[")[0]);
             chart.tooltip.keyFormatter((d) => {
@@ -51,10 +58,8 @@ hqDefine("app_execution/js/workflow_charts", [
                 .datum(timingSeries)
                 .call(chart);
 
-            nv.utils.windowResize(chart.update);
             return chart;
         });
-
     }
 
     function setupStatusChart(data) {
@@ -75,26 +80,13 @@ hqDefine("app_execution/js/workflow_charts", [
             };
         });
 
-        nv.addGraph(function () {
-            let chart = nv.models.lineChart()
-                .showYAxis(true)
-                .showXAxis(true);
-
-            chart.yAxis
-                .axisLabel('Count');
-            chart.forceY(0);
-            chart.xScale(d3.time.scale());
-            chart.margin({left: 80, bottom: 100});
-            chart.xAxis.rotateLabels(-45)
-                .tickFormat(function (d) {
-                    return moment(d).format("MMM DD [@] HH");
-                });
+        nv.addGraph(() => {
+            let chart = buildChart(gettext("Chart"));
 
             d3.select('#status_barchart svg')
                 .datum(seriesData)
                 .call(chart);
 
-            nv.utils.windowResize(chart.update);
             return chart;
         });
     }
