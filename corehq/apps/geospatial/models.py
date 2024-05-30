@@ -79,6 +79,7 @@ class GeoConfig(models.Model):
     api_token = models.CharField(max_length=255, blank=True, null=True, db_column="api_token")
 
     def save(self, *args, **kwargs):
+        assert self.travel_mode in [self.WALKING, self.CYCLING, self.DRIVING]
         super().save(*args, **kwargs)
         self._clear_caches()
 
@@ -95,11 +96,6 @@ class GeoConfig(models.Model):
     @property
     def max_travel_time_seconds(self):
         return self.max_case_travel_time * 60
-
-    @property
-    def mapbox_travel_mode(self):
-        assert self.travel_mode in [self.WALKING, self.CYCLING, self.DRIVING]
-        return self.travel_mode
 
     @property
     def disbursement_solver(self):

@@ -163,8 +163,7 @@ class RoadNetworkSolver(RadialDistanceSolver):
         sources = ";".join(map(str, list(range(sources_count))))
         destinations = ";".join(map(str, list(range(sources_count, sources_count + destinations_count))))
 
-        travel_mode = config.mapbox_travel_mode
-        url = f'https://api.mapbox.com/directions-matrix/v1/mapbox/{travel_mode}/{coordinates}'
+        url = f'https://api.mapbox.com/directions-matrix/v1/mapbox/{config.travel_mode}/{coordinates}'
 
         if config.max_case_travel_time:
             annotations = "distance,duration"
