@@ -17,6 +17,7 @@ from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.toggles import TABLEAU_USER_SYNCING
+from corehq.apps.users.decorators import get_permission_name
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -436,12 +437,28 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def page_context(self):
-        profiles = [profile.to_json() for profile in self.form_user_update.custom_data.model.get_profiles()]
+        current_profile_id = self.editable_user.get_user_data(self.domain).profile_id
+
+        can_edit_current_profile = True
+        if current_profile_id:
+            can_edit_current_profile = self.request.couch_user.has_permission(
+                self.domain,
+                get_permission_name(HqPermissions.access_profile),
+                data=str(current_profile_id)
+            )
+
+        if can_edit_current_profile:
+            cde = self.form_user_update.custom_data
+            profiles = cde.field_view.get_user_accessible_profiles(self.domain, self.request.couch_user)
+            serialized_profiles = [p.to_json() for p in profiles]
+        else:
+            serialized_profiles = [CustomDataFieldsProfile.objects.get(id=current_profile_id).to_json()]
+
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
             'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
-            'custom_fields_profiles': sorted(profiles, key=lambda x: x['name'].lower()),
+            'custom_fields_profiles': sorted(serialized_profiles, key=lambda x: x['name'].lower()),
             'custom_fields_profile_slug': PROFILE_SLUG,
             'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
         }
