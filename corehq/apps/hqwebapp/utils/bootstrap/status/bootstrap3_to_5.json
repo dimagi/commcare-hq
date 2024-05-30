@@ -67,6 +67,17 @@
   "registry": {
     "is_complete": true
   },
+  "motech.generic_inbound": {
+    "in_progress": true,
+    "templates": [
+        "api_edit.html",
+        "api_list.html"
+    ],
+    "javascript": [
+        "js/api_list.js",
+        "js/copy_data.js"
+    ]
+  },
   "user_importer": {
     "is_complete": true
   },
