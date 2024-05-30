@@ -157,7 +157,6 @@ def view_generic(
     error = request.GET.get('error', '')
     context.update({
         'error': error,
-        'app': app,
     })
 
     # Pass form for Copy Application to template
