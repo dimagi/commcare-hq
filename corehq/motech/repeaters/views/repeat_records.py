@@ -317,7 +317,7 @@ class RepeatRecordView(View):
                     dhis2_errors.append((cleaned_log, get_diagnosis_message(cleaned_log)))
 
         attempt_html = render_to_string(
-            'repeaters/partials/attempt_history.html',
+            'repeaters/partials/bootstrap3/attempt_history.html',
             context={
                 'record': record,
                 'record_id': record_id,
