@@ -638,6 +638,7 @@ hqDefine('geospatial/js/models', [
         self.clearSelectedPolygonFilter = function clearSelectedPolygonFilter() {
             self.selectedSavedPolygonId('');
             self.clearActivePolygon();
+            updateSelectedSavedPolygonParam();
         };
 
         self.selectedSavedPolygonId.subscribe(function (selectedPolygonID) {
