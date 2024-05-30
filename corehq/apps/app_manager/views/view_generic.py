@@ -53,9 +53,17 @@ from corehq.util.soft_assert import soft_assert
 
 
 @retry_resource(3)
-def view_generic(request, domain, app_id, module_id=None, form_id=None,
-                 copy_app_form=None, release_manager=False,
-                 module_unique_id=None, form_unique_id=None):
+def view_generic(
+    request,
+    domain,
+    app_id,
+    module_id=None,
+    form_id=None,
+    copy_app_form=None,
+    release_manager=False,
+    module_unique_id=None,
+    form_unique_id=None,
+):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -183,11 +191,24 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
             default_file_name = '%s_form%s' % (default_file_name, form_id)
 
         specific_media = [{
-            'menu_refs': app.get_menu_media(module, form=form, form_index=form_id, to_language=lang),
-            'default_file_name': '{name}_{lang}'.format(name=default_file_name, lang=lang),
+            'menu_refs': app.get_menu_media(
+                module,
+                form=form,
+                form_index=form_id,
+                to_language=lang,
+            ),
+            'default_file_name': '{name}_{lang}'.format(
+                name=default_file_name,
+                lang=lang,
+            ),
         }]
 
-        if not form and module and not isinstance(module, ReportModule) and module.uses_media():
+        if (
+            not form
+            and module
+            and not isinstance(module, ReportModule)
+            and module.uses_media()
+        ):
             def _make_name(suffix):
                 return "{default_name}_{suffix}_{lang}".format(
                     default_name=default_file_name,
@@ -196,44 +217,73 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
                 )
 
             specific_media.append({
-                'menu_refs': app.get_case_list_form_media(module, to_language=lang),
+                'menu_refs': app.get_case_list_form_media(
+                    module,
+                    to_language=lang,
+                ),
                 'default_file_name': _make_name('case_list_form'),
                 'qualifier': 'case_list_form_',
             })
             specific_media.append({
-                'menu_refs': app.get_case_list_menu_item_media(module, to_language=lang),
+                'menu_refs': app.get_case_list_menu_item_media(
+                    module,
+                    to_language=lang,
+                ),
                 'default_file_name': _make_name('case_list_menu_item'),
                 'qualifier': 'case_list-menu_item_',
             })
-            if (module and hasattr(module, 'search_config') and module.uses_media()
-                    and toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)):
+            if (
+                module
+                and hasattr(module, 'search_config')
+                and module.uses_media()
+                and toggles.USH_CASE_CLAIM_UPDATES.enabled(domain)
+            ):
                 specific_media.extend([
                     {
                         'menu_refs': app.get_case_search_label_media(
-                            module, module.search_config.search_label, to_language=lang),
-                        'default_file_name': _make_name('case_search_label_item'),
+                            module,
+                            module.search_config.search_label,
+                            to_language=lang,
+                        ),
+                        'default_file_name': _make_name(
+                            'case_search_label_item'
+                        ),
                         'qualifier': 'case_search-search_label_media_'
                     },
                     {
                         'menu_refs': app.get_case_search_label_media(
-                            module, module.search_config.search_again_label, to_language=lang),
-                        'default_file_name': _make_name('case_search_again_label_item'),
+                            module,
+                            module.search_config.search_again_label,
+                            to_language=lang,
+                        ),
+                        'default_file_name': _make_name(
+                            'case_search_again_label_item'
+                        ),
                         'qualifier': 'case_search-search_again_label_media_'
                     }
                 ])
-            if (toggles.CASE_LIST_LOOKUP.enabled(request.user.username) or
-                    toggles.CASE_LIST_LOOKUP.enabled(app.domain) or
-                    toggles.BIOMETRIC_INTEGRATION.enabled(app.domain)):
+            if (
+                toggles.CASE_LIST_LOOKUP.enabled(request.user.username)
+                or toggles.CASE_LIST_LOOKUP.enabled(app.domain)
+                or toggles.BIOMETRIC_INTEGRATION.enabled(app.domain)
+            ):
                 specific_media.append({
                     'menu_refs': app.get_case_list_lookup_image(module),
-                    'default_file_name': '{}_case_list_lookup'.format(default_file_name),
+                    'default_file_name': '{}_case_list_lookup'.format(
+                        default_file_name
+                    ),
                     'qualifier': 'case-list-lookupcase',
                 })
 
                 if hasattr(module, 'product_details'):
                     specific_media.append({
-                        'menu_refs': app.get_case_list_lookup_image(module, type='product'),
-                        'default_file_name': '{}_product_list_lookup'.format(default_file_name),
+                        'menu_refs': app.get_case_list_lookup_image(
+                            module,
+                            type='product',
+                        ),
+                        'default_file_name': '{}_product_list_lookup'.format(
+                            default_file_name
+                        ),
                         'qualifier': 'case-list-lookupproduct',
                     })
 
@@ -256,13 +306,17 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
             'multimedia': {
                 "object_map": app.get_object_map(multimedia_map=multimedia_map),
                 'upload_managers': uploaders,
-                'upload_managers_js': {type: u.js_options for type, u in uploaders.items()},
+                'upload_managers_js': {type: u.js_options
+                                       for type, u in uploaders.items()},
             }
         })
 
         context['module_icon'] = None
         if toggles.CUSTOM_ICON_BADGES.enabled(domain):
-            context['module_icon'] = module.custom_icon if module.custom_icon else CustomIcon()
+            if module.custom_icon:
+                context['module_icon'] = module.custom_icon
+            else:
+                context['module_icon'] = CustomIcon()
         context['nav_menu_media_specifics'] = specific_media
 
     error = request.GET.get('error', '')
@@ -278,15 +332,21 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
 
     domain_names = {
         d.name for d in Domain.active_for_user(request.couch_user)
-        if not (is_active_downstream_domain(request.domain)
-                and get_upstream_domain_link(request.domain).master_domain == d.name)
+        if not (
+            is_active_downstream_domain(request.domain)
+            and get_upstream_domain_link(request.domain).master_domain == d.name
+        )
     }
     domain_names.add(request.domain)
-    # NOTE: The CopyApplicationForm checks for access to linked domains before displaying
+    # NOTE: The CopyApplicationForm checks for access to linked domains
+    #       before displaying
     linkable_domains = []
     limit_to_linked_domains = True
     if can_domain_access_linked_domains(request.domain):
-        linkable_domains = get_accessible_downstream_domains(domain, request.couch_user)
+        linkable_domains = get_accessible_downstream_domains(
+            domain,
+            request.couch_user,
+        )
         limit_to_linked_domains = not request.couch_user.is_superuser
     context.update({
         'domain_names': sorted(domain_names),
@@ -341,7 +401,10 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
 
     confirm = request.session.pop('CONFIRM', False)
     context.update({'confirm': confirm})
-    context.update({'show_release_mode': AppReleaseModeSetting.get_settings(domain).is_visible})
+    context.update({
+        'show_release_mode':
+            AppReleaseModeSetting.get_settings(domain).is_visible
+    })
 
     response = render(request, template, context)
 
