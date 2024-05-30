@@ -4,10 +4,14 @@
 {% load compress %}
 {% load menu_tags %}
 
+{% requirejs_main 'accounting/js/renew_plan_selection' %}
+
 {% block plan_breadcrumbs %}{% endblock %}
 
 {% block form_content %}
-  {% requirejs_main 'accounting/js/renew_plan_selection' %}
+  {% initial_page_data 'renewal_choices' renewal_choices %}
+  {% initial_page_data 'is_annual_plan' is_annual_plan %}
+  {% initial_page_data 'is_self_renewable_plan' is_self_renewable_plan %}
 
   <p class="lead text-center">
     {% blocktrans with plan.name as p %}
@@ -21,9 +25,6 @@
     {% csrf_token %}
 
     {% if request|toggle_enabled:'SELF_SERVICE_ANNUAL_RENEWALS' and is_self_renewable_plan %}
-      {% initial_page_data 'renewal_choices' renewal_choices %}
-      {% initial_page_data 'is_annual_plan' is_annual_plan %}
-      {% initial_page_data 'is_self_renewable_plan' is_self_renewable_plan %}
       {% include 'accounting/partials/renew_plan_selection.html' %}
     {% else %}
       {% include 'accounting/partials/confirm_plan_summary.html' %}
