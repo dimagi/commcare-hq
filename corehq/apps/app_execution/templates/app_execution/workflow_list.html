@@ -18,7 +18,7 @@
   <div>
     <a class='btn btn-primary' href="{% url 'app_execution:new_workflow' request.domain %}">Create New</a>
   </div>
-  <div class="row">
+  <div class="row row-cols-lg-1 row-cols-xl-2">
     <div id="timing_linechart" class="col">
       <h4 class="text-center">{% trans "Average Timings" %}</h4>
       <svg height="300px"></svg>

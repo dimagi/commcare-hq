@@ -23,7 +23,7 @@
   {% registerurl "app_execution:logs_json" request.domain workflow.id %}
 
   <h2>{% translate 'Logs for workflow' %} "<a href="{% url "app_execution:edit_workflow" request.domain workflow.id %}">{{ workflow.name }}</a>"</h2>
-  <div class="row">
+  <div class="row row-cols-lg-1 row-cols-xl-2">
     <div id="timing_linechart" class="col">
       <h4 class="text-center">{% translate "Average Timings" %}</h4>
       <svg height="300px"></svg>
@@ -34,7 +34,7 @@
     </div>
   </div>
   <div id="workflow-logs">
-    <div class="row">
+    <div class="row my-3">
       <label for="status" class="col-sm-1 col-form-label">{% translate 'Filter' %}</label>
       <div class="col col-sm-3">
         <select class="form-select" name="status" data-bind="value: statusFilter">
