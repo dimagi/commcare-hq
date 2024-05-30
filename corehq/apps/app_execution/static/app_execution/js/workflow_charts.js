@@ -1,4 +1,4 @@
-// /* globals moment */
+'use strict';
 hqDefine("app_execution/js/workflow_charts", [
     'jquery',
     'moment/moment',
