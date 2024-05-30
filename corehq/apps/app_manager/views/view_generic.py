@@ -175,19 +175,16 @@ def view_generic(
             and not isinstance(module, ReportModule)
             and module.uses_media()
         ):
-            def _make_name(suffix):
-                return "{default_name}_{suffix}_{lang}".format(
-                    default_name=default_file_name,
-                    suffix=suffix,
-                    lang=lang,
-                )
-
             specific_media.append({
                 'menu_refs': app.get_case_list_form_media(
                     module,
                     to_language=lang,
                 ),
-                'default_file_name': _make_name('case_list_form'),
+                'default_file_name': _make_file_name(
+                    default_file_name,
+                    'case_list_form',
+                    lang,
+                ),
                 'qualifier': 'case_list_form_',
             })
             specific_media.append({
@@ -195,7 +192,11 @@ def view_generic(
                     module,
                     to_language=lang,
                 ),
-                'default_file_name': _make_name('case_list_menu_item'),
+                'default_file_name': _make_file_name(
+                    default_file_name,
+                    'case_list_menu_item',
+                    lang,
+                ),
                 'qualifier': 'case_list-menu_item_',
             })
             if (
@@ -211,8 +212,10 @@ def view_generic(
                             module.search_config.search_label,
                             to_language=lang,
                         ),
-                        'default_file_name': _make_name(
-                            'case_search_label_item'
+                        'default_file_name': _make_file_name(
+                            default_file_name,
+                            'case_search_label_item',
+                            lang,
                         ),
                         'qualifier': 'case_search-search_label_media_'
                     },
@@ -222,8 +225,10 @@ def view_generic(
                             module.search_config.search_again_label,
                             to_language=lang,
                         ),
-                        'default_file_name': _make_name(
-                            'case_search_again_label_item'
+                        'default_file_name': _make_file_name(
+                            default_file_name,
+                            'case_search_again_label_item',
+                            lang,
                         ),
                         'qualifier': 'case_search-search_again_label_media_'
                     }
@@ -452,3 +457,14 @@ def _handle_bad_states(
             'form_id': form.id,
             'form_unique_id': form_unique_id,
         })
+
+
+def _make_file_name(default_name, suffix, lang):
+    """
+    Appends ``suffix`` and ``lang`` to ``default_name``
+
+    >>> _make_file_name('sir_lancelot', 'obe', 'fr')
+    'sir_lancelot_obe_fr'
+
+    """
+    return f'{default_name}_{suffix}_{lang}'

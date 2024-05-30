@@ -1,4 +1,5 @@
 import base64
+import doctest
 import json
 import re
 from contextlib import contextmanager
@@ -753,3 +754,10 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
                 self.url, HTTP_AUTHORIZATION=f"Basic {invalid_credentials}"
             )
             self.assertEqual(response.status_code, 401)
+
+
+def test_doctests():
+    import corehq.apps.app_manager.views.view_generic as module
+
+    results = doctest.testmod(module)
+    assert results.failed == 0
