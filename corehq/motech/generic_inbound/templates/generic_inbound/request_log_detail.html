@@ -7,20 +7,18 @@
 
 {% captureas status_css %}
   {% case log.status 'success' %} success
-  {% case 'filtered' %} default
+  {% case 'filtered' %} secondary
   {% case 'reverted' %} warning
   {% case 'error' 'validation-failed' %} danger
-  {% else %} default
+  {% else %} secondary
   {% endcase %}
 {% endcaptureas %}
 
 <h1>{{ current_page.title }}</h1>
 
-<div class="card ">  {# todo B5: css:panel #}
-  <div class="card-header">
-    <h3 class="card-title">{% trans "Metadata" %}</h3>
-  </div>
+<div class="card">
   <div class="card-body">
+    <h3 class="card-title">{% trans "Metadata" %}</h3>
     <table class="table table-bordered">
       <tbody>
         <tr>
@@ -32,7 +30,7 @@
         <tr>
           <th>status</th>
           <td>
-            <span class="badge label-{{ status_css.strip }}">
+            <span class="badge text-bg-{{ status_css.strip }}">
               {{ log.get_status_display }}
             </span>
           </td>
@@ -51,11 +49,9 @@
 </div>
 
 
-<div class="card ">  {# todo B5: css:panel #}
-  <div class="card-header">
-    <h3 class="card-title">{% trans "Request Details" %}</h3>
-  </div>
+<div class="card">
   <div class="card-body">
+    <h3 class="card-title">{% trans "Request Details" %}</h3>
     <table class="table table-bordered">
       <tbody>
         <tr>
@@ -73,10 +69,10 @@
         <tr>
           <th>request_headers</th>
           <td>
-            <dl class="dl-horizontal">  {# todo B5: css:dl-horizontal #}
+            <dl class="row">
             {% for key, value in log.request_headers.items|dictsort:0 %}
-              <dt>{{ key }}</dt>
-              <dd>{{ value }}</dd>
+              <dt class="col-3 fw-bold">{{ key }}</dt>
+              <dd class="col-9">{{ value }}</dd>
             {% endfor %}
             </dl>
           </td>
@@ -90,11 +86,9 @@
   </div>
 </div>
 
-<div class="card ">  {# todo B5: css:panel #}
-  <div class="card-header">
-    <h3 class="card-title">{% trans "Response Details" %}</h3>
-  </div>
+<div class="card">
   <div class="card-body">
+    <h3 class="card-title">{% trans "Response Details" %}</h3>
     <table class="table table-bordered">
       <tbody>
         <tr>
@@ -110,11 +104,9 @@
   </div>
 </div>
 
-<div class="card ">  {# todo B5: css:panel #}
-  <div class="card-header">
-    <h3 class="card-title">{% trans "Processing Attempts" %}</h3>
-  </div>
+<div class="card">
   <div class="card-body">
+    <h3 class="card-title">{% trans "Processing Attempts" %}</h3>
     <table class="table table-bordered">
       <thead>
         <tr>
@@ -132,7 +124,7 @@
           <td>{% utc_to_timezone attempt.timestamp timezone %}</td>
           <td>{{ attempt.is_retry }}</td>
           <td>{{ attempt.response_status }}</td>
-          <td><code>{{ attempt.raw_response }}</code></td>
+          <td class="font-monospace">{{ attempt.raw_response }}</td>
           <td>
             {% if attempt.xform_id %}
               <a href="{% url 'render_form_data' domain attempt.xform_id %}">{{ attempt.xform_id }}</a>
@@ -158,26 +150,24 @@
   </div>
 </div>
 
-<div class="form-actions">
-  {% if log.status != 'success' %}
-    <form action="{% url 'retry_api_request' domain log.id %}" method="post" class="float-start">{% csrf_token %}
-      <button type="submit" class="btn btn-outline-primary disable-on-submit" >
-        <i class="fa fa-repeat"></i>
-        {% trans 'Retry' %}
-      </button>
-    </form>
-  {% elif log.status == 'success' %}
-    <form action="{% url 'revert_api_request' domain log.id %}" method="post" class="float-start">{% csrf_token %}
-      <button type="submit" class="btn btn-outline-danger disable-on-submit" >
-        <i class="fa fa-undo"></i>
-        {% trans 'Revert' %}
-      </button>
-      <span class="hq-help-template"
-            data-title="{% trans 'Reverting API Requests' %}"
-            data-content="{% blocktrans %}Reverts actions performed in this request and archives any associated forms.{% endblocktrans %}">
-      </span>
-    </form>
-  {% endif %}
-</div>
+{% if log.status != 'success' %}
+  <form action="{% url 'retry_api_request' domain log.id %}" method="post" class="float-start">{% csrf_token %}
+    <button type="submit" class="btn btn-outline-primary disable-on-submit" >
+      <i class="fa fa-repeat"></i>
+      {% trans 'Retry' %}
+    </button>
+  </form>
+{% elif log.status == 'success' %}
+  <form action="{% url 'revert_api_request' domain log.id %}" method="post" class="float-start">{% csrf_token %}
+    <button type="submit" class="btn btn-outline-danger disable-on-submit" >
+      <i class="fa fa-undo"></i>
+      {% trans 'Revert' %}
+    </button>
+    <span class="hq-help-template"
+          data-title="{% trans 'Reverting API Requests' %}"
+          data-content="{% blocktrans %}Reverts actions performed in this request and archives any associated forms.{% endblocktrans %}">
+    </span>
+  </form>
+{% endif %}
 
 {% endblock %}
