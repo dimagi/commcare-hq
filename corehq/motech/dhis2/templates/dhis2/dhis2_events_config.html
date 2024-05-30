@@ -13,20 +13,16 @@
 
 <script type="text/html" id="form-config-template">
   <fieldset>
-    <div class="form-group">  {# todo B5: css:form-group #}
-      <div class="controls col-md-9 col-lg-8 col-xl-6">
-        <textarea name="formConfigs"
-                  class="jsonwidget form-control"
-                  required=""
-                  data-bind="value: formConfigs"></textarea>
-      </div>
-    </div>
+    <textarea name="formConfigs"
+              class="jsonwidget form-control"
+              required=""
+              data-bind="value: formConfigs"></textarea>
   </fieldset>
 </script>
 
-<label>
-    {% trans "Form config" %}
-</label>
+<h2>
+  {% trans "Form Config" %}
+</h2>
 <form id="dhis2-form-config"
       class="form-horizontal ko-template"
       method="post"
@@ -35,20 +31,11 @@
                         name: 'form-config-template',
                         afterRender: initFormConfigTemplate
                     }"></div>
-  <p>
-    <div data-bind="visible: isError()">
-        <pre data-bind="text: errorMessage()" class="alert message-alert alert-danger"></pre>
-    </div>
-  </p>
+  <div class="alert message-alert alert-danger" data-bind="visible: isError(), text: errorMessage()"></div>
 
-  <div class="form-actions">
-    <div class="offset-md-3 offset-lg-2
-                controls col-md-9 col-lg-8 col-xl-6">
-      <button type="submit"
-              class="btn btn-primary">
-        {% trans "Save Changes" %}
-      </button>
-    </div>
-  </div>
+  <button type="submit"
+          class="btn btn-primary">
+    {% trans "Save Changes" %}
+  </button>
 </form>
 {% endblock %}
