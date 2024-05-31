@@ -71,11 +71,13 @@ hqDefine("geospatial/js/geospatial_map", [
         }
     };
 
-    var disbursementRunnerModel = function () {
+    var disbursementRunnerModel = function (disbursementParameters) {
         var self = {};
 
         self.pollUrl = ko.observable('');
         self.isBusy = ko.observable(false);
+        self.showParams = ko.observable(false);
+        self.parameters = ko.observableArray(disbursementParameters);
 
         self.disbursementErrorMessage = ko.observable('');
         self.showUnassignedCasesError = ko.observable(false);
@@ -114,6 +116,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
         self.runCaseDisbursementAlgorithm = function (cases, users) {
             self.setBusy(true);
+            self.showParams(true);
             let mapInstance = mapModel.mapInstance;
 
             let caseData = [];
@@ -447,9 +450,12 @@ hqDefine("geospatial/js/geospatial_map", [
             // Hide controls until data is displayed
             showMapControls(false);
 
-            disbursementRunner = new disbursementRunnerModel();
+            const algorithmParameters = initialPageData.get('disbursement_parameters');
+            disbursementRunner = new disbursementRunnerModel(algorithmParameters);
+
             $("#disbursement-spinner").koApplyBindings(disbursementRunner);
             $("#disbursement-error").koApplyBindings(disbursementRunner);
+            $("#disbursement-params").koApplyBindings(disbursementRunner)
 
             return;
         }

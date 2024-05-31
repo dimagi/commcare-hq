@@ -33,7 +33,7 @@ from .es import (
     apply_geohash_agg,
     find_precision,
 )
-from .models import GeoPolygon
+from .models import GeoPolygon, GeoConfig
 from .utils import (
     geojson_to_es_geoshape,
     get_geo_case_property,
@@ -65,6 +65,7 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
                 {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
                 for p in GeoPolygon.objects.filter(domain=self.domain).all()
             ],
+            'disbursement_parameters': self.disbursement_parameters,
         })
         return context
 
@@ -87,6 +88,19 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
     @property
     def rows(self):
         raise NotImplementedError()
+
+    @property
+    def disbursement_parameters(self):
+        try:
+            config = GeoConfig.objects.get(domain=self.domain)
+        except GeoConfig.DoesNotExist:
+            return []
+
+        unspecified = _("Unspecified")
+        return [
+            {'name': _('Max cases per user'), 'value': config.max_cases_per_user or unspecified},
+            {'name': _('Min cases per user'), 'value': config.min_cases_per_user or unspecified},
+        ]
 
 
 class CaseManagementMap(BaseCaseMapReport):
