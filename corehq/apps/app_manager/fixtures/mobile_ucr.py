@@ -21,6 +21,7 @@ from corehq.apps.app_manager.const import (
     MOBILE_UCR_VERSION_2,
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.exceptions import MobileUCRTooLargeException
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     is_valid_mobile_select_filter_type,
 )
@@ -542,6 +543,8 @@ def get_report_element(
     row_index = 0
     rows = report_data_cache.get_data(report_config.uuid, data_source)
     for row_index, row in enumerate(rows):
+        if row_index + 1 >= settings.MAX_MOBILE_UCR_SIZE:
+            raise MobileUCRTooLargeException
         row_elements.append(row_to_element(deferred_fields, filter_options_by_field, row, row_index))
         total_row_calculator.update_totals(row)
 
