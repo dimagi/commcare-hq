@@ -39,18 +39,18 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
         return accessible_profiles
 
     @classmethod
-    def get_displayable_profiles_and_edit_permission(cls, current_profile_id, domain, couch_user):
-        can_edit_current_profile = True
+    def get_displayable_profiles_and_edit_permission(cls, original_profile_id, domain, couch_user):
+        can_edit_original_profile = True
 
-        if current_profile_id:
-            can_edit_current_profile = couch_user.has_permission(
+        if original_profile_id:
+            can_edit_original_profile = couch_user.has_permission(
                 domain,
                 get_permission_name(HqPermissions.access_profile),
-                data=str(current_profile_id)
+                data=str(original_profile_id)
             )
 
-        if can_edit_current_profile:
+        if can_edit_original_profile:
             profiles = cls.get_user_accessible_profiles(domain, couch_user)
         else:
-            profiles = {CustomDataFieldsProfile.objects.get(id=current_profile_id)}
-        return profiles, can_edit_current_profile
+            profiles = {CustomDataFieldsProfile.objects.get(id=original_profile_id)}
+        return profiles, can_edit_original_profile

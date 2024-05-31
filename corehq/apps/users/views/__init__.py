@@ -436,10 +436,10 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def page_context(self):
-        current_profile_id = self.editable_user.get_user_data(self.domain).profile_id
-        profiles, can_edit_current_profile = (
+        original_profile_id = self.editable_user.get_user_data(self.domain).profile_id
+        profiles, can_edit_original_profile = (
             self.form_user_update.custom_data.field_view.get_displayable_profiles_and_edit_permission(
-                current_profile_id, self.domain, self.request.couch_user
+                original_profile_id, self.domain, self.request.couch_user
             )
         )
         serialized_profiles = [p.to_json() for p in profiles]

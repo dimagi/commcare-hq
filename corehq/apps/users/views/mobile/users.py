@@ -201,7 +201,7 @@ class EditCommCareUserView(BaseEditUserView):
     def main_context(self):
         context = super(EditCommCareUserView, self).main_context
         current_profile_id = self.editable_user.get_user_data(self.domain).profile_id
-        profiles, can_edit_current_profile = (
+        profiles, can_edit_original_profile = (
             self.form_user_update.custom_data.field_view.get_displayable_profiles_and_edit_permission(
                 current_profile_id, self.domain, self.couch_user
             )

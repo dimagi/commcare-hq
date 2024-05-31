@@ -141,12 +141,12 @@ class CustomDataEditor(object):
 
         from corehq.apps.users.views.mobile import UserFieldsView
         if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES) and self.field_view is UserFieldsView:
-            current_profile_id = None
+            original_profile_id = None
             if self.existing_custom_data:
-                current_profile_id = self.existing_custom_data.get(PROFILE_SLUG, None)
+                original_profile_id = self.existing_custom_data.get(PROFILE_SLUG, None)
 
-            profiles, can_edit_current_profile = self.field_view.get_displayable_profiles_and_edit_permission(
-                current_profile_id, self.domain, self.request_user
+            profiles, can_edit_original_profile = self.field_view.get_displayable_profiles_and_edit_permission(
+                original_profile_id, self.domain, self.request_user
             )
 
             if profiles:
@@ -154,7 +154,7 @@ class CustomDataEditor(object):
                     'data-placeholder': _('Select a profile'),
                     'data-allow-clear': 'true',
                 }
-                if not can_edit_current_profile:
+                if not can_edit_original_profile:
                     attrs['disabled'] = True
                 if not self.ko_model:
                     attrs.update({'class': 'hqwebapp-select2'})
