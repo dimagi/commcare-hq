@@ -12,7 +12,8 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from django.http import HttpRequest
 
-from corehq.apps.app_execution import const, data_model
+from corehq.apps.app_execution import const
+from corehq.apps.app_execution.data_model import steps
 from corehq.apps.app_execution.exceptions import AppExecutionError, FormplayerException
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.formplayer_api.sync_db import sync_db
@@ -214,7 +215,7 @@ class FormplayerSession:
         if screen == ScreenType.START:
             return "navigate_menu_start"
         if screen == ScreenType.FORM:
-            return "submit-all" if isinstance(step, data_model.SubmitFormStep) else "answer"
+            return "submit-all" if isinstance(step, steps.SubmitFormStep) else "answer"
         return "navigate_menu"
 
     def get_session_start_data(self):
@@ -269,11 +270,11 @@ class FormplayerSession:
         print("Starting app session:\n", file=self.log)
 
     def execute_step(self, step):
-        is_form_step = isinstance(step, (data_model.AnswerQuestionStep, data_model.SubmitFormStep))
+        is_form_step = isinstance(step, (steps.AnswerQuestionStep, steps.SubmitFormStep))
         if is_form_step and self.form_mode == const.FORM_MODE_IGNORE:
             self.log_step(step, skipped=True)
             return
-        if self.form_mode == const.FORM_MODE_NO_SUBMIT and isinstance(step, data_model.SubmitFormStep):
+        if self.form_mode == const.FORM_MODE_NO_SUBMIT and isinstance(step, steps.SubmitFormStep):
             self.log_step(step, skipped=True)
             return
         data = self.get_request_data(step)
