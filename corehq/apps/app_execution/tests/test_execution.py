@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+from testil import eq
 
 from . import response_factory as factory
 from .mock_formplayer import CaseList, Form, Menu, MockFormplayerClient
@@ -34,4 +35,5 @@ class TestExecution(SimpleTestCase):
         ])
         session = FormplayerSession(MockFormplayerClient(APP), app_id="app_id")
         session.__dict__["app_build_id"] = "app_build_id"  # prime cache to avoid DB hit
-        execute_workflow(session, workflow)
+        success = execute_workflow(session, workflow)
+        eq(success, True)

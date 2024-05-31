@@ -129,12 +129,12 @@ def test_workflow(request, domain, pk):
     if request.method == "POST":
         session = config.get_formplayer_session()
         try:
-            execute_workflow(session, config.workflow)
+            success = execute_workflow(session, config.workflow)
         except (AppExecutionError, FormplayerException) as e:
             context["error"] = str(e)
             context["success"] = False
         else:
-            context["success"] = True
+            context["success"] = success
 
         context["result"] = True
         context["output"] = session.get_logs()

@@ -6,5 +6,5 @@ class FormplayerException(Exception):
     pass
 
 
-class StopExecution(Exception):
+class ExpectationFailed(Exception):
     """Special exception to signal that the execution should stop immediately."""

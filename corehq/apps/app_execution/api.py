@@ -14,7 +14,7 @@ from django.http import HttpRequest
 
 from corehq.apps.app_execution import const
 from corehq.apps.app_execution.data_model import steps, expectations
-from corehq.apps.app_execution.exceptions import AppExecutionError, FormplayerException, StopExecution
+from corehq.apps.app_execution.exceptions import AppExecutionError, FormplayerException, ExpectationFailed
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.formplayer_api.sync_db import sync_db
 from corehq.apps.formplayer_api.utils import get_formplayer_url
@@ -279,9 +279,10 @@ class FormplayerSession:
             return
         if isinstance(step, expectations.Expectation):
             result = step.evaluate(self)
-            self.log(f"Expectation {self} evaluated to {result}")
+            status = "SUCCESS" if result else "FAILED"
+            self.log(f"Expectation {status} for {step}")
             if not result:
-                raise StopExecution()
+                raise ExpectationFailed()
         else:
             data = self.get_request_data(step)
             self.data = self.client.make_request(data, self.request_url(step))
@@ -338,8 +339,9 @@ def execute_workflow(session: FormplayerSession, workflow):
         try:
             for step in workflow.steps:
                 execute_step(session, step)
-        except StopExecution:
-            return
+        except ExpectationFailed:
+            return False
+    return True
 
 
 def execute_step(session, step):
