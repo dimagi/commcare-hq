@@ -681,7 +681,6 @@ hqDefine('geospatial/js/models', [
             }
             self.clearActivePolygon();
 
-            removeActivePolygonLayer();
             createActivePolygonLayer(polygonObj);
 
             self.activeSavedPolygon = polygonObj;
