@@ -194,3 +194,7 @@ class DangerousXmlException(Exception):
 
 class AppMisconfigurationError(AppManagerException):
     """Errors in app configuration that are the user's responsibility"""
+
+
+class MobileUCRTooLargeException(Exception):
+    pass
