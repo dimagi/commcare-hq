@@ -18,7 +18,7 @@ hqDefine("users/js/custom_data_fields", [
         return {
             value: ko.observable(options.value),
             previousValue: ko.observable(options.value),    // save user-entered value
-            disable: ko.observable(!!false),
+            disable: ko.observable(false),
         };
     };
 
@@ -46,7 +46,6 @@ hqDefine("users/js/custom_data_fields", [
         _.each(self.slugs, function (slug) {
             self[slug] = fieldModel({
                 value: options.user_data[slug] || originalProfileFields[slug],
-                disable: !!originalProfileFields[slug],
             });
         });
 
