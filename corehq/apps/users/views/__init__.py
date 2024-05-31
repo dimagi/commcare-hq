@@ -17,7 +17,6 @@ from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.toggles import TABLEAU_USER_SYNCING
-from corehq.apps.users.decorators import get_permission_name
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -438,21 +437,12 @@ class EditWebUserView(BaseEditUserView):
     @property
     def page_context(self):
         current_profile_id = self.editable_user.get_user_data(self.domain).profile_id
-
-        can_edit_current_profile = True
-        if current_profile_id:
-            can_edit_current_profile = self.request.couch_user.has_permission(
-                self.domain,
-                get_permission_name(HqPermissions.access_profile),
-                data=str(current_profile_id)
+        profiles, can_edit_current_profile = (
+            self.form_user_update.custom_data.field_view.get_displayable_profiles_and_edit_permission(
+                current_profile_id, self.domain, self.request.couch_user
             )
-
-        if can_edit_current_profile:
-            cde = self.form_user_update.custom_data
-            profiles = cde.field_view.get_user_accessible_profiles(self.domain, self.request.couch_user)
-            serialized_profiles = [p.to_json() for p in profiles]
-        else:
-            serialized_profiles = [CustomDataFieldsProfile.objects.get(id=current_profile_id).to_json()]
+        )
+        serialized_profiles = [p.to_json() for p in profiles]
 
         ctx = {
             'form_uneditable': BaseUserInfoForm(),

@@ -2,6 +2,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
 from corehq.apps.users.decorators import require_can_edit_commcare_users, get_permission_name
 from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.tasks import remove_unused_custom_fields_from_users_task
@@ -36,3 +37,20 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
         accessible_profile_ids = permission.edit_user_profile_list
         accessible_profiles = {p for p in all_profiles if str(p.id) in accessible_profile_ids}
         return accessible_profiles
+
+    @classmethod
+    def get_displayable_profiles_and_edit_permission(cls, current_profile_id, domain, couch_user):
+        can_edit_current_profile = True
+
+        if current_profile_id:
+            can_edit_current_profile = couch_user.has_permission(
+                domain,
+                get_permission_name(HqPermissions.access_profile),
+                data=str(current_profile_id)
+            )
+
+        if can_edit_current_profile:
+            profiles = cls.get_user_accessible_profiles(domain, couch_user)
+        else:
+            profiles = {CustomDataFieldsProfile.objects.get(id=current_profile_id)}
+        return profiles, can_edit_current_profile

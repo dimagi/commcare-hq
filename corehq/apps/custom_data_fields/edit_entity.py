@@ -14,8 +14,6 @@ from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
 from memoized import memoized
 
 from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
-from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import HqPermissions
 from corehq import privileges
 
 from .models import (
@@ -143,20 +141,13 @@ class CustomDataEditor(object):
 
         from corehq.apps.users.views.mobile import UserFieldsView
         if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES) and self.field_view is UserFieldsView:
-            can_edit_current_profile = True
+            current_profile_id = None
             if self.existing_custom_data:
                 current_profile_id = self.existing_custom_data.get(PROFILE_SLUG, None)
-                if current_profile_id:
-                    can_edit_current_profile = self.request_user.has_permission(
-                        self.domain,
-                        get_permission_name(HqPermissions.access_profile),
-                        data=str(current_profile_id)
-                    )
 
-            if can_edit_current_profile:
-                profiles = self.field_view.get_user_accessible_profiles(self.domain, self.request_user)
-            else:
-                profiles = [CustomDataFieldsProfile.objects.get(id=current_profile_id)]
+            profiles, can_edit_current_profile = self.field_view.get_displayable_profiles_and_edit_permission(
+                current_profile_id, self.domain, self.request_user
+            )
 
             if profiles:
                 attrs = {
