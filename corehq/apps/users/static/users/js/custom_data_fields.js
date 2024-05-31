@@ -1,6 +1,8 @@
 /**
  *  This file defines a model for editing custom data fields while creating or editing a mobile user.
  */
+'use strict';
+
 hqDefine("users/js/custom_data_fields", [
     'knockout',
     'underscore',

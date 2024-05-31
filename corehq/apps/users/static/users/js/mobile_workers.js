@@ -15,6 +15,8 @@
  *    as well as a minimum length requirment (the length is configurable).
  *  - If any validation is being used, we automatically generate a suggested password that passes validation.
  */
+'use strict';
+
 hqDefine("users/js/mobile_workers",[
     'jquery',
     'knockout',

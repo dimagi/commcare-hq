@@ -1,3 +1,5 @@
+'use strict';
+
 hqDefine('users/js/edit_commcare_user', [
     'jquery',
     'knockout',
