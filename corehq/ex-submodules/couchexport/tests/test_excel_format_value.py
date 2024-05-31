@@ -143,3 +143,10 @@ def test_text():
 
 def test_bad_date_string():
     yield check, '112020-02-2609', '112020-02-2609', numbers.FORMAT_TEXT, str
+
+
+def test_sanitize_leading_chars():
+    yield check, "=83+112", "'=83+112", numbers.FORMAT_TEXT, str
+    yield check, "@83+112", "'@83+112", numbers.FORMAT_TEXT, str
+    yield check, "+83+112", "'+83+112", numbers.FORMAT_TEXT, str
+    yield check, "-83+112", "'-83+112", numbers.FORMAT_TEXT, str
