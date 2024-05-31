@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 from testil import eq
 
-from corehq.apps.app_execution.api import ScreenType
+from corehq.apps.app_execution.api import FormplayerSession, ScreenType
 from corehq.apps.app_execution.data_model.expectations import XpathExpectation, _get_result
 
 RESULT_XML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><result>{}</result>"
@@ -19,7 +19,13 @@ def test_expect_xpath_false():
 
 
 def _test_expect_xpath(result):
-    session = Mock(current_screen=ScreenType.MENU, app_build_id="123", data={"selections": ["0"]})
+    session = Mock(
+        current_screen=ScreenType.FORM,
+        app_build_id="123",
+        data={"selections": ["0"]},
+        client=Mock(),
+        spec=FormplayerSession,
+    )
     session.get_base_data.return_value = {}
     session.client.make_request.return_value = {"output": RESULT_XML.format(result)}
     expectation = XpathExpectation(xpath="1 = 2")

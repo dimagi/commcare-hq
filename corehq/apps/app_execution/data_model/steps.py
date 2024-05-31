@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from attr import define
 from attrs import asdict
@@ -281,7 +281,7 @@ class SubmitFormStep(Step):
 class FormStep(Step):
     type: ClassVar[str] = "form"
     is_form_step: ClassVar[bool] = True
-    children: list[AnswerQuestionStep | SubmitFormStep]
+    children: list[Any]
 
     def to_json(self):
         return {
@@ -294,6 +294,7 @@ class FormStep(Step):
 
     @classmethod
     def from_json(cls, data):
+        from .base import steps_from_json
         return cls(children=steps_from_json(data["children"]))
 
 

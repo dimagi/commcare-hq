@@ -19,13 +19,17 @@ class AppWorkflow:
 
     @classmethod
     def __jsonattrs_from_json__(cls, data):
-        steps = []
-        for raw_step in data["steps"]:
-            if raw_step["type"].startswith("expect:"):
-                steps.append(expectations.expectation_from_json(raw_step))
-            else:
-                steps.extend(step_models.steps_from_json([raw_step]))
-        return cls(steps=steps)
+        return cls(steps=steps_from_json(data["steps"]))
 
     def __str__(self):
         return " -> ".join(str(step) for step in self.steps)
+
+
+def steps_from_json(json_steps):
+    steps = []
+    for raw_step in json_steps:
+        if raw_step["type"].startswith("expect:"):
+            steps.append(expectations.expectation_from_json(raw_step))
+        else:
+            steps.extend(step_models.steps_from_json([raw_step]))
+    return steps

@@ -1,3 +1,5 @@
+import copy
+import logging
 import re
 from typing import ClassVar
 
@@ -7,22 +9,29 @@ from corehq.apps.app_execution.exceptions import AppExecutionError
 from submodules.xml2json import xml2json
 from jsonpath_ng.ext import parse as jsonpath_parse
 
+log = logging.getLogger(__name__)
+
 
 @define
 class Expectation:
     type: ClassVar[str]
 
+    def get_children(self):
+        """Compatibility with Step.get_children()"""
+        return []
+
     def evaluate(self, session):
         try:
             return self._evaluate(session)
         except Exception as e:
+            log.exception(f"Error evaluating expectation {self}")
             raise AppExecutionError(f"Error evaluating expectation {self}") from e
 
     def _evaluate(self, session):
         raise NotImplementedError()
 
     def to_json(self):
-        return {"type": f"expect:{self.type}", **asdict(self)}
+        return {"type": f"{self.type}", **asdict(self)}
 
     @classmethod
     def from_json(cls, data):
@@ -37,6 +46,9 @@ class XpathExpectation(Expectation):
     def _evaluate(self, session):
         return evaluate_xpath(session, self.xpath) == "true"
 
+    def __str__(self):
+        return f"{self.type}({self.xpath})"
+
 
 @define
 class CasePresent(Expectation):
@@ -47,6 +59,9 @@ class CasePresent(Expectation):
         xpath = f"count(instance('casedb')/casedb/case[{self.xpath_filter}]) > 0"
         return evaluate_xpath(session, xpath) == "true"
 
+    def __str__(self):
+        return f"{self.type}({self.xpath_filter})"
+
 
 @define
 class CaseAbsent(Expectation):
@@ -56,6 +71,9 @@ class CaseAbsent(Expectation):
     def _evaluate(self, session):
         xpath = f"count(instance('casedb')/casedb/case[{self.xpath_filter}]) = 0"
         return evaluate_xpath(session, xpath) == "true"
+
+    def __str__(self):
+        return f"{self.type}({self.xpath_filter})"
 
 
 @define
@@ -79,6 +97,9 @@ class QuestionValue(Expectation):
 
         session.log(f"Question {self.question_path} not found")
         return False
+
+    def __str__(self):
+        return f"{self.type}({self.question_path} = {self.value})"
 
 
 def get_question_value_from_tree(question_id, tree):
@@ -147,7 +168,7 @@ def _get_data(session, xpath):
         "debugOutput": "basic"
     }
     if session.current_screen == ScreenType.FORM:
-        data["session_id"] = session["session_id"]
+        data["session_id"] = session.data["session_id"]
     return data
 
 
@@ -180,6 +201,7 @@ TYPE_MAP = {step.type: step for step in Expectation.__subclasses__()}
 
 
 def expectation_from_json(raw_expectation):
+    raw_expectation = copy.deepcopy(raw_expectation)
     type_ = raw_expectation.pop("type").replace("expect:", "")
     if type_ not in TYPE_MAP:
         raise ValueError(f"Unknown expectation type {type_}")
