@@ -64,9 +64,11 @@ class CaseDisbursementAlgorithm(BaseDomainView):
         solver_class = config.disbursement_solver
         result = solver_class(request_json).solve(config=config)
 
-        return json_response(
-            {'assignments': result['assigned'], 'unassigned': result['unassigned']}
-        )
+        return json_response({
+            'assignments': result['assigned'],
+            'unassigned': result['unassigned'],
+            'parameters': result['parameters'],
+        })
 
 
 class GeoPolygonView(BaseDomainView):

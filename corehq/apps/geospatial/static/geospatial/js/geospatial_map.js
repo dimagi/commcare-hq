@@ -74,6 +74,8 @@ hqDefine("geospatial/js/geospatial_map", [
         var self = {};
 
         self.isBusy = ko.observable(false);
+        self.showParams = ko.observable(false);
+        self.parameters = ko.observableArray([]);
 
         self.disbursementErrorMessage = ko.observable('');
         self.showUnassignedCasesError = ko.observable(false);
@@ -131,6 +133,28 @@ hqDefine("geospatial/js/geospatial_map", [
                 });
             });
 
+            self.setDisbursementParameters = function (parameters) {
+                var parametersList = [
+                    {name: gettext("Max cases per user"), value: parameters.max_cases_per_user},
+                    {name: gettext("Min cases per user"), value: parameters.min_cases_per_user}
+                ];
+
+                if (parameters.max_case_distance) {
+                    const maxCaseDistanceParamValue = `${parameters.max_case_distance} km`;
+                    parametersList.push({name: gettext("Max distance to case"), value: maxCaseDistanceParamValue});
+                }
+
+                if (parameters.max_case_travel_time) {
+                    const travelParamValue = `${parameters.max_case_travel_time} ${gettext("minutes")}`;
+                    parametersList.push(
+                        {name: gettext("Max travel time"), value: travelParamValue}
+                    );
+                }
+
+                self.parameters(parametersList);
+                self.showParams(true);
+            }
+
             let userData = users.map(function (c) {
                 return {
                     id: c.itemId,
@@ -146,6 +170,8 @@ hqDefine("geospatial/js/geospatial_map", [
                 data: JSON.stringify({'users': userData, "cases": caseData}),
                 contentType: "application/json; charset=utf-8",
                 success: function (ret) {
+                    self.setDisbursementParameters(ret["parameters"]);
+
                     if (ret['unassigned'].length) {
                         self.showUnassignedCasesError(true);
                     }
@@ -418,8 +444,10 @@ hqDefine("geospatial/js/geospatial_map", [
             showMapControls(false);
 
             disbursementRunner = new disbursementRunnerModel();
+
             $("#disbursement-spinner").koApplyBindings(disbursementRunner);
             $("#disbursement-error").koApplyBindings(disbursementRunner);
+            $("#disbursement-params").koApplyBindings(disbursementRunner);
 
             return;
         }
