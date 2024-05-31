@@ -163,6 +163,8 @@ class CustomDataEditor(object):
                     'data-placeholder': _('Select a profile'),
                     'data-allow-clear': 'true',
                 }
+                if not can_edit_current_profile:
+                    attrs['disabled'] = True
                 if not self.ko_model:
                     attrs.update({'class': 'hqwebapp-select2'})
                 fields[PROFILE_SLUG] = forms.IntegerField(
