@@ -141,7 +141,8 @@ class CustomDataEditor(object):
     def init_form(self, post_dict=None):
         fields = OrderedDict()
 
-        if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
+        from corehq.apps.users.views.mobile import UserFieldsView
+        if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES) and self.field_view is UserFieldsView:
             can_edit_current_profile = True
             if self.existing_custom_data:
                 current_profile_id = self.existing_custom_data.get(PROFILE_SLUG, None)
