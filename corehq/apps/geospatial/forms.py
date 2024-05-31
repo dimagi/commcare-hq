@@ -81,7 +81,7 @@ class GeospatialConfigForm(forms.ModelForm):
     )
     max_case_distance = forms.IntegerField(
         label=_("Max distance (km) to case"),
-        help_text=_("The maximum distance (in kilometer) from the user to the case. Leave blank to skip."),
+        help_text=_("The maximum distance (in kilometers) from the user to the case. Leave blank to skip."),
         required=False,
         min_value=1,
     )
