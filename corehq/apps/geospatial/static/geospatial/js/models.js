@@ -635,6 +635,12 @@ hqDefine('geospatial/js/models', [
             }
         };
 
+        self.clearSelectedPolygonFilter = function clearSelectedPolygonFilter() {
+            self.selectedSavedPolygonId('');
+            self.clearActivePolygon();
+            updateSelectedSavedPolygonParam();
+        };
+
         self.selectedSavedPolygonId.subscribe(function (selectedPolygonID) {
             self.oldSelectedSavedPolygonId(selectedPolygonID);
         }, null, "beforeChange");
@@ -675,7 +681,6 @@ hqDefine('geospatial/js/models', [
             }
             self.clearActivePolygon();
 
-            removeActivePolygonLayer();
             createActivePolygonLayer(polygonObj);
 
             self.activeSavedPolygon = polygonObj;
