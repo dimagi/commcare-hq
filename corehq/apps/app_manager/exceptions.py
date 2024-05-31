@@ -1,5 +1,3 @@
-import couchdbkit
-
 from corehq.apps.app_manager.const import APP_V2
 
 
@@ -79,7 +77,8 @@ class XFormValidationError(XFormException):
             return msg
         # Don't display the first two lines which say "Parsing form..." and 'Title: "{form_name}"'
         #
-        # ... and if possible split the third line that looks like e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
+        # ... and if possible split the third line that looks like
+        # e.g. "org.javarosa.xform.parse.XFormParseException: Select question has no choices"
         # and just return the undecorated string
         #
         # ... unless the first line says
