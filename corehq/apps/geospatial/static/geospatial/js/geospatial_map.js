@@ -455,7 +455,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
             $("#disbursement-spinner").koApplyBindings(disbursementRunner);
             $("#disbursement-error").koApplyBindings(disbursementRunner);
-            $("#disbursement-params").koApplyBindings(disbursementRunner)
+            $("#disbursement-params").koApplyBindings(disbursementRunner);
 
             return;
         }
