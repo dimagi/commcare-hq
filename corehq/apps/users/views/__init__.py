@@ -447,6 +447,7 @@ class EditWebUserView(BaseEditUserView):
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
+            'can_edit_original_profile': can_edit_original_profile,
             'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
             'custom_fields_profiles': sorted(serialized_profiles, key=lambda x: x['name'].lower()),
             'custom_fields_profile_slug': PROFILE_SLUG,

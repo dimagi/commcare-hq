@@ -209,6 +209,7 @@ class EditCommCareUserView(BaseEditUserView):
         serialized_profiles = [p.to_json() for p in profiles]
 
         context.update({
+            'can_edit_original_profile': can_edit_original_profile,
             'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
             'custom_fields_profiles': sorted(serialized_profiles, key=lambda x: x['name'].lower()),
             'custom_fields_profile_slug': PROFILE_SLUG,
@@ -737,6 +738,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
+            'can_edit_original_profile': True,
             'custom_fields_form': self.custom_data.form,
             'custom_fields_slugs': [f.slug for f in self.custom_data.fields],
             'custom_fields_profiles': serialized_profiles,
