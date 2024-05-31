@@ -101,7 +101,7 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
         """
         name = row_obj.raw_username if hasattr(row_obj, 'raw_username') else row_obj.name
         if self._has_form_view_permission():
-            row_link = self.get_raw_user_link(row_obj)
+            row_link = self.get_raw_row_link(row_obj)
             return self.table_cell(name, row_link)
         return self.table_cell(name)
 
