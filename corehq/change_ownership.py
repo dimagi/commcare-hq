@@ -21,9 +21,10 @@ from django.db.models import Q
 current_time = datetime.now().time()
 db_file_path = os.path.expanduser('~/script_items_to_process.db')
 
+
 class Updater(object):
-    chunk_size = 100 # Could potentially increase this
-    batch_size = 20000 # Maximum number of cases to process in a single script run
+    chunk_size = 100  # Could potentially increase this
+    batch_size = 20000  # Maximum number of cases to process in a single script run
     domain = 'alafiacomm'
     stat_counts = {
         'success': 0,
@@ -332,4 +333,8 @@ class CaseUpdater(Updater):
 
         return cases_to_save, reverse_ids
 
-
+# run this by using the following steps
+# case_updater = CaseUpdater('test')
+# case_updater.db_manager.setup_db()
+# case_updater.store_all_case_ids()
+# case_updater.start()
