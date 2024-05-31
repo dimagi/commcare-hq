@@ -28,6 +28,7 @@ def _get_workflow():
         expectations.XpathExpectation(xpath="instance('commcaresession')/session/data/case/@case_id = '123'"),
         expectations.CasePresent(xpath_filter="@case_id = '123'"),
         expectations.CaseAbsent(xpath_filter="@case_id = '345'"),
+        expectations.QuestionValue(question_path="/data/question1", value="123"),
     ])
 
 
@@ -37,5 +38,6 @@ def _get_workflow_json():
             {"type": "expect:xpath", "xpath": "instance('commcaresession')/session/data/case/@case_id = '123'"},
             {"type": "expect:case_present", "xpath_filter": "@case_id = '123'"},
             {"type": "expect:case_absent", "xpath_filter": "@case_id = '345'"},
+            {"type": "expect:question_value", "question_path": "/data/question1", "value": "123"},
         ]
     }

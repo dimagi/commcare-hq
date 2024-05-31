@@ -1,9 +1,11 @@
+import re
 from typing import ClassVar
 
 from attr import asdict, define
 
 from corehq.apps.app_execution.exceptions import AppExecutionError
 from submodules.xml2json import xml2json
+from jsonpath_ng.ext import parse as jsonpath_parse
 
 
 @define
@@ -54,6 +56,77 @@ class CaseAbsent(Expectation):
     def _evaluate(self, session):
         xpath = f"count(instance('casedb')/casedb/case[{self.xpath_filter}]) = 0"
         return evaluate_xpath(session, xpath) == "true"
+
+
+@define
+class QuestionValue(Expectation):
+    type: ClassVar[str] = "question_value"
+    question_path: str
+    value: str
+
+    def _evaluate(self, session):
+        from corehq.apps.app_execution.api import ScreenType
+        if not session.current_screen == ScreenType.FORM:
+            session.log("QuestionValue expectation only works in form screens")
+            return False
+
+        result, found = get_question_value_from_tree(self.question_path, session.data.get("tree", []))
+        if not found:
+            result, found = get_question_value_from_xml(session, self.question_path)
+
+        if found:
+            return result == self.value
+
+        session.log(f"Question {self.question_path} not found")
+        return False
+
+
+def get_question_value_from_tree(question_id, tree):
+    for node in tree:
+        if node.get("binding") == question_id:
+            return node.get("answer"), True
+        if node.get("children"):
+            result, found = get_question_value_from_tree(question_id, node.get("children"))
+            if found:
+                return result, True
+    return None, False
+
+
+def get_question_value_from_xml(session, question_id):
+    xml = session.data.get("instanceXml", {}).get("output")
+    if not xml:
+        session.log("No form instance XML found")
+        return None, False
+
+    try:
+        name, json_response = xml2json.xml2json(xml.encode())
+    except xml2json.XMLSyntaxError:
+        session.log("Unable to parse form instance XML")
+        return None, False
+    return _get_question_value_from_json(session, question_id, {name: json_response})
+
+
+def _get_question_value_from_json(session, question_id, json_response):
+    expr = question_id.replace("/", ".")
+    expr = _convert_to_zero_index(expr)
+    try:
+        jsonpath_expr = jsonpath_parse(f"$.{expr}")
+    except Exception:
+        session.log(f"Unable to parse the question path {question_id}")
+        return None, False
+
+    values = [match.value for match in jsonpath_expr.find(json_response)]
+    if values:
+        return values[0], True
+
+    return None, False
+
+
+def _convert_to_zero_index(expr):
+    """Xpath is 1-indexed but jsonpath is 0-indexed"""
+    for index in re.findall(r"\[(\d+)]", expr):
+        expr = expr.replace(f"[{index}]", f"[{int(index) - 1}]")
+    return expr
 
 
 def evaluate_xpath(session, xpath):
