@@ -32,7 +32,7 @@ def run_app_workflows():
         finally:
             config.last_run = timezone.now()
             config.save()
-            log.output = session.log.getvalue()
+            log.output = session.get_logs()
             log.completed = timezone.now()
             log.save()
 

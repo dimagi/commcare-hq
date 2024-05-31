@@ -4,12 +4,13 @@ import dataclasses
 
 from attr import define
 
-from . import steps
+from . import steps as step_models  # noqa
+from . import expectations
 
 
 @define
 class AppWorkflow:
-    steps: list[steps.Step] = dataclasses.field(default_factory=list)
+    steps: list[step_models.Step | expectations.Expectation] = dataclasses.field(default_factory=list)
 
     def __jsonattrs_to_json__(self):
         return {
@@ -18,7 +19,13 @@ class AppWorkflow:
 
     @classmethod
     def __jsonattrs_from_json__(cls, data):
-        return cls(steps=steps.steps_from_json(data["steps"]))
+        steps = []
+        for raw_step in data["steps"]:
+            if raw_step["type"].startswith("expect:"):
+                steps.append(expectations.expectation_from_json(raw_step))
+            else:
+                steps.extend(step_models.steps_from_json([raw_step]))
+        return cls(steps=steps)
 
     def __str__(self):
         return " -> ".join(str(step) for step in self.steps)

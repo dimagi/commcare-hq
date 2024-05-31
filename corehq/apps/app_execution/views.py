@@ -137,7 +137,7 @@ def test_workflow(request, domain, pk):
             context["success"] = True
 
         context["result"] = True
-        context["output"] = session.log.getvalue()
+        context["output"] = session.get_logs()
         context["workflow_json"] = config.workflow_json
 
     return render(request, "app_execution/workflow_test.html", context)

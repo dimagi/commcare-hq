@@ -1,5 +1,6 @@
 from .base import AppWorkflow
 from . import steps
+from . import expectations  # noqa
 
 EXAMPLE_WORKFLOW = AppWorkflow(steps=[
     steps.CommandStep(value="My Module"),

@@ -317,6 +317,6 @@ def _append_selection(data, selection):
 STEP_MAP = {step.type: step for step in Step.__subclasses__()}
 
 
-def steps_from_json(data):
-    data = copy.deepcopy(data)
-    return [STEP_MAP[child.pop("type")].from_json(child) for child in data]
+def steps_from_json(raw_steps):
+    raw_steps = copy.deepcopy(raw_steps)
+    return [STEP_MAP[child.pop("type")].from_json(child) for child in raw_steps]
