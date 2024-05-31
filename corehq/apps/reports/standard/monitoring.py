@@ -96,10 +96,12 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
     exportable = True
 
     def get_user_link(self, user):
+        name = user.raw_username if hasattr(user, 'raw_username') else user.name
+
         if self._has_form_view_permission():
             user_link = self.get_raw_user_link(user)
-            name = user.raw_username if hasattr(user, 'raw_username') else user.name
             return self.table_cell(name, user_link)
+
         return self.table_cell(name)
 
     def _has_form_view_permission(self):
