@@ -95,11 +95,14 @@ WorkerActivityReportData = namedtuple('WorkerActivityReportData', [
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
 
-    def get_user_link(self, user):
+    def get_row_link(self, row_obj):
+        """
+        :row_obj: Can be a User or RowData object
+        """
+        name = row_obj.raw_username if hasattr(row_obj, 'raw_username') else row_obj.name
         if self._has_form_view_permission():
-            user_link = self.get_raw_user_link(user)
-            name = user.raw_username if hasattr(user, 'raw_username') else user.name
-            return self.table_cell(name, user_link)
+            row_link = self.get_raw_user_link(row_obj)
+            return self.table_cell(name, row_link)
         return self.table_cell(name)
 
     def _has_form_view_permission(self):
@@ -733,7 +736,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 return 0
 
         def header(self):
-            return self.report.get_user_link(self.row_data)['html']
+            return self.report.get_row_link(self.row_data)['html']
 
     class TotalRow(object):
 
@@ -855,7 +858,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                     ])
                 row_sum = sum(row)
                 row = (
-                    [self.get_user_link(simplified_user)]
+                    [self.get_row_link(simplified_user)]
                     + [self.table_cell(row_data, zerostyle=True) for row_data in row]
                     + [self.table_cell(row_sum, format_html("<strong>{}</strong>", row_sum))]
                 )
@@ -863,7 +866,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                           for i, col in enumerate(row[1:])]
                 yield row
             else:
-                yield [self.get_user_link(simplified_user), '--']
+                yield [self.get_row_link(simplified_user), '--']
         if self.all_relevant_forms:
             self.total_row = [_("All Users")] + totals
         yield self.total_row
@@ -1185,7 +1188,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
         for user in users:
             stats = data_map.get(user.user_id, {})
             rows.append([
-                self.get_user_link(user),
+                self.get_row_link(user),
                 _fmt_ts(stats.get('avg')),
                 _fmt_ts(stats.get('std_deviation')),
                 _fmt_ts(stats.get('min')),
@@ -1282,7 +1285,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 td = submission_time - completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
                 rows.append([
-                    self.get_user_link(
+                    self.get_row_link(
                         row['form']['meta']['username'],
                         user_map.get(row['form']['meta']['userID'])
                     ),
@@ -1305,10 +1308,10 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         ]
         return rows
 
-    def get_user_link(self, username, user):
+    def get_row_link(self, username, user):
         if not user:
             return username
-        return super(FormCompletionVsSubmissionTrendsReport, self).get_user_link(user)
+        return super(FormCompletionVsSubmissionTrendsReport, self).get_row_link(user)
 
     def _format_date(self, date):
         """
