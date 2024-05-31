@@ -711,6 +711,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             post_dict=self.request.POST if self.request.method == "POST" else None,
             required_only=True,
             ko_model="custom_fields",
+            request_user=self.couch_user,
         )
 
     @property
@@ -1029,6 +1030,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
             field_view=UserFieldsView,
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
+            request_user=self.request.couch_user,
         )
 
     @property

@@ -14,6 +14,8 @@ from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
 from memoized import memoized
 
 from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
+from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import HqPermissions
 from corehq import privileges
 
 from .models import (
@@ -62,13 +64,14 @@ class CustomDataEditor(object):
     """
 
     def __init__(self, field_view, domain, existing_custom_data=None, post_dict=None,
-                 prefix=None, required_only=False, ko_model=None):
+                 prefix=None, required_only=False, ko_model=None, request_user=None):
         self.field_view = field_view
         self.domain = domain
         self.existing_custom_data = existing_custom_data
         self.required_only = required_only
         self.ko_model = ko_model
         self.prefix = prefix if prefix is not None else CUSTOM_DATA_FIELD_PREFIX
+        self.request_user = request_user
         self.form = self.init_form(post_dict)
 
     @property
@@ -137,8 +140,23 @@ class CustomDataEditor(object):
 
     def init_form(self, post_dict=None):
         fields = OrderedDict()
+
         if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
-            profiles = self.model.get_profiles()
+            can_edit_current_profile = True
+            if self.existing_custom_data:
+                current_profile_id = self.existing_custom_data.get(PROFILE_SLUG, None)
+                if current_profile_id:
+                    can_edit_current_profile = self.request_user.has_permission(
+                        self.domain,
+                        get_permission_name(HqPermissions.access_profile),
+                        data=str(current_profile_id)
+                    )
+
+            if can_edit_current_profile:
+                profiles = self.field_view.get_user_accessible_profiles(self.domain, self.request_user)
+            else:
+                profiles = [CustomDataFieldsProfile.objects.get(id=current_profile_id)]
+
             if profiles:
                 attrs = {
                     'data-placeholder': _('Select a profile'),
