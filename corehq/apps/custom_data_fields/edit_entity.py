@@ -149,6 +149,13 @@ class CustomDataEditor(object):
                 original_profile_id, self.domain, self.request_user
             )
 
+            def validate_profile_slug(value):
+                from django.core.exceptions import ValidationError
+                if value not in [p.id for p in profiles]:
+                    raise ValidationError(
+                        _('Invalid profile selected. Please select a valid profile.'),
+                    )
+
             if profiles:
                 attrs = {
                     'data-placeholder': _('Select a profile'),
@@ -164,7 +171,8 @@ class CustomDataEditor(object):
                     widget=Select(choices=[
                         (p.id, p.name)
                         for p in profiles
-                    ], attrs=attrs)
+                    ], attrs=attrs),
+                    validators=[validate_profile_slug],
                 )
         for field in self.fields:
             fields[field.slug] = self._make_field(field)
