@@ -218,6 +218,11 @@ class CustomDataEditor(object):
 
         # Add profile fields so that form validation passes
         if fields:
+            # When a field is disabled via knockout, it is not included in POST so this
+            # adds it back
+            if (post_dict and (with_prefix(PROFILE_SLUG, self.prefix)) not in post_dict
+                    and not can_edit_original_profile):
+                fields.update({with_prefix(PROFILE_SLUG, self.prefix): original_profile_id})
             try:
                 profile_fields = CustomDataFieldsProfile.objects.get(
                     id=int(fields.get(with_prefix(PROFILE_SLUG, self.prefix))),
