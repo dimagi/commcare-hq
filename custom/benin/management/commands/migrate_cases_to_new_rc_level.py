@@ -10,7 +10,10 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase
-from corehq.sql_db.util import paginate_query_across_partitioned_databases
+from corehq.sql_db.util import (
+    paginate_query,
+    paginate_query_across_partitioned_databases,
+)
 from corehq.util.log import with_progress_bar
 from custom.benin.management.commands.base import DBManager, Updater
 
@@ -29,6 +32,10 @@ class Command(BaseCommand):
             help="Case type on the domain to migrate for"
         )
         parser.add_argument(
+            '--db_name',
+            help='Django DB alias to run on'
+        )
+        parser.add_argument(
             '--dry_run',
             action='store_true',
             default=False,
@@ -37,11 +44,18 @@ class Command(BaseCommand):
 
     def handle(self, domain, case_type, **options):
         dry_run = options['dry_run']
+        db_alias = options['db_name']
 
-        db_manager = DBManager(db_file_path, db_table_name)
-        case_updater = CaseUpdater(domain, case_type, db_manager)
+        table_name = f"{db_table_name}_{case_type}"
+        if db_alias:
+            table_name += f"_{db_alias}"
+        db_manager = DBManager(db_file_path, table_name)
+        case_updater = CaseUpdater(domain, case_type, db_manager, db_alias)
 
         print("Fetching all case ids.")
+        if db_alias:
+            print(f"Using only db: {db_alias}")
+
         case_ids = case_updater.store_all_case_ids()
         print(f"Stored {len(case_ids)}.")
 
@@ -52,11 +66,12 @@ class Command(BaseCommand):
 class CaseUpdater(Updater):
     device_id = 'system'
 
-    def __init__(self, domain, case_type, db_manager):
+    def __init__(self, domain, case_type, db_manager, db_alias):
         """
         case_type: Should be one of [menage, membre, seance_educative, fiche_pointage]
         """
         self.case_type = case_type
+        self.db_alias = db_alias
         super(CaseUpdater, self).__init__(domain, db_manager)
 
     @property
@@ -65,9 +80,14 @@ class CaseUpdater(Updater):
 
     def _fetch_case_ids(self):
         query = Q(domain=self.domain) & Q(type=self.case_type)
-        for row in paginate_query_across_partitioned_databases(CommCareCase, query, values=['case_id'],
-                                                               load_source='all_case_ids'):
-            yield row[0]
+        if self.db_alias:
+            for row in paginate_query(self.db_alias, CommCareCase, query, values=['case_id'],
+                                      load_source='all_case_ids'):
+                yield row[0]
+        else:
+            for row in paginate_query_across_partitioned_databases(CommCareCase, query, values=['case_id'],
+                                                                   load_source='all_case_ids'):
+                yield row[0]
 
     def store_all_case_ids(self):
         """
