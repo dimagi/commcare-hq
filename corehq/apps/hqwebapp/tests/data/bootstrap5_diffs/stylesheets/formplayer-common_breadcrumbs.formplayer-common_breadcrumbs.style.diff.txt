@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -2,30 +2,34 @@
+@@ -2,30 +2,35 @@
      position: sticky;
      position: -webkit-sticky;
      top: 0;
@@ -31,6 +31,7 @@
 +    color: white;
 +
      &:before {
++      padding: 0 6px 0 0;
        content: '\f054';
        font-family: 'FontAwesome';
      }
