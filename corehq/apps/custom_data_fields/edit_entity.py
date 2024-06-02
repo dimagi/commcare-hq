@@ -140,7 +140,11 @@ class CustomDataEditor(object):
         fields = OrderedDict()
 
         from corehq.apps.users.views.mobile import UserFieldsView
-        if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES) and self.field_view is UserFieldsView:
+        has_profile_privilege_and_is_user_fields_view = (
+            domain_has_privilege(self.domain, privileges.APP_USER_PROFILES)
+            and self.field_view is UserFieldsView
+        )
+        if has_profile_privilege_and_is_user_fields_view:
             original_profile_id = None
             if self.existing_custom_data:
                 original_profile_id = self.existing_custom_data.get(PROFILE_SLUG, None)
@@ -225,7 +229,8 @@ class CustomDataEditor(object):
             fields = None
 
         # Add profile fields so that form validation passes
-        if fields:
+        if fields and has_profile_privilege_and_is_user_fields_view:
+
             # When a field is disabled via knockout, it is not included in POST so this
             # adds it back
             if (post_dict and (with_prefix(PROFILE_SLUG, self.prefix)) not in post_dict
