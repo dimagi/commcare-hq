@@ -127,6 +127,7 @@ class UserUpdater(Updater):
         # TODO: Implement code to reverse actions if needed
 
         print("---MOVING MOBILE WORKER LOCATIONS---")
+        # This does not seem right? We should be fetching all ids here?
         user_ids = self.db_manager.get_ids(self.batch_size)
         user_count = len(user_ids)
         chunk_count = math.ceil(user_count / self.batch_size)
