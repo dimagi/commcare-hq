@@ -38,14 +38,14 @@ class DBManager(object):
 
     def setup_db(self):
         cur = self._get_db_cur()
-        cur.execute(f"CREATE TABLE {self.table_name} (id, revert_id, status, message)")
+        cur.execute(f"CREATE TABLE {self.table_name} (id, revert_id, updated_id, status, message)")
         cur.connection.commit()
         cur.close()
 
     def create_row(self, id):
         # TODO: Catch status that's not pending?
         cur = self._get_db_cur()
-        cur.execute(f"INSERT INTO {self.table_name} VALUES (?, ?, ?, ?)", (id, '', self.STATUS_PENDING, ''))
+        cur.execute(f"INSERT INTO {self.table_name} VALUES (?, ?, ?, ?, ?)", (id, '', '', self.STATUS_PENDING, ''))
         cur.connection.commit()
         cur.close()
 

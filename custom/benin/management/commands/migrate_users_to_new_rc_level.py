@@ -104,7 +104,8 @@ class UserUpdater(Updater):
                         user_id=user.user_id,
                         status=self.db_manager.STATUS_SUCCESS,
                         message='',
-                        revert_id=reverse_ids[user.user_id]
+                        revert_id=reverse_ids[user.user_id],
+                        updated_id=user.location_id
                     )
                 else:
                     self._save_row(
@@ -179,13 +180,15 @@ class UserUpdater(Updater):
 
         return users_to_save, reverse_ids
 
-    def _save_row(self, user_id, status, message, revert_id=None):
+    def _save_row(self, user_id, status, message, revert_id=None, updated_id=None):
         value_dict = {
             'status': status,
             'message': message
         }
         if revert_id:
             value_dict['revert_id'] = revert_id
+        if updated_id:
+            value_dict['updated_id'] = updated_id
 
         self.db_manager.update_row(
             user_id,

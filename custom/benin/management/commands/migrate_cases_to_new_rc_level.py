@@ -141,6 +141,7 @@ class CaseUpdater(Updater):
                     status=self.db_manager.STATUS_SUCCESS,
                     message='',
                     revert_id=reverse_ids[case_block.case_id],
+                    updated_id=case_block.owner_id
                 )
                 self.stat_counts['success'] += 1
 
@@ -187,13 +188,15 @@ class CaseUpdater(Updater):
 
         return cases_to_save, reverse_ids
 
-    def _save_row(self, case_id, status, message, revert_id=None):
+    def _save_row(self, case_id, status, message, revert_id=None, updated_id=None):
         value_dict = {
             'status': status,
             'message': message
         }
         if revert_id:
             value_dict['revert_id'] = revert_id
+        if updated_id:
+            value_dict['updated_id'] = updated_id
 
         self.db_manager.update_row(
             case_id,
