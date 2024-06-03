@@ -379,9 +379,6 @@ hqDefine('cloudcare/js/utils', [
         }
         let tempus = hqTempusDominus.createDatePicker($el.get(0), options);
 
-        $el.on("focusout", function () {
-            tempus.hide();
-        });
         $el.attr("placeholder", dateFormat);
         $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
     };
@@ -402,16 +399,12 @@ hqDefine('cloudcare/js/utils', [
             localization: {
                 format: timeFormat,
             },
-            useCurrent: false,
+            useCurrent: true,
         };
         if (date.isValid()) {
             options.viewDate = new hqTempusDominus.tempusDominus.DateTime(date.format(timeFormat));
         }
         let tempus = hqTempusDominus.createTimePicker($el.get(0), options);
-
-        $el.on("focusout", function () {
-            tempus.hide();
-        });
     };
 
     var smallScreenIsEnabled = function () {
