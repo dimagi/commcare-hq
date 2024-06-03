@@ -6,7 +6,7 @@ from django.forms.widgets import Select
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django import forms
-from corehq.apps.geospatial.models import GeoConfig
+from corehq.apps.geospatial.models import GeoConfig, validate_travel_mode
 from corehq import toggles
 
 
@@ -96,6 +96,7 @@ class GeospatialConfigForm(forms.ModelForm):
         help_text=_("The travel mode of the users. "
                     "Consider this when specifying the max travel time to each case."),
         widget=Select(choices=GeoConfig.VALID_TRAVEL_MODES),
+        validators=[validate_travel_mode]
     )
     selected_disbursement_algorithm = forms.ChoiceField(
         label=_("Disbursement algorithm"),
