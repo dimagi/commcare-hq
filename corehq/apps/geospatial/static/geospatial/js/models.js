@@ -64,7 +64,17 @@ hqDefine('geospatial/js/models', [
             return gettext("Case");
         };
 
+        self.updateCheckbox = function () {
+            const checkbox = $(`#${self.selectCssId}`);
+            if (!checkbox) {
+                return;
+            }
+            checkbox.prop('checked', self.isSelected());
+        };
+
         self.isSelected.subscribe(function () {
+            // Popup might be open when value changes, so make sure checkbox shows correct value
+            self.updateCheckbox();
             var color = self.isSelected() ? self.markerColors.selected : self.markerColors.default;
             changeMarkerColor(self, color);
         });
