@@ -3,6 +3,7 @@ from collections import OrderedDict, defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
 from functools import partial
+import gevent
 from itertools import groupby
 
 from django.core.exceptions import ValidationError
@@ -1771,6 +1772,7 @@ class ExportDataSchema(Document):
         only_process_current_builds=False,
         task=None,
         for_new_export_instance=False,
+        is_identifier_case_type=False,
     ):
         """
         Builds a schema from Application builds for a given identifier
@@ -1787,6 +1789,7 @@ class ExportDataSchema(Document):
             processed.
         :param task: A celery task to update the progress of the build
         :param for_new_export_instance: Flag to be set if generating schema for a new export instance
+        :param is_identifier_case_type: boolean, if True, some optimizations are applied specific to case type
         :returns: Returns a ExportDataSchema instance
         """
 
@@ -1809,7 +1812,8 @@ class ExportDataSchema(Document):
             )
         app_build_ids.extend(app_ids_for_domain)
         current_schema = cls._process_apps_for_export(domain, current_schema, identifier, app_build_ids, task,
-                                                      for_new_export_instance=for_new_export_instance)
+                                                      for_new_export_instance=for_new_export_instance,
+                                                      is_identifier_case_type=is_identifier_case_type)
 
         inferred_schema = cls._get_inferred_schema(domain, app_id, identifier)
         if inferred_schema:
@@ -1955,43 +1959,64 @@ class ExportDataSchema(Document):
 
     @classmethod
     def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
-                                 for_new_export_instance=False):
+                                 for_new_export_instance=False, is_identifier_case_type=False):
         apps_processed = 0
+        app_schemas = []
+        app_updates = []
+        greenlets = []
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
-            doc_type = app_doc.get('doc_type', '')
-            if doc_type not in ('Application', 'LinkedApplication', 'Application-Deleted'):
-                continue
-            if (not app_doc.get('has_submissions', False)
-                    and app_doc.get('copy_of')):
-                continue
+            greenlets.append(gevent.spawn(cls._get_app_schemas_and_updates, app_doc, identifier,
+                                          for_new_export_instance, is_identifier_case_type))
 
-            try:
-                app = Application.wrap(app_doc)
-            except BadValueError as err:
-                logging.exception(
-                    f"Bad definition for Application {app_doc['_id']}",
-                    exc_info=err,
-                )
-                continue
-
-            try:
-                schema = cls._process_app_build(
-                    schema,
-                    app,
-                    identifier,
-                    for_new_export_instance=for_new_export_instance,
-                )
-            except Exception as e:
-                logging.exception('Failed to process app {}. {}'.format(app._id, e))
-                continue
-
-            if app.copy_of:
-                schema.record_update(app.copy_of, app.version)
-
+        for result in gevent.joinall(greenlets):
+            result = result.get()
+            app_schemas.extend(result[0])
+            app_updates.extend(result[1])
             apps_processed += 1
             set_task_progress(task, apps_processed, len(app_build_ids))
 
+        app_schemas.insert(0, schema)
+        schema = cls._merge_schemas(*app_schemas)
+        for update in app_updates:
+            schema.record_update(*update)
         return schema
+
+    @classmethod
+    def _get_app_schemas_and_updates(cls, app_doc, identifier,
+                                     for_new_export_instance, is_identifier_case_type):
+        doc_type = app_doc.get('doc_type', '')
+        if doc_type not in ('Application', 'LinkedApplication', 'Application-Deleted'):
+            return [], []
+        if (not app_doc.get('has_submissions', False)
+                and app_doc.get('copy_of')):
+            return [], []
+
+        try:
+            app = Application.wrap(app_doc)
+        except BadValueError as err:
+            logging.exception(
+                f"Bad definition for Application {app_doc['_id']}",
+                exc_info=err,
+            )
+            return [], []
+
+        if is_identifier_case_type and not app.case_type_exists(identifier):
+            return [], []
+
+        try:
+            app_schemas = cls._get_list_of_schemas(
+                app,
+                identifier,
+                for_new_export_instance=for_new_export_instance
+            )
+        except Exception as e:
+            logging.exception('Failed to process app {}. {}'.format(app._id, e))
+            return [], []
+
+        app_updates = []
+        if app.copy_of:
+            app_updates = [(app.copy_of, app.version)]
+        return app_schemas, app_updates
 
 
 class FormExportDataSchema(ExportDataSchema):
@@ -2044,10 +2069,17 @@ class FormExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _process_app_build(cls, current_schema, app, form_xmlns, for_new_export_instance=False):
+        schemas = cls._get_list_of_schemas(app, form_xmlns, for_new_export_instance)
+        if not schemas:
+            return current_schema
+        schemas.insert(0, current_schema)
+        return cls._merge_schemas(*schemas)
+
+    @classmethod
+    def _get_list_of_schemas(cls, app, form_xmlns, for_new_export_instance=False):
         forms = app.get_forms_by_xmlns(form_xmlns, log_missing=False)
         if not forms:
-            return current_schema
-
+            return []
         xform = forms[0].wrapped_xform()  # This will be the same for any form in the list
         xform_schema = cls._generate_schema_from_xform(
             xform,
@@ -2056,11 +2088,10 @@ class FormExportDataSchema(ExportDataSchema):
             app.version,
         )
 
-        schemas = [current_schema, xform_schema]
+        schemas = [xform_schema]
         repeats = cls._get_repeat_paths(xform, app.langs)
         schemas.extend(cls._add_export_items_for_cases(xform_schema.group_schemas[0], forms, repeats))
-
-        return cls._merge_schemas(*schemas)
+        return schemas
 
     @classmethod
     def _add_export_items_for_cases(cls, root_group_schema, forms, repeats):
@@ -2315,14 +2346,15 @@ class FormExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
-                                 for_new_export_instance=False):
+                                 for_new_export_instance=False, is_identifier_case_type=False):
         return super(FormExportDataSchema, cls)._process_apps_for_export(
             domain,
             schema,
             identifier,
             app_build_ids,
             task,
-            for_new_export_instance=for_new_export_instance
+            for_new_export_instance=for_new_export_instance,
+            is_identifier_case_type=is_identifier_case_type,
         )
 
 
@@ -2362,8 +2394,13 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_latest_case_export_schema(domain, case_type)
 
     @classmethod
-    def _process_app_build(cls, current_schema, app, case_type, for_new_export_instance=False,
-                           is_bulk_case_export=False):
+    def _process_app_build(cls, current_schema, app, case_type, for_new_export_instance=False):
+        case_schemas = cls._get_list_of_schemas(app, case_type, for_new_export_instance)
+        case_schemas.append(current_schema)
+        return cls._merge_schemas(*case_schemas)
+
+    @classmethod
+    def _get_list_of_schemas(cls, app, case_type, for_new_export_instance=False):
         builder = ParentCasePropertyBuilder(
             app.domain,
             [app],
@@ -2397,9 +2434,7 @@ class CaseExportDataSchema(ExportDataSchema):
             app.origin_id,
             app.version,
         ))
-        case_schemas.append(current_schema)
-
-        return cls._merge_schemas(*case_schemas)
+        return case_schemas
 
     @classmethod
     def _reorder_case_properties_from_data_dictionary(cls, domain, case_type, case_properties):
@@ -2525,7 +2560,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
-                                 for_new_export_instance=False):
+                                 for_new_export_instance=False, is_identifier_case_type=False):
         if identifier == ALL_CASE_TYPE_EXPORT:
             return cls._process_apps_for_bulk_export(domain, schema, app_build_ids, task)
         else:
@@ -2535,7 +2570,8 @@ class CaseExportDataSchema(ExportDataSchema):
                 identifier,
                 app_build_ids,
                 task,
-                for_new_export_instance=for_new_export_instance
+                for_new_export_instance=for_new_export_instance,
+                is_identifier_case_type=is_identifier_case_type
             )
 
     @classmethod
@@ -2605,14 +2641,15 @@ class SMSExportDataSchema(ExportDataSchema):
         return SMSExportDataSchema(domain=domain, include_metadata=include_metadata)
 
     def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
-                                 for_new_export_instance=False):
+                                 for_new_export_instance=False, is_identifier_case_type=False):
         return super(SMSExportDataSchema, cls)._process_apps_for_export(
             domain,
             schema,
             identifier,
             app_build_ids,
             task,
-            for_new_export_instance=for_new_export_instance
+            for_new_export_instance=for_new_export_instance,
+            is_identifier_case_type=is_identifier_case_type
         )
 
 
