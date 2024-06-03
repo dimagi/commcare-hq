@@ -348,6 +348,9 @@ class HqPermissions(DocumentSchema):
     def access_web_app(self, app_id):
         return self.access_web_apps or app_id in self.web_apps_list
 
+    def access_profile(self, profile_id):
+        return self.edit_user_profile or profile_id in self.edit_user_profile_list
+
     def view_tableau_viz(self, viz_id):
         if not self.access_all_locations:
             return False
