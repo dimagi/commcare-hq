@@ -4,8 +4,8 @@
   <fieldset>
   <legend class="sr-only" data-bind="text: question.caption()"></legend>
     <div class="sel clear">
-      <div data-bind="foreach: choices, as: 'choice'">
-        <div class="form-check" data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }, class: $parent.colStyleIfHideLabel">
+      <div data-bind="foreach: choices, as: 'choice', css: {row: $data.colStyleIfHideLabel}">
+        <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti, 'form-check': !$parent.colStyleIfHideLabel}, class: $parent.colStyleIfHideLabel">
           <input data-bind="
                       checked: $parent.rawAnswer,
                       checkedValue: $data,
