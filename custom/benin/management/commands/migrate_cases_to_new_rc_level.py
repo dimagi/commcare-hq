@@ -117,9 +117,9 @@ class CaseUpdater(Updater):
         case_ids = self.db_manager.get_ids()
 
         case_count = len(case_ids)
-        chunk_count = math.ceil(case_count / self.batch_size)
+        chunk_count = math.ceil(case_count / self.chunk_size)
         print(f'Total Cases to Process: {case_count}')
-        print(f"Batch size: {self.batch_size}")
+        print(f"Batch size: {self.chunk_size}")
         print(f'Total Batches to Process: {chunk_count}')
 
         response = input("Do you want to proceed? (y/n)")

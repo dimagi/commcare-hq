@@ -4,7 +4,6 @@ import sqlite3
 
 class Updater(object):
     chunk_size = 100  # Could potentially increase this
-    batch_size = 20000  # Maximum number of cases to process in a single script run
     stat_counts = {
         'success': 0,
         'skipped': 0,

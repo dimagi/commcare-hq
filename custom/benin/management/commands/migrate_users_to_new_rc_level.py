@@ -45,7 +45,6 @@ class Command(BaseCommand):
 
 
 class UserUpdater(Updater):
-    batch_size = 100  # overwrite this because users are less
 
     def store_all_user_ids(self):
         """
@@ -72,10 +71,10 @@ class UserUpdater(Updater):
         user_ids = self.db_manager.get_ids()
 
         user_count = len(user_ids)
-        batch_count = math.ceil(user_count / self.batch_size)
+        chunks_count = math.ceil(user_count / self.chunk_size)
         print(f"Users to Process: {user_count}")
-        print(f"Batch size: {self.batch_size}")
-        print(f"Total batches to Process: {batch_count}")
+        print(f"Batch size: {self.chunk_size}")
+        print(f"Total batches to Process: {chunks_count}")
 
         response = input("Do you want to proceed? (y/n)")
         if not response == 'y':
