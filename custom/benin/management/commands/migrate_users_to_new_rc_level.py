@@ -78,6 +78,7 @@ class UserUpdater(Updater):
 
         response = input("Do you want to proceed? (y/n)")
         if not response == 'y':
+            print("Process aborted. Bye!")
             exit(0)
 
         users_docs_gen = iter_docs(CommCareUser.get_db(), user_ids)

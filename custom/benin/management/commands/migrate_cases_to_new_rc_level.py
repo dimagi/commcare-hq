@@ -120,6 +120,7 @@ class CaseUpdater(Updater):
 
         response = input("Do you want to proceed? (y/n)")
         if not response == 'y':
+            print("Process aborted. Bye!")
             exit(0)
 
         cases_docs_gen = CommCareCase.objects.iter_cases(case_ids, domain=self.domain)
