@@ -45,9 +45,6 @@ class Command(BaseCommand):
 
 
 class UserUpdater(Updater):
-    rc_num_prop_name = 'rc_number'
-    user_type_prop_name = 'usertype'
-
     batch_size = 100  # overwrite this because users are less
 
     def store_all_user_ids(self):
@@ -126,6 +123,8 @@ class UserUpdater(Updater):
     def _process_chunk(self, users):
         users_to_save = []
         reverse_ids = {}
+        rc_num_prop_name = 'rc_number'
+        user_type_prop_name = 'usertype'
 
         users = prime_user_data_caches(users, self.domain)
 
@@ -134,8 +133,8 @@ class UserUpdater(Updater):
 
             # First make sure that the user type is rc
             if (
-                self.user_type_prop_name not in user_data
-                or user_data[self.user_type_prop_name] != "rc"
+                user_type_prop_name not in user_data
+                or user_data[user_type_prop_name] != "rc"
             ):
                 self._save_row(
                     user_id=user.user_id,
@@ -145,7 +144,7 @@ class UserUpdater(Updater):
                 self.stat_counts['skipped'] += 1
                 continue
 
-            if user.location and user.location.name == user_data[self.rc_num_prop_name]:
+            if user.location and user.location.name == user_data[rc_num_prop_name]:
                 # Skip and don't update user if already at location
                 self._save_row(
                     user_id=user.user_id,
@@ -160,13 +159,13 @@ class UserUpdater(Updater):
                 loc = SQLLocation.objects.get(
                     domain=self.domain,
                     parent__location_id=user.location_id,
-                    name=user_data[self.rc_num_prop_name]
+                    name=user_data[rc_num_prop_name]
                 )
             except SQLLocation.DoesNotExist:
                 self._save_row(
                     user_id=user.user_id,
                     status=self.db_manager.STATUS_FAILURE,
-                    message=f'({user_data[self.rc_num_prop_name]}) does not exist '
+                    message=f'({user_data[rc_num_prop_name]}) does not exist '
                             f'as child of location with id ({user.location_id})'
                 )
                 self.stat_counts['failed'] += 1
