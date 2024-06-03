@@ -357,15 +357,22 @@ hqDefine('geospatial/js/models', [
             marker.addTo(self.mapInstance);
 
             const popupDiv = document.createElement("div");
+
+            const mapItemInstance = new MapItem(itemId, itemData, marker, colors);
+            let openFunc;
+            if (self.usesClusters) {
+                openFunc = () => highlightMarkerGroup(itemId);
+            } else {
+                openFunc = () => mapItemInstance.updateCheckbox();
+            }
             const popup = utils.createMapPopup(
                 coordinates,
                 popupDiv,
-                () => highlightMarkerGroup(itemId),
+                openFunc,
                 resetMarkersOpacity
             );
 
             marker.setPopup(popup);
-            const mapItemInstance = new MapItem(itemId, itemData, marker, colors);
             $(popupDiv).koApplyBindings(mapItemInstance);
 
             return mapItemInstance;
