@@ -702,7 +702,7 @@ class WebUserRow(BaseUserRow):
             'username': self.row.get('username'),
             'role': self.row.get('role'),
             'status': self.row.get('status'),
-            'location_codes': format_location_codes(self.row.get('location_code', [])),
+            'location_codes': format_location_codes(self.row.get('location_code')),
             'remove': spec_value_to_boolean_or_none(self.row, 'remove'),
             "data": self.row.get('data', {}),
             "uncategorized_data": self.row.get('uncategorized_data', {}),
