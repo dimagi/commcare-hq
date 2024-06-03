@@ -13,8 +13,8 @@ from corehq.apps.users.user_data import prime_user_data_caches
 from corehq.util.log import with_progress_bar
 from custom.benin.management.commands.base import DBManager, Updater
 
-db_file_path = os.path.expanduser('~/migrate_users_to_new_rc_level.db')
-db_table_name = "users"
+sqlite_db_file_path = os.path.expanduser('~/migrate_users_to_new_rc_level.db')
+sqlite_db_table_name = "users"
 
 
 class Command(BaseCommand):
@@ -33,7 +33,7 @@ class Command(BaseCommand):
     def handle(self, domain, **options):
         dry_run = options['dry_run']
 
-        db_manager = DBManager(db_file_path, db_table_name)
+        db_manager = DBManager(sqlite_db_file_path, sqlite_db_table_name)
         user_updater = UserUpdater(domain, db_manager)
 
         print("Fetching all user ids.")

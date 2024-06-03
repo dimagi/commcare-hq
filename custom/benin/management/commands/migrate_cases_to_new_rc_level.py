@@ -17,8 +17,8 @@ from corehq.sql_db.util import (
 from corehq.util.log import with_progress_bar
 from custom.benin.management.commands.base import DBManager, Updater
 
-db_file_path = os.path.expanduser('~/migrate_cases_to_new_rc_level.db')
-db_table_name = "cases"
+sqlite_db_file_path = os.path.expanduser('~/migrate_cases_to_new_rc_level.db')
+sqlite_db_table_name_prefix = "cases"
 
 
 class Command(BaseCommand):
@@ -46,10 +46,10 @@ class Command(BaseCommand):
         dry_run = options['dry_run']
         db_alias = options['db_name']
 
-        table_name = f"{db_table_name}_{case_type}"
+        table_name = f"{sqlite_db_table_name_prefix}_{case_type}"
         if db_alias:
             table_name += f"_{db_alias}"
-        db_manager = DBManager(db_file_path, table_name)
+        db_manager = DBManager(sqlite_db_file_path, table_name)
         case_updater = CaseUpdater(domain, case_type, db_manager, db_alias)
 
         print("Fetching all case ids.")
