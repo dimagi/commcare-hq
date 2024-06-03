@@ -119,7 +119,10 @@ from corehq.util.global_request import get_request_domain
 from corehq.util.html_utils import strip_tags
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
-from corehq.apps.data_dictionary.util import get_deprecated_fields
+from corehq.apps.data_dictionary.util import (
+    get_case_property_group_name_for_properties,
+    get_deprecated_fields,
+)
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.util import get_indicator_adapter
 
@@ -1496,6 +1499,7 @@ class ScalarItem(ExportItem):
     """
     A text, numeric, date, etc. question or case property
     """
+    case_property_group_name = StringProperty()
 
 
 class LabelItem(ExportItem):
@@ -2358,7 +2362,8 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_latest_case_export_schema(domain, case_type)
 
     @classmethod
-    def _process_app_build(cls, current_schema, app, case_type, for_new_export_instance=False):
+    def _process_app_build(cls, current_schema, app, case_type, for_new_export_instance=False,
+                           is_bulk_case_export=False):
         builder = ParentCasePropertyBuilder(
             app.domain,
             [app],
@@ -2374,10 +2379,12 @@ class CaseExportDataSchema(ExportDataSchema):
         parent_types = builder.get_case_relationships_for_case_type(case_type)
         case_schemas = []
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
+            app.domain,
             case_property_mapping,
             parent_types,
             app.origin_id,  # If not copy, must be current app
             app.version,
+            is_bulk_case_export=is_bulk_case_export,
         ))
         if any([relationship_tuple[1] in ['parent', 'host'] for relationship_tuple in parent_types]):
             case_schemas.append(cls._generate_schema_for_parent_case(
@@ -2427,7 +2434,8 @@ class CaseExportDataSchema(ExportDataSchema):
         return ordered_case_properties
 
     @classmethod
-    def _generate_schema_from_case_property_mapping(cls, case_property_mapping, parent_types, app_id, app_version):
+    def _generate_schema_from_case_property_mapping(cls, domain, case_property_mapping, parent_types, app_id,
+                                                    app_version, is_bulk_case_export=False):
         """
         Generates the schema for the main Case tab on the export page
         Includes system export properties for the case as well as properties for exporting parent case IDs
@@ -2442,12 +2450,17 @@ class CaseExportDataSchema(ExportDataSchema):
         )
 
         for case_type, case_properties in case_property_mapping.items():
+            if not is_bulk_case_export and domain_has_privilege(domain, privileges.DATA_DICTIONARY):
+                case_group_name_for_property = get_case_property_group_name_for_properties(domain, case_type)
+            else:
+                case_group_name_for_property = {}
 
             for prop in case_properties:
                 group_schema.items.append(ScalarItem(
                     path=[PathNode(name=prop)],
                     label=prop,
                     last_occurrences={app_id: app_version},
+                    case_property_group_name=case_group_name_for_property.get(prop, None)
                 ))
 
         for case_type, identifier in parent_types:
@@ -2546,6 +2559,7 @@ class CaseExportDataSchema(ExportDataSchema):
                         case_type_schema,
                         app,
                         case_type,
+                        is_bulk_case_export=True,
                     )
                 except Exception as e:
                     logging.exception('Failed to process app {}. {}'.format(app._id, e))
