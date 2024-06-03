@@ -1,5 +1,5 @@
-/* globals process */
-
+/* globals module, process, require */
+'use strict';
 module.exports = function (grunt) {
     var headless = require('mocha-headless-chrome'),
         _ = require('lodash'),
