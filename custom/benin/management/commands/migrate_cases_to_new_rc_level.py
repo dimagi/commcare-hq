@@ -74,10 +74,6 @@ class CaseUpdater(Updater):
         self.db_alias = db_alias
         super(CaseUpdater, self).__init__(domain, db_manager)
 
-    @property
-    def db_table_name(self):
-        return f'{self.db_table_name}_{self.case_type}'
-
     def _fetch_case_ids(self):
         query = Q(domain=self.domain) & Q(type=self.case_type)
         if self.db_alias:
