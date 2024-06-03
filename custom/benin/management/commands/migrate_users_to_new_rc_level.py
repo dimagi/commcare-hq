@@ -56,6 +56,7 @@ class UserUpdater(Updater):
             UserES()
             .domain(self.domain)
             .mobile_users()
+            .is_active()
         ).get_ids()
         for user_id in user_ids:
             self.db_manager.create_row(user_id)
