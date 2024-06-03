@@ -81,7 +81,7 @@ from corehq.form_processor.models import (
     UserRequestedRebuild,
     XFormInstance,
 )
-from corehq.motech.repeaters.models import SQLRepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views.repeat_record_display import (
     RepeatRecordDisplay,
 )
@@ -221,7 +221,7 @@ class CaseDataView(BaseProjectReportSectionView):
 
         repeat_records = [
             RepeatRecordDisplay(record, timezone, date_format=DATE_FORMAT)
-            for record in SQLRepeatRecord.objects.filter(domain=self.domain, payload_id=self.case_id)
+            for record in RepeatRecord.objects.filter(domain=self.domain, payload_id=self.case_id)
         ]
 
         can_edit_data = self.request.couch_user.can_edit_data
