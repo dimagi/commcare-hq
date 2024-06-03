@@ -300,7 +300,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
         events: {
             'change @ui.queryField': 'changeQueryField',
             'change @ui.searchForBlank': 'notifyParentOfFieldChange',
-            'dp.change @ui.queryField': 'changeDateQueryField',
+            'change.td @ui.date': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
