@@ -108,6 +108,9 @@ class GeoConfigViewTestClass(TestCase):
             'user_location_property_name': user_property or '',
             'min_cases_per_user': 1,
             'max_cases_per_user': 2,
+            'max_case_distance': 100,
+            'max_case_travel_time': 90,
+            'travel_mode': 'driving',
         }
         if extra_data:
             data |= extra_data
