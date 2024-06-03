@@ -345,6 +345,8 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
             ),
         }
 
+    create_item_form_class = "form row"
+
     def get_create_form(self, is_blank=False):
         if self.request.method == 'POST' and not is_blank:
             return DataValueMapCreateForm(self.object, self.request.POST)

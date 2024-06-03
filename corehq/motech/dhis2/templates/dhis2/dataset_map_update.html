@@ -16,10 +16,7 @@
 
 {% block pagination_footer %}
   </fieldset>
-  <div class="spacer"></div>
-
-  {% crispy form %}  {# todo B5: check crispy #}
-  <div class="spacer"></div>
+  {% crispy form %}
 {% endblock %}
 
 {% block pagination_templates %}
@@ -32,7 +29,7 @@
     <td>
         <button type="button"
                 data-bs-toggle="modal"
-                data-bind="attr: {'data-target': '#update-datavalue-map-' + id}"
+                data-bind="attr: {'data-bs-target': '#update-datavalue-map-' + id}"
                 class="btn btn-primary">
           {% trans 'Edit' %}
         </button>
@@ -41,16 +38,13 @@
              data-bind="attr: {'id': 'update-datavalue-map-' + id}">
           <div class="modal-dialog">
             <div class="modal-content">
-              <div class="modal-header">  {# todo B5: css:modal-header #}
-                  <button type="button"
-                          class="btn-close"  {# todo B5: css:close #}
-                          data-bs-dismiss="modal"
-                          aria-hidden="true">&times;</button>
-                  <h3>
+              <div class="modal-header">
+                  <h3 class="modal-title">
                     {% blocktrans trimmed %}
-                    Update DataValue Map <strong data-bind="text: column"></strong>:
+                      Update DataValue Map <strong data-bind="text: column"></strong>:
                     {% endblocktrans %}
                   </h3>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
               </div>
               <div class="modal-body">
                 <div data-bind="html: updateForm"></div>
@@ -61,7 +55,7 @@
 
         <button type="button"
                 data-bs-toggle="modal"
-                data-bind="attr: {'data-target': '#delete-datavalue-map-' + id}"
+                data-bind="attr: {'data-bs-target': '#delete-datavalue-map-' + id}"
                 class="btn btn-outline-danger">
             <i class="fa fa-remove"></i> {% trans 'Delete' %}
         </button>
@@ -70,16 +64,13 @@
              data-bind="attr: {'id': 'delete-datavalue-map-' + id}">
           <div class="modal-dialog">
             <div class="modal-content">
-              <div class="modal-header">  {# todo B5: css:modal-header #}
-                <button type="button"
-                        class="btn-close"  {# todo B5: css:close #}
-                        data-bs-dismiss="modal"
-                        aria-hidden="true">&times;</button>
-                <h3>
+              <div class="modal-header">
+                <h3 class="modal-title">
                   {% blocktrans trimmed %}
                   Delete DataValue Map <strong data-bind="text: column"></strong>?
                   {% endblocktrans %}
                 </h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans_html_attr "Close" %}"></button>
               </div>
               <div class="modal-body">
                 <p class="lead">
@@ -96,8 +87,7 @@
                   {% trans 'Cancel' %}
                 </button>
                 <button type="button"
-                        class="btn btn-outline-danger delete-item-confirm"
-                        data-loading-text="{% trans 'Deleting DataValue Map ...' %}">  {# todo B5: stateful button #}
+                        class="btn btn-outline-danger delete-item-confirm"?
                   <i class="fa fa-remove"></i> {% trans 'Delete' %}
                 </button>
               </div>
