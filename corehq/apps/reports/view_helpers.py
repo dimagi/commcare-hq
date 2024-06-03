@@ -70,8 +70,7 @@ def _sortkey(child):
 
 
 def get_case_hierarchy(case):
-    def get_children(case, seen=None):
-        seen = seen or set()
+    def get_children(case, seen):
         if case.case_id not in seen:
             yield case
         seen.add(case.case_id)
@@ -86,4 +85,4 @@ def get_case_hierarchy(case):
             if not hasattr(child, 'treetable_parent_node_id'):
                 child.treetable_parent_node_id = case.case_id
             yield from get_children(child, seen)
-    return list(get_children(case))
+    return list(get_children(case, seen=set()))
