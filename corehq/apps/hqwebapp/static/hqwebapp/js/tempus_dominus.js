@@ -148,5 +148,6 @@ hqDefine("hqwebapp/js/tempus_dominus", [
         createDefaultDateRangePicker: createDefaultDateRangePicker,
         createTimePicker: createTimePicker,
         getDateRangeSeparator: getDateRangeSeparator,
+        tempusDominus: tempusDominus,
     };
 });
