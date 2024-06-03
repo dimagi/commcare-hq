@@ -8,7 +8,7 @@ from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.models import CommCareCase
 from corehq.sql_db.util import (
     paginate_query,
@@ -52,6 +52,15 @@ class Command(BaseCommand):
         db_manager = DBManager(sqlite_db_file_path, table_name)
         case_updater = CaseUpdater(domain, case_type, db_manager, db_alias)
 
+        print("Fetching updated users location id.")
+        updated_users_location_ids = load_updated_users_location_ids()
+        print("Finished loading user details")
+
+        response = input("Print user details? (y/n)")
+        if response == 'y':
+            for user_id, location_id in updated_users_location_ids.items():
+                print(f"{user_id}: {location_id}: {SQLLocation.active_objects.get(location_id).name}")
+
         print("Fetching all case ids.")
         if db_alias:
             print(f"Using only db: {db_alias}")
@@ -60,7 +69,7 @@ class Command(BaseCommand):
         print(f"Stored {len(case_ids)}.")
 
         print("Iterating cases now...")
-        case_updater.start(dry_run)
+        case_updater.start(updated_users_location_ids, dry_run)
 
 
 class CaseUpdater(Updater):
@@ -103,7 +112,7 @@ class CaseUpdater(Updater):
             device_id=self.device_id,
         )
 
-    def start(self, dry_run=False):
+    def start(self, updated_users_location_ids, dry_run=False):
         # TODO: Implement code to reverse actions if needed
         if not dry_run:
             print("---MOVING CASE OWNERSHIP---")
@@ -130,7 +139,7 @@ class CaseUpdater(Updater):
                 length=case_count,
                 oneline=False)
         ):
-            case_blocks, reverse_ids = self._process_chunk(cases)
+            case_blocks, reverse_ids = self._process_chunk(cases, updated_users_location_ids)
             if not dry_run:
                 print("Updating cases...")
                 self._submit_cases(case_blocks)
@@ -152,22 +161,22 @@ class CaseUpdater(Updater):
             f"Skipped: {self.stat_counts['skipped']}"
         )
 
-    def _process_chunk(self, cases):
+    def _process_chunk(self, cases, updated_users_location_ids):
         cases_to_save = []
         reverse_ids = {}
         for case_obj in cases:
-            try:
-                user = CommCareUser.get_by_user_id(case_obj.opened_by)
-            except CommCareUser.AccountTypeError:
+            if case_obj.opened_by in updated_users_location_ids:
+                updated_location_id = updated_users_location_ids[case_obj.opened_by]
+            else:
                 self._save_row(
                     case_obj.case_id,
                     status=self.db_manager.STATUS_SKIPPED,
-                    message='Not owned by a mobile worker'
+                    message=f'Could not find mobile worker {case_obj.opened_by}'
                 )
                 self.stat_counts['skipped'] += 1
                 continue
 
-            if user.location_id == case_obj.owner_id:
+            if updated_location_id == case_obj.owner_id:
                 # Skip and don't update case if already owned by location
                 self._save_row(
                     case_id=case_obj.case_id,
@@ -181,7 +190,7 @@ class CaseUpdater(Updater):
             case_block = CaseBlock(
                 create=False,
                 case_id=case_obj.case_id,
-                owner_id=user.location_id,
+                owner_id=updated_location_id,
             )
             reverse_ids[case_obj.case_id] = case_obj.owner_id
             cases_to_save.append(case_block)
@@ -202,3 +211,29 @@ class CaseUpdater(Updater):
             case_id,
             value_dict=value_dict
         )
+
+
+def load_updated_users_location_ids():
+    updated_users_location_ids = {}
+    from custom.benin.management.commands.migrate_users_to_new_rc_level import (
+        sqlite_db_file_path as user_sqlite_db_file_path,
+        sqlite_db_table_name as user_sqlite_db_table_name)
+    user_db_manager = DBManager(user_sqlite_db_file_path, user_sqlite_db_table_name)
+    cur = user_db_manager._get_db_cur()
+    res = cur.execute(
+        "SELECT id, update_id FROM {} WHERE status = '{}'".format(
+            user_sqlite_db_table_name, user_db_manager.STATUS_SUCCESS
+        )
+    )
+    result = res.fetchall()
+    cur.close()
+    for user_id, updated_location_id in result:
+        updated_users_location_ids[user_id] = updated_location_id
+    validate_location_ids_loaded(updated_users_location_ids)
+    return updated_users_location_ids
+
+
+def validate_location_ids_loaded(updated_users_location_ids):
+    location_ids = updated_users_location_ids.values()
+    locations = SQLLocation.active_objects.get_locations(location_ids)
+    assert len(location_ids) == len(locations), "Locations loaded for users incorrectly"
