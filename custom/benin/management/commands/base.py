@@ -11,8 +11,8 @@ class Updater(object):
     }
 
     def __init__(self, domain, db_manager):
-        self.db_manager = db_manager
         self.domain = domain
+        self.db_manager = db_manager
 
 
 class DBManager(object):
