@@ -519,9 +519,7 @@ class CCUserRow(BaseUserRow):
             "name": self.row.get('name'),
             "uncategorized_data": self.row.get('uncategorized_data', {}),
             "user_id": self.row.get('user_id'),
-            "location_codes": format_location_codes(
-                self.row.get('location_code', []) if 'location_code' in self.row else None
-            ),
+            "location_codes": format_location_codes(self.row.get('location_code')),
             "role": self.row.get('role', None),
             "profile_name": self.row.get('user_profile', None),
             "web_user_username": self.row.get('web_user'),
