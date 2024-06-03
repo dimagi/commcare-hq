@@ -130,17 +130,17 @@ class CaseUpdater(Updater):
                 length=case_count,
                 oneline=False)
         ):
-            cases_to_save, reverse_ids = self._process_chunk(cases)
+            case_blocks, reverse_ids = self._process_chunk(cases)
             if not dry_run:
                 print("Updating cases...")
-                self._submit_cases(cases_to_save)
+                self._submit_cases(case_blocks)
                 print("Updated cases!")
-            for case_obj in cases_to_save:
+            for case_block in case_blocks:
                 self._save_row(
-                    case_id=case_obj.case_id,
+                    case_id=case_block.case_id,
                     status=self.db_manager.STATUS_SUCCESS,
                     message='',
-                    revert_id=reverse_ids[case_obj.case_id]
+                    revert_id=reverse_ids[case_block.case_id],
                 )
                 self.stat_counts['success'] += 1
 
