@@ -8,8 +8,12 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import case_adapter, case_search_adapter, user_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
-from corehq.apps.geospatial.models import GeoConfig
-from corehq.apps.geospatial.views import GeospatialConfigPage, GPSCaptureView
+from corehq.apps.geospatial.models import GeoConfig, GeoPolygon
+from corehq.apps.geospatial.views import (
+    GeoPolygonView,
+    GeospatialConfigPage,
+    GPSCaptureView,
+)
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.models import CommCareCase
@@ -403,3 +407,94 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
         user_data = response.json()['user_data']
         self.assertEqual(len(user_data), 1)
         self.assertEqual(user_data[0]['gps_point'], '12.34 45.67')
+
+
+class TestGeoPolygonView(BaseGeospatialViewClass):
+    urlname = GeoPolygonView.urlname
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username=self.username, password=self.password)
+
+    def tearDown(self):
+        GeoPolygon.objects.all().delete()
+        super().tearDown()
+
+    @staticmethod
+    def _sample_geojson_data():
+        data = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "id": "5af4923d29d0669052ed15737fcd9627",
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "coordinates": [
+                            [
+                                [2.8405520338592964, 10.123570736635216],
+                                [2.9854525080494057, 9.603842241835679],
+                                [3.857119423099789, 9.98535424153846],
+                                [3.601279523358272, 10.2973713850877],
+                                [2.601279523358272, 10.123570736635216],
+                            ]
+                        ],
+                        "type": "Polygon"
+                    }
+                }
+            ],
+            "name": "test-2",
+        }
+        return data
+
+    def test_feature_flag_not_enabled(self):
+        response = self.client.post(self.endpoint, self._sample_geojson_data())
+        self.assertTrue(response.status_code == 404)
+
+    @flag_enabled('GEOSPATIAL')
+    def test_save_polygon(self):
+        geo_json_data = self._sample_geojson_data()
+        response = self.client.post(
+            self.endpoint,
+            data={"geo_json": geo_json_data},
+            content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 200)
+        saved_polygons = GeoPolygon.objects.filter(domain=self.domain)
+        self.assertEqual(len(saved_polygons), 1)
+        self.assertTrue(saved_polygons[0].name == geo_json_data["name"])
+        geo_json_data.pop("name")
+        for feature in geo_json_data["features"]:
+            del feature['id']
+        self.assertEqual(saved_polygons[0].geo_json, geo_json_data)
+
+    @flag_enabled('GEOSPATIAL')
+    def test_get_polygons(self):
+        geo_json_data = self._sample_geojson_data()
+        geo_polygon = GeoPolygon.objects.create(
+            name=geo_json_data.pop('name'),
+            domain=self.domain,
+            geo_json=geo_json_data
+        )
+        response = self.client.get(self.endpoint, data={"polygon_id": geo_polygon.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), geo_json_data)
+
+    @flag_enabled('GEOSPATIAL')
+    def test_delete_polygon(self):
+        geo_json_data = self._sample_geojson_data()
+        geo_polygon = GeoPolygon.objects.create(
+            name=geo_json_data.pop('name'),
+            domain=self.domain,
+            geo_json=geo_json_data
+        )
+        response = self.client.delete(
+            self.endpoint,
+            data={"polygon_id": geo_polygon.id},
+            content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 200)
+        with self.assertRaises(GeoPolygon.DoesNotExist):
+            GeoPolygon.objects.get(pk=geo_polygon.id, domain=self.domain)
+        saved_polygons = GeoPolygon.objects.filter(domain=self.domain)
+        self.assertEqual(len(saved_polygons), 0)
