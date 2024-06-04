@@ -61,11 +61,11 @@ $group-indent: 15px;
     margin-right: $group-indent;
   }
 
-  .gr.panel {
+  .gr.card {
     border-radius: 0px;
   }
 
-  .rep.panel {
+  .rep.card {
     border-radius: 0px;
   }
 
@@ -89,7 +89,7 @@ $group-indent: 15px;
     }
   }
 
-  .panel-body {
+  .card-body {
     @include media-breakpoint-down(md) {
       padding-left: 0px;
       padding-right: 0px;
@@ -97,7 +97,7 @@ $group-indent: 15px;
   }
 
   .stripe-repeats {
-    > .row, .panel-body > .children > .row {
+    > .row, .card-body > .children > .row {
       &:nth-of-type(odd) {
         background-color: $table-accent-bg;
       }
@@ -133,7 +133,7 @@ $group-indent: 15px;
     }
   }
 
-  .panel-heading {
+  .card-header {
     border-top-left-radius: 0px;
     border-top-right-radius: 0px;
   }
@@ -208,8 +208,8 @@ $group-indent: 15px;
     break-inside: avoid;
   }
 
-  .panel.panel-default.last,
-  .panel.panel-default.last *,
+  .card.last,
+  .card.last *,
   .q.last,
   .q.last * {
     margin-bottom: 0px;
