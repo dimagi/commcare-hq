@@ -64,7 +64,19 @@ hqDefine('geospatial/js/models', [
             return gettext("Case");
         };
 
+        self.updateCheckbox = function () {
+            // Need to update the checkbox through JQuery as we can't rely on dynamically changing its value
+            // with an observable. Doing so breaks all KO bindings in the element
+            const checkbox = $(`#${self.selectCssId}`);
+            if (!checkbox) {
+                return;
+            }
+            checkbox.prop('checked', self.isSelected());
+        };
+
         self.isSelected.subscribe(function () {
+            // Popup might be open when value changes, so make sure checkbox shows correct value
+            self.updateCheckbox();
             var color = self.isSelected() ? self.markerColors.selected : self.markerColors.default;
             changeMarkerColor(self, color);
         });
@@ -347,15 +359,22 @@ hqDefine('geospatial/js/models', [
             marker.addTo(self.mapInstance);
 
             const popupDiv = document.createElement("div");
+
+            const mapItemInstance = new MapItem(itemId, itemData, marker, colors);
+            let openFunc;
+            if (self.usesClusters) {
+                openFunc = () => highlightMarkerGroup(itemId);
+            } else {
+                openFunc = () => mapItemInstance.updateCheckbox();
+            }
             const popup = utils.createMapPopup(
                 coordinates,
                 popupDiv,
-                () => highlightMarkerGroup(itemId),
+                openFunc,
                 resetMarkersOpacity
             );
 
             marker.setPopup(popup);
-            const mapItemInstance = new MapItem(itemId, itemData, marker, colors);
             $(popupDiv).koApplyBindings(mapItemInstance);
 
             return mapItemInstance;
