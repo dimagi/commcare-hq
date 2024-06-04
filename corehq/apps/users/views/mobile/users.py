@@ -50,7 +50,6 @@ from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
-    PROFILE_SLUG,
 )
 from corehq.apps.domain.auth import get_connectid_userinfo
 from corehq.apps.domain.decorators import (
@@ -200,19 +199,13 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     def main_context(self):
         context = super(EditCommCareUserView, self).main_context
-        current_profile_id = self.editable_user.get_user_data(self.domain).profile_id
-        profiles, can_edit_original_profile = (
-            self.form_user_update.custom_data.field_view.get_displayable_profiles_and_edit_permission(
-                current_profile_id, self.domain, self.couch_user
-            )
-        )
-        serialized_profiles = [p.to_json() for p in profiles]
 
+        original_profile_id = self.editable_user.get_user_data(self.domain).profile_id
+        field_view_context = self.form_user_update.custom_data.field_view.get_field_page_context(
+            self.domain, self.couch_user, self.form_user_update.custom_data, original_profile_id
+        )
+        context.update(field_view_context)
         context.update({
-            'can_edit_original_profile': can_edit_original_profile,
-            'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
-            'custom_fields_profiles': sorted(serialized_profiles, key=lambda x: x['name'].lower()),
-            'custom_fields_profile_slug': PROFILE_SLUG,
             'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
@@ -731,18 +724,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @property
     def page_context(self):
         bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
-        profiles = self.custom_data.field_view.get_user_accessible_profiles(
-            self.domain, self.couch_user
-        )
-        serialized_profiles = [p.to_json() for p in profiles]
 
-        return {
+        context = {
             'new_mobile_worker_form': self.new_mobile_worker_form,
-            'can_edit_original_profile': True,
             'custom_fields_form': self.custom_data.form,
-            'custom_fields_slugs': [f.slug for f in self.custom_data.fields],
-            'custom_fields_profiles': serialized_profiles,
-            'custom_fields_profile_slug': PROFILE_SLUG,
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
@@ -755,6 +740,13 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'show_deactivate_after_date': self.new_mobile_worker_form.show_deactivate_after_date,
             'two_stage_user_confirmation': self.two_stage_user_confirmation,
         }
+
+        field_view_context = self.custom_data.field_view.get_field_page_context(
+            self.domain, self.couch_user, self.custom_data
+        )
+        context.update(field_view_context)
+
+        return context
 
     @property
     @memoized
