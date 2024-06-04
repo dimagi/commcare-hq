@@ -49,6 +49,7 @@ from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
 )
 from corehq.apps.userreports.exceptions import (
+    BadBuilderConfigError,
     BadSpecError,
     DataSourceConfigurationNotFoundError,
     TableNotFoundWarning,
@@ -593,9 +594,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 "aaData": cls.sanitize_page(export.get_data()),
             }
         except DataSourceConfigurationNotFoundError:
-            # A temporary data source has probably expired
-            # TODO: It would be more helpful just to quietly recreate the data source config from GET params
-            return None
+            raise BadBuilderConfigError(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
 
 
 # Base class for classes that provide custom rendering for UCRs
