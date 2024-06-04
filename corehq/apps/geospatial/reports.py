@@ -101,14 +101,10 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
     @staticmethod
     def _construct_disbursement_parameters(config):
         def get_parameter_spec(name, value, unit=None):
-            param_value = _("Unspecified")
-            if value:
-                param_value = value
-                if unit:
-                    param_value = f'{param_value} {unit}'
             return {
                 'name': name,
-                'value': param_value,
+                'value': value,
+                'unit': unit
             }
 
         params_list = [
@@ -121,7 +117,7 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
             param_name = _("Max {travel_mode} time").format(travel_mode=config.travel_mode)
             params_list.append(
                 get_parameter_spec(
-                    name=param_name, value=config.max_case_distance, unit=_("minutes")
+                    name=param_name, value=config.max_case_travel_time, unit=_("minutes")
                 )
             )
 
