@@ -117,16 +117,12 @@
 </div>
 <div id="disbursement-params" class="alert alert-info" data-bind="visible: showParams()">
   <h4>{% trans 'Disbursement parameters' %}</h4>
-  <table>
-    <thead>
-      <!-- ko foreach: parameters -->
-      <tr>
-        <td style="padding-right: 1em" data-bind="text: name"></td>
-        <td data-bind="text: value"></td>
-      </tr>
-      <!-- /ko -->
-    </thead>
-  </table>
+  <!-- ko foreach: parameters -->
+  <span style="padding-right: 1em">
+    <span data-bind="text: name"></span>:
+    <b><span data-bind="text: value"></span></b>
+  </span>
+  <!-- /ko -->
 </div>
 <div id="geospatial-map" style="height: 500px">
     <div id="layer-toggle-menu" class="btn-group-vertical hidden">
