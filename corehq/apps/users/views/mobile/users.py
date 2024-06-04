@@ -200,10 +200,18 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     def main_context(self):
         context = super(EditCommCareUserView, self).main_context
-        profiles = [profile.to_json() for profile in self.form_user_update.custom_data.model.get_profiles()]
+        current_profile_id = self.editable_user.get_user_data(self.domain).profile_id
+        profiles, can_edit_original_profile = (
+            self.form_user_update.custom_data.field_view.get_displayable_profiles_and_edit_permission(
+                current_profile_id, self.domain, self.couch_user
+            )
+        )
+        serialized_profiles = [p.to_json() for p in profiles]
+
         context.update({
+            'can_edit_original_profile': can_edit_original_profile,
             'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
-            'custom_fields_profiles': sorted(profiles, key=lambda x: x['name'].lower()),
+            'custom_fields_profiles': sorted(serialized_profiles, key=lambda x: x['name'].lower()),
             'custom_fields_profile_slug': PROFILE_SLUG,
             'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
             'edit_user_form_title': self.edit_user_form_title,
@@ -711,6 +719,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             post_dict=self.request.POST if self.request.method == "POST" else None,
             required_only=True,
             ko_model="custom_fields",
+            request_user=self.couch_user,
         )
 
     @property
@@ -722,13 +731,17 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @property
     def page_context(self):
         bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
+        profiles = self.custom_data.field_view.get_user_accessible_profiles(
+            self.domain, self.couch_user
+        )
+        serialized_profiles = [p.to_json() for p in profiles]
 
-        profiles = [profile.to_json() for profile in self.custom_data.model.get_profiles()]
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
+            'can_edit_original_profile': True,
             'custom_fields_form': self.custom_data.form,
             'custom_fields_slugs': [f.slug for f in self.custom_data.fields],
-            'custom_fields_profiles': profiles,
+            'custom_fields_profiles': serialized_profiles,
             'custom_fields_profile_slug': PROFILE_SLUG,
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
@@ -1035,6 +1048,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
             field_view=UserFieldsView,
             domain=self.domain,
             post_dict=self.request.POST if self.request.method == "POST" else None,
+            request_user=self.request.couch_user,
         )
 
     @property
