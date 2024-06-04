@@ -65,6 +65,8 @@ hqDefine('geospatial/js/models', [
         };
 
         self.updateCheckbox = function () {
+            // Need to update the checkbox through JQuery as we can't rely on dynamically changing its value
+            // with an observable. Doing so breaks all KO bindings in the element
             const checkbox = $(`#${self.selectCssId}`);
             if (!checkbox) {
                 return;
