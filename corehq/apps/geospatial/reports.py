@@ -96,11 +96,36 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
         except GeoConfig.DoesNotExist:
             return []
 
-        unspecified = _("Unspecified")
-        return [
-            {'name': _('Max cases per user'), 'value': config.max_cases_per_user or unspecified},
-            {'name': _('Min cases per user'), 'value': config.min_cases_per_user or unspecified},
+        return self._construct_disbursement_parameters(config)
+
+    @staticmethod
+    def _construct_disbursement_parameters(config):
+        def get_parameter_spec(name, value, unit=None):
+            param_value = _("Unspecified")
+            if value:
+                param_value = value
+                if unit:
+                    param_value = f'{param_value} {unit}'
+            return {
+                'name': name,
+                'value': param_value,
+            }
+
+        params_list = [
+            get_parameter_spec(name=_('Max cases per user'), value=config.max_cases_per_user),
+            get_parameter_spec(name=_('Min cases per user'), value=config.min_cases_per_user),
+            get_parameter_spec(name=_('Max distance to case'), value=config.max_case_distance, unit="km")
         ]
+
+        if config.supports_travel_mode:
+            param_name = _("Max {travel_mode} time").format(travel_mode=config.travel_mode)
+            params_list.append(
+                get_parameter_spec(
+                    name=param_name, value=config.max_case_distance, unit=_("minutes")
+                )
+            )
+
+        return params_list
 
 
 class CaseManagementMap(BaseCaseMapReport):
