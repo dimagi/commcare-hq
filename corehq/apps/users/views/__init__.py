@@ -1241,7 +1241,7 @@ class BaseUploadUser(BaseUserSettingsView):
             return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
 
         task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-        if PARALLEL_USER_IMPORTS.enabled(self.domain) and not self.is_web_upload:
+        if PARALLEL_USER_IMPORTS.enabled(self.domain) and self.is_web_upload:
             if list(self.group_specs):
                 messages.error(
                     request,
