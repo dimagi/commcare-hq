@@ -9,7 +9,7 @@
           <input data-bind="
                       checked: $parent.rawAnswer,
                       checkedValue: $data,
-                      css: { 'is-invalid': $root.hasError() },
+                      css: { 'is-invalid': $parent.question.hasError() },
                       attr: {
                           id: 'group-' + $parent.entryId + '-choice-' + $index(),
                           type: $parent.isMulti ? 'checkbox' : 'radio',
