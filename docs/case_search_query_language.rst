@@ -177,8 +177,9 @@ The following functions are supported:
 
 .. note::
    ``fuzzy-match`` is backed by Elasticsearch's `Fuzzy query`_, which uses `Levenshtein distance`_
-   to gauge similarity. To consider something a match, it requires an exact prefix match and an edit
-   distance based on the length of the string (longer strings can have more edits).
+   to gauge similarity. Parameters for searches are tuned in implementation to balance matching with
+   performance, but to consider something a match it generally requires matching initial prefix and
+   an edit distance based on the length of the string (longer strings can have more edits).
 
 .. _Fuzzy Query: https://www.elastic.co/guide/en/elasticsearch/reference/8.11/query-dsl-fuzzy-query.html
 .. _Levenshtein distance: https://en.wikipedia.org/wiki/Levenshtein_distance
