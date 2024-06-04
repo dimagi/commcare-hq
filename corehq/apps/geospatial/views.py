@@ -183,7 +183,7 @@ class GeoPolygonView(BaseDomainView):
         try:
             polygon = GeoPolygon.objects.get(pk=polygon_id, domain=self.domain)
             polygon.delete()
-        except (ValueError, GeoPolygon.DoesNotExist) as e:
+        except (ValueError, GeoPolygon.DoesNotExist):
             return JsonResponse({
                 'success': False,
                 'message': _("Saved area not found or incorrect ID provided.")

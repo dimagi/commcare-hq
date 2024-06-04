@@ -652,11 +652,11 @@ hqDefine('geospatial/js/models', [
                 data: JSON.stringify({'polygon_id': self.selectedSavedPolygonId()}),
                 contentType: "application/json; charset=utf-8",
                 success: function (ret) {
-                    if (!ret.success){
+                    if (!ret.success) {
                         return alertUser.alert_user(message, 'danger');
                     }
                     self.clearSelectedPolygonFilter();
-                    var message = gettext(ret.message) + " " + gettext("Refreshing Page...")
+                    var message = gettext(ret.message) + " " + gettext("Refreshing Page...");
                     alertUser.alert_user(message, 'success');
                     window.location.reload();
                 },
