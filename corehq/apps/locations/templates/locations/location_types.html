@@ -7,6 +7,7 @@
 {% block page_content %}
   {% initial_page_data 'location_types' location_types %}
   {% initial_page_data 'commtrack_enabled' commtrack_enabled %}
+  {% initial_page_data 'location_case_sync_restriction_enabled' location_case_sync_restriction_enabled %}
   {% initial_page_data 'suggest_orphan_case_alerts_setting' suggest_orphan_case_alerts_setting %}
   {% initial_page_data 'project_settings_url' project_settings_url %}
   <div class="row">
@@ -157,15 +158,17 @@
                                           {% endblocktrans %}">
                                     </span>
               </th>
-              <th>
-                {% trans "View Child Data to Level" %}
-                <span class="hq-help-template"
-                      data-title="{% trans "View Child Data to Level" %}"
-                      data-content="{% blocktrans %}
-                          <p>Only include cases that show up in the user's restore file down to this level (inclusive).</p>
-                      {% endblocktrans %}">
-                </span>
-              </th>
+              {% if location_case_sync_restriction_enabled %}
+                <th data-bind="visible: advanced_mode">
+                  {% trans "View Child Data to Level" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "View Child Data to Level" %}"
+                        data-content="{% blocktrans %}
+                            <p>Only include cases that show up in the user's restore file down to this level (inclusive).</p>
+                        {% endblocktrans %}">
+                  </span>
+                </th>
+              {% endif %}
               <th></th>
             </tr>
             </thead>
@@ -243,16 +246,18 @@
               <td>
                 <input data-bind="checked: view_descendants" type="checkbox" />
               </td>
-              <td>
-                <select class="form-control"
-                        data-bind="options: $data.child_loc_types(),
-                                   optionsText: 'name',
-                                   optionsValue: 'pk',
-                                   value: expand_view_child_data_to,
-                                   optionsCaption: '\u2013{% trans 'none' %}\u2013',
-                                   enable: view_descendants">
-                </select>
-              </td>
+              {% if location_case_sync_restriction_enabled %}
+                <td data-bind="visible: $parent.advanced_mode">
+                  <select class="form-control"
+                          data-bind="options: $data.child_loc_types(),
+                                    optionsText: 'name',
+                                    optionsValue: 'pk',
+                                    value: expand_view_child_data_to,
+                                    optionsCaption: '\u2013{% trans 'none' %}\u2013',
+                                    enable: view_descendants">
+                  </select>
+                </td>
+              {% endif %}
               <td>
                 <button type="button" class="btn btn-danger" data-bind="click: $root.remove_loctype">
                   <i class="fa-regular fa-trash-can"></i> {% trans "Remove" %}
