@@ -106,6 +106,15 @@
         Previous disbursement was cleared.
     {% endblocktrans %}
 </div>
+<div id="disbursement-params" class="alert alert-info" data-bind="visible: showParams()">
+  <h4>{% trans 'Disbursement parameters' %}</h4>
+  <!-- ko foreach: parameters -->
+  <span style="padding-right: 1em">
+    <span data-bind="text: name"></span>:
+    <b><span data-bind="text: value"></span></b>
+  </span>
+  <!-- /ko -->
+</div>
 <div id="geospatial-map" style="height: 500px">
     <div id="layer-toggle-menu" class="btn-group-vertical hidden">
         <h4 class="text-center">
