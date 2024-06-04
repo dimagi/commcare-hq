@@ -33,7 +33,7 @@ from .es import (
     apply_geohash_agg,
     find_precision,
 )
-from .models import GeoPolygon
+from .models import GeoPolygon, GeoConfig
 from .utils import (
     geojson_to_es_geoshape,
     get_geo_case_property,
@@ -65,6 +65,7 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
                 {'id': p.id, 'name': p.name, 'geo_json': p.geo_json}
                 for p in GeoPolygon.objects.filter(domain=self.domain).all()
             ],
+            'disbursement_parameters': self.disbursement_parameters,
         })
         return context
 
@@ -87,6 +88,40 @@ class BaseCaseMapReport(ProjectReport, CaseListMixin, XpathCaseSearchFilterMixin
     @property
     def rows(self):
         raise NotImplementedError()
+
+    @property
+    def disbursement_parameters(self):
+        try:
+            config = GeoConfig.objects.get(domain=self.domain)
+        except GeoConfig.DoesNotExist:
+            return []
+
+        return self._construct_disbursement_parameters(config)
+
+    @staticmethod
+    def _construct_disbursement_parameters(config):
+        def get_parameter_spec(name, value, unit=None):
+            return {
+                'name': name,
+                'value': value,
+                'unit': unit
+            }
+
+        params_list = [
+            get_parameter_spec(name=_('Max cases per user'), value=config.max_cases_per_user),
+            get_parameter_spec(name=_('Min cases per user'), value=config.min_cases_per_user),
+            get_parameter_spec(name=_('Max distance to case'), value=config.max_case_distance, unit="km")
+        ]
+
+        if config.supports_travel_mode:
+            param_name = _("Max {travel_mode} time").format(travel_mode=config.travel_mode)
+            params_list.append(
+                get_parameter_spec(
+                    name=param_name, value=config.max_case_travel_time, unit=_("minutes")
+                )
+            )
+
+        return params_list
 
 
 class CaseManagementMap(BaseCaseMapReport):
