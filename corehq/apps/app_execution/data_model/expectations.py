@@ -31,7 +31,7 @@ class Expectation:
         raise NotImplementedError()
 
     def to_json(self):
-        return {"type": f"{self.type}", **asdict(self)}
+        return {"type": f"expect:{self.type}", **asdict(self)}
 
     @classmethod
     def from_json(cls, data):

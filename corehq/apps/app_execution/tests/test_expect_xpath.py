@@ -22,7 +22,7 @@ def _test_expect_xpath(result):
     session = Mock(
         current_screen=ScreenType.FORM,
         app_build_id="123",
-        data={"selections": ["0"]},
+        data={"selections": ["0"], "session_id": "123"},
         client=Mock(),
         spec=FormplayerSession,
     )
