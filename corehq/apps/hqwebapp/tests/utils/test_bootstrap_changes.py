@@ -429,10 +429,8 @@ def test_update_gruntfile():
         'reports_core/choiceListUtils',
         'locations',
         'userreports',
-        'cloudcare/bootstrap3',
-        'cloudcare/bootstrap5',
-        'cloudcare/form_entry/bootstrap3',
-        'cloudcare/form_entry/bootstrap5',
+        'cloudcare',
+        'cloudcare/form_entry',
         'hqwebapp',
         'case_importer',
     ];
