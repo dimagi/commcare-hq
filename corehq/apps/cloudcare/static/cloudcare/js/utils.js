@@ -414,6 +414,7 @@ hqDefine('cloudcare/js/utils', [
             },
             localization: {
                 format: timeFormat,
+                hourCycle: timeFormat.indexOf('T') == -1 ? 'h23' : 'h12',
             },
             useCurrent: true,
         };

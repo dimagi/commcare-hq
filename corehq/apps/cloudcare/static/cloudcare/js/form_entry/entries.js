@@ -793,12 +793,12 @@ hqDefine("cloudcare/js/form_entry/entries", [
             var answer = self.answer() ? self.convertServerToClientFormat(self.answer()) : constants.NO_ANSWER;
             self.initWidget(self.$picker, answer);
 
-            self.$picker.on("dp.change", function (e) {
+            self.$picker.on("change.td", function (e) {
                 if (!e.date) {
                     self.answer(constants.NO_ANSWER);
                     return;
                 }
-                self.answer(moment(e.date.toDate()).format(self.serverFormat));
+                self.answer(moment(e.date).format(self.serverFormat));
             });
         };
     }
@@ -834,7 +834,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         this.templateType = 'time';
         if (question.style) {
             if (question.stylesContains(constants.TIME_12_HOUR)) {
-                this.clientFormat = 'h:mm a';
+                this.clientFormat = 'h:mm T';
             }
         }
         DateTimeEntryBase.call(this, question, options);
