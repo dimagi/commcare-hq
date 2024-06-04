@@ -49,7 +49,16 @@
      }
    }
  
-@@ -48,21 +41,21 @@
+@@ -42,7 +35,7 @@
+     position: sticky;
+     /* Puts the anchored submit button in front of form elements that use bootstrap's .form-control,
+        which adds z-index of 2 (3 when focused) */
+-    z-index: @zindex-formplayer-anchored-submit;
++    z-index: $zindex-formplayer-anchored-submit;
+   }
+ 
+   // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
+@@ -51,8 +44,8 @@
      margin-right: 0px;
    }
    .question-container {
@@ -60,15 +69,10 @@
 -  .form-group {
 +    padding-left: $form-text-indent;
 +    padding-right: $form-text-indent;
-+  }
-+
-+  .q {
-     margin-left: 0px;
-     margin-right: 0px;
--    .caption.control-label {
-+    .caption {
-       display: block;
-     }
+   }
+ 
+   .form-group {
+@@ -64,8 +57,8 @@
    }
  
    .group-body {
@@ -79,7 +83,7 @@
    }
  
    .gr.panel {
-@@ -94,7 +87,7 @@
+@@ -97,7 +90,7 @@
    }
  
    .panel-body {
@@ -88,7 +92,7 @@
        padding-left: 0px;
        padding-right: 0px;
      }
-@@ -103,19 +96,19 @@
+@@ -106,19 +99,19 @@
    .stripe-repeats {
      > .row, .panel-body > .children > .row {
        &:nth-of-type(odd) {
@@ -111,8 +115,7 @@
      border-radius: 8px;
      margin: 2px;
      padding-top: 5px;
-@@ -156,17 +149,17 @@
-     display: none;
+@@ -160,7 +153,7 @@
    }
  
 -  .form-group.required {
@@ -122,7 +125,7 @@
      margin-bottom: 0;
      label:before {
        display: none;
-     }
+@@ -168,8 +161,8 @@
    }
  
 -  .form-group.required.on {
@@ -134,7 +137,7 @@
      border-bottom: none;
      padding-top: 10px;
      padding-bottom: 10px;
-@@ -180,13 +173,13 @@
+@@ -183,13 +176,13 @@
    .form-group-required-label {
      display: block;
      opacity: 0;

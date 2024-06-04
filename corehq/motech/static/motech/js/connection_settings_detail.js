@@ -22,11 +22,11 @@ hqDefine("motech/js/connection_settings_detail", [
                 ];
             if (authPreset === 'CUSTOM') {
                 _.each(customAuthPresetFields, function (field) {
-                    $('#div_id_' + field).show();
+                    $('#div_id_' + field).removeClass("d-none");
                 });
             } else {
                 _.each(customAuthPresetFields, function (field) {
-                    $('#div_id_' + field).hide();
+                    $('#div_id_' + field).addClass("d-none");
                 });
             }
 
@@ -74,13 +74,13 @@ hqDefine("motech/js/connection_settings_detail", [
             _.each(_.pairs(allFields), function ([field, label]) {
                 let div = $('#div_id_' + field);
                 if (field in visible) {
-                    div.show();
+                    div.removeClass("d-none");
                     let label = visible[field] || allFields[field];
                     if (label) {
                         div.find('label').text(label);
                     }
                 } else {
-                    div.hide();
+                    div.addClass("d-none");
                 }
             });
         });
@@ -93,7 +93,7 @@ hqDefine("motech/js/connection_settings_detail", [
          */
         var handleSuccess = function (resp) {
             var message;
-            $testResult.removeClass("hide text-danger text-success");
+            $testResult.removeClass("d-none text-danger text-success");
             $testConnectionButton.enableButton();
 
             if (resp.status) {
@@ -114,7 +114,7 @@ hqDefine("motech/js/connection_settings_detail", [
         var handleFailure = function (resp) {
             $testConnectionButton.enableButton();
             $testResult
-                .removeClass("hide text-success")
+                .removeClass("d-none text-success")
                 .addClass("text-danger");
             $testResult.text(gettext(
                 'CommCare HQ was unable to make the request: '

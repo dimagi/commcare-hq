@@ -1,8 +1,5 @@
-@import '../../hqwebapp/less/_hq/includes/variables.less';
-@import '../../hqwebapp/less/_hq/includes/mixins.less';
-
-@panel-dashboard-border: darken(@navbar-default-bg, 5);
-@panel-dashboard-header-bg: @navbar-default-bg;
+$card-dashboard-border: darken($navbar-default-bg, 5);
+$card-dashboard-header-bg: $navbar-default-bg;
 
 .dashboard-icon {
   display: block;
@@ -11,23 +8,23 @@
 
 .dashboard-icon-large {
   margin: 0 auto;
-  @icon-size: 220px;
-  width: @icon-size;
-  height: @icon-size;
+  $icon-size: 220px;
+  width: $icon-size;
+  height: $icon-size;
   font-size: 200px;
 }
 
 .dashboard-icon-medium {
-  @icon-size: 230px;
+  $icon-size: 230px;
   width: 100%;
-  height: @icon-size;
+  height: $icon-size;
   margin: 0 auto;
   font-size: 170px;
-  @media(max-width: @screen-md-max) {
+  @include media-breakpoint-down(lg) {
     font-size: 140px;
     padding-top: 15px;
   }
-  @media(max-width: @screen-sm-max) {
+  @include media-breakpoint-down(md) {
     font-size: 170px;
   }
 }
@@ -53,19 +50,15 @@
   }
 }
 
-.panel-dashboard {
-  .panel-variant(@panel-dashboard-border; @navbar-default-color; @panel-dashboard-header-bg; @panel-dashboard-border);
-
-  .panel-heading {
-    font-weight: bold;
-    font-size: @font-size-large;
+.card-dashboard {
+  .card-header {
     text-align: center;
+    font-size: $font-size-base * 1.5;
   }
 }
 
-.panel-dashboard-medium {
-  height: 263px;
-  font-size: @font-size-small;
+.card-dashboard-medium {
+  height: 275px;
   position: relative;
 
   .list-group {
@@ -89,7 +82,7 @@
         right: 5px;
         top: 3px;
         padding: 5px;
-        background-color: @cc-bg;
+        background-color: $cc-bg;
         visibility: hidden;
       }
     }
@@ -120,6 +113,6 @@
     top: 100px;
     left: 50%;
     margin-left: -28px;
-    z-index: @zindexDashboardSpinner;
+    z-index: $zindexDashboardSpinner;
   }
 }

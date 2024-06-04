@@ -12,6 +12,8 @@ from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.enterprise.models import EnterprisePermissions
+from corehq.apps.reports.models import TableauUser
+from corehq.apps.reports.util import get_allowed_tableau_groups_for_domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_other_user, user_can_change_locations
 from corehq.apps.user_importer.exceptions import UserUploadError
@@ -47,7 +49,8 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowe
     ]
     if is_web_user_import:
         return validators + [RequiredWebFieldsValidator(domain), DuplicateValidator(domain, 'email', all_specs),
-                             EmailValidator(domain, 'username')]
+                             EmailValidator(domain, 'username'), TableauRoleValidator(domain),
+                             TableauGroupsValidator(domain, all_specs)]
     else:
         return validators + [
             UsernameValidator(domain),
@@ -137,6 +140,40 @@ class RequiredWebFieldsValidator(ImportValidator):
         role = spec.get('role')
         if not username or not role:
             return self.error_message
+
+
+class TableauRoleValidator(ImportValidator):
+    _error_message = _("Invalid tableau role: '{}'. Please choose one of the following: {}")
+
+    def __init__(self, domain):
+        super().__init__(domain)
+        self.valid_role_options = [e.value for e in TableauUser.Roles]
+
+    def validate_spec(self, spec):
+        tableau_role = spec.get('tableau_role')
+        if tableau_role is not None and tableau_role not in self.valid_role_options:
+            return self._error_message.format(tableau_role, ', '.join(self.valid_role_options))
+
+
+class TableauGroupsValidator(ImportValidator):
+    _error_message = _("These groups, {}, are not valid for this domain. Please choose from the following: {}")
+
+    def __init__(self, domain, all_specs):
+        super().__init__(domain)
+        self.allowed_groups_for_domain = []
+        if 'tableau_groups' in all_specs[0]:
+            self.allowed_groups_for_domain = get_allowed_tableau_groups_for_domain(self.domain) or []
+
+    def validate_spec(self, spec):
+        tableau_groups = spec.get('tableau_groups') or []
+        if tableau_groups:
+            tableau_groups = tableau_groups.split(',')
+        invalid_groups = []
+        for group in tableau_groups:
+            if group not in self.allowed_groups_for_domain:
+                invalid_groups.append(group)
+        if invalid_groups:
+            return self._error_message.format(', '.join(invalid_groups), ', '.join(self.allowed_groups_for_domain))
 
 
 class DuplicateValidator(ImportValidator):
