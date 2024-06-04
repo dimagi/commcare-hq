@@ -12,8 +12,9 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from django.http import HttpRequest
 
-from corehq.apps.app_execution import const, data_model
-from corehq.apps.app_execution.exceptions import AppExecutionError, FormplayerException
+from corehq.apps.app_execution import const
+from corehq.apps.app_execution.data_model import steps, expectations
+from corehq.apps.app_execution.exceptions import AppExecutionError, FormplayerException, ExpectationFailed
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.formplayer_api.sync_db import sync_db
 from corehq.apps.formplayer_api.utils import get_formplayer_url
@@ -178,7 +179,7 @@ class FormplayerSession:
     form_mode: str = const.FORM_MODE_HUMAN
     sync_first: bool = False
     data: dict = None
-    log: StringIO = dataclasses.field(default_factory=StringIO)
+    _log: StringIO = dataclasses.field(default_factory=StringIO)
 
     def __enter__(self):
         self.client.__enter__()
@@ -196,13 +197,13 @@ class FormplayerSession:
         build_on = "Latest Version"
         if app.built_on:
             build_on = app.built_on.strftime("%B %d, %Y")
-        print(f"Using app '{app.name}' ({app._id} - {app.version} - {build_on})", file=self.log)
+        self.log(f"Using app '{app.name}' ({app._id} - {app.version} - {build_on})")
         return app._id
 
     def sync(self):
         if not self.sync_first:
             return
-        print(f"Syncing user data for {self.client.username}", file=self.log)
+        self.log(f"Syncing user data for {self.client.username}")
         sync_db(self.client.domain, self.client.username)
 
     @property
@@ -214,7 +215,7 @@ class FormplayerSession:
         if screen == ScreenType.START:
             return "navigate_menu_start"
         if screen == ScreenType.FORM:
-            return "submit-all" if isinstance(step, data_model.SubmitFormStep) else "answer"
+            return "submit-all" if isinstance(step, steps.SubmitFormStep) else "answer"
         return "navigate_menu"
 
     def get_session_start_data(self):
@@ -231,7 +232,7 @@ class FormplayerSession:
             assert not step.is_form_step, step
         selections = list(self.data.get("selections", [])) if self.data else []
         data = {
-            **self._get_base_data(),
+            **self.get_base_data(),
             "app_id": self.app_build_id,
             "locale": "en",
             "geo_location": None,
@@ -248,12 +249,12 @@ class FormplayerSession:
     def _get_form_data(self, step):
         assert step.is_form_step, step
         data = {
-            **self._get_base_data(),
+            **self.get_base_data(),
             "debuggerEnabled": False,
         }
         return step.get_request_data(self, data)
 
-    def _get_base_data(self):
+    def get_base_data(self):
         return {
             "domain": self.client.domain,
             "restore_as": None,
@@ -266,20 +267,27 @@ class FormplayerSession:
         self.sync()
         data = self.get_session_start_data()
         self.data = self.client.make_request(data, "navigate_menu_start")
-        print("Starting app session:\n", file=self.log)
+        self.log("Starting app session:\n")
 
     def execute_step(self, step):
-        is_form_step = isinstance(step, (data_model.AnswerQuestionStep, data_model.SubmitFormStep))
+        is_form_step = isinstance(step, (steps.AnswerQuestionStep, steps.SubmitFormStep))
         if is_form_step and self.form_mode == const.FORM_MODE_IGNORE:
             self.log_step(step, skipped=True)
             return
-        if self.form_mode == const.FORM_MODE_NO_SUBMIT and isinstance(step, data_model.SubmitFormStep):
+        if self.form_mode == const.FORM_MODE_NO_SUBMIT and isinstance(step, steps.SubmitFormStep):
             self.log_step(step, skipped=True)
             return
-        data = self.get_request_data(step)
-        self.data = self.client.make_request(data, self.request_url(step))
-        self.augment_data_from_request(data, ["query_data", "session_id"])
-        self.log_step(step)
+        if isinstance(step, expectations.Expectation):
+            result = step.evaluate(self)
+            status = "SUCCESS" if result else "FAILED"
+            self.log(f"Expectation {status} for {step}")
+            if not result:
+                raise ExpectationFailed()
+        else:
+            data = self.get_request_data(step)
+            self.data = self.client.make_request(data, self.request_url(step))
+            self.augment_data_from_request(data, ["query_data", "session_id"])
+            self.log_step(step)
 
     def augment_data_from_request(self, request_data, fields):
         """Some fields aren't returned by Formplayer, so we need to maintain their value across requests"""
@@ -289,41 +297,51 @@ class FormplayerSession:
 
     def log_step(self, step, indent="  ", skipped=False):
         skipped_log = " (ignored)" if skipped else ""
-        print(f"Execute step: {step or 'START'} {skipped_log}", file=self.log)
+        self.log(f"Execute step: {step or 'START'} {skipped_log}")
         if skipped:
             return
         double_indent = indent * 2
         screen = self.current_screen
-        print(f"{indent}New Screen: {screen}", file=self.log)
+        self.log(f"{indent}New Screen: {screen}")
         if self.data:
             if screen == ScreenType.START:
-                print("", file=self.log)
+                self.log("")
             elif screen == ScreenType.MENU:
                 for command in self.data["commands"]:
-                    print(f"{double_indent}Command: {command['displayText']}", file=self.log)
+                    self.log(f"{double_indent}Command: {command['displayText']}")
             elif screen == ScreenType.CASE_LIST:
                 for row in self.data["entities"]:
-                    print(f"{double_indent}Case: {row['id']}", file=self.log)
+                    self.log(f"{double_indent}Case: {row['id']}")
             elif screen == ScreenType.SEARCH:
                 for display in self.data["displays"]:
-                    print(f"{double_indent}Search field: {display['text']}", file=self.log)
+                    self.log(f"{double_indent}Search field: {display['text']}")
             elif screen == ScreenType.SPLIT_SEARCH:
                 for display in self.data["queryResponse"]["displays"]:
-                    print(f"{double_indent}Search field: {display['text']}", file=self.log)
+                    self.log(f"{double_indent}Search field: {display['text']}")
                 for row in self.data["entities"]:
-                    print(f"{double_indent}Case: {row['id']}", file=self.log)
+                    self.log(f"{double_indent}Case: {row['id']}")
             elif screen == ScreenType.FORM:
                 for item in self.data["tree"]:
                     if item["type"] == "question":
                         answer = item.get('answer', None) or '""'
-                        print(f"{double_indent}Question: {item['caption']}={answer}", file=self.log)
+                        self.log(f"{double_indent}Question: {item['caption']}={answer}")
+
+    def get_logs(self):
+        return self._log.getvalue()
+
+    def log(self, message):
+        print(message, file=self._log)
 
 
 def execute_workflow(session: FormplayerSession, workflow):
     with session:
         session.start_session()
-        for step in workflow.steps:
-            execute_step(session, step)
+        try:
+            for step in workflow.steps:
+                execute_step(session, step)
+        except ExpectationFailed:
+            return False
+    return True
 
 
 def execute_step(session, step):

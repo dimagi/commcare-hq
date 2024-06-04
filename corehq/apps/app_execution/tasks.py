@@ -19,7 +19,7 @@ def run_app_workflows():
         session = config.get_formplayer_session()
         log = config.appexecutionlog_set.create()
         try:
-            execute_workflow(session, config.workflow)
+            success = execute_workflow(session, config.workflow)
         except Exception as e:
             log.success = False
             log.error = str(e)
@@ -28,11 +28,11 @@ def run_app_workflows():
             if rate_limit(f"task-execution-error-{config.pk}", actions_allowed=1, how_often=10 * 60):
                 _email_error(config, e, log)
         else:
-            log.success = True
+            log.success = success
         finally:
             config.last_run = timezone.now()
             config.save()
-            log.output = session.log.getvalue()
+            log.output = session.get_logs()
             log.completed = timezone.now()
             log.save()
 
