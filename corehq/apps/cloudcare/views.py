@@ -545,11 +545,12 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
         if not build_id:
             return _fail(_("No corresponding application found in this project."))
 
-    restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
-    force_login_as = (not toggles.SMART_LINKS_FOR_WEB_USERS.enabled(domain)
-                      and not restore_as_user.is_commcare_user())
-    if force_login_as and not can_use_restore_as(request):
-        return _fail(_("This user cannot access this link."))
+    # restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
+    # force_login_as = (not toggles.SMART_LINKS_FOR_WEB_USERS.enabled(domain)
+    #                   and not restore_as_user.is_commcare_user())
+    # if force_login_as and not can_use_restore_as(request):
+    #     return _fail(_("This user cannot access this link."))
+    force_login_as = False
 
     state = {"appId": build_id, "forceLoginAs": force_login_as}
     if endpoint_id is not None:
