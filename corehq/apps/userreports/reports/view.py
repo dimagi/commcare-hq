@@ -592,9 +592,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
                 "chart_configs": report_config.charts,
                 "aaData": cls.sanitize_page(export.get_data()),
             }
-        except UserReportsError:
-            # User posted an invalid report configuration
-            return None
         except DataSourceConfigurationNotFoundError:
             # A temporary data source has probably expired
             # TODO: It would be more helpful just to quietly recreate the data source config from GET params
