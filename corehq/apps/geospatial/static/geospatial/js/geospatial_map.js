@@ -70,10 +70,12 @@ hqDefine("geospatial/js/geospatial_map", [
         }
     };
 
-    var disbursementRunnerModel = function () {
+    var disbursementRunnerModel = function (disbursementParameters) {
         var self = {};
 
         self.isBusy = ko.observable(false);
+        self.showParams = ko.observable(false);
+        self.parameters = ko.observableArray(disbursementParameters);
 
         self.disbursementErrorMessage = ko.observable('');
         self.showUnassignedCasesError = ko.observable(false);
@@ -112,6 +114,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
         self.runCaseDisbursementAlgorithm = function (cases, users) {
             self.setBusy(true);
+            self.showParams(true);
             let mapInstance = mapModel.mapInstance;
 
             let caseData = [];
@@ -400,6 +403,22 @@ hqDefine("geospatial/js/geospatial_map", [
         mapModel.fitMapBounds(caseMapItems);
     }
 
+    function sanitizeDisbursementParametersText(parameters) {
+        var sanitizedParameters = [];
+
+        parameters.forEach(function (param) {
+            var sanitizedParam = {name: param.name, value: gettext("Unspecified")};
+            if (param.value) {
+                sanitizedParam.value = `${param.value}`;
+                if (param.unit) {
+                    sanitizedParam.value = sanitizedParam.value + ` ${param.unit}`;
+                }
+            }
+            sanitizedParameters.push(sanitizedParam);
+        });
+        return sanitizedParameters;
+    }
+
     $(document).ajaxComplete(function (event, xhr, settings) {
         // When mobile workers are loaded from the user filtering menu, ajaxComplete will be called again.
         // We don't want to reload the map or cases when this happens, so simply return.
@@ -420,9 +439,14 @@ hqDefine("geospatial/js/geospatial_map", [
             // Hide controls until data is displayed
             showMapControls(false);
 
-            disbursementRunner = new disbursementRunnerModel();
+            const algorithmParameters = sanitizeDisbursementParametersText(
+                initialPageData.get('disbursement_parameters')
+            );
+            disbursementRunner = new disbursementRunnerModel(algorithmParameters);
+
             $("#disbursement-spinner").koApplyBindings(disbursementRunner);
             $("#disbursement-error").koApplyBindings(disbursementRunner);
+            $("#disbursement-params").koApplyBindings(disbursementRunner);
 
             return;
         }
