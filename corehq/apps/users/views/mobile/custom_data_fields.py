@@ -32,8 +32,7 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
         if couch_user.has_permission(domain, get_permission_name(HqPermissions.edit_user_profile)):
             return all_profiles
 
-        role = couch_user.get_role(domain)
-        permission = role.permissions if role else HqPermissions()
+        permission = couch_user.get_role(domain).permissions
         accessible_profile_ids = permission.edit_user_profile_list
         accessible_profiles = {p for p in all_profiles if str(p.id) in accessible_profile_ids}
         return accessible_profiles
