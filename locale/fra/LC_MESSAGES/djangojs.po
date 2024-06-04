@@ -3553,6 +3553,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid ""
+"Please ensure that the filtered area includes both casesand mobile workers "
+"before attempting to run disbursement."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid "All locations"
 msgstr ""
 
@@ -3929,6 +3935,12 @@ msgstr "Sélectionner un site"
 #: corehq/apps/locations/static/locations/js/widgets.js
 msgid "Choose a primary location"
 msgstr "Choisir un site principal"
+
+#: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
+msgid ""
+"Could not load data. Please try again later or report an issue if this "
+"problem persists."
+msgstr ""
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
 #: corehq/apps/registration/static/registration/js/bootstrap5/password.js
@@ -4713,6 +4725,20 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Mobile Workers"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
+"configuration for web users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View tableau configuration for web users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only tableau configuration for web users"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js

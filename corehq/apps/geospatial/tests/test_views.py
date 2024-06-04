@@ -106,6 +106,8 @@ class GeoConfigViewTestClass(TestCase):
         data = {
             'case_location_property_name': case_property,
             'user_location_property_name': user_property or '',
+            'min_cases_per_user': 1,
+            'max_cases_per_user': 2,
         }
         if extra_data:
             data |= extra_data
@@ -169,7 +171,7 @@ class GeoConfigViewTestClass(TestCase):
                 case_property='prop1',
                 user_property='prop2',
                 extra_data={
-                    'selected_disbursement_algorithm': GeoConfig.RADIAL_ALGORITHM
+                    'selected_disbursement_algorithm': GeoConfig.RADIAL_ALGORITHM,
                 }
             )
         )
@@ -196,7 +198,7 @@ class GeoConfigViewTestClass(TestCase):
                 case_property='prop1',
                 user_property='prop2',
                 extra_data={
-                    'selected_disbursement_algorithm': GeoConfig.RADIAL_ALGORITHM
+                    'selected_disbursement_algorithm': GeoConfig.RADIAL_ALGORITHM,
                 }
             )
         )
