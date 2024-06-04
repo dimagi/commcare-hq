@@ -180,9 +180,9 @@ class QueryHelper:
 
     def get_base_queryset(self, slug=None):
         # slug is only informational, used for profiling
-        CaseSearchES = self.profiler.get_case_search_class(slug)
+        _CaseSearchES = self.profiler.get_case_search_class(slug)
         # See case_search_bha.py docstring for context on index_name
-        return CaseSearchES(index=self.config.index_name or None).domain(self.domain)
+        return _CaseSearchES(index=self.config.index_name or None).domain(self.domain)
 
     def wrap_case(self, es_hit, include_score=False):
         return wrap_case_search_hit(es_hit, include_score=include_score)
@@ -209,8 +209,8 @@ class RegistryQueryHelper(QueryHelper):
         self._registry_helper = registry_helper
 
     def get_base_queryset(self, slug=None):
-        CaseSearchES = self.profiler.get_case_search_class(slug)
-        return CaseSearchES().domain(self._registry_helper.visible_domains)
+        _CaseSearchES = self.profiler.get_case_search_class(slug)
+        return _CaseSearchES().domain(self._registry_helper.visible_domains)
 
     def wrap_case(self, es_hit, include_score=False):
         case = super().wrap_case(es_hit, include_score)
