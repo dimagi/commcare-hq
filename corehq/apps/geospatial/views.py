@@ -178,6 +178,24 @@ class GeoPolygonView(BaseDomainView):
             'id': geo_polygon.id,
         })
 
+    def delete(self, request, *args, **kwargs):
+        polygon_id = json.loads(request.body).get('polygon_id', None)
+        try:
+            polygon = GeoPolygon.objects.get(pk=polygon_id, domain=self.domain)
+            polygon.delete()
+        except (ValueError, GeoPolygon.DoesNotExist) as e:
+            return JsonResponse({
+                'success': False,
+                'message': _("Saved area not found or incorrect ID provided.")
+            })
+
+        return JsonResponse({
+            'success': True,
+            'message': _("Saved area '{polygon_name}' has been successfully deleted.").format(
+                polygon_name=polygon.name,
+            )
+        })
+
 
 class BaseConfigView(BaseDomainView):
     section_name = _("Data")
