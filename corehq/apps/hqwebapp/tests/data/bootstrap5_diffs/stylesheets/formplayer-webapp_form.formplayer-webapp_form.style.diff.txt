@@ -58,7 +58,7 @@
    }
  
    // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
-@@ -51,8 +44,8 @@
+@@ -51,21 +44,21 @@
      margin-right: 0px;
    }
    .question-container {
@@ -69,10 +69,15 @@
 -  .form-group {
 +    padding-left: $form-text-indent;
 +    padding-right: $form-text-indent;
-   }
- 
-   .form-group {
-@@ -64,8 +57,8 @@
++  }
++
++  .q {
+     margin-left: 0px;
+     margin-right: 0px;
+-    .caption.control-label {
++    .caption {
+       display: block;
+     }
    }
  
    .group-body {
@@ -115,7 +120,8 @@
      border-radius: 8px;
      margin: 2px;
      padding-top: 5px;
-@@ -160,7 +153,7 @@
+@@ -159,17 +152,17 @@
+     display: none;
    }
  
 -  .form-group.required {
@@ -125,7 +131,7 @@
      margin-bottom: 0;
      label:before {
        display: none;
-@@ -168,8 +161,8 @@
+     }
    }
  
 -  .form-group.required.on {
@@ -153,7 +159,7 @@
      color: white;
      width: auto;
      line-height: 14px;
-@@ -208,14 +201,14 @@
+@@ -211,14 +204,14 @@
      }
    }
  
@@ -171,7 +177,7 @@
      margin-bottom: 0px;
      padding-bottom: 0px;
      .widget-container {
-@@ -238,7 +231,7 @@
+@@ -241,7 +234,7 @@
  .question-tile-row {
    display: flex;
    align-items: start;
@@ -180,7 +186,7 @@
      padding-top: 0px !important;
      padding-bottom: 0px !important;
      margin-top: 0px !important;
-@@ -265,3 +258,8 @@
+@@ -268,3 +261,8 @@
    padding-top: 0px !important;
    padding-bottom: 7px;
  }
