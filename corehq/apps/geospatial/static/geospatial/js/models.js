@@ -5,12 +5,14 @@ hqDefine('geospatial/js/models', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'geospatial/js/utils',
+    'hqwebapp/js/bootstrap3/alert_user',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    utils
+    utils,
+    alertUser
 ) {
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
@@ -18,6 +20,7 @@ hqDefine('geospatial/js/models', [
     const MAX_URL_LENGTH = 4500;
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
+    var geoJSONUrl = initialPageData.reverse('geo_polygon');
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -639,6 +642,25 @@ hqDefine('geospatial/js/models', [
             self.selectedSavedPolygonId('');
             self.clearActivePolygon();
             updateSelectedSavedPolygonParam();
+        };
+
+        self.deleteSelectedPolygonFilter = function () {
+            $.ajax({
+                type: 'DELETE',
+                url: geoJSONUrl,
+                dataType: 'json',
+                data: JSON.stringify({'polygon_id': self.selectedSavedPolygonId()}),
+                contentType: "application/json; charset=utf-8",
+                success: function (ret) {
+                    if (!ret.success){
+                        return alertUser.alert_user(message, 'danger');
+                    }
+                    self.clearSelectedPolygonFilter();
+                    var message = gettext(ret.message) + " " + gettext("Refreshing Page...")
+                    alertUser.alert_user(message, 'success');
+                    window.location.reload();
+                },
+            });
         };
 
         self.selectedSavedPolygonId.subscribe(function (selectedPolygonID) {
