@@ -826,6 +826,10 @@ class ReportPreview(BaseDomainView):
             except BadBuilderConfigError as e:
                 return json_response({'status': 'error', 'message': str(e)}, status_code=400)
 
+            return json_response({
+                'status': 'error',
+                'message': 'Report preview returned no response',
+            }, status_code=400)
         else:
             return json_response({
                 'status': 'error',
