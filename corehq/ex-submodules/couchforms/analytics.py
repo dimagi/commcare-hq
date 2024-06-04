@@ -172,7 +172,7 @@ def get_exports_by_form(domain, use_es=False):
 
 def _get_export_forms_by_app_es(domain):
     rows = []
-    apps = AppES().domain(domain).run().hits
+    apps = AppES().domain(domain).is_build(False).run().hits
     for app in apps:
         for module_id, module in enumerate(app.get("modules", [])):
             for form_id, form in enumerate(module.get("forms", [])):
