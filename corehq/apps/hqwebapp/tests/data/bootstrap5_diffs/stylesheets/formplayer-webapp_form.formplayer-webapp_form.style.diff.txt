@@ -58,7 +58,7 @@
    }
  
    // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
-@@ -51,21 +44,21 @@
+@@ -51,28 +44,28 @@
      margin-right: 0px;
    }
    .question-container {
@@ -83,23 +83,38 @@
    .group-body {
 -    margin-left: @group-indent;
 -    margin-right: @group-indent;
+-  }
+-
+-  .gr.panel {
 +    margin-left: $group-indent;
 +    margin-right: $group-indent;
++  }
++
++  .gr.card {
+     border-radius: 0px;
    }
  
-   .gr.panel {
-@@ -97,7 +90,7 @@
+-  .rep.panel {
++  .rep.card {
+     border-radius: 0px;
    }
  
-   .panel-body {
+@@ -96,29 +89,29 @@
+     }
+   }
+ 
+-  .panel-body {
 -    @media (max-width: @screen-xs-max) {
++  .card-body {
 +    @include media-breakpoint-down(md) {
        padding-left: 0px;
        padding-right: 0px;
      }
-@@ -106,19 +99,19 @@
+   }
+ 
    .stripe-repeats {
-     > .row, .panel-body > .children > .row {
+-    > .row, .panel-body > .children > .row {
++    > .row, .card-body > .children > .row {
        &:nth-of-type(odd) {
 -        background-color: @table-bg-accent;
 +        background-color: $table-accent-bg;
@@ -120,6 +135,15 @@
      border-radius: 8px;
      margin: 2px;
      padding-top: 5px;
+@@ -140,7 +133,7 @@
+     }
+   }
+ 
+-  .panel-heading {
++  .card-header {
+     border-top-left-radius: 0px;
+     border-top-right-radius: 0px;
+   }
 @@ -159,17 +152,17 @@
      display: none;
    }
@@ -168,10 +192,12 @@
      break-inside: avoid;
    }
  
-   .panel.panel-default.last,
-   .panel.panel-default.last *,
+-  .panel.panel-default.last,
+-  .panel.panel-default.last *,
 -  .q.form-group.last,
 -  .q.form-group.last * {
++  .card.last,
++  .card.last *,
 +  .q.last,
 +  .q.last * {
      margin-bottom: 0px;
@@ -186,7 +212,21 @@
      padding-top: 0px !important;
      padding-bottom: 0px !important;
      margin-top: 0px !important;
-@@ -268,3 +261,8 @@
+@@ -249,13 +242,6 @@
+   }
+ }
+ 
+-.question-tile-row {
+-  .gr {
+-    padding-right: 0px !important;
+-    padding-left: 0px !important;
+-  }
+-}
+-
+ .gr-has-no-nested-questions {
+   display: none;
+ }
+@@ -268,3 +254,8 @@
    padding-top: 0px !important;
    padding-bottom: 7px;
  }
