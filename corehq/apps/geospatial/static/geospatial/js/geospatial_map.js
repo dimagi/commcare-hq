@@ -22,7 +22,6 @@ hqDefine("geospatial/js/geospatial_map", [
         'default': "#0e00ff", // Blue
         'selected': "#0b940d", // Dark Green
     };
-    const DEFAULT_POLL_TIME_MS = 1500;
 
     const MAP_CONTAINER_ID = 'geospatial-map';
 
@@ -74,7 +73,6 @@ hqDefine("geospatial/js/geospatial_map", [
     var disbursementRunnerModel = function () {
         var self = {};
 
-        self.pollUrl = ko.observable('');
         self.isBusy = ko.observable(false);
 
         self.disbursementErrorMessage = ko.observable('');
@@ -151,9 +149,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     if (ret['unassigned'].length) {
                         self.showUnassignedCasesError(true);
                     }
-                    if (ret['poll_url'] !== undefined) {
-                        self.startPoll(ret['poll_url']);
-                    } else if (ret['assignments']) {
+                    if (ret['assignments']) {
                         self.handleDisbursementResults(ret['assignments']);
                     } else {
                         self.setBusy(false);
@@ -166,32 +162,6 @@ hqDefine("geospatial/js/geospatial_map", [
                     self.setBusy(false);
                 },
             });
-        };
-
-        self.startPoll = function (pollUrl) {
-            if (!self.isBusy()) {
-                self.setBusy(true);
-            }
-            self.pollUrl(pollUrl);
-            self.doPoll();
-        };
-
-        self.doPoll = function () {
-            var tick = function () {
-                $.ajax({
-                    method: 'GET',
-                    url: self.pollUrl(),
-                    success: function (data) {
-                        const result = data.result;
-                        if (!data) {
-                            setTimeout(tick, DEFAULT_POLL_TIME_MS);
-                        } else {
-                            self.handleDisbursementResults(result);
-                        }
-                    },
-                });
-            };
-            tick();
         };
 
         function connectUserWithCasesOnMap(user, cases) {
