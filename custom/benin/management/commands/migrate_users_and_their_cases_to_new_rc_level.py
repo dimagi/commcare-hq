@@ -28,6 +28,9 @@ class Command(BaseCommand):
 
         parser.add_argument('domain')
         parser.add_argument(
+            '--village_id'
+        )
+        parser.add_argument(
             '--dry_run',
             action='store_true',
             default=False,
@@ -56,9 +59,14 @@ class Command(BaseCommand):
                        retry on this update in case of any intermittent failures
         """
         dry_run = options['dry_run']
+        village_id = options['village_id']
 
-        villages = _find_locations(domain=domain, location_type_code=LOCATION_TYPE_VILLAGE)
+        if village_id:
+            villages = SQLLocation.active_objects.get_locations([village_id])
+        else:
+            villages = _find_locations(domain=domain, location_type_code=LOCATION_TYPE_VILLAGE)
         for village in villages:
+            log(f"Starting updates for village {village.name}")
             users = _find_rc_users_at_location(domain, village)
             for user in users:
                 user_rc_number = user.user_data.get('rc_number')
