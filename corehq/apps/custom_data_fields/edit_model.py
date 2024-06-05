@@ -288,6 +288,16 @@ class CustomDataModelMixin(object):
         return self.get_definition().get_profiles()
 
     @classmethod
+    @memoized
+    def get_definition_for_domain(cls, domain):
+        return CustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
+
+    @classmethod
+    @memoized
+    def get_user_accessible_profiles(cls, domain, *args):
+        return cls.get_definition_for_domain(domain).get_profiles()
+
+    @classmethod
     def validate_incoming_fields(cls, existing_fields, new_fields, can_edit_linked_data=False):
         existing_synced_fields = {field.upstream_id: field for field in existing_fields if field.upstream_id}
 
