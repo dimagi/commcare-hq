@@ -166,7 +166,7 @@ def _update_case_owners(domain, case_ids, owner_id, dry_run):
 def log(message, logfile=None):
     logfile = logfile or progress_logfile
     print(message)
-    with open(logfile, 'w+') as filestream:
+    with open(logfile, 'a') as filestream:
         filestream.write(message)
 
 
