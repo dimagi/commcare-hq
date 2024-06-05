@@ -145,7 +145,7 @@ hqDefine("geospatial/js/geospatial_map", [
                 }
 
                 if (parameters.max_case_travel_time_seconds) {
-                    const travelParamValue = `${parameters.max_case_travel_time_seconds/60} ${gettext("minutes")}`;
+                    const travelParamValue = `${parameters.max_case_travel_time_seconds / 60} ${gettext("minutes")}`;
                     parametersList.push(
                         {name: gettext("Max travel time"), value: travelParamValue}
                     );
