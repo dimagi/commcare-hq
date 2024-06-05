@@ -653,10 +653,10 @@ hqDefine('geospatial/js/models', [
                 contentType: "application/json; charset=utf-8",
                 success: function (ret) {
                     if (!ret.success) {
-                        return alertUser.alert_user(gettext(ret.message), 'danger');
+                        return alertUser.alert_user(ret.message, 'danger');
                     }
                     self.clearSelectedPolygonFilter();
-                    var message = gettext(ret.message) + " " + gettext("Refreshing Page...");
+                    var message = ret.message + " " + gettext("Refreshing Page...");
                     alertUser.alert_user(message, 'success');
                     window.location.reload();
                 },
