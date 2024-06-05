@@ -136,7 +136,7 @@ hqDefine("geospatial/js/geospatial_map", [
             self.setDisbursementParameters = function (parameters) {
                 var parametersList = [
                     {name: gettext("Max cases per user"), value: parameters.max_cases_per_user},
-                    {name: gettext("Min cases per user"), value: parameters.min_cases_per_user}
+                    {name: gettext("Min cases per user"), value: parameters.min_cases_per_user},
                 ];
 
                 if (parameters.max_case_distance) {
@@ -153,7 +153,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
                 self.parameters(parametersList);
                 self.showParams(true);
-            }
+            };
 
             let userData = users.map(function (c) {
                 return {
