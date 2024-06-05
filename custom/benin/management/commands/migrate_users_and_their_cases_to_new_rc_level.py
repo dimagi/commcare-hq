@@ -1,9 +1,16 @@
+import math
+
 from django.core.management.base import BaseCommand
 
+from casexml.apps.case.mock import CaseBlock
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.es.cases import CaseES
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.user_data import prime_user_data_caches
+from corehq.util.log import with_progress_bar
 
 LOCATION_TYPE_VILLAGE = "Village"
 LOCATION_TYPE_RC = "RC"
@@ -41,7 +48,8 @@ class Command(BaseCommand):
                         2. Why are we updating it though? They are already owned by users. They aren't many though
                     3. Update all cases
                         1. Update owner to be the corresponding RC location
-                    4. Update users location to corresponding RC location
+                    4. Update users location to corresponding RC location only after cases to enable
+                       retry on this update in case of any intermittent failures
         """
         villages = _find_locations(domain=domain, location_type_code=LOCATION_TYPE_VILLAGE)
         for village in villages:
@@ -59,7 +67,7 @@ class Command(BaseCommand):
                             f"with rc number {user_rc_number}")
                     else:
                         if new_user_rc_location:
-                            _update_cases(user=user, current_owner_id=village.location_id,
+                            _update_cases(domain=domain, user=user, current_owner_id=village.location_id,
                                           new_owner_id=new_user_rc_location.location_id)
                             _update_users_location(user=user, location=new_user_rc_location)
                         else:
@@ -104,11 +112,34 @@ def _find_child_location_with_name(parent_location, location_name):
         raise MultipleMatchingLocationsFound
 
 
-def _update_cases(user, current_owner_id, new_owner_id):
+def _update_cases(domain, user, current_owner_id, new_owner_id):
     case_ids = _find_case_ids(owner_id=current_owner_id, opened_by_user_id=user.user_id)
+
     log("fUpdating {len(case_ids)} cases for user {user.username}")
-    # ToDo: update cases with progress bar
-    return case_ids
+
+    for case_ids in with_progress_bar(
+        chunked(case_ids, 100),
+        length=math.ceil(len(case_ids) / 100),
+        oneline=False
+    ):
+        _update_case_owners(domain, case_ids, new_owner_id)
+
+
+def _update_case_owners(domain, case_ids, owner_id):
+    case_blocks = []
+    for case_id in case_ids:
+        case_blocks.append(
+            CaseBlock(
+                create=False,
+                case_id=case_id,
+                owner_id=owner_id
+            )
+        )
+    submit_case_blocks(
+        case_blocks=case_blocks,
+        domain=domain,
+        device_id=__name__ + ".migrate_users_and_their_cases_to_new_rc_level"
+    )
 
 
 def log(message):
@@ -128,8 +159,7 @@ def _find_case_ids(owner_id, opened_by_user_id):
 
 
 def _update_users_location(user, location):
-    # ToDo: update user's primary location
-    pass
+    user.set_location(location)
 
 
 class MultipleMatchingLocationsFound(Exception):
