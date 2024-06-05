@@ -47,16 +47,21 @@ class Command(BaseCommand):
             for user in users:
                 user_rc_number = user.user_data.get('rc_number')
                 if user_rc_number:
-                    new_user_rc_location = _find_child_location_with_name(
-                        parent_location=village,
-                        location_name=user_rc_number
-                    )
-                    if new_user_rc_location:
-                        _update_cases(user=user, current_owner_id=village.location_id,
-                                      new_owner_id=new_user_rc_location.location_id)
-                        _update_users_location(user=user, location=new_user_rc_location)
+                    try:
+                        new_user_rc_location = _find_child_location_with_name(
+                            parent_location=village,
+                            location_name=user_rc_number
+                        )
+                    except MultipleMatchingLocationsFound:
+                        log(f"Multiple matching locations found for user {user.username}:{user.user_id} "
+                            f"with rc number {user_rc_number}")
                     else:
-                        log(f"User {user.username}:{user.user_id} rc {user_rc_number} location not found ")
+                        if new_user_rc_location:
+                            _update_cases(user=user, current_owner_id=village.location_id,
+                                          new_owner_id=new_user_rc_location.location_id)
+                            _update_users_location(user=user, location=new_user_rc_location)
+                        else:
+                            log(f"User {user.username}:{user.user_id} rc {user_rc_number} location not found ")
                 else:
                     log(f"User {user.username}:{user.user_id} missing rc number")
 
@@ -86,8 +91,16 @@ def _find_users_at_location(location):
 
 
 def _find_child_location_with_name(parent_location, location_name):
-    # ToDo: find location under parent location that has the name location_name
-    return None
+    # find location under parent location that has the name location_name
+    locations = parent_location.get_descendants().filter(
+        name=location_name
+    )
+    if not locations:
+        return None
+    if len(locations) == 1:
+        return locations[0]
+    if len(locations) > 1:
+        raise MultipleMatchingLocationsFound
 
 
 def _update_cases(user, current_owner_id, new_owner_id):
@@ -109,4 +122,8 @@ def _find_cases(owner_id, opened_by_user_id):
 
 def _update_users_location(user, location):
     # ToDo: update user's primary location
+    pass
+
+
+class MultipleMatchingLocationsFound(Exception):
     pass
