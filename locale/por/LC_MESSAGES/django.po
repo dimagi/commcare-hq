@@ -33,6 +33,7 @@
 # Sarah Sagan <ssagan@dimagi.com>, 2015
 # Séfora Vazirna <seforan@gmail.com>, 2020-2021
 # Tyler Wymer <twymer@dimagi.com>, 2014
+#: corehq/motech/repeaters/forms.py
 msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
@@ -1112,8 +1113,9 @@ msgstr ""
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
 #: corehq/motech/forms.py
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
 #: corehq/motech/templates/motech/connection_settings.html
 msgid "Cancel"
 msgstr "Cancelar"
@@ -2994,7 +2996,6 @@ msgstr ""
 #: corehq/apps/reports/views.py
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
@@ -4814,7 +4815,8 @@ msgstr ""
 #: corehq/apps/reports/standard/sms.py corehq/apps/smsbillables/filters.py
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/smsbackends/telerivet/forms.py
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 #: custom/inddex/filters.py
 msgid "No"
 msgstr ""
@@ -5146,10 +5148,8 @@ msgid "Web Apps Logo"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
-#, fuzzy
-#| msgid "Settings"
 msgid "Web Apps Settings"
-msgstr "Definições"
+msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "Weekly Log Sending Frequency"
@@ -5285,7 +5285,8 @@ msgstr ""
 #: corehq/apps/reports/standard/sms.py corehq/apps/smsbillables/filters.py
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/smsbackends/telerivet/forms.py
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 #: custom/inddex/filters.py
 msgid "Yes"
 msgstr ""
@@ -6096,7 +6097,8 @@ msgstr ""
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_property_modal.html
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
 msgid "Close"
 msgstr ""
 
@@ -8357,7 +8359,9 @@ msgstr ""
 msgid ""
 "Minimize duplicate registrations by requiring mobile workers to search the "
 "case list before registering a new case. Read more on the <a href='https://"
-"help.commcarehq.org/pages/viewpage.action?pageId=30605985'>Help Site</a>."
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/"
+"Case+List+and+Case+Detail+Configuration#Minimize-Duplicates:-Registration-"
+"From-the-Case-List'>Help Site</a>."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_form_setting.html
@@ -10056,7 +10060,7 @@ msgid "Add-ons"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
-#: corehq/apps/commtrack/views.py
+#: corehq/apps/commtrack/views.py corehq/apps/geospatial/forms.py
 msgid "Advanced Settings"
 msgstr ""
 
@@ -12243,7 +12247,7 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/cloudcare/partials/query/bootstrap5/list.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py
-#: corehq/apps/geospatial/templates/case_grouping_map.html
+#: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
 msgstr ""
@@ -12944,11 +12948,15 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/dashboard/templates/dashboard/base.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "          Welcome Back to %(cc_name)s\n"
+#| "        "
 msgid ""
 "\n"
-"          Welcome Back to %(cc_name)s\n"
-"        "
+"        Welcome Back to %(cc_name)s\n"
+"      "
 msgstr ""
 "\n"
 "Bem-vindo de volta ao %(cc_name)s"
@@ -21955,9 +21963,23 @@ msgid ""
 "configured for use of the Mapbox Matrix API."
 msgstr ""
 
-#: corehq/apps/geospatial/forms.py corehq/tabs/tabclasses.py
-msgid "Configure Geospatial Settings"
+#: corehq/apps/geospatial/forms.py
+msgid "Case Grouping Parameters"
 msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Algorithms"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Test API Key"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "Location Filter"
+msgid "Location Data Properties"
+msgstr "Filtro por Localização"
 
 #: corehq/apps/geospatial/forms.py
 msgid ""
@@ -21974,18 +21996,6 @@ msgid ""
 "will no longer appear on maps.</li><li>If the old case property is being "
 "used in an application, a new version would need to be released with the new "
 "case property for all users that capture location data.</li></ul>"
-msgstr ""
-
-#: corehq/apps/geospatial/forms.py
-msgid "Case Grouping Parameters"
-msgstr ""
-
-#: corehq/apps/geospatial/forms.py
-msgid "Algorithms"
-msgstr ""
-
-#: corehq/apps/geospatial/forms.py
-msgid "Test API Key"
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
@@ -22077,11 +22087,6 @@ msgid "Export Groups"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/case_grouping_map.html
-#: corehq/apps/geospatial/templates/map_visualization.html
-msgid "Filter by Saved Area"
-msgstr ""
-
-#: corehq/apps/geospatial/templates/case_grouping_map.html
 msgid ""
 "\n"
 "      Please\n"
@@ -22125,6 +22130,10 @@ msgstr ""
 
 #: corehq/apps/geospatial/templates/case_grouping_map.html
 msgid "Show All Groups"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
+msgid "Filter by Saved Area"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
@@ -27257,7 +27266,6 @@ msgstr ""
 #: corehq/apps/notifications/forms.py
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
 #: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
-#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 #: corehq/motech/generic_inbound/views.py corehq/motech/views.py
 msgid "URL"
 msgstr ""
@@ -29535,6 +29543,12 @@ msgstr ""
 #: corehq/apps/reports/commtrack/standard.py
 msgid "over-stock"
 msgstr ""
+
+#: corehq/apps/reports/const.py
+#, fuzzy
+#| msgid "Case List Explorer"
+msgid "Explorer"
+msgstr "Explorador de Lista de Casos"
 
 #: corehq/apps/reports/const.py
 msgid "Explorer - Can Publish"
@@ -32419,11 +32433,6 @@ msgstr ""
 
 #: corehq/apps/reports/v2/reports/explore_case_data.py
 msgid "Project Data"
-msgstr ""
-
-#: corehq/apps/reports/view_helpers.py
-#, python-format
-msgid "Add %(case_type)s"
 msgstr ""
 
 #: corehq/apps/reports/views.py
@@ -36969,7 +36978,7 @@ msgstr ""
 
 #: corehq/apps/user_importer/importer.py
 msgid ""
-"The email has bounced for this user's invite. Please try again with a "
+"The email has bounced for this user's invite: {}. Please try again with a "
 "different username"
 msgstr ""
 
@@ -37051,6 +37060,16 @@ msgstr ""
 
 #: corehq/apps/user_importer/validation.py
 msgid "Upload of web users requires 'username' and 'role' for each user"
+msgstr ""
+
+#: corehq/apps/user_importer/validation.py
+msgid "Invalid tableau role: '{}'. Please choose one of the following: {}"
+msgstr ""
+
+#: corehq/apps/user_importer/validation.py
+msgid ""
+"These groups, {}, are not valid for this domain. Please choose from the "
+"following: {}"
 msgstr ""
 
 #: corehq/apps/user_importer/validation.py
@@ -39311,10 +39330,8 @@ msgid "Security"
 msgstr "Manejo de Casos"
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
-#, fuzzy
-#| msgid "Email Supported"
 msgid "Support"
-msgstr "E-mail Suportado"
+msgstr ""
 
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 msgid "User Location"
@@ -41009,10 +41026,8 @@ msgid "Parent case not found"
 msgstr ""
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
-#, fuzzy
-#| msgid "Current Users"
 msgid "(current case)"
-msgstr "Usuários Atuais"
+msgstr ""
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
 msgid "No related cases"
@@ -43613,19 +43628,19 @@ msgid "FHIR version"
 msgstr ""
 
 #: corehq/motech/fhir/forms.py
-msgid "Enable patient registration"
-msgstr ""
-
-#: corehq/motech/fhir/forms.py
 msgid "Register new patients on the remote FHIR service?"
 msgstr ""
 
 #: corehq/motech/fhir/forms.py
-msgid "Enable patient search"
+msgid "Enable patient registration"
 msgstr ""
 
 #: corehq/motech/fhir/forms.py
 msgid "Search the remote FHIR service for matching patients?"
+msgstr ""
+
+#: corehq/motech/fhir/forms.py
+msgid "Enable patient search"
 msgstr ""
 
 #: corehq/motech/fhir/repeaters.py corehq/motech/fhir/views.py
@@ -43669,11 +43684,11 @@ msgid "Pass credentials in Basic Auth header when requesting a token"
 msgstr ""
 
 #: corehq/motech/forms.py
-msgid "Skip certificate verification"
+msgid "Do not use in a production environment"
 msgstr ""
 
 #: corehq/motech/forms.py
-msgid "Do not use in a production environment"
+msgid "Skip certificate verification"
 msgstr ""
 
 #: corehq/motech/forms.py corehq/motech/openmrs/forms.py
@@ -44034,11 +44049,11 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/openmrs/forms.py
-msgid "Atom feed enabled"
+msgid "Poll Atom feed for changes made in OpenMRS/Bahmni"
 msgstr ""
 
 #: corehq/motech/openmrs/forms.py
-msgid "Poll Atom feed for changes made in OpenMRS/Bahmni"
+msgid "Atom feed enabled"
 msgstr ""
 
 #: corehq/motech/openmrs/forms.py
@@ -44130,6 +44145,10 @@ msgid "Start Forwarding"
 msgstr ""
 
 #: corehq/motech/repeaters/forms.py
+msgid "Include 'app_id' URL query parameter."
+msgstr ""
+
+#: corehq/motech/repeaters/forms.py
 msgid "Users to exclude"
 msgstr ""
 
@@ -44216,11 +44235,88 @@ msgstr ""
 msgid "Python dictionary"
 msgstr ""
 
-#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Resend selected records"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "Resend"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Cancel selected records"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Requeue selected records"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Requeue"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+#, python-format
+msgid "Select all %(total)s payloads"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+#, python-format
+msgid "Select %(total_pending)s pending payloads"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+#, python-format
+msgid "Select %(total_cancelled)s cancelled payloads"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Please select at least one payload"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "This action is not allowed for some of the selected payloads"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Confirmation"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Are you sure?"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+#: corehq/motech/templates/motech/logs.html
+msgid "Payload"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/bootstrap3/repeat_record_report.html
+#: corehq/motech/repeaters/templates/repeaters/bootstrap5/repeat_record_report.html
+msgid "Payload Error"
+msgstr ""
+
+#: corehq/motech/repeaters/templates/repeaters/partials/bootstrap3/attempt_history.html
+#: corehq/motech/repeaters/templates/repeaters/partials/bootstrap5/attempt_history.html
 msgid "No attempts exist for this record."
 msgstr ""
 
-#: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
+#: corehq/motech/repeaters/templates/repeaters/partials/bootstrap3/attempt_history.html
+#: corehq/motech/repeaters/templates/repeaters/partials/bootstrap5/attempt_history.html
 msgid "Diagnosis:"
 msgstr ""
 
@@ -44286,67 +44382,6 @@ msgid ""
 "                                    forwarded, and this configuration will "
 "no longer appear on this page.\n"
 "                                "
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Resend selected records"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-#: corehq/motech/repeaters/views/repeat_records.py
-msgid "Resend"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Cancel selected records"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Requeue selected records"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Requeue"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-#, python-format
-msgid "Select all %(total)s payloads"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-#, python-format
-msgid "Select %(total_pending)s pending payloads"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-#, python-format
-msgid "Select %(total_cancelled)s cancelled payloads"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Please select at least one payload"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "This action is not allowed for some of the selected payloads"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Confirmation"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Are you sure?"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-#: corehq/motech/templates/motech/logs.html
-msgid "Payload"
-msgstr ""
-
-#: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
-msgid "Payload Error"
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
@@ -44452,10 +44487,6 @@ msgstr ""
 
 #: corehq/motech/templates/motech/connection_settings.html
 msgid "Delete Connection Settings"
-msgstr ""
-
-#: corehq/motech/templates/motech/connection_settings.html
-msgid "Deleting Connection Settings"
 msgstr ""
 
 #: corehq/motech/templates/motech/connection_settings.html
@@ -44794,6 +44825,10 @@ msgid "Data Manipulation"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
+msgid "Configure Geospatial Settings"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
 msgid "Remote"
 msgstr ""
 
@@ -44810,10 +44845,8 @@ msgid "New Application"
 msgstr "Nova Aplicação"
 
 #: corehq/tabs/tabclasses.py
-#, fuzzy
-#| msgid "Application Version"
 msgid "Application Testing"
-msgstr "Versão da Aplicação"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Test Inbound SMS"
