@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 
+from corehq.apps.es.cases import CaseES
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.user_data import prime_user_data_caches
@@ -104,10 +105,10 @@ def _find_child_location_with_name(parent_location, location_name):
 
 
 def _update_cases(user, current_owner_id, new_owner_id):
-    cases = _find_cases(owner_id=current_owner_id, opened_by_user_id=user.user_id)
-    log("fUpdating {len(cases)} cases for user {user.username}")
+    case_ids = _find_case_ids(owner_id=current_owner_id, opened_by_user_id=user.user_id)
+    log("fUpdating {len(case_ids)} cases for user {user.username}")
     # ToDo: update cases with progress bar
-    return cases
+    return case_ids
 
 
 def log(message):
@@ -115,9 +116,15 @@ def log(message):
     pass
 
 
-def _find_cases(owner_id, opened_by_user_id):
-    # ToDo: find open cases owned and opened by specific user
-    return []
+def _find_case_ids(owner_id, opened_by_user_id):
+    # find ids for open cases owned and opened by specific user
+    return (
+        CaseES()
+        .owner(owner_id)
+        .opened_by(opened_by_user_id)
+        .is_closed(False)
+        .get_ids()
+    )
 
 
 def _update_users_location(user, location):
