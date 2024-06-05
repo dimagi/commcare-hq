@@ -81,10 +81,6 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         user_count = len(distance_costs)
         case_count = len(distance_costs[0])
 
-        # remove me
-        assert parameters.user_count == user_count
-        assert parameters.case_count == case_count
-
         # Define decision variables
         decision_variables = self.get_decision_variables(x_dim=user_count, y_dim=case_count)
 
