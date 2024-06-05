@@ -27,8 +27,9 @@ class Parameters:
         self.min_cases_per_user = config.min_cases_per_user or 0
         self.max_case_distance = config.max_case_distance
 
-        max_travel_time_secs = config.max_case_travel_time * 60 if config.max_case_travel_time else None
-        self.max_case_travel_time_seconds = max_travel_time_secs if config.supports_travel_mode else None
+        if config.supports_travel_mode:
+            max_travel_time_secs = config.max_case_travel_time * 60 if config.max_case_travel_time else None
+            self.max_case_travel_time_seconds = max_travel_time_secs
 
 
 class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
