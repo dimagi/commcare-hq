@@ -525,7 +525,7 @@ hqDefine('geospatial/js/models', [
         self.selectedSavedPolygonId = ko.observable('');
         self.oldSelectedSavedPolygonId = ko.observable('');
         self.resettingSavedPolygon = false;
-        self.activeSavedPolygon;
+        self.activeSavedPolygon = ko.observable(null);
 
         self.addPolygonsToFilterList = function (featureList) {
             for (const feature of featureList) {
@@ -606,9 +606,9 @@ hqDefine('geospatial/js/models', [
         };
 
         function removeActivePolygonLayer() {
-            if (self.activeSavedPolygon) {
-                self.mapObj.mapInstance.removeLayer(self.activeSavedPolygon.id);
-                self.mapObj.mapInstance.removeSource(self.activeSavedPolygon.id);
+            if (self.activeSavedPolygon()) {
+                self.mapObj.mapInstance.removeLayer(self.activeSavedPolygon().id);
+                self.mapObj.mapInstance.removeSource(self.activeSavedPolygon().id);
             }
         }
 
@@ -630,9 +630,9 @@ hqDefine('geospatial/js/models', [
         }
 
         self.clearActivePolygon = function () {
-            if (self.activeSavedPolygon) {
+            if (self.activeSavedPolygon()) {
                 removeActivePolygonLayer();
-                self.activeSavedPolygon = null;
+                self.activeSavedPolygon(null);
                 self.btnSaveDisabled(false);
                 self.btnExportDisabled(true);
             }
@@ -711,7 +711,7 @@ hqDefine('geospatial/js/models', [
 
             createActivePolygonLayer(polygonObj);
 
-            self.activeSavedPolygon = polygonObj;
+            self.activeSavedPolygon(polygonObj);
             updateSelectedSavedPolygonParam();
             self.btnExportDisabled(false);
             self.btnSaveDisabled(true);
