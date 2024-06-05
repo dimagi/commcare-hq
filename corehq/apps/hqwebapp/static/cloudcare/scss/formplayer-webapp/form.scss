@@ -197,6 +197,10 @@ $group-indent: 15px;
 }
 
 @media print {
+  #content-container {
+    max-width: none;
+  }
+
   .form-container.print-container {
     margin: 0px;
     .page-header {
