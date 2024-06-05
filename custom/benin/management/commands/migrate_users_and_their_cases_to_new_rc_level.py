@@ -55,6 +55,8 @@ class Command(BaseCommand):
                     4. Update users location to corresponding RC location only after cases to enable
                        retry on this update in case of any intermittent failures
         """
+        dry_run = options['dry_run']
+
         villages = _find_locations(domain=domain, location_type_code=LOCATION_TYPE_VILLAGE)
         for village in villages:
             users = _find_rc_users_at_location(domain, village)
@@ -72,8 +74,9 @@ class Command(BaseCommand):
                     else:
                         if new_user_rc_location:
                             _update_cases(domain=domain, user=user, current_owner_id=village.location_id,
-                                          new_owner_id=new_user_rc_location.location_id)
-                            _update_users_location(user=user, location=new_user_rc_location)
+                                          new_owner_id=new_user_rc_location.location_id,
+                                          dry_run=dry_run)
+                            _update_users_location(user=user, location=new_user_rc_location, dry_run=dry_run)
                             log(f"User {user.username}:{user.user_id} updates completed.")
                         else:
                             log(f"User {user.username}:{user.user_id} rc {user_rc_number} location not found ")
@@ -117,7 +120,7 @@ def _find_child_location_with_name(parent_location, location_name):
         raise MultipleMatchingLocationsFound
 
 
-def _update_cases(domain, user, current_owner_id, new_owner_id):
+def _update_cases(domain, user, current_owner_id, new_owner_id, dry_run):
     case_types = ['menage', 'membre', 'seance_educative', 'fiche_pointage']
     for case_type in case_types:
         case_ids = _find_case_ids(case_type=case_type, owner_id=current_owner_id, opened_by_user_id=user.user_id)
@@ -129,10 +132,10 @@ def _update_cases(domain, user, current_owner_id, new_owner_id):
             length=math.ceil(len(case_ids) / 100),
             oneline=False
         ):
-            _update_case_owners(domain, case_ids, new_owner_id)
+            _update_case_owners(domain, case_ids, new_owner_id, dry_run)
 
 
-def _update_case_owners(domain, case_ids, owner_id):
+def _update_case_owners(domain, case_ids, owner_id, dry_run):
     case_blocks = []
     for case_id in case_ids:
         case_blocks.append(
@@ -142,11 +145,12 @@ def _update_case_owners(domain, case_ids, owner_id):
                 owner_id=owner_id
             )
         )
-    submit_case_blocks(
-        case_blocks=case_blocks,
-        domain=domain,
-        device_id=__name__ + ".migrate_users_and_their_cases_to_new_rc_level"
-    )
+    if not dry_run:
+        submit_case_blocks(
+            case_blocks=case_blocks,
+            domain=domain,
+            device_id=__name__ + ".migrate_users_and_their_cases_to_new_rc_level"
+        )
 
 
 def log(message):
@@ -167,8 +171,10 @@ def _find_case_ids(case_type, owner_id, opened_by_user_id):
     )
 
 
-def _update_users_location(user, location):
-    user.set_location(location)
+def _update_users_location(user, location, dry_run):
+    if not dry_run:
+        user.set_location(location)
+    log(f"User {user.username}:{user.user_id} location updated to {location.location_id}")
 
 
 class MultipleMatchingLocationsFound(Exception):
