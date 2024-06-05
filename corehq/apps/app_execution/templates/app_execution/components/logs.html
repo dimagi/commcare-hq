@@ -2,14 +2,14 @@
 <div class="row">
   <div class="col">
     <h3>Logs</h3>
-    <pre class="text-bg-light border rounded-3 p-3">{{ output }}</pre>
-    {% if success %}
+    <pre class="text-bg-light border rounded-3 p-3">{{ log.output }}</pre>
+    {% if log.success %}
       <div class="text-bg-success p-3">
         <strong>{% trans "Success" %}</strong>
       </div>
     {% else %}
       <div class="text-bg-danger p-3">
-        <strong>{% trans "Error:" %}</strong> {{ error }}
+        <strong>{% trans "Error:" %}</strong> {{ log.error }}
       </div>
     {% endif %}
   </div>

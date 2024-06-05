@@ -49,7 +49,10 @@ class AppWorkflowConfigForm(forms.ModelForm):
             del self.fields["workflow_dsl"]
         else:
             del self.fields["workflow"]
-            self.fields["workflow_dsl"].initial = workflow_to_dsl(self.instance.workflow)
+            workflow = self.instance.workflow
+            if not workflow:
+                workflow = self.initial.get("workflow")
+            self.fields["workflow_dsl"].initial = workflow_to_dsl(workflow)
 
         if self.instance.id:
             self.fields["username"].initial = self.instance.django_user.username
