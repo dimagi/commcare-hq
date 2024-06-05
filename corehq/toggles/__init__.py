@@ -2874,3 +2874,10 @@ APP_TESTING = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description=''
 )
+
+SMART_LINKS_FOR_WEB_USERS = StaticToggle(
+    slug='smart_links_for_web_users',
+    label='USH: Allow web users to use smart links without logging in as before',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
