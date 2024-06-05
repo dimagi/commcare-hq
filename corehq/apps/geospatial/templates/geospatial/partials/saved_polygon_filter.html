@@ -17,9 +17,10 @@
             </button>
         </div>
         <div class="col-sm-2" style="margin-left:5px">
-            <button class="btn btn-default" data-bind="click: deleteSelectedPolygonFilter, visible: selectedSavedPolygonId">
+            <button class="btn btn-default" data-toggle="modal" data-target="#delete-saved-area-modal" data-bind="visible: selectedSavedPolygonId">
                 {% trans 'Delete Area' %}
             </button>
         </div>
     </div>
 </div>
+{% include 'geospatial/partials/delete_saved_area_modal.html' %}
