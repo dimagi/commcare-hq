@@ -10,7 +10,7 @@ from corehq.apps.app_execution.tests.utils import assert_json_dict_equal
 class StepModelTest(SimpleTestCase):
 
     def test_workflow_has_all_step_types(self):
-        workflow = _get_workflow()
+        workflow = get_workflow_with_all_steps()
         all_steps = []
         new_steps = [step for step in workflow.steps]
         while new_steps:
@@ -24,14 +24,14 @@ class StepModelTest(SimpleTestCase):
             raise AssertionError(f"Missing step types: {missing}")
 
     def test_to_json(self):
-        assert_json_dict_equal(_get_workflow().__jsonattrs_to_json__(), _get_workflow_json())
+        assert_json_dict_equal(get_workflow_with_all_steps().__jsonattrs_to_json__(), _get_workflow_json())
 
     def test_from_json(self):
         workflow = AppWorkflow.__jsonattrs_from_json__(_get_workflow_json())
-        eq(workflow, _get_workflow())
+        eq(workflow, get_workflow_with_all_steps())
 
 
-def _get_workflow():
+def get_workflow_with_all_steps():
     return AppWorkflow(steps=[
         steps.CommandStep("Case Search"),
         steps.CommandIdStep("action 0"),

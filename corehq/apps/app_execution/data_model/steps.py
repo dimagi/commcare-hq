@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 from typing import Any, ClassVar
 
-from attr import define
+from attr import Factory, define
 from attrs import asdict
 
 from ..exceptions import AppExecutionError
@@ -298,8 +298,8 @@ class SubmitFormStep(Step):
 @define
 class FormStep(Step):
     type: ClassVar[str] = "form"
-    is_form_step: ClassVar[bool] = True
-    children: list[Any]
+    is_form_step: ClassVar[bool] = False  # the children are all form steps but this one isn't
+    children: list[Any] = Factory(list)
 
     def to_json(self):
         return {
