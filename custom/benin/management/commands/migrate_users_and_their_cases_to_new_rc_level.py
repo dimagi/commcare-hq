@@ -1,3 +1,4 @@
+import datetime
 import math
 
 from django.core.management.base import BaseCommand
@@ -14,6 +15,9 @@ from corehq.util.log import with_progress_bar
 
 LOCATION_TYPE_VILLAGE = "Village"
 LOCATION_TYPE_RC = "RC"
+
+
+logfile = f"migrate_users_and_their_cases_to_new_rc_level_{datetime.datetime.utcnow()}"
 
 
 class Command(BaseCommand):
@@ -143,8 +147,9 @@ def _update_case_owners(domain, case_ids, owner_id):
 
 
 def log(message):
-    # ToDo: add logging to log message where ever needed
-    pass
+    print(message)
+    with open(logfile, 'w+') as filestream:
+        filestream.write(message)
 
 
 def _find_case_ids(owner_id, opened_by_user_id):
