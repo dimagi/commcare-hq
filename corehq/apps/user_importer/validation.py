@@ -30,7 +30,8 @@ from corehq.util.workbook_json.excel import (
 
 
 def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowed_groups=None, allowed_roles=None,
-                               profiles_by_name=None, upload_domain=None, upload_user=None, location_cache=None):
+                               all_user_profiles_by_name=None, upload_domain=None, upload_user=None,
+                               location_cache=None):
     domain = domain_obj.name
     validate_passwords = domain_obj.strong_mobile_passwords
     noop = NoopValidator(domain)
@@ -39,12 +40,12 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowe
         UsernameTypeValidator(domain),
         DuplicateValidator(domain, 'username', all_specs),
         UsernameLengthValidator(domain),
-        CustomDataValidator(domain, profiles_by_name),
+        CustomDataValidator(domain, all_user_profiles_by_name),
         EmailValidator(domain, 'email'),
         RoleValidator(domain, allowed_roles),
         ExistingUserValidator(domain, all_specs),
         TargetDomainValidator(upload_domain),
-        ProfileValidator(domain, list(profiles_by_name)),
+        ProfileValidator(domain, list(all_user_profiles_by_name)),
         LocationAccessValidator(domain, upload_user, location_cache, is_web_user_import)
     ]
     if is_web_user_import:
@@ -267,18 +268,19 @@ class PasswordValidator(ImportValidator):
 
 
 class CustomDataValidator(ImportValidator):
-    def __init__(self, domain, profiles_by_name):
+    def __init__(self, domain, all_user_profiles_by_name):
         super().__init__(domain)
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         self.custom_data_validator = UserFieldsView.get_validator(domain)
-        self.profiles_by_name = profiles_by_name
+        self.all_user_profiles_by_name = all_user_profiles_by_name
 
     def validate_spec(self, spec):
         data = spec.get('data')
         profile_name = spec.get('user_profile')
+        print("in validate profile, profile_name is", profile_name)
         if data:
-            if profile_name and self.profiles_by_name:
-                profile = self.profiles_by_name.get(profile_name)
+            if profile_name and self.all_user_profiles_by_name:
+                profile = self.all_user_profiles_by_name.get(profile_name)
             else:
                 profile = None
             return self.custom_data_validator(data, profile=profile)

@@ -990,7 +990,7 @@ class DomainInfo:
             self.is_web_upload,
             allowed_group_names,
             allowed_roles=roles_by_name,
-            profiles_by_name=self.profiles_by_name,
+            all_user_profiles_by_name=self.profiles_by_name,
             upload_domain=self.importer.upload_domain,
             upload_user=self.upload_user,
             location_cache=self.location_cache
