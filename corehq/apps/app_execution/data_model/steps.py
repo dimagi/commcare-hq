@@ -230,6 +230,11 @@ class AnswerQuestionStep(Step):
     question_text: str
     value: str
 
+    @classmethod
+    def from_json(cls, data):
+        data.pop("question_id", None)
+        return cls(**data)
+
     def get_request_data(self, session, data):
         return {
             **data,

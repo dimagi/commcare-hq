@@ -18,31 +18,61 @@ def dsl_to_workflow(dsl_str):
     """
     lines = dsl_str.splitlines()
     steps = []
+    nested = []
     for line in lines:
         line = line.strip()
         if not line or line.startswith('#'):
             continue
 
-        for dsl in DSL:
-            try:
-                step = dsl.from_dsl(line)
-            except Exception as e:
-                raise AppExecutionError(f"Error parsing line '{line}': {e}")
+        if nested and nested[-1].match_end(line):
+            nested.pop()
+            continue
 
-            if not step:
-                # try next parser
-                continue
-
-            if getattr(step, "is_form_step", False):
-                if not isinstance(steps[-1], data_model.steps.FormStep):
-                    raise AppExecutionError("Form steps must be preceded by a 'Start form' step")
-                steps[-1].children.append(step)
-            else:
-                steps.append(step)
-            break
+        step, dsl = _line_to_step(line)
+        if nested:
+            steps[-1].children.append(step)
         else:
-            raise AppExecutionError(f"Invalid step: {line}")
+            steps.append(step)
+
+        if isinstance(dsl, NestedDsl):
+            nested.append(dsl)
+
+        # for dsl in DSL:
+        #     try:
+        #         step = dsl.from_dsl(line)
+        #     except Exception as e:
+        #         raise AppExecutionError(f"Error parsing line '{line}': {e}")
+        #
+        #     if not step:
+        #         # try next parser
+        #         continue
+        #
+        #     if getattr(step, "is_form_step", False):
+        #         if not isinstance(steps[-1], data_model.steps.FormStep):
+        #             raise AppExecutionError("Form steps must be preceded by a 'Start form' step")
+        #         steps[-1].children.append(step)
+        #     else:
+        #         steps.append(step)
+        #     break
+        # else:
+        #     raise AppExecutionError(f"Invalid step: {line}")
     return data_model.AppWorkflow(steps=steps)
+
+
+def _line_to_step(line):
+    for dsl in DSL:
+        try:
+            step = dsl.from_dsl(line)
+        except Exception as e:
+            raise AppExecutionError(f"Error parsing line '{line}': {e}")
+
+        if not step:
+            # try next parser
+            continue
+
+        return step, dsl
+
+    raise AppExecutionError(f"Invalid step: {line}")
 
 
 def workflow_to_dsl(workflow):
@@ -51,14 +81,18 @@ def workflow_to_dsl(workflow):
     return '\n'.join(lines)
 
 
-def _steps_to_dsl_lines(steps):
+def _steps_to_dsl_lines(steps, depth=0):
     lines = []
     for step in steps:
         dsl = DSL_MAP.get(step.type)
         if not dsl:
             raise AppExecutionError(f"Unsupported step type: {step.type}")
-        lines.append(dsl.to_dsl(step))
-        lines.extend(_steps_to_dsl_lines(step.get_children()))
+        indent = "  " * depth
+        dsl_out = dsl.to_dsl(step)
+        if isinstance(dsl_out, list):
+            lines.extend([indent + line for line in dsl_out])
+        else:
+            lines.append(indent + dsl_out)
     return lines
 
 
@@ -91,13 +125,36 @@ class SimpleDsl:
             return self.step_cls(**self.dict_to_kwargs(match.groupdict()))
 
 
+@dataclasses.dataclass
+class NestedDsl:
+    step_cls: type[Any]
+    starting: str
+    ending: str
+
+    def to_dsl(self, step):
+        dsl = [self.starting.format(step=step)]
+        for child in step.get_children():
+            dsl.extend(_steps_to_dsl_lines([child], depth=1))
+        dsl.append(self.ending.format(step=step))
+        return dsl
+
+    def from_dsl(self, line):
+        if re.match(self.starting, line, re.IGNORECASE):
+            return self.step_cls()
+
+    def match_end(self, line):
+        return re.match(self.ending, line, re.IGNORECASE)
+
+
 def _format_kv_pairs(field_name):
     """Factory function to produce a CSV string formatter for a field in a step class.
 
     Inverse of `_get_key_value_pairs`
     """
+
     def _formatter(step):
         return ", ".join(f'{k}="{v}"' for k, v in getattr(step, field_name).items())
+
     return _formatter
 
 
@@ -137,9 +194,11 @@ def join_values(field_name):
     Args:
         field_name (str): The name of the field in the step class
     """
+
     def _joiner(step):
         value = getattr(step, field_name)
         return ', '.join(map(str, value))
+
     return _joiner
 
 
@@ -152,6 +211,7 @@ def split_values(field_name, groupdict_field='value', cast=str):
         groupdict_field (str): The name of the field in the regex match groupdict
         cast (callable): A function to cast the value to the desired type
     """
+
     def _splitter(groupdict):
         values = []
         for val in groupdict[groupdict_field].split(','):
@@ -161,6 +221,7 @@ def split_values(field_name, groupdict_field='value', cast=str):
                 except Exception:
                     raise AppExecutionError(f"Invalid value: {val_clean}")
         return {field_name: values}
+
     return _splitter
 
 
@@ -170,13 +231,14 @@ def cast_value(field_name, cast):
     Args:
         cast (callable): A function to cast the value to the desired type
     """
+
     def _caster(groupdict):
         return {field_name: cast(groupdict[field_name])}
+
     return _caster
 
 
 VALUE_ENDING = r'\s+"(?P<value>.*?)"$'
-INDENT = "  "
 
 DSL = [
     SimpleDsl(
@@ -234,17 +296,17 @@ DSL = [
     ),
     SimpleDsl(
         data_model.steps.AnswerQuestionStep,
-        INDENT + 'Answer question "{step.question_text}" with "{value}"',
+        'Answer question "{step.question_text}" with "{value}"',
         fr'^Answer question\s+"(?P<question_text>.+?)"\s+with{VALUE_ENDING}'
     ),
     SimpleDsl(
         data_model.steps.AnswerQuestionIdStep,
-        INDENT + 'Answer question with ID "{step.question_id}" with "{value}"',
+        'Answer question with ID "{step.question_id}" with "{value}"',
         fr'^Answer question with ID\s+"(?P<question_id>.+?)"\s+with{VALUE_ENDING}'
     ),
     SimpleDsl(
         data_model.steps.SubmitFormStep,
-        INDENT + 'Submit form',
+        'Submit form',
         r'^submit form$',
         value_to_str=identity,
     ),
@@ -255,11 +317,10 @@ DSL = [
         value_to_str=lambda step: json.dumps(step.request_data),
         dict_to_kwargs=lambda groupdict: {"request_data": json.loads(groupdict["value"])},
     ),
-    SimpleDsl(
+    NestedDsl(
         data_model.steps.FormStep,
-        'Start form',
-        r'Start form$',
-        value_to_str=identity,
+        starting='Start form',
+        ending="End form"
     ),
 
     # Expectations

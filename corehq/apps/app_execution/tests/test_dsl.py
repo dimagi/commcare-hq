@@ -45,6 +45,25 @@ class TestDsl(SimpleTestCase):
             data_model.steps.CommandIdStep("action 0"),
         ]))
 
+    def test_expectations_in_form(self):
+        dsl = """
+        Start form
+            Expect case present @case_id = '123'
+            Answer question "Name" with "str"
+            Expect question "/data/question1" with "123"
+            Submit form
+        End form
+        """
+        workflow = dsl_to_workflow(dsl)
+        eq(workflow, data_model.AppWorkflow(steps=[
+            data_model.steps.FormStep(children=[
+                data_model.expectations.CasePresent(xpath_filter="@case_id = '123'"),
+                data_model.steps.AnswerQuestionStep("Name", "str"),
+                data_model.expectations.QuestionValue("/data/question1", "123"),
+                data_model.steps.SubmitFormStep(),
+            ]),
+        ]))
+
 
 def _get_workflow():
     steps = get_workflow_with_all_steps().steps
@@ -70,6 +89,7 @@ def _get_dsl():
         '  Answer question "Name" with "str"',
         '  Answer question with ID "name" with "str"',
         '  Submit form',
+        'End form',
         "Expect xpath instance('commcaresession')/session/data/case/@case_id = '123'",
         "Expect case present @case_id = '123'",
         "Expect case absent @case_id = '345'",
