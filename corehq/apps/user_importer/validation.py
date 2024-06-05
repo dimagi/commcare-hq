@@ -277,7 +277,6 @@ class CustomDataValidator(ImportValidator):
     def validate_spec(self, spec):
         data = spec.get('data')
         profile_name = spec.get('user_profile')
-        print("in validate profile, profile_name is", profile_name)
         if data:
             if profile_name and self.all_user_profiles_by_name:
                 profile = self.all_user_profiles_by_name.get(profile_name)
@@ -318,13 +317,13 @@ class RoleValidator(ImportValidator):
 class ProfileValidator(ImportValidator):
     error_message = _("Profile '{}' does not exist")
 
-    def __init__(self, domain, allowed_profiles=None):
+    def __init__(self, domain, all_profile_names=None):
         super().__init__(domain)
-        self.allowed_profiles = allowed_profiles
+        self.all_profile_names = all_profile_names
 
     def validate_spec(self, spec):
         profile = spec.get('user_profile')
-        if profile and profile not in self.allowed_profiles:
+        if profile and profile not in self.all_profile_names:
             return self.error_message.format(profile)
 
 
