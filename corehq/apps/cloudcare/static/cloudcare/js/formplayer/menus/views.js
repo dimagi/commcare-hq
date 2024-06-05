@@ -489,7 +489,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseTileView = CaseView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style panel panel-default",
+        className: "formplayer-request list-cell-wrapper-style card",
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileView.__super__.templateContext.apply(this, arguments);
@@ -513,7 +513,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseTileViewUnclickable = CaseTileView.extend({
         events: {},
-        className: "list-cell-wrapper-style panel panel-default",
+        className: "list-cell-wrapper-style card",
         rowClick: function () {},
     });
 
@@ -537,7 +537,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseTileGroupedView = CaseTileView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style case-tile-group panel panel-default",
+        className: "formplayer-request list-cell-wrapper-style case-tile-group card",
         template: _.template($("#case-tile-grouped-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);

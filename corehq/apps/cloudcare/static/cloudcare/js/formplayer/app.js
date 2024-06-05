@@ -384,7 +384,7 @@ hqDefine("cloudcare/js/formplayer/app", [
 
         window.addEventListener(
             'beforeprint', function () {
-                $('.panel.panel-default, .q.form-group').last().addClass('last');
+                $('.card, .q').last().addClass('last');
             }
         );
 
