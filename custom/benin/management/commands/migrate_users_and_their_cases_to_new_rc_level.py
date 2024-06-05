@@ -74,6 +74,7 @@ class Command(BaseCommand):
                             _update_cases(domain=domain, user=user, current_owner_id=village.location_id,
                                           new_owner_id=new_user_rc_location.location_id)
                             _update_users_location(user=user, location=new_user_rc_location)
+                            log(f"User {user.username}:{user.user_id} updates completed.")
                         else:
                             log(f"User {user.username}:{user.user_id} rc {user_rc_number} location not found ")
                 else:
