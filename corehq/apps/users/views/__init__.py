@@ -711,16 +711,15 @@ class ListRolesView(BaseRoleAccessView):
         return role_view_data
 
     def get_possible_profiles(self):
-        profile_list = []
-        definintions = CustomDataFieldsDefinition.objects.filter(domain=self.domain)
-        for definition in definintions:
-            prof_query_set = definition.get_profiles()
-            for prof in prof_query_set:
-                profile_list.append({
-                    'id': prof.id,
-                    'name': prof.name,
-                })
-        return profile_list
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            CUSTOM_USER_DATA_FIELD_TYPE,
+        )
+        return [{
+                'id': profile.id,
+                'name': profile.name,
+                }
+            for profile in CustomDataFieldsDefinition.get(self.domain, CUSTOM_USER_DATA_FIELD_TYPE).get_profiles()
+        ]
 
     @property
     def page_context(self):
