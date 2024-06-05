@@ -17,7 +17,8 @@ LOCATION_TYPE_VILLAGE = "Village"
 LOCATION_TYPE_RC = "RC"
 
 
-logfile = f"migrate_users_and_their_cases_to_new_rc_level_{datetime.datetime.utcnow()}"
+progress_logfile = f"migrate_users_and_their_cases_to_new_rc_level_{datetime.datetime.utcnow()}"
+error_logfile = f"migrate_users_and_their_cases_to_new_rc_level_errors_{datetime.datetime.utcnow()}"
 
 
 class Command(BaseCommand):
@@ -77,8 +78,8 @@ class Command(BaseCommand):
                             location_name=user_rc_number
                         )
                     except MultipleMatchingLocationsFound:
-                        log(f"Multiple matching locations found for user {user.username}:{user.user_id} "
-                            f"with rc number {user_rc_number}")
+                        log_error(f"Multiple matching locations found for user {user.username}:{user.user_id} "
+                                  f"with rc number {user_rc_number}")
                     else:
                         if new_user_rc_location:
                             _update_cases(domain=domain, user=user, current_owner_id=village.location_id,
@@ -87,9 +88,10 @@ class Command(BaseCommand):
                             _update_users_location(user=user, location=new_user_rc_location, dry_run=dry_run)
                             log(f"User {user.username}:{user.user_id} updates completed.")
                         else:
-                            log(f"User {user.username}:{user.user_id} rc {user_rc_number} location not found ")
+                            log_error(f"User {user.username}:{user.user_id} rc {user_rc_number} location "
+                                      f"not found")
                 else:
-                    log(f"User {user.username}:{user.user_id} missing rc number")
+                    log_error(f"User {user.username}:{user.user_id} missing rc number")
 
 
 def _find_locations(domain, location_type_code):
@@ -161,10 +163,15 @@ def _update_case_owners(domain, case_ids, owner_id, dry_run):
         )
 
 
-def log(message):
+def log(message, logfile=None):
+    logfile = logfile or progress_logfile
     print(message)
     with open(logfile, 'w+') as filestream:
         filestream.write(message)
+
+
+def log_error(message):
+    log(message, logfile=error_logfile)
 
 
 def _find_case_ids(case_type, owner_id, opened_by_user_id):
