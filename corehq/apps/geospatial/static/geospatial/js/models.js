@@ -660,6 +660,12 @@ hqDefine('geospatial/js/models', [
                     alertUser.alert_user(message, 'success');
                     window.location.reload();
                 },
+                error: function () {
+                    alertUser.alert_user(
+                        gettext("Oops! Something went wrong! Please contact admin if the problem persists."),
+                        'danger'
+                    );
+                },
             });
         };
 
