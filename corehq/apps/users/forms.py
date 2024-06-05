@@ -50,6 +50,7 @@ from corehq.apps.reports.util import (
     get_allowed_tableau_groups_for_domain,
     get_tableau_groups_for_user,
     update_tableau_user,
+    DEFAULT_TABLEAU_ROLE,
 )
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
@@ -1774,6 +1775,7 @@ class BaseTableauUserForm(forms.Form):
         label=gettext_noop("Role"),
         choices=TableauUser.Roles.choices,
         required=True,
+        initial=DEFAULT_TABLEAU_ROLE,
     )
     groups = forms.MultipleChoiceField(
         label=gettext_noop("Groups"),
