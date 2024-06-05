@@ -144,8 +144,8 @@ hqDefine("geospatial/js/geospatial_map", [
                     parametersList.push({name: gettext("Max distance to case"), value: maxCaseDistanceParamValue});
                 }
 
-                if (parameters.max_case_travel_time) {
-                    const travelParamValue = `${parameters.max_case_travel_time} ${gettext("minutes")}`;
+                if (parameters.max_case_travel_time_seconds) {
+                    const travelParamValue = `${parameters.max_case_travel_time_seconds/60} ${gettext("minutes")}`;
                     parametersList.push(
                         {name: gettext("Max travel time"), value: travelParamValue}
                     );

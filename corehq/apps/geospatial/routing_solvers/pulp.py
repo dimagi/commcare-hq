@@ -13,7 +13,7 @@ class Parameters:
     min_cases_per_user: int
     max_cases_per_user: int
     max_case_distance: int
-    max_case_travel_time: int
+    max_case_travel_time_seconds: int
     user_count: int
     case_count: int
 
@@ -26,11 +26,9 @@ class Parameters:
 
         self.min_cases_per_user = config.min_cases_per_user or 0
         self.max_case_distance = config.max_case_distance
-        self.max_case_travel_time = config.max_case_travel_time if config.supports_travel_mode else None
 
-    @property
-    def max_travel_time_seconds(self):
-        return self.max_case_travel_time * 60
+        max_travel_time_secs = config.max_case_travel_time * 60 if config.max_case_travel_time else None
+        self.max_case_travel_time_seconds = max_travel_time_secs if config.supports_travel_mode else None
 
 
 class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
@@ -174,8 +172,8 @@ class RadialDistanceSolver(DisbursementAlgorithmSolverInterface):
         if should_check_distance and distance_to_case > parameters.max_case_distance:
             return False
 
-        should_check_duration = travel_secs_to_case and parameters.max_case_travel_time
-        if should_check_duration and travel_secs_to_case > parameters.max_travel_time_seconds:
+        should_check_duration = travel_secs_to_case and parameters.max_case_travel_time_seconds
+        if should_check_duration and travel_secs_to_case > parameters.max_case_travel_time_seconds:
             return False
 
         return True
