@@ -14,15 +14,18 @@
 {% endblock %}
 {% block page_content %}
   <div class="mb-3">
-    <h2>Testing {{ workflow.name }}</h2>
-    <a class='btn btn-primary' href="{% url 'app_execution:edit_workflow' request.domain workflow.id %}">Edit</a>
+    <h2>{% blocktrans with name=workflow.name %}Testing {{ name }}{% endblocktrans %}</h2>
+    <a class='btn btn-primary' href="{% url 'app_execution:edit_workflow' request.domain workflow.id %}">{% translate 'Edit' %}</a>
   </div>
   {% if result %}
     {% include "app_execution/components/logs.html" %}
   {% endif %}
   <form method="post" class="mt-3">
     {% csrf_token %}
-    <button id="submit-button" type="submit" class="btn btn-primary" data-loading-text="Running...">
-      Run {% if result %}Again{% endif %}</button>
+    <button id="submit-button" type="submit" class="btn btn-primary" data-loading-text="{% translate 'Running...' %}">
+      {% if result %}{% translate 'Run Again' %}
+      {% else %}{% translate 'Run' %}
+      {% endif %}
+    </button>
   </form>
 {% endblock %}
