@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.user_data import prime_user_data_caches
 
@@ -75,7 +76,7 @@ def _find_locations(domain, location_type_code):
 
 def _find_rc_users_at_location(domain, location):
     # return users with usertype as 'rc'
-    users = _find_users_at_location(location)
+    users = _find_users_at_location(domain, location)
     prime_user_data_caches(users, domain)
 
     return [
@@ -85,9 +86,8 @@ def _find_rc_users_at_location(domain, location):
     ]
 
 
-def _find_users_at_location(location):
-    # ToDo: return users at location
-    return []
+def _find_users_at_location(domain, location):
+    return get_users_by_location_id(domain, location.location_id)
 
 
 def _find_child_location_with_name(parent_location, location_name):
