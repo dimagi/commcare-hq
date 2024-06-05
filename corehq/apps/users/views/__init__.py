@@ -11,7 +11,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition, PROFILE_SLUG
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
@@ -436,23 +436,17 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def page_context(self):
-        original_profile_id = self.editable_user.get_user_data(self.domain).profile_id
-        profiles, can_edit_original_profile = (
-            self.form_user_update.custom_data.field_view.get_displayable_profiles_and_edit_permission(
-                original_profile_id, self.domain, self.request.couch_user
-            )
-        )
-        serialized_profiles = [p.to_json() for p in profiles]
-
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
-            'can_edit_original_profile': can_edit_original_profile,
-            'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
-            'custom_fields_profiles': sorted(serialized_profiles, key=lambda x: x['name'].lower()),
-            'custom_fields_profile_slug': PROFILE_SLUG,
             'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
         }
+
+        original_profile_id = self.editable_user.get_user_data(self.domain).profile_id
+        field_view_context = self.form_user_update.custom_data.field_view.get_field_page_context(
+            self.domain, self.request.couch_user, self.form_user_update.custom_data, original_profile_id
+        )
+        ctx.update(field_view_context)
         if self.request.is_view_only:
             make_form_readonly(self.commtrack_form)
         if self.request.project.commtrack_enabled or self.request.project.uses_locations:
@@ -718,6 +712,18 @@ class ListRolesView(BaseRoleAccessView):
             )
         return role_view_data
 
+    def get_possible_profiles(self):
+        profile_list = []
+        definintions = CustomDataFieldsDefinition.objects.filter(domain=self.domain)
+        for definition in definintions:
+            prof_query_set = definition.get_profiles()
+            for prof in prof_query_set:
+                profile_list.append({
+                    'id': prof.id,
+                    'name': prof.name,
+                })
+        return profile_list
+
     @property
     def page_context(self):
         from corehq.apps.linked_domain.dbaccessors import is_active_downstream_domain
@@ -747,6 +753,7 @@ class ListRolesView(BaseRoleAccessView):
             'default_role': StaticRole.domain_default(self.domain),
             'tableau_list': tableau_list,
             'report_list': get_possible_reports(self.domain),
+            'profile_list': self.get_possible_profiles(),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
