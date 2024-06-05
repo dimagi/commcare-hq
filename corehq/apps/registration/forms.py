@@ -18,7 +18,6 @@ from crispy_forms.helper import FormHelper
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -491,6 +490,7 @@ class AdminInvitesUserForm(BaseLocationForm):
 
     def __init__(self, data=None, excluded_emails=None, is_add_user=None,
                  role_choices=(), should_show_location=False, *, domain, **kwargs):
+        self.request = kwargs.get('request')
         super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
         domain_obj = Domain.get_by_name(domain)
         self.fields['role'].choices = role_choices
@@ -498,13 +498,13 @@ class AdminInvitesUserForm(BaseLocationForm):
             if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
                 self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)
                 from corehq.apps.users.views.mobile import UserFieldsView
-                definition = CustomDataFieldsDefinition.get(domain_obj.name, UserFieldsView.field_type)
-                if definition:
-                    profiles = definition.get_profiles()
-                    if len(profiles) > 0:
-                        self.fields['profile'].choices = [('', '')] + [
-                            (profile.id, profile.name) for profile in profiles
-                        ]
+                profiles = UserFieldsView.get_user_accessible_profiles(
+                    self.domain, self.request.couch_user
+                )
+                if len(profiles) > 0:
+                    self.fields['profile'].choices = [('', '')] + [
+                        (profile.id, profile.name) for profile in profiles
+                    ]
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
                 programs = Program.by_domain(domain_obj.name)

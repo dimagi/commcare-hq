@@ -10,6 +10,7 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.motech.const import (
     AUTH_PRESETS,
     AUTH_TYPES,
@@ -59,9 +60,12 @@ class ConnectionSettingsForm(forms.ModelForm):
         required=False,
     )
     skip_cert_verify = forms.BooleanField(
-        label=_('Skip certificate verification'),
+        label="",
         help_text=_('Do not use in a production environment'),
         required=False,
+        widget=BootstrapCheckboxInput(
+            inline_label=_('Skip certificate verification'),
+        ),
     )
     notify_addresses_str = forms.CharField(
         label=_('Addresses to send notifications'),
@@ -150,20 +154,18 @@ class ConnectionSettingsForm(forms.ModelForm):
             twbscrispy.PrependedText('skip_cert_verify', ''),
             self.test_connection_button,
 
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Save"),
-                    type="submit",
-                    css_class="btn btn-primary",
+            twbscrispy.StrictButton(
+                _("Save"),
+                type="submit",
+                css_class="btn btn-primary",
+            ),
+            hqcrispy.LinkButton(
+                _("Cancel"),
+                reverse(
+                    ConnectionSettingsListView.urlname,
+                    kwargs={'domain': self.domain},
                 ),
-                hqcrispy.LinkButton(
-                    _("Cancel"),
-                    reverse(
-                        ConnectionSettingsListView.urlname,
-                        kwargs={'domain': self.domain},
-                    ),
-                    css_class="btn btn-default",
-                ),
+                css_class="btn btn-outline-primary",
             ),
         )
 
@@ -177,11 +179,14 @@ class ConnectionSettingsForm(forms.ModelForm):
                     _('Test Connection'),
                     type='button',
                     css_id='test-connection-button',
-                    css_class='btn btn-default disabled',
+                    css_class='btn btn-outline-primary disabled mb-3',
                 ),
-                css_class=hqcrispy.CSS_ACTION_CLASS,
             ),
-            css_class='form-group'
+            crispy.Div(
+                "",
+                css_id='test-connection-result',
+                css_class='text-success d-none mb-3',
+            ),
         )
 
     def clean_notify_addresses_str(self):

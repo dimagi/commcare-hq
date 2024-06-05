@@ -79,6 +79,9 @@
   "groups": {
     "is_complete": true
   },
+  "motech.openmrs": {
+    "is_complete": true
+  },
   "programs": {
     "is_complete": true
   },
@@ -91,6 +94,17 @@
   "reports": {
     "in_progress": true
   },
+  "motech.repeaters": {
+    "is_progress": true,
+    "templates": [
+      "add_form_repeater.html",
+      "repeaters.html",
+      "partials/repeater_row.html"
+    ],
+    "javascript": [
+      "js/add_form_repeater.js"
+    ]
+  },
   "reports_core": {
     "in_progress": true
   },
@@ -101,6 +115,9 @@
     "is_complete": true
   },
   "hqcase": {
+    "is_complete": true
+  },
+  "dashboard": {
     "is_complete": true
   }
 }
