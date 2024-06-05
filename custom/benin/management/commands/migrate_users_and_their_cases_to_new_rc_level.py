@@ -118,16 +118,18 @@ def _find_child_location_with_name(parent_location, location_name):
 
 
 def _update_cases(domain, user, current_owner_id, new_owner_id):
-    case_ids = _find_case_ids(owner_id=current_owner_id, opened_by_user_id=user.user_id)
+    case_types = ['menage', 'membre', 'seance_educative', 'fiche_pointage']
+    for case_type in case_types:
+        case_ids = _find_case_ids(case_type=case_type, owner_id=current_owner_id, opened_by_user_id=user.user_id)
 
-    log("fUpdating {len(case_ids)} cases for user {user.username}")
+        log(f"fUpdating {len(case_ids)} {case_type} cases for user {user.username}")
 
-    for case_ids in with_progress_bar(
-        chunked(case_ids, 100),
-        length=math.ceil(len(case_ids) / 100),
-        oneline=False
-    ):
-        _update_case_owners(domain, case_ids, new_owner_id)
+        for case_ids in with_progress_bar(
+            chunked(case_ids, 100),
+            length=math.ceil(len(case_ids) / 100),
+            oneline=False
+        ):
+            _update_case_owners(domain, case_ids, new_owner_id)
 
 
 def _update_case_owners(domain, case_ids, owner_id):
@@ -153,10 +155,11 @@ def log(message):
         filestream.write(message)
 
 
-def _find_case_ids(owner_id, opened_by_user_id):
-    # find ids for open cases owned and opened by specific user
+def _find_case_ids(case_type, owner_id, opened_by_user_id):
+    # find ids for open cases of a case type owned and opened by specific user
     return (
         CaseES()
+        .case_type(case_type)
         .owner(owner_id)
         .opened_by(opened_by_user_id)
         .is_closed(False)
