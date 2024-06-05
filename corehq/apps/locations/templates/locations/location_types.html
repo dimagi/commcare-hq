@@ -7,7 +7,6 @@
 {% block page_content %}
   {% initial_page_data 'location_types' location_types %}
   {% initial_page_data 'commtrack_enabled' commtrack_enabled %}
-  {% initial_page_data 'location_case_sync_restriction_enabled' location_case_sync_restriction_enabled %}
   {% initial_page_data 'suggest_orphan_case_alerts_setting' suggest_orphan_case_alerts_setting %}
   {% initial_page_data 'project_settings_url' project_settings_url %}
   <div class="row">
@@ -158,7 +157,7 @@
                                           {% endblocktrans %}">
                                     </span>
               </th>
-              {% if location_case_sync_restriction_enabled %}
+              {% if request|toggle_enabled:"USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION" %}
                 <th data-bind="visible: advanced_mode">
                   {% trans "View Child Data to Level" %}
                   <span class="hq-help-template"
@@ -246,7 +245,7 @@
               <td>
                 <input data-bind="checked: view_descendants" type="checkbox" />
               </td>
-              {% if location_case_sync_restriction_enabled %}
+              {% if request|toggle_enabled:"USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION" %}
                 <td data-bind="visible: $parent.advanced_mode">
                   <select class="form-control"
                           data-bind="options: $data.child_loc_types(),
