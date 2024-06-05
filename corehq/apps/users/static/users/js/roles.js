@@ -102,7 +102,7 @@ hqDefine('users/js/roles',[
                 data.profilePermissions = {
                     all: data.permissions.edit_user_profile,
                     specific: ko.utils.arrayMap(root.profileOptions, function (profile) {
-                        var slug = String(profile.id)
+                        var slug = String(profile.id);
                         return {
                             slug: slug,
                             name: profile.name,
