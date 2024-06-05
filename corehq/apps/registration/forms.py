@@ -498,12 +498,12 @@ class AdminInvitesUserForm(BaseLocationForm):
             if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
                 self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)
                 from corehq.apps.users.views.mobile import UserFieldsView
-                profiles = UserFieldsView.get_user_accessible_profiles(
+                self.valid_profiles = UserFieldsView.get_user_accessible_profiles(
                     self.domain, self.request.couch_user
                 )
-                if len(profiles) > 0:
+                if len(self.valid_profiles) > 0:
                     self.fields['profile'].choices = [('', '')] + [
-                        (profile.id, profile.name) for profile in profiles
+                        (profile.id, profile.name) for profile in self.valid_profiles
                     ]
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
@@ -555,6 +555,14 @@ class AdminInvitesUserForm(BaseLocationForm):
                 ),
             ),
         )
+
+    def clean_profile(self):
+        profile_id = self.cleaned_data['profile']
+        if profile_id and profile_id not in {str(p.id) for p in self.valid_profiles}:
+            raise forms.ValidationError(
+                _('Invalid profile selected. Please select a valid profile.'),
+            )
+        return profile_id
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip()
