@@ -335,7 +335,7 @@ class ProfileValidator(ImportValidator):
         user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
         original_profile_id = None
         if user_result.invitation:
-            original_profile_id = user_result.invitation.profile.id
+            original_profile_id = user_result.invitation.profile.id if user_result.invitation.profile else None
         elif user_result.editable_user:
             original_profile_id = user_result.editable_user.get_user_data(self.domain).profile_id
 
