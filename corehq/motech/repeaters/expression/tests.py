@@ -11,9 +11,8 @@ from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.expression.repeaters import CaseExpressionRepeater
-from corehq.motech.repeaters.models import SQLRepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord
 from corehq.util.test_utils import flag_enabled
 
 
@@ -84,25 +83,22 @@ class CaseExpressionRepeaterTest(TestCase, DomainSubscriptionMixin):
 
         cls.repeater.save()
 
-    def tearDown(self):
-        delete_all_repeat_records()
-
     @classmethod
     def repeat_records(cls, domain_name):
         # Enqueued repeat records have next_check set 48 hours in the future.
         later = datetime.utcnow() + timedelta(hours=48 + 1)
-        return SQLRepeatRecord.objects.filter(domain=domain_name, next_check__lt=later)
+        return RepeatRecord.objects.filter(domain=domain_name, next_check__lt=later)
 
     def test_filter_cases(self):
         forwardable_case = self.factory.create_case(case_type='forward-me')
         unforwardable_case = self.factory.create_case(case_type='dont-forward-me')
         repeat_records = self.repeat_records(self.domain).all()
-        self.assertEqual(SQLRepeatRecord.objects.filter(domain=self.domain).count(), 1)
+        self.assertEqual(RepeatRecord.objects.filter(domain=self.domain).count(), 1)
         self.assertEqual(repeat_records[0].payload_id, forwardable_case.case_id)
 
         self.factory.update_case(unforwardable_case.case_id, update={'now-this-case': 'can-be-forwarded'})
         repeat_records = self.repeat_records(self.domain).all()
-        self.assertEqual(SQLRepeatRecord.objects.filter(domain=self.domain).count(), 2)
+        self.assertEqual(RepeatRecord.objects.filter(domain=self.domain).count(), 2)
         self.assertEqual(repeat_records[1].payload_id, unforwardable_case.case_id)
 
     def test_payload(self):

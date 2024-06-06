@@ -10,7 +10,7 @@ from corehq.motech.repeaters.const import (
     RECORD_CANCELLED_STATE,
     RECORD_SUCCESS_STATE,
 )
-from corehq.motech.repeaters.models import Repeater, SQLRepeatRecord
+from corehq.motech.repeaters.models import Repeater, RepeatRecord
 
 
 class Command(BaseCommand):
@@ -33,7 +33,7 @@ class Command(BaseCommand):
     @memoized
     def most_recent_success(self):
         res = {}
-        for record in SQLRepeatRecord.objects.iterate(
+        for record in RepeatRecord.objects.iterate(
                 self.domain, repeater_id=self.repeater_id, state=RECORD_SUCCESS_STATE):
             if record.last_checked:
                 res[record.payload_id] = max(res.get(record.payload_id, datetime.datetime.min),
@@ -48,7 +48,7 @@ class Command(BaseCommand):
 
         redundant_records = []
         records_by_payload_id = defaultdict(list)
-        records = SQLRepeatRecord.objects.iterate(domain, repeater_id=repeater_id, state=RECORD_CANCELLED_STATE)
+        records = RepeatRecord.objects.iterate(domain, repeater_id=repeater_id, state=RECORD_CANCELLED_STATE)
         total_records = 0
         for record in records:
             total_records += 1
@@ -117,7 +117,7 @@ class RepeatRecordDeleter:
 
     def flush(self):
         if self.ids_to_delete:
-            SQLRepeatRecord.objects.filter(id__in=self.ids_to_delete).delete()
+            RepeatRecord.objects.filter(id__in=self.ids_to_delete).delete()
             self.ids_to_delete = []
 
     def __exit__(self, *exc_info):

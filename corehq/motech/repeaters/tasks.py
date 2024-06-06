@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -7,7 +6,6 @@ from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection, get_redis_lock
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.celery import periodic_task, task
 from corehq.motech.models import RequestLog
@@ -30,10 +28,9 @@ from .const import (
 )
 from .models import (
     Repeater,
-    SQLRepeatRecord,
+    RepeatRecord,
     domain_can_forward,
     get_payload,
-    is_sql_id,
     send_request,
 )
 
@@ -108,7 +105,7 @@ def check_repeaters_in_partition(partition):
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for record in SQLRepeatRecord.objects.iter_partition(
+            for record in RepeatRecord.objects.iter_partition(
                     start, partition, CHECK_REPEATERS_PARTITION_COUNT):
                 if not _soft_assert(
                     datetime.utcnow() < twentythree_hours_later,
@@ -134,8 +131,7 @@ def process_repeat_record(repeat_record_id, domain):
     NOTE: Keep separate from retry_process_repeat_record for monitoring purposes
     Domain is present here for domain tagging in datadog
     """
-    repeat_record = _get_repeat_record(repeat_record_id)
-    _process_repeat_record(repeat_record)
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -144,15 +140,7 @@ def retry_process_repeat_record(repeat_record_id, domain):
     NOTE: Keep separate from process_repeat_record for monitoring purposes
     Domain is present here for domain tagging in datadog
     """
-    repeat_record = _get_repeat_record(repeat_record_id)
-    _process_repeat_record(repeat_record)
-
-
-def _get_repeat_record(repeat_record_id):
-    if not is_sql_id(repeat_record_id):
-        # can be removed after all in-flight tasks with Couch ids have been processed
-        return SQLRepeatRecord.objects.get(couch_id=repeat_record_id)
-    return SQLRepeatRecord.objects.get(id=repeat_record_id)
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
 def _process_repeat_record(repeat_record):
@@ -169,8 +157,7 @@ def _process_repeat_record(repeat_record):
 
     if repeat_record.repeater.is_deleted:
         repeat_record.cancel()
-        with _delete_couch_record(repeat_record):
-            repeat_record.save()
+        repeat_record.save()
         return
 
     try:
@@ -185,30 +172,9 @@ def _process_repeat_record(repeat_record):
         logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
 
 
-@contextmanager
-def _delete_couch_record(repeat_record):
-    from django.db.models import Model
-
-    def delete(_, couch_object):
-        if not couch_object.doc_type.endswith(DELETED_SUFFIX):
-            couch_object.doc_type += DELETED_SUFFIX
-
-    if isinstance(repeat_record, Model):
-        assert not repeat_record._migration_get_custom_sql_to_couch_functions()
-        repeat_record._migration_get_custom_sql_to_couch_functions = lambda: [delete]
-        try:
-            yield
-        finally:
-            del repeat_record._migration_get_custom_sql_to_couch_functions
-            assert not repeat_record._migration_get_custom_sql_to_couch_functions()
-    else:
-        delete(..., repeat_record)
-        yield
-
-
 metrics_gauge_task(
     'commcare.repeaters.overdue',
-    SQLRepeatRecord.objects.count_overdue,
+    RepeatRecord.objects.count_overdue,
     run_every=crontab(),  # every minute
     multiprocess_mode=MPM_MAX
 )
@@ -217,7 +183,7 @@ metrics_gauge_task(
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeater(repeater_id):
     """
-    Worker task to send SQLRepeatRecords in chronological order.
+    Worker task to send RepeatRecords in chronological order.
 
     This function assumes that ``repeater`` checks have already
     been performed. Call via ``models.attempt_forward_now()``.

@@ -13,8 +13,7 @@ from corehq.apps.data_interfaces.utils import (
     operate_on_payloads,
 )
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import FormRepeater, SQLRepeatRecord
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
+from corehq.motech.repeaters.models import FormRepeater, RepeatRecord
 
 DOMAIN = 'test-domain'
 
@@ -25,7 +24,7 @@ class TestUtils(SimpleTestCase):
         response = _get_repeat_record_ids(None, None, 'test_domain')
         self.assertEqual(response, [])
 
-    @patch('corehq.apps.data_interfaces.tasks.SQLRepeatRecord.objects.filter')
+    @patch('corehq.apps.data_interfaces.tasks.RepeatRecord.objects.filter')
     def test__get_ids_payload_id_in_data(self, get_by_payload_id):
         payload_id = Mock()
         _get_repeat_record_ids(payload_id, None, 'test_domain')
@@ -33,7 +32,7 @@ class TestUtils(SimpleTestCase):
         self.assertEqual(get_by_payload_id.call_count, 1)
         get_by_payload_id.assert_called_with(domain='test_domain', payload_id=payload_id)
 
-    @patch('corehq.apps.data_interfaces.tasks.SQLRepeatRecord.objects.filter')
+    @patch('corehq.apps.data_interfaces.tasks.RepeatRecord.objects.filter')
     def test__get_ids_payload_id_not_in_data(self, iter_by_repeater):
         REPEATER_ID = 'c0ffee'
         _get_repeat_record_ids(None, REPEATER_ID, 'test_domain')
@@ -41,23 +40,23 @@ class TestUtils(SimpleTestCase):
         iter_by_repeater.assert_called_with(domain='test_domain', repeater__id=REPEATER_ID)
         self.assertEqual(iter_by_repeater.call_count, 1)
 
-    @patch('corehq.motech.repeaters.models.SQLRepeatRecord.objects')
+    @patch('corehq.motech.repeaters.models.RepeatRecord.objects')
     def test__validate_record_record_does_not_exist(self, mock_objects):
-        mock_objects.get.side_effect = [SQLRepeatRecord.DoesNotExist]
+        mock_objects.get.side_effect = [RepeatRecord.DoesNotExist]
         response = _get_sql_repeat_record('test_domain', '1234')
 
         mock_objects.get.assert_called_once_with(domain='test_domain', id='1234')
         self.assertIsNone(response)
 
-    @patch('corehq.motech.repeaters.models.SQLRepeatRecord.objects')
+    @patch('corehq.motech.repeaters.models.RepeatRecord.objects')
     def test__validate_record_invalid_domain(self, mock_objects):
-        mock_objects.get.side_effect = SQLRepeatRecord.DoesNotExist
+        mock_objects.get.side_effect = RepeatRecord.DoesNotExist
         response = _get_sql_repeat_record('test_domain', '1234')
 
         mock_objects.get.assert_called_once_with(domain='test_domain', id='1234')
         self.assertIsNone(response)
 
-    @patch('corehq.motech.repeaters.models.SQLRepeatRecord.objects')
+    @patch('corehq.motech.repeaters.models.RepeatRecord.objects')
     def test__validate_record_success(self, mock_objects):
         mock_record = Mock()
         mock_record.domain = 'test_domain'
@@ -66,19 +65,6 @@ class TestUtils(SimpleTestCase):
 
         mock_objects.get.assert_called_once_with(domain='test_domain', id='1234')
         self.assertEqual(response, mock_record)
-
-    @patch('corehq.motech.repeaters.models.SQLRepeatRecord.objects')
-    def test__validate_record_success_with_couch_id(self, mock_objects):
-        couch_id = 'b6859ae05fd94dccbc3dfd25cdc6cb2c'
-        mock_record = Mock()
-        mock_record.domain = 'test_domain'
-        mock_objects.get.return_value = mock_record
-        response = _get_sql_repeat_record('test_domain', couch_id)
-
-        mock_objects.get.assert_called_once_with(domain='test_domain', couch_id=couch_id)
-        self.assertEqual(response, mock_record)
-        assert issubclass(SQLRepeatRecord, SyncSQLToCouchMixin), \
-            "couch_id not supported? Should this test be removed?"
 
 
 class TestTasks(TestCase):
@@ -504,13 +490,13 @@ class TestGetRepeatRecordIDs(TestCase):
     @classmethod
     def create_repeat_records(cls):
         now = datetime.now()
-        cls.sql_records = [SQLRepeatRecord(
+        cls.sql_records = [RepeatRecord(
             domain=DOMAIN,
             repeater_id=cls.repeater.id,
             payload_id=cls.instance_id,
             registered_at=now,
         ) for __ in range(3)]
-        SQLRepeatRecord.objects.bulk_create(cls.sql_records)
+        RepeatRecord.objects.bulk_create(cls.sql_records)
 
     def test_no_payload_id_no_repeater_id_sql(self):
         result = _get_repeat_record_ids(payload_id=None, repeater_id=None, domain=DOMAIN)

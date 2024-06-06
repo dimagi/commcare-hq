@@ -9,7 +9,7 @@ from unittest.mock import PropertyMock, patch
 
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import SQLRepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord
 from custom.cowin.const import (
     COWIN_API_DATA_REGISTRATION_IDENTIFIER,
     COWIN_API_DATA_VACCINATION_IDENTIFIER,
@@ -48,7 +48,7 @@ class TestRepeaters(SimpleTestCase):
 
         repeater = BeneficiaryRegistrationRepeater()
         generator = BeneficiaryRegistrationPayloadGenerator(repeater)
-        repeat_record = SQLRepeatRecord()
+        repeat_record = RepeatRecord()
 
         self.assertEqual(repeater.get_headers(repeat_record)['X-Api-Key'], "secure-api-key")
 
@@ -66,8 +66,8 @@ class TestRepeaters(SimpleTestCase):
             }
         )
 
-    @patch('corehq.motech.repeaters.models.SQLRepeatRecord.handle_success', lambda *_: None)
-    @patch('corehq.motech.repeaters.models.SQLRepeatRecord.repeater', new_callable=PropertyMock)
+    @patch('corehq.motech.repeaters.models.RepeatRecord.handle_success', lambda *_: None)
+    @patch('corehq.motech.repeaters.models.RepeatRecord.repeater', new_callable=PropertyMock)
     @patch('corehq.motech.repeaters.models.CaseRepeater.payload_doc')
     @patch('custom.cowin.repeaters.update_case')
     @patch('requests.Response.json')
@@ -92,7 +92,7 @@ class TestRepeaters(SimpleTestCase):
         response.status_code = 200
         json_response_mock.return_value = response_json
 
-        repeat_record = SQLRepeatRecord(payload_id=case_id)
+        repeat_record = RepeatRecord(payload_id=case_id)
         repeater = BeneficiaryRegistrationRepeater(domain=self.domain)
         repeat_record_repeater_mock.return_value = repeater
 
@@ -115,7 +115,7 @@ class TestRepeaters(SimpleTestCase):
 
         repeater = BeneficiaryVaccinationRepeater()
         generator = BeneficiaryVaccinationPayloadGenerator(repeater)
-        repeat_record = SQLRepeatRecord()
+        repeat_record = RepeatRecord()
 
         self.assertEqual(repeater.get_headers(repeat_record)['X-Api-Key'], "my-secure-api-key")
 
@@ -169,8 +169,8 @@ class TestRepeaters(SimpleTestCase):
             }
         )
 
-    @patch('corehq.motech.repeaters.models.SQLRepeatRecord.handle_success', lambda *_: None)
-    @patch('corehq.motech.repeaters.models.SQLRepeatRecord.repeater', new_callable=PropertyMock)
+    @patch('corehq.motech.repeaters.models.RepeatRecord.handle_success', lambda *_: None)
+    @patch('corehq.motech.repeaters.models.RepeatRecord.repeater', new_callable=PropertyMock)
     @patch('corehq.motech.repeaters.models.CaseRepeater.payload_doc')
     @patch('custom.cowin.repeaters.update_case')
     def test_vaccination_response(self, update_case_mock, payload_doc_mock, repeat_record_repeater_mock):
@@ -188,7 +188,7 @@ class TestRepeaters(SimpleTestCase):
         response = requests.Response()
         response.status_code = 204
 
-        repeat_record = SQLRepeatRecord(payload_id=case_id)
+        repeat_record = RepeatRecord(payload_id=case_id)
         repeater = BeneficiaryVaccinationRepeater(domain=self.domain)
 
         repeat_record_repeater_mock.return_value = repeater
