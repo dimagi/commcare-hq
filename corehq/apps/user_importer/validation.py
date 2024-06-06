@@ -329,7 +329,7 @@ class ProfileValidator(ImportValidator):
 
     def validate_spec(self, spec):
         spec_profile_name = spec.get('user_profile')
-        if spec_profile_name and spec_profile_name not in list(self.all_user_profiles_by_name):
+        if spec_profile_name and spec_profile_name not in self.all_user_profiles_by_name.keys():
             return self.error_message.format(spec_profile_name)
 
         user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
