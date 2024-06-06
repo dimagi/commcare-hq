@@ -8,7 +8,6 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.generic import View
 
-import pytz
 from memoized import memoized
 
 from dimagi.utils.web import get_url_base, json_response
