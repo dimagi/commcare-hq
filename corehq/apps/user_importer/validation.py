@@ -30,8 +30,8 @@ from corehq.util.workbook_json.excel import (
 )
 
 
-def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowed_groups=None, allowed_roles=None,
-                               all_user_profiles_by_name=None, upload_domain=None, upload_user=None,
+def get_user_import_validators(domain_obj, all_specs, is_web_user_import, all_user_profiles_by_name,
+                               allowed_groups=None, allowed_roles=None, upload_domain=None, upload_user=None,
                                location_cache=None):
     domain = domain_obj.name
     validate_passwords = domain_obj.strong_mobile_passwords
@@ -320,7 +320,7 @@ class ProfileValidator(ImportValidator):
     error_message_user_profile_access = _("You do not have permission to edit the profile for this user "
                                   "or user invitation")
 
-    def __init__(self, domain, upload_user, is_web_user_import, all_profile_names=None):
+    def __init__(self, domain, upload_user, is_web_user_import, all_profile_names):
         super().__init__(domain)
         self.upload_user = upload_user
         self.is_web_user_import = is_web_user_import
