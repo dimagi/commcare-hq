@@ -714,12 +714,15 @@ class ListRolesView(BaseRoleAccessView):
         from corehq.apps.users.views.mobile.custom_data_fields import (
             CUSTOM_USER_DATA_FIELD_TYPE,
         )
-        return [{
-                'id': profile.id,
-                'name': profile.name,
-                }
-            for profile in CustomDataFieldsDefinition.get(self.domain, CUSTOM_USER_DATA_FIELD_TYPE).get_profiles()
-        ]
+        definition = CustomDataFieldsDefinition.get(self.domain, CUSTOM_USER_DATA_FIELD_TYPE)
+        if definition is not None:
+            return [{
+                    'id': profile.id,
+                    'name': profile.name,
+                    }
+                for profile in definition.get_profiles()]
+        else:
+            return []
 
     @property
     def page_context(self):
