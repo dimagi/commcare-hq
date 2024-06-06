@@ -46,7 +46,7 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowe
         RoleValidator(domain, allowed_roles),
         ExistingUserValidator(domain, all_specs),
         TargetDomainValidator(upload_domain),
-        ProfileValidator(domain, list(all_user_profiles_by_name)),
+        ProfileValidator(domain, upload_user, is_web_user_import, list(all_user_profiles_by_name)),
         LocationAccessValidator(domain, upload_user, location_cache, is_web_user_import)
     ]
     if is_web_user_import:
@@ -317,15 +317,32 @@ class RoleValidator(ImportValidator):
 
 class ProfileValidator(ImportValidator):
     error_message = _("Profile '{}' does not exist")
+    error_message_user_profile_access = _("You do not have permission to edit the profile for this user "
+                                  "or user invitation")
 
-    def __init__(self, domain, all_profile_names=None):
+    def __init__(self, domain, upload_user, is_web_user_import, all_profile_names=None):
         super().__init__(domain)
+        self.upload_user = upload_user
+        self.is_web_user_import = is_web_user_import
         self.all_profile_names = all_profile_names
 
     def validate_spec(self, spec):
         profile = spec.get('user_profile')
         if profile and profile not in self.all_profile_names:
             return self.error_message.format(profile)
+
+        user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
+        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+        upload_user_accessible_profiles = (
+            UserFieldsView.get_user_accessible_profiles(self.domain, self.upload_user))
+
+        original_profile_id = None
+        if user_result.invitation:
+            original_profile_id = user_result.invitation.profile.id
+        elif user_result.editable_user:
+            original_profile_id = user_result.editable_user.get_user_data(self.domain).profile_id
+        if original_profile_id and original_profile_id not in {p.id for p in upload_user_accessible_profiles}:
+            return self.error_message_user_profile_access
 
 
 class GroupValidator(ImportValidator):
@@ -477,7 +494,6 @@ class UserRetrievalResult(NamedTuple):
 def _get_invitation_or_editable_user(spec, is_web_user_import, domain) -> UserRetrievalResult:
     username = spec.get('username')
     editable_user = None
-
     if is_web_user_import:
         try:
             invitation = Invitation.objects.get(domain=domain, email=username, is_accepted=False)
@@ -489,5 +505,4 @@ def _get_invitation_or_editable_user(spec, is_web_user_import, domain) -> UserRe
             editable_user = CouchUser.get_by_username(username, strict=True)
         elif 'user_id' in spec:
             editable_user = CouchUser.get_by_user_id(spec.get('user_id'))
-
     return UserRetrievalResult(editable_user=editable_user)
