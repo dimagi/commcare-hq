@@ -317,8 +317,9 @@ class RoleValidator(ImportValidator):
 
 class ProfileValidator(ImportValidator):
     error_message = _("Profile '{}' does not exist")
-    error_message_user_profile_access = _("You do not have permission to edit the profile for this user "
+    error_message_original_user_profile_access = _("You do not have permission to edit the profile for this user "
                                   "or user invitation")
+    error_message_new_user_profile_access = _("You do not have permission to assign the profile '{}'")
 
     def __init__(self, domain, upload_user, is_web_user_import, all_user_profiles_by_name):
         super().__init__(domain)
@@ -348,8 +349,11 @@ class ProfileValidator(ImportValidator):
         )
         if not profile_changed:
             return
-        if original_profile_id and original_profile_id not in {p.id for p in upload_user_accessible_profiles}:
+        accessible_profile_ids = {p.id for p in upload_user_accessible_profiles}
+        if original_profile_id and original_profile_id not in accessible_profile_ids:
             return self.error_message_user_profile_access
+        if spec_profile and spec_profile.id not in accessible_profile_ids:
+            return self.error_message_new_user_profile_access.format(spec_profile_name)
 
 
 class GroupValidator(ImportValidator):
