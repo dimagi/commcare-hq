@@ -237,6 +237,18 @@ class TestLookupTableResource(APIResourceTest):
         self.assertEqual(data_type.fields[0].properties, ['lang', 'name'])
         self.assertEqual(data_type.item_attributes, ['X'])
 
+    def test_update_field_name(self):
+        lookup_table = {
+            "fields": [{"name": "ignored", "field_name": "property", "properties": ["value"]}],
+            "tag": "lookup_table",
+        }
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(self.data_type.id), json.dumps(lookup_table), method="PUT")
+        print(response.content)  # for debugging errors
+        data_type = LookupTable.objects.get(id=self.data_type.id)
+        self.assertEqual(data_type.fields[0].field_name, 'property')
+
 
 class TestLookupTableItemResourceV06(APIResourceTest):
     resource = LookupTableItemResource

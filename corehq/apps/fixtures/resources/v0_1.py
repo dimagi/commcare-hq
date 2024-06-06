@@ -178,13 +178,15 @@ class LookupTableResource(HqBaseResource):
         clear_fixture_cache(kwargs['domain'])
         return ImmediateHttpResponse(response=HttpAccepted())
 
-    def obj_create(self, bundle, request=None, **kwargs):
-        def adapt(field):
-            if "name" not in field and "field_name" in field:
-                field = field.copy()
-                field["name"] = field.pop("field_name")
-            return field
+    @staticmethod
+    def _adapt_field(field):
+        if "field_name" in field:
+            field = field.copy()
+            field["name"] = field.pop("field_name")
+        return field
 
+    def obj_create(self, bundle, request=None, **kwargs):
+        adapt = self._adapt_field
         tag = bundle.data.get("tag")
         if LookupTable.objects.domain_tag_exists(kwargs['domain'], tag):
             raise BadRequest(f"A lookup table with name {tag} already exists")
@@ -217,7 +219,8 @@ class LookupTableResource(HqBaseResource):
 
         if 'fields' in bundle.data:
             save = True
-            bundle.obj.fields = [TypeField(**f) for f in bundle.data['fields']]
+            adapt = self._adapt_field
+            bundle.obj.fields = [TypeField(**adapt(f)) for f in bundle.data['fields']]
 
         if 'item_attributes' in bundle.data:
             save = True
