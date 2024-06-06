@@ -341,6 +341,13 @@ class ProfileValidator(ImportValidator):
             original_profile_id = user_result.invitation.profile.id
         elif user_result.editable_user:
             original_profile_id = user_result.editable_user.get_user_data(self.domain).profile_id
+
+        spec_profile = self.all_user_profiles_by_name.get(spec_profile_name)
+        profile_changed = original_profile_id != (
+            spec_profile.id if spec_profile is not None else spec_profile
+        )
+        if not profile_changed:
+            return
         if original_profile_id and original_profile_id not in {p.id for p in upload_user_accessible_profiles}:
             return self.error_message_user_profile_access
 
