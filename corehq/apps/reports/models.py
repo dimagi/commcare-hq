@@ -262,6 +262,10 @@ class TableauUser(models.Model):
         VIEWER = 'Viewer', 'Viewer'
         UNLICENSED = 'Unlicensed', 'Unlicensed'
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
 
 logger = logging.getLogger('tableau_api')
 
