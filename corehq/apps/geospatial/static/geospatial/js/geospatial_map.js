@@ -26,7 +26,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
     const MAP_CONTAINER_ID = 'geospatial-map';
 
-    var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
+    var saveGeoJSONUrl = initialPageData.reverse('geo_polygons');
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
     var disbursementRunner;
 

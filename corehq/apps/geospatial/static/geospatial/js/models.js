@@ -20,7 +20,6 @@ hqDefine('geospatial/js/models', [
     const MAX_URL_LENGTH = 4500;
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
-    var geoJSONUrl = initialPageData.reverse('geo_polygon');
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -645,12 +644,10 @@ hqDefine('geospatial/js/models', [
         };
 
         self.deleteSelectedPolygonFilter = function () {
+            const deleteGeoJSONUrl = initialPageData.reverse('geo_polygon', self.selectedSavedPolygonId());
             $.ajax({
                 type: 'DELETE',
-                url: geoJSONUrl,
-                dataType: 'json',
-                data: JSON.stringify({'polygon_id': self.selectedSavedPolygonId()}),
-                contentType: "application/json; charset=utf-8",
+                url: deleteGeoJSONUrl,
                 success: function (ret) {
                     if (!ret.success) {
                         return alertUser.alert_user(ret.message, 'danger');
