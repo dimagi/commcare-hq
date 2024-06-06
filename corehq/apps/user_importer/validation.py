@@ -333,10 +333,6 @@ class ProfileValidator(ImportValidator):
             return self.error_message.format(spec_profile_name)
 
         user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
-        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-        upload_user_accessible_profiles = (
-            UserFieldsView.get_user_accessible_profiles(self.domain, self.upload_user))
-
         original_profile_id = None
         if user_result.invitation:
             original_profile_id = user_result.invitation.profile.id
@@ -349,6 +345,10 @@ class ProfileValidator(ImportValidator):
         )
         if not profile_changed:
             return
+
+        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+        upload_user_accessible_profiles = (
+            UserFieldsView.get_user_accessible_profiles(self.domain, self.upload_user))
         accessible_profile_ids = {p.id for p in upload_user_accessible_profiles}
         if original_profile_id and original_profile_id not in accessible_profile_ids:
             return self.error_message_user_profile_access
