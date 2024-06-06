@@ -19,6 +19,7 @@ from corehq.apps.fixtures.models import (
 )
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import HqPermissions
+from corehq.util.validation import JSONSchemaValidator
 
 
 def convert_fdt(fdi, type_cache=None):
@@ -218,10 +219,70 @@ class FieldsDictField(tp_f.DictField):
 
 
 class LookupTableItemResource(HqBaseResource):
+    """Lookup Table Row API resource
+
+    Example ``fields`` format:
+
+        "fields": {
+            "tree": {
+                "field_list": [
+                    {
+                        "field_value": "pine",
+                        "properties": {"family": "Pinaceae"}
+                    }
+                ]
+            }
+        }
+
+    Note: the object containing "field_list" is superfluous and could
+    be replaced with the "field_list" property value. Maybe in a
+    API version?
+
+    Example ``item_attributes`` format:
+
+        "item_attributes": {
+            "name": "Western White Pine Tree",
+            "height": "30-50 meters",
+        }
+    """
     id = UUIDField(attribute='id', readonly=True, unique=True)
     data_type_id = UUIDField(attribute='table_id')
     fields = FieldsDictField(attribute='fields')
     item_attributes = tp_f.DictField(attribute='item_attributes')
+
+    validate_deserialized_data = JSONSchemaValidator({
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+            "fields": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "object",
+                    "properties": {"field_list": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "patternProperties": {
+                                "^(field_)?value$": {"type": "string"},
+                            },
+                            "properties": {
+                                "properties": {
+                                    "type": "object",
+                                    "additionalProperties": {"type": "string"},
+                                },
+                            },
+                            "additionalProperties": False,
+                        },
+                    }},
+                    "additionalProperties": False,
+                },
+            },
+            "item_attributes": {
+                "type": "object",
+                "additionalProperties": {"type": "string"},
+            }
+        },
+    })
 
     # It appears that sort_key is not included in any user facing UI. It is only defined as
     # the order of rows in the excel file when uploaded. We'll keep this behavior by incrementing

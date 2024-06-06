@@ -328,6 +328,21 @@ class TestLookupTableItemResourceV06(APIResourceTest):
             'cool_attr_value'
         )
 
+    def test_create_with_bad_properties(self):
+        data_item_json = self._get_data_item_create()
+        data_item_json["fields"]["state_name"]["field_list"][0]["properties"] = []
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(data_item_json),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        errors = json.loads(response.content.decode("utf-8"))
+        print(errors)
+        self.assertIn("[] is not of type 'object':", errors[0])
+        data_item = LookupTableRow.objects.filter(domain=self.domain.name).first()
+        self.assertIsNone(data_item)
+
 
 class TestLookupTableItemResourceV05(TestLookupTableItemResourceV06):
     resource = LookupTableItemResource
