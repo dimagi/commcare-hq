@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -10,7 +10,8 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.geospatial.models import GeoConfig, GeoPolygon
 from corehq.apps.geospatial.views import (
-    GeoPolygonView,
+    GeoPolygonDetailView,
+    GeoPolygonListView,
     GeospatialConfigPage,
     GPSCaptureView,
 )
@@ -51,9 +52,12 @@ class BaseGeospatialViewClass(TestCase):
     def endpoint(self):
         return reverse(self.urlname, args=(self.domain,))
 
+    @property
+    def login_url(self):
+        return reverse('domain_login', kwargs={'domain': self.domain})
+
 
 class GeoConfigViewTestClass(TestCase):
-
     domain = 'test-domain'
     username = 'zeusy'
     password = 'nyx'
@@ -212,7 +216,6 @@ class GeoConfigViewTestClass(TestCase):
 
 @es_test(requires=[case_adapter], setup_class=True)
 class TestGPSCaptureView(BaseGeospatialViewClass):
-
     urlname = GPSCaptureView.urlname
 
     def test_no_access(self):
@@ -234,7 +237,6 @@ class TestGPSCaptureView(BaseGeospatialViewClass):
 @flag_enabled('GEOSPATIAL')
 @es_test(requires=[case_search_adapter, user_adapter], setup_class=True)
 class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
-
     urlname = 'get_paginated_cases_or_users'
 
     @classmethod
@@ -322,7 +324,6 @@ class TestGetPaginatedCasesOrUsers(BaseGeospatialViewClass):
 
 @es_test(requires=[user_adapter], setup_class=True)
 class TestGetUsersWithGPS(BaseGeospatialViewClass):
-
     urlname = 'get_users_with_gps'
 
     @classmethod
@@ -409,8 +410,8 @@ class TestGetUsersWithGPS(BaseGeospatialViewClass):
         self.assertEqual(user_data[0]['gps_point'], '12.34 45.67')
 
 
-class TestGeoPolygonView(BaseGeospatialViewClass):
-    urlname = GeoPolygonView.urlname
+class TestGeoPolygonListView(BaseGeospatialViewClass):
+    urlname = GeoPolygonListView.urlname
 
     def setUp(self):
         super().setUp()
@@ -420,40 +421,18 @@ class TestGeoPolygonView(BaseGeospatialViewClass):
         GeoPolygon.objects.all().delete()
         super().tearDown()
 
-    @staticmethod
-    def _sample_geojson_data():
-        data = {
-            "type": "FeatureCollection",
-            "features": [
-                {
-                    "id": "5af4923d29d0669052ed15737fcd9627",
-                    "type": "Feature",
-                    "properties": {},
-                    "geometry": {
-                        "coordinates": [
-                            [
-                                [2.8405520338592964, 10.123570736635216],
-                                [2.9854525080494057, 9.603842241835679],
-                                [3.857119423099789, 9.98535424153846],
-                                [3.601279523358272, 10.2973713850877],
-                                [2.601279523358272, 10.123570736635216],
-                            ]
-                        ],
-                        "type": "Polygon"
-                    }
-                }
-            ],
-            "name": "test-2",
-        }
-        return data
+    @flag_enabled('GEOSPATIAL')
+    def test_not_logged_in(self):
+        response = Client().post(self.endpoint, _sample_geojson_data())
+        self.assertRedirects(response, f"{self.login_url}?next={self.endpoint}")
 
     def test_feature_flag_not_enabled(self):
-        response = self.client.post(self.endpoint, self._sample_geojson_data())
+        response = self.client.post(self.endpoint, _sample_geojson_data())
         self.assertTrue(response.status_code == 404)
 
     @flag_enabled('GEOSPATIAL')
     def test_save_polygon(self):
-        geo_json_data = self._sample_geojson_data()
+        geo_json_data = _sample_geojson_data()
         response = self.client.post(
             self.endpoint,
             data={"geo_json": geo_json_data},
@@ -468,33 +447,80 @@ class TestGeoPolygonView(BaseGeospatialViewClass):
             del feature['id']
         self.assertEqual(saved_polygons[0].geo_json, geo_json_data)
 
-    @flag_enabled('GEOSPATIAL')
-    def test_get_polygons(self):
-        geo_json_data = self._sample_geojson_data()
-        geo_polygon = GeoPolygon.objects.create(
+
+class TestGeoPolygonDetailView(BaseGeospatialViewClass):
+    urlname = GeoPolygonDetailView.urlname
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username=self.username, password=self.password)
+
+    def tearDown(self):
+        GeoPolygon.objects.all().delete()
+        super().tearDown()
+
+    def _create_sample_polygon(self):
+        geo_json_data = _sample_geojson_data()
+        return GeoPolygon.objects.create(
             name=geo_json_data.pop('name'),
             domain=self.domain,
             geo_json=geo_json_data
         )
-        response = self.client.get(self.endpoint, data={"polygon_id": geo_polygon.id})
+
+    def _endpoint(self, geo_polygon_id):
+        return reverse(GeoPolygonDetailView.urlname, kwargs={"domain": self.domain, "pk": geo_polygon_id})
+
+    @flag_enabled('GEOSPATIAL')
+    def test_not_logged_in(self):
+        geo_polygon = self._create_sample_polygon()
+        response = Client().get(self._endpoint(geo_polygon.id))
+        self.assertRedirects(response, f"{self.login_url}?next={self._endpoint(geo_polygon.id)}")
+
+    def test_feature_flag_not_enabled(self):
+        geo_polygon = self._create_sample_polygon()
+        response = self.client.get(self._endpoint(geo_polygon.id))
+        self.assertTrue(response.status_code == 404)
+
+    @flag_enabled('GEOSPATIAL')
+    def test_get_polygon(self):
+        geo_polygon = self._create_sample_polygon()
+        response = self.client.get(self._endpoint(geo_polygon.id))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), geo_json_data)
+        self.assertEqual(response.json(), geo_polygon.geo_json)
 
     @flag_enabled('GEOSPATIAL')
     def test_delete_polygon(self):
-        geo_json_data = self._sample_geojson_data()
-        geo_polygon = GeoPolygon.objects.create(
-            name=geo_json_data.pop('name'),
-            domain=self.domain,
-            geo_json=geo_json_data
-        )
-        response = self.client.delete(
-            self.endpoint,
-            data={"polygon_id": geo_polygon.id},
-            content_type="application/json"
-        )
+        geo_polygon = self._create_sample_polygon()
+        response = self.client.delete(self._endpoint(geo_polygon.id))
         self.assertEqual(response.status_code, 200)
         with self.assertRaises(GeoPolygon.DoesNotExist):
             GeoPolygon.objects.get(pk=geo_polygon.id, domain=self.domain)
         saved_polygons = GeoPolygon.objects.filter(domain=self.domain)
         self.assertEqual(len(saved_polygons), 0)
+
+
+def _sample_geojson_data():
+    data = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "id": "5af4923d29d0669052ed15737fcd9627",
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "coordinates": [
+                        [
+                            [2.8405520338592964, 10.123570736635216],
+                            [2.9854525080494057, 9.603842241835679],
+                            [3.857119423099789, 9.98535424153846],
+                            [3.601279523358272, 10.2973713850877],
+                            [2.601279523358272, 10.123570736635216],
+                        ]
+                    ],
+                    "type": "Polygon"
+                }
+            }
+        ],
+        "name": "test-2",
+    }
+    return data
