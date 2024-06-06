@@ -114,6 +114,7 @@ accounting
  0092_revert_application_error_report_priv
  0093_defaultproductplan_is_annual_plan
  0094_add_annual_softwareplans
+ 0095_update_softwareplan_visibilities
 admin
  0001_initial
  0002_logentry_remove_auto_add
