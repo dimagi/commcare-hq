@@ -46,7 +46,7 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, all_us
         RoleValidator(domain, allowed_roles),
         ExistingUserValidator(domain, all_specs),
         TargetDomainValidator(upload_domain),
-        ProfileValidator(domain, upload_user, is_web_user_import, list(all_user_profiles_by_name)),
+        ProfileValidator(domain, upload_user, is_web_user_import, all_user_profiles_by_name),
         LocationAccessValidator(domain, upload_user, location_cache, is_web_user_import)
     ]
     if is_web_user_import:
@@ -320,16 +320,16 @@ class ProfileValidator(ImportValidator):
     error_message_user_profile_access = _("You do not have permission to edit the profile for this user "
                                   "or user invitation")
 
-    def __init__(self, domain, upload_user, is_web_user_import, all_profile_names):
+    def __init__(self, domain, upload_user, is_web_user_import, all_user_profiles_by_name):
         super().__init__(domain)
         self.upload_user = upload_user
         self.is_web_user_import = is_web_user_import
-        self.all_profile_names = all_profile_names
+        self.all_user_profiles_by_name = all_user_profiles_by_name
 
     def validate_spec(self, spec):
-        profile = spec.get('user_profile')
-        if profile and profile not in self.all_profile_names:
-            return self.error_message.format(profile)
+        spec_profile_name = spec.get('user_profile')
+        if spec_profile_name and spec_profile_name not in list(self.all_user_profiles_by_name):
+            return self.error_message.format(spec_profile_name)
 
         user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
