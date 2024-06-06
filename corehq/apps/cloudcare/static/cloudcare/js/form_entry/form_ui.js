@@ -5,6 +5,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     'underscore',
     'DOMPurify/dist/purify.min',
     'hqwebapp/js/toggles',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
@@ -17,6 +18,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     _,
     DOMPurify,
     toggles,
+    bootstrap,
     markdown,
     cloudcareUtils,
     constants,
@@ -623,12 +625,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             $(document).on("click", ".help-text-trigger", function (event) {
                 event.preventDefault();
                 var container = $(event.currentTarget).closest(".caption");
-                container.find(".modal").modal('show');
+                bootstrap.Modal.getOrCreateInstance(container.find(".modal")).show();
             });
 
             $(document).on("click", ".unsupported-question-type-trigger", function (event) {
                 var container = $(event.currentTarget).closest(".widget");
-                container.find(".modal").modal('show');
+                bootstrap.Modal.getOrCreateInstance(container.find(".modal")).show();
             });
         };
 
@@ -792,7 +794,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         };
 
         let columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
-        this.elementTile = `col-sm-${columnWidth}`;
+        this.elementTile = `col-md-${columnWidth}`;
     }
 
     Group.prototype = Object.create(Container.prototype);
@@ -828,7 +830,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         };
 
         const columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
-        this.elementTile = `col-sm-${columnWidth}`;
+        this.elementTile = `col-md-${columnWidth}`;
     }
     Repeat.prototype = Object.create(Container.prototype);
     Repeat.prototype.constructor = Container;
@@ -1076,7 +1078,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         if (self.stylesContains(constants.PER_ROW_PATTERN)) {
             self.controlWidth = constants.FULL_WIDTH;
             self.labelWidth = constants.FULL_WIDTH;
-            self.questionTileWidth = `col-sm-${columnWidth}`;
+            self.questionTileWidth = `col-md-${columnWidth}`;
         } else {
             self.controlWidth = constants.CONTROL_WIDTH;
             self.labelWidth = constants.LABEL_WIDTH;
