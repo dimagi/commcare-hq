@@ -37,25 +37,6 @@ def dsl_to_workflow(dsl_str):
         if isinstance(dsl, NestedDsl):
             nested.append(dsl)
 
-        # for dsl in DSL:
-        #     try:
-        #         step = dsl.from_dsl(line)
-        #     except Exception as e:
-        #         raise AppExecutionError(f"Error parsing line '{line}': {e}")
-        #
-        #     if not step:
-        #         # try next parser
-        #         continue
-        #
-        #     if getattr(step, "is_form_step", False):
-        #         if not isinstance(steps[-1], data_model.steps.FormStep):
-        #             raise AppExecutionError("Form steps must be preceded by a 'Start form' step")
-        #         steps[-1].children.append(step)
-        #     else:
-        #         steps.append(step)
-        #     break
-        # else:
-        #     raise AppExecutionError(f"Invalid step: {line}")
     return data_model.AppWorkflow(steps=steps)
 
 
