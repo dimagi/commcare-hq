@@ -340,10 +340,10 @@ class ProfileValidator(ImportValidator):
             original_profile_id = user_result.editable_user.get_user_data(self.domain).profile_id
 
         spec_profile = self.all_user_profiles_by_name.get(spec_profile_name)
-        profile_changed = original_profile_id != (
-            spec_profile.id if spec_profile is not None else spec_profile
+        spec_profile_same_as_original = original_profile_id == (
+            spec_profile.id if spec_profile is not None else None
         )
-        if not profile_changed:
+        if spec_profile_same_as_original:
             return
 
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
