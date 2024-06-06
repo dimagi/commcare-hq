@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from collections import Counter
+from typing import NamedTuple, Optional
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -443,26 +444,16 @@ class LocationAccessValidator(ImportValidator):
     def validate_spec(self, spec):
         from corehq.apps.user_importer.importer import find_location_id
         # 1. Get current locations for user or user invitation and ensure user can edit it
-        username = spec.get('username')
         current_locs = []
-        editable_user = None
-        if self.is_web_user_import:
-            try:
-                invitation = Invitation.objects.get(domain=self.domain, email=username, is_accepted=False)
-                if not user_can_access_invite(self.domain, self.upload_user, invitation):
-                    return self.error_message_user_access.format(invitation.email)
-                current_locs = invitation.assigned_locations.all()
-            except Invitation.DoesNotExist:
-                editable_user = CouchUser.get_by_username(username, strict=True)
-        else:
-            if username:
-                editable_user = CouchUser.get_by_username(username, strict=True)
-            elif 'user_id' in spec:
-                editable_user = CouchUser.get_by_user_id(spec.get('user_id'))
-        if editable_user:
-            if not user_can_access_other_user(self.domain, self.upload_user, editable_user):
-                return self.error_message_user_access.format(editable_user.username)
-            current_locs = editable_user.get_location_ids(self.domain)
+        user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
+        if user_result.invitation:
+            if not user_can_access_invite(self.domain, self.upload_user, user_result.invitation):
+                return self.error_message_user_access.format(user_result.invitation.email)
+            current_locs = user_result.invitation.assigned_locations.all()
+        elif user_result.editable_user:
+            if not user_can_access_other_user(self.domain, self.upload_user, user_result.editable_user):
+                return self.error_message_user_access.format(user_result.editable_user.username)
+            current_locs = user_result.editable_user.get_location_ids(self.domain)
 
         # 2. Ensure the user is only adding the user to/removing from *new locations* that they have permission
         # to access.
@@ -476,3 +467,27 @@ class LocationAccessValidator(ImportValidator):
                 return self.error_message_location_access.format(
                     ', '.join(SQLLocation.objects.filter(
                         location_id__in=problem_location_ids).values_list('site_code', flat=True)))
+
+
+class UserRetrievalResult(NamedTuple):
+    invitation: Optional[Invitation] = None
+    editable_user: Optional[CouchUser] = None
+
+
+def _get_invitation_or_editable_user(spec, is_web_user_import, domain) -> UserRetrievalResult:
+    username = spec.get('username')
+    editable_user = None
+
+    if is_web_user_import:
+        try:
+            invitation = Invitation.objects.get(domain=domain, email=username, is_accepted=False)
+            return UserRetrievalResult(invitation=invitation)
+        except Invitation.DoesNotExist:
+            editable_user = CouchUser.get_by_username(username, strict=True)
+    else:
+        if username:
+            editable_user = CouchUser.get_by_username(username, strict=True)
+        elif 'user_id' in spec:
+            editable_user = CouchUser.get_by_user_id(spec.get('user_id'))
+
+    return UserRetrievalResult(editable_user=editable_user)
