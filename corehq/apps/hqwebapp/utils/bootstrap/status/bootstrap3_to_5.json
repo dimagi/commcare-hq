@@ -67,6 +67,9 @@
   "registry": {
     "is_complete": true
   },
+  "motech.generic_inbound": {
+    "is_complete": true
+  },
   "user_importer": {
     "is_complete": true
   },

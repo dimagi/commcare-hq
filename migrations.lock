@@ -1232,6 +1232,7 @@ users
  0065_transfer_to_tableau_config_permission
  0066_add_profile_permissions
  0067_alter_invitation_tableau_role
+ 0068_grant_web_apps_to_default_mobile_worker_role
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

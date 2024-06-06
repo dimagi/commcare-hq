@@ -120,7 +120,6 @@
       {% csrf_token %}
       <input type="hidden" name="form_type" value="tableau" />
       <fieldset>
-        <legend>{% trans 'Tableau Configuration' %}</legend>
         {% crispy tableau_form %}
       </fieldset>
       {% if not request.is_view_only and edit_user_tableau_config%}

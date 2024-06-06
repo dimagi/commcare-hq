@@ -572,6 +572,11 @@ hqDefine("geospatial/js/case_grouping_map",[
                 return;
             }
 
+            // Groups need to be unlocked to load new case data
+            if (groupLockModelInstance.groupsLocked()) {
+                groupLockModelInstance.toggleGroupLock();
+            }
+
             // Hide the datatable rows but not the pagination bar
             $('.dataTables_scroll').hide();
 
