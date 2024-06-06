@@ -114,8 +114,7 @@ class NestedDsl:
 
     def to_dsl(self, step):
         dsl = [self.starting.format(step=step)]
-        for child in step.get_children():
-            dsl.extend(_steps_to_dsl_lines([child], depth=1))
+        dsl.extend(_steps_to_dsl_lines(step.get_children(), depth=1))
         dsl.append(self.ending.format(step=step))
         return dsl
 
