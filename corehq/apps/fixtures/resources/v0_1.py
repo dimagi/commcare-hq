@@ -109,11 +109,50 @@ class InternalFixtureResource(FixtureResource):
 
 
 class LookupTableResource(HqBaseResource):
+    """Lookup Table API resource
+
+    Example ``fields`` format:
+
+        "fields": [
+            {
+                "field_name": "tree",
+                "properties": ["family"]
+            }
+        ]
+
+    Example ``item_attributes`` format:
+
+        "item_attributes": ["name", "height"]
+    """
     id = UUIDField(attribute='id', readonly=True, unique=True)
     is_global = tp_f.BooleanField(attribute='is_global')
     tag = tp_f.CharField(attribute='tag')
     fields = tp_f.ListField(attribute='fields')
     item_attributes = tp_f.ListField(attribute='item_attributes')
+
+    validate_deserialized_data = JSONSchemaValidator({
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+            "fields": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^(field_)?name$": {"type": "string"},
+                    },
+                    "properties": {
+                        "properties": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                    },
+                    "additionalProperties": False,
+                },
+            },
+            "item_attributes": {"type": "array", "items": {"type": "string"}}
+        },
+    })
 
     def dehydrate_fields(self, bundle):
         return [
