@@ -15,7 +15,7 @@ requirejs.config({
         "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
         "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
         "underscore": "underscore/underscore",
-        "stripe": "https://js.stripe.com/v2/",
+        "stripe": "https://js.stripe.com/v2/?noext",
     },
     shim: {
         "stripe": { exports: 'Stripe' },
