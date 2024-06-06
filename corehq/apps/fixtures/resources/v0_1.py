@@ -148,6 +148,10 @@ class LookupTableResource(HqBaseResource):
                         },
                     },
                     "additionalProperties": False,
+                    "oneOf": [
+                        {"not": {"required": ["field_name"]}},
+                        {"not": {"required": ["name"]}},
+                    ],
                 },
             },
             "item_attributes": {"type": "array", "items": {"type": "string"}}
@@ -314,6 +318,10 @@ class LookupTableItemResource(HqBaseResource):
                                 },
                             },
                             "additionalProperties": False,
+                            "oneOf": [
+                                {"not": {"required": ["field_value"]}},
+                                {"not": {"required": ["value"]}},
+                            ],
                         },
                     }},
                     "additionalProperties": False,

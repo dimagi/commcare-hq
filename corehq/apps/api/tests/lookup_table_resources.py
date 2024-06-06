@@ -239,7 +239,7 @@ class TestLookupTableResource(APIResourceTest):
 
     def test_update_field_name(self):
         lookup_table = {
-            "fields": [{"name": "ignored", "field_name": "property", "properties": ["value"]}],
+            "fields": [{"name": "property", "properties": ["value"]}],
             "tag": "lookup_table",
         }
 
@@ -354,6 +354,22 @@ class TestLookupTableItemResourceV06(APIResourceTest):
         self.assertIn("[] is not of type 'object':", errors[0])
         data_item = LookupTableRow.objects.filter(domain=self.domain.name).first()
         self.assertIsNone(data_item)
+
+    def test_update_field_value(self):
+        data_item = self._create_data_item()
+        data_item_update = self._get_data_item_update()
+        data_item_update["fields"]["state_name"]["field_list"][0] = {
+            "value": "Mass.",
+            "properties": {"lang": "en"},
+        }
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(data_item.id.hex),
+            json.dumps(data_item_update),
+            method="PUT",
+        )
+        print(response.content)  # for debugging errors
+        row = LookupTableRow.objects.filter(domain=self.domain.name).first()
+        self.assertEqual(row.fields["state_name"][0].value, 'Mass.')
 
 
 class TestLookupTableItemResourceV05(TestLookupTableItemResourceV06):
