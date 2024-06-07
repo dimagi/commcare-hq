@@ -20,7 +20,7 @@ hqDefine('geospatial/js/models', [
     const MAX_URL_LENGTH = 4500;
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
-    const saveGeoJSONUrl = initialPageData.reverse('geo_polygons');
+    const saveGeoPolygonUrl = initialPageData.reverse('geo_polygons');
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -765,7 +765,7 @@ hqDefine('geospatial/js/models', [
             self.loadSelectedPolygonFromQueryParam();
         };
 
-        self.saveGeoJson = function () {
+        self.saveGeoPolygon = function () {
             const data = self.mapObj.drawControls.getAll();
             if (data.features.length) {
                 let name = window.prompt(gettext("Name of the Area"));
@@ -773,7 +773,7 @@ hqDefine('geospatial/js/models', [
 
                 $.ajax({
                     type: 'post',
-                    url: saveGeoJSONUrl,
+                    url: saveGeoPolygonUrl,
                     dataType: 'json',
                     data: JSON.stringify({'geo_json': data}),
                     contentType: "application/json; charset=utf-8",
