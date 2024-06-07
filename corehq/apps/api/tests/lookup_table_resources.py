@@ -249,6 +249,23 @@ class TestLookupTableResource(APIResourceTest):
         data_type = LookupTable.objects.get(id=self.data_type.id)
         self.assertEqual(data_type.fields[0].field_name, 'property')
 
+    def test_update_fails_with_two_field_names(self):
+        lookup_table = {
+            "fields": [{"name": "property", "field_name": "prop"}],
+            "tag": "lookup_table",
+        }
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(self.data_type.id), json.dumps(lookup_table), method="PUT")
+        self.assertEqual(response.status_code, 400)
+        errors = json.loads(response.content.decode("utf-8"))
+        print(errors)
+        self.assertIn("Failed validating 'not' in schema", errors[0])
+        self.assertIn("{'not': {'required': ['field_name']}}", errors[0])
+        self.assertIn("Failed validating 'not' in schema", errors[1])
+        self.assertIn("{'not': {'required': ['name']}}", errors[1])
+        self.assertEqual(len(errors), 2)
+
 
 class TestLookupTableItemResourceV06(APIResourceTest):
     resource = LookupTableItemResource
@@ -370,6 +387,27 @@ class TestLookupTableItemResourceV06(APIResourceTest):
         print(response.content)  # for debugging errors
         row = LookupTableRow.objects.filter(domain=self.domain.name).first()
         self.assertEqual(row.fields["state_name"][0].value, 'Mass.')
+
+    def test_update_fails_with_two_field_values(self):
+        data_item = self._create_data_item()
+        data_item_update = self._get_data_item_update()
+        data_item_update["fields"]["state_name"]["field_list"][0] = {
+            "value": "Mass.",
+            "field_value": "Mass...",
+        }
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(data_item.id.hex),
+            json.dumps(data_item_update),
+            method="PUT",
+        )
+        self.assertEqual(response.status_code, 400)
+        errors = json.loads(response.content.decode("utf-8"))
+        print(errors)
+        self.assertIn("Failed validating 'not' in schema", errors[0])
+        self.assertIn("{'not': {'required': ['field_value']}}", errors[0])
+        self.assertIn("Failed validating 'not' in schema", errors[1])
+        self.assertIn("{'not': {'required': ['value']}}", errors[1])
+        self.assertEqual(len(errors), 2)
 
 
 class TestLookupTableItemResourceV05(TestLookupTableItemResourceV06):
