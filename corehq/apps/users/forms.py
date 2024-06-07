@@ -1522,6 +1522,7 @@ class _UserFormSet(object):
             existing_custom_data=self.editable_user.get_user_data(self.domain).to_dict(),
             post_dict=self.data,
             ko_model="custom_fields",
+            request_user=self.request_user,
         )
 
     def is_valid(self):
