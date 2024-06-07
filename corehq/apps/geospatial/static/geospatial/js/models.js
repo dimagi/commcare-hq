@@ -20,6 +20,7 @@ hqDefine('geospatial/js/models', [
     const MAX_URL_LENGTH = 4500;
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
+    const saveGeoJSONUrl = initialPageData.reverse('geo_polygons');
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -762,6 +763,36 @@ hqDefine('geospatial/js/models', [
                 self.savedPolygons.push(new SavedPolygon(polygon));
             });
             self.loadSelectedPolygonFromQueryParam();
+        };
+
+        self.saveGeoJson = function () {
+            const data = self.mapObj.drawControls.getAll();
+            if (data.features.length) {
+                let name = window.prompt(gettext("Name of the Area"));
+                data['name'] = name;
+
+                $.ajax({
+                    type: 'post',
+                    url: saveGeoJSONUrl,
+                    dataType: 'json',
+                    data: JSON.stringify({'geo_json': data}),
+                    contentType: "application/json; charset=utf-8",
+                    success: function (ret) {
+                        delete data.name;
+                        // delete drawn area
+                        self.mapObj.drawControls.deleteAll();
+                        self.savedPolygons.push(
+                            new SavedPolygon({
+                                name: name,
+                                id: ret.id,
+                                geo_json: data,
+                            })
+                        );
+                        // redraw using mapControlsModelInstance
+                        self.selectedSavedPolygonId(ret.id);
+                    },
+                });
+            }
         };
 
     };
