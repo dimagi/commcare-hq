@@ -283,12 +283,6 @@ hqDefine("geospatial/js/geospatial_map", [
             }
         });
 
-        var $exportDrawnArea = $("#btnExportDrawnArea");
-        $exportDrawnArea.click(function () {
-            if (mapModel && mapModel.mapInstance) {
-                polygonFilterModel.exportGeoJson("btnExportDrawnArea");
-            }
-        });
 
         var $runDisbursement = $("#btnRunDisbursement");
         $runDisbursement.click(function () {
