@@ -747,12 +747,24 @@ def edit_app_langs(request, domain, app_id):
     except AssertionError:
         return HttpResponse(status=400)
 
-    # now do it
+    rename_languages(app, rename)
+    remove_deleted_languages(app, langs)
+
+    if app.langs != langs:
+        app.langs[:] = langs
+
+    app.smart_lang_display = json.loads(request.body.decode('utf-8'))['smart_lang_display']
+    app.save()
+    return json_response(langs)
+
+
+def rename_languages(app, rename):
     for old, new in rename.items():
         if old != new:
             app.rename_lang(old, new)
 
-    #remove deleted languages from build profiles
+
+def remove_deleted_languages(app, langs):
     new_langs = set(langs)
     deleted = [lang for lang in app.langs if lang not in new_langs]
     for id in app.build_profiles:
@@ -761,16 +773,6 @@ def edit_app_langs(request, domain, app_id):
                 app.build_profiles[id].langs.remove(lang)
             except ValueError:
                 pass
-
-    def replace_all(list1, list2):
-        if list1 != list2:
-            while list1:
-                list1.pop()
-            list1.extend(list2)
-    replace_all(app.langs, langs)
-    app.smart_lang_display = json.loads(request.body.decode('utf-8'))['smart_lang_display']
-    app.save()
-    return json_response(langs)
 
 
 @require_can_edit_apps
