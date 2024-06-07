@@ -766,11 +766,13 @@ hqDefine('geospatial/js/models', [
         };
 
         self.saveGeoPolygon = function () {
-            const data = self.mapObj.drawControls.getAll();
+            let data = self.mapObj.drawControls.getAll();
             if (data.features.length) {
                 let name = window.prompt(gettext("Name of the Area"));
+                if (!name) {
+                    return;
+                }
                 data['name'] = name;
-
                 $.ajax({
                     type: 'post',
                     url: saveGeoPolygonUrl,
