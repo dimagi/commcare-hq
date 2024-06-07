@@ -22,7 +22,9 @@ from corehq.apps.user_importer.validation import (
     UsernameValidator,
     BooleanColumnValidator,
     ConfirmationSmsValidator,
-    LocationAccessValidator)
+    LocationAccessValidator,
+    _get_invitation_or_editable_user,
+)
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, HqPermissions, Invitation, WebUser
 from corehq.apps.users.models_role import UserRole
@@ -516,3 +518,32 @@ class TestProfileValidator(TestCase):
     def tearDownClass(cls):
         super(TestProfileValidator, cls).tearDownClass()
         delete_all_users()
+
+
+class TestUtil(TestCase):
+    domain = "test-domain"
+
+    def test_get_invitation_or_editable_user(self):
+        create_domain(self.domain)
+        editable_user = WebUser.create(self.domain, 'editable-user', 'password', None, None)
+        invitation = Invitation.objects.create(
+            domain=self.domain,
+            email='invite-user@dimagi.com',
+            invited_by='a@dimagi.com',
+            invited_on=datetime.utcnow(),
+        )
+        spec = {'username': editable_user.username}
+        self.assertEqual(editable_user.userID,
+                         _get_invitation_or_editable_user(spec, True, self.domain).editable_user.userID)
+        self.assertEqual(editable_user.userID,
+                         _get_invitation_or_editable_user(spec, False, self.domain).editable_user.userID)
+        spec = {'user_id': editable_user.userID}
+        self.assertEqual(editable_user.userID,
+                         _get_invitation_or_editable_user(spec, False, self.domain).editable_user.userID)
+
+        spec = {'username': invitation.email}
+        self.assertEqual(invitation, _get_invitation_or_editable_user(spec, True, self.domain).invitation)
+
+        spec = {}
+        self.assertEqual(None, _get_invitation_or_editable_user(spec, True, self.domain).editable_user)
+        self.assertEqual(None, _get_invitation_or_editable_user(spec, False, self.domain).editable_user)
