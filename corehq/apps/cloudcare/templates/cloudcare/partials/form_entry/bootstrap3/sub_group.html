@@ -41,7 +41,8 @@
                 "></span>
           <button class="btn btn-danger del pull-right" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
                   data-bind="
-                      visible: isRepetition,
+                      visible: showDelete,
+                      enabled: hasNoPendingAnswer(),
                       click: deleteRepeat
                   "><i class="fa fa-remove"></i></button>
         </legend>
@@ -55,9 +56,10 @@
           </div>
           <span class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
           <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
-          <button class="btn btn-danger del pull-right" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
+           <button class="btn btn-danger del pull-right" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
                   data-bind="
-                      visible: isRepetition,
+                      visible: showDelete,
+                      enabled: hasNoPendingAnswer(),
                       click: deleteRepeat
                   "><i class="fa fa-remove"></i></button>
         </div>

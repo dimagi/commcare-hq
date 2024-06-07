@@ -33,6 +33,9 @@ $group-indent: 15px;
 
   .sticky-submit {
     position: sticky;
+    /* Puts the anchored submit button in front of form elements that use bootstrap's .form-control,
+       which adds z-index of 2 (3 when focused) */
+    z-index: $zindex-formplayer-anchored-submit;
   }
 
   // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.

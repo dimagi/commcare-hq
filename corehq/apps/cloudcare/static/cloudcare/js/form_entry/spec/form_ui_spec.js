@@ -438,4 +438,80 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.equal(question.answer(), "updated answer");
         });
     });
+
+    describe('formUI.removeSiblingsOfRepeatGroup', function () {
+        it('should do nothing for an empty root node', function () {
+            const rootNode = {children: []};
+            formUI.removeSiblingsOfRepeatGroup(rootNode, '1');
+            assert.deepEqual(rootNode, {children: []});
+        });
+
+        it('should remove nodes with the same prefix and keep the rest', function () {
+            const rootNode = {
+                children: [
+                    {ix: '0'},
+                    {ix: '1_0'},
+                    {ix: '1_1'},
+                ],
+            };
+            formUI.removeSiblingsOfRepeatGroup(rootNode, '1_1');
+            assert.deepEqual(
+                rootNode,
+                {
+                    children: [
+                        {ix: '0'},
+                    ],
+                });
+        });
+
+        it('should keep other repeat groups', function () {
+            const rootNode = {
+                children: [
+                    {ix: '0_0'},
+                    {ix: '1_0'},
+                    {ix: '1_1'},
+                    {ix: '2_1'},
+                ],
+            };
+            formUI.removeSiblingsOfRepeatGroup(rootNode, '1_1');
+            assert.deepEqual(
+                rootNode,
+                {
+                    children: [
+                        {ix: '0_0'},
+                        {ix: '2_1'},
+                    ],
+                });
+        });
+
+        it('should work with nested children', function () {
+            const rootNode = {
+                children: [
+                    {ix: '0'},
+                    {
+                        ix: '1',
+                        children: [
+                            {ix: '1,0_0'},
+                            {ix: '1,0_1'},
+                            {ix: '1,1'},
+                        ],
+                    },
+                ],
+            };
+            formUI.removeSiblingsOfRepeatGroup(rootNode, '1,0_1');
+            assert.deepEqual(
+                rootNode,
+                {
+                    children: [
+                        {ix: '0'},
+                        {
+                            ix: '1',
+                            children: [
+                                {ix: '1,1'},
+                            ],
+                        },
+                    ],
+                });
+        });
+    });
 });

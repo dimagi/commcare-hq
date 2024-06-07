@@ -440,8 +440,11 @@ hqDefine("geospatial/js/geospatial_map", [
         // This indicates clicking Apply button or initial page load
         if (isAfterReportLoad) {
             initMap();
-            initPolygonFilters();
-            initUserFilters();
+            mapModel.mapInstance.on('load', () => {
+                initPolygonFilters();
+                initUserFilters();
+            });
+
             // Hide controls until data is displayed
             showMapControls(false);
 
