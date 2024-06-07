@@ -422,6 +422,20 @@ class TestProfileValidator(TestCase):
         cls.editable_user.save()
         cls.web_user_import_validator = ProfileValidator(cls.domain, cls.upload_user,
                                                 True, cls.all_user_profile_ids_by_name)
+        cls.invitation = Invitation.objects.create(
+            domain=cls.domain,
+            email='invite-user@dimagi.com',
+            invited_by='a@dimagi.com',
+            invited_on=datetime.utcnow(),
+            profile=cls.profile1
+        )
+        cls.invitation2 = Invitation.objects.create(
+            domain=cls.domain,
+            email='invite-user2@dimagi.com',
+            invited_by='a@dimagi.com',
+            invited_on=datetime.utcnow(),
+            profile=None
+        )
         cls.edit_all_profiles_role = UserRole.create(
             domain=cls.domain_obj.name,
             name='Edit All Profiles',
@@ -446,30 +460,35 @@ class TestProfileValidator(TestCase):
 
     def test_edit_all_profiles_no_issues(self):
         self.upload_user.set_role(self.domain, self.edit_all_profiles_role.get_qualified_id())
-        user_spec = {'username': self.editable_user.username, 'user_profile': 'p2'}
-        validation_result = self.web_user_import_validator.validate_spec(user_spec)
-        assert validation_result is None
-        user_spec = {'username': self.editable_user2.username, 'user_profile': 'p2'}
-        validation_result = self.web_user_import_validator.validate_spec(user_spec)
-        assert validation_result is None
+        for username in [self.editable_user.username, self.invitation.email]:
+            user_spec = {'username': username, 'user_profile': 'p2'}
+            validation_result = self.web_user_import_validator.validate_spec(user_spec)
+            assert validation_result is None
+        for username in [self.editable_user2.username, self.invitation2.email]:
+            user_spec = {'username': username, 'user_profile': 'p2'}
+            validation_result = self.web_user_import_validator.validate_spec(user_spec)
+            assert validation_result is None
 
     def test_change_profile_no_issue(self):
         self.upload_user.set_role(self.domain, self.edit_p1_and_p2_profiles_role.get_qualified_id())
-        user_spec = {'username': self.editable_user.username, 'user_profile': 'p2'}
-        validation_result = self.web_user_import_validator.validate_spec(user_spec)
-        assert validation_result is None
+        for username in [self.editable_user.username, self.invitation.email]:
+            user_spec = {'username': username, 'user_profile': 'p2'}
+            validation_result = self.web_user_import_validator.validate_spec(user_spec)
+            assert validation_result is None
 
     def test_invalid_profile_name(self):
         self.upload_user.set_role(self.domain, self.edit_all_profiles_role.get_qualified_id())
-        user_spec = {'username': self.editable_user2.username, 'user_profile': 'r1'}
-        validation_result = self.web_user_import_validator.validate_spec(user_spec)
+        for username in [self.editable_user2.username, self.invitation2.email]:
+            user_spec = {'username': username, 'user_profile': 'r1'}
+            validation_result = self.web_user_import_validator.validate_spec(user_spec)
         assert validation_result == ("Profile 'r1' does not exist")
 
     def test_cant_assign_profile_without_the_permission(self):
         self.upload_user.set_role(self.domain, self.edit_p1_profiles_role.get_qualified_id())
-        user_spec = {'username': self.editable_user.username, 'user_profile': 'p2'}
-        validation_result = self.web_user_import_validator.validate_spec(user_spec)
-        assert validation_result == ("You do not have permission to assign the profile 'p2'")
+        for username in [self.editable_user.username, self.invitation.email]:
+            user_spec = {'username': username, 'user_profile': 'p2'}
+            validation_result = self.web_user_import_validator.validate_spec(user_spec)
+            assert validation_result == ("You do not have permission to assign the profile 'p2'")
 
     def test_removing_and_assigning_profile(self):
         self.upload_user.set_role(self.domain, self.edit_p1_profiles_role.get_qualified_id())
