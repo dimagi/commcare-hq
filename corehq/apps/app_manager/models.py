@@ -1600,6 +1600,11 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
         super(Form, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_case_and_meta(self)
 
+    def set_xform_default_language(self, lang):
+        source = XForm(self.source, domain=self.get_app().domain)
+        if source.exists():
+            source.set_default_language(lang)
+
     def all_other_forms_require_a_case(self):
         m = self.get_module()
         return all([form.requires == 'case' for form in m.get_forms() if form.id != self.id])
