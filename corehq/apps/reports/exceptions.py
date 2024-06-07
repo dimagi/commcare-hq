@@ -20,3 +20,11 @@ class TableauAPIError(Exception):
     def __init__(self, message, code=None):
         self.code = int(code) if code else None
         super().__init__(message)
+
+
+class TooManyCasesError(ValueError):
+    pass
+
+
+class FormArchiveError(Exception):
+    pass
