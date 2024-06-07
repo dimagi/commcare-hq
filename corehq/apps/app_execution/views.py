@@ -9,13 +9,16 @@ from django.urls import reverse
 from corehq.apps.app_execution import const
 from corehq.apps.app_execution.api import execute_workflow
 from corehq.apps.app_execution.data_model import EXAMPLE_WORKFLOW
-from corehq.apps.app_execution.db_accessors import get_avg_duration_data
+from corehq.apps.app_execution.db_accessors import get_avg_duration_data, get_status_data
 from corehq.apps.app_execution.exceptions import AppExecutionError, FormplayerException
 from corehq.apps.app_execution.forms import AppWorkflowConfigForm
 from corehq.apps.app_execution.har_parser import parse_har_from_string
 from corehq.apps.app_execution.models import AppExecutionLog, AppWorkflowConfig
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.view_utils import get_date_param
+from django.utils.translation import gettext as _
 
 
 @require_superuser_or_contractor
@@ -24,13 +27,16 @@ def workflow_list(request, domain):
     workflows = AppWorkflowConfig.objects.filter(domain=domain)
     _augment_with_logs(workflows)
     utcnow = datetime.utcnow()
-    chart_data = get_avg_duration_data(domain, start=utcnow - relativedelta(months=1), end=utcnow)
+    start = utcnow - relativedelta(months=1)
     context = _get_context(
         request,
-        "Automatically Executed App Workflows",
+        _("Automatically Executed App Workflows"),
         reverse("app_execution:workflow_list", args=[domain]),
         workflows=workflows,
-        chart_data=chart_data
+        chart_data={
+            "timing": get_avg_duration_data(domain, start=start, end=utcnow),
+            "status": get_status_data(domain, start=start, end=utcnow),
+        }
     )
     return render(request, "app_execution/workflow_list.html", context)
 
@@ -72,8 +78,11 @@ def new_workflow(request, domain):
                 return redirect("app_execution:workflow_list", domain)
 
     context = _get_context(
-        request, "New App Workflow", reverse("app_execution:new_workflow", args=[domain]),
-        add_parent=True, form=form
+        request,
+        _("New App Workflow"),
+        reverse("app_execution:new_workflow", args=[domain]),
+        add_parent=True,
+        form=form
     )
     return render(request, "app_execution/workflow_form.html", context)
 
@@ -90,14 +99,15 @@ def edit_workflow(request, domain, pk):
         if import_har and har_file:
             form = _get_form_from_har(har_file.read(), request, instance=config)
         elif har_file:
-            messages.error(request, "You must use the 'Import HAR' button to upload a HAR file.")
+            messages.error(request, _("You must use the 'Import HAR' button to upload a HAR file."))
         else:
             if form.is_valid():
                 form.save()
                 return redirect("app_execution:workflow_list", domain)
 
     context = _get_context(
-        request, f"Edit App Workflow: {config.name}", reverse("app_execution:edit_workflow", args=[domain, pk]),
+        request, _("Edit App Workflow: {name}").format(name=config.name),
+        reverse("app_execution:edit_workflow", args=[domain, pk]),
         add_parent=True, form=form
     )
     return render(request, "app_execution/workflow_form.html", context)
@@ -111,7 +121,7 @@ def _get_form_from_har(har_data_string, request, instance=None):
         post_data["app_id"] = config.app_id
         post_data["workflow"] = AppWorkflowConfig.workflow_object_to_json_string(config.workflow)
     except Exception as e:
-        messages.error(request, "Unable to process HAR file: " + str(e))
+        messages.error(request, _("Unable to process HAR file: {error}").format(error=str(e)))
 
     return AppWorkflowConfigForm(request, post_data, instance=instance)
 
@@ -129,15 +139,15 @@ def test_workflow(request, domain, pk):
     if request.method == "POST":
         session = config.get_formplayer_session()
         try:
-            execute_workflow(session, config.workflow)
+            success = execute_workflow(session, config.workflow)
         except (AppExecutionError, FormplayerException) as e:
             context["error"] = str(e)
             context["success"] = False
         else:
-            context["success"] = True
+            context["success"] = success
 
         context["result"] = True
-        context["output"] = session.log.getvalue()
+        context["output"] = session.get_logs()
         context["workflow_json"] = config.workflow_json
 
     return render(request, "app_execution/workflow_test.html", context)
@@ -165,17 +175,18 @@ def _get_context(request, title, url, add_parent=False, **kwargs):
 @use_bootstrap5
 def workflow_log_list(request, domain, pk):
     utcnow = datetime.utcnow()
-    chart_data = get_avg_duration_data(
-        domain, start=utcnow - relativedelta(months=1), end=utcnow, workflow_id=pk
-    )
+    start = utcnow - relativedelta(months=1)
     context = _get_context(
         request,
-        "Automatically Executed App Workflow Logs",
+        _("Automatically Executed App Workflow Logs"),
         reverse("app_execution:workflow_logs", args=[domain, pk]),
         add_parent=True,
         workflow=AppWorkflowConfig.objects.get(id=pk),
         total=AppExecutionLog.objects.filter(workflow__domain=domain, workflow_id=pk).count(),
-        chart_data=chart_data
+        chart_data={
+            "timing": get_avg_duration_data(domain, start=start, end=utcnow, workflow_id=pk),
+            "status": get_status_data(domain, start=start, end=utcnow, workflow_id=pk),
+        },
     )
     return render(request, "app_execution/workflow_log_list.html", context)
 
@@ -183,12 +194,27 @@ def workflow_log_list(request, domain, pk):
 @require_superuser_or_contractor
 @use_bootstrap5
 def workflow_logs_json(request, domain, pk):
+    status = request.GET.get('status', None)
     limit = int(request.GET.get('per_page', 10))
     page = int(request.GET.get('page', 1))
     skip = limit * (page - 1)
-    logs = AppExecutionLog.objects.filter(
-        workflow__domain=domain, workflow_id=pk
-    ).order_by("-started")[skip:skip + limit]
+
+    timezone = get_timezone_for_user(request.couch_user, domain)
+    try:
+        start_date = get_date_param(request, 'startDate', timezone=timezone)
+        end_date = get_date_param(request, 'endDate', timezone=timezone)
+    except ValueError:
+        return JsonResponse({"error": _("Invalid date parameter")})
+
+    query = AppExecutionLog.objects.filter(workflow__domain=domain, workflow_id=pk)
+    if status:
+        query = query.filter(success=status == "success")
+    if start_date:
+        query = query.filter(started__gte=start_date)
+    if end_date:
+        query = query.filter(started__lte=datetime.combine(end_date, datetime.max.time()))
+
+    logs = query.order_by("-started")[skip:skip + limit]
     return JsonResponse({
         "logs": [
             {
@@ -212,7 +238,7 @@ def workflow_log(request, domain, pk):
         request, "app_execution/workflow_log.html",
         _get_context(
             request,
-            f"Workflow Log: {log.workflow.name}",
+            _("Workflow Log: {name}").format(name=log.workflow.name),
             reverse("app_execution:workflow_log", args=[domain, pk]),
             add_parent=True,
             log=log,

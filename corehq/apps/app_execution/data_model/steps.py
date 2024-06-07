@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import copy
-import dataclasses
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from attr import define
 from attrs import asdict
 
-from corehq.apps.app_execution.exceptions import AppExecutionError
+from ..exceptions import AppExecutionError
 
 
 @define
@@ -27,23 +26,6 @@ class Step:
     @classmethod
     def from_json(cls, data):
         return cls(**data)
-
-
-@define
-class AppWorkflow:
-    steps: list[Step] = dataclasses.field(default_factory=list)
-
-    def __jsonattrs_to_json__(self):
-        return {
-            "steps": [step.to_json() for step in self.steps]
-        }
-
-    @classmethod
-    def __jsonattrs_from_json__(cls, data):
-        return cls(steps=_steps_from_json(data["steps"]))
-
-    def __str__(self):
-        return " -> ".join(str(step) for step in self.steps)
 
 
 @define
@@ -299,7 +281,7 @@ class SubmitFormStep(Step):
 class FormStep(Step):
     type: ClassVar[str] = "form"
     is_form_step: ClassVar[bool] = True
-    children: list[AnswerQuestionStep | SubmitFormStep]
+    children: list[Any]
 
     def to_json(self):
         return {
@@ -312,7 +294,8 @@ class FormStep(Step):
 
     @classmethod
     def from_json(cls, data):
-        return cls(children=_steps_from_json(data["children"]))
+        from .base import steps_from_json
+        return cls(children=steps_from_json(data["children"]))
 
 
 @define
@@ -335,19 +318,6 @@ def _append_selection(data, selection):
 STEP_MAP = {step.type: step for step in Step.__subclasses__()}
 
 
-def _steps_from_json(data):
-    data = copy.deepcopy(data)
-    return [STEP_MAP[child.pop("type")].from_json(child) for child in data]
-
-
-EXAMPLE_WORKFLOW = AppWorkflow(steps=[
-    CommandStep(value="My Module"),
-    EntitySelectStep(value="clinic_123"),
-    QueryStep(inputs={"name": "John Doe"}),
-    EntitySelectIndexStep(value=0),
-    FormStep(children=[
-        AnswerQuestionStep(question_text="Name", question_id="name", value="John Doe"),
-        AnswerQuestionStep(question_text="Age", question_id="age", value="30"),
-        SubmitFormStep(),
-    ]),
-])
+def steps_from_json(raw_steps):
+    raw_steps = copy.deepcopy(raw_steps)
+    return [STEP_MAP[child.pop("type")].from_json(child) for child in raw_steps]

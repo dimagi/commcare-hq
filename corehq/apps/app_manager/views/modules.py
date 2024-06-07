@@ -147,6 +147,9 @@ def get_module_template(user, module):
 
 
 def get_module_view_context(request, app, module, lang=None):
+    # make sure all modules have unique ids
+    app.ensure_module_unique_ids(should_save=True)
+
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
         'show_search_workflow': (

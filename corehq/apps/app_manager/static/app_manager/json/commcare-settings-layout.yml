@@ -55,6 +55,7 @@
   collapse: true
   settings:
     - properties.logo_web_apps
+    - hq.show_breadcrumbs
     - hq.persistent_menu
 
 - title: 'Advanced'
