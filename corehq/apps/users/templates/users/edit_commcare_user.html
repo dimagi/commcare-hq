@@ -204,7 +204,9 @@
               <td>{{ couch_user.last_login|to_user_time:request }}</td>
             </tr>
             <tr>
-              <td>{% trans "Last Sync" %}</td>
+              <td title="Approximate date/time of the last time this user synced with the server from CommCare">
+                {% trans "Last Sync" %}
+              </td>
               <td>{{ couch_user.reporting_metadata.last_sync_for_user.sync_date|to_user_time:request }}</td>
             </tr>
             <tr>
@@ -212,11 +214,16 @@
               <td>{{ couch_user.reporting_metadata.last_submission_for_user.submission_date|to_user_time:request }}</td>
             </tr>
             <tr>
-              <td>{% trans "Devices" %}</td>
+              <td title="List of devices used to access CommCare applications, with approximate last-use dates.">
+                {% trans "Devices" %}
+              </td>
               <td>
                 <ul class="list-unstyled">
                   {% for device in couch_user.devices %}
-                    <li>{{ device.last_used|to_user_time:request }} - {{ device.device_id }}</li>
+                    <li>
+                      {{ device.last_used|to_user_time:request }} -
+                      <code>{{ device.device_id }}</code>
+                    </li>
                   {% endfor %}
                 </ul>
               </td>
