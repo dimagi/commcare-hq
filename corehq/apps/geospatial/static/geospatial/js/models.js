@@ -659,7 +659,7 @@ hqDefine('geospatial/js/models', [
                 },
                 error: function () {
                     alertUser.alert_user(
-                        gettext("Oops! Something went wrong! Please contact admin if the problem persists."),
+                        gettext("Oops! Something went wrong! Please report an issue if the problem persists."),
                         'danger'
                     );
                 },
