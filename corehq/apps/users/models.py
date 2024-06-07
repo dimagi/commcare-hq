@@ -272,6 +272,10 @@ class HqPermissions(DocumentSchema):
         if not self.view_web_users:
             self.view_user_tableau_config = False
 
+        if not self.edit_web_users and not self.edit_commcare_users:
+            self.edit_user_profile = False
+            self.edit_user_profile_list = []
+
         if self.edit_user_tableau_config:
             self.view_user_tableau_config = True
 
