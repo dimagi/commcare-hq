@@ -38,7 +38,7 @@ from corehq.apps.domain.views.accounting import (
     WireInvoiceView,
     pause_subscription,
 )
-from corehq.apps.domain.views.base import select, accept_all_invitations
+from corehq.apps.domain.views.base import select, accept_all_invitations, select_error
 from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
 from corehq.apps.domain.views.internal import (
     ActivateTransferDomainView,
@@ -101,6 +101,7 @@ PASSWORD_RESET_DONE_KWARGS = {
 
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
+    url(r'^domain/select/error/$', select_error, name='domain_select_error'),
     url(r'^domain/select_redirect/$', select, {'do_not_redirect': True}, name='domain_select_redirect'),
     url('^accept_all_invitations/$', accept_all_invitations, name='accept_all_invitations'),
     url(r'^domain/transfer/(?P<guid>\w+)/activate$',

@@ -79,6 +79,11 @@ def select(request, do_not_redirect=False, next_view=None):
 
 
 @login_required
+def select_error(request):
+    raise Exception("I AM AN ERROR ON PURPOSE")
+
+
+@login_required
 def accept_all_invitations(request):
     user = request.couch_user
     invites = Invitation.by_email(user.username)
