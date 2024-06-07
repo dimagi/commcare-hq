@@ -488,7 +488,8 @@
               </div>
             </div>
             {% if request|request_has_privilege:"APP_USER_PROFILES" %}
-              <div class="form-group">
+              <div class="form-group"
+                data-bind="visible: permissions.edit_web_users() || permissions.edit_commcare_users()">
                 <label class="col-sm-4 control-label">
                   {% trans "Assign All User Profiles" %}
                 </label>
@@ -504,7 +505,7 @@
                 </div>
               </div>
               <div class="form-group"
-                data-bind="visible: !profilePermissions.all()">
+                data-bind="visible: !profilePermissions.all() && (permissions.edit_web_users() || permissions.edit_commcare_users())">
                 <label class="col-sm-4 control-label">
                   {% trans "Assign Specific User Profiles" %}
                 </label>
