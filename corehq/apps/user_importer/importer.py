@@ -666,7 +666,6 @@ class CCUserRow(BaseUserRow):
                 elif not web_user or not web_user.is_member_of(self.domain):
                     profile = None
                     if cv["profile_name"]:
-                        _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
                         profile = self.domain_info.profiles_by_name[cv["profile_name"]]
                     create_or_update_web_user_invite(
                         web_user_username, self.domain, role_qualified_id, self.importer.upload_user,
@@ -749,7 +748,6 @@ class WebUserRow(BaseUserRow):
             else:
                 profile = None
                 if self.column_values["profile_name"]:
-                    _check_profile(self.column_values["profile_name"], self.domain_info.profiles_by_name)
                     profile = self.domain_info.profiles_by_name[self.column_values["profile_name"]]
                 tableau_role = self.column_values["tableau_role"]
                 tableau_group_ids = None
@@ -828,7 +826,6 @@ class WebUserRow(BaseUserRow):
                     user_invite_loc_id = user_invite_loc.location_id
             profile = None
             if cv["profile_name"]:
-                _check_profile(cv["profile_name"], self.domain_info.profiles_by_name)
                 profile = self.domain_info.profiles_by_name[cv["profile_name"]]
             tableau_role = cv["tableau_role"]
             tableau_group_ids = None
@@ -988,9 +985,9 @@ class DomainInfo:
             self.domain_obj,
             domain_user_specs,
             self.is_web_upload,
-            allowed_group_names,
+            all_user_profiles_by_name=self.profiles_by_name,
+            allowed_groups=allowed_group_names,
             allowed_roles=roles_by_name,
-            profiles_by_name=self.profiles_by_name,
             upload_domain=self.importer.upload_domain,
             upload_user=self.upload_user,
             location_cache=self.location_cache
@@ -1088,10 +1085,3 @@ def remove_web_user_from_domain(domain, user, username, upload_user, user_change
         user.save()
         if user_change_logger:
             user_change_logger.add_info(UserChangeMessage.domain_removal(domain))
-
-
-def _check_profile(profile_name, valid_profiles_by_name):
-    if profile_name not in valid_profiles_by_name:
-        raise UserUploadError(_(
-            f"{profile_name} is not a valid profile"
-        ))

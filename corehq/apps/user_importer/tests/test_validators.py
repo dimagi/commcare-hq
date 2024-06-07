@@ -1,8 +1,10 @@
 from datetime import datetime
+from django.test import TestCase
 from faker import Faker
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from testil import assert_raises
 
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase, restrict_user_by_location
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.importer import SiteCodeToLocationCache
@@ -115,15 +117,6 @@ TEST_CASES = [
         ],
         RoleValidator('domain', {'r1', 'r2'}),
         {0: RoleValidator.error_message.format('r3')}
-    ),
-    (
-        [
-            {'user_profile': 'p1'},
-            {'user_profile': 'r1'},
-            {},
-        ],
-        ProfileValidator('domain', {'p1', 'p2'}),
-        {1: ProfileValidator.error_message.format('r1')}
     ),
     (
         [
@@ -392,4 +385,43 @@ class TestLocationAccessValidator(LocationHierarchyTestCase):
     @classmethod
     def tearDownClass(cls):
         super(LocationHierarchyTestCase, cls).tearDownClass()
+        delete_all_users()
+
+
+class TestProfileValidator(TestCase):
+    domain = 'test-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        delete_all_users()
+        super(TestProfileValidator, cls).setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.upload_user = WebUser.create(cls.domain, 'username', 'password', None, None)
+        cls.editable_user = WebUser.create(cls.domain, 'editable-user', 'password', None, None)
+        cls.all_user_profile_ids_by_name = {'p1': 1, 'p2': 2}
+        cls.web_user_import_validator = ProfileValidator(cls.domain, cls.upload_user,
+                                                True, cls.all_user_profile_ids_by_name)
+        cls.nonweb_user_import_validator = ProfileValidator(cls.domain, cls.upload_user,
+                                                            False, cls.all_user_profile_ids_by_name)
+
+    # @patch('corehq.apps.users.views.mobile.custom_data_fields.UserFieldsView.get_user_accessible_profiles')
+    def test_non_existing_profile(self):
+        user_specs = [
+            {'username': self.editable_user.username, 'user_profile': 'p1'},
+            {'username': self.editable_user.username, 'user_profile': ''},
+        ]
+        for spec in user_specs:
+            mock_return = {MagicMock(id=val) for val in self.all_user_profile_ids_by_name.values()}
+            with patch(
+                'corehq.apps.users.views.mobile.custom_data_fields.UserFieldsView.get_user_accessible_profiles',
+                return_value=mock_return
+            ):
+                self.web_user_import_validator(spec)
+        user_spec = {'username': self.editable_user.username, 'user_profile': 'r1'}
+        with assert_raises(UserUploadError, msg=ProfileValidator.error_message.format('r1')):
+            self.web_user_import_validator(user_spec)
+
+    @classmethod
+    def tearDownClass(cls):
+        super(TestProfileValidator, cls).tearDownClass()
         delete_all_users()
