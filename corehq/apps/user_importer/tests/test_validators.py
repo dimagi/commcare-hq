@@ -483,14 +483,14 @@ class TestProfileValidator(TestCase):
         for username in [self.editable_user2.username, self.invitation2.email]:
             user_spec = {'username': username, 'user_profile': 'r1'}
             validation_result = self.web_user_import_validator.validate_spec(user_spec)
-        assert validation_result == ("Profile 'r1' does not exist")
+        assert validation_result == ProfileValidator.error_message.format('r1')
 
     def test_cant_assign_profile_without_the_permission(self):
         self.upload_user.set_role(self.domain, self.edit_p1_profiles_role.get_qualified_id())
         for username in [self.editable_user.username, self.invitation.email]:
             user_spec = {'username': username, 'user_profile': 'p2'}
             validation_result = self.web_user_import_validator.validate_spec(user_spec)
-            assert validation_result == ("You do not have permission to assign the profile 'p2'")
+            assert validation_result == ProfileValidator.error_message_new_user_profile_access.format('p2')
 
     def test_removing_and_assigning_profile(self):
         self.upload_user.set_role(self.domain, self.edit_p1_profiles_role.get_qualified_id())
@@ -511,8 +511,7 @@ class TestProfileValidator(TestCase):
         self.upload_user.set_role(self.domain, self.edit_p2_profiles_role.get_qualified_id())
         user_spec = {'username': self.editable_user.username, 'user_profile': 'p2'}
         validation_result = self.web_user_import_validator.validate_spec(user_spec)
-        assert validation_result == ("You do not have permission to edit the profile for this user "
-                                    "or user invitation")
+        assert validation_result == ProfileValidator.error_message_original_user_profile_access
 
     @classmethod
     def tearDownClass(cls):
