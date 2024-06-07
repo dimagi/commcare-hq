@@ -36,7 +36,7 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, all_us
     domain = domain_obj.name
     validate_passwords = domain_obj.strong_mobile_passwords
     noop = NoopValidator(domain)
-
+    all_user_profiles_by_id = {name: profile.id for name, profile in all_user_profiles_by_name.items()}
     validators = [
         UsernameTypeValidator(domain),
         DuplicateValidator(domain, 'username', all_specs),
@@ -46,7 +46,7 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, all_us
         RoleValidator(domain, allowed_roles),
         ExistingUserValidator(domain, all_specs),
         TargetDomainValidator(upload_domain),
-        ProfileValidator(domain, upload_user, is_web_user_import, all_user_profiles_by_name),
+        ProfileValidator(domain, upload_user, is_web_user_import, all_user_profiles_by_id),
         LocationAccessValidator(domain, upload_user, location_cache, is_web_user_import)
     ]
     if is_web_user_import:
@@ -321,15 +321,15 @@ class ProfileValidator(ImportValidator):
                                   "or user invitation")
     error_message_new_user_profile_access = _("You do not have permission to assign the profile '{}'")
 
-    def __init__(self, domain, upload_user, is_web_user_import, all_user_profiles_by_name):
+    def __init__(self, domain, upload_user, is_web_user_import, all_user_profile_ids_by_name):
         super().__init__(domain)
         self.upload_user = upload_user
         self.is_web_user_import = is_web_user_import
-        self.all_user_profiles_by_name = all_user_profiles_by_name
+        self.all_user_profile_ids_by_name = all_user_profile_ids_by_name
 
     def validate_spec(self, spec):
         spec_profile_name = spec.get('user_profile')
-        if spec_profile_name and spec_profile_name not in self.all_user_profiles_by_name.keys():
+        if spec_profile_name and spec_profile_name not in self.all_user_profile_ids_by_name.keys():
             return self.error_message.format(spec_profile_name)
 
         user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
@@ -339,10 +339,8 @@ class ProfileValidator(ImportValidator):
         elif user_result.editable_user:
             original_profile_id = user_result.editable_user.get_user_data(self.domain).profile_id
 
-        spec_profile = self.all_user_profiles_by_name.get(spec_profile_name)
-        spec_profile_same_as_original = original_profile_id == (
-            spec_profile.id if spec_profile is not None else None
-        )
+        spec_profile_id = self.all_user_profile_ids_by_name.get(spec_profile_name)
+        spec_profile_same_as_original = original_profile_id == spec_profile_id
         if spec_profile_same_as_original:
             return
 
@@ -352,7 +350,7 @@ class ProfileValidator(ImportValidator):
         accessible_profile_ids = {p.id for p in upload_user_accessible_profiles}
         if original_profile_id and original_profile_id not in accessible_profile_ids:
             return self.error_message_user_profile_access
-        if spec_profile and spec_profile.id not in accessible_profile_ids:
+        if spec_profile_id is not None and spec_profile_id not in accessible_profile_ids:
             return self.error_message_new_user_profile_access.format(spec_profile_name)
 
 
