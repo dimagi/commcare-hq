@@ -262,8 +262,12 @@ class TableauUser(models.Model):
         VIEWER = 'Viewer', 'Viewer'
         UNLICENSED = 'Unlicensed', 'Unlicensed'
 
+    def clean(self):
+        from corehq.apps.reports.util import clean_tableau_role
+        clean_tableau_role(self.role)
+
     def save(self, *args, **kwargs):
-        self.full_clean()
+        self.clean()
         super().save(*args, **kwargs)
 
 

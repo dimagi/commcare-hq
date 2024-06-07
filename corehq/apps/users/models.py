@@ -2753,8 +2753,12 @@ class Invitation(models.Model):
     def __repr__(self):
         return f"Invitation(domain='{self.domain}', email='{self.email})"
 
+    def clean(self):
+        from corehq.apps.reports.util import clean_tableau_role
+        clean_tableau_role(self.tableau_role)
+
     def save(self, *args, **kwargs):
-        self.full_clean()
+        self.clean()
         super().save(*args, **kwargs)
 
     @classmethod
