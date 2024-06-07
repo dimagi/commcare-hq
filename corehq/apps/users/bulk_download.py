@@ -226,6 +226,7 @@ def make_invited_web_user_dict(invite, location_cache):
         'last_login (read only)': 'N/A',
         'remove': '',
         'domain': invite.domain,
+        'user_profile': invite.profile.name if invite.profile else '',
     }
 
 
