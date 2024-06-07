@@ -28,6 +28,7 @@ from corehq.apps.user_importer.validation import (
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, HqPermissions, Invitation, WebUser
 from corehq.apps.users.models_role import UserRole
+from corehq.util.test_utils import flag_enabled
 from corehq.apps.custom_data_fields.models import (CustomDataFieldsDefinition,
     CustomDataFieldsProfile)
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
@@ -394,6 +395,7 @@ class TestLocationAccessValidator(LocationHierarchyTestCase):
         delete_all_users()
 
 
+@flag_enabled('RESTRICT_USER_PROFILE_ASSIGNMENT')
 class TestProfileValidator(TestCase):
     domain = 'test-domain'
 
