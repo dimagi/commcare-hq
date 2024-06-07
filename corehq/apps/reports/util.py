@@ -644,7 +644,7 @@ def _get_hq_group_id(session):
 
 def clean_tableau_role(role_name):
     valid_role_options = [item[1] for item in TABLEAU_ROLES]
-    if role_name not in TABLEAU_ROLES:
+    if role_name is not None and role_name not in valid_role_options:
         message = (
             "'{}' is not a valid Tableau Role choice. "
             "Please choose one of the following: "
