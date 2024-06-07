@@ -755,16 +755,12 @@ hqDefine('geospatial/js/models', [
             self.loadSelectedPolygonFromQueryParam();
         };
 
-        self.exportGeoJson = function (exportButtonId) {
-            const exportButton = $(`#${exportButtonId}`);
-            const selectedId = parseInt(self.selectedSavedPolygonId());
-            const selectedPolygon = self.savedPolygons().find(
-                function (o) { return o.id === selectedId; }
-            );
-            if (selectedPolygon) {
-                const convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(selectedPolygon.geoJson));
-                exportButton.attr('href', 'data:' + convertedData);
-                exportButton.attr('download','data.geojson');
+        self.exportGeoJson = function (data, event) {
+            if (self.activeSavedPolygon()) {
+                const convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(self.activeSavedPolygon().geoJson));
+                $(event.target).attr('href', 'data:' + convertedData);
+                $(event.target).attr('download','data.geojson');
+                return true;
             }
         };
     };
