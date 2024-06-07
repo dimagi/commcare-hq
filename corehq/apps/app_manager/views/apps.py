@@ -749,6 +749,7 @@ def edit_app_langs(request, domain, app_id):
 
     rename_languages(app, rename)
     remove_deleted_languages(app, langs)
+    set_xform_default_languages(app, langs)
 
     if app.langs != langs:
         app.langs[:] = langs
@@ -773,6 +774,13 @@ def remove_deleted_languages(app, langs):
                 app.build_profiles[id].langs.remove(lang)
             except ValueError:
                 pass
+
+
+def set_xform_default_languages(app, langs):
+    new_default_lang = langs[0] if langs[0] != app.langs[0] else None
+    if new_default_lang:
+        for form in app.get_forms():
+            form.set_xform_default_language(new_default_lang)
 
 
 @require_can_edit_apps
