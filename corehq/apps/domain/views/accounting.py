@@ -245,9 +245,12 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     })
 
                 else:
+                    from corehq.toggles import SELF_SERVICE_ANNUAL_RENEWALS
                     days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
-                        'can_renew': days_left <= 30,
+                        'can_renew': ((days_left <= 90)
+                            if SELF_SERVICE_ANNUAL_RENEWALS.enabled_for_request(self.request)
+                            else (days_left <= 30)),
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
 
