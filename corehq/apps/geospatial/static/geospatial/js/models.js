@@ -655,7 +655,9 @@ hqDefine('geospatial/js/models', [
                     self.clearSelectedPolygonFilter();
                     var message = ret.message + " " + gettext("Refreshing Page...");
                     alertUser.alert_user(message, 'success');
-                    window.location.reload();
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 2000);
                 },
                 error: function () {
                     alertUser.alert_user(
