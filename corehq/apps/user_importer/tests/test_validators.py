@@ -432,6 +432,11 @@ class TestProfileValidator(TestCase):
             name='Edit Profile p1',
             permissions=HqPermissions(edit_user_profile=False, edit_user_profile_list=[str(cls.profile1.id)])
         )
+        cls.edit_p2_profiles_role = UserRole.create(
+            domain=cls.domain_obj.name,
+            name='Edit Profile p1',
+            permissions=HqPermissions(edit_user_profile=False, edit_user_profile_list=[str(cls.profile2.id)])
+        )
         cls.edit_p1_and_p2_profiles_role = UserRole.create(
             domain=cls.domain_obj.name,
             name='Edit Profile p1 and p2',
@@ -470,24 +475,20 @@ class TestProfileValidator(TestCase):
         self.upload_user.set_role(self.domain, self.edit_p1_profiles_role.get_qualified_id())
         user_spec = {'username': self.editable_user.username, 'user_profile': ''}
         validation_result = self.web_user_import_validator.validate_spec(user_spec)
-        assert validation_result == None
+        assert validation_result is None
         user_spec = {'username': self.editable_user2.username, 'user_profile': 'p1'}
         validation_result = self.web_user_import_validator.validate_spec(user_spec)
-        assert validation_result == None
+        assert validation_result is None
 
     def test_no_error_when_unaccessible_profile_didnt_change(self):
-        self.editable_user2.get_user_data(self.domain).profile_id = self.profile2.id
-        self.editable_user2.save()
-        self.upload_user.set_role(self.domain, self.edit_p1_profiles_role.get_qualified_id())
-        user_spec = {'username': self.editable_user2.username, 'user_profile': 'p2'}
+        self.upload_user.set_role(self.domain, self.edit_p2_profiles_role.get_qualified_id())
+        user_spec = {'username': self.editable_user.username, 'user_profile': 'p1'}
         validation_result = self.web_user_import_validator.validate_spec(user_spec)
-        assert validation_result == None
+        assert validation_result is None
 
     def test_cant_edit_profile_no_access(self):
-        self.editable_user2.get_user_data(self.domain).profile_id = self.profile2.id
-        self.editable_user2.save()
-        self.upload_user.set_role(self.domain, self.edit_p1_profiles_role.get_qualified_id())
-        user_spec = {'username': self.editable_user2.username, 'user_profile': 'p1'}
+        self.upload_user.set_role(self.domain, self.edit_p2_profiles_role.get_qualified_id())
+        user_spec = {'username': self.editable_user.username, 'user_profile': 'p2'}
         validation_result = self.web_user_import_validator.validate_spec(user_spec)
         assert validation_result == ("You do not have permission to edit the profile for this user "
                                     "or user invitation")
