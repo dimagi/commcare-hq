@@ -276,14 +276,6 @@ hqDefine("geospatial/js/geospatial_map", [
             $mapControlDiv.koApplyBindings(polygonFilterModel);
         }
 
-        const $saveDrawnArea = $("#btnSaveDrawnArea");
-        $saveDrawnArea.click(function () {
-            if (mapModel && mapModel.mapInstance) {
-                saveGeoJson();
-            }
-        });
-
-
         var $runDisbursement = $("#btnRunDisbursement");
         $runDisbursement.click(function () {
             $('#disbursement-clear-message').hide();

@@ -69,9 +69,6 @@
 </div>
 <div class="row panel" id="mapControls">
     {% include 'geospatial/partials/saved_polygon_filter.html' %}
-    <a id="btnSaveDrawnArea" class="col-sm-2 btn btn-default" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnSaveDisabled }">
-        {% trans 'Save Area' %}
-    </a>
     <a id="btnRunDisbursement" class="col-sm-2 btn btn-primary" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnRunDisbursementDisabled }">
         {% trans 'Run Disbursement' %}
     </a>
