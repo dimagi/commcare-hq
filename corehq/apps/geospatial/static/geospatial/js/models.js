@@ -21,6 +21,7 @@ hqDefine('geospatial/js/models', [
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
     const saveGeoPolygonUrl = initialPageData.reverse('geo_polygons');
+    const unexpectedErrorMessage = "Oops! Something went wrong! Please report an issue if the problem persists.";
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -689,10 +690,7 @@ hqDefine('geospatial/js/models', [
                     }, 2000);
                 },
                 error: function () {
-                    alertUser.alert_user(
-                        gettext("Oops! Something went wrong! Please report an issue if the problem persists."),
-                        'danger'
-                    );
+                    alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
                 },
             });
         };
@@ -792,6 +790,9 @@ hqDefine('geospatial/js/models', [
                         );
                         // redraw using mapControlsModelInstance
                         self.selectedSavedPolygonId(ret.id);
+                    },
+                    error: function () {
+                        alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
                     },
                 });
             }
