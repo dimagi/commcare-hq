@@ -316,7 +316,7 @@ class RoleValidator(ImportValidator):
 
 
 class ProfileValidator(ImportValidator):
-    error_message = _("Profile '{}' does not exist")
+    error_message_nonexisting_profile = _("Profile '{}' does not exist")
     error_message_original_user_profile_access = _("You do not have permission to edit the profile for this user "
                                                    "or user invitation")
     error_message_new_user_profile_access = _("You do not have permission to assign the profile '{}'")
@@ -330,7 +330,7 @@ class ProfileValidator(ImportValidator):
     def validate_spec(self, spec):
         spec_profile_name = spec.get('user_profile')
         if spec_profile_name and spec_profile_name not in self.all_user_profile_ids_by_name.keys():
-            return self.error_message.format(spec_profile_name)
+            return self.error_message_nonexisting_profile.format(spec_profile_name)
 
         user_result = _get_invitation_or_editable_user(spec, self.is_web_user_import, self.domain)
         original_profile_id = None

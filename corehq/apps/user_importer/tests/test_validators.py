@@ -483,7 +483,7 @@ class TestProfileValidator(TestCase):
         for username in [self.editable_user2.username, self.invitation2.email]:
             user_spec = {'username': username, 'user_profile': 'r1'}
             validation_result = self.web_user_import_validator.validate_spec(user_spec)
-        assert validation_result == ProfileValidator.error_message.format('r1')
+        assert validation_result == ProfileValidator.error_message_nonexisting_profile.format('r1')
 
     def test_cant_assign_profile_without_the_permission(self):
         self.upload_user.set_role(self.domain, self.edit_p1_profiles_role.get_qualified_id())
