@@ -26,7 +26,6 @@ hqDefine("geospatial/js/geospatial_map", [
 
     const MAP_CONTAINER_ID = 'geospatial-map';
 
-    var saveGeoJSONUrl = initialPageData.reverse('geo_polygons');
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
     var disbursementRunner;
 
@@ -39,37 +38,6 @@ hqDefine("geospatial/js/geospatial_map", [
         $("#mapControls").toggle(state);
         $("#user-filters-panel").toggle(state);
     }
-
-    var saveGeoJson = function () {
-        const data = mapModel.drawControls.getAll();
-        if (data.features.length) {
-            let name = window.prompt(gettext("Name of the Area"));
-            data['name'] = name;
-
-            $.ajax({
-                type: 'post',
-                url: saveGeoJSONUrl,
-                dataType: 'json',
-                data: JSON.stringify({'geo_json': data}),
-                contentType: "application/json; charset=utf-8",
-                success: function (ret) {
-                    delete data.name;
-                    // delete drawn area
-                    mapModel.drawControls.deleteAll();
-                    console.log('newPoly', name);
-                    polygonFilterModel.savedPolygons.push(
-                        new models.SavedPolygon({
-                            name: name,
-                            id: ret.id,
-                            geo_json: data,
-                        })
-                    );
-                    // redraw using mapControlsModelInstance
-                    polygonFilterModel.selectedSavedPolygonId(ret.id);
-                },
-            });
-        }
-    };
 
     var disbursementRunnerModel = function () {
         var self = {};
