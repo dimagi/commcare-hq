@@ -662,6 +662,15 @@ hqDefine('geospatial/js/models', [
             updateSelectedSavedPolygonParam();
         };
 
+        self.exportSelectedPolygonGeoJson = function (data, event) {
+            if (self.activeSavedPolygon()) {
+                const convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(self.activeSavedPolygon().geoJson));
+                $(event.target).attr('href', 'data:' + convertedData);
+                $(event.target).attr('download','data.geojson');
+                return true;
+            }
+        };
+
         self.deleteSelectedPolygonFilter = function () {
             const deleteGeoJSONUrl = initialPageData.reverse('geo_polygon', self.selectedSavedPolygonId());
             $.ajax({
@@ -755,14 +764,6 @@ hqDefine('geospatial/js/models', [
             self.loadSelectedPolygonFromQueryParam();
         };
 
-        self.exportGeoJson = function (data, event) {
-            if (self.activeSavedPolygon()) {
-                const convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(self.activeSavedPolygon().geoJson));
-                $(event.target).attr('href', 'data:' + convertedData);
-                $(event.target).attr('download','data.geojson');
-                return true;
-            }
-        };
     };
 
     return {
