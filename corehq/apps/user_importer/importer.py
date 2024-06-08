@@ -658,15 +658,15 @@ class CCUserRow(BaseUserRow):
                 if cv["tableau_groups"] is not None:
                     groups_list = cv["tableau_groups"].split(',')
                     tableau_group_ids = get_tableau_group_ids_by_names(groups_list, self.domain)
+                profile = None
+                if cv["profile_name"]:
+                    profile = self.domain_info.profiles_by_name[cv["profile_name"]]
                 if web_user and not web_user.is_member_of(self.domain) and cv["is_account_confirmed"]:
                     # add confirmed account to domain
                     # role_qualified_id would be present here as confirmed in check_user_role
                     web_user_importer.add_to_domain(role_qualified_id, self.user.location_id,
                                                 self.user.assigned_location_ids, tableau_role, tableau_group_ids)
                 elif not web_user or not web_user.is_member_of(self.domain):
-                    profile = None
-                    if cv["profile_name"]:
-                        profile = self.domain_info.profiles_by_name[cv["profile_name"]]
                     create_or_update_web_user_invite(
                         web_user_username, self.domain, role_qualified_id, self.importer.upload_user,
                         self.user.location_id,

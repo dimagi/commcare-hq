@@ -883,7 +883,8 @@ def edit_app_attr(request, domain, app_id, attr):
         ('mobile_ucr_restore_version', None, _always_allowed),
         ('location_fixture_restore', None, _always_allowed),
         ('split_screen_dynamic_search', None, _always_allowed),
-        ('persistent_menu', None, _always_allowed)
+        ('persistent_menu', None, _always_allowed),
+        ('show_breadcrumbs', None, _always_allowed)
     )
     for attribute, transformation, can_set_attr in easy_attrs:
         if should_edit(attribute):
