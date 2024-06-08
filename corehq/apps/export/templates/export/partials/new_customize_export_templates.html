@@ -214,6 +214,11 @@
             </th>
             <th>
               {% trans "Property Group" %}
+              <span
+                data-bind="makeHqHelp: {
+                  description: '{% trans "From case property groups on Data Dictionary" %}'
+                }"
+              ></span>
             </th>
             <th data-bind="attr: { 'class': $root.displayColumnClass }">
               {% trans "Display" %}<br />
