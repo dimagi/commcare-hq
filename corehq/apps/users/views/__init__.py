@@ -11,7 +11,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition, PROFILE_SLUG
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider

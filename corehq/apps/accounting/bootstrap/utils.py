@@ -171,8 +171,9 @@ def _ensure_software_plan(plan_key, product, product_rate, verbose, apps):
         plan_opts = {
             'name': plan_name,
             'edition': plan_key.edition,
-            'visibility': (SoftwarePlanVisibility.ANNUAL
-                           if plan_key.is_annual_plan else SoftwarePlanVisibility.PUBLIC),
+            'visibility': (SoftwarePlanVisibility.INTERNAL
+                if plan_key.edition == SoftwarePlanEdition.ENTERPRISE
+                else SoftwarePlanVisibility.PUBLIC),
         }
         if plan_key.is_annual_plan is not None:
             plan_opts['is_annual_plan'] = plan_key.is_annual_plan
