@@ -2363,7 +2363,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _process_app_build(cls, current_schema, app, case_type, for_new_export_instance=False,
-                           is_bulk_case_export=False):
+                           for_bulk_export=False):
         builder = ParentCasePropertyBuilder(
             app.domain,
             [app],
@@ -2384,7 +2384,7 @@ class CaseExportDataSchema(ExportDataSchema):
             parent_types,
             app.origin_id,  # If not copy, must be current app
             app.version,
-            is_bulk_case_export=is_bulk_case_export,
+            for_bulk_export=for_bulk_export,
         ))
         if any([relationship_tuple[1] in ['parent', 'host'] for relationship_tuple in parent_types]):
             case_schemas.append(cls._generate_schema_for_parent_case(
@@ -2435,7 +2435,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _generate_schema_from_case_property_mapping(cls, domain, case_property_mapping, parent_types, app_id,
-                                                    app_version, is_bulk_case_export=False):
+                                                    app_version, for_bulk_export=False):
         """
         Generates the schema for the main Case tab on the export page
         Includes system export properties for the case as well as properties for exporting parent case IDs
@@ -2450,7 +2450,7 @@ class CaseExportDataSchema(ExportDataSchema):
         )
 
         for case_type, case_properties in case_property_mapping.items():
-            if not is_bulk_case_export and domain_has_privilege(domain, privileges.DATA_DICTIONARY):
+            if not for_bulk_export and domain_has_privilege(domain, privileges.DATA_DICTIONARY):
                 case_group_name_for_property = get_case_property_group_name_for_properties(domain, case_type)
             else:
                 case_group_name_for_property = {}
@@ -2559,7 +2559,7 @@ class CaseExportDataSchema(ExportDataSchema):
                         case_type_schema,
                         app,
                         case_type,
-                        is_bulk_case_export=True,
+                        for_bulk_export=True,
                     )
                 except Exception as e:
                     logging.exception('Failed to process app {}. {}'.format(app._id, e))

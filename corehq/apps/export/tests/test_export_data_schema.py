@@ -315,7 +315,7 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
     app_id = '1234'
     domain = 'test'
 
-    def _get_schema_from_case_property_mapping(self, is_bulk_case_export=False):
+    def _get_schema_from_case_property_mapping(self, for_bulk_export=False):
         case_property_mapping = {
             'candy': ['my_case_property', 'my_second_case_property']
         }
@@ -332,7 +332,7 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
                 [],
                 self.app_id,
                 1,
-                is_bulk_case_export=is_bulk_case_export,
+                for_bulk_export=for_bulk_export,
             )
 
     @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
@@ -376,7 +376,7 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
 
     @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
     def test_case_property_group_name_skipped_for_bulk_export(self, _):
-        schema = self._get_schema_from_case_property_mapping(is_bulk_case_export=True)
+        schema = self._get_schema_from_case_property_mapping(for_bulk_export=True)
         self.assertEqual(len(schema.group_schemas), 1)
         group_schema = schema.group_schemas[0]
 
