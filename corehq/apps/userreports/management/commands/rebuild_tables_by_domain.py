@@ -20,10 +20,11 @@ class Command(BaseCommand):
     def handle(self, domain, **options):
         tables = StaticDataSourceConfiguration.by_domain(domain)
         tables.extend(DataSourceConfiguration.by_domain(domain))
+        tables_by_id = {table.table_id: table for table in tables}
 
-        print("Rebuilding {} tables".format(len(tables)))
+        print("Rebuilding {} tables".format(len(tables_by_id)))
 
-        for table in tables:
+        for table in tables_by_id.values():
             tasks.rebuild_indicators(
                 table._id, initiated_by=options['initiated'], source='rebuild_tables_by_domain'
             )
