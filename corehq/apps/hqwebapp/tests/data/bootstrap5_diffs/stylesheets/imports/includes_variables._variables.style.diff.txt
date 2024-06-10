@@ -223,9 +223,9 @@
 +
 +
 +// Base color overrides
-+$blue: #5D70D2;
-+$green: #3FA12A;
-+$red: $dimagi-sunset;
++$blue: darken(#5D70D2, 20%);
++$green: darken(#3FA12A, 10%);
++$red: darken($dimagi-sunset, 20%);
 +$teal: #01A2A9;
 +$yellow: $dimagi-marigold;
 +$indigo: $dimagi-indigo;
