@@ -2760,6 +2760,14 @@ class Invitation(models.Model):
     def __repr__(self):
         return f"Invitation(domain='{self.domain}', email='{self.email})"
 
+    def clean(self):
+        from corehq.apps.reports.util import clean_tableau_role
+        clean_tableau_role(self.tableau_role)
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
     @classmethod
     def by_domain(cls, domain, is_accepted=False, **filters):
         return Invitation.objects.filter(domain=domain, is_accepted=is_accepted, **filters)
