@@ -665,7 +665,8 @@ class CCUserRow(BaseUserRow):
                     # add confirmed account to domain
                     # role_qualified_id would be present here as confirmed in check_user_role
                     web_user_importer.add_to_domain(role_qualified_id, self.user.location_id,
-                                                self.user.assigned_location_ids, tableau_role, tableau_group_ids)
+                                                self.user.assigned_location_ids, tableau_role, tableau_group_ids,
+                                                profile)
                 elif not web_user or not web_user.is_member_of(self.domain):
                     create_or_update_web_user_invite(
                         web_user_username, self.domain, role_qualified_id, self.importer.upload_user,
