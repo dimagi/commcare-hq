@@ -81,6 +81,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             DataTablesColumn(_("Username"),
                              prop_name='username.exact',
                              sql_col='user_dim__username'),
+            DataTablesColumn(_("Assigned Location(s)"),
+                             help_text=_('The location(s) that the user is assigned to'),
+                             sortable=False),
             DataTablesColumn(_("Last Submission"),
                              prop_name='reporting_metadata.last_submissions.submission_date',
                              alt_prop_name='reporting_metadata.last_submission_for_user.submission_date',
@@ -119,7 +122,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                  sortable=False)
             )
         headers = DataTablesHeader(*columns)
-        headers.custom_sort = [[1, 'desc']]
+        headers.custom_sort = [[2, 'desc']]
         return headers
 
     @cached_property
