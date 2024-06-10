@@ -1,5 +1,5 @@
 'use strict';
-hqDefine("reports/js/bootstrap3/application_status", function () {
+hqDefine("reports/js/bootstrap5/application_status", function () {
     const initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     $(function () {
