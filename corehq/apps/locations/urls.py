@@ -25,6 +25,7 @@ from .views import (
     unarchive_location,
     unassign_users,
     count_locations,
+    get_assigned_location_names_for_user,
 )
 
 settings_urls = [
@@ -50,6 +51,8 @@ settings_urls = [
     url(r'^downgrade/$', DowngradeLocationsView.as_view(),
         name=DowngradeLocationsView.urlname),
     url(r'^unassign_users/$', unassign_users, name='unassign_users'),
+    url(r'^assigned_location_names_for_user/$',
+        get_assigned_location_names_for_user, name='get_assigned_location_names_for_user'),
     url(r'^(?P<loc_id>[\w-]+)/archive/$', archive_location, name='archive_location'),
     url(r'^(?P<loc_id>[\w-]+)/unarchive/$', unarchive_location, name='unarchive_location'),
     url(r'^(?P<loc_id>[\w-]+)/delete/$', delete_location, name='delete_location'),
