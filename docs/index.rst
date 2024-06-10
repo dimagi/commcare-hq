@@ -46,6 +46,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     apps/builds
     web_apps
     formplayer
+    case_search_query_language
 
 .. toctree::
     :caption: Application Data Layer

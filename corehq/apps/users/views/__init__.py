@@ -1110,6 +1110,8 @@ class InviteWebUserView(BaseManageWebUserView):
         initial = {
             'email': domain_request.email if domain_request else None,
         }
+        can_edit_tableau_config = (self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config')
+                                and toggles.TABLEAU_USER_SYNCING.enabled(self.domain))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
             pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
@@ -1120,6 +1122,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 domain=self.domain,
                 is_add_user=is_add_user,
                 should_show_location=self.request.project.uses_locations,
+                can_edit_tableau_config=can_edit_tableau_config,
                 request=self.request
             )
         return AdminInvitesUserForm(
@@ -1128,6 +1131,7 @@ class InviteWebUserView(BaseManageWebUserView):
             domain=self.domain,
             is_add_user=is_add_user,
             should_show_location=self.request.project.uses_locations,
+            can_edit_tableau_config=can_edit_tableau_config,
             request=self.request
         )
 
@@ -1156,6 +1160,10 @@ class InviteWebUserView(BaseManageWebUserView):
             create_invitation = True
             data = self.invite_web_user_form.cleaned_data
             domain_request = DomainRequest.by_email(self.domain, data["email"])
+            profile_id = data.get("profile", None)
+            profile = CustomDataFieldsProfile.objects.get(
+                id=profile_id,
+                definition__domain=self.domain) if profile_id else None
             if domain_request is not None:
                 domain_request.is_approved = True
                 domain_request.save()
@@ -1167,6 +1175,9 @@ class InviteWebUserView(BaseManageWebUserView):
                                          primary_location_id=data.get("primary_location", None),
                                          program_id=data.get("program", None),
                                          assigned_location_ids=data.get("assigned_locations", None),
+                                         profile=profile,
+                                         tableau_role=data.get("tableau_role", None),
+                                         tableau_group_ids=data.get("tableau_group_ids", None)
                                          )
                 messages.success(request, "%s added." % data["email"])
             else:
@@ -1187,10 +1198,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 if primary_location_id:
                     assert primary_location_id in assigned_location_ids
                 self._assert_user_has_permission_to_access_locations(assigned_location_ids)
-                profile_id = data.get("profile", None)
-                data["profile"] = CustomDataFieldsProfile.objects.get(
-                    id=profile_id,
-                    definition__domain=self.domain) if profile_id else None
+                data["profile"] = profile
                 invite = Invitation(**data)
                 invite.save()
 

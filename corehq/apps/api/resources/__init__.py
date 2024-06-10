@@ -1,5 +1,6 @@
 import json
 
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.urls import NoReverseMatch
 
@@ -113,6 +114,22 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
                 json.dumps({"error": "Your current subscription does not have access to this feature"}),
                 content_type="application/json",
                 status=401))
+
+    def alter_deserialized_detail_data(self, request, data):
+        """Provide a hook for data validation
+
+        Subclasses may implement ``validate_deserialized_data`` that
+        raises ``django.core.exceptions.ValidationError`` if the submitted
+        data is not valid. This is designed to work conveniently with
+        ``corehq.util.validation.JSONSchemaValidator``.
+        """
+        data = super().alter_deserialized_detail_data(request, data)
+        if hasattr(self, "validate_deserialized_data"):
+            try:
+                self.validate_deserialized_data(data)
+            except ValidationError as error:
+                raise ImmediateHttpResponse(self.error_response(request, error.messages))
+        return data
 
     def get_required_privilege(self):
         return privileges.API_ACCESS
