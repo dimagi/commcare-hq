@@ -36,7 +36,6 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, all_us
     domain = domain_obj.name
     validate_passwords = domain_obj.strong_mobile_passwords
     noop = NoopValidator(domain)
-    all_user_profiles_by_id = {name: profile.id for name, profile in all_user_profiles_by_name.items()}
     validators = [
         UsernameTypeValidator(domain),
         DuplicateValidator(domain, 'username', all_specs),
@@ -46,7 +45,7 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, all_us
         RoleValidator(domain, allowed_roles),
         ExistingUserValidator(domain, all_specs),
         TargetDomainValidator(upload_domain),
-        ProfileValidator(domain, upload_user, is_web_user_import, all_user_profiles_by_id),
+        ProfileValidator(domain, upload_user, is_web_user_import, all_user_profiles_by_name),
         LocationAccessValidator(domain, upload_user, location_cache, is_web_user_import)
     ]
     if is_web_user_import:
@@ -321,11 +320,11 @@ class ProfileValidator(ImportValidator):
                                                    "or user invitation")
     error_message_new_user_profile_access = _("You do not have permission to assign the profile '{}'")
 
-    def __init__(self, domain, upload_user, is_web_user_import, all_user_profile_ids_by_name):
+    def __init__(self, domain, upload_user, is_web_user_import, all_user_profiles_by_name):
         super().__init__(domain)
         self.upload_user = upload_user
         self.is_web_user_import = is_web_user_import
-        self.all_user_profile_ids_by_name = all_user_profile_ids_by_name
+        self.all_user_profile_ids_by_name = {name: p.id for name, p in all_user_profiles_by_name.items()}
 
     def validate_spec(self, spec):
         spec_profile_name = spec.get('user_profile')
