@@ -377,7 +377,7 @@ hqDefine('cloudcare/js/utils', [
         if (selectedDate) {
             options.viewDate = new hqTempusDominus.tempusDominus.DateTime(selectedDate);
         }
-        let tempus = hqTempusDominus.createDatePicker($el.get(0), options);
+        hqTempusDominus.createDatePicker($el.get(0), options);
 
         $el.attr("placeholder", dateFormat);
         $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
@@ -398,14 +398,14 @@ hqDefine('cloudcare/js/utils', [
             },
             localization: {
                 format: timeFormat,
-                hourCycle: timeFormat.indexOf('T') == -1 ? 'h23' : 'h12',
+                hourCycle: timeFormat.indexOf('T') === -1 ? 'h23' : 'h12',
             },
             useCurrent: true,
         };
         if (date.isValid()) {
             options.viewDate = new hqTempusDominus.tempusDominus.DateTime(date.format(timeFormat));
         }
-        let tempus = hqTempusDominus.createTimePicker($el.get(0), options);
+        hqTempusDominus.createTimePicker($el.get(0), options);
     };
 
     var smallScreenIsEnabled = function () {
