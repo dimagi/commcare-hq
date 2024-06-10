@@ -33,6 +33,7 @@ from corehq.apps.es.aggregations import (
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.util import get_formatted_assigned_location_names
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.select import SelectApplicationFilter
@@ -376,6 +377,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 user_display_string(user.get('username', ''),
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
+                self.get_location_column(user),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
                 app_name or "---", build_version, commcare_version or '---',
                 num_unsent_forms if num_unsent_forms is not None else "---",
@@ -485,6 +487,26 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             row[len(location_colums) + 2] = _fmt_timestamp(row[len(location_colums) + 2])
         result[0][1] = table
         return result
+
+    def _make_view_assigned_locations_button(self, user_id):
+        return format_html('''
+        <button
+            class="btn btn-sm btn-default view-assigned-locations-btn"
+            data-user-id={}>
+            <i class="fa fa-search"></i>
+            {}
+        </button>
+        ''', user_id, _('See All'))
+
+    def get_location_column(self, user):
+        assigned_loc_ids = user.get('assigned_location_ids')
+        if not assigned_loc_ids:
+            return '---'
+        if len(assigned_loc_ids) > 4:
+            return self._make_view_assigned_locations_button(user.get('_id'))
+
+        primary_loc_id = user.get('location_id')
+        return get_formatted_assigned_location_names(primary_loc_id, assigned_loc_ids)
 
 
 def _get_commcare_version(app_version_info):
