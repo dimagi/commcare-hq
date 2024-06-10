@@ -72,22 +72,24 @@ def get_interaction_colors():
             title="Call to Action",
             description="Referred to as 'CommCare Blue'. "
                         "Use for buttons, checkmarks, radio buttons or actionable primary icons. "
-                        "Links are a slightly darkened shade of this color ($blue-600) to improve contrast.",
-            main_color=Color('primary', '5D70D2'),
+                        "Links are a slightly darkened shade of this color ($blue-600) to improve contrast. "
+                        "Note the official brand color is: #5D70D2, but this is adjusted slightly to meet "
+                        "web accessibility guidelines.",
+            main_color=Color('primary', '5B6FD2'),
             subtle_color=Color('primary-subtle', 'DFE2H6'),
         ),
         ColorGroup(
             title="Download / Upload",
             description="Used typically for buttons indicating a download or upload action. "
                         "Corresponds with 'info' classes",
-            main_color=Color('info', '01A2A9'),
+            main_color=Color('info', '018289'),
             subtle_color=Color('info-subtle', 'CCECEE'),
         ),
         ColorGroup(
             title="Success",
             description="Use when an action has been completed successfully, primarily for messaging. "
                         "Rarely used for interactive elements like buttons.",
-            main_color=Color('success', '3FA12A'),
+            main_color=Color('success', '358623'),
             subtle_color=Color('success-subtle', 'D9ECD4'),
         ),
         ColorGroup(
@@ -101,7 +103,7 @@ def get_interaction_colors():
             title="Error, Negative Attention",
             description="Use to highlight an error, something negative or a critical risk. "
                         "Use as text, highlights, banners or destructive buttons. ",
-            main_color=Color('danger', 'E73C27'),
+            main_color=Color('danger', 'E13019'),
             subtle_color=Color('danger-subtle', 'FAD8D4'),
         ),
     ]
@@ -134,15 +136,15 @@ def get_neutral_colors():
 def get_gradient_colors():
     return {
         'blue': [
-            Color('blue-100', 'DFE2F6'),
-            Color('blue-200', 'BEC6ED'),
-            Color('blue-300', '9EA9E4'),
-            Color('blue-400', '7D8DDB'),
-            ThemeColor('blue-500', '5D70D2', theme_equivalent='primary'),
-            Color('blue-600', '4A5AA8'),
-            Color('blue-700', '38437E'),
-            Color('blue-800', '252D54'),
-            Color('blue-900', '13162A'),
+            Color('blue-100', 'DEE2F6'),
+            Color('blue-200', 'BDC5ED'),
+            Color('blue-300', '9DA9E4'),
+            Color('blue-400', '7C8CDB'),
+            ThemeColor('blue-500', '5B6FD2', theme_equivalent='primary'),
+            Color('blue-600', '#4959A8'),
+            Color('blue-700', '37437E'),
+            Color('blue-800', '242C54'),
+            Color('blue-900', '12162A'),
         ],
         'gray': [
             ThemeColor('gray-100', 'f8f9fa', theme_equivalent='light'),
