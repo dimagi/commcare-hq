@@ -3,6 +3,7 @@ import os
 import tempfile
 from collections import OrderedDict
 
+from django.utils.html import format_html
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
@@ -427,5 +428,25 @@ def get_location_type(domain, location, parent, loc_type_string, exception, is_n
         ))
 
     return loc_type_obj
+
+
+def get_formatted_assigned_location_names(primary_location_id, assigned_location_ids):
+    """
+    Create an HTML formatted string of the given assigned location names.
+    The primary location will be highlighted in bold.
+    """
+    locs = SQLLocation.objects.filter(location_id__in=assigned_location_ids)
+    formatted_loc_names = []
+    for loc in locs:
+        if loc.location_id == primary_location_id and len(assigned_location_ids) > 1:
+            formatted_loc_names.append(
+                f'<strong>{loc.name}</strong>'
+            )
+        else:
+            formatted_loc_names.append(loc.name)
+
+    formatted_str = ', '.join(formatted_loc_names)
+    out_str = f'<div>{formatted_str}</div>'
+    return format_html(out_str)
 
 # ---
