@@ -72,10 +72,8 @@ def get_interaction_colors():
             title="Call to Action",
             description="Referred to as 'CommCare Blue'. "
                         "Use for buttons, checkmarks, radio buttons or actionable primary icons. "
-                        "Links are a slightly darkened shade of this color ($blue-600) to improve contrast. "
-                        "Note the official brand color is: #5D70D2, but this is adjusted slightly to meet "
-                        "web accessibility guidelines.",
-            main_color=Color('primary', '5B6FD2'),
+                        "Links are a slightly darkened shade of this color ($blue-600) to improve contrast.",
+            main_color=Color('primary', '5D70D2'),
             subtle_color=Color('primary-subtle', 'DFE2H6'),
         ),
         ColorGroup(
@@ -136,15 +134,15 @@ def get_neutral_colors():
 def get_gradient_colors():
     return {
         'blue': [
-            Color('blue-100', 'DEE2F6'),
-            Color('blue-200', 'BDC5ED'),
-            Color('blue-300', '9DA9E4'),
-            Color('blue-400', '7C8CDB'),
-            ThemeColor('blue-500', '5B6FD2', theme_equivalent='primary'),
-            Color('blue-600', '#4959A8'),
-            Color('blue-700', '37437E'),
-            Color('blue-800', '242C54'),
-            Color('blue-900', '12162A'),
+            Color('blue-100', 'DFE2F6'),
+            Color('blue-200', 'BEC6ED'),
+            Color('blue-300', '9EA9E4'),
+            Color('blue-400', '7D8DDB'),
+            ThemeColor('blue-500', '5D70D2', theme_equivalent='primary'),
+            Color('blue-600', '4A5AA8'),
+            Color('blue-700', '38437E'),
+            Color('blue-800', '252D54'),
+            Color('blue-900', '13162A'),
         ],
         'gray': [
             ThemeColor('gray-100', 'f8f9fa', theme_equivalent='light'),
