@@ -5,12 +5,14 @@ hqDefine('geospatial/js/models', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'geospatial/js/utils',
+    'hqwebapp/js/bootstrap3/alert_user',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    utils
+    utils,
+    alertUser
 ) {
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
@@ -593,7 +595,7 @@ hqDefine('geospatial/js/models', [
         self.selectedSavedPolygonId = ko.observable('');
         self.oldSelectedSavedPolygonId = ko.observable('');
         self.resettingSavedPolygon = false;
-        self.activeSavedPolygon;
+        self.activeSavedPolygon = ko.observable(null);
 
         self.addPolygonsToFilterList = function (featureList) {
             for (const feature of featureList) {
@@ -674,9 +676,9 @@ hqDefine('geospatial/js/models', [
         };
 
         function removeActivePolygonLayer() {
-            if (self.activeSavedPolygon) {
-                self.mapObj.mapInstance.removeLayer(self.activeSavedPolygon.id);
-                self.mapObj.mapInstance.removeSource(self.activeSavedPolygon.id);
+            if (self.activeSavedPolygon()) {
+                self.mapObj.mapInstance.removeLayer(self.activeSavedPolygon().id);
+                self.mapObj.mapInstance.removeSource(self.activeSavedPolygon().id);
             }
         }
 
@@ -698,9 +700,9 @@ hqDefine('geospatial/js/models', [
         }
 
         self.clearActivePolygon = function () {
-            if (self.activeSavedPolygon) {
+            if (self.activeSavedPolygon()) {
                 removeActivePolygonLayer();
-                self.activeSavedPolygon = null;
+                self.activeSavedPolygon(null);
                 self.btnSaveDisabled(false);
                 self.btnExportDisabled(true);
             }
@@ -710,6 +712,31 @@ hqDefine('geospatial/js/models', [
             self.selectedSavedPolygonId('');
             self.clearActivePolygon();
             updateSelectedSavedPolygonParam();
+        };
+
+        self.deleteSelectedPolygonFilter = function () {
+            const deleteGeoJSONUrl = initialPageData.reverse('geo_polygon', self.selectedSavedPolygonId());
+            $.ajax({
+                type: 'DELETE',
+                url: deleteGeoJSONUrl,
+                success: function (ret) {
+                    if (!ret.success) {
+                        return alertUser.alert_user(ret.message, 'danger');
+                    }
+                    self.clearSelectedPolygonFilter();
+                    var message = ret.message + " " + gettext("Refreshing Page...");
+                    alertUser.alert_user(message, 'success');
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 2000);
+                },
+                error: function () {
+                    alertUser.alert_user(
+                        gettext("Oops! Something went wrong! Please report an issue if the problem persists."),
+                        'danger'
+                    );
+                },
+            });
         };
 
         self.selectedSavedPolygonId.subscribe(function (selectedPolygonID) {
@@ -754,7 +781,7 @@ hqDefine('geospatial/js/models', [
 
             createActivePolygonLayer(polygonObj);
 
-            self.activeSavedPolygon = polygonObj;
+            self.activeSavedPolygon(polygonObj);
             updateSelectedSavedPolygonParam();
             self.btnExportDisabled(false);
             self.btnSaveDisabled(true);
