@@ -57,6 +57,7 @@ from .views.mobile.users import (
     FilteredCommCareUserDownload,
     FilteredWebUserDownload,
     MobileWorkerListView,
+    ReactMobileWorkerListView,
     UploadCommCareUsers,
     UserUploadStatusView,
     activate_commcare_user,
@@ -148,6 +149,7 @@ urlpatterns = [
     url(r'^httpdigest/?$', test_httpdigest, name='test_httpdigest'),
 ] + [
     url(r'^commcare/$', MobileWorkerListView.as_view(), name=MobileWorkerListView.urlname),
+    url(r'^react/$', ReactMobileWorkerListView.as_view(), name=ReactMobileWorkerListView.urlname),
     url(r'^commcare/json/$', paginate_mobile_workers, name='paginate_mobile_workers'),
     url(r'^user_data/$', waf_allow('XSS_BODY')(UserFieldsView.as_view()), name=UserFieldsView.urlname),
     url(
