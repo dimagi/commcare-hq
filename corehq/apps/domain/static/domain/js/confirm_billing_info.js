@@ -2,7 +2,7 @@ hqDefine("domain/js/confirm_billing_info", [
     'jquery',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'accounting/js/lib/stripe',
+    'stripe',
     'accounting/js/stripe_card_manager',
     'accounting/js/widgets',
 ], function (
