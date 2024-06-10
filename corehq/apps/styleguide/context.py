@@ -82,7 +82,7 @@ def get_interaction_colors():
             title="Download / Upload",
             description="Used typically for buttons indicating a download or upload action. "
                         "Corresponds with 'info' classes",
-            main_color=Color('info', '018289'),
+            main_color=Color('info', '01A2A9'),
             subtle_color=Color('info-subtle', 'CCECEE'),
         ),
         ColorGroup(
