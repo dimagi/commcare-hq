@@ -74,7 +74,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
             }
         },
         onChangeOneQuestionPerScreen: function (e) {
-            this.currentUser.displayOptions.oneQuestionPerScreen = e.target.value === "on";
+            this.currentUser.displayOptions.oneQuestionPerScreen = e.target.checked;
             UsersModels.saveDisplayOptions(this.currentUser.displayOptions);
         },
     });
