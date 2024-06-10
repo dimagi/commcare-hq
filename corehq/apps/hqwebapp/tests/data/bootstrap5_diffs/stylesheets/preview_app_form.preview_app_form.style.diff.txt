@@ -49,21 +49,33 @@
    }
  }
  
-@@ -85,7 +82,7 @@
+@@ -76,7 +73,7 @@
+   }
  }
  
- .form-group.required {
+-.form-group {
++.q {
+   padding: 10px 0;
+   label {
+     margin-right: 10px;
+@@ -84,17 +81,17 @@
+   }
+ }
+ 
+-.form-group.required {
 -  .transition(all .5s);
++.q.required {
 +  transition: all .5s;
    margin-bottom: 0;
    label:before {
      display: none;
-@@ -93,8 +90,8 @@
+   }
  }
  
- .form-group.required.on {
+-.form-group.required.on {
 -  background-color: @cc-att-neg-hi;
 -  border: 10px solid @cc-att-neg-mid;
++.q.required.on {
 +  background-color: $cc-att-neg-hi;
 +  border: 10px solid $cc-att-neg-mid;
    border-bottom: none;
@@ -85,3 +97,12 @@
    color: white;
    width: auto;
    line-height: 14px;
+@@ -122,7 +119,7 @@
+   border: none;
+ }
+ 
+-.form-group .help-block {
++.q .help-block {
+   font-size: 11px;
+   &:before {
+     content: "\f05a";
