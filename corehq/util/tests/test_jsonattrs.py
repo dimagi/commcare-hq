@@ -283,12 +283,8 @@ def get_json_value(model, field_name):
     """
     field = model._meta.get_field(field_name)
     value = field.pre_save(model, False)
-    from django import VERSION as django_version
-    if django_version[:2] >= (4, 2):
-        # load as json obj to ensure it serializes properly
-        return json.loads(json.dumps(field.get_prep_value(value)))
-    else:
-        return json.loads(field.get_prep_value(value))
+    # load as json obj to ensure it serializes properly
+    return json.loads(json.dumps(field.get_prep_value(value)))
 
 
 def set_json_value(model, field_name, value):

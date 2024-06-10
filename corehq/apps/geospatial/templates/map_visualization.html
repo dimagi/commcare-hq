@@ -68,16 +68,7 @@
     </div>
 </div>
 <div class="row panel" id="mapControls">
-    <label for="saved-polygons" class="control-label col-sm-2 col-md-2 col-lg-2">
-    {% trans "Filter by Saved Area" %}</label>
-    <div class="controls col-sm-2 col-md-2 col-lg-2">
-        <select id="saved-polygons"
-                class="form-control"
-                data-bind="select2: savedPolygons,
-                        value: selectedSavedPolygonId,
-                        ">
-        </select>
-    </div>
+    {% include 'geospatial/partials/saved_polygon_filter.html' %}
     <a id="btnExportDrawnArea" class="col-sm-2 btn btn-default" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnExportDisabled }">
         {% trans 'Export Area' %}
     </a>
@@ -95,11 +86,7 @@
     {% trans "Running disbursement algorithm..." %}
   </h4>
 </div>
-<div id="disbursement-error" class="alert alert-danger" data-bind="visible: hasMissingData()">
-    {% blocktrans %}
-        Please ensure that the filtered area includes both cases and mobile workers before
-        attempting to run disbursement.
-    {% endblocktrans %}
+<div id="disbursement-error" class="alert alert-danger" data-bind="visible: disbursementErrorMessage(), html: disbursementErrorMessage">
 </div>
 <div id="disbursement-clear-message" class="alert alert-info" style="display: none">
     {% blocktrans %}

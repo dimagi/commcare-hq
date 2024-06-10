@@ -100,18 +100,28 @@
         </div>
       {% endif %}
     </form>
+
+    {% if support_info.locations %}
+      <h4>[Support only] Assigned Locations</h4>
+      <div class="list-group">
+        {% for location in support_info.locations %}
+          <a href="{% url "edit_location" domain location.location_id %}" class="list-group-item">
+            {{ location.get_path_display }} <span class="badge">{{ location.location_type.name }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
   {% endif %}
 
-  {% if tableau_form %}
+  {% if tableau_form and view_user_tableau_config %}
     <hr />
     <form id="tableau_form" class="form form-horizontal" name="" method="post">
       {% csrf_token %}
       <input type="hidden" name="form_type" value="tableau" />
       <fieldset>
-        <legend>{% trans 'Tableau Configuration' %}</legend>
         {% crispy tableau_form %}
       </fieldset>
-      {% if not request.is_view_only %}
+      {% if not request.is_view_only and edit_user_tableau_config%}
         <div class="form-actions">
           <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
             <button type="submit" class="btn btn-primary">{% trans 'Update Tableau Configuration' %}</button>

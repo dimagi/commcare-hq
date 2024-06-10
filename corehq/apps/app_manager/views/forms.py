@@ -649,7 +649,14 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
     ]
 
 
-def get_form_view_context_and_template(request, domain, form, langs, current_lang, messages=messages):
+def get_form_view_context(
+        request,
+        domain,
+        form,
+        langs,
+        current_lang,
+        messages=messages,
+):
     # HELPME
     #
     # This method has been flagged for refactoring due to its complexity and
@@ -889,7 +896,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         })
 
     context.update({'case_config_options': case_config_options})
-    return "app_manager/form_view.html", context
+    return context
 
 
 def _get_form_link_context(app, module, form, langs):

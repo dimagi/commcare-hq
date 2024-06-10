@@ -113,6 +113,8 @@ accounting
  0091_remove_custom_banner_alerts_feature_flag
  0092_revert_application_error_report_priv
  0093_defaultproductplan_is_annual_plan
+ 0094_add_annual_softwareplans
+ 0095_update_softwareplan_visibilities
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -131,6 +133,8 @@ api
 app_execution
  0001_initial
  0002_alter_appworkflowconfig_unique_together
+ 0003_appexecutionlog_updated
+ 0004_alter_appworkflowconfig_notification_emails_and_more
 app_manager
  0001_linked_app_domain
  0002_latestenabledbuildprofiles
@@ -229,6 +233,7 @@ case_search
  0011_domainsnotincasesearchindex
  0012_casesearchconfig_sync_cases_on_form_entry
  0013_casesearchconfig_fuzzy_prefix_length
+ 0014_casesearchconfig_index_name
 cleanup
  0001_convert_change_feed_checkpoint_to_sql
  0002_convert_mc_checkpoint_to_sql
@@ -419,6 +424,10 @@ es
  0006_verify_es2_indices_reindexed
  0007_init_indices_for_fresh_es_5
  0008_add_doc_id_to_all_mappings
+ 0009_add_indices_for_reindex_in_es5
+ 0010_delete_reverted_indices
+ 0011_add_indices_for_es5_reindex
+ 0012_add_new_index_for_bha
 events
  0001_add_events_model
  0002_attendancetrackingconfig
@@ -583,6 +592,7 @@ geospatial
  0003_auto_20230908_0927
  0004_auto_20230920_0821
  0005_auto_20240202_0807
+ 0006_geoconfig_max_cases_per_user_and_more
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -676,6 +686,7 @@ locations
  0018_auto_20200430_1601
  0019_auto_20200924_1753
  0020_delete_locationrelation
+ 0021_add_fixture_queryset_case_sync_restriction
 mobile_auth
  0001_initial
  0002_delete_sqlmobileauthkeyrecord
@@ -828,6 +839,7 @@ reports
  0013_tableau_various_20221205
  0014_querystringhash
  0015_tableauserver_allowed_tableau_groups
+ 0016_alter_tableauuser_role
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -1217,6 +1229,12 @@ users
  0060_invitations_addtableau_roles_and_groupids
  0061_auto_20240423_0802
  0062_add_web_apps_groups_permission_flag
+ 0063_rename_location_invitation_primary_location_and_more
+ 0064_add_edit_view_tableau_config_permissions
+ 0065_transfer_to_tableau_config_permission
+ 0066_add_profile_permissions
+ 0067_alter_invitation_tableau_role
+ 0068_grant_web_apps_to_default_mobile_worker_role
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

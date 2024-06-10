@@ -36,22 +36,6 @@ hqDefine('cloudcare/js/utils', [
         showSpinner: false,
     });
 
-    var getFormUrl = function (urlRoot, appId, moduleId, formId, instanceId) {
-        var url = urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
-        if (instanceId) {
-            url += '?instance_id=' + instanceId;
-        }
-        return url;
-    };
-
-    var getSubmitUrl = function (urlRoot, appId) {
-        // deprecated but still called from "touchforms-inline"
-        // which is used to fill out forms from within case details view
-        // use app.getSubmitUrl instead
-        // todo: replace and remove
-        return urlRoot + "/" + appId + "/";
-    };
-
     var showError = function (message, $el, reportToHq) {
         message = getErrorMessage(message);
         // Make message more user friendly since html isn't useful here
@@ -59,7 +43,7 @@ hqDefine('cloudcare/js/utils', [
             message = 'Sorry, something went wrong. Please try again in a few minutes. ' +
             'If this problem persists, please report it to CommCare Support.';
         }
-        _show(message, $el, null, "alert alert-danger");
+        _show(message, $el, null, "alert-danger");
         if (reportToHq === undefined || reportToHq) {
             reportFormplayerErrorToHQ({
                 type: 'show_error_notification',
@@ -72,12 +56,12 @@ hqDefine('cloudcare/js/utils', [
         if (message === undefined) {
             return;
         }
-        _show(message, $el, null, "alert alert-danger");
+        _show(message, $el, null, "alert-danger");
     };
 
     var showHTMLError = function (message, $el, autoHideTime, reportToHq) {
         var htmlMessage = message = getErrorMessage(message);
-        var $container = _show(message, $el, autoHideTime, "alert alert-danger", true);
+        var $container = _show(message, $el, autoHideTime, "alert-danger", true);
         try {
             message = $container.text();  // pull out just the text the user sees
             message = message.replace(/\s+/g, ' ').trim();
@@ -113,6 +97,8 @@ hqDefine('cloudcare/js/utils', [
     var _show = function (message, $el, autoHideTime, classes, isHTML) {
         var $container = $("<div />"),
             $alertDialog;
+        $container.addClass("alert");
+        $container.addClass("alert-dismissible");
         $container.addClass(classes);
         if (isHTML) {
             $container.html(message);
@@ -122,13 +108,17 @@ hqDefine('cloudcare/js/utils', [
         // HTML errors may already have an alert dialog
         $alertDialog = $container.hasClass("alert") ? $container : $container.find('.alert');
         try {
-            $alertDialog
-                .prepend(
-                    $("<a />")
-                        .addClass("close")
-                        .attr("data-dismiss", "alert")
-                        .html("&times;")
-                );
+            if (window.USE_BOOTSTRAP5) {
+                $alertDialog.append($("<button />").addClass("btn-close").attr("data-bs-dismiss", "alert").attr("aria-label", gettext("Close")));
+            } else {
+                $alertDialog
+                    .prepend(
+                        $("<a />")
+                            .addClass("close")
+                            .attr("data-dismiss", "alert")
+                            .html("&times;")
+                    );
+            }
         } catch (e) {
             // escaping a DOM-related error from running mocha tests using grunt
             // in the command line. This passes just fine in the browser but
@@ -418,7 +408,7 @@ hqDefine('cloudcare/js/utils', [
 
         $el.on("focusout", $el.data("DateTimePicker").hide);
         $el.attr("placeholder", dateFormat);
-        $el.attr("pattern", "[0-9-/]+");
+        $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
     };
 
     var initTimePicker = function ($el, selectedTime, timeFormat) {
@@ -480,8 +470,6 @@ hqDefine('cloudcare/js/utils', [
         parseInputDate: parseInputDate,
         initDatePicker: initDatePicker,
         initTimePicker: initTimePicker,
-        getFormUrl: getFormUrl,
-        getSubmitUrl: getSubmitUrl,
         showError: showError,
         showWarning: showWarning,
         showHTMLError: showHTMLError,

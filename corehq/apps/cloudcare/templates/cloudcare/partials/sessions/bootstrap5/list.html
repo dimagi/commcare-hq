@@ -3,8 +3,10 @@
 <script type="text/template" id="session-view-list-template">
   <% if(isPreviewEnv) { %>
   <div class="breadcrumb-form-container">
-    <ol class="breadcrumb breadcrumb-form">  {# todo B5: css:breadcrumb #}
-      <li class="breadcrumb-text">{% trans "Incomplete Forms" %}</li>
+    <ol class="breadcrumb breadcrumb-form">
+      <li class="breadcrumb-item">
+        {% trans "Incomplete Forms" %}
+      </li>
     </ol>
   </div>
   <% } else { %>
@@ -19,7 +21,7 @@
   <% } %>
   <div class="module-menu-container module-menu-bar-offset">
     <% if (!isPreviewEnv) { %>
-    <div class="page-header menu-header">  {# todo B5: css:page-header #}
+    <div class="page-header menu-header d-none d-md-block">
       <h1 class="page-title">{% trans "Incomplete Forms" %}</h1>
     </div>
     <% } %>

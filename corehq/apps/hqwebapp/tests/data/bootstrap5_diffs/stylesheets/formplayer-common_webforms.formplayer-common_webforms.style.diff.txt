@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -37,8 +37,6 @@
+ }
+ 
+ .widget {
+-  margin-right: 20px;
+-
+   button p {
+     margin-bottom: 0;
+   }

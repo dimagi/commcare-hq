@@ -48,7 +48,7 @@ from .repeat_record_display import RepeatRecordDisplay
 class DomainForwardingRepeatRecords(GenericTabularReport):
     name = 'Repeat Records'
     slug = 'repeat_record_report'
-    base_template = 'repeaters/repeat_record_report.html'
+    base_template = 'repeaters/bootstrap3/repeat_record_report.html'
     section_name = 'Project Settings'
 
     dispatcher = DomainReportDispatcher
@@ -316,7 +316,7 @@ class RepeatRecordView(View):
                     dhis2_errors.append((cleaned_log, get_diagnosis_message(cleaned_log)))
 
         attempt_html = render_to_string(
-            'repeaters/partials/attempt_history.html',
+            'repeaters/partials/bootstrap3/attempt_history.html',
             context={
                 'record': record,
                 'record_id': record_id,

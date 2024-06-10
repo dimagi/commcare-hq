@@ -171,14 +171,12 @@ class SoftwarePlanVisibility(object):
     PUBLIC = "PUBLIC"
     INTERNAL = "INTERNAL"
     TRIAL = "TRIAL"
-    ANNUAL = "ANNUAL"
     ARCHIVED = "ARCHIVED"
     CHOICES = (
         (PUBLIC, "PUBLIC - Anyone can subscribe"),
         (INTERNAL, "INTERNAL - Dimagi must create subscription"),
         (TRIAL, "TRIAL- This is a Trial Plan"),
         (ARCHIVED, "ARCHIVED - hidden from subscription change forms"),
-        (ANNUAL, "ANNUAL - public plans that on annual pricing"),
     )
 
 
@@ -857,7 +855,7 @@ class DefaultProductPlan(models.Model):
 
     class Meta(object):
         app_label = 'accounting'
-        unique_together = ('edition', 'is_trial', 'is_report_builder_enabled')
+        unique_together = ('edition', 'is_trial', 'is_report_builder_enabled', 'is_annual_plan')
 
     @classmethod
     @quickcache(['edition', 'is_trial', 'is_report_builder_enabled'],

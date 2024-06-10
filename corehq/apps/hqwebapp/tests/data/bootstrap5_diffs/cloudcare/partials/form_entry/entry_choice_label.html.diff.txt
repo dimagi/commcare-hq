@@ -1,6 +1,14 @@
 --- 
 +++ 
-@@ -21,7 +21,7 @@
+@@ -12,6 +12,7 @@
+                     id: 'group-' + $parent.entryId + '-choice-' + $index(),
+                     'aria-labelledby': $parent.entryId + '-choice-' + $index() + '-sr',
+                     name: $parent.entryId,
++                    css: { 'is-invalid': $root.hasError() },
+                     class: 'group-' + $parent.entryId,
+                 }
+             "/>
+@@ -21,7 +22,7 @@
      <!-- /ko -->
      <!-- ko if: hideLabel -->
        <div data-bind="attr: { 'class': colStyle }">

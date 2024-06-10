@@ -75,6 +75,8 @@ from corehq.util import flatten_list
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.groups.models import Group
 
 TOO_MUCH_DATA = gettext_noop(
     'The filters you selected include too much data. Please change your filters and try again'
@@ -94,10 +96,13 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
     exportable = True
 
     def get_user_link(self, user):
+        name = user.raw_username if hasattr(user, 'raw_username') else user.name
+
         if self._has_form_view_permission():
             user_link = self.get_raw_user_link(user)
-            return self.table_cell(user.raw_username, user_link)
-        return self.table_cell(user.raw_username)
+            return self.table_cell(name, user_link)
+
+        return self.table_cell(name)
 
     def _has_form_view_permission(self):
         return self.request.couch_user.has_permission(
@@ -181,14 +186,32 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """See column headers for details"""
     name = gettext_lazy('Case Activity')
     slug = 'case_activity'
-    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-              'corehq.apps.reports.filters.select.CaseTypeFilter']
     display_data = ['percent']
     emailable = True
     description = gettext_lazy("Followup rates on active cases.")
     is_cacheable = True
     ajax_pagination = True
     exportable_all = True
+
+    @property
+    def fields(self):
+        fields = [
+            'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+            'corehq.apps.reports.filters.select.CaseTypeFilter',
+        ]
+        if self.has_case_sharing:
+            fields.append('corehq.apps.reports.filters.users.UserOrGroupFilter')
+        return fields
+
+    @property
+    @memoized
+    def has_case_sharing(self):
+        return self.domain_object.case_sharing_included()
+
+    @property
+    @memoized
+    def view_by_groups(self):
+        return self.request.GET.get('view_by') == 'groups'
 
     @property
     def shared_pagination_GET_params(self):
@@ -206,6 +229,10 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             dict(
                 name='landmark',
                 value=self.request.GET.get('landmark')
+            ),
+            dict(
+                name='view_by',
+                value=self.request.GET.get('view_by')
             )
         ]
         return params
@@ -239,10 +266,17 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def special_notice(self):
-        if self.domain_object.case_sharing_included():
-            return _("This report currently does not support case sharing. "
-                     "There might be inconsistencies in case totals if the "
-                     "user is part of a case sharing group.")
+        if self.has_case_sharing:
+            help_link = (
+                "https://dimagi.atlassian.net/wiki/spaces/commcarepublic"
+                "/pages/2143957523/Debugging+Case+Sharing+errors"
+            )
+            return format_html(_(
+                "Note that when viewing this report by group it will only include "
+                "cases which are assigned to a Case Sharing Group/Location. To learn "
+                "more about Case Sharing click "
+                "<a href='{}' target='blank'>here</a>."
+            ).format(help_link))
 
     _default_landmarks = [30, 60, 90]
 
@@ -283,7 +317,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def total_records(self):
-        return len(self.user_ids)
+        return len(self.owner_ids)
 
     @property
     def headers(self):
@@ -293,7 +327,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                                     help_text=help_text.format(num_days),
                                     sortable=False if title == "Proportion" else True)
 
-        columns = [DataTablesColumn(_("Users"))]
+        columns = [DataTablesColumn(_("Groups"))] if self.view_by_groups else [DataTablesColumn(_("Users"))]
 
         for __, landmark in self.landmarks:
             columns.append(DataTablesColumnGroup(
@@ -310,43 +344,99 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     @property
     @memoized
     def selected_users(self):
-        return _get_selected_users(self.domain, self.request)
+        users = _get_selected_users(self.domain, self.request)
+        return [
+            self.RowData(
+                id=user.user_id,
+                name=user.raw_username,
+                name_in_report=user.username_in_report,
+                filter_func=CaseListFilter.for_user
+            ) for user in users
+        ]
+
+    @property
+    def has_case_group_filters(self):
+        slugs = EMWF.get_value(self.request, self.domain)
+        filter_count = len(EMWF.selected_group_ids(slugs) + EMWF.selected_location_ids(slugs))
+        return filter_count > 0
 
     @property
     @memoized
-    def users_by_id(self):
-        return {user.user_id: user for user in self.selected_users}
+    def selected_groups(self):
+        if self.has_case_group_filters:
+            slugs = EMWF.get_value(self.request, self.domain)
+            group_ids = EMWF.selected_group_ids(slugs)
+            groups = [Group.get(g) for g in group_ids]
+        else:
+            groups = Group.get_reporting_groups(self.domain)
+        return [
+            self.RowData(
+                id=group['_id'],
+                name=group['name'],
+                name_in_report=group['name'],
+                filter_func=CaseListFilter.for_reporting_group
+            ) for group in groups
+        ]
 
     @property
     @memoized
-    def user_ids(self):
-        return list(self.users_by_id)
+    def selected_locations(self):
+        locations = SQLLocation.objects.filter(domain=self.domain)
+        slugs = EMWF.get_value(self.request, self.domain)
+        if self.has_case_group_filters:
+            location_ids = EMWF.selected_location_ids(slugs)
+            locations = locations.filter(location_id__in=location_ids)
+        return [
+            self.RowData(
+                id=loc.location_id,
+                name=loc.name,
+                name_in_report=loc.display_name,
+                filter_func=CaseListFilter.for_reporting_location
+            ) for loc in locations
+        ]
 
     @property
     @memoized
-    def paginated_users(self):
-        if self.sort_column is None:
-            return sorted(
-                self.selected_users, key=lambda u: u.raw_username, reverse=self.pagination.desc
-            )[self.pagination.start:self.pagination.start + self.pagination.count]
+    def selected_owners(self):
+        if self.view_by_groups:
+            return self.selected_groups + self.selected_locations
         return self.selected_users
 
     @property
     @memoized
-    def paginated_users_by_id(self):
-        return [(user.user_id, user) for user in self.paginated_users]
+    def owners_by_id(self):
+        return {owner.id: owner for owner in self.selected_owners}
 
     @property
     @memoized
-    def paginated_user_ids(self):
-        return [user.user_id for user in self.paginated_users]
+    def owner_ids(self):
+        return list(self.owners_by_id)
+
+    @property
+    @memoized
+    def paginated_owners(self):
+        if self.sort_column is None:
+            return sorted(
+                self.selected_owners, key=lambda o: o.name, reverse=self.pagination.desc
+            )[self.pagination.start:self.pagination.start + self.pagination.count]
+        return self.selected_owners
+
+    @property
+    @memoized
+    def paginated_owners_by_id(self):
+        return [(owner.id, owner) for owner in self.paginated_owners]
+
+    @property
+    @memoized
+    def paginated_owner_ids(self):
+        return [owner.id for owner in self.paginated_owners]
 
     @property
     def sort_column(self):
         column_num = self.request_params.get('iSortCol_0', 0)
         num_columns = self.request_params.get('iColumns', 15)
         if column_num == 0:
-            return None  # user
+            return None  # owner
         elif column_num == (num_columns - 2):
             return "active_total"
         elif column_num == (num_columns - 1):
@@ -369,7 +459,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return "landmark_%d" % (landmark,)
 
     @property
-    def should_sort_by_username(self):
+    def should_sort_by_name(self):
         return self.request_params.get('iSortCol_0', 0) == 0
 
     def _format_row(self, row):
@@ -400,23 +490,22 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     @property
     def rows(self):
         es_results = self.es_queryset(
-            user_ids=self.paginated_user_ids,
+            owner_ids=self.paginated_owner_ids,
             size=self.pagination.start + self.pagination.count
         )
-        buckets = es_results.aggregations.users.buckets_list
-        if self.missing_users:
-            buckets.append(es_results.aggregations.missing_users.bucket)
+        buckets = es_results.aggregations.owners.buckets_list
+        if self.missing_owners:
+            buckets.append(es_results.aggregations.missing_owners.bucket)
         rows = []
         for bucket in buckets:
-            user = self.users_by_id[bucket.key]
-            rows.append(self.Row(self, user, bucket))
+            owner = self.owners_by_id[bucket.key]
+            rows.append(self.Row(self, owner, bucket))
 
-        rows.extend(self._unmatched_buckets(buckets, self.paginated_user_ids))
+        rows.extend(self._unmatched_buckets(buckets, self.paginated_owner_ids))
 
-        if self.should_sort_by_username:
+        if self.should_sort_by_name:
             # ES handles sorting for all other columns
-            rows.sort(key=lambda row: row.user.raw_username)
-
+            rows.sort(key=lambda row: row.row_data.name)
         self.total_row = self._total_row
         if len(rows) <= self.pagination.count:
             return list(map(self._format_row, rows))
@@ -428,29 +517,29 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def get_all_rows(self):
-        es_results = self.es_queryset(user_ids=self.user_ids)
-        buckets = es_results.aggregations.users.buckets_list
-        if self.missing_users:
-            buckets.append(es_results.aggregations.missing_users.bucket)
+        es_results = self.es_queryset(owner_ids=self.owner_ids)
+        buckets = es_results.aggregations.owners.buckets_list
+        if self.missing_owners:
+            buckets.append(es_results.aggregations.missing_owners.bucket)
         rows = []
         for bucket in buckets:
-            user = self.users_by_id[bucket.key]
-            rows.append(self.Row(self, user, bucket))
+            owner = self.owners_by_id[bucket.key]
+            rows.append(self.Row(self, owner, bucket))
 
-        rows.extend(self._unmatched_buckets(buckets, self.user_ids))
+        rows.extend(self._unmatched_buckets(buckets, self.owner_ids))
 
         self.total_row = self._total_row
         return list(map(self._format_row, rows))
 
-    def _unmatched_buckets(self, buckets, user_ids):
+    def _unmatched_buckets(self, buckets, owner_ids):
         # ES doesn't return buckets that don't have any docs matching docs
-        # we expect a bucket for each relevant user id so add empty buckets
-        returned_user_ids = {b.key for b in buckets}
-        not_returned_user_ids = set(user_ids) - returned_user_ids
+        # we expect a bucket for each relevant owner id so add empty buckets
+        returned_owner_ids = {b.key for b in buckets}
+        not_returned_owner_ids = set(owner_ids) - returned_owner_ids
         extra_rows = []
-        for user_id in not_returned_user_ids:
-            extra_rows.append(self.Row(self, self.users_by_id[user_id], {}))
-        extra_rows.sort(key=lambda row: row.user.raw_username)
+        for owner_id in not_returned_owner_ids:
+            extra_rows.append(self.Row(self, self.owners_by_id[owner_id], {}))
+        extra_rows.sort(key=lambda row: row.row_data.name)
         return extra_rows
 
     @property
@@ -470,9 +559,12 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         query = (
             case_es.CaseES()
             .domain(self.domain)
-            .user_ids_handle_unknown(self.user_ids)
             .size(0)
         )
+        if self.view_by_groups:
+            query = query.owner(self.owner_ids)
+        else:
+            query = query.user_ids_handle_unknown(self.owner_ids)
         if self.case_type:
             query = query.filter(case_es.case_type(self.case_type))
         else:
@@ -487,12 +579,15 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         query = self.add_landmark_aggregations(query, self.end_date)
 
-        return self._format_row(self.TotalRow(query.run(), _("All Users")))
+        return self._format_row(self.TotalRow(
+            query.run(),
+            _("All Groups") if self.view_by_groups else _("All Users")
+        ))
 
     @property
     @memoized
-    def missing_users(self):
-        return None in self.user_ids
+    def missing_owners(self):
+        return None in self.owner_ids
 
     @property
     def end_date(self):
@@ -502,9 +597,10 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def milestone_start(self):
         return ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
 
-    def es_queryset(self, user_ids, size=None):
+    def es_queryset(self, owner_ids, size=None):
+        field = 'owner_id' if self.view_by_groups else 'user_id'
         top_level_aggregation = (
-            TermsAggregation('users', 'user_id')
+            TermsAggregation('owners', field)
             .aggregation(self._touched_total_aggregation)
             .aggregation(self._active_total_aggregation)
             .aggregation(self._inactive_total_aggregation)
@@ -523,9 +619,13 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         query = (
             case_es.CaseES()
             .domain(self.domain)
-            .user_ids_handle_unknown(user_ids)
             .size(0)
         )
+        if self.view_by_groups:
+            query = query.owner(owner_ids)
+        else:
+            query = query.user_ids_handle_unknown(owner_ids)
+
         if self.case_type:
             query = query.case_type(self.case_type)
         else:
@@ -533,9 +633,9 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         query = query.aggregation(top_level_aggregation)
 
-        if self.missing_users:
+        if self.missing_owners:
             missing_aggregation = (
-                MissingAggregation('missing_users', 'user_id')
+                MissingAggregation('missing_owners', field)
                 .aggregation(self._touched_total_aggregation)
                 .aggregation(self._active_total_aggregation)
                 .aggregation(self._inactive_total_aggregation)
@@ -562,11 +662,22 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             .aggregation(FilterAggregation('closed', case_es.is_closed()))
         )
 
+    class RowData(object):
+        def __init__(self, id, name, name_in_report, filter_func):
+            self.id = id
+            self.name = name
+            self.name_in_report = name_in_report
+            self.filter_func = filter_func  # Func for getting ID to filter by in Case List
+
+        @property
+        def filter_id(self):
+            return urlencode(self.filter_func(self.id))
+
     class Row(object):
 
-        def __init__(self, report, user, bucket):
+        def __init__(self, report, row_data, bucket):
             self.report = report
-            self.user = user
+            self.row_data = row_data
             self.bucket = bucket
 
         def active_count(self, landmark_key):
@@ -624,7 +735,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 return 0
 
         def header(self):
-            return self.report.get_user_link(self.user)['html']
+            return self.report.get_user_link(self.row_data)['html']
 
     class TotalRow(object):
 
@@ -655,6 +766,16 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         def header(self):
             return self._header
+
+    def get_raw_user_link(self, row_data):
+        row_link_template = '<a href="{link}?{params}">{name}</a>'
+        row_link = format_html(
+            row_link_template,
+            link=self.raw_user_link_url,
+            params=row_data.filter_id,
+            name=row_data.name_in_report,
+        )
+        return row_link
 
 
 @location_safe
@@ -1346,8 +1467,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     @property
     @memoized
     def users_by_group(self):
-        from corehq.apps.groups.models import Group
-
         if not self.group_ids or self.request.GET.get('all_groups', 'off') == 'on':
             groups = Group.get_reporting_groups(self.domain)
         else:

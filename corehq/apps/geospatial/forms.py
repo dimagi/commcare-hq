@@ -35,6 +35,8 @@ class GeospatialConfigForm(forms.ModelForm):
             "target_group_count",
             "selected_disbursement_algorithm",
             "plaintext_api_token",
+            "min_cases_per_user",
+            "max_cases_per_user",
         ]
 
     user_location_property_name = forms.CharField(
@@ -62,7 +64,7 @@ class GeospatialConfigForm(forms.ModelForm):
         min_value=1,
     )
     min_cases_per_group = forms.IntegerField(
-        label=("Minimum group size"),
+        label=_("Minimum group size"),
         help_text=_("The minimum number of cases that can be in a group"),
         required=False,
         min_value=1,
@@ -83,6 +85,21 @@ class GeospatialConfigForm(forms.ModelForm):
         # ),
         choices=DISBURSEMENT_ALGORITHM_OPTIONS,
         required=True,
+        help_text=_("The algorithm which will be used to disburse cases between users"),
+    )
+    min_cases_per_user = forms.IntegerField(
+        label=_("Minimum cases assigned per user"),
+        help_text=_("The minimum number of cases each user can be assigned"),
+        required=True,
+        min_value=1,
+    )
+    max_cases_per_user = forms.IntegerField(
+        label=_("Maximum cases assigned per user"),
+        help_text=_(
+            "The maximum number of cases each user can be assigned. "
+            "Leave blank in case you don't want to specify any upper limit."
+        ),
+        required=False,
     )
     plaintext_api_token = forms.CharField(
         label=_("Enter mapbox token"),
@@ -106,41 +123,6 @@ class GeospatialConfigForm(forms.ModelForm):
         self.helper.add_layout(
             crispy.Layout(
                 crispy.Fieldset(
-                    _("Configure Geospatial Settings"),
-                    crispy.Field(
-                        'user_location_property_name',
-                        data_bind="value: customUserFieldName"
-                    ),
-                    crispy.Field(
-                        'case_location_property_name',
-                        data_bind="options: geoCasePropOptions, "
-                                  "value: geoCasePropertyName, "
-                                  "event: {change: onGeoCasePropChange}"
-                    ),
-                    crispy.Div(
-                        crispy.HTML('%s' % _(
-                            'The currently used "{{ config.case_location_property_name }}" case property '
-                            'has been deprecated in the Data Dictionary. Please consider switching this '
-                            'to another property.')
-                        ),
-                        css_class='alert alert-warning',
-                        data_bind="visible: isCasePropDeprecated"
-                    ),
-                    crispy.Div(
-                        crispy.HTML('%s' % _(
-                            'The currently used "{{ config.case_location_property_name }}" case '
-                            'property may be associated with cases. Selecting a new case '
-                            'property will have the following effects:'
-                            '<ul><li>All cases using the old case property will no longer appear on maps.</li>'
-                            '<li>If the old case property is being used in an application, a new version would '
-                            'need to be released with the new case property for all users that capture '
-                            'location data.</li></ul>')
-                        ),
-                        css_class='alert alert-warning',
-                        data_bind="visible: hasGeoCasePropChanged"
-                    ),
-                ),
-                crispy.Fieldset(
                     _('Case Grouping Parameters'),
                     crispy.Field('selected_grouping_method', data_bind="value: selectedGroupMethod"),
                     crispy.Div(
@@ -159,6 +141,14 @@ class GeospatialConfigForm(forms.ModelForm):
                         'selected_disbursement_algorithm',
                         data_bind='value: selectedAlgorithm',
                     ),
+                    crispy.Field(
+                        'min_cases_per_user',
+                        data_bind='value: minCasesPerUser',
+                    ),
+                    crispy.Field(
+                        'max_cases_per_user',
+                        data_bind='value: maxCasesPerUser',
+                    ),
                     crispy.Div(
                         crispy.Field('plaintext_api_token', data_bind="value: plaintext_api_token"),
                         data_bind="visible: captureApiToken"
@@ -173,6 +163,45 @@ class GeospatialConfigForm(forms.ModelForm):
                         ),
                         css_class=hqcrispy.CSS_ACTION_CLASS,
                         data_bind="visible: captureApiToken"
+                    ),
+                ),
+                hqcrispy.FieldsetAccordionGroup(
+                    _('Advanced Settings'),
+                    crispy.Fieldset(
+                        _("Location Data Properties"),
+                        crispy.Field(
+                            'user_location_property_name',
+                            data_bind="value: customUserFieldName"
+                        ),
+                        crispy.Field(
+                            'case_location_property_name',
+                            data_bind="options: geoCasePropOptions, "
+                                      "value: geoCasePropertyName, "
+                                      "event: {change: onGeoCasePropChange}"
+                        ),
+                        crispy.Div(
+                            crispy.HTML('%s' % _(
+                                'The currently used "{{ config.case_location_property_name }}" case property '
+                                'has been deprecated in the Data Dictionary. Please consider switching this '
+                                'to another property.')
+                            ),
+                            css_class='alert alert-warning',
+                            data_bind="visible: isCasePropDeprecated"
+                        ),
+                        crispy.Div(
+                            crispy.HTML('%s' % _(
+                                'The currently used "{{ config.case_location_property_name }}" case '
+                                'property may be associated with cases. Selecting a new case '
+                                'property will have the following effects:'
+                                '<ul><li>All cases using the old case property will no longer '
+                                'appear on maps.</li><li>If the old case property is being used '
+                                'in an application, a new version would need to be released with '
+                                'the new case property for all users that capture location data.'
+                                '</li></ul>')
+                            ),
+                            css_class='alert alert-warning',
+                            data_bind="visible: hasGeoCasePropChanged"
+                        ),
                     ),
                 ),
                 hqcrispy.FormActions(
@@ -212,6 +241,10 @@ class GeospatialConfigForm(forms.ModelForm):
         token = cleaned_data.get('plaintext_api_token')
         if algorithm == GeoConfig.ROAD_NETWORK_ALGORITHM and not token:
             raise ValidationError(_("Mapbox API token required"))
+
+        max_cases_per_user_value = cleaned_data['max_cases_per_user']
+        if max_cases_per_user_value and max_cases_per_user_value < cleaned_data['min_cases_per_user']:
+            raise ValidationError(_("The maximum cases per user cannot be less than the minimum specified"))
 
         return cleaned_data
 
