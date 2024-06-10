@@ -37,11 +37,13 @@ from corehq.apps.locations.tasks import (
     download_locations_async,
     import_locations_async,
 )
+from corehq.apps.locations.util import get_formatted_assigned_location_names
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.apps.reports.filters.controllers import EmwfOptionsController
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.apps.users.models import CouchUser
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
@@ -1152,4 +1154,18 @@ def count_locations(request, domain):
 
     return JsonResponse({
         'count': locations_count
+    })
+
+
+def get_assigned_location_names_for_user(request, domain):
+    user_id = request.GET.get('user_id')
+    if not user_id:
+        raise Http404()
+    user = CouchUser.get_by_user_id(user_id)
+    if not user:
+        raise Http404()
+    return JsonResponse({
+        'assigned_location_names_html': get_formatted_assigned_location_names(
+            user.location_id, user.assigned_location_ids,
+        )
     })
