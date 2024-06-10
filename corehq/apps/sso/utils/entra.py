@@ -72,7 +72,12 @@ def get_user_principal_names(user_ids, token):
         headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
         data=json.dumps(batch_payload)
     )
-    batch_response.raise_for_status()
+    try:
+        batch_response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        # Append the response body to the HTTPError message
+        error_message = f"{e.response.status_code} {e.response.reason} - {batch_response.text}"
+        raise requests.exceptions.HTTPError(error_message, response=e.response)
     batch_result = batch_response.json()
 
     for resp in batch_result['responses']:
