@@ -21,7 +21,7 @@
       </div>
       {% if environment == "web-apps" %}
         <div class="row" data-bind="visible: erroredQuestions().length > 0">
-          <div class="col-md-12 alert alert-danger">
+          <div class="alert alert-danger">
             {% blocktrans %}
               Please correct the answers below before submitting.
               <br>
