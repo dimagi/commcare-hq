@@ -421,11 +421,11 @@ class TestProfileValidator(TestCase):
             definition=cls.definition,
         )
         cls.profile2.save()
-        cls.all_user_profile_ids_by_name = {'p1': cls.profile1.id, 'p2': cls.profile2.id}
+        all_user_profiles_by_name = {'p1': cls.profile1, 'p2': cls.profile2}
         cls.editable_user.get_user_data(cls.domain).profile_id = cls.profile1.id
         cls.editable_user.save()
         cls.web_user_import_validator = ProfileValidator(cls.domain, cls.upload_user,
-                                                True, cls.all_user_profile_ids_by_name)
+                                                True, all_user_profiles_by_name)
         cls.invitation = Invitation.objects.create(
             domain=cls.domain,
             email='invite-user@dimagi.com',
