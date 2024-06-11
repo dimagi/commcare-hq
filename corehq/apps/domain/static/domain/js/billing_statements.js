@@ -5,7 +5,7 @@ hqDefine("domain/js/billing_statements", [
     'hqwebapp/js/initial_page_data',
     'accounting/js/payment_method_handler',
     'hqwebapp/js/bootstrap3/crud_paginated_list',
-    'accounting/js/lib/stripe',
+    'stripe',
 ], function (
     $,
     _,
