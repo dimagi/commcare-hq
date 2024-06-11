@@ -902,6 +902,8 @@ def undelete_report(request, domain, report_id):
     ])
     if config and is_deleted(config):
         undo_delete(config)
+        indicator_adapter = get_indicator_adapter(config.config)
+        indicator_adapter.adapter.rebuild_table(initiated_by=request.user.username)
         messages.success(
             request,
             _('Successfully restored report "{name}"').format(name=config.title)
