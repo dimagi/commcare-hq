@@ -21,7 +21,7 @@ ENDPOINT_BASE_URL = "https://graph.microsoft.com/v1.0"
 MS_BATCH_LIMIT = 20
 
 
-def get_all_members_of_the_idp_from_entra(idp):
+def get_all_usernames_of_the_idp_from_entra(idp):
     import msal
     config = configure_idp(idp)
 
