@@ -189,7 +189,7 @@
     {% endif %}
     <div class="tab-pane" id="user-metadata">
       <div class="panel-body">
-        <table class="table table-striped table-hover">
+        <table class="table">
           <tbody>
             <tr>
               <td>{% trans "Created On" %}</td>
@@ -228,14 +228,22 @@
                 </span>
               </td>
               <td>
-                <ul class="list-unstyled">
-                  {% for device in couch_user.devices %}
-                    <li>
-                      {{ device.last_used|to_user_time:request }} -
-                      <code>{{ device.device_id }}</code>
-                    </li>
-                  {% endfor %}
-                </ul>
+                <table class="table-condensed table-bordered">
+                  <thead>
+                    <tr>
+                      <th>Device ID</th>
+                      <th>Last Used</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for device in couch_user.devices|dictsortreversed:"last_used" %}
+                      <tr>
+                        <td style="font-family: monospace">{{ device.device_id }}</td>
+                        <td>{{ device.last_used|to_user_time:request }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
               </td>
             </tr>
           </tbody>
