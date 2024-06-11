@@ -18,6 +18,7 @@ class MSOdataType:
 
 
 ENDPOINT_BASE_URL = "https://graph.microsoft.com/v1.0"
+MS_BATCH_LIMIT = 20
 
 
 def get_all_members_of_the_idp_from_entra(idp):
@@ -56,34 +57,48 @@ def configure_idp(idp):
 
 
 def get_user_principal_names(user_ids, token):
-    # Prepare batch request
-    batch_payload = {
-        "requests": [
-            {
-                "id": str(i),
-                "method": "GET",
-                "url": f"/users/{principal_id}?$select=userPrincipalName"
-            } for i, principal_id in enumerate(user_ids)
-        ]
-    }
-    # Send batch request
-    batch_response = requests.post(
-        f'{ENDPOINT_BASE_URL}/$batch',
-        headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
-        data=json.dumps(batch_payload)
-    )
-    batch_response.raise_for_status()
-    batch_result = batch_response.json()
+    # Convert set to list to make it subscriptable
+    user_ids = list(user_ids)
+    #JSON batch requests are currently limited to 20 individual requests.
+    user_id_chunks = [user_ids[i:i + MS_BATCH_LIMIT] for i in range(0, len(user_ids), MS_BATCH_LIMIT)]
 
-    for resp in batch_result['responses']:
-        if 'body' in resp and 'error' in resp['body']:
-            raise EntraVerificationFailed(resp['body']['error']['code'], resp['body']['message'])
+    user_principal_names = []
 
-    # Extract userPrincipalName from batch response
-    user_principal_names = [
-        resp['body']['userPrincipalName'] for resp in batch_result['responses']
-        if 'body' in resp and 'userPrincipalName' in resp['body']
-    ]
+    for chunk in user_id_chunks:
+        batch_payload = {
+            "requests": [
+                {
+                    "id": str(i),
+                    "method": "GET",
+                    "url": f"/users/{principal_id}?$select=userPrincipalName"
+                } for i, principal_id in enumerate(chunk)
+            ]
+        }
+
+        # Send batch request
+        batch_response = requests.post(
+            f'{ENDPOINT_BASE_URL}/$batch',
+            headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+            data=json.dumps(batch_payload)
+        )
+
+        try:
+            batch_response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            # Append the response body to the HTTPError message
+            error_message = f"{e.response.status_code} {e.response.reason} - {batch_response.text}"
+            raise requests.exceptions.HTTPError(error_message, response=e.response)
+
+        batch_result = batch_response.json()
+        for resp in batch_result['responses']:
+            if 'body' in resp and 'error' in resp['body']:
+                raise EntraVerificationFailed(resp['body']['error']['code'], resp['body']['message'])
+
+        # Extract userPrincipalName from batch response
+        for resp in batch_result['responses']:
+            if 'body' in resp and 'userPrincipalName' in resp['body']:
+                user_principal_names.append(resp['body']['userPrincipalName'])
+
     return user_principal_names
 
 
