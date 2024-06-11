@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 @pytest.hookimpl
-def pytest_configure():
+def pytest_sessionstart():
     import dimagi.utils.couch
 
     global get_client

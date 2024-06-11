@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.hookimpl
-def pytest_configure():
+def pytest_sessionstart():
     from corehq.apps.domain.tests.test_utils import patch_domain_deletion
     from corehq.form_processor.tests.utils import patch_testcase_databases
     from corehq.util.es.testing import patch_es_user_signals
