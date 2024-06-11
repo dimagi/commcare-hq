@@ -584,15 +584,17 @@ def _reverse_index_map(index_map):
 
 class SimplifiedSyncLog(AbstractSyncLog):
     """
-    New, simplified sync log class that is used by ownership cleanliness restore.
+    New, simplified sync log class that is used by ownership cleanliness
+    restore.
 
-    Just maintains a flat list of case IDs on the phone rather than the case/dependent state
-    lists from the SyncLog class.
+    Just maintains a flat list of case IDs on the phone rather than the
+    case/dependent state lists from the SyncLog class.
     """
     log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
     case_ids_on_phone = SetProperty(six.text_type)
-    # this is a subset of case_ids_on_phone used to flag that a case is only around because it has dependencies
-    # this allows us to purge it if possible from other actions
+    # this is a subset of case_ids_on_phone used to flag that a case is
+    # only around because it has dependencies this allows us to purge
+    # it if possible from other actions
     dependent_case_ids_on_phone = SetProperty(six.text_type)
     owner_ids_on_phone = SetProperty(six.text_type)
     index_tree = SchemaProperty(IndexTree)  # index tree of subcases / children
@@ -632,41 +634,53 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def purge(self, case_id, xform_id=None):
         """
-        This happens in 3 phases, and recursively tries to purge outgoing indices of purged cases.
-        Definitions:
+        This happens in 3 phases, and recursively tries to purge
+        outgoing indices of purged cases.
+
+        Definitions
         -----------
+
         A case is *relevant* if:
+
         - it is open and owned or,
         - it has a relevant child or,
         - it has a relevant extension or,
         - it is the extension of a relevant case.
 
         A case is *available* if:
+
         - it is open and not an extension case or,
         - it is open and is the extension of an available case.
 
         A case is *live* if:
+
         - it is owned and available or,
         - it has a live child or,
         - it has a live extension or,
         - it is the extension of a live case.
 
-        Algorithm:
-        ----------
-        1. Mark *relevant* cases
-            Mark all open cases owned by the user relevant. Traversing all outgoing child
-            and extension indexes, as well as all incoming extension indexes, mark all
-            touched cases relevant.
+        Algorithm
+        ---------
 
-        2. Mark *available* cases
-            Mark all relevant cases that are open and have no outgoing extension indexes
-            as available. Traverse incoming extension indexes which don't lead to closed
-            cases, mark all touched cases as available.
+        1. Mark *relevant* cases:
 
-        3. Mark *live* cases
-            Mark all relevant, owned, available cases as live. Traverse incoming
-            extension indexes which don't lead to closed cases, mark all touched
-            cases as live.
+           Mark all open cases owned by the user relevant. Traversing
+           all outgoing child and extension indexes, as well as all
+           incoming extension indexes, mark all touched cases
+           relevant.
+
+        2. Mark *available* cases:
+
+           Mark all relevant cases that are open and have no outgoing
+           extension indexes as available. Traverse incoming extension
+           indexes which don't lead to closed cases, mark all touched
+           cases as available.
+
+        3. Mark *live* cases:
+
+           Mark all relevant, owned, available cases as live. Traverse
+           incoming extension indexes which don't lead to closed cases,
+           mark all touched cases as live.
         """
         _get_logger().debug("purging: {}".format(case_id))
         self.dependent_case_ids_on_phone.add(case_id)
@@ -678,9 +692,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def _get_relevant_cases(self, case_id):
         """
-        Mark all open cases owned by the user relevant. Traversing all outgoing child
-        and extension indexes, as well as all incoming extension indexes,
-        mark all touched cases relevant.
+        Mark all open cases owned by the user relevant. Traversing all
+        outgoing child and extension indexes, as well as all incoming
+        extension indexes, mark all touched cases relevant.
         """
         relevant = IndexTree.get_all_dependencies(
             case_id,
@@ -692,14 +706,22 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def _get_available_cases(self, relevant):
         """
-        Mark all relevant cases that are open and have no outgoing extension indexes
-        as available. Traverse incoming extension indexes which don't lead to closed
-        cases, mark all touched cases as available
+        Mark all relevant cases that are open and have no outgoing
+        extension indexes as available. Traverse incoming extension
+        indexes which don't lead to closed cases, mark all touched
+        cases as available
         """
         incoming_extensions = self.extension_index_tree.reverse_indices
-        available = {case for case in relevant
-                     if case not in self.closed_cases
-                     and (not self.extension_index_tree.indices.get(case) or self.index_tree.indices.get(case))}
+        available = {
+            case for case in relevant
+            if (
+                case not in self.closed_cases
+                and (
+                    not self.extension_index_tree.indices.get(case)
+                    or self.index_tree.indices.get(case)
+                )
+            )
+        }
         new_available = set() | available
         while new_available:
             case_to_check = new_available.pop()
@@ -715,9 +737,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def _get_live_cases(self, available):
         """
-        Mark all relevant, owned, available cases as live. Traverse incoming
-        extension indexes which don't lead to closed cases, mark all touched
-        cases as available.
+        Mark all relevant, owned, available cases as live. Traverse
+        incoming extension indexes which don't lead to closed cases,
+        mark all touched cases as available.
         """
         primary_case_ids = self.primary_case_ids
         live = available & primary_case_ids
@@ -744,8 +766,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
         return live
 
     def _remove_cases_purge_indices(self, all_to_remove, checked_case_id, xform_id):
-        """Remove all cases marked for removal. Traverse child cases and try to purge those too."""
-
+        """
+        Remove all cases marked for removal. Traverse child cases and
+        try to purge those too.
+        """
         _get_logger().debug("cases to to_remove: {}".format(all_to_remove))
         for to_remove in all_to_remove:
             indices = self.index_tree.indices.get(to_remove, {})
@@ -753,11 +777,18 @@ class SimplifiedSyncLog(AbstractSyncLog):
             for referenced_case in indices.values():
                 is_dependent_case = referenced_case in self.dependent_case_ids_on_phone
                 already_primed_for_removal = referenced_case in all_to_remove
-                if is_dependent_case and not already_primed_for_removal and referenced_case != checked_case_id:
+                if (
+                    is_dependent_case
+                    and not already_primed_for_removal
+                    and referenced_case != checked_case_id
+                ):
                     self.purge(referenced_case, xform_id)
 
     def _remove_case(self, to_remove, all_to_remove, checked_case_id, xform_id):
-        """Removes case from index trees, case_ids_on_phone and dependent_case_ids_on_phone if pertinent"""
+        """
+        Removes case from index trees, case_ids_on_phone and
+        dependent_case_ids_on_phone if pertinent
+        """
         _get_logger().debug('removing: {}'.format(to_remove))
 
         deleted_indices = self.index_tree.indices.pop(to_remove, {})
@@ -770,8 +801,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if should_fail_softly:
                 pass
             else:
-                # this is only a soft assert for now because of http://manage.dimagi.com/default.asp?181443
-                # we should convert back to a real Exception when we stop getting any of these
+                # This is only a soft assert for now because of FogBugz
+                # ticket 181443. We should convert back to a real
+                # Exception when we stop getting any of these
                 _assert = soft_assert(notify_admins=True, exponential_backoff=False)
                 _assert(False, 'case already remove from synclog', {
                     'case_id': to_remove,
@@ -791,7 +823,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def _add_index(self, index, case_update):
         _get_logger().debug('adding index {} --<{}>--> {} ({}).'.format(
-            index.case_id, index.relationship, index.referenced_id, index.identifier))
+            index.case_id,
+            index.relationship,
+            index.referenced_id,
+            index.identifier,
+        ))
         if index.relationship == const.CASE_INDEX_EXTENSION:
             self._add_extension_index(index, case_update)
         else:
@@ -799,18 +835,29 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def _add_extension_index(self, index, case_update):
         assert index.relationship == const.CASE_INDEX_EXTENSION
-        self.extension_index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
+        self.extension_index_tree.set_index(
+            index.case_id,
+            index.identifier,
+            index.referenced_id,
+        )
 
-        case_child_indices = [idx for idx in case_update.indices_to_add
-                              if idx.relationship == const.CASE_INDEX_CHILD
-                              and idx.referenced_id == index.referenced_id]
+        case_child_indices = [
+            idx for idx in case_update.indices_to_add
+            if idx.relationship == const.CASE_INDEX_CHILD
+            and idx.referenced_id == index.referenced_id
+        ]
         if not case_child_indices and not case_update.is_live:
-            # this case doesn't also have child indices, and it is not owned, so it is dependent
+            # this case doesn't also have child indices, and it is not
+            # owned, so it is dependent
             self.dependent_case_ids_on_phone.add(index.case_id)
 
     def _add_child_index(self, index):
         assert index.relationship == const.CASE_INDEX_CHILD
-        self.index_tree.set_index(index.case_id, index.identifier, index.referenced_id)
+        self.index_tree.set_index(
+            index.case_id,
+            index.identifier,
+            index.referenced_id,
+        )
 
     def _delete_index(self, index):
         self.index_tree.delete_index(index.case_id, index.identifier)
@@ -818,8 +865,15 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     def update_phone_lists(self, xform, case_list):
         all_updates = self._initialize_case_updates(case_list, xform)
-        live_updates, non_live_updates = self._process_case_updates(all_updates, xform.form_id)
-        made_changes = self._apply_case_updates(live_updates, non_live_updates, xform.form_id)
+        live_updates, non_live_updates = self._process_case_updates(
+            all_updates,
+            xform.form_id,
+        )
+        made_changes = self._apply_case_updates(
+            live_updates,
+            non_live_updates,
+            xform.form_id,
+        )
         if made_changes or not self.last_submitted:
             self.last_submitted = datetime.utcnow()
             self.rev_before_last_submitted = self._rev
@@ -830,8 +884,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
         owner_id_map = {}
         for case in case_list:
             if case.case_id not in all_updates:
-                all_updates[case.case_id] = CaseUpdate(case_id=case.case_id,
-                                                       owner_ids_on_phone=self.owner_ids_on_phone)
+                all_updates[case.case_id] = CaseUpdate(
+                    case_id=case.case_id,
+                    owner_ids_on_phone=self.owner_ids_on_phone,
+                )
             case_update = all_updates[case.case_id]
             case_update.was_live_previously = case.case_id in self.primary_case_ids
             actions = case.get_actions_for_form(xform)
@@ -842,13 +898,19 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 if action.action_type == const.CASE_ACTION_INDEX:
                     for index in action.indices:
                         if index.referenced_id:
-                            case_update.indices_to_add.append(
-                                ShortIndex(case.case_id, index.identifier, index.referenced_id, index.relationship)
-                            )
+                            case_update.indices_to_add.append(ShortIndex(
+                                case.case_id,
+                                index.identifier,
+                                index.referenced_id,
+                                index.relationship,
+                            ))
                         else:
-                            case_update.indices_to_delete.append(
-                                ShortIndex(case.case_id, index.identifier, None, None)
-                            )
+                            case_update.indices_to_delete.append(ShortIndex(
+                                case.case_id,
+                                index.identifier,
+                                None,
+                                None
+                            ))
                 elif action.action_type == const.CASE_ACTION_CLOSE:
                     case_update.is_closed = True
         return all_updates
