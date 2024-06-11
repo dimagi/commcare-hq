@@ -10,6 +10,7 @@ from django.http import (
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET
 
@@ -38,15 +39,15 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone
 
-from .const import POLYGON_COLLECTION_GEOJSON_SCHEMA, GPS_POINT_CASE_PROPERTY
+from .const import GPS_POINT_CASE_PROPERTY, POLYGON_COLLECTION_GEOJSON_SCHEMA
 from .models import GeoConfig, GeoPolygon
 from .utils import (
+    create_case_with_gps_property,
     get_geo_case_property,
     get_geo_user_property,
     get_lat_lon_from_dict,
     set_case_gps_property,
     set_user_gps_property,
-    create_case_with_gps_property,
 )
 
 
@@ -71,24 +72,9 @@ class CaseDisbursementAlgorithm(BaseDomainView):
         })
 
 
-class GeoPolygonView(BaseDomainView):
-    urlname = 'geo_polygon'
-
-    @method_decorator(toggles.GEOSPATIAL.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(GeoPolygonView, self).dispatch(request, *args, **kwargs)
-
-    def get(self, request, *args, **kwargs):
-        try:
-            polygon_id = int(request.GET.get('polygon_id', None))
-        except TypeError:
-            raise Http404()
-        try:
-            polygon = GeoPolygon.objects.get(pk=polygon_id)
-            assert polygon.domain == self.domain
-        except (GeoPolygon.DoesNotExist, AssertionError):
-            raise Http404()
-        return json_response(polygon.geo_json)
+@method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
+class GeoPolygonListView(BaseDomainView):
+    urlname = 'geo_polygons'
 
     def post(self, request, *args, **kwargs):
         try:
@@ -118,6 +104,32 @@ class GeoPolygonView(BaseDomainView):
         )
         return json_response({
             'id': geo_polygon.id,
+        })
+
+
+@method_decorator(toggles.GEOSPATIAL.required_decorator(), name="dispatch")
+class GeoPolygonDetailView(BaseDomainView):
+    urlname = 'geo_polygon'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            polygon = GeoPolygon.objects.get(pk=kwargs["pk"], domain=self.domain)
+        except (ValueError, GeoPolygon.DoesNotExist):
+            raise Http404()
+        return JsonResponse(polygon.geo_json)
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            polygon = GeoPolygon.objects.get(pk=kwargs["pk"], domain=self.domain)
+            polygon.delete()
+        except (ValueError, GeoPolygon.DoesNotExist):
+            raise Http404()
+
+        return JsonResponse({
+            'success': True,
+            'message': _("Saved area '{polygon_name}' has been successfully deleted.").format(
+                polygon_name=polygon.name,
+            )
         })
 
 

@@ -9,8 +9,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
-from corehq.motech.repeaters.models import SQLRepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord
 
 DOMAIN = 'zapier-case-forwarding-tests'
 ZAPIER_CASE_TYPE = 'animal'
@@ -31,7 +30,6 @@ class TestZapierCaseForwarding(TestCase):
         super(TestZapierCaseForwarding, cls).tearDownClass()
 
     def tearDown(self):
-        delete_all_repeat_records()
         ZapierSubscription.objects.all().delete()
 
     def test_create_case_forwarding(self):
@@ -75,7 +73,7 @@ class TestZapierCaseForwarding(TestCase):
         )
         # Enqueued repeat records have next_check set 48 hours in the future.
         later = datetime.utcnow() + timedelta(hours=48 + 1)
-        repeat_records = list(SQLRepeatRecord.objects.filter(domain=self.domain, next_check__lt=later))
+        repeat_records = list(RepeatRecord.objects.filter(domain=self.domain, next_check__lt=later))
         self.assertEqual(expected_records_after_create, len(repeat_records))
         for record in repeat_records:
             self.assertEqual(case_id, record.payload_id)
@@ -89,7 +87,7 @@ class TestZapierCaseForwarding(TestCase):
                 ).as_text()
             ], domain=self.domain
         )
-        repeat_records = list(SQLRepeatRecord.objects.filter(domain=self.domain, next_check__lt=later))
+        repeat_records = list(RepeatRecord.objects.filter(domain=self.domain, next_check__lt=later))
         self.assertEqual(expected_records_after_update, len(repeat_records))
         for record in repeat_records:
             self.assertEqual(case_id, record.payload_id)
