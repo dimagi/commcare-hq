@@ -87,9 +87,10 @@ def pytest_configure(config):
     assert db_opt in ["both", "only", "skip"], db_opt
     config.should_run_database_tests = db_opt
 
-    # This blocker will be activated by django-pytest's
-    # pytest_configure hook, which uses trylast=True.
-    config.stash[blocking_manager_key] = HqDbBlocker(config, _ispytest=True)
+    if settings.configured:
+        # This blocker will be activated by django-pytest's
+        # pytest_configure hook, which uses trylast=True.
+        config.stash[blocking_manager_key] = HqDbBlocker(config, _ispytest=True)
 
 
 @pytest.hookimpl(wrapper=True)
