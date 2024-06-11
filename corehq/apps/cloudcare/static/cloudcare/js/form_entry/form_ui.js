@@ -250,8 +250,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                         return new GroupedElementTileRow(options.data, self);
                     } else if (options.data.type === constants.QUESTION_TYPE) {
                         return new Question(options.data, self);
-                    } else if (options.data.type === constants.GROUP_TYPE && options.data.exists === "false") {
-                        return new AddGroup(options.data, self);
                     } else if (options.data.type === constants.GROUP_TYPE) {
                         return new Group(options.data, self);
                     } else if (options.data.type === constants.REPEAT_TYPE) {
@@ -657,7 +655,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     self.fromJS(response);
                 }
 
-                if (element.serverError) { element.serverError(null); }
+                if (element.serverError) {
+                    element.serverError(null);
+                }
 
                 response.children = allChildren;
                 self.fromJS(response);
@@ -681,6 +681,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         var self = this;
         self.parent = parent;
         Container.call(self, json);
+
+        self.isDummy = ko.observable(self.exists() === "false");
+        self.addChoice = ko.observable(json['add-choice']);
+        self.newRepeat = function () {
+            $.publish('formplayer.' + constants.NEW_REPEAT, self);
+            $.publish('formplayer.dirty');
+            $('.add').trigger('blur');
+        };
 
         self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
@@ -857,7 +865,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
-                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE || d.type() === constants.ADD_GROUP_TYPE) {
+                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE) {
                     return true;
                 } else if (d.type() === constants.GROUP_TYPE) {
                     return d.hasAnyNestedQuestions();
@@ -888,24 +896,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         return itemsPerRow !== null ? Math.round(constants.GRID_COLUMNS / itemsPerRow) : constants.GRID_COLUMNS;
     };
-
-    function AddGroup(json, parent) {
-        var self = this;
-        self.parent = parent;
-        self.hasError = ko.observable(false);
-        self.children = ko.observable([]);
-        self.newRepeat = function () {
-            $.publish('formplayer.' + constants.NEW_REPEAT, self);
-            $.publish('formplayer.dirty');
-            $('.add').trigger('blur');
-        };
-        self.entryTemplate = "add-group-entry-ko-template";
-        self.addChoice = ko.observable(json['add-choice']);
-        self.type = ko.observable("add-group");
-        self.rel_ix = ko.observable(relativeIndex(json.ix));
-        self.required = ko.observable(json.required);
-        self.hasError = ko.observable(json.hasError);
-    }
 
     /**
      * Represents a Question. A Question contains an Entry which is the widget that is displayed for that question

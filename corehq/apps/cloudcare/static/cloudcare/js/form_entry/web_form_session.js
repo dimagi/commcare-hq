@@ -450,7 +450,10 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                     'ix': formUI.getIx(repeat),
                 },
                 function (resp) {
-                    $.publish('session.reconcile', [resp, repeat]);
+                    // elementTile is not defined on addGroup
+                    // $.publish('session.reconcile', [resp, repeat]);
+
+                    $.publish('session.reconcile', [resp, repeat, formUI.getIx(repeat)]);
                 },
                 constants.BLOCK_ALL);
         };
