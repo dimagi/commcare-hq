@@ -610,8 +610,6 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "celery_periodic": None,
     "email_queue": 30,
     "export_download_queue": 30,
-    "icds_aggregation_queue": None,
-    "icds_dashboard_reports_queue": None,
     "logistics_background_queue": None,
     "logistics_reminder_queue": None,
     "malt_generation_queue": 6 * 60 * 60,

@@ -50,14 +50,12 @@ Queues
     case_import_queue,,seconds,,Run case imports,minutes / hours,
     email_queue,yes,seconds,"generally seconds, since people often blocked on receiving the email (registration workflows for example)",Send emails.,seconds,
     export_download_queue,,seconds,seconds / minutes,Used for manually-triggered exports,minutes,
-    icds_dashboard_reports_queue,,seconds,fast,,,
     background_queue,,,,,varies wildly,
     beat,N/A,,,,,
     case_rule_queue,,,,Run case update rules. Triggered by schedule,minutes / hours,
     celery,,,,,,
     celery_periodic,,,,,"Invoice generation: ~2 hours on production.  Runs as a single task, once per month.","I think this is one of the trickiest ones (and most heterogenous) because we run lots of scheduled tasks, that we expect to happen at a certain time, some of which we want at exactly that time and some we are ok with delay in start."
     flower,N/A,,,,,
-    icds_aggregation_queue,yes,,initial task is immediate. follow up tasks are constrained by performance of previous tasks. recommend not tracking,Run aggregation tasks for ICDS. Triggered by schedule.,,
     logistics_background_queue,,,,Custom queue,,
     logistics_reminder_queue,,,,Custom queue,,
     saved_exports_queue,,,,Used only for regularly scheduled exports. Triggered by schedule.,minutes,"This queue is used only for regularly scheduled exports, which are not user-triggered. The time taken to process a saved export depends on the export itself. We now save the time taken to run the saved export as last_build_duration which can be used to monitor or move the task to a different queue that handles big tasks. Since all exports are triggered at the same time (midnight UTC) the queue gets big. Could be useful to spread these out so that the exports are generated at midnight in the TZ of the domain (see callcenter tasks for where this is already done)"
