@@ -182,7 +182,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             for (let groupChild of json.children) {
                 // Detects configured repeat groups within the form. If a repeat group has a 'repeat-count' configured,
                 // the Formplayer response designates the key 'type' as 'sub-group' and 'repeatable' as 'true'.
-                if ((groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true") || groupChild.type === constants.REPEAT_TYPE) {
+                if ((groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true")) {
                     if (_.has(groupChild, 'style') && groupChild.style && groupChild.style.raw) {
                         groupChild.style.raw = groupChild.style.raw.concat(" ", elementNPerRowStyle);
                     } else {
@@ -252,8 +252,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                         return new Question(options.data, self);
                     } else if (options.data.type === constants.GROUP_TYPE) {
                         return new Group(options.data, self);
-                    } else if (options.data.type === constants.REPEAT_TYPE) {
-                        return new Repeat(options.data, self);
                     } else {
                         console.error('Could not find question type of ' + options.data.type);
                     }
@@ -308,8 +306,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         let currentNode = this;
         let nestedDepthCount = 0;
         while (currentNode.parent) {
-            let isCollapsibleGroup = currentNode.type() === constants.GROUP_TYPE && currentNode.collapsible;
-            if (isCollapsibleGroup || currentNode.type() === constants.REPEAT_TYPE) {
+            if (currentNode.type() === constants.GROUP_TYPE && currentNode.collapsible) {
                 nestedDepthCount += 1;
             }
             currentNode = currentNode.parent;
@@ -373,7 +370,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         }
 
         for (let child of json.children) {
-            if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
+            if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE) {
                 const elementTileWidth = GroupedElementTileRow.calculateElementWidth(child.style);
                 usedWidth += elementTileWidth;
                 if (usedWidth > constants.GRID_COLUMNS) {
@@ -381,7 +378,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     usedWidth += elementTileWidth;
                 }
 
-                if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
+                if (child.type === constants.GROUP_TYPE) {
                     child = Container.groupElements(child);
                 }
 
@@ -684,20 +681,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         self.isDummy = ko.observable(self.exists() === "false");
         self.addChoice = ko.observable(json['add-choice']);
-        self.newRepeat = function () {
-            $.publish('formplayer.' + constants.NEW_REPEAT, self);
-            $.publish('formplayer.dirty');
-            $('.add').trigger('blur');
-        };
 
         self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
-        // USH-4332: after FP deploy isRepetition can be removed
-        self.isRepetition = parent.parent instanceof Repeat;
         if (Object.hasOwn(self, 'delete')) {
             self.showDelete = self.delete();
         } else {
-            self.showDelete = self.isRepetition;
+            self.showDelete = false;
         }
         let parentForm = getParentForm(self);
         let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
@@ -707,13 +697,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         });
 
         // Header and captions
-        self.showHeader = oneQuestionPerScreen || self.isRepetition || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown);
-        if (self.showHeader) {
-            if (!oneQuestionPerScreen && self.isRepetition) {
-                self.caption(null);
-                self.hideCaption = true;
-            }
-        }
+        self.showHeader = oneQuestionPerScreen || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown);
 
         if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
             self.domain_meta = parseMeta(json.datatype, json.style);
@@ -757,13 +741,20 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             });
         });
 
-        if (self.isRepetition) {
-            // If the group is part of a repetition the index can change if the user adds or deletes
-            // repeat groups.
-            self.ix.subscribe(function () {
-                self.rel_ix(relativeIndex(self.ix()));
-            });
-        }
+        // is that always true now?
+        // if (self.isRepetition) {
+        //     // If the group is part of a repetition the index can change if the user adds or deletes
+        //     // repeat groups.
+        //     self.ix.subscribe(function () {
+        //         self.rel_ix(relativeIndex(self.ix()));
+        //     });
+        // }
+
+        self.newRepeat = function () {
+            $.publish('formplayer.' + constants.NEW_REPEAT, self);
+            $.publish('formplayer.dirty');
+            $('.add').trigger('blur');
+        };
 
         self.deleteRepeat = function () {
             $.publish('formplayer.' + constants.DELETE_REPEAT, self);
@@ -771,7 +762,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         };
 
         self.hasAnyNestedQuestions = function () {
-            return _.any(self.children(), function (d) {
+            return self.isDummy() || _.any(self.children(), function (d) {
                 if (d.type() === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
                     return d.hasAnyNestedQuestions();
                 }
@@ -793,9 +784,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         };
 
         self.headerBackgroundColor = function () {
-            if (self.isRepetition || !self.collapsible) {
-                return '';
-            }
             return Container.prototype.headerBackgroundColor.call(self);
         };
 
@@ -805,41 +793,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
     Group.prototype = Object.create(Container.prototype);
     Group.prototype.constructor = Container;
-
-    /**
-     * Represents a repeat group. A repeat only has Group objects as children, which are contained
-     * within a GroupedElementTileRow. Each child Group contains GroupedElementTileRow
-     * objects which contains the child questions to be rendered
-     * @param {Object} json - The JSON returned from touchforms to represent a Form
-     * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
-     */
-    function Repeat(json, parent) {
-        var self = this;
-        self.parent = parent;
-
-        Container.call(self, json);
-
-        self.rel_ix = ko.observable(relativeIndex(self.ix()));
-        if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
-            self.domain_meta = parseMeta(json.datatype, json.style);
-        }
-        self.templateType = 'repeat';
-        self.ixInfo = function (o) {
-            var fullIx = getIx(o);
-            return o.rel_ix + (o.isRepetition ? '(' + o.uuid + ')' : '') + (o.rel_ix !== fullIx ? ' :: ' + fullIx : '');
-        };
-
-        self.newRepeat = function () {
-            $.publish('formplayer.' + constants.NEW_REPEAT, self);
-            $.publish('formplayer.dirty');
-            $('.add').trigger('blur');
-        };
-
-        const columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
-        this.elementTile = `col-sm-${columnWidth}`;
-    }
-    Repeat.prototype = Object.create(Container.prototype);
-    Repeat.prototype.constructor = Container;
 
     /**
      * Represents a group of Questions, Group, or Repeat. Elements are grouped such that all elements are
@@ -865,7 +818,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
-                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE) {
+                if (d.type() === constants.QUESTION_TYPE) {
                     return true;
                 } else if (d.type() === constants.GROUP_TYPE) {
                     return d.hasAnyNestedQuestions();
@@ -1092,7 +1045,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         Question: function (json, parent) {
             return new Question(json, parent);
         },
-        Repeat: Repeat,
         removeSiblingsOfRepeatGroup: removeSiblingsOfRepeatGroup,
     };
 });
