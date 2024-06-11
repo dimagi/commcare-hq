@@ -75,8 +75,8 @@ def pytest_addoption(parser):
 
 @pytest.hookimpl
 def pytest_configure(config):
-    config.reuse_db = reusedb = config.getoption("--reusedb")
-    config.skip_setup_for_reuse_db = reusedb and reusedb != "reset"
+    config.reuse_db = reusedb = config.getoption("--reusedb") or config.getvalue("reuse_db")
+    config.skip_setup_for_reuse_db = reusedb and (reusedb != "reset" or config.getvalue("create_db"))
     config.should_teardown = not reusedb or reusedb == "teardown"
     db_opt = config.getoption("--db")
     assert db_opt in ["both", "only", "skip"], db_opt
