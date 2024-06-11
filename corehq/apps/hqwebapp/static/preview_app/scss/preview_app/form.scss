@@ -84,9 +84,6 @@
 .q.required {
   transition: all .5s;
   margin-bottom: 0;
-  label:before {
-    display: none;
-  }
 }
 
 .q.required.on {
