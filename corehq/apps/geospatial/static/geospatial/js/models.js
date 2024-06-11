@@ -781,6 +781,7 @@ hqDefine('geospatial/js/models', [
                         delete data.name;
                         // delete drawn area
                         self.mapObj.drawControls.deleteAll();
+                        self.removePolygonsFromFilterList(data.features);
                         self.savedPolygons.push(
                             new SavedPolygon({
                                 name: name,
