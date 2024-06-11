@@ -15,7 +15,13 @@ from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test, populate_case_search_index
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports import tasks
+from corehq.apps.userreports.const import DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
+from corehq.apps.userreports.exceptions import (
+    BadBuilderConfigError,
+    DataSourceConfigurationNotFoundError,
+    UserReportsError,
+)
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
@@ -361,6 +367,23 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
                 },
             ]
         )
+
+    @patch("corehq.apps.userreports.reports.view.ReportExport")
+    def test_report_preview_data_does_not_handle_user_reports_error(self, mock):
+        mock.side_effect = UserReportsError
+        report, view = self._build_report_and_view()
+
+        with self.assertRaises(UserReportsError):
+            ConfigurableReportView.report_preview_data(report.domain, report)
+
+    @patch("corehq.apps.userreports.reports.view.ReportExport")
+    def test_report_preview_data_propagates_data_source_not_found_error(self, mock):
+        mock.side_effect = DataSourceConfigurationNotFoundError
+        report, view = self._build_report_and_view()
+
+        with self.assertRaises(BadBuilderConfigError) as err:
+            ConfigurableReportView.report_preview_data(report.domain, report)
+        self.assertEqual(str(err.exception), DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
 
     def test_paginated_build_table(self):
         """

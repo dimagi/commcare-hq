@@ -108,6 +108,7 @@ from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     TableNotFoundWarning,
     UserQueryError,
+    UserReportsError,
     translate_programming_error,
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -825,7 +826,14 @@ class ReportPreview(BaseDomainView):
                     return json_response(response_data)
             except BadBuilderConfigError as e:
                 return json_response({'status': 'error', 'message': str(e)}, status_code=400)
-
+            except UserReportsError as err:
+                notify_exception(request, str(err), details={'domain': self.domain})
+                # Empty message -> generic error in the template.
+                return json_response({'status': 'error', 'message': ''}, status_code=400)
+            return json_response({
+                'status': 'error',
+                'message': 'Report preview returned no response',
+            }, status_code=400)
         else:
             return json_response({
                 'status': 'error',
