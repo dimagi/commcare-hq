@@ -23,7 +23,7 @@ MS_BATCH_LIMIT = 20
 
 def get_all_usernames_of_the_idp_from_entra(idp):
     import msal
-    config = configure_idp(idp)
+    config = _configure_idp(idp)
 
     # Create a preferably long-lived app instance which maintains a token cache.
     app = msal.ConfidentialClientApplication(
@@ -31,20 +31,20 @@ def get_all_usernames_of_the_idp_from_entra(idp):
         client_credential=config["secret"],
     )
 
-    token = get_access_token(app, config)
+    token = _get_access_token(app, config)
 
     # microsoft.graph.appRoleAssignment's property doesn't have userPrincipalName
-    user_principal_ids = get_all_user_ids_in_app(token, config["client_id"])
+    user_principal_ids = _get_all_user_ids_in_app(token, config["client_id"])
 
     if len(user_principal_ids) == 0:
         return []
 
-    user_principal_names = get_user_principal_names(user_principal_ids, token)
+    user_principal_names = _get_user_principal_names(user_principal_ids, token)
 
     return user_principal_names
 
 
-def configure_idp(idp):
+def _configure_idp(idp):
     authority_base_url = "https://login.microsoftonline.com/"
     authority = f"{authority_base_url}{idp.api_host}"
 
@@ -56,7 +56,7 @@ def configure_idp(idp):
     }
 
 
-def get_user_principal_names(user_ids, token):
+def _get_user_principal_names(user_ids, token):
     # Convert set to list to make it subscriptable
     user_ids = list(user_ids)
     #JSON batch requests are currently limited to 20 individual requests.
@@ -102,7 +102,7 @@ def get_user_principal_names(user_ids, token):
     return user_principal_names
 
 
-def get_access_token(app, config):
+def _get_access_token(app, config):
     # looks up a token from cache
     result = app.acquire_token_silent(config["scope"], account=None)
     if not result:
@@ -113,7 +113,7 @@ def get_access_token(app, config):
     return result.get("access_token")
 
 
-def get_all_user_ids_in_app(token, app_id):
+def _get_all_user_ids_in_app(token, app_id):
     endpoint = (f"{ENDPOINT_BASE_URL}/servicePrincipals(appId='{app_id}')/"
                f"appRoleAssignedTo?$select=principalId, principalType")
     # Calling graph using the access token
@@ -138,7 +138,7 @@ def get_all_user_ids_in_app(token, app_id):
                                        "Please include only Users or Groups as members of this SSO application")
 
     for group_id in group_queue:
-        members_data = get_group_members(group_id, token)
+        members_data = _get_group_members(group_id, token)
         for member in members_data.get("value", []):
             # Only direct user in the group will have access to the application
             # Nested group won't have access to the application
@@ -148,7 +148,7 @@ def get_all_user_ids_in_app(token, app_id):
     return user_ids
 
 
-def get_group_members(group_id, token):
+def _get_group_members(group_id, token):
     endpoint = f"{ENDPOINT_BASE_URL}/groups/{group_id}/members?$select=id"
     headers = {'Authorization': 'Bearer ' + token}
     response = requests.get(endpoint, headers=headers)
