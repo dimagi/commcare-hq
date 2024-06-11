@@ -204,8 +204,13 @@
               <td>{{ couch_user.last_login|to_user_time:request }}</td>
             </tr>
             <tr>
-              <td title="Approximate date/time of the last time this user synced with the server from CommCare">
+              <td>
                 {% trans "Last Sync" %}
+                <span class="hq-help-template"
+                  data-content="{% blocktrans %}
+                    Approximate date/time of the last time this user synced with the server from CommCare.
+                  {% endblocktrans %}">
+                </span>
               </td>
               <td>{{ couch_user.reporting_metadata.last_sync_for_user.sync_date|to_user_time:request }}</td>
             </tr>
@@ -214,8 +219,13 @@
               <td>{{ couch_user.reporting_metadata.last_submission_for_user.submission_date|to_user_time:request }}</td>
             </tr>
             <tr>
-              <td title="List of devices used to access CommCare applications, with approximate last-use dates.">
+              <td>
                 {% trans "Devices" %}
+                <span class="hq-help-template"
+                  data-content="{% blocktrans %}
+                    List of devices used to access CommCare applications, with approximate last-use dates.
+                  {% endblocktrans %}">
+                </span>
               </td>
               <td>
                 <ul class="list-unstyled">
