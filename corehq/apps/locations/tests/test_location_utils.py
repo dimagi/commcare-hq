@@ -1,5 +1,6 @@
 from ..models import LocationType, SQLLocation
 from .util import LocationHierarchyTestCase
+from corehq.apps.locations.util import get_formatted_assigned_location_names
 
 
 class MassachusettsTestCase(LocationHierarchyTestCase):
@@ -62,3 +63,17 @@ class TestGetLocationsAndChildren(MassachusettsTestCase):
     def test_get_locations_and_children_with_empty_list(self):
         result = SQLLocation.objects.get_locations_and_children([])
         self.assertItemsEqual(list(result), [])
+
+
+class TestGetFormattedAssignedLocationNames(MassachusettsTestCase):
+
+    def test_get_formatted_assigned_location_names(self):
+        primary_loc_id = self.locations['Middlesex'].location_id
+        assigned_loc_ids = [
+            self.locations['Cambridge'].location_id,
+            self.locations['Middlesex'].location_id,
+            self.locations['Boston'].location_id
+        ]
+        expected = '<div><strong>Middlesex</strong>, Cambridge, Boston</div>'
+        res = get_formatted_assigned_location_names(primary_loc_id, assigned_loc_ids)
+        self.assertEqual(res, expected)
