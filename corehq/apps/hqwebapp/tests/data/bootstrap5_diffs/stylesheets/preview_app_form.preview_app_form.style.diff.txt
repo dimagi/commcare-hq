@@ -58,7 +58,7 @@
    padding: 10px 0;
    label {
      margin-right: 10px;
-@@ -84,17 +81,17 @@
+@@ -84,17 +81,14 @@
    }
  }
  
@@ -67,9 +67,9 @@
 +.q.required {
 +  transition: all .5s;
    margin-bottom: 0;
-   label:before {
-     display: none;
-   }
+-  label:before {
+-    display: none;
+-  }
  }
  
 -.form-group.required.on {
@@ -81,7 +81,7 @@
    border-bottom: none;
    label {
      margin-left: 0;
-@@ -104,13 +101,13 @@
+@@ -104,13 +98,13 @@
  
  .form-group-required-label {
    opacity: 0;
@@ -97,7 +97,7 @@
    color: white;
    width: auto;
    line-height: 14px;
-@@ -122,7 +119,7 @@
+@@ -122,7 +116,7 @@
    border: none;
  }
  
