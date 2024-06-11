@@ -32,6 +32,7 @@ addopts = [
 ]
 markers = [
     "slow: marks tests as slow (deselect with -m 'not slow')",
+    "skip_setup_users: skip user setup in importer tests",
 ]
 empty_parameter_set_mark = "fail_at_collect"
 xfail_strict = true
