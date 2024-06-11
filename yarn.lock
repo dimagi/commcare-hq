@@ -3069,11 +3069,6 @@ jquery-memoized-ajax@0.5.0:
   resolved "https://registry.yarnpkg.com/jquery-memoized-ajax/-/jquery-memoized-ajax-0.5.0.tgz#5331f2fa5838569bd564e4760d4520570a732817"
   integrity sha1-UzHy+lg4VpvVZOR2DUUgVwpzKBc=
 
-jquery-migrate@1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/jquery-migrate/-/jquery-migrate-1.2.1.tgz#e1056ad970fb22d5009e2d4d77cf709b78f04768"
-  integrity sha1-4QVq2XD7ItUAni1Nd89wm3jwR2g=
-
 jquery-textchange@jmalonzo/bower-jquery-textchange#0.2.3:
   version "0.0.0"
   resolved "https://codeload.github.com/jmalonzo/bower-jquery-textchange/tar.gz/fd7d7c0ac5116861759cd467135307dc9aab7cdc"
