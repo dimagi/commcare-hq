@@ -66,7 +66,7 @@ WHITELIST = [
 ]
 
 
-def configure_warnings(is_testing):
+def configure_warnings(is_testing=False):
     strict = is_testing or os.environ.get("CCHQ_STRICT_WARNINGS")
     if strict:
         augment_warning_messages()
