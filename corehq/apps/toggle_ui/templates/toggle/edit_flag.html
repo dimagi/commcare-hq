@@ -158,11 +158,6 @@
             description: '{% trans "Items added here will be enabled regardless of the randomness" %}'}"></span>
         {% endif %}
       </h4>
-      <div class="row" data-bind="visible: latest_use().name">
-        <div class="col-sm-6">
-          Most recently updated: <strong data-bind="text:latest_use().name"></strong>: <span data-bind="text:latest_use().date"></span>
-        </div>
-      </div>
       <table class="table table-condensed"><!-- B5: add table-borderless and remove `border: none` inline styles on table cells -->
         <tbody data-bind="foreach: items">
           <tr>
