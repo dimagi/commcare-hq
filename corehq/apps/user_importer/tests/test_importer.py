@@ -287,6 +287,19 @@ class TestUserDataMixin:
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "Profile 'not_a_real_profile' does not exist")
 
+    def _test_user_data_profile_removal(self, is_web_upload=False):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(user_profile='')],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            is_web_upload
+        )
+        self.assert_user_data_contains({
+            PROFILE_SLUG: '',
+        })
+
     def _test_uncategorized_data(self, is_web_upload=False):
         # Set data
         import_users_and_groups(
@@ -781,6 +794,9 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
 
     def test_user_data_profile_unknown(self):
         self._test_user_data_profile_unknown(is_web_upload=False)
+
+    def test_user_data_profile_removal(self):
+        self._test_user_data_profile_removal(is_web_upload=False)
 
     def test_uncategorized_data(self):
         self._test_uncategorized_data(is_web_upload=False)
@@ -1807,6 +1823,9 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
 
     def test_user_data_profile_unknown(self):
         self._test_user_data_profile_unknown(is_web_upload=True)
+
+    def test_user_data_profile_removal(self):
+        self._test_user_data_profile_removal(is_web_upload=True)
 
     def test_uncategorized_data(self):
         self._test_uncategorized_data(is_web_upload=True)
