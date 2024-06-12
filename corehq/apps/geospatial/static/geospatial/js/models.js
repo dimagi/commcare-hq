@@ -767,7 +767,11 @@ hqDefine('geospatial/js/models', [
             let data = self.mapObj.drawControls.getAll();
             if (data.features.length) {
                 let name = window.prompt(gettext("Name of the Area"));
-                if (!name) {
+                if (name === null) {
+                    return;
+                }
+                if (name === '') {
+                    alertUser.alert_user(gettext("Please enter the name for the area!"), 'warning', false, true);
                     return;
                 }
                 data['name'] = name;
