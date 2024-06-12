@@ -21,7 +21,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
     var GridItem = Marionette.View.extend({
         template: _.template($("#row-template").html() || ""),
         tagName: "div",
-        className: "grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request",
+        className: "grid-item col-sm-6 col-md-4 col-xl-3 formplayer-request",
         events: {
             "click": "rowClick",
             "keydown": "rowKeyAction",
@@ -101,14 +101,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
     var GridView = Marionette.CollectionView.extend({
         template: _.template($("#grid-template").html() || ""),
         childView: GridItem,
-        childViewContainer: function () {
-            if (window.USE_BOOTSTRAP5) {
-                return ".row";
-            } else {
-                return ".js-application-container";
-            }
-        },
-
+        childViewContainer: ".row",
         events: _.extend(BaseAppView.events),
         incompleteSessionsClick: _.extend(BaseAppView.incompleteSessionsClick),
         syncClick: _.extend(BaseAppView.syncClick),
