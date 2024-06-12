@@ -302,7 +302,7 @@ class EmailValidator(ImportValidator):
 
 
 class RoleValidator(ImportValidator):
-    error_message = _("Role '{}' does not exist")
+    error_message = _("Role '{}' does not exist or you do not have permission to access it")
 
     def __init__(self, domain, allowed_roles=None):
         super().__init__(domain)

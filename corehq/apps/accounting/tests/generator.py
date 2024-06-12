@@ -142,7 +142,7 @@ def get_start_date():
 @unit_testing_only
 def arbitrary_domain():
     domain = Domain(
-        name=data_gen.arbitrary_unique_name()[:20],
+        name=data_gen.arbitrary_unique_name()[:20].lower(),
         is_active=True,
     )
     domain.save()
@@ -157,7 +157,7 @@ def arbitrary_domain_and_subscriber():
 
 
 @unit_testing_only
-def arbitrary_user(domain_name, is_active=True, is_webuser=False):
+def arbitrary_user(domain_name, is_active=True, is_webuser=False, **kwargs):
     username = unique_name()
     if is_webuser:
         username = create_arbitrary_web_user_name()
@@ -167,7 +167,7 @@ def arbitrary_user(domain_name, is_active=True, is_webuser=False):
         username = unique_name()
         user_cls = CommCareUser
         email = None
-    commcare_user = user_cls.create(domain_name, username, 'test123', None, None, email)
+    commcare_user = user_cls.create(domain_name, username, 'test123', None, None, email, **kwargs)
     commcare_user.is_active = is_active
     return commcare_user
 
