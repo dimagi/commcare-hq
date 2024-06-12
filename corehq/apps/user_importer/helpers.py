@@ -161,9 +161,13 @@ class BaseUserImporter(object):
             raise UserUploadError(_("You cannot set {} directly").format(PROFILE_SLUG))
         if profile_name:
             profile_id = profiles_by_name[profile_name].pk
+        elif profile_name == '':
+            profile_id = ''
+        else:
+            profile_id = ...
 
         try:
-            user_data.update(data, profile_id=profile_id if profile_name else ...)
+            user_data.update(data, profile_id=profile_id)
             user_data.update(uncategorized_data)
         except UserDataError as e:
             raise UserUploadError(str(e))
