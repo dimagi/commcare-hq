@@ -8,7 +8,6 @@ from datetime import datetime
 import pytz
 
 from django.core.cache import cache
-from django.core.exceptions import ValidationError
 from django.db.transaction import atomic
 from django.http import Http404
 from django.utils.translation import gettext as _
@@ -23,7 +22,7 @@ from celery.schedules import crontab
 from corehq.apps.celery import periodic_task
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.const import USER_QUERY_LIMIT, HQ_TABLEAU_GROUP_NAME, TABLEAU_ROLES
+from corehq.apps.reports.const import USER_QUERY_LIMIT, HQ_TABLEAU_GROUP_NAME
 from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.models import TableauServer, TableauAPISession, TableauUser, TableauConnectedApp
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
@@ -640,17 +639,6 @@ def _add_user_to_HQ_group(session, user):
 
 def _get_hq_group_id(session):
     return session.get_group(HQ_TABLEAU_GROUP_NAME).get('id')
-
-
-def clean_tableau_role(role_name):
-    valid_role_options = [item[1] for item in TABLEAU_ROLES]
-    if role_name is not None and role_name not in valid_role_options:
-        message = (
-            "'{}' is not a valid Tableau Role choice. "
-            "Please choose one of the following: "
-            "{}"
-        ).format(role_name, valid_role_options)
-        raise ValidationError(message)
 
 
 @periodic_task(run_every=crontab(minute=0, hour='*/1'), queue='background_queue')
