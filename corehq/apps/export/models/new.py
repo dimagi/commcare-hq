@@ -2460,7 +2460,7 @@ class CaseExportDataSchema(ExportDataSchema):
                     path=[PathNode(name=prop)],
                     label=prop,
                     last_occurrences={app_id: app_version},
-                    case_property_group_name=case_group_name_for_property.get(prop, None)
+                    case_property_group_name=case_group_name_for_property.get(prop)
                 ))
 
         for case_type, identifier in parent_types:
