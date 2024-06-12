@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy
 from corehq.apps.accounting.models import BillingAccount, Subscription
 from corehq.apps.sso import certificates
 from corehq.apps.sso.exceptions import ServiceProviderCertificateError
-from corehq.apps.sso.utils.entra import get_all_members_of_the_idp_from_entra
+from corehq.apps.sso.utils.entra import get_all_usernames_of_the_idp_from_entra
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from corehq.util.quickcache import quickcache
 
@@ -439,9 +439,9 @@ class IdentityProvider(models.Model):
             return idp
         return None
 
-    def get_all_members_of_the_idp(self):
+    def get_all_usernames_of_the_idp(self):
         if self.idp_type == IdentityProviderType.ENTRA_ID:
-            return get_all_members_of_the_idp_from_entra(self)
+            return get_all_usernames_of_the_idp_from_entra(self)
         else:
             raise NotImplementedError("Not implemented")
 
