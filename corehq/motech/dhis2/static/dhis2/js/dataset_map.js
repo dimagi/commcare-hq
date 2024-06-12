@@ -1,4 +1,4 @@
-hqDefine("dhis2/js/dataset_map_update", [
+hqDefine("dhis2/js/dataset_map", [
     "jquery",
     "hqwebapp/js/bootstrap5/crud_paginated_list_init",
     "hqwebapp/js/bootstrap5/widgets",
