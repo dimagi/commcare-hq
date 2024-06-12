@@ -14,12 +14,6 @@
       margin-bottom: 5px;
     }
 
-    .btn-danger {
-      display: inline;
-      border-radius: 4px !important;
-      margin-right: 10px !important;
-    }
-
     .label-release {
       background-color: #c22eff !important;
     }
@@ -176,23 +170,26 @@
               Most recently updated: <strong data-bind="text:latest_use().name"></strong>: <span data-bind="text:latest_use().date"></span>
             </div>
           </div>
-          <!-- ko foreach: items -->
-          <div class="row margin-vertical-sm">
-            <div class="col-sm-4">
-              <div class="input-group">
-                <div class="input-group-btn">
-                  <a href="#" class="btn btn-danger" data-bind="click: $parent.removeItem"><i class="fa-regular fa-trash-can"></i></a>
-                </div>
-                <input class="input-medium form-control" type="text" data-bind="value: value">
-                <span class="input-group-addon"
-                      data-bind="html: $parent.getNamespaceHtml(namespace(), value())"
-                      style="font-family:monospace;"></span>
-                <span data-bind="text: last_used, visible: last_used" class="input-group-addon"></span>
-                <span data-bind="text: service_type" class="input-group-addon"></span>
-              </div>
-            </div>
-          </div>
-          <!-- /ko -->
+          <table class="table table-condensed"><!-- B5: add table-borderless and remove `border: none` inline styles on table cells -->
+            <tbody data-bind="foreach: items">
+              <tr>
+                <td class="col-sm-4" style="border: 0">
+                  <div class="input-group">
+                    <span class="input-group-btn">
+                      <button class="btn btn-default" data-bind="click: $parent.removeItem">
+                        <i class="text-danger fa-regular fa-trash-can"></i>
+                      </button>
+                    </span>
+                    <input class="form-control" type="text" data-bind="value: value">
+                  </div>
+                </td>
+                <!-- B5: replace inline styles with vertical alignment class: https://getbootstrap.com/docs/5.3/utilities/vertical-align/#css -->
+                <td class="col-sm-2" style="border: 0; vertical-align: middle" data-bind="html: $parent.getNamespaceHtml(namespace(), value())"></td>
+                <td class="col-sm-2" style="border: 0; vertical-align: middle" data-bind="text: last_used"></td>
+                <td class="col-sm-4" style="border: 0; vertical-align: middle" data-bind="text: service_type"></td>
+              </tr>
+            </tbody>
+          </table>
           {% for namespace in namespaces %}
             <button class="btn btn-primary" data-bind="click: function (){ addItem('{{ namespace }}') }">
               <i class="fa fa-plus"></i> {% trans "Add " %}{{ namespace }}
