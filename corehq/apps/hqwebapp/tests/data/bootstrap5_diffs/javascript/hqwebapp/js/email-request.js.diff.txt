@@ -43,7 +43,7 @@
              self.cancelBtnEnabled(true);
 -            self.$submitBtn.button('reset');
 +            self.$submitBtn.changeButtonState('reset');
-             self.hasEmailInputError(false);
+             resetErrors();
          };
  
 @@ -108,12 +110,12 @@

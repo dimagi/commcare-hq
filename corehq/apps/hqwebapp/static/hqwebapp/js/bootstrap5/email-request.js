@@ -84,7 +84,7 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
             self.$formElement.resetForm();
             self.cancelBtnEnabled(true);
             self.$submitBtn.changeButtonState('reset');
-            self.hasEmailInputError(false);
+            resetErrors();
         };
 
         function isValidEmail(email) {
