@@ -43,3 +43,7 @@ legend {
 .ms-header .btn {
   margin-top: -3px;
 }
+
+.form-control {
+  appearance: auto;   // Override B5's `appearance: none`
+}
