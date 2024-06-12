@@ -24,7 +24,12 @@
           </div>
           <div class="modal-body">
             <p>
-              <strong>{% trans "Please submit this report from the page where you would like to see the change" %}</strong>
+              <strong>
+                {% blocktrans %}
+                  If this request is related to a specific feature, then please submit this report
+                  from the location where you would like to see the change.
+                {% endblocktrans %}
+              </strong>
             </p>
             <div class="form-horizontal">
               <div class="row mb-3">
