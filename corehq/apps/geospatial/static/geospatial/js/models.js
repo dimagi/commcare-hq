@@ -671,6 +671,7 @@ hqDefine('geospatial/js/models', [
                 $(event.target).attr('download','data.geojson');
                 return true;
             }
+            return false;
         };
 
         self.deleteSelectedPolygonFilter = function () {
