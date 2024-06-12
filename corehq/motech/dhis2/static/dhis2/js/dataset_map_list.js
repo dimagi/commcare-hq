@@ -1,4 +1,4 @@
-hqDefine("dhis2/js/dataset_map", [
+hqDefine("dhis2/js/dataset_map_list", [
     "jquery",
     "underscore",
     "hqwebapp/js/initial_page_data",
