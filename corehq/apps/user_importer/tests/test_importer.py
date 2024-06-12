@@ -299,6 +299,7 @@ class TestUserDataMixin:
         self.assert_user_data_contains({
             PROFILE_SLUG: '',
         })
+        self.assertEqual(self.user.get_user_data(self.domain_name).profile, None)
 
     def _test_uncategorized_data(self, is_web_upload=False):
         # Set data
@@ -796,6 +797,8 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         self._test_user_data_profile_unknown(is_web_upload=False)
 
     def test_user_data_profile_removal(self):
+        CommCareUser.create(self.domain_name, 'hello', 'password', None, None,
+                            first_name='Sally', last_name='Sitwell')
         self._test_user_data_profile_removal(is_web_upload=False)
 
     def test_uncategorized_data(self):
