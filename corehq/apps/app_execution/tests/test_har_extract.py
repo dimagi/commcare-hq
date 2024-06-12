@@ -2,7 +2,7 @@ import os
 
 from django.test import SimpleTestCase
 
-from corehq.apps.app_execution import data_model
+from corehq.apps.app_execution.data_model import steps
 from corehq.apps.app_execution.har_parser import HarParser
 from corehq.util.test_utils import TestFileMixin
 
@@ -42,57 +42,57 @@ class TestHarExtraction(SimpleTestCase, TestFileMixin):
         har = self.get_json("split_case_search_select")
         config = HarParser().parse(har)
         self.assertEqual(config.workflow.steps, [
-            data_model.CommandStep(value='Pending Cases'),
-            data_model.EntitySelectStep(value='0da3e5c6-f069-49be-aab3-53f2b9b7ebd0')
+            steps.CommandStep(value='Pending Cases'),
+            steps.EntitySelectStep(value='0da3e5c6-f069-49be-aab3-53f2b9b7ebd0')
         ])
 
     def test_split_screen_case_search_search(self):
         har = self.get_json("split_case_search_search")
         config = HarParser().parse(har)
         self.assertEqual(config.workflow.steps, [
-            data_model.CommandStep(value='Pending Cases'),
-            data_model.QueryInputValidationStep(inputs={'name': 'stale1'}),
-            data_model.QueryStep(inputs={'name': 'stale1'}),
-            data_model.EntitySelectStep(value='0da3e5c6-f069-49be-aab3-53f2b9b7ebd0'),
+            steps.CommandStep(value='Pending Cases'),
+            steps.QueryInputValidationStep(inputs={'name': 'stale1'}),
+            steps.QueryStep(inputs={'name': 'stale1'}),
+            steps.EntitySelectStep(value='0da3e5c6-f069-49be-aab3-53f2b9b7ebd0'),
         ])
 
     def test_search_again(self):
         har = self.get_json("search_again")
         config = HarParser().parse(har)
         self.assertEqual(config.workflow.steps, [
-            data_model.CommandStep(value='Include Related Cases'),
-            data_model.ClearQueryStep(),
-            data_model.QueryInputValidationStep(inputs={'first_name': 'Lucca'}),
-            data_model.QueryInputValidationStep(inputs={'first_name': 'Lucca', 'last_name': 'Mcpherson'}),
-            data_model.QueryStep(inputs={'first_name': 'Lucca', 'last_name': 'Mcpherson'}),
-            data_model.EntitySelectStep(value='18e434037dae4d87b98e77687a2aeff4'),
+            steps.CommandStep(value='Include Related Cases'),
+            steps.ClearQueryStep(),
+            steps.QueryInputValidationStep(inputs={'first_name': 'Lucca'}),
+            steps.QueryInputValidationStep(inputs={'first_name': 'Lucca', 'last_name': 'Mcpherson'}),
+            steps.QueryStep(inputs={'first_name': 'Lucca', 'last_name': 'Mcpherson'}),
+            steps.EntitySelectStep(value='18e434037dae4d87b98e77687a2aeff4'),
         ])
 
     def test_case_list_action(self):
         har = self.get_json("case_list_action")
         config = HarParser().parse(har)
         self.assertEqual(config.workflow.steps, [
-            data_model.CommandStep(value='Baby Log'),
-            data_model.CommandStep(id='action 0')
+            steps.CommandStep(value='Baby Log'),
+            steps.CommandStep(id='action 0')
         ])
 
 
 def get_reg_form_steps():
     return [
-        data_model.CommandStep(value='Register'),
-        data_model.CommandStep(value='Register cat'),
-        data_model.FormStep(children=[
-            data_model.AnswerQuestionStep(question_text='Name', question_id='name', value='fluffy'),
-            data_model.AnswerQuestionStep(question_text='Date', question_id='date', value='2024-05-14'),
-            data_model.SubmitFormStep()
+        steps.CommandStep(value='Register'),
+        steps.CommandStep(value='Register cat'),
+        steps.FormStep(children=[
+            steps.AnswerQuestionStep(question_text='Name', question_id='name', value='fluffy'),
+            steps.AnswerQuestionStep(question_text='Date', question_id='date', value='2024-05-14'),
+            steps.SubmitFormStep()
         ])
     ]
 
 
 def get_case_list_steps():
     return [
-        data_model.CommandStep(value='Register'),
-        data_model.CommandStep(value='Cat sighting'),
-        data_model.EntitySelectStep(value='7a6d6f96-9bd4-41c0-8e52-e499497c4991'),
-        data_model.FormStep(children=[data_model.SubmitFormStep()])
+        steps.CommandStep(value='Register'),
+        steps.CommandStep(value='Cat sighting'),
+        steps.EntitySelectStep(value='7a6d6f96-9bd4-41c0-8e52-e499497c4991'),
+        steps.FormStep(children=[steps.SubmitFormStep()])
     ]

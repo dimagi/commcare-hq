@@ -15,6 +15,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.users.decorators import (
     require_can_edit_web_users,
     require_permission,
@@ -27,7 +28,7 @@ from ..const import State
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
 from ..models import (
     Repeater,
-    SQLRepeatRecord,
+    RepeatRecord,
     get_all_repeater_types,
 )
 
@@ -40,6 +41,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     page_title = gettext_lazy("Data Forwarding")
     template_name = 'repeaters/repeaters.html'
 
+    @use_bootstrap5
     @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING))
     def dispatch(self, request, *args, **kwargs):
@@ -66,7 +68,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
-        state_counts = SQLRepeatRecord.objects.count_by_repeater_and_state(domain=self.domain)
+        state_counts = RepeatRecord.objects.count_by_repeater_and_state(domain=self.domain)
         return {
             'report': 'repeat_record_report',
             'repeater_types_info': self.get_repeater_types_info(state_counts),
@@ -88,6 +90,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
     repeater_form_class = GenericRepeaterForm
     template_name = 'repeaters/add_form_repeater.html'
 
+    @use_bootstrap5
     @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING))
     def dispatch(self, request, *args, **kwargs):
@@ -193,6 +196,7 @@ class AddRepeaterView(BaseRepeaterView):
         )
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class EditRepeaterView(BaseRepeaterView):
     urlname = 'edit_repeater'
     template_name = 'repeaters/add_form_repeater.html'

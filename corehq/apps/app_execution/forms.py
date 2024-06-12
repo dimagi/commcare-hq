@@ -13,10 +13,10 @@ from corehq.apps.users.util import generate_mobile_username
 
 
 class AppWorkflowConfigForm(forms.ModelForm):
-    run_every = forms.IntegerField(min_value=1, required=False, label="Run Every (minutes)")
-    username = forms.CharField(max_length=255, label="Username",
-                               help_text="Username of the user to run the workflow")
-    har_file = forms.FileField(label="HAR File", required=False)
+    run_every = forms.IntegerField(min_value=1, required=False, label=_("Run Every (minutes)"))
+    username = forms.CharField(max_length=255, label=_("Username"),
+                               help_text=_("Username of the user to run the workflow"))
+    har_file = forms.FileField(label=_("HAR File"), required=False)
 
     class Meta:
         model = AppWorkflowConfig
@@ -52,6 +52,7 @@ class AppWorkflowConfigForm(forms.ModelForm):
         if request.user.is_superuser:
             fields += ["run_every", "notification_emails"]
 
+        har_help = _("HAR file recording should start with the selection of the app (navigate_menu_start).")
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Div(
@@ -59,23 +60,22 @@ class AppWorkflowConfigForm(forms.ModelForm):
                     css_class="col",
                 ),
                 crispy.Div(
-                    crispy.HTML("<p>HAR file recording should start with the "
-                                "selection of the app (navigate_menu_start).</p>"),
+                    crispy.HTML(f"<p>{har_help}</p>"),
                     "har_file",
                     twbscrispy.StrictButton(
-                        "Populate workflow from HAR file",
+                        _("Populate workflow from HAR file"),
                         type='submit', css_class='btn-secondary', name="import_har", value="1",
                         formnovalidate=True,
                     ),
                     crispy.HTML("<p>&nbsp;</p>"),
-                    crispy.HTML("<p>Workflow:</p>"),
+                    crispy.HTML(f"<p>{_('Workflow:')}</p>"),
                     InlineField("workflow"),
                     css_class="col"
                 ),
                 css_class="row mb-3"
             ),
             hqcrispy.FormActions(
-                twbscrispy.StrictButton("Save", type='submit', css_class='btn-primary')
+                twbscrispy.StrictButton(_("Save"), type='submit', css_class='btn-primary')
             ),
         )
 
@@ -98,7 +98,9 @@ class AppWorkflowConfigForm(forms.ModelForm):
         try:
             get_brief_app(domain, app_id)
         except NoResultFound:
-            raise forms.ValidationError(f"App not found in domain: {domain}:{app_id}")
+            raise forms.ValidationError(_("App not found in domain: {domain}:{app_id}").format(
+                domain=domain, app_id=app_id
+            ))
 
         return app_id
 

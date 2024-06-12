@@ -1,6 +1,6 @@
 import json
 
-from corehq.apps.app_execution import data_model
+from corehq.apps.app_execution.data_model import AppWorkflow, steps
 from corehq.apps.app_execution.api import ScreenType, get_screen_type
 from corehq.apps.app_execution.models import AppWorkflowConfig
 
@@ -55,7 +55,7 @@ class HarParser:
             elif endpoint == 'answer':
                 self.form_step.children.append(self._extract_form_answer_step(request_data))
             elif endpoint == 'submit-all':
-                self.form_step.children.append(data_model.SubmitFormStep())
+                self.form_step.children.append(steps.SubmitFormStep())
             elif endpoint == 'get_details':
                 # skip over detail screens and don't update current screen and screen data
                 continue
@@ -64,7 +64,7 @@ class HarParser:
             self.screen_data = response_data
 
         return AppWorkflowConfig(
-            domain=self.domain, app_id=self.app_id, workflow=data_model.AppWorkflow(steps=self.steps)
+            domain=self.domain, app_id=self.app_id, workflow=AppWorkflow(steps=self.steps)
         )
 
     def _extract_navigation_step(self, request_data):
@@ -72,12 +72,12 @@ class HarParser:
         if self.current_screen == ScreenType.MENU:
             last_selection = _get_last_selection(request_data, int)
             command = self.screen_data["commands"][last_selection]["displayText"]
-            return data_model.CommandStep(value=command)
+            return steps.CommandStep(value=command)
         elif self.current_screen == ScreenType.CASE_LIST:
             if selections_changed:
                 return self._get_entity_select_step(request_data)
             elif self._get_query_data(request_data).get("inputs") is None:
-                return data_model.ClearQueryStep()
+                return steps.ClearQueryStep()
         elif self.current_screen == ScreenType.SEARCH:
             return self._get_search_step(request_data)
         elif self.current_screen == ScreenType.SPLIT_SEARCH:
@@ -94,18 +94,18 @@ class HarParser:
     def _get_entity_select_step(self, request_data):
         last_selection = _get_last_selection(request_data)
         if is_action(last_selection):
-            return data_model.CommandStep(id=last_selection)
+            return steps.CommandStep(id=last_selection)
         elif is_multi_select(last_selection):
-            return data_model.MultipleEntitySelectStep(values=request_data["selectedValues"])
+            return steps.MultipleEntitySelectStep(values=request_data["selectedValues"])
         else:
-            return data_model.EntitySelectStep(value=last_selection)
+            return steps.EntitySelectStep(value=last_selection)
 
     def _get_search_step(self, request_data):
         query_data = self._get_query_data(request_data)
         if query_data and query_data["execute"]:
-            return data_model.QueryStep(inputs=query_data["inputs"])
+            return steps.QueryStep(inputs=query_data["inputs"])
         else:
-            return data_model.QueryInputValidationStep(inputs=query_data["inputs"])
+            return steps.QueryInputValidationStep(inputs=query_data["inputs"])
 
     def _get_query_data(self, request_data):
         query_key = self.screen_data["queryKey"]
@@ -115,14 +115,14 @@ class HarParser:
     def _extract_form_answer_step(self, request_data):
         tree = self.screen_data["tree"]
         tree_item = [question for question in tree if question["ix"] == request_data["ix"]][0]
-        step = data_model.AnswerQuestionStep(question_text=tree_item["caption"],
-                                             question_id=tree_item["question_id"],
-                                             value=request_data["answer"])
+        step = steps.AnswerQuestionStep(question_text=tree_item["caption"],
+                                        question_id=tree_item["question_id"],
+                                        value=request_data["answer"])
         return step
 
     def set_form_step(self):
         if not self.form_step:
-            self.form_step = data_model.FormStep(children=[])
+            self.form_step = steps.FormStep(children=[])
             self.steps.append(self.form_step)
 
     def clear_form_step(self):

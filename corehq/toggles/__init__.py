@@ -2476,6 +2476,13 @@ TABLEAU_USER_SYNCING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
 )
 
+RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
+    'restrict_user_profile_assignment',
+    'Limit which user profiles a web user can assign to other web users and mobile workers.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 
 def _handle_attendance_tracking_role(domain, is_enabled):
     from corehq.apps.accounting.utils import domain_has_privilege
@@ -2884,4 +2891,11 @@ APP_TESTING = StaticToggle(
     tag=TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     description=''
+)
+
+SMART_LINKS_FOR_WEB_USERS = StaticToggle(
+    slug='smart_links_for_web_users',
+    label='USH: Allow web users to use smart links without logging in as before',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )

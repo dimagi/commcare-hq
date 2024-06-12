@@ -131,7 +131,7 @@ class TestUserDataMixin:
             is_web_upload
         )
         self.assert_user_data_equals({
-            'commcare_project': 'mydomain', 'key': 'F#', 'commcare_profile': '', 'mode': ''})
+            'commcare_project': self.domain.name, 'key': 'F#', 'commcare_profile': '', 'mode': ''})
 
         # Update user_data
         import_users_and_groups(
@@ -143,7 +143,7 @@ class TestUserDataMixin:
             is_web_upload
         )
         self.assert_user_data_equals({
-            'commcare_project': 'mydomain', 'key': 'Bb', 'commcare_profile': '', 'mode': ''})
+            'commcare_project': self.domain.name, 'key': 'Bb', 'commcare_profile': '', 'mode': ''})
 
         # set user data to blank
         import_users_and_groups(
@@ -178,7 +178,7 @@ class TestUserDataMixin:
         )
 
         self.assert_user_data_equals({
-            'commcare_project': 'mydomain',
+            'commcare_project': self.domain.name,
             'key': 'F#',
             'mode': 'minor',
             PROFILE_SLUG: self.profile.id,
@@ -1634,7 +1634,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
     def setUpClass(cls):
         super().setUpClass()
         delete_all_users()
-        cls.domain_name = 'mydomain'
+        cls.domain_name = 'mydomain2'
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
         cls.role = UserRole.create(cls.domain.name, 'edit-apps')

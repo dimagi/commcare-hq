@@ -64,6 +64,7 @@ $zindex-persistent-tile-cloudcare:    993;
 $zindex-formplayer-progress:          990;
 $zindex-cloudcare-debugger:          1005;
 $zindex-formplayer-scroll-to-bottom:    5;
+$zindex-formplayer-anchored-submit:     4;
 $zindex-select2-results:             1056;  // higher than $zindex-modal so select2s can be used in modals
 
 $cursor-disabled: 'not-allowed';

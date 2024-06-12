@@ -1135,6 +1135,40 @@ class ApplicationsTab(UITab):
         return submenu_context
 
     @property
+    @memoized
+    def sidebar_items(self):
+        return [
+            (_("Application Test Flows"), [
+                {
+                    'title': "Workflow List",
+                    'url': reverse("app_execution:workflow_list", args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': _("New"),
+                            'urlname': "new_workflow",
+                        },
+                        {
+                            'title': _("Edit"),
+                            'urlname': "edit_workflow",
+                        },
+                        {
+                            'title': _("Run"),
+                            'urlname': "test_workflow",
+                        },
+                        {
+                            'title': _("Logs"),
+                            'urlname': "workflow_logs",
+                        },
+                        {
+                            'title': _("Log Details"),
+                            'urlname': "workflow_log",
+                        },
+                    ],
+                },
+            ]),
+        ]
+
+    @property
     def _is_viewable(self):
         couch_user = self.couch_user
         return (self.domain and couch_user
