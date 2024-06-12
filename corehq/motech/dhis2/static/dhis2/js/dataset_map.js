@@ -12,10 +12,10 @@ hqDefine("dhis2/js/dataset_map", [
     $(function () {
         var $sendNowResult = $('#send-now-result'),
             $remoteLogsLink = $('#remote-logs');
-        $remoteLogsLink.hide();
+        $remoteLogsLink.addClass("d-none");
 
         var handleSuccess = function (response) {
-            $sendNowResult.removeClass("hide text-danger text-success");
+            $sendNowResult.removeClass("d-none text-danger text-success");
             if (response.success) {
                 $sendNowResult.addClass("text-success");
             } else {
@@ -24,13 +24,13 @@ hqDefine("dhis2/js/dataset_map", [
             $sendNowResult.text(gettext('DHIS2 response: ') + response.text);
             if (response.log_url) {
                 $remoteLogsLink.attr('href', response.log_url);
-                $remoteLogsLink.show();
+                $remoteLogsLink.removeClass("d-none");
             }
         };
 
         var handleFailure = function (resp) {
             $sendNowResult
-                .removeClass("hide text-success")
+                .removeClass("d-none text-success")
                 .addClass("text-danger");
             $sendNowResult.text(
                 gettext('CommCare HQ was unable to send the DataSet: ')
@@ -38,7 +38,7 @@ hqDefine("dhis2/js/dataset_map", [
             );
             if (resp.responseJSON) {
                 $remoteLogsLink.attr('href', resp.responseJSON['log_url']);
-                $remoteLogsLink.show();
+                $remoteLogsLink.removeClass("d-none");
             }
         };
 
