@@ -130,7 +130,7 @@ def auto_deactivate_removed_sso_users():
         idp_type=IdentityProviderType.ENTRA_ID
     ).all():
         try:
-            idp_users = idp.get_all_members_of_the_idp()
+            usernames_in_idp = idp.get_all_usernames_of_the_idp()
         except EntraVerificationFailed as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.VERIFICATION_ERROR,
@@ -152,7 +152,7 @@ def auto_deactivate_removed_sso_users():
             continue
 
         # if the Graph Users API returns an empty list of users we will skip auto deactivation
-        if len(idp_users) == 0:
+        if len(usernames_in_idp) == 0:
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.EMPTY_ERROR)
             continue
 
@@ -167,7 +167,7 @@ def auto_deactivate_removed_sso_users():
         authenticated_email_domains = authenticated_domains.values_list('email_domain', flat=True)
 
         for username in usernames_in_account:
-            if username not in idp_users and username not in exempt_usernames:
+            if username not in usernames_in_idp and username not in exempt_usernames:
                 email_domain = get_email_domain_from_username(username)
                 if email_domain in authenticated_email_domains:
                     usernames_to_deactivate.append(username)
