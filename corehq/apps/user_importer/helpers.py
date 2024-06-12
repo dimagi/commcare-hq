@@ -162,7 +162,7 @@ class BaseUserImporter(object):
         if profile_name:
             profile_id = profiles_by_name[profile_name].pk
         elif profile_name == '':
-            profile_id = ''
+            profile_id = None
         else:
             profile_id = ...
 
