@@ -154,6 +154,22 @@ class TestUserData(TestCase):
         user_data = users[0].get_user_data(self.domain).to_dict()
         self.assertIn('field1', user_data)
 
+    def test_profile(self):
+        fields_definition = CustomDataFieldsDefinition.objects.create(
+            domain=self.domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
+        profile = CustomDataFieldsProfile.objects.create(
+            name='blues', fields={'favorite_color': 'blue'}, definition=fields_definition)
+
+        user = self.make_commcare_user()
+        user_data = user.get_user_data(self.domain)
+        user_data.profile_id = profile.pk
+        user_data.save()
+        self.assertEqual(user_data.profile.pk, profile.pk)
+
+        user_data.profile_id = None
+        user_data.save()
+        self.assertEqual(user_data.profile, None)
+
 
 def _get_profile(self, profile_id):
     if profile_id == 'blues':
@@ -286,6 +302,7 @@ class TestUserDataModel(SimpleTestCase):
         user_data.update({
             'favorite_color': '',
         }, profile_id=None)
+        self.assertEqual(user_data.profile, None)
 
     def test_delitem(self):
         user_data = self.init_user_data({'yearbook_quote': 'something random'})
