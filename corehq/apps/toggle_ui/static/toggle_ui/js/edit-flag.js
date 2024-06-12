@@ -104,12 +104,11 @@ hqDefine('toggle_ui/js/edit-flag', [
         self.saveButtonTop = self.createSaveButton();
         self.saveButtonBottom = self.createSaveButton();
 
-        var projectInfoUrl = '<a href="' + initialPageData.reverse('domain_internal_settings') + '">domain</a>';
         self.getNamespaceHtml = function (namespace, value) {
             if (namespace === 'domain') {
-                return projectInfoUrl.replace('___', value);
+                return '<a href="' + initialPageData.reverse('domain_internal_settings', value) + '">domain <i class="fa fa-external-link"></i></a>';
             } else {
-                return namespace;
+                return "<i class='fa fa-user'></i> " + namespace;
             }
         };
 
