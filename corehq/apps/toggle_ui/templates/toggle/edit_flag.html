@@ -34,14 +34,12 @@
       <span class="pull-right">
       {% if not usage_info %}
         <a href="{{ page_url }}?usage_info=true">
-          <i class="icon-white icon-info-sign"></i>
-          {% trans "Show usage" %}
-        </a> |
-      {% endif %}
-        <a href="{{ page_url }}?show_service_type=true">
-          <i class="icon-white icon-info-sign"></i>
-          {% trans "Show account service type" %}
+          <button class="btn btn-info">
+            <i class="icon-white icon-info-sign"></i>
+            {% trans "Show usage" %}
+          </button>
         </a>
+      {% endif %}
       </span>
       {% if static_toggle.description %}
         <p>{{ static_toggle.description }}</p>
