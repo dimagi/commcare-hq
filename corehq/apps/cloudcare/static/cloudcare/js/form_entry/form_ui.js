@@ -415,6 +415,16 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         });
     }
 
+    function removeRepeatGroup(rootNode, deletedGroupIx) {
+        const ixParts = deletedGroupIx.split(",");
+        let parentOfDeletedGroup = rootNode;
+        for (let i = 0; i < ixParts.length - 1; i++) {
+            parentOfDeletedGroup = parentOfDeletedGroup.children.find(c => c.ix.endsWith(ixParts[i]));
+        }
+        const idx = parentOfDeletedGroup.children.findIndex(c => c.ix === deletedGroupIx);
+        parentOfDeletedGroup.children.splice(idx, 2);
+    }
+
     /**
      * Represents the entire form. There is only one of these on a page.
      * @param {Object} json - The JSON returned from touchforms to represent a Form
@@ -628,7 +638,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         };
 
         $.unsubscribe('session');
-        $.subscribe('session.reconcile', function (e, response, element, deletedGroup) {
+        $.subscribe('session.reconcile', function (e, response, element, options) {
             // TODO where does response status parsing belong?
             if (response.status === 'validation-error') {
                 if (response.type === 'required') {
@@ -641,14 +651,19 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 const allChildren = response.tree;
                 delete response.tree;
 
-                if (deletedGroup) {
+                if (options) {
                     // deletedGroup is only set for responses from delete-repeat.
                     // because ko.mapping does not like reassigning keys we need to remove all repeat group siblings and
                     // add them back in to force proper refresh. Setting response.children to [] would also work but was
                     // quite slow for larger forms.
                     // self.fromJS makes changes to the response. So create a copy first.
                     response.children = JSON.parse(JSON.stringify(allChildren));
-                    removeSiblingsOfRepeatGroup(response, deletedGroup);
+                    if (options.deletedGroup) {
+                        removeSiblingsOfRepeatGroup(response, options.deletedGroup);
+                    }
+                    if (options.addedGroup) {
+                        removeRepeatGroup(response, options.addedGroup);
+                    }
                     self.fromJS(response);
                 }
 

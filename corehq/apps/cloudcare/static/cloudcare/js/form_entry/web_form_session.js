@@ -450,23 +450,26 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                     'ix': formUI.getIx(repeat),
                 },
                 function (resp) {
-                    // elementTile is not defined on addGroup
-                    // $.publish('session.reconcile', [resp, repeat]);
-
-                    $.publish('session.reconcile', [resp, repeat, formUI.getIx(repeat)]);
+                    const options = {
+                        addedGroup: formUI.getIx(repeat),
+                    };
+                    $.publish('session.reconcile', [resp, repeat, options]);
                 },
                 constants.BLOCK_ALL);
         };
 
         self.deleteRepeat = function (repetition) {
             const juncture = formUI.getIx(repetition);
+            const options = {
+                deletedGroup: juncture,
+            };
             this.serverRequest(
                 {
                     'action': constants.DELETE_REPEAT,
                     'ix': juncture,
                 },
                 function (resp) {
-                    $.publish('session.reconcile', [resp, repetition, juncture]);
+                    $.publish('session.reconcile', [resp, repetition, options]);
                 },
                 constants.BLOCK_ALL);
         };
