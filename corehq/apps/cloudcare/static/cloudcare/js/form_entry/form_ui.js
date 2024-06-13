@@ -700,7 +700,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.addChoice = ko.observable(json['add-choice']);
 
         self.groupId = groupNum++;
-        self.rel_ix = ko.observable(relativeIndex(self.ix()));
+        self.rel_ix = ko.pureComputed(() => relativeIndex(self.ix()));
         if (Object.hasOwn(self, 'delete')) {
             self.showDelete = self.delete();
         } else {
@@ -757,15 +757,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 return child.required() || child.childrenRequired && child.childrenRequired();
             });
         });
-
-        // is that always true now?
-        // if (self.isRepetition) {
-        //     // If the group is part of a repetition the index can change if the user adds or deletes
-        //     // repeat groups.
-        //     self.ix.subscribe(function () {
-        //         self.rel_ix(relativeIndex(self.ix()));
-        //     });
-        // }
 
         self.newRepeat = function () {
             $.publish('formplayer.' + constants.NEW_REPEAT, self);
