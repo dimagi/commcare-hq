@@ -184,12 +184,15 @@ def _ensure_software_plan(plan_key, product, product_rate, verbose, apps):
 
 
 def _software_plan_name(plan_key, product, product_rate):
-    name_parts = (
+    name_parts = [
         product_rate.name if product is None else product.name,
         (" Trial" if plan_key.is_trial else " Edition") if product is None else "",
-        " - Pay Annually" if plan_key.is_annual_plan else " - Pay Monthly",
-        " - Report Builder (5 Reports)" if plan_key.is_report_builder_enabled else "",
-    )
+    ]
+    if plan_key.edition != SoftwarePlanEdition.ENTERPRISE:
+        name_parts.extend([
+            " - Pay Annually" if plan_key.is_annual_plan else " - Pay Monthly",
+            " - Report Builder (5 Reports)" if plan_key.is_report_builder_enabled else "",
+        ])
     return "".join(name_parts)
 
 
