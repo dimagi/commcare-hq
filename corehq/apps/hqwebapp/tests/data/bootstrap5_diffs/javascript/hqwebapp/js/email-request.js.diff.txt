@@ -1,6 +1,7 @@
 --- 
 +++ 
-@@ -1,14 +1,17 @@
+@@ -1,15 +1,17 @@
+ 'use strict';
 -hqDefine('hqwebapp/js/bootstrap3/email-request', [
 +hqDefine('hqwebapp/js/bootstrap5/email-request', [
      "jquery",
@@ -11,7 +12,6 @@
 -], function ($, ko) {
 +    "hqwebapp/js/bootstrap5/hq.helpers",
 +], function ($, ko, bootstrap) {
-+    'use strict';
  
      var EmailRequest = function (modalId, formId) {
          let self = {};
@@ -21,7 +21,7 @@
          self.$formElement = $(`#${formId}`);
          self.$submitBtn = self.$formElement.find("button[type='submit']");
  
-@@ -56,9 +59,9 @@
+@@ -57,9 +59,9 @@
  
              if (!self.isRequestReportSubmitting && self.isReportSent) {
                  self.isReportSent = false;
@@ -33,7 +33,7 @@
                  self.cancelBtnEnabled(false);
                  self.$formElement.ajaxSubmit({
                      type: "POST",
-@@ -77,10 +80,10 @@
+@@ -78,10 +80,10 @@
          };
  
          self.resetForm = function () {
@@ -46,7 +46,7 @@
              resetErrors();
          };
  
-@@ -107,12 +110,12 @@
+@@ -108,12 +110,12 @@
          function hqwebappRequestReportSucccess() {
              self.isRequestReportSubmitting = false;
              self.isReportSent = true;

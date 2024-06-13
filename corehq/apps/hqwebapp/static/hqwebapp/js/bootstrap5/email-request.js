@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('hqwebapp/js/bootstrap5/email-request', [
     "jquery",
     "knockout",
@@ -5,7 +6,6 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
     "jquery-form/dist/jquery.form.min",
     "hqwebapp/js/bootstrap5/hq.helpers",
 ], function ($, ko, bootstrap) {
-    'use strict';
 
     var EmailRequest = function (modalId, formId) {
         let self = {};
