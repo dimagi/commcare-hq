@@ -21,9 +21,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             groupJSON,
             noQuestionGroupJSON,
             nestedGroupJSON,
-            spy,
-            repeatJSON,
-            repeatNestJSON;
+            spy;
 
         before(function () {
             initialPageData.register(
