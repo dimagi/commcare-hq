@@ -2,13 +2,22 @@
 {% load hq_shared_tags %}
 
 <script type="text/html" id="sub-group-fullform-ko-template">
+  <!-- ko if: isDummy -->
+  <div style="margin-bottom: 10px; margin-right: 10px">
+      <button class="btn btn-default add" href="#"
+              data-bind="click: newRepeat, text: addChoice"
+              id="repeat-add-new">
+              <i class="fa fa-plus"></i>
+      </button>
+  </div>
+  <!-- /ko -->
+  <!-- ko ifnot: isDummy -->
   <div tabindex="-1" class ="gr" data-bind="
         class: elementTile,
         css: {
           'gr-no-children': $data.children().length === 0,
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'card': collapsible,
-          'repetition': isRepetition,
           'required-group': !showChildren() && childrenRequired(),
           'stripe-repeats': stripeRepeats,
           'group-border': groupBorder,
@@ -84,4 +93,5 @@
         </fieldset>
       </div>
   </div>
+  <!-- /ko -->
 </script>
