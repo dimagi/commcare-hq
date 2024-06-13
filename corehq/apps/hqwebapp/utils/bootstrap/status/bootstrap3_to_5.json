@@ -125,5 +125,8 @@
   },
   "dashboard": {
     "is_complete": true
+  },
+  "motech.dhis2": {
+    "is_complete": true
   }
 }
