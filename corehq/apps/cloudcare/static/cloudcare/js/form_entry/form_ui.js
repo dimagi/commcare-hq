@@ -799,6 +799,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         };
 
         self.headerBackgroundColor = function () {
+            if (!self.collapsible) {
+                return '';
+            }
             return Container.prototype.headerBackgroundColor.call(self);
         };
 
@@ -1061,5 +1064,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             return new Question(json, parent);
         },
         removeSiblingsOfRepeatGroup: removeSiblingsOfRepeatGroup,
+        removeRepeatGroup: removeRepeatGroup,
     };
 });
