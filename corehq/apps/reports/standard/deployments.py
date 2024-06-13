@@ -482,9 +482,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         for row in table[1:]:
             # Last submission
-            row[len(location_colums) + 1] = _fmt_timestamp(row[len(location_colums) + 1])
-            # Last sync
             row[len(location_colums) + 2] = _fmt_timestamp(row[len(location_colums) + 2])
+            # Last sync
+            row[len(location_colums) + 3] = _fmt_timestamp(row[len(location_colums) + 3])
         result[0][1] = table
         return result
 
