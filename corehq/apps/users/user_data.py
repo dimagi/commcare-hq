@@ -116,7 +116,9 @@ class UserData:
             non_empty_existing_fields = {k for k, v in self._local_to_user.items() if v}
             if set(new_profile.fields).intersection(non_empty_existing_fields):
                 raise UserDataError(_("Profile conflicts with existing data"))
-        self._profile_id = profile_id
+            self._profile_id = profile_id
+        else:
+            self._profile_id = None
 
     @cached_property
     def profile(self):
