@@ -112,10 +112,11 @@
                          class="form-control"
                          id="bug-report-cc"
                          placeholder="ex: admin@commcarehq.org, test@commcarehq.org"
-                         data-bind="value: recipientEmailsText, css: { 'is-invalid': hasRecipientsInputError }" />
-                  <span class="invalid-feedback">
-                    <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
-                  </span>
+                         data-bind="value: recipientEmailsText, css: { 'is-invalid': recipientsErrorMessage }" />
+                  <div class="invalid-feedback">
+                    <i class="fa fa-warning"></i>
+                    <span data-bind="text: recipientsErrorMessage"></span>
+                  </div>
                   <p class="help-block">
                     {% blocktrans %}
                       Comma-separated email addresses of others you want to notify about this issue.
