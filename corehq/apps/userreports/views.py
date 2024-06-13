@@ -1360,7 +1360,7 @@ def _number_of_records_to_be_iterated_for_rebuild(config):
             count_of_records = CaseSearchES().domain(config.domain).count()
     elif config.referenced_doc_type == 'XFormInstance':
         if case_types_or_xmlns:
-            count_of_records = FormES().domain(config.domain).xmlns(case_types_or_xmlns)
+            count_of_records = FormES().domain(config.domain).xmlns(case_types_or_xmlns).count()
         else:
             count_of_records = FormES().domain(config.domain).count()
 
