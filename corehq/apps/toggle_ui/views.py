@@ -128,10 +128,6 @@ class ToggleEditView(BasePageView):
         return self.request.GET.get('usage_info') == 'true'
 
     @property
-    def show_service_type(self):
-        return self.request.GET.get('show_service_type') == 'true'
-
-    @property
     def toggle_slug(self):
         return self.args[0] if len(self.args) > 0 else self.kwargs.get('toggle', "")
 
@@ -179,8 +175,6 @@ class ToggleEditView(BasePageView):
         }
         if self.usage_info:
             context['last_used'] = _get_usage_info(toggle)
-
-        if self.show_service_type:
             context['service_type'], context['by_service'] = _get_service_type(toggle)
 
         return context
@@ -217,7 +211,6 @@ class ToggleEditView(BasePageView):
         }
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
-        if self.show_service_type:
             data['service_type'], data['by_service'] = _get_service_type(toggle)
         return HttpResponse(json.dumps(data), content_type="application/json")
 

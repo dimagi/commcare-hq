@@ -17,7 +17,6 @@ from corehq.motech.generic_inbound.models import ConfigurableAPI
 from corehq.toggles import GENERIC_INBOUND_API
 from corehq.util import reverse
 from corehq.util.timezones.conversions import ServerTime
-from corehq.util.timezones.utils import get_timezone
 
 from .models import RequestLog
 
@@ -137,5 +136,4 @@ class ApiLogDetailView(BaseProjectSettingsView):
     def page_context(self):
         return {
             'log': self.log,
-            'timezone': get_timezone(self.request, self.domain)
         }
