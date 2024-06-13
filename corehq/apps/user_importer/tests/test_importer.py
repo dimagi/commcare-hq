@@ -288,9 +288,13 @@ class TestUserDataMixin:
         self.assertEqual(rows[0]['flag'], "Profile 'not_a_real_profile' does not exist")
 
     def _test_user_data_profile_removal(self, is_web_upload=False):
+        user_data = self.user.get_user_data(self.domain_name)
+        user_data.profile_id = self.profile.id
+        user_data.save()
+        self.assertTrue(self.user.get_user_data(self.domain_name).profile)
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(user_profile='')],
+            [self._get_spec(user_profile='', user_id=self.user._id)],
             [],
             self.uploading_user.get_id,
             self.upload_record.pk,
@@ -394,10 +398,12 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
             group.delete()
 
     @property
+    def username(self):
+        return '{}@{}.commcarehq.org'.format('hello', self.domain.name)
+
+    @property
     def user(self):
-        return CommCareUser.get_by_username('{}@{}.commcarehq.org'.format(
-            'hello',
-            self.domain.name))
+        return CommCareUser.get_by_username(self.username)
 
     def _get_spec(self, delete_keys=None, **kwargs):
         spec = {
@@ -797,7 +803,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         self._test_user_data_profile_unknown(is_web_upload=False)
 
     def test_user_data_profile_removal(self):
-        CommCareUser.create(self.domain_name, 'hello', 'password', None, None,
+        CommCareUser.create(self.domain_name, self.username, 'password', None, None,
                             first_name='Sally', last_name='Sitwell')
         self._test_user_data_profile_removal(is_web_upload=False)
 
@@ -863,7 +869,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         self.assertDictEqual(user_history.change_messages, change_messages)
 
     def test_tracking_update_to_existing_commcare_user(self):
-        CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+        CommCareUser.create(self.domain_name, self.username, "*******",
                             created_by=None, created_via=None)
         import_users_and_groups(
             self.domain.name,
@@ -1178,7 +1184,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         self.assertEqual(last_entry.action, UserModelAction.UPDATE.value)
 
     def test_ensure_user_history_on_only_userdata_update(self):
-        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+        user = CommCareUser.create(self.domain_name, self.username, "*******",
                                    created_by=None, created_via=None)
         import_users_and_groups(
             self.domain.name,
@@ -1213,7 +1219,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
 
     def test_upload_with_multiple_phone_numbers(self):
         initial_default_number = '12345678912'
-        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+        user = CommCareUser.create(self.domain_name, self.username, "*******",
                                    created_by=None, created_via=None, phone_number='12345678912')
 
         number1 = '8765547824'
@@ -1257,7 +1263,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
 
     def test_upload_with_multiple_phone_numbers_and_some_blank(self):
         initial_default_number = '12345678912'
-        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+        user = CommCareUser.create(self.domain_name, self.username, "*******",
                                    created_by=None, created_via=None, phone_number='12345678912')
         number1 = ''
         number2 = '7765547823'
@@ -1293,7 +1299,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         self.assertEqual(user.phone_numbers, [number2])
 
     def test_upload_with_multiple_phone_numbers_with_duplicates(self):
-        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+        user = CommCareUser.create(self.domain_name, self.username, "*******",
                                    created_by=None, created_via=None, phone_number='12345678912')
         number1 = '7765547823'
         duplicate_number = number1
@@ -1347,7 +1353,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         self.assertEqual(res['messages']['rows'][0]['flag'], f'Invalid phone number detected: {bad_number}')
 
     def test_upload_with_no_phone_numbers(self):
-        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+        user = CommCareUser.create(self.domain_name, self.username, "*******",
                                    created_by=None, created_via=None, phone_number='12345678912')
 
         user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
@@ -1376,7 +1382,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         self.assertEqual(user.phone_numbers, [])
 
     def test_upload_with_no_phone_number_in_row(self):
-        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+        user = CommCareUser.create(self.domain_name, self.username, "*******",
                                    created_by=None, created_via=None, phone_number='12345678912')
 
         user_specs = self._get_spec(delete_keys=['phone-number'], user_id=user._id)
@@ -1402,7 +1408,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         self.assertEqual(user.phone_numbers, ['12345678912'])
 
     def test_upload_with_group(self):
-        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+        user = CommCareUser.create(self.domain_name, self.username, "*******",
                                    created_by=None, created_via=None)
         user_specs = self._get_spec(user_id=user._id)
         group = Group(domain=self.domain.name, name="test_group")
@@ -1427,7 +1433,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
             UserChangeMessage.groups_info([group])['groups'])
 
     def test_upload_with_no_group(self):
-        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+        user = CommCareUser.create(self.domain_name, self.username, "*******",
                                    created_by=None, created_via=None)
         user_specs = self._get_spec(user_id=user._id)
         group = Group(domain=self.domain.name, name="test_group")
@@ -1480,7 +1486,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMi
         self.assertEqual(updated_group.name, 'another_group')
 
     def test_upload_new_group_and_assign_to_user(self):
-        user = CommCareUser.create(self.domain_name, f"hello@{self.domain.name}.commcarehq.org", "*******",
+        user = CommCareUser.create(self.domain_name, self.username, "*******",
                                    created_by=None, created_via=None)
         user_specs = self._get_spec(user_id=user._id, group=['test_group'])
 
