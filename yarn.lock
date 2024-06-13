@@ -1131,11 +1131,6 @@ bl@^4.0.3:
     inherits "^2.0.4"
     readable-stream "^3.4.0"
 
-blazy@1.8.2:
-  version "1.8.2"
-  resolved "https://registry.yarnpkg.com/blazy/-/blazy-1.8.2.tgz#50dfd638baaf9003efd6eb3a836aca54184ab6da"
-  integrity sha1-UN/WOLqvkAPv1us6g2rKVBhKtto=
-
 blurhash@^2.0.5:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/blurhash/-/blurhash-2.0.5.tgz#efde729fc14a2f03571a6aa91b49cba80d1abe4b"
