@@ -29,50 +29,118 @@ class TestRadialDistanceSolver(SimpleTestCase):
         }
 
     def test_basic(self):
+        config = GeoConfig()
+        solver = RadialDistanceSolver(self._problem_data)
+        params = solver.get_parameters(config=config)
+
         self.assertEqual(
-            RadialDistanceSolver(self._problem_data).solve(GeoConfig()), (
-                None,
-                {
+            solver.solve(config), {
+                'assigned': {
                     'New York': ['New Hampshire', 'Newark', 'NY2'],
                     'Los Angeles': ['Phoenix', 'LA2', 'LA3', 'Dallas', 'Jackson']
-                }
-            )
+                }, 'unassigned': [], 'parameters': params.__dict__}
         )
 
     def test_with_max_criteria(self):
+        config = GeoConfig(max_cases_per_user=4)
+        solver = RadialDistanceSolver(self._problem_data)
+        params = solver.get_parameters(config=config)
+
         self.assertEqual(
-            RadialDistanceSolver(self._problem_data).solve(GeoConfig(max_cases_per_user=4)), (
-                None,
-                {
+            solver.solve(config), {
+                'assigned': {
                     'New York': ['New Hampshire', 'Newark', 'NY2', 'Dallas'],
                     'Los Angeles': ['Phoenix', 'LA2', 'LA3', 'Jackson']
-                }
-            )
+                }, 'unassigned': [], 'parameters': params.__dict__}
         )
 
     def test_more_cases_than_is_assignable(self):
         # If max_cases_per_user * n_users < n_cases, that would result in an infeasible solution.
+        config = GeoConfig(max_cases_per_user=2)
+        solver = RadialDistanceSolver(self._problem_data)
+        params = solver.get_parameters(config=config)
+
+        expected_results = {
+            'assigned': [],
+            'unassigned': self._problem_data['cases'],
+            'parameters': params.__dict__,
+        }
         self.assertEqual(
-            RadialDistanceSolver(self._problem_data).solve(GeoConfig(max_cases_per_user=2)), (None, None)
+            solver.solve(config), expected_results
         )
 
     def test_too_few_cases_for_minimum_criteria(self):
-        self.assertEqual(
-            RadialDistanceSolver(self._problem_data).solve(GeoConfig(min_cases_per_user=5)), (None, None)
-        )
+        config = GeoConfig(min_cases_per_user=5)
+        solver = RadialDistanceSolver(self._problem_data)
+        params = solver.get_parameters(config=config)
+
+        expected_results = {
+            'assigned': [],
+            'unassigned': self._problem_data['cases'],
+            'parameters': params.__dict__,
+        }
+        self.assertEqual(solver.solve(config), expected_results)
 
     def test_no_cases_is_infeasible_solution(self):
         problem_data = self._problem_data
         problem_data['cases'] = []
 
-        self.assertEqual(
-            RadialDistanceSolver(problem_data).solve(GeoConfig()), (None, None)
-        )
+        config = GeoConfig()
+        solver = RadialDistanceSolver(problem_data)
+        params = solver.get_parameters(config=config)
+
+        expected_results = {'assigned': [], 'unassigned': [], 'parameters': params.__dict__}
+        self.assertEqual(solver.solve(config), expected_results)
 
     def test_no_users_is_infeasible_solution(self):
         problem_data = self._problem_data
         problem_data['users'] = []
 
+        config = GeoConfig()
+        solver = RadialDistanceSolver(problem_data)
+        params = solver.get_parameters(config=config)
+
+        expected_results = {
+            'assigned': [],
+            'unassigned': self._problem_data['cases'],
+            'parameters': params.__dict__,
+        }
+        self.assertEqual(solver.solve(config), expected_results)
+
+    def test_cases_too_far_distance(self):
+        config = GeoConfig(max_case_distance=1)
+        solver = RadialDistanceSolver(self._problem_data)
+        params = solver.get_parameters(config=config)
+
+        expected_results = {
+            'assigned': {'New York': [], 'Los Angeles': []},
+            'unassigned': self._problem_data['cases'],
+            'parameters': params.__dict__,
+        }
         self.assertEqual(
-            RadialDistanceSolver(problem_data).solve(GeoConfig()), (None, None)
+            solver.solve(config), expected_results
+        )
+
+    def test_massive_distance_disburses_normally(self):
+        # This test just shows that, given a big enough radius from the user, the results will look
+        # the same as if there was no radius at all
+        results_from_normal = RadialDistanceSolver(self._problem_data).solve(GeoConfig())
+        results_from_normal['parameters'] = {}  # don't care about params
+
+        results_massive_max_distance = RadialDistanceSolver(self._problem_data).solve(
+            GeoConfig(max_case_distance=10000)
+        )
+        results_massive_max_distance['parameters'] = {}
+
+        self.assertEqual(
+            results_from_normal, results_massive_max_distance
+        )
+
+    def test_radial_solver_does_not_take_travel_time_into_account(self):
+        results_from_normal = RadialDistanceSolver(self._problem_data).solve(GeoConfig())
+        results_with_travel_time = RadialDistanceSolver(self._problem_data).solve(
+            GeoConfig(max_case_travel_time=5)
+        )
+        self.assertEqual(
+            results_from_normal, results_with_travel_time
         )
