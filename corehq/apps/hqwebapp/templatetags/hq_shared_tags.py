@@ -23,9 +23,14 @@ from django_prbac.utils import has_privilege
 from dimagi.utils.web import json_handler
 
 from corehq import privileges
-from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException, TemplateTagJSONException
+from corehq.apps.hqwebapp.exceptions import (
+    AlreadyRenderedException,
+    TemplateTagJSONException,
+)
 from corehq.apps.hqwebapp.models import Alert
 from corehq.motech.utils import pformat_json
+from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone
 
 register = template.Library()
 
@@ -114,7 +119,10 @@ def domains_for_user(context, request, selected_domain=None):
     the user doc updates via save.
     """
 
-    from corehq.apps.domain.views.base import get_domain_links_for_dropdown, get_enterprise_links_for_dropdown
+    from corehq.apps.domain.views.base import (
+        get_domain_links_for_dropdown,
+        get_enterprise_links_for_dropdown,
+    )
     domain_links = get_domain_links_for_dropdown(request.couch_user)
 
     # Enterprise permissions projects aren't in the dropdown, but show a hint they exist
@@ -746,3 +754,14 @@ def request_has_privilege(request, privilege_name):
     from corehq import privileges
     privilege = _get_obj_from_name_or_instance(privileges, privilege_name)
     return domain_has_privilege(request.domain, privilege)
+
+
+@register.filter
+def to_user_time(dt, request):
+    """Convert a datetime to a readable string in the user's timezone"""
+    if not dt:
+        return "---"
+    if not isinstance(dt, datetime):
+        raise ValueError("to_user_time only accepts datetimes")
+    timezone = get_timezone(request, getattr(request, 'domain', None))
+    return ServerTime(dt).user_time(timezone).ui_string()

@@ -2039,6 +2039,17 @@ ACCOUNTING_TESTING_TOOLS = StaticToggle(
     [NAMESPACE_USER]
 )
 
+SELF_SERVICE_ANNUAL_RENEWALS = StaticToggle(
+    'self_service_annual_renewals',
+    'Allow self service renewal for Pay Annually software plans',
+    TAG_SAAS_CONDITIONAL,
+    [NAMESPACE_USER],
+    description=(
+        "Allows billing admin users to choose between Pay Monthly or Pay Annually plans when renewing"
+        "This is a temporary flag to be removed upon completion of self service annual renewals feature."
+    )
+)
+
 ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     'add_row_index_to_mobile_ucrs',
     'Add row index to mobile UCRs as the first column to retain original order of data',
@@ -2463,6 +2474,13 @@ TABLEAU_USER_SYNCING = StaticToggle(
     """,
     parent_toggles=[EMBED_TABLEAU_REPORT_BY_USER],
     help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
+)
+
+RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
+    'restrict_user_profile_assignment',
+    'Limit which user profiles a web user can assign to other web users and mobile workers.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 
