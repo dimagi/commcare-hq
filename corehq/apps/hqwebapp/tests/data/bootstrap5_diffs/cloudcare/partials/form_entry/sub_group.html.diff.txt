@@ -1,12 +1,11 @@
 --- 
 +++ 
-@@ -17,14 +17,15 @@
+@@ -17,14 +17,14 @@
          css: {
            'gr-no-children': $data.children().length === 0,
            'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
 -          'panel panel-default': collapsible,
 +          'card': collapsible,
-+          'repetition': isRepetition,
            'required-group': !showChildren() && childrenRequired(),
            'stripe-repeats': stripeRepeats,
            'group-border': groupBorder,
@@ -18,7 +17,7 @@
             clickable: collapsible
          },
          attr: collapsible ? {
-@@ -48,7 +49,7 @@
+@@ -48,7 +48,7 @@
                  data-bind="
                    html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
                  "></span>
@@ -27,7 +26,7 @@
                    data-bind="
                        visible: showDelete,
                        enabled: hasNoPendingAnswer(),
-@@ -64,8 +65,8 @@
+@@ -64,8 +64,8 @@
              "></i>
            </div>
            <span class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
@@ -38,7 +37,7 @@
                    data-bind="
                        visible: showDelete,
                        enabled: hasNoPendingAnswer(),
-@@ -86,7 +87,7 @@
+@@ -86,7 +86,7 @@
                  afterRender: focusNewRepeat,
                },
                css: {
