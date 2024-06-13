@@ -371,8 +371,8 @@ class generate_cases:
     their parameterized names are not valid function names. This was a
     tradeoff with making parameterized tests identifiable on failure.
 
-    Another alternative is nose test generators.
-    https://nose.readthedocs.io/en/latest/writing_tests.html#test-generators
+    Another alternative is pytest.mark.parametrize.
+    https://pytest.org/en/stable/example/parametrize.html
 
     :param argsets: A sequence of argument tuples or dicts, one for each
     test case to be generated.
@@ -612,10 +612,7 @@ create_test_case.__test__ = False
 
 
 def teardown(do_teardown):
-    """A decorator that adds teardown logic to a test function/method
-
-    NOTE this will not work for nose test generator functions.
-    """
+    """A decorator that adds teardown logic to a test function/method"""
     def decorate(func):
         @wraps(func)
         def wrapper(*args, **kw):
