@@ -188,7 +188,7 @@ def _software_plan_name(plan_key, product, product_rate):
         product_rate.name if product is None else product.name,
         (" Trial" if plan_key.is_trial else " Edition") if product is None else "",
     ]
-    if plan_key.edition != SoftwarePlanEdition.ENTERPRISE:
+    if plan_key.edition in SoftwarePlanEdition.SELF_RENEWABLE_EDITIONS:
         name_parts.extend([
             " - Pay Annually" if plan_key.is_annual_plan else " - Pay Monthly",
             " - Report Builder (5 Reports)" if plan_key.is_report_builder_enabled else "",
