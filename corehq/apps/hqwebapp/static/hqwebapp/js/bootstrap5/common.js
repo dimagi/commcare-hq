@@ -1,4 +1,5 @@
 hqDefine("hqwebapp/js/bootstrap5/common", [
+    'htmx',
     'jquery',
     'knockout',
     'ko.mapping',
