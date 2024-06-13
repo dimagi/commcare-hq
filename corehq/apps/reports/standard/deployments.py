@@ -81,6 +81,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             DataTablesColumn(_("Username"),
                              prop_name='username.exact',
                              sql_col='user_dim__username'),
+            DataTablesColumn(_("Assigned Location(s)"),
+                             help_text=_('The location(s) that the user is assigned to, '
+                                         'including the primary location which is highlighted in bold.'),
+                             sortable=False),
             DataTablesColumn(_("Last Submission"),
                              prop_name='reporting_metadata.last_submissions.submission_date',
                              alt_prop_name='reporting_metadata.last_submission_for_user.submission_date',
@@ -119,7 +123,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                  sortable=False)
             )
         headers = DataTablesHeader(*columns)
-        headers.custom_sort = [[1, 'desc']]
+        headers.custom_sort = [[2, 'desc']]
         return headers
 
     @cached_property
@@ -373,6 +377,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 user_display_string(user.get('username', ''),
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
+                self.get_location_column(user),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
                 app_name or "---", build_version, commcare_version or '---',
                 num_unsent_forms if num_unsent_forms is not None else "---",
@@ -477,11 +482,45 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         for row in table[1:]:
             # Last submission
-            row[len(location_colums) + 1] = _fmt_timestamp(row[len(location_colums) + 1])
-            # Last sync
             row[len(location_colums) + 2] = _fmt_timestamp(row[len(location_colums) + 2])
+            # Last sync
+            row[len(location_colums) + 3] = _fmt_timestamp(row[len(location_colums) + 3])
         result[0][1] = table
         return result
+
+    def get_location_column(self, user):
+        assigned_loc_ids = user.get('assigned_location_ids')
+        if not assigned_loc_ids:
+            return '---'
+        primary_loc_id = user.get('location_id')
+        return self._get_formatted_assigned_location_names(primary_loc_id, assigned_loc_ids)
+
+    def _get_formatted_assigned_location_names(self, primary_location_id, assigned_location_ids):
+        """
+        Create an HTML formatted string of the given assigned location names.
+        The primary location will be highlighted in bold.
+        """
+        locs = SQLLocation.objects.filter(location_id__in=assigned_location_ids)
+        formatted_loc_names = []
+        for loc in locs:
+            if loc.location_id == primary_location_id and len(assigned_location_ids) > 1:
+                formatted_loc_names.append(
+                    f'<strong>{loc.name}</strong>'
+                )
+            else:
+                formatted_loc_names.append(loc.name)
+
+        formatted_str = ', '.join(formatted_loc_names[:4])
+        all_str = ', '.join(formatted_loc_names)
+        eplise_str = _('...See more') if len(formatted_loc_names) > 4 else ''
+        out_str = ('''
+            <div>
+                <span class="locations-list">{}</span>
+                <a href="#" class="toggle-all-locations">{}</a>
+                <span class="all-locations-list" style="display:none">{}</span>
+            </div>
+        ''').format(formatted_str, eplise_str, all_str)
+        return format_html(out_str)
 
 
 def _get_commcare_version(app_version_info):
