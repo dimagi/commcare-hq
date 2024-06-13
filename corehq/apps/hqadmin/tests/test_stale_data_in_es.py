@@ -78,7 +78,7 @@ class TestStaleDataInESSQL(TestCase):
         def call(num_to_process=None, expect_exception=None):
             _fake_es_check = _make_fake_es_check(num_to_process)
             patch_path = 'corehq.apps.hqadmin.management.commands.stale_data_in_es'
-            with mock.patch(f'{patch_path}.CHUNK_SIZE', 1),\
+            with mock.patch(f'{patch_path}.CHUNK_SIZE', 1), \
                     mock.patch(f'{patch_path}.CaseHelper._yield_missing_in_es', _fake_es_check):
                 return self._stale_data_in_es(
                     'case', iteration_key=iteration_key, expect_exception=expect_exception
@@ -201,7 +201,7 @@ class TestStaleDataInESSQL(TestCase):
         case.server_modified_on = pg_modified_on
 
         self._assert_not_in_sync(call(), rows=[
-            (case.case_id, 'CommCareCase', case.type, case.domain, None, case.server_modified_on)
+            (case.case_id, 'CommCareCase', case.type, case.domain, "None,None,None", case.server_modified_on)
         ])
 
     def _stale_data_in_es(self, *args, **kwargs):
