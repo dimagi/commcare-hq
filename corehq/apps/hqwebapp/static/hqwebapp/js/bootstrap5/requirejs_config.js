@@ -14,6 +14,7 @@ requirejs.config({
         "datatables.fixedColumns": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
         "datatables.fixedColumns.bootstrap": "datatables.net-fixedcolumns/js/dataTables.fixedColumns.min",
         "es6": "requirejs-babel7/es6",
+        "htmx": "htmx.org/dist/htmx.min",
         "jquery": "jquery/dist/jquery.min",
         "knockout": "knockout/build/output/knockout-latest.debug",
         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
