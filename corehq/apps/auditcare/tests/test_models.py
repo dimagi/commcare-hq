@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from unittest.mock import patch
 
+import pytest
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import RequestFactory
@@ -123,18 +124,17 @@ class TestNavigationEventAudit(AuditcareTest):
         self.assertIsNone(event.id)
 
 
-def test_get_domain():
-    def test(cfg):
-        request = make_request(cfg.path)
-        if "request_domain" in cfg:
-            request.domain = cfg.request_domain
-        eq(mod.get_domain(request), cfg.expect)
-
-    cfg = Config(expect="block")
-    yield test, cfg(path="/path", expect=None)
-    yield test, cfg(path="/a/block/path")
-    yield test, cfg(path="/path", request_domain="block")
-    yield test, cfg(path="/a/block/path", request_domain="xx")
+@pytest.mark.parametrize("cfg", [
+    Config(expect=None, path="/path"),
+    Config(expect="block", path="/a/block/path"),
+    Config(expect="block", path="/path", request_domain="block"),
+    Config(expect="block", path="/a/block/path", request_domain="xx"),
+])
+def test_get_domain(cfg):
+    request = make_request(cfg.path)
+    if "request_domain" in cfg:
+        request.domain = cfg.request_domain
+    eq(mod.get_domain(request), cfg.expect)
 
 
 def make_request(path="/path", session_key="abc", params=None, **headers):

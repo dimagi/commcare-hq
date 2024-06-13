@@ -1,3 +1,4 @@
+import pytest
 from django.test import TestCase
 from freezegun import freeze_time
 from unittest.mock import patch
@@ -205,19 +206,16 @@ class SqlUpdateStrategyTest(TestCase):
         soft_assert_mock.reset_mock()
 
 
-def test_update_known_properties_with_empty_values():
-    def test(prop):
-        case = SqlCaseUpdateStrategy.case_implementation_class()
-        setattr(case, prop, "value")
-        action = CaseUpdateAction(block=None, **{prop: ""})
+@pytest.mark.parametrize("prop", [p for p, d in KNOWN_PROPERTIES.items() if d is not None])
+def test_update_known_properties_with_empty_values(prop):
+    case = SqlCaseUpdateStrategy.case_implementation_class()
+    setattr(case, prop, "value")
+    action = CaseUpdateAction(block=None, **{prop: ""})
 
-        SqlCaseUpdateStrategy(case)._update_known_properties(action)
+    SqlCaseUpdateStrategy(case)._update_known_properties(action)
 
-        eq(getattr(case, prop), "")
+    eq(getattr(case, prop), "")
 
-    # verify that at least one property will be tested
+
+def test_at_least_one_property_will_be_tested():
     assert any(v is not None for v in KNOWN_PROPERTIES.values()), KNOWN_PROPERTIES
-
-    for prop, default in KNOWN_PROPERTIES.items():
-        if default is not None:
-            yield test, prop

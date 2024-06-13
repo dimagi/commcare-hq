@@ -27,6 +27,8 @@ class Marker:
                         or len(args) != 1
                     ):
                         args = (args,)
+                    elif isinstance(args, list) and len(args) == arg_names.count(",") + 1:
+                        args = tuple(args)
                     try:
                         test_tuple = test + args
                     except TypeError:

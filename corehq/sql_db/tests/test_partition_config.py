@@ -4,6 +4,7 @@ from django.db import DEFAULT_DB_ALIAS
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
+import pytest
 from testil import assert_raises
 
 from corehq.sql_db.config import (
@@ -187,22 +188,18 @@ class TestPartitionConfig(SimpleTestCase):
             _get_standby_plproxy_config(config)
 
 
+@pytest.mark.parametrize("config, exception", [
+    (INVALID_SHARD_RANGE_START, NotZeroStartError),
+    (INVALID_SHARD_RANGE_CONTINUOUS, NonContinuousShardsError),
+    (INVALID_SHARD_RANGE_POWER_2, NotPowerOf2Error),
+])
 @ignore_databases_override_warning
-def test_partition_config_validation():
-    def _run_test(config, exception, message):
-        settings = {
-            'DATABASES': TEST_DATABASES,
-        }
-        with override_settings(**settings), assert_raises(exception, msg=message):
-            PlProxyConfig.from_dict(config)
-
-    cases = [
-        (INVALID_SHARD_RANGE_START, NotZeroStartError, None),
-        (INVALID_SHARD_RANGE_CONTINUOUS, NonContinuousShardsError, None),
-        (INVALID_SHARD_RANGE_POWER_2, NotPowerOf2Error, None),
-    ]
-    for config, exception, message in cases:
-        yield _run_test, config, exception, message
+def test_partition_config_validation(config, exception):
+    settings = {
+        'DATABASES': TEST_DATABASES,
+    }
+    with override_settings(**settings), assert_raises(exception):
+        PlProxyConfig.from_dict(config)
 
 
 @ignore_databases_override_warning

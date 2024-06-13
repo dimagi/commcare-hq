@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
 
+import pytest
 from celery.schedules import crontab
 from freezegun import freeze_time
 from nose.tools import assert_equal, assert_raises
@@ -34,20 +35,15 @@ def test_deserialize_run_every_setting():
             deserialize_run_every_setting(input_value)
 
 
-def test_run_periodic_task_again():
-    def _test(run_every, last_run, duration, expected, now):
-        with freeze_time(now):
-            run_again = run_periodic_task_again(run_every, last_run, duration)
-        eq(run_again, expected)
-
+def make_cases():
     now = datetime.utcnow()
-    def nowfun(): return now
     all_hours = list(range(0, 24))
     all_hours_except_now = list(set(all_hours) - {now.hour})
     one_second = timedelta(seconds=1)
     one_second_ago = now - one_second
-    run_every_minute = crontab(nowfun=nowfun)
-    tests = [
+    run_every_minute = crontab(nowfun=lambda: now)
+
+    return {n: args + [now] for n, *args in [
         # (
         #   name,
         #   run_every,
@@ -78,19 +74,18 @@ def test_run_periodic_task_again():
         ),
         (
             'cron_inside_window',
-            crontab(hour=now.hour, nowfun=nowfun),
+            crontab(hour=now.hour, nowfun=lambda: now),
             one_second_ago,
             one_second,
             True
         ),
         (
             'cron_outside_window',
-            crontab(hour=all_hours_except_now, nowfun=nowfun),
+            crontab(hour=all_hours_except_now, nowfun=lambda: now),
             one_second_ago,
             one_second,
             False
         ),
-
         (
             'repeat_enough_time',
             timedelta(minutes=1),
@@ -105,7 +100,15 @@ def test_run_periodic_task_again():
             timedelta(seconds=40),
             False
         ),
-    ]
+    ]}
 
-    for name, run_every, last_run, duration, expected in tests:
-        yield lambda n: _test(run_every, last_run, duration, expected, now), name
+
+TEST_CASES = make_cases()
+
+
+@pytest.mark.parametrize("name", TEST_CASES)
+def test_run_periodic_task_again(name):
+    run_every, last_run, duration, expected, now = TEST_CASES[name]
+    with freeze_time(now):
+        run_again = run_periodic_task_again(run_every, last_run, duration)
+    eq(run_again, expected)
