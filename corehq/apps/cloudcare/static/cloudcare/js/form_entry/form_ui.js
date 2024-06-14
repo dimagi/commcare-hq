@@ -288,7 +288,18 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     return options.target;
                 },
                 key: function (data) {
-                    return ko.utils.unwrapObservable(data.uuid) || ko.utils.unwrapObservable(data.ix);
+                    const uuid = ko.utils.unwrapObservable(data.uuid);
+                    if (uuid) {
+                        return uuid;
+                    }
+                    const exists = ko.utils.unwrapObservable(data.exists);
+                    const ix = ko.utils.unwrapObservable(data.ix);
+                    if (exists && exists === 'false') {
+                        // this is a add group button. replace last part with d
+                        const lastIdx = ix.lastIndexOf('_');
+                        return lastIdx === -1 ? ix : ix.slice(0, lastIdx) + '_d';
+                    }
+                    return ix;
                 },
             },
         };
@@ -413,16 +424,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             const childIxParts = c.ix.split(",");
             return !childIxParts[childIxParts.length - 1].startsWith(lastPartPrefix);
         });
-    }
-
-    function removeRepeatGroup(rootNode, deletedGroupIx) {
-        const ixParts = deletedGroupIx.split(",");
-        let parentOfDeletedGroup = rootNode;
-        for (let i = 0; i < ixParts.length - 1; i++) {
-            parentOfDeletedGroup = parentOfDeletedGroup.children.find(c => c.ix.endsWith(ixParts[i]));
-        }
-        const idx = parentOfDeletedGroup.children.findIndex(c => c.ix === deletedGroupIx);
-        parentOfDeletedGroup.children.splice(idx, 2);
     }
 
     /**
@@ -660,9 +661,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     response.children = JSON.parse(JSON.stringify(allChildren));
                     if (options.deletedGroup) {
                         removeSiblingsOfRepeatGroup(response, options.deletedGroup);
-                    }
-                    if (options.addedGroup) {
-                        removeRepeatGroup(response, options.addedGroup);
                     }
                     self.fromJS(response);
                 }
@@ -1055,6 +1053,5 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             return new Question(json, parent);
         },
         removeSiblingsOfRepeatGroup: removeSiblingsOfRepeatGroup,
-        removeRepeatGroup: removeRepeatGroup,
     };
 });
