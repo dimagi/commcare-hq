@@ -69,7 +69,11 @@ def get_accounts_with_customer_invoices_over_threshold(today):
                 | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
                 account__name=account
             )
-            invoices = [invoice for invoice in invoices if invoice.subscriptions.first().plan_version == plan]
+            invoices = [
+                invoice
+                for invoice in invoices
+                if invoice.subscriptions and invoice.subscriptions.first().plan_version == plan
+            ]
             total_overdue_to_date = sum(invoice.balance for invoice in invoices)
 
             if total_overdue_to_date >= UNPAID_INVOICE_THRESHOLD:
