@@ -38,9 +38,29 @@ empty_parameter_set_mark = "fail_at_collect"
 xfail_strict = true
 
 norecursedirs = [
+    ".*",
+    "*.egg",
+    "artifacts",
     "docker",
+    "git-hooks",
+    "locale",
     "node_modules",
+    "requirements",
+    "scripts",
+    "sharedfiles",
     "staticfiles",
+]
+
+python_files = [
+    "test_*.py",
+    "tests.py",
+    "*/tests/*.py",
+]
+
+pythonpath = [
+    "submodules/dimagi-utils-src",
+    "submodules/django-digest-src",
+    "submodules/toggle",
 ]
 
 required_plugins = "pytest-django"
