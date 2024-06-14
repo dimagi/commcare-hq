@@ -289,7 +289,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     }
                     return options.target;
                 },
-                key: function(data) {
+                key: function (data) {
                     const uuid = ko.utils.unwrapObservable(data.uuid);
                     if (uuid) {
                         return uuid;
@@ -426,16 +426,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             const childIxParts = c.ix.split(",");
             return !childIxParts[childIxParts.length - 1].startsWith(lastPartPrefix);
         });
-    }
-
-    function removeRepeatGroup(rootNode, deletedGroupIx) {
-        const ixParts = deletedGroupIx.split(",");
-        let parentOfDeletedGroup = rootNode;
-        for (let i = 0; i < ixParts.length - 1; i++) {
-            parentOfDeletedGroup = parentOfDeletedGroup.children.find(c => c.ix.endsWith(ixParts[i]));
-        }
-        const idx = parentOfDeletedGroup.children.findIndex(c => c.ix === deletedGroupIx);
-        parentOfDeletedGroup.children.splice(idx, 2);
     }
 
     /**
@@ -673,9 +663,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     response.children = JSON.parse(JSON.stringify(allChildren));
                     if (options.deletedGroup) {
                         removeSiblingsOfRepeatGroup(response, options.deletedGroup);
-                    }
-                    if (options.addedGroup) {
-                        removeRepeatGroup(response, options.addedGroup);
                     }
                     self.fromJS(response);
                 }

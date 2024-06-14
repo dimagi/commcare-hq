@@ -338,7 +338,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.isTrue(form.children()[0].children()[0].hasAnyNestedQuestions());
             assert.isFalse(form.children()[1].children()[0].hasAnyNestedQuestions());
 
-            groupJSON.children = [questionJSON];
+            groupJSON.children = [repeatJSON];
             formJSON.tree = [groupJSON];
             let form2 = formUI.Form(formJSON);
             assert.isTrue(form2.children()[0].hasAnyNestedQuestions());
