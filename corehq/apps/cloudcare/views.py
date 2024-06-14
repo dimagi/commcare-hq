@@ -126,7 +126,7 @@ class FormplayerMain(View):
         if not hasattr(request, 'couch_user'):
             raise Http404()
 
-        def set_cookie(response):  # set_coookie is a noop by default
+        def set_cookie(response):  # set_cookie is a noop by default
             return response
 
         cookie_name = urllib.parse.quote(
@@ -136,8 +136,18 @@ class FormplayerMain(View):
             username = urllib.parse.unquote(username)
             username = get_complete_username(username, domain)
             user = CouchUser.get_by_username(username)
-            if user:
+            if user and request.couch_user.has_permission(domain, "login_as_all_users"):
                 return user, set_cookie
+            elif user and request.couch_user.has_permission(domain, "limited_login_as"):
+                allowed_login_as_users = login_as_user_query(
+                    domain,
+                    request.couch_user,
+                    search_string='',
+                    limit=50,
+                    offset=0
+                ).run().hits
+                if user._id in [user['_id'] for user in allowed_login_as_users]:
+                    return user, set_cookie
             else:
                 def set_cookie(response):  # overwrite the default noop set_cookie
                     response.delete_cookie(cookie_name)
