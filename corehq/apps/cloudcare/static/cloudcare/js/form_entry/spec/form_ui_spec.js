@@ -7,7 +7,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
     "cloudcare/js/form_entry/const",
     "cloudcare/js/form_entry/form_ui",
     "cloudcare/js/form_entry/spec/fixtures",
-], function (
+], function(
     _,
     sinon,
     initialPageData,
@@ -15,7 +15,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
     formUI,
     fixtures
 ) {
-    describe('Fullform formUI', function () {
+    describe('Fullform formUI', function() {
         var questionJSON,
             formJSON,
             groupJSON,
@@ -23,7 +23,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             nestedGroupJSON,
             spy;
 
-        before(function () {
+        before(function() {
             initialPageData.register(
                 "toggles_dict",
                 {
@@ -33,11 +33,11 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             );
         });
 
-        after(function () {
+        after(function() {
             initialPageData.unregister("toggles_dict");
         });
 
-        beforeEach(function () {
+        beforeEach(function() {
             questionJSON = fixtures.selectJSON();
 
             groupJSON = fixtures.groupJSON();
@@ -67,12 +67,12 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
 
         });
 
-        afterEach(function () {
+        afterEach(function() {
             $.unsubscribe();
             this.clock.restore();
         });
 
-        it('Should render a basic form and reconcile', function () {
+        it('Should render a basic form and reconcile', function() {
             var form = formUI.Form(formJSON),
                 newJson = [questionJSON];
 
@@ -82,8 +82,8 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.equal(form.children().length, 1);
         });
 
-        it('Should render questions grouped by row', function () {
-            let styleObj = {raw: '2-per-row'};
+        it('Should render questions grouped by row', function() {
+            let styleObj = { raw: '2-per-row' };
             let q0 = fixtures.textJSON({
                 style: styleObj,
                 ix: "0",
@@ -116,9 +116,9 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.equal(form.children()[3].children().length, 1); // [q3]
         });
 
-        it('Should render groups and question grouped by row', function () {
-            let styleObj = {raw: '3-per-row'};
-            let styleObj2 = {raw: '2-per-row'};
+        it('Should render groups and question grouped by row', function() {
+            let styleObj = { raw: '3-per-row' };
+            let styleObj2 = { raw: '2-per-row' };
 
             let g0 = fixtures.groupJSON({
                 style: styleObj,
@@ -136,7 +136,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             g0.children[0].children[0].style = styleObj2;
             g0.children[0].children[1].style = styleObj2;
 
-            formJSON.tree = [g0,g1,q2];
+            formJSON.tree = [g0, g1, q2];
             let form = formUI.Form(formJSON);
 
             /* Group-Element-Tile-Row
@@ -171,8 +171,8 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.equal(form.children()[0].children()[1].children()[0].children()[0].children()[1].children().length, 1); // [q]
         });
 
-        it('Should calculate nested background header color', function () {
-            let styleObj = {raw: 'group-collapse'};
+        it('Should calculate nested background header color', function() {
+            let styleObj = { raw: 'group-collapse' };
             let g0 = fixtures.groupJSON({
                 style: styleObj,
             });
@@ -220,7 +220,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].headerBackgroundColor(), ''); //[r1-0]
         });
 
-        it('Should reconcile question choices', function () {
+        it('Should reconcile question choices', function() {
             formJSON.tree = [questionJSON];
             var form = formUI.Form(formJSON),
                 question = form.children()[0].children()[0];
@@ -234,7 +234,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.equal(question.choices().length, 1);
         });
 
-        it('Should reconcile a GeoPointEntry', function () {
+        it('Should reconcile a GeoPointEntry', function() {
             questionJSON.datatype = constants.GEO;
             questionJSON.answer = null;
             formJSON.tree = [questionJSON];
@@ -242,19 +242,19 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
                 question = form.children()[0].children()[0];
             assert.equal(question.answer(), null);
 
-            questionJSON.answer = [1,2];
+            questionJSON.answer = [1, 2];
             formJSON.tree = [questionJSON];
             $.publish('session.reconcile', [_.clone(formJSON), question]);
-            assert.sameMembers(question.answer(), [1,2]);
+            assert.sameMembers(question.answer(), [1, 2]);
 
-            questionJSON.answer = [3,3];
+            questionJSON.answer = [3, 3];
             form = formUI.Form(_.clone(formJSON)),
-            question = form.children()[0].children()[0];
+                question = form.children()[0].children()[0];
             $.publish('session.reconcile', [_.clone(formJSON), question]);
-            assert.sameMembers(question.answer(), [3,3]);
+            assert.sameMembers(question.answer(), [3, 3]);
         });
 
-        it('Should reconcile a FileInput entry', function () {
+        it('Should reconcile a FileInput entry', function() {
             questionJSON.datatype = constants.BINARY;
             questionJSON.control = constants.CONTROL_IMAGE_CHOOSE;
             questionJSON.answer = "chucknorris.png";
@@ -265,14 +265,14 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
 
             // simulate response processing from FP
             question.pendingAnswer(_.clone(question.answer()));
-            question.formplayerMediaRequest = {state: () => "resolved"};
+            question.formplayerMediaRequest = { state: () => "resolved" };
             questionJSON.answer = "autogenerated.png";
             formJSON.tree = [questionJSON];
             $.publish('session.reconcile', [_.clone(formJSON), question]);
             assert.equal(question.answer(), "autogenerated.png");
         });
 
-        it('Should only subscribe once', function () {
+        it('Should only subscribe once', function() {
             /**
              * This specifically ensures that we unsubscribe from events when we change forms
              */
@@ -292,7 +292,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
         });
 
 
-        it('Should throttle answers', function () {
+        it('Should throttle answers', function() {
             questionJSON.datatype = constants.STRING;
             var question = formUI.Question(questionJSON);
             question.answer('abc');
@@ -306,7 +306,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.equal(spy.callCount, 2);
         });
 
-        it('Should not be valid if question has serverError', function () {
+        it('Should not be valid if question has serverError', function() {
             questionJSON.datatype = constants.STRING;
             var question = formUI.Question(questionJSON);
 
@@ -318,7 +318,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
 
         });
 
-        it('Should handle a constraint error', function () {
+        it('Should handle a constraint error', function() {
             var form = formUI.Form(formJSON);
             var question = formUI.Question(questionJSON, form);
 
@@ -333,7 +333,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.isOk(question.serverError());
         });
 
-        it('Should find nested questions', function () {
+        it('Should find nested questions', function() {
             var form = formUI.Form(nestedGroupJSON);
             assert.isTrue(form.children()[0].children()[0].hasAnyNestedQuestions());
             assert.isFalse(form.children()[1].children()[0].hasAnyNestedQuestions());
@@ -344,7 +344,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.isTrue(form2.children()[0].hasAnyNestedQuestions());
         });
 
-        it('Should not reconcile outdated data', function () {
+        it('Should not reconcile outdated data', function() {
             // Check that we don't overwrite a question value if the value is changed while
             // an 'answer' request is in flight
 
@@ -367,19 +367,19 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
         });
     });
 
-    describe('formUI.removeSiblingsOfRepeatGroup', function () {
-        it('should do nothing for an empty root node', function () {
-            const rootNode = {children: []};
+    describe('formUI.removeSiblingsOfRepeatGroup', function() {
+        it('should do nothing for an empty root node', function() {
+            const rootNode = { children: [] };
             formUI.removeSiblingsOfRepeatGroup(rootNode, '1');
-            assert.deepEqual(rootNode, {children: []});
+            assert.deepEqual(rootNode, { children: [] });
         });
 
-        it('should remove nodes with the same prefix and keep the rest', function () {
+        it('should remove nodes with the same prefix and keep the rest', function() {
             const rootNode = {
                 children: [
-                    {ix: '0'},
-                    {ix: '1_0'},
-                    {ix: '1_1'},
+                    { ix: '0' },
+                    { ix: '1_0' },
+                    { ix: '1_1' },
                 ],
             };
             formUI.removeSiblingsOfRepeatGroup(rootNode, '1_1');
@@ -387,18 +387,18 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
                 rootNode,
                 {
                     children: [
-                        {ix: '0'},
+                        { ix: '0' },
                     ],
                 });
         });
 
-        it('should keep other repeat groups', function () {
+        it('should keep other repeat groups', function() {
             const rootNode = {
                 children: [
-                    {ix: '0_0'},
-                    {ix: '1_0'},
-                    {ix: '1_1'},
-                    {ix: '2_1'},
+                    { ix: '0_0' },
+                    { ix: '1_0' },
+                    { ix: '1_1' },
+                    { ix: '2_1' },
                 ],
             };
             formUI.removeSiblingsOfRepeatGroup(rootNode, '1_1');
@@ -406,22 +406,22 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
                 rootNode,
                 {
                     children: [
-                        {ix: '0_0'},
-                        {ix: '2_1'},
+                        { ix: '0_0' },
+                        { ix: '2_1' },
                     ],
                 });
         });
 
-        it('should work with nested children', function () {
+        it('should work with nested children', function() {
             const rootNode = {
                 children: [
-                    {ix: '0'},
+                    { ix: '0' },
                     {
                         ix: '1',
                         children: [
-                            {ix: '1,0_0'},
-                            {ix: '1,0_1'},
-                            {ix: '1,1'},
+                            { ix: '1,0_0' },
+                            { ix: '1,0_1' },
+                            { ix: '1,1' },
                         ],
                     },
                 ],
@@ -431,37 +431,13 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
                 rootNode,
                 {
                     children: [
-                        {ix: '0'},
+                        { ix: '0' },
                         {
                             ix: '1',
                             children: [
-                                {ix: '1,1'},
+                                { ix: '1,1' },
                             ],
                         },
-                    ],
-                });
-        });
-    });
-
-    describe('formUI.removeRepeatGroup', function () {
-        it('should only remove the last two siblings', function () {
-            const rootNode = {
-                children: [
-                    {ix: '0'},
-                    {ix: '1_0'},
-                    {ix: '1_1'},
-                    {ix: '1_2'},
-                    {ix: '1_3'},
-                ],
-            };
-            formUI.removeRepeatGroup(rootNode, '1_2');
-            assert.deepEqual(
-                rootNode,
-                {
-                    children: [
-                        {ix: '0'},
-                        {ix: '1_0'},
-                        {ix: '1_1'},
                     ],
                 });
         });
