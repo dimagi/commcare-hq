@@ -95,13 +95,14 @@ WorkerActivityReportData = namedtuple('WorkerActivityReportData', [
 class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     exportable = True
 
-    def get_user_link(self, user):
-        name = user.raw_username if hasattr(user, 'raw_username') else user.name
-
+    def get_row_link(self, row_obj):
+        """
+        :row_obj: Can be a User or RowData object
+        """
+        name = row_obj.raw_username if hasattr(row_obj, 'raw_username') else row_obj.name
         if self._has_form_view_permission():
-            user_link = self.get_raw_user_link(user)
-            return self.table_cell(name, user_link)
-
+            row_link = self.get_raw_row_link(row_obj)
+            return self.table_cell(name, row_link)
         return self.table_cell(name)
 
     def _has_form_view_permission(self):
@@ -111,14 +112,17 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
             data='corehq.apps.reports.standard.inspect.SubmitHistory'
         )
 
-    def get_raw_user_link(self, user):
+    def get_raw_row_link(self, row_obj):
         raise NotImplementedError
 
 
 class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
 
-    def get_raw_user_link(self, user):
-        return _get_raw_user_link(user, self.raw_user_link_url, filter_class=CaseListFilter)
+    def get_raw_row_link(self, row_obj):
+        """
+        :row_obj: Can be a User or RowData object
+        """
+        return _get_raw_user_link(row_obj, self.raw_user_link_url, filter_class=CaseListFilter)
 
     @property
     def raw_user_link_url(self):
@@ -128,7 +132,7 @@ class WorkerMonitoringCaseReportTableBase(WorkerMonitoringReportTableBase):
 
 class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
 
-    def get_raw_user_link(self, user):
+    def get_raw_row_link(self, row_obj):
         params = {
             "form_unknown": self.request.GET.get("form_unknown", ''),
             "form_unknown_xmlns": self.request.GET.get("form_unknown_xmlns", ''),
@@ -140,14 +144,14 @@ class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
             "enddate": self.request.GET.get("enddate", '')
         }
 
-        params.update(EMWF.for_user(user.user_id))
+        params.update(EMWF.for_user(row_obj.user_id))
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 
         user_link_template = '<a href="{link}">{username}</a>'
         base_link = SubmitHistory.get_url(domain=self.domain)
         link = "{baselink}?{params}".format(baselink=base_link, params=urlencode(params))
-        return format_html(user_link_template, link=link, username=user.username_in_report)
+        return format_html(user_link_template, link=link, username=row_obj.username_in_report)
 
 
 class MultiFormDrilldownMixin(object):
@@ -735,7 +739,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 return 0
 
         def header(self):
-            return self.report.get_user_link(self.row_data)['html']
+            return self.report.get_row_link(self.row_data)['html']
 
     class TotalRow(object):
 
@@ -767,13 +771,13 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         def header(self):
             return self._header
 
-    def get_raw_user_link(self, row_data):
+    def get_raw_row_link(self, row_obj):
         row_link_template = '<a href="{link}?{params}">{name}</a>'
         row_link = format_html(
             row_link_template,
             link=self.raw_user_link_url,
-            params=row_data.filter_id,
-            name=row_data.name_in_report,
+            params=row_obj.filter_id,
+            name=row_obj.name_in_report,
         )
         return row_link
 
@@ -857,7 +861,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                     ])
                 row_sum = sum(row)
                 row = (
-                    [self.get_user_link(simplified_user)]
+                    [self.get_row_link(simplified_user)]
                     + [self.table_cell(row_data, zerostyle=True) for row_data in row]
                     + [self.table_cell(row_sum, format_html("<strong>{}</strong>", row_sum))]
                 )
@@ -865,7 +869,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                           for i, col in enumerate(row[1:])]
                 yield row
             else:
-                yield [self.get_user_link(simplified_user), '--']
+                yield [self.get_row_link(simplified_user), '--']
         if self.all_relevant_forms:
             self.total_row = [_("All Users")] + totals
         yield self.total_row
@@ -1092,14 +1096,14 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         ]
         styled_zero = mark_safe('<span class="text-muted">0</span>')  # nosec: no user input
         styled_date_cols = [styled_zero if c == 0 else c for c in date_cols]
-        first_col = self.get_raw_user_link(user) if user else _("Total")
+        first_col = self.get_raw_row_link(user) if user else _("Total")
         return [first_col] + styled_date_cols + [sum(date_cols)]
 
-    def get_raw_user_link(self, user):
+    def get_raw_row_link(self, row_obj):
         from corehq.apps.reports.standard.inspect import SubmitHistory
         value = CompletionOrSubmissionTimeFilter.get_value(self.request, self.domain)
         sub_time_param = {CompletionOrSubmissionTimeFilter.slug: value} if value else None
-        return _get_raw_user_link(user, SubmitHistory.get_url(domain=self.domain),
+        return _get_raw_user_link(row_obj, SubmitHistory.get_url(domain=self.domain),
                                   filter_class=EMWF, additional_params=sub_time_param)
 
     @property
@@ -1187,7 +1191,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
         for user in users:
             stats = data_map.get(user.user_id, {})
             rows.append([
-                self.get_user_link(user),
+                self.get_row_link(user),
                 _fmt_ts(stats.get('avg')),
                 _fmt_ts(stats.get('std_deviation')),
                 _fmt_ts(stats.get('min')),
@@ -1284,7 +1288,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                 td = submission_time - completion_time
                 td_total = (td.seconds + td.days * 24 * 3600)
                 rows.append([
-                    self.get_user_link(
+                    self.get_row_link(
                         row['form']['meta']['username'],
                         user_map.get(row['form']['meta']['userID'])
                     ),
@@ -1307,10 +1311,10 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         ]
         return rows
 
-    def get_user_link(self, username, user):
+    def get_row_link(self, username, user):
         if not user:
             return username
-        return super(FormCompletionVsSubmissionTrendsReport, self).get_user_link(user)
+        return super(FormCompletionVsSubmissionTrendsReport, self).get_row_link(user)
 
     def _format_date(self, date):
         """
