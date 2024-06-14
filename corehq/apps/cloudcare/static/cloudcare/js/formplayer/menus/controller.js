@@ -161,6 +161,16 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         }
+
+        if (menuResponse.persistentMenu) {
+            FormplayerFrontend.regions.getRegion('persistentMenu').show(
+                views.PersistentMenuView({model: new Backbone.Model({
+                    persistentMenu: menuResponse.persistentMenu,
+                })}).render());
+        } else {
+            FormplayerFrontend.regions.getRegion('persistentMenu').empty();
+        }
+
         if (menuResponse.appVersion) {
             FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
         }

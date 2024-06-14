@@ -1,0 +1,25 @@
+{% load i18n %}
+
+<script type="text/template" id="persistent-menu-template">
+  <button id="persistent-menu-button"
+    data-bs-toggle="collapse"
+    data-bs-target="#persistent-menu-content"
+    aria-expanded="false"
+    aria-controls="persistent-menu-content"
+    class="position-fixed top-0 start-0 bg-info h-100"></button>
+  <div id="persistent-menu-content"
+    class="collapse position-fixed top-50 start-20 bg-light h-50 w-25">
+    <%= _.template($('#persistent-menu-commands').text())({commands: persistentMenu}) %>
+  </div>
+</script>
+
+<script type="text/template" id="persistent-menu-commands">
+  <ul>
+    <% for(var i = 0; i < commands.length; i++) { %>
+      <li><%- commands[i].displayText %></li>
+      <% if (!_.isEmpty(commands[i].commands)) { %>
+        <%= _.template($('#persistent-menu-commands').text())({commands: commands[i].commands}) %>
+      <% } %>
+    <% } %>
+  </ul>
+</script>
