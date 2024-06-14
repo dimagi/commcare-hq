@@ -7,7 +7,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
     "cloudcare/js/form_entry/const",
     "cloudcare/js/form_entry/form_ui",
     "cloudcare/js/form_entry/spec/fixtures",
-], function (
+], function(
     _,
     sinon,
     initialPageData,
@@ -15,17 +15,15 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
     formUI,
     fixtures
 ) {
-    describe('Fullform formUI', function () {
+    describe('Fullform formUI', function() {
         var questionJSON,
             formJSON,
             groupJSON,
             noQuestionGroupJSON,
             nestedGroupJSON,
-            spy,
-            repeatJSON,
-            repeatNestJSON;
+            spy;
 
-        before(function () {
+        before(function() {
             initialPageData.register(
                 "toggles_dict",
                 {
@@ -35,16 +33,12 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             );
         });
 
-        after(function () {
+        after(function() {
             initialPageData.unregister("toggles_dict");
         });
 
-        beforeEach(function () {
+        beforeEach(function() {
             questionJSON = fixtures.selectJSON();
-
-            repeatJSON = fixtures.repeatJSON();
-
-            repeatNestJSON = fixtures.repeatNestJSON();
 
             groupJSON = fixtures.groupJSON();
 
@@ -53,13 +47,14 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             nestedGroupJSON = {
                 tree: [groupJSON, noQuestionGroupJSON],
                 seq_id: 1,
+                exists: true,
                 session_id: '123',
                 title: 'My title',
                 langs: ['en'],
             };
 
             formJSON = {
-                tree: [questionJSON, repeatJSON],
+                tree: [questionJSON, groupJSON],
                 seq_id: 1,
                 session_id: '123',
                 title: 'My title',
@@ -72,12 +67,12 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
 
         });
 
-        afterEach(function () {
+        afterEach(function() {
             $.unsubscribe();
             this.clock.restore();
         });
 
-        it('Should render a basic form and reconcile', function () {
+        it('Should render a basic form and reconcile', function() {
             var form = formUI.Form(formJSON),
                 newJson = [questionJSON];
 
@@ -87,27 +82,8 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.equal(form.children().length, 1);
         });
 
-        it('Should render a repeater question', function () {
-            formJSON.tree = [repeatJSON];
-            var form = formUI.Form(formJSON);
-            assert.equal(form.children().length, 1);
-            assert.equal(form.children()[0].children()[0].children().length, 0);
-
-            // Add new repeat
-            form.fromJS({ children: [repeatNestJSON] });
-            assert.equal(form.children().length, 1);
-            // Each repeat is a group with questions
-            assert.equal(form.children()[0].children()[0].type(), constants.REPEAT_TYPE);
-            assert.equal(form.children()[0].children()[0].children().length, 1);
-            assert.equal(form.children()[0].children()[0].children()[0].type(), constants.GROUPED_ELEMENT_TILE_ROW_TYPE);
-            assert.equal(form.children()[0].children()[0].children()[0].children()[0].type(), constants.GROUP_TYPE);
-            assert.isTrue(form.children()[0].children()[0].children()[0].children()[0].isRepetition);
-            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[0].type(), constants.GROUPED_ELEMENT_TILE_ROW_TYPE);
-            assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[0].children()[0].type(), constants.QUESTION_TYPE);
-        });
-
-        it('Should render questions grouped by row', function () {
-            let styleObj = {raw: '2-per-row'};
+        it('Should render questions grouped by row', function() {
+            let styleObj = { raw: '2-per-row' };
             let q0 = fixtures.textJSON({
                 style: styleObj,
                 ix: "0",
@@ -140,9 +116,9 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.equal(form.children()[3].children().length, 1); // [q3]
         });
 
-        it('Should render groups and question grouped by row', function () {
-            let styleObj = {raw: '3-per-row'};
-            let styleObj2 = {raw: '2-per-row'};
+        it('Should render groups and question grouped by row', function() {
+            let styleObj = { raw: '3-per-row' };
+            let styleObj2 = { raw: '2-per-row' };
 
             let g0 = fixtures.groupJSON({
                 style: styleObj,
@@ -160,7 +136,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             g0.children[0].children[0].style = styleObj2;
             g0.children[0].children[1].style = styleObj2;
 
-            formJSON.tree = [g0,g1,q2];
+            formJSON.tree = [g0, g1, q2];
             let form = formUI.Form(formJSON);
 
             /* Group-Element-Tile-Row
@@ -195,68 +171,20 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.equal(form.children()[0].children()[1].children()[0].children()[0].children()[1].children().length, 1); // [q]
         });
 
-        it('Should add n-per-row style to Repeat that are direct children of n-per-row-repeat Group and group the Repeat', function () {
-            let styleObj = {raw: '2-per-row-repeat'},
-                fakeStyleObj = {raw: "fake-style"};
-
-            let g0 = fixtures.groupJSON({
-                    style: styleObj,
-                    ix: "0",
-                }),
-                r0 = fixtures.repeatJSON({
-                    style: fakeStyleObj,
-                }),
-                r1 = fixtures.repeatJSON(),
-                r2 = fixtures.repeatJSON();
-
-            r1.ix = "1J";
-            r2.ix = "2J";
-            g0.children.push(r0, r1, r2);
-            formJSON.tree = [g0];
-            let form = formUI.Form(formJSON);
-
-            /* -Group-Element-Tile-Row
-                -Group0
-                    -Group-Element-Tile-Row
-                        -Group1
-                            -Group-Element-Tile-Row
-                                -Question
-                            -Group-Element-Tile-Row
-                                -Question
-                    -Group-Element-Tile-Row
-                        -Repeat0
-                        -Repeat1
-                    -Group-Element-Tile-Row
-                        -Repeat2
-            */
-
-            // Expected structure (where ge signifies type "grouped-element-tile-row")
-            let group0 = form.children()[0].children()[0],
-                group1 = group0.children()[0].children()[0],
-                repeat0 = group0.children()[1].children()[0],
-                repeat1 = group0.children()[1].children()[1],
-                repeat2 = group0.children()[2].children()[0];
-            assert.equal(form.children()[0].children().length, 1); // [group0]
-            assert.equal(group0.children().length, 3); // [ge, ge, ge]
-            assert.equal(group1.style, null); // [group]
-            assert.equal(group0.children()[1].children().length, 2); // [repeat0, repeat1]
-            assert.equal(repeat0.style.raw(), "fake-style 2-per-row");
-            assert.equal(repeat1.style.raw(), "2-per-row");
-            assert.equal(repeat2.style.raw(), "2-per-row");
-        });
-
-        it('Should calculate nested background header color', function () {
-            let styleObj = {raw: 'group-collapse'};
+        it('Should calculate nested background header color', function() {
+            let styleObj = { raw: 'group-collapse' };
             let g0 = fixtures.groupJSON({
                 style: styleObj,
             });
             let g1 = fixtures.groupJSON({
                 style: styleObj,
             });
-            let r1 = fixtures.repeatNestJSON();
+            let g2 = fixtures.groupJSON({
+                style: styleObj,
+            });
             g1.children[0].style = styleObj;
-            r1.children[0].children[0].style = styleObj;
-            g1.children[0].children.push(r1);
+            g2.children[0].children[0].style = styleObj;
+            g1.children[0].children.push(g2);
             g0.children[0].children.push(g1);
 
             /* Group (collapsible) [g0]
@@ -275,12 +203,12 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
                                         -Group-Element-Tile-Row
                                             -Question
                                         -Group-Element-Tile-Row
-                                            -Repeat [r1]
+                                            -Group (collapsible) [g2-0]
                                                 -Group-Element-Tile-Row
-                                                    - Group (collapsible) [r1-0]
-                                                        -Group-Element-Tile-Row
-                                                            -Question
-            */
+                                                    -Question
+                                                -Group-Element-Tile-Row
+                                                    -Question
+                    */
             formJSON.tree = [g0];
             let form = formUI.Form(formJSON);
 
@@ -292,7 +220,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.equal(form.children()[0].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].children()[2].children()[0].children()[0].children()[0].headerBackgroundColor(), ''); //[r1-0]
         });
 
-        it('Should reconcile question choices', function () {
+        it('Should reconcile question choices', function() {
             formJSON.tree = [questionJSON];
             var form = formUI.Form(formJSON),
                 question = form.children()[0].children()[0];
@@ -306,7 +234,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.equal(question.choices().length, 1);
         });
 
-        it('Should reconcile a GeoPointEntry', function () {
+        it('Should reconcile a GeoPointEntry', function() {
             questionJSON.datatype = constants.GEO;
             questionJSON.answer = null;
             formJSON.tree = [questionJSON];
@@ -314,19 +242,19 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
                 question = form.children()[0].children()[0];
             assert.equal(question.answer(), null);
 
-            questionJSON.answer = [1,2];
+            questionJSON.answer = [1, 2];
             formJSON.tree = [questionJSON];
             $.publish('session.reconcile', [_.clone(formJSON), question]);
-            assert.sameMembers(question.answer(), [1,2]);
+            assert.sameMembers(question.answer(), [1, 2]);
 
-            questionJSON.answer = [3,3];
+            questionJSON.answer = [3, 3];
             form = formUI.Form(_.clone(formJSON)),
-            question = form.children()[0].children()[0];
+                question = form.children()[0].children()[0];
             $.publish('session.reconcile', [_.clone(formJSON), question]);
-            assert.sameMembers(question.answer(), [3,3]);
+            assert.sameMembers(question.answer(), [3, 3]);
         });
 
-        it('Should reconcile a FileInput entry', function () {
+        it('Should reconcile a FileInput entry', function() {
             questionJSON.datatype = constants.BINARY;
             questionJSON.control = constants.CONTROL_IMAGE_CHOOSE;
             questionJSON.answer = "chucknorris.png";
@@ -337,14 +265,14 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
 
             // simulate response processing from FP
             question.pendingAnswer(_.clone(question.answer()));
-            question.formplayerMediaRequest = {state: () => "resolved"};
+            question.formplayerMediaRequest = { state: () => "resolved" };
             questionJSON.answer = "autogenerated.png";
             formJSON.tree = [questionJSON];
             $.publish('session.reconcile', [_.clone(formJSON), question]);
             assert.equal(question.answer(), "autogenerated.png");
         });
 
-        it('Should only subscribe once', function () {
+        it('Should only subscribe once', function() {
             /**
              * This specifically ensures that we unsubscribe from events when we change forms
              */
@@ -364,7 +292,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
         });
 
 
-        it('Should throttle answers', function () {
+        it('Should throttle answers', function() {
             questionJSON.datatype = constants.STRING;
             var question = formUI.Question(questionJSON);
             question.answer('abc');
@@ -378,7 +306,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.equal(spy.callCount, 2);
         });
 
-        it('Should not be valid if question has serverError', function () {
+        it('Should not be valid if question has serverError', function() {
             questionJSON.datatype = constants.STRING;
             var question = formUI.Question(questionJSON);
 
@@ -390,7 +318,7 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
 
         });
 
-        it('Should handle a constraint error', function () {
+        it('Should handle a constraint error', function() {
             var form = formUI.Form(formJSON);
             var question = formUI.Question(questionJSON, form);
 
@@ -405,18 +333,18 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
             assert.isOk(question.serverError());
         });
 
-        it('Should find nested questions', function () {
+        it('Should find nested questions', function() {
             var form = formUI.Form(nestedGroupJSON);
             assert.isTrue(form.children()[0].children()[0].hasAnyNestedQuestions());
             assert.isFalse(form.children()[1].children()[0].hasAnyNestedQuestions());
 
-            groupJSON.children = [repeatJSON];
+            groupJSON.children = [questionJSON];
             formJSON.tree = [groupJSON];
             let form2 = formUI.Form(formJSON);
             assert.isTrue(form2.children()[0].hasAnyNestedQuestions());
         });
 
-        it('Should not reconcile outdated data', function () {
+        it('Should not reconcile outdated data', function() {
             // Check that we don't overwrite a question value if the value is changed while
             // an 'answer' request is in flight
 
@@ -439,19 +367,19 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
         });
     });
 
-    describe('formUI.removeSiblingsOfRepeatGroup', function () {
-        it('should do nothing for an empty root node', function () {
-            const rootNode = {children: []};
+    describe('formUI.removeSiblingsOfRepeatGroup', function() {
+        it('should do nothing for an empty root node', function() {
+            const rootNode = { children: [] };
             formUI.removeSiblingsOfRepeatGroup(rootNode, '1');
-            assert.deepEqual(rootNode, {children: []});
+            assert.deepEqual(rootNode, { children: [] });
         });
 
-        it('should remove nodes with the same prefix and keep the rest', function () {
+        it('should remove nodes with the same prefix and keep the rest', function() {
             const rootNode = {
                 children: [
-                    {ix: '0'},
-                    {ix: '1_0'},
-                    {ix: '1_1'},
+                    { ix: '0' },
+                    { ix: '1_0' },
+                    { ix: '1_1' },
                 ],
             };
             formUI.removeSiblingsOfRepeatGroup(rootNode, '1_1');
@@ -459,18 +387,18 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
                 rootNode,
                 {
                     children: [
-                        {ix: '0'},
+                        { ix: '0' },
                     ],
                 });
         });
 
-        it('should keep other repeat groups', function () {
+        it('should keep other repeat groups', function() {
             const rootNode = {
                 children: [
-                    {ix: '0_0'},
-                    {ix: '1_0'},
-                    {ix: '1_1'},
-                    {ix: '2_1'},
+                    { ix: '0_0' },
+                    { ix: '1_0' },
+                    { ix: '1_1' },
+                    { ix: '2_1' },
                 ],
             };
             formUI.removeSiblingsOfRepeatGroup(rootNode, '1_1');
@@ -478,22 +406,22 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
                 rootNode,
                 {
                     children: [
-                        {ix: '0_0'},
-                        {ix: '2_1'},
+                        { ix: '0_0' },
+                        { ix: '2_1' },
                     ],
                 });
         });
 
-        it('should work with nested children', function () {
+        it('should work with nested children', function() {
             const rootNode = {
                 children: [
-                    {ix: '0'},
+                    { ix: '0' },
                     {
                         ix: '1',
                         children: [
-                            {ix: '1,0_0'},
-                            {ix: '1,0_1'},
-                            {ix: '1,1'},
+                            { ix: '1,0_0' },
+                            { ix: '1,0_1' },
+                            { ix: '1,1' },
                         ],
                     },
                 ],
@@ -503,11 +431,11 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
                 rootNode,
                 {
                     children: [
-                        {ix: '0'},
+                        { ix: '0' },
                         {
                             ix: '1',
                             children: [
-                                {ix: '1,1'},
+                                { ix: '1,1' },
                             ],
                         },
                     ],

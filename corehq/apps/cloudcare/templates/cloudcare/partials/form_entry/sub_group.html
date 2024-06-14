@@ -3,8 +3,8 @@
 
 <script type="text/html" id="sub-group-fullform-ko-template">
   <!-- ko if: isDummy -->
-  <div style="margin-bottom: 10px; margin-right: 10px">
-      <button class="btn btn-default add" href="#"
+  <div class="mb-1 mr-1">
+      <button class="btn btn-outline-primary add" href="#"
               data-bind="click: newRepeat, text: addChoice"
               id="repeat-add-new">
               <i class="fa fa-plus"></i>
@@ -18,7 +18,6 @@
           'gr-no-children': $data.children().length === 0,
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'card': collapsible,
-          'repetition': isRepetition,
           'required-group': !showChildren() && childrenRequired(),
           'stripe-repeats': stripeRepeats,
           'group-border': groupBorder,
