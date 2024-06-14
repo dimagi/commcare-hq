@@ -17,6 +17,7 @@ from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import UserES
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters
@@ -568,7 +569,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         if self.case_type:
             query = query.filter(case_es.case_type(self.case_type))
         else:
-            query = query.filter(filters.NOT(case_es.case_type('commcare-user')))
+            query = query.filter(filters.NOT(case_es.case_type(USERCASE_TYPE)))
 
         query = (
             query
@@ -629,7 +630,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         if self.case_type:
             query = query.case_type(self.case_type)
         else:
-            query = query.filter(filters.NOT(case_es.case_type('commcare-user')))
+            query = query.filter(filters.NOT(case_es.case_type(USERCASE_TYPE)))
 
         query = query.aggregation(top_level_aggregation)
 
