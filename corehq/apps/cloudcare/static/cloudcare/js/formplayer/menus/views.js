@@ -1489,6 +1489,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
     });
 
+    const PersistentMenuView = Marionette.View.extend({
+        tagName: "div",
+        template: _.template($("#persistent-menu-template").html() || ""),
+    });
+
     return {
         buildCaseTileStyles: buildCaseTileStyles,
         BreadcrumbListView: function (options) {
@@ -1529,6 +1534,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
+        },
+        PersistentMenuView: function (options) {
+            return new PersistentMenuView(options);
         },
     };
 })

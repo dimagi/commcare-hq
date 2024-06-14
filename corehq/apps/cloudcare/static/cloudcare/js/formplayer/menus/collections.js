@@ -42,6 +42,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
             'noItemsText',
             'dynamicSearch',
             'metaData',
+            'persistentMenu',
         ],
 
         entityProperties: [
