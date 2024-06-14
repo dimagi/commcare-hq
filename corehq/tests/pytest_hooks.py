@@ -53,6 +53,15 @@ def pytest_pycollect_makeitem(collector, name, obj):
     return None
 
 
+def pytest_report_teststatus(report, config):
+    """Show skipped reason when verbosity >= 2 (-vv)"""
+    if report.when in ("setup", "teardown") and report.skipped:
+        if config.get_verbosity() >= 2:
+            reason = report.longrepr[-1].removeprefix("Skipped: ")
+            return "skipped", "s", f"SKIPPED {reason}"
+    return None
+
+
 def _get_wrapped(obj):
     while hasattr(obj, "__wrapped__"):
         obj = obj.__wrapped__
