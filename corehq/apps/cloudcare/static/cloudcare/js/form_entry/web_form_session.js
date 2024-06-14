@@ -450,10 +450,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                     'ix': formUI.getIx(repeat),
                 },
                 function (resp) {
-                    const options = {
-                        addedGroup: formUI.getIx(repeat),
-                    };
-                    $.publish('session.reconcile', [resp, repeat, options]);
+                    $.publish('session.reconcile', [resp, repeat]);
                 },
                 constants.BLOCK_ALL);
         };

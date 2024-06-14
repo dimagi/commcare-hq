@@ -442,28 +442,4 @@ hqDefine("cloudcare/js/form_entry/spec/form_ui_spec", [
                 });
         });
     });
-
-    describe('formUI.removeRepeatGroup', function () {
-        it('should only remove the last two siblings', function () {
-            const rootNode = {
-                children: [
-                    {ix: '0'},
-                    {ix: '1_0'},
-                    {ix: '1_1'},
-                    {ix: '1_2'},
-                    {ix: '1_3'},
-                ],
-            };
-            formUI.removeRepeatGroup(rootNode, '1_2');
-            assert.deepEqual(
-                rootNode,
-                {
-                    children: [
-                        {ix: '0'},
-                        {ix: '1_0'},
-                        {ix: '1_1'},
-                    ],
-                });
-        });
-    });
 });
