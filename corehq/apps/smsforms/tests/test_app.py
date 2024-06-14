@@ -1,4 +1,5 @@
 import uuid
+from contextlib import ExitStack
 from unittest.mock import patch
 from xml.etree.ElementTree import XML
 
@@ -27,7 +28,6 @@ from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.util import utcnow
 
 
-@patch_user_data_db_layer()
 @patch('corehq.apps.smsforms.app.tfsms.start_session')
 class TestStartSession(TestCase):
     domain = "test-domain"
@@ -49,10 +49,12 @@ class TestStartSession(TestCase):
 
         cls.case = CommCareCase(domain=cls.domain, case_id=cls.case_id, case_json={'language_code': 'fr'})
         cls.web_user = WebUser(username='web-user@example.com', _id=uuid.uuid4().hex, language='hin')
+        cls.addClassCleanup(SQLXFormsSession.objects.all().delete)
 
-    @classmethod
-    def tearDownClass(cls):
-        SQLXFormsSession.objects.all().delete()
+    def setUp(self):
+        context = ExitStack()
+        context.enter_context(patch_user_data_db_layer())
+        self.addCleanup(context.close)
 
     def _start_session(self, yield_responses=False):
         if not self.recipient:
