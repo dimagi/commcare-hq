@@ -668,7 +668,7 @@ hqDefine('geospatial/js/models', [
             if (self.activeSavedPolygon()) {
                 const convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(self.activeSavedPolygon().geoJson));
                 $(event.target).attr('href', 'data:' + convertedData);
-                $(event.target).attr('download','data.geojson');
+                $(event.target).attr('download',self.activeSavedPolygon().text + '.geojson');
                 return true;
             }
             return false;
