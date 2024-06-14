@@ -272,6 +272,10 @@ class HqPermissions(DocumentSchema):
         if not self.view_web_users:
             self.view_user_tableau_config = False
 
+        if not self.edit_web_users and not self.edit_commcare_users:
+            self.edit_user_profile = False
+            self.edit_user_profile_list = []
+
         if self.edit_user_tableau_config:
             self.view_user_tableau_config = True
 
@@ -347,6 +351,9 @@ class HqPermissions(DocumentSchema):
 
     def access_web_app(self, app_id):
         return self.access_web_apps or app_id in self.web_apps_list
+
+    def access_profile(self, profile_id):
+        return self.edit_user_profile or profile_id in self.edit_user_profile_list
 
     def view_tableau_viz(self, viz_id):
         if not self.access_all_locations:
@@ -2732,26 +2739,30 @@ class Invitation(models.Model):
 
     uuid = models.UUIDField(primary_key=True, db_index=True, default=uuid4)
     email = models.CharField(max_length=255, db_index=True)
-    email_status = models.CharField(max_length=126, null=True)
+    email_status = models.CharField(max_length=126, null=True, blank=True)
     invited_by = models.CharField(max_length=126)           # couch id of a WebUser
     invited_on = models.DateTimeField()
     is_accepted = models.BooleanField(default=False)
     domain = models.CharField(max_length=255)
-    role = models.CharField(max_length=100, null=True)  # role qualified ID
-    program = models.CharField(max_length=126, null=True)   # couch id of a Program
-    supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
+    role = models.CharField(max_length=100, null=True, blank=True)  # role qualified ID
+    program = models.CharField(max_length=126, null=True, blank=True)   # couch id of a Program
+    supply_point = models.CharField(max_length=126, null=True, blank=True)  # couch id of a Location
     primary_location = models.ForeignKey("locations.SQLLocation", on_delete=models.SET_NULL,
-                                 to_field='location_id', null=True)  # to replace supply_point
+                                 to_field='location_id', null=True, blank=True)  # to replace supply_point
     assigned_locations = models.ManyToManyField("locations.SQLLocation", symmetrical=False,
                                                 related_name='invitations')
     profile = models.ForeignKey("custom_data_fields.CustomDataFieldsProfile",
-                                on_delete=models.SET_NULL, null=True)
-    custom_user_data = models.JSONField(default=dict)
-    tableau_role = models.CharField(max_length=32, choices=TABLEAU_ROLES, null=True)
-    tableau_group_ids = ArrayField(models.CharField(max_length=36), null=True)
+                                on_delete=models.SET_NULL, null=True, blank=True)
+    custom_user_data = models.JSONField(default=dict, blank=True)
+    tableau_role = models.CharField(max_length=32, choices=TABLEAU_ROLES, null=True, blank=True)
+    tableau_group_ids = ArrayField(models.CharField(max_length=36), null=True, blank=True)
 
     def __repr__(self):
         return f"Invitation(domain='{self.domain}', email='{self.email})"
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     @classmethod
     def by_domain(cls, domain, is_accepted=False, **filters):

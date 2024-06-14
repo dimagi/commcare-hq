@@ -1,18 +1,18 @@
 hqDefine("dhis2/js/dataset_map_update", [
     "jquery",
-    "hqwebapp/js/bootstrap3/crud_paginated_list_init",
-    "hqwebapp/js/bootstrap3/widgets",
+    "hqwebapp/js/bootstrap5/crud_paginated_list_init",
+    "hqwebapp/js/bootstrap5/widgets",
 ], function ($) {
     function showCompleteDateColumnInput(shouldShow) {
-        var label = $('label[for="id_complete_date_column"]').hide();
-        var element = $('#id_complete_date_column').hide();
+        var label = $('label[for="id_complete_date_column"]').addClass("d-none");
+        var element = $('#id_complete_date_column').addClass("d-none");
 
         if (shouldShow) {
-            label.show();
-            element.show();
+            label.removeClass("d-none");
+            element.removeClass("d-none");
         } else {
-            label.hide();
-            element.hide();
+            label.addClass("d-none");
+            element.addClass("d-none");
         }
     }
 

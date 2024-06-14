@@ -31,7 +31,7 @@ from corehq.apps.es.tests.utils import (
 )
 
 
-@patch('corehq.apps.data_dictionary.util._get_all_case_properties')
+@patch('corehq.apps.data_dictionary.util._get_properties_by_case_type')
 class GenerateDictionaryTest(TestCase):
     domain = uuid.uuid4().hex
 

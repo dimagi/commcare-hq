@@ -5,12 +5,14 @@ hqDefine('geospatial/js/models', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'geospatial/js/utils',
+    'hqwebapp/js/bootstrap3/alert_user',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    utils
+    utils,
+    alertUser
 ) {
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
@@ -64,7 +66,19 @@ hqDefine('geospatial/js/models', [
             return gettext("Case");
         };
 
+        self.updateCheckbox = function () {
+            // Need to update the checkbox through JQuery as we can't rely on dynamically changing its value
+            // with an observable. Doing so breaks all KO bindings in the element
+            const checkbox = $(`#${self.selectCssId}`);
+            if (!checkbox) {
+                return;
+            }
+            checkbox.prop('checked', self.isSelected());
+        };
+
         self.isSelected.subscribe(function () {
+            // Popup might be open when value changes, so make sure checkbox shows correct value
+            self.updateCheckbox();
             var color = self.isSelected() ? self.markerColors.selected : self.markerColors.default;
             changeMarkerColor(self, color);
         });
@@ -347,15 +361,22 @@ hqDefine('geospatial/js/models', [
             marker.addTo(self.mapInstance);
 
             const popupDiv = document.createElement("div");
+
+            const mapItemInstance = new MapItem(itemId, itemData, marker, colors);
+            let openFunc;
+            if (self.usesClusters) {
+                openFunc = () => highlightMarkerGroup(itemId);
+            } else {
+                openFunc = () => mapItemInstance.updateCheckbox();
+            }
             const popup = utils.createMapPopup(
                 coordinates,
                 popupDiv,
-                () => highlightMarkerGroup(itemId),
+                openFunc,
                 resetMarkersOpacity
             );
 
             marker.setPopup(popup);
-            const mapItemInstance = new MapItem(itemId, itemData, marker, colors);
             $(popupDiv).koApplyBindings(mapItemInstance);
 
             return mapItemInstance;
@@ -522,7 +543,7 @@ hqDefine('geospatial/js/models', [
         self.selectedSavedPolygonId = ko.observable('');
         self.oldSelectedSavedPolygonId = ko.observable('');
         self.resettingSavedPolygon = false;
-        self.activeSavedPolygon;
+        self.activeSavedPolygon = ko.observable(null);
 
         self.addPolygonsToFilterList = function (featureList) {
             for (const feature of featureList) {
@@ -603,9 +624,9 @@ hqDefine('geospatial/js/models', [
         };
 
         function removeActivePolygonLayer() {
-            if (self.activeSavedPolygon) {
-                self.mapObj.mapInstance.removeLayer(self.activeSavedPolygon.id);
-                self.mapObj.mapInstance.removeSource(self.activeSavedPolygon.id);
+            if (self.activeSavedPolygon()) {
+                self.mapObj.mapInstance.removeLayer(self.activeSavedPolygon().id);
+                self.mapObj.mapInstance.removeSource(self.activeSavedPolygon().id);
             }
         }
 
@@ -627,12 +648,43 @@ hqDefine('geospatial/js/models', [
         }
 
         self.clearActivePolygon = function () {
-            if (self.activeSavedPolygon) {
+            if (self.activeSavedPolygon()) {
                 removeActivePolygonLayer();
-                self.activeSavedPolygon = null;
+                self.activeSavedPolygon(null);
                 self.btnSaveDisabled(false);
                 self.btnExportDisabled(true);
             }
+        };
+
+        self.clearSelectedPolygonFilter = function clearSelectedPolygonFilter() {
+            self.selectedSavedPolygonId('');
+            self.clearActivePolygon();
+            updateSelectedSavedPolygonParam();
+        };
+
+        self.deleteSelectedPolygonFilter = function () {
+            const deleteGeoJSONUrl = initialPageData.reverse('geo_polygon', self.selectedSavedPolygonId());
+            $.ajax({
+                type: 'DELETE',
+                url: deleteGeoJSONUrl,
+                success: function (ret) {
+                    if (!ret.success) {
+                        return alertUser.alert_user(ret.message, 'danger');
+                    }
+                    self.clearSelectedPolygonFilter();
+                    var message = ret.message + " " + gettext("Refreshing Page...");
+                    alertUser.alert_user(message, 'success');
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 2000);
+                },
+                error: function () {
+                    alertUser.alert_user(
+                        gettext("Oops! Something went wrong! Please report an issue if the problem persists."),
+                        'danger'
+                    );
+                },
+            });
         };
 
         self.selectedSavedPolygonId.subscribe(function (selectedPolygonID) {
@@ -675,10 +727,9 @@ hqDefine('geospatial/js/models', [
             }
             self.clearActivePolygon();
 
-            removeActivePolygonLayer();
             createActivePolygonLayer(polygonObj);
 
-            self.activeSavedPolygon = polygonObj;
+            self.activeSavedPolygon(polygonObj);
             updateSelectedSavedPolygonParam();
             self.btnExportDisabled(false);
             self.btnSaveDisabled(true);

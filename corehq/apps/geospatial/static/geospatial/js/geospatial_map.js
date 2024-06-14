@@ -26,7 +26,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
     const MAP_CONTAINER_ID = 'geospatial-map';
 
-    var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
+    var saveGeoJSONUrl = initialPageData.reverse('geo_polygons');
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
     var disbursementRunner;
 
@@ -260,8 +260,8 @@ hqDefine("geospatial/js/geospatial_map", [
 
     function selectMapItemsInPolygons() {
         let features = mapModel.drawControls.getAll().features;
-        if (polygonFilterModel.activeSavedPolygon) {
-            features = features.concat(polygonFilterModel.activeSavedPolygon.geoJson.features);
+        if (polygonFilterModel.activeSavedPolygon()) {
+            features = features.concat(polygonFilterModel.activeSavedPolygon().geoJson.features);
         }
         mapModel.selectAllMapItems(features);
     }
@@ -296,7 +296,7 @@ hqDefine("geospatial/js/geospatial_map", [
             if (mapModel && mapModel.mapInstance && !polygonFilterModel.btnRunDisbursementDisabled()) {
                 let selectedCases = mapModel.caseMapItems();
                 let selectedUsers = mapModel.userMapItems();
-                if (mapModel.mapHasPolygons() || polygonFilterModel.activeSavedPolygon) {
+                if (mapModel.mapHasPolygons() || polygonFilterModel.activeSavedPolygon()) {
                     selectedCases = mapModel.caseMapItems().filter(function (caseItem) {
                         return caseItem.isSelected();
                     });
@@ -440,8 +440,11 @@ hqDefine("geospatial/js/geospatial_map", [
         // This indicates clicking Apply button or initial page load
         if (isAfterReportLoad) {
             initMap();
-            initPolygonFilters();
-            initUserFilters();
+            mapModel.mapInstance.on('load', () => {
+                initPolygonFilters();
+                initUserFilters();
+            });
+
             // Hide controls until data is displayed
             showMapControls(false);
 

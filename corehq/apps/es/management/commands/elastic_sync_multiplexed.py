@@ -91,9 +91,6 @@ class ESSyncUtil:
         source_index = source_adapter.index_name
         destination_index = destination_adapter.index_name
 
-        logger.info(f"Preparing subindex {destination_index} for backfill")
-        self._prepare_index_for_reindex(destination_index)
-
         logger.info("Starting process to backfill subindex")
         task_id = es_manager.reindex(source_index, destination_index, query={"domain": domain})
 
