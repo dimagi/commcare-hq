@@ -1642,12 +1642,19 @@ def subscribe_to_data_source_changes(request, domain, config_id):
         ds=config_id,
         server=client_hostname,
     )
-    DataSourceRepeater.objects.create(
-        name=repeater_name,
+
+    datasource_query = DataSourceRepeater.objects.filter(
         domain=domain,
-        data_source_id=config_id,
         connection_settings_id=conn_settings.id,
+        options={"data_source_id": config_id},
     )
+    if not datasource_query.exists():
+        DataSourceRepeater.objects.create(
+            name=repeater_name,
+            domain=domain,
+            data_source_id=config_id,
+            connection_settings_id=conn_settings.id,
+        )
     return HttpResponse(status=201)
 
 
