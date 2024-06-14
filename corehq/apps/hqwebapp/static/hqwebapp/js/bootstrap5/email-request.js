@@ -99,7 +99,7 @@ hqDefine('hqwebapp/js/bootstrap5/email-request', [
         }
 
         function isDimagiEmail(email) {
-            return email.includes('@dimagi.com');
+            return email.endsWith('@dimagi.com');
         }
 
         function resetErrors() {
