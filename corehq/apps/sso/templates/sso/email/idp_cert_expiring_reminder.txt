@@ -6,8 +6,6 @@ The certificate for your Identity Provider {{ idp_name }} expires soon!
 If the certificate is not renewed, any single sign-on authentication using this
 IdP will stop working {{ expires_on }}
 
-To avoid any disruption of service, please update your certificate.
-
 If you have any questions, please don’t hesitate to contact {{ contact_email }}.
 Thank you for your use and support of CommCare.
 
