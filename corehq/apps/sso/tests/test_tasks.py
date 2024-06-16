@@ -382,7 +382,7 @@ class TestAutoDeactivationTask(TestCase):
         self.assertTrue(web_user_c.is_active)
         mock_send.assert_called_once()
 
-    def test_deactivation_skip_members_of_the_domains_but_not_have_an_email_domain_controlled_by_the_idp(self):
+    def test_deactivation_skip_members_who_do_not_have_an_email_domain_controlled_by_the_idp(self):
         dimagi_user = self._create_web_user('superuser@dimagi.com')
         self.mock_get_all_usernames_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
 
