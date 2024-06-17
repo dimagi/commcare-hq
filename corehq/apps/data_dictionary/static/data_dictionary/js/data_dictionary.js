@@ -59,6 +59,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     subscribePropObservable(propObj, propObj.deleted, changeSaveButton);
                     subscribePropObservable(propObj, propObj.removeFHIRResourcePropertyPath, changeSaveButton);
                     propObj.allowedValues.on('change', changeSaveButton);
+                    propObj.allowedValues.on('change', propObj.allowedValuesChanged);
                     groupObj.properties.push(propObj);
                 }
                 groupObj.properties.subscribe(changeSaveButton);
@@ -127,6 +128,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
             }
         };
 
+        self.allowedValuesChanged = function () {
+            // Default to true on any change callback as this is how it is
+            // done for the save button
+            self.hasChanges = true;
+        };
 
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
         let subTitle;
