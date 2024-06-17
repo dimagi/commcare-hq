@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('domain/js/update_billing_contact_info', [
     'jquery',
     'hqwebapp/js/initial_page_data',

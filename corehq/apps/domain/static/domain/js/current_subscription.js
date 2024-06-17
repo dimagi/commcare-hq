@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("domain/js/current_subscription", [
     'jquery',
     'hqwebapp/js/initial_page_data',
