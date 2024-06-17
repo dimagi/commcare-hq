@@ -86,12 +86,34 @@
     {% trans "Running disbursement algorithm..." %}
   </h4>
 </div>
-<div id="disbursement-error" class="alert alert-danger" data-bind="visible: disbursementErrorMessage(), html: disbursementErrorMessage">
+<div id="disbursement-error">
+  <div class="alert alert-danger" data-bind="visible: disbursementErrorMessage(), html: disbursementErrorMessage">
+  </div>
+  <div class="alert alert-danger" data-bind="visible: showUnassignedCasesError()">
+    {% blocktrans %}
+    We couldn't match every case to a user with the current disbursement settings.
+    Please follow any of the below steps to rectify this.
+    <ul>
+      <li>Ensure that your settings are correct</li>
+      <li>Allocate more users to the area</li>
+      <li>Use filtered areas to reduce the number of cases such that the algorithm can ensure all cases are assigned.</li>
+    </ul>
+    {% endblocktrans %}
+  </div>
 </div>
 <div id="disbursement-clear-message" class="alert alert-info" style="display: none">
     {% blocktrans %}
         Previous disbursement was cleared.
     {% endblocktrans %}
+</div>
+<div id="disbursement-params" class="alert alert-info" data-bind="visible: showParams()">
+  <h4>{% trans 'Disbursement parameters' %}</h4>
+  <!-- ko foreach: parameters -->
+  <span style="padding-right: 1em">
+    <span data-bind="text: name"></span>:
+    <b><span data-bind="text: value"></span></b>
+  </span>
+  <!-- /ko -->
 </div>
 <div id="geospatial-map" style="height: 500px">
     <div id="layer-toggle-menu" class="btn-group-vertical hidden">

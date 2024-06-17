@@ -16,7 +16,6 @@ from django.views.decorators.http import require_GET
 
 import jsonschema
 from memoized import memoized
-from requests.exceptions import HTTPError
 
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
@@ -39,14 +38,9 @@ from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.models import CommCareCase
 from corehq.util.timezones.utils import get_timezone
-from corehq.util.view_utils import json_error
 
 from .const import GPS_POINT_CASE_PROPERTY, POLYGON_COLLECTION_GEOJSON_SCHEMA
 from .models import GeoConfig, GeoPolygon
-from .routing_solvers.mapbox_optimize import (
-    routing_status,
-    submit_routing_request,
-)
 from .utils import (
     create_case_with_gps_property,
     get_geo_case_property,
@@ -61,43 +55,6 @@ def geospatial_default(request, *args, **kwargs):
     return HttpResponseRedirect(CaseManagementMap.get_url(*args, **kwargs))
 
 
-class MapboxOptimizationV2(BaseDomainView):
-    urlname = 'mapbox_routing'
-
-    def get(self, request):
-        return geospatial_default(request)
-
-    @json_error
-    def post(self, request):
-        # Submits the given request JSON to Mapbox Optimize V2 API
-        #   and responds with a result ID that can be polled
-        request_json = json.loads(request.body.decode('utf-8'))
-        try:
-            poll_id = submit_routing_request(request_json)
-            return json_response(
-                {"poll_url": reverse("mapbox_routing_status", args=[self.domain, poll_id])}
-            )
-        except (jsonschema.exceptions.ValidationError, HTTPError) as e:
-            return HttpResponseBadRequest(str(e))
-
-    @method_decorator(toggles.GEOSPATIAL.required_decorator())
-    def dispatch(self, request, domain, *args, **kwargs):
-        self.domain = domain
-        return super(MapboxOptimizationV2, self).dispatch(request, *args, **kwargs)
-
-
-def mapbox_routing_status(request, domain, poll_id):
-    # Todo; handle HTTPErrors
-    return routing_status(poll_id)
-
-
-def routing_status_view(request, domain, poll_id):
-    # Todo; handle HTTPErrors
-    return json_response({
-        'result': routing_status(poll_id)
-    })
-
-
 class CaseDisbursementAlgorithm(BaseDomainView):
     urlname = "case_disbursement"
 
@@ -106,26 +63,12 @@ class CaseDisbursementAlgorithm(BaseDomainView):
         request_json = json.loads(request.body.decode('utf-8'))
 
         solver_class = config.disbursement_solver
-        poll_id, result = solver_class(request_json).solve(config=config)
+        result = solver_class(request_json).solve(config=config)
 
-        if not result:
-            html = _(
-                "We couldn't match every case to a user with the current disbursement settings. "
-                "Please follow any of the below steps to rectify this."
-                "<ul><li>Ensure that your min/max cases per user setting is correct</li>"
-                "<li>Allocate more users to the area</li>"
-                "<li>Use filtered areas to reduce the number of cases such that the algorithm "
-                "can ensure all cases are assigned.</li></ul>"
-            )
-            html_message = mark_safe(html)
-            return json_response({'error': html_message})
-
-        if poll_id is None:
-            return json_response(
-                {'result': result}
-            )
         return json_response({
-            "poll_url": reverse("routing_status", args=[self.domain, poll_id])
+            'assignments': result['assigned'],
+            'unassigned': result['unassigned'],
+            'parameters': result['parameters'],
         })
 
 
