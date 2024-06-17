@@ -246,6 +246,9 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         if (element.deleted() && !element.id) {
                             return;
                         }
+                        if (!element.hasChanges) {
+                            return;
+                        }
 
                         const allowedValues = element.allowedValues.val();
                         let pureAllowedValues = {};
