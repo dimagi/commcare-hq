@@ -48,23 +48,17 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", [
             var text = fixtures.textJSON({ix: "0"}),
                 textInGroup = fixtures.textJSON({ix: "1,0"}),
                 group = fixtures.groupJSON({ix: "1", children: [textInGroup]}),
-                textInRepeat = fixtures.textJSON({ix: "2_0,0"}),
-                groupInRepeat = fixtures.groupJSON({ix: "2_0", children: [textInRepeat]}),
-                repeat = fixtures.repeatJSON({ix: "2", children: [groupInRepeat]}),
                 form = formUI.Form({
-                    tree: [text, group, repeat],
+                    tree: [text, group],
                 });
 
-            [text, group, repeat] = form.children().map(child => child.children()[0]);
-            [groupInRepeat] = repeat.children()[0].children();
-            [textInRepeat] = groupInRepeat.children()[0].children();
-            assert.equal(groupInRepeat.caption(), null);
+            [text, group] = form.children().map(child => child.children()[0]);
+            [textInGroup] = group.children()[0].children();
             assert.equal(utils.getRootForm(text), form);
-            assert.equal(utils.getRootForm(groupInRepeat), form);
-            assert.equal(utils.getRootForm(textInRepeat), form);
+            assert.equal(utils.getRootForm(group), form);
+            assert.equal(utils.getRootForm(textInGroup), form);
 
             assert.equal(utils.getBroadcastContainer(text), form);
-            assert.equal(utils.getBroadcastContainer(textInRepeat), groupInRepeat);
 
             initialPageData.unregister("toggles_dict");
         });

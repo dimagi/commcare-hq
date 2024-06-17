@@ -9,7 +9,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     'cloudcare/js/form_entry/task_queue',
     'cloudcare/js/form_entry/utils',
     'cloudcare/js/form_entry/form_ui',
-], function (
+], function(
     $,
     ko,
     _,
@@ -77,11 +77,11 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
         self.lastRequestHandled = -1;
 
         // workaround for "forever loading" bugs...
-        $(document).ajaxStop(function () {
+        $(document).ajaxStop(function() {
             self.blockingStaus = constants.BLOCK_NONE;
         });
 
-        self.load = function ($form, initLang) {
+        self.load = function($form, initLang) {
             if (this.session_id) {
                 this.resumeForm($form);
             } else {
@@ -89,7 +89,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
             }
         };
 
-        self.isOneQuestionPerScreen = function () {
+        self.isOneQuestionPerScreen = function() {
             if (self.displayOptions === undefined) {
                 return false;
             }
@@ -105,7 +105,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
          *      this function should return true to also run default behavior afterwards, or false to prevent it
          */
         // eslint-disable-next-line no-unused-vars
-        self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
+        self.serverRequest = function(requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
             if (self.blockingStatus === constants.BLOCK_ALL) {
                 return;
             }
@@ -121,7 +121,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
             self.taskQueue.addTask(requestParams.action, self._serverRequest, arguments, self);
         };
 
-        self._serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
+        self._serverRequest = function(requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
             var self = this;
 
             if (_.isFunction(requestParams)) {
@@ -147,7 +147,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 // use a blob here so that we can set the content type
                 let answerData = new Blob(
                     [JSON.stringify(_.omit(requestParams, "file"))],
-                    {type: 'application/json'}
+                    { type: 'application/json' }
                 );
                 newData.append("answer", answerData);
 
@@ -171,10 +171,10 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 xhrFields: {
                     withCredentials: true,
                 },
-                success: function (resp) {
+                success: function(resp) {
                     self.handleSuccess(resp, requestParams.action, successCallback, errorResponseCallback);
                 },
-                error: function (resp, textStatus) {
+                error: function(resp, textStatus) {
                     self.handleFailure(resp, requestParams.action, textStatus, failureCallback);
                 },
             }, contentParams));
@@ -185,9 +185,9 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
          * @param {Object} response - touchforms response object
          * @param {function} callback - callback to be called if no errors occured
          */
-        self.handleSuccess = function (resp, action, successCallback, errorResponseCallback) {
+        self.handleSuccess = function(resp, action, successCallback, errorResponseCallback) {
             var self = this;
-            errorResponseCallback = errorResponseCallback || function () { return true; };
+            errorResponseCallback = errorResponseCallback || function() { return true; };
             if (resp.status === 'error' || resp.error) {
                 if (errorResponseCallback()) {
                     self.onerror(resp);
@@ -213,7 +213,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
             $.publish('session.block', self.blockingStatus);
         };
 
-        self.handleFailure = function (resp, action, textStatus, failureCallback) {
+        self.handleFailure = function(resp, action, textStatus, failureCallback) {
             var self = this,
                 errorMessage = null,
                 isHTML = false;
@@ -260,7 +260,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
         /*
          * Subscribes to form action events which then get directed to a response to touchforms
          */
-        self.applyListeners = function () {
+        self.applyListeners = function() {
             var self = this;
             $.unsubscribe([
                 'formplayer.' + constants.ANSWER,
@@ -275,42 +275,42 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 'formplayer.' + constants.FORMATTED_QUESTIONS,
                 'formplayer.' + constants.CHANGE_LANG,
             ].join(' '));
-            $.subscribe('formplayer.' + constants.SUBMIT, function (e, form) {
+            $.subscribe('formplayer.' + constants.SUBMIT, function(e, form) {
                 self.submitForm(form);
             });
-            $.subscribe('formplayer.' + constants.ANSWER, function (e, question) {
+            $.subscribe('formplayer.' + constants.ANSWER, function(e, question) {
                 self.answerQuestion(question);
             });
-            $.subscribe('formplayer.' + constants.CLEAR_ANSWER, function (e, question) {
+            $.subscribe('formplayer.' + constants.CLEAR_ANSWER, function(e, question) {
                 self.answerQuestion(question);
             });
-            $.subscribe('formplayer.' + constants.DELETE_REPEAT, function (e, group) {
+            $.subscribe('formplayer.' + constants.DELETE_REPEAT, function(e, group) {
                 self.deleteRepeat(group);
             });
-            $.subscribe('formplayer.' + constants.NEW_REPEAT, function (e, repeat) {
+            $.subscribe('formplayer.' + constants.NEW_REPEAT, function(e, repeat) {
                 self.newRepeat(repeat);
             });
-            $.subscribe('formplayer.' + constants.EVALUATE_XPATH, function (e, xpath, callback) {
+            $.subscribe('formplayer.' + constants.EVALUATE_XPATH, function(e, xpath, callback) {
                 self.evaluateXPath(xpath, callback);
             });
-            $.subscribe('formplayer.' + constants.NEXT_QUESTION, function (e, opts) {
+            $.subscribe('formplayer.' + constants.NEXT_QUESTION, function(e, opts) {
                 self.nextQuestion(opts);
             });
-            $.subscribe('formplayer.' + constants.PREV_QUESTION, function (e, opts) {
+            $.subscribe('formplayer.' + constants.PREV_QUESTION, function(e, opts) {
                 self.prevQuestion(opts);
             });
-            $.subscribe('formplayer.' + constants.QUESTIONS_FOR_INDEX, function (e, index) {
+            $.subscribe('formplayer.' + constants.QUESTIONS_FOR_INDEX, function(e, index) {
                 self.getQuestionsForIndex(index);
             });
-            $.subscribe('formplayer.' + constants.FORMATTED_QUESTIONS, function (e, callback) {
+            $.subscribe('formplayer.' + constants.FORMATTED_QUESTIONS, function(e, callback) {
                 self.getFormattedQuestions(callback);
             });
-            $.subscribe('formplayer.' + constants.CHANGE_LANG, function (e, lang) {
+            $.subscribe('formplayer.' + constants.CHANGE_LANG, function(e, lang) {
                 self.changeLang(lang);
             });
         };
 
-        self.loadForm = function ($form, initLang) {
+        self.loadForm = function($form, initLang) {
             var args = {
                 'action': constants.NEW_FORM,
                 'instance-content': this.instance_xml,
@@ -328,7 +328,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
             this.initForm(args, $form);
         };
 
-        self.resumeForm = function ($form) {
+        self.resumeForm = function($form) {
             var args = {
                 "action": constants.CURRENT,
             };
@@ -336,7 +336,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
             this.initForm(args, $form);
         };
 
-        self.answerQuestion = function (q) {
+        self.answerQuestion = function(q) {
             var self = this;
             var ix = formUI.getIx(q);
             var answer = q.entry.xformAction === constants.CLEAR_ANSWER ? constants.NO_ANSWER : q.answer();
@@ -354,7 +354,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                     'answersToValidate': erroredLabels,
                     'oneQuestionPerScreen': oneQuestionPerScreen,
                 }, q.entry.xformParams()),
-                function (resp) {
+                function(resp) {
                     sessionStorage.answerQuestionInProgress = false;
                     self.updateXformAction(q);
                     if (q.formplayerMediaRequest) {
@@ -364,12 +364,12 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                     if (self.answerCallback !== undefined) {
                         self.answerCallback(self.session_id);
                     }
-                    $.each(erroredLabels, function (ix) {
+                    $.each(erroredLabels, function(ix) {
                         self.serverError(formUI.getForIx(form, ix), resp.errors[ix]);
                     });
                 },
                 constants.BLOCK_SUBMIT,
-                function () {
+                function() {
                     self.updateXformAction(q);
                     if (q.formplayerMediaRequest) {
                         q.formplayerMediaRequest.reject();
@@ -380,70 +380,70 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 });
         };
 
-        self.updateXformAction = function (q) {
+        self.updateXformAction = function(q) {
             if (q.entry.xformAction === constants.CLEAR_ANSWER) {
                 q.entry.xformAction = (q.entry.templateType === "file" || q.entry.templateType === "signature")
                     ? constants.ANSWER_MEDIA : constants.ANSWER;
             }
         };
 
-        self.nextQuestion = function (opts) {
+        self.nextQuestion = function(opts) {
             this.serverRequest(
                 {
                     'action': constants.NEXT_QUESTION,
                 },
-                function (resp) {
+                function(resp) {
                     opts.callback(parseInt(resp.currentIndex), resp.isAtFirstIndex, resp.isAtLastIndex);
                     resp.title = opts.title;
                     $.publish('session.reconcile', [resp, {}]);
                 });
         };
 
-        self.prevQuestion = function (opts) {
+        self.prevQuestion = function(opts) {
             this.serverRequest(
                 {
                     'action': constants.PREV_QUESTION,
                 },
-                function (resp) {
+                function(resp) {
                     opts.callback(parseInt(resp.currentIndex), resp.isAtFirstIndex, resp.isAtLastIndex);
                     resp.title = opts.title;
                     $.publish('session.reconcile', [resp, {}]);
                 });
         };
 
-        self.getQuestionsForIndex = function (index) {
+        self.getQuestionsForIndex = function(index) {
             this.serverRequest(
                 {
                     'action': constants.QUESTIONS_FOR_INDEX,
                     'ix': index,
                 },
-                function (resp) {
+                function(resp) {
                     $.publish('session.reconcile', [resp, {}]);
                 });
         };
 
-        self.evaluateXPath = function (xpath, callback) {
+        self.evaluateXPath = function(xpath, callback) {
             this.serverRequest(
                 {
                     'action': constants.EVALUATE_XPATH,
                     'xpath': xpath,
                 },
-                function (resp) {
+                function(resp) {
                     callback(resp);
                 });
         };
 
-        self.getFormattedQuestions = function (callback) {
+        self.getFormattedQuestions = function(callback) {
             this.serverRequest(
                 {
                     'action': constants.FORMATTED_QUESTIONS,
                 },
-                function (resp) {
+                function(resp) {
                     callback(resp);
                 });
         };
 
-        self.newRepeat = function (repeat) {
+        self.newRepeat = function(repeat) {
             this.serverRequest(
                 {
                     'action': constants.NEW_REPEAT,
@@ -456,58 +456,45 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
         };
 
         self.deleteRepeat = function (repetition) {
-            // USH-4332: after FP deploy keep only else clause
-            if (repetition.parent.parent instanceof formUI.Repeat) {
-                var juncture = formUI.getIx(repetition.parent.parent);
-                var repIx = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
-                this.serverRequest(
-                    {
-                        'action': constants.DELETE_REPEAT,
-                        'ix': repIx,
-                        'form_ix': juncture,
-                    },
-                    function (resp) {
-                        $.publish('session.reconcile', [resp, repetition]);
-                    },
-                    constants.BLOCK_ALL);
-            } else {
-                const juncture = formUI.getIx(repetition);
-                this.serverRequest(
-                    {
-                        'action': constants.DELETE_REPEAT,
-                        'ix': juncture,
-                    },
-                    function (resp) {
-                        $.publish('session.reconcile', [resp, repetition, juncture]);
-                    },
-                    constants.BLOCK_ALL);
-            }
+            const juncture = formUI.getIx(repetition);
+            const options = {
+                deletedGroup: juncture,
+            };
+            this.serverRequest(
+                {
+                    'action': constants.DELETE_REPEAT,
+                    'ix': juncture,
+                },
+                function(resp) {
+                    $.publish('session.reconcile', [resp, repetition, options]);
+                },
+                constants.BLOCK_ALL);
         };
 
-        self.changeLang = function (lang) {
+        self.changeLang = function(lang) {
             this.serverRequest(
                 {
                     'action': constants.CHANGE_LOCALE,
                     'locale': lang,
                 },
-                function (resp) {
+                function(resp) {
                     $.publish('session.reconcile', [resp, lang]);
                 });
         };
 
-        self.submitForm = function (form) {
+        self.submitForm = function(form) {
             var self = this,
                 accumulateAnswers,
                 prevalidated = true;
 
-            accumulateAnswers = function (o) {
+            accumulateAnswers = function(o) {
                 var _answers = {},
                     _accumulateAnswers;
 
-                _accumulateAnswers = function (o) {
+                _accumulateAnswers = function(o) {
                     if (ko.utils.unwrapObservable(o.type) !== 'question') {
                         if (_.has(o, "children")) {
-                            $.each(o.children(), function (i, val) {
+                            $.each(o.children(), function(i, val) {
                                 _accumulateAnswers(val);
                             });
                         }
@@ -529,14 +516,14 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
 
             form.isSubmitting(true);
             var submitAttempts = 0,
-                timer = setInterval(function () {
+                timer = setInterval(function() {
                     if (form.blockSubmit() && submitAttempts < 10) {
                         submitAttempts++;
                         return;
                     }
                     clearInterval(timer);
 
-                    var requestCallback = function () {
+                    var requestCallback = function() {
                         var answers = accumulateAnswers(form);
                         return {
                             'action': constants.SUBMIT,
@@ -547,12 +534,12 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                     requestCallback.action = constants.SUBMIT;
                     self.serverRequest(
                         requestCallback,
-                        function (resp) {
+                        function(resp) {
                             form.isSubmitting(false);
                             if (resp.status === 'success') {
                                 self.onsubmit(resp);
                             } else {
-                                $.each(resp.errors, function (ix, error) {
+                                $.each(resp.errors, function(ix, error) {
                                     self.serverError(formUI.getForIx(form, ix), error);
                                 });
                                 if (resp.status === 'too-many-requests') {
@@ -568,7 +555,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                         },
                         constants.BLOCK_ALL,
                         undefined,
-                        function () {
+                        function() {
                             form.isSubmitting(false);
                             return true;
                         }
@@ -576,7 +563,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 }, 250);
         };
 
-        self.serverError = function (q, resp) {
+        self.serverError = function(q, resp) {
             if (!q) {
                 // q is no longer visible (display condition has hidden it)
                 return;
@@ -590,19 +577,19 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
             }
         };
 
-        self.initForm = function (args, $form) {
+        self.initForm = function(args, $form) {
             var self = this;
-            this.serverRequest(args, function (resp) {
+            this.serverRequest(args, function(resp) {
                 self.renderFormXml(resp, $form, self.displayOptions);
                 self.onload(self, resp);
             });
         };
 
-        self.renderFormXml = function (resp, $form) {
+        self.renderFormXml = function(resp, $form) {
             var self = this;
             self.session_id = self.session_id || resp.session_id;
             var promise = formEntryUtils.initialRender(resp, self.resourceMap, $form);
-            $.when(promise).done(function (form) {
+            $.when(promise).done(function(form) {
                 self.form = form;
                 if (resp.shouldAutoSubmit) {
                     self.submitForm(self.form);
