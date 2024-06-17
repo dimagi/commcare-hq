@@ -473,6 +473,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 prop.deprecated.subscribe(changeSaveButton);
                 prop.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
                 prop.allowedValues.on('change', changeSaveButton);
+                prop.hasChanges = true;
                 self.newPropertyName(undefined);
                 lastGroup.properties.push(prop);
             }
