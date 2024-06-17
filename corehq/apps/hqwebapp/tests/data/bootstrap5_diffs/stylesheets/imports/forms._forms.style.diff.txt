@@ -360,7 +360,7 @@
  }
  
  .form-hide-actions .form-actions {
-@@ -361,15 +12,34 @@
+@@ -361,15 +12,38 @@
    .validationMessage {
      display: block;
      padding-top: 8px;
@@ -401,4 +401,8 @@
 +
 +.ms-header .btn {
 +  margin-top: -3px;
++}
++
++.form-control {
++  appearance: auto;   // Override B5's `appearance: none`
 +}
