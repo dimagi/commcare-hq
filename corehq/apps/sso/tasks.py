@@ -13,7 +13,7 @@ from corehq.apps.sso.models import (
     IdentityProviderProtocol,
     IdentityProviderType,
     UserExemptFromSingleSignOn,
-    LoginEnforcementType
+    LoginEnforcementType,
 )
 from corehq.apps.sso.utils.context_helpers import (
     get_api_secret_expiration_email_context,
@@ -129,7 +129,7 @@ def auto_deactivate_removed_sso_users():
     for idp in IdentityProvider.objects.filter(
         enable_user_deactivation=True,
         idp_type=IdentityProviderType.ENTRA_ID,
-        login_enforcement_type=LoginEnforcementType.GLOBAL
+        login_enforcement_type=LoginEnforcementType.GLOBAL,
     ).all():
         try:
             usernames_in_idp = idp.get_all_usernames_of_the_idp()
