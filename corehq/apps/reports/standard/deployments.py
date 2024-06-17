@@ -488,19 +488,17 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         result[0][1] = table
         return result
 
-    def get_location_column(self, user):
-        assigned_loc_ids = user.get('assigned_location_ids')
-        if not assigned_loc_ids:
+        if not user.get('assigned_location_ids'):
             return '---'
-        primary_loc_id = user.get('location_id')
-        return self._get_formatted_assigned_location_names(primary_loc_id, assigned_loc_ids)
+        return self._get_formatted_assigned_location_names(user)
 
-    def _get_formatted_assigned_location_names(self, primary_location_id, assigned_location_ids):
+    def _get_formatted_assigned_location_names(self, user):
         """
         Create an HTML formatted string of the given assigned location names.
         The primary location will be highlighted in bold.
         """
-        locs = SQLLocation.objects.filter(location_id__in=assigned_location_ids)
+        assigned_location_ids = user.get('assigned_location_ids')
+        primary_location_id = user.get('location_id')
         formatted_loc_names = []
         for loc in locs:
             if loc.location_id == primary_location_id and len(assigned_location_ids) > 1:
