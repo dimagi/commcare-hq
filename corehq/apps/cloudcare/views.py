@@ -143,7 +143,7 @@ class FormplayerMain(View):
                     domain,
                     request.couch_user,
                     search_string='',
-                    limit=50,
+                    limit=500,
                     offset=0
                 ).run().hits
                 if user._id in [user['_id'] for user in allowed_login_as_users]:
