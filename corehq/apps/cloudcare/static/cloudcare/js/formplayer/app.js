@@ -367,7 +367,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                             "for offline use. Please reconnect to the Internet before " +
                             "continuing."), $("#cloudcare-notifications"));
                         $('.submit').prop('disabled', 'disabled');
-                        $('.form-control').prop('disabled', 'disabled');
+                        $('.form-control, .form-select').prop('disabled', 'disabled');
                     }
                 },reconnectTimingWindow);
             });
@@ -377,7 +377,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                 if ((new Date() - offlineTime) > reconnectTimingWindow) {
                     CloudcareUtils.showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
                     $('.submit').prop('disabled', false);
-                    $('.form-control').prop('disabled', false);
+                    $('.form-control, .form-select').prop('disabled', false);
                 }
             }
         );

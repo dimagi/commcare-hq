@@ -30,7 +30,7 @@
 <script type="text/template" id="lang-setting-template">
   <th>{% trans "Set the application language" %}</th>
   <td>
-    <select class="form-control js-lang">
+    <select class="form-select js-lang">
       <% _.each(langs, function(lang) { %>
       <option <% if (lang === currentLang) { %>selected<% } %>>
       <%- lang %>

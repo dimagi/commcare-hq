@@ -6,7 +6,7 @@
     <div class="container pagination-container">
       <div class="d-flex justify-content-between flex-wrap">
         <div class="module-per-page-container mb-2">
-          <select class="form-control form-control-lg per-page-limit">
+          <select class="form-select form-select-lg per-page-limit">
             <% for(var i = 0; i < rowRange.length; i++) { %>
               <% if (rowRange[i] === limit) { %>
                 <option value="<%- rowRange[i] %>" selected>{% trans "<%- rowRange[i] %> per page" %}</option>

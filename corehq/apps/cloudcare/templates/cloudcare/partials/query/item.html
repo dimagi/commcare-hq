@@ -23,7 +23,7 @@
     class="<% if (contentTag === 'td') { %>col-sm-6 <% } else { %>input-group-sm <% } %>query-input-group">
 
     <% if (input == "select1") { %>
-    <select class="query-field form-control hqwebapp-select2<% if (errorMessage) { %> is-invalid<% } %>"
+    <select class="query-field form-select hqwebapp-select2<% if (errorMessage) { %> is-invalid<% } %>"
             data-receive="<%- receive %>"<% if (required) { %> aria-required="true"<% } %>>
         <option value=""></option>
         <% for (let key in itemsetChoicesDict) { %>
@@ -35,7 +35,7 @@
 
     <% } else if (input == "select") { %>
     <select multiple
-            class="query-field form-control hqwebapp-select2<% if (errorMessage) { %> is-invalid<% } %>"
+            class="query-field form-select hqwebapp-select2<% if (errorMessage) { %> is-invalid<% } %>"
             data-receive="<%- receive %>"<% if (required) { %> aria-required="true"<% } %>>
         <% for (let key in itemsetChoicesDict) { %>
         <option value="<%- key %>" <% if (value && value.indexOf(String(key)) > -1) { %>selected<% } %>>
