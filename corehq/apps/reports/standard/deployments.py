@@ -501,7 +501,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         primary_location_id = user.get('location_id')
         formatted_loc_names = []
         for loc in locs:
-            if loc.location_id == primary_location_id and len(assigned_location_ids) > 1:
+            if loc.location_id == primary_location_id:
                 formatted_loc_names.append(
                     f'<strong>{loc.name}</strong>'
                 )
