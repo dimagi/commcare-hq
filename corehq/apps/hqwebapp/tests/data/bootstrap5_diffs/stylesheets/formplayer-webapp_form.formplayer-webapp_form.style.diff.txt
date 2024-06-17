@@ -22,11 +22,13 @@
    }
  
    .controls {
-@@ -18,23 +18,16 @@
+@@ -17,24 +17,17 @@
+     padding-top: 3px;
    }
  
-   .form-control {
+-  .form-control {
 -    font-size: @form-text-size;
++  .form-control, .form-select {
 +    font-size: $form-text-size;
    }
  
