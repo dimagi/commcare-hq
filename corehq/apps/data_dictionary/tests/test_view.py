@@ -21,6 +21,8 @@ from corehq.util.test_utils import flag_enabled
 
 # TODO Remove this once we migrate to the new view
 urlpatterns.insert(0, url(r"^json_v2/$", data_dictionary_json_v2, name='data_dictionary_json_v2'))
+urlpatterns.insert(0, url(r"^json_v2/(?P<case_type_name>[\w-]+)/$", data_dictionary_json_v2,
+                          name='case_type_data_dictionary_json_v2'))
 
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
@@ -272,7 +274,6 @@ class DataDictionaryViewTest(TestCase):
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class TestDeprecateOrRestoreCaseTypeView(TestCase):
-
     urlname = 'deprecate_or_restore_case_type'
     domain = 'test-domain'
 
@@ -457,8 +458,9 @@ class DataDictionaryJsonTest(TestCase):
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryJsonV2Test(TestCase):
     domain_name = uuid.uuid4().hex
-    # TODO Replace this with the original view after migration
+    # TODO Replace these with the original views after migration
     case_types_view_name = "data_dictionary_json_v2"
+    case_properties_view_name = "case_type_data_dictionary_json_v2"
 
     @classmethod
     def setUpClass(cls):
@@ -490,6 +492,12 @@ class DataDictionaryJsonV2Test(TestCase):
         cls.fhir_resource_name = "fhir-sample"
         cls.fhir_json_path = "sample.json.path"
         cls.case_types_endpoint = reverse(cls.case_types_view_name, args=[cls.domain_name])
+
+    @classmethod
+    def case_properties_endpoint(cls, case_type=None):
+        if not case_type:
+            case_type = cls.case_type_obj.name
+        return reverse(cls.case_properties_view_name, args=[cls.domain_name, case_type])
 
     @classmethod
     def tearDownClass(cls):
@@ -544,6 +552,57 @@ class DataDictionaryJsonV2Test(TestCase):
             )
         return expected_output
 
+    @classmethod
+    def _get_case_properties_json(cls, case_type_obj, groups_properties_dict=None, skip=0, limit=500,
+                                  fhir_enabled=False):
+        expected_output = {
+            "name": case_type_obj.name,
+            "fhir_resource_type": cls.fhir_resource_name if fhir_enabled else None,
+            "is_deprecated": case_type_obj.is_deprecated,
+            "module_count": 0,
+            "is_safe_to_delete": True,
+            "properties_count": case_type_obj.properties.count(),
+            "_links": {
+                "self": f"http://testserver/a/{cls.domain_name}/data_dictionary/json_v2/{case_type_obj.name}/"
+                        f"?skip={skip}&limit={limit}"
+            },
+            "groups": []
+        }
+        if skip:
+            expected_output["_links"]["previous"] = (f"http://testserver/a/{cls.domain_name}/data_dictionary/"
+                                                     f"json_v2/{case_type_obj.name}/?skip={skip - limit}"
+                                                     f"&limit={limit}")
+        if case_type_obj.properties.count() > (skip + limit):
+            expected_output["_links"]["next"] = (f"http://testserver/a/{cls.domain_name}/data_dictionary/json_v2/"
+                                                 f"{case_type_obj.name}/?skip={skip + limit}&limit={limit}")
+        if groups_properties_dict:
+            for group, properties in groups_properties_dict.items():
+                group_data = {
+                    "name": group.name if group else "",
+                    "properties": [
+                        {
+                            "id": prop.id,
+                            "description": "",
+                            "label": "",
+                            "fhir_resource_prop_path": cls.fhir_json_path if fhir_enabled else None,
+                            "name": prop.name,
+                            "deprecated": False,
+                            "is_safe_to_delete": True,
+                            "data_type": "number",
+                            "allowed_values": {}
+                        }
+                        for prop in properties
+                    ],
+                }
+                if group:
+                    group_data.update({
+                        "id": group.id,
+                        "description": "",
+                        "deprecated": False
+                    })
+                expected_output["groups"].append(group_data)
+        return expected_output
+
     def test_get_case_types_no_access(self, *args):
         # uses a different client that is not logged in
         response = Client().get(self.case_types_endpoint)
@@ -571,6 +630,84 @@ class DataDictionaryJsonV2Test(TestCase):
         response = self.client.get(self.case_types_endpoint, data={'load_deprecated_case_types': 'true'})
         self.assertEqual(response.status_code, 200)
         expected_response = self._get_case_types_json(with_deprecated=True)
+        self.assertEqual(response.json(), expected_response)
+
+    def test_get_case_properties_no_access(self, *args):
+        # uses a different client that is not logged in
+        response = Client().get(self.case_properties_endpoint())
+        self.assertEqual(response.status_code, 302)
+
+    def test_get_case_properties_404(self, *args):
+        response = self.client.get(self.case_properties_endpoint("does-not-exist"))
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_case_properties(self, *args):
+        response = self.client.get(self.case_properties_endpoint())
+        self.assertEqual(response.status_code, 200)
+        expected_response = self._get_case_properties_json(
+            self.case_type_obj,
+            {self.group_obj: self.case_properties_with_group, None: self.case_properties_without_group},
+        )
+        self.assertEqual(response.json(), expected_response)
+
+    @flag_enabled('FHIR_INTEGRATION')
+    @patch('corehq.apps.data_dictionary.views.load_fhir_resource_mappings')
+    def test_get_case_properties_fhir_enabled(self, mocked_load_fhir_resource_mappings, *args):
+        mocked_load_fhir_resource_mappings.return_value = (
+            {self.case_type_obj: self.fhir_resource_name},
+            {case_property: self.fhir_json_path for case_property in self.case_type_obj.properties.all()}
+        )
+        response = self.client.get(self.case_properties_endpoint())
+        self.assertEqual(response.status_code, 200)
+        expected_response = self._get_case_properties_json(
+            self.case_type_obj,
+            {self.group_obj: self.case_properties_with_group, None: self.case_properties_without_group},
+            fhir_enabled=True
+        )
+        self.assertEqual(response.json(), expected_response)
+
+    def test_get_case_properties_with_skip_limit(self, *args):
+        response = self.client.get(self.case_properties_endpoint(), data={"skip": 2, "limit": 2})
+        self.assertEqual(response.status_code, 200)
+        expected_response = self._get_case_properties_json(
+            self.case_type_obj,
+            {None: self.case_properties_without_group},
+            skip=2,
+            limit=2,
+        )
+        self.assertEqual(response.json(), expected_response)
+
+    def test_get_case_properties_with_skip_limit_error(self, *args):
+        response = self.client.get(self.case_properties_endpoint(), data={"skip": -1, "limit": 2})
+        self.assertEqual(response.status_code, 400)
+
+    def test_get_case_properties_multi_page(self, *args):
+        response = self.client.get(self.case_properties_endpoint(), data={"skip": 0, "limit": 2})
+        self.assertEqual(response.status_code, 200)
+        expected_response = self._get_case_properties_json(
+            self.case_type_obj,
+            {self.group_obj: self.case_properties_with_group},
+            limit=2
+        )
+        self.assertEqual(response.json(), expected_response)
+        # Get Next Page
+        response = self.client.get(response.json()["_links"]["next"])
+        self.assertEqual(response.status_code, 200)
+        expected_response = self._get_case_properties_json(
+            self.case_type_obj,
+            {None: self.case_properties_without_group},
+            skip=2,
+            limit=2
+        )
+        self.assertEqual(response.json(), expected_response)
+        # Get Previous Page
+        response = self.client.get(response.json()["_links"]["previous"])
+        self.assertEqual(response.status_code, 200)
+        expected_response = self._get_case_properties_json(
+            self.case_type_obj,
+            {self.group_obj: self.case_properties_with_group},
+            limit=2
+        )
         self.assertEqual(response.json(), expected_response)
 
 
