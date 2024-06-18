@@ -50,7 +50,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
                     var propObj = propertyListItem(prop.name, prop.label, false, group.name, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath, isGeoCaseProp, prop.is_safe_to_delete, prop.id, prop.index);
+                        prop.removeFHIRResourcePropertyPath, isGeoCaseProp, prop.is_safe_to_delete, prop.id, prop.index, groupObj.name());
                     subscribePropObservable(propObj, propObj.description, changeSaveButton);
                     subscribePropObservable(propObj, propObj.label, changeSaveButton);
                     subscribePropObservable(propObj, propObj.fhirResourcePropPath, changeSaveButton);
@@ -103,7 +103,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
     };
 
     var propertyListItem = function (name, label, isGroup, groupName, caseType, dataType, description, allowedValues,
-        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeoCaseProp, isSafeToDelete, id, index) {
+        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeoCaseProp, isSafeToDelete, id, index,
+        loadedGroup) {
         var self = {};
         self.id = id;
         self.name = name;
@@ -122,6 +123,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.deleted = ko.observable(false);
         self.hasChanges = false;
         self.index = index;
+        self.loadedGroup = loadedGroup;  // The group this case property is part of when page was loaded. Used to identify group changes
 
         self.valChanged = function (newVal, oldVal) {
             if (newVal !== oldVal) {
@@ -269,7 +271,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'allowed_values': pureAllowedValues,
                         };
                         if (!element.hasChanges
-                            && data.index === element.index) {
+                            && data.index === element.index
+                            && element.loadedGroup === group.name()) {
                             return;
                         }
                         properties.push(data);
