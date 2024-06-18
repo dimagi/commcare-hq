@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from couchdbkit.client import Database
 from requests import HTTPError
 
-from corehq.apps.cleanup.utils import abort, confirm_destructive_operation
+from corehq.apps.cleanup.utils import abort, color_style, confirm, confirm_destructive_operation
 from corehq.util.couchdb_management import couch_config
 
 
@@ -25,7 +25,12 @@ class Command(BaseCommand):
         )
 
     def handle(self, *, dbname=None, **options):
-        confirm_destructive_operation()
+        if dbname is None:
+            confirm_destructive_operation()
+        else:
+            style = color_style()
+            print(style.ERROR("\nHEY! This is wicked dangerous, pay attention.\n"))
+            confirm("Are you SURE you want to proceed?")
 
         print("This operation will delete the following DBs")
 
