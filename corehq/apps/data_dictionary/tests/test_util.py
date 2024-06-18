@@ -1,7 +1,7 @@
 import uuid
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from django.utils.translation import gettext
 
 from casexml.apps.case.mock import CaseBlock
@@ -23,6 +23,7 @@ from corehq.apps.data_dictionary.util import (
     get_case_property_description_dict,
     get_case_property_label_dict,
     get_case_property_deprecated_dict,
+    update_url_query_params,
 )
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import (
@@ -367,3 +368,19 @@ class UsedPropsByCaseTypeTest(TestCase):
         self.assertEqual({'prop', 'other-prop'}, props)
         props = set(used_props_by_case_type['other-case-type']) - metadata_props
         self.assertEqual({'prop', 'foobar'}, props)
+
+
+class TestUpdateUrlQueryParams(SimpleTestCase):
+    url = "http://example.com"
+
+    def test_add_params(self):
+        result = update_url_query_params(self.url, {"fruit": "orange", "biscuits": "oreo"})
+        self.assertEqual(result, f"{self.url}?fruit=orange&biscuits=oreo")
+
+    def test_update_params(self):
+        result = update_url_query_params(f"{self.url}?fruit=apple", {"fruit": "orange", "biscuits": "oreo"})
+        self.assertEqual(result, f"{self.url}?fruit=orange&biscuits=oreo")
+
+    def test_no_params(self):
+        result = update_url_query_params(self.url, {})
+        self.assertEqual(result, self.url)
