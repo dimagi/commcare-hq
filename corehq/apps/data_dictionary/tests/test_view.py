@@ -1,19 +1,26 @@
 import json
+import random
+import string
 import uuid
 from unittest.mock import patch
 
 from django.test import Client, TestCase
-from django.urls import reverse
+from django.urls import reverse, re_path as url
 
 from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyGroup, CasePropertyAllowedValue, CaseType
+from corehq.apps.data_dictionary.views import data_dictionary_json_v2
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.users.models import WebUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
+from corehq.apps.data_dictionary.urls import urlpatterns
 
 from corehq.util.test_utils import privilege_enabled
 from corehq import privileges
 from corehq.util.test_utils import flag_enabled
+
+# TODO Remove this once we migrate to the new view
+urlpatterns.insert(0, url(r"^json_v2/$", data_dictionary_json_v2, name='data_dictionary_json_v2'))
 
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
@@ -327,6 +334,7 @@ class TestDeprecateOrRestoreCaseTypeView(TestCase):
         self.assertEqual(case_prop_group_count, 0)
 
 
+# TODO Remove this Test Class once we migrate to the new view
 @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryJsonTest(TestCase):
@@ -440,6 +448,129 @@ class DataDictionaryJsonTest(TestCase):
         self.client.login(username='test', password='foobar')
         response = self.client.get(self.endpoint, data={'load_deprecated_case_types': 'true'})
         expected_response = self._get_case_type_json(with_deprecated=True)
+        self.assertEqual(response.json(), expected_response)
+
+
+@patch('corehq.apps.data_dictionary.views.get_case_type_app_module_count', return_value={})
+@patch('corehq.apps.data_dictionary.views.get_used_props_by_case_type', return_value={})
+@flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
+@privilege_enabled(privileges.DATA_DICTIONARY)
+class DataDictionaryJsonV2Test(TestCase):
+    domain_name = uuid.uuid4().hex
+    # TODO Replace this with the original view after migration
+    case_types_view_name = "data_dictionary_json_v2"
+
+    @classmethod
+    def setUpClass(cls):
+        super(DataDictionaryJsonV2Test, cls).setUpClass()
+        cls.domain = create_domain(cls.domain_name)
+
+        cls.couch_user = WebUser.create(None, "test", "foobar", None, None)
+        cls.couch_user.add_domain_membership(cls.domain_name, is_admin=True)
+        cls.couch_user.save()
+
+        cls.case_type_obj = CaseType.objects.create(name="case_type", domain=cls.domain_name)
+        cls.group_obj = CasePropertyGroup.objects.create(case_type=cls.case_type_obj, name="group")
+        cls.case_properties_with_group = cls._create_properties_for_case_type(
+            case_type=cls.case_type_obj,
+            properties_count=2,
+            group=cls.group_obj
+        )
+        cls.case_properties_without_group = cls._create_properties_for_case_type(
+            case_type=cls.case_type_obj,
+            properties_count=2,
+        )
+
+        cls.deprecated_case_type_obj = CaseType.objects.create(
+            name="dep_case_type",
+            domain=cls.domain_name,
+            is_deprecated=True,
+        )
+
+        cls.fhir_resource_name = "fhir-sample"
+        cls.fhir_json_path = "sample.json.path"
+        cls.case_types_endpoint = reverse(cls.case_types_view_name, args=[cls.domain_name])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.case_type_obj.delete()
+        cls.deprecated_case_type_obj.delete()
+        cls.couch_user.delete(cls.domain_name, deleted_by=None)
+        cls.domain.delete()
+        super(DataDictionaryJsonV2Test, cls).tearDownClass()
+
+    def setUp(self):
+        self.client.login(username='test', password='foobar')
+
+    @classmethod
+    def _create_properties_for_case_type(cls, case_type, properties_count, group=None):
+        case_properties = []
+        for index in range(properties_count):
+            prop_name = ''.join(random.choices(string.ascii_lowercase + string.digits, k=7))
+            case_prop_obj = CaseProperty.objects.create(
+                case_type=case_type,
+                name=prop_name,
+                data_type='number',
+                group=group if group else None
+            )
+            case_properties.append(case_prop_obj)
+        return case_properties
+
+    @classmethod
+    def _get_case_types_json(cls, with_deprecated=False, fhir_enabled=False):
+        expected_output = {
+            "case_types": [
+                {
+                    "name": cls.case_type_obj.name,
+                    "fhir_resource_type": cls.fhir_resource_name if fhir_enabled else None,
+                    "is_safe_to_delete": True,
+                    "is_deprecated": False,
+                    "module_count": 0,
+                    "properties_count": cls.case_type_obj.properties.count(),
+                },
+            ],
+            "geo_case_property": GPS_POINT_CASE_PROPERTY,
+        }
+        if with_deprecated:
+            expected_output['case_types'].append(
+                {
+                    "name": cls.deprecated_case_type_obj.name,
+                    "fhir_resource_type": None,
+                    "is_safe_to_delete": True,
+                    "is_deprecated": True,
+                    "module_count": 0,
+                    "properties_count": cls.deprecated_case_type_obj.properties.count(),
+                }
+            )
+        return expected_output
+
+    def test_get_case_types_no_access(self, *args):
+        # uses a different client that is not logged in
+        response = Client().get(self.case_types_endpoint)
+        self.assertEqual(response.status_code, 302)
+
+    def test_get_case_types(self, *args):
+        response = self.client.get(self.case_types_endpoint)
+        self.assertEqual(response.status_code, 200)
+        expected_response = self._get_case_types_json()
+        self.assertEqual(response.json(), expected_response)
+
+    @flag_enabled('FHIR_INTEGRATION')
+    @patch('corehq.apps.data_dictionary.views.load_fhir_resource_mappings')
+    def test_get_case_types_fhir_enabled(self, mocked_load_fhir_resource_mappings, *args):
+        mocked_load_fhir_resource_mappings.return_value = (
+            {self.case_type_obj: self.fhir_resource_name},
+            {case_property: self.fhir_json_path for case_property in self.case_properties_with_group}
+        )
+        response = self.client.get(self.case_types_endpoint)
+        self.assertEqual(response.status_code, 200)
+        expected_response = self._get_case_types_json(fhir_enabled=True)
+        self.assertEqual(response.json(), expected_response)
+
+    def test_get_case_types_with_deprecated(self, *args):
+        response = self.client.get(self.case_types_endpoint, data={'load_deprecated_case_types': 'true'})
+        self.assertEqual(response.status_code, 200)
+        expected_response = self._get_case_types_json(with_deprecated=True)
         self.assertEqual(response.json(), expected_response)
 
 
