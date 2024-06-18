@@ -50,21 +50,28 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
                     var propObj = propertyListItem(prop.name, prop.label, false, group.name, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath, isGeoCaseProp, prop.is_safe_to_delete, prop.id);
-                    propObj.description.subscribe(changeSaveButton);
-                    propObj.label.subscribe(changeSaveButton);
-                    propObj.fhirResourcePropPath.subscribe(changeSaveButton);
-                    propObj.dataType.subscribe(changeSaveButton);
-                    propObj.deprecated.subscribe(changeSaveButton);
-                    propObj.deleted.subscribe(changeSaveButton);
-                    propObj.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
+                        prop.removeFHIRResourcePropertyPath, isGeoCaseProp, prop.is_safe_to_delete, prop.id, prop.index, groupObj.name());
+                    subscribePropObservable(propObj, propObj.description, changeSaveButton);
+                    subscribePropObservable(propObj, propObj.label, changeSaveButton);
+                    subscribePropObservable(propObj, propObj.fhirResourcePropPath, changeSaveButton);
+                    subscribePropObservable(propObj, propObj.dataType, changeSaveButton);
+                    subscribePropObservable(propObj, propObj.deprecated, changeSaveButton);
+                    subscribePropObservable(propObj, propObj.deleted, changeSaveButton);
+                    subscribePropObservable(propObj, propObj.removeFHIRResourcePropertyPath, changeSaveButton);
                     propObj.allowedValues.on('change', changeSaveButton);
+                    propObj.allowedValues.on('change', propObj.allowedValuesChanged);
                     groupObj.properties.push(propObj);
                 }
                 groupObj.properties.subscribe(changeSaveButton);
                 self.groups.push(groupObj);
             }
         };
+
+        function subscribePropObservable(propObj, prop, changeSaveButton) {
+            prop.subscribe(changeSaveButton);
+            const valChangedFunc = (newVal) => propObj.valChanged(newVal, prop._oldValue);
+            prop.subscribe(valChangedFunc);
+        }
 
         return self;
     };
@@ -96,7 +103,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
     };
 
     var propertyListItem = function (name, label, isGroup, groupName, caseType, dataType, description, allowedValues,
-        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeoCaseProp, isSafeToDelete, id) {
+        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeoCaseProp, isSafeToDelete, id, index,
+        loadedGroup) {
         var self = {};
         self.id = id;
         self.name = name;
@@ -113,6 +121,22 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.isGeoCaseProp = ko.observable(isGeoCaseProp);
         self.isSafeToDelete = ko.observable(isSafeToDelete);
         self.deleted = ko.observable(false);
+        self.hasChanges = false;
+        self.index = index;
+        self.loadedGroup = loadedGroup;  // The group this case property is part of when page was loaded. Used to identify group changes
+
+        self.valChanged = function (newVal, oldVal) {
+            if (newVal !== oldVal) {
+                self.hasChanges = true;
+            }
+        };
+
+        self.allowedValuesChanged = function () {
+            // Default to true on any change callback as this is how it is
+            // done for the save button
+            self.hasChanges = true;
+        };
+
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
         let subTitle;
         if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
@@ -246,6 +270,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'removeFHIRResourcePropertyPath': element.removeFHIRResourcePropertyPath(),
                             'allowed_values': pureAllowedValues,
                         };
+                        if (!element.hasChanges
+                            && data.index === element.index
+                            && element.loadedGroup === group.name()) {
+                            return;
+                        }
                         properties.push(data);
                     });
                 });
@@ -449,6 +478,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 prop.deprecated.subscribe(changeSaveButton);
                 prop.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
                 prop.allowedValues.on('change', changeSaveButton);
+                prop.hasChanges = true;
                 self.newPropertyName(undefined);
                 lastGroup.properties.push(prop);
             }
