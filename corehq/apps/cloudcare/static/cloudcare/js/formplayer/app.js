@@ -125,6 +125,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     });
 
     FormplayerFrontend.on('clearForm', function () {
+        FormplayerFrontend.trigger('setFormNotInProgress');
         $('#webforms').html("");
         $('.menu-scrollable-container').removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
         $('#webforms-nav').html("");
@@ -183,6 +184,7 @@ hqDefine("cloudcare/js/formplayer/app", [
 
     FormplayerFrontend.on('startForm', function (data) {
         FormplayerFrontend.permitIntervalSync = false;
+        FormplayerFrontend.trigger('setFormInProgress');
         FormplayerFrontend.getChannel().request("clearMenu");
 
         data.onLoading = CloudcareUtils.formplayerLoading;
@@ -754,6 +756,18 @@ hqDefine("cloudcare/js/formplayer/app", [
             var match = (window || this).location.href.match(/#(.*)$/);
             return match ? decodeURI(match[1]) : '';
         },
+    });
+
+    FormplayerFrontend.on("setFormInProgress", function () {
+        FormplayerFrontend.formInProgress = true;
+        window.onbeforeunload = function () {
+            return true;
+        };
+    });
+
+    FormplayerFrontend.on("setFormNotInProgress", function () {
+        FormplayerFrontend.formInProgress = false;
+        window.onbeforeunload = null;
     });
 
     return FormplayerFrontend;
