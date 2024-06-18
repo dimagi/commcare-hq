@@ -1,3 +1,4 @@
+import doctest
 from datetime import date
 from unittest.mock import patch
 
@@ -156,3 +157,10 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
 
         cases = CaseFactory(self.domain).create_or_update_cases(extension_cases)
         self.session_case = cases[-1]
+
+
+def test_doctests():
+    import custom.gcc_sangath.rules.custom_actions as module
+
+    results = doctest.testmod(module)
+    assert results.failed == 0

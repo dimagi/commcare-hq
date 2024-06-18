@@ -65,6 +65,7 @@ def _get_case_updates(peer_rating_cases):
         peer_rating_cases,
     )
 
+    agg_rating = _get_aggregate(SESSION_RATING_CASE_PROP, peer_rating_cases)
     agg_of_mean_treatment_specific_score = _get_aggregate(
         MEAN_TREATMENT_SPECIFIC_SCORE_CASE_PROP,
         peer_rating_cases,
@@ -79,10 +80,7 @@ def _get_case_updates(peer_rating_cases):
     case_updates = dict({
         'feedback_num': number_of_peer_ratings,
         'total_session_rating': sum_of_session_rating,
-        'agg_rating': round(
-            sum_of_session_rating / number_of_peer_ratings,
-            1,
-        ),
+        'agg_rating': agg_rating,
         'agg_mean_treatment_specific_score': agg_of_mean_treatment_specific_score,
         'agg_mean_general_skills_score': agg_of_mean_general_skills_score,
         'date_of_peer_review': latest_peer_review,
@@ -93,17 +91,46 @@ def _get_case_updates(peer_rating_cases):
 
 
 def _get_sum(case_property, peer_rating_cases):
-    total = sum([
-        float(peer_rating_case.get_case_property(case_property) or 0)
+    total = sum(
+        float(peer_rating_case.get_case_property(case_property))
         for peer_rating_case in peer_rating_cases
-    ])
-    return float('{:.1f}'.format(total))
+        if _is_num(peer_rating_case.get_case_property(case_property))
+    )
+    return float("{:.1f}".format(total))
 
 
 def _get_aggregate(case_property, peer_rating_cases):
     total = _get_sum(case_property, peer_rating_cases)
-    count = len(peer_rating_cases)
-    return float('{:.1f}'.format(total / count))
+    count = _get_count(case_property, peer_rating_cases)
+    # Return 0.0 instead of None if count is 0 to mimic former behavior
+    # where count would be greater than 0 and total would be 0.
+    return float('{:.1f}'.format(total / count)) if count != 0 else 0.0
+
+
+def _get_count(case_property, peer_rating_cases):
+    return sum(
+        1 for peer_rating_case in peer_rating_cases
+        if _is_num(peer_rating_case.get_case_property(case_property))
+    )
+
+
+def _is_num(value):
+    """
+    Check if ``value`` is a number.
+
+    >>> _is_num(1.0)
+    True
+    >>> _is_num('0')
+    True
+    >>> _is_num('')
+    False
+
+    """
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
 
 
 def _get_latest_peer_review_date(peer_rating_cases):
