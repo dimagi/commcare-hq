@@ -928,7 +928,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         self.ixInfo = function (o) {
             var fullIx = getIx(o);
-            return o.rel_ix + (o.isRepetition ? '(' + o.uuid + ')' : '') + (o.rel_ix !== fullIx ? ' :: ' + fullIx : '');
+            return o.rel_ix + (o.rel_ix !== fullIx ? ' :: ' + fullIx : '');
         };
 
         self.triggerAnswer = function () {
