@@ -129,6 +129,15 @@ class FormplayerMain(View):
         def set_cookie(response):  # set_cookie is a noop by default
             return response
 
+        def _get_login_as_user_query():
+            return login_as_user_query(
+                domain,
+                request.couch_user,
+                search_string='',
+                limit=500,
+                offset=0
+            ).run()
+
         cookie_name = urllib.parse.quote(
             'restoreAs:{}:{}'.format(domain, request.couch_user.username))
         username = request.COOKIES.get(cookie_name)
@@ -139,14 +148,8 @@ class FormplayerMain(View):
             if user and request.couch_user.has_permission(domain, "login_as_all_users"):
                 return user, set_cookie
             elif user and request.couch_user.has_permission(domain, "limited_login_as"):
-                allowed_login_as_users = login_as_user_query(
-                    domain,
-                    request.couch_user,
-                    search_string='',
-                    limit=500,
-                    offset=0
-                ).run().hits
-                if user._id in [user['_id'] for user in allowed_login_as_users]:
+                login_as_users = _get_login_as_user_query()
+                if user._id == login_as_users.hits[0]['_id']:
                     return user, set_cookie
             else:
                 def set_cookie(response):  # overwrite the default noop set_cookie
@@ -154,13 +157,7 @@ class FormplayerMain(View):
                     return response
 
         elif request.couch_user.has_permission(domain, 'limited_login_as'):
-            login_as_users = login_as_user_query(
-                domain,
-                request.couch_user,
-                search_string='',
-                limit=1,
-                offset=0
-            ).run()
+            login_as_users = _get_login_as_user_query()
             if login_as_users.total == 1:
                 def set_cookie(response):
                     response.set_cookie(cookie_name, urllib.parse.quote(user.raw_username))
