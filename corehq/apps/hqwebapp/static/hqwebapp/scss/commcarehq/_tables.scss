@@ -76,3 +76,46 @@
 .table-editprops-filterval {
   min-width: 115px;
 }
+
+.table thead tr th.orderable {
+  position: relative;
+  padding: 0;
+
+  a {
+    display: block;
+    background-color: $blue-800;
+    color: $white;
+    padding: 0.5rem 0.5rem;
+  }
+  &:nth-child(odd) a {
+    background-color: $blue-700;
+  }
+
+  &::before,
+  &::after {
+    position: absolute;
+    display: block;
+    right: 10px;
+    line-height: 9px;
+    font-size: .8em;
+    color: $white;
+    opacity: 0.3;
+  }
+
+  &::before {
+    bottom: 50%;
+    content: "▲" / "";
+  }
+
+  &::after {
+    top: 50%;
+    content: "▼" / "";
+  }
+
+  &.asc::before {
+    opacity: 1.0;
+  }
+  &.desc::after {
+    opacity: 1.0;
+  }
+}
