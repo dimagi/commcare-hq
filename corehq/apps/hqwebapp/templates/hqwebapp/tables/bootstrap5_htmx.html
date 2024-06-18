@@ -1,0 +1,44 @@
+{% extends "hqwebapp/tables/bootstrap5.html" %}
+{% load django_tables2 %}
+{% load hq_shared_tags %}
+
+{% block table.thead %}
+  {% if table.show_header %}
+    {% render_header 'htmx' %}
+  {% endif %}
+{% endblock table.thead %}
+
+{% block select-per-page-attr %}
+  name="{{ table.per_page_field }}"
+  hx-get="{{ request.path_info }}"
+  hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+{% endblock %}
+
+{% block prev-page-link-attr %}
+    hx-get="{{ request.path_info }}{% querystring table.prefixed_page_field=table.page.previous_page_number %}"
+    hx-trigger="click"
+    hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+    hx-swap="outerHTML"
+{% endblock %}
+{% block next-page-link-attr %}
+    hx-get="{{ request.path_info }}{% querystring table.prefixed_page_field=table.page.next_page_number %}"
+    hx-trigger="click"
+    hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+    hx-swap="outerHTML"
+{% endblock %}
+
+{% block pagination.range %}
+  {% for p in table.page|table_page_range:table.paginator %}
+    <li class="page-item{% if table.page.number == p %} active{% endif %}">
+      <a class="page-link"
+          {% if p != '...' %}
+         hx-get="{{ request.path_info }}{% querystring table.prefixed_page_field=p %}"
+         hx-trigger="click"
+         hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+         hx-swap="outerHTML"
+          {% endif %}>
+        {{ p }}
+      </a>
+    </li>
+  {% endfor %}
+{% endblock pagination.range %}
