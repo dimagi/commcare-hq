@@ -85,3 +85,7 @@ code {
 a {
     cursor: pointer;
 }
+
+button {
+  font-weight: bold !important; // to meet WCAG AA guidelines
+}

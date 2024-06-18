@@ -2,7 +2,9 @@ from django.urls import re_path as url
 
 from .dispatchers import CaseManagementMapDispatcher
 from .views import (
-    GeoPolygonView,
+    CaseDisbursementAlgorithm,
+    GeoPolygonDetailView,
+    GeoPolygonListView,
     GeospatialConfigPage,
     GPSCaptureView,
     CaseDisbursementAlgorithm,
@@ -13,8 +15,8 @@ from .views import (
 
 urlpatterns = [
     url(r'^$', geospatial_default, name='geospatial_default'),
-    url(r'^edit_geo_polygon/$', GeoPolygonView.as_view(),
-        name=GeoPolygonView.urlname),
+    url(r'^edit_geo_polygon/$', GeoPolygonListView.as_view(), name=GeoPolygonListView.urlname),
+    url(r'^edit_geo_polygon/(?P<pk>[\w-]+)/$', GeoPolygonDetailView.as_view(), name=GeoPolygonDetailView.urlname),
     url(r'^run_disbursement/$',
         CaseDisbursementAlgorithm.as_view(),
         name=CaseDisbursementAlgorithm.urlname),

@@ -2039,6 +2039,17 @@ ACCOUNTING_TESTING_TOOLS = StaticToggle(
     [NAMESPACE_USER]
 )
 
+SELF_SERVICE_ANNUAL_RENEWALS = StaticToggle(
+    'self_service_annual_renewals',
+    'Allow self service renewal for Pay Annually software plans',
+    TAG_SAAS_CONDITIONAL,
+    [NAMESPACE_USER],
+    description=(
+        "Allows billing admin users to choose between Pay Monthly or Pay Annually plans when renewing"
+        "This is a temporary flag to be removed upon completion of self service annual renewals feature."
+    )
+)
+
 ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     'add_row_index_to_mobile_ucrs',
     'Add row index to mobile UCRs as the first column to retain original order of data',
@@ -2465,6 +2476,13 @@ TABLEAU_USER_SYNCING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
 )
 
+RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
+    'restrict_user_profile_assignment',
+    'Limit which user profiles a web user can assign to other web users and mobile workers.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 
 def _handle_attendance_tracking_role(domain, is_enabled):
     from corehq.apps.accounting.utils import domain_has_privilege
@@ -2873,4 +2891,11 @@ APP_TESTING = StaticToggle(
     tag=TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     description=''
+)
+
+SMART_LINKS_FOR_WEB_USERS = StaticToggle(
+    slug='smart_links_for_web_users',
+    label='USH: Allow web users to use smart links without logging in as before',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )
