@@ -317,7 +317,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             for loc_id in user.get('assigned_location_ids'):
                 all_loc_ids.add(loc_id)
         return dict(SQLLocation.objects.filter(
-            location_id__in=all_loc_ids
+            location_id__in=all_loc_ids, domain=self.domain
         ).values_list('location_id', 'name'))
 
     def process_rows(self, users, fmt_for_export=False):
