@@ -177,10 +177,26 @@ class TestCanUserAccessWebApp(TestCase):
 
         self.assertTrue(has_access)
 
+    def test_web_user_has_access_to_canonical_if_assigned_role_that_can_access_specific_app(self):
+        self.set_role_on_user_with_permissions(
+            self.web_user, HqPermissions(web_apps_list=[self.app_doc["copy_of"]])
+        )
+
+        has_access = can_user_access_web_app(self.web_user, self.canonical_doc)
+
+        self.assertTrue(has_access)
+
     def test_web_user_does_not_have_access_if_assigned_role_that_can_access_different_app(self):
         self.set_role_on_user_with_permissions(self.web_user, HqPermissions(web_apps_list=["random-app"]))
 
         has_access = can_user_access_web_app(self.web_user, self.app_doc)
+
+        self.assertFalse(has_access)
+
+    def test_web_user_does_not_have_access_to_canonical_if_assigned_role_that_can_access_different_app(self):
+        self.set_role_on_user_with_permissions(self.web_user, HqPermissions(web_apps_list=["random-app"]))
+
+        has_access = can_user_access_web_app(self.web_user, self.canonical_doc)
 
         self.assertFalse(has_access)
 
@@ -252,7 +268,12 @@ class TestCanUserAccessWebApp(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.app_doc = {'doc_type': 'Application', '_id': 'abc123', 'copy_of': 'def456', 'domain': self.domain}
+        self.canonical_doc = {'doc_type': 'Application', '_id': 'def456', 'copy_of': None, 'domain': self.domain}
+        self.app_doc = {
+            **self.canonical_doc,
+            'copy_of': self.canonical_doc['_id'],
+            '_id': 'abc123',
+        }
         self.commcare_user = CommCareUser.create(self.domain, 'bob@test.commcarehq.org', 'password', None, None)
         self.addCleanup(self.commcare_user.delete, None, None)
         self.web_user = WebUser.create(self.domain, 'bob@test.com', 'password', None, None)
