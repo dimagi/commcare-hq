@@ -15,7 +15,7 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 
 urlpatterns = [
     url(r"^json/$", data_dictionary_json, name='data_dictionary_json'),
-    url(r"^json/?(?P<case_type_name>\w+)/?$", data_dictionary_json, name='case_type_dictionary_json'),
+    url(r"^json/(?P<case_type_name>[\w-]+)/$", data_dictionary_json, name='case_type_dictionary_json'),
     url(r"^create_case_type/$", create_case_type, name='create_case_type'),
     url(r"^deprecate_or_restore_case_type/(?P<case_type_name>[\w-]+)/$", deprecate_or_restore_case_type,
         name='deprecate_or_restore_case_type'),
