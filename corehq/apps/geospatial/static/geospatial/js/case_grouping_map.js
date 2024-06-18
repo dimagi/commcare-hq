@@ -544,9 +544,11 @@ hqDefine("geospatial/js/case_grouping_map",[
             });
             mapModel.mapInstance.on('draw.delete', function (e) {
                 polygonFilterInstance.removePolygonsFromFilterList(e.features);
+                polygonFilterInstance.btnSaveDisabled(!mapModel.mapHasPolygons());
             });
             mapModel.mapInstance.on('draw.create', function (e) {
                 polygonFilterInstance.addPolygonsToFilterList(e.features);
+                polygonFilterInstance.btnSaveDisabled(!mapModel.mapHasPolygons());
             });
         }
 
