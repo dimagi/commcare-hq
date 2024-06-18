@@ -5,19 +5,23 @@ import uuid
 from unittest.mock import patch
 
 from django.test import Client, TestCase
-from django.urls import reverse, re_path as url
+from django.urls import re_path as url
+from django.urls import reverse
 
-from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyGroup, CasePropertyAllowedValue, CaseType
+from corehq import privileges
+from corehq.apps.data_dictionary.models import (
+    CaseProperty,
+    CasePropertyAllowedValue,
+    CasePropertyGroup,
+    CaseType,
+)
+from corehq.apps.data_dictionary.urls import urlpatterns
 from corehq.apps.data_dictionary.views import data_dictionary_json_v2
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
-from corehq.apps.users.models import WebUser, HqPermissions
+from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
-from corehq.apps.data_dictionary.urls import urlpatterns
-
-from corehq.util.test_utils import privilege_enabled
-from corehq import privileges
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 # TODO Remove this once we migrate to the new view
 urlpatterns.insert(0, url(r"^json_v2/$", data_dictionary_json_v2, name='data_dictionary_json_v2'))
