@@ -11,7 +11,12 @@ from corehq.apps.sso.certificates import DEFAULT_EXPIRATION
 from django.contrib.auth.models import User
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.models import HQApiKey
-from corehq.apps.sso.models import AuthenticatedEmailDomain, IdentityProviderType, UserExemptFromSingleSignOn
+from corehq.apps.sso.models import (
+    AuthenticatedEmailDomain,
+    IdentityProviderType,
+    UserExemptFromSingleSignOn,
+    LoginEnforcementType,
+)
 from corehq.apps.sso.tasks import (
     IDP_CERT_EXPIRES_REMINDER_DAYS,
     auto_deactivate_removed_sso_users,
@@ -325,20 +330,20 @@ class TestAutoDeactivationTask(TestCase):
             is_active=True,
         )
 
-        cls.idp = generator.create_idp('vaultwax', cls.account)
-        cls.idp.enable_user_deactivation = True
-        cls.idp.idp_type = IdentityProviderType.ENTRA_ID
-        cls.idp.save()
-        cls.email_domain = AuthenticatedEmailDomain.objects.create(
-            email_domain='vaultwax.com',
-            identity_provider=cls.idp,
-        )
         idp_patcher = patch('corehq.apps.sso.models.IdentityProvider.get_all_usernames_of_the_idp')
         cls.mock_get_all_usernames_of_the_idp = idp_patcher.start()
         cls.addClassCleanup(idp_patcher.stop)
 
     def setUp(self):
         super().setUp()
+        self.idp = generator.create_idp('vaultwax', self.account)
+        self.idp.enable_user_deactivation = True
+        self.idp.idp_type = IdentityProviderType.ENTRA_ID
+        self.idp.save()
+        self.email_domain = AuthenticatedEmailDomain.objects.create(
+            email_domain='vaultwax.com',
+            identity_provider=self.idp,
+        )
         self.web_user_a = self._create_web_user('a@vaultwax.com')
         self.web_user_b = self._create_web_user('b@vaultwax.com')
         self.web_user_c = self._create_web_user('c@vaultwax.com')
@@ -382,7 +387,7 @@ class TestAutoDeactivationTask(TestCase):
         self.assertTrue(web_user_c.is_active)
         mock_send.assert_called_once()
 
-    def test_deactivation_skip_members_of_the_domains_but_not_have_an_email_domain_controlled_by_the_idp(self):
+    def test_deactivation_skip_members_who_do_not_have_an_email_domain_controlled_by_the_idp(self):
         dimagi_user = self._create_web_user('superuser@dimagi.com')
         self.mock_get_all_usernames_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
 
@@ -393,6 +398,28 @@ class TestAutoDeactivationTask(TestCase):
         self.assertTrue(dimagi_user.is_active)
         web_user_c = WebUser.get_by_username(self.web_user_c.username)
         self.assertFalse(web_user_c.is_active)
+
+    def test_auto_deactivation_skipped_for_idp_whose_auto_deactivation_is_off(self):
+        self.idp.enable_user_deactivation = False
+        self.idp.save()
+        self.mock_get_all_usernames_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
+
+        auto_deactivate_removed_sso_users()
+
+        # Refetch Web User
+        web_user = WebUser.get_by_username(self.web_user_c.username)
+        self.assertTrue(web_user.is_active)
+
+    def test_auto_deactivation_disabled_for_idp_whose_login_enforcement_type_is_test(self):
+        self.idp.login_enforcement_type = LoginEnforcementType.TEST
+        self.idp.save()
+        self.mock_get_all_usernames_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
+
+        auto_deactivate_removed_sso_users()
+
+        # Refetch Web User
+        web_user = WebUser.get_by_username(self.web_user_c.username)
+        self.assertTrue(web_user.is_active)
 
     def _create_web_user(self, username):
         user = WebUser.create(
