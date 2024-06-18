@@ -2,7 +2,6 @@ from django.urls import re_path as url
 
 from .dispatchers import CaseManagementMapDispatcher
 from .views import (
-    CaseDisbursementAlgorithm,
     GeoPolygonDetailView,
     GeoPolygonListView,
     GeospatialConfigPage,
