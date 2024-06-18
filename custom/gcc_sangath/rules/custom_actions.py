@@ -123,12 +123,14 @@ def _is_num(value):
     True
     >>> _is_num('')
     False
+    >>> _is_num(None)
+    False
 
     """
     try:
         float(value)
         return True
-    except ValueError:
+    except (TypeError, ValueError):
         return False
 
 

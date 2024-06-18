@@ -2,6 +2,8 @@ import doctest
 from datetime import date
 from unittest.mock import patch
 
+from nose.tools import assert_equal
+
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
@@ -21,6 +23,9 @@ from custom.gcc_sangath.const import (
     SESSION_RATING_CASE_PROP,
 )
 from custom.gcc_sangath.rules.custom_actions import (
+    _get_aggregate,
+    _get_count,
+    _get_sum,
     sanitize_session_peer_rating,
 )
 
@@ -164,3 +169,36 @@ def test_doctests():
 
     results = doctest.testmod(module)
     assert results.failed == 0
+
+
+class MockCase(dict):
+    def get_case_property(self, prop):
+        return self[prop]
+
+
+peer_rating_cases = [
+    MockCase({SESSION_RATING_CASE_PROP: 1.1}),
+    MockCase({SESSION_RATING_CASE_PROP: '2.2'}),
+    MockCase({SESSION_RATING_CASE_PROP: 10 / 3}),
+    MockCase({SESSION_RATING_CASE_PROP: ' '}),
+]
+
+
+def test_get_sum():
+    total = _get_sum(SESSION_RATING_CASE_PROP, peer_rating_cases)
+    assert_equal(total, 6.633333333333334)
+
+
+def test_get_count():
+    count = _get_count(SESSION_RATING_CASE_PROP, peer_rating_cases)
+    assert_equal(count, 3)
+
+
+def test_get_aggregate():
+    aggregate = _get_aggregate(SESSION_RATING_CASE_PROP, peer_rating_cases)
+    assert_equal(aggregate, 2.2)
+
+
+def test_division_by_zero():
+    aggregate = _get_aggregate(SESSION_RATING_CASE_PROP, [])
+    assert_equal(aggregate, 0.0)
