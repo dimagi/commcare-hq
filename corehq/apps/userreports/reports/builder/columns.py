@@ -200,13 +200,18 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
             }]
 
         columns = []
+        from corehq.apps.userreports.indicators.factory import construct_column_id_for_choice
         for choice_index, choice in enumerate(self._question_source['options']):
             columns.append({
                 "type": "field",
                 "column_id": "column_{}_{}".format(index, choice_index),
                 "format": "default",
                 "aggregation": UCR_AGG_SUM,
-                "field": "{}_{}".format(self._get_choice_indicator()['column_id'], choice['value']),
+                # HERE IT IS!!
+                # do we just want a function that takes in the full column id, and the full choice, and returns the truncated version?
+                # this could then be used in both places where we need to get the same column_id for a specific choice to ensure consistency
+                "field": construct_column_id_for_choice(self._get_choice_indicator()['column_id'], choice['value']),
+                #"field": "{}_{}".format(self._get_choice_indicator()['column_id'], choice['value']),
                 "display": display_text + self.LABEL_DIVIDER + choice['label']
             })
 

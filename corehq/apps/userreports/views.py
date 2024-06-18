@@ -669,6 +669,7 @@ class ConfigureReport(ReportBuilderView):
             self.existing_report, self.registry_slug,
         )
         temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
+        #breakpoint()
         return {
             'existing_report': self.existing_report,
             'report_description': self.report_description,
@@ -722,6 +723,7 @@ class ConfigureReport(ReportBuilderView):
 
         bound_form = self._get_bound_form(report_data)
 
+        # TODO: is there an existing report at this point? Or do we create a temp?
         if bound_form.is_valid():
             if self.existing_report:
                 report_configuration = bound_form.update_report()

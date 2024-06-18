@@ -665,6 +665,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         self._verify_contains_allowed_expressions()
         self.parsed_expression
         self.pk_columns
+        #self.validate_column_length()
 
     @classmethod
     def by_domain(cls, domain):
@@ -746,6 +747,11 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 raise BadSpecError("Primary key columns must have is_primary_key set to true", self.data_source_id)
             columns = self.sql_settings.primary_key
         return columns
+
+    def validate_column_length(self):
+        for col in self.get_columns():
+            if len(col.id) > 63:
+                raise ValueError("Column length is too long {col.id}")
 
     @cached_property
     def rebuild_failed(self):
@@ -894,6 +900,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def report_columns(self):
+        #breakpoint()
         return [ReportColumnFactory.from_spec(c, self.is_static, self.domain) for c in self.columns]
 
     @property

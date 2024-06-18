@@ -94,6 +94,17 @@ def _build_boolean_indicator(spec, factory_context):
     )
 
 
+def construct_column_id_for_choice(column_id, choice, max_length=47):
+    full_column_id = '{col}_{choice}'.format(col=column_id, choice=choice)
+    if len(full_column_id) <= max_length:
+        return full_column_id
+
+    column_len = max_length - 10  # leave room for _ + truncated choice
+    truncated_column = column_id[-column_len:] if len(column_id) > column_len else column_id
+    truncated_choice = choice[:9] if len(choice) > 9 else choice
+    return '{col}_{choice}'.format(col=truncated_column, choice=truncated_choice)
+
+
 def _build_choice_list_indicator(spec, factory_context):
     wrapped_spec = ChoiceListIndicatorSpec.wrap(spec)
     base_display_name = wrapped_spec.display_name
@@ -101,13 +112,10 @@ def _build_choice_list_indicator(spec, factory_context):
     def _construct_display(choice):
         return '{base} ({choice})'.format(base=base_display_name, choice=choice)
 
-    def _construct_column(choice):
-        return '{col}_{choice}'.format(col=spec['column_id'], choice=choice)
-
     choice_indicators = [
         BooleanIndicator(
             display_name=_construct_display(choice),
-            column_id=_construct_column(choice),
+            column_id=construct_column_id_for_choice(spec['column_id'], choice),
             filter=SinglePropertyValueFilter(
                 expression=wrapped_spec.getter,
                 operator=wrapped_spec.get_operator(),
