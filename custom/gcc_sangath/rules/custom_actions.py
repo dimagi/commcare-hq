@@ -60,10 +60,10 @@ def _get_peer_rating_cases(session_case):
 
 def _get_case_updates(peer_rating_cases):
     number_of_peer_ratings = len(peer_rating_cases)
-    sum_of_session_rating = _get_sum(
+    sum_of_session_rating = float('{:.1f}'.format(_get_sum(
         SESSION_RATING_CASE_PROP,
         peer_rating_cases,
-    )
+    )))
 
     agg_rating = _get_aggregate(SESSION_RATING_CASE_PROP, peer_rating_cases)
     agg_of_mean_treatment_specific_score = _get_aggregate(
@@ -91,12 +91,11 @@ def _get_case_updates(peer_rating_cases):
 
 
 def _get_sum(case_property, peer_rating_cases):
-    total = sum(
+    return sum(
         float(peer_rating_case.get_case_property(case_property))
         for peer_rating_case in peer_rating_cases
         if _is_num(peer_rating_case.get_case_property(case_property))
     )
-    return float("{:.1f}".format(total))
 
 
 def _get_aggregate(case_property, peer_rating_cases):
