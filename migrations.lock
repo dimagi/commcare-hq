@@ -687,6 +687,7 @@ locations
  0019_auto_20200924_1753
  0020_delete_locationrelation
  0021_add_fixture_queryset_case_sync_restriction
+ 0022_locationtype_has_users
 mobile_auth
  0001_initial
  0002_delete_sqlmobileauthkeyrecord
