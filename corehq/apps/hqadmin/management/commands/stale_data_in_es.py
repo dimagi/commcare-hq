@@ -4,6 +4,7 @@ import sys
 from collections import namedtuple
 from datetime import datetime
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 import dateutil
@@ -29,8 +30,10 @@ from corehq.elastic import ESError
 
 CHUNK_SIZE = 1000
 
-RunConfig = namedtuple('RunConfig', ['iteration_key', 'domain', 'start_date', 'end_date', 'case_type'])
-DataRow = namedtuple('DataRow', ['doc_id', 'doc_type', 'doc_subtype', 'domain', 'es_date', 'primary_date'])
+RunConfig = namedtuple(
+    'RunConfig', ['iteration_key', 'domain', 'start_date', 'end_date', 'case_type', 'stderr'])
+DataRow = namedtuple('DataRow', ['doc_id', 'doc_type', 'doc_subtype',
+                     'domain', 'es_date', 'primary_date'])
 
 
 ALL_DOMAINS = object()
@@ -75,7 +78,8 @@ class Command(BaseCommand):
         parser.add_argument('data_models', nargs='+',
                             help='A list of data models to check. Valid options are "case" and "form".')
         parser.add_argument('--domain', default=ALL_DOMAINS)
-        parser.add_argument('--iteration_key', help='Unique slug to identify this run. Used to allow resuming.')
+        parser.add_argument(
+            '--iteration_key', help='Unique slug to identify this run. Used to allow resuming.')
         parser.add_argument(
             '--start',
             action='store',
@@ -97,12 +101,15 @@ class Command(BaseCommand):
         data_models = set(data_models)
 
         default_start, default_end = datetime(2010, 1, 1), datetime.utcnow()
-        start = dateutil.parser.parse(options['start']) if options['start'] else default_start
-        end = dateutil.parser.parse(options['end']) if options['end'] else default_end
+        start = dateutil.parser.parse(
+            options['start']) if options['start'] else default_start
+        end = dateutil.parser.parse(
+            options['end']) if options['end'] else default_end
         case_type = options['case_type']
         iteration_key = options['iteration_key']
         if iteration_key:
-            print(f'\nResuming previous run. Iteration Key:\n\t"{iteration_key}"\n', file=self.stderr)
+            print(
+                f'\nResuming previous run. Iteration Key:\n\t"{iteration_key}"\n', file=self.stderr)
         else:
             iteration_key = (
                 f'stale_data_{datetime.utcnow().isoformat()}'
@@ -111,9 +118,10 @@ class Command(BaseCommand):
                 f'-{end.isoformat() if end != default_end else ""}'
                 f'-{case_type or ""}'
             )
-            print(f'\nStarting new run. Iteration key:\n\t"{iteration_key}"\n', file=self.stderr)
+            print(
+                f'\nStarting new run. Iteration key:\n\t"{iteration_key}"\n', file=self.stderr)
 
-        run_config = RunConfig(iteration_key, domain, start, end, case_type)
+        run_config = RunConfig(iteration_key, domain, start, end, case_type, self.stderr)
 
         if run_config.domain is ALL_DOMAINS:
             print('Running for all domains', file=self.stderr)
@@ -129,7 +137,8 @@ class Command(BaseCommand):
         try:
             for data_model in data_models:
                 try:
-                    process_data_model_fn = DATA_MODEL_HELPERS[data_model.lower()]()
+                    process_data_model_fn = DATA_MODEL_HELPERS[data_model.lower()](
+                    )
                 except KeyError:
                     raise CommandError('Only valid options for data model are "{}"'.format(
                         '", "'.join(DATA_MODEL_HELPERS.keys())
@@ -154,19 +163,36 @@ class CaseHelper:
 
     @classmethod
     def run(cls, run_config):
-        for chunk in cls.get_sql_chunks(run_config):
-            yield from cls._yield_missing_in_es(chunk)
+        domains_with_dedicated_index = list(settings.CASE_SEARCH_SUB_INDICES.keys())
+        if run_config.domain is ALL_DOMAINS:
+            print('Running all domains without dedicated index', file=run_config.stderr)
+            for chunk in cls.get_sql_chunks(None, run_config, domains_with_dedicated_index):
+                yield from cls._yield_missing_in_es(chunk)
+
+            print('Running all domains with dedicated index', file=run_config.stderr)
+            for domain in domains_with_dedicated_index:
+                print(f'Running {domain}', file=run_config.stderr)
+                case_search_index = settings.CASE_SEARCH_SUB_INDICES[domain]['index_cname']
+                for chunk in cls.get_sql_chunks(domain, run_config):
+                    yield from cls._yield_missing_in_es(chunk, case_search_index)
+
+        else:
+            case_search_index = None
+            if run_config.domain in domains_with_dedicated_index:
+                case_search_index = settings.CASE_SEARCH_SUB_INDICES[run_config.domain]['index_cname']
+
+            for chunk in cls.get_sql_chunks(run_config.domain, run_config):
+                yield from cls._yield_missing_in_es(chunk, case_search_index)
 
     @staticmethod
-    def get_sql_chunks(run_config):
-        domain = run_config.domain if run_config.domain is not ALL_DOMAINS else None
-
+    def get_sql_chunks(domain, run_config, domains_with_dedicated_index=None):
         accessor = CaseReindexAccessor(
             domain,
             start_date=run_config.start_date, end_date=run_config.end_date,
-            case_type=run_config.case_type
+            case_type=run_config.case_type,
+            not_domains=domains_with_dedicated_index
         )
-        iteration_key = f'sql_cases-{run_config.iteration_key}'
+        iteration_key = f'sql_cases-{run_config.iteration_key}-{domain}'
         for chunk in _get_resumable_chunked_iterator(accessor, iteration_key, '[SQL cases] '):
             matching_records = [
                 (case.case_id, case.type, case.server_modified_on, case.domain)
@@ -175,43 +201,65 @@ class CaseHelper:
             yield matching_records
 
     @staticmethod
-    def _yield_missing_in_es(chunk):
+    def _yield_missing_in_es(chunk, dedicated_case_search_index=None):
         case_ids, case_search_ids = CaseHelper._get_ids_from_chunk(chunk)
         es_modified_on_by_ids = CaseHelper._get_es_modified_dates(case_ids)
-        case_search_es_modified_on_by_ids = CaseHelper._get_case_search_es_modified_dates(case_search_ids)
+        case_search_es_modified_on_by_ids = CaseHelper._get_case_search_es_modified_dates(
+            case_search_ids)
+        dedicated_case_search_es_modified_on_by_ids = None
+        if dedicated_case_search_index:
+            dedicated_case_search_es_modified_on_by_ids = CaseHelper._get_case_search_es_modified_dates(
+                case_search_ids, dedicated_case_search_index)
         for case_id, case_type, modified_on, domain in chunk:
             stale, data_row = CaseHelper._check_stale(case_id, case_type, modified_on, domain,
-                                                      es_modified_on_by_ids, case_search_es_modified_on_by_ids)
+                                                      es_modified_on_by_ids, case_search_es_modified_on_by_ids,
+                                                      dedicated_case_search_es_modified_on_by_ids)
             if stale:
                 yield data_row
 
     @staticmethod
     def _check_stale(case_id, case_type, modified_on, domain,
-                     es_modified_on_by_ids, case_search_es_modified_on_by_ids):
-        es_modified_on, es_domain = es_modified_on_by_ids.get(case_id, (None, None))
-        if (es_modified_on, es_domain) != (modified_on, domain):
-            # if the doc is newer in ES than sql, refetch from sql to get newest
-            if es_modified_on is not None and es_modified_on > modified_on:
-                refreshed = CommCareCase.objects.get_case(case_id, domain)
-                if refreshed.server_modified_on != modified_on:
-                    return CaseHelper._check_stale(case_id, case_type, refreshed.server_modified_on,
-                                                   refreshed.domain, es_modified_on_by_ids,
-                                                   case_search_es_modified_on_by_ids)
-            return True, DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type,
-                                 domain=domain, es_date=es_modified_on, primary_date=modified_on)
-        elif domain_needs_search_index(domain):
-            es_modified_on, es_domain = case_search_es_modified_on_by_ids.get(case_id, (None, None))
+                     es_modified_on_by_ids, case_search_es_modified_on_by_ids,
+                     dedicated_modified_on_ids=None):
+
+        def check_index(ids):
+            is_stale = False
+            es_modified_on, es_domain = ids.get(
+                case_id, (None, None))
             if (es_modified_on, es_domain) != (modified_on, domain):
+                is_stale = True
                 # if the doc is newer in ES than sql, refetch from sql to get newest
                 if es_modified_on is not None and es_modified_on > modified_on:
                     refreshed = CommCareCase.objects.get_case(case_id, domain)
-                    if refreshed.server_modified_on != modified_on:
-                        return CaseHelper._check_stale(case_id, case_type, refreshed.server_modified_on,
-                                                       refreshed.domain, es_modified_on_by_ids,
-                                                       case_search_es_modified_on_by_ids)
-                return True, DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type,
-                                     domain=domain, es_date=es_modified_on, primary_date=modified_on)
-        return False, None
+                    if (refreshed.server_modified_on != modified_on
+                            and refreshed.server_modified_on == es_modified_on):
+                        is_stale = False
+
+            return is_stale, es_modified_on
+
+        es_is_stale, es_case_modified_on = check_index(es_modified_on_by_ids)
+        es_search_is_stale = False
+        es_search_modified_on = None
+        es_dedicated_search_is_stale = False
+        es_dedicated_search_modified_on = None
+
+        # check might not be needed anymore
+        if domain_needs_search_index(domain):
+            es_search_is_stale, es_search_modified_on = check_index(case_search_es_modified_on_by_ids)
+
+            if dedicated_modified_on_ids:
+                es_dedicated_search_is_stale, es_dedicated_search_modified_on = (
+                    check_index(dedicated_modified_on_ids))
+
+        # return data_row is not None, data_row
+        if not es_is_stale and not es_search_is_stale and not es_dedicated_search_is_stale:
+            return False, None
+        else:
+            es_date_str = f"{ es_case_modified_on },{ es_search_modified_on },{ es_dedicated_search_modified_on }"
+
+            return True, DataRow(doc_id=case_id, doc_type='CommCareCase',
+                                 doc_subtype=case_type, domain=domain,
+                                 es_date=es_date_str, primary_date=modified_on)
 
     @staticmethod
     @retry_on_es_timeout
@@ -226,12 +274,19 @@ class CaseHelper:
 
     @staticmethod
     @retry_on_es_timeout
-    def _get_case_search_es_modified_dates(case_ids):
-        results = (
-            CaseSearchES(for_export=True)
-            .case_ids(case_ids)
-            .values_list('_id', 'server_modified_on', 'domain')
-        )
+    def _get_case_search_es_modified_dates(case_ids, case_search_index=None):
+        if case_search_index:
+            results = (
+                CaseSearchES(for_export=True)
+                .case_ids(case_ids)
+                .values_list('_id', 'server_modified_on', 'domain')
+            )
+        else:
+            results = (
+                CaseSearchES(for_export=True, index=case_search_index)
+                .case_ids(case_ids)
+                .values_list('_id', 'server_modified_on', 'domain')
+            )
         return {_id: (iso_string_to_datetime(server_modified_on) if server_modified_on else None, domain)
                 for _id, server_modified_on, domain in results}
 
@@ -263,7 +318,8 @@ class FormHelper:
         iteration_key = f'sql_forms-{run_config.iteration_key}'
         for chunk in _get_resumable_chunked_iterator(accessor, iteration_key, '[SQL forms] '):
             matching_records = [
-                (form.form_id, form.doc_type, form.xmlns, form.received_on, form.domain)
+                (form.form_id, form.doc_type, form.xmlns,
+                 form.received_on, form.domain)
                 for form in chunk
                 # Only check for "normal" and "archived" forms
                 if form.is_normal or form.is_archived
@@ -273,9 +329,11 @@ class FormHelper:
     @staticmethod
     def _yield_missing_in_es(chunk):
         form_ids = [val[0] for val in chunk]
-        es_modified_on_by_ids = FormHelper._get_es_modified_dates_for_forms(form_ids)
+        es_modified_on_by_ids = FormHelper._get_es_modified_dates_for_forms(
+            form_ids)
         for form_id, doc_type, xmlns, modified_on, domain in chunk:
-            es_modified_on, es_doc_type, es_domain = es_modified_on_by_ids.get(form_id, (None, None, None))
+            es_modified_on, es_doc_type, es_domain = es_modified_on_by_ids.get(
+                form_id, (None, None, None))
             if (es_modified_on, es_doc_type, es_domain) != (modified_on, doc_type, domain):
                 yield DataRow(doc_id=form_id, doc_type=doc_type, doc_subtype=xmlns, domain=domain,
                               es_date=es_modified_on, primary_date=modified_on)
