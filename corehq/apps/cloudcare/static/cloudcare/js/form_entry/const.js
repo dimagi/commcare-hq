@@ -2,7 +2,6 @@
 hqDefine("cloudcare/js/form_entry/const", [], function () {
     return {
         GROUP_TYPE: 'sub-group',
-        REPEAT_TYPE: 'repeat-juncture',
         QUESTION_TYPE: 'question',
         GROUPED_ELEMENT_TILE_ROW_TYPE: 'grouped-element-tile-row',
 
