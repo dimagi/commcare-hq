@@ -2,6 +2,7 @@ from collections import defaultdict
 from itertools import groupby
 from operator import attrgetter
 import re
+from urllib.parse import urlparse, urlencode, parse_qsl
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext
@@ -416,3 +417,12 @@ def get_used_props_by_case_type(domain):
                 props_by_case_type[case_type_bucket.key] = []
             props_by_case_type[case_type_bucket.key].append(prop_bucket.key)
     return props_by_case_type
+
+
+def update_url_query_params(url, params):
+    """Adds query params to the url. Overrides the value if param already exists."""
+    parsed_url = urlparse(url)
+    current_params = dict(parse_qsl(parsed_url.query))
+    merged_params = urlencode({**current_params, **params})
+    # Note: _replace is a public method of namedtuple. Starts with _ to avoid conflicts with field names.
+    return parsed_url._replace(query=merged_params).geturl()
