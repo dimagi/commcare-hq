@@ -46,7 +46,6 @@ class Migration(migrations.Migration):
             DROP SEQUENCE IF EXISTS "repeaters_repeater_id_seq";
             DROP SERVER IF EXISTS repeaters_fdw CASCADE;
             DROP FUNCTION IF EXISTS repeaters_repeater_id_seq_nextval;
-            DROP USER repeaters_fdw_user;
             """,
             reverse_sql=""
         ),
