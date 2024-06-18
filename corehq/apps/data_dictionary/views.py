@@ -5,6 +5,7 @@ from operator import attrgetter
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db.models import Count
 from django.db.models.query import Prefetch
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -140,6 +141,40 @@ def data_dictionary_json(request, domain, case_type_name=None):
     return JsonResponse({
         'case_types': props,
         'geo_case_property': geo_case_prop,
+    })
+
+
+@login_and_domain_required
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
+def data_dictionary_json_v2(request, domain, case_type_name=None):
+    fhir_resource_type_name_by_case_type = {}
+    fhir_resource_prop_by_case_prop = {}
+    if toggles.FHIR_INTEGRATION.enabled(domain):
+        fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = load_fhir_resource_mappings(domain)
+
+    case_type_app_module_count = get_case_type_app_module_count(domain)
+    used_props_by_case_type = get_used_props_by_case_type(domain)
+    geo_case_prop = get_geo_case_property(domain)
+
+    def _get_case_data(case_type):
+        module_count = case_type_app_module_count.get(case_type.name, 0)
+        used_props = used_props_by_case_type.get(case_type.name, [])
+        return {
+            "name": case_type.name,
+            "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
+            "is_deprecated": case_type.is_deprecated,
+            "module_count": module_count,
+            "is_safe_to_delete": len(used_props) == 0,
+            "properties_count": case_type.properties_count,
+        }
+
+    queryset = CaseType.objects.filter(domain=domain).annotate(properties_count=Count('property'))
+    if not request.GET.get("load_deprecated_case_types", False) == "true":
+        queryset = queryset.filter(is_deprecated=False)
+    case_types_data = [_get_case_data(case_type) for case_type in queryset]
+    return JsonResponse({
+        "case_types": case_types_data,
+        "geo_case_property": geo_case_prop,
     })
 
 
