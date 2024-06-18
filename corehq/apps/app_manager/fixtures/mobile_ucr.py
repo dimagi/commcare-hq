@@ -548,9 +548,9 @@ def get_report_element(
     row_elements = []
     row_index = 0
     rows = report_data_cache.get_data(report_config.uuid, data_source)
+    if len(rows) > settings.MAX_MOBIE_UCR_SIZE:
+        raise MobileUCRTooLargeException
     for row_index, row in enumerate(rows):
-        if row_index + 1 >= settings.MAX_MOBILE_UCR_SIZE:
-            raise MobileUCRTooLargeException
         row_elements.append(row_to_element(deferred_fields, filter_options_by_field, row, row_index))
         total_row_calculator.update_totals(row)
 
