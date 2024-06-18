@@ -658,7 +658,7 @@ unidecode==1.2.0
     # via pyphonetics
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==1.26.18
+urllib3==1.26.19
     # via
     #   -r docs-requirements.in
     #   botocore
