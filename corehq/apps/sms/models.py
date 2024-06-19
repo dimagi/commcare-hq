@@ -2062,7 +2062,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     def get_generic_name(cls):
         """
         This method should return a descriptive name for this backend
-        (such as "Unicel" or "Tropo"), for use in identifying it to an end user.
+        (such as "Tropo"), for use in identifying it to an end user.
         """
         raise NotImplementedError("Please implement this method")
 

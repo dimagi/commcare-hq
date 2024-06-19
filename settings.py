@@ -1715,7 +1715,6 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
     'corehq.messaging.smsbackends.infobip.models.InfobipBackend',
     'corehq.messaging.smsbackends.amazon_pinpoint.models.PinpointBackend',
-    'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
