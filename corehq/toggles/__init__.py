@@ -2869,7 +2869,7 @@ USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
 RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
     slug='restrict_data_source_rebuilds',
     label='Restrict data source rebuilt from UI',
-    tag=TAG_SOLUTIONS,
+    tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
 )
