@@ -249,6 +249,13 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         if (element.deleted() && !element.id) {
                             return;
                         }
+                        const propIndex = group.toBeDeprecated() ? 0 : index;
+                        const propGroup = group.toBeDeprecated() ? "" : group.name();
+                        if (!element.hasChanges
+                            && propIndex === element.index
+                            && element.loadedGroup === propGroup) {
+                            return;
+                        }
 
                         const allowedValues = element.allowedValues.val();
                         let pureAllowedValues = {};
@@ -259,9 +266,9 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'caseType': element.caseType,
                             'name': element.name,
                             'label': element.label() || element.name,
-                            'index': group.toBeDeprecated() ? 0 : index,
+                            'index': propIndex,
                             'data_type': element.dataType(),
-                            'group': group.toBeDeprecated() ? "" : group.name(),
+                            'group': propGroup,
                             'description': element.description(),
                             'fhir_resource_prop_path': (
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
@@ -270,11 +277,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'removeFHIRResourcePropertyPath': element.removeFHIRResourcePropertyPath(),
                             'allowed_values': pureAllowedValues,
                         };
-                        if (!element.hasChanges
-                            && data.index === element.index
-                            && element.loadedGroup === group.name()) {
-                            return;
-                        }
                         properties.push(data);
                     });
                 });
