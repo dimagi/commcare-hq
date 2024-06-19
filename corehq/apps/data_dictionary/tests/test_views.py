@@ -593,7 +593,8 @@ class DataDictionaryJsonV2Test(TestCase):
                             "deprecated": False,
                             "is_safe_to_delete": True,
                             "data_type": "number",
-                            "allowed_values": {}
+                            "allowed_values": {},
+                            "index": prop.index,
                         }
                         for prop in properties
                     ],
