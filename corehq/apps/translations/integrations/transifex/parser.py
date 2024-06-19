@@ -12,7 +12,7 @@ CONTEXT_REGEXS = {
     # Module or Form: sheet name for module/form: unique id
     'module_and_forms_sheet': r'^(Module|Form):(\w+):(\w+)$',  # maintain legacy module usage instead of menu
     # case property: list/detail
-    'module_sheet': r'^(.+):(list|detail)$',
+    'module_sheet': r'^(.+):(list|detail|case_search_display|case_search_hint)$',
 }
 
 TRANSIFEX_MODULE_RESOURCE_NAME = re.compile(r'^module_(\w+)(_v\d+)?$')  # module_moduleUniqueID_v123
