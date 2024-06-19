@@ -82,8 +82,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                              prop_name='username.exact',
                              sql_col='user_dim__username'),
             DataTablesColumn(_("Assigned Location(s)"),
-                             help_text=_('The location(s) that the user is assigned to, '
-                                         'including the primary location which is highlighted in bold.'),
+                             help_text=_('Assigned locations for the user, with the primary '
+                                         'location highlighted in bold.'),
                              sortable=False),
             DataTablesColumn(_("Last Submission"),
                              prop_name='reporting_metadata.last_submissions.submission_date',
