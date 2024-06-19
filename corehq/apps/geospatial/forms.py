@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django import forms
 from corehq.apps.geospatial.models import GeoConfig, validate_travel_mode
+from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 from corehq import toggles
 
 
@@ -108,7 +109,16 @@ class GeospatialConfigForm(forms.ModelForm):
         # ),
         choices=DISBURSEMENT_ALGORITHM_OPTIONS,
         required=True,
-        help_text=_("The algorithm which will be used to disburse cases between users"),
+        help_text=format_html_lazy(_('''
+            <span data-bind="visible: selectedAlgorithm() == '{}'">
+                Uses the straight-line distance between users and cases to
+                determine allocation of cases. Ideal for when map road coverage is poor.
+            </span>
+            <span data-bind="visible: selectedAlgorithm() == '{}'">
+                Takes distance along roads between users and cases into account
+                to determine allocation of cases. Ideal for when map road coverage is good.
+            </span>
+        '''), GeoConfig.RADIAL_ALGORITHM, GeoConfig.ROAD_NETWORK_ALGORITHM)
     )
     min_cases_per_user = forms.IntegerField(
         label=_("Minimum cases assigned per user"),
