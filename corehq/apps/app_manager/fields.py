@@ -430,7 +430,8 @@ class ApplicationDataRMIHelper(object):
             if 'app' in form:
                 form['has_app'] = True
                 forms.append(form)
-            else:
+            elif not self.domain_object.exports_use_elasticsearch:
+                # If the elasticsearch toggle is on, we don't care about forms without apps
                 app_id = f['key'][1] or ''
                 form['app'] = {
                     'id': app_id
