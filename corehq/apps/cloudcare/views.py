@@ -74,7 +74,7 @@ from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
     use_bootstrap5,
-    use_daterangepicker,
+    use_tempusdominus,
     waf_allow,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import can_use_restore_as
@@ -100,7 +100,8 @@ class FormplayerMain(View):
     urlname = 'formplayer_main'
 
     @xframe_options_sameorigin
-    @use_daterangepicker
+    @use_bootstrap5
+    @use_tempusdominus
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, request, *args, **kwargs):
@@ -214,7 +215,7 @@ class FormplayerMain(View):
         }
 
         return set_cookie(
-            render(request, "cloudcare/bootstrap3/formplayer_home.html", context)
+            render(request, "cloudcare/formplayer_home.html", context)
         )
 
 
@@ -231,17 +232,18 @@ class FormplayerMainPreview(FormplayerMain):
         return get_current_app_doc(domain, app_id)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(use_tempusdominus, name='dispatch')
 class PreviewAppView(TemplateView):
-    template_name = 'cloudcare/bootstrap3/preview_app.html'
+    template_name = 'cloudcare/preview_app.html'
     urlname = 'preview_app'
 
-    @use_daterangepicker
     @xframe_options_sameorigin
     def get(self, request, *args, **kwargs):
         mobile_ucr_count = get_mobile_ucr_count(request.domain)
         if should_restrict_web_apps_usage(request.domain, mobile_ucr_count):
             context = BlockWebAppsView.get_context_for_ucr_limit_error(request.domain, mobile_ucr_count)
-            return render(request, 'cloudcare/bootstrap3/block_preview_app.html', context)
+            return render(request, 'cloudcare/block_preview_app.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': _format_app_doc(app.to_json()),
@@ -357,7 +359,7 @@ class ReadableQuestions(View):
         readable_form = readable.get_readable_form_data(form_data_json, pretty_questions)
 
         rendered_readable_form = render_to_string(
-            'reports/form/partials/bootstrap3/readable_form.html',
+            'reports/form/partials/bootstrap5/readable_form.html',
             {'questions': readable_form}
         )
 
@@ -562,6 +564,7 @@ def session_endpoint(request, domain, app_id, endpoint_id=None):
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + "#" + cloudcare_state)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class BlockWebAppsView(BaseDomainView):
 
     urlname = 'block_web_apps'
