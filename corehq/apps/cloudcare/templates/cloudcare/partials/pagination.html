@@ -1,0 +1,122 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block pagination_templates %}
+  <% if (showPagination) { %>
+    <div class="container pagination-container">
+      <div class="d-flex justify-content-between flex-wrap">
+        <div class="module-per-page-container mb-2">
+          <select class="form-select form-select-lg per-page-limit">
+            <% for(var i = 0; i < rowRange.length; i++) { %>
+              <% if (rowRange[i] === limit) { %>
+                <option value="<%- rowRange[i] %>" selected>{% trans "<%- rowRange[i] %> per page" %}</option>
+              <% } else { %>
+                <option value="<%- rowRange[i] %>">{% trans "<%- rowRange[i] %> per page" %}</option>
+              <% } %>
+            <% } %>
+          </select>
+        </div>
+        <% if (pageCount > 1) { %>
+          <ul class="pagination pagination-lg mb-2 flex-wrap"><!-- wrap for the sake of app preview -->
+            <!-- Render Previous button -->
+            <% if (currentPage > 0) { %>
+              <li class="page-item">
+                <a class="page-link js-page" aria-label='{% trans_html_attr "First Page" %}' tabindex="0" data-id="0">
+                  <span><i class="fa fa-fast-backward"></i></span>
+                </a>
+              </li>
+              <li>
+                <a class="page-link js-page" aria-label='{% trans_html_attr "Previous" %}' tabindex="0" data-id="<%- currentPage - 1 %>">
+                  <span><i class="fa fa-caret-left"></i></span>
+                </a>
+              </li>
+            <% } else { %>
+              <li class="page-item paginate-disabled">
+                <a class="page-link js-page" data-id="0">
+                  <span><i class="fa fa-fast-backward"></i></span>
+                </a>
+              </li>
+              <li>
+                <a class="page-link js-page" data-id="<%- currentPage - 1 %>">
+                  <span><i class="fa fa-caret-left"></i></span>
+                </a>
+              </li>
+            <% } %>
+            <!-- Render page buttons -->
+            <% if (pageCount <= 5) { %>
+                <% for (i = startPage-1; i < endPage; i++) { %>
+                  <li class="page-item js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%- i %>">
+                    <a class="page-link" aria-label="<%- pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current ='page'<% } %> tabindex="0"><%- i + 1 %></a>
+                  </li>
+                <% } %>
+            <% } else { %>
+              <% if (startPage <= 3) { %>
+                <% for (i = 0; i < startPage; i++) { %>
+                  <li class="page-item js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%- i %>">
+                    <a class="page-link" aria-label="<%- pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current='page'<% } %> tabindex="0"><%- i + 1 %></a>
+                  </li>
+                <% } %>
+              <% } else { %>
+                  <li class="page-item js-page" data-id="0">
+                    <a class="page-link" aria-label="<%- pageNumLabel({num: 1}) %>" tabindex="0">{% trans "1" %}</a>
+                  </li>
+                  <li class="page-item js-page">
+                    <a class="page-link paginate-disabled">{% trans "..." %}</a>
+                  </li>
+              <% } %>
+              <% for (i = startPage; i < endPage; i++) { %>
+                <li class="page-item js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%- i %>">
+                  <a class="page-link" aria-label="<%- pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current='page'<% } %> tabindex="0"><%- i + 1 %></a>
+                </li>
+              <% } %>
+              <% if (endPage >= pageCount - 2) { %>
+                <% for (i = endPage+1; i <= pageCount; i++) { %>
+                  <li class="page-item js-page<% if (i === currentPage) { %> active<% } %>" data-id="<%- i - 1 %>">
+                    <a class="page-link" aria-label="<%- pageNumLabel({num: i + 1}) %>" <% if (i === currentPage ) { %> aria-current='page'<% } %> tabindex="0"><%- i %></a>
+                  </li>
+                <% } %>
+              <% } else { %>
+                <li class="page-item js-page">
+                  <a class="page-link paginate-disabled">{% trans "..." %}</a>
+                </li>
+                <li class="page-item js-page" data-id="<%- pageCount - 1 %>">
+                  <a class="page-link" aria-label="<%- pageNumLabel({num: pageCount}) %>" tabindex="0"><%- pageCount %></a>
+                </li>
+              <% } %>
+            <% } %>
+            <!-- Render Next buttons -->
+            <% if (currentPage >= pageCount - 1) { %>
+              <li class="page-item paginate-disabled">
+                <a class="page-link js-page" data-id="<%- currentPage + 1 %>">
+                  <span><i class="fa fa-caret-right"></i></span>
+                </a>
+              </li>
+              <li>
+                <a class="page-link js-page" data-id="<%- pageCount - 1 %>">
+                  <span><i class="fa fa-fast-forward"></i></span>
+                </a>
+              </li>
+            <% } else { %>
+              <li class="page-item">
+                <a class="page-link js-page" aria-label='{% trans_html_attr "Next" %}' tabindex="0" data-id="<%- currentPage + 1 %>">
+                  <span><i class="fa fa-caret-right"></i></span>
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link js-page" aria-label='{% trans_html_attr "Last Page" %}' tabindex="0" data-id="<%- pageCount - 1 %>">
+                  <span><i class="fa fa-fast-forward"></i></span>
+                </a>
+              </li>
+            <% } %>
+          </ul>
+          <div class="module-go-container mb-2">
+            <div class="input-group input-group-lg">
+              <input type="text" class="form-control" placeholder='{% trans_html_attr "Go to page" %}' id="goText">
+              <button class="btn btn-outline-primary" type="button" id="pagination-go-button">{% trans "Go" %}</button>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+{% endblock %}
