@@ -802,3 +802,8 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             },
             'template': 'deleted-user-api-key-template',
         }
+
+
+@login_required
+def an_error(request):
+    raise Exception("I AM AN ERROR ON PURPOSE")
