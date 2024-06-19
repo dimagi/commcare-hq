@@ -1,15 +1,28 @@
 {% load i18n %}
 
 <script type="text/template" id="persistent-menu-template">
-  <button id="persistent-menu-button"
-    data-bs-toggle="collapse"
-    data-bs-target="#persistent-menu-content"
-    aria-expanded="false"
-    aria-controls="persistent-menu-content"
-    class="position-fixed top-0 start-0 bg-info h-100"></button>
-  <div id="persistent-menu-content"
-    class="collapse position-fixed top-50 start-20 bg-light h-50 w-25">
-    <%= _.template($('#persistent-menu-commands').text())({commands: persistentMenu}) %>
+  <button id="persistent-menu-expand"
+          data-bs-toggle="collapse"
+          data-bs-target=".persistent-menu-toggle"
+          aria-expanded="false"
+          aria-controls="persistent-menu-content"
+          class="position-fixed top-50 start-0 persistent-menu-toggle show">
+    <i class = "fa text-muted fa-arrow-right"></i>
+  </button>
+  <div id="persistent-menu-container" class="persistent-menu-toggle collapse container-fluid h-100">
+    <div class="row h-100">
+      <div id="persistent-menu-content" class="col-3">
+        <%= _.template($('#persistent-menu-commands').text())({commands: persistentMenu}) %>
+      </div>
+      <div id="persistent-menu-overlay" class="col">
+        <button id="persistent-menu-collapse"
+                data-bs-toggle="collapse"
+                data-bs-target=".persistent-menu-toggle"
+                class="position-fixed top-50 persistent-menu-toggle">
+          <i class = "fa text-muted fa-arrow-left"></i>
+        </button>
+      </div>
+    </div>
   </div>
 </script>
 
