@@ -148,6 +148,7 @@
   }
 
   .list-cell-wrapper-style {
+    display: block;         // override .card's display: flex rule
     margin: 10px 5px 0 5px;
     border-collapse: collapse;
     vertical-align: top;
