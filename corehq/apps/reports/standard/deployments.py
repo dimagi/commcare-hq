@@ -514,8 +514,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         for loc_id in assigned_location_ids:
             loc_name = user_loc_dict.get(loc_id)
             if loc_id == primary_location_id:
-                formatted_loc_names.append(
-                    f'<strong>{loc_name}</strong>'
+                formatted_loc_names.insert(
+                    0, f'<strong>{loc_name}</strong>'
                 )
             else:
                 formatted_loc_names.append(loc_name)
