@@ -1492,6 +1492,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     const PersistentMenuView = Marionette.View.extend({
         tagName: "div",
         template: _.template($("#persistent-menu-template").html() || ""),
+        ui: {
+            container: "#persistent-menu-container",
+        },
+        events: {
+            "show.bs.collapse": "expand",
+        },
+        setHeights: function () {
+            const boundingRect = this.ui.container[0].closest('#cloudcare-app-context').getBoundingClientRect();
+            this.ui.container[0].style.height = `${boundingRect.height}px`;
+            this.ui.container[0].style.top = `${boundingRect.y}px`;
+        },
+        expand: function (event) {
+            this.setHeights();
+        },
     });
 
     return {
