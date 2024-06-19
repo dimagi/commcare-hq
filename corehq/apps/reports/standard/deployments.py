@@ -522,14 +522,18 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
         formatted_str = ', '.join(formatted_loc_names[:4])
         all_str = ', '.join(formatted_loc_names)
-        eplise_str = _('...See more') if len(formatted_loc_names) > 4 else ''
+        view_all_str = _('...See more') if len(formatted_loc_names) > 4 else ''
+        view_less_str = _('...See less') if len(formatted_loc_names) > 4 else ''
         out_str = ('''
             <div>
                 <span class="locations-list">{}</span>
-                <a href="#" class="toggle-all-locations">{}</a>
                 <span class="all-locations-list" style="display:none">{}</span>
+                <a href="#" class="toggle-all-locations">
+                   <span>{}</span>
+                   <span style="display:none">{}</span>
+                </a>
             </div>
-        ''').format(formatted_str, eplise_str, all_str)
+        ''').format(formatted_str, all_str, view_all_str, view_less_str)
         return format_html(out_str)
 
 
