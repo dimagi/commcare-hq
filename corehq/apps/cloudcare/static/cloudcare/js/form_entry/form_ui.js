@@ -12,7 +12,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     'cloudcare/js/form_entry/entries',
     'cloudcare/js/form_entry/utils',
     'jquery-tiny-pubsub/dist/ba-tiny-pubsub',       // $.pubsub
-], function (
+], function(
     $,
     ko,
     _,
@@ -27,9 +27,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 ) {
     var groupNum = 0;
 
-    _.delay(function () {
+    _.delay(function() {
         ko.bindingHandlers.renderMarkdown = {
-            update: function (element, valueAccessor) {
+            update: function(element, valueAccessor) {
                 var value = ko.unwrap(valueAccessor());
                 value = markdown.render(value);
                 $(element).html(value);
@@ -106,7 +106,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         let matchingStyles = [];
         if (styleStr) {
             let styles = styleStr.split(' ');
-            styles.forEach(function (style) {
+            styles.forEach(function(style) {
                 if ((pattern instanceof RegExp && style.match(pattern))
                     || (typeof pattern === "string" && pattern === style)) {
                     matchingStyles.push(style);
@@ -184,11 +184,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             for (let groupChild of json.children) {
                 // Detects configured repeat groups within the form. If a repeat group has a 'repeat-count' configured,
                 // the Formplayer response designates the key 'type' as 'sub-group' and 'repeatable' as 'true'.
-                if ((groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true") || groupChild.type === constants.REPEAT_TYPE) {
+                if ((groupChild.type === constants.GROUP_TYPE && groupChild.repeatable === "true")) {
                     if (_.has(groupChild, 'style') && groupChild.style && groupChild.style.raw) {
                         groupChild.style.raw = groupChild.style.raw.concat(" ", elementNPerRowStyle);
                     } else {
-                        groupChild.style = {'raw': elementNPerRowStyle};
+                        groupChild.style = { 'raw': elementNPerRowStyle };
                     }
                 }
             }
@@ -209,12 +209,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
          * Used in KO template to determine what template to use for a child
          * @param {Object} child - The child object to be rendered, either Group, Repeat, or Question
          */
-        self.childTemplate = function (child) {
+        self.childTemplate = function(child) {
             return child.type() + '-fullform-ko-template';
         };
 
-        self.hasError = ko.computed(function () {
-            return _.find(self.children(), function (child) {
+        self.hasError = ko.computed(function() {
+            return _.find(self.children(), function(child) {
                 return child.hasError();
             });
         });
@@ -225,7 +225,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
      * a knockout representation.
      * @param {Object} json - The JSON returned from touchforms to represent a Container
      */
-    Container.prototype.fromJS = function (json) {
+    Container.prototype.fromJS = function(json) {
         var self = this;
 
         if (!json.type) {
@@ -234,7 +234,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         var mapping = {
             caption: {
-                update: function (options) {
+                update: function(options) {
                     if (self.hideCaption) {
                         return null;
                     }
@@ -242,29 +242,25 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 },
             },
             caption_markdown: {
-                update: function (options) {
+                update: function(options) {
                     return options.data ? markdown.render(options.data) : null;
                 },
             },
             children: {
-                create: function (options) {
+                create: function(options) {
                     if (options.data.type === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
                         return new GroupedElementTileRow(options.data, self);
                     } else if (options.data.type === constants.QUESTION_TYPE) {
                         return new Question(options.data, self);
-                    } else if (options.data.type === constants.GROUP_TYPE && options.data.exists === "false") {
-                        return new AddGroup(options.data, self);
                     } else if (options.data.type === constants.GROUP_TYPE) {
                         return new Group(options.data, self);
-                    } else if (options.data.type === constants.REPEAT_TYPE) {
-                        return new Repeat(options.data, self);
                     } else {
                         console.error('Could not find question type of ' + options.data.type);
                     }
                 },
-                update: function (options) {
+                update: function(options) {
                     if (options.target.pendingAnswer &&
-                            options.target.pendingAnswer() !== constants.NO_PENDING_ANSWER) {
+                        options.target.pendingAnswer() !== constants.NO_PENDING_ANSWER) {
                         // There is a request in progress, check if the answer has changed since the request
                         // was made. For file questions, it is most unlikely that the answer will change while the request
                         // is in progress, so we just ignore the value.
@@ -294,7 +290,18 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     return options.target;
                 },
                 key: function (data) {
-                    return ko.utils.unwrapObservable(data.uuid) || ko.utils.unwrapObservable(data.ix);
+                    const uuid = ko.utils.unwrapObservable(data.uuid);
+                    if (uuid) {
+                        return uuid;
+                    }
+                    const exists = ko.utils.unwrapObservable(data.exists);
+                    const ix = ko.utils.unwrapObservable(data.ix);
+                    if (exists && exists === 'false') {
+                        // this is a add group button. replace last part with d
+                        const lastIdx = ix.lastIndexOf('_');
+                        return lastIdx === -1 ? ix : ix.slice(0, lastIdx) + '_d';
+                    }
+                    return ix;
                 },
             },
         };
@@ -308,12 +315,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
      *
      * @returns {string} - Background color for the header's nesting level.
      */
-    Container.prototype.headerBackgroundColor = function () {
+    Container.prototype.headerBackgroundColor = function() {
         let currentNode = this;
         let nestedDepthCount = 0;
         while (currentNode.parent) {
-            let isCollapsibleGroup = currentNode.type() === constants.GROUP_TYPE && currentNode.collapsible;
-            if (isCollapsibleGroup || currentNode.type() === constants.REPEAT_TYPE) {
+            if (currentNode.type() === constants.GROUP_TYPE && currentNode.collapsible) {
                 nestedDepthCount += 1;
             }
             currentNode = currentNode.parent;
@@ -342,7 +348,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
      * @returns {Object} - A new JSON object with sequential "Question" items and sequential
      * "Group" items grouped into "GroupedElementTileRow".
      */
-    Container.groupElements = function (json) {
+    Container.groupElements = function(json) {
         if (!json || !json.children || !Array.isArray(json.children)) {
             return json;
         }
@@ -377,7 +383,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         }
 
         for (let child of json.children) {
-            if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
+            if (child.type === constants.QUESTION_TYPE || child.type === constants.GROUP_TYPE) {
                 const elementTileWidth = GroupedElementTileRow.calculateElementWidth(child.style);
                 usedWidth += elementTileWidth;
                 if (usedWidth > constants.GRID_COLUMNS) {
@@ -385,7 +391,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                     usedWidth += elementTileWidth;
                 }
 
-                if (child.type === constants.GROUP_TYPE || child.type === constants.REPEAT_TYPE) {
+                if (child.type === constants.GROUP_TYPE) {
                     child = Container.groupElements(child);
                 }
 
@@ -416,7 +422,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         const siblingsOfDeletedGroup = parentOfDeletedGroup.children;
         const lastPart = ixParts[ixParts.length - 1];
         const lastPartPrefix = lastPart.substr(0, lastPart.lastIndexOf("_") + 1);
-        parentOfDeletedGroup.children = siblingsOfDeletedGroup.filter(function (c) {
+        parentOfDeletedGroup.children = siblingsOfDeletedGroup.filter(function(c) {
             const childIxParts = c.ix.split(",");
             return !childIxParts[childIxParts.length - 1].startsWith(lastPartPrefix);
         });
@@ -442,40 +448,40 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.atFirstIndex = ko.observable(true);
         self.shouldAutoSubmit = json.shouldAutoSubmit;
 
-        var _updateIndexCallback = function (ix, isAtFirstIndex, isAtLastIndex) {
+        var _updateIndexCallback = function(ix, isAtFirstIndex, isAtLastIndex) {
             self.currentIndex(ix.toString());
             self.atFirstIndex(isAtFirstIndex);
             self.atLastIndex(isAtLastIndex);
         };
 
-        self.showInFormNavigation = ko.computed(function () {
+        self.showInFormNavigation = ko.computed(function() {
             return self.displayOptions.oneQuestionPerScreen !== undefined
-            && self.displayOptions.oneQuestionPerScreen() === true;
+                && self.displayOptions.oneQuestionPerScreen() === true;
         });
 
-        self.isCurrentRequiredSatisfied = ko.computed(function () {
+        self.isCurrentRequiredSatisfied = ko.computed(function() {
             if (!self.showInFormNavigation()) {
                 return true;
             }
 
             let questions = getQuestions(self);
-            return _.every(questions, function (q) {
+            return _.every(questions, function(q) {
                 return (q.answer() === constants.NO_ANSWER && !q.required()) || q.answer() !== null;
             });
         });
-        self.isCurrentRequiredSatisfied.subscribe(function (isSatisfied) {
+        self.isCurrentRequiredSatisfied.subscribe(function(isSatisfied) {
             if (isSatisfied) {
                 self.forceRequiredVisible(false);
             }
         });
 
-        self.enableNextButton = ko.computed(function () {
+        self.enableNextButton = ko.computed(function() {
             if (!self.showInFormNavigation()) {
                 return false;
             }
 
             let questions = getQuestions(self);
-            var allValidAndNotPending = _.every(questions, function (q) {
+            var allValidAndNotPending = _.every(questions, function(q) {
                 return q.isValid() && !q.pendingAnswer();
             });
             return allValidAndNotPending
@@ -484,14 +490,14 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 && !self.atLastIndex();
         });
 
-        self.enablePreviousButton = ko.computed(function () {
+        self.enablePreviousButton = ko.computed(function() {
             if (!self.showInFormNavigation()) {
                 return false;
             }
             return self.currentIndex() !== "0" && self.currentIndex() !== "-1" && !self.atFirstIndex();
         });
 
-        self.erroredLabels = ko.computed(function () {
+        self.erroredLabels = ko.computed(function() {
             var questions = getQuestions(self);
             var erroredLabels = {};
             for (var i = 0; i < questions.length; i++) {
@@ -502,7 +508,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             return erroredLabels;
         });
 
-        self.erroredQuestions = ko.computed(function () {
+        self.erroredQuestions = ko.computed(function() {
             if (!self.hasSubmitAttempted()) {
                 return [];
             }
@@ -512,7 +518,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             for (var i = 0; i < questions.length; i++) {
                 // eslint-disable-next-line
                 if (questions[i].error() != null || questions[i].serverError() != null
-                            || (questions[i].required() && questions[i].answer() === null)) {
+                    || (questions[i].required() && questions[i].answer() === null)) {
                     qs.push(questions[i]);
                 }
             }
@@ -520,7 +526,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         });
 
         self.currentJumpPoint = null;
-        self.jumpToErrors = function () {
+        self.jumpToErrors = function() {
             var erroredQuestions = self.erroredQuestions();
             for (var i = erroredQuestions.length - 1; i >= 0; i--) {
                 if (!self.currentJumpPoint || !erroredQuestions.includes(self.currentJumpPoint)) {
@@ -539,11 +545,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             self.currentJumpPoint.navigateTo();
         };
 
-        self.enableSubmitButton = ko.computed(function () {
+        self.enableSubmitButton = ko.computed(function() {
             return !self.isSubmitting() && self.erroredQuestions().length === 0;
         });
 
-        self.getSubmitTranslation = function () {
+        self.getSubmitTranslation = function() {
             var translations = self.translations;
             if (translations) {
                 const result = Object.entries(translations).find(([k]) => k.includes("submit_label"));
@@ -555,7 +561,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             return gettext("Submit");
         };
 
-        self.submitText = ko.computed(function () {
+        self.submitText = ko.computed(function() {
             if (self.isSubmitting()) {
                 return gettext('Submitting...');
             }
@@ -564,27 +570,27 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         self.forceRequiredVisible = ko.observable(false);
 
-        self.showRequiredNotice = ko.computed(function () {
+        self.showRequiredNotice = ko.computed(function() {
             return !self.isCurrentRequiredSatisfied() && self.forceRequiredVisible();
         });
 
-        self.clickedNextOnRequired = function () {
+        self.clickedNextOnRequired = function() {
             self.forceRequiredVisible(true);
         };
 
-        self.enableForceNextButton = ko.computed(function () {
+        self.enableForceNextButton = ko.computed(function() {
             return !self.isCurrentRequiredSatisfied() && !self.enableNextButton();
         });
 
-        self.disableNextButton = ko.computed(function () {
+        self.disableNextButton = ko.computed(function() {
             return !self.enableNextButton() && !self.enableForceNextButton();
         });
 
-        self.showSubmitButton = ko.computed(function () {
+        self.showSubmitButton = ko.computed(function() {
             return !self.showInFormNavigation() && !self.shouldAutoSubmit;
         });
 
-        self.submitForm = function () {
+        self.submitForm = function() {
             $(document).onvisibilitychange = () => {
                 if (document.visibilityState === "hidden") {
                     self.showSubmitButton = false;
@@ -594,21 +600,21 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             $.publish('formplayer.' + constants.SUBMIT, self);
         };
 
-        self.nextQuestion = function () {
+        self.nextQuestion = function() {
             $.publish('formplayer.' + constants.NEXT_QUESTION, {
                 callback: _updateIndexCallback,
                 title: self.title(),
             });
         };
 
-        self.prevQuestion = function () {
+        self.prevQuestion = function() {
             $.publish('formplayer.' + constants.PREV_QUESTION, {
                 callback: _updateIndexCallback,
                 title: self.title(),
             });
         };
 
-        self.getTranslation = function (translationKey, defaultTranslation) {
+        self.getTranslation = function(translationKey, defaultTranslation) {
             // Find the root level element which contains the translations.
             var translations = self.translations;
 
@@ -621,21 +627,21 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             return defaultTranslation;
         };
 
-        self.afterRender = function () {
-            $(document).on("click", ".help-text-trigger", function (event) {
+        self.afterRender = function() {
+            $(document).on("click", ".help-text-trigger", function(event) {
                 event.preventDefault();
                 var container = $(event.currentTarget).closest(".caption");
                 bootstrap.Modal.getOrCreateInstance(container.find(".modal")).show();
             });
 
-            $(document).on("click", ".unsupported-question-type-trigger", function (event) {
+            $(document).on("click", ".unsupported-question-type-trigger", function(event) {
                 var container = $(event.currentTarget).closest(".widget");
                 bootstrap.Modal.getOrCreateInstance(container.find(".modal")).show();
             });
         };
 
         $.unsubscribe('session');
-        $.subscribe('session.reconcile', function (e, response, element, deletedGroup) {
+        $.subscribe('session.reconcile', function (e, response, element, options) {
             // TODO where does response status parsing belong?
             if (response.status === 'validation-error') {
                 if (response.type === 'required') {
@@ -648,25 +654,29 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 const allChildren = response.tree;
                 delete response.tree;
 
-                if (deletedGroup) {
+                if (options) {
                     // deletedGroup is only set for responses from delete-repeat.
                     // because ko.mapping does not like reassigning keys we need to remove all repeat group siblings and
                     // add them back in to force proper refresh. Setting response.children to [] would also work but was
                     // quite slow for larger forms.
                     // self.fromJS makes changes to the response. So create a copy first.
                     response.children = JSON.parse(JSON.stringify(allChildren));
-                    removeSiblingsOfRepeatGroup(response, deletedGroup);
+                    if (options.deletedGroup) {
+                        removeSiblingsOfRepeatGroup(response, options.deletedGroup);
+                    }
                     self.fromJS(response);
                 }
 
-                if (element.serverError) { element.serverError(null); }
+                if (element.serverError) {
+                    element.serverError(null);
+                }
 
                 response.children = allChildren;
                 self.fromJS(response);
             }
         });
 
-        $.subscribe('session.block', function (e, block) {
+        $.subscribe('session.block', function(e, block) {
             $('#webforms input, #webforms textarea').prop('disabled', block === constants.BLOCK_ALL);
             self.blockSubmit(block === constants.BLOCK_ALL || block === constants.BLOCK_SUBMIT);
         });
@@ -684,36 +694,31 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.parent = parent;
         Container.call(self, json);
 
+        self.isDummy = ko.observable(self.exists() === "false");
+        self.addChoice = ko.observable(json['add-choice']);
+
         self.groupId = groupNum++;
-        self.rel_ix = ko.observable(relativeIndex(self.ix()));
-        // USH-4332: after FP deploy isRepetition can be removed
-        self.isRepetition = parent.parent instanceof Repeat;
+        self.rel_ix = ko.pureComputed(() => relativeIndex(self.ix()));
         if (Object.hasOwn(self, 'delete')) {
             self.showDelete = self.delete();
         } else {
-            self.showDelete = self.isRepetition;
+            self.showDelete = false;
         }
         let parentForm = getParentForm(self);
         let oneQuestionPerScreen = parentForm.displayOptions.oneQuestionPerScreen !== undefined && parentForm.displayOptions.oneQuestionPerScreen();
 
-        self.hasNoPendingAnswer = ko.pureComputed(function () {
+        self.hasNoPendingAnswer = ko.pureComputed(function() {
             return !self.parent.hasAnyNestedQuestionWithPendingAnswer();
         });
 
         // Header and captions
-        self.showHeader = oneQuestionPerScreen || self.isRepetition || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown);
-        if (self.showHeader) {
-            if (!oneQuestionPerScreen && self.isRepetition) {
-                self.caption(null);
-                self.hideCaption = true;
-            }
-        }
+        self.showHeader = oneQuestionPerScreen || ko.utils.unwrapObservable(self.caption) || ko.utils.unwrapObservable(self.caption_markdown);
 
         if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
             self.domain_meta = parseMeta(json.datatype, json.style);
         }
 
-        self.focusNewRepeat = function () {
+        self.focusNewRepeat = function() {
             var repeat = $('.repetition');
             if (repeat) {
                 repeat.trigger('focus');
@@ -725,7 +730,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.collapsible = _.contains(styles, constants.COLLAPSIBLE);
         self.groupBorder = _.contains(styles, constants.GROUP_BORDER);
         self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN));
-        self.toggleChildren = function () {
+        self.toggleChildren = function() {
             if (self.collapsible) {
                 if (self.showChildren()) {
                     self.showChildren(false);
@@ -735,29 +740,27 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             }
         };
 
-        self.captionId = function () {
+        self.captionId = function() {
             return "group_".concat(self.groupId).concat("_caption");
         };
 
-        self.keyPressAction = function (data, event) {
+        self.keyPressAction = function(data, event) {
             // Toggle children on Enter or Space.
             if (event.keyCode === 13 || event.keyCode === 32) {
                 this.toggleChildren(data, event);
             }
         };
-        self.childrenRequired = ko.computed(function () {
-            return _.find(self.children(), function (child) {
+        self.childrenRequired = ko.computed(function() {
+            return _.find(self.children(), function(child) {
                 return child.required() || child.childrenRequired && child.childrenRequired();
             });
         });
 
-        if (self.isRepetition) {
-            // If the group is part of a repetition the index can change if the user adds or deletes
-            // repeat groups.
-            self.ix.subscribe(function () {
-                self.rel_ix(relativeIndex(self.ix()));
-            });
-        }
+        self.newRepeat = function () {
+            $.publish('formplayer.' + constants.NEW_REPEAT, self);
+            $.publish('formplayer.dirty');
+            $('.add').trigger('blur');
+        };
 
         self.deleteRepeat = function () {
             $.publish('formplayer.' + constants.DELETE_REPEAT, self);
@@ -765,29 +768,29 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         };
 
         self.hasAnyNestedQuestions = function () {
-            return _.any(self.children(), function (d) {
+            return self.isDummy() || _.any(self.children(), function (d) {
                 if (d.type() === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
                     return d.hasAnyNestedQuestions();
                 }
             });
         };
 
-        self.hasAnyNestedQuestionWithPendingAnswer = ko.pureComputed(function () {
-            return _.any(self.children(), function (d) {
+        self.hasAnyNestedQuestionWithPendingAnswer = ko.pureComputed(function() {
+            return _.any(self.children(), function(d) {
                 if (d.type() === constants.GROUPED_ELEMENT_TILE_ROW_TYPE) {
                     return d.hasAnyNestedQuestionWithPendingAnswer();
                 }
             });
         });
 
-        self.isVisibleGroup = function () {
+        self.isVisibleGroup = function() {
             const hasChildren = self.children().length !== 0;
             const hasLabel = !!ko.utils.unwrapObservable(self.caption_markdown) || !!self.caption();
             return hasChildren && hasLabel;
         };
 
-        self.headerBackgroundColor = function () {
-            if (self.isRepetition || !self.collapsible) {
+        self.headerBackgroundColor = function() {
+            if (!self.collapsible) {
                 return '';
             }
             return Container.prototype.headerBackgroundColor.call(self);
@@ -801,41 +804,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     Group.prototype.constructor = Container;
 
     /**
-     * Represents a repeat group. A repeat only has Group objects as children, which are contained
-     * within a GroupedElementTileRow. Each child Group contains GroupedElementTileRow
-     * objects which contains the child questions to be rendered
-     * @param {Object} json - The JSON returned from touchforms to represent a Form
-     * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
-     */
-    function Repeat(json, parent) {
-        var self = this;
-        self.parent = parent;
-
-        Container.call(self, json);
-
-        self.rel_ix = ko.observable(relativeIndex(self.ix()));
-        if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
-            self.domain_meta = parseMeta(json.datatype, json.style);
-        }
-        self.templateType = 'repeat';
-        self.ixInfo = function (o) {
-            var fullIx = getIx(o);
-            return o.rel_ix + (o.isRepetition ? '(' + o.uuid + ')' : '') + (o.rel_ix !== fullIx ? ' :: ' + fullIx : '');
-        };
-
-        self.newRepeat = function () {
-            $.publish('formplayer.' + constants.NEW_REPEAT, self);
-            $.publish('formplayer.dirty');
-            $('.add').trigger('blur');
-        };
-
-        const columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
-        this.elementTile = `col-md-${columnWidth}`;
-    }
-    Repeat.prototype = Object.create(Container.prototype);
-    Repeat.prototype.constructor = Container;
-
-    /**
      * Represents a group of Questions, Group, or Repeat. Elements are grouped such that all elements are
      * contained in the same row.
      * @param {Object} json - The JSON returned from touchforms to represent a Form
@@ -846,8 +814,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         self.parent = parent;
         Container.call(self, json);
 
-        self.hasAnyNestedQuestionWithPendingAnswer = ko.pureComputed(function () {
-            return _.any(self.children(), function (d) {
+        self.hasAnyNestedQuestionWithPendingAnswer = ko.pureComputed(function() {
+            return _.any(self.children(), function(d) {
                 if (d.type() === constants.QUESTION_TYPE) {
                     return d.pendingAnswer();
                 } else if (d.type() === constants.GROUP_TYPE) {
@@ -857,9 +825,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             });
         });
 
-        self.hasAnyNestedQuestions = function () {
-            return _.any(self.children(), function (d) {
-                if (d.type() === constants.QUESTION_TYPE || d.type() === constants.REPEAT_TYPE || d.type() === constants.ADD_GROUP_TYPE) {
+        self.hasAnyNestedQuestions = function() {
+            return _.any(self.children(), function(d) {
+                if (d.type() === constants.QUESTION_TYPE) {
                     return true;
                 } else if (d.type() === constants.GROUP_TYPE) {
                     return d.hasAnyNestedQuestions();
@@ -868,8 +836,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         };
 
         self.required = ko.observable(0);
-        self.childrenRequired = ko.computed(function () {
-            return _.find(self.children(), function (child) {
+        self.childrenRequired = ko.computed(function() {
+            return _.find(self.children(), function(child) {
                 return (child.required && child.required() || child.childrenRequired && child.childrenRequired());
             });
         });
@@ -882,7 +850,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
      * based on Bootstrap's 12 column grid system and returns the column width.
      * @param {Object} style - the appearance attributes
      */
-    GroupedElementTileRow.calculateElementWidth = function (style) {
+    GroupedElementTileRow.calculateElementWidth = function(style) {
         const styleStr = (style) ? ko.utils.unwrapObservable(style.raw) : null;
         const matchingPerRowStyles = getMatchingStyles(constants.PER_ROW_PATTERN, styleStr);
         const perRowStyle = matchingPerRowStyles.length === 0 ? null : matchingPerRowStyles[0];
@@ -890,24 +858,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         return itemsPerRow !== null ? Math.round(constants.GRID_COLUMNS / itemsPerRow) : constants.GRID_COLUMNS;
     };
-
-    function AddGroup(json, parent) {
-        var self = this;
-        self.parent = parent;
-        self.hasError = ko.observable(false);
-        self.children = ko.observable([]);
-        self.newRepeat = function () {
-            $.publish('formplayer.' + constants.NEW_REPEAT, self);
-            $.publish('formplayer.dirty');
-            $('.add').trigger('blur');
-        };
-        self.entryTemplate = "add-group-entry-ko-template";
-        self.addChoice = ko.observable(json['add-choice']);
-        self.type = ko.observable("add-group");
-        self.rel_ix = ko.observable(relativeIndex(json.ix));
-        self.required = ko.observable(json.required);
-        self.hasError = ko.observable(json.hasError);
-    }
 
     /**
      * Represents a Question. A Question contains an Entry which is the widget that is displayed for that question
@@ -939,11 +889,11 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         // pendingAnswer is a copy of an answer being submitted, so that we know not to reconcile a new answer
         // until the question has received a response from the server.
         self.pendingAnswer = ko.observable(constants.NO_PENDING_ANSWER);
-        self.pendingAnswer.subscribe(function () { self.hasAnswered = true; });
-        self.dirty = ko.computed(function () {
+        self.pendingAnswer.subscribe(function() { self.hasAnswered = true; });
+        self.dirty = ko.computed(function() {
             return self.pendingAnswer() !== constants.NO_PENDING_ANSWER;
         });
-        self.hasError = ko.computed(function () {
+        self.hasError = ko.computed(function() {
             return (self.error() || self.serverError()) && !self.dirty();
         });
 
@@ -960,7 +910,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         });
         self.setWidths(self.hasLabelContent());
 
-        self.form = function () {
+        self.form = function() {
             var parent = self.parent;
             while (parent.type && parent.type() !== null) {
                 parent = parent.parent;
@@ -968,41 +918,41 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             return parent;
         };
 
-        self.isValid = function () {
+        self.isValid = function() {
             return self.error() === null && self.serverError() === null;
         };
 
         self.entry = entries.getEntry(self);
-        self.entryTemplate = function () {
+        self.entryTemplate = function() {
             return self.entry.templateType + '-entry-ko-template';
         };
-        self.afterRender = function () { self.entry.afterRender(); };
+        self.afterRender = function() { self.entry.afterRender(); };
 
-        self.ixInfo = function (o) {
+        self.ixInfo = function(o) {
             var fullIx = getIx(o);
-            return o.rel_ix + (o.isRepetition ? '(' + o.uuid + ')' : '') + (o.rel_ix !== fullIx ? ' :: ' + fullIx : '');
+            return o.rel_ix + (o.rel_ix !== fullIx ? ' :: ' + fullIx : '');
         };
 
-        self.triggerAnswer = function () {
+        self.triggerAnswer = function() {
             self.pendingAnswer(_.clone(self.answer()));
             publishAnswerEvent();
         };
-        var publishAnswerEvent = _.throttle(function () {
+        var publishAnswerEvent = _.throttle(function() {
             $.publish('formplayer.dirty');
             $.publish('formplayer.' + constants.ANSWER, self);
         }, self.throttle);
         self.onchange = self.triggerAnswer;
 
-        self.onClear = _.throttle(function () {
+        self.onClear = _.throttle(function() {
             $.publish('formplayer.' + constants.CLEAR_ANSWER, self);
         }, self.throttle);
 
-        self.mediaSrc = function (resourceType) {
+        self.mediaSrc = function(resourceType) {
             if (!resourceType || !_.isFunction(formEntryUtils.resourceMap)) { return ''; }
             return formEntryUtils.resourceMap(resourceType);
         };
 
-        self.navigateTo = function () {
+        self.navigateTo = function() {
             // toggle nested collapsible Groups
             var hasParent = self.parent !== undefined;
             var currentNode = self;
@@ -1028,21 +978,21 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
      * a knockout representation.
      * @param {Object} json - The JSON returned from touchforms to represent a Question
      */
-    Question.prototype.fromJS = function (json) {
+    Question.prototype.fromJS = function(json) {
         var self = this;
         var mapping = {
             caption: {
-                update: function (options) {
+                update: function(options) {
                     return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
                 },
             },
             caption_markdown: {
-                update: function (options) {
+                update: function(options) {
                     return options.data ? markdown.render(options.data) : null;
                 },
             },
             help: {
-                update: function (options) {
+                update: function(options) {
                     return options.data ? markdown.render(options.data) : null;
                 },
             },
@@ -1057,7 +1007,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
      * an exact match is returned.
      * @param {Object} pattern - the regex or string used to find matching styles.
      */
-    Question.prototype.stylesContaining = function (pattern) {
+    Question.prototype.stylesContaining = function(pattern) {
         var self = this;
         return stylesContaining(pattern, self.style);
     };
@@ -1066,12 +1016,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
      * Returns a boolean of whether the styles contain a pattern.
      * @param {Object} pattern - the regex or string used to find matching styles.
      */
-    Question.prototype.stylesContains = function (pattern) {
+    Question.prototype.stylesContains = function(pattern) {
         let _self = this;
         return stylesContains(pattern, _self.style);
     };
 
-    Question.prototype.setWidths = function (hasLabel) {
+    Question.prototype.setWidths = function(hasLabel) {
         const self = this;
         const columnWidth = GroupedElementTileRow.calculateElementWidth(self.style);
 
@@ -1103,13 +1053,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     return {
         getIx: getIx,
         getForIx: getForIx,
-        Form: function (json) {
+        Form: function(json) {
             return new Form(json);
         },
-        Question: function (json, parent) {
+        Question: function(json, parent) {
             return new Question(json, parent);
         },
-        Repeat: Repeat,
         removeSiblingsOfRepeatGroup: removeSiblingsOfRepeatGroup,
     };
 });
