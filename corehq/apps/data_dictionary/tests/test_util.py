@@ -158,6 +158,11 @@ class MiscUtilTest(TestCase):
             case_type=cls.case_type_obj,
             name='TestGroup'
         )
+        cls.case_type_deprecated_group = CasePropertyGroup.objects.create(
+            case_type=cls.case_type_obj,
+            name='DeprecatedTestGroup',
+            deprecated=True,
+        )
         CaseProperty.objects.create(
             name='case_prop_1',
             case_type=cls.case_type_obj,
@@ -321,11 +326,27 @@ class MiscUtilTest(TestCase):
         self.assertEqual(dep_dict, expected_response)
 
     def test_get_case_property_group_name_for_properties(self):
+        # Deprecated case prop
+        CaseProperty.objects.create(
+            name='deprecated_case_prop',
+            case_type=self.case_type_obj,
+            label='Deprecated Case Prop',
+            deprecated=True,
+            group=self.case_type_group,
+        )
+        # Deprecated group's case prop
+        CaseProperty.objects.create(
+            name='deprecated_group_case_prop_1',
+            case_type=self.case_type_obj,
+            label='Deprecated group prop',
+            group=self.case_type_deprecated_group,
+        )
+
         case_group_name_for_property = get_case_property_group_name_for_properties(self.domain,
                                                                                    self.case_type_name)
         self.assertEqual(
             case_group_name_for_property,
-            {'case_prop_1': 'TestGroup', 'case_prop_2': None}
+            {'case_prop_1': 'TestGroup'}
         )
 
 
