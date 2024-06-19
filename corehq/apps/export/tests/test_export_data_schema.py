@@ -1415,7 +1415,7 @@ class TestOrderingOfSchemas(SimpleTestCase):
         )
 
 
-class TestOrderingOfCaseSchemaItemsFromDataDictionary(TestCase, TestXmlMixin):
+class BaseTestOrderingOfCaseSchemaItems(TestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
     case_type = 'person'
@@ -1423,7 +1423,7 @@ class TestOrderingOfCaseSchemaItemsFromDataDictionary(TestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestOrderingOfCaseSchemaItemsFromDataDictionary, cls).setUpClass()
+        super(BaseTestOrderingOfCaseSchemaItems, cls).setUpClass()
 
         factory = AppFactory(domain=cls.domain)
         module1, form1 = factory.new_basic_module('update_case', cls.case_type)
@@ -1463,12 +1463,17 @@ class TestOrderingOfCaseSchemaItemsFromDataDictionary(TestCase, TestXmlMixin):
     @classmethod
     def tearDownClass(cls):
         cls.current_app.delete()
-        super(TestOrderingOfCaseSchemaItemsFromDataDictionary, cls).tearDownClass()
+        super(BaseTestOrderingOfCaseSchemaItems, cls).tearDownClass()
 
     def _get_schema_item_order(self, for_new_export_instance=True):
         schema = self._generate_schema(for_new_export_instance=for_new_export_instance)
         return [item.label for item in schema.group_schemas[0].items]
 
+    def _generate_schema(self):
+        raise NotImplementedError
+
+
+class TestOrderingOfCaseSchemaItemsFromDataDictionary(BaseTestOrderingOfCaseSchemaItems):
     def _generate_schema(self, for_new_export_instance=True):
         return CaseExportDataSchema.generate_schema_from_builds(
             self.domain,
@@ -1515,3 +1520,27 @@ class TestOrderingOfCaseSchemaItemsFromDataDictionary(TestCase, TestXmlMixin):
             self._get_schema_item_order(),
             ['weight', 'height', 'address', 'age']
         )
+
+
+class TestOrderingOfBulkCaseExportSchemaItemsFromDataDictionary(BaseTestOrderingOfCaseSchemaItems):
+    def _generate_schema(self, **kwargs):
+        return CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            None,
+            ALL_CASE_TYPE_EXPORT,
+        )
+
+    def test_default_ordering(self, *args):
+        with patch('corehq.apps.export.models.new.get_case_types_for_domain', return_value=(self.case_type,)):
+            self.assertListEqual(
+                self._get_schema_item_order(),
+                ['address', 'age', 'height', 'weight']
+            )
+
+    @patch('corehq.apps.export.models.new.domain_has_privilege', return_value=True)
+    def test_ordering_for_bulk_export_with_feature_flag(self, *args):
+        with patch('corehq.apps.export.models.new.get_case_types_for_domain', return_value=(self.case_type,)):
+            self.assertListEqual(
+                self._get_schema_item_order(),
+                ['weight', 'height', 'address', 'age']
+            )
