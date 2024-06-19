@@ -76,14 +76,6 @@
   }
 }
 
-.query-caption.required .control-label::before, .search-query-group-header.required .search-query-group-header-label::before {
-  content: '*';
-  font-weight: bold;
-  color: #c0392b;
-  margin: 0 3px;
-  float: left;
-}
-
 .search-query-group-header-label {
   font-size: larger;
 }
