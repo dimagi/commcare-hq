@@ -15,6 +15,7 @@ requirejs.config({
         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
         "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
         "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
+        "sortablejs": "sortablejs/Sortable.min",
         "underscore": "underscore/underscore",
     },
     shim: {
