@@ -1201,7 +1201,7 @@ class InitiateAddSMSBackendForm(Form):
             if is_superuser_or_contractor(user) or api_id == SQLTelerivetBackend.get_api_id():
                 friendly_name = klass.get_generic_name()
                 if friendly_name == 'Unicel':
-                    continue # Unicel is a formerly used Gateway which is no longer supported
+                    continue  # Unicel is a formerly used Gateway which is no longer supported
                 backend_choices.append((api_id, friendly_name))
         backend_choices = sorted(backend_choices, key=lambda backend: backend[1])
         self.fields['hq_api_id'].choices = backend_choices
