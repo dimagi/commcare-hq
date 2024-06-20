@@ -69,8 +69,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         function subscribePropObservable(propObj, prop, changeSaveButton) {
             prop.subscribe(changeSaveButton);
-            const valChangedFunc = (newVal) => propObj.valChanged(newVal, prop._oldValue);
-            prop.subscribe(valChangedFunc);
+            propObj.trackObservableChange(prop);
         }
 
         return self;
@@ -125,10 +124,19 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.index = index;
         self.loadedGroup = loadedGroup;  // The group this case property is part of when page was loaded. Used to identify group changes
 
-        self.valChanged = function (newVal, oldVal) {
-            if (newVal !== oldVal) {
-                self.hasChanges = true;
-            }
+        self.trackObservableChange = function (observable) {
+            // Keep track of old val for observable, and subscribe to new changes.
+            // We can then identify when the val has changed.
+            let oldVal = observable();
+            observable.subscribe(function (newVal) {
+                if (!newVal && !oldVal) {
+                    return;
+                }
+                if (newVal !== oldVal) {
+                    self.hasChanges = true;
+                }
+                oldVal = newVal;
+            });
         };
 
         self.allowedValuesChanged = function () {
