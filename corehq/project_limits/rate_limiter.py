@@ -4,7 +4,11 @@ import time
 import attr
 
 from corehq.apps.users.models import CommCareUser
-from corehq.project_limits.models import DynamicRateDefinition
+from corehq.project_limits.models import (
+    AVG,
+    DynamicRateDefinition,
+    PillowLagThrottleDefinition,
+)
 from corehq.project_limits.rate_counter.presets import (
     day_rate_counter,
     hour_rate_counter,
@@ -148,6 +152,14 @@ def _get_account_name(domain):
         return f'account:{account.name}'
     else:
         return f'no_account:{domain}'
+
+
+@quickcache(['kafka_topic'], memoize_timeout=60, timeout=24 * 60 * 60)
+def get_pillow_throttle_definition(kafka_topic):
+    try:
+        return PillowLagThrottleDefinition.objects.get(kafka_topic=kafka_topic)
+    except PillowLagThrottleDefinition.DoesNotExist:
+        return None
 
 
 class PerUserRateDefinition(object):
