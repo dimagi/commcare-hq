@@ -150,7 +150,7 @@ hqDefine('geospatial/js/models', [
             self.mapInstance.addControl(self.drawControls);
 
             // Add zoom and rotation controls to the map.
-            self.mapInstance.addControl(new mapboxgl.NavigationControl());
+            self.mapInstance.addControl(new mapboxgl.NavigationControl());  // eslint-disable-line no-undef
 
             if (self.usesClusters) {
                 createClusterLayers();
