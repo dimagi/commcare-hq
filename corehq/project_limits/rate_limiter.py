@@ -1,5 +1,6 @@
 import random
 import time
+from datetime import datetime, timedelta
 
 import attr
 
@@ -247,3 +248,23 @@ def _get_rate_definition_dict(rate_definition):
         attribute.name: getattr(rate_definition, attribute.name)
         for attribute in RateDefinition.__attrs_attrs__
     }
+
+
+class GaugeLimiter:
+    def __init__(self, gauge):
+        self.gauge = gauge
+        self.throttle_config = get_pillow_throttle_definition(gauge.topic)
+
+    def wait(self):
+        if not self.throttle_config:
+            return
+        current_lag = None
+        if self.throttle_config.actionable_metric == AVG:
+            current_lag = self.gauge.avg()
+        else:
+            current_lag = self.gauge.max()
+        if current_lag > self.acceptable_delay and self.has_pillow_reported_in_last_15_minutes():
+            time.sleep(self.throttle_config.throttle_for_seconds)
+
+    def has_pillow_reported_in_last_15_minutes(self):
+        self.gauge.get_last_reported_time() > datetime.utcnow() - timedelta(minutes=15)
