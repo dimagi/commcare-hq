@@ -129,11 +129,13 @@ class FeatureType(object):
     USER = "User"
     SMS = "SMS"
     WEB_USER = "Web User"
+    SUBMITTING_MOBILE_WORKER = "Submitting Mobile Worker"
 
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
-        (WEB_USER, WEB_USER)
+        (WEB_USER, WEB_USER),
+        (SUBMITTING_MOBILE_WORKER, SUBMITTING_MOBILE_WORKER),
     )
 
 
@@ -729,7 +731,7 @@ class Feature(models.Model):
     and will be what the FeatureRate references to provide a monthly fee, limit and per-excess fee.
     """
     name = models.CharField(max_length=40, unique=True)
-    feature_type = models.CharField(max_length=10, db_index=True, choices=FeatureType.CHOICES)
+    feature_type = models.CharField(max_length=40, db_index=True, choices=FeatureType.CHOICES)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta(object):
@@ -3391,7 +3393,7 @@ class CreditLine(models.Model):
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
     is_product = models.BooleanField(default=False)
-    feature_type = models.CharField(max_length=10, null=True, blank=True,
+    feature_type = models.CharField(max_length=40, null=True, blank=True,
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
@@ -3958,18 +3960,37 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
             raise ValidationError(_("You can't specify both an invoice and a line item."))
 
 
-class DomainUserHistory(models.Model):
+class DomainUserHistoryBase(models.Model):
     """
-    A record of the number of users in a domain at the record_date.
-    Created by task calculate_users_in_all_domains on the first of every month.
-    Used to bill clients for the appropriate number of users
+    Base record of the number of mobile workers in a domain for a given date.
     """
     domain = models.CharField(max_length=256)
     record_date = models.DateField()
     num_users = models.IntegerField(default=0)
 
     class Meta:
+        abstract = True
         unique_together = ('domain', 'record_date')
+
+
+class DomainUserHistory(DomainUserHistoryBase):
+    """
+    The total number of mobile workers in a domain at the record_date.
+    Created by task calculate_users_in_all_domains on the first of every month.
+    Used to bill clients for the appropriate number of mobile workers.
+    """
+    pass
+
+
+class DomainSubmittingMobileWorkerHistory(DomainUserHistoryBase):
+    """
+    The number of form-submitting mobile workers in a domain for the month
+    preceeding the record date.
+    TODO: Create by task calculate_submitting_mobile_workers_in_all_domains
+    on the first of every month. Will be used to bill clients for the
+    appropriate number of form-submitting mobile workers.
+    """
+    pass
 
 
 class BillingAccountWebUserHistory(models.Model):
