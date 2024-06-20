@@ -47,6 +47,7 @@ from corehq.apps.reports.standard import (
     ProjectReportParametersMixin,
 )
 from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.quickcache import quickcache
@@ -311,10 +312,11 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             )
         )
 
-    def user_locations_dict(self, users):
+    def user_locations_dict(self, user_docs):
         all_loc_ids = set()
-        for user in users:
-            for loc_id in user.get('assigned_location_ids'):
+        for user_doc in user_docs:
+            user = CouchUser.wrap_correctly(user_doc)
+            for loc_id in user.get_location_ids(self.domain):
                 all_loc_ids.add(loc_id)
         return dict(SQLLocation.objects.filter(
             location_id__in=all_loc_ids, domain=self.domain
@@ -498,8 +500,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         result[0][1] = table
         return result
 
-    def get_location_column(self, user, user_loc_dict):
-        if not user.get('assigned_location_ids'):
+    def get_location_column(self, user_doc, user_loc_dict):
+        user = CouchUser.wrap_correctly(user_doc)
+        if not user.get_location_ids(self.domain):
             return '---'
         return self._get_formatted_assigned_location_names(user, user_loc_dict)
 
@@ -508,8 +511,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         Create an HTML formatted string of the given assigned location names.
         The primary location will be highlighted in bold.
         """
-        assigned_location_ids = user.get('assigned_location_ids')
-        primary_location_id = user.get('location_id')
+        assigned_location_ids = user.get_location_ids(self.domain)
+        primary_location_id = user.get_location_id(self.domain)
         formatted_loc_names = []
         for loc_id in assigned_location_ids:
             loc_name = user_loc_dict.get(loc_id)
