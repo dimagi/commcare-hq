@@ -521,20 +521,20 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 formatted_loc_names.append(loc_name)
 
         formatted_str = ', '.join(formatted_loc_names[:4])
-        all_str = ', '.join(formatted_loc_names)
-        view_all_str = _('...See more') if len(formatted_loc_names) > 4 else ''
-        view_less_str = _('...See less') if len(formatted_loc_names) > 4 else ''
-        out_str = ('''
-            <div>
-                <span class="locations-list">{}</span>
-                <span class="all-locations-list" style="display:none">{}</span>
-                <a href="#" class="toggle-all-locations">
-                   <span>{}</span>
-                   <span style="display:none">{}</span>
-                </a>
-            </div>
-        ''').format(formatted_str, all_str, view_all_str, view_less_str)
-        return format_html(out_str)
+        html_nodes = [
+            f'<span class="locations-list">{formatted_str}</span>',
+        ]
+        if len(formatted_loc_names) > 4:
+            all_str = ', '.join(formatted_loc_names)
+            view_controls_html_nodes = [
+                f'<span>{_("...See more")}</span>',
+                f'<span style="display:none">{_("...See less")}</span>',
+            ]
+            html_nodes += [
+                f'<span class="all-locations-list" style="display:none">{all_str}</span>',
+                f'<a href="#" class="toggle-all-locations">{"".join(view_controls_html_nodes)}</a>',
+            ]
+        return format_html(f'<div>{"".join(html_nodes)}</div>')
 
 
 def _get_commcare_version(app_version_info):
