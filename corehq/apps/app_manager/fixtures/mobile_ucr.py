@@ -1,7 +1,7 @@
 import logging
 import numbers
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -9,6 +9,7 @@ from django.conf import settings
 from django.utils.translation import gettext
 
 from lxml.builder import E
+from memoized import memoized
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.models import UCRSyncLog
@@ -34,6 +35,7 @@ from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
+from corehq.util.metrics import metrics_histogram
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
@@ -61,6 +63,19 @@ def _should_sync(restore_state):
 
     # Default to syncing
     return True
+
+
+@memoized
+def _count_buckets():
+    count_buckets = []
+    for x in range(10):
+        bucket_value = 100 * 10 ** x
+        if bucket_value >= settings.MAX_MOBILE_UCR_SIZE:
+            count_buckets.append(settings.MAX_MOBILE_UCR_SIZE)
+            break
+        else:
+            count_buckets.append(bucket_value)
+    return count_buckets
 
 
 class ReportFixturesProvider(FixtureProvider):
@@ -94,8 +109,18 @@ class ReportFixturesProvider(FixtureProvider):
 
         for provider in providers:
             fixtures.extend(provider(restore_state, restore_user, needed_versions, report_configs))
+            self.report_ucr_row_count(provider.row_count, provider.version, restore_user.domain)
 
         return fixtures
+
+    def report_ucr_row_count(self, row_count, provider_version, domain):
+        metrics_histogram(
+            "commcare.restores.ucr_rows.count",
+            row_count,
+            bucket_tag="count",
+            buckets=_count_buckets(),
+            tags={"version": provider_version, "domain": domain},
+        )
 
     def should_sync(self, restore_state):
         restore_user = restore_state.restore_user
@@ -184,6 +209,11 @@ def _get_report_index_fixture(restore_user, oldest_sync_time=None):
 class BaseReportFixtureProvider(metaclass=ABCMeta):
     def __init__(self, report_data_cache):
         self.report_data_cache = report_data_cache
+        self.row_count = 0
+
+    @abstractproperty
+    def version(self):
+        """A string representing the version of this provider"""
 
     @abstractmethod
     def __call__(self, restore_state, restore_user, needed_versions, report_configs):
@@ -198,6 +228,7 @@ class BaseReportFixtureProvider(metaclass=ABCMeta):
 
 class ReportFixturesProviderV1(BaseReportFixtureProvider):
     id = 'commcare:reports'
+    version = '1'
 
     def __call__(self, restore_state, restore_user, needed_versions, report_configs):
         """
@@ -265,6 +296,9 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         row_elements, filters_elem = generate_rows_and_filters(
             self.report_data_cache, report_config, restore_user, _row_to_row_elem
         )
+        # the v1 provider writes all reports to one fixture, so the "effective" row_count is the sum of every
+        # report's row_count
+        self.row_count += len(row_elements)
         rows_elem = E.rows()
         for row in row_elements:
             rows_elem.append(row)
@@ -277,6 +311,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
 
 class ReportFixturesProviderV2(BaseReportFixtureProvider):
     id = 'commcare-reports'
+    version = '2'
 
     def __call__(self, restore_state, restore_user, needed_versions, report_configs):
         """
@@ -412,6 +447,8 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         rows, filters_elem = generate_rows_and_filters(
             self.report_data_cache, report_config, restore_user, _row_to_row_elem
         )
+        # the v2 provider writes each report to its own fixture so we only care about the max row_count
+        self.row_count = max(len(rows), self.row_count)
         rows_elem = E.rows(last_sync=_format_last_sync_time(restore_user))
         for row in rows:
             rows_elem.append(row)
