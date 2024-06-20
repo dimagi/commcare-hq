@@ -1,4 +1,5 @@
 {% extends "hqwebapp/tables/bootstrap5.html" %}
+{% load i18n %}
 {% load django_tables2 %}
 {% load hq_shared_tags %}
 
@@ -11,6 +12,12 @@
 {% block table-container-attrs %}
   hx-get="{{ request.path_info }}{% querystring %}"
   hx-trigger="refreshTable"
+{% endblock %}
+
+{% block before_table %}
+  <div class="htmx-indicator">
+    <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Updating..." %}
+  </div>
 {% endblock %}
 
 {% block select-per-page-attr %}
