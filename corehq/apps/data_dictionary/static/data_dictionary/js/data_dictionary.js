@@ -24,7 +24,15 @@ hqDefine("data_dictionary/js/data_dictionary", [
     DOMPurify,
     toggles
 ) {
-    var caseType = function (name, fhirResourceType, deprecated, moduleCount, geoCaseProp, isSafeToDelete) {
+    var caseType = function (
+        name,
+        fhirResourceType,
+        deprecated,
+        moduleCount,
+        geoCaseProp,
+        isSafeToDelete,
+        changeSaveButton
+    ) {
         var self = {};
         self.name = name || gettext("No Name");
         self.deprecated = deprecated;
@@ -34,13 +42,18 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.groups = ko.observableArray();
         self.geoCaseProp = geoCaseProp;
         self.canDelete = isSafeToDelete;
+        self.changeSaveButton = changeSaveButton;
 
-        self.init = function (groupData, changeSaveButton) {
+        self.init = function (groupData) {
             for (let group of groupData) {
-                let groupObj = groupsViewModel(self.name, group.id, group.name, group.description, group.deprecated);
-                groupObj.name.subscribe(changeSaveButton);
-                groupObj.description.subscribe(changeSaveButton);
-                groupObj.toBeDeprecated.subscribe(changeSaveButton);
+                let groupObj = groupsViewModel(
+                    self.name,
+                    group.id,
+                    group.name,
+                    group.description,
+                    group.deprecated,
+                    self.changeSaveButton
+                );
 
                 for (let prop of group.properties) {
                     const isGeoCaseProp = (self.geoCaseProp === prop.name && prop.data_type === 'gps');
@@ -48,34 +61,42 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         self.canDelete = false;
                     }
 
-                    var propObj = propertyListItem(prop.name, prop.label, false, group.name, self.name, prop.data_type,
-                        prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath, isGeoCaseProp, prop.is_safe_to_delete, prop.id, prop.index, groupObj.name());
-                    subscribePropObservable(propObj, propObj.description, changeSaveButton);
-                    subscribePropObservable(propObj, propObj.label, changeSaveButton);
-                    subscribePropObservable(propObj, propObj.fhirResourcePropPath, changeSaveButton);
-                    subscribePropObservable(propObj, propObj.dataType, changeSaveButton);
-                    subscribePropObservable(propObj, propObj.deprecated, changeSaveButton);
-                    subscribePropObservable(propObj, propObj.deleted, changeSaveButton);
-                    subscribePropObservable(propObj, propObj.removeFHIRResourcePropertyPath, changeSaveButton);
-                    propObj.allowedValues.on('change', changeSaveButton);
-                    propObj.allowedValues.on('change', propObj.allowedValuesChanged);
+                    var propObj = propertyListItem(
+                        prop.name,
+                        prop.label,
+                        false,
+                        group.name,
+                        self.name,
+                        prop.data_type,
+                        prop.description,
+                        prop.allowed_values,
+                        prop.fhir_resource_prop_path,
+                        prop.deprecated,
+                        prop.removeFHIRResourcePropertyPath,
+                        isGeoCaseProp,
+                        prop.is_safe_to_delete,
+                        prop.id,
+                        prop.index,
+                        groupObj.name(),
+                        self.changeSaveButton
+                );
                     groupObj.properties.push(propObj);
                 }
-                groupObj.properties.subscribe(changeSaveButton);
                 self.groups.push(groupObj);
             }
         };
 
-        function subscribePropObservable(propObj, prop, changeSaveButton) {
-            prop.subscribe(changeSaveButton);
-            propObj.trackObservableChange(prop);
-        }
-
         return self;
     };
 
-    var groupsViewModel = function (caseType, id, name, description, deprecated) {
+    var groupsViewModel = function (
+        caseType,
+        id,
+        name,
+        description,
+        deprecated,
+        changeSaveButton
+    ) {
         var self = {};
         self.id = id;
         self.name = ko.observable(name);
@@ -98,12 +119,34 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.showGroupPropertyTransferWarning = ko.computed(function () {
             return self.toBeDeprecated() && !deprecated && self.properties().length > 0;
         });
+
+        self.name.subscribe(changeSaveButton);
+        self.description.subscribe(changeSaveButton);
+        self.toBeDeprecated.subscribe(changeSaveButton);
+        self.properties.subscribe(changeSaveButton);
+
         return self;
     };
 
-    var propertyListItem = function (name, label, isGroup, groupName, caseType, dataType, description, allowedValues,
-        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeoCaseProp, isSafeToDelete, id, index,
-        loadedGroup) {
+    var propertyListItem = function (
+        name,
+        label,
+        isGroup,
+        groupName,
+        caseType,
+        dataType,
+        description,
+        allowedValues,
+        fhirResourcePropPath,
+        deprecated,
+        removeFHIRResourcePropertyPath,
+        isGeoCaseProp,
+        isSafeToDelete,
+        id,
+        index,
+        loadedGroup,
+        changeSaveButton
+    ) {
         var self = {};
         self.id = id;
         self.name = name;
@@ -211,6 +254,22 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 $modal.modal('hide');
             });
         };
+
+        subscribePropObservable(self.description);
+        subscribePropObservable(self.label);
+        subscribePropObservable(self.fhirResourcePropPath);
+        subscribePropObservable(self.dataType);
+        subscribePropObservable(self.deprecated);
+        subscribePropObservable(self.deleted);
+        subscribePropObservable(self.removeFHIRResourcePropertyPath);
+        self.allowedValues.on('change', changeSaveButton);
+        self.allowedValues.on('change', self.allowedValuesChanged);
+        self.hasChanges = true;
+
+        function subscribePropObservable(prop) {
+            prop.subscribe(changeSaveButton);
+            self.trackObservableChange(prop);
+        }
 
         return self;
     };
@@ -321,9 +380,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             caseTypeData.is_deprecated,
                             caseTypeData.module_count,
                             data.geo_case_property,
-                            caseTypeData.is_safe_to_delete
+                            caseTypeData.is_safe_to_delete,
+                            changeSaveButton
                         );
-                        caseTypeObj.init(caseTypeData.groups, changeSaveButton);
+                        caseTypeObj.init(caseTypeData.groups);
                         self.caseTypes.push(caseTypeObj);
                     });
                     if (self.caseTypes().length) {
@@ -480,15 +540,17 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.newCaseProperty = function () {
             if (_.isString(self.newPropertyName()) && self.newPropertyName().trim()) {
                 let lastGroup = self.caseGroupList()[self.caseGroupList().length - 1];
-                var prop = propertyListItem(self.newPropertyName(), self.newPropertyName(), false, lastGroup.name(), self.activeCaseType(), '', '', {});
-                prop.dataType.subscribe(changeSaveButton);
-                prop.description.subscribe(changeSaveButton);
-                prop.label.subscribe(changeSaveButton);
-                prop.fhirResourcePropPath.subscribe(changeSaveButton);
-                prop.deprecated.subscribe(changeSaveButton);
-                prop.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
-                prop.allowedValues.on('change', changeSaveButton);
-                prop.hasChanges = true;
+                var prop = propertyListItem(
+                    self.newPropertyName(),
+                    self.newPropertyName(),
+                    false,
+                    lastGroup.name(),
+                    self.activeCaseType(),
+                    '',
+                    '',
+                    {},
+                    changeSaveButton
+                );
                 self.newPropertyName(undefined);
                 lastGroup.properties.push(prop);
             }
@@ -496,7 +558,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newGroup = function () {
             if (_.isString(self.newGroupName()) && self.newGroupName().trim()) {
-                var group = groupsViewModel(self.activeCaseType(), null, self.newGroupName(), '', false);
+                var group = groupsViewModel(
+                    self.activeCaseType(),
+                    null,
+                    self.newGroupName(),
+                    '',
+                    false,
+                    changeSaveButton
+                );
                 self.caseGroupList.push(group);
                 self.newGroupName(undefined);
             }
