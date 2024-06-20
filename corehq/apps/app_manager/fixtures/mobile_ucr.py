@@ -21,7 +21,7 @@ from corehq.apps.app_manager.const import (
     MOBILE_UCR_VERSION_2,
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.exceptions import FailHardException, MobileUCRTooLargeException
+from corehq.apps.app_manager.exceptions import CannotRestoreException, MobileUCRTooLargeException
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     is_valid_mobile_select_filter_type,
 )
@@ -271,7 +271,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
             except UserReportsError:
                 if settings.UNIT_TESTING or settings.DEBUG or fail_hard:
                     raise
-            except FailHardException:
+            except CannotRestoreException:
                 # raise regardless of fail_hard
                 raise
             except Exception as err:
@@ -430,7 +430,7 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
             except UserReportsError:
                 if settings.UNIT_TESTING or settings.DEBUG or fail_hard:
                     raise
-            except FailHardException:
+            except CannotRestoreException:
                 # raise regardless of fail_hard
                 raise
             except Exception as err:

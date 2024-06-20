@@ -195,9 +195,9 @@ class AppMisconfigurationError(AppManagerException):
     """Errors in app configuration that are the user's responsibility"""
 
 
-class FailHardException(Exception):
+class CannotRestoreException(Exception):
     """Errors that inherit from this exception will always fail hard in restores"""
 
 
-class MobileUCRTooLargeException(FailHardException):
+class MobileUCRTooLargeException(CannotRestoreException):
     pass
