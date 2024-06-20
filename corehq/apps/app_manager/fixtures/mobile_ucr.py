@@ -565,7 +565,7 @@ def get_report_element(
             f"Report {report_config.report_id} row count {len(rows)} exceeds max allowed row count "
             f"{settings.MAX_MOBILE_UCR_SIZE}"
         )
-    if current_row_count and len(rows) + current_row_count > settings.MAX_MOBILE_UCR_SIZE * 2:
+    if current_row_count is not None and len(rows) + current_row_count > settings.MAX_MOBILE_UCR_SIZE * 2:
         raise MobileUCRTooLargeException(
             "You are attempting to restore too many mobile reports. Your Mobile UCR Restore Version is set to 1.0."
             " Try upgrading to 2.0."
