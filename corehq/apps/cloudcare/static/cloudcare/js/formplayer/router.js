@@ -275,11 +275,8 @@ hqDefine("cloudcare/js/formplayer/router", [
     });
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
-        if (FormplayerFrontend.formInProgress) {
-            const userConfirmed = window.confirm("You have a form in progress. Are you sure you want to navigate away?");
-            if (!userConfirmed) {
-                return;
-            }
+        if (!FormplayerFrontend.userWantsToNavigateAwayFromForm()) {
+            return;
         }
         FormplayerFrontend.trigger("clearForm");
         var urlObject = utils.currentUrlToObject();

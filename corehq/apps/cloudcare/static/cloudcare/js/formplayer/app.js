@@ -85,6 +85,17 @@ hqDefine("cloudcare/js/formplayer/app", [
         return Backbone.Radio.channel('formplayer');
     };
 
+    FormplayerFrontend.userWantsToNavigateAwayFromForm = function () {
+        if (FormplayerFrontend.formInProgress) {
+            const userConfirmedYes = window.confirm("You have a form in progress. Are you sure you want to navigate away?");
+            if (!userConfirmedYes) {
+                return false;
+            }
+        }
+        FormplayerFrontend.trigger('setFormNotInProgress');
+        return true;
+    };
+
     /**
      * This function maps a jr:// media path to its HTML path IE
      * jr://images/icon/mother.png -> https://commcarehq.org/hq/multimedia/file/CommCareImage/[app_id]/mother.png
@@ -712,6 +723,9 @@ hqDefine("cloudcare/js/formplayer/app", [
         // switches tab back from the application name
         document.title = gettext("Web Apps - CommCare HQ");
 
+        if (!FormplayerFrontend.userWantsToNavigateAwayFromForm()) {
+            return;
+        }
         var urlObject = FormplayerUtils.currentUrlToObject(),
             appId,
             currentUser = UsersModels.getCurrentUser();
