@@ -148,6 +148,10 @@ hqDefine('geospatial/js/models', [
                 },
             });
             self.mapInstance.addControl(self.drawControls);
+
+            // Add zoom and rotation controls to the map.
+            self.mapInstance.addControl(new mapboxgl.NavigationControl());
+
             if (self.usesClusters) {
                 createClusterLayers();
             }
