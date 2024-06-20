@@ -109,16 +109,20 @@ class GeospatialConfigForm(forms.ModelForm):
         # ),
         choices=DISBURSEMENT_ALGORITHM_OPTIONS,
         required=True,
-        help_text=format_html_lazy(_('''
+        help_text=format_html_lazy('''
             <span data-bind="visible: selectedAlgorithm() == '{}'">
-                Uses the straight-line distance between users and cases to
-                determine allocation of cases. Ideal for when map road coverage is poor.
+                {}
             </span>
             <span data-bind="visible: selectedAlgorithm() == '{}'">
-                Takes distance along roads between users and cases into account
-                to determine allocation of cases. Ideal for when map road coverage is good.
-            </span>
-        '''), GeoConfig.RADIAL_ALGORITHM, GeoConfig.ROAD_NETWORK_ALGORITHM)
+                {}
+            </span>''',
+            GeoConfig.RADIAL_ALGORITHM,
+            _('Uses the straight-line distance between users and cases to determine '
+              ' allocation of cases. Ideal for when map road coverage is poor.'),
+            GeoConfig.ROAD_NETWORK_ALGORITHM,
+            _('Takes distance along roads between users and cases into account to determine '
+              'allocation of cases. Ideal for when map road coverage is good.'),
+        )
     )
     min_cases_per_user = forms.IntegerField(
         label=_("Minimum cases assigned per user"),
