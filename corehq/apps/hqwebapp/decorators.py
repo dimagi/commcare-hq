@@ -4,6 +4,27 @@ from functools import wraps
 from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
 
 
+def use_alpinejs(view_func):
+    """Use this decorator on the dispatch method of a TemplateView subclass
+    to use Alpine.js on a page.
+    Note: Eventually this will be bundled with Webpack. The es6/esm module
+    is incompatible with Requirejs and didn't seem fitting to add additional tooling
+    to support this in Requirejs since alpine.js lives primarily in HTML attributes.
+    Can be referenced in javascript with `window.Alpine` if necessary.
+
+    Example:
+        @use_alpinejs
+        def dispatch(self, request, *args, **kwargs):
+            return super().dispatch(request, *args, **kwargs)
+
+    Or alternatively:
+        @method_decorator(use_alpinejs, name='dispatch')
+        class MyViewClass(MyViewSubclass):
+            ...
+    """
+    return set_request_flag(view_func, 'use_alpinejs')
+
+
 def use_daterangepicker(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable the inclusion of the daterangepicker library at the base template
