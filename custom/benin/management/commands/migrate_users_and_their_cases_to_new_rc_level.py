@@ -156,7 +156,7 @@ def _update_case_owners(domain, case_ids, owner_id, dry_run):
                 create=False,
                 case_id=case_id,
                 owner_id=owner_id
-            )
+            ).as_text()
         )
     if not dry_run:
         submit_case_blocks(
