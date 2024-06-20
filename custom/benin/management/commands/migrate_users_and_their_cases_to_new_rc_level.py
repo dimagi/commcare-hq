@@ -70,8 +70,8 @@ class Command(BaseCommand):
         for village in villages:
             log(f"Starting updates for village {village.name}")
             users = _find_rc_users_at_location(domain, village)
+            log(f"Total number of users: {len(users)}")
             for user in users:
-                log(f"Total number of users for village: {village.name} found is {len(users)}")
                 user_rc_number = user.get_user_data(domain).get('rc_number')
                 if user_rc_number:
                     try:
@@ -138,7 +138,7 @@ def _update_cases(domain, user, current_owner_id, new_owner_id, dry_run):
     for case_type in case_types:
         case_ids = _find_case_ids(case_type=case_type, owner_id=current_owner_id, opened_by_user_id=user.user_id)
 
-        log(f"fUpdating {len(case_ids)} {case_type} cases for user {user.username}")
+        log(f"Updating {len(case_ids)} {case_type} cases for user {user.username}")
 
         for case_ids in with_progress_bar(
             chunked(case_ids, 100),
