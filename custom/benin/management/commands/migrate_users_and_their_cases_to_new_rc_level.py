@@ -66,10 +66,12 @@ class Command(BaseCommand):
             villages = SQLLocation.active_objects.get_locations([village_id])
         else:
             villages = _find_locations(domain=domain, location_type_code=LOCATION_TYPE_VILLAGE)
+        log(f"Total number of villages found: {len(villages)}")
         for village in villages:
             log(f"Starting updates for village {village.name}")
             users = _find_rc_users_at_location(domain, village)
             for user in users:
+                log(f"Total number of users for village: {village.name} found is {len(users)}")
                 user_rc_number = user.user_data.get('rc_number')
                 if user_rc_number:
                     try:
@@ -92,6 +94,7 @@ class Command(BaseCommand):
                                       f"not found")
                 else:
                     log_error(f"User {user.username}:{user.user_id} missing rc number")
+            log(f"Updates for village {village.name} processed.")
 
 
 def _find_locations(domain, location_type_code):
