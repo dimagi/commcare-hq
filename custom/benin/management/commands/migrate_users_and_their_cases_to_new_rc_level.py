@@ -13,8 +13,8 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.user_data import prime_user_data_caches
 from corehq.util.log import with_progress_bar
 
-LOCATION_TYPE_VILLAGE = "Village"
-LOCATION_TYPE_RC = "RC"
+LOCATION_TYPE_VILLAGE = "village"
+LOCATION_TYPE_RC = "rc"
 
 
 progress_logfile = f"migrate_users_and_their_cases_to_new_rc_level_{datetime.datetime.utcnow()}"
