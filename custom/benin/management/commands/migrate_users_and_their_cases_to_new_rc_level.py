@@ -72,7 +72,7 @@ class Command(BaseCommand):
             users = _find_rc_users_at_location(domain, village)
             for user in users:
                 log(f"Total number of users for village: {village.name} found is {len(users)}")
-                user_rc_number = user.user_data.get('rc_number')
+                user_rc_number = user.get_user_data(domain).get('rc_number')
                 if user_rc_number:
                     try:
                         new_user_rc_location = _find_child_location_with_name(
@@ -107,12 +107,12 @@ def _find_locations(domain, location_type_code):
 def _find_rc_users_at_location(domain, location):
     # return users with usertype as 'rc'
     users = _find_users_at_location(domain, location)
-    prime_user_data_caches(users, domain)
+    users = prime_user_data_caches(users, domain)
 
     return [
         user
         for user in users
-        if user.user_data.get('usertype') == 'rc'
+        if user.get_user_data(domain).get('usertype') == 'rc'
     ]
 
 
