@@ -64,21 +64,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     }
 
                     var propObj = propertyListItem(
-                        prop.name,
-                        prop.label,
+                        prop,
                         false,
                         group.name,
                         self.name,
-                        prop.data_type,
-                        prop.description,
-                        prop.allowed_values,
-                        prop.fhir_resource_prop_path,
-                        prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath,
                         isGeoCaseProp,
-                        prop.is_safe_to_delete,
-                        prop.id,
-                        prop.index,
                         groupObj.name(),
                         self.changeSaveButton
                 );
@@ -141,42 +131,32 @@ hqDefine("data_dictionary/js/data_dictionary", [
     };
 
     var propertyListItem = function (
-        name,
-        label,
+        prop,
         isGroup,
         groupName,
         caseType,
-        dataType,
-        description,
-        allowedValues,
-        fhirResourcePropPath,
-        deprecated,
-        removeFHIRResourcePropertyPath,
         isGeoCaseProp,
-        isSafeToDelete,
-        id,
-        index,
         loadedGroup,
         changeSaveButton
     ) {
         var self = {};
-        self.id = id;
-        self.name = name;
-        self.label = ko.observable(label);
+        self.id = prop.id;
+        self.name = prop.name;
+        self.label = ko.observable(prop.label);
         self.expanded = ko.observable(true);
         self.isGroup = isGroup;
         self.group = ko.observable(groupName);
         self.caseType = caseType;
-        self.dataType = ko.observable(dataType);
-        self.description = ko.observable(description);
-        self.fhirResourcePropPath = ko.observable(fhirResourcePropPath);
-        self.originalResourcePropPath = fhirResourcePropPath;
-        self.deprecated = ko.observable(deprecated || false);
+        self.dataType = ko.observable(prop.data_type);
+        self.description = ko.observable(prop.description);
+        self.fhirResourcePropPath = ko.observable(prop.fhir_resource_prop_path);
+        self.originalResourcePropPath = prop.fhir_resource_prop_path;
+        self.deprecated = ko.observable(prop.deprecated || false);
         self.isGeoCaseProp = ko.observable(isGeoCaseProp);
-        self.isSafeToDelete = ko.observable(isSafeToDelete);
+        self.isSafeToDelete = ko.observable(prop.isSafeToDelete);
         self.deleted = ko.observable(false);
         self.hasChanges = false;
-        self.index = index;
+        self.index = prop.index;
         self.loadedGroup = loadedGroup;  // The group this case property is part of when page was loaded. Used to identify group changes
 
         self.trackObservableChange = function (observable) {
@@ -200,7 +180,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.hasChanges = true;
         };
 
-        self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
+        self.removeFHIRResourcePropertyPath = ko.observable(prop.removeFHIRResourcePropertyPath || false);
         let subTitle;
         if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
             subTitle = gettext("When importing data, CommCare will not save a row if its cells don't match these valid values.");
@@ -214,7 +194,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             {"key": gettext("valid value"), "value": gettext("description")}, /* placeholders */
             10 /* maxDisplay */
         );
-        self.allowedValues.val(allowedValues);
+        self.allowedValues.val(prop.allowedValues);
         if (initialPageData.get('read_only_mode')) {
             self.allowedValues.setEdit(false);
         }
@@ -556,19 +536,22 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.newCaseProperty = function () {
             if (_.isString(self.newPropertyName()) && self.newPropertyName().trim()) {
                 let lastGroup = self.caseGroupList()[self.caseGroupList().length - 1];
-                var prop = propertyListItem(
-                    self.newPropertyName(),
-                    self.newPropertyName(),
+                const prop = {
+                    'name': self.newPropertyName(),
+                    'label': self.newPropertyName(),
+                    'allowedValues': {}
+                }
+                let propObj = propertyListItem(
+                    prop,
                     false,
                     lastGroup.name(),
                     self.activeCaseType(),
-                    '',
-                    '',
-                    {},
+                    false,
+                    lastGroup.name(),
                     changeSaveButton
                 );
                 self.newPropertyName(undefined);
-                lastGroup.properties.push(prop);
+                lastGroup.properties.push(propObj);
             }
         };
 
