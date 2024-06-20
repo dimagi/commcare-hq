@@ -139,7 +139,7 @@ def _get_all_user_ids_in_app(token, app_id):
 
     for group_id in group_queue:
         members_data = _get_group_members(group_id, token)
-        for member in members_data.get("value", []):
+        for member in members_data:
             # Only direct user in the group will have access to the application
             # Nested group won't have access to the application
             if member["@odata.type"] == MSOdataType.USER:
@@ -149,8 +149,17 @@ def _get_all_user_ids_in_app(token, app_id):
 
 
 def _get_group_members(group_id, token):
+    members = []
     endpoint = f"{ENDPOINT_BASE_URL}/groups/{group_id}/members?$select=id"
     headers = {'Authorization': 'Bearer ' + token}
-    response = requests.get(endpoint, headers=headers)
-    response.raise_for_status()
-    return response.json()
+
+    while endpoint:
+        response = requests.get(endpoint, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        members.extend(data.get('value', []))
+
+        # Check for a nextLink to continue paging through results
+        endpoint = data.get('@odata.nextLink')
+
+    return members
