@@ -166,6 +166,10 @@
       {% javascript_libraries use_bootstrap5=use_bootstrap5 underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
     {% endif %}
 
+    {% if request.use_alpinejs %}
+      <script type="text/javascript" src="{% static 'alpinejs/dist/cdn.min.js' %}"></script>
+    {% endif %}
+
     {# Up here because if daterangepicker is called from within a form widget, #}
     {# the javascript requiring the config file is run before js-inline #}
     {% if request.use_daterangepicker and not requirejs_main and not use_bootstrap5 %}
