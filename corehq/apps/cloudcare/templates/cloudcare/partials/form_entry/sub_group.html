@@ -54,7 +54,7 @@
                 css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
             "></i>
           </div>
-          <span class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
+          <span class="webapp-markdown-output caption flex-grow-1" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
           <i class="fa fa-warning text-danger float-end" data-bind="visible: hasError() && !showChildren()"></i>
            <button class="btn btn-outline-danger del float-end" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
                   data-bind="
