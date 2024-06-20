@@ -490,7 +490,7 @@ def _format_last_sync_time(restore_user, sync_time=None):
 
 
 def generate_rows_and_filters(
-    report_data_cache, report_config, restore_user, row_to_element, current_row_count=None
+    report_data_cache, report_config, restore_user, row_to_element, current_row_count=0
 ):
     """Generate restore row and filter elements
     :param row_to_element: function (
@@ -544,7 +544,7 @@ def get_report_element(
     deferred_fields,
     filter_options_by_field,
     row_to_element,
-    current_row_count=None,
+    current_row_count=0,
 ):
     """
     :param row_to_element: function (
@@ -565,7 +565,7 @@ def get_report_element(
             f"Report {report_config.report_id} row count {len(rows)} exceeds max allowed row count "
             f"{settings.MAX_MOBILE_UCR_SIZE}"
         )
-    if current_row_count is not None and len(rows) + current_row_count > settings.MAX_MOBILE_UCR_SIZE * 2:
+    if len(rows) + current_row_count > settings.MAX_MOBILE_UCR_SIZE * 2:
         raise MobileUCRTooLargeException(
             "You are attempting to restore too many mobile reports. Your Mobile UCR Restore Version is set to 1.0."
             " Try upgrading to 2.0."
