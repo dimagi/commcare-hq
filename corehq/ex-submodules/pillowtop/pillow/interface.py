@@ -6,8 +6,6 @@ from datetime import datetime
 from django.conf import settings
 from memoized import memoized
 
-import sys
-
 from sentry_sdk import configure_scope
 
 from corehq.util.metrics import metrics_counter, metrics_gauge
