@@ -111,10 +111,10 @@ class ReportFixturesProvider(FixtureProvider):
         for provider in providers:
             try:
                 fixtures.extend(provider(restore_state, restore_user, needed_versions, report_configs))
-                row_count = provider.row_count
+                self.report_ucr_row_count(provider.row_count, provider.version, restore_user.domain)
             except MobileUCRTooLargeException as err:
-                row_count = err.row_count
-            self.report_ucr_row_count(row_count, provider.version, restore_user.domain)
+                self.report_ucr_row_count(err.row_count, provider.version, restore_user.domain)
+                raise
 
         return fixtures
 
