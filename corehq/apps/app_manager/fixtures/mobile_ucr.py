@@ -21,7 +21,6 @@ from corehq.apps.app_manager.const import (
     MOBILE_UCR_VERSION_2,
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.exceptions import CannotRestoreException, MobileUCRTooLargeException
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     is_valid_mobile_select_filter_type,
 )
@@ -110,12 +109,8 @@ class ReportFixturesProvider(FixtureProvider):
         ]
 
         for provider in providers:
-            try:
-                fixtures.extend(provider(restore_state, restore_user, needed_versions, report_configs))
-                self.report_ucr_row_count(provider.row_count, provider.version, restore_user.domain)
-            except MobileUCRTooLargeException as err:
-                self.report_ucr_row_count(err.row_count, provider.version, restore_user.domain)
-                raise
+            fixtures.extend(provider(restore_state, restore_user, needed_versions, report_configs))
+            self.report_ucr_row_count(provider.row_count, provider.version, restore_user.domain)
 
         return fixtures
 

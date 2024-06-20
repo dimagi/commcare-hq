@@ -193,14 +193,3 @@ class DangerousXmlException(Exception):
 
 class AppMisconfigurationError(AppManagerException):
     """Errors in app configuration that are the user's responsibility"""
-
-
-class CannotRestoreException(Exception):
-    """Errors that inherit from this exception will always fail hard in restores"""
-
-
-class MobileUCRTooLargeException(CannotRestoreException):
-
-    def __init__(self, message, row_count):
-        super().__init__(message)
-        self.row_count = row_count
