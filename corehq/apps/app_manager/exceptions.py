@@ -200,4 +200,7 @@ class CannotRestoreException(Exception):
 
 
 class MobileUCRTooLargeException(CannotRestoreException):
-    pass
+
+    def __init__(self, message, row_count):
+        super().__init__(message)
+        self.row_count = row_count

@@ -109,8 +109,12 @@ class ReportFixturesProvider(FixtureProvider):
         ]
 
         for provider in providers:
-            fixtures.extend(provider(restore_state, restore_user, needed_versions, report_configs))
-            self.report_ucr_row_count(provider.row_count, provider.version, restore_user.domain)
+            try:
+                fixtures.extend(provider(restore_state, restore_user, needed_versions, report_configs))
+                row_count = provider.row_count
+            except MobileUCRTooLargeException as err:
+                row_count = err.row_count
+            self.report_ucr_row_count(row_count, provider.version, restore_user.domain)
 
         return fixtures
 
@@ -563,12 +567,14 @@ def get_report_element(
     if len(rows) > settings.MAX_MOBILE_UCR_SIZE:
         raise MobileUCRTooLargeException(
             f"Report {report_config.report_id} row count {len(rows)} exceeds max allowed row count "
-            f"{settings.MAX_MOBILE_UCR_SIZE}"
+            f"{settings.MAX_MOBILE_UCR_SIZE}",
+            row_count=len(rows),
         )
     if len(rows) + current_row_count > settings.MAX_MOBILE_UCR_SIZE * 2:
         raise MobileUCRTooLargeException(
             "You are attempting to restore too many mobile reports. Your Mobile UCR Restore Version is set to 1.0."
-            " Try upgrading to 2.0."
+            " Try upgrading to 2.0.",
+            row_count=len(rows) + current_row_count,
         )
     for row_index, row in enumerate(rows):
         row_elements.append(row_to_element(deferred_fields, filter_options_by_field, row, row_index))
