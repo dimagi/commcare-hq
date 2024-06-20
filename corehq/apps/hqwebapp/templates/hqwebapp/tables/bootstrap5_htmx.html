@@ -8,6 +8,11 @@
   {% endif %}
 {% endblock table.thead %}
 
+{% block table-container-attrs %}
+  hx-get="{{ request.path_info }}{% querystring %}"
+  hx-trigger="refreshTable"
+{% endblock %}
+
 {% block select-per-page-attr %}
   name="{{ table.per_page_field }}"
   hx-get="{{ request.path_info }}"

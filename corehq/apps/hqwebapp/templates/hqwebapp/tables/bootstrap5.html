@@ -4,7 +4,9 @@
 {% load hq_shared_tags %}
 
 {% block table-wrapper %}
-  <div class="table-container"{% if table.css_id %} id="{{ table.css_id }}"{% endif %}>
+  <div class="table-container"
+       {% block table-container-attrs %}{% endblock %}
+      {% if table.css_id %} id="{{ table.css_id }}"{% endif %}>
     {% block table %}
       {{ block.super }}
     {% endblock table %}
