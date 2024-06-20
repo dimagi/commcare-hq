@@ -53,22 +53,10 @@ class SelectablePaginator(Paginator):
     paging_options = [10, 25, 50, 100]
 
 
-@method_decorator(require_superuser, name='dispatch')
-@method_decorator(use_bootstrap5, name='dispatch')
-class PaginationDataView(SingleTableView):
-    urlname = "prototype_htmx_table_view"
+class SavedPaginationOptionMixin(SingleTableView):
+    urlname = None
     paginate_by = 25
-    table_class = FakeDataTable
-    template_name = 'prototype/htmx/single_table.html'
     paginator_class = SelectablePaginator
-
-    def get_queryset(self):
-        return _generate_example_data(100)
-
-    def get_table_kwargs(self):
-        return {
-            'template_name': "hqwebapp/tables/bootstrap5_htmx.html",
-        }
 
     @property
     def paginate_by_cookie_slug(self):
@@ -85,10 +73,29 @@ class PaginationDataView(SingleTableView):
     def get_paginate_by(self, table_data):
         return self.current_paginate_by
 
+
+class SavedPaginatedTableView(SavedPaginationOptionMixin, SingleTableView):
+
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
         response.set_cookie(self.paginate_by_cookie_slug, self.current_paginate_by)
         return response
+
+
+@method_decorator(require_superuser, name='dispatch')
+@method_decorator(use_bootstrap5, name='dispatch')
+class PaginationDataView(SavedPaginatedTableView):
+    urlname = "prototype_htmx_table_view"
+    table_class = FakeDataTable
+    template_name = 'prototype/htmx/single_table.html'
+
+    def get_queryset(self):
+        return _generate_example_data(100)
+
+    def get_table_kwargs(self):
+        return {
+            'template_name': "hqwebapp/tables/bootstrap5_htmx.html",
+        }
 
 
 @quickcache(['num_entries'])
