@@ -73,6 +73,10 @@ class ReportConfigurationNotFoundError(UserReportsError):
     pass
 
 
+class MobileUCRTooLargeError(UserReportsError):
+    pass
+
+
 class InvalidQueryColumn(UserReportsError):
     pass
 
