@@ -1714,7 +1714,7 @@ MOBILE_RECOVERY_MEASURES = StaticToggle(
 
 PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
-    'Used for emergencies when UCR sync is causing operational problems',
+    'Prevent Mobile UCR sync (when a UCR sync is causing operational problems)',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description='Prevents mobile UCRs from being generated or included in the sync payload',
