@@ -168,43 +168,39 @@ class CaseHelper:
         all_domains_with_dedicated_search_index = []
 
         if run_config.domain is ALL_DOMAINS:
-            all_domains = None
+            all_domains = Domain.get_all_names()
             all_domains_with_search_index = \
                 [domain for domain in Domain.get_all_names() if domain_needs_search_index(domain)]
             all_domains_with_dedicated_search_index = settings.CASE_SEARCH_SUB_INDICES.keys()
         else:
-            all_domains = run_config.domain
+            all_domains = [run_config.domain]
             if domain_needs_search_index(run_config.domain.name):
                 all_domains_with_search_index = [run_config.domain.name]
             if run_config.domain in settings.Case_SEARCH_SUB_INDICES:
                 all_domains_with_dedicated_search_index = [run_config.domain]
 
         case_query = CaseES(for_export=True)
-        for chunk in cls.get_sql_chunks(all_domains, run_config, 'case'):
-            yield from cls._yield_missing_in_es(chunk, case_query)
-
-        # USH-4684: The yield from these for loop can be moved in the one for CaseES
         case_search_query = CaseSearchES(for_export=True)
-        for domain in all_domains_with_search_index:
-            for chunk in cls.get_sql_chunks(domain, run_config, f'case-search-{domain}'):
-                yield from cls._yield_missing_in_es(chunk, case_search_query)
-
-        for domain in all_domains_with_dedicated_search_index:
-            case_search_index = settings.CASE_SEARCH_SUB_INDICES[domain]['index_cname']
-            dedicated_case_search_query = CaseSearchES(for_export=True)
-            dedicated_case_search_query.index = case_search_index
-            for chunk in cls.get_sql_chunks(domain, run_config, f'dedicated-{domain}'):
-                yield from cls._yield_missing_in_es(chunk, dedicated_case_search_query)
+        for domain in all_domains:
+            for chunk in cls.get_sql_chunks(domain, run_config):
+                yield from cls._yield_missing_in_es(chunk, case_query)
+                if domain in all_domains_with_search_index:
+                    yield from cls._yield_missing_in_es(chunk, case_search_query)
+                if domain in all_domains_with_dedicated_search_index:
+                    case_search_index = settings.CASE_SEARCH_SUB_INDICES[domain]['index_cname']
+                    dedicated_case_search_query = CaseSearchES(for_export=True)
+                    dedicated_case_search_query.index = case_search_index
+                    yield from cls._yield_missing_in_es(chunk, dedicated_case_search_query)
 
     @staticmethod
-    def get_sql_chunks(domain, run_config, key_suffix):
+    def get_sql_chunks(domain, run_config):
         accessor = CaseReindexAccessor(
             domain,
             start_date=run_config.start_date, end_date=run_config.end_date,
             case_type=run_config.case_type
         )
-        iteration_key = f'sql_cases-{run_config.iteration_key}-{domain}-{key_suffix}'
-        for chunk in _get_resumable_chunked_iterator(accessor, iteration_key, '[SQL cases] '):
+        iteration_key = f'sql_cases-{run_config.iteration_key}-{domain}'
+        for chunk in _get_resumable_chunked_iterator(accessor, iteration_key, f'[SQL cases - {domain}] '):
             matching_records = [
                 (case.case_id, case.type, case.server_modified_on, case.domain)
                 for case in chunk
