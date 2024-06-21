@@ -38,7 +38,8 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.couch.database import iter_docs
 from soil.progress import set_task_progress
 
-from corehq import feature_previews
+from corehq import feature_previews, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.app_schemas.case_properties import (
     ParentCasePropertyBuilder,
 )
@@ -57,6 +58,7 @@ from corehq.apps.app_manager.models import (
     OpenSubCaseAction,
     RemoteApp,
 )
+from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import (
     ALL_CASE_TYPE_EXPORT,
@@ -1764,6 +1766,7 @@ class ExportDataSchema(Document):
         force_rebuild=False,
         only_process_current_builds=False,
         task=None,
+        for_new_export_instance=False,
     ):
         """
         Builds a schema from Application builds for a given identifier
@@ -1779,6 +1782,7 @@ class ExportDataSchema(Document):
             be present in the schema since past builds have not been
             processed.
         :param task: A celery task to update the progress of the build
+        :param for_new_export_instance: Flag to be set if generating schema for a new export instance
         :returns: Returns a ExportDataSchema instance
         """
 
@@ -1800,7 +1804,8 @@ class ExportDataSchema(Document):
                 current_schema.last_app_versions,
             )
         app_build_ids.extend(app_ids_for_domain)
-        current_schema = cls._process_apps_for_export(domain, current_schema, identifier, app_build_ids, task)
+        current_schema = cls._process_apps_for_export(domain, current_schema, identifier, app_build_ids, task,
+                                                      for_new_export_instance=for_new_export_instance)
 
         inferred_schema = cls._get_inferred_schema(domain, app_id, identifier)
         if inferred_schema:
@@ -1945,7 +1950,8 @@ class ExportDataSchema(Document):
         return current_schema
 
     @classmethod
-    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
+                                 for_new_export_instance=False):
         apps_processed = 0
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             doc_type = app_doc.get('doc_type', '')
@@ -1969,6 +1975,7 @@ class ExportDataSchema(Document):
                     schema,
                     app,
                     identifier,
+                    for_new_export_instance=for_new_export_instance,
                 )
             except Exception as e:
                 logging.exception('Failed to process app {}. {}'.format(app._id, e))
@@ -2032,7 +2039,7 @@ class FormExportDataSchema(ExportDataSchema):
         return get_latest_form_export_schema(domain, app_id, form_xmlns)
 
     @classmethod
-    def _process_app_build(cls, current_schema, app, form_xmlns):
+    def _process_app_build(cls, current_schema, app, form_xmlns, for_new_export_instance=False):
         forms = app.get_forms_by_xmlns(form_xmlns, log_missing=False)
         if not forms:
             return current_schema
@@ -2303,13 +2310,15 @@ class FormExportDataSchema(ExportDataSchema):
         return items
 
     @classmethod
-    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
+                                 for_new_export_instance=False):
         return super(FormExportDataSchema, cls)._process_apps_for_export(
             domain,
             schema,
             identifier,
             app_build_ids,
-            task
+            task,
+            for_new_export_instance=for_new_export_instance
         )
 
 
@@ -2349,13 +2358,20 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_latest_case_export_schema(domain, case_type)
 
     @classmethod
-    def _process_app_build(cls, current_schema, app, case_type):
+    def _process_app_build(cls, current_schema, app, case_type, for_new_export_instance=False,
+                           for_bulk_export=False):
         builder = ParentCasePropertyBuilder(
             app.domain,
             [app],
             include_parent_properties=False
         )
         case_property_mapping = builder.get_case_property_map([case_type])
+
+        if ((for_bulk_export or for_new_export_instance)
+                and domain_has_privilege(app.domain, privileges.DATA_DICTIONARY)):
+            case_property_mapping[case_type] = cls._reorder_case_properties_from_data_dictionary(
+                app.domain, case_type, case_property_mapping[case_type]
+            )
 
         parent_types = builder.get_case_relationships_for_case_type(case_type)
         case_schemas = []
@@ -2379,6 +2395,38 @@ class CaseExportDataSchema(ExportDataSchema):
         case_schemas.append(current_schema)
 
         return cls._merge_schemas(*case_schemas)
+
+    @classmethod
+    def _reorder_case_properties_from_data_dictionary(cls, domain, case_type, case_properties):
+        """
+        Reorders the list of case properties passed according to ordering of case properties for the case type
+        in Data Dictionary.
+        Deprecated properties are included as well since they could be present in the export.
+
+        :param: domain - domain name
+        :param: case_type - name of case type
+        :param: case_properties - list of case properties corresponding to the case type
+        """
+        case_properties_indices = {}
+
+        filter_kwargs = {'case_type__domain': domain, 'case_type__name': case_type}
+
+        for case_property_index, case_property_name in enumerate(
+            CaseProperty.objects
+                .filter(**filter_kwargs)
+                .select_related('case_type').select_related('group')
+                # order by pk for properties with same index, likely for automatically added properties
+                .order_by('group__index', 'index', 'pk')
+                .values_list('name', flat=True)
+        ):
+            case_properties_indices[case_property_name] = case_property_index
+
+        ordered_case_properties = sorted(
+            case_properties,
+            key=lambda prop: case_properties_indices.get(prop, 0)
+        )
+
+        return ordered_case_properties
 
     @classmethod
     def _generate_schema_from_case_property_mapping(cls, case_property_mapping, parent_types, app_id, app_version):
@@ -2465,7 +2513,8 @@ class CaseExportDataSchema(ExportDataSchema):
         return schema
 
     @classmethod
-    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
+                                 for_new_export_instance=False):
         if identifier == ALL_CASE_TYPE_EXPORT:
             return cls._process_apps_for_bulk_export(domain, schema, app_build_ids, task)
         else:
@@ -2474,7 +2523,8 @@ class CaseExportDataSchema(ExportDataSchema):
                 schema,
                 identifier,
                 app_build_ids,
-                task
+                task,
+                for_new_export_instance=for_new_export_instance
             )
 
     @classmethod
@@ -2498,6 +2548,7 @@ class CaseExportDataSchema(ExportDataSchema):
                         case_type_schema,
                         app,
                         case_type,
+                        for_bulk_export=True,
                     )
                 except Exception as e:
                     logging.exception('Failed to process app {}. {}'.format(app._id, e))
@@ -2531,7 +2582,7 @@ class SMSExportDataSchema(ExportDataSchema):
 
     @classmethod
     def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
-            only_process_current_builds=False, task=None):
+                                    only_process_current_builds=False, task=None, for_new_export_instance=False):
         return cls(domain=domain)
 
     @classmethod
@@ -2542,13 +2593,15 @@ class SMSExportDataSchema(ExportDataSchema):
     def get_latest_export_schema(domain, include_metadata, identifier=None):
         return SMSExportDataSchema(domain=domain, include_metadata=include_metadata)
 
-    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task):
-        return super(FormExportDataSchema, cls)._process_apps_for_export(
+    def _process_apps_for_export(cls, domain, schema, identifier, app_build_ids, task,
+                                 for_new_export_instance=False):
+        return super(SMSExportDataSchema, cls)._process_apps_for_export(
             domain,
             schema,
             identifier,
             app_build_ids,
-            task
+            task,
+            for_new_export_instance=for_new_export_instance
         )
 
 

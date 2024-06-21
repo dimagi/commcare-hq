@@ -1,0 +1,9 @@
+--- 
++++ 
+@@ -1,5 +1,5 @@
+ {% load i18n %}
+-<dl class="dl-horizontal">
++<dl class="dl-horizontal">  {# todo B5: css:dl-horizontal #}
+   <dt>{% trans "Name" %}</dt>
+   <dd>{{ user.human_friendly_name }}</dd>
+   <dt>{% trans "Phone number" %}</dt>

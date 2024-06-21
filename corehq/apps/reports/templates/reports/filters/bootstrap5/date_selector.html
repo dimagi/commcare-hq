@@ -1,0 +1,13 @@
+{% extends 'reports/filters/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block filter_content %}
+  <input type="text"
+         id="filter_date_selector"
+         name="date"
+         value="{{ date|date:'Y-m-d' }}"
+         data-init="{% if slug == 'date' %}1{% endif %}"
+         {% if min_date %} data-min-date="{{min_date |date:'Y-m-d' }}" {% endif %}
+         {% if max_date %} data-max-date="{{max_date |date:'Y-m-d' }}" {% endif %}
+         class="form-control" />
+{% endblock %}

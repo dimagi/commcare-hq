@@ -1,0 +1,19 @@
+--- 
++++ 
+@@ -1,13 +1,13 @@
+-hqDefine("reports/js/bootstrap3/edit_scheduled_report", [
++hqDefine("reports/js/bootstrap5/edit_scheduled_report", [
+     "jquery",
+     "underscore",
+     "analytix/js/google",
+     "hqwebapp/js/initial_page_data",
+     "hqwebapp/js/toggles",
+     "hqwebapp/js/multiselect_utils",
+-    "hqwebapp/js/bootstrap3/widgets",  // autocomplete widget for email recipient list
++    "hqwebapp/js/bootstrap5/widgets",  // autocomplete widget for email recipient list
+     "jquery-ui/ui/widgets/datepicker",
+-    'hqwebapp/js/bootstrap3/components.ko',    // select toggle widget
++    'hqwebapp/js/bootstrap5/components.ko',    // select toggle widget
+ ], function (
+     $,
+     _,

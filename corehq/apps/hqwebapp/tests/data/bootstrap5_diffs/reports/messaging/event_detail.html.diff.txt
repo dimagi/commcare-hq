@@ -1,0 +1,14 @@
+--- 
++++ 
+@@ -1,9 +1,9 @@
+-{% extends "reports/bootstrap3/tabular.html" %}
++{% extends "reports/bootstrap5/tabular.html" %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+ 
+ {% block reporttable %}
+-  <table style="width: 30%;" class="table table-bordered">
++  <table style="width: 30%;" class="table table-bordered">  {# todo B5: inline style #}
+     <tbody>
+     <tr>
+       <th>{% trans 'Processed Date' %}</th>

@@ -19,7 +19,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import (
-    check_redirect,
+    check_access_and_redirect,
     safe_cached_download,
     safe_download,
 )
@@ -56,7 +56,7 @@ def _get_build_profile_id(request):
 
 
 @safe_download
-@check_redirect
+@check_access_and_redirect
 def download_odk_profile(request, domain, app_id):
     """
     See ApplicationBase.create_profile
@@ -75,7 +75,7 @@ def download_odk_profile(request, domain, app_id):
 
 
 @safe_download
-@check_redirect
+@check_access_and_redirect
 def download_odk_media_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
@@ -89,7 +89,7 @@ def download_odk_media_profile(request, domain, app_id):
     )
 
 
-@check_redirect
+@check_access_and_redirect
 @safe_cached_download
 def download_suite(request, domain, app_id):
     """
@@ -104,7 +104,7 @@ def download_suite(request, domain, app_id):
     )
 
 
-@check_redirect
+@check_access_and_redirect
 @safe_cached_download
 def download_media_suite(request, domain, app_id):
     """
@@ -119,7 +119,7 @@ def download_media_suite(request, domain, app_id):
     )
 
 
-@check_redirect
+@check_access_and_redirect
 @safe_cached_download
 def download_app_strings(request, domain, app_id, lang):
     """
@@ -133,7 +133,7 @@ def download_app_strings(request, domain, app_id, lang):
     )
 
 
-@check_redirect
+@check_access_and_redirect
 @safe_cached_download
 def download_xform(request, domain, app_id, module_id, form_id):
     """
@@ -172,7 +172,7 @@ class DownloadCCZ(DownloadMultimediaZip):
         super(DownloadCCZ, self).check_before_zipping()
 
 
-@check_redirect
+@check_access_and_redirect
 @safe_cached_download
 def download_file(request, domain, app_id, path):
     download_target_version = request.GET.get('download_target_version') == 'true'
@@ -281,7 +281,7 @@ def download_file(request, domain, app_id, path):
 
 
 @safe_download
-@check_redirect
+@check_access_and_redirect
 def download_profile(request, domain, app_id):
     """
     See ApplicationBase.create_profile
@@ -299,7 +299,7 @@ def download_profile(request, domain, app_id):
 
 
 @safe_download
-@check_redirect
+@check_access_and_redirect
 def download_media_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
@@ -312,7 +312,7 @@ def download_media_profile(request, domain, app_id):
     )
 
 
-@check_redirect
+@check_access_and_redirect
 @safe_cached_download
 def download_practice_user_restore(request, domain, app_id):
     if not request.app.copy_of:

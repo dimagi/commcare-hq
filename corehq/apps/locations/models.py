@@ -87,6 +87,7 @@ class LocationType(models.Model):
     administrative = models.BooleanField(default=False)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
+    has_users = models.BooleanField(default=True)
 
     # Sync optimization controls
     _expand_from = models.ForeignKey(
@@ -94,15 +95,21 @@ class LocationType(models.Model):
         null=True,
         related_name='+',
         db_column='expand_from',
-        on_delete=models.CASCADE,
+        on_delete=models.RESTRICT,
     )  # levels below this location type that we start expanding from
     _expand_from_root = models.BooleanField(default=False, db_column='expand_from_root')
     expand_to = models.ForeignKey(
         "self",
         null=True,
         related_name="+",
-        on_delete=models.CASCADE,
+        on_delete=models.RESTRICT,
     )  # levels above this type that are synced
+    expand_view_child_data_to = models.ForeignKey(
+        "self",
+        null=True,
+        related_name="+",
+        on_delete=models.RESTRICT,
+    )
     include_without_expanding = models.ForeignKey(
         'self',
         null=True,

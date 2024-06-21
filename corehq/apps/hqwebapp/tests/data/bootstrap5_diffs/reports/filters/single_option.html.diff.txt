@@ -1,0 +1,26 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends 'reports/filters/bootstrap3/base.html' %}
++{% extends 'reports/filters/bootstrap5/base.html' %}
+ {% load hq_shared_tags %}
+ {% block filter_content %}
+   {% if pagination.enabled %}
+@@ -7,7 +7,7 @@
+             data-handler="{{ pagination.handler }}"
+             data-url="{{ pagination.url }}"
+             data-action="{{ pagination.action }}"
+-            style="width: 100%"
++            style="width: 100%"  {# todo B5: inline style #}
+             data-placeholder="{{ select.default_text }}"
+             data-selected="{{ select.selected|default:'' }}"
+             name="{{ slug }}"></select>
+@@ -16,7 +16,7 @@
+             data-select-options="{% html_attr select.options %}"
+             data-selected="{{ select.selected|default:'' }}"
+             class="report-filter-single-option"
+-            style="width: 100%"
++            style="width: 100%"  {# todo B5: inline style #}
+             data-bind="options: select_params, optionsText: 'text', optionsValue: 'val', {% if select.default_text %}optionsCaption: '{{ select.default_text|escapejs }}', {% endif %}value: current_selection"
+             name="{{ slug }}"></select>
+   {% endif %}

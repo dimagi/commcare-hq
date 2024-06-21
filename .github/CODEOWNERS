@@ -25,11 +25,12 @@
 /corehq/sql_proxy_standby_accessors/ @snopoke
 /corehq/tests/nose.py @millerdev
 /corehq/tests/noseplugins/ @millerdev
-/corehq/util/ @esoergel
+/corehq/util/couch.py @esoergel
 /corehq/util/couch_helpers.py @millerdev
 /corehq/util/datadog/lockmeter.py @millerdev
 /corehq/util/datadog/tests/test_lockmeter.py @millerdev
 /corehq/util/pagination.py @millerdev
+/corehq/util/timer.py @esoergel
 /corehq/warehouse/ @calellowitz
 /corehq/warnings.py @millerdev
 
@@ -40,7 +41,7 @@
 /corehq/apps/case_search/ @orangejenny @MartinRiese @esoergel @AddisonDunn @stephherbers @Robert-Costello @Jtang-1 @nospame
 /corehq/apps/change_feed/ @dannyroberts
 /corehq/apps/cleanup/management/commands/populate_sql_model_from_couch_model.py @millerdev
-/corehq/apps/cloudcare/ @orangejenny @MartinRiese @esoergel @AddisonDunn @stephherbers @Robert-Costello @Jtang-1 @nospame
+/corehq/apps/cloudcare/ @orangejenny @MartinRiese @AddisonDunn @stephherbers @Robert-Costello @Jtang-1 @nospame
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/data_dictionary/ @esoergel @orangejenny @zandre-eng
 /corehq/apps/domain/decorators.py @esoergel
@@ -52,9 +53,9 @@
 /corehq/apps/hqwebapp/two_factor_methods.py @gherceg
 /corehq/apps/linked_domain/ @gherceg
 /corehq/apps/locations/ @esoergel
-/corehq/apps/locations/adjacencylist.py @esoergel @millerdev
+/corehq/apps/locations/adjacencylist.py @millerdev
 /corehq/apps/locations/resources/v0_6.py @AddisonDunn
-/corehq/apps/ota/ @snopoke
+/corehq/apps/ota/ @snopoke @esoergel
 /corehq/apps/reports/models.py @AddisonDunn
 /corehq/apps/reports/standard/cases/ @esoergel
 /corehq/apps/reports/standard/tableau.py @AddisonDunn

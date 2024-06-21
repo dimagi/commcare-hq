@@ -1,0 +1,16 @@
+{% extends 'reports/filters/bootstrap5/daterange.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block filter_content %}
+  <div id="{{ css_id }}_container" class="report-filter-optional" data-show-filter-name="{{ showFilterName|BOOL }}">
+    <label class="checkbox">  {# todo B5: css:checkbox #}
+      <input name="{{ css_id }}_use_filter" type="checkbox" data-bind="checked: showFilterName" />  {# todo B5: css:checkbox #}
+      {% trans "Use Filter" %}
+    </label>
+
+    <div class="card" data-bind="visible: showFilterName">  {# todo B5: css:well #}
+      {{ block.super }}
+    </div>
+  </div>
+{% endblock %}

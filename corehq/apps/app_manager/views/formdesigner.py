@@ -157,7 +157,6 @@ def _get_form_designer_view(request, domain, app, module, form):
             app,
             request.couch_user.username,
         ),
-        'show_ui_notification_to_hide_translations': (len(app.langs) > 2),
     })
     context.update(_get_requirejs_context())
 

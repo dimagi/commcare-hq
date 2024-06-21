@@ -6,13 +6,14 @@ from celery.schedules import crontab
 
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.sso.exceptions import EntraVerificationFailed
+from corehq.apps.sso.exceptions import EntraVerificationFailed, EntraUnsupportedType
 from corehq.apps.sso.models import (
     AuthenticatedEmailDomain,
     IdentityProvider,
     IdentityProviderProtocol,
     IdentityProviderType,
-    UserExemptFromSingleSignOn
+    UserExemptFromSingleSignOn,
+    LoginEnforcementType,
 )
 from corehq.apps.sso.utils.context_helpers import (
     get_api_secret_expiration_email_context,
@@ -127,10 +128,11 @@ def send_idp_cert_expires_reminder_emails(num_days):
 def auto_deactivate_removed_sso_users():
     for idp in IdentityProvider.objects.filter(
         enable_user_deactivation=True,
-        idp_type=IdentityProviderType.ENTRA_ID
+        idp_type=IdentityProviderType.ENTRA_ID,
+        login_enforcement_type=LoginEnforcementType.GLOBAL,
     ).all():
         try:
-            idp_users = idp.get_all_members_of_the_idp()
+            usernames_in_idp = idp.get_all_usernames_of_the_idp()
         except EntraVerificationFailed as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.VERIFICATION_ERROR,
@@ -141,13 +143,18 @@ def auto_deactivate_removed_sso_users():
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.HTTP_ERROR)
             continue
+        except EntraUnsupportedType as e:
+            notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
+            send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.UNSUPPORTED_ERROR,
+                                            error_description=e.message)
+            continue
         except Exception as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.OTHER_ERROR)
             continue
 
         # if the Graph Users API returns an empty list of users we will skip auto deactivation
-        if len(idp_users) == 0:
+        if len(usernames_in_idp) == 0:
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.EMPTY_ERROR)
             continue
 
@@ -162,7 +169,7 @@ def auto_deactivate_removed_sso_users():
         authenticated_email_domains = authenticated_domains.values_list('email_domain', flat=True)
 
         for username in usernames_in_account:
-            if username not in idp_users and username not in exempt_usernames:
+            if username not in usernames_in_idp and username not in exempt_usernames:
                 email_domain = get_email_domain_from_username(username)
                 if email_domain in authenticated_email_domains:
                     usernames_to_deactivate.append(username)
@@ -184,6 +191,9 @@ def send_deactivation_skipped_email(idp, failure_code, error=None, error_descrip
                            "indicates an issue with Microsoft's servers.")
     elif failure_code == MSGraphIssue.EMPTY_ERROR:
         failure_reason = _("We received an empty list of users from your Microsoft Entra ID instance.")
+    elif failure_code == MSGraphIssue.UNSUPPORTED_ERROR:
+        failure_reason = _("We encountered an issue when connecting to your Microsoft Graph API: "
+                           f"{error_description}")
     elif failure_code == MSGraphIssue.OTHER_ERROR:
         failure_reason = _("We encountered an unknown issue, please contact Commcare HQ Support.")
 

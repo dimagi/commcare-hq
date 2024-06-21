@@ -16,7 +16,7 @@ class DatespanFilter(BaseReportFilter):
         This is the standard datespan filter that gets pulled into request with the decorator
         @datespan_in_request
     """
-    template = "reports/filters/datespan.html"
+    template = "reports/filters/bootstrap3/datespan.html"
     label = gettext_lazy("Date Range")
     slug = "datespan"
     inclusive = True
@@ -59,7 +59,7 @@ class HiddenLastMonthDateFilter(DatespanFilter):
     A filter that returns last month as datespan
     but is hidden since datespan should be fixed to last month
     """
-    template = "reports/filters/month_datespan.html"
+    template = "reports/filters/bootstrap3/month_datespan.html"
     label = gettext_lazy("Date Range")
     slug = "datespan"
     inclusive = True
@@ -79,7 +79,7 @@ class SingleDateFilter(BaseReportFilter):
     """
     A filter that returns a single date
     """
-    template = "reports/filters/date_selector.html"
+    template = "reports/filters/bootstrap3/date_selector.html"
     label = gettext_lazy("Date")
     slug = "date"
     # below delta should be in days from today's date
