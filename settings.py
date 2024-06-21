@@ -115,6 +115,7 @@ STATICFILES_FINDERS = (
 
 STATICFILES_DIRS = [
     YARN_COMPONENTS,
+    ('react', os.path.join(FILEPATH, 'static_react')),
 ]
 
 # bleh, why did this submodule have to be removed?
