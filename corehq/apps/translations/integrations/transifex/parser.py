@@ -11,7 +11,7 @@ from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 CONTEXT_REGEXS = {
     # Module or Form: sheet name for module/form: unique id
     'module_and_forms_sheet': r'^(Module|Form):(\w+):(\w+)$',  # maintain legacy module usage instead of menu
-    # case property: list/detail
+    # case property: list/detail/case_search_display/case_search_hint
     'module_sheet': r'^(.+):(list|detail|case_search_display|case_search_hint)$',
 }
 
