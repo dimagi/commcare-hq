@@ -23,6 +23,9 @@ from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.dbaccessors import get_all_user_search_query
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.apps.hqadmin.models import HqDeploy
+from corehq.apps.es.cases import CaseES
+from corehq.apps.es.forms import FormES
+from corehq.toggles import USER_CONFIGURABLE_REPORTS, RESTRICT_DATA_SOURCE_REBUILD
 
 
 class AdminReport(GenericTabularReport):
@@ -333,3 +336,84 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
                 abbrev_sha=commit_sha[:7]
             )
         return None
+
+
+class UCRDataLoadReport(AdminReport):
+    UCR_RESTRICTION_THRESHOLD = 1_000_000
+
+    slug = 'ucr_data_load'
+    name = gettext_lazy("UCR Domains Data Report")
+
+    fields = [
+        'corehq.apps.reports.filters.simple.SimpleDomain',
+    ]
+    emailable = False
+    exportable = True
+    default_rows = 10
+
+    @property
+    def selected_domain(self):
+        selected_domain = self.request.GET.get('domain_name', None)
+        return selected_domain if selected_domain != '' else None
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(gettext_lazy("Domain")),
+            DataTablesColumn(gettext_lazy("Case count")),
+            DataTablesColumn(gettext_lazy("Form count")),
+            DataTablesColumn(gettext_lazy("UCR rebuild restriction status")),
+        )
+
+    @property
+    def rows(self):
+        rows = []
+
+        for domain in self.ucr_domains():
+            rows.append(self._row_data(domain))
+
+        return rows
+
+    def ucr_domains(self):
+        ucr_domains = USER_CONFIGURABLE_REPORTS.get_enabled_domains()
+
+        if self.selected_domain:
+            if self.selected_domain in ucr_domains:
+                return [self.selected_domain]
+            return []
+
+        return ucr_domains
+
+    def _row_data(self, domain):
+        case_count = CaseES().domain(domain).count()
+        form_count = FormES().domain(domain).count()
+
+        return [
+            domain,
+            case_count,
+            form_count,
+            self.restrict_rebuild_column_data(domain, case_count, form_count),
+        ]
+
+    def restrict_rebuild_column_data(self, domain, case_count, form_count):
+        from django.utils.safestring import mark_safe
+        from corehq.apps.toggle_ui.views import ToggleEditView
+
+        should_restrict_rebuild = (
+            case_count >= self.UCR_RESTRICTION_THRESHOLD or form_count >= self.UCR_RESTRICTION_THRESHOLD
+        )
+        ff_enabled = RESTRICT_DATA_SOURCE_REBUILD.enabled(domain)
+        toggle_edit_url = reverse(ToggleEditView.urlname, args=(RESTRICT_DATA_SOURCE_REBUILD.slug,))
+
+        if should_restrict_rebuild:
+            if not ff_enabled:
+                return mark_safe(f"""
+                    <a href={toggle_edit_url}>{gettext_lazy("Rebuild restriction required")}</a>
+                """)
+            return gettext_lazy("Rebuild restricted")
+
+        if ff_enabled:
+            return mark_safe(f"""
+                <a href={toggle_edit_url}>{gettext_lazy("Rebuild restriction not required")}</a>
+            """)
+        return gettext_lazy("No rebuild restriction required")
