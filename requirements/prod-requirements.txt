@@ -619,7 +619,7 @@ toolz==0.12.1
     # via pyseeyou
 toposort==1.7
     # via -r base-requirements.in
-tornado==6.3.3
+tornado==6.4.1
     # via flower
 traitlets==5.1.1
     # via
