@@ -116,12 +116,22 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         displays = [row for row in self.condensed_rows if row['list_or_detail'] == 'case_search_display']
         hints = [row for row in self.condensed_rows if row['list_or_detail'] == 'case_search_hint']
 
-        def partially_update_translations(incomplete_rows):
-            property_dict = {prop.name: prop for prop in properties}
+        def partially_update_translations(incomplete_rows, is_display):
+            property_dict = {p.name: p for p in properties}
             for row in incomplete_rows:
                 prop_name = row.get('case_property')
                 if prop_name in property_dict:
-                    self._update_translation(row, property_dict[prop_name].hint)
+                    if is_display:
+                        self._update_translation(row, property_dict[prop_name].label)
+                    else:
+                        self._update_translation(row, property_dict[prop_name].hint)
+                else:
+                    message = _('A {display_or_hint} row for menu {index} has an unexpected case search property '
+                                '"{field}". This property has either been removed or does not exist.').format(
+                        display_or_hint='display' if is_display else 'hint',
+                        index=self.module.id + 1,
+                        field=row.get('case_property', ""))
+                    self.msgs.append((messages.error, message))
 
         if len(displays) == len(properties):
             for display_row, prop in itertools.chain(zip(displays, properties)):
@@ -145,7 +155,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                 index=self.module.id + 1,
             )
             self.msgs.append((messages.warning, message))
-            partially_update_translations(displays)
+            partially_update_translations(displays, is_display=True)
 
         if len(hints) == len(properties):
             for hint_row, prop in itertools.chain(zip(hints, properties)):
@@ -161,7 +171,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         else:
             # Empty hint rows are not pushed to Transifex
             # So it could commonly give back a translations file with these rows "missing"
-            partially_update_translations(hints)
+            partially_update_translations(hints, is_display=False)
 
     def _update_report_module_rows(self, rows):
         new_headers = [None for i in self.module.report_configs]
