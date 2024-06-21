@@ -557,10 +557,10 @@ def get_report_element(
             f"{settings.MAX_MOBILE_UCR_SIZE}",
             row_count=len(rows),
         )
-    if len(rows) + current_row_count > settings.MAX_MOBILE_UCR_SIZE * 2:
+    if len(rows) + current_row_count > settings.MAX_MOBILE_UCR_SIZE:
         raise MobileUCRTooLargeException(
-            "You are attempting to restore too many mobile reports. Your Mobile UCR Restore Version is set to 1.0."
-            " Try upgrading to 2.0.",
+            "You are attempting to restore too many mobile report rows. Your "
+            "Mobile UCR Restore Version is set to 1.0. Try upgrading to 2.0.",
             row_count=len(rows) + current_row_count,
         )
     for row_index, row in enumerate(rows):
