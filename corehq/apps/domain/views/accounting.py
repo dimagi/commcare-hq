@@ -245,12 +245,9 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     })
 
                 else:
-                    from corehq.toggles import SELF_SERVICE_ANNUAL_RENEWALS
                     days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
-                        'can_renew': ((days_left <= 90)
-                            if SELF_SERVICE_ANNUAL_RENEWALS.enabled_for_request(self.request)
-                            else (days_left <= 30)),
+                        'can_renew': days_left <= 90,
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
 
@@ -1577,17 +1574,12 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         context.update({
             'current_edition': current_edition,
             'plan': self.subscription.plan_version.user_facing_description,
+            'is_annual_plan': self.subscription.plan_version.plan.is_annual_plan,
+            'is_self_renewable_plan': self.plan_is_self_renewable,
+            'renewal_choices': self.renewal_choices,
             'tile_css': 'tile-{}'.format(current_edition.lower()),
             'is_renewal_page': True,
         })
-
-        from corehq.toggles import SELF_SERVICE_ANNUAL_RENEWALS
-        if SELF_SERVICE_ANNUAL_RENEWALS.enabled_for_request(self.request):
-            context.update({
-                'renewal_choices': self.renewal_choices,
-                'is_annual_plan': self.subscription.plan_version.plan.is_annual_plan,
-                'is_self_renewable_plan': self.plan_is_self_renewable,
-            })
         return context
 
 
@@ -1657,11 +1649,7 @@ class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings,
 
     @property
     def is_annual_plan(self):
-        from corehq.toggles import SELF_SERVICE_ANNUAL_RENEWALS
-        if SELF_SERVICE_ANNUAL_RENEWALS.enabled_for_request(self.request):
-            return self.request.POST.get('is_annual_plan', '').lower() == 'true'
-        else:
-            return False
+        return self.request.POST.get('is_annual_plan', '').lower() == 'true'
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:

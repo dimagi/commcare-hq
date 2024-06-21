@@ -204,6 +204,9 @@ _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
 def is_valid_case_type(case_type, module):
     """
+    Returns ``True`` if ``case_type`` is valid for ``module``
+
+    >>> from corehq.apps.app_manager.const import USERCASE_TYPE
     >>> from corehq.apps.app_manager.models import Module, AdvancedModule
     >>> is_valid_case_type('foo', Module())
     True
@@ -215,9 +218,9 @@ def is_valid_case_type(case_type, module):
     False
     >>> is_valid_case_type(None, Module())
     False
-    >>> is_valid_case_type('commcare-user', Module())
+    >>> is_valid_case_type(USERCASE_TYPE, Module())
     False
-    >>> is_valid_case_type('commcare-user', AdvancedModule())
+    >>> is_valid_case_type(USERCASE_TYPE, AdvancedModule())
     True
     """
     from corehq.apps.app_manager.models import AdvancedModule

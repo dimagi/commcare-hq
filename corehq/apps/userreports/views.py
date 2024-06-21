@@ -1360,9 +1360,9 @@ def _number_of_records_to_be_iterated_for_rebuild(config):
             count_of_records = CaseSearchES().domain(config.domain).count()
     elif config.referenced_doc_type == 'XFormInstance':
         if case_types_or_xmlns:
-            count_of_records = FormES().domain().xmlns(case_types_or_xmlns)
+            count_of_records = FormES().domain(config.domain).xmlns(case_types_or_xmlns).count()
         else:
-            count_of_records = FormES().domain().count()
+            count_of_records = FormES().domain(config.domain).count()
 
     return count_of_records
 
@@ -1642,12 +1642,19 @@ def subscribe_to_data_source_changes(request, domain, config_id):
         ds=config_id,
         server=client_hostname,
     )
-    DataSourceRepeater.objects.create(
-        name=repeater_name,
+
+    datasource_query = DataSourceRepeater.objects.filter(
         domain=domain,
-        data_source_id=config_id,
         connection_settings_id=conn_settings.id,
+        options={"data_source_id": config_id},
     )
+    if not datasource_query.exists():
+        DataSourceRepeater.objects.create(
+            name=repeater_name,
+            domain=domain,
+            data_source_id=config_id,
+            connection_settings_id=conn_settings.id,
+        )
     return HttpResponse(status=201)
 
 

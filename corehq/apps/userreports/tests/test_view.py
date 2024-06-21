@@ -618,6 +618,53 @@ class TestSubscribeToDataSource(TestCase):
         self.assertEqual(repeater.connection_settings_id, conn_settings.id)
         self.assertEqual(repeater.data_source_id, data_source_id)
 
+    @flag_enabled('SUPERSET_ANALYTICS')
+    @flag_enabled('API_THROTTLE_WHITELIST')
+    def test_subscribe_create_only_one_repeater_instance(self):
+        data_source_id = "data_source_id"
+        client_id = "client_id"
+
+        post_data = {
+            'webhook_url': 'https://hostname.com/webhook',
+            'client_id': client_id,
+            'client_secret': 'client_secret',
+            'token_url': 'https://hostname.com/token',
+            'refresh_url': 'https://hostname.com/refresh',
+        }
+        response = self._post_request(
+            domain=self.domain,
+            data_source_id=data_source_id,
+            data=post_data,
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+        self.assertEqual(response.status_code, 201)
+
+        conn_settings = ConnectionSettings.objects.get(client_id=client_id)
+        repeater_count = DataSourceRepeater.objects.filter(
+            domain=self.domain,
+            connection_settings_id=conn_settings.id,
+            options={"data_source_id": data_source_id},
+        ).count()
+        self.assertEqual(repeater_count, 1)
+
+        response = self._post_request(
+            domain=self.domain,
+            data_source_id=data_source_id,
+            data=post_data,
+            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        )
+        self.assertEqual(response.status_code, 201)
+
+        repeater_count = DataSourceRepeater.objects.filter(
+            domain=self.domain,
+            connection_settings_id=conn_settings.id,
+            options={"data_source_id": data_source_id},
+        ).count()
+        self.assertEqual(repeater_count, 1)
+
+        conn_settings_count = ConnectionSettings.objects.filter(client_id=client_id).count()
+        self.assertEqual(conn_settings_count, 1)
+
     @flag_enabled('API_THROTTLE_WHITELIST')
     def test_subscribe_unsuccessful_without_ff(self):
         data_source_id = "data_source_id"

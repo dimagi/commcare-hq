@@ -2358,7 +2358,8 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_latest_case_export_schema(domain, case_type)
 
     @classmethod
-    def _process_app_build(cls, current_schema, app, case_type, for_new_export_instance=False):
+    def _process_app_build(cls, current_schema, app, case_type, for_new_export_instance=False,
+                           for_bulk_export=False):
         builder = ParentCasePropertyBuilder(
             app.domain,
             [app],
@@ -2366,7 +2367,8 @@ class CaseExportDataSchema(ExportDataSchema):
         )
         case_property_mapping = builder.get_case_property_map([case_type])
 
-        if for_new_export_instance and domain_has_privilege(app.domain, privileges.DATA_DICTIONARY):
+        if ((for_bulk_export or for_new_export_instance)
+                and domain_has_privilege(app.domain, privileges.DATA_DICTIONARY)):
             case_property_mapping[case_type] = cls._reorder_case_properties_from_data_dictionary(
                 app.domain, case_type, case_property_mapping[case_type]
             )
@@ -2546,6 +2548,7 @@ class CaseExportDataSchema(ExportDataSchema):
                         case_type_schema,
                         app,
                         case_type,
+                        for_bulk_export=True,
                     )
                 except Exception as e:
                     logging.exception('Failed to process app {}. {}'.format(app._id, e))
