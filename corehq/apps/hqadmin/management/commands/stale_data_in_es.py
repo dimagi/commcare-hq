@@ -171,8 +171,7 @@ class CaseHelper:
             all_domains = None
             all_domains_with_search_index = \
                 [domain for domain in Domain.get_all_names() if domain_needs_search_index(domain)]
-            all_domains_with_dedicated_search_index = \
-                [domain for domain in Domain.get_all_names() if domain in settings.CASE_SEARCH_SUB_INDICES]
+            all_domains_with_dedicated_search_index = settings.CASE_SEARCH_SUB_INDICES.keys()
         else:
             all_domains = run_config.domain
             if domain_needs_search_index(run_config.domain.name):
