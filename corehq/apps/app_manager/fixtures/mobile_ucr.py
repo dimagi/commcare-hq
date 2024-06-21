@@ -21,13 +21,13 @@ from corehq.apps.app_manager.const import (
     MOBILE_UCR_VERSION_2,
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.exceptions import CannotRestoreException, MobileUCRTooLargeException
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import (
     is_valid_mobile_select_filter_type,
 )
 from corehq.apps.app_manager.util import get_correct_app_class, is_remote_app
 from corehq.apps.cloudcare.utils import get_web_apps_available_to_user
 from corehq.apps.userreports.exceptions import (
+    MobileUCRTooLargeError,
     ReportConfigurationNotFoundError,
     UserReportsError,
 )
@@ -109,12 +109,8 @@ class ReportFixturesProvider(FixtureProvider):
         ]
 
         for provider in providers:
-            try:
-                fixtures.extend(provider(restore_state, restore_user, needed_versions, report_configs))
-                self.report_ucr_row_count(provider.row_count, provider.version, restore_user.domain)
-            except MobileUCRTooLargeException as err:
-                self.report_ucr_row_count(err.row_count, provider.version, restore_user.domain)
-                raise
+            fixtures.extend(provider(restore_state, restore_user, needed_versions, report_configs))
+            self.report_ucr_row_count(provider.row_count, provider.version, restore_user.domain)
 
         return fixtures
 
@@ -275,9 +271,13 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
             except UserReportsError:
                 if settings.UNIT_TESTING or settings.DEBUG or fail_hard:
                     raise
-            except CannotRestoreException:
-                # raise regardless of fail_hard
-                raise
+            except MobileUCRTooLargeError:
+                # reset reports elem to empty to punt all reports data to avoid confusion
+                reports_elem = E.reports(last_sync=_format_last_sync_time(restore_user))
+                logging.warning(
+                    f'MobileUCRTooLargeError: Skipped all reports for user {restore_user.username}'
+                )
+                break
             except Exception as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 if settings.UNIT_TESTING or settings.DEBUG or fail_hard:
@@ -434,9 +434,13 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
             except UserReportsError:
                 if settings.UNIT_TESTING or settings.DEBUG or fail_hard:
                     raise
-            except CannotRestoreException:
-                # raise regardless of fail_hard
-                raise
+            except MobileUCRTooLargeError:
+                # reset fixtures to empty to punt all reports data to avoid confusion
+                fixtures = []
+                logging.warning(
+                    f'MobileUCRTooLargeError: Skipped all reports for user {restore_user.username}'
+                )
+                break
             except Exception as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 if settings.UNIT_TESTING or settings.DEBUG or fail_hard:
@@ -565,17 +569,9 @@ def get_report_element(
     row_index = 0
     rows = report_data_cache.get_data(report_config.uuid, data_source)
     if len(rows) > settings.MAX_MOBILE_UCR_SIZE:
-        raise MobileUCRTooLargeException(
-            f"Report {report_config.report_id} row count {len(rows)} exceeds max allowed row count "
-            f"{settings.MAX_MOBILE_UCR_SIZE}",
-            row_count=len(rows),
-        )
+        raise MobileUCRTooLargeError()
     if len(rows) + current_row_count > settings.MAX_MOBILE_UCR_SIZE * 2:
-        raise MobileUCRTooLargeException(
-            "You are attempting to restore too many mobile reports. Your Mobile UCR Restore Version is set to 1.0."
-            " Try upgrading to 2.0.",
-            row_count=len(rows) + current_row_count,
-        )
+        raise MobileUCRTooLargeError()
     for row_index, row in enumerate(rows):
         row_elements.append(row_to_element(deferred_fields, filter_options_by_field, row, row_index))
         total_row_calculator.update_totals(row)
