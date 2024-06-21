@@ -10,6 +10,7 @@ from corehq.apps.export.const import EMPTY_VALUE, MISSING_VALUE
 _dirty_chars = re.compile(
     '[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
 )
+_dirty_leading_chars = ('=', '+', '-', '@', '\t', '\r')
 
 
 def get_excel_format_value(value):
@@ -160,8 +161,7 @@ def get_excel_format_value(value):
             pass
 
     # no formats matched...clean and return as text
-    value = _dirty_chars.sub('?', value)
-    return ExcelFormatValue(numbers.FORMAT_TEXT, value)
+    return ExcelFormatValue(numbers.FORMAT_TEXT, sanitize(value))
 
 
 def get_legacy_excel_safe_value(value):
@@ -173,6 +173,12 @@ def get_legacy_excel_safe_value(value):
         value = str(value)
     else:
         value = ''
+    return sanitize(value)
+
+
+def sanitize(value):
+    if value.startswith(_dirty_leading_chars) and value != MISSING_VALUE:
+        value = f"'{value}"
     return _dirty_chars.sub('?', value)
 
 
