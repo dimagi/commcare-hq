@@ -115,12 +115,10 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         properties = self.module.search_config.properties
         displays = [row for row in self.condensed_rows if row['list_or_detail'] == 'case_search_display']
         hints = [row for row in self.condensed_rows if row['list_or_detail'] == 'case_search_hint']
-        if len(displays) != len(hints) or len(displays) != len(properties):
-
+        if len(displays) != len(properties):
             message = _(
-                'Expected {expected_count} case_search_display and case_search_hint '
-                'properties in  menu {index}, found {actual_label_count} for case_search_display and '
-                '{actual_hint_count} for case_search_hint'
+                'Expected {expected_count} case_search_display '
+                'properties in  menu {index}, found {actual_label_count} for case_search_display. '
                 'No Case Search config properties for menu {index} were updated.'
             ).format(
                 expected_count=len(properties),
@@ -140,16 +138,26 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                     self.msgs.append((messages.error, message))
                     continue
                 self._update_translation(display_row, prop.label)
-            for hint_row, prop in itertools.chain(zip(hints, properties)):
-                if hint_row.get('case_property') != prop.name:
-                    message = _('A hint row for menu {index} has an unexpected case search property "{field}". '
-                                'Case properties must appear in the same order as they do in the bulk '
-                                'app translation download. No translations updated for this row.').format(
-                                    index=self.module.id + 1,
-                                    field=hint_row.get('case_property', ""))
-                    self.msgs.append((messages.error, message))
-                    continue
-                self._update_translation(hint_row, prop.hint)
+            if len(hints) == len(properties):
+                for hint_row, prop in itertools.chain(zip(hints, properties)):
+                    if hint_row.get('case_property') != prop.name:
+                        message = _('A hint row for menu {index} has an unexpected case search property "{field}".'
+                                    ' Case properties must appear in the same order as they do in the bulk '
+                                    'app translation download. No translations updated for this row.').format(
+                                        index=self.module.id + 1,
+                                        field=hint_row.get('case_property', ""))
+                        self.msgs.append((messages.error, message))
+                        continue
+                    self._update_translation(hint_row, prop.hint)
+            elif hints and len(hints) != len(properties):
+                # Transifex translations don't include empty hint rows
+                prop_index = -1
+                for hint_row in hints:
+                    while prop_index < len(properties):
+                        prop_index += 1
+                        if hint_row.get('case_property') == properties[prop_index].name:
+                            self._update_translation(hint_row, properties[prop_index].hint)
+                            break
 
     def _update_report_module_rows(self, rows):
         new_headers = [None for i in self.module.report_configs]
