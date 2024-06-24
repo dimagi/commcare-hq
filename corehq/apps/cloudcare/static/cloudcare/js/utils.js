@@ -377,10 +377,12 @@ hqDefine('cloudcare/js/utils', [
         if (selectedDate) {
             options.viewDate = new hqTempusDominus.tempusDominus.DateTime(selectedDate);
         }
-        hqTempusDominus.createDatePicker($el.get(0), options);
+        let picker = hqTempusDominus.createDatePicker($el.get(0), options);
 
         $el.attr("placeholder", dateFormat);
         $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
+
+        return picker;
     };
 
     var initTimePicker = function ($el, selectedTime, timeFormat) {
@@ -405,7 +407,7 @@ hqDefine('cloudcare/js/utils', [
         if (date.isValid()) {
             options.viewDate = new hqTempusDominus.tempusDominus.DateTime(date.format(dateFormat + ' ' + timeFormat));
         }
-        hqTempusDominus.createTimePicker($el.get(0), options);
+        return hqTempusDominus.createTimePicker($el.get(0), options);
     };
 
     var smallScreenIsEnabled = function () {

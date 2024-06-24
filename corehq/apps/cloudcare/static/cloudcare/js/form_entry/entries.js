@@ -791,9 +791,9 @@ hqDefine("cloudcare/js/form_entry/entries", [
             self.$picker = $('#' + self.entryId);
 
             var answer = self.answer() ? self.convertServerToClientFormat(self.answer()) : constants.NO_ANSWER;
-            self.initWidget(self.$picker, answer);
+            self.picker = self.initWidget(self.$picker, answer);
 
-            self.$picker.on("change.td", function (e) {
+            self.picker.subscribe("change.td", function (e) {
                 if (!e.date) {
                     self.answer(constants.NO_ANSWER);
                     return;
@@ -827,7 +827,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     DateEntry.prototype.clientFormat = 'MM/DD/YYYY';
     DateEntry.prototype.serverFormat = 'YYYY-MM-DD';
     DateEntry.prototype.initWidget = function ($element, answer) {
-        cloudcareUtils.initDatePicker($element, answer);
+        return cloudcareUtils.initDatePicker($element, answer);
     };
 
     function TimeEntry(question, options) {
@@ -845,7 +845,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     TimeEntry.prototype.clientFormat = 'HH:mm';
     TimeEntry.prototype.serverFormat = 'HH:mm';
     TimeEntry.prototype.initWidget = function ($element, answer) {
-        cloudcareUtils.initTimePicker($element, answer, this.clientFormat);
+        return cloudcareUtils.initTimePicker($element, answer, this.clientFormat);
     };
 
     function EthiopianDateEntry(question, options) {
