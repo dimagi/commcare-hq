@@ -96,8 +96,7 @@ class AppAwareSyncTests(TestCase):
             get_data_mock.return_value = self.rows
             with mock_datasource_config():
                 fixtures = call_fixture_generator(report_fixture_generator, self.user)
-
-        reports = self._get_fixture(fixtures, ReportFixturesProviderV1.id).findall('.//report')
+                reports = self._get_fixture(fixtures, ReportFixturesProviderV1.id).findall('.//report')
         self.assertEqual(len(reports), 2)
         report_ids = {r.attrib.get('id') for r in reports}
         self.assertEqual(report_ids, {'123456', 'abcdef'})
@@ -111,7 +110,7 @@ class AppAwareSyncTests(TestCase):
             get_data_mock.return_value = self.rows
             with mock_datasource_config():
                 fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app1)
-        reports = self._get_fixture(fixtures, ReportFixturesProviderV1.id).findall('.//report')
+                reports = self._get_fixture(fixtures, ReportFixturesProviderV1.id).findall('.//report')
 
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].attrib.get('id'), '123456')
@@ -158,7 +157,7 @@ class AppAwareSyncTests(TestCase):
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
             fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app3)
-        self.assertEqual(len(fixtures), 0)
+        self.assertEqual(len(list(fixtures)), 0)
 
     def test_user_restore(self):
         from casexml.apps.phone.utils import MockDevice

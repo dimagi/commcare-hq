@@ -95,8 +95,6 @@ class ReportFixturesProvider(FixtureProvider):
         if not report_configs:
             return []
 
-        fixtures = []
-
         needed_versions = {
             app.mobile_ucr_restore_version
             for app in apps
@@ -110,13 +108,11 @@ class ReportFixturesProvider(FixtureProvider):
 
         for provider in providers:
             try:
-                fixtures.extend(provider(restore_state, restore_user, needed_versions, report_configs))
+                yield from provider(restore_state, restore_user, needed_versions, report_configs)
                 self.report_ucr_row_count(provider.row_count, provider.version, restore_user.domain)
             except MobileUCRTooLargeException as err:
                 self.report_ucr_row_count(err.row_count, provider.version, restore_user.domain)
                 raise
-
-        return fixtures
 
     def report_ucr_row_count(self, row_count, provider_version, domain):
         metrics_histogram(
@@ -239,9 +235,8 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        fixtures = []
         if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
-            fixtures.append(_get_report_index_fixture(restore_user))
+            yield _get_report_index_fixture(restore_user)
             try:
                 self.report_data_cache.load_reports()
             except Exception:
@@ -249,16 +244,14 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
                     "domain": restore_user.domain,
                     "report_config_ids": [config.report_id for config in report_configs]
                 })
-                return []
+                return
 
-            fixtures.extend(self._v1_fixture(restore_user, report_configs, restore_state.params.fail_hard))
+            yield self._v1_fixture(restore_user, report_configs, restore_state.params.fail_hard)
         else:
-            fixtures.extend(self._empty_v1_fixture(restore_user))
-
-        return fixtures
+            yield self._empty_v1_fixture(restore_user)
 
     def _empty_v1_fixture(self, restore_user):
-        return [E.fixture(id=self.id, user_id=restore_user.user_id)]
+        return E.fixture(id=self.id, user_id=restore_user.user_id)
 
     def _v1_fixture(self, restore_user, report_configs, fail_hard=False):
         user_id = restore_user.user_id
@@ -283,7 +276,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
                 if settings.UNIT_TESTING or settings.DEBUG or fail_hard:
                     raise
         root.append(reports_elem)
-        return [root]
+        return root
 
     def report_config_to_fixture(self, report_config, restore_user):
         row_index_enabled = toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(restore_user.domain)
@@ -325,13 +318,11 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        fixtures = []
-
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
             synced_fixtures, purged_fixture_ids = self._relevant_report_configs(restore_state, report_configs)
 
             oldest_sync_time = self._get_oldest_sync_time(restore_state, synced_fixtures, purged_fixture_ids)
-            fixtures.append(_get_report_index_fixture(restore_user, oldest_sync_time))
+            yield _get_report_index_fixture(restore_user, oldest_sync_time)
 
             try:
                 self.report_data_cache.load_reports(synced_fixtures)
@@ -342,11 +333,9 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
                 })
                 return []
 
-            fixtures.extend(self._v2_fixtures(restore_user, synced_fixtures, restore_state.params.fail_hard))
+            yield from self._v2_fixtures(restore_user, synced_fixtures, restore_state.params.fail_hard)
             for report_uuid in purged_fixture_ids:
-                fixtures.extend(self._empty_v2_fixtures(report_uuid))
-
-        return fixtures
+                yield from self._empty_v2_fixtures(report_uuid)
 
     @staticmethod
     def _get_oldest_sync_time(restore_state, synced_fixtures, purged_fixture_ids):
@@ -416,16 +405,13 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         return configs_to_sync, extra_configs_on_phone
 
     def _empty_v2_fixtures(self, report_uuid):
-        return [
-            E.fixture(id=self._report_fixture_id(report_uuid)),
-            E.fixture(id=self._report_filter_id(report_uuid))
-        ]
+        yield E.fixture(id=self._report_fixture_id(report_uuid))
+        yield E.fixture(id=self._report_filter_id(report_uuid))
 
     def _v2_fixtures(self, restore_user, report_configs, fail_hard=False):
-        fixtures = []
         for report_config in report_configs:
             try:
-                fixtures.extend(self.report_config_to_fixture(report_config, restore_user))
+                yield from self.report_config_to_fixture(report_config, restore_user)
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 if fail_hard:
@@ -441,7 +427,6 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
                 logging.exception('Error generating report fixture: {}'.format(err))
                 if settings.UNIT_TESTING or settings.DEBUG or fail_hard:
                     raise
-        return fixtures
 
     def report_config_to_fixture(self, report_config, restore_user):
         def _row_to_row_elem(deferred_fields, filter_options_by_field, row, index, is_total_row=False):
@@ -458,21 +443,23 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         rows, filters_elem = generate_rows_and_filters(
             self.report_data_cache, report_config, restore_user, _row_to_row_elem
         )
+
+        report_filter_elem = E.fixture(id=ReportFixturesProviderV2._report_filter_id(report_config.uuid))
+        report_filter_elem.append(filters_elem)
+        yield report_filter_elem
+
         # the v2 provider writes each report to its own fixture so we only care about the max row_count
         self.row_count = max(len(rows), self.row_count)
         rows_elem = E.rows(last_sync=_format_last_sync_time(restore_user))
         for row in rows:
             rows_elem.append(row)
 
-        report_filter_elem = E.fixture(id=ReportFixturesProviderV2._report_filter_id(report_config.uuid))
-        report_filter_elem.append(filters_elem)
-
         report_elem = E.fixture(
             id=ReportFixturesProviderV2._report_fixture_id(report_config.uuid), user_id=restore_user.user_id,
             report_id=report_config.report_id, indexed='true'
         )
         report_elem.append(rows_elem)
-        return [report_filter_elem, report_elem]
+        yield report_elem
 
     @staticmethod
     def _report_fixture_id(report_uuid):
@@ -570,10 +557,10 @@ def get_report_element(
             f"{settings.MAX_MOBILE_UCR_SIZE}",
             row_count=len(rows),
         )
-    if len(rows) + current_row_count > settings.MAX_MOBILE_UCR_SIZE * 2:
+    if len(rows) + current_row_count > settings.MAX_MOBILE_UCR_SIZE:
         raise MobileUCRTooLargeException(
-            "You are attempting to restore too many mobile reports. Your Mobile UCR Restore Version is set to 1.0."
-            " Try upgrading to 2.0.",
+            "You are attempting to restore too many mobile report rows. Your "
+            "Mobile UCR Restore Version is set to 1.0. Try upgrading to 2.0.",
             row_count=len(rows) + current_row_count,
         )
     for row_index, row in enumerate(rows):
