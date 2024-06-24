@@ -2,90 +2,100 @@
 {% load hq_shared_tags %}
 
 <div id="registration-choose-plan-container"
-     class="reg-form-container reg-plan-container">
+     class="reg-plan-container">
   <div class="row">
-
-    <div class="col-xs-6">
-      <div class="plan-container plan-container-professional">
-        <div class="plan-header">
-          <h2>
-            <small>CommCare</small>
-            Professional
-          </h2>
-        </div>
-        <p class="lead">
-          {% blocktrans %}
-            For organizations exploring CommCare.
-          {% endblocktrans %}
-        </p>
-        {% include 'registration/partials/feature_list.html' with features=professional_features %}
-        <p class="plan-price">
-          {% blocktrans %}
-            See <a href="https://dimagi.com/commcare/pricing/" target="_blank">pricing</a> options.
-          {% endblocktrans %}
-        </p>
-        <div class="plan-cta">
-          <a href="#cta-form-start-trial"
-             id="js-get-trial"
-             data-toggle="modal"
-             class="btn btn-primary">
-            {% blocktrans %}
-              Request Custom Trial
-            {% endblocktrans %}
-          </a>
-          <script src="//fast.wistia.com/embed/medias/jzm3ggrinr.jsonp" async></script>
-          <script src="//fast.wistia.com/assets/external/E-v1.js" async></script>
-          <span class="wistia_embed
-                       wistia_async_jzm3ggrinr
-                       popover=true
-                       popoverPreventScroll=true
-                       popoverBorderRadius=10
-                       popoverOverlayOpacity=.75
-                       playbar=true
-                       smallPlayButton=true
-                       volumeControl=false
-                       settingsControl=false
-                       fullscreenButton=true
-                       controlsVisibleOnLoad=false
-                       popoverContent=link">
-            <a href="#">
-              <i class="fa fa-play-circle"></i>
-              {% blocktrans %}
-                Watch Demo
-              {% endblocktrans %}
-            </a>
-          </span>
-        </div>
-      </div>
-    </div>
 
     <div class="col-xs-6">
       <div class="plan-container plan-container-community">
         <div class="plan-header">
+          <div class="plan-icon">
+            <i class="fa fa-user"></i>
+          </div>
           <h2>
             <small>CommCare</small>
             Community
           </h2>
         </div>
-        <p class="lead">
-          {% blocktrans %}
-            For individuals learning about data collection.
-          {% endblocktrans %}
-        </p>
-        {% include 'registration/partials/feature_list.html' with features=community_features %}
-        <p class="plan-price">
-          {% blocktrans %}
-            Free for personal use.
-          {% endblocktrans %}
-        </p>
-        <div class="plan-cta">
-          <a href="#"
-             id="js-create-account"
-             class="btn btn-default">
+        <div class="plan-body">
+          <p class="lead">
             {% blocktrans %}
-              Create Account
+              For individuals learning<br/> about data collection.
             {% endblocktrans %}
-          </a>
+          </p>
+          {% include 'registration/partials/feature_list.html' with features=community_features %}
+          <p class="plan-price">
+            {% blocktrans %}
+              Free for personal use.
+            {% endblocktrans %}
+          </p>
+          <div class="plan-cta">
+            <a href="#"
+               id="js-create-account"
+               class="btn btn-default">
+              {% blocktrans %}
+                Create Account
+              {% endblocktrans %}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xs-6">
+      <div class="plan-container plan-container-professional">
+        <div class="plan-header">
+          <div class="plan-icon">
+            <i class="fa fa-briefcase"></i>
+          </div>
+          <h2>
+            <small>CommCare</small>
+            Professional
+          </h2>
+        </div>
+        <div class="plan-body">
+          <p class="lead">
+            {% blocktrans %}
+              For organizations<br /> exploring CommCare.
+            {% endblocktrans %}
+          </p>
+          {% include 'registration/partials/feature_list.html' with features=professional_features %}
+          <p class="plan-price">
+            {% blocktrans %}
+              See <a href="https://dimagi.com/commcare/pricing/" target="_blank">pricing</a> options.
+            {% endblocktrans %}
+          </p>
+          <div class="plan-cta">
+            <a href="#cta-form-start-trial"
+               id="js-get-trial"
+               data-toggle="modal"
+               class="btn btn-primary">
+              {% blocktrans %}
+                Request Custom Trial
+              {% endblocktrans %}
+            </a>
+            <script src="//fast.wistia.com/embed/medias/jzm3ggrinr.jsonp" async></script>
+            <script src="//fast.wistia.com/assets/external/E-v1.js" async></script>
+            <span class="wistia_embed
+                         wistia_async_jzm3ggrinr
+                         popover=true
+                         popoverPreventScroll=true
+                         popoverBorderRadius=10
+                         popoverOverlayOpacity=.75
+                         playbar=true
+                         smallPlayButton=true
+                         volumeControl=false
+                         settingsControl=false
+                         fullscreenButton=true
+                         controlsVisibleOnLoad=false
+                         popoverContent=link">
+              <a href="#">
+                <i class="fa fa-play-circle"></i>
+                {% blocktrans %}
+                  Watch Demo
+                {% endblocktrans %}
+              </a>
+            </span>
+          </div>
         </div>
       </div>
     </div>
