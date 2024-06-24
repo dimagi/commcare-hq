@@ -339,24 +339,15 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
         return None
 
 
-class UCRDataLoadReport(AdminReport):
+class UCRRebuildRestrictionTable:
     UCR_RESTRICTION_THRESHOLD = 1_000_000
 
-    slug = 'ucr_data_load'
-    name = gettext_lazy("UCR Domains Data Report")
+    selected_domain: str
+    restriction_ff_status: str
 
-    fields = [
-        'corehq.apps.reports.filters.simple.SimpleDomain',
-        'corehq.apps.reports.filters.select.UCRRebuildStatusFilter',
-    ]
-    emailable = False
-    exportable = True
-    default_rows = 10
-
-    @property
-    def selected_domain(self):
-        selected_domain = self.request.GET.get('domain_name', None)
-        return selected_domain if selected_domain != '' else None
+    def __init__(self, *args, **kwargs):
+        self.selected_domain = kwargs.get('selected_domain')
+        self.restriction_ff_status = kwargs.get('restriction_ff_status')
 
     @property
     def headers(self):
@@ -372,15 +363,18 @@ class UCRDataLoadReport(AdminReport):
         rows = []
 
         for domain in self.ucr_domains():
-            row_data = self._row_data(domain)
-            if row_data:
-                rows.append(row_data)
+            case_count = CaseES().domain(domain).count()
+            form_count = FormES().domain(domain).count()
+
+            if self.should_show_domain(domain, case_count, form_count):
+                rows.append(
+                    self._row_data(domain, case_count, form_count)
+                )
 
         return rows
 
     def ucr_domains(self):
         ucr_domains = USER_CONFIGURABLE_REPORTS.get_enabled_domains()
-
         if self.selected_domain:
             if self.selected_domain in ucr_domains:
                 return [self.selected_domain]
@@ -388,53 +382,23 @@ class UCRDataLoadReport(AdminReport):
 
         return ucr_domains
 
-    @property
-    def rebuild_status_filter_value(self):
-        return self.request.GET.get('ucr_rebuild_status')
-
-    @property
-    def show_only_restricted(self):
-        return self.rebuild_status_filter_value == UCRRestrictionFFStatus.Enabled.name
-
-    @property
-    def show_only_non_restricted(self):
-        return self.rebuild_status_filter_value == UCRRestrictionFFStatus.NotEnabled.name
-
-    @property
-    def show_should_restrict_rebuild(self):
-        return self.rebuild_status_filter_value == UCRRestrictionFFStatus.ShouldEnable.name
-
-    @property
-    def show_should_not_restrict_rebuild(self):
-        return self.rebuild_status_filter_value == UCRRestrictionFFStatus.CanDisable.name
-
-    @property
-    def show_all_domains(self):
-        return self.rebuild_status_filter_value == ''
-
-    def should_add_domain(self, domain, total_cases, total_forms):
-        if self.show_all_domains:
+    def should_show_domain(self, domain, total_cases, total_forms):
+        if self._show_all_domains:
             return True
 
         should_restrict_rebuild = self._should_restrict_rebuild(total_cases, total_forms)
-        rebuild_is_restricted = self._rebuild_is_restricted(domain)
+        restriction_ff_enabled = self._rebuild_restricted_ff_enabled(domain)
 
-        if self.show_only_restricted:
-            return rebuild_is_restricted
-        if self.show_only_non_restricted:
-            return not rebuild_is_restricted
-        if self.show_should_restrict_rebuild:
-            return should_restrict_rebuild and not rebuild_is_restricted
-        if self.show_should_not_restrict_rebuild:
-            return not should_restrict_rebuild and rebuild_is_restricted
+        if self._show_ff_enabled_domains:
+            return restriction_ff_enabled
+        if self._show_ff_disabled_domains:
+            return not restriction_ff_enabled
+        if self._show_should_enable_ff_domains:
+            return should_restrict_rebuild and not restriction_ff_enabled
+        if self._show_should_disable_ff_domains:
+            return not should_restrict_rebuild and restriction_ff_enabled
 
-    def _row_data(self, domain):
-        case_count = CaseES().domain(domain).count()
-        form_count = FormES().domain(domain).count()
-
-        if not self.should_add_domain(domain, case_count, form_count):
-            return []
-
+    def _row_data(self, domain, case_count, form_count):
         return [
             domain,
             case_count,
@@ -442,29 +406,78 @@ class UCRDataLoadReport(AdminReport):
             self._restrict_rebuild_column_data(domain, case_count, form_count),
         ]
 
+    def _should_restrict_rebuild(self, case_count, form_count):
+        return case_count >= self.UCR_RESTRICTION_THRESHOLD or form_count >= self.UCR_RESTRICTION_THRESHOLD
+
+    @staticmethod
+    @memoized
+    def _rebuild_restricted_ff_enabled(domain):
+        return RESTRICT_DATA_SOURCE_REBUILD.enabled(domain)
+
+    @property
+    def _show_ff_enabled_domains(self):
+        return self.restriction_ff_status == UCRRestrictionFFStatus.Enabled.name
+
+    @property
+    def _show_ff_disabled_domains(self):
+        return self.restriction_ff_status == UCRRestrictionFFStatus.NotEnabled.name
+
+    @property
+    def _show_should_enable_ff_domains(self):
+        return self.restriction_ff_status == UCRRestrictionFFStatus.ShouldEnable.name
+
+    @property
+    def _show_should_disable_ff_domains(self):
+        return self.restriction_ff_status == UCRRestrictionFFStatus.CanDisable.name
+
+    @property
+    def _show_all_domains(self):
+        return not self.restriction_ff_status
+
     def _restrict_rebuild_column_data(self, domain, case_count, form_count):
         from django.utils.safestring import mark_safe
         from corehq.apps.toggle_ui.views import ToggleEditView
 
-        rebuild_is_restricted = self._rebuild_is_restricted(domain)
+        restriction_ff_enabled = self._rebuild_restricted_ff_enabled(domain)
         toggle_edit_url = reverse(ToggleEditView.urlname, args=(RESTRICT_DATA_SOURCE_REBUILD.slug,))
 
         if self._should_restrict_rebuild(case_count, form_count):
-            if not rebuild_is_restricted:
+            if not restriction_ff_enabled:
                 return mark_safe(f"""
                     <a href={toggle_edit_url}>{gettext_lazy("Rebuild restriction required")}</a>
                 """)
             return gettext_lazy("Rebuild restricted")
 
-        if rebuild_is_restricted:
+        if restriction_ff_enabled:
             return mark_safe(f"""
                 <a href={toggle_edit_url}>{gettext_lazy("Rebuild restriction not required")}</a>
             """)
         return gettext_lazy("No rebuild restriction required")
 
-    def _should_restrict_rebuild(self, case_count, form_count):
-        return case_count >= self.UCR_RESTRICTION_THRESHOLD or form_count >= self.UCR_RESTRICTION_THRESHOLD
 
-    @staticmethod
-    def _rebuild_is_restricted(domain):
-        return RESTRICT_DATA_SOURCE_REBUILD.enabled(domain)
+class UCRDataLoadReport(AdminReport):
+    slug = 'ucr_data_load'
+    name = gettext_lazy("UCR Domains Data Report")
+
+    fields = [
+        'corehq.apps.reports.filters.simple.SimpleDomain',
+        'corehq.apps.reports.filters.select.UCRRebuildStatusFilter',
+    ]
+    emailable = False
+    exportable = False
+    default_rows = 10
+
+    def __init__(self, request, *args, **kwargs):
+        self.table_data = UCRRebuildRestrictionTable(
+            selected_domain=request.GET.get('domain_name'),
+            restriction_ff_status=request.GET.get('ucr_rebuild_restriction')
+        )
+        super().__init__(request, *args, **kwargs)
+
+    @property
+    def headers(self):
+        return self.table_data.headers
+
+    @property
+    def rows(self):
+        return self.table_data.rows
