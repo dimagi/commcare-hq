@@ -9,6 +9,7 @@ changelog:
     - title: Product Updates
       labels:
         - product/all-users-all-environments
+        - product/prod-india-all-users
     - title: Custom Feature Updates
       labels:
         - product/feature-flag
