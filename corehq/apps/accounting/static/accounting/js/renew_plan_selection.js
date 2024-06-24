@@ -7,8 +7,7 @@ hqDefine('accounting/js/renew_plan_selection', [
 ], function (
     $,
     ko,
-    initialPageData,
-    toggles
+    initialPageData
 ) {
     var PlanRenewalView = function (options) {
         var self = this;
@@ -21,8 +20,7 @@ hqDefine('accounting/js/renew_plan_selection', [
     };
 
     $(function () {
-        if (toggles.toggleEnabled('SELF_SERVICE_ANNUAL_RENEWALS')
-            && initialPageData.get('is_self_renewable_plan')) {
+        if (initialPageData.get('is_self_renewable_plan')) {
             var planRenewalView = new PlanRenewalView({
                 renewalChoices: initialPageData.get('renewal_choices'),
                 isAnnualPlan: initialPageData.get('is_annual_plan'),

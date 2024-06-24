@@ -20,6 +20,8 @@ hqDefine('geospatial/js/models', [
     const MAX_URL_LENGTH = 4500;
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
+    const saveGeoPolygonUrl = initialPageData.reverse('geo_polygons');
+    const unexpectedErrorMessage = "Oops! Something went wrong! Please report an issue if the problem persists.";
 
     var MissingGPSModel = function () {
         this.casesWithoutGPS = ko.observable([]);
@@ -146,6 +148,10 @@ hqDefine('geospatial/js/models', [
                 },
             });
             self.mapInstance.addControl(self.drawControls);
+
+            // Add zoom and rotation controls to the map.
+            self.mapInstance.addControl(new mapboxgl.NavigationControl());  // eslint-disable-line no-undef
+
             if (self.usesClusters) {
                 createClusterLayers();
             }
@@ -662,6 +668,16 @@ hqDefine('geospatial/js/models', [
             updateSelectedSavedPolygonParam();
         };
 
+        self.exportSelectedPolygonGeoJson = function (data, event) {
+            if (self.activeSavedPolygon()) {
+                const convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(self.activeSavedPolygon().geoJson));
+                $(event.target).attr('href', 'data:' + convertedData);
+                $(event.target).attr('download',self.activeSavedPolygon().text + '.geojson');
+                return true;
+            }
+            return false;
+        };
+
         self.deleteSelectedPolygonFilter = function () {
             const deleteGeoJSONUrl = initialPageData.reverse('geo_polygon', self.selectedSavedPolygonId());
             $.ajax({
@@ -679,10 +695,7 @@ hqDefine('geospatial/js/models', [
                     }, 2000);
                 },
                 error: function () {
-                    alertUser.alert_user(
-                        gettext("Oops! Something went wrong! Please report an issue if the problem persists."),
-                        'danger'
-                    );
+                    alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
                 },
             });
         };
@@ -755,18 +768,46 @@ hqDefine('geospatial/js/models', [
             self.loadSelectedPolygonFromQueryParam();
         };
 
-        self.exportGeoJson = function (exportButtonId) {
-            const exportButton = $(`#${exportButtonId}`);
-            const selectedId = parseInt(self.selectedSavedPolygonId());
-            const selectedPolygon = self.savedPolygons().find(
-                function (o) { return o.id === selectedId; }
-            );
-            if (selectedPolygon) {
-                const convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(selectedPolygon.geoJson));
-                exportButton.attr('href', 'data:' + convertedData);
-                exportButton.attr('download','data.geojson');
+        self.saveGeoPolygon = function () {
+            let data = self.mapObj.drawControls.getAll();
+            if (data.features.length) {
+                let name = window.prompt(gettext("Name of the Area"));
+                if (name === null) {
+                    return;
+                }
+                if (name === '') {
+                    alertUser.alert_user(gettext("Please enter the name for the area!"), 'warning', false, true);
+                    return;
+                }
+                data['name'] = name;
+                $.ajax({
+                    type: 'post',
+                    url: saveGeoPolygonUrl,
+                    dataType: 'json',
+                    data: JSON.stringify({'geo_json': data}),
+                    contentType: "application/json; charset=utf-8",
+                    success: function (ret) {
+                        delete data.name;
+                        // delete drawn area
+                        self.mapObj.drawControls.deleteAll();
+                        self.removePolygonsFromFilterList(data.features);
+                        self.savedPolygons.push(
+                            new SavedPolygon({
+                                name: name,
+                                id: ret.id,
+                                geo_json: data,
+                            })
+                        );
+                        // redraw using mapControlsModelInstance
+                        self.selectedSavedPolygonId(ret.id);
+                    },
+                    error: function () {
+                        alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
+                    },
+                });
             }
         };
+
     };
 
     return {

@@ -13,11 +13,11 @@
 # Rowena Luk <rluk@dimagi.com>, 2021
 # Dimagi Dev <devops@dimagi.com>, 2021
 # Ismaïla Diene <idiene@dimagi.com>, 2022
-# Aissetou Sawadogo <ais107@hotmail.com>, 2023
 # Ayla Reith <areith@dimagi.com>, 2023
 # Carla Legros <clegros@dimagi.com>, 2023
 # patrick keating <pkeating@dimagi.com>, 2023
 # Tyler Wymer <twymer@dimagi.com>, 2024
+# Aissetou Sawadogo <ais107@hotmail.com>, 2024
 #
 #, fuzzy
 msgid ""
@@ -25,7 +25,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2024\n"
+"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2024\n"
 "Language-Team: French (https://app.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -168,6 +168,22 @@ msgstr "Suivant"
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
 msgid "Your trial request has been received!"
 msgstr ""
+
+#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
+msgid "Seconds"
+msgstr ""
+
+#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
+msgid "Chart"
+msgstr "Graphique"
+
+#: corehq/apps/app_execution/static/app_execution/js/workflow_logs.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
+#: corehq/apps/registry/static/registry/js/registry_logs.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
+msgid "Show All Dates"
+msgstr "Afficher toutes les dates"
 
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
@@ -3543,10 +3559,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "Name of the Area"
-msgstr ""
-
-#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid ""
 "Oops! Something went wrong! Please check that your geospatial settings are "
 "configured correctly or contact admin if the problem persists."
@@ -3571,10 +3583,24 @@ msgid "Mobile Worker"
 msgstr "Utilisateur mobile"
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Refreshing Page..."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid ""
 "Warning! This action will clear the current disbursement. Please confirm if "
 "you want to proceed."
 msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Name of the Area"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+#, fuzzy
+#| msgid "Please enter your name."
+msgid "Please enter the name for the area!"
+msgstr "Veuillez saisir votre nom"
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
@@ -3613,6 +3639,16 @@ msgid ""
 msgstr ""
 "Danny est déçu que vous ayez rencontré ce problème. Il travaille le plus "
 "rapidement possible afin de résoudre le problème."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
+msgid "Incorrect Format"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
+msgid "Only Dimagi email addresses can be included"
+msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/inactivity.js
@@ -3697,13 +3733,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
 msgid "Clear"
 msgstr "Effacer"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
-#: corehq/apps/registry/static/registry/js/registry_logs.js
-#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
-#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
-msgid "Show All Dates"
-msgstr "Afficher toutes les dates"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
 msgid "Items"

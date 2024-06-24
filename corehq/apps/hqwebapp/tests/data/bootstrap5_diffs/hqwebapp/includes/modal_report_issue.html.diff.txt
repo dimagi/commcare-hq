@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,156 +1,168 @@
+@@ -1,157 +1,169 @@
  {% load i18n %}
  {% load hq_shared_tags %}
  {% if request.user.is_authenticated %}
@@ -173,7 +173,7 @@
 -                        </div>
 -                        {% endif %}
 -
--                        <div class="form-group" id="bug-report-cc-form-group" data-bind="css: { 'has-error has-feedback': hasRecipientsInputError}">
+-                        <div class="form-group" id="bug-report-cc-form-group" data-bind="css: { 'has-error has-feedback': recipientsErrorMessage}">
 -                            <label for="bug-report-cc"
 -                                   class="col-sm-3 control-label">{% trans "Other recipients" %}</label>
 -                            <div class="col-sm-9">
@@ -187,9 +187,10 @@
 -                                    {% blocktrans %}
 -                                        Comma-separated email addresses of others you want to notify about this issue.
 -                                    {% endblocktrans %}
--                                    <span class="label label-danger" data-bind="visible: hasRecipientsInputError">
--                                        <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
--                                    </span>
+-                                    <div class="label label-danger" data-bind="visible: recipientsErrorMessage">
+-                                        <i class="fa fa-warning"></i>
+-                                        <span data-bind="text: recipientsErrorMessage"></span>
+-                                    </div>
 -                                </p>
 -                            </div>
 -                        </div>
@@ -258,10 +259,11 @@
 +                         class="form-control"
 +                         id="bug-report-cc"
 +                         placeholder="ex: admin@commcarehq.org, test@commcarehq.org"
-+                         data-bind="value: recipientEmailsText, css: { 'is-invalid': hasRecipientsInputError }" />
-+                  <span class="invalid-feedback">
-+                    <i class="fa fa-warning"></i> {% trans 'Incorrect Format' %}
-+                  </span>
++                         data-bind="value: recipientEmailsText, css: { 'is-invalid': recipientsErrorMessage }" />
++                  <div class="invalid-feedback">
++                    <i class="fa fa-warning"></i>
++                    <span data-bind="text: recipientsErrorMessage"></span>
++                  </div>
 +                  <p class="help-block">
 +                    {% blocktrans %}
 +                      Comma-separated email addresses of others you want to notify about this issue.

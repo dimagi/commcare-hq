@@ -456,32 +456,19 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
         };
 
         self.deleteRepeat = function (repetition) {
-            // USH-4332: after FP deploy keep only else clause
-            if (repetition.parent.parent instanceof formUI.Repeat) {
-                var juncture = formUI.getIx(repetition.parent.parent);
-                var repIx = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
-                this.serverRequest(
-                    {
-                        'action': constants.DELETE_REPEAT,
-                        'ix': repIx,
-                        'form_ix': juncture,
-                    },
-                    function (resp) {
-                        $.publish('session.reconcile', [resp, repetition]);
-                    },
-                    constants.BLOCK_ALL);
-            } else {
-                const juncture = formUI.getIx(repetition);
-                this.serverRequest(
-                    {
-                        'action': constants.DELETE_REPEAT,
-                        'ix': juncture,
-                    },
-                    function (resp) {
-                        $.publish('session.reconcile', [resp, repetition, juncture]);
-                    },
-                    constants.BLOCK_ALL);
-            }
+            const juncture = formUI.getIx(repetition);
+            const options = {
+                deletedGroup: juncture,
+            };
+            this.serverRequest(
+                {
+                    'action': constants.DELETE_REPEAT,
+                    'ix': juncture,
+                },
+                function (resp) {
+                    $.publish('session.reconcile', [resp, repetition, options]);
+                },
+                constants.BLOCK_ALL);
         };
 
         self.changeLang = function (lang) {
