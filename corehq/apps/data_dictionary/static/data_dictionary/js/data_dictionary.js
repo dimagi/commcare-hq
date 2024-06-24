@@ -530,6 +530,16 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return true;
         };
 
+        self.quickCaseExportPath = ko.computed(function () {
+            if (self.getActiveCaseType()) {
+                return (
+                    initialPageData.reverse('new_custom_export_case') +
+                    "?export_tag=" +
+                    self.getActiveCaseType().name
+                );
+            }
+        });
+
         self.clearForm = function () {
             $("#create-case-type-form").trigger("reset");
             self.name("");
