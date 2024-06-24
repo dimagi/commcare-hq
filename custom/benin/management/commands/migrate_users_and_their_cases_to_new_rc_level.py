@@ -1,5 +1,6 @@
 import datetime
 import math
+import time
 
 from django.core.management.base import BaseCommand
 
@@ -16,9 +17,9 @@ from corehq.util.log import with_progress_bar
 LOCATION_TYPE_VILLAGE = "village"
 LOCATION_TYPE_RC = "rc"
 
-
-progress_logfile = f"migrate_users_and_their_cases_to_new_rc_level_{datetime.datetime.utcnow()}"
-error_logfile = f"migrate_users_and_their_cases_to_new_rc_level_errors_{datetime.datetime.utcnow()}"
+run_time = datetime.datetime.utcnow().strftime("%Y-%m-%d_%H:%M:%S")
+progress_logfile = f"migrate_users_and_their_cases_to_new_rc_level_{run_time}.log"
+error_logfile = f"migrate_users_and_their_cases_to_new_rc_level_errors_{run_time}.log"
 
 
 class Command(BaseCommand):
@@ -61,7 +62,8 @@ class Command(BaseCommand):
         """
         dry_run = options['dry_run']
         village_id = options['village_id']
-
+        start_time = time.time()
+        log(f"Started processing of script")
         if village_id:
             villages = SQLLocation.active_objects.get_locations([village_id])
         else:
@@ -95,6 +97,7 @@ class Command(BaseCommand):
                 else:
                     log_error(f"User {user.username}:{user.user_id} missing rc number")
             log(f"Updates for village {village.name} processed.")
+        log(f"Processing completed. Total execution time: {(time.time() - start_time):.2f}s")
 
 
 def _find_locations(domain, location_type_code):
@@ -162,7 +165,7 @@ def _update_case_owners(domain, case_ids, owner_id, dry_run):
         submit_case_blocks(
             case_blocks=case_blocks,
             domain=domain,
-            device_id=__name__ + ".migrate_users_and_their_cases_to_new_rc_level"
+            device_id=__name__
         )
 
 
@@ -170,7 +173,7 @@ def log(message, logfile=None):
     logfile = logfile or progress_logfile
     print(message)
     with open(logfile, 'a') as filestream:
-        filestream.write(message)
+        filestream.write(message+'\n')
 
 
 def log_error(message):
