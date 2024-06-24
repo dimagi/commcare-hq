@@ -26,6 +26,7 @@ from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.forms import FormES
 from corehq.toggles import USER_CONFIGURABLE_REPORTS, RESTRICT_DATA_SOURCE_REBUILD
+from corehq.motech.repeaters.const import UCRRestrictionFFStatus
 
 
 class AdminReport(GenericTabularReport):
@@ -346,6 +347,7 @@ class UCRDataLoadReport(AdminReport):
 
     fields = [
         'corehq.apps.reports.filters.simple.SimpleDomain',
+        'corehq.apps.reports.filters.select.UCRRebuildStatusFilter',
     ]
     emailable = False
     exportable = True
@@ -370,7 +372,9 @@ class UCRDataLoadReport(AdminReport):
         rows = []
 
         for domain in self.ucr_domains():
-            rows.append(self._row_data(domain))
+            row_data = self._row_data(domain)
+            if row_data:
+                rows.append(row_data)
 
         return rows
 
@@ -384,36 +388,83 @@ class UCRDataLoadReport(AdminReport):
 
         return ucr_domains
 
+    @property
+    def rebuild_status_filter_value(self):
+        return self.request.GET.get('ucr_rebuild_status')
+
+    @property
+    def show_only_restricted(self):
+        return self.rebuild_status_filter_value == UCRRestrictionFFStatus.Enabled.name
+
+    @property
+    def show_only_non_restricted(self):
+        return self.rebuild_status_filter_value == UCRRestrictionFFStatus.NotEnabled.name
+
+    @property
+    def show_should_restrict_rebuild(self):
+        return self.rebuild_status_filter_value == UCRRestrictionFFStatus.ShouldEnable.name
+
+    @property
+    def show_should_not_restrict_rebuild(self):
+        return self.rebuild_status_filter_value == UCRRestrictionFFStatus.CanDisable.name
+
+    @property
+    def show_all_domains(self):
+        return self.rebuild_status_filter_value == ''
+
+    def should_add_domain(self, domain, total_cases, total_forms):
+        if self.show_all_domains:
+            return True
+
+        should_restrict_rebuild = self._should_restrict_rebuild(total_cases, total_forms)
+        rebuild_is_restricted = self._rebuild_is_restricted(domain)
+
+        if self.show_only_restricted:
+            return rebuild_is_restricted
+        if self.show_only_non_restricted:
+            return not rebuild_is_restricted
+        if self.show_should_restrict_rebuild:
+            return should_restrict_rebuild and not rebuild_is_restricted
+        if self.show_should_not_restrict_rebuild:
+            return not should_restrict_rebuild and rebuild_is_restricted
+
     def _row_data(self, domain):
         case_count = CaseES().domain(domain).count()
         form_count = FormES().domain(domain).count()
+
+        if not self.should_add_domain(domain, case_count, form_count):
+            return []
 
         return [
             domain,
             case_count,
             form_count,
-            self.restrict_rebuild_column_data(domain, case_count, form_count),
+            self._restrict_rebuild_column_data(domain, case_count, form_count),
         ]
 
-    def restrict_rebuild_column_data(self, domain, case_count, form_count):
+    def _restrict_rebuild_column_data(self, domain, case_count, form_count):
         from django.utils.safestring import mark_safe
         from corehq.apps.toggle_ui.views import ToggleEditView
 
-        should_restrict_rebuild = (
-            case_count >= self.UCR_RESTRICTION_THRESHOLD or form_count >= self.UCR_RESTRICTION_THRESHOLD
-        )
-        ff_enabled = RESTRICT_DATA_SOURCE_REBUILD.enabled(domain)
+        rebuild_is_restricted = self._rebuild_is_restricted(domain)
         toggle_edit_url = reverse(ToggleEditView.urlname, args=(RESTRICT_DATA_SOURCE_REBUILD.slug,))
 
-        if should_restrict_rebuild:
-            if not ff_enabled:
+        if self._should_restrict_rebuild(case_count, form_count):
+            if not rebuild_is_restricted:
                 return mark_safe(f"""
                     <a href={toggle_edit_url}>{gettext_lazy("Rebuild restriction required")}</a>
                 """)
             return gettext_lazy("Rebuild restricted")
 
-        if ff_enabled:
+        if rebuild_is_restricted:
             return mark_safe(f"""
                 <a href={toggle_edit_url}>{gettext_lazy("Rebuild restriction not required")}</a>
             """)
         return gettext_lazy("No rebuild restriction required")
+
+    def _should_restrict_rebuild(self, case_count, form_count):
+        return case_count >= self.UCR_RESTRICTION_THRESHOLD or form_count >= self.UCR_RESTRICTION_THRESHOLD
+
+    @staticmethod
+    def _rebuild_is_restricted(domain):
+        return RESTRICT_DATA_SOURCE_REBUILD.enabled(domain)
