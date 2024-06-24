@@ -174,9 +174,9 @@ class CaseHelper:
             all_domains_with_dedicated_search_index = settings.CASE_SEARCH_SUB_INDICES.keys()
         else:
             all_domains = [run_config.domain]
-            if domain_needs_search_index(run_config.domain.name):
-                all_domains_with_search_index = [run_config.domain.name]
-            if run_config.domain in settings.Case_SEARCH_SUB_INDICES:
+            if domain_needs_search_index(run_config.domain):
+                all_domains_with_search_index = [run_config.domain]
+            if run_config.domain in settings.CASE_SEARCH_SUB_INDICES:
                 all_domains_with_dedicated_search_index = [run_config.domain]
 
         case_query = CaseES(for_export=True)
@@ -295,7 +295,7 @@ class FormHelper:
                 form_id, (None, None, None))
             if (es_modified_on, es_doc_type, es_domain) != (modified_on, doc_type, domain):
                 yield DataRow(doc_id=form_id, doc_type=doc_type, doc_subtype=xmlns, domain=domain,
-                              es_date=es_modified_on, primary_date=modified_on)
+                              index=FormES().index, es_date=es_modified_on, primary_date=modified_on)
 
     @staticmethod
     def _get_es_modified_dates_for_forms(form_ids):
