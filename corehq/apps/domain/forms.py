@@ -1168,6 +1168,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     )
 
     def __init__(self, domain, can_edit_eula, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
         super(DomainInternalForm, self).__init__(*args, **kwargs)
         self.domain = domain
         self.can_edit_eula = can_edit_eula
@@ -1265,6 +1266,13 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 ),
             ),
         )
+
+        if not self.user.is_staff:
+            self.fields['auto_case_update_limit'].disabled = True
+            self.fields['auto_case_update_limit'].help_text = (
+                'Case update rule limits are only modifiable by Dimagi admins. '
+                'Please reach out to support@dimagi.com if you wish to update this setting.'
+            )
 
     @property
     def current_values(self):
