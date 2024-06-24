@@ -35,6 +35,7 @@ class TestStaleDataInESSQL(TestCase):
     project_name = 'sql-project'
     case_type = 'patient'
     form_xmlns = None
+    maxDiff = None
 
     def test_no_output(self):
         self._assert_in_sync(self._stale_data_in_es('form'))
@@ -62,7 +63,7 @@ class TestStaleDataInESSQL(TestCase):
         def _make_fake_es_check(num_to_process):
             seen = []
 
-            def _fake_es_check(chunk):
+            def _fake_es_check(chunk, query):
                 chunk = list(chunk)
                 if len(seen) == num_to_process:
                     raise ExitEarlyException(seen)
@@ -70,7 +71,7 @@ class TestStaleDataInESSQL(TestCase):
                 for case_id, case_type, modified_on, domain in chunk:
                     yield DataRow(
                         doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
-                        es_date=None, primary_date=modified_on
+                        index=query.index, es_date=None, primary_date=modified_on
                     )
 
             return _fake_es_check
@@ -78,7 +79,7 @@ class TestStaleDataInESSQL(TestCase):
         def call(num_to_process=None, expect_exception=None):
             _fake_es_check = _make_fake_es_check(num_to_process)
             patch_path = 'corehq.apps.hqadmin.management.commands.stale_data_in_es'
-            with mock.patch(f'{patch_path}.CHUNK_SIZE', 1),\
+            with mock.patch(f'{patch_path}.CHUNK_SIZE', 1), \
                     mock.patch(f'{patch_path}.CaseHelper._yield_missing_in_es', _fake_es_check):
                 return self._stale_data_in_es(
                     'case', iteration_key=iteration_key, expect_exception=expect_exception
@@ -87,15 +88,15 @@ class TestStaleDataInESSQL(TestCase):
         form, cases = self._submit_form(self.project.name, new_cases=4)
 
         # process first 2 then raise exception
-        self._assert_not_in_sync(call(2, expect_exception=ExitEarlyException), rows=[
-            (case.case_id, 'CommCareCase', case.type, case.domain, None, case.server_modified_on)
-            for case in cases[:2]
+        self._assert_not_in_sync(call(4, expect_exception=ExitEarlyException), rows=[
+            (case.case_id, 'CommCareCase', case.type, case.domain, index, None, case.server_modified_on)
+            for case in cases[:2] for index in ['cases', 'case_search']
         ])
 
         # process rest - should start at 3rd doc
         self._assert_not_in_sync(call(4), rows=[
-            (case.case_id, 'CommCareCase', case.type, case.domain, None, case.server_modified_on)
-            for case in cases[2:]
+            (case.case_id, 'CommCareCase', case.type, case.domain, index, None, case.server_modified_on)
+            for case in cases[2:] for index in ['cases', 'case_search']
         ])
 
     def test_form_resume(self):
@@ -112,7 +113,7 @@ class TestStaleDataInESSQL(TestCase):
                 for form_id, doc_type, xmlns, modified_on, domain in chunk:
                     yield DataRow(
                         doc_id=form_id, doc_type=doc_type, doc_subtype=xmlns, domain=domain,
-                        es_date=None, primary_date=modified_on
+                        index='forms', es_date=None, primary_date=modified_on
                     )
 
             return _fake_es_check
@@ -132,13 +133,13 @@ class TestStaleDataInESSQL(TestCase):
 
         # process first 2 then raise exception
         self._assert_not_in_sync(call(2, expect_exception=ExitEarlyException), rows=[
-            (form.form_id, 'XFormInstance', form.xmlns, form.domain, None, form.received_on)
+            (form.form_id, 'XFormInstance', form.xmlns, form.domain, 'forms', None, form.received_on)
             for form in forms[:2]
         ])
 
         # process rest - should start at 3rd doc
         self._assert_not_in_sync(call(4), rows=[
-            (form.form_id, 'XFormInstance', form.xmlns, form.domain, None, form.received_on)
+            (form.form_id, 'XFormInstance', form.xmlns, form.domain, 'forms', None, form.received_on)
             for form in forms[2:]
         ])
 
@@ -148,7 +149,7 @@ class TestStaleDataInESSQL(TestCase):
 
         form, cases = self._submit_form(self.project.name)
         self._assert_not_in_sync(call(), rows=[
-            (form.form_id, 'XFormInstance', form.xmlns, form.domain, None, form.received_on)
+            (form.form_id, 'XFormInstance', form.xmlns, form.domain, 'forms', None, form.received_on)
         ])
 
         self._send_forms_to_es([form])
@@ -156,7 +157,7 @@ class TestStaleDataInESSQL(TestCase):
 
         form.archive(trigger_signals=False)
         self._assert_not_in_sync(call(), rows=[
-            (form.form_id, 'XFormArchived', form.xmlns, form.domain, form.received_on, form.received_on)
+            (form.form_id, 'XFormArchived', form.xmlns, form.domain, 'forms', form.received_on, form.received_on)
         ])
 
         self._send_forms_to_es([form])
@@ -164,7 +165,7 @@ class TestStaleDataInESSQL(TestCase):
 
         form.unarchive(trigger_signals=False)
         self._assert_not_in_sync(call(), rows=[
-            (form.form_id, 'XFormInstance', form.xmlns, form.domain, form.received_on, form.received_on)
+            (form.form_id, 'XFormInstance', form.xmlns, form.domain, 'forms', form.received_on, form.received_on)
         ])
 
         self._send_forms_to_es([form])
@@ -175,7 +176,8 @@ class TestStaleDataInESSQL(TestCase):
             return self._stale_data_in_es('case', **cmd_kwargs)
         form, (case,) = self._submit_form(self.project.name, new_cases=1)
         self._assert_not_in_sync(call(), rows=[
-            (case.case_id, 'CommCareCase', case.type, case.domain, None, case.server_modified_on)
+            (case.case_id, 'CommCareCase', case.type, case.domain, 'cases', None, case.server_modified_on),
+            (case.case_id, 'CommCareCase', case.type, case.domain, 'case_search', None, case.server_modified_on)
         ])
 
         self._send_cases_to_es([case])
@@ -184,7 +186,10 @@ class TestStaleDataInESSQL(TestCase):
         old_date = case.server_modified_on
         form, (case,) = self._submit_form(self.project.name, update_cases=[case])
         self._assert_not_in_sync(call(), rows=[
-            (case.case_id, 'CommCareCase', case.type, case.domain, old_date, case.server_modified_on)
+            (case.case_id, 'CommCareCase', case.type, case.domain, 'cases', old_date,
+             case.server_modified_on),
+            (case.case_id, 'CommCareCase', case.type, case.domain, 'case_search', old_date,
+             case.server_modified_on)
         ])
 
         self._send_cases_to_es([case])
@@ -201,7 +206,8 @@ class TestStaleDataInESSQL(TestCase):
         case.server_modified_on = pg_modified_on
 
         self._assert_not_in_sync(call(), rows=[
-            (case.case_id, 'CommCareCase', case.type, case.domain, None, case.server_modified_on)
+            (case.case_id, 'CommCareCase', case.type, case.domain, "cases", None, case.server_modified_on),
+            (case.case_id, 'CommCareCase', case.type, case.domain, "case_search", None, case.server_modified_on)
         ])
 
     def _stale_data_in_es(self, *args, **kwargs):
@@ -271,14 +277,14 @@ class TestStaleDataInESSQL(TestCase):
     def _assert_in_sync(self, output):
         self.assertEqual(
             output,
-            'Doc ID\tDoc Type\tDoc Subtype\tDomain\tES Date\tCorrect Date\n'
+            'Doc ID\tDoc Type\tDoc Subtype\tDomain\tIndex\tES Date\tCorrect Date\n'
         )
 
     def _assert_not_in_sync(self, output, rows):
         content = "".join('{}\n'.format('\t'.join(map(str, row))) for row in rows)
         self.assertEqual(
             output,
-            f'Doc ID\tDoc Type\tDoc Subtype\tDomain\tES Date\tCorrect Date\n{content}'
+            f'Doc ID\tDoc Type\tDoc Subtype\tDomain\tIndex\tES Date\tCorrect Date\n{content}'
         )
 
     @classmethod
