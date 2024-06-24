@@ -148,7 +148,7 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
 
 
 class UCRRebuildStatusFilter(BaseSingleOptionFilter):
-    slug = "ucr_rebuild_status"
+    slug = "ucr_rebuild_restriction"
     label = gettext_lazy("Rebuild restriction feature flag")
     default_text = gettext_lazy("Show All")
 
