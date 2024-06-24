@@ -1167,8 +1167,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
     )
 
-    def __init__(self, domain, can_edit_eula, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
+    def __init__(self, domain, can_edit_eula, *args, user, **kwargs):
+        self.user = user
         super(DomainInternalForm, self).__init__(*args, **kwargs)
         self.domain = domain
         self.can_edit_eula = can_edit_eula
