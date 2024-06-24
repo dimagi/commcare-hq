@@ -85,14 +85,14 @@ hqDefine("cloudcare/js/formplayer/app", [
         return Backbone.Radio.channel('formplayer');
     };
 
-    FormplayerFrontend.userWantsToNavigateAwayFromForm = function () {
-        if (FormplayerFrontend.formInProgress) {
+    FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm = function () {
+        if (FormplayerFrontend.unsavedFormInProgress) {
             const userConfirmedYes = window.confirm("You have a form in progress. Are you sure you want to navigate away?");
             if (!userConfirmedYes) {
                 return false;
             }
         }
-        FormplayerFrontend.trigger('setFormNotInProgress');
+        FormplayerFrontend.trigger('setUnsavedFormNotInProgress');
         return true;
     };
 
@@ -195,7 +195,7 @@ hqDefine("cloudcare/js/formplayer/app", [
 
     FormplayerFrontend.on('startForm', function (data) {
         FormplayerFrontend.permitIntervalSync = false;
-        FormplayerFrontend.trigger('setFormInProgress');
+        FormplayerFrontend.trigger('setUnsavedFormInProgress');
         FormplayerFrontend.getChannel().request("clearMenu");
 
         data.onLoading = CloudcareUtils.formplayerLoading;
@@ -723,9 +723,6 @@ hqDefine("cloudcare/js/formplayer/app", [
         // switches tab back from the application name
         document.title = gettext("Web Apps - CommCare HQ");
 
-        if (!FormplayerFrontend.userWantsToNavigateAwayFromForm()) {
-            return;
-        }
         var urlObject = FormplayerUtils.currentUrlToObject(),
             appId,
             currentUser = UsersModels.getCurrentUser();
@@ -772,16 +769,27 @@ hqDefine("cloudcare/js/formplayer/app", [
         },
     });
 
-    FormplayerFrontend.on("setFormInProgress", function () {
-        FormplayerFrontend.formInProgress = true;
-        window.onbeforeunload = function () {
-            return true;
-        };
+    FormplayerFrontend.on("setUnsavedFormInProgress", function () {
+        const appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
+        var app = AppsAPI.getAppEntity(appId);
+        if (!app) {
+            return;
+        }
+        app = app.toJSON();
+        const savedFormsSettingOff = (app.profile.properties || {})['cc-show-incomplete'] === 'no';
+        if (savedFormsSettingOff) {
+            FormplayerFrontend.unsavedFormInProgress = true;
+            window.onbeforeunload = function () {
+                return true;
+            };
+        }
     });
 
-    FormplayerFrontend.on("setFormNotInProgress", function () {
-        FormplayerFrontend.formInProgress = false;
-        window.onbeforeunload = null;
+    FormplayerFrontend.on("setUnsavedFormNotInProgress", function () {
+        if (FormplayerFrontend.unsavedFormInProgress) {
+            FormplayerFrontend.unsavedFormInProgress = false;
+            window.onbeforeunload = null;
+        }
     });
 
     return FormplayerFrontend;
