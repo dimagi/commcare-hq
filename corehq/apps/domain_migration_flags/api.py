@@ -1,6 +1,7 @@
 import logging
 from collections import defaultdict
 from datetime import datetime
+from functools import wraps
 
 from django.db.models import Q
 
@@ -126,3 +127,25 @@ def all_domains_with_migrations_in_progress():
 def reset_caches(domain, slug):
     any_migrations_in_progress(domain, strict=True)
     get_migration_status(domain, slug, strict=True)
+
+
+def once_off_migration(slug):
+    """Ensure that the body of a migration is run only once
+
+    You can still run it again if there is an exception
+    """
+    def outer(migration_fn):
+        @wraps(migration_fn)
+        def inner(*args, **kwargs):
+            if get_migration_complete(ALL_DOMAINS, slug):
+                return
+            set_migration_started(ALL_DOMAINS, slug)
+            try:
+                res = migration_fn(*args, **kwargs)
+            except Exception:
+                set_migration_not_started(ALL_DOMAINS, slug)
+                raise
+            set_migration_complete(ALL_DOMAINS, slug)
+            return res
+        return inner
+    return outer
