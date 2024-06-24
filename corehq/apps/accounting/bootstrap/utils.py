@@ -10,8 +10,6 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
 )
 
-FEATURE_TYPES = list(dict(FeatureType.CHOICES))
-
 
 def ensure_plans(config, verbose, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
@@ -31,7 +29,7 @@ def ensure_plans(config, verbose, apps):
             plan_deets['product_rate_monthly_fee'], plan_key.edition,
             verbose=verbose, apps=apps,
         )
-        features = _ensure_features(plan_key.edition, verbose, apps)
+        features = _ensure_features(plan_deets['feature_rates'], plan_key.edition, verbose, apps)
         feature_rates = _ensure_feature_rates(
             plan_deets['feature_rates'], features, plan_key.edition,
             verbose=verbose, apps=apps,
@@ -102,7 +100,7 @@ def _get_software_product(product_name, verbose, apps):
     return product
 
 
-def _ensure_features(edition, verbose, apps):
+def _ensure_features(feature_rates, edition, verbose, apps):
     """
     Ensures that all the Features necessary for the plans are created.
     """
@@ -112,9 +110,8 @@ def _ensure_features(edition, verbose, apps):
         log_accounting_info(f"Ensuring Features for plan: {edition}")
 
     features = []
-    for feature_type in FEATURE_TYPES:
-        # Don't prefix web user feature name with edition
-        if feature_type == FeatureType.WEB_USER:
+    for feature_type in feature_rates.keys():
+        if feature_type not in FeatureType.EDITIONED_FEATURES:
             feature = Feature(name=feature_type, feature_type=feature_type)
         else:
             feature = Feature(name=f"{feature_type} {edition}", feature_type=feature_type)

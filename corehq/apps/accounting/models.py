@@ -137,6 +137,10 @@ class FeatureType(object):
         (WEB_USER, WEB_USER),
         (SUBMITTING_MOBILE_WORKER, SUBMITTING_MOBILE_WORKER),
     )
+    EDITIONED_FEATURES = [
+        USER,
+        SMS,
+    ]
 
 
 class SoftwarePlanEdition(object):
