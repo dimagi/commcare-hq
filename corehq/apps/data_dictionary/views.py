@@ -46,7 +46,8 @@ from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.motech.fhir.utils import (
-    load_fhir_resource_mappings,
+    load_fhir_case_properties_mapping,
+    load_fhir_case_type_mapping,
     load_fhir_resource_types,
     remove_fhir_resource_type,
     update_fhir_resource_type,
@@ -75,8 +76,9 @@ def data_dictionary_json(request, domain, case_type_name=None):
         Prefetch('properties__allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
     )
     if toggles.FHIR_INTEGRATION.enabled(domain):
-        fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = load_fhir_resource_mappings(
-            domain)
+        fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
+        fhir_resource_prop_by_case_prop = load_fhir_case_properties_mapping(domain)
+
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
 
@@ -154,7 +156,8 @@ def data_dictionary_json_v2(request, domain, case_type_name=None):
     fhir_resource_type_name_by_case_type = {}
     fhir_resource_prop_by_case_prop = {}
     if toggles.FHIR_INTEGRATION.enabled(domain):
-        fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = load_fhir_resource_mappings(domain)
+        fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
+        fhir_resource_prop_by_case_prop = load_fhir_case_properties_mapping(domain)
 
     case_type_app_module_count = get_case_type_app_module_count(domain)
     used_props_by_case_type = get_used_props_by_case_type(domain)
@@ -457,9 +460,8 @@ def _generate_data_for_export(domain, export_fhir_data):
     fhir_resource_prop_by_case_prop = {}
 
     if export_fhir_data:
-        fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = load_fhir_resource_mappings(
-            domain
-        )
+        fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
+        fhir_resource_prop_by_case_prop = load_fhir_case_properties_mapping(domain)
         _add_fhir_resource_mapping_sheet(case_type_data, fhir_resource_type_name_by_case_type)
 
     for case_type in queryset:
