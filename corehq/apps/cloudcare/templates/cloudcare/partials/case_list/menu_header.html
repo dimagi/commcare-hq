@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div class="page-header menu-header clearfix" id="case-list-menu-header">
+<div class="page-header menu-header d-none d-md-block clearfix" id="case-list-menu-header">
   <div class="float-end">
     <% if (showMap) { %>
       <button id="hide-map-button" class="btn btn-primary float-end" type="button"
@@ -17,7 +17,7 @@
     <% } %>
   </div>
   <% if (title.length > 0) { %>
-    <h1 aria-label="<%- title %>" tabindex="0" class="page-title d-none d-md-block"><%- title %></h1>
+    <h1  aria-label="<%- title %>" tabindex="0" class="page-title"><%- title %></h1>
   <% } %>
   <% if (sidebarEnabled && description.length > 0) { %>
     <div aria-label="<%- description %>" tabindex="0" class="query-description"><%= description %></div>
