@@ -41,17 +41,15 @@ class UserChangeLogger(object):
 
         if not is_new_user:
             self.original_user_doc = self.user.to_json()
-            self.original_user_data = self.user.get_user_data(user_domain).raw
         else:
             self.original_user_doc = None
-            self.original_user_data = None
 
         self.fields_changed = {}
         self.change_messages = {}
 
         self._save = False  # flag to check if log needs to be saved for updates
 
-    def add_changes(self, changes):
+    def add_changes(self, changes, skip_confirmation=False):
         """
         Add changes to user properties.
         Ignored for new user since the whole user doc is logged for a new user
@@ -60,7 +58,7 @@ class UserChangeLogger(object):
         if self.is_new_user:
             return
         for name, new_value in changes.items():
-            if self.original_user_doc[name] != new_value:
+            if skip_confirmation or self.original_user_doc[name] != new_value:
                 self.fields_changed[name] = new_value
                 self._save = True
 
@@ -157,6 +155,8 @@ class BaseUserImporter(object):
         from corehq.apps.users.user_data import UserDataError
         user_data = self.user.get_user_data(self.user_domain)
         old_profile_id = user_data.profile_id
+        old_user_data = user_data.raw
+
         if PROFILE_SLUG in data:
             raise UserUploadError(_("You cannot set {} directly").format(PROFILE_SLUG))
         if profile_name:
@@ -174,19 +174,15 @@ class BaseUserImporter(object):
         if user_data.profile_id and user_data.profile_id != old_profile_id:
             self.logger.add_info(UserChangeMessage.profile_info(user_data.profile_id, profile_name))
 
+        if old_user_data != user_data.raw:
+            self.logger.add_changes({'user_data': user_data.raw}, skip_confirmation=True)
+
     def save_log(self):
         # Tracking for role is done post save to have role setup correctly on save
         if self.role_updated:
             new_role = self.user.get_role(domain=self.user_domain)
             self.logger.add_info(UserChangeMessage.role_change(new_role))
-
-        self._include_user_data_changes()
         return self.logger.save()
-
-    def _include_user_data_changes(self):
-        new_user_data = self.user.get_user_data(self.user_domain).raw
-        if self.logger.original_user_data != new_user_data:
-            self.logger.add_changes({'user_data': new_user_data})
 
 
 class CommCareUserImporter(BaseUserImporter):

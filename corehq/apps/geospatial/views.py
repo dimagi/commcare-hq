@@ -16,7 +16,6 @@ from django.views.decorators.http import require_GET
 import jsonschema
 from memoized import memoized
 
-from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.web import json_request, json_response
 
@@ -367,32 +366,28 @@ class GetPaginatedCases(CaseListMixin):
 
 def _get_paginated_users_without_gps(domain, page, limit, query):
     location_prop_name = get_geo_user_property(domain)
-    query = (
+    res = (
         UserES()
         .domain(domain)
         .mobile_users()
         .missing_or_empty_user_data_property(location_prop_name)
         .search_string_query(query, ['username'])
+        .fields(['_id', 'username'])
         .sort('created_on', desc=True)
+        .start((page - 1) * limit)
+        .size(limit)
+        .run()
     )
-
-    paginator = Paginator(query.get_ids(), limit)
-    user_ids_page = list(paginator.get_page(page))
-    user_docs = get_docs(CommCareUser.get_db(), keys=user_ids_page)
-    user_data = []
-    for user_doc in user_docs:
-        lat, lon = get_lat_lon_from_dict(user_doc['user_data'], location_prop_name)
-        user_data.append(
-            {
-                'id': user_doc['_id'],
-                'name': user_doc['username'].split('@')[0],
-                'lat': lat,
-                'lon': lon,
-            }
-        )
     return {
-        'items': user_data,
-        'total': paginator.count,
+        'items': [
+            {
+                'id': hit['_id'],
+                'name': hit['username'].split('@')[0],
+                'lat': '',
+                'lon': '',
+            } for hit in res.hits
+        ],
+        'total': res.total,
     }
 
 
