@@ -844,6 +844,7 @@ reports
  0015_tableauserver_allowed_tableau_groups
  0016_alter_tableauuser_role
  0017_alter_tableauuser_tableau_user_id
+ 0018_alter_tableauuser_role
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -1240,6 +1241,7 @@ users
  0067_alter_invitation_tableau_role
  0068_grant_web_apps_to_default_mobile_worker_role
  0069_alter_invitation_custom_user_data_and_more
+ 0070_alter_invitation_tableau_role
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
