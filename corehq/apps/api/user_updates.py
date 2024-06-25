@@ -119,7 +119,7 @@ def _update_user_data(user, new_user_data, user_change_logger):
     if user_change_logger and changed:
         user_change_logger.add_changes({
             'user_data': user.get_user_data(user.domain).raw
-        })
+        }, skip_confirmation=True)
 
 
 def _update_user_role(user, role, user_change_logger):

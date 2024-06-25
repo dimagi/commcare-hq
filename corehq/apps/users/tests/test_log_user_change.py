@@ -16,8 +16,10 @@ class TestLogUserChange(TestCase):
     def setUpClass(cls):
         cls.project = create_domain(cls.domain)
         cls.web_user = WebUser.create(cls.domain, 'test@commcarehq.org', '******',
+                                      user_data={'favorite_color': 'cyan'},
                                       created_by=None, created_via=None)
         cls.commcare_user = CommCareUser.create(cls.domain, f'test@{cls.domain}.commcarehq.org', '******',
+                                                user_data={'favorite_color': 'purple'},
                                                 created_by=cls.web_user, created_via=USER_CHANGE_VIA_WEB)
 
     @classmethod
@@ -186,7 +188,7 @@ def _get_expected_changes_json(user):
         'status': None,
         'subscribed_to_commcare_users': False,
         'two_factor_auth_disabled_until': None,
-        'user_data': {},
+        'user_data': user.get_user_data('test').raw,
         'user_location_id': None,
         'username': user_json['username']
     }
