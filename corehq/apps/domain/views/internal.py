@@ -97,8 +97,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     def internal_settings_form(self):
         can_edit_eula = toggles.CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
-            return DomainInternalForm(self.request.domain, can_edit_eula, self.request.user,
-                                      self.request.POST)
+            return DomainInternalForm(self.request.domain, can_edit_eula,
+                                      self.request.POST, user=self.request.user)
         initial = {
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
