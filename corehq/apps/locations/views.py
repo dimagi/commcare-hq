@@ -3,6 +3,7 @@ import logging
 
 from django.contrib import messages
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpResponseRedirect
 from django.http.response import HttpResponseServerError
 from django.shortcuts import get_object_or_404, redirect, render
@@ -66,7 +67,7 @@ from .permissions import (
     user_can_edit_location_types,
 )
 from .tree_utils import assert_no_cycles
-from .util import load_locs_json, location_hierarchy_config
+from .util import does_location_type_have_users, load_locs_json, location_hierarchy_config
 from django.http import JsonResponse, HttpResponseBadRequest
 from corehq.apps.locations.dbaccessors import get_filtered_locations_count
 
@@ -389,6 +390,17 @@ class LocationTypesView(BaseDomainView):
                         return False
             return True
 
+        def _verify_has_users_config(loc_type_payload, pk):
+            if not loc_type.get('has_users'):
+                try:
+                    existing_loc_type_sql_obj = LocationType.objects.get(pk=pk)
+                except ObjectDoesNotExist:  # Location type not created yet
+                    return
+                if does_location_type_have_users(existing_loc_type_sql_obj):
+                    raise LocationConsistencyError(f"Locations of the organization level '{loc_type['name']}' "
+                                                "have users assigned to them. You can't uncheck the "
+                                                "'Has Users' setting for this level!")
+
         loc_types = payload['loc_types']
         pks = []
         payload_loc_type_name_by_pk = {}
@@ -405,6 +417,10 @@ class LocationTypesView(BaseDomainView):
             payload_loc_type_name_by_pk[loc_type['pk']] = loc_type['name']
             if loc_type.get('code'):
                 payload_loc_type_code_by_pk[loc_type['pk']] = loc_type['code']
+            # All location types have users until UI allows otherwise.
+            # Remove below line when UI work is being done.
+            loc_type['has_users'] = True
+            _verify_has_users_config(loc_type, pk)
         names = list(payload_loc_type_name_by_pk.values())
         names_are_unique = len(names) == len(set(names))
         codes = list(payload_loc_type_code_by_pk.values())
