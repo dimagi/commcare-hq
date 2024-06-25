@@ -4,7 +4,7 @@
 <script type="text/html" id="sub-group-fullform-ko-template">
   <!-- ko if: isDummy -->
   <div style="margin-bottom: 10px; margin-right: 10px">
-      <button class="btn btn-default add" href="#"
+      <button type="button" class="btn btn-default add" href="#"
               data-bind="click: newRepeat, text: addChoice"
               id="repeat-add-new">
               <i class="fa fa-plus"></i>
@@ -48,7 +48,10 @@
                 data-bind="
                   html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
                 "></span>
-          <button class="btn btn-danger del pull-right" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
+          <button type="button"
+                  class="btn btn-danger del pull-right"
+                  href="#"
+                  aria-label="{% trans_html_attr 'Delete Repeat' %}"
                   data-bind="
                       visible: showDelete,
                       enabled: hasNoPendingAnswer(),
@@ -65,8 +68,11 @@
           </div>
           <span class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
           <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
-           <button class="btn btn-danger del pull-right" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
-                  data-bind="
+           <button type="button"
+                   class="btn btn-danger del pull-right"
+                   href="#"
+                   aria-label="{% trans_html_attr 'Delete Repeat' %}"
+                   data-bind="
                       visible: showDelete,
                       enabled: hasNoPendingAnswer(),
                       click: deleteRepeat
