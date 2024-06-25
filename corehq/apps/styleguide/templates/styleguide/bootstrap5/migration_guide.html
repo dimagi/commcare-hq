@@ -206,7 +206,7 @@
     Step 2 (large apps): Auto-Migrate &amp; Split Files
   </h2>
   <p>
-    The next step is to split affected template and javascript files into <code>bootstrap3</code> and
+    For large migrations, the first step is to split affected template and javascript files into <code>bootstrap3</code> and
     <code>bootstrap5</code> versions. This is an automated process that uses a management command to find and
     replace the straightforward changes, while flagging more complex changes to be addressed later.
   </p>
@@ -268,7 +268,8 @@
   <p>
     The option <code>--skip-all</code> is optional, but recommended unless you have a particularly tricky app
     as it speeds up the migration process by auto-committing the split files changes for each template and
-    javascript file in the app.
+    javascript file in the app. If you use <code>--skip-all</code>, you are still responsible for changes made by
+    the tool, so it's a good idea to review the auto-generated commits in GitHub or your favorite diff tool.
   </p>
   <p>
     If <code>--skip-all</code> is not used, the management command will iterate through all template and javascript
@@ -276,15 +277,19 @@
     the diff for each file at the end.
   </p>
   <p>
-    Regardless of what route you take, a changelog for each file will be saved to a markdown file in
+    Regardless of what route you take, code will also be updated with TODO comments noting areas that need
+    attention and could not automatically be updated.  These comments reference helper documents in the
+    <a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/utils/bootstrap/changes_guide"
+    target="_blank">changes_guide</a> directory.
+  </p>
+  <p>
+    In addition, a changelog for each file will be saved to a markdown file in
     <code>BOOTSTRAP_MIGRATION_LOGS_DIR</code> (ouside of repository).
-    If you want to work on migrating an application with multiple people, you can zip these markdown files and
-    share with your collaborators for future reference.
   </p>
   <div class="alert alert-primary">
     <p>
-      It is possible that you might have to run a migration multiple times on an app. It might be the case that templates
-      or javascript files have several nested dependencies.
+      If templates or javascript files have several nested dependencies, you may need to run this split files step
+      multiple times.
     </p>
     <p>
       For instance, let's suppose one template called <code>webapps_base.html</code> is
@@ -491,8 +496,8 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
     part accurately.
   </p>
   <div class="alert alert-primary">
-    It is important to create a separate Pull Request for stylesheet changes. This PR should come after the "split files"
-    changes in the previous step.
+    Updating stylesheets is in large part a mechanical process. As always, please commit large mechanical changes
+    separately from changes that need closer review.
   </div>
   <p>
     You will have to update <code>bootstrap5_diff_config.json</code> manually when working with stylesheet files.
@@ -525,11 +530,12 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
   </p>
   <p>
     Finally, you should make sure any javascript files needed to render that view also inherit from <code>bootstrap5</code>
-    dependencies.
+    dependencies. The migration tool should have handled updating any <code>bootstrap3</code> dependencies to their
+    <code>bootstrap5</code> versions.
   </p>
   <p>
-    Once a view's template and javascript files updated, it is now time to load that view make visual observations and
-    make adjustments to get the view to render without javascript or visual errors. The view should be as similar
+    Once a view's template and javascript files are updated, it is now time to load that view and test for
+    any javascript or visual errors. The view should be as similar
     as possible to its Bootstrap 3 version, which you can compare with on production.
   </p>
   <p>
@@ -582,15 +588,14 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
   <h3 id="deploy-to-staging" class="pt-3">
     Deploy to Staging
   </h3>
-  <div class="alert alert-danger">
-    <strong>IMPORTANT: Do not skip this step!</strong> Please deploy to staging to avoid any fires. You have been warned.
-  </div>
   <p>
-    Once you have your migrated view working locally, it is important to deploy your view's branch to staging to ensure
-    that the requirejs build doesn't encounter any issues and that there are no other staticfiles or javascript
-    issues with this view. It is often the case that the production environment introduces front-end issues that are
-    often not discovered when testing locally, due to the complexity of the requirejs build, django compressor, caching,
-    and content distribution of static files.
+    Once you have your migrated view working locally, it is also helpful to deploy to staging and smoke test there.
+    This is particularly important for migrations that involve switching a JavaScript library from a Bootstrap 3 to
+    Bootstrap 5 version, such as switching the Bootstrap 3 date picker with Botostrap 5-compatible tempus dominus.
+  </p>
+  <p>
+    Most view migrations should also go through QA. Migrations can skip QA if they make
+    relatively superficial changes and are in low-risk areas.
   </p>
 
   <h3 id="rebuild-diffs" class="pt-3">
@@ -669,7 +674,7 @@ box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);</pre>
   <p>
     Finally, LESS files can be removed from all parts of HQ and <code>COMPRESS_PRECOMPILERS</code> in
     <code>settings.py</code> can be updated to only precompile SCSS. Any LESS-related dependencies can be removed from
-    <code>packange.json</code> and commcare-cloud, and new developer setup guides like <code>DEV_SETUP.md</code> can
+    <code>package.json</code> and commcare-cloud, and new developer setup guides like <code>DEV_SETUP.md</code> can
     be updated to remove references to LESS.
   </p>
   <p>
