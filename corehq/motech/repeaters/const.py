@@ -32,3 +32,10 @@ RECORD_SUCCESS_STATE = State.Success
 RECORD_FAILURE_STATE = State.Fail
 RECORD_CANCELLED_STATE = State.Cancelled
 RECORD_EMPTY_STATE = State.Empty
+
+
+class UCRRestrictionFFStatus(IntegerChoices):
+    Enabled = 1, _('Is enabled')
+    NotEnabled = 2, _('Is not enabled')
+    ShouldEnable = 3, _('Should be enabled')
+    CanDisable = 4, _('Can be disabled')
