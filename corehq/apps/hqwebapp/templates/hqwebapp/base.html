@@ -162,12 +162,12 @@
       window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
     </script>
 
-    {% if not requirejs_main %}
-      {% javascript_libraries use_bootstrap5=use_bootstrap5 underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
-    {% endif %}
-
     {% if request.use_alpinejs %}
       <script type="text/javascript" src="{% static 'alpinejs/dist/cdn.min.js' %}"></script>
+    {% endif %}
+
+    {% if not requirejs_main %}
+      {% javascript_libraries use_bootstrap5=use_bootstrap5 underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
     {% endif %}
 
     {# Up here because if daterangepicker is called from within a form widget, #}
