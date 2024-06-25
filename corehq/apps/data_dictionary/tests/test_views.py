@@ -553,10 +553,6 @@ class DataDictionaryJsonV2Test(TestCase):
                                   fhir_enabled=False):
         expected_output = {
             "name": case_type_obj.name,
-            "fhir_resource_type": cls.fhir_resource_name if fhir_enabled else None,
-            "is_deprecated": case_type_obj.is_deprecated,
-            "module_count": 0,
-            "is_safe_to_delete": True,
             "properties_count": case_type_obj.properties.count(),
             "_links": {
                 "self": f"http://testserver/a/{cls.domain_name}/data_dictionary/json_v2/{case_type_obj.name}/"
