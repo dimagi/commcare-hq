@@ -31,7 +31,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
         moduleCount,
         geoCaseProp,
         isSafeToDelete,
-        changeSaveButton
+        changeSaveButton,
+        dataUrl
     ) {
         var self = {};
         self.name = name || gettext("No Name");
@@ -43,6 +44,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.geoCaseProp = geoCaseProp;
         self.canDelete = isSafeToDelete;
         self.changeSaveButton = changeSaveButton;
+        self.dataUrl = dataUrl;
 
         self.init = function (groupData) {
             for (let group of groupData) {
@@ -82,9 +84,19 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 );
                     groupObj.properties.push(propObj);
                 }
+                groupObj.properties.subscribe(self.changeSaveButton);
                 self.groups.push(groupObj);
             }
         };
+
+        self.fetchCaseProperties = function () {
+            if (self.groups().length === 0) {
+                const caseTypeUrl = self.dataUrl + self.name + '/';
+                $.getJSON(caseTypeUrl, function (data) {
+                    self.init(data.groups);
+                });
+            }
+        }
 
         return self;
     };
@@ -123,7 +135,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.name.subscribe(changeSaveButton);
         self.description.subscribe(changeSaveButton);
         self.toBeDeprecated.subscribe(changeSaveButton);
-        self.properties.subscribe(changeSaveButton);
+        // Don't subscribe self.properties until they have been loaded
 
         return self;
     };
@@ -371,6 +383,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         };
 
         self.init = function (callback) {
+            // Get list of case types
             $.getJSON(dataUrl, {load_deprecated_case_types: self.showDeprecatedCaseTypes()})
                 .done(function (data) {
                     _.each(data.case_types, function (caseTypeData) {
@@ -381,12 +394,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             caseTypeData.module_count,
                             data.geo_case_property,
                             caseTypeData.is_safe_to_delete,
-                            changeSaveButton
+                            changeSaveButton,
+                            dataUrl
                         );
-                        caseTypeObj.init(caseTypeData.groups);
                         self.caseTypes.push(caseTypeObj);
                     });
                     if (self.caseTypes().length) {
+                        // `self.goToCaseType()` calls `caseType.fetchCaseProperties()`
+                        // to fetch the case properties of the first case type
                         self.goToCaseType(self.caseTypes()[0]);
                     }
                     self.caseGroupList.subscribe(changeSaveButton);
@@ -480,6 +495,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     return;
                 }
             }
+            caseType.fetchCaseProperties();
             self.activeCaseType(caseType.name);
             self.fhirResourceType(caseType.fhirResourceType());
             self.removefhirResourceType(false);
@@ -656,7 +672,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     };
 
     $(function () {
-        var dataUrl = initialPageData.reverse('data_dictionary_json'),
+        var dataUrl = initialPageData.reverse('data_dictionary_json_case_types'),
             casePropertyUrl = initialPageData.reverse('update_case_property'),
             typeChoices = initialPageData.get('typeChoices'),
             fhirResourceTypes = initialPageData.get('fhirResourceTypes'),
