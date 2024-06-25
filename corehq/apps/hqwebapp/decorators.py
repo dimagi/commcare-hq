@@ -25,6 +25,31 @@ def use_alpinejs(view_func):
     return set_request_flag(view_func, 'use_alpinejs')
 
 
+def use_htmx(view_func):
+    """Use this decorator on the dispatch method of a TemplateView subclass
+    to use HTMX on a page.
+
+    Note: Bundling HTMX with RequireJS can be done by setting window.htmx = htmx
+    after importing the htmx module. However, some page loads caused HTMX to not initialize
+    properly on a page, resulting in components that never loaded. Importing the HTMX script
+    directly in <head> first thing proves to be the more performant and reliable way to get
+    HTMX initialize reliably and quickly.
+
+    TODO: Investigate bundling HTMX with Webpack.
+
+    Example:
+        @use_htmx
+        def dispatch(self, request, *args, **kwargs):
+            return super().dispatch(request, *args, **kwargs)
+
+    Or alternatively:
+        @method_decorator(use_htmx, name='dispatch')
+        class MyViewClass(MyViewSubclass):
+            ...
+    """
+    return set_request_flag(view_func, 'use_htmx')
+
+
 def use_daterangepicker(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to enable the inclusion of the daterangepicker library at the base template

@@ -22,12 +22,10 @@
       deps: [
           'knockout',
           'ko.mapping',
-          'htmx',
           {% if use_bootstrap5 %}'es6!hqwebapp/js/bootstrap5_loader'{% else %}'bootstrap'{% endif %},
       ],
-      callback: function (ko, mapping, htmx) {
+      callback: function (ko, mapping) {
         ko.mapping = mapping;
-        window.htmx = htmx;
       }
     });
     requirejs([
