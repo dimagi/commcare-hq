@@ -68,10 +68,11 @@ def _should_sync(restore_state):
 
 @memoized
 def _count_buckets():
+    max_size = max(settings.MAX_MOBILE_UCR_SIZE, 250000)
     count_buckets = []
     for x in range(10):
         bucket_value = 100 * 10 ** x
-        if bucket_value >= settings.MAX_MOBILE_UCR_SIZE:
+        if bucket_value >= max_size:
             count_buckets.append(settings.MAX_MOBILE_UCR_SIZE)
             break
         else:
