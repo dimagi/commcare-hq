@@ -119,3 +119,12 @@
     opacity: 1.0;
   }
 }
+
+
+.table thead tr th.select-header {
+  background-color: $blue-800;
+
+  &:nth-child(odd) {
+    background-color: $blue-700;
+  }
+}
