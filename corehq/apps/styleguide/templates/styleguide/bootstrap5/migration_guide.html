@@ -15,14 +15,14 @@
       <li><a href="#overview">Overview</a></li>
       <li><a href="#prepare-local-environment">Prepare Local Environment</a></li>
       <li><a href="#announce-migration">Step 1: Announce Migration</a></li>
-      <li><a href="#split-files">Step 2: Auto-Migrate &amp; Split Files</a>
+      <li><a href="#no-split">Step 2 (small apps): The "No Split" Process</li>
+      <li><a href="#split-files">Step 2 (large apps): Auto-Migrate &amp; Split Files</a>
         <ul>
           <li><a href="#pre-work">Pre-Work: Lint</a></li>
           <li><a href="#large-apps">Migrating Large Apps</a></li>
           <li><a href="#update-diffs">Configure &amp; Update Diffs</a></li>
           <li><a href="#verify-references">Verify References</a></li>
           <li><a href="#re-migrate">Re-Migrate Files</a></li>
-          <li><a href="#small-apps">Migrating Smaller Apps</a></li>
         </ul>
       </li>
       <li><a href="#update-stylesheets">Step 2B: Migrate Stylesheets</a></li>
@@ -150,8 +150,60 @@
     target="_blank">the app's migration status</a>.
   </p>
 
+  <h2 id="no-split" class="pt-3">
+    Step 2 (small apps): The "No Split" Process
+  </h2>
+  <p>
+    For small apps that are not depended on by other apps, the migration tool supports a streamlined process that
+    does not require splitting files into a Bootstrap 3 and Bootstrap 5 version. This is a good option for apps
+    with a small number of views, as it involves fewer pull requests and avoids the overhead of splitting files.
+    This approach does the entire migration in a single pull request, which
+    makes it unlikely to be a good choice for apps with 10+ views.
+  </p>
+  <p>
+    To begin a "no split" migration, first
+    <a href="http://localhost:8000/styleguide/b5/migration/#pre-work" target="_blank">lint</a> the app's JavaScript
+    and make a pull request for any linting changes. Then, to begin the actual migration, run:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">./manage.py migrate_app_to_bootstrap5 &lt;app_name&gt; --no-split</pre>
+    </div>
+  </div>
+  <p>
+    This will iterate through all the templates and javascript files in <code>&lt;app_name&gt;</code>,
+    applying all automated fixes and adding TODO comments for fixes that aren't automated. After
+    staging the changes to each file, you will have the option to auto-commit those changes.
+  </p>
+  <p>
+    For each migrated template, the command will wait for you to apply the <code>@use_bootstrap5</code> decorator
+    to the relevant views (see <a href="#migrating-views">Migrating Views</a>) before moving on to the next template.
+  </p>
+  <p>
+    Once all the files are migrated in-place, go through the TODO comments, which reference helper documents in the
+    <a href="https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/utils/bootstrap/changes_guide"
+    target="_blank">changes_guide</a> directory.
+  </p>
+  <p>
+    After all TODOs are addressed, test your work: load the page and
+    test out any interactivity. Most migrations should also go through QA. Migrations can skip QA if they make
+    relatively superficial changes and are in low-risk areas.
+  </p>
+  <p>
+    Also mark the migration as "complete" as part of your pull request. This updates a status file where we
+    programmatically track the status of the overall platform migration. To do so:
+  </p>
+  <div class="card text-bg-light mb-3">
+    <div class="card-body">
+      <pre class="m-0">./manage.py complete_bootstrap5_migration &lt;app_name&gt;</pre>
+    </div>
+  </div>
+  <p>
+    You're done! Ignore the rest of this document.
+  </p>
+
   <h2 id="split-files" class="pt-4">
-    Step 2: Auto-Migrate &amp; Split Files
+    Step 2 (large apps): Auto-Migrate &amp; Split Files
   </h2>
   <p>
     The next step is to split affected template and javascript files into <code>bootstrap3</code> and
@@ -334,36 +386,6 @@
     This command will then re-apply the migration changes to the <code>bootstrap3</code> file and then save those
     changes to the <code>bootstrap5</code> version. You can then commit those changes and then run
     <code>build_bootstrap5_diffs</code> to rebuild the diffs.
-  </p>
-
-  <h3 id="small-apps" class="pt-3">
-    Step 2.1B: Migrating Smaller Apps
-  </h3>
-  <p>
-    Some apps only have a handful of templates and javascript files, and it's possible to run the auto-migration
-    on the templates in-place and migrate the views to Bootstrap 5 all within the same Pull Request. In this case,
-    you can make use of the <code>--no-split</code> option for <code>migrate_app_to_bootstrap5</code>.
-  </p>
-  <div class="card text-bg-light mb-3">
-    <div class="card-body">
-      <pre class="m-0">./manage.py migrate_app_to_bootstrap5 &lt;app_name&gt; --no-split</pre>
-    </div>
-  </div>
-  <p>
-    This option will iterate through all the templates and javascript files in <code>&lt;app_name&gt;</code>. After
-    staging the changes to each file, you will have the option to auto-commit those changes.
-  </p>
-  <p>
-    For each migrated template, the command will wait for you to apply the <code>@use_bootstrap5</code> decorator
-    to the relevant views (see <a href="#migrating-views">Migrating Views</a>) before moving on to the next template.
-  </p>
-  <p>
-    Once all the files are migrated in-place, you can then make additional manual changes to each template and view.
-    When the views are fully migrated, you can then create your pull request.
-  </p>
-  <p>
-    This option is useful for smaller apps, because it avoids the split-files and reference renames. Please only
-    choose this option if you are confident you can migrate all the views and javascript files within 1 to 2 weeks.
   </p>
 
   <h2 id="update-stylesheets" class="pt-4">
