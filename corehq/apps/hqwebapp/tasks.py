@@ -6,6 +6,7 @@ from django.core.mail.message import EmailMessage
 from django.core.management import call_command
 from django.utils.translation import gettext as _
 from dimagi.utils.django.email import get_email_configuration
+from django.urls import reverse
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
@@ -22,6 +23,8 @@ from corehq.util.email_event_utils import get_bounced_system_emails
 from corehq.util.log import send_HTML_email
 from corehq.util.metrics import metrics_track_errors
 from corehq.util.models import TransientBounceEmail
+
+from corehq.motech.repeaters.const import UCRRestrictionFFStatus
 
 
 def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
@@ -253,3 +256,33 @@ def clean_expired_transient_emails():
 def clear_expired_oauth_tokens():
     # https://django-oauth-toolkit.readthedocs.io/en/latest/management_commands.html#cleartokens
     call_command('cleartokens')
+
+
+@periodic_task(run_every=crontab(day_of_week=1))
+def send_domain_ucr_data_info_to_admins():
+    from corehq.apps.reports.dispatcher import AdminReportDispatcher
+    from corehq.apps.reports.filters.select import UCRRebuildStatusFilter
+    from corehq.apps.hqadmin.reports import UCRRebuildRestrictionTable, UCRDataLoadReport
+
+    table = UCRRebuildRestrictionTable(
+        restriction_ff_status=UCRRestrictionFFStatus.ShouldEnable.name,
+    )
+    subject = "Weekly report: projects for ucr restriction FF"
+    recipient = "solutions-tech-app-engineers@dimagi.com"
+
+    endpoint = reverse(AdminReportDispatcher.name(), args=(UCRDataLoadReport.slug,))
+    protocol = settings.DEFAULT_PROTOCOL
+    host = settings.BASE_ADDRESS
+
+    filter_name = UCRRebuildStatusFilter.slug
+    filter_value = UCRRestrictionFFStatus.ShouldEnable.name
+    report_url = f"{protocol}://{host}{endpoint}?{filter_name}={filter_value}"
+
+    message = f"""
+        We have identified {len(table.rows)} projects that require the RESTRICT_DATA_SOURCE_REBUILD
+        feature flag to be enabled. Please see the detailed report: {report_url}
+    """
+
+    send_mail_async.delay(
+        subject, message, [recipient]
+    )
