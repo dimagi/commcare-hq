@@ -36,8 +36,14 @@ hqDefine("hqwebapp/js/tempus_dominus", [
             picker.dates.setValue(options.viewDate);
         }
 
+        // Since picking a date is a single-click action, hide the picker on date selection
         picker.subscribe("change.td", function () {
             picker.hide();
+        });
+
+        $(el).on("error.td", function (e) {
+            picker.dates.setValue(null);
+            e.stopPropagation();
         });
 
         return picker;
@@ -99,6 +105,11 @@ hqDefine("hqwebapp/js/tempus_dominus", [
         if (options.viewDate) {
             picker.dates.setValue(options.viewDate);
         }
+
+        $(el).on("error.td", function (e) {
+            picker.dates.setValue(null);
+            e.stopPropagation();
+        });
 
         return picker;
     };
