@@ -49,47 +49,69 @@
     update this notice and leave this page as documentation for the next Bootstrap migration.
   </div>
   <p>
-    We are taking an app-by-app approach to migrating from Bootstrap 3 to 5. This process is summarized by the following:
+    <a href="https://getbootstrap.com/" target="_blank">Bootstrap</a> is a third-party UI library used throughout
+    HQ. It's essentially a set of stylesheets and javascript widgets. This means that migrating from one version to the
+    next involves the following kinds of work:
+
+    <ul>
+        <li>
+            <strong>Styling updates</strong>: This can be as simple as replacing a renamed CSS class, which is often handled
+            automatically by our migration tool. It can also mean updating HQ stylesheets to work harmoniously with
+            Bootstrap's new/updated styles.
+        </li>
+        <li>
+            <strong>HTML updates</strong>: Some of the new/updated Bootstrap styles correspond to HTML changes. This affects simple
+            widgets like dropdown menus, which may now need classes to be applied differently - for
+            example, the children of dropdown menus now need to use a new <code>dropdown-item</code> class.
+            Our migration tool detects widgets that need to be updated, although a developer is needed to implement
+            the changes. The tool can automatically make other HTML-related changes, such as renaming attributes
+            like <code>data-toggle</code> that have been renamed in the new version.
+        </li>
+        <li>
+            <strong>JavaScript updates</strong>: HQ uses a number of Bootstrap-provided interactive widgets, such as modal dialogs.
+            The APIs for accessing these widgets have changed, so the calling code needs to be updated.
+            There are also a few non-Bootstrap widgets that depend on a specific version of Bootstrap and need to
+            be migrated to a new version.
+            Our migration tool detects usage of widgets that need to be updated, but a developer is needed to make the
+            changes.
+        </li>
+    </ul>
   </p>
-  <ul>
-    <li>
-      <p>
-        Using an automated process, split template and javascript files that need changes into <code>bootstrap3</code>
-        and <code>bootstrap5</code> versions. This process will find/replace the straightforward changes and flag
-        more complex changes to be addressed later.
-      </p>
-    </li>
-    <li>
-      <p>
-        Migrate views in the app one-by-one by applying the <code>@use_bootstrap5</code> decorator and
-        ensuring template and javascript files for that view inherit from <code>bootstrap5</code> base templates
-        and javascript dependencies. This process will be visual in nature, and may involve updates to the
-        Bootstrap 5 stylesheet and/or restructuring HTML and javascript components to ensure the view renders properly
-        with no javascript errors.
-      </p>
-    </li>
-    <li>
-      <p>
-        Once <code>bootstrap3</code> versions of a template or javascript file are no longer referenced, the
-        <code>bootstrap5</code> version can be "un-split" and the file moved back to the original location prior to
-        the split.
-      </p>
-    </li>
-    <li>
-      <p>
-        An app will be considered fully migrated when all template and javascript files are no longer split into
-        <code>bootstrap3</code> and <code>bootstrap5</code> versions and every view in the app is decorated with
-        <code>@use_bootstrap5</code>.
-      </p>
-    </li>
-    <li>
-      <p>
-        Once all apps are fully migrated to Bootstrap 5, we can then remove the use of the any in-template splits
-        referencing <code>request.use_boostrap5</code>, so that any Bootstrap 3 related code is removed. Lastly, a final
-        cleanup should be done to remove the <code>@use_bootstrap5</code> decorator from all the views.
-      </p>
-    </li>
-  </ul>
+  <p>
+    Because the HQ codebase is large, we are taking an incremental approach to this migration.
+    For organizational purposes, we are executing and tracking this migration primarily on an app-by-app basis.
+  </p>
+  <p>
+    Multiple versions of Bootstrap cannot coexist on the same page.
+    The <code>@use_bootstrap5</code> decorator marks individual views as migrated to Bootstrap 5. This decorator
+    sets a <code>use_bootstrap5</code> attribute on the request that's used to set up the
+    relevant Bootstrap environment.
+  </p>
+  <p>
+    This means that files that are required by both migrated and unmigrated pages need to be "split" into two
+    versions: one to include on Bootstrap 3 pages and another to include on Bootstrap 5 pages. This applies largely to code that
+    is fundamental to HQ's UI and used throughout the platform, such as the <code>hqwebapp</code> app, the
+    analytics JavaScript libraries, etc.
+  </p>
+  <p>
+    It can also be helpful to "split" files in this way while migrating an app. This allows
+    Bootstrap 5 changes to be developed, reviewed, and merged in small pieces, before switching the Bootstrap
+    version used in production. It is a more complex process that adds more code during the migration,
+    although most of this code is automatically generated by the migration tool.
+    In these cases, once the app is fully migrated, the Bootstrap 3 files can be deleted.
+  </p>
+  <p>
+    To support this approach, we have tooling that facilitates "splitting" and "unsplitting" files:
+    copying files, moving them, and updating references to them. This tooling also performs the simpler migration
+    updates, such as renaming CSS classes. For updates that it cannot handle automatically, it adds a TODO comment
+    to the relevant code and writes out a changelog.
+  </p>
+  <p>
+    Once the entire platform is fully migrated to Bootstrap 5, any remaining Bootstrap 3 code can be removed:
+    the Bootstrap 3 versions of files in <code>hqwebapp</code> and similar apps, the <code>@use_bootstrap5</code>
+    decorator, any code related to <code>request.use_bootstrap5</code> or <code>window.USE_BOOTSTRAP_5</code>,
+    the Bootstrap 3 stylesheets and JavaScript library, and so forth.
+  </p>
 
   <h2 id="prepare-local-environment" class="pt-4">
     Prepare Local Environment
