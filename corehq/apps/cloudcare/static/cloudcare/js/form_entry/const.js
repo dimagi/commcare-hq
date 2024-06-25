@@ -53,15 +53,15 @@ hqDefine("cloudcare/js/form_entry/const", [], function () {
         NO_ANSWER: null,
 
         // UI
-        LABEL_WIDTH: 'col-sm-4',
-        LABEL_OFFSET: 'col-sm-offset-4',
-        CONTROL_WIDTH: 'col-sm-8',
+        LABEL_WIDTH: 'col-md-4',
+        LABEL_OFFSET: 'col-md-offset-4',
+        CONTROL_WIDTH: 'col-md-8',
         BLOCK_NONE: 'block-none',
         BLOCK_SUBMIT: 'block-submit',
         BLOCK_ALL: 'block-all',
-        FULL_WIDTH: 'col-sm-12',
-        SHORT_WIDTH: 'col-sm-2',
-        MEDIUM_WIDTH: 'col-sm-4',
+        FULL_WIDTH: 'col-md-12',
+        SHORT_WIDTH: 'col-md-2',
+        MEDIUM_WIDTH: 'col-md-4',
 
         // XForm Navigation
         QUESTIONS_FOR_INDEX: 'questions_for_index',
