@@ -5,7 +5,6 @@ import uuid
 from unittest.mock import patch
 
 from django.test import Client, TestCase
-from django.urls import re_path as url
 from django.urls import reverse
 
 from corehq import privileges
@@ -15,18 +14,11 @@ from corehq.apps.data_dictionary.models import (
     CasePropertyGroup,
     CaseType,
 )
-from corehq.apps.data_dictionary.urls import urlpatterns
-from corehq.apps.data_dictionary.views import data_dictionary_json_case_types, data_dictionary_json_case_properties
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
 from corehq.util.test_utils import flag_enabled, privilege_enabled
-
-# TODO Remove this once we migrate to the new view
-urlpatterns.insert(0, url(r"^json_v2/$", data_dictionary_json_case_types, name='data_dictionary_json_v2'))
-urlpatterns.insert(0, url(r"^json_v2/(?P<case_type_name>[\w-]+)/$", data_dictionary_json_case_properties,
-                          name='case_type_data_dictionary_json_v2'))
 
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
@@ -463,9 +455,8 @@ class DataDictionaryJsonTest(TestCase):
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryJsonV2Test(TestCase):
     domain_name = uuid.uuid4().hex
-    # TODO Replace these with the original views after migration
-    case_types_view_name = "data_dictionary_json_v2"
-    case_properties_view_name = "case_type_data_dictionary_json_v2"
+    case_types_view_name = "data_dictionary_json_case_types"
+    case_properties_view_name = "data_dictionary_json_case_properties"
 
     @classmethod
     def setUpClass(cls):
