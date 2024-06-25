@@ -82,8 +82,11 @@ def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
     return user_es.start(offset).size(limit).sort('username.exact')
 
 
-def get_role_user_count(domain, role_id):
+def get_role_user_count(domain, role_id, web_users_only=False):
     from corehq.apps.es.users import UserES
-    users_count = UserES().is_active().domain(domain).role_id(role_id).count()
+    query = UserES().is_active().domain(domain).role_id(role_id)
+    if web_users_only:
+        query = query.web_users()
+    users_count = query.count()
     users_count += Invitation.objects.filter(role="user-role:" + role_id, is_accepted=False).count()
     return users_count

@@ -1714,8 +1714,8 @@ MOBILE_RECOVERY_MEASURES = StaticToggle(
 
 PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
-    'ICDS: Used for ICDS emergencies when UCR sync is killing the DB',
-    TAG_CUSTOM,
+    'Prevent Mobile UCR sync (when a UCR sync is causing operational problems)',
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description='Prevents mobile UCRs from being generated or included in the sync payload',
 )
@@ -2465,6 +2465,13 @@ TABLEAU_USER_SYNCING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
 )
 
+RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
+    'restrict_user_profile_assignment',
+    'Limit which user profiles a web user can assign to other web users and mobile workers.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 
 def _handle_attendance_tracking_role(domain, is_enabled):
     from corehq.apps.accounting.utils import domain_has_privilege
@@ -2862,7 +2869,7 @@ USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
 RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
     slug='restrict_data_source_rebuilds',
     label='Restrict data source rebuilt from UI',
-    tag=TAG_SOLUTIONS,
+    tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
 )
@@ -2873,4 +2880,11 @@ APP_TESTING = StaticToggle(
     tag=TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     description=''
+)
+
+SMART_LINKS_FOR_WEB_USERS = StaticToggle(
+    slug='smart_links_for_web_users',
+    label='USH: Allow web users to use smart links without logging in as before',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )

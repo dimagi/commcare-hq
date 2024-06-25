@@ -171,8 +171,9 @@ def _ensure_software_plan(plan_key, product, product_rate, verbose, apps):
         plan_opts = {
             'name': plan_name,
             'edition': plan_key.edition,
-            'visibility': (SoftwarePlanVisibility.ANNUAL
-                           if plan_key.is_annual_plan else SoftwarePlanVisibility.PUBLIC),
+            'visibility': (SoftwarePlanVisibility.INTERNAL
+                if plan_key.edition == SoftwarePlanEdition.ENTERPRISE
+                else SoftwarePlanVisibility.PUBLIC),
         }
         if plan_key.is_annual_plan is not None:
             plan_opts['is_annual_plan'] = plan_key.is_annual_plan
@@ -183,14 +184,16 @@ def _ensure_software_plan(plan_key, product, product_rate, verbose, apps):
 
 
 def _software_plan_name(plan_key, product, product_rate):
-    plan_name = (
-        (f"{product_rate.name} Trial" if plan_key.is_trial else f"{product_rate.name} Edition")
-        if product is None else product.name)
-    if plan_key.is_annual_plan:
-        plan_name = f"{plan_name} - Pay Annually"
-    if plan_key.is_report_builder_enabled:
-        plan_name = f"{plan_name} - Report Builder (5 Reports)"
-    return plan_name
+    name_parts = [
+        product_rate.name if product is None else product.name,
+        (" Trial" if plan_key.is_trial else " Edition") if product is None else "",
+    ]
+    if plan_key.edition in SoftwarePlanEdition.SELF_RENEWABLE_EDITIONS:
+        name_parts.extend([
+            " - Pay Annually" if plan_key.is_annual_plan else " - Pay Monthly",
+            " - Report Builder (5 Reports)" if plan_key.is_report_builder_enabled else "",
+        ])
+    return "".join(name_parts)
 
 
 def _ensure_software_plan_version(role, software_plan, product_rate, feature_rates, apps):

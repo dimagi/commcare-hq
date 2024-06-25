@@ -158,6 +158,22 @@ msgstr "Siguiente"
 msgid "Your trial request has been received!"
 msgstr ""
 
+#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
+msgid "Seconds"
+msgstr ""
+
+#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
+msgid "Chart"
+msgstr "Gráfico"
+
+#: corehq/apps/app_execution/static/app_execution/js/workflow_logs.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
+#: corehq/apps/registry/static/registry/js/registry_logs.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
+msgid "Show All Dates"
+msgstr "Mostrar Todas las Fechas"
+
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
 #: corehq/apps/locations/static/locations/js/location_types.js
@@ -3649,13 +3665,15 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "Name of the Area"
+msgid ""
+"Oops! Something went wrong! Please check that your geospatial settings are "
+"configured correctly or contact admin if the problem persists."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid ""
-"Oops! Something went wrong! Please check that your geospatial settings are "
-"configured correctly or contact admin if the problem persists."
+"Please ensure that the filtered area includes both casesand mobile workers "
+"before attempting to run disbursement."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
@@ -3671,10 +3689,24 @@ msgid "Mobile Worker"
 msgstr "Usuario Móvil"
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Refreshing Page..."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid ""
 "Warning! This action will clear the current disbursement. Please confirm if "
 "you want to proceed."
 msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Name of the Area"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+#, fuzzy
+#| msgid "Enter the name of the author."
+msgid "Please enter the name for the area!"
+msgstr "Ingrese el nombre del autor."
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
@@ -3713,6 +3745,16 @@ msgid ""
 msgstr ""
 "Danny está bastante triste de que usted haya encontrado este problema. Él se "
 "está asegurando de que esté arreglado tan pronto como sea posible."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
+msgid "Incorrect Format"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
+msgid "Only Dimagi email addresses can be included"
+msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/inactivity.js
@@ -3799,13 +3841,6 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
 msgid "Clear"
 msgstr "Borrar"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
-#: corehq/apps/registry/static/registry/js/registry_logs.js
-#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
-#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
-msgid "Show All Dates"
-msgstr "Mostrar Todas las Fechas"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
 msgid "Items"
@@ -4445,14 +4480,16 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Success!"
 msgstr "¡Éxito!"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
 #: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed"
 msgstr "Falló"
 
@@ -5361,19 +5398,23 @@ msgstr ""
 msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed to fetch attempts"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed to fetch payload"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed to send"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed to cancel"
 msgstr ""
 

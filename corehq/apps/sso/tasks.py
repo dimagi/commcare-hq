@@ -12,7 +12,8 @@ from corehq.apps.sso.models import (
     IdentityProvider,
     IdentityProviderProtocol,
     IdentityProviderType,
-    UserExemptFromSingleSignOn
+    UserExemptFromSingleSignOn,
+    LoginEnforcementType,
 )
 from corehq.apps.sso.utils.context_helpers import (
     get_api_secret_expiration_email_context,
@@ -20,7 +21,7 @@ from corehq.apps.sso.utils.context_helpers import (
     get_sso_deactivation_skip_email_context,
 )
 from corehq.apps.sso.utils.entra import MSGraphIssue
-from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
+from corehq.apps.sso.utils.user_helpers import convert_emails_to_lowercase, get_email_domain_from_username
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.models import HQApiKey
 from django.contrib.auth.models import User
@@ -127,10 +128,11 @@ def send_idp_cert_expires_reminder_emails(num_days):
 def auto_deactivate_removed_sso_users():
     for idp in IdentityProvider.objects.filter(
         enable_user_deactivation=True,
-        idp_type=IdentityProviderType.ENTRA_ID
+        idp_type=IdentityProviderType.ENTRA_ID,
+        login_enforcement_type=LoginEnforcementType.GLOBAL,
     ).all():
         try:
-            idp_users = idp.get_all_members_of_the_idp()
+            usernames_in_idp = convert_emails_to_lowercase(idp.get_all_usernames_of_the_idp())
         except EntraVerificationFailed as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.VERIFICATION_ERROR,
@@ -152,7 +154,7 @@ def auto_deactivate_removed_sso_users():
             continue
 
         # if the Graph Users API returns an empty list of users we will skip auto deactivation
-        if len(idp_users) == 0:
+        if len(usernames_in_idp) == 0:
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.EMPTY_ERROR)
             continue
 
@@ -167,7 +169,7 @@ def auto_deactivate_removed_sso_users():
         authenticated_email_domains = authenticated_domains.values_list('email_domain', flat=True)
 
         for username in usernames_in_account:
-            if username not in idp_users and username not in exempt_usernames:
+            if username not in usernames_in_idp and username not in exempt_usernames:
                 email_domain = get_email_domain_from_username(username)
                 if email_domain in authenticated_email_domains:
                     usernames_to_deactivate.append(username)

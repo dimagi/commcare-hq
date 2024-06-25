@@ -6,7 +6,7 @@
  {% load case_tags %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -9,7 +9,7 @@
+@@ -8,7 +8,7 @@
    <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
  {% endblock %}
  
@@ -15,7 +15,7 @@
  
  {% block page_content %}
  
-@@ -30,7 +30,7 @@
+@@ -29,7 +29,7 @@
      <div id="report-content">
        <div id="tabbed-content-container">
          <div class="row">
@@ -24,7 +24,7 @@
              {% if is_case_type_deprecated %}
                <div class="alert alert-warning">
                  <p>
-@@ -47,25 +47,25 @@
+@@ -46,25 +46,25 @@
            </div>
          </div>
          <div class="row">
@@ -58,7 +58,7 @@
                {% endif %}
              </ul>
  
-@@ -74,18 +74,18 @@
+@@ -73,18 +73,18 @@
                  <div class="row-fluid">
                    {% if case_property_tables %}
                      {% if show_expand_collapse_buttons %}
@@ -84,7 +84,7 @@
                                     data-parent="#property-table-{{ forloop.counter }}-parent"
                                     href="#property-table-{{ forloop.counter }}"
                                     class="collapse in">
-@@ -96,7 +96,7 @@
+@@ -95,7 +95,7 @@
                              </div>
                            {% endif %}
                            <div class="panel-collapse collapse in" id="property-table-{{ forloop.counter }}">
@@ -93,7 +93,7 @@
                                {% include "reports/partials/case_property_table.html" with rows=table.rows %}
                              </div>
                            </div>
-@@ -104,11 +104,11 @@
+@@ -103,11 +103,11 @@
                        {% endfor %}
                      </div>
                    {% else %}
@@ -108,7 +108,7 @@
                        </a>
                        {% blocktrans %}
                          <p>
-@@ -145,7 +145,7 @@
+@@ -144,7 +144,7 @@
                {% if ledgers %}
                  <div class="tab-pane" id="case-ledgers">
                    {% if show_transaction_export %}
@@ -117,7 +117,7 @@
                    {% endif %}
                    {% for section_id, product_map in ledgers.items %}
                      <h1>{% blocktrans %}Section: {{ section_id }}{% endblocktrans %}</h1>
-@@ -174,7 +174,7 @@
+@@ -173,7 +173,7 @@
                {% endif %}
  
                <div class="tab-pane row" id="history">
@@ -126,7 +126,7 @@
                    <ul data-bind="foreach: $root.form_type_facets">
                      <li>
                        <strong><span data-bind="text: form_name"></span></strong>:
-@@ -188,10 +188,10 @@
+@@ -187,10 +187,10 @@
                    <table class="table table-striped datatable table-hover">
                      <thead>
                      <tr>
@@ -141,7 +141,7 @@
                      </tr>
                      </thead>
                      <tbody data-bind="foreach: xforms">
-@@ -206,7 +206,7 @@
+@@ -205,7 +205,7 @@
                        </td>
                        <td>
                          <span data-bind="text: user_type"></span>
@@ -150,7 +150,7 @@
                        </td>
                      </tr>
                      </tbody>
-@@ -215,26 +215,26 @@
+@@ -214,26 +214,26 @@
                      <div class="dataTables_info">
                        <span data-bind="text: $root.page_start_num() + '-' + $root.page_end_num() + ' / ' + $root.total_rows()"></span>
                      </div>
@@ -183,7 +183,7 @@
                    <div id="xform_data_panel"></div>
                  </div>
                </div> <!-- end case-history tab -->
-@@ -250,36 +250,36 @@
+@@ -249,36 +249,36 @@
  
      {% if can_edit_data %}
        <div id="case-actions" class="clearfix form-actions">
@@ -229,7 +229,7 @@
                  <i class="fa fa-archive"></i>
                  {% trans 'Close Case' %}
                </button>
-@@ -293,6 +293,6 @@
+@@ -292,6 +292,6 @@
  
  {% block modals %}{{ block.super }}
    {% if show_properties_edit %}

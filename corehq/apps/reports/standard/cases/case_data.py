@@ -101,13 +101,13 @@ from corehq.form_processor.models import (
 )
 from corehq.form_processor.models.forms import TempFormCache
 from corehq.form_processor.models.cases import TempCaseCache
-from corehq.motech.repeaters.models import SQLRepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views.repeat_record_display import (
     RepeatRecordDisplay,
 )
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.view_utils import absolute_reverse, get_case_or_404, reverse
+from corehq.util.view_utils import get_case_or_404, reverse
 
 from .basic import CaseListReport
 from .utils import get_user_type
@@ -209,10 +209,6 @@ class CaseDataView(BaseProjectReportSectionView):
         # Get correct timezone for the current date: https://github.com/dimagi/commcare-hq/pull/5324
         timezone = timezone.localize(datetime.utcnow()).tzinfo
         show_transaction_export = toggles.COMMTRACK.enabled(self.request.user.username)
-
-        def _get_case_url(case_id):
-            return absolute_reverse(self.urlname, args=[self.domain, case_id])
-
         data = copy.deepcopy(wrapped_case.to_full_dict())
         display = wrapped_case.get_display_config()
         default_properties = get_table_as_rows(data, display, timezone)
@@ -241,7 +237,7 @@ class CaseDataView(BaseProjectReportSectionView):
 
         repeat_records = [
             RepeatRecordDisplay(record, timezone, date_format=DATE_FORMAT)
-            for record in SQLRepeatRecord.objects.filter(domain=self.domain, payload_id=self.case_id)
+            for record in RepeatRecord.objects.filter(domain=self.domain, payload_id=self.case_id)
         ]
 
         can_edit_data = self.request.couch_user.can_edit_data
@@ -274,7 +270,7 @@ class CaseDataView(BaseProjectReportSectionView):
             context['case_property_tables'] = case_property_tables
             context['show_expand_collapse_buttons'] = len(
                 [table.get('name') for table in case_property_tables if table.get('name') is not None]) > 1
-        context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
+        context.update(case_hierarchy_context(self.case_instance, timezone=timezone))
         return context
 
 

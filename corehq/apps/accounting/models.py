@@ -31,7 +31,10 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.web import get_site_domain
 
-from corehq.apps.accounting.emails import send_subscription_change_alert
+from corehq.apps.accounting.emails import (
+    send_subscription_change_alert,
+    send_subscription_renewal_alert,
+)
 from corehq.apps.accounting.exceptions import (
     AccountingError,
     CreditLineError,
@@ -171,14 +174,12 @@ class SoftwarePlanVisibility(object):
     PUBLIC = "PUBLIC"
     INTERNAL = "INTERNAL"
     TRIAL = "TRIAL"
-    ANNUAL = "ANNUAL"
     ARCHIVED = "ARCHIVED"
     CHOICES = (
         (PUBLIC, "PUBLIC - Anyone can subscribe"),
         (INTERNAL, "INTERNAL - Dimagi must create subscription"),
         (TRIAL, "TRIAL- This is a Trial Plan"),
         (ARCHIVED, "ARCHIVED - hidden from subscription change forms"),
-        (ANNUAL, "ANNUAL - public plans that on annual pricing"),
     )
 
 
@@ -1578,9 +1579,10 @@ class Subscription(models.Model):
         """
         This creates a new subscription with a date_start that is
         equivalent to the current subscription's date_end.
-        - The date_end is left None.
-        - The plan_version is the cheapest self-subscribable plan with the
+        - If unspecified, the plan_version is the cheapest self-subscribable "pay monthly" plan with the
           same set of privileges that the current plan has.
+        - If new_version is a "pay annually" plan, the length of the new subscription is 1 year.
+          Otherwise, date_end is left None.
         """
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
@@ -1601,13 +1603,19 @@ class Subscription(models.Model):
                 "There was an issue renewing your subscription. Someone "
                 "from Dimagi will get back to you shortly."
             )
+
+        if new_version.plan.is_annual_plan:
+            new_date_end = self.date_end.replace(year=self.date_end.year + 1)
+        else:
+            new_date_end = None
+
         renewed_subscription = Subscription(
             account=self.account,
             plan_version=new_version,
             subscriber=self.subscriber,
             salesforce_contract_id=self.salesforce_contract_id,
             date_start=self.date_end,
-            date_end=None,
+            date_end=new_date_end,
         )
         if service_type is not None:
             renewed_subscription.service_type = service_type
@@ -1624,6 +1632,8 @@ class Subscription(models.Model):
             self, method=adjustment_method, note=note, web_user=web_user,
             reason=SubscriptionAdjustmentReason.RENEW,
         )
+
+        send_subscription_renewal_alert(self.subscriber.domain, renewed_subscription, self)
 
         return renewed_subscription
 

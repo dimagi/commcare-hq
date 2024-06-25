@@ -108,6 +108,7 @@ from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     TableNotFoundWarning,
     UserQueryError,
+    UserReportsError,
     translate_programming_error,
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -825,7 +826,14 @@ class ReportPreview(BaseDomainView):
                     return json_response(response_data)
             except BadBuilderConfigError as e:
                 return json_response({'status': 'error', 'message': str(e)}, status_code=400)
-
+            except UserReportsError as err:
+                notify_exception(request, str(err), details={'domain': self.domain})
+                # Empty message -> generic error in the template.
+                return json_response({'status': 'error', 'message': ''}, status_code=400)
+            return json_response({
+                'status': 'error',
+                'message': 'Report preview returned no response',
+            }, status_code=400)
         else:
             return json_response({
                 'status': 'error',
@@ -902,6 +910,8 @@ def undelete_report(request, domain, report_id):
     ])
     if config and is_deleted(config):
         undo_delete(config)
+        indicator_adapter = get_indicator_adapter(config.config)
+        indicator_adapter.adapter.rebuild_table(initiated_by=request.user.username)
         messages.success(
             request,
             _('Successfully restored report "{name}"').format(name=config.title)
@@ -1350,9 +1360,9 @@ def _number_of_records_to_be_iterated_for_rebuild(config):
             count_of_records = CaseSearchES().domain(config.domain).count()
     elif config.referenced_doc_type == 'XFormInstance':
         if case_types_or_xmlns:
-            count_of_records = FormES().domain().xmlns(case_types_or_xmlns)
+            count_of_records = FormES().domain(config.domain).xmlns(case_types_or_xmlns).count()
         else:
-            count_of_records = FormES().domain().count()
+            count_of_records = FormES().domain(config.domain).count()
 
     return count_of_records
 
@@ -1632,12 +1642,19 @@ def subscribe_to_data_source_changes(request, domain, config_id):
         ds=config_id,
         server=client_hostname,
     )
-    DataSourceRepeater.objects.create(
-        name=repeater_name,
+
+    datasource_query = DataSourceRepeater.objects.filter(
         domain=domain,
-        data_source_id=config_id,
         connection_settings_id=conn_settings.id,
+        options={"data_source_id": config_id},
     )
+    if not datasource_query.exists():
+        DataSourceRepeater.objects.create(
+            name=repeater_name,
+            domain=domain,
+            data_source_id=config_id,
+            connection_settings_id=conn_settings.id,
+        )
     return HttpResponse(status=201)
 
 
