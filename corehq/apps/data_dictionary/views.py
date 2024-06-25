@@ -228,15 +228,7 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
     )
 
     current_url = request.build_absolute_uri()
-    links = {"self": update_url_query_params(current_url, {"skip": skip, "limit": limit})}
-    if skip:
-        links["previous"] = update_url_query_params(
-            current_url,
-            {"skip": max(skip - limit, 0), "limit": limit}
-        )
-    if case_type_data["properties_count"] > (skip + limit):
-        links["next"] = update_url_query_params(current_url, {"skip": skip + limit, "limit": limit})
-    case_type_data["_links"] = links
+    case_type_data["_links"] = _get_pagination_links(current_url, case_type_data["properties_count"], skip, limit)
 
     case_type_data["groups"] = []
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
@@ -281,6 +273,18 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
         case_type_data["groups"].append(group_data)
 
     return JsonResponse(case_type_data)
+
+
+def _get_pagination_links(current_url, total_records, skip, limit):
+    links = {"self": update_url_query_params(current_url, {"skip": skip, "limit": limit})}
+    if skip:
+        links["previous"] = update_url_query_params(
+            current_url,
+            {"skip": max(skip - limit, 0), "limit": limit}
+        )
+    if total_records > (skip + limit):
+        links["next"] = update_url_query_params(current_url, {"skip": skip + limit, "limit": limit})
+    return links
 
 
 @login_and_domain_required
