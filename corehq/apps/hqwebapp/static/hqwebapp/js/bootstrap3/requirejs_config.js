@@ -9,7 +9,6 @@ requirejs.config({
         "datatables": "datatables.net/js/jquery.dataTables.min",
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
         "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",
-        "htmx": "htmx.org/dist/htmx.min",
         "jquery": "jquery/dist/jquery.min",
         "knockout": "knockout/build/output/knockout-latest.debug",
         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
