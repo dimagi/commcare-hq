@@ -1,5 +1,15 @@
 from django.urls import re_path as url
 from corehq.apps.prototype.views import example
+from corehq.apps.prototype.views.data_cleaning.main import (
+    DataCleaningPrototypeView,
+)
+from corehq.apps.prototype.views.data_cleaning.forms import (
+    ConfigureColumnsFormView,
+    FilterColumnsFormView,
+)
+from corehq.apps.prototype.views.data_cleaning.tables import (
+    DataCleaningTableView,
+)
 from corehq.apps.prototype.views.htmx.pagination import (
     HtmxPaginationView,
     PaginationDataView,
@@ -14,4 +24,12 @@ urlpatterns = [
         name=HtmxPaginationView.urlname),
     url(r'^htmx/pagination/data/$', PaginationDataView.as_view(),
         name=PaginationDataView.urlname),
+    url(r'^htmx/cleaning/$', DataCleaningPrototypeView.as_view(),
+        name=DataCleaningPrototypeView.urlname),
+    url(r'^htmx/cleaning/data/$', DataCleaningTableView.as_view(),
+        name=DataCleaningTableView.urlname),
+    url(r'^htmx/cleaning/forms/columns/$', ConfigureColumnsFormView.as_view(),
+        name=ConfigureColumnsFormView.urlname),
+    url(r'^htmx/cleaning/forms/filter/$', FilterColumnsFormView.as_view(),
+        name=FilterColumnsFormView.urlname),
 ]

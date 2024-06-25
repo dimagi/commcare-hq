@@ -1,0 +1,27 @@
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+{% load hq_shared_tags %}
+{% load django_tables2 %}
+{% load i18n %}
+
+{% requirejs_main_b5 "prototype/js/htmx/data_cleaning" %}
+
+{% block content %}
+  <div hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <div class="d-flex align-items-center m-3">
+      <h1 class="fs-3 pe-3 py-3 m-0">
+        {% trans "Case Type" %} "{{ case_type }}
+      </h1>
+      <div>
+        {% include "prototype/data_cleaning/partials/button_bar.html" %}
+      </div>
+    </div>
+    <div class="mx-3"
+         hx-get="{% url "prototype_data_cleaning_htmx" %}{% querystring %}"
+         hx-trigger="load">
+      <div class="htmx-indicator">
+        <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
+      </div>
+    </div>
+    {% include "prototype/data_cleaning/partials/offcanvas.html" %}
+  </div>
+{% endblock %}
