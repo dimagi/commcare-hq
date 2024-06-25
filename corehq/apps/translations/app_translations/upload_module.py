@@ -133,14 +133,18 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                         field=row.get('case_property', ""))
                     self.msgs.append((messages.error, message))
 
+        def get_unexpected_case_property_msg(is_display, field):
+            return _('A {display_or_hint} row for menu {index} has an unexpected case search property "{field}". '
+                     'Case properties must appear in the same order as they do in the bulk '
+                     'app translation download. No translations updated for this row.').format(
+                display_or_hint='display' if is_display else 'hint',
+                index=self.module.id + 1,
+                field=field)
+
         if len(displays) == len(properties):
             for display_row, prop in itertools.chain(zip(displays, properties)):
                 if display_row.get('case_property') != prop.name:
-                    message = _('A display row for menu {index} has an unexpected case search property "{field}". '
-                                'Case properties must appear in the same order as they do in the bulk '
-                                'app translation download. No translations updated for this row.').format(
-                                    index=self.module.id + 1,
-                                    field=display_row.get('case_property', ""))
+                    message = get_unexpected_case_property_msg(True, display_row.get('case_property', ""))
                     self.msgs.append((messages.error, message))
                     continue
                 self._update_translation(display_row, prop.label)
@@ -160,11 +164,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         if len(hints) == len(properties):
             for hint_row, prop in itertools.chain(zip(hints, properties)):
                 if hint_row.get('case_property') != prop.name:
-                    message = _('A hint row for menu {index} has an unexpected case search property "{field}". '
-                                'Case properties must appear in the same order as they do in the bulk '
-                                'app translation download. No translations updated for this row.').format(
-                                    index=self.module.id + 1,
-                                    field=hint_row.get('case_property', ""))
+                    message = get_unexpected_case_property_msg(False, hint_row.get('case_property', ""))
                     self.msgs.append((messages.error, message))
                     continue
                 self._update_translation(hint_row, prop.hint)
