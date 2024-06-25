@@ -30,6 +30,7 @@ from corehq.apps.products.models import Product
 from corehq.blobs import CODES, get_blob_db
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.files import safe_filename_header
+from corehq.apps.locations.dbaccessors import user_ids_at_locations
 
 
 def load_locs_json(domain, selected_loc_id=None, include_archived=False,
@@ -429,3 +430,10 @@ def get_location_type(domain, location, parent, loc_type_string, exception, is_n
     return loc_type_obj
 
 # ---
+
+
+# Checks if a location type has any users assigned to it's related locations
+def does_location_type_have_users(loc_type):
+    location_ids = list(SQLLocation.objects.filter(location_type=loc_type).values_list('location_id', flat=True))
+    users = user_ids_at_locations(location_ids)
+    return bool(users)
