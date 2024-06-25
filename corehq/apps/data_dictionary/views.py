@@ -149,34 +149,34 @@ def data_dictionary_json(request, domain, case_type_name=None):
     })
 
 
+def get_case_type_data(domain, case_type):
+    case_type_app_module_count = get_case_type_app_module_count(domain)
+    used_props_by_case_type = get_used_props_by_case_type(domain)
+    module_count = case_type_app_module_count.get(case_type.name, 0)
+    used_props = used_props_by_case_type.get(case_type.name, [])
+    data = {
+        "name": case_type.name,
+        "fhir_resource_type": None,
+        "is_deprecated": case_type.is_deprecated,
+        "module_count": module_count,
+        "is_safe_to_delete": len(used_props) == 0,
+        "properties_count": case_type.properties_count,
+    }
+    if toggles.FHIR_INTEGRATION.enabled(domain):
+        fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
+        data["fhir_resource_type"] = fhir_resource_type_name_by_case_type.get(case_type)
+    return data
+
+
 @login_and_domain_required
 @requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 def data_dictionary_json_case_types(request, domain):
-    fhir_resource_type_name_by_case_type = {}
-    if toggles.FHIR_INTEGRATION.enabled(domain):
-        fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
-
-    case_type_app_module_count = get_case_type_app_module_count(domain)
-    used_props_by_case_type = get_used_props_by_case_type(domain)
     geo_case_prop = get_geo_case_property(domain)
-
     queryset = CaseType.objects.filter(domain=domain).annotate(properties_count=Count('property'))
     if not request.GET.get("load_deprecated_case_types", False) == "true":
         queryset = queryset.filter(is_deprecated=False)
-    case_types_data = []
-    for case_type in queryset:
-        used_props = used_props_by_case_type.get(case_type.name, [])
-        case_types_data.append({
-            "name": case_type.name,
-            "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
-            "is_deprecated": case_type.is_deprecated,
-            "module_count": case_type_app_module_count.get(case_type.name, 0),
-            "is_safe_to_delete": len(used_props) == 0,
-            "properties_count": case_type.properties_count,
-        })
-
     return JsonResponse({
-        "case_types": case_types_data,
+        "case_types": [get_case_type_data(domain, ct) for ct in queryset],
         "geo_case_property": geo_case_prop,
     })
 
@@ -184,27 +184,12 @@ def data_dictionary_json_case_types(request, domain):
 @login_and_domain_required
 @requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 def data_dictionary_json_case_properties(request, domain, case_type_name):
-    fhir_resource_type_name_by_case_type = {}
     fhir_resource_prop_by_case_prop = {}
     if toggles.FHIR_INTEGRATION.enabled(domain):
-        fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
         fhir_resource_prop_by_case_prop = load_fhir_case_properties_mapping(domain)
 
-    case_type_app_module_count = get_case_type_app_module_count(domain)
     used_props_by_case_type = get_used_props_by_case_type(domain)
     geo_case_prop = get_geo_case_property(domain)
-
-    def _get_case_data(case_type):
-        module_count = case_type_app_module_count.get(case_type.name, 0)
-        used_props = used_props_by_case_type.get(case_type.name, [])
-        return {
-            "name": case_type.name,
-            "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
-            "is_deprecated": case_type.is_deprecated,
-            "module_count": module_count,
-            "is_safe_to_delete": len(used_props) == 0,
-            "properties_count": case_type.properties_count,
-        }
 
     try:
         skip = int(request.GET.get('skip', 0))
@@ -219,7 +204,7 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
         domain=domain,
         name=case_type_name
     )
-    case_type_data = _get_case_data(case_type)
+    case_type_data = get_case_type_data(domain, case_type)
 
     properties_queryset = CaseProperty.objects.select_related('group').filter(case_type=case_type)
     properties_queryset = properties_queryset.order_by('group_id', 'index', 'pk')[skip:skip + limit]

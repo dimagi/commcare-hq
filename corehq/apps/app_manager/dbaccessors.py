@@ -535,6 +535,7 @@ def get_case_types_from_apps(domain):
     return (case_types.union(save_to_case_updates) - {''})
 
 
+@quickcache(vary_on=['domain'], timeout=60 * 10)
 def get_case_type_app_module_count(domain):
     """
     Gets the case types of modules in applications in the domain, returning
