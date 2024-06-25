@@ -335,8 +335,8 @@ hqDefine('cloudcare/js/utils', [
         return inputDate;
     };
 
-    var dateFormat = 'MM/DD/YYYY';
-    var dateFormats = ['MM/DD/YYYY', 'YYYY-MM-DD', 'M/D/YYYY', 'M/D/YY', 'M-D-YYYY', 'M-D-YY', moment.defaultFormat];
+    var dateFormat = 'M/D/YYYY';
+    var dateFormats = ['MM/DD/YYYY', 'M/DD/YYYY', 'MM/D/YYYY',  'YYYY-MM-DD', 'M/D/YYYY', 'M/D/YY', 'M-D-YYYY', 'M-D-YY', moment.defaultFormat];
 
     // Annoyingly, moment and tempus dominus use different formats.
     // Moment: https://momentjs.com/docs/#/parsing/string-format/
