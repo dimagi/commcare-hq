@@ -152,7 +152,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
 @login_and_domain_required
 @requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
-def data_dictionary_json_v2(request, domain, case_type_name=None):
+def data_dictionary_json_case_types(request, domain):
     fhir_resource_type_name_by_case_type = {}
     fhir_resource_prop_by_case_prop = {}
     if toggles.FHIR_INTEGRATION.enabled(domain):
@@ -175,91 +175,116 @@ def data_dictionary_json_v2(request, domain, case_type_name=None):
             "properties_count": case_type.properties_count,
         }
 
-    if case_type_name:
-        try:
-            skip = int(request.GET.get('skip', 0))
-            limit = int(request.GET.get('limit', 500))
-            if skip < 0 or limit < 0:
-                raise ValueError
-        except ValueError:
-            return JsonResponse({"error": _("skip and limit must be positive integers")}, status=400)
+    queryset = CaseType.objects.filter(domain=domain).annotate(properties_count=Count('property'))
+    if not request.GET.get("load_deprecated_case_types", False) == "true":
+        queryset = queryset.filter(is_deprecated=False)
+    case_types_data = [_get_case_data(case_type) for case_type in queryset]
+    return JsonResponse({
+        "case_types": case_types_data,
+        "geo_case_property": geo_case_prop,
+    })
 
-        case_type = get_object_or_404(
-            CaseType.objects.annotate(properties_count=Count('property')),
-            domain=domain,
-            name=case_type_name
-        )
-        case_type_data = _get_case_data(case_type)
 
-        properties_queryset = CaseProperty.objects.select_related('group').filter(case_type=case_type)
-        properties_queryset = properties_queryset.order_by('group_id', 'index', 'pk')[skip:skip + limit]
-        properties_queryset = properties_queryset.prefetch_related(
-            Prefetch('allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
-        )
+@login_and_domain_required
+@requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
+def data_dictionary_json_case_properties(request, domain, case_type_name):
+    fhir_resource_type_name_by_case_type = {}
+    fhir_resource_prop_by_case_prop = {}
+    if toggles.FHIR_INTEGRATION.enabled(domain):
+        fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
+        fhir_resource_prop_by_case_prop = load_fhir_case_properties_mapping(domain)
 
-        current_url = request.build_absolute_uri()
-        links = {"self": update_url_query_params(current_url, {"skip": skip, "limit": limit})}
-        if skip:
-            links["previous"] = update_url_query_params(
-                current_url,
-                {"skip": max(skip - limit, 0), "limit": limit}
-            )
-        if case_type_data["properties_count"] > (skip + limit):
-            links["next"] = update_url_query_params(current_url, {"skip": skip + limit, "limit": limit})
-        case_type_data["_links"] = links
+    case_type_app_module_count = get_case_type_app_module_count(domain)
+    used_props_by_case_type = get_used_props_by_case_type(domain)
+    geo_case_prop = get_geo_case_property(domain)
 
-        case_type_data["groups"] = []
-        data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
+    def _get_case_data(case_type):
+        module_count = case_type_app_module_count.get(case_type.name, 0)
         used_props = used_props_by_case_type.get(case_type.name, [])
-        for group_id, props in itertools.groupby(properties_queryset, key=attrgetter("group_id")):
-            props = list(props)
-            grouped_properties = []
-            for prop in props:
-                prop_data = {
-                    'id': prop.id,
-                    'description': prop.description,
-                    'label': prop.label,
-                    'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(prop),
-                    'name': prop.name,
-                    'deprecated': prop.deprecated,
-                    'is_safe_to_delete': prop.name not in used_props and prop.name != geo_case_prop,
-                    'index': prop.index,
-                }
-                if data_validation_enabled:
-                    prop_data.update({
-                        'data_type': prop.data_type,
-                        'allowed_values': {
-                            av.allowed_value: av.description
-                            for av in prop.allowed_values.all()
-                        },
-                    })
-                grouped_properties.append(prop_data)
+        return {
+            "name": case_type.name,
+            "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
+            "is_deprecated": case_type.is_deprecated,
+            "module_count": module_count,
+            "is_safe_to_delete": len(used_props) == 0,
+            "properties_count": case_type.properties_count,
+        }
 
-            group_data = {
-                "name": "",
-                "properties": grouped_properties
+    try:
+        skip = int(request.GET.get('skip', 0))
+        limit = int(request.GET.get('limit', 500))
+        if skip < 0 or limit < 0:
+            raise ValueError
+    except ValueError:
+        return JsonResponse({"error": _("skip and limit must be positive integers")}, status=400)
+
+    case_type = get_object_or_404(
+        CaseType.objects.annotate(properties_count=Count('property')),
+        domain=domain,
+        name=case_type_name
+    )
+    case_type_data = _get_case_data(case_type)
+
+    properties_queryset = CaseProperty.objects.select_related('group').filter(case_type=case_type)
+    properties_queryset = properties_queryset.order_by('group_id', 'index', 'pk')[skip:skip + limit]
+    properties_queryset = properties_queryset.prefetch_related(
+        Prefetch('allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
+    )
+
+    current_url = request.build_absolute_uri()
+    links = {"self": update_url_query_params(current_url, {"skip": skip, "limit": limit})}
+    if skip:
+        links["previous"] = update_url_query_params(
+            current_url,
+            {"skip": max(skip - limit, 0), "limit": limit}
+        )
+    if case_type_data["properties_count"] > (skip + limit):
+        links["next"] = update_url_query_params(current_url, {"skip": skip + limit, "limit": limit})
+    case_type_data["_links"] = links
+
+    case_type_data["groups"] = []
+    data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
+    used_props = used_props_by_case_type.get(case_type.name, [])
+    for group_id, props in itertools.groupby(properties_queryset, key=attrgetter("group_id")):
+        props = list(props)
+        grouped_properties = []
+        for prop in props:
+            prop_data = {
+                'id': prop.id,
+                'description': prop.description,
+                'label': prop.label,
+                'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(prop),
+                'name': prop.name,
+                'deprecated': prop.deprecated,
+                'is_safe_to_delete': prop.name not in used_props and prop.name != geo_case_prop,
+                'index': prop.index,
             }
-            # Note that properties can be without group
-            if group_id:
-                group = props[0].group
-                group_data.update({
-                    "id": group.id,
-                    "name": group.name,
-                    "description": group.description,
-                    "deprecated": group.deprecated,
+            if data_validation_enabled:
+                prop_data.update({
+                    'data_type': prop.data_type,
+                    'allowed_values': {
+                        av.allowed_value: av.description
+                        for av in prop.allowed_values.all()
+                    },
                 })
-            case_type_data["groups"].append(group_data)
+            grouped_properties.append(prop_data)
 
-        return JsonResponse(case_type_data)
-    else:
-        queryset = CaseType.objects.filter(domain=domain).annotate(properties_count=Count('property'))
-        if not request.GET.get("load_deprecated_case_types", False) == "true":
-            queryset = queryset.filter(is_deprecated=False)
-        case_types_data = [_get_case_data(case_type) for case_type in queryset]
-        return JsonResponse({
-            "case_types": case_types_data,
-            "geo_case_property": geo_case_prop,
-        })
+        group_data = {
+            "name": "",
+            "properties": grouped_properties
+        }
+        # Note that properties can be without group
+        if group_id:
+            group = props[0].group
+            group_data.update({
+                "id": group.id,
+                "name": group.name,
+                "description": group.description,
+                "deprecated": group.deprecated,
+            })
+        case_type_data["groups"].append(group_data)
+
+    return JsonResponse(case_type_data)
 
 
 @login_and_domain_required

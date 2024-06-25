@@ -16,7 +16,7 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
 )
 from corehq.apps.data_dictionary.urls import urlpatterns
-from corehq.apps.data_dictionary.views import data_dictionary_json_v2
+from corehq.apps.data_dictionary.views import data_dictionary_json_case_types, data_dictionary_json_case_properties
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
 from corehq.apps.users.models import HqPermissions, WebUser
@@ -24,8 +24,8 @@ from corehq.apps.users.models_role import UserRole
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 # TODO Remove this once we migrate to the new view
-urlpatterns.insert(0, url(r"^json_v2/$", data_dictionary_json_v2, name='data_dictionary_json_v2'))
-urlpatterns.insert(0, url(r"^json_v2/(?P<case_type_name>[\w-]+)/$", data_dictionary_json_v2,
+urlpatterns.insert(0, url(r"^json_v2/$", data_dictionary_json_case_types, name='data_dictionary_json_v2'))
+urlpatterns.insert(0, url(r"^json_v2/(?P<case_type_name>[\w-]+)/$", data_dictionary_json_case_properties,
                           name='case_type_data_dictionary_json_v2'))
 
 
