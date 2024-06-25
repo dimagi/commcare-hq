@@ -61,7 +61,7 @@
     </td>
     <td>
       <div class="btn-group" role="group" aria-label="{% trans "Actions" %}">
-        <a class="btn btn-outline-primary" href="{% url "app_execution:test_workflow" request.domain workflow.id %}">{% translate 'Test' %}</a>
+        <a class="btn btn-outline-primary" href="{% url "app_execution:run_workflow" request.domain workflow.id %}">{% translate 'Run' %}</a>
         <a class="btn btn-outline-primary" href="{% url "app_execution:workflow_logs" request.domain workflow.id %}">{% translate 'Logs' %}</a>
         <a class="btn btn-outline-primary" href="{% url "app_execution:delete_workflow" request.domain workflow.id %}">{% translate 'Delete' %}</a>
       </div>

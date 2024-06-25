@@ -10,7 +10,7 @@ from corehq.apps.app_execution.tests.utils import assert_json_dict_equal
 class StepModelTest(SimpleTestCase):
 
     def test_workflow_has_all_step_types(self):
-        workflow = _get_workflow()
+        workflow = get_workflow_with_all_steps()
         all_steps = []
         new_steps = [step for step in workflow.steps]
         while new_steps:
@@ -24,16 +24,17 @@ class StepModelTest(SimpleTestCase):
             raise AssertionError(f"Missing step types: {missing}")
 
     def test_to_json(self):
-        assert_json_dict_equal(_get_workflow().__jsonattrs_to_json__(), _get_workflow_json())
+        assert_json_dict_equal(get_workflow_with_all_steps().__jsonattrs_to_json__(), _get_workflow_json())
 
     def test_from_json(self):
         workflow = AppWorkflow.__jsonattrs_from_json__(_get_workflow_json())
-        eq(workflow, _get_workflow())
+        eq(workflow, get_workflow_with_all_steps())
 
 
-def _get_workflow():
+def get_workflow_with_all_steps():
     return AppWorkflow(steps=[
         steps.CommandStep("Case Search"),
+        steps.CommandIdStep("action 0"),
         steps.QueryInputValidationStep({"first_name": "query value"}),
         steps.QueryInputValidationStep({"last_name": "query value"}),
         steps.QueryStep({"first_name": "query value", "last_name": "query value"}),
@@ -45,7 +46,8 @@ def _get_workflow():
         steps.MultipleEntitySelectStep(values=["xyz", "abc"]),
         steps.MultipleEntitySelectByIndexStep(values=[0, 2]),
         steps.FormStep(children=[
-            steps.AnswerQuestionStep(question_text='Name', question_id='name', value='str'),
+            steps.AnswerQuestionStep(question_text='Name', value='str'),
+            steps.AnswerQuestionIdStep(question_id='name', value='str'),
             steps.SubmitFormStep()
         ]),
     ])
@@ -55,6 +57,7 @@ def _get_workflow_json():
     return {
         "steps": [
             {"type": "command", "value": "Case Search"},
+            {"type": "command_id", "value": "action 0"},
             {"type": "query_input_validation", "inputs": {"first_name": "query value"}},
             {"type": "query_input_validation", "inputs": {"last_name": "query value"}},
             {
@@ -75,6 +78,10 @@ def _get_workflow_json():
                     {
                         "type": "answer_question",
                         "question_text": "Name",
+                        "value": "str",
+                    },
+                    {
+                        "type": "answer_question_id",
                         "question_id": "name",
                         "value": "str",
                     },
