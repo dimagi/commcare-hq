@@ -417,10 +417,8 @@ class LocationTypesView(BaseDomainView):
             payload_loc_type_name_by_pk[loc_type['pk']] = loc_type['name']
             if loc_type.get('code'):
                 payload_loc_type_code_by_pk[loc_type['pk']] = loc_type['code']
-            # All location types have users until UI allows otherwise.
-            # Remove below line when UI work is being done.
-            loc_type['has_users'] = True
-            _verify_has_users_config(loc_type, pk)
+            if toggles.LOCATION_HAS_USERS.enabled(self.domain):
+                _verify_has_users_config(loc_type, pk)
         names = list(payload_loc_type_name_by_pk.values())
         names_are_unique = len(names) == len(set(names))
         codes = list(payload_loc_type_code_by_pk.values())
