@@ -387,7 +387,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         );
                         self.caseTypes.push(caseTypeObj);
                     });
-                    if (self.caseTypes().length) {
+                    if (
+                        self.caseTypes().length
+                        // Check that hash navigation has not already loaded the first case type
+                        && self.caseTypes()[0] !== self.getHashNavigationCaseType()
+                    ) {
                         // `self.goToCaseType()` calls `caseType.fetchCaseProperties()`
                         // to fetch the case properties of the first case type
                         self.goToCaseType(self.caseTypes()[0]);
@@ -398,6 +402,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     callback();
                 });
         };
+
+        self.getHashNavigationCaseType = function () {
+            let fullHash = window.location.hash.split('?')[0],
+                hash = fullHash.substring(1);
+            return _.find(self.caseTypes(), function (prop) {
+                return prop.name === hash;
+            });
+        }
 
         self.getActiveCaseType = function () {
             return _.find(self.caseTypes(), function (prop) {
@@ -670,11 +682,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes);
 
         function doHashNavigation() {
-            let fullHash = window.location.hash.split('?')[0],
-                hash = fullHash.substring(1);
-            let caseType = _.find(viewModel.caseTypes(), function (prop) {
-                return prop.name === hash;
-            });
+            let caseType = viewModel.getHashNavigationCaseType();
             if (caseType) {
                 viewModel.goToCaseType(caseType);
             }
