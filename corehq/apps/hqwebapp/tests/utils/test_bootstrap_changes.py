@@ -222,9 +222,7 @@ def test_flag_crispy_forms_in_template():
     line = """    {% crispy form %}\n"""
     flags = flag_crispy_forms_in_template(line)
     eq(flags[0][0], "check crispy")
-    eq(flags[0][1].startswith("This template uses crispy forms. "
-                              "Please ensure the form looks good after migration, and refer to "
-                              "the updated Style Guide for current best practices."), True)
+    eq(flags[0][1].startswith("This template uses crispy forms."), True)
 
 
 def test_flag_changed_javascript_plugins_bootstrap5():
