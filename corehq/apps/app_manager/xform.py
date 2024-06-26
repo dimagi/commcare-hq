@@ -1504,6 +1504,7 @@ class XForm(WrappedNode):
             '{orx}instanceID',
             '{cc}appVersion',
             '{orx}drift',
+            '{orx}formLoadTime',
         )
         if form.get_auto_gps_capture():
             tags += ('{cc}location',)
