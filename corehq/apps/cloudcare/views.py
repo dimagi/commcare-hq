@@ -134,7 +134,7 @@ class FormplayerMain(View):
                 domain,
                 request.couch_user,
                 search_string='',
-                limit=500,
+                limit=1,
                 offset=0
             ).run()
 
