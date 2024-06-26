@@ -15,8 +15,8 @@
                         <orx:instanceID />
                         <cc:appVersion />
                         <orx:drift/>
-                        <cc:location/>
                         <orx:formLoadTime/>
+                        <cc:location/>
                     </orx:meta>
                 </data>
             </instance>
