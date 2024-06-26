@@ -19,18 +19,6 @@ class TestUCRRebuildRestrictionTable(TestCase):
             ucr_enabled_domains
         )
 
-    @patch('corehq.apps.hqadmin.reports.USER_CONFIGURABLE_REPORTS.get_enabled_domains')
-    def test_filtered_ucr_domain(self, get_enabled_domains_mock):
-        ucr_enabled_domains = ['domain1', 'domain2']
-        get_enabled_domains_mock.return_value = ucr_enabled_domains
-
-        table_data = UCRRebuildRestrictionTable(selected_domain='domain1')
-
-        self.assertEqual(
-            table_data.ucr_domains(),
-            ['domain1'],
-        )
-
     def test_should_show_domain_default_show_all(self):
         table_data = UCRRebuildRestrictionTable()
         self.assertTrue(table_data.should_show_domain)

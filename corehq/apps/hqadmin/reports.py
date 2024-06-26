@@ -342,11 +342,9 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
 class UCRRebuildRestrictionTable:
     UCR_RESTRICTION_THRESHOLD = 1_000_000
 
-    selected_domain: str
     restriction_ff_status: str
 
     def __init__(self, *args, **kwargs):
-        self.selected_domain = kwargs.get('selected_domain')
         self.restriction_ff_status = kwargs.get('restriction_ff_status')
 
     @property
@@ -362,7 +360,7 @@ class UCRRebuildRestrictionTable:
     def rows(self):
         rows = []
 
-        for domain in self.ucr_domains():
+        for domain in self.ucr_domains:
             case_count = CaseES().domain(domain).count()
             form_count = FormES().domain(domain).count()
 
@@ -373,14 +371,9 @@ class UCRRebuildRestrictionTable:
 
         return rows
 
+    @property
     def ucr_domains(self):
-        ucr_domains = USER_CONFIGURABLE_REPORTS.get_enabled_domains()
-        if self.selected_domain:
-            if self.selected_domain in ucr_domains:
-                return [self.selected_domain]
-            return []
-
-        return ucr_domains
+        return USER_CONFIGURABLE_REPORTS.get_enabled_domains()
 
     def should_show_domain(self, domain, total_cases, total_forms):
         if self._show_all_domains:
@@ -460,7 +453,6 @@ class UCRDataLoadReport(AdminReport):
     name = gettext_lazy("UCR Domains Data Report")
 
     fields = [
-        'corehq.apps.reports.filters.simple.SimpleDomain',
         'corehq.apps.reports.filters.select.UCRRebuildStatusFilter',
     ]
     emailable = False
@@ -469,7 +461,6 @@ class UCRDataLoadReport(AdminReport):
 
     def __init__(self, request, *args, **kwargs):
         self.table_data = UCRRebuildRestrictionTable(
-            selected_domain=request.GET.get('domain_name'),
             restriction_ff_status=request.GET.get('ucr_rebuild_restriction')
         )
         super().__init__(request, *args, **kwargs)
