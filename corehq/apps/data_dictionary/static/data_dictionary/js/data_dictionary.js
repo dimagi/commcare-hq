@@ -46,7 +46,24 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.changeSaveButton = changeSaveButton;
         self.dataUrl = dataUrl;
 
-        self.init = function (groupData) {
+        self.fetchCaseProperties = function () {
+            if (self.groups().length === 0) {
+                let caseTypeUrl = self.dataUrl + self.name + '/';
+                recurseChunks(caseTypeUrl);
+            }
+        }
+
+        const recurseChunks = function (nextUrl) {
+            $.getJSON(nextUrl, function (data) {
+                setCaseProperties(data.groups);
+                nextUrl = data._links.next;
+                if (nextUrl) {
+                    recurseChunks(nextUrl);
+                }
+            });
+        }
+
+        const setCaseProperties = function (groupData) {
             for (let group of groupData) {
                 let groupObj = groupsViewModel(
                     self.name,
@@ -78,15 +95,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 self.groups.push(groupObj);
             }
         };
-
-        self.fetchCaseProperties = function () {
-            if (self.groups().length === 0) {
-                const caseTypeUrl = self.dataUrl + self.name + '/';
-                $.getJSON(caseTypeUrl, function (data) {
-                    self.init(data.groups);
-                });
-            }
-        }
 
         return self;
     };
