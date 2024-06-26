@@ -47,6 +47,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         self.xformParams = function () { return {}; };
         self.placeholderText = '';
         self.broadcastTopics = [];
+        self.colStyleIfHideLabel = ko.observable(null);
         // Returns true if the rawAnswer is valid, false otherwise
         self.isValid = function (rawAnswer) {
             return self.getErrorMessage(rawAnswer) === null;
