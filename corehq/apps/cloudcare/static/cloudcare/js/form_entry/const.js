@@ -54,7 +54,7 @@ hqDefine("cloudcare/js/form_entry/const", [], function () {
 
         // UI
         LABEL_WIDTH: 'col-md-4',
-        LABEL_OFFSET: 'col-md-offset-4',
+        LABEL_OFFSET: 'offset-md-4',
         CONTROL_WIDTH: 'col-md-8',
         BLOCK_NONE: 'block-none',
         BLOCK_SUBMIT: 'block-submit',
