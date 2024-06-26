@@ -527,6 +527,7 @@ Any other notes from the meeting?
                                         <orx:userID/>
                                         <orx:instanceID/>
                                         <cc:appVersion/>
+                                        <orx:formLoadTime/>
                                 </orx:meta>
 
                                 <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
