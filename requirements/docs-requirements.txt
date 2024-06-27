@@ -16,7 +16,7 @@ asgiref==3.7.2
     # via django
 asttokens==2.4.1
     # via transifex-python
-async-timeout==4.0.2
+async-timeout==4.0.3
     # via redis
 attrs==23.1.0
     # via
@@ -500,7 +500,7 @@ quickcache==0.5.4
     # via -r base-requirements.in
 rcssmin==1.1.1
     # via django-compressor
-redis==4.5.4
+redis==5.0.6
     # via
     #   -r base-requirements.in
     #   django-redis
