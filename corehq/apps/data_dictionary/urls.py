@@ -1,17 +1,18 @@
-from django.urls import path, re_path as url
+from django.urls import path
+from django.urls import re_path as url
 
 from corehq.apps.data_dictionary.views import (
     DataDictionaryView,
     ExportDataDictionaryView,
     UploadDataDictionaryView,
+    create_case_type,
     data_dictionary_json,
-    data_dictionary_json_case_types,
     data_dictionary_json_case_properties,
+    data_dictionary_json_case_types,
+    delete_case_type,
+    deprecate_or_restore_case_type,
     update_case_property,
     update_case_property_description,
-    create_case_type,
-    deprecate_or_restore_case_type,
-    delete_case_type,
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
 
