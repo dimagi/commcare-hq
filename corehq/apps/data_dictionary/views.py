@@ -207,52 +207,46 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
     used_props_by_case_type = get_used_props_by_case_type(domain)
     geo_case_prop = get_geo_case_property(domain)
 
-    used_props = used_props_by_case_type[case_type.name] if case_type.name in used_props_by_case_type else []
+    used_props = used_props_by_case_type.get(case_type.name, [])
 
-    grouped_properties = {
-        group: [
-            {
+    for group_id, props in itertools.groupby(properties_queryset, key=attrgetter("group_id")):
+        props = list(props)
+        grouped_properties = []
+        for prop in props:
+            prop_data = {
                 'id': prop.id,
                 'description': prop.description,
                 'label': prop.label,
-                'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(
-                    prop
-                ),
+                'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(prop),
                 'name': prop.name,
                 'deprecated': prop.deprecated,
                 'is_safe_to_delete': prop.name not in used_props and prop.name != geo_case_prop,
             }
-            | (
-                {
+            if data_validation_enabled:
+                prop_data.update({
                     'data_type': prop.data_type,
                     'allowed_values': {
                         av.allowed_value: av.description
                         for av in prop.allowed_values.all()
                     },
-                }
-                if data_validation_enabled
-                else {}
-            )
-            for prop in props
-        ]
-        for group, props in itertools.groupby(
-            properties_queryset, key=attrgetter('group_id')
-        )
-    }
-    for group in case_type.groups.all():
-        case_type_data["groups"].append({
-            "id": group.id,
-            "name": group.name,
-            "description": group.description,
-            "deprecated": group.deprecated,
-            "properties": grouped_properties.get(group.id, [])
-        })
+                })
+            grouped_properties.append(prop_data)
 
-    # Aggregate properties that don't have a group
-    case_type_data["groups"].append({
-        "name": "",
-        "properties": grouped_properties.get(None, [])
-    })
+        group_data = {
+            "name": "",
+            "properties": grouped_properties
+        }
+        # Note that properties can be without group
+        if group_id:
+            group = props[0].group
+            group_data.update({
+                "id": group.id,
+                "name": group.name,
+                "description": group.description,
+                "deprecated": group.deprecated,
+            })
+        case_type_data["groups"].append(group_data)
+
     return JsonResponse(case_type_data)
 
 
