@@ -445,6 +445,28 @@ class IdentityProvider(models.Model):
         else:
             raise NotImplementedError("Not implemented")
 
+    def get_webuser_names_goverened_by_idp(self):
+        usernames_in_account = set(self.owner.get_web_user_usernames())
+
+        if self.login_enforcement_type == LoginEnforcementType.GLOBAL:
+            authenticated_domains = AuthenticatedEmailDomain.objects.filter(identity_provider=self)
+            exempt_usernames = UserExemptFromSingleSignOn.objects.filter(email_domain__in=authenticated_domains
+                                                                         ).values_list('username', flat=True)
+            authenticated_email_domains = authenticated_domains.values_list('email_domain', flat=True)
+
+            usernames = []
+
+            for username in usernames_in_account:
+                if username not in exempt_usernames and (get_email_domain_from_username(username)
+                                                         in authenticated_email_domains):
+                    usernames.append(username)
+            return usernames
+
+        elif self.login_enforcement_type == LoginEnforcementType.TEST:
+            test_usernames = set(SsoTestUser.objects.filter(email_domain__identity_provider__slug=self.slug
+                                                            ).values_list('username', flat=True))
+            return list(test_usernames.intersection(usernames_in_account))
+
 
 @receiver(post_save, sender=Subscription)
 @receiver(post_delete, sender=Subscription)
