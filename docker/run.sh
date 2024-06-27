@@ -38,7 +38,6 @@ function setup {
 
     pip-sync requirements/test-requirements.txt
     pip check  # make sure there are no incompatibilities in test-requirements.txt
-    pip install -e .
     python_preheat  # preheat the python libs
 
     # compile pyc files
