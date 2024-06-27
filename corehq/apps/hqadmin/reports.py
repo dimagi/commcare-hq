@@ -27,6 +27,7 @@ from corehq.apps.es.cases import CaseES
 from corehq.apps.es.forms import FormES
 from corehq.toggles import USER_CONFIGURABLE_REPORTS, RESTRICT_DATA_SOURCE_REBUILD
 from corehq.motech.repeaters.const import UCRRestrictionFFStatus
+from corehq.apps.es.aggregations import TermsAggregation
 
 
 class AdminReport(GenericTabularReport):
@@ -360,9 +361,16 @@ class UCRRebuildRestrictionTable:
     def rows(self):
         rows = []
 
-        for domain in self.ucr_domains:
-            case_count = CaseES().domain(domain).count()
-            form_count = FormES().domain(domain).count()
+        ucr_domains = self.ucr_domains
+        if not ucr_domains:
+            return []
+
+        case_count_by_domain = self._case_count_by_domain(ucr_domains)
+        form_count_by_domain = self._forms_count_by_domain(ucr_domains)
+
+        for domain in ucr_domains:
+            case_count = getattr(case_count_by_domain.get(domain), 'doc_count', 0)
+            form_count = getattr(form_count_by_domain.get(domain), 'doc_count', 0)
 
             if self.should_show_domain(domain, case_count, form_count):
                 rows.append(
@@ -394,6 +402,18 @@ class UCRRebuildRestrictionTable:
             return should_restrict_rebuild and not restriction_ff_enabled
         if self._show_should_disable_ff_domains:
             return not should_restrict_rebuild and restriction_ff_enabled
+
+    @staticmethod
+    def _case_count_by_domain(domains):
+        return CaseES().domain(domains).aggregation(
+            TermsAggregation('domain', 'domain.exact')
+        ).run().aggregations.domain.buckets_dict
+
+    @staticmethod
+    def _forms_count_by_domain(domains):
+        return FormES().domain(domains).aggregation(
+            TermsAggregation('domain', 'domain.exact')
+        ).run().aggregations.domain.buckets_dict
 
     def _row_data(self, domain, case_count, form_count):
         return [

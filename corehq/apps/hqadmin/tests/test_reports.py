@@ -15,7 +15,7 @@ class TestUCRRebuildRestrictionTable(TestCase):
         table_data = UCRRebuildRestrictionTable()
 
         self.assertEqual(
-            table_data.ucr_domains(),
+            table_data.ucr_domains,
             ucr_enabled_domains
         )
 
