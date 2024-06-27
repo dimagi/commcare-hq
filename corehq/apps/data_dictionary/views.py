@@ -31,6 +31,7 @@ from corehq.apps.data_dictionary.util import (
     delete_case_property,
     get_used_props_by_case_type,
     get_data_dict_props_by_case_type,
+    update_url_query_params,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
@@ -205,6 +206,9 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
         "groups": []
     }
 
+    current_url = request.build_absolute_uri()
+    case_type_data["_links"] = _get_pagination_links(current_url, case_type_data["properties_count"], skip, limit)
+
     properties_queryset = CaseProperty.objects.select_related('group').filter(case_type=case_type)
     properties_queryset = properties_queryset.order_by('group_id', 'index', 'pk')[skip:skip + limit]
     properties_queryset = properties_queryset.prefetch_related(
@@ -256,6 +260,18 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
         case_type_data["groups"].append(group_data)
 
     return JsonResponse(case_type_data)
+
+
+def _get_pagination_links(current_url, total_records, skip, limit):
+    links = {"self": update_url_query_params(current_url, {"skip": skip, "limit": limit})}
+    if skip:
+        links["previous"] = update_url_query_params(
+            current_url,
+            {"skip": max(skip - limit, 0), "limit": limit}
+        )
+    if total_records > (skip + limit):
+        links["next"] = update_url_query_params(current_url, {"skip": skip + limit, "limit": limit})
+    return links
 
 
 @login_and_domain_required
