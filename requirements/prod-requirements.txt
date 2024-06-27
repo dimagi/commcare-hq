@@ -201,7 +201,7 @@ django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websock
     # via -r base-requirements.in
 djangorestframework==3.13.1
     # via -r base-requirements.in
-dropbox==11.36.0
+dropbox==11.36.2
     # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
@@ -619,7 +619,7 @@ toolz==0.12.1
     # via pyseeyou
 toposort==1.7
     # via -r base-requirements.in
-tornado==6.3.3
+tornado==6.4.1
     # via flower
 traitlets==5.1.1
     # via
