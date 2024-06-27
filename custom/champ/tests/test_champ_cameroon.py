@@ -1,12 +1,14 @@
 from datetime import date
 
 from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.users.tests.util import patch_user_data_db_layer
 from custom.champ.tests.utils import TestDataSourceExpressions
 from custom.champ.utils import POST_TEST_XMLNS, ACCOMPAGNEMENT_XMLNS, SUIVI_MEDICAL_XMLNS
 
 CHAMP_CAMEROON_DATA_SOURCE = 'champ_cameroon.json'
 
 
+@patch_user_data_db_layer()
 class TestEnhancedPeerMobilization(TestDataSourceExpressions):
 
     data_source_name = CHAMP_CAMEROON_DATA_SOURCE
