@@ -7,6 +7,7 @@ from django_tables2 import columns
 
 from corehq import toggles
 from corehq.apps.prototype.models.data_cleaning.cache_store import VisibleColumnStore, FakeCaseDataStore
+from corehq.apps.prototype.models.data_cleaning.columns import EditableColumn
 from corehq.apps.prototype.models.data_cleaning.filters import ColumnFilter
 from corehq.apps.prototype.models.data_cleaning.tables import FakeCaseTable
 from corehq.apps.prototype.views.htmx.pagination import SavedPaginatedTableView
@@ -113,12 +114,21 @@ class DataCleaningTableView(SavedPaginatedTableView):
         if 'clearFilters' in request.POST:
             FakeCaseTable.clear_filters(request)
 
+        if 'cancelEdit' in request.POST:
+            self.cancel_edit_for_cell(
+                int(request.POST['cancelEdit']),
+                request.POST['column']
+            )
+
+        if 'applyEdits' in request.POST:
+            self.apply_edits()
+
         return self.get(request, *args, **kwargs)
 
-    def select_row(self, case_id, is_selected):
+    def select_row(self, row_id, is_selected):
         data_store = FakeCaseDataStore(self.request)
         all_rows = data_store.get()
-        all_rows[case_id]['selected'] = is_selected
+        all_rows[row_id]['selected'] = is_selected
         data_store.set(all_rows)
 
     def select_all(self, is_selected):
@@ -133,4 +143,25 @@ class DataCleaningTableView(SavedPaginatedTableView):
         all_rows = data_store.get()
         for row_id in row_ids:
             all_rows[int(row_id)]['selected'] = is_selected
+        data_store.set(all_rows)
+
+    def cancel_edit_for_cell(self, row_id, column_slug):
+        data_store = FakeCaseDataStore(self.request)
+        all_rows = data_store.get()
+        edited_slug = EditableColumn.get_edited_slug(column_slug)
+        if edited_slug in all_rows[row_id]:
+            del all_rows[row_id][edited_slug]
+        data_store.set(all_rows)
+
+    def apply_edits(self):
+        data_store = FakeCaseDataStore(self.request)
+        all_rows = data_store.get()
+        for row in all_rows:
+            if not row['selected']:
+                continue
+            edited_keys = [k for k in row.keys() if k.endswith('__edited')]
+            for edited_key in edited_keys:
+                original_key = edited_key.replace('__edited', '')
+                row[original_key] = row[edited_key]
+                del row[edited_key]
         data_store.set(all_rows)
