@@ -372,6 +372,10 @@ class UCRRebuildRestrictionTable:
         return rows
 
     @property
+    def total_records(self):
+        return len(self.ucr_domains)
+
+    @property
     def ucr_domains(self):
         return USER_CONFIGURABLE_REPORTS.get_enabled_domains()
 
@@ -458,6 +462,7 @@ class UCRDataLoadReport(AdminReport):
     emailable = False
     exportable = False
     default_rows = 10
+    ajax_pagination = True
 
     def __init__(self, request, *args, **kwargs):
         self.table_data = UCRRebuildRestrictionTable(
@@ -471,4 +476,16 @@ class UCRDataLoadReport(AdminReport):
 
     @property
     def rows(self):
-        return self.table_data.rows
+        start = self.pagination.start
+        end = self.pagination.start + self.pagination.count
+        return self.table_data.rows[start:end]
+
+    @property
+    def total_records(self):
+        return self.table_data.total_records
+
+    @property
+    def shared_pagination_GET_params(self):
+        return [
+            {'name': 'ucr_rebuild_restriction', 'value': self.request.GET.get('ucr_rebuild_restriction')}
+        ]
