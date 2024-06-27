@@ -770,19 +770,10 @@ hqDefine("cloudcare/js/formplayer/app", [
     });
 
     FormplayerFrontend.on("setUnsavedFormInProgress", function () {
-        const appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
-        var app = AppsAPI.getAppEntity(appId);
-        if (!app) {
-            return;
-        }
-        app = app.toJSON();
-        const savedFormsSettingOff = (app.profile.properties || {})['cc-show-incomplete'] === 'no';
-        if (savedFormsSettingOff) {
-            FormplayerFrontend.unsavedFormInProgress = true;
-            window.onbeforeunload = function () {
-                return true;
-            };
-        }
+        FormplayerFrontend.unsavedFormInProgress = true;
+        window.onbeforeunload = function () {
+            return true;
+        };
     });
 
     FormplayerFrontend.on("setUnsavedFormNotInProgress", function () {
