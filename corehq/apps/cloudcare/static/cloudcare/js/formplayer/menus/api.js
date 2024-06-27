@@ -40,6 +40,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                 lastRecordedLocation = FormplayerFrontend.getChannel().request('lastRecordedLocation'),
                 timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
                 tzFromBrowser = Intl.DateTimeFormat().resolvedOptions().timeZone,
+                screenSize = String(window.innerWidth),
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
                 defer = $.Deferred(),
@@ -184,6 +185,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                     "isShortDetail": params.isShortDetail,
                     "isRefreshCaseSearch": params.isRefreshCaseSearch,
                     "requestInitiatedByTag": params.requestInitiatedByTag,
+                    "screen_size": screenSize,
                 };
                 options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;
