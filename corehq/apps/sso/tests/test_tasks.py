@@ -14,6 +14,7 @@ from corehq.apps.users.models import HQApiKey
 from corehq.apps.sso.models import (
     AuthenticatedEmailDomain,
     IdentityProviderType,
+    SsoTestUser,
     UserExemptFromSingleSignOn,
     LoginEnforcementType,
 )
@@ -410,16 +411,22 @@ class TestAutoDeactivationTask(TestCase):
         web_user = WebUser.get_by_username(self.web_user_c.username)
         self.assertTrue(web_user.is_active)
 
-    def test_auto_deactivation_disabled_for_idp_whose_login_enforcement_type_is_test(self):
+    def test_auto_deactivation_only_deactivate_absent_test_user_when_login_enforcement_is_test(self):
         self.idp.login_enforcement_type = LoginEnforcementType.TEST
         self.idp.save()
+        test_user = SsoTestUser.objects.create(
+            email_domain=self.email_domain,
+            username='test@vaultwax.com',
+        )
+        self._create_web_user(test_user.username)
         self.mock_get_all_usernames_of_the_idp.return_value = [self.web_user_a.username, self.web_user_b.username]
 
         auto_deactivate_removed_sso_users()
 
-        # Refetch Web User
-        web_user = WebUser.get_by_username(self.web_user_c.username)
-        self.assertTrue(web_user.is_active)
+        test_user = WebUser.get_by_username(test_user.username)
+        self.assertFalse(test_user.is_active)
+        web_user_c = WebUser.get_by_username(self.web_user_c.username)
+        self.assertTrue(web_user_c.is_active)
 
     def _create_web_user(self, username):
         user = WebUser.create(
