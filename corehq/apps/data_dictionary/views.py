@@ -9,7 +9,7 @@ from django.db.models import Count
 from django.db.models.query import Prefetch
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
@@ -18,7 +18,12 @@ from django.views.generic import View
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 
-from corehq import toggles
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import (
+    requires_privilege,
+    requires_privilege_with_fallback,
+)
+from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
 from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CasePropertyAllowedValue,
@@ -26,35 +31,32 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
 )
 from corehq.apps.data_dictionary.util import (
+    delete_case_property,
+    get_data_dict_props_by_case_type,
+    get_used_props_by_case_type,
     save_case_property,
     save_case_property_group,
-    delete_case_property,
-    get_used_props_by_case_type,
-    get_data_dict_props_by_case_type,
     update_url_query_params,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.motech.fhir.utils import (
-    load_fhir_case_type_mapping,
     load_fhir_case_properties_mapping,
+    load_fhir_case_type_mapping,
     load_fhir_resource_types,
     remove_fhir_resource_type,
     update_fhir_resource_type,
 )
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege
-from corehq import privileges
-from corehq.apps.app_manager.dbaccessors import get_case_type_app_module_count
-from corehq.apps.geospatial.utils import get_geo_case_property
 
 from .bulk import (
-    process_bulk_upload,
-    FHIR_RESOURCE_TYPE_MAPPING_SHEET,
     ALLOWED_VALUES_SHEET_SUFFIX,
+    FHIR_RESOURCE_TYPE_MAPPING_SHEET,
+    process_bulk_upload,
 )
 
 

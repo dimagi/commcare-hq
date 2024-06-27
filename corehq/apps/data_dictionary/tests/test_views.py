@@ -7,15 +7,18 @@ from unittest.mock import patch
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyGroup, CasePropertyAllowedValue, CaseType
+from corehq import privileges
+from corehq.apps.data_dictionary.models import (
+    CaseProperty,
+    CasePropertyAllowedValue,
+    CasePropertyGroup,
+    CaseType,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.geospatial.const import GPS_POINT_CASE_PROPERTY
-from corehq.apps.users.models import WebUser, HqPermissions
+from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
-
-from corehq.util.test_utils import privilege_enabled
-from corehq import privileges
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
 @privilege_enabled(privileges.DATA_DICTIONARY)
