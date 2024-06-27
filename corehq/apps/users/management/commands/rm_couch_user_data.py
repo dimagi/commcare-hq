@@ -14,7 +14,7 @@ from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
-    help = "Populate SQL user data from couch"
+    help = "Remove now-stale CouchUser.user_data field"
 
     def handle(self, *args, **options):
         do_migration()
