@@ -2,10 +2,12 @@ from django.urls import re_path as url
 from corehq.apps.prototype.views import example
 from corehq.apps.prototype.views.data_cleaning.main import (
     DataCleaningPrototypeView,
+    reset_data,
 )
 from corehq.apps.prototype.views.data_cleaning.forms import (
     ConfigureColumnsFormView,
     FilterColumnsFormView,
+    CleanDataFormView,
 )
 from corehq.apps.prototype.views.data_cleaning.tables import (
     DataCleaningTableView,
@@ -32,4 +34,8 @@ urlpatterns = [
         name=ConfigureColumnsFormView.urlname),
     url(r'^htmx/cleaning/forms/filter/$', FilterColumnsFormView.as_view(),
         name=FilterColumnsFormView.urlname),
+    url(r'^htmx/cleaning/forms/clean_data/$', CleanDataFormView.as_view(),
+        name=CleanDataFormView.urlname),
+    url(r'^htmx/cleaning/reset/$', reset_data,
+        name="data_cleaning_reset_data"),
 ]
