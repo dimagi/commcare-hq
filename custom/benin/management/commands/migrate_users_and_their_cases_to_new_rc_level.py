@@ -89,7 +89,8 @@ class Command(BaseCommand):
                             _update_cases(domain=domain, user=user, current_owner_id=village.location_id,
                                           new_owner_id=new_user_rc_location.location_id,
                                           dry_run=dry_run)
-                            _update_users_location(user=user, location=new_user_rc_location, dry_run=dry_run)
+                            _update_users_location(user=user, existing_location=village,
+                                                   new_location=new_user_rc_location, dry_run=dry_run)
                             log(f"User {user.username}:{user.user_id} updates completed.")
                         else:
                             log_error(f"User {user.username}:{user.user_id} rc {user_rc_number} location "
@@ -192,10 +193,11 @@ def _find_case_ids(case_type, owner_id, opened_by_user_id):
     )
 
 
-def _update_users_location(user, location, dry_run):
+def _update_users_location(user, existing_location, new_location, dry_run):
     if not dry_run:
-        user.set_location(location)
-    log(f"User {user.username}:{user.user_id} location updated to {location.location_id}")
+        user.set_location(new_location)
+        user.unset_location_by_id(existing_location.location_id)
+    log(f"User {user.username}:{user.user_id} location updated to {new_location.location_id}")
 
 
 class MultipleMatchingLocationsFound(Exception):
