@@ -151,11 +151,12 @@ def data_dictionary_json(request, domain, case_type_name=None):
 @requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 def data_dictionary_json_case_types(request, domain):
     fhir_resource_type_name_by_case_type = {}
+    if toggles.FHIR_INTEGRATION.enabled(domain):
+        fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
+
     queryset = CaseType.objects.filter(domain=domain).annotate(properties_count=Count('property'))
     if not request.GET.get('load_deprecated_case_types', False) == 'true':
         queryset = queryset.filter(is_deprecated=False)
-    if toggles.FHIR_INTEGRATION.enabled(domain):
-        fhir_resource_type_name_by_case_type = load_fhir_case_type_mapping(domain)
 
     case_type_app_module_count = get_case_type_app_module_count(domain)
     used_props_by_case_type = get_used_props_by_case_type(domain)
@@ -163,7 +164,7 @@ def data_dictionary_json_case_types(request, domain):
     case_types_data = []
     for case_type in queryset:
         module_count = case_type_app_module_count.get(case_type.name, 0)
-        used_props = used_props_by_case_type[case_type.name] if case_type.name in used_props_by_case_type else []
+        used_props = used_props_by_case_type.get(case_type.name, [])
         case_types_data.append({
             "name": case_type.name,
             "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
@@ -181,10 +182,6 @@ def data_dictionary_json_case_types(request, domain):
 @login_and_domain_required
 @requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 def data_dictionary_json_case_properties(request, domain, case_type_name):
-    fhir_resource_prop_by_case_prop = {}
-    if toggles.FHIR_INTEGRATION.enabled(domain):
-        fhir_resource_prop_by_case_prop = load_fhir_case_properties_mapping(domain)
-
     try:
         skip = int(request.GET.get('skip', 0))
         limit = int(request.GET.get('limit', 500))
@@ -192,6 +189,10 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
             raise ValueError
     except ValueError:
         return JsonResponse({"error": _("skip and limit must be positive integers")}, status=400)
+
+    fhir_resource_prop_by_case_prop = {}
+    if toggles.FHIR_INTEGRATION.enabled(domain):
+        fhir_resource_prop_by_case_prop = load_fhir_case_properties_mapping(domain)
 
     case_type = get_object_or_404(
         CaseType.objects.annotate(properties_count=Count('property')),
