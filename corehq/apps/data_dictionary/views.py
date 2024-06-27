@@ -9,7 +9,7 @@ from django.db.models import Count
 from django.db.models.query import Prefetch
 from django.db.transaction import atomic
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
@@ -180,86 +180,80 @@ def data_dictionary_json_case_types(request, domain):
 @login_and_domain_required
 @requires_privilege_with_fallback(privileges.DATA_DICTIONARY)
 def data_dictionary_json_case_properties(request, domain, case_type_name):
-    props = []
     fhir_resource_type_name_by_case_type = {}
     fhir_resource_prop_by_case_prop = {}
-    queryset = CaseType.objects.filter(domain=domain)
-    queryset = queryset.prefetch_related(
-        Prefetch('groups', queryset=CasePropertyGroup.objects.order_by('index')),
-        # order by pk for properties with same index, likely for automatically added properties
-        Prefetch('properties', queryset=CaseProperty.objects.order_by('group_id', 'index', 'pk')),
-        Prefetch('properties__allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
-    )
     if toggles.FHIR_INTEGRATION.enabled(domain):
         fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = load_fhir_resource_mappings(
             domain)
-    queryset = queryset.filter(name=case_type_name)
 
-    case_type_app_module_count = get_case_type_app_module_count(domain)
+    case_type = get_object_or_404(
+        CaseType.objects.annotate(properties_count=Count('property')),
+        domain=domain,
+        name=case_type_name
+    )
+    case_type_data = {
+        "name": case_type.name,
+        "properties_count": case_type.properties_count,
+        "groups": []
+    }
+
+    properties_queryset = CaseProperty.objects.select_related('group').filter(case_type=case_type)
+    properties_queryset = properties_queryset.order_by('group_id', 'index', 'pk')
+    properties_queryset = properties_queryset.prefetch_related(
+        Prefetch('allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
+    )
+
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
     used_props_by_case_type = get_used_props_by_case_type(domain)
     geo_case_prop = get_geo_case_property(domain)
-    for case_type in queryset:
-        module_count = case_type_app_module_count.get(case_type.name, 0)
-        used_props = used_props_by_case_type[case_type.name] if case_type.name in used_props_by_case_type else []
-        p = {
-            "name": case_type.name,
-            "fhir_resource_type": fhir_resource_type_name_by_case_type.get(case_type),
-            "groups": [],
-            "is_deprecated": case_type.is_deprecated,
-            "module_count": module_count,
-            "properties": [],
-            "is_safe_to_delete": len(used_props) == 0,
-        }
-        grouped_properties = {
-            group: [
-                {
-                    'id': prop.id,
-                    'description': prop.description,
-                    'label': prop.label,
-                    'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(
-                        prop
-                    ),
-                    'name': prop.name,
-                    'deprecated': prop.deprecated,
-                    'is_safe_to_delete': prop.name not in used_props and prop.name != geo_case_prop,
-                }
-                | (
-                    {
-                        'data_type': prop.data_type,
-                        'allowed_values': {
-                            av.allowed_value: av.description
-                            for av in prop.allowed_values.all()
-                        },
-                    }
-                    if data_validation_enabled
-                    else {}
-                )
-                for prop in props
-            ]
-            for group, props in itertools.groupby(
-                case_type.properties.all(), key=attrgetter('group_id')
-            )
-        }
-        for group in case_type.groups.all():
-            p["groups"].append({
-                "id": group.id,
-                "name": group.name,
-                "description": group.description,
-                "deprecated": group.deprecated,
-                "properties": grouped_properties.get(group.id, [])
-            })
 
-        # Aggregate properties that don't have a group
-        p["groups"].append({
-            "name": "",
-            "properties": grouped_properties.get(None, [])
+    used_props = used_props_by_case_type[case_type.name] if case_type.name in used_props_by_case_type else []
+
+    grouped_properties = {
+        group: [
+            {
+                'id': prop.id,
+                'description': prop.description,
+                'label': prop.label,
+                'fhir_resource_prop_path': fhir_resource_prop_by_case_prop.get(
+                    prop
+                ),
+                'name': prop.name,
+                'deprecated': prop.deprecated,
+                'is_safe_to_delete': prop.name not in used_props and prop.name != geo_case_prop,
+            }
+            | (
+                {
+                    'data_type': prop.data_type,
+                    'allowed_values': {
+                        av.allowed_value: av.description
+                        for av in prop.allowed_values.all()
+                    },
+                }
+                if data_validation_enabled
+                else {}
+            )
+            for prop in props
+        ]
+        for group, props in itertools.groupby(
+            properties_queryset, key=attrgetter('group_id')
+        )
+    }
+    for group in case_type.groups.all():
+        case_type_data["groups"].append({
+            "id": group.id,
+            "name": group.name,
+            "description": group.description,
+            "deprecated": group.deprecated,
+            "properties": grouped_properties.get(group.id, [])
         })
-        props.append(p)
-    return JsonResponse({
-        'case_types': props,
-        'geo_case_property': geo_case_prop,
+
+    # Aggregate properties that don't have a group
+    case_type_data["groups"].append({
+        "name": "",
+        "properties": grouped_properties.get(None, [])
     })
+    return JsonResponse(case_type_data)
 
 
 @login_and_domain_required
