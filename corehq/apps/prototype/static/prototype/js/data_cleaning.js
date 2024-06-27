@@ -1,6 +1,6 @@
 'use strict';
 
-hqDefine("prototype/js/htmx/data_cleaning",[
+hqDefine("prototype/js/data_cleaning",[
     'underscore',
     'sortablejs',
 ], function (_, Sortable) {
