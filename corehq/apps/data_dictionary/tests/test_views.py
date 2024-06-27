@@ -425,12 +425,18 @@ class DataDictionaryJsonV2Test(TestCase):
         self.assertEqual(response.json(), expected_response)
 
     @flag_enabled('FHIR_INTEGRATION')
-    @patch('corehq.apps.data_dictionary.views.load_fhir_resource_mappings')
-    def test_get_case_types_fhir_enabled(self, mocked_load_fhir_resource_mappings, *args):
-        mocked_load_fhir_resource_mappings.return_value = (
-            {self.case_type_obj: self.fhir_resource_name},
-            {case_property: self.fhir_json_path for case_property in self.case_properties_with_group}
-        )
+    @patch('corehq.apps.data_dictionary.views.load_fhir_case_type_mapping')
+    @patch('corehq.apps.data_dictionary.views.load_fhir_case_properties_mapping')
+    def test_get_case_types_fhir_enabled(
+        self,
+        mocked_load_fhir_case_properties_mapping,
+        mocked_load_fhir_case_type_mapping,
+        *args
+    ):
+        mocked_load_fhir_case_type_mapping.return_value = {self.case_type_obj: self.fhir_resource_name}
+        mocked_load_fhir_case_properties_mapping.return_value = {
+            case_property: self.fhir_json_path for case_property in self.case_type_obj.properties.all()
+        }
         response = self.client.get(self.case_types_endpoint)
         self.assertEqual(response.status_code, 200)
         expected_response = self._get_case_types_json(fhir_enabled=True)
@@ -461,12 +467,18 @@ class DataDictionaryJsonV2Test(TestCase):
         self.assertEqual(response.json(), expected_response)
 
     @flag_enabled('FHIR_INTEGRATION')
-    @patch('corehq.apps.data_dictionary.views.load_fhir_resource_mappings')
-    def test_get_case_properties_fhir_enabled(self, mocked_load_fhir_resource_mappings, *args):
-        mocked_load_fhir_resource_mappings.return_value = (
-            {self.case_type_obj: self.fhir_resource_name},
-            {case_property: self.fhir_json_path for case_property in self.case_type_obj.properties.all()}
-        )
+    @patch('corehq.apps.data_dictionary.views.load_fhir_case_type_mapping')
+    @patch('corehq.apps.data_dictionary.views.load_fhir_case_properties_mapping')
+    def test_get_case_properties_fhir_enabled(
+        self,
+        mocked_load_fhir_case_properties_mapping,
+        mocked_load_fhir_case_type_mapping,
+        *args
+    ):
+        mocked_load_fhir_case_type_mapping.return_value = {self.case_type_obj: self.fhir_resource_name}
+        mocked_load_fhir_case_properties_mapping.return_value = {
+            case_property: self.fhir_json_path for case_property in self.case_type_obj.properties.all()
+        }
         response = self.client.get(self.case_properties_endpoint())
         self.assertEqual(response.status_code, 200)
         expected_response = self._get_case_properties_json(
