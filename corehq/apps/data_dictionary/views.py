@@ -186,6 +186,14 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
         fhir_resource_type_name_by_case_type, fhir_resource_prop_by_case_prop = load_fhir_resource_mappings(
             domain)
 
+    try:
+        skip = int(request.GET.get('skip', 0))
+        limit = int(request.GET.get('limit', 500))
+        if skip < 0 or limit < 0:
+            raise ValueError
+    except ValueError:
+        return JsonResponse({"error": _("skip and limit must be positive integers")}, status=400)
+
     case_type = get_object_or_404(
         CaseType.objects.annotate(properties_count=Count('property')),
         domain=domain,
@@ -198,7 +206,7 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
     }
 
     properties_queryset = CaseProperty.objects.select_related('group').filter(case_type=case_type)
-    properties_queryset = properties_queryset.order_by('group_id', 'index', 'pk')
+    properties_queryset = properties_queryset.order_by('group_id', 'index', 'pk')[skip:skip + limit]
     properties_queryset = properties_queryset.prefetch_related(
         Prefetch('allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
     )
