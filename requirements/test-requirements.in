@@ -9,6 +9,7 @@ Faker
 flaky>=3.8  # required for pytest 8.2 (and possibly earlier versions)
 freezegun
 radon>=5.0  # v5 no longer depends on flake8-polyfill
+pytest @ git+https://github.com/millerdev/pytest.git@7843f289c99cba985c78ded49170bee300984ba2
 pytest-django
 pytest-unmagic @ git+https://github.com/dimagi/pytest-unmagic.git
 coverage

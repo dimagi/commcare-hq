@@ -28,7 +28,8 @@ namespaces = false
 minversion = "8.1"
 addopts = [
     "--strict-markers",
-    "-p", "no:warnings",  # HQ has its own (incompatible) warnings system
+    "-pcorehq.tests.pytest_hooks",
+    "-pno:warnings",  # HQ has its own (incompatible) warnings system
 ]
 markers = [
     "es_test: marker for elasticsearch tests",
@@ -59,9 +60,15 @@ python_files = [
 ]
 
 pythonpath = [
-    "submodules/dimagi-utils-src",
+    ".",
+    "corehq/ex-submodules",
+    "submodules",  # for langcodes
+    "submodules/commcare-translations",
+    "submodules/couchdbkit-aggregate",
     "submodules/django-digest-src",
-    "submodules/toggle",
+    "submodules/django-no-exceptions",
+    "submodules/python-digest",
+    "submodules/xml2json",
 ]
 
 required_plugins = "pytest-django"
