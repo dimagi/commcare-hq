@@ -17,7 +17,7 @@ from corehq.util.log import with_progress_bar
 LOCATION_TYPE_VILLAGE = "village"
 LOCATION_TYPE_RC = "rc"
 
-run_time = datetime.datetime.utcnow().strftime("%Y-%m-%d_%H:%M:%S")
+run_time = datetime.datetime.utcnow().strftime("%Y-%m-%d_%H.%M.%S")
 progress_logfile = f"migrate_users_and_their_cases_to_new_rc_level_{run_time}.log"
 error_logfile = f"migrate_users_and_their_cases_to_new_rc_level_errors_{run_time}.log"
 
