@@ -405,7 +405,7 @@ hqDefine('cloudcare/js/utils', [
             useCurrent: true,
         };
         if (date.isValid()) {
-            options.viewDate = new hqTempusDominus.tempusDominus.DateTime(date.format(dateFormat + ' ' + timeFormat));
+            options.viewDate = new hqTempusDominus.tempusDominus.DateTime(date);
         }
         return hqTempusDominus.createTimePicker($el.get(0), options);
     };
