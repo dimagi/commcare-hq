@@ -215,7 +215,6 @@ class UpdateCasePropertyViewTest(TestCase):
         self.assertIsNone(prop)
 
 
-# TODO Remove this Test Class once we migrate to the new view
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryViewTest(TestCase):
     domain_name = uuid.uuid4().hex
@@ -597,6 +596,7 @@ class TestDeprecateOrRestoreCaseTypeView(TestCase):
         self.assertEqual(case_prop_group_count, 0)
 
 
+# TODO Remove this Test Class once we migrate to the new view
 @flag_enabled('CASE_IMPORT_DATA_DICTIONARY_VALIDATION')
 @privilege_enabled(privileges.DATA_DICTIONARY)
 class DataDictionaryJsonTest(TestCase):
@@ -660,7 +660,6 @@ class DataDictionaryJsonTest(TestCase):
                                     "is_safe_to_delete": True,
                                     "allowed_values": {},
                                     "data_type": "number",
-                                    "index": 0,
                                 },
                             ],
                         },
