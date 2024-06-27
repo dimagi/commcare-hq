@@ -24,6 +24,9 @@ class BaseCacheStore:
     def get(self):
         return cache.get(self.cache_key, self.default_value)
 
+    def delete(self):
+        cache.delete(self.cache_key)
+
 
 class VisibleColumnStore(BaseCacheStore):
     slug = 'visible-column'
