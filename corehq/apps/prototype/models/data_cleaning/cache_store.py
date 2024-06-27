@@ -8,7 +8,7 @@ from corehq.util.quickcache import quickcache
 
 class BaseCacheStore:
     slug = None
-    timeout = 24 * 60 * 60
+    timeout = 24 * 60 * 60 * 60
     default_value = None
 
     def __init__(self, request):
