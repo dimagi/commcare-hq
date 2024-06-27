@@ -3,7 +3,6 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
 from corehq import toggles
-from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.prototype.forms.data_cleaning import AddColumnFilterForm
 from corehq.apps.prototype.models.data_cleaning.cache_store import VisibleColumnStore
@@ -59,8 +58,8 @@ class ConfigureColumnsFormView(TemplateView):
         return response
 
 
-@method_decorator(require_superuser, name='dispatch')
 @method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(toggles.SAAS_PROTOTYPE.required_decorator(), name='dispatch')
 class FilterColumnsFormView(TemplateView):
     urlname = "data_cleaning_filter_columns_form"
     template_name = "prototype/data_cleaning/partials/forms/filter_columns_form.html"
