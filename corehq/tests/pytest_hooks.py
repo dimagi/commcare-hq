@@ -59,12 +59,3 @@ def _get_wrapped(obj):
     while hasattr(obj, "__wrapped__"):
         obj = obj.__wrapped__
     return obj
-
-
-def assert_loaded():
-    # Not a pytest hook.
-    assert getattr(pytest_load_initial_conftests, "loaded", False), """
-        pytest requires commcare-hq test hooks. Recommended:
-
-        pip install -e .
-    """
