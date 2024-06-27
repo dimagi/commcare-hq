@@ -233,6 +233,7 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
                 'name': prop.name,
                 'deprecated': prop.deprecated,
                 'is_safe_to_delete': prop.name not in used_props and prop.name != geo_case_prop,
+                'index': prop.index,
             }
             if data_validation_enabled:
                 prop_data.update({
