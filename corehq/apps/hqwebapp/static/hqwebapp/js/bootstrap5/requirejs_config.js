@@ -20,6 +20,7 @@ requirejs.config({
         "popper": "@popperjs/core/dist/umd/popper.min",
         "sentry_browser": "sentry/js/sentry.browser.7.28.0.min",
         "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
+        "sortablejs": "sortablejs/Sortable.min",
         "tempusDominus": "@eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
         "underscore": "underscore/underscore",
         "nvd3/nv.d3.latest.min": "nvd3-1.8.6/build/nv.d3.min",
