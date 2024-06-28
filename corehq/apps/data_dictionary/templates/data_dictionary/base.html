@@ -391,7 +391,11 @@
             </button>
             <div class="help-block">
               <span class="text-danger" data-bind="visible: !newGroupNameUnique()">
-                {% trans "A case property group with this name already exists." %}
+                {% blocktrans %}
+                  A case property group with this name already exists.
+                  If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated
+                  groups.
+                {% endblocktrans %}
               </span>
               <span class="text-danger" data-bind="visible: !newGroupNameValid()">
                 {% trans "Invalid case group name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}
