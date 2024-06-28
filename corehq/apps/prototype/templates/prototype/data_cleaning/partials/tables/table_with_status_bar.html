@@ -54,6 +54,20 @@
         </button>
       </div>
     {% endif %}
+
+    {% if table.has_edits %}
+      <div class="ps-2 ms-2">
+        <i class="fa-solid fa-pencil"></i>
+        Edits:
+        <button type="button"
+                hx-post="{{ request.path_info }}{% querystring %}"
+                hx-vals='{"applyEdits": true}'
+                hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+                class="btn btn-success btn-sm ms-2">
+          <i class="fa-solid fa-check"></i> Apply Edits to Selection
+        </button>
+      </div>
+    {% endif %}
   </div>
   {{ block.super }}
 {% endblock %}

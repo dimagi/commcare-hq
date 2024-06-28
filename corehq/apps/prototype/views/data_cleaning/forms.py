@@ -3,10 +3,9 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
 from corehq import toggles
-from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
-from corehq.apps.prototype.forms.data_cleaning import AddColumnFilterForm
-from corehq.apps.prototype.models.data_cleaning.cache_store import VisibleColumnStore
+from corehq.apps.prototype.forms.data_cleaning import AddColumnFilterForm, CleanColumnDataForm
+from corehq.apps.prototype.models.data_cleaning.cache_store import VisibleColumnStore, FakeCaseDataStore
 from corehq.apps.prototype.models.data_cleaning.filters import ColumnFilter
 from corehq.apps.prototype.models.data_cleaning.tables import FakeCaseTable
 
@@ -59,8 +58,8 @@ class ConfigureColumnsFormView(TemplateView):
         return response
 
 
-@method_decorator(require_superuser, name='dispatch')
 @method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(toggles.SAAS_PROTOTYPE.required_decorator(), name='dispatch')
 class FilterColumnsFormView(TemplateView):
     urlname = "data_cleaning_filter_columns_form"
     template_name = "prototype/data_cleaning/partials/forms/filter_columns_form.html"
@@ -88,4 +87,33 @@ class FilterColumnsFormView(TemplateView):
             filter_form.add_filter(request)
             filter_form = None
         response = super().get(request, filter_form=filter_form, *args, **kwargs)
+        return response
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(toggles.SAAS_PROTOTYPE.required_decorator(), name='dispatch')
+class CleanDataFormView(TemplateView):
+    urlname = "data_cleaning_clean_data_form"
+    template_name = "prototype/data_cleaning/partials/forms/clean_data_form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        clean_data_form = kwargs.pop('clean_data_form') if 'clean_data_form' in kwargs else None
+        context.update({
+            "container_id": FakeCaseTable.filter_form_id,
+            "clean_data_form": clean_data_form or CleanColumnDataForm(
+                FakeCaseTable, FakeCaseDataStore(self.request)
+            ),
+            "table_selector": f"#{FakeCaseTable.css_id}",
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        clean_data_form = CleanColumnDataForm(
+            FakeCaseTable, FakeCaseDataStore(request), request.POST
+        )
+        if clean_data_form.is_valid():
+            clean_data_form.apply_actions_to_data()
+            clean_data_form = None
+        response = super().get(request, clean_data_form=clean_data_form, *args, **kwargs)
         return response
