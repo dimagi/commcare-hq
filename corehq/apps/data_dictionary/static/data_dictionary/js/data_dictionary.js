@@ -68,14 +68,21 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         const setCaseProperties = function (groupData) {
             for (let group of groupData) {
-                let groupObj = groupsViewModel(
-                    self.name,
-                    group.id,
-                    group.name,
-                    group.description,
-                    group.deprecated,
-                    self.changeSaveButton
-                );
+                let groupObj = _.find(self.groups(), function (g) {
+                    return g.id === group.id;
+                });
+                if (!groupObj) {
+                    groupObj = groupsViewModel(
+                        self.name,
+                        group.id,
+                        group.name,
+                        group.description,
+                        group.deprecated,
+                        self.changeSaveButton
+                    );
+                    groupObj.properties.subscribe(self.changeSaveButton);
+                    self.groups.push(groupObj);
+                }
 
                 for (let prop of group.properties) {
                     const isGeoCaseProp = (self.geoCaseProp === prop.name && prop.data_type === 'gps');
@@ -94,8 +101,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 );
                     groupObj.properties.push(propObj);
                 }
-                groupObj.properties.subscribe(self.changeSaveButton);
-                self.groups.push(groupObj);
             }
         };
 
