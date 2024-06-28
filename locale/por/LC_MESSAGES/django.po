@@ -12620,11 +12620,6 @@ msgstr ""
 msgid "Sorry, this response is required!"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/repeat_juncture.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/repeat_juncture.html
-msgid "This repeatable group is empty"
-msgstr ""
-
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/sub_group.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/sub_group.html
 msgid "Question Group"
@@ -22142,11 +22137,51 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
+msgid "Max distance (km) to case"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The maximum distance (in kilometers) from the user to the case. Leave blank "
+"to skip."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Max travel time (minutes) to case"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The maximum travel time (in minutes) from the user to the case. Leave blank "
+"to skip."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "Select a Menu"
+msgid "Select travel mode"
+msgstr "Selecione um menu "
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The travel mode of the users. Consider this when specifying the max travel "
+"time to each case."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
 msgid "Disbursement algorithm"
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
-msgid "The algorithm which will be used to disburse cases between users"
+msgid ""
+"Uses the straight-line distance between users and cases to determine  "
+"allocation of cases. Ideal for when map road coverage is poor."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"Takes distance along roads between users and cases into account to determine "
+"allocation of cases. Ideal for when map road coverage is good."
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
@@ -22236,11 +22271,28 @@ msgid "The maximum cases per user cannot be less than the minimum specified"
 msgstr ""
 
 #: corehq/apps/geospatial/models.py
+#, python-format
+msgid "%(value)s is not a valid travel mode"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
 msgid "Min/Max Grouping"
 msgstr ""
 
 #: corehq/apps/geospatial/models.py
 msgid "Target Size Grouping"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Walking"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Cycling"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Driving"
 msgstr ""
 
 #: corehq/apps/geospatial/reports.py
@@ -22548,8 +22600,27 @@ msgstr ""
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid ""
 "\n"
+"    We couldn't match every case to a user with the current disbursement "
+"settings.\n"
+"    Please follow any of the below steps to rectify this.\n"
+"    <ul>\n"
+"      <li>Ensure that your settings are correct</li>\n"
+"      <li>Allocate more users to the area</li>\n"
+"      <li>Use filtered areas to reduce the number of cases such that the "
+"algorithm can ensure all cases are assigned.</li>\n"
+"    </ul>\n"
+"    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid ""
+"\n"
 "        Previous disbursement was cleared.\n"
 "    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid "Disbursement parameters"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
@@ -22578,16 +22649,6 @@ msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "All Cases on Map"
-msgstr ""
-
-#: corehq/apps/geospatial/views.py
-msgid ""
-"We couldn't match every case to a user with the current disbursement "
-"settings. Please follow any of the below steps to rectify this."
-"<ul><li>Ensure that your min/max cases per user setting is correct</"
-"li><li>Allocate more users to the area</li><li>Use filtered areas to reduce "
-"the number of cases such that the algorithm can ensure all cases are "
-"assigned.</li></ul>"
 msgstr ""
 
 #: corehq/apps/geospatial/views.py
@@ -25048,21 +25109,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Reporting groups are used in reports "
-#| "to filter and view\n"
-#| "                                    data."
 msgid ""
 "\n"
 "                          Do not upload a file containing sensitive data "
 "like passwords or project data.\n"
 "                        "
 msgstr ""
-"\n"
-"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
-" dados."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid "Create Alert"
@@ -36755,26 +36807,26 @@ msgstr ""
 #: corehq/apps/translations/app_translations/upload_module.py
 #, python-brace-format
 msgid ""
-"Expected {expected_count} case_search_display and case_search_hint "
-"properties in  menu {index}, found {actual_label_count} for "
-"case_search_display and {actual_hint_count} for case_search_hintNo Case "
-"Search config properties for menu {index} were updated."
+"A {display_or_hint} row for menu {index} has an unexpected case search "
+"property \"{field}\". This property has either been removed or does not "
+"exist."
 msgstr ""
 
 #: corehq/apps/translations/app_translations/upload_module.py
 #, python-brace-format
 msgid ""
-"A display row for menu {index} has an unexpected case search property "
-"\"{field}\". Case properties must appear in the same order as they do in the "
-"bulk app translation download. No translations updated for this row."
+"A {display_or_hint} row for menu {index} has an unexpected case search "
+"property \"{field}\". Case properties must appear in the same order as they "
+"do in the bulk app translation download. No translations updated for this "
+"row."
 msgstr ""
 
 #: corehq/apps/translations/app_translations/upload_module.py
 #, python-brace-format
 msgid ""
-"A hint row for menu {index} has an unexpected case search property "
-"\"{field}\". Case properties must appear in the same order as they do in the "
-"bulk app translation download. No translations updated for this row."
+"Expected {expected_count} case_search_display properties in  menu {index}, "
+"found {actual_label_count} for case_search_display. Case Search config "
+"properties for menu {index} were only partially updated."
 msgstr ""
 
 #: corehq/apps/translations/app_translations/upload_module.py
@@ -37071,6 +37123,19 @@ msgstr ""
 #: corehq/apps/translations/templates/download_translations.html
 #: corehq/tabs/tabclasses.py
 msgid "Download Translations"
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py
+msgid ""
+"Missing current Application Version. This can happen if the latest version "
+"was deleted without creating a new one. Please create a new Application "
+"Version before trying again."
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py
+msgid ""
+"Missing selected Application Version. Please create a new version before "
+"trying again."
 msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py

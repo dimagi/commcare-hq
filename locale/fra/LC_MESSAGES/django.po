@@ -13066,11 +13066,6 @@ msgstr ""
 msgid "Sorry, this response is required!"
 msgstr "Désolé, cette réponse est exigée!"
 
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/repeat_juncture.html
-#: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/repeat_juncture.html
-msgid "This repeatable group is empty"
-msgstr ""
-
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap3/sub_group.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/form_entry/bootstrap5/sub_group.html
 msgid "Question Group"
@@ -13333,11 +13328,8 @@ msgstr "Sélectionner un"
 
 #: corehq/apps/custom_data_fields/edit_entity.py
 #: corehq/apps/registration/forms.py
-#, fuzzy
-#| msgid "Invalid file-format. Please upload a valid xlsx file."
 msgid "Invalid profile selected. Please select a valid profile."
 msgstr ""
-"Format de fichier non valide. Veuillez uploader un fichier xlsx valide."
 
 #: corehq/apps/custom_data_fields/edit_entity.py
 msgid "Select a profile"
@@ -22753,11 +22745,51 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
+msgid "Max distance (km) to case"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The maximum distance (in kilometers) from the user to the case. Leave blank "
+"to skip."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid "Max travel time (minutes) to case"
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The maximum travel time (in minutes) from the user to the case. Leave blank "
+"to skip."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+#, fuzzy
+#| msgid "Select Case Type"
+msgid "Select travel mode"
+msgstr "Choisir type de dossier"
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"The travel mode of the users. Consider this when specifying the max travel "
+"time to each case."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
 msgid "Disbursement algorithm"
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
-msgid "The algorithm which will be used to disburse cases between users"
+msgid ""
+"Uses the straight-line distance between users and cases to determine  "
+"allocation of cases. Ideal for when map road coverage is poor."
+msgstr ""
+
+#: corehq/apps/geospatial/forms.py
+msgid ""
+"Takes distance along roads between users and cases into account to determine "
+"allocation of cases. Ideal for when map road coverage is good."
 msgstr ""
 
 #: corehq/apps/geospatial/forms.py
@@ -22847,12 +22879,31 @@ msgid "The maximum cases per user cannot be less than the minimum specified"
 msgstr ""
 
 #: corehq/apps/geospatial/models.py
+#, python-format
+msgid "%(value)s is not a valid travel mode"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
 msgid "Min/Max Grouping"
 msgstr ""
 
 #: corehq/apps/geospatial/models.py
 msgid "Target Size Grouping"
 msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Walking"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+msgid "Cycling"
+msgstr ""
+
+#: corehq/apps/geospatial/models.py
+#, fuzzy
+#| msgid "Saving"
+msgid "Driving"
+msgstr "Enregistrement"
 
 #: corehq/apps/geospatial/reports.py
 msgid "Case Management Map"
@@ -23159,9 +23210,30 @@ msgstr ""
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid ""
 "\n"
+"    We couldn't match every case to a user with the current disbursement "
+"settings.\n"
+"    Please follow any of the below steps to rectify this.\n"
+"    <ul>\n"
+"      <li>Ensure that your settings are correct</li>\n"
+"      <li>Allocate more users to the area</li>\n"
+"      <li>Use filtered areas to reduce the number of cases such that the "
+"algorithm can ensure all cases are assigned.</li>\n"
+"    </ul>\n"
+"    "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+msgid ""
+"\n"
 "        Previous disbursement was cleared.\n"
 "    "
 msgstr ""
+
+#: corehq/apps/geospatial/templates/map_visualization.html
+#, fuzzy
+#| msgid "Message Parameter"
+msgid "Disbursement parameters"
+msgstr "Paramètre de message"
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Layers"
@@ -23189,16 +23261,6 @@ msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "All Cases on Map"
-msgstr ""
-
-#: corehq/apps/geospatial/views.py
-msgid ""
-"We couldn't match every case to a user with the current disbursement "
-"settings. Please follow any of the below steps to rectify this."
-"<ul><li>Ensure that your min/max cases per user setting is correct</"
-"li><li>Allocate more users to the area</li><li>Use filtered areas to reduce "
-"the number of cases such that the algorithm can ensure all cases are "
-"assigned.</li></ul>"
 msgstr ""
 
 #: corehq/apps/geospatial/views.py
@@ -25613,14 +25675,6 @@ msgid "Make a Feature Request to Solutions"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                                  Should cases that don't "
-#| "have a value for the sort property\n"
-#| "                                                  appear at the top or "
-#| "the bottom of the case list?\n"
-#| "                                              "
 msgid ""
 "\n"
 "                                If this request is related to a specific "
@@ -25629,9 +25683,6 @@ msgid ""
 "see the change.\n"
 "                            "
 msgstr ""
-"\n"
-"Les dossiers sans valeurs pour la propriété de tri devraient-ils figurer en "
-"premier ou en dernier dans la liste de dossiers?"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
@@ -25694,38 +25745,20 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Please enter your email here so "
-#| "that we can follow up with you regarding this issue\n"
-#| "                                    "
 msgid ""
 "\n"
 "                        Please enter your email here so that we can follow "
 "up with you regarding this issue\n"
 "                      "
 msgstr ""
-"\n"
-"Veuillez saisir votre adresse e-mail ici afin que nous puissions vous suivre "
-"sur ce problème"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Comma-separated email addresses "
-#| "of others you want to notify about this issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "                      Comma-separated email addresses of others you want to "
 "notify about this issue.\n"
 "                    "
 msgstr ""
-"\n"
-"Adresses e-mail séparées par des virgules des autres personnes que vous "
-"souhaitez informer de ce problème."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
 msgid ""
@@ -25752,53 +25785,28 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Comma-separated email addresses "
-#| "of others you want to notify about this issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "                      Comma-separated email addresses of others you want to "
 "notify about this request.\n"
 "                    "
 msgstr ""
-"\n"
-"Adresses e-mail séparées par des virgules des autres personnes que vous "
-"souhaitez informer de ce problème."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Please upload any files relevant to "
-#| "your issue.\n"
-#| "                                    "
 msgid ""
 "\n"
 "                          Please upload any files relevant to your "
 "suggestion.\n"
 "                        "
 msgstr ""
-"\n"
-"Veuillez charger tout document en relation avec ce problème."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_solutions_feature_request.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                        Do not upload a file containing "
-#| "individually identifiable data.\n"
-#| "                                    "
 msgid ""
 "\n"
 "                          Do not upload a file containing sensitive data "
 "like passwords or project data.\n"
 "                        "
 msgstr ""
-"\n"
-"Ne pas envoyer de Fichier contenant des données personnelles identifiables"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid "Create Alert"
@@ -37827,26 +37835,26 @@ msgstr ""
 #: corehq/apps/translations/app_translations/upload_module.py
 #, python-brace-format
 msgid ""
-"Expected {expected_count} case_search_display and case_search_hint "
-"properties in  menu {index}, found {actual_label_count} for "
-"case_search_display and {actual_hint_count} for case_search_hintNo Case "
-"Search config properties for menu {index} were updated."
+"A {display_or_hint} row for menu {index} has an unexpected case search "
+"property \"{field}\". This property has either been removed or does not "
+"exist."
 msgstr ""
 
 #: corehq/apps/translations/app_translations/upload_module.py
 #, python-brace-format
 msgid ""
-"A display row for menu {index} has an unexpected case search property "
-"\"{field}\". Case properties must appear in the same order as they do in the "
-"bulk app translation download. No translations updated for this row."
+"A {display_or_hint} row for menu {index} has an unexpected case search "
+"property \"{field}\". Case properties must appear in the same order as they "
+"do in the bulk app translation download. No translations updated for this "
+"row."
 msgstr ""
 
 #: corehq/apps/translations/app_translations/upload_module.py
 #, python-brace-format
 msgid ""
-"A hint row for menu {index} has an unexpected case search property "
-"\"{field}\". Case properties must appear in the same order as they do in the "
-"bulk app translation download. No translations updated for this row."
+"Expected {expected_count} case_search_display properties in  menu {index}, "
+"found {actual_label_count} for case_search_display. Case Search config "
+"properties for menu {index} were only partially updated."
 msgstr ""
 
 #: corehq/apps/translations/app_translations/upload_module.py
@@ -38147,6 +38155,19 @@ msgstr ""
 
 #: corehq/apps/translations/integrations/transifex/views.py
 msgid ""
+"Missing current Application Version. This can happen if the latest version "
+"was deleted without creating a new one. Please create a new Application "
+"Version before trying again."
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py
+msgid ""
+"Missing selected Application Version. Please create a new version before "
+"trying again."
+msgstr ""
+
+#: corehq/apps/translations/integrations/transifex/views.py
+msgid ""
 "Submitted request to download translations. You should receive an email "
 "shortly."
 msgstr ""
@@ -38443,28 +38464,22 @@ msgid "User has an invalid email address for their {}"
 msgstr ""
 
 #: corehq/apps/user_importer/validation.py
-#, fuzzy
-#| msgid "Sorry, you don't have permission to access that page!"
 msgid "Role '{}' does not exist or you do not have permission to access it"
-msgstr "Désolé! Vous n'avez pas les permissions pour accéder cette page!"
+msgstr ""
 
 #: corehq/apps/user_importer/validation.py
 msgid "Profile '{}' does not exist"
 msgstr ""
 
 #: corehq/apps/user_importer/validation.py
-#, fuzzy
-#| msgid "{} does not have permission to edit commcare users"
 msgid ""
 "You do not have permission to edit the profile for this user or user "
 "invitation"
-msgstr "{}  n'a pas la permission de modifier des utilisateurs commcare"
+msgstr ""
 
 #: corehq/apps/user_importer/validation.py
-#, fuzzy
-#| msgid "You don't have permission to access this page."
 msgid "You do not have permission to assign the profile '{}'"
-msgstr "Vous n'avez pas la permission pour accéder à cette page."
+msgstr ""
 
 #: corehq/apps/user_importer/validation.py
 msgid "Group '{}' does not exist (try adding it to your spreadsheet)"
@@ -41716,10 +41731,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
-#, fuzzy
-#| msgid "All Case Properties"
 msgid "Assign All User Profiles"
-msgstr "Toutes les propriétés de dossier"
+msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
 msgid ""
@@ -44961,10 +44974,8 @@ msgid "Category option combo ID"
 msgstr ""
 
 #: corehq/motech/dhis2/forms.py
-#, fuzzy
-#| msgid "Update Data"
 msgid "Update DataValue Map"
-msgstr "Mise à jour de Données"
+msgstr ""
 
 #: corehq/motech/dhis2/forms.py
 #, python-format
@@ -45090,10 +45101,8 @@ msgid "Update DHIS2 Tracked Entity configuration"
 msgstr ""
 
 #: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
-#, fuzzy
-#| msgid "Form Changes"
 msgid "Form Config"
-msgstr "Modifications de formulaire"
+msgstr ""
 
 #: corehq/motech/dhis2/views.py
 msgid "DataSet Maps per page"
@@ -47549,12 +47558,3 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
-
-#~ msgid "Delimiters"
-#~ msgstr "Délimiteurs"
-
-#~ msgid "Named Answers"
-#~ msgstr "Réponses nommées"
-
-#~ msgid "Joining Characters"
-#~ msgstr "Caractères de liaison"
