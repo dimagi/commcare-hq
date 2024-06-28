@@ -32,6 +32,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         geoCaseProp,
         isSafeToDelete,
         changeSaveButton,
+        resetSaveButton,
         dataUrl
     ) {
         var self = {};
@@ -44,6 +45,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.geoCaseProp = geoCaseProp;
         self.canDelete = isSafeToDelete;
         self.changeSaveButton = changeSaveButton;
+        self.resetSaveButton = resetSaveButton;
         self.dataUrl = dataUrl;
 
         self.fetchCaseProperties = function () {
@@ -56,6 +58,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         const recurseChunks = function (nextUrl) {
             $.getJSON(nextUrl, function (data) {
                 setCaseProperties(data.groups);
+                self.resetSaveButton();
                 nextUrl = data._links.next;
                 if (nextUrl) {
                     recurseChunks(nextUrl);
@@ -369,6 +372,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.saveButton.fire('change');
         };
 
+        const resetSaveButton = function () {
+            self.saveButton.setState('saved');
+        }
+
         self.init = function (callback) {
             // Get list of case types
             $.getJSON(dataUrl, {load_deprecated_case_types: self.showDeprecatedCaseTypes()})
@@ -382,6 +389,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             data.geo_case_property,
                             caseTypeData.is_safe_to_delete,
                             changeSaveButton,
+                            resetSaveButton,
                             dataUrl
                         );
                         self.caseTypes.push(caseTypeObj);
