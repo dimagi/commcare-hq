@@ -129,6 +129,7 @@
   {% registerurl 'deprecate_or_restore_case_type' domain '---' %}
   {% registerurl 'delete_case_type' domain '---' %}
   {% registerurl 'data_dictionary' domain %}
+  {% registerurl 'new_custom_export_case' domain %}
   {% initial_page_data 'typeChoices' question_types %}
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
   {% initial_page_data 'read_only_mode' request.is_view_only %}
@@ -191,6 +192,13 @@
         <a class="btn btn-danger" href="#" data-bind="openModal: 'delete-case-type-modal', visible: $root.canDeleteActiveCaseType()">
           <i class="fa fa-trash"></i>
           {% trans "Delete Case Type" %}
+        </a>
+      {% endif %}
+      {% if request.couch_user.can_edit_data %}
+        <a class="btn btn-default" id="export-case-type-data-dict"
+           data-bind="attr: { href: quickCaseExportPath }, visible: activeCaseType()">
+          <i class="icon icon-share fa-solid fa-share-square"></i>
+          {% trans "Export Case Data" %}
         </a>
       {% endif %}
       <div data-bind="visible: $root.activeCaseType()">
