@@ -18,7 +18,9 @@
   <div class="d-flex align-items-center">
     <div class="my-1">
       <i class="fa-solid fa-circle-check"></i>
-      <span x-text="num_selected"></span> Records Selected
+      {% blocktrans %}
+        <span x-text="num_selected"></span> Records Selected
+      {% endblocktrans %}
     </div>
     <div x-show="num_selected > 0" class="ps-2">
       <button type="button"
@@ -35,14 +37,18 @@
               hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
               hx-vals='{"selectAll": true}'
               class="btn btn-outline-primary btn-sm">
-        Select All {{ table.page.paginator.count }} Records
+        {% blocktrans %}
+          Select All {{ table.page.paginator.count }} Records
+        {% endblocktrans %}
       </button>
     </div>
 
     {%  if table.has_filters %}
       <div class="ps-2 ms-2">
         <i class="fa-solid fa-filter"></i>
-        Filter Applied: {{ table.page.paginator.count }} Matching Records
+        {% blocktrans %}
+          Filter Applied: {{ table.page.paginator.count }} Matching Records
+        {% endblocktrans %}
         <button type="button"
                 id="clear-filters-button"
                 hx-post="{{ request.path_info }}{% querystring %}"
@@ -50,7 +56,7 @@
                 hx-on::after-request="htmx.trigger('#{{ table.filter_form_id }}', 'refreshFilters');"
                 hx-vals='{"clearFilters": true}'
                 class="btn btn-outline-danger btn-sm ms-2">
-          <i class="fa-solid fa-close"></i> Clear Filters
+          <i class="fa-solid fa-close"></i> {% trans "Clear Filters" %}
         </button>
       </div>
     {% endif %}
@@ -64,7 +70,7 @@
                 hx-vals='{"applyEdits": true}'
                 hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
                 class="btn btn-success btn-sm ms-2">
-          <i class="fa-solid fa-check"></i> Apply Edits to Selection
+          <i class="fa-solid fa-check"></i> {% trans "Apply Edits to Selected Rows" %}
         </button>
       </div>
     {% endif %}
