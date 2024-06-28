@@ -212,14 +212,6 @@
                 </button>
               {% endif %}
             </th>
-            <th style="text-align: center">
-              {% trans "Property Group" %}
-              <span
-                data-bind="makeHqHelp: {
-                  description: '{% trans "From case property groups in Data Dictionary" %}'
-                }"
-              ></span>
-            </th>
             <th data-bind="attr: { 'class': $root.displayColumnClass }">
               {% trans "Display" %}<br />
               {% if export_instance.type == 'form' %}
@@ -342,7 +334,10 @@
                                 <span data-bind="text: tag,
                                  attr: { class: $root.getTagCSSClass(tag) }"></span>
               </span>
-
+              <span
+                data-bind="text: column.item.case_property_group_name"
+                class="label label-default"
+              ></span>
               <!-- ko if: !column.isEditable() -->
               <code data-toggle="tooltip"
                     data-placement="top"
@@ -366,12 +361,6 @@
                 {% trans "Required for OData" %}
               </span>
               <!-- /ko -->
-            </td>
-            <td>
-              <span
-                data-bind="text: column.item.case_property_group_name"
-                class="label label-info"
-              ></span>
             </td>
             <td>
               <input class="form-control"
