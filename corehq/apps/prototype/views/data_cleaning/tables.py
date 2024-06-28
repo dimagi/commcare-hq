@@ -3,7 +3,8 @@ import json
 from django.http import Http404
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
-from django_tables2 import columns
+from django.views.generic import TemplateView
+from django_tables2 import columns, config, rows
 
 from corehq import toggles
 from corehq.apps.prototype.models.data_cleaning.cache_store import VisibleColumnStore, FakeCaseDataStore
@@ -17,6 +18,7 @@ from corehq.apps.prototype.views.htmx.pagination import SavedPaginatedTableView
 class DataCleaningTableView(SavedPaginatedTableView):
     urlname = "prototype_data_cleaning_htmx"
     table_class = FakeCaseTable
+    data_store = FakeCaseDataStore
     template_name = 'prototype/htmx/single_table.html'
 
     def get_queryset(self):
@@ -114,19 +116,6 @@ class DataCleaningTableView(SavedPaginatedTableView):
         if 'clearFilters' in request.POST:
             FakeCaseTable.clear_filters(request)
 
-        if 'cancelEdit' in request.POST:
-            self.cancel_edit_for_cell(
-                int(request.POST['cancelEdit']),
-                request.POST['column']
-            )
-
-        if 'editCellValue' in request.POST:
-            self.edit_cell_value(
-                int(request.POST['rowId']),
-                request.POST['column'],
-                request.POST['editCellValue']
-            )
-
         if 'applyEdits' in request.POST:
             self.apply_edits()
 
@@ -179,4 +168,93 @@ class DataCleaningTableView(SavedPaginatedTableView):
                 original_key = edited_key.replace('__edited', '')
                 row[original_key] = row[edited_key]
                 del row[edited_key]
+        data_store.set(all_rows)
+
+
+@method_decorator(toggles.SAAS_PROTOTYPE.required_decorator(), name='dispatch')
+class DataCleaningCellEditView(TemplateView):
+    urlname = "prototype_data_cleaning_edit_cell"
+    template_name = EditableColumn.template_name
+    table_view_class = DataCleaningTableView
+
+    http_method_names = [
+        "post",
+    ]
+
+    @property
+    def data_store(self):
+        return self.table_view_class.data_store
+
+    @property
+    def column_slug(self):
+        slug = self.request.POST['column']
+        if not slug:
+            raise Http404("column must be present in request.POST")
+        return slug
+
+    @property
+    def record_id(self):
+        record_id = self.request.POST['recordId']
+        if not record_id:
+            raise Http404("recordId must be present in request.POST")
+        try:
+            record_id = int(record_id)
+        except ValueError:
+            raise Http404("recordId should be an integer")
+        return record_id
+
+    def get_record(self):
+        all_rows = self.data_store(self.request).get()
+        return all_rows[self.record_id]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        column = dict(FakeCaseTable.available_columns)[self.column_slug]
+        record = self.get_record()
+        value = record[self.column_slug]
+
+        table_class = self.table_view_class.table_class
+        table = config.RequestConfig(self.request).configure(table_class(data=[]))
+
+        bound_row = rows.BoundRow(record, table=table)
+        bound_column = columns.BoundColumn(table, column, self.column_slug)
+
+        cell_context = column.get_cell_context(
+            record, table, value, bound_column, bound_row
+        )
+
+        context.update(cell_context)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        actions = {
+            'cancelEdit': self.cancel_edit,
+            "editCellValue": self.edit_cell_value,
+        }
+        for action_slug, action_fn in actions.items():
+            if action_slug in self.request.POST:
+                actions[action_slug]()
+        return super().get(request, *args, **kwargs)
+
+    def cancel_edit(self):
+        data_store = self.data_store(self.request)
+        all_rows = data_store.get()
+        edited_slug = EditableColumn.get_edited_slug(self.column_slug)
+        if edited_slug in all_rows[self.record_id]:
+            del all_rows[self.record_id][edited_slug]
+        data_store.set(all_rows)
+
+    def edit_cell_value(self):
+        data_store = self.data_store(self.request)
+        all_rows = data_store.get()
+        edited_slug = EditableColumn.get_edited_slug(self.column_slug)
+        new_value = self.request.POST['newValue']
+        original_value = all_rows[self.record_id][self.column_slug]
+        if original_value != new_value:
+            # edit value only if it differs from the original value
+            all_rows[self.record_id][edited_slug] = new_value
+        elif original_value == new_value and all_rows[self.record_id].get(edited_slug):
+            # delete an existing edited value
+            del all_rows[self.record_id][edited_slug]
         data_store.set(all_rows)
