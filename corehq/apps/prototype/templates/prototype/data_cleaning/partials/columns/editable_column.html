@@ -6,7 +6,6 @@
        @dblclick="isEditing = true">
     {% if edited_value %}
       <form hx-vals='{"cancelEdit": {{ record.id }}, "column": "{{ column.accessor }}" }'
-            hx-swap="none"
             hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
             hx-post="{{ request.path_info }}{% querystring %}">
         <div class="badge text-bg-danger">{{ value }}</div>
