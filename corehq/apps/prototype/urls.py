@@ -11,6 +11,7 @@ from corehq.apps.prototype.views.data_cleaning.forms import (
 )
 from corehq.apps.prototype.views.data_cleaning.tables import (
     DataCleaningTableView,
+    DataCleaningCellEditView,
 )
 from corehq.apps.prototype.views.htmx.pagination import (
     HtmxPaginationView,
@@ -30,6 +31,8 @@ urlpatterns = [
         name=DataCleaningPrototypeView.urlname),
     url(r'^htmx/cleaning/data/$', DataCleaningTableView.as_view(),
         name=DataCleaningTableView.urlname),
+    url(r'^htmx/cleaning/data/edit/cell/$', DataCleaningCellEditView.as_view(),
+        name=DataCleaningCellEditView.urlname),
     url(r'^htmx/cleaning/forms/columns/$', ConfigureColumnsFormView.as_view(),
         name=ConfigureColumnsFormView.urlname),
     url(r'^htmx/cleaning/forms/filter/$', FilterColumnsFormView.as_view(),
