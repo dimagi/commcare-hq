@@ -61,5 +61,9 @@ class ImportCases(DataInterface):
             {
                 'title': gettext_noop('Match Excel Columns to Case Properties'),
                 'urlname': 'excel_fields'
+            },
+            {
+                'title': gettext_noop('Confirm Import'),
+                'urlname': 'confirm_import'
             }
         ]

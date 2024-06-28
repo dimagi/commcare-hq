@@ -13,11 +13,13 @@ from corehq.apps.case_importer.views import (
     excel_config,
     excel_fields,
     bulk_case_upload_api,
+    # confirm_import,
 )
 
 urlpatterns = [
     url(r'^excel/config/$', excel_config, name='excel_config'),
     url(r'^excel/fields/$', excel_fields, name='excel_fields'),
+    # url(r'^excel/confirm_import/$', confirm_import, name='confirm_import'),
     url(r'^excel/commit/$', excel_commit, name='excel_commit'),
     url(r'^excel/bulk_upload_api/$', bulk_case_upload_api, name='bulk_case_upload_api'),
     url(r'^history/uploads/$', case_uploads, name='case_importer_uploads'),
