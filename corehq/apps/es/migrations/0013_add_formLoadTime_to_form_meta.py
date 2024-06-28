@@ -17,7 +17,17 @@ class Migration(migrations.Migration):
             name=index_runtime_name('forms-20230524'),
             type_='xform',
             properties={
-                'form': {'dynamic': False, 'properties': {'#type': {'type': 'keyword'}, '@name': {'type': 'keyword'}, 'case': {'dynamic': False, 'properties': {'@case_id': {'type': 'keyword'}, '@date_modified': {'format': "epoch_millis||yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss", 'type': 'date'}, '@user_id': {'type': 'keyword'}, '@xmlns': {'type': 'keyword'}, 'case_id': {'type': 'keyword'}, 'date_modified': {'format': "epoch_millis||yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss", 'type': 'date'}, 'user_id': {'type': 'keyword'}, 'xmlns': {'type': 'keyword'}}}, 'meta': {'dynamic': False, 'properties': {'appVersion': {'type': 'keyword'}, 'app_build_version': {'type': 'keyword'}, 'commcare_version': {'type': 'keyword'}, 'deviceID': {'type': 'keyword'}, 'formLoadTime': {'type': 'keyword'}, 'geo_point': {'type': 'geo_point'}, 'instanceID': {'type': 'keyword'}, 'timeEnd': {'format': "epoch_millis||yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss", 'type': 'date'}, 'timeStart': {'format': "epoch_millis||yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss", 'type': 'date'}, 'userID': {'null_value': '__NULL__', 'type': 'keyword'}, 'username': {'type': 'keyword'}}}}},
+                'form': {
+                    'properties': {
+                        'meta': {
+                            'properties': {
+                                'formLoadTime': {
+                                    'type': 'keyword'
+                                }
+                            }
+                        }
+                    }
+                },
             },
             es_versions=[5],
         ),
@@ -25,7 +35,17 @@ class Migration(migrations.Migration):
             name=index_runtime_name('forms-2024-05-09'),
             type_='xform',
             properties={
-                'form': {'dynamic': False, 'properties': {'#type': {'type': 'keyword'}, '@name': {'type': 'keyword'}, 'case': {'dynamic': False, 'properties': {'@case_id': {'type': 'keyword'}, '@date_modified': {'format': "epoch_millis||yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss", 'type': 'date'}, '@user_id': {'type': 'keyword'}, '@xmlns': {'type': 'keyword'}, 'case_id': {'type': 'keyword'}, 'date_modified': {'format': "epoch_millis||yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss", 'type': 'date'}, 'user_id': {'type': 'keyword'}, 'xmlns': {'type': 'keyword'}}}, 'meta': {'dynamic': False, 'properties': {'appVersion': {'type': 'keyword'}, 'app_build_version': {'type': 'keyword'}, 'commcare_version': {'type': 'keyword'}, 'deviceID': {'type': 'keyword'}, 'formLoadTime': {'type': 'keyword'}, 'geo_point': {'type': 'geo_point'}, 'instanceID': {'type': 'keyword'}, 'timeEnd': {'format': "epoch_millis||yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss", 'type': 'date'}, 'timeStart': {'format': "epoch_millis||yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss", 'type': 'date'}, 'userID': {'null_value': '__NULL__', 'type': 'keyword'}, 'username': {'type': 'keyword'}}}}},
+                'form': {
+                    'properties': {
+                        'meta': {
+                            'properties': {
+                                'formLoadTime': {
+                                    'type': 'keyword'
+                                }
+                            }
+                        }
+                    }
+                },
             },
             es_versions=[5],
         )
