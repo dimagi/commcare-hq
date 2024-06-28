@@ -120,6 +120,13 @@ class DataCleaningTableView(SavedPaginatedTableView):
                 request.POST['column']
             )
 
+        if 'editCellValue' in request.POST:
+            self.edit_cell_value(
+                int(request.POST['rowId']),
+                request.POST['column'],
+                request.POST['editCellValue']
+            )
+
         if 'applyEdits' in request.POST:
             self.apply_edits()
 
@@ -151,6 +158,14 @@ class DataCleaningTableView(SavedPaginatedTableView):
         edited_slug = EditableColumn.get_edited_slug(column_slug)
         if edited_slug in all_rows[row_id]:
             del all_rows[row_id][edited_slug]
+        data_store.set(all_rows)
+
+    def edit_cell_value(self, row_id, column_slug, new_value):
+        data_store = FakeCaseDataStore(self.request)
+        all_rows = data_store.get()
+        edited_slug = EditableColumn.get_edited_slug(column_slug)
+        if all_rows[row_id][column_slug] != new_value:
+            all_rows[row_id][edited_slug] = new_value
         data_store.set(all_rows)
 
     def apply_edits(self):
