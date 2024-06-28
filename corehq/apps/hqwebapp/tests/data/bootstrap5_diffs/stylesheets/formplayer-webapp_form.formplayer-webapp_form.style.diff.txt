@@ -266,7 +266,7 @@
  .gr-has-no-nested-questions {
    display: none;
  }
-@@ -268,3 +258,8 @@
+@@ -268,3 +258,15 @@
    padding-top: 0px !important;
    padding-bottom: 7px;
  }
@@ -274,4 +274,11 @@
 +#next-error {
 +  position: fixed;
 +  bottom: 35px;
++}
++
++.mtb-05em-for-hs {
++    h1, h2, h3, h4, h5, h6 {
++        margin-top: 0.5em !important;
++        margin-bottom: 0.5em !important;
++    }
 +}
