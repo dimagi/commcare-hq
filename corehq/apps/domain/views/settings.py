@@ -54,6 +54,7 @@ from corehq.apps.domain.forms import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
@@ -524,6 +525,7 @@ class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
         }
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSettingsView):
     page_title = gettext_lazy("Manage Mobile Workers")
     template_name = 'enterprise/manage_mobile_workers.html'

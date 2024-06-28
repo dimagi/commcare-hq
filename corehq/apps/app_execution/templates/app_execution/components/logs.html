@@ -1,0 +1,20 @@
+{% load i18n %}
+<div class="row">
+  <div class="col">
+    <h3>Logs</h3>
+    <pre class="text-bg-light border rounded-3 p-3">{{ output }}</pre>
+    {% if success %}
+      <div class="text-bg-success p-3">
+        <strong>{% trans "Success" %}</strong>
+      </div>
+    {% else %}
+      <div class="text-bg-danger p-3">
+        <strong>{% trans "Error:" %}</strong> {{ error }}
+      </div>
+    {% endif %}
+  </div>
+  <div class="col">
+    <h3>{% trans "Workflow" %}</h3>
+    <pre class="text-bg-light border rounded-3 p-3">{{ workflow_json }}</pre>
+  </div>
+</div>

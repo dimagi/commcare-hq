@@ -1,5 +1,8 @@
 .full-width {
   width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  max-width: none;  // clear any max-widths set by bootstrap, such as in .container
 }
 
 .sidebar-push {
@@ -10,11 +13,11 @@
 
 #sidebar-region {
   background: transparent;
-  @include media-breakpoint-up(lg) {
+  @include media-breakpoint-up(md) {
     width: 300px;
     position: absolute;
   }
-  @include media-breakpoint-down(lg) {
+  @include media-breakpoint-down(md) {
     max-width: 600px;
     margin: auto;
   }
@@ -85,16 +88,28 @@
   font-size: larger;
 }
 
-.search-query-group {
+.table .search-query-group {   // .table needed for specificity, to override .table stylings
   background-color: $cc-bg;
+  border: none;
 }
 
 #query-group-content > tr {
   background-color: white;
+
+  td {
+    border: none;
+  }
 }
 
-#query-properties td {
-  border-top: 0px;
+#query-properties {
+  > tr:nth-of-type(odd) > :not(.search-query-group) {
+    background-color: $light;
+  }
+
+  td {
+    --bstable-bg-type: none;
+    border-top: 0px;
+  }
 }
 
 .search-query-group .table {

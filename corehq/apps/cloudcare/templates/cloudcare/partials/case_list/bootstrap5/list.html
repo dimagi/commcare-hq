@@ -1,20 +1,20 @@
+{% load hq_shared_tags %}
 {% load i18n %}
 
 <script type="text/template" id="case-view-list-template">
   <div class="module-case-list-container">
 
     <button id="scroll-to-bottom"
-            class="btn btn-lg btn-circle btn-primary d-md-none d-lg-none"
+            class="btn btn-lg btn-circle btn-primary d-md-none d-lg-none d-none"
             type="button"
-            aria-label="{% trans 'Scroll to bottom' %}"
-            style="display: none;">  {# todo B5: inline style #}
+            aria-label="{% trans_html_attr 'Scroll to bottom' %}">
       <i class="fa fa-lg fa-arrow-down" aria-hidden="true"></i>
     </button>
 
     {% include "cloudcare/partials/case_list/bootstrap5/menu_header.html" %}
 
     <% if (isMultiSelect) { %>
-    <div class="case-list-actions">
+    <div class="case-list-actions d-grid gap-2 d-md-block">
       {% include 'cloudcare/partials/case_list/bootstrap5/multi_select_continue_button.html' %}
     </div>
     <% } %>
@@ -36,10 +36,10 @@
     <% } %>
 
     <div id="module-case-list-container__results-container"
-         class="row row-no-gutters">
+         class="row g-0">
       <% if (showMap) { %>
         <div id="module-case-list-map"
-             class="sticky sticky-map col-lg-5 col-md-push-9<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
+             class="sticky sticky-map col-lg-5 order-md-1<% if (useTiles) { %> white-border<% } %> noprint-sub-container"></div>
       <% } %>
       <div id="module-case-list" class="col-md<% if (showMap) { %>-7 col-md-pull-5<% } %>">
         <% if (useTiles) { %>
@@ -55,7 +55,7 @@
       </div>
     </div>
     <% if (actions || isMultiSelect) { %>
-      <div class="case-list-actions">
+      <div class="case-list-actions d-grid gap-2 d-md-block">
         <% if (isMultiSelect) { %>
           {% include 'cloudcare/partials/case_list/bootstrap5/multi_select_continue_button.html' %}
         <% } %>

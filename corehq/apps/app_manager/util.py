@@ -204,6 +204,9 @@ _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
 def is_valid_case_type(case_type, module):
     """
+    Returns ``True`` if ``case_type`` is valid for ``module``
+
+    >>> from corehq.apps.app_manager.const import USERCASE_TYPE
     >>> from corehq.apps.app_manager.models import Module, AdvancedModule
     >>> is_valid_case_type('foo', Module())
     True
@@ -215,9 +218,9 @@ def is_valid_case_type(case_type, module):
     False
     >>> is_valid_case_type(None, Module())
     False
-    >>> is_valid_case_type('commcare-user', Module())
+    >>> is_valid_case_type(USERCASE_TYPE, Module())
     False
-    >>> is_valid_case_type('commcare-user', AdvancedModule())
+    >>> is_valid_case_type(USERCASE_TYPE, AdvancedModule())
     True
     """
     from corehq.apps.app_manager.models import AdvancedModule
@@ -672,7 +675,11 @@ def get_latest_app_release_by_location(domain, location_id, app_id):
     Child location's setting takes precedence over parent
     """
     from corehq.apps.app_manager.models import AppReleaseByLocation
-    location = SQLLocation.active_objects.get(location_id=location_id)
+
+    try:
+        location = SQLLocation.active_objects.get(location_id=location_id)
+    except SQLLocation.DoesNotExist:
+        return None
     location_and_ancestor_ids = location.get_ancestors(include_self=True).values_list(
         'location_id', flat=True).reverse()
     # get all active enabled releases and order by version desc to get one with the highest version in the end

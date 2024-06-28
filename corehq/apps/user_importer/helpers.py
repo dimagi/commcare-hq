@@ -161,9 +161,13 @@ class BaseUserImporter(object):
             raise UserUploadError(_("You cannot set {} directly").format(PROFILE_SLUG))
         if profile_name:
             profile_id = profiles_by_name[profile_name].pk
+        elif profile_name == '':
+            profile_id = None
+        else:
+            profile_id = ...
 
         try:
-            user_data.update(data, profile_id=profile_id if profile_name else ...)
+            user_data.update(data, profile_id=profile_id)
             user_data.update(uncategorized_data)
         except UserDataError as e:
             raise UserUploadError(str(e))
@@ -308,10 +312,13 @@ def _fmt_phone(phone_number):
 
 
 class WebUserImporter(BaseUserImporter):
-    def add_to_domain(self, role_qualified_id, primary_location_id, assigned_location_ids):
+    def add_to_domain(self, role_qualified_id, primary_location_id, assigned_location_ids,
+                      tableau_role, tableau_group_ids, profile):
         self.user.add_as_web_user(self.user_domain, role=role_qualified_id,
                                 primary_location_id=primary_location_id,
-                                assigned_location_ids=assigned_location_ids)
+                                assigned_location_ids=assigned_location_ids,
+                                tableau_role=tableau_role, tableau_group_ids=tableau_group_ids,
+                                profile=profile)
         self.role_updated = bool(role_qualified_id)
 
         self.logger.add_info(UserChangeMessage.added_as_web_user(self.user_domain))

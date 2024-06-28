@@ -2,13 +2,22 @@
 {% load hq_shared_tags %}
 
 <script type="text/html" id="sub-group-fullform-ko-template">
+  <!-- ko if: isDummy -->
+  <div class="mb-1 mr-1">
+      <button class="btn btn-outline-primary add" href="#"
+              data-bind="click: newRepeat, text: addChoice"
+              id="repeat-add-new">
+              <i class="fa fa-plus"></i>
+      </button>
+  </div>
+  <!-- /ko -->
+  <!-- ko ifnot: isDummy -->
   <div tabindex="-1" class ="gr" data-bind="
         class: elementTile,
         css: {
           'gr-no-children': $data.children().length === 0,
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
-          'card card-default': collapsible,  {# todo B5: css:panel #}
-          'repetition': isRepetition,
+          'card': collapsible,
           'required-group': !showChildren() && childrenRequired(),
           'stripe-repeats': stripeRepeats,
           'group-border': groupBorder,
@@ -41,7 +50,8 @@
                 "></span>
           <button class="btn btn-outline-danger del float-end" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
                   data-bind="
-                      visible: isRepetition,
+                      visible: showDelete,
+                      enabled: hasNoPendingAnswer(),
                       click: deleteRepeat
                   "><i class="fa fa-remove"></i></button>
         </legend>
@@ -55,9 +65,10 @@
           </div>
           <span class="webapp-markdown-output caption" data-bind="html: caption_markdown() || caption(), attr: {id: captionId()}"></span>
           <i class="fa fa-warning text-danger float-end" data-bind="visible: hasError() && !showChildren()"></i>
-          <button class="btn btn-outline-danger del float-end" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
+           <button class="btn btn-outline-danger del float-end" href="#" aria-label="{% trans_html_attr 'Delete Repeat' %}"
                   data-bind="
-                      visible: isRepetition,
+                      visible: showDelete,
+                      enabled: hasNoPendingAnswer(),
                       click: deleteRepeat
                   "><i class="fa fa-remove"></i></button>
         </div>
@@ -82,4 +93,5 @@
         </fieldset>
       </div>
   </div>
+  <!-- /ko -->
 </script>

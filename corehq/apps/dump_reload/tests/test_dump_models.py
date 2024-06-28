@@ -43,6 +43,7 @@ IGNORE_MODELS = {
     "analytics.PartnerAnalyticsReport",
     "api.ApiUser",
     "app_execution.AppWorkflowConfig",
+    "app_execution.AppExecutionLog",
     "app_manager.ExchangeApplication",
     "auth.Group",
     "auth.Permission",

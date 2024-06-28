@@ -115,7 +115,6 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import DatetimeLocalWidget, HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.hqwebapp.widgets import (
     BootstrapCheckboxInput,
     GeoCoderInput,
@@ -797,7 +796,7 @@ class PrivacySecurityForm(forms.Form):
     secure_submissions = BooleanField(
         label=gettext_lazy("Secure submissions"),
         required=False,
-        help_text=mark_safe_lazy(gettext_lazy(  # nosec: no user input
+        help_text=mark_safe(gettext_lazy(  # nosec: no user input
             "Secure Submissions prevents others from impersonating your mobile workers. "
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "
@@ -1803,6 +1802,9 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
     plan_edition = forms.CharField(
         widget=forms.HiddenInput,
     )
+    is_annual_plan = forms.CharField(
+        widget=forms.HiddenInput,
+    )
 
     def __init__(self, account, domain, creating_user, current_subscription,
                  renewed_version, data=None, *args, **kwargs):
@@ -1814,10 +1816,12 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.fields['plan_edition'].initial = renewed_version.plan.edition
+        self.fields['is_annual_plan'].initial = renewed_version.plan.is_annual_plan
 
         from corehq.apps.domain.views.accounting import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
             'plan_edition',
+            'is_annual_plan',
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',

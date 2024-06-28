@@ -22,7 +22,7 @@
    }
  
    .controls {
-@@ -18,23 +18,22 @@
+@@ -18,23 +18,16 @@
    }
  
    .form-control {
@@ -31,19 +31,15 @@
    }
  
    .form-actions {
-     margin: 30px 0 0 0;
-     &.form-group {
+-    margin: 30px 0 0 0;
+-    &.form-group {
 -      margin-left: -@form-text-indent;
 -      margin-right: -@form-text-indent;
 -    }
 -
 -    background-color: @call-to-action-extra-hi;
 -    .border-bottom-radius(0);
-+      margin-left: -$form-text-indent;
-+      margin-right: -$form-text-indent;
-+    }
-+
-+    background-color: var(--bsprimary-bg-subtle);
++    margin: 30px -$form-text-indent 0 -$form-text-indent;
  
      .submit .btn {
        font-size: 20px;
@@ -53,7 +49,16 @@
      }
    }
  
-@@ -48,8 +47,8 @@
+@@ -42,7 +35,7 @@
+     position: sticky;
+     /* Puts the anchored submit button in front of form elements that use bootstrap's .form-control,
+        which adds z-index of 2 (3 when focused) */
+-    z-index: @zindex-formplayer-anchored-submit;
++    z-index: $zindex-formplayer-anchored-submit;
+   }
+ 
+   // Bootstrap introduces -10px left/right margin for row classes. This causes element to overflow parent.
+@@ -51,8 +44,8 @@
      margin-right: 0px;
    }
    .question-container {
@@ -64,7 +69,7 @@
    }
  
    .form-group {
-@@ -61,8 +60,8 @@
+@@ -64,8 +57,8 @@
    }
  
    .group-body {
@@ -75,7 +80,7 @@
    }
  
    .gr.panel {
-@@ -94,7 +93,7 @@
+@@ -97,7 +90,7 @@
    }
  
    .panel-body {
@@ -84,7 +89,7 @@
        padding-left: 0px;
        padding-right: 0px;
      }
-@@ -103,19 +102,19 @@
+@@ -106,19 +99,19 @@
    .stripe-repeats {
      > .row, .panel-body > .children > .row {
        &:nth-of-type(odd) {
@@ -107,7 +112,7 @@
      border-radius: 8px;
      margin: 2px;
      padding-top: 5px;
-@@ -157,7 +156,7 @@
+@@ -160,7 +153,7 @@
    }
  
    .form-group.required {
@@ -116,7 +121,7 @@
      margin-bottom: 0;
      label:before {
        display: none;
-@@ -165,8 +164,8 @@
+@@ -168,8 +161,8 @@
    }
  
    .form-group.required.on {
@@ -127,7 +132,7 @@
      border-bottom: none;
      padding-top: 10px;
      padding-bottom: 10px;
-@@ -180,13 +179,13 @@
+@@ -183,13 +176,13 @@
    .form-group-required-label {
      display: block;
      opacity: 0;
@@ -143,3 +148,12 @@
      color: white;
      width: auto;
      line-height: 14px;
+@@ -268,3 +261,8 @@
+   padding-top: 0px !important;
+   padding-bottom: 7px;
+ }
++
++#next-error {
++  position: fixed;
++  bottom: 35px;
++}

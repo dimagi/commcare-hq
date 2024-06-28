@@ -404,6 +404,15 @@
       "file_type": "template",
       "label": "users/partials",
       "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "users/partials",
+      "compare_all_files": true
     }
   ],
   "apps/cloudcare/templates/cloudcare": [
@@ -723,6 +732,37 @@
       ],
       "file_type": "javascript",
       "label": "javascript/reports_core/js",
+      "compare_all_files": true
+    }
+  ],
+  "motech/repeaters/templates/repeaters": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "repeaters",
+      "compare_all_files": true
+    },
+    {
+      "directories": [
+        "partials/bootstrap3",
+        "partials/bootstrap5"
+      ],
+      "file_type": "template",
+      "label": "repeaters/partials",
+      "compare_all_files": true
+    }
+  ],
+  "motech/repeaters/static/repeaters/js": [
+    {
+      "directories": [
+        "bootstrap3",
+        "bootstrap5"
+      ],
+      "file_type": "javascript",
+      "label": "javascript/repeaters/js",
       "compare_all_files": true
     }
   ]

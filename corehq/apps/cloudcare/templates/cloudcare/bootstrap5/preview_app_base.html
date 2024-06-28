@@ -35,8 +35,6 @@
 
   {% block css %}{% endblock %}
 
-  <link rel="stylesheet"
-        href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
   <link type="text/css"
         rel="stylesheet"
         media="screen"
@@ -45,6 +43,10 @@
   <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
   <link rel="stylesheet" href="{% static 'jquery-ui-built-themes/base/jquery-ui.min.css' %}">
   <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
+  <link type="text/css"
+        rel="stylesheet"
+        media="screen"
+        href="{% static "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css" %}" />
 
   <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
@@ -55,6 +57,7 @@
 
   {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
   <script>
+    window.USE_BOOTSTRAP5 = true;
     window.USE_REQUIREJS = true;
   </script>
 </head>

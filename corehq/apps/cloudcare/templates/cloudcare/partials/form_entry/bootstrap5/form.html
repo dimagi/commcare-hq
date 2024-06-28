@@ -11,13 +11,13 @@
           css: { 'form-single-question': showInFormNavigation },
       ">
 
-    <div class="page-header">  {# todo B5: css:page-header #}
+    <div class="page-header">
       <h1 class="title" data-bind="text: title, visible: !showInFormNavigation()"></h1>
     </div>
 
     <form class="form form-horizontal" data-bind="submit: submitForm">
       <div class="question-container">
-        <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+        <div class="mb-3" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
       </div>
       {% if environment == "web-apps" %}
         <div class="row" data-bind="visible: erroredQuestions().length > 0">
@@ -42,7 +42,7 @@
           </div>
         </div>
       {% endif %}
-      <div id="submit-button" class="form-actions form-group noprint-sub-container"  {# todo B5: css:form-group #}
+      <div id="submit-button" class="form-actions noprint-sub-container"
            data-bind="
               visible: showSubmitButton,
               css: { 'sticky-submit': isAnchoredSubmitStyle },
@@ -64,30 +64,9 @@
     </form>
   </div>
   <div data-bind="visible: erroredQuestions().length > 0">
-    {% if environment == "web-apps" %}
-      {% if request|ui_notify_enabled:"JUMP_TO_INVALID_QUESTIONS_WEBAPPS" %}
-        <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-bottom-left fade in"
-             style="position: fixed; width: 300px; bottom: 65px;"  {# todo B5: inline style #}
-             data-slug="{{ "JUMP_TO_INVALID_QUESTIONS_WEBAPPS"|ui_notify_slug }}"
-             role="alert">
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">  {# todo B5: css:close #}
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <p class="lead">{% trans 'Navigate Across Required Questions' %}</p>
-          <p>
-            {% blocktrans %}
-              You can use this button to navigate between questions that are required but missing or that contain errors.
-              You will also see a summary of questions that need attention at the bottom of the form.
-            {% endblocktrans %}
-            <br>
-            <a target="_blank" class="btn btn-primary-dark" href="https://confluence.dimagi.com/display/commcarepublic/Using+Web+Apps#UsingWebApps-Navigatingtoallrequiredquestions">{% trans "Learn More" %}</a>
-          </p>
-        </div>
-      {% endif %}
-    {% endif %}
-    <div id="scroll-bottom" class="btn btn-outline-danger" style="position: fixed; bottom: 35px" title="{% trans_html_attr "Jump between required/errored questions" %}" data-bind="click: jumpToErrors">  {# todo B5: inline style #}
-      <i class='fa fa-fast-forward'> </i>
-          {% trans "Next Error" %}
+    <div id="next-error" class="btn btn-outline-danger" title="{% trans_html_attr "Jump between required/errored questions" %}" data-bind="click: jumpToErrors">
+      <i class='fa fa-fast-forward'></i>
+      {% trans "Next Error" %}
     </div>
   </div>
 </script>

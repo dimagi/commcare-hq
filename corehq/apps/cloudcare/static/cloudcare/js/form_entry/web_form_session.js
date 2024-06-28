@@ -456,16 +456,17 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
         };
 
         self.deleteRepeat = function (repetition) {
-            var juncture = formUI.getIx(repetition.parent.parent);
-            var repIx = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
+            const juncture = formUI.getIx(repetition);
+            const options = {
+                deletedGroup: juncture,
+            };
             this.serverRequest(
                 {
                     'action': constants.DELETE_REPEAT,
-                    'ix': repIx,
-                    'form_ix': juncture,
+                    'ix': juncture,
                 },
                 function (resp) {
-                    $.publish('session.reconcile', [resp, repetition]);
+                    $.publish('session.reconcile', [resp, repetition, options]);
                 },
                 constants.BLOCK_ALL);
         };
