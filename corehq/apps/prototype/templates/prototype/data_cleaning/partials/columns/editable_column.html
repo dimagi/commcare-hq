@@ -1,13 +1,18 @@
 {% load django_tables2 %}
 
-<div x-data='{ isEditing: false, cellValue: "{% if edited_value %}{{ edited_value }}{% else %}{{ value }}{% endif %}" }'>
+<div class="editable-column-container"
+     x-data='{ isEditing: false,
+               cellValue: "{% if edited_value %}{{ edited_value }}{% else %}{{ value }}{% endif %}" }'>
   <div class="inline-edit-block"
        x-show="!isEditing"
        @dblclick="isEditing = true">
     {% if edited_value %}
-      <form hx-vals='{"cancelEdit": {{ record.id }}, "column": "{{ column.accessor }}" }'
-            hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
-            hx-post="{{ request.path_info }}{% querystring %}">
+      <form hx-post="{% url "prototype_data_cleaning_edit_cell" %}"
+            hx-vals='{"cancelEdit": true,
+                      "column": "{{ column.accessor }}",
+                      "recordId": "{{ record.id }}" }'
+            hx-swap="outerHTML"
+            hx-target="closest .editable-column-container">
         <div class="badge text-bg-danger">{{ value }}</div>
         <div class="badge text-bg-success">{{ edited_value }}</div>
         <button type="submit"
@@ -25,13 +30,16 @@
     </button>
   </div>
   <div x-show="isEditing">
-    <form hx-post="{{ request.path_info }}{% querystring %}"
-          hx-vals='{"rowId": {{ record.id }}, "column": "{{ column.accessor }}"}'
-          hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}">
+    <form hx-post="{% url "prototype_data_cleaning_edit_cell" %}"
+          hx-vals='{"editCellValue": true,
+                    "recordId": {{ record.id }},
+                    "column": "{{ column.accessor }}"}'
+          hx-swap="outerHTML"
+          hx-target="closest .editable-column-container">
       <div class="input-group">
         <input type="text"
                class="form-control"
-               name="editCellValue"
+               name="newValue"
                x-model="cellValue">
         <button class="btn btn-primary"
                 type="submit">
