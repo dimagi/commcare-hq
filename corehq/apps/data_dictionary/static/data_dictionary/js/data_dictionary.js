@@ -282,7 +282,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.removefhirResourceType = ko.observable(false);
         self.newPropertyName = ko.observable();
         self.newGroupName = ko.observable();
-        self.caseGroupList = ko.observableArray();
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
         self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
@@ -299,7 +298,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             save: function () {
                 const groups = [];
                 const properties = [];
-                _.each(self.caseGroupList(), function (group, index) {
+                _.each(self.activeCaseTypeData(), function (group, index) {
                     if (group.name() !== "") {
                         let groupData = {
                             'caseType': group.caseType,
@@ -394,9 +393,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     ) {
                         // `self.goToCaseType()` calls `caseType.fetchCaseProperties()`
                         // to fetch the case properties of the first case type
-                        self.goToCaseType(self.caseTypes()[0]);
+                        let caseType = self.caseTypes()[0]
+                        self.goToCaseType(caseType);
+                        caseType.groups.subscribe(changeSaveButton)
                     }
-                    self.caseGroupList.subscribe(changeSaveButton);
                     self.fhirResourceType.subscribe(changeSaveButton);
                     self.removefhirResourceType.subscribe(changeSaveButton);
                     callback();
@@ -417,15 +417,16 @@ hqDefine("data_dictionary/js/data_dictionary", [
             });
         };
 
-        self.activeCaseTypeData = function () {
-            var caseTypes = self.caseTypes();
-            if (caseTypes.length) {
-                var caseType = self.getActiveCaseType();
-                if (caseType) {
-                    return caseType.groups();
-                }
+        self.getCaseTypeGroupsObservable = function () {
+            let caseType = self.getActiveCaseType();
+            if (caseType) {
+                return caseType.groups;  // The observable, not its value
             }
-            return [];
+        };
+
+        self.activeCaseTypeData = function () {
+            const groupsObs = self.getCaseTypeGroupsObservable();
+            return (groupsObs) ? groupsObs() : [];
         };
 
         self.isActiveCaseTypeDeprecated = function () {
@@ -499,7 +500,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.activeCaseType(caseType.name);
             self.fhirResourceType(caseType.fhirResourceType());
             self.removefhirResourceType(false);
-            self.caseGroupList(self.activeCaseTypeData());
             self.saveButton.setState('saved');
         };
 
@@ -555,7 +555,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newCaseProperty = function () {
             if (_.isString(self.newPropertyName()) && self.newPropertyName().trim()) {
-                let lastGroup = self.caseGroupList()[self.caseGroupList().length - 1];
+                let lastGroup = self.activeCaseTypeData()[self.activeCaseTypeData().length - 1];
                 const prop = {
                     'name': self.newPropertyName(),
                     'label': self.newPropertyName(),
@@ -585,7 +585,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     false,
                     changeSaveButton
                 );
-                self.caseGroupList.push(group);
+                let groupsObs = self.getCaseTypeGroupsObservable();
+                groupsObs.push(group);  // TODO: Broken for computed value
                 self.newGroupName(undefined);
             }
         };
