@@ -22,7 +22,7 @@ class DataCleaningTableView(SavedPaginatedTableView):
     template_name = 'prototype/htmx/single_table.html'
 
     def get_queryset(self):
-        table_data = FakeCaseDataStore(self.request).get()
+        table_data = self.data_store(self.request).get()
         return ColumnFilter.filter_table_from_cache(
             self.request, table_data
         )
@@ -122,43 +122,27 @@ class DataCleaningTableView(SavedPaginatedTableView):
         return self.get(request, *args, **kwargs)
 
     def select_row(self, row_id, is_selected):
-        data_store = FakeCaseDataStore(self.request)
+        data_store = self.data_store(self.request)
         all_rows = data_store.get()
         all_rows[row_id]['selected'] = is_selected
         data_store.set(all_rows)
 
     def select_all(self, is_selected):
-        data_store = FakeCaseDataStore(self.request)
+        data_store = self.data_store(self.request)
         all_rows = data_store.get()
         for row in all_rows:
             row['selected'] = is_selected
         data_store.set(all_rows)
 
     def select_page(self, row_ids, is_selected):
-        data_store = FakeCaseDataStore(self.request)
+        data_store = self.data_store(self.request)
         all_rows = data_store.get()
         for row_id in row_ids:
             all_rows[int(row_id)]['selected'] = is_selected
         data_store.set(all_rows)
 
-    def cancel_edit_for_cell(self, row_id, column_slug):
-        data_store = FakeCaseDataStore(self.request)
-        all_rows = data_store.get()
-        edited_slug = EditableColumn.get_edited_slug(column_slug)
-        if edited_slug in all_rows[row_id]:
-            del all_rows[row_id][edited_slug]
-        data_store.set(all_rows)
-
-    def edit_cell_value(self, row_id, column_slug, new_value):
-        data_store = FakeCaseDataStore(self.request)
-        all_rows = data_store.get()
-        edited_slug = EditableColumn.get_edited_slug(column_slug)
-        if all_rows[row_id][column_slug] != new_value:
-            all_rows[row_id][edited_slug] = new_value
-        data_store.set(all_rows)
-
     def apply_edits(self):
-        data_store = FakeCaseDataStore(self.request)
+        data_store = self.data_store(self.request)
         all_rows = data_store.get()
         for row in all_rows:
             if not row['selected']:
