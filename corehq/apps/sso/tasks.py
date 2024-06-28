@@ -21,7 +21,7 @@ from corehq.apps.sso.utils.context_helpers import (
     get_sso_deactivation_skip_email_context,
 )
 from corehq.apps.sso.utils.entra import MSGraphIssue
-from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
+from corehq.apps.sso.utils.user_helpers import convert_emails_to_lowercase, get_email_domain_from_username
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.models import HQApiKey
 from django.contrib.auth.models import User
@@ -132,7 +132,7 @@ def auto_deactivate_removed_sso_users():
         login_enforcement_type=LoginEnforcementType.GLOBAL,
     ).all():
         try:
-            usernames_in_idp = idp.get_all_usernames_of_the_idp()
+            usernames_in_idp = convert_emails_to_lowercase(idp.get_all_usernames_of_the_idp())
         except EntraVerificationFailed as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.VERIFICATION_ERROR,

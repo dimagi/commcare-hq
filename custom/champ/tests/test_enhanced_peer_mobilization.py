@@ -1,11 +1,14 @@
 from datetime import date
+
 from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.users.tests.util import patch_user_data_db_layer
 from custom.champ.tests.utils import TestDataSourceExpressions
 from custom.champ.utils import PREVENTION_XMLNS, TARGET_XMLNS
 
 ENHANCED_PEER_MOBILIZATION_DATA_SOURCE = 'enhanced_peer_mobilization.json'
 
 
+@patch_user_data_db_layer()
 class TestEnhancedPeerMobilization(TestDataSourceExpressions):
 
     data_source_name = ENHANCED_PEER_MOBILIZATION_DATA_SOURCE
