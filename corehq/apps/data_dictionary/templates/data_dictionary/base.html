@@ -215,7 +215,7 @@
             <div class="row-item-small"></div>
           {% endif %}
           </div>
-          <div data-bind="sortable: { data: caseGroupList, connectClass: 'groups', options: { handle: 'i.sortable-handle' } }">
+          <div data-bind="sortable: { data: activeCaseTypeData(), connectClass: 'groups', options: { handle: 'i.sortable-handle' } }">
           <div>
           <div class="group-deprecated" data-bind="visible: showGroupPropertyTransferWarning" style="display: none;">
             <b data-bind="text: name()"></b>
