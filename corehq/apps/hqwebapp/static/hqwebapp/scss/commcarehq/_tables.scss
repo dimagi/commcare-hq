@@ -120,8 +120,8 @@
   }
 }
 
-
 .table thead tr th.select-header {
+  width: 28px;
   background-color: $blue-800;
 
   &:nth-child(odd) {
