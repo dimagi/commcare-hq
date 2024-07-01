@@ -64,9 +64,14 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
         # domain_2 still has full subscription allocation
         self._assert_subscription_value_equals(domain_2, 8)
 
-    def _setup_domain(self, domain):
+    def test_no_user_limit(self):
+        domain = 'enterprise-domain'
+        self._setup_domain(domain, SoftwarePlanEdition.ENTERPRISE)
+        self._assert_subscription_value_equals(domain, 1000)
+
+    def _setup_domain(self, domain, software_plan=SoftwarePlanEdition.ADVANCED):
         domain_obj = create_domain(domain)
-        self.setup_subscription(domain_obj.name, SoftwarePlanEdition.ADVANCED)
+        self.setup_subscription(domain_obj.name, software_plan)
         self.addCleanup(lambda: self.teardown_subscription(domain))
         self.addCleanup(domain_obj.delete)
         assert CommCareUser.total_by_domain(domain, is_active=True) == 0

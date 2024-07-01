@@ -131,11 +131,12 @@ def get_n_users_in_domain(domain):
 
 @quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
 def get_n_users_in_subscription(domain):
-    from corehq.apps.accounting.models import Subscription
+    from corehq.apps.accounting.models import Subscription, UNLIMITED_FEATURE_USAGE
     subscription = Subscription.get_active_subscription_by_domain(domain)
     if subscription:
-        plan_version = subscription.plan_version
-        return plan_version.feature_rates.get(feature__feature_type='User').monthly_limit
+        limit = subscription.plan_version.feature_rates.get(feature__feature_type='User').monthly_limit
+        # Advanced plans get 500 users/mo, let's arbitrarily double that as the fallback max.
+        return 1000 if limit == UNLIMITED_FEATURE_USAGE else limit
     else:
         return 0
 
