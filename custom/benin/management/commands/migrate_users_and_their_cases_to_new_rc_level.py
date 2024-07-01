@@ -69,6 +69,7 @@ class Command(BaseCommand):
         else:
             villages = _find_locations(domain=domain, location_type_code=LOCATION_TYPE_VILLAGE)
         log(f"Total number of villages found: {len(villages)}")
+
         for village in villages:
             log(f"Starting updates for village {village.name}")
             users = _find_rc_users_at_location(domain, village)
@@ -143,13 +144,13 @@ def _update_cases(domain, user, current_owner_id, new_owner_id, dry_run):
         case_ids = _find_case_ids(case_type=case_type, owner_id=current_owner_id, opened_by_user_id=user.user_id)
 
         log(f"Updating {len(case_ids)} {case_type} cases for user {user.username}")
-
-        for case_ids in with_progress_bar(
-            chunked(case_ids, 100),
-            length=math.ceil(len(case_ids) / 100),
-            oneline=False
-        ):
-            _update_case_owners(domain, case_ids, new_owner_id, dry_run)
+        if case_ids:
+            for case_ids in with_progress_bar(
+                chunked(case_ids, 100),
+                length=math.ceil(len(case_ids) / 100),
+                oneline=False
+            ):
+                _update_case_owners(domain, case_ids, new_owner_id, dry_run)
 
 
 def _update_case_owners(domain, case_ids, owner_id, dry_run):
