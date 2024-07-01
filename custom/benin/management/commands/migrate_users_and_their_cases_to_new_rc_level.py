@@ -1,6 +1,6 @@
-import datetime
 import math
 import time
+import logging
 
 from django.core.management.base import BaseCommand
 
@@ -17,9 +17,7 @@ from corehq.util.log import with_progress_bar
 LOCATION_TYPE_VILLAGE = "village"
 LOCATION_TYPE_RC = "rc"
 
-run_time = datetime.datetime.utcnow().strftime("%Y-%m-%d_%H.%M.%S")
-progress_logfile = f"migrate_users_and_their_cases_to_new_rc_level_{run_time}.log"
-error_logfile = f"migrate_users_and_their_cases_to_new_rc_level_errors_{run_time}.log"
+logger = logging.getLogger("custom_benin_script")
 
 
 class Command(BaseCommand):
@@ -63,17 +61,17 @@ class Command(BaseCommand):
         dry_run = options['dry_run']
         village_id = options['village_id']
         start_time = time.time()
-        log(f"Started processing of script")
+        logger.info("Started processing of script")
         if village_id:
             villages = SQLLocation.active_objects.get_locations([village_id])
         else:
             villages = _find_locations(domain=domain, location_type_code=LOCATION_TYPE_VILLAGE)
-        log(f"Total number of villages found: {len(villages)}")
+        logger.info(f"Total number of villages found: {len(villages)}")
 
         for village in villages:
-            log(f"Starting updates for village {village.name}")
+            logger.info(f"Starting updates for village {village.name}")
             users = _find_rc_users_at_location(domain, village)
-            log(f"Total number of users: {len(users)}")
+            logger.info(f"Total number of users: {len(users)}")
             for user in users:
                 user_rc_number = user.get_user_data(domain).get('rc_number')
                 if user_rc_number:
@@ -83,8 +81,8 @@ class Command(BaseCommand):
                             location_name=user_rc_number
                         )
                     except MultipleMatchingLocationsFound:
-                        log_error(f"Multiple matching locations found for user {user.username}:{user.user_id} "
-                                  f"with rc number {user_rc_number}")
+                        logger.error(f"Multiple matching locations found for user {user.username}:{user.user_id} "
+                                     f"with rc number {user_rc_number}")
                     else:
                         if new_user_rc_location:
                             _update_cases(domain=domain, user=user, current_owner_id=village.location_id,
@@ -92,14 +90,14 @@ class Command(BaseCommand):
                                           dry_run=dry_run)
                             _update_users_location(user=user, existing_location=village,
                                                    new_location=new_user_rc_location, dry_run=dry_run)
-                            log(f"User {user.username}:{user.user_id} updates completed.")
+                            logger.info(f"User {user.username}:{user.user_id} updates completed.")
                         else:
-                            log_error(f"User {user.username}:{user.user_id} rc {user_rc_number} location "
-                                      f"not found")
+                            logger.error(f"User {user.username}:{user.user_id} rc {user_rc_number} location "
+                                         f"not found")
                 else:
-                    log_error(f"User {user.username}:{user.user_id} missing rc number")
-            log(f"Updates for village {village.name} processed.")
-        log(f"Processing completed. Total execution time: {(time.time() - start_time):.2f}s")
+                    logger.error(f"User {user.username}:{user.user_id} missing rc number")
+            logger.info(f"Updates for village {village.name} processed.")
+        logger.info(f"Processing completed. Total execution time: {(time.time() - start_time):.2f}s")
 
 
 def _find_locations(domain, location_type_code):
@@ -143,7 +141,7 @@ def _update_cases(domain, user, current_owner_id, new_owner_id, dry_run):
     for case_type in case_types:
         case_ids = _find_case_ids(case_type=case_type, owner_id=current_owner_id, opened_by_user_id=user.user_id)
 
-        log(f"Updating {len(case_ids)} {case_type} cases for user {user.username}")
+        logger.info(f"Updating {len(case_ids)} {case_type} cases for user {user.username}")
         if case_ids:
             for case_ids in with_progress_bar(
                 chunked(case_ids, 100),
@@ -171,17 +169,6 @@ def _update_case_owners(domain, case_ids, owner_id, dry_run):
         )
 
 
-def log(message, logfile=None):
-    logfile = logfile or progress_logfile
-    print(message)
-    with open(logfile, 'a') as filestream:
-        filestream.write(message+'\n')
-
-
-def log_error(message):
-    log(message, logfile=error_logfile)
-
-
 def _find_case_ids(case_type, owner_id, opened_by_user_id):
     # find ids for open cases of a case type owned and opened by specific user
     return (
@@ -198,7 +185,7 @@ def _update_users_location(user, existing_location, new_location, dry_run):
     if not dry_run:
         user.set_location(new_location)
         user.unset_location_by_id(existing_location.location_id)
-    log(f"User {user.username}:{user.user_id} location updated to {new_location.location_id}")
+    logger.info(f"User {user.username}:{user.user_id} location updated to {new_location.location_id}")
 
 
 class MultipleMatchingLocationsFound(Exception):
