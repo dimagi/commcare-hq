@@ -1336,6 +1336,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         ).all()
 
     @classmethod
+    def total_by_domain(cls, domain, is_active=True):
+        data = cls.by_domain(domain, is_active, reduce=True)
+        return data[0].get('value', 0) if data else 0
+
+    @classmethod
     def ids_by_domain(cls, domain, is_active=True):
         flag = "active" if is_active else "inactive"
         if cls.__name__ == "CouchUser":
@@ -1348,11 +1353,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             reduce=False,
             include_docs=False,
         )]
-
-    @classmethod
-    def total_by_domain(cls, domain, is_active=True):
-        data = cls.by_domain(domain, is_active, reduce=True)
-        return data[0].get('value', 0) if data else 0
 
     @classmethod
     def phone_users_by_domain(cls, domain):
