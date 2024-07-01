@@ -27,21 +27,6 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
         domain_1 = 'domain-with-subscription'
         domain_2 = 'other-domain-in-same-customer-account'
 
-        def _setup(domain):
-            domain_obj = create_domain(domain)
-            self.setup_subscription(domain_obj.name, SoftwarePlanEdition.ADVANCED)
-            self.addCleanup(lambda: self.teardown_subscription(domain))
-            self.addCleanup(domain_obj.delete)
-            assert CommCareUser.total_by_domain(domain, is_active=True) == 0
-
-        def _get_included_in_subscription():
-            n = (
-                BOOTSTRAP_CONFIG_TESTING[(SoftwarePlanEdition.ADVANCED, False, False)]
-                ['feature_rates'][FeatureType.USER]['monthly_limit']
-            )
-            assert n == 8
-            return n
-
         def _link_domains(domain, other_domain):
             plan_version = Subscription.get_active_subscription_by_domain(domain).plan_version
             plan = plan_version.plan
@@ -51,7 +36,7 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
             other_subscription.plan_version = plan_version
             other_subscription.save()
 
-        _setup(domain_1)
+        self._setup_domain(domain_1)
 
         # There are no users yet
         self._assert_domain_value_equals(domain_1, 0)
@@ -67,7 +52,7 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
         # subscription still returns only the billing amount
         self._assert_subscription_value_equals(domain_1, 8)
 
-        _setup(domain_2)
+        self._setup_domain(domain_2)
         _link_domains(domain_1, domain_2)
 
         # No change on the original domain
@@ -78,6 +63,13 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
 
         # domain_2 still has full subscription allocation
         self._assert_subscription_value_equals(domain_2, 8)
+
+    def _setup_domain(self, domain):
+        domain_obj = create_domain(domain)
+        self.setup_subscription(domain_obj.name, SoftwarePlanEdition.ADVANCED)
+        self.addCleanup(lambda: self.teardown_subscription(domain))
+        self.addCleanup(domain_obj.delete)
+        assert CommCareUser.total_by_domain(domain, is_active=True) == 0
 
     def _assert_domain_value_equals(self, domain, value):
         get_n_users_in_domain.clear(domain)
