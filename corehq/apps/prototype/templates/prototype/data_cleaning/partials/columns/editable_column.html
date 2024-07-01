@@ -7,9 +7,9 @@
        x-show="!isEditing"
        @dblclick="isEditing = true">
     {% if edited_value %}
-      <form hx-post="{% url "prototype_data_cleaning_edit_cell" %}"
-            hx-vals='{"cancelEdit": true,
-                      "column": "{{ column.accessor }}",
+      <form hx-post="{{ request.path_info }}{% querystring %}"
+            hx-action="cancel_edit"
+            hx-vals='{"column": "{{ column.accessor }}",
                       "recordId": "{{ record.id }}" }'
             hx-swap="outerHTML"
             hx-target="closest .editable-column-container">
@@ -30,9 +30,9 @@
     </button>
   </div>
   <div x-show="isEditing">
-    <form hx-post="{% url "prototype_data_cleaning_edit_cell" %}"
-          hx-vals='{"editCellValue": true,
-                    "recordId": {{ record.id }},
+    <form hx-post="{{ request.path_info }}{% querystring %}"
+          hx-action="edit_cell_value"
+          hx-vals='{"recordId": {{ record.id }},
                     "column": "{{ column.accessor }}"}'
           hx-swap="outerHTML"
           hx-target="closest .editable-column-container">
