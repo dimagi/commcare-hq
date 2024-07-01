@@ -101,7 +101,6 @@ def enterprise_dashboard_download(request, domain, slug, export_hash):
     if content:
         file = ContentFile(content)
         response = HttpResponse(file, Format.FORMAT_DICT[Format.UNZIPPED_CSV])
-        response['Content-Length'] = file.size
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
         return response
 
