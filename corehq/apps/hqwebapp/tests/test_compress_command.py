@@ -1,10 +1,9 @@
 import os
 
+import pytest
 from django.conf import settings
 from django.template.utils import get_app_template_dirs
 from django.test import SimpleTestCase
-
-from nose.plugins.attrib import attr
 
 B3_BASE = 'hqwebapp/bootstrap3/base_navigation.html'
 
@@ -31,7 +30,7 @@ class TestDjangoCompressOffline(SimpleTestCase):
         for tag in DISALLOWED_REGEXES:
             self.assertNotRegex(line.strip(), tag[0], '{}: {}'.format(tag[1], filename))
 
-    @attr("slow")
+    @pytest.mark.slow
     def test_compress_offline(self):
         template_dir_list = []
         for template_dir in get_app_template_dirs('templates'):

@@ -214,7 +214,6 @@ def _test_document_store(self, doc_store_cls, doc_store_args, data_context, id_f
 
 
 @generate_cases([
-    (CouchDocumentStore, (get_db(), 'domain', 'doc_type'), couch_data, '_id'),
     (CaseDocumentStore, ('domain',), case_data, '_id'),
     (FormDocumentStore, ('domain',), form_data, '_id'),
     (LocationDocumentStore, ('domain',), location_data, 'location_id'),
@@ -224,3 +223,10 @@ def _test_document_store(self, doc_store_cls, doc_store_args, data_context, id_f
 ], DocumentStoreDbTests)
 def test_documet_store(*args):
     _test_document_store(*args)
+
+
+def test_couch_documet_store():
+    # this one is separated out because get_db() should not be called
+    # during test collection
+    _test_document_store(
+        CouchDocumentStore, (get_db(), 'domain', 'doc_type'), couch_data, '_id')

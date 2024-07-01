@@ -1,4 +1,5 @@
 import uuid
+from contextlib import ExitStack
 from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase
@@ -58,13 +59,17 @@ class TestUserSignals(SimpleTestCase):
 
 
 @mock_out_couch()
-@patch_user_data_db_layer()
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock)
 @patch('corehq.apps.analytics.signals.update_hubspot_properties')
 @patch('corehq.apps.callcenter.tasks.sync_usercases')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
 @es_test(requires=[user_adapter], setup_class=True)
 class TestUserSyncToEs(SimpleTestCase):
+
+    def setUp(self):
+        context = ExitStack()
+        context.enter_context(patch_user_data_db_layer())
+        self.addCleanup(context.close)
 
     @sync_users_to_es()
     def test_sync_to_es_create_update_delete(self, *mocks):

@@ -1,0 +1,62 @@
+import os
+import sys
+
+import pytest
+from unmagic import fence
+
+import ddtrace  # noqa: F401
+if type(sys.modules).__module__.split(".")[0] == "ddtrace" and hasattr(sys.modules, "uninstall"):
+    # Remove ddtrace cruft from tracebacks. ModuleWatchdog is installed
+    # unconditionally when ddtrace is imported, which happens early
+    # in pytest startup because of ddtrace's pytest11 entry point(s).
+    sys.modules.uninstall()
+
+fence.install({"corehq", "custom", "dimagi", "testapps"})
+
+pytest_plugins = [
+    'unmagic.fence',
+    #'corehq.tests.pytest_plugins.dbtransaction',  # FIXME
+    'corehq.tests.pytest_plugins.dividedwerun',
+    'corehq.tests.pytest_plugins.timelimit',
+    'corehq.tests.pytest_plugins.patches',
+    'corehq.tests.pytest_plugins.redislocks',
+    'corehq.tests.pytest_plugins.reusedb',
+]
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_load_initial_conftests():
+    assert not hasattr(pytest_load_initial_conftests, 'loaded'), "Already loaded"
+    pytest_load_initial_conftests.loaded = True
+    os.environ.setdefault('CCHQ_TESTING', '1')
+
+    from manage import init_hq_python_path, run_patches
+    init_hq_python_path()
+    run_patches()
+
+    from corehq.warnings import configure_warnings
+    configure_warnings(is_testing=True)
+
+    from .nosecompat import create_nose_virtual_package
+    create_nose_virtual_package()
+
+
+def pytest_pycollect_makeitem(collector, name, obj):
+    """Fail on common mistake that results in masked tests"""
+    if (
+        "Test" in name
+        and not isinstance(obj, type)
+        and isinstance(wrapped := _get_wrapped(obj), type)
+        and any(n.startswith("test_") for n in dir(wrapped))
+    ):
+        return pytest.fail(
+            f"{obj.__module__}.{name} appears to be a test class that has "
+            "been wrapped with a decorator that masks its tests."
+        )
+    return None
+
+
+def _get_wrapped(obj):
+    while hasattr(obj, "__wrapped__"):
+        obj = obj.__wrapped__
+    return obj

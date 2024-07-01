@@ -20,7 +20,7 @@ from testapps.test_pillowtop.utils import process_pillow_changes
 
 
 class TestException(Exception):
-    pass
+    __test__ = False
 
 
 class TestMixin(object):

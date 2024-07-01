@@ -5,15 +5,14 @@ New test utilities should be added to a module in the
 it makes sense to do so. See the docstring on that package for important
 guidelines.
 """
-import functools
 import json
 import logging
 import os
+import re
 import traceback
 import uuid
 from collections import namedtuple
 from contextlib import ExitStack, closing, contextmanager
-from datetime import datetime, timedelta
 from functools import wraps
 from io import StringIO, open
 from textwrap import indent, wrap
@@ -298,63 +297,6 @@ def NOOP(*args, **kwargs):
     pass
 
 
-class RunConfig(object):
-
-    def __init__(self, settings, pre_run=None, post_run=None):
-        self.settings = settings
-        self.pre_run = pre_run or NOOP
-        self.post_run = post_run or NOOP
-
-
-class RunWithMultipleConfigs(object):
-
-    def __init__(self, fn, run_configs):
-        self.fn = fn
-        self.run_configs = run_configs
-
-    def __call__(self, *args, **kwargs):
-        for run_config in self.run_configs:
-
-            def fn_with_pre_and_post(*args, **kwargs):
-                # make sure the pre and post run also run with the right settings
-                run_config.pre_run(*args, **kwargs)
-                self.fn(*args, **kwargs)
-                run_config.post_run(*args, **kwargs)
-
-            try:
-                call_with_settings(fn_with_pre_and_post, run_config.settings, args, kwargs)
-            except Exception:
-                print(self.fn, 'failed with the following settings:')
-                for key, value in run_config.settings.items():
-                    print('settings.{} = {!r}'.format(key, value))
-                raise
-
-
-def call_with_settings(fn, settings_dict, args, kwargs):
-    original_settings = {key: getattr(settings, key, None) for key in settings_dict}
-    try:
-        # set settings to new values
-        for key, value in settings_dict.items():
-            setattr(settings, key, value)
-        fn(*args, **kwargs)
-    finally:
-        # set settings back to original values
-        for key, value in original_settings.items():
-            setattr(settings, key, value)
-
-
-def run_with_multiple_configs(fn, run_configs, nose_tags=None):
-    from nose.plugins.attrib import attr
-    helper = RunWithMultipleConfigs(fn, run_configs)
-
-    @functools.wraps(fn)
-    @attr(**(nose_tags or {}))
-    def inner(*args, **kwargs):
-        return helper(*args, **kwargs)
-
-    return inner
-
-
 class capture_log_output(ContextDecorator):
     """
     Can be used as either a context manager or decorator.
@@ -445,6 +387,10 @@ class generate_cases:
                 "duplicate test case: {}.{}".format(owner, test.__name__)
             setattr(owner, test.__name__, test)
 
+        def argsrepr(args):
+            return obj_addr.sub(">", repr(args))
+
+        obj_addr = re.compile(r" at 0x[\da-f]{8,}>")
         tests = []
 
         if self.test_class is None:
@@ -469,7 +415,7 @@ class generate_cases:
                     return test_func(self, **args)
                 return test_func(self, *args)
 
-            test.__name__ = test_func.__name__ + repr(args)
+            test.__name__ = test_func.__name__ + argsrepr(args)
             assign(Test, test)
             tests.append(test)
 
@@ -493,9 +439,7 @@ def timelimit(limit):
     without raising an error and the elapsed run time is longer than
     the allowed time limit.
 
-    This decorator can be used to extend the time limit imposed by
-    --max-test-time when `corehq.tests.noseplugins.timing.TimingPlugin`
-    is enabled.
+    Can be used to override the limit imposed by --max-test-time.
 
     Usage:
 
@@ -507,64 +451,24 @@ def timelimit(limit):
         def lt_half_second():
             ...
 
-    See also: `patch_max_test_time` for overriding time limits for an
-    entire test group (module, test class, etc.)
-
     :param limit: number of seconds or a callable to decorate. If
     callable, the time limit defaults to one second.
     """
     if callable(limit):
-        return timelimit((limit, timedelta(seconds=1)))
+        return timelimit((limit, 1))
     if not isinstance(limit, tuple):
-        limit = timedelta(seconds=limit)
         return lambda func: timelimit((func, limit))
     func, limit = limit
 
     @wraps(func)
     def time_limit(*args, **kw):
-        from corehq.tests.noseplugins.timing import add_time_limit
-        add_time_limit(limit.total_seconds())
-        start = datetime.utcnow()
+        start = time()
         rval = func(*args, **kw)
-        elapsed = datetime.utcnow() - start
-        assert elapsed < limit, f"{func.__name__} took too long: {elapsed}"
+        elapsed = time() - start
+        assert elapsed < limit, f"{func.__name__} time limit ({limit}) exceeded: {elapsed}"
         return rval
+    time_limit.max_test_time = limit
     return time_limit
-
-
-def patch_max_test_time(limit):
-    """Temporarily override test time limit (--max-test-time)
-
-    Note: this is only useful when spanning multiple test events because
-    the limit must be present at the _end_ of a test event to take
-    effect. Therefore it will do nothing if used within the context of a
-    single test (use `timelimit` for that). It also does not affect the
-    time limit on the final teardown fixture (in which the patch is
-    removed).
-
-    :param limit: New time limit (seconds).
-
-    Usage at module level:
-
-        TIME_LIMIT = patch_max_test_time(9)
-
-        def setup_module():
-            TIME_LIMIT.start()
-
-        def teardown_module():
-            TIME_LIMIT.stop()
-
-    Usage as class decorator:
-
-        @patch_max_test_time(9)
-        class TestSomething(TestCase):
-            ...
-    """
-    from corehq.tests.noseplugins.timing import patch_max_test_time
-    return patch_max_test_time(limit)
-
-
-patch_max_test_time.__test__ = False
 
 
 def patch_foreign_value_caches():
