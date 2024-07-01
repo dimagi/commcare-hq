@@ -538,7 +538,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             all_str = ', '.join(formatted_loc_names)
             view_controls_html_nodes = [
                 f'<span class="loc-view-control">{_("...See more")}</span>',
-                f'<span class="loc-view-control" style="display:none">{_("...See less")}</span>',
+                f'<span class="loc-view-control" style="display:none">{_("...Collapse")}</span>',
             ]
             html_nodes += [
                 f'<span class="all-locations-list" style="display:none">{all_str}</span>',
