@@ -4,6 +4,7 @@ import sys
 import pytest
 from unmagic import fence
 
+import ddtrace  # noqa: F401
 if type(sys.modules).__module__.split(".")[0] == "ddtrace" and hasattr(sys.modules, "uninstall"):
     # Remove ddtrace cruft from tracebacks. ModuleWatchdog is installed
     # unconditionally when ddtrace is imported, which happens early
