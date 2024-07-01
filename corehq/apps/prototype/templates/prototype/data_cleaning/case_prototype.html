@@ -25,3 +25,37 @@
     {% include "prototype/data_cleaning/partials/offcanvas.html" %}
   </div>
 {% endblock %}
+
+{% block modals %}
+  <div id="htmx-request-error-modal"
+       class="modal fade"
+       data-bs-backdrop="static"
+       data-bs-keyboard="false"
+       aria-labelledby="htmxRequestErrorModalTitle"
+       tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"
+              id="htmxRequestErrorModalTitle">
+            {% trans "Server Error Encountered" %}
+          </h5>
+          <button type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {# todo handle this with alpine.placeholder to demo how to pass errors to front end #}
+          <p id="htmxRequestErrorCode"></p>
+          <p id="htmxRequestErrorText"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  data-bs-dismiss="modal">{% trans "Close" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
