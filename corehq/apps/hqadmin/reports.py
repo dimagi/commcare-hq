@@ -420,7 +420,7 @@ class UCRRebuildRestrictionTable:
             domain,
             case_count,
             form_count,
-            self._restrict_rebuild_column_data(domain, case_count, form_count),
+            self._ucr_rebuild_restriction_status_column_data(domain, case_count, form_count),
         ]
 
     def _should_restrict_rebuild(self, case_count, form_count):
@@ -451,7 +451,7 @@ class UCRRebuildRestrictionTable:
     def _show_all_domains(self):
         return not self.restriction_ff_status
 
-    def _restrict_rebuild_column_data(self, domain, case_count, form_count):
+    def _ucr_rebuild_restriction_status_column_data(self, domain, case_count, form_count):
         from django.utils.safestring import mark_safe
         from corehq.apps.toggle_ui.views import ToggleEditView
 
