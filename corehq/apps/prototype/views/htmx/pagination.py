@@ -4,15 +4,16 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy
 from django_tables2 import columns, tables, SingleTableView
 
-from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.hqwebapp.decorators import use_bootstrap5
+from corehq import toggles
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_htmx
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.prototype.utils import fake_data
 from corehq.util.quickcache import quickcache
 
 
-@method_decorator(require_superuser, name='dispatch')
+@method_decorator(use_htmx, name='dispatch')
 @method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(toggles.SAAS_PROTOTYPE.required_decorator(), name='dispatch')
 class HtmxPaginationView(BasePageView):
     urlname = "prototype_htmx_pagination_example"
     template_name = 'prototype/htmx/pagination.html'
@@ -82,8 +83,7 @@ class SavedPaginatedTableView(SavedPaginationOptionMixin, SingleTableView):
         return response
 
 
-@method_decorator(require_superuser, name='dispatch')
-@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(toggles.SAAS_PROTOTYPE.required_decorator(), name='dispatch')
 class PaginationDataView(SavedPaginatedTableView):
     urlname = "prototype_htmx_table_view"
     table_class = FakeDataTable

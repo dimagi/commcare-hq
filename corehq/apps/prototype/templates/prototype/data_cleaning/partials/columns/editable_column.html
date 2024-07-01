@@ -1,0 +1,48 @@
+{% load django_tables2 %}
+
+<div x-data='{ isEditing: false, cellValue: "{% if edited_value %}{{ edited_value }}{% else %}{{ value }}{% endif %}" }'>
+  <div class="inline-edit-block"
+       x-show="!isEditing"
+       @dblclick="isEditing = true">
+    {% if edited_value %}
+      <form hx-vals='{"cancelEdit": {{ record.id }}, "column": "{{ column.accessor }}" }'
+            hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+            hx-post="{{ request.path_info }}{% querystring %}">
+        <div class="badge text-bg-danger">{{ value }}</div>
+        <div class="badge text-bg-success">{{ edited_value }}</div>
+        <button type="submit"
+                class="btn btn-outline-danger btn-sm">
+          <i class="fa fa-close"></i>
+        </button>
+      </form>
+    {% else %}
+      {{ value }}
+    {% endif %}
+    <button class="btn btn-link btn-sm inline-edit-button"
+            type="button"
+            @click="isEditing = true">
+       <i class="fa fa-pencil"></i>
+    </button>
+  </div>
+  <div x-show="isEditing">
+    <form hx-post="{{ request.path_info }}{% querystring %}"
+          hx-vals='{"rowId": {{ record.id }}, "column": "{{ column.accessor }}"}'
+          hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}">
+      <div class="input-group">
+        <input type="text"
+               class="form-control"
+               name="editCellValue"
+               x-model="cellValue">
+        <button class="btn btn-primary"
+                type="submit">
+          <i class="fa fa-check"></i>
+        </button>
+        <button class="btn btn-outline-danger"
+                type="button"
+                @click="isEditing = false">
+          <i class="fa fa-close"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

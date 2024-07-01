@@ -5,8 +5,9 @@
     </h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
-  <div class="offcanvas-body">
-    edit property form
+  <div class="offcanvas-body"
+       hx-trigger="load"
+       hx-get="{% url "data_cleaning_clean_data_form" %}">
   </div>
 </div>
 
