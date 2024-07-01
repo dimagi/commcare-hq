@@ -4,7 +4,7 @@ from corehq.apps.accounting.bootstrap.config.testing import BOOTSTRAP_CONFIG_TES
 from corehq.apps.accounting.models import SoftwarePlanEdition, FeatureType, Subscription
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.project_limits.rate_limiter import get_n_users_in_domain, get_n_users_in_subscription
 
@@ -69,6 +69,18 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
         self._setup_domain(domain, SoftwarePlanEdition.ENTERPRISE)
         self._assert_subscription_value_equals(domain, 1000)
 
+    def test_paid_web_users(self):
+        domain = 'web-user-domain'
+        self._setup_domain(domain)
+        self._set_n_users(domain, 3, CommCareUser)
+        self._set_n_users(domain, 2, WebUser)
+        self._assert_domain_value_equals(domain, 3)
+
+        subscription = Subscription.get_active_subscription_by_domain(domain)
+        subscription.account.bill_web_user = True
+        subscription.account.save()
+        self._assert_domain_value_equals(domain, 3 + 2)
+
     def _setup_domain(self, domain, software_plan=SoftwarePlanEdition.ADVANCED):
         domain_obj = create_domain(domain)
         self.setup_subscription(domain_obj.name, software_plan)
@@ -84,14 +96,14 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
         get_n_users_in_subscription.clear(domain)
         self.assertEqual(get_n_users_in_subscription(domain), value)
 
-    def _set_n_users(self, domain, n_users):
-        start_n_users = CommCareUser.total_by_domain(domain, is_active=True)
+    def _set_n_users(self, domain, n_users, user_cls=CommCareUser):
+        start_n_users = user_cls.total_by_domain(domain, is_active=True)
         assert n_users >= start_n_users, 'this helper can only add users'
 
         for i in range(start_n_users, n_users):
-            user = CommCareUser.create(domain, format_username('user{}'.format(i), domain),
-                                       password='123', created_by=None, created_via=None)
+            username = format_username(f'{user_cls.__name__}{i}', domain)
+            user = user_cls.create(domain, username, password='123', created_by=None, created_via=None)
             user.is_active = True
             user.save()
             self.addCleanup(user.delete, domain, deleted_by=None)
-        assert CommCareUser.total_by_domain(domain, is_active=True) == n_users
+        assert user_cls.total_by_domain(domain, is_active=True) == n_users

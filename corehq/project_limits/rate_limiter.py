@@ -3,7 +3,7 @@ import time
 
 import attr
 
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.project_limits.models import DynamicRateDefinition
 from corehq.project_limits.rate_counter.presets import (
     day_rate_counter,
@@ -126,7 +126,12 @@ class RateLimiter(object):
 
 @quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
 def get_n_users_in_domain(domain):
-    return CommCareUser.total_by_domain(domain, is_active=True)
+    from corehq.apps.accounting.models import Subscription
+    total = CommCareUser.total_by_domain(domain, is_active=True)
+    subscription = Subscription.get_active_subscription_by_domain(domain)
+    if subscription and subscription.account.bill_web_user:
+        total += WebUser.total_by_domain(domain, is_active=True)
+    return total
 
 
 @quickcache(['domain'], memoize_timeout=60, timeout=60 * 60)
