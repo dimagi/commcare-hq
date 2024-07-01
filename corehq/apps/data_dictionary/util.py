@@ -1,7 +1,8 @@
+import re
 from collections import defaultdict
 from itertools import groupby
 from operator import attrgetter
-import re
+from urllib.parse import parse_qsl, urlencode, urlparse
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext
@@ -18,7 +19,11 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
 )
 from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
-from corehq.apps.es.case_search import CaseSearchES, CASE_PROPERTIES_PATH, PROPERTY_KEY
+from corehq.apps.es.case_search import (
+    CASE_PROPERTIES_PATH,
+    PROPERTY_KEY,
+    CaseSearchES,
+)
 from corehq.motech.fhir.utils import update_fhir_resource_property
 from corehq.util.quickcache import quickcache
 
@@ -422,3 +427,12 @@ def get_case_property_group_name_for_properties(domain, case_type_name):
     return dict(CaseProperty.objects.filter(
         case_type__name=case_type_name, case_type__domain=domain, deprecated=False, group__deprecated=False
     ).values_list('name', 'group__name'))
+
+
+def update_url_query_params(url, params):
+    """Adds query params to the url. Overrides the value if param already exists."""
+    parsed_url = urlparse(url)
+    current_params = dict(parse_qsl(parsed_url.query))
+    merged_params = urlencode({**current_params, **params})
+    # Note: _replace is a public method of namedtuple. Starts with _ to avoid conflicts with field names.
+    return parsed_url._replace(query=merged_params).geturl()
