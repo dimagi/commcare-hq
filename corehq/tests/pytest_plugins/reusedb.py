@@ -20,6 +20,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+from pytest_django import fixtures as django_fixtures
 from pytest_django.fixtures import (
     db as django_db,
     django_db_modify_db_settings,
@@ -43,6 +44,7 @@ from dimagi.utils.parsing import string_to_boolean
 
 from corehq.util.test_utils import timelimit, unit_testing_only
 
+from .util import override_fixture
 from ..tools import nottest
 
 log = logging.getLogger(__name__)
@@ -172,18 +174,14 @@ def is_still_sorted(items, key):
     return all(new_key(a) <= new_key(b) for a, b in zip(items, it))
 
 
-@pytest.fixture(scope="session")
+@override_fixture(django_fixtures.django_db_setup)
 @use(django_db_modify_db_settings)
 def django_db_setup():
-    """Override pytest_django's django_db_setup fixture
+    """Override pytest-django's django_db_setup fixture
 
-    Replace pytest_django's database setup/teardown with
+    Replace pytest-django's database setup/teardown with
     DeferredDatabaseContext, which handles other databases
     including Couch, Elasticsearch, BlobDB, and Redis.
-
-    There appears to be no explicit dependency between this and the
-    pytest-django fixture. Is there a race to determine which will
-    override the other? Beware of magic.
     """
     try:
         yield
