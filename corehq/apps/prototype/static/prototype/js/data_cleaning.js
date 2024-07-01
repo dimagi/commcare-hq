@@ -3,8 +3,9 @@
 hqDefine("prototype/js/data_cleaning",[
     'underscore',
     'sortablejs',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'prototype/js/htmx_action',  // support hx-action attributes
-], function (_, Sortable) {
+], function (_, Sortable, bootstrap) {
     let htmx = window.htmx;
     htmx.onLoad(function (content) {
         let sortables = content.querySelectorAll(".sortable");
@@ -48,5 +49,20 @@ hqDefine("prototype/js/data_cleaning",[
                     return el.value;
                 });
         }
+    });
+    document.body.addEventListener('htmx:responseError', function (evt) {
+        let modal = new bootstrap.Modal(document.getElementById('htmx-request-error-modal'));
+        // Alpine.data isn't doing what I'd like it to do here, perhaps because of requireJS...
+        // doing the update manually for now and will try in a separate branch where I have
+        // a local setup of Webpack running to see if it behaves better.
+        // window.Alpine.data('handleHtmxRequestError', function () {
+        //     return {
+        //         errorCode: evt.detail.xhr.status,
+        //         errorText: evt.detail.xhr.statusText,
+        //     };
+        // });
+        document.getElementById('htmxRequestErrorCode').textContent = evt.detail.xhr.status;
+        document.getElementById('htmxRequestErrorText').textContent = evt.detail.xhr.statusText;
+        modal.show();
     });
 });
