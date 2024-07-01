@@ -13,6 +13,7 @@ from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.user_data import prime_user_data_caches
 from corehq.util.log import with_progress_bar
+from custom.benin.tasks import process_updates_for_village_async
 
 LOCATION_TYPE_VILLAGE = "village"
 LOCATION_TYPE_RC = "rc"
@@ -35,6 +36,12 @@ class Command(BaseCommand):
             action='store_true',
             default=False,
             help="A dry run to only share the updates that would happen",
+        )
+        parser.add_argument(
+            '--run_in_celery',
+            action='store_true',
+            default=False,
+            help="Will spawn a celery task for each village",
         )
 
     def handle(self, domain, **options):
@@ -60,6 +67,8 @@ class Command(BaseCommand):
         """
         dry_run = options['dry_run']
         village_id = options['village_id']
+        run_in_celery = options['run_in_celery']
+
         start_time = time.time()
         logger.info("Started processing of script")
         if village_id:
@@ -69,35 +78,47 @@ class Command(BaseCommand):
         logger.info(f"Total number of villages found: {len(villages)}")
 
         for village in villages:
-            logger.info(f"Starting updates for village {village.name}")
-            users = _find_rc_users_at_location(domain, village)
-            logger.info(f"Total number of users: {len(users)}")
-            for user in users:
-                user_rc_number = user.get_user_data(domain).get('rc_number')
-                if user_rc_number:
-                    try:
-                        new_user_rc_location = _find_child_location_with_name(
-                            parent_location=village,
-                            location_name=user_rc_number
-                        )
-                    except MultipleMatchingLocationsFound:
-                        logger.error(f"Multiple matching locations found for user {user.username}:{user.user_id} "
-                                     f"with rc number {user_rc_number}")
-                    else:
-                        if new_user_rc_location:
-                            _update_cases(domain=domain, user=user, current_owner_id=village.location_id,
-                                          new_owner_id=new_user_rc_location.location_id,
-                                          dry_run=dry_run)
-                            _update_users_location(user=user, existing_location=village,
-                                                   new_location=new_user_rc_location, dry_run=dry_run)
-                            logger.info(f"User {user.username}:{user.user_id} updates completed.")
-                        else:
-                            logger.error(f"User {user.username}:{user.user_id} rc {user_rc_number} location "
-                                         f"not found")
+            if run_in_celery:
+                process_updates_for_village_async.delay(domain, village.id, dry_run)
+            else:
+                process_updates_for_village(domain, village.id, dry_run)
+
+        if run_in_celery:
+            logger.info("Celery tasks queued for all villages.")
+        else:
+            logger.info(f"Processing completed. Total execution time: {(time.time() - start_time):.2f}s")
+
+
+def process_updates_for_village(domain, village_id, dry_run):
+    village = SQLLocation.active_objects.get(pk=village_id)
+    logger.info(f"Starting updates for village {village.name}")
+    users = _find_rc_users_at_location(domain, village)
+    logger.info(f"Total number of users in village {village.name}: {len(users)}")
+    for user in users:
+        user_rc_number = user.get_user_data(domain).get('rc_number')
+        if user_rc_number:
+            try:
+                new_user_rc_location = _find_child_location_with_name(
+                    parent_location=village,
+                    location_name=user_rc_number
+                )
+            except MultipleMatchingLocationsFound:
+                logger.error(f"Multiple matching locations found for user {user.username}:{user.user_id} "
+                             f"with rc number {user_rc_number}")
+            else:
+                if new_user_rc_location:
+                    _update_cases(domain=domain, user=user, current_owner_id=village.location_id,
+                                  new_owner_id=new_user_rc_location.location_id,
+                                  dry_run=dry_run)
+                    _update_users_location(user=user, existing_location=village,
+                                           new_location=new_user_rc_location, dry_run=dry_run)
+                    logger.info(f"User {user.username}:{user.user_id} updates completed.")
                 else:
-                    logger.error(f"User {user.username}:{user.user_id} missing rc number")
-            logger.info(f"Updates for village {village.name} processed.")
-        logger.info(f"Processing completed. Total execution time: {(time.time() - start_time):.2f}s")
+                    logger.error(f"User {user.username}:{user.user_id} rc {user_rc_number} location "
+                                 f"not found")
+        else:
+            logger.error(f"User {user.username}:{user.user_id} missing rc number")
+    logger.info(f"Updates for village {village.name} processed.")
 
 
 def _find_locations(domain, location_type_code):
