@@ -3,6 +3,7 @@
 hqDefine("prototype/js/data_cleaning",[
     'underscore',
     'sortablejs',
+    'prototype/js/htmx_action',  // support hx-action attributes
 ], function (_, Sortable) {
     let htmx = window.htmx;
     htmx.onLoad(function (content) {
@@ -37,8 +38,10 @@ hqDefine("prototype/js/data_cleaning",[
     });
     document.body.addEventListener('htmx:beforeSend', function (evt) {
         if (evt.detail.elt.dataset.selectAll) {
+            // Transfer "select all" checkbox event from the table header checkbox to all checkboxes
+            // on client side by triggering the click event that Alpine is bound to
             let isSelected = evt.detail.elt.checked;
-            evt.detail.requestConfig.parameters.rowIds = _.map(
+            evt.detail.requestConfig.parameters.pageRowIds = _.map(
                 document.getElementsByClassName('js-select-row'), function (el) {
                     el.checked = isSelected;
                     htmx.trigger(el, 'click');
