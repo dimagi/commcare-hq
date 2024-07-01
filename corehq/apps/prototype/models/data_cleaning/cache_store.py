@@ -8,7 +8,7 @@ from corehq.util.quickcache import quickcache
 
 class BaseCacheStore:
     slug = None
-    timeout = 24 * 60 * 60
+    timeout = 24 * 60 * 60 * 60
     default_value = None
 
     def __init__(self, request):
@@ -23,6 +23,9 @@ class BaseCacheStore:
 
     def get(self):
         return cache.get(self.cache_key, self.default_value)
+
+    def delete(self):
+        cache.delete(self.cache_key)
 
 
 class VisibleColumnStore(BaseCacheStore):
