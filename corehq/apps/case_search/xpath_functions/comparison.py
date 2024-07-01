@@ -20,7 +20,6 @@ from corehq.apps.es.case_search import (
     case_property_numeric_range,
     case_property_query,
 )
-from corehq.toggles import CASE_SEARCH_INDEXED_METADATA
 from corehq.util.timezones.conversions import UserTime
 from corehq.util.timezones.utils import get_timezone_for_domain
 
@@ -39,8 +38,7 @@ def property_comparison_query(context, case_property_name_raw, op, value_raw, no
             return _create_system_datetime_query(
                 context.domain, meta_property, op, value, node,
             )
-        if (CASE_SEARCH_INDEXED_METADATA.enabled(context.domain)
-                and op in [EQ, NEQ] and not context.fuzzy):  # We can filter better at the top level
+        if op in [EQ, NEQ] and not context.fuzzy:  # We can filter better at the top level
             return _create_system_query(meta_property, op, value)
     return _create_query(context, case_property_name, op, value, node)
 
@@ -140,9 +138,7 @@ def _create_system_datetime_query(domain, meta_property, op, value, node):
         else:
             range_kwargs = {RANGE_OP_MAPPING[op]: utc_equivalent_datetime_value}
 
-    if CASE_SEARCH_INDEXED_METADATA.enabled(domain):
-        return filters.date_range(meta_property.es_field_name, **range_kwargs)
-    return case_property_date_range(meta_property.key, **range_kwargs)
+    return filters.date_range(meta_property.es_field_name, **range_kwargs)
 
 
 def adjust_input_date_by_timezone(date_, timezone, op):
