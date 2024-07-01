@@ -13,7 +13,7 @@
       <% if (typeof hint !== "undefined" && hint !== null) { %>
       <div class="hq-help" data-bs-toggle="popover">
         <a href="#" tabindex="-1" title="<%- text ? text : "" %>" data-bs-content="<%- hint ? hint : "" %>">
-          <i class="fa fa-question-circle icon-question-sign"></i>
+          <i class="fa fa-question-circle icon-question-sign" tabindex="0"></i>
         </a>
       </div>
       <% } %>
