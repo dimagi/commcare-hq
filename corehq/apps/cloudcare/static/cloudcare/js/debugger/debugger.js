@@ -6,7 +6,7 @@ hqDefine('cloudcare/js/debugger/debugger', [
     'clipboard/dist/clipboard',
     'ace-builds/src-min-noconflict/ace',
     'analytix/js/kissmetrix',
-    'reports/js/bootstrap3/readable_form',
+    'reports/js/bootstrap5/readable_form',
     'hqwebapp/js/atwho',    // $.atwho
     'ace-builds/src-min-noconflict/mode-json',
     'ace-builds/src-min-noconflict/mode-xml',
