@@ -3,7 +3,6 @@ import logging
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpResponseRedirect
 from django.http.response import HttpResponseServerError
 from django.shortcuts import get_object_or_404, redirect, render
@@ -392,11 +391,9 @@ class LocationTypesView(BaseDomainView):
 
         def _verify_has_users_config(loc_type_payload, pk):
             if not loc_type.get('has_users'):
-                try:
-                    existing_loc_type_sql_obj = LocationType.objects.get(pk=pk)
-                except ObjectDoesNotExist:  # Location type not created yet
+                if _is_fake_pk(pk):
                     return
-                if does_location_type_have_users(existing_loc_type_sql_obj):
+                if does_location_type_have_users(LocationType.objects.get(pk=pk)):
                     raise LocationConsistencyError(f"Locations of the organization level '{loc_type['name']}' "
                                                 "have users assigned to them. You can't uncheck the "
                                                 "'Has Users' setting for this level!")
