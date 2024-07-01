@@ -24,6 +24,7 @@
     </div>
     <div x-show="num_selected > 0" class="ps-2">
       <button type="button"
+              hx-action="select_all"
               hx-post="{{ request.path_info }}{% querystring %}"
               hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
               hx-vals='{"selectAll": false}'
@@ -33,6 +34,7 @@
     </div>
     <div x-show="num_selected > 0 && num_selected < total_records" class="ps-2">
       <button type="button"
+              hx-action="select_all"
               hx-post="{{ request.path_info }}{% querystring %}"
               hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
               hx-vals='{"selectAll": true}'
@@ -51,10 +53,10 @@
         {% endblocktrans %}
         <button type="button"
                 id="clear-filters-button"
-                hx-post="{{ request.path_info }}{% querystring %}"
                 hx-swap="none"
+                hx-post="{{ request.path_info }}{% querystring %}"
+                hx-action="clear_filters"
                 hx-on::after-request="htmx.trigger('#{{ table.filter_form_id }}', 'refreshFilters');"
-                hx-vals='{"clearFilters": true}'
                 class="btn btn-outline-danger btn-sm ms-2">
           <i class="fa-solid fa-close"></i> {% trans "Clear Filters" %}
         </button>
@@ -67,7 +69,7 @@
         Edits:
         <button type="button"
                 hx-post="{{ request.path_info }}{% querystring %}"
-                hx-vals='{"applyEdits": true}'
+                hx-action="apply_edits"
                 hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
                 class="btn btn-success btn-sm ms-2">
           <i class="fa-solid fa-check"></i> {% trans "Apply Edits to Selected Rows" %}
