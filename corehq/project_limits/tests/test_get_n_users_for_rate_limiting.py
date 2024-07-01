@@ -1,7 +1,6 @@
 from django.test import TestCase
 
-from corehq.apps.accounting.bootstrap.config.testing import BOOTSTRAP_CONFIG_TESTING
-from corehq.apps.accounting.models import SoftwarePlanEdition, FeatureType, Subscription
+from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
