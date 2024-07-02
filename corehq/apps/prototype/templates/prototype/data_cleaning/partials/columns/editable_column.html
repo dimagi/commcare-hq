@@ -1,9 +1,12 @@
 {% load django_tables2 %}
+{% load hq_shared_tags %}
 
 <div class="editable-column-container"
-     data-refresh-edit="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %} .edit-button"
      x-data='{ isEditing: false,
-               cellValue: "{% if edited_value %}{{ edited_value }}{% else %}{{ value }}{% endif %}" }'>
+               cellValue: "{% if edited_value %}{{ edited_value }}{% else %}{{ value }}{% endif %}" }'
+     {% if update_edit %}
+     x-init="$dispatch('updateApplyEditsButton', {{ table.has_edits|BOOL }})"
+     {% endif %}>
   <div class="inline-edit-block"
        x-show="!isEditing"
        @dblclick="isEditing = true">

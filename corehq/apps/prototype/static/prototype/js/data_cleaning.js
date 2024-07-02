@@ -36,9 +36,6 @@ hqDefine("prototype/js/data_cleaning",[
         if (evt.detail.elt.dataset.refreshTable) {
             htmx.trigger(evt.detail.elt.dataset.refreshTable, 'refreshTable');
         }
-        if (evt.detail.elt.dataset.refreshEdit) {
-            htmx.trigger(evt.detail.elt.dataset.refreshEdit, 'refreshEdit');
-        }
     });
     document.body.addEventListener('htmx:beforeSend', function (evt) {
         if (evt.detail.elt.dataset.selectAll) {

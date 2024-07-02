@@ -68,7 +68,20 @@
       </div>
     {% endif %}
 
-    {% include "prototype/data_cleaning/partials/buttons/apply_edits_button.html" %}
+    <div class="ps-2 ms-2 edit-button"
+         x-data="{ hasEdits: {{ table.has_edits|BOOL }} }"
+         x-show="hasEdits && numRecordsSelected > 0"
+         @update-apply-edits-button.camel.window="hasEdits = $event.detail">
+      <i class="fa-solid fa-pencil"></i>
+      {% trans "Edits" %}:
+      <button class="btn btn-success btn-sm ms-2"
+              type="button"
+              hx-post="{{ request.path_info }}{% querystring %}"
+              hx-action="apply_edits"
+              hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}">
+        <i class="fa-solid fa-check"></i> {% trans "Apply Edits to Selected Rows" %}
+      </button>
+    </div>
 
   </div>
   {{ block.super }}

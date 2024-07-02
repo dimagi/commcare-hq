@@ -198,6 +198,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
 
     def render_table_cell_response(self, request, *args, **kwargs):
         context = self.get_cell_context_data(request)
+        context['update_edit'] = True
         self.template_name = self.get_column().template_name
         return self.render_htmx_partial_response(
             request, self.get_column().template_name, context
@@ -228,16 +229,3 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
             del all_rows[self.record_id][edited_slug]
         data_store.set(all_rows)
         return self.render_table_cell_response(request, *args, **kwargs)
-
-    @hx_action('post')
-    def refresh_apply_edits_button(self, request, *args, **kwargs):
-        context = {}
-        table = config.RequestConfig(request).configure(
-            self.table_class(data=[])
-        )
-        context[self.get_context_table_name(table)] = table
-        return self.render_htmx_partial_response(
-            request,
-            "prototype/data_cleaning/partials/buttons/apply_edits_button.html",
-            context
-        )
