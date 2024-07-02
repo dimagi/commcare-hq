@@ -5,7 +5,7 @@
 
 {% block table-container-attrs %}
   hx-get="{{ request.path_info }}{% querystring %}"
-  hx-trigger="refreshTable, refreshAll"
+  hx-trigger="refreshTable"
   x-data="{
     numRecordsSelected: {{ table.num_selected_records }},
     totalRecords: {{ table.page.paginator.count }},
