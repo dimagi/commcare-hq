@@ -50,7 +50,9 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
                         "class": "form-check-input",
                         "name": "selectionAll",
                         "value": "all",
-                        "data-select-all": "true",
+                        # data attribute below is detected on htmx:beforeSend,
+                        # inserts `pageRowIds` into request
+                        "data-select-all": "js-select-row",
                         # htmx
                         "hx-swap": "none",
                         "hx-post": self.request.get_full_path(),

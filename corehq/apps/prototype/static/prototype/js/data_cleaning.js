@@ -39,13 +39,14 @@ hqDefine("prototype/js/data_cleaning",[
     });
     document.body.addEventListener('htmx:beforeSend', function (evt) {
         if (evt.detail.elt.dataset.selectAll) {
-            // Transfer "select all" checkbox event from the table header checkbox to all checkboxes
-            // on client side by triggering the click event that Alpine is bound to
             let isSelected = evt.detail.elt.checked;
             evt.detail.requestConfig.parameters.pageRowIds = _.map(
-                document.getElementsByClassName('js-select-row'), function (el) {
+                document.getElementsByClassName(evt.detail.elt.dataset.selectAll), function (el) {
                     el.checked = isSelected;
+
+                    // Triggers the @click events bound to checkboxes to update the Alpine data model
                     htmx.trigger(el, 'click');
+
                     return el.value;
                 });
         }
