@@ -393,7 +393,7 @@ class LocationTypesView(BaseDomainView):
             if not loc_type.get('has_users'):
                 if _is_fake_pk(pk):
                     return
-                if does_location_type_have_users(LocationType.objects.get(pk=pk)):
+                if does_location_type_have_users(LocationType.objects.get(pk=pk, domain=self.domain)):
                     raise LocationConsistencyError(f"Locations of the organization level '{loc_type['name']}' "
                                                 "have users assigned to them. You can't uncheck the "
                                                 "'Has Users' setting for this level!")
