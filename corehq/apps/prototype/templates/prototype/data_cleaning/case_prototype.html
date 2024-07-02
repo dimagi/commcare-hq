@@ -3,7 +3,7 @@
 {% load django_tables2 %}
 {% load i18n %}
 
-{% requirejs_main_b5 "prototype/js/data_cleaning" %}
+{% webpack_main "prototype/js/data_cleaning" %}
 
 {% block content %}
   <div hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
