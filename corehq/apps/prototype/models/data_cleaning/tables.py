@@ -7,6 +7,7 @@ from corehq.apps.prototype.models.data_cleaning.columns import EditableColumn
 
 class FakeCaseTable(tables.Table):
     css_id = "fake-case-table"
+    configure_columns_form_id = "configure-columns-form"
     filter_form_id = "filter-columns-form"
     clean_data_form_id = "clean-columns-form"
     available_columns = [
