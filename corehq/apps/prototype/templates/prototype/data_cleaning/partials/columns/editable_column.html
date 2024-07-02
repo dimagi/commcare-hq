@@ -1,6 +1,7 @@
 {% load django_tables2 %}
 
 <div class="editable-column-container"
+     data-refresh-edit="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %} .edit-button"
      x-data='{ isEditing: false,
                cellValue: "{% if edited_value %}{{ edited_value }}{% else %}{{ value }}{% endif %}" }'>
   <div class="inline-edit-block"
