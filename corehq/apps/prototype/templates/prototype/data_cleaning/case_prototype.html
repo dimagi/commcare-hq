@@ -6,6 +6,7 @@
 {% requirejs_main_b5 "prototype/js/data_cleaning" %}
 
 {% block content %}
+  {# note: we can also insert X-CSRFToken header on `body` element in base template--current best-practice from our other codebases #}
   <div hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     <div class="d-flex align-items-center m-3">
       <h1 class="fs-3 pe-3 py-3 m-0">
