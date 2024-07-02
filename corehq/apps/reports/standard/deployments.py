@@ -395,7 +395,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             rows.append(row_data)
         return rows
 
-    def _locations_names_dict(self, user_docs_es):
+    def _locations_names_dict(self, user_es_docs):
         """
         Returns a dict of all assigned location names for given `user_docs`.
         The dict has the following structure:
@@ -404,8 +404,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         }
         """
         all_loc_ids = set()
-        for user_doc in user_docs_es:
-            user = CouchUser.wrap_correctly(user_doc)
+        for user_es_doc in user_es_docs:
+            user = CouchUser.wrap_correctly(user_es_doc)
             for loc_id in user.get_location_ids(self.domain):
                 all_loc_ids.add(loc_id)
         return dict(SQLLocation.objects.filter(
@@ -507,8 +507,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         result[0][1] = table
         return result
 
-    def _get_location_column(self, user_doc_es, user_loc_dict):
-        user = CouchUser.wrap_correctly(user_doc_es)
+    def _get_location_column(self, user_es_doc, user_loc_dict):
+        user = CouchUser.wrap_correctly(user_es_doc)
         if not user.get_location_ids(self.domain):
             return '---'
         return self._get_formatted_assigned_location_names(user, user_loc_dict)
