@@ -1,0 +1,60 @@
+{% load django_tables2 %}
+{% load hq_shared_tags %}
+
+<div class="editable-column-container"
+     x-data='{ isEditing: false,
+               cellValue: "{% if edited_value %}{{ edited_value }}{% else %}{{ value }}{% endif %}" }'
+     {% if update_edit %}
+     x-init="$dispatch('updateApplyEditsButton', {{ table.has_edits|BOOL }})"
+     {% endif %}>
+  <div class="inline-edit-block"
+       x-show="!isEditing"
+       @dblclick="isEditing = true">
+    {% if edited_value %}
+      <form hx-post="{{ request.path_info }}{% querystring %}"
+            hx-action="cancel_edit"
+            hx-vals='{"column": "{{ column.accessor }}",
+                      "recordId": "{{ record.id }}" }'
+            hx-swap="outerHTML"
+            hx-target="closest .editable-column-container">
+        <div class="badge text-bg-danger">{{ value }}</div>
+        <div class="badge text-bg-success">{{ edited_value }}</div>
+        <button type="submit"
+                class="btn btn-outline-danger btn-sm">
+          <i class="fa fa-close"></i>
+        </button>
+      </form>
+    {% else %}
+      {{ value }}
+    {% endif %}
+    <button class="btn btn-link btn-sm inline-edit-button"
+            type="button"
+            @click="isEditing = true">
+       <i class="fa fa-pencil"></i>
+    </button>
+  </div>
+  <div x-show="isEditing">
+    <form hx-post="{{ request.path_info }}{% querystring %}"
+          hx-action="edit_cell_value"
+          hx-vals='{"recordId": {{ record.id }},
+                    "column": "{{ column.accessor }}"}'
+          hx-swap="outerHTML"
+          hx-target="closest .editable-column-container">
+      <div class="input-group">
+        <input type="text"
+               class="form-control"
+               name="newValue"
+               x-model="cellValue">
+        <button class="btn btn-primary"
+                type="submit">
+          <i class="fa fa-check"></i>
+        </button>
+        <button class="btn btn-outline-danger"
+                type="button"
+                @click="isEditing = false">
+          <i class="fa fa-close"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

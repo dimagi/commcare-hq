@@ -120,11 +120,48 @@
   }
 }
 
-
 .table thead tr th.select-header {
+  width: 28px;
   background-color: $blue-800;
 
   &:nth-child(odd) {
     background-color: $blue-700;
+  }
+}
+
+
+.table tbody tr td .inline-edit-block {
+  display: block;
+  background-color: transparent;
+  transition: background-color .5s ease-in-out;
+  position: relative;
+
+  .inline-edit-button {
+    position: absolute;
+    right: 0;
+    top: calc(50% - 12px);
+    opacity: 0;
+    transition: opacity .5s ease-in-out;
+  }
+
+  &:hover {
+    background-color: $gray-200;
+    &:nth-child(odd) {
+      background-color: $gray-300;
+    }
+  }
+
+  &:hover .inline-edit-button {
+    display: block;
+    opacity: 1;
+  }
+}
+
+.table tbody tr.table-primary td .inline-edit-block {
+  &:hover {
+    background-color: $blue-100;
+    &:nth-child(odd) {
+      background-color: $blue-200;
+    }
   }
 }
