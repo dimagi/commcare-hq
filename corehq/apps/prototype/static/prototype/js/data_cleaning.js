@@ -1,9 +1,11 @@
 'use strict';
 
-hqDefine("prototype/js/htmx/data_cleaning",[
+hqDefine("prototype/js/data_cleaning",[
     'underscore',
     'sortablejs',
-], function (_, Sortable) {
+    'es6!hqwebapp/js/bootstrap5_loader',
+    'prototype/js/htmx_action',  // support hx-action attributes
+], function (_, Sortable, bootstrap) {
     let htmx = window.htmx;
     htmx.onLoad(function (content) {
         let sortables = content.querySelectorAll(".sortable");
@@ -38,12 +40,25 @@ hqDefine("prototype/js/htmx/data_cleaning",[
     document.body.addEventListener('htmx:beforeSend', function (evt) {
         if (evt.detail.elt.dataset.selectAll) {
             let isSelected = evt.detail.elt.checked;
-            evt.detail.requestConfig.parameters.rowIds = _.map(
-                document.getElementsByClassName('js-select-row'), function (el) {
+            evt.detail.requestConfig.parameters.pageRowIds = _.map(
+                document.getElementsByClassName(evt.detail.elt.dataset.selectAll), function (el) {
                     el.checked = isSelected;
+
+                    // Triggers the @click events bound to checkboxes to update the Alpine data model
                     htmx.trigger(el, 'click');
+
                     return el.value;
                 });
         }
+    });
+    document.body.addEventListener('htmx:responseError', function (evt) {
+        let modal = new bootstrap.Modal(document.getElementById('htmxRequestErrorModal'));
+        window.dispatchEvent(new CustomEvent('updateHtmxRequestErrorModal', {
+            detail: {
+                errorCode: evt.detail.xhr.status,
+                errorText: evt.detail.xhr.statusText,
+            },
+        }));
+        modal.show();
     });
 });
