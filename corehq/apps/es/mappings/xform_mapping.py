@@ -140,6 +140,9 @@ XFORM_MAPPING = {
                         },
                         "username": {
                             "type": "keyword"
+                        },
+                        "formLoadTime": {
+                            "type": "keyword"
                         }
                     }
                 }

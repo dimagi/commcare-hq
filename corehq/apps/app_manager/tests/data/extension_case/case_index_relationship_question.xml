@@ -31,6 +31,7 @@
           <orx:instanceID/>
           <cc:appVersion/>
           <orx:drift/>
+          <orx:formLoadTime/>
         </orx:meta></data>
       </instance>
       <instance id="commcaresession" src="jr://instance/session"/>
