@@ -75,7 +75,8 @@ class ReadableFormdataTest(SimpleTestCase):
                     "#text": "2.0"
                 },
                 "timeStart": "2013-12-23T16:24:10Z",
-                "deviceID": "cloudcare"
+                "deviceID": "cloudcare",
+                "formLoadTime": "111",
             },
             "@version": "10"
         }
@@ -169,7 +170,8 @@ class ReadableFormdataTest(SimpleTestCase):
                     )
                 },
                 "timeStart": "2014-04-28T18:26:38Z",
-                "deviceID": "990004280784863"
+                "deviceID": "990004280784863",
+                "formLoadTime": "111",
             },
             "question1": "T",
             "question3": "item2",
@@ -291,7 +293,8 @@ class ReadableFormdataTest(SimpleTestCase):
                     )
                 },
                 "timeStart": "2014-04-28T18:26:38Z",
-                "deviceID": "990004280784863"
+                "deviceID": "990004280784863",
+                "formLoadTime": "111"
             },
             "@version": "8"
         }
@@ -339,7 +342,6 @@ class ReadableFormdataTest(SimpleTestCase):
         # BE SURE TO UPDATE BOTH THE PYTHON 2 AND 3 RESULT FILES!
         # print(yaml.safe_dump([json.loads(json.dumps(x.to_json()))
         #                       for x in questions]))
-
         self.assertJSONEqual(json.dumps([x.to_json() for x in questions]),
                              json.dumps(result),
                              msg="Search for \"READABLE FORMS TEST\" for more info on fixing this test")
