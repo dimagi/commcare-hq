@@ -13,6 +13,8 @@ from corehq.apps.prototype.models.data_cleaning.tables import FakeCaseTable
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.SAAS_PROTOTYPE.required_decorator(), name='dispatch')
 class ConfigureColumnsFormView(TemplateView):
+    """A form view without using Django forms and crispy Forms,
+    for comparison with the other form views."""
     urlname = "data_cleaning_configure_columns_form"
     template_name = "prototype/data_cleaning/partials/forms/configure_columns_form.html"
 
@@ -31,8 +33,9 @@ class ConfigureColumnsFormView(TemplateView):
                     'config': c[1],
                 }
                 for c in FakeCaseTable.get_visible_columns(visible_columns)],
-            "table_selector": f"#{FakeCaseTable.css_id}",
             "new_column_choices": new_column_choices,
+            "table_selector": f"#{FakeCaseTable.css_id}",
+            "container_id": FakeCaseTable.configure_columns_form_id,
         })
         return context
 
@@ -68,10 +71,10 @@ class FilterColumnsFormView(TemplateView):
         context = super().get_context_data(**kwargs)
         filter_form = kwargs.pop('filter_form') if 'filter_form' in kwargs else None
         context.update({
-            "container_id": FakeCaseTable.filter_form_id,
             "add_filter_form": filter_form or AddColumnFilterForm(FakeCaseTable),
             "column_filters": ColumnFilter.get_filters_from_cache(self.request),
             "table_selector": f"#{FakeCaseTable.css_id}",
+            "container_id": FakeCaseTable.filter_form_id,
         })
         return context
 
@@ -100,11 +103,11 @@ class CleanDataFormView(TemplateView):
         context = super().get_context_data(**kwargs)
         clean_data_form = kwargs.pop('clean_data_form') if 'clean_data_form' in kwargs else None
         context.update({
-            "container_id": FakeCaseTable.filter_form_id,
             "clean_data_form": clean_data_form or CleanColumnDataForm(
                 FakeCaseTable, FakeCaseDataStore(self.request)
             ),
             "table_selector": f"#{FakeCaseTable.css_id}",
+            "container_id": FakeCaseTable.clean_data_form_id,
         })
         return context
 
