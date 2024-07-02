@@ -366,8 +366,8 @@ hqDefine("app_manager/js/details/column", function () {
         self.$format.find("select").css("margin-bottom", "5px");
         self.format.on('change', function () {
             if (self.field.val() === microCaseImageName && self.format.val() !== 'image') {
-                // After changing the format to something other than image, clear the reserved micro image field
-                // name and make the input editable again
+                // The field name input was disabled to enforce using the reserved micro image name.
+                // If the format is no longer an image then the user can edit the field input again
                 self.field.val('');
                 self.field.observableVal('');
                 self.field.ui.find('select').val('').change();
@@ -437,8 +437,8 @@ hqDefine("app_manager/js/details/column", function () {
                         fireChange();
                     });
                 } else if (this.val() === 'image') {
-                    // After selecting the image format, set the reserved micro image name as the
-                    // field name and make the input uneditable
+                    // We are enforcing the reserved field name for the micro image format,
+                    // so don't allow a user to change this
                     self.field.ui.find('select').val(microCaseImageName).change();
                     self.field.val(microCaseImageName);
                     self.field.observableVal(microCaseImageName);
