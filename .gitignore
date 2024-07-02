@@ -85,3 +85,7 @@ corehq/apps/hqwebapp/static/hqwebapp/js/lib/modernizr.js
 # direnv
 .envrc
 .direnv
+
+# setup
+.setup_progress
+.setup_container
