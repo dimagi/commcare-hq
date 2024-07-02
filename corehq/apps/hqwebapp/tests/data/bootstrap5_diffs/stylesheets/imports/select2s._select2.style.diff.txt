@@ -173,7 +173,7 @@
 +
 +.select2-container--default {
 +  .select2-selection--single .select2-selection__clear {
-+    margin-right: 30px;
++    margin-right: 30px !important;
 +  }
 +}
 +

@@ -1,0 +1,30 @@
+{% load i18n %}
+
+<script type="text/html" id="select-entry-ko-template">
+  <fieldset>
+  <legend class="sr-only" data-bind="text: question.caption()"></legend>
+    <div class="sel clear">
+      <div data-bind="foreach: choices, as: 'choice', css: {row: $data.colStyleIfHideLabel()}">
+        <div data-bind="css: {'form-check': !$parent.colStyleIfHideLabel()}, class: $parent.colStyleIfHideLabel()">
+          <input data-bind="
+                      checked: $parent.rawAnswer,
+                      checkedValue: $data,
+                      css: { 'is-invalid': $parent.question.hasError() },
+                      attr: {
+                          id: 'group-' + $parent.entryId + '-choice-' + $index(),
+                          type: $parent.isMulti ? 'checkbox' : 'radio',
+                          name: $parent.entryId,
+                          class: 'group-' + $parent.entryId + ' form-check-input',
+                      },
+                  "/>
+          <label class="form-check-label"
+                 data-bind="renderMarkdown: $data, class: $parent.hideLabel ? 'sr-only' : '', attr: {'for': 'group-' + $parent.entryId + '-choice-' + $index(),}"
+          ></label>
+        </div>
+      </div>
+      <button type="button" class="btn btn-outline-primary btn-sm float-end" data-bind="click: onClear, fadeVisible: !isMulti && rawAnswer()">
+        {% trans "Clear" %}
+      </button>
+    </div>
+  </fieldset>
+</script>

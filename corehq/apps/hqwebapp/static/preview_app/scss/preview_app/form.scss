@@ -73,7 +73,7 @@
   }
 }
 
-.form-group {
+.q {
   padding: 10px 0;
   label {
     margin-right: 10px;
@@ -81,15 +81,12 @@
   }
 }
 
-.form-group.required {
+.q.required {
   transition: all .5s;
   margin-bottom: 0;
-  label:before {
-    display: none;
-  }
 }
 
-.form-group.required.on {
+.q.required.on {
   background-color: $cc-att-neg-hi;
   border: 10px solid $cc-att-neg-mid;
   border-bottom: none;
@@ -119,7 +116,7 @@
   border: none;
 }
 
-.form-group .help-block {
+.q .help-block {
   font-size: 11px;
   &:before {
     content: "\f05a";

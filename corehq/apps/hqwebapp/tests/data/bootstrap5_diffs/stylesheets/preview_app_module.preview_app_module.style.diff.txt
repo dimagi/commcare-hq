@@ -15,7 +15,7 @@
    .input-group-lg .form-control,
    .input-group-lg .btn{
      font-size: 11px;
-@@ -45,18 +45,14 @@
+@@ -45,19 +45,17 @@
    }
  }
  
@@ -23,35 +23,39 @@
 -  width: 140px;
 -}
 -
- .module-per-page-container {
--  .input-group-lg .form-control,
+-.module-per-page-container {
++.pagination-container {
++  .form-select,
++  .pagination-lg .page-link,
+   .input-group-lg .form-control,
 -  .input-group-lg .btn{
-+  .pagination-lg .form-control,
-+  .pagination-lg .btn{
++  .input-group-lg .btn {
      font-size: 11px;
      height: 30px;
      padding: 5px 10px;
    }
 -  .input-group-lg .btn [class*='fa-'] {
-+  .pagination-lg .btn [class*='fa-'] {
-     font-size: 11px;
-   }
- }
-@@ -76,13 +72,6 @@
+-    font-size: 11px;
++  .form-select {
++    padding: 5px 20px;  // extra padding for the sake of the arrow
    }
  }
  
+@@ -73,13 +71,6 @@
+ 
+   .module-icon {
+     max-height: 30px;
+-  }
+-}
+-
 -.module-pagination-container .pagination {
 -  font-size: 10px;
 -  [class*='fa-'] {
 -    font-size: 14px;
--  }
--}
--
- .module-case-detail-modal {
-   padding: 0 !important;
-   width: 251px;
-@@ -99,8 +88,7 @@
+   }
+ }
+ 
+@@ -99,8 +90,7 @@
    .modal-content {
      height: 442px;
      overflow-x: hidden;
@@ -61,7 +65,7 @@
    }
  }
  
-@@ -110,8 +98,7 @@
+@@ -110,8 +100,7 @@
    }
  
    .modal-content {
@@ -71,3 +75,13 @@
    }
  
    .btn-lg {
+@@ -142,8 +131,7 @@
+ 
+ .module-banner {
+   font-size: 11px;
+-  padding-left: 6px;
+-  padding-right: 6px;
++  padding: 6px;
+ }
+ 
+ .module-menu-bar-offset {

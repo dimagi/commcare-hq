@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,16 +1,11 @@
+@@ -1,16 +1,10 @@
  #breadcrumb-region .breadcrumb,
  .single-app-view .breadcrumb,
  .breadcrumb-form-container .breadcrumb {
@@ -16,11 +16,10 @@
 +  .breadcrumb-item {
      &:before {
 -      padding: 0 6px 0 12px;
-+      padding: 0 6px 0 0;
        color: #ffffff;
        font-size: 12px;
        vertical-align: top;
-@@ -23,16 +18,16 @@
+@@ -23,16 +17,16 @@
  }
  
  #breadcrumb-region .breadcrumb-nav {
@@ -40,7 +39,7 @@
      margin-bottom: 0;
      flex-grow: 1;
    }
-@@ -52,7 +47,7 @@
+@@ -52,7 +46,7 @@
      font-size: 12px;
      margin-bottom: 0px;
      padding-left: 33px;

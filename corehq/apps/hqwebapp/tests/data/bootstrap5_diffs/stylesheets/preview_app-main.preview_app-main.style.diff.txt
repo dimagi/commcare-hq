@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,25 +1,17 @@
+@@ -1,25 +1,18 @@
 -@import '../../hqwebapp/less/_hq/includes/variables.less';
 -@import '../../hqwebapp/less/_hq/includes/mixins.less';
 -
@@ -14,6 +14,7 @@
  
 -@import "preview_app/base";
  @import "preview_app/variables";
++@import "preview_app/datepicker";
  @import "preview_app/notifications";
  @import "preview_app/scrollable";
  @import "preview_app/navigation";
