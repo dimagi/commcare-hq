@@ -56,8 +56,8 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
                         "hx-post": self.request.get_full_path(),
                         "hx-action": "select_page",
                         # alpine
-                        # `page_num_selected`, `page_total_records`: defined in table_with_status_bar.html
-                        ":checked": "page_num_selected == page_total_records",
+                        # `pageNumRecordsSelected`, `pageTotalRecords`: defined in table_with_status_bar.html
+                        ":checked": "pageNumRecordsSelected == pageTotalRecords",
                     },
                     "td__input": {
                         "class": "form-check-input js-select-row",
@@ -67,14 +67,14 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
                         "hx-action": "select_row",
                         "hx-vals": self.get_checkbox_hx_vals,
                         # alpine
-                        "x-init": "if ($el.checked) { page_num_selected++; }",
-                        # `is_selected`: defined in FakeCaseTable.Meta.row_attrs
-                        # `page_num_selected`, `num_selected`: defined in table_with_status_bar.html
-                        "@click": "if ($event.target.checked != is_selected) {"
-                                  "  $event.target.checked ? num_selected++ : num_selected--;"
-                                  "  $event.target.checked ? page_num_selected++ : page_num_selected--; "
+                        "x-init": "if ($el.checked) { pageNumRecordsSelected++; }",
+                        # `isRowSelected`: defined in FakeCaseTable.Meta.row_attrs
+                        # `pageNumRecordsSelected`, `numRecordsSelected`: defined in table_with_status_bar.html
+                        "@click": "if ($event.target.checked != isRowSelected) {"
+                                  "  $event.target.checked ? numRecordsSelected++ : numRecordsSelected--;"
+                                  "  $event.target.checked ? pageNumRecordsSelected++ : pageNumRecordsSelected--; "
                                   "}"
-                                  "is_selected = $event.target.checked;"
+                                  "isRowSelected = $event.target.checked;"
                     },
                 },
                 orderable=False,

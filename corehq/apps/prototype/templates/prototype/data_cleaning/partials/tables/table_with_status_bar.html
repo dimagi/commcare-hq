@@ -7,10 +7,10 @@
   hx-get="{{ request.path_info }}{% querystring %}"
   hx-trigger="refreshTable, refreshAll"
   x-data="{
-    num_selected: {{ table.num_selected_records }},
-    total_records: {{ table.page.paginator.count }},
-    page_total_records: {{ table.paginator.per_page }},
-    page_num_selected: 0,
+    numRecordsSelected: {{ table.num_selected_records }},
+    totalRecords: {{ table.page.paginator.count }},
+    pageTotalRecords: {{ table.paginator.per_page }},
+    pageNumRecordsSelected: 0,
   }"
 {% endblock %}
 
@@ -19,26 +19,30 @@
     <div class="my-1">
       <i class="fa-solid fa-circle-check"></i>
       {% blocktrans %}
-        <span x-text="num_selected"></span> Records Selected
+        <span x-text="numRecordsSelected"></span> Records Selected
       {% endblocktrans %}
     </div>
-    <div x-show="num_selected > 0" class="ps-2">
-      <button type="button"
+    <div class="ps-2"
+         x-show="numRecordsSelected > 0">
+      <button class="btn btn-outline-danger btn-sm"
+              type="button"
               hx-action="select_all"
               hx-post="{{ request.path_info }}{% querystring %}"
               hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
-              hx-vals='{"selectAll": false}'
-              class="btn btn-outline-danger btn-sm">
-        Cancel Selection
+              hx-vals='{"selectAll": false}'>
+        {% blocktrans %}
+          Cancel Selection
+        {% endblocktrans %}
       </button>
     </div>
-    <div x-show="num_selected > 0 && num_selected < total_records" class="ps-2">
-      <button type="button"
+    <div class="ps-2"
+         x-show="numRecordsSelected > 0 && numRecordsSelected < totalRecords">
+      <button class="btn btn-outline-primary btn-sm"
+              type="button"
               hx-action="select_all"
               hx-post="{{ request.path_info }}{% querystring %}"
               hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
-              hx-vals='{"selectAll": true}'
-              class="btn btn-outline-primary btn-sm">
+              hx-vals='{"selectAll": true}'>
         {% blocktrans %}
           Select All {{ table.page.paginator.count }} Records
         {% endblocktrans %}
@@ -51,13 +55,12 @@
         {% blocktrans %}
           Filter Applied: {{ table.page.paginator.count }} Matching Records
         {% endblocktrans %}
-        <button type="button"
-                id="clear-filters-button"
+        <button class="btn btn-outline-danger btn-sm ms-2"
+                type="button"
                 hx-swap="none"
                 hx-post="{{ request.path_info }}{% querystring %}"
                 hx-action="clear_filters"
-                hx-on::after-request="htmx.trigger('#{{ table.filter_form_id }}', 'refreshFilters');"
-                class="btn btn-outline-danger btn-sm ms-2">
+                hx-on::after-request="htmx.trigger('#{{ table.filter_form_id }}', 'refreshFilters');">
           <i class="fa-solid fa-close"></i> {% trans "Clear Filters" %}
         </button>
       </div>
