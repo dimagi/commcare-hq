@@ -134,7 +134,7 @@ hqDefine('hqwebapp/js/bootstrap5/inactivity', [
             } else {
                 $newVersionModal.find('#incompleteFormWarning').addClass('d-none');
             }
-            if (!isModalOpen($modal)) {
+            if (!isModalOpen($loginModal)) {
                 if (isModalOpen($warningModal)) {
                     warningModal.hide();
                 }

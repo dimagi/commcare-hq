@@ -81,9 +81,11 @@
 +                $newVersionModal.find('#incompleteFormWarning').removeClass('d-none');
              } else {
 -                $newVersionModal.find('#incompleteFormWarning').hide();
+-            }
+-            if (!isModalOpen($modal)) {
 +                $newVersionModal.find('#incompleteFormWarning').addClass('d-none');
-             }
-             if (!isModalOpen($modal)) {
++            }
++            if (!isModalOpen($loginModal)) {
                  if (isModalOpen($warningModal)) {
 -                    $warningModal.modal('hide');
 +                    warningModal.hide();
