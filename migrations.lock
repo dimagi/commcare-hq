@@ -116,6 +116,7 @@ accounting
  0094_add_annual_softwareplans
  0095_update_softwareplan_visibilities
  0096_domainsubmittingmobileworkerhistory_and_featuretype_choice
+ 0097_add_submitting_mobile_worker_feature
 admin
  0001_initial
  0002_logentry_remove_auto_add
