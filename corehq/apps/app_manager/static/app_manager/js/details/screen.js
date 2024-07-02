@@ -494,7 +494,8 @@ hqDefine("app_manager/js/details/screen", function () {
         self.save = function () {
             // Only save if property names are valid
             var errors = [],
-                containsTab = false;
+                containsTab = false,
+                imageColumnCount = 0;
             _.each(self.columns(), function (column) {
                 column.saveAttempted(true);
                 if (column.isTab) {
@@ -504,8 +505,14 @@ hqDefine("app_manager/js/details/screen", function () {
                     }
                 } else if (column.showWarning()) {
                     errors.push(gettext("There is an error in your property name: ") + column.field.value);
+                } else if (column.format.value === 'image') {
+                    imageColumnCount += 1;
                 }
             });
+
+            if (imageColumnCount > 1) {
+                errors.push(gettext("You can only have one property with the 'Image' format"));
+            }
             if (containsTab) {
                 if (!self.columns()[0].isTab) {
                     errors.push(gettext("All properties must be below a tab."));
