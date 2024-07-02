@@ -150,13 +150,10 @@ def get_date_header(request):
 
 
 def get_submit_ip(request):
-    from corehq.apps.ota.decorators import ORIGIN_TOKEN_HEADER, validate_origin_token
-    x_commcarehq_origin_ip = request.META.get(COMMCAREHQ_ORIGIN_IP, None)
-    origin_token = request.META.get(ORIGIN_TOKEN_HEADER, None)
-    if x_commcarehq_origin_ip:
-        is_ip_address = IP_RE.match(x_commcarehq_origin_ip)
-        if is_ip_address and validate_origin_token(origin_token):
-            return x_commcarehq_origin_ip
+    from corehq.apps.ota.decorators import is_from_formplayer
+    origin_ip = request.META.get(COMMCAREHQ_ORIGIN_IP)
+    if is_from_formplayer(request) and origin_ip and IP_RE.match(origin_ip):
+        return origin_ip
     return get_ip(request)
 
 

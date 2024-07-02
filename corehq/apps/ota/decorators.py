@@ -47,6 +47,11 @@ def require_mobile_access(fn):
     return _inner
 
 
+def is_from_formplayer(request):
+    token = request.META.get(ORIGIN_TOKEN_HEADER)
+    return token is not None and validate_origin_token(token)
+
+
 def validate_origin_token(origin_token):
     """
     This checks that the origin token passed in is a valid one set in redis
