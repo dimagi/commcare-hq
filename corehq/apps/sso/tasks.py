@@ -128,7 +128,7 @@ def auto_deactivate_removed_sso_users():
         idp_type=IdentityProviderType.ENTRA_ID,
     ).all():
         try:
-            usernames_in_idp = set(convert_emails_to_lowercase(idp.get_all_usernames_of_the_idp()))
+            usernames_in_idp = set(convert_emails_to_lowercase(idp.get_remote_member_usernames()))
         except EntraVerificationFailed as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.VERIFICATION_ERROR,
@@ -154,7 +154,7 @@ def auto_deactivate_removed_sso_users():
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.EMPTY_ERROR)
             continue
 
-        usernames_governed_by_idp = set(idp.get_webuser_names_goverened_by_idp())
+        usernames_governed_by_idp = set(idp.get_local_member_usernames())
 
         # Deactivate user that is not returned by Graph Users API
         for username in usernames_governed_by_idp:

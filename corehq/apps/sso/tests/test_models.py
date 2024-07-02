@@ -120,31 +120,31 @@ class IdentityProviderGovernanceScopeTests(TestCase):
         )
         return self._create_web_user(username)
 
-    def test_get_webuser_names_goverened_by_idp_returns_everyone_when_login_enforcement_is_global(self):
-        self.assertCountEqual(self.idp.get_webuser_names_goverened_by_idp(),
+    def test_idp_governance_scope_returns_everyone_when_login_enforcement_is_global(self):
+        self.assertCountEqual(self.idp.get_local_member_usernames(),
                               [self.web_user_a.username, self.web_user_b.username, self.web_user_c.username,
                                self.test_user_a.username, self.test_user_b.username])
 
-    def test_get_webuser_names_goverened_by_idp_returns_test_user_only_when_login_enforcement_is_test(self):
+    def test_idp_governance_scope_returns_test_user_only_when_login_enforcement_is_test(self):
         self.idp.login_enforcement_type = LoginEnforcementType.TEST
         self.idp.save()
 
-        self.assertCountEqual(self.idp.get_webuser_names_goverened_by_idp(),
+        self.assertCountEqual(self.idp.get_local_member_usernames(),
                               [self.test_user_a.username, self.test_user_b.username])
 
-    def test_get_webuser_names_goverened_by_idp_excludes_exempt_user(self):
+    def test_idp_governance_scope_excludes_exempt_user(self):
         # exempt user cannot be test user, so this idp must be in global mode
         UserExemptFromSingleSignOn.objects.create(
             email_domain=self.email_domain,
             username=f'exempt{self.email_domain}'
         )
-        self.assertCountEqual(self.idp.get_webuser_names_goverened_by_idp(),
+        self.assertCountEqual(self.idp.get_local_member_usernames(),
                               [self.web_user_a.username, self.web_user_b.username, self.web_user_c.username,
                                self.test_user_a.username, self.test_user_b.username])
 
-    def test_get_webuser_names_governed_by_idp_excludes_users_have_different_email_domain(self):
+    def test_idp_governance_scope_excludes_users_have_different_email_domain(self):
         self.other_email_domain_user = self._create_web_user('a@gmail.com')
 
-        self.assertCountEqual(self.idp.get_webuser_names_goverened_by_idp(),
+        self.assertCountEqual(self.idp.get_local_member_usernames(),
                               [self.web_user_a.username, self.web_user_b.username, self.web_user_c.username,
                                self.test_user_a.username, self.test_user_b.username])
