@@ -12,6 +12,8 @@
     pageTotalRecords: {{ table.paginator.per_page }},
     pageNumRecordsSelected: 0,
   }"
+  x-init="$dispatch('numRecordsSelectedChanged', numRecordsSelected);
+          $watch('numRecordsSelected', value => $dispatch('numRecordsSelectedChanged', value))"
 {% endblock %}
 
 {% block before_table %}
