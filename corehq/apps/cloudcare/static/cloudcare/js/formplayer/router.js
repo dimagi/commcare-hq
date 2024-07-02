@@ -76,7 +76,7 @@ hqDefine("cloudcare/js/formplayer/router", [
                 // We can't do any menu navigation without an appId
                 FormplayerFrontend.trigger("apps:list");
             } else {
-                menusController.selectMenu(urlObject);
+                return menusController.selectMenu(urlObject);
             }
         },
         listUsers: function (page, query) {
@@ -226,7 +226,7 @@ hqDefine("cloudcare/js/formplayer/router", [
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:query", function (queryDict, sidebarEnabled, initiatedByTag) {
+    FormplayerFrontend.getChannel().reply("menu:query", function (queryDict, sidebarEnabled, initiatedByTag) {
         var urlObject = utils.currentUrlToObject();
         var queryObject = _.extend(
             {
@@ -243,7 +243,7 @@ hqDefine("cloudcare/js/formplayer/router", [
         urlObject.setRequestInitiatedByTag(initiatedByTag);
         let encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
         sessionStorage.removeItem('selectedValues');
-        API.listMenus(encodedUrl);
+        return API.listMenus(encodedUrl);
     });
 
     FormplayerFrontend.on('restore_as:list', function () {
