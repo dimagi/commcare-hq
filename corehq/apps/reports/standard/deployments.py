@@ -312,23 +312,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             )
         )
 
-    def locations_names_dict(self, user_docs):
-        """
-        Returns a dict of all assigned location names for given `user_docs`.
-        The dict has the following structure:
-        {
-            'loc_id': 'loc_name'
-        }
-        """
-        all_loc_ids = set()
-        for user_doc in user_docs:
-            user = CouchUser.wrap_correctly(user_doc)
-            for loc_id in user.get_location_ids(self.domain):
-                all_loc_ids.add(loc_id)
-        return dict(SQLLocation.objects.filter(
-            location_id__in=all_loc_ids, domain=self.domain
-        ).values_list('location_id', 'name'))
-
     def process_rows(self, users, fmt_for_export=False):
         rows = []
         users = list(users)
@@ -338,7 +321,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             grouped_ancestor_locs = self.get_bulk_ancestors(location_ids)
             self.required_loc_columns = self.get_location_columns(grouped_ancestor_locs)
 
-        loc_names_dict = self.locations_names_dict(users)
+        loc_names_dict = self._locations_names_dict(users)
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
             last_build_profile_name = device = device_app_meta = num_unsent_forms = None
@@ -396,7 +379,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 user_display_string(user.get('username', ''),
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
-                self.get_location_column(user, loc_names_dict),
+                self._get_location_column(user, loc_names_dict),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
                 app_name or "---", build_version, commcare_version or '---',
                 num_unsent_forms if num_unsent_forms is not None else "---",
@@ -411,6 +394,23 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
             rows.append(row_data)
         return rows
+
+    def _locations_names_dict(self, user_docs_es):
+        """
+        Returns a dict of all assigned location names for given `user_docs`.
+        The dict has the following structure:
+        {
+            'loc_id': 'loc_name'
+        }
+        """
+        all_loc_ids = set()
+        for user_doc in user_docs_es:
+            user = CouchUser.wrap_correctly(user_doc)
+            for loc_id in user.get_location_ids(self.domain):
+                all_loc_ids.add(loc_id)
+        return dict(SQLLocation.objects.filter(
+            location_id__in=all_loc_ids, domain=self.domain
+        ).values_list('location_id', 'name'))
 
     def process_facts(self, app_status_facts, fmt_for_export=False):
         rows = []
@@ -507,8 +507,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         result[0][1] = table
         return result
 
-    def get_location_column(self, user_doc, user_loc_dict):
-        user = CouchUser.wrap_correctly(user_doc)
+    def _get_location_column(self, user_doc_es, user_loc_dict):
+        user = CouchUser.wrap_correctly(user_doc_es)
         if not user.get_location_ids(self.domain):
             return '---'
         return self._get_formatted_assigned_location_names(user, user_loc_dict)
