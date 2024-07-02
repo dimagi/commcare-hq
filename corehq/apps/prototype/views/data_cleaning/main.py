@@ -17,7 +17,7 @@ from corehq.apps.prototype.models.data_cleaning.cache_store import FakeCaseDataS
 @method_decorator(use_alpinejs, name='dispatch')
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.SAAS_PROTOTYPE.required_decorator(), name='dispatch')
-class DataCleaningPrototypeView(BasePageView):
+class CaseDataCleaningPrototypeView(BasePageView):
     urlname = "prototype_data_cleaning_case"
     template_name = 'prototype/data_cleaning/case_prototype.html'
 

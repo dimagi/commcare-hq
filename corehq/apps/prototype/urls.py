@@ -1,7 +1,7 @@
 from django.urls import re_path as url
 from corehq.apps.prototype.views import example
 from corehq.apps.prototype.views.data_cleaning.main import (
-    DataCleaningPrototypeView,
+    CaseDataCleaningPrototypeView,
     reset_data,
 )
 from corehq.apps.prototype.views.data_cleaning.forms import (
@@ -26,8 +26,8 @@ urlpatterns = [
         name=HtmxPaginationView.urlname),
     url(r'^htmx/pagination/data/$', PaginationDataView.as_view(),
         name=PaginationDataView.urlname),
-    url(r'^htmx/cleaning/$', DataCleaningPrototypeView.as_view(),
-        name=DataCleaningPrototypeView.urlname),
+    url(r'^htmx/cleaning/$', CaseDataCleaningPrototypeView.as_view(),
+        name=CaseDataCleaningPrototypeView.urlname),
     url(r'^htmx/cleaning/data/$', DataCleaningTableView.as_view(),
         name=DataCleaningTableView.urlname),
     url(r'^htmx/cleaning/forms/columns/$', ConfigureColumnsFormView.as_view(),
