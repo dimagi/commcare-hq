@@ -454,11 +454,12 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
             return !modernizr.smil;
         }
 
-        var $unsupportedBrowser = $("#unsupported-browser");
-        if (unsupportedBrowser()) {
-            $unsupportedBrowser.removeClass('hide'); // todo remove after bootstrap5 migration
-            $unsupportedBrowser.removeClass('d-none');
-        }
+        // todo: figure out with webpack loading
+        // var $unsupportedBrowser = $("#unsupported-browser");
+        // if (unsupportedBrowser()) {
+        //     $unsupportedBrowser.removeClass('hide'); // todo remove after bootstrap5 migration
+        //     $unsupportedBrowser.removeClass('d-none');
+        // }
 
         // EULA modal
         var eulaCookie = "gdpr_rollout";
