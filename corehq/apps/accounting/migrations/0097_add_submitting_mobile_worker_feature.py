@@ -3,7 +3,7 @@ from django.db import migrations
 from corehq.apps.accounting.bootstrap.config.submitting_mobile_worker_feature_rate import (
     BOOTSTRAP_CONFIG,
 )
-from corehq.apps.accounting.bootstrap.utils import _ensure_feature_rates
+from corehq.apps.accounting.bootstrap.utils import ensure_feature_rates
 from corehq.apps.accounting.models import FeatureType
 
 
@@ -14,7 +14,7 @@ def _add_submitting_mobile_worker_feature(apps, schema_editor):
         feature_type=FeatureType.SUBMITTING_MOBILE_WORKER
     )
     features = [submitting_mobile_worker_feature]
-    feature_rates = _ensure_feature_rates(BOOTSTRAP_CONFIG['feature_rates'], features, None, True, apps)
+    feature_rates = ensure_feature_rates(BOOTSTRAP_CONFIG['feature_rates'], features, True, apps)
     for feature_rate in feature_rates:
         feature_rate.save()
 

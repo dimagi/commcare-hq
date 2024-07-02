@@ -30,10 +30,7 @@ def ensure_plans(config, verbose, apps):
             verbose=verbose, apps=apps,
         )
         features = _ensure_features(plan_deets['feature_rates'], plan_key.edition, verbose, apps)
-        feature_rates = _ensure_feature_rates(
-            plan_deets['feature_rates'], features, plan_key.edition,
-            verbose=verbose, apps=apps,
-        )
+        feature_rates = ensure_feature_rates(plan_deets['feature_rates'], features, verbose=verbose, apps=apps)
 
         software_plan = _ensure_software_plan(plan_key, product, product_rate, verbose, apps)
         _ensure_software_plan_version(role, software_plan, product_rate, feature_rates, apps)
@@ -131,7 +128,7 @@ def _ensure_features(feature_rates, edition, verbose, apps):
     return features
 
 
-def _ensure_feature_rates(feature_rates, features, edition, verbose, apps):
+def ensure_feature_rates(feature_rates, features, verbose, apps):
     """
     Ensures that all the FeatureRates necessary for the plans are created.
     """
