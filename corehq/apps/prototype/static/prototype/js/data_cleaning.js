@@ -1,9 +1,11 @@
 'use strict';
 
-hqDefine("prototype/js/htmx/data_cleaning",[
+hqDefine("prototype/js/data_cleaning",[
     'underscore',
     'sortablejs',
-], function (_, Sortable) {
+    'es6!hqwebapp/js/bootstrap5_loader',
+    'prototype/js/htmx_action',  // support hx-action attributes
+], function (_, Sortable, bootstrap) {
     let htmx = window.htmx;
     htmx.onLoad(function (content) {
         let sortables = content.querySelectorAll(".sortable");
@@ -37,13 +39,30 @@ hqDefine("prototype/js/htmx/data_cleaning",[
     });
     document.body.addEventListener('htmx:beforeSend', function (evt) {
         if (evt.detail.elt.dataset.selectAll) {
+            // Transfer "select all" checkbox event from the table header checkbox to all checkboxes
+            // on client side by triggering the click event that Alpine is bound to
             let isSelected = evt.detail.elt.checked;
-            evt.detail.requestConfig.parameters.rowIds = _.map(
+            evt.detail.requestConfig.parameters.pageRowIds = _.map(
                 document.getElementsByClassName('js-select-row'), function (el) {
                     el.checked = isSelected;
                     htmx.trigger(el, 'click');
                     return el.value;
                 });
         }
+    });
+    document.body.addEventListener('htmx:responseError', function (evt) {
+        let modal = new bootstrap.Modal(document.getElementById('htmx-request-error-modal'));
+        // Alpine.data isn't doing what I'd like it to do here, perhaps because of requireJS...
+        // doing the update manually for now and will try in a separate branch where I have
+        // a local setup of Webpack running to see if it behaves better.
+        // window.Alpine.data('handleHtmxRequestError', function () {
+        //     return {
+        //         errorCode: evt.detail.xhr.status,
+        //         errorText: evt.detail.xhr.statusText,
+        //     };
+        // });
+        document.getElementById('htmxRequestErrorCode').textContent = evt.detail.xhr.status;
+        document.getElementById('htmxRequestErrorText').textContent = evt.detail.xhr.statusText;
+        modal.show();
     });
 });
