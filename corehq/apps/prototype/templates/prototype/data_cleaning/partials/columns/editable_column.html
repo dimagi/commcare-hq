@@ -4,9 +4,9 @@
 <div class="editable-column-container"
      x-data='{ isEditing: false,
                cellValue: "{% if edited_value %}{{ edited_value }}{% else %}{{ value }}{% endif %}" }'
-     {% if update_edit %}
+   {% if is_partial_update %}
      x-init="$dispatch('updateApplyEditsButton', {{ table.has_edits|BOOL }})"
-     {% endif %}>
+   {% endif %}>
   <div class="inline-edit-block"
        x-show="!isEditing"
        @dblclick="isEditing = true">
