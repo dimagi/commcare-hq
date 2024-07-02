@@ -130,6 +130,7 @@ django==4.2.11
     #   django-recaptcha
     #   django-redis
     #   django-statici18n
+    #   django-tables2
     #   django-two-factor-auth
     #   django-user-agents
     #   djangorestframework
@@ -181,6 +182,8 @@ django-redis==5.3.0
 django-redis-sessions==0.6.2
     # via -r base-requirements.in
 django-statici18n==2.4.0
+    # via -r base-requirements.in
+django-tables2==2.7.0
     # via -r base-requirements.in
 django-tastypie==0.14.6
     # via -r base-requirements.in

@@ -1,0 +1,84 @@
+{% extends "hqwebapp/tables/bootstrap5_htmx.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+{% load hq_shared_tags %}
+
+{% block table-container-attrs %}
+  hx-get="{{ request.path_info }}{% querystring %}"
+  hx-trigger="refreshTable"
+  x-data="{
+    numRecordsSelected: {{ table.num_selected_records }},
+    totalRecords: {{ table.page.paginator.count }},
+    pageTotalRecords: {{ table.paginator.per_page }},
+    pageNumRecordsSelected: 0,
+  }"
+{% endblock %}
+
+{% block before_table %}
+  <div class="d-flex align-items-center">
+    <div class="my-1">
+      <i class="fa-solid fa-circle-check"></i>
+      {% blocktrans %}
+        <span x-text="numRecordsSelected"></span> Records Selected
+      {% endblocktrans %}
+    </div>
+    <div class="ps-2"
+         x-show="numRecordsSelected > 0">
+      <button class="btn btn-outline-danger btn-sm"
+              type="button"
+              hx-action="select_all"
+              hx-post="{{ request.path_info }}{% querystring %}"
+              hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+              hx-vals='{"selectAll": false}'>
+        {% blocktrans %}
+          Cancel Selection
+        {% endblocktrans %}
+      </button>
+    </div>
+    <div class="ps-2"
+         x-show="numRecordsSelected > 0 && numRecordsSelected < totalRecords">
+      <button class="btn btn-outline-primary btn-sm"
+              type="button"
+              hx-action="select_all"
+              hx-post="{{ request.path_info }}{% querystring %}"
+              hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+              hx-vals='{"selectAll": true}'>
+        {% blocktrans %}
+          Select All {{ table.page.paginator.count }} Records
+        {% endblocktrans %}
+      </button>
+    </div>
+
+    {%  if table.has_filters %}
+      <div class="ps-2 ms-2">
+        <i class="fa-solid fa-filter"></i>
+        {% blocktrans %}
+          Filter Applied: {{ table.page.paginator.count }} Matching Records
+        {% endblocktrans %}
+        <button class="btn btn-outline-danger btn-sm ms-2"
+                type="button"
+                hx-swap="none"
+                hx-post="{{ request.path_info }}{% querystring %}"
+                hx-action="clear_filters"
+                hx-on::after-request="htmx.trigger('#{{ table.filter_form_id }}', 'refreshFilters');">
+          <i class="fa-solid fa-close"></i> {% trans "Clear Filters" %}
+        </button>
+      </div>
+    {% endif %}
+
+    {% if table.has_edits %}
+      <div class="ps-2 ms-2">
+        <i class="fa-solid fa-pencil"></i>
+        Edits:
+        <button type="button"
+                hx-post="{{ request.path_info }}{% querystring %}"
+                hx-action="apply_edits"
+                hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+                class="btn btn-success btn-sm ms-2">
+          <i class="fa-solid fa-check"></i> {% trans "Apply Edits to Selected Rows" %}
+        </button>
+      </div>
+    {% endif %}
+  </div>
+  {{ block.super }}
+{% endblock %}
