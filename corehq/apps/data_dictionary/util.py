@@ -416,3 +416,9 @@ def get_used_props_by_case_type(domain):
                 props_by_case_type[case_type_bucket.key] = []
             props_by_case_type[case_type_bucket.key].append(prop_bucket.key)
     return props_by_case_type
+
+
+def get_case_property_group_name_for_properties(domain, case_type_name):
+    return dict(CaseProperty.objects.filter(
+        case_type__name=case_type_name, case_type__domain=domain, deprecated=False, group__deprecated=False
+    ).values_list('name', 'group__name'))
