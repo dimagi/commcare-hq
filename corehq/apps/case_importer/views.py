@@ -383,6 +383,7 @@ def excel_fields(request, domain):
 @require_POST
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
+@use_bootstrap5
 def excel_commit(request, domain):
     """
     Step three of three.
@@ -403,6 +404,19 @@ def excel_commit(request, domain):
         case_upload.check_file()
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
+    num_cases = 0
+    worksheet_titles = _get_workbook_sheet_names(case_upload)
+    for i in range(len(worksheet_titles)):
+        with case_upload.get_spreadsheet(i) as spreadsheet:
+            num_cases += spreadsheet.max_row - 1
+
+    if not request.GET.get('confirm', False):
+        context = {
+            'num_cases': num_cases,
+            'domain': domain
+        }
+        context.update(_case_importer_breadcrumb_context(_('Confirm Import'), domain))
+        return render(request, 'case_importer/confirm_import.html', context)
 
     case_type = request.POST['case_type']
     all_configs = []
