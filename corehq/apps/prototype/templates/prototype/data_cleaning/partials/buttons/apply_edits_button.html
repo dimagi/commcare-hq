@@ -10,7 +10,7 @@
      x-data="{ hasEdits: {{ table.has_edits|BOOL }} }"
      x-show="hasEdits && numRecordsSelected > 0">
   <i class="fa-solid fa-pencil"></i>
-  Edits:
+  {% trans "Edits" %}:
   <button class="btn btn-success btn-sm ms-2"
           type="button"
           hx-post="{{ request.path_info }}{% querystring %}"
