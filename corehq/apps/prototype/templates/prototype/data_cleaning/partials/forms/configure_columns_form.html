@@ -7,7 +7,7 @@
 
   <div class="mb-3">
     <h5>
-      Visible Columns
+      {% trans "Visible Columns" %}
     </h5>
     <form hx-post="{{ request.path_info }}"
           hx-target="#{{ container_id }}"
@@ -21,7 +21,7 @@
               <span class="ps-2">{{ column.config.header }}</span>
             </a>
             <button class="btn btn-outline-danger btn-sm"
-                    id="delete-column-{{ column.slug }}"
+                    aria-label="{% trans "Close" %}"
                     hx-target="#{{ container_id }}"
                     hx-delete="{{ request.path_info }}?column={{ column.slug }}">
               <i class="fa-solid fa-close"></i>
@@ -38,7 +38,8 @@
               hx-target="#{{ container_id }}">
           <div class="mb-3">
             <label for="property"
-                   class="form-label">Select property to add:
+                   class="form-label">
+              {% trans "Select property to add" %}:
             </label>
             <select class="form-select"
                     name="add_column">
@@ -50,7 +51,7 @@
           <div class="mb-3" >
             <button type="submit"
                     class="btn btn-outline-primary">
-              <i class="fa-solid fa-plus"></i> Add Column
+              <i class="fa-solid fa-plus"></i> {% trans "Add Column" %}
             </button>
           </div>
         </form>
