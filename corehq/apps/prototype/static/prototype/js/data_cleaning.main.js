@@ -13,6 +13,16 @@ import _ from 'underscore';
 
 window.htmx = htmx;
 window.Alpine = Alpine;
+
+Alpine.data('htmxRequestErrorModal', () => ({
+    errorCode: '',
+    errorText: '',
+    updateError(evt) {
+        this.errorCode = evt.detail.errorCode;
+        this.errorText = evt.detail.errorText;
+    },
+}));
+
 Alpine.start();
 
 document.body.addEventListener('htmx:configRequest', function (evt) {
@@ -70,5 +80,11 @@ document.body.addEventListener('htmx:beforeSend', function (evt) {
 
 document.body.addEventListener('htmx:responseError', function (evt) {
     const errModal = new Modal(document.getElementById('htmx-request-error-modal'));
+    window.dispatchEvent(new CustomEvent('updateHtmxError', {
+        detail: {
+            errorCode: evt.detail.xhr.status,
+            errorText: evt.detail.xhr.statusText,
+        },
+    }));
     errModal.show();
 });
