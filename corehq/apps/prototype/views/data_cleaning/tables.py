@@ -198,7 +198,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
 
     def render_table_cell_response(self, request, *args, **kwargs):
         context = self.get_cell_context_data(request)
-        context['update_edit'] = True
+        context['is_partial_update'] = True
         self.template_name = self.get_column().template_name
         return self.render_htmx_partial_response(
             request, self.get_column().template_name, context
