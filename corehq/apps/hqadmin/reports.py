@@ -380,6 +380,7 @@ class UCRRebuildRestrictionTable:
         return rows
 
     @property
+    @memoized
     def ucr_domains(self):
         return USER_CONFIGURABLE_REPORTS.get_enabled_domains()
 
