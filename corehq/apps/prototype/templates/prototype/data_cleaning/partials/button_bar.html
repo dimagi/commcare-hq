@@ -14,8 +14,10 @@
 </button>
 <button type="button"
         class="btn btn-outline-primary"
-        data-bind="disable: isCleanDataButtonDisabled"
         data-bs-toggle="offcanvas"
-        data-bs-target="#editOffcanvas">
+        data-bs-target="#editOffcanvas"
+        x-data="{ isCleaningAllowed: false }"
+        :disabled="!isCleaningAllowed"
+        @num-records-selected-changed.camel.window="isCleaningAllowed = $event.detail > 0">
   <i class="fa-solid fa-shower"></i> {% trans "Clean Data" %}
 </button>
