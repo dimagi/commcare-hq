@@ -38,8 +38,8 @@ class FakeCaseTable(tables.Table):
             'class': 'table table-striped',
         }
         row_attrs = {
-            "x-data": "{ is_selected: $el.firstElementChild.firstElementChild.checked }",
-            ":class": "{ 'table-primary': is_selected }",
+            "x-data": "{ isRowSelected: $el.firstElementChild.firstElementChild.checked }",
+            ":class": "{ 'table-primary': isRowSelected }",
         }
 
     def __init__(self, *args, **kwargs):
