@@ -11,11 +11,13 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods, require_POST
 
 from memoized import memoized
 
 from dimagi.utils.couch import get_redis_lock, release_lock
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -25,10 +27,10 @@ from corehq import toggles
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
-from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.decorators import domain_admin_required, api_auth
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui, use_multiselect, waf_allow
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
@@ -49,7 +51,7 @@ from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
-from .exceptions import LocationConsistencyError
+from .exceptions import LocationConsistencyError, LocationBulkImportError
 from .forms import (
     LocationFilterForm,
     LocationFormSet,
@@ -105,7 +107,11 @@ def lock_locations(func):
                 # handle delete_location view
                 return json_response({'success': False, 'message': message})
             else:
-                return HttpResponseRedirect(request.META['HTTP_REFERER'])
+                referer = request.META.get('HTTP_REFERER')
+                if referer:
+                    return HttpResponseRedirect(referer)
+                else:
+                    return json_response({'success': False, 'message': message})
 
     return func_wrapper
 
@@ -964,7 +970,7 @@ class LocationImportView(BaseLocationView):
 
         domain = args[0]
 
-        ref = self._cache_file(request, domain, upload)
+        ref = self.cache_file(request, domain, upload)
         if not isinstance(ref, LocationImportView.Ref):
             # ref is HTTP response: lock could not be acquired
             return ref
@@ -980,7 +986,7 @@ class LocationImportView(BaseLocationView):
 
     @staticmethod
     @lock_locations
-    def _cache_file(request, domain, upload):
+    def cache_file(request, domain, upload):
         """Stash in soil for ten hours to make it easier to pass to celery
 
         :returns: `LocationImportView.Ref` object that can be identified
@@ -1153,3 +1159,40 @@ def count_locations(request, domain):
     return JsonResponse({
         'count': locations_count
     })
+
+
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@require_POST
+@api_auth()
+def bulk_location_upload_api(request, domain, **kwargs):
+    try:
+        return _bulk_location_upload_api(request, domain)
+    except LocationBulkImportError as e:
+        error, status_code = str(e), 400
+    except Exception as e:
+        notify_exception(None, message=str(e))
+        error, status_code = str(e), 500
+
+    return json_response({'success': False, 'message': error}, status_code=status_code)
+
+
+def _bulk_location_upload_api(request, domain):
+    upload_file = request.FILES.get("bulk_upload_file")
+    if not upload_file:
+        raise LocationBulkImportError(_("no file uploaded"))
+
+    try:
+        get_workbook(upload_file)
+    except WorkbookJSONError as e:
+        raise LocationBulkImportError(str(e))
+
+    file_ref = LocationImportView.cache_file(request, domain, upload_file)
+    if not isinstance(file_ref, LocationImportView.Ref):
+        return file_ref
+
+    file_ref = file_ref.value
+    task = import_locations_async.delay(domain, file_ref.download_id, request.couch_user.user_id)
+    file_ref.set_task(task)
+
+    return json_response({"success": True})

@@ -1,10 +1,12 @@
 import json
 from contextlib import contextmanager
 from copy import deepcopy
+from io import BytesIO
+from openpyxl import Workbook
 from unittest.mock import patch
 
 from django.http import Http404
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.urls import reverse
 
 from corehq import privileges
@@ -19,6 +21,7 @@ from corehq.apps.events.models import (
 from corehq.apps.hqcase.case_helper import CaseHelper
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
+from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.exceptions import InvalidRequestException
@@ -28,7 +31,7 @@ from corehq.apps.users.models import (
     HqPermissions,
     UserHistory,
     UserRole,
-    WebUser,
+    WebUser, HQApiKey,
 )
 from corehq.apps.users.views import _delete_user_role, _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
@@ -38,6 +41,7 @@ from corehq.util.test_utils import (
     generate_cases,
     privilege_enabled,
 )
+from corehq.util.workbook_json.excel import WorkbookJSONError
 
 
 def get_default_available_permissions(**kwargs):
@@ -436,3 +440,124 @@ class TestCountWebUsers(TestCase):
         )
         result = self.client.get(reverse(self.view, kwargs={'domain': self.domain}))
         self.assertEqual(json.loads(result.content)['user_count'], 2)
+
+
+class BulkUserUploadAPITest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_name = 'bulk-user-upload-domain'
+        cls.domain = create_domain(cls.domain_name)
+        cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
+        cls.user = WebUser.create(cls.domain_name, 'test@test.com', 'password', created_by=None, created_via=None)
+        cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
+        cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user(), domain=cls.domain_name)
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('bulk_user_upload_api', args=[self.domain_name])
+
+    @staticmethod
+    def _create_valid_workbook():
+        workbook = Workbook()
+        users_sheet = workbook.create_sheet(title='users')
+        users_sheet.append(['username', 'email', 'password'])
+        users_sheet.append(['test_user', 'test@example.com', 'password'])
+
+        file = BytesIO()
+        workbook.save(file)
+        file.seek(0)
+        file.name = 'users.xlsx'
+
+        return file
+
+    def _make_post_request(self, file):
+        return self.client.post(
+            self.url,
+            {'bulk_upload_file': file},
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
+            format='multipart'
+        )
+
+    def test_success(self):
+        file = self._create_valid_workbook()
+
+        with patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users'):
+            response = self._make_post_request(file)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json(), {'success': True})
+
+    def test_api_no_authentication(self):
+        response = self.client.post(self.url, {'bulk_upload_file': 'mock_file'})
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.content.decode(), 'Authorization Required')
+
+    def test_api_invalid_authentication(self):
+        response = self.client.post(
+            self.url,
+            {'bulk_upload_file': 'mock_file'},
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:invalid_key'
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_no_file_uploaded(self):
+        response = self.client.post(
+            self.url,
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
+            format='multipart'
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'success': False, 'message': 'no file uploaded'})
+
+    @patch('corehq.apps.users.views.mobile.users.get_workbook')
+    def test_invalid_file_format(self, mock_get_workbook):
+        mock_get_workbook.side_effect = WorkbookJSONError('Invalid file format')
+        file = BytesIO(b'invalid file content')
+        file.name = 'invalid_file.txt'
+        response = self._make_post_request(file)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'success': False, 'message': 'Invalid file format'})
+
+    def test_invalid_workbook_headers(self):
+        workbook = Workbook()
+        users_sheet = workbook.create_sheet(title='users')
+        users_sheet.append(['invalid_header', 'email', 'password'])
+        users_sheet.append(['test_user', 'test@example.com', 'password'])
+
+        file = BytesIO()
+        workbook.save(file)
+        file.seek(0)
+        file.name = 'users.xlsx'
+
+        response = self._make_post_request(file)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {
+            'message': 'The following are required column headers: username.\n'
+                       'The following are illegal column headers: invalid_header.',
+            'success': False
+        })
+
+    @patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users')
+    def test_user_upload_error(self, mock_upload_users):
+        mock_upload_users.side_effect = UserUploadError('User upload error')
+        file = self._create_valid_workbook()
+
+        response = self._make_post_request(file)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'success': False, 'message': 'User upload error'})
+
+    @patch('corehq.apps.users.views.mobile.users.notify_exception')
+    @patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users')
+    def test_exception(self, mock_upload_users, mock_notify_exception):
+        mock_upload_users.side_effect = Exception('Unexpected error')
+        file = self._create_valid_workbook()
+
+        response = self._make_post_request(file)
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.json(), {'success': False, 'message': 'Unexpected error'})
+        mock_notify_exception.assert_called_once_with(None, message='Unexpected error')
