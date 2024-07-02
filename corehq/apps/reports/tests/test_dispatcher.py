@@ -52,7 +52,8 @@ class AdminReportDispatcherTests(SimpleTestCase):
             'user_audit_report',
             'device_log_soft_asserts',
             'deploy_history_report',
-            'phone_number_report'
+            'phone_number_report',
+            'ucr_data_load',
         })
 
 

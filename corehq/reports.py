@@ -38,6 +38,7 @@ from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
+    UCRDataLoadReport,
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports import commtrack
@@ -330,6 +331,7 @@ ADMIN_REPORTS = (
         AdminPhoneNumberReport,
         UserAuditReport,
         DeployHistoryReport,
+        UCRDataLoadReport,
     )),
 )
 
