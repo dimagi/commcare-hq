@@ -34,7 +34,7 @@ hqDefine("geospatial/js/geospatial_map", [
     function showMapControls(state) {
         $("#geospatial-map").toggle(state);
         $("#case-buttons").toggle(state);
-        $("#mapControls").toggle(state);
+        $("#polygon-filters").toggle(state);
         $("#user-filters-panel").toggle(state);
     }
 
@@ -233,7 +233,7 @@ hqDefine("geospatial/js/geospatial_map", [
 
     function initPolygonFilters() {
         // Assumes `map` var is initialized
-        const $mapControlDiv = $("#mapControls");
+        const $mapControlDiv = $("#polygon-filters");
         polygonFilterModel = new models.PolygonFilter(mapModel, false, true);
         polygonFilterModel.loadPolygons(initialPageData.get('saved_polygons'));
         if ($mapControlDiv.length) {
