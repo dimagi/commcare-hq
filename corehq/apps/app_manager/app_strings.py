@@ -155,7 +155,7 @@ def _create_module_details_app_strings(module, langs):
                 clean_trans(column.header, langs)
             )
 
-            if column.format in ('enum', 'conditional-enum', 'enum-image', 'clickable-icon'):
+            if column.format in ('enum', 'conditional-enum', 'enum-image', 'clickable-icon', 'translatable-enum'):
                 for item in column.enum:
                     yield (
                         id_strings.detail_column_enum_variable(
