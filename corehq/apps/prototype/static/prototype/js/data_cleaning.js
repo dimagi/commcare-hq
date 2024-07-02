@@ -51,18 +51,13 @@ hqDefine("prototype/js/data_cleaning",[
         }
     });
     document.body.addEventListener('htmx:responseError', function (evt) {
-        let modal = new bootstrap.Modal(document.getElementById('htmx-request-error-modal'));
-        // Alpine.data isn't doing what I'd like it to do here, perhaps because of requireJS...
-        // doing the update manually for now and will try in a separate branch where I have
-        // a local setup of Webpack running to see if it behaves better.
-        // window.Alpine.data('handleHtmxRequestError', function () {
-        //     return {
-        //         errorCode: evt.detail.xhr.status,
-        //         errorText: evt.detail.xhr.statusText,
-        //     };
-        // });
-        document.getElementById('htmxRequestErrorCode').textContent = evt.detail.xhr.status;
-        document.getElementById('htmxRequestErrorText').textContent = evt.detail.xhr.statusText;
+        let modal = new bootstrap.Modal(document.getElementById('htmxRequestErrorModal'));
+        window.dispatchEvent(new CustomEvent('updateHtmxRequestErrorModal', {
+            detail: {
+                errorCode: evt.detail.xhr.status,
+                errorText: evt.detail.xhr.statusText,
+            },
+        }));
         modal.show();
     });
 });

@@ -27,8 +27,16 @@
 {% endblock %}
 
 {% block modals %}
-  <div id="htmx-request-error-modal"
+  <div id="htmxRequestErrorModal"
        class="modal fade"
+       x-data="{ errorCode: '',
+                 errorText: '',
+                 updateError(evt) {
+                     this.errorCode = evt.detail.errorCode;
+                     this.errorText = evt.detail.errorText;
+                 },
+               }"
+       @update-htmx-request-error-modal.camel.window="updateError"
        data-bs-backdrop="static"
        data-bs-keyboard="false"
        aria-labelledby="htmxRequestErrorModalTitle"
@@ -46,9 +54,9 @@
                   aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          {# todo handle this with alpine.placeholder to demo how to pass errors to front end #}
-          <p id="htmxRequestErrorCode"></p>
-          <p id="htmxRequestErrorText"></p>
+          {# todo placeholder for passing HTMX errors to front end. simple UI for now :) #}
+          <p x-text="errorCode"></p>
+          <p x-text="errorText"></p>
         </div>
         <div class="modal-footer">
           <button type="button"
