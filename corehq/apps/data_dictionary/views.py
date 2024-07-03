@@ -261,6 +261,11 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
                 "deprecated": group.deprecated,
             })
         case_type_data["groups"].append(group_data)
+    if not properties_queryset:
+        case_type_data["groups"].append({
+            "name": "",
+            "properties": []
+        })
 
     return JsonResponse(case_type_data)
 
