@@ -399,8 +399,8 @@ def is_case_type_or_prop_name_valid(case_prop_name):
     return match_obj is not None
 
 
-@quickcache(vary_on=['domain'], timeout=60 * 10)
-def get_used_props_by_case_type(domain):
+@quickcache(vary_on=['domain', 'case_type'], timeout=60 * 10)
+def get_used_props_by_case_type(domain, case_type=None):
     agg = TermsAggregation('case_types', 'type.exact').aggregation(
         NestedAggregation('case_props', CASE_PROPERTIES_PATH).aggregation(
             TermsAggregation('props', PROPERTY_KEY)
@@ -412,6 +412,8 @@ def get_used_props_by_case_type(domain):
         .size(0)
         .aggregation(agg)
     )
+    if case_type:
+        query = query.case_type(case_type)
     case_type_buckets = query.run().aggregations.case_types.buckets_list
     props_by_case_type = {}
     for case_type_bucket in case_type_buckets:

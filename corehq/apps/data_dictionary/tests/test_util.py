@@ -365,6 +365,12 @@ class UsedPropsByCaseTypeTest(TestCase):
         props = set(used_props_by_case_type['other-case-type']) - metadata_props
         self.assertEqual({'prop', 'foobar'}, props)
 
+    def test_get_used_props_by_case_type_with_case_type_param(self):
+        used_props_by_case_type = get_used_props_by_case_type(self.domain, 'case-type')
+        self.assertEqual(len(used_props_by_case_type), 1)
+        props = set(used_props_by_case_type['case-type'])
+        self.assertTrue(props.issuperset({'prop', 'other-prop'}))
+
 
 class TestUpdateUrlQueryParams(SimpleTestCase):
     url = "http://example.com"

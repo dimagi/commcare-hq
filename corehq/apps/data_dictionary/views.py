@@ -223,7 +223,7 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
     )
 
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
-    used_props_by_case_type = get_used_props_by_case_type(domain)
+    used_props_by_case_type = get_used_props_by_case_type(domain, case_type_name)
     geo_case_prop = get_geo_case_property(domain)
 
     used_props = used_props_by_case_type.get(case_type.name, [])
