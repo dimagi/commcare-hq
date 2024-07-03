@@ -210,10 +210,15 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
     current_url = request.build_absolute_uri()
     case_type_data["_links"] = _get_pagination_links(current_url, case_type_data["properties_count"], skip, limit)
 
-    properties_queryset = CaseProperty.objects.select_related('group').filter(case_type=case_type)
-    properties_queryset = properties_queryset.order_by('group_id', 'index', 'pk')[skip:skip + limit]
-    properties_queryset = properties_queryset.prefetch_related(
-        Prefetch('allowed_values', queryset=CasePropertyAllowedValue.objects.order_by('allowed_value'))
+    properties_queryset = (
+        CaseProperty.objects
+        .select_related('group')
+        .filter(case_type=case_type)
+        .order_by('group_id', 'index', 'pk')[skip:skip + limit]
+        .prefetch_related(Prefetch(
+            'allowed_values',
+            queryset=CasePropertyAllowedValue.objects.order_by('allowed_value')
+        ))
     )
 
     data_validation_enabled = toggles.CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(domain)
