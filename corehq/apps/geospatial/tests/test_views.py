@@ -424,23 +424,26 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
         GeoPolygon.objects.all().delete()
         super().tearDown()
 
+    def _make_post_request(self, data):
+        return self.client.post(
+            self.endpoint,
+            data=data,
+            content_type='application/json',
+        )
+
     @flag_enabled('GEOSPATIAL')
     def test_not_logged_in(self):
         response = Client().post(self.endpoint, _sample_geojson_data())
         self.assertRedirects(response, f"{self.login_url}?next={self.endpoint}")
 
     def test_feature_flag_not_enabled(self):
-        response = self.client.post(self.endpoint, _sample_geojson_data())
+        response = self._make_post_request({'geo_json': _sample_geojson_data()})
         self.assertTrue(response.status_code == 404)
 
     @flag_enabled('GEOSPATIAL')
     def test_save_polygon(self):
         geo_json_data = _sample_geojson_data()
-        response = self.client.post(
-            self.endpoint,
-            data={"geo_json": geo_json_data},
-            content_type="application/json"
-        )
+        response = self._make_post_request({'geo_json': geo_json_data})
         self.assertEqual(response.status_code, 200)
         saved_polygons = GeoPolygon.objects.filter(domain=self.domain)
         self.assertEqual(len(saved_polygons), 1)
