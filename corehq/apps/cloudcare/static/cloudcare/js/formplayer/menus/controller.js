@@ -164,9 +164,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
 
         if (menuResponse.persistentMenu) {
             FormplayerFrontend.regions.getRegion('persistentMenu').show(
-                views.PersistentMenuView({model: new Backbone.Model({
-                    persistentMenu: menuResponse.persistentMenu,
-                })}).render());
+                views.PersistentMenuView({
+                    collection: new Backbone.Collection(menuResponse.persistentMenu),
+                }).render());
         } else {
             FormplayerFrontend.regions.getRegion('persistentMenu').empty();
         }
