@@ -3665,6 +3665,26 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Max cases per user"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Min cases per user"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Max distance to case"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "minutes"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Max travel time"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid ""
 "Oops! Something went wrong! Please check that your geospatial settings are "
 "configured correctly or contact admin if the problem persists."
@@ -3703,10 +3723,8 @@ msgid "Name of the Area"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
-#, fuzzy
-#| msgid "Enter the name of the author."
 msgid "Please enter the name for the area!"
-msgstr "Ingrese el nombre del autor."
+msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js
 msgid "Edit Group Information"
@@ -3749,7 +3767,7 @@ msgstr ""
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
 msgid "Incorrect Format"
-msgstr ""
+msgstr "Formato Incorrecto"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
