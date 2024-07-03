@@ -103,7 +103,7 @@ class GeoPolygonListView(BaseDomainView):
             del feature['id']
 
         geo_polygon = GeoPolygon.objects.create(
-            name=geo_json.pop('name'),
+            name=geo_polygon_name,
             domain=self.domain,
             geo_json=geo_json
         )
