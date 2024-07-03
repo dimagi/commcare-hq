@@ -789,6 +789,10 @@ def _commcare_analytics_roles_options():
         {
             'slug': 'sql_lab',
             'name': 'SQL Lab'
+        },
+        {
+            'slug': 'dataset_editor',
+            'name': 'Dataset Editor'
         }
     ]
 

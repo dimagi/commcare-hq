@@ -396,6 +396,7 @@ class DataDictionaryJsonTest(TestCase):
                                     "is_safe_to_delete": True,
                                     "allowed_values": {},
                                     "data_type": "number",
+                                    "index": 0,
                                 },
                             ],
                         },

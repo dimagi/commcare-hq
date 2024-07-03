@@ -207,7 +207,7 @@ docutils==0.18.1
     #   myst-parser
     #   sphinx
     #   sphinx-rtd-theme
-dropbox==11.36.0
+dropbox==11.36.2
     # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
@@ -658,7 +658,7 @@ unidecode==1.2.0
     # via pyphonetics
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==1.26.18
+urllib3==1.26.19
     # via
     #   -r docs-requirements.in
     #   botocore

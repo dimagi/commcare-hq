@@ -12,7 +12,8 @@ from corehq.apps.sso.models import (
     IdentityProvider,
     IdentityProviderProtocol,
     IdentityProviderType,
-    UserExemptFromSingleSignOn
+    UserExemptFromSingleSignOn,
+    LoginEnforcementType,
 )
 from corehq.apps.sso.utils.context_helpers import (
     get_api_secret_expiration_email_context,
@@ -20,7 +21,7 @@ from corehq.apps.sso.utils.context_helpers import (
     get_sso_deactivation_skip_email_context,
 )
 from corehq.apps.sso.utils.entra import MSGraphIssue
-from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
+from corehq.apps.sso.utils.user_helpers import convert_emails_to_lowercase, get_email_domain_from_username
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.models import HQApiKey
 from django.contrib.auth.models import User
@@ -127,10 +128,11 @@ def send_idp_cert_expires_reminder_emails(num_days):
 def auto_deactivate_removed_sso_users():
     for idp in IdentityProvider.objects.filter(
         enable_user_deactivation=True,
-        idp_type=IdentityProviderType.ENTRA_ID
+        idp_type=IdentityProviderType.ENTRA_ID,
+        login_enforcement_type=LoginEnforcementType.GLOBAL,
     ).all():
         try:
-            usernames_in_idp = idp.get_all_usernames_of_the_idp()
+            usernames_in_idp = convert_emails_to_lowercase(idp.get_all_usernames_of_the_idp())
         except EntraVerificationFailed as e:
             notify_exception(None, f"Failed to get members of the IdP. {str(e)}")
             send_deactivation_skipped_email(idp=idp, failure_code=MSGraphIssue.VERIFICATION_ERROR,

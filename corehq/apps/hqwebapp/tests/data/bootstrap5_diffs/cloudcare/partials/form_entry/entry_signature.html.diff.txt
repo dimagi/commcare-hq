@@ -14,8 +14,8 @@
 +      class="border rounded" />
      </canvas>
    </div>
--  <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear">
-+  <button class="btn btn-outline-primary btn-sm float-end" data-bind="click: onClear">
+-  <button type="button" class="btn btn-default btn-xs pull-right" data-bind="click: onClear">
++  <button type="button" class="btn btn-outline-primary btn-sm float-end" data-bind="click: onClear">
      {% trans "Clear" %}
    </button>
 -  <input type="file" class="hidden" data-bind="
