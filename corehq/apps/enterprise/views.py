@@ -50,12 +50,14 @@ from corehq.apps.enterprise.tasks import email_enterprise_report
 
 from corehq.apps.export.utils import get_default_export_settings_if_available
 
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_can_edit_or_view_web_users
 
 from corehq.const import USER_DATE_FORMAT
 
 
+@use_bootstrap5
 @always_allow_project_access
 @require_enterprise_admin
 @login_and_domain_required
@@ -99,7 +101,6 @@ def enterprise_dashboard_download(request, domain, slug, export_hash):
     if content:
         file = ContentFile(content)
         response = HttpResponse(file, Format.FORMAT_DICT[Format.UNZIPPED_CSV])
-        response['Content-Length'] = file.size
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
         return response
 
@@ -119,6 +120,7 @@ def enterprise_dashboard_email(request, domain, slug):
     return JsonResponse({'message': message})
 
 
+@use_bootstrap5
 @require_enterprise_admin
 @login_and_domain_required
 def enterprise_settings(request, domain):
@@ -337,6 +339,7 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 # with other views in this area. They also require superuser access because these views
 # used to be in another part of HQ, where they were limited to superusers, and we don't
 # want them to be visible to any external users until we're ready to GA this feature.
+@use_bootstrap5
 @require_can_edit_or_view_web_users
 @require_superuser
 @require_enterprise_admin
@@ -443,6 +446,7 @@ def update_enterprise_permissions_source_domain(request, domain):
     return HttpResponseRedirect(redirect)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ManageEnterpriseMobileWorkersView(ManageMobileWorkersMixin, BaseEnterpriseAdminView):
     page_title = gettext_lazy("Manage Mobile Workers")
     template_name = 'enterprise/manage_mobile_workers.html'

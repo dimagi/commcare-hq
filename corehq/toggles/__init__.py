@@ -1026,17 +1026,6 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
-NO_SCROLL_IN_CASE_SEARCH = StaticToggle(
-    'no_scroll_in_case_search',
-    "Do not use scroll queries in case search elasticsearch queries",
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="""
-    This toggle replaces scroll queries in case search ancestor functions with
-    normal search queries.
-    """
-)
-
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
@@ -1149,6 +1138,13 @@ HIDE_SYNC_BUTTON = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+PERSISTENT_MENU_SETTING = StaticToggle(
+    "persistent_menu_setting",
+    "Show Persistent Menu option in Web Apps settings",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 
 def _ensure_search_index_is_enabled(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain
@@ -1175,6 +1171,14 @@ EXPLORE_CASE_DATA = StaticToggle(
     'the Case List Explorer toggle or doing a manual migration.\n\n'
     'Please use the EXPLORE_CASE_DATA_PREVIEW Feature Preview moving forward. '
     'This will be deprecated once the Feature Preview is in full swing.',
+)
+
+SAAS_PROTOTYPE = StaticToggle(
+    'saas_prototype',
+    'Use allowed to view SaaS prototypes',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+    description='Use this for rapid prototypes developed by the SaaS product team.',
 )
 
 ECD_MIGRATED_DOMAINS = StaticToggle(
@@ -1710,8 +1714,8 @@ MOBILE_RECOVERY_MEASURES = StaticToggle(
 
 PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
-    'ICDS: Used for ICDS emergencies when UCR sync is killing the DB',
-    TAG_CUSTOM,
+    'Prevent Mobile UCR sync (when a UCR sync is causing operational problems)',
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description='Prevents mobile UCRs from being generated or included in the sync payload',
 )
@@ -2461,6 +2465,13 @@ TABLEAU_USER_SYNCING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/USH/Tableau+User+Syncing',
 )
 
+RESTRICT_USER_PROFILE_ASSIGNMENT = StaticToggle(
+    'restrict_user_profile_assignment',
+    'Limit which user profiles a web user can assign to other web users and mobile workers.',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 
 def _handle_attendance_tracking_role(domain, is_enabled):
     from corehq.apps.accounting.utils import domain_has_privilege
@@ -2858,7 +2869,29 @@ USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
 RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
     slug='restrict_data_source_rebuilds',
     label='Restrict data source rebuilt from UI',
-    tag=TAG_SOLUTIONS,
+    tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
+)
+
+APP_TESTING = StaticToggle(
+    slug='app_testing',
+    label='App Testing UI',
+    tag=TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=''
+)
+
+SMART_LINKS_FOR_WEB_USERS = StaticToggle(
+    slug='smart_links_for_web_users',
+    label='USH: Allow web users to use smart links without logging in as before',
+    tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+LOCATION_HAS_USERS = StaticToggle(
+    slug='location_has_users',
+    label='USH Dev: Allows marking whether a location should have users assigned or not.',
+    tag=TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
 )

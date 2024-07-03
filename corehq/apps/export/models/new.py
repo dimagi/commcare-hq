@@ -2371,7 +2371,8 @@ class CaseExportDataSchema(ExportDataSchema):
         )
         case_property_mapping = builder.get_case_property_map([case_type])
 
-        if for_new_export_instance and domain_has_privilege(app.domain, privileges.DATA_DICTIONARY):
+        if ((for_bulk_export or for_new_export_instance)
+                and domain_has_privilege(app.domain, privileges.DATA_DICTIONARY)):
             case_property_mapping[case_type] = cls._reorder_case_properties_from_data_dictionary(
                 app.domain, case_type, case_property_mapping[case_type]
             )

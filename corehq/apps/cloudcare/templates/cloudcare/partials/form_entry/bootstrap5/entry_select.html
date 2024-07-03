@@ -9,6 +9,7 @@
           <input data-bind="
                       checked: $parent.rawAnswer,
                       checkedValue: $data,
+                      css: { 'is-invalid': $root.hasError() },
                       attr: {
                           id: 'group-' + $parent.entryId + '-choice-' + $index(),
                           type: $parent.isMulti ? 'checkbox' : 'radio',
@@ -21,7 +22,7 @@
           ></label>
         </div>
       </div>
-      <button class="btn btn-outline-primary btn-sm float-end" data-bind="click: onClear, fadeVisible: !isMulti && rawAnswer()">
+      <button type="button" class="btn btn-outline-primary btn-sm float-end" data-bind="click: onClear, fadeVisible: !isMulti && rawAnswer()">
         {% trans "Clear" %}
       </button>
     </div>

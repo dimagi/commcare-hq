@@ -31,8 +31,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     L
 ) {
     const MenuView = Marionette.View.extend({
+        isGrid: function () {
+            return this.model.collection.layoutStyle === constants.LayoutStyles.GRID;
+        },
         tagName: function () {
-            if (this.model.collection.layoutStyle === 'grid') {
+            if (this.isGrid()) {
                 return 'div';
             } else {
                 return 'tr';
@@ -60,7 +63,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
         getTemplate: function () {
             let id = "#menu-view-row-template";
-            if (this.model.collection.layoutStyle === constants.LayoutStyles.GRID) {
+            if (this.isGrid()) {
                 id = "#menu-view-grid-item-template";
             } else if (this.model.get('audioUri')) {
                 id = "#menu-view-row-audio-template";
@@ -82,14 +85,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             e.preventDefault();
             const $playBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-play');
             const $pauseBtn = $playBtn.parent().find('.js-module-audio-pause');
-            $pauseBtn.removeClass('hide');
-            $playBtn.addClass('hide');
+            const displayClass = window.USE_BOOTSTRAP5 ? "d-none" : "hide";
+            $pauseBtn.removeClass(displayClass);
+            $playBtn.addClass(displayClass);
             const $audioElem = $playBtn.parent().find('.js-module-audio');
             if ($audioElem.data('isFirstPlay') !== 'yes') {
                 $audioElem.data('isFirstPlay', 'yes');
                 $audioElem.one('ended', function () {
-                    $playBtn.removeClass('hide');
-                    $pauseBtn.addClass('hide');
+                    $playBtn.removeClass(displayClass);
+                    $pauseBtn.addClass(displayClass);
                     $audioElem.data('isFirstPlay', 'no');
                 });
             }
@@ -98,8 +102,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         audioPause: function (e) {
             e.preventDefault();
             const $pauseBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-pause');
-            $pauseBtn.parent().find('.js-module-audio-play').removeClass('hide');
-            $pauseBtn.addClass('hide');
+            const displayClass = window.USE_BOOTSTRAP5 ? "d-none" : "hide";
+            $pauseBtn.parent().find('.js-module-audio-play').removeClass(displayClass);
+            $pauseBtn.addClass(displayClass);
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
         },
         rowKeyAction: function (e) {
@@ -790,13 +795,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const mapDiv = $('#module-case-list-map');
             const moduleCaseList = $('#module-case-list');
             const hideButton = $('#hide-map-button');
-            if (!mapDiv.hasClass('hide')) {
-                mapDiv.addClass('hide');
+            const displayClass = window.USE_BOOTSTRAP5 ? "d-none" : "hide";
+            if (!mapDiv.hasClass(displayClass)) {
+                mapDiv.addClass(displayClass);
                 moduleCaseList.removeClass('col-md-7 col-md-pull-5').addClass('col-md');
                 hideButton.text(gettext('Show Map'));
                 $(e.target).attr('aria-expanded', 'false');
             } else {
-                mapDiv.removeClass('hide');
+                mapDiv.removeClass(displayClass);
                 moduleCaseList.addClass('col-md-7 col-md-pull-5').removeClass('col-md');
                 hideButton.text(gettext('Hide Map'));
                 $(e.target).attr('aria-expanded', 'true');
@@ -1008,7 +1014,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.boundHandleScroll = self.handleScroll.bind(self);
             $(window).on('scroll', self.boundHandleScroll);
             if (self.shouldShowScrollButton()) {
-                $('#scroll-to-bottom').show();
+                $('#scroll-to-bottom').removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
             }
         },
 
@@ -1264,7 +1270,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     const BreadcrumbView = Marionette.View.extend({
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
-        className: "breadcrumb-text",
+        className: function () {
+            if (window.USE_BOOTSTRAP5) {
+                return "breadcrumb-item";
+            } else {
+                return "breadcrumb-text";
+            }
+        },
         attributes: function () {
             let attributes = {
                 "role": "link",
@@ -1416,7 +1428,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     const DetailTabView = Marionette.View.extend({
         tagName: "li",
         className: function () {
-            return this.options.model.get('active') ? 'active' : '';
+            if (window.USE_BOOTSTRAP5) {
+                return "nav-item";
+            } else {
+                return this.options.model.get('active') ? 'active' : '';
+            }
+        },
+        attributes: {
+            role: "presentation",
         },
         template: _.template($("#detail-view-tab-item-template").html() || ""),
         events: {
@@ -1447,7 +1466,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseDetailFooterView = Marionette.View.extend({
         tagName: "div",
-        className: "",
+        className: function () {
+            if (window.USE_BOOTSTRAP5) {
+                return "d-flex gap-2 justify-content-center";
+            } else {
+                return "";
+            }
+        },
         events: {
             "click #select-case": "selectCase",
         },

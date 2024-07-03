@@ -36,6 +36,7 @@
     <script src="{% static 'reports/js/inspect_data.js' %}"></script>
     <script src="{% static 'reports/js/bootstrap5/project_health_dashboard.js' %}"></script>
     <script src="{% static 'reports/js/bootstrap5/aggregate_user_status.js' %}"></script>
+    <script src="{% static 'reports/js/bootstrap5/application_status.js' %}"></script>
     <script src="{% static 'reports/js/user_history.js' %}"></script>
     <script src="{% static 'reports/js/case_activity.js' %}"></script>
     <script src="{% static 'hqwebapp/js/bootstrap5/widgets.js' %}"></script>
@@ -74,18 +75,6 @@
       {% trans report.title|default:"Untitled Report" %}
     </li>
   </ol>
-{% endblock %}
-
-{% block modals %}{{ block.super }}
-  {% if request|ui_notify_enabled:"REPORT_BUILDER_V2" %}
-    <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
-         style="margin-left: 12px"  {# todo B5: inline style #}
-         data-bs-target="#create-new-report-left-nav"
-         data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
-         role="alert">
-      {% include 'notifications/partials/bootstrap5/report_builder_v2_oct2017.html' %}
-    </div>
-  {% endif %}
 {% endblock %}
 
 {% block page_content %}

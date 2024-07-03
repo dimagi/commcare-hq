@@ -1000,6 +1000,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
         self.file(null);
         self.rawAnswer(constants.NO_ANSWER);
         self.xformAction = constants.CLEAR_ANSWER;
+        self.question.error(null);
         self.question.onClear();
         self.broadcastMessages(self.question, constants.NO_ANSWER);
     };

@@ -99,6 +99,18 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
+                data.profilePermissions = {
+                    all: data.permissions.edit_user_profile,
+                    specific: ko.utils.arrayMap(root.profileOptions, function (profile) {
+                        var slug = String(profile.id);
+                        return {
+                            slug: slug,
+                            name: profile.name,
+                            value: data.permissions.edit_user_profile_list.indexOf(slug) !== -1,
+                        };
+                    }),
+                };
+
                 data.tableauPermissions = {
                     all: data.permissions.view_tableau,
                     specific: ko.utils.arrayMap(root.tableauOptions, function (viz) {
@@ -178,6 +190,7 @@ hqDefine('users/js/roles',[
                     return root.allowEdit && (!self.upstream_id() || root.unlockLinkedRoles());
                 });
                 self.reportPermissions.filteredSpecific = filterSpecific(self.reportPermissions);
+                self.profilePermissions.filteredSpecific = filterSpecific(self.profilePermissions);
                 self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
                 self.accessWebAppsPermission.filteredSpecific = filterSpecific(self.accessWebAppsPermission);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
@@ -208,6 +221,13 @@ hqDefine('users/js/roles',[
                 if (self.hasUnpermittedLocationRestriction) {
                     self.permissions.access_all_locations(true);
                 }
+                self.permissions.edit_web_users.subscribe(function (newValue) {
+                    self.permissions.edit_user_tableau_config(newValue && toggles.toggleEnabled("TABLEAU_USER_SYNCING"));
+                });
+
+                self.permissions.view_web_users.subscribe(function (newValue) {
+                    self.permissions.view_user_tableau_config(newValue && toggles.toggleEnabled("TABLEAU_USER_SYNCING"));
+                });
                 self.accessAreas = [
                     {
                         showOption: true,
@@ -220,6 +240,26 @@ hqDefine('users/js/roles',[
                         viewCheckboxLabel: "view-web-users-checkbox",
                         screenReaderEditAndViewText: gettext("Edit & View Mobile Workers"),
                         screenReaderViewOnlyText: gettext("View-Only Mobile Workers"),
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
+                    },
+                    {
+                        showOption: ko.computed(function () {
+                            return toggles.toggleEnabled("TABLEAU_USER_SYNCING") && (self.permissions.edit_web_users() || self.permissions.view_web_users());
+                        }),
+                        editPermission: self.permissions.edit_user_tableau_config,
+                        viewPermission: self.permissions.view_user_tableau_config,
+                        text: gettext("<strong>Manage Tableau Configuration</strong> &mdash; manage tableau configuration for web users"),
+                        showEditCheckbox: ko.computed(function () {
+                            return self.permissions.edit_web_users();
+                        }),
+                        editCheckboxLabel: "edit-user-tableau-config-checkbox",
+                        showViewCheckbox: true,
+                        viewCheckboxLabel: "view-user-tableau-config-checkbox",
+                        screenReaderEditAndViewText: gettext("Edit & View tableau configuration for web users"),
+                        screenReaderViewOnlyText: gettext("View-Only tableau configuration for web users"),
                         showAllowCheckbox: false,
                         allowCheckboxText: null,
                         allowCheckboxId: null,
@@ -586,6 +626,10 @@ hqDefine('users/js/roles',[
 
                 data.permissions.view_reports = data.reportPermissions.all;
                 data.permissions.view_report_list = unwrapItemList(data.reportPermissions.specific, 'path');
+
+                data.permissions.edit_user_profile = data.profilePermissions.all;
+                data.permissions.edit_user_profile_list = unwrapItemList(data.profilePermissions.specific);
+
                 data.permissions.view_tableau = data.tableauPermissions.all;
                 data.permissions.view_tableau_list = unwrapItemList(data.tableauPermissions.specific);
 
@@ -613,6 +657,7 @@ hqDefine('users/js/roles',[
         self.ExportOwnershipEnabled = o.ExportOwnershipEnabled;
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
+        self.profileOptions = o.profileOptions;
         self.tableauOptions = o.tableauOptions;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;

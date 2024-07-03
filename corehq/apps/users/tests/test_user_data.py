@@ -6,10 +6,6 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, Field, CustomDataFieldsDefinition
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.management.commands.populate_sql_user_data import (
-    get_users_without_user_data,
-    populate_user_data,
-)
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.user_data import (
     SQLUserData,
@@ -72,50 +68,6 @@ class TestUserData(TestCase):
             'what_domain_is_it': 'domain 2',
         })
 
-    def test_migrate_get_users_without_user_data(self):
-        users_without_data = [
-            self.make_commcare_user(),
-            self.make_commcare_user(),
-            self.make_web_user(),
-            self.make_web_user(),
-        ]
-        users_with_data = [self.make_commcare_user(), self.make_web_user()]
-        for user in users_with_data:
-            ud = user.get_user_data(self.domain)
-            ud['key'] = 'dummy val so this is non-empty'
-            ud.save()
-
-        users_to_migrate = get_users_without_user_data()
-        self.assertItemsEqual(
-            [u.username for u in users_without_data],
-            [u.username for u in users_to_migrate],
-        )
-
-    def test_migrate_commcare_user(self):
-        user = self.make_commcare_user()
-        user['user_data'] = {'favorite_color': 'purple'}
-        user.save()
-        populate_user_data(CommCareUser.get_db().get(user._id), user.get_django_user())
-        sql_data = SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
-        self.assertEqual(sql_data.data['favorite_color'], 'purple')
-
-    def test_migrate_web_user(self):
-        user = self.make_web_user()
-        # one user data dictionary, gets copied to all domains
-        user['user_data'] = {'favorite_color': 'purple'}
-        user.add_domain_membership('domain2', timezone='UTC')
-        user.save()
-        populate_user_data(WebUser.get_db().get(user._id), user.get_django_user())
-        for domain in [self.domain, 'domain2']:
-            sql_data = SQLUserData.objects.get(domain=domain, user_id=user.user_id)
-            self.assertEqual(sql_data.data['favorite_color'], 'purple')
-
-    def test_migrate_user_no_data(self):
-        user = self.make_commcare_user()
-        populate_user_data(CommCareUser.get_db().get(user._id), user.get_django_user())
-        with self.assertRaises(SQLUserData.DoesNotExist):
-            SQLUserData.objects.get(domain=self.domain, user_id=user.user_id)
-
     def test_prime_user_data_caches(self):
         users = [
             self.make_commcare_user(),
@@ -153,6 +105,22 @@ class TestUserData(TestCase):
         fields_definition.set_fields([Field(slug='updated', label='Updated')])
         user_data = users[0].get_user_data(self.domain).to_dict()
         self.assertIn('field1', user_data)
+
+    def test_profile(self):
+        fields_definition = CustomDataFieldsDefinition.objects.create(
+            domain=self.domain, field_type=CUSTOM_USER_DATA_FIELD_TYPE)
+        profile = CustomDataFieldsProfile.objects.create(
+            name='blues', fields={'favorite_color': 'blue'}, definition=fields_definition)
+
+        user = self.make_commcare_user()
+        user_data = user.get_user_data(self.domain)
+        user_data.profile_id = profile.pk
+        user_data.save()
+        self.assertEqual(user_data.profile.pk, profile.pk)
+
+        user_data.profile_id = None
+        user_data.save()
+        self.assertEqual(user_data.profile, None)
 
 
 def _get_profile(self, profile_id):
@@ -286,6 +254,7 @@ class TestUserDataModel(SimpleTestCase):
         user_data.update({
             'favorite_color': '',
         }, profile_id=None)
+        self.assertEqual(user_data.profile, None)
 
     def test_delitem(self):
         user_data = self.init_user_data({'yearbook_quote': 'something random'})

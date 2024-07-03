@@ -11,7 +11,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
-from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
+from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, CustomDataFieldsDefinition
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
 from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
@@ -331,6 +331,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     @memoized
     def tableau_form(self):
+        user = CouchUser.get_by_user_id(self.couch_user._id)
         try:
             if self.request.method == "POST" and self.request.POST['form_type'] == "tableau":
                 return TableauUserForm(self.request.POST,
@@ -347,7 +348,8 @@ class BaseEditUserView(BaseUserSettingsView):
                 username=self.editable_user.username,
                 initial={
                     'role': tableau_user.role
-                }
+                },
+                readonly=(not user.has_permission(self.domain, 'edit_user_tableau_config'))
             )
         except (TableauAPIError, TableauUser.DoesNotExist) as e:
             messages.error(self.request, _('''There was an error getting data for this user's associated Tableau
@@ -365,13 +367,13 @@ class BaseEditUserView(BaseUserSettingsView):
                 saved = True
         elif self.request.POST['form_type'] == "update-user":
             if self.update_user():
-                messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
                 saved = True
         elif self.request.POST['form_type'] == "tableau":
             if self.tableau_form and self.tableau_form.is_valid():
                 self.tableau_form.save(self.editable_user.username)
                 saved = True
         if saved:
+            messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
             return HttpResponseRedirect(self.page_url)
         else:
             return self.get(request, *args, **kwargs)
@@ -434,21 +436,28 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def page_context(self):
-        profiles = [profile.to_json() for profile in self.form_user_update.custom_data.model.get_profiles()]
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
-            'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
-            'custom_fields_profiles': sorted(profiles, key=lambda x: x['name'].lower()),
-            'custom_fields_profile_slug': PROFILE_SLUG,
             'user_data': self.editable_user.get_user_data(self.domain).to_dict(),
         }
+
+        original_profile_id = self.editable_user.get_user_data(self.domain).profile_id
+        field_view_context = self.form_user_update.custom_data.field_view.get_field_page_context(
+            self.domain, self.request.couch_user, self.form_user_update.custom_data, original_profile_id
+        )
+        ctx.update(field_view_context)
         if self.request.is_view_only:
             make_form_readonly(self.commtrack_form)
         if self.request.project.commtrack_enabled or self.request.project.uses_locations:
             ctx.update({'update_form': self.commtrack_form})
         if TABLEAU_USER_SYNCING.enabled(self.domain):
-            ctx.update({'tableau_form': self.tableau_form})
+            user = CouchUser.get_by_user_id(self.couch_user._id)
+            ctx.update({
+                'tableau_form': self.tableau_form,
+                'view_user_tableau_config': user.has_permission(self.domain, 'view_user_tableau_config'),
+                'edit_user_tableau_config': user.has_permission(self.domain, 'edit_user_tableau_config')
+            })
         if self.can_grant_superuser_access:
             ctx.update({'update_permissions': True})
 
@@ -464,7 +473,10 @@ class EditWebUserView(BaseEditUserView):
             ),
             'idp_name': idp.name if idp else '',
         })
-
+        if toggles.SUPPORT.enabled(self.request.couch_user.username):
+            ctx["support_info"] = {
+                'locations': self.editable_user.get_sql_locations(self.domain)
+            }
         return ctx
 
     @method_decorator(always_allow_project_access)
@@ -585,19 +597,19 @@ class ListWebUsersView(BaseRoleAccessView):
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'bulk_download_url': bulk_download_url,
-            'user_can_access_all_locations': self.request.couch_user.has_permission(
-                self.domain, 'access_all_locations'),
             'from_address': settings.DEFAULT_FROM_EMAIL
         }
 
 
 @require_can_edit_or_view_web_users
+@location_safe
 def download_web_users(request, domain):
     track_workflow(request.couch_user.get_email(), 'Bulk download web users selected')
     from corehq.apps.users.views.mobile.users import download_users
     return download_users(request, domain, user_type=WEB_USER_TYPE)
 
 
+@location_safe
 class DownloadWebUsersStatusView(BaseUserSettingsView):
     urlname = 'download_web_users_status'
     page_title = gettext_noop('Download Web Users Status')
@@ -700,6 +712,20 @@ class ListRolesView(BaseRoleAccessView):
             )
         return role_view_data
 
+    def get_possible_profiles(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import (
+            CUSTOM_USER_DATA_FIELD_TYPE,
+        )
+        definition = CustomDataFieldsDefinition.get(self.domain, CUSTOM_USER_DATA_FIELD_TYPE)
+        if definition is not None:
+            return [{
+                    'id': profile.id,
+                    'name': profile.name,
+                    }
+                for profile in definition.get_profiles()]
+        else:
+            return []
+
     @property
     def page_context(self):
         from corehq.apps.linked_domain.dbaccessors import is_active_downstream_domain
@@ -729,6 +755,7 @@ class ListRolesView(BaseRoleAccessView):
             'default_role': StaticRole.domain_default(self.domain),
             'tableau_list': tableau_list,
             'report_list': get_possible_reports(self.domain),
+            'profile_list': self.get_possible_profiles(),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
@@ -762,6 +789,10 @@ def _commcare_analytics_roles_options():
         {
             'slug': 'sql_lab',
             'name': 'SQL Lab'
+        },
+        {
+            'slug': 'dataset_editor',
+            'name': 'Dataset Editor'
         }
     ]
 
@@ -1100,6 +1131,8 @@ class InviteWebUserView(BaseManageWebUserView):
         initial = {
             'email': domain_request.email if domain_request else None,
         }
+        can_edit_tableau_config = (self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config')
+                                and toggles.TABLEAU_USER_SYNCING.enabled(self.domain))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
             pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
@@ -1110,6 +1143,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 domain=self.domain,
                 is_add_user=is_add_user,
                 should_show_location=self.request.project.uses_locations,
+                can_edit_tableau_config=can_edit_tableau_config,
                 request=self.request
             )
         return AdminInvitesUserForm(
@@ -1118,6 +1152,7 @@ class InviteWebUserView(BaseManageWebUserView):
             domain=self.domain,
             is_add_user=is_add_user,
             should_show_location=self.request.project.uses_locations,
+            can_edit_tableau_config=can_edit_tableau_config,
             request=self.request
         )
 
@@ -1146,6 +1181,10 @@ class InviteWebUserView(BaseManageWebUserView):
             create_invitation = True
             data = self.invite_web_user_form.cleaned_data
             domain_request = DomainRequest.by_email(self.domain, data["email"])
+            profile_id = data.get("profile", None)
+            profile = CustomDataFieldsProfile.objects.get(
+                id=profile_id,
+                definition__domain=self.domain) if profile_id else None
             if domain_request is not None:
                 domain_request.is_approved = True
                 domain_request.save()
@@ -1157,6 +1196,9 @@ class InviteWebUserView(BaseManageWebUserView):
                                          primary_location_id=data.get("primary_location", None),
                                          program_id=data.get("program", None),
                                          assigned_location_ids=data.get("assigned_locations", None),
+                                         profile=profile,
+                                         tableau_role=data.get("tableau_role", None),
+                                         tableau_group_ids=data.get("tableau_group_ids", None)
                                          )
                 messages.success(request, "%s added." % data["email"])
             else:
@@ -1177,10 +1219,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 if primary_location_id:
                     assert primary_location_id in assigned_location_ids
                 self._assert_user_has_permission_to_access_locations(assigned_location_ids)
-                profile_id = data.get("profile", None)
-                data["profile"] = CustomDataFieldsProfile.objects.get(
-                    id=profile_id,
-                    definition__domain=self.domain) if profile_id else None
+                data["profile"] = profile
                 invite = Invitation(**data)
                 invite.save()
 
@@ -1276,6 +1315,7 @@ class BaseUploadUser(BaseUserSettingsView):
             )
 
 
+@location_safe
 class UploadWebUsers(BaseUploadUser):
     template_name = 'hqwebapp/bootstrap3/bulk_upload.html'
     urlname = 'upload_web_users'
@@ -1299,6 +1339,7 @@ class UploadWebUsers(BaseUploadUser):
         return super(UploadWebUsers, self).post(request, *args, **kwargs)
 
 
+@location_safe
 class WebUserUploadStatusView(BaseManageWebUserView):
     urlname = 'web_user_upload_status'
     page_title = gettext_noop('Web User Upload Status')
@@ -1339,6 +1380,7 @@ class UserUploadJobPollView(BaseUserSettingsView):
         return render(request, 'users/mobile/partials/user_upload_status.html', context)
 
 
+@location_safe
 class WebUserUploadJobPollView(UserUploadJobPollView, BaseManageWebUserView):
     urlname = "web_user_upload_job_poll"
     on_complete_long = 'Web Worker upload has finished'

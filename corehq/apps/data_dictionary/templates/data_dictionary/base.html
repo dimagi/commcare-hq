@@ -103,7 +103,7 @@
                 css: {disabled: formCreateCaseTypeSent()},
                 attr: {disabled: formCreateCaseTypeSent()}
               ">{% trans 'Cancel' %}</a>
-              <button type="submit" class="btn btn-primary" data-bind="
+              <button type="submit" class="btn btn-primary" id="gtm-create-case-type-btn" data-bind="
                 css: {disabled: formCreateCaseTypeSent() || !nameValid() || !nameUnique()},
                 attr: {disabled: formCreateCaseTypeSent() || !nameValid() || !nameUnique()}
               ">
@@ -141,7 +141,7 @@
     </p>
   </div>
   {% if not request.is_view_only %}
-    <div data-bind="saveButton: saveButton, visible: $root.activeCaseType()"></div>
+    <div id="gtm-save-btn" data-bind="saveButton: saveButton, visible: $root.activeCaseType()"></div>
   {% endif %}
   <div class="row">
     <div class="col-md-12">
@@ -176,7 +176,7 @@
         {% trans "Export to Excel" %}
       </a>
       {% if not request.is_view_only %}
-        <a class="btn btn-default" href="{% url "upload_data_dict" domain %}">
+        <a class="btn btn-default" id="gtm-upload-dict" href="{% url "upload_data_dict" domain %}">
           <i class="fa-solid fa-cloud-arrow-up"></i>
           {% trans "Import from Excel" %}
         </a>
@@ -348,7 +348,7 @@
               </div>
               <div class="row-item-small m-auto">
                 <!-- ko if: !deprecated() -->
-                <button title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="btn btn-default">
+                <button id="gtm-deprecate-case-property" title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="btn btn-default">
                   <i class="fa fa-archive"></i>
                   {% trans 'Deprecate' %}
                 </button>
@@ -369,13 +369,17 @@
         {% if not request.is_view_only %}
           <form class="form-inline" data-bind="css: { 'has-error': !newPropertyNameUnique() || !newPropertyNameValid() }">
             <input class="form-control" placeholder="Case Property" data-bind="value: newPropertyName">
-            <button class="btn btn-default" data-bind="click: $root.newCaseProperty, enable: newPropertyNameUnique() && newPropertyNameValid()">
+            <button class="btn btn-default" id="gtm-add-case-property" data-bind="click: $root.newCaseProperty, enable: newPropertyNameUnique() && newPropertyNameValid()">
               <i class="fa fa-plus"></i>
               {% trans "Add Case Property" %}
             </button>
             <div class="help-block">
               <span class="text-danger" data-bind="visible: !newPropertyNameUnique()">
-                {% trans "A case property with this name already exists." %}
+                {% blocktrans %}
+                  A case property with this name already exists.
+                  If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated
+                  properties.
+                {% endblocktrans %}
               </span>
               <span class="text-danger" data-bind="visible: !newPropertyNameValid()">
                 {% trans "Invalid case property name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}
@@ -385,13 +389,17 @@
           <br />
           <form class="form-inline" data-bind="css: {'has-error': !newGroupNameUnique() || !newGroupNameValid()}">
             <input class="form-control" placeholder="Group Name" data-bind="value: newGroupName">
-            <button class="btn btn-default" data-bind="click: $root.newGroup, enable: newGroupNameUnique() && newGroupNameValid()">
+            <button class="btn btn-default" id="gtm-add-case-property-group" data-bind="click: $root.newGroup, enable: newGroupNameUnique() && newGroupNameValid()">
               <i class="fa fa-plus"></i>
               {% trans "Add Case Property Group" %}
             </button>
             <div class="help-block">
               <span class="text-danger" data-bind="visible: !newGroupNameUnique()">
-                {% trans "A case property group with this name already exists." %}
+                {% blocktrans %}
+                  A case property group with this name already exists.
+                  If you don’t see it on the page, please click ‘Show Deprecated’ button to reveal deprecated
+                  groups.
+                {% endblocktrans %}
               </span>
               <span class="text-danger" data-bind="visible: !newGroupNameValid()">
                 {% trans "Invalid case group name. It should start with a letter, and only contain letters, numbers, '-', and '_'" %}

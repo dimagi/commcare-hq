@@ -14,6 +14,8 @@ import polib
 from memoized import memoized
 
 from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_current_app, get_version_build_id
+from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.locations.permissions import location_safe
@@ -26,9 +28,7 @@ from corehq.apps.translations.forms import (
     PullResourceForm,
 )
 from corehq.apps.translations.generators import PoFileGenerator, Translation
-from corehq.apps.translations.integrations.transifex.exceptions import (
-    ResourceMissing,
-)
+from corehq.apps.translations.integrations.transifex.exceptions import TransifexApiException
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
 from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
@@ -302,8 +302,8 @@ class PullResource(BaseTranslationsView):
             if self.pull_resource_form.is_valid():
                 try:
                     return self._pull_resource(request)
-                except ResourceMissing:
-                    messages.add_message(request, messages.ERROR, 'Resource not found')
+                except TransifexApiException as e:
+                    messages.add_message(request, messages.ERROR, 'Resource not found. {}'.format(e))
         return self.get(request, *args, **kwargs)
 
 
@@ -455,7 +455,7 @@ class AppTranslations(BaseTranslationsView):
                 try:
                     if self.perform_request(request, form_data):
                         return redirect(self.urlname, domain=self.domain)
-                except ResourceMissing as e:
+                except TransifexApiException as e:
                     messages.error(request, e)
         return self.get(request, *args, **kwargs)
 
@@ -545,9 +545,25 @@ class DownloadTranslations(BaseTranslationsView):
             form = DownloadAppTranslationsForm(self.domain, self.request.POST)
             if form.is_valid():
                 form_data = form.cleaned_data
-                email_project_from_hq.delay(request.domain, form_data, request.user.email)
-                messages.success(request, _('Submitted request to download translations. '
-                                            'You should receive an email shortly.'))
+                try:
+                    if not form_data['version']:
+                        app = get_current_app(request.domain, form_data['app_id'])
+                        version = app.version
+                    else:
+                        version = form_data['version']
+                    get_version_build_id(request.domain, form_data['app_id'], version)
+                except BuildNotFoundException:
+                    if not form_data['version']:
+                        messages.error(request, _('Missing current Application Version. This can happen if the '
+                                                  'latest version was deleted without creating a new one. '
+                                                  'Please create a new Application Version before trying again.'))
+                    else:
+                        messages.error(request, _('Missing selected Application Version. Please create a new '
+                                                  'version before trying again.'))
+                else:
+                    email_project_from_hq.delay(request.domain, form_data, request.user.email)
+                    messages.success(request, _('Submitted request to download translations. '
+                                                'You should receive an email shortly.'))
                 return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
 

@@ -11,7 +11,7 @@ from eulxml.xpath.ast import (
 
 from corehq.apps.case_search.const import MAX_RELATED_CASES
 from corehq.apps.case_search.exceptions import XPathFunctionException
-from corehq.apps.es import CaseSearchES, filters, queries
+from corehq.apps.es import filters, queries
 
 
 @dataclass
@@ -99,8 +99,8 @@ def _run_subcase_query(subcase_query, context):
     else:
         subcase_filter = filters.match_all()
 
-    es_query = (
-        CaseSearchES().domain(context.domain)
+    return (
+        context.helper.get_base_queryset('subcase_query')
         .nested(
             'indices',
             queries.filtered(
@@ -113,10 +113,8 @@ def _run_subcase_query(subcase_query, context):
         )
         .filter(subcase_filter)
         .source(['indices.referenced_id', 'indices.identifier'])
+        .run().hits
     )
-
-    results = context.profiler.run_query('subcase_query', es_query)
-    return results.hits
 
 
 def _parse_normalize_subcase_query(node) -> SubCaseQuery:
