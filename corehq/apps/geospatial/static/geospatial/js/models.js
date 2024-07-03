@@ -797,8 +797,13 @@ hqDefine('geospatial/js/models', [
                         // redraw using mapControlsModelInstance
                         self.selectedSavedPolygonId(ret.id);
                     },
-                    error: function () {
-                        alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
+                    error: function (response) {
+                        const responseText = response.responseText;
+                        if (responseText) {
+                            alertUser.alert_user(gettext(responseText), 'danger');
+                        } else {
+                            alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
+                        }
                     },
                 });
             }
