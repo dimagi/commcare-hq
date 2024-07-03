@@ -6,7 +6,12 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import ODataAuthentication
-from corehq.apps.enterprise.enterprise import EnterpriseDomainReport
+from corehq.apps.enterprise.enterprise import (
+    EnterpriseDomainReport,
+    EnterpriseWebUserReport,
+    EnterpriseMobileWorkerReport,
+    EnterpriseODataReport,
+)
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.odata.utils import FieldMetadata
@@ -79,6 +84,7 @@ class ODataResource(HqBaseResource):
         mapping = {
             fields.CharField: 'Edm.String',
             fields.DateTimeField: 'Edm.DateTimeOffset',
+            fields.DateField: 'Edm.Date',
             fields.IntegerField: 'Edm.Int32'
         }
 
@@ -90,6 +96,16 @@ class ODataResource(HqBaseResource):
 
     def get_primary_key(self):
         raise NotImplementedError()
+
+    @classmethod
+    def convert_datetime(cls, datetime_string):
+        # OData's edm:DateTimeOffset expects datetimes in ISO format: https://docs.oasis-open.org/odata/odata/v4.0/errata02/os/complete/part3-csdl/odata-v4.0-errata02-os-part3-csdl-complete.html#_Toc406398065  # noqa: E501
+        if not datetime_string:
+            return None
+
+        time = datetime.strptime(datetime_string, '%Y/%m/%d %H:%M:%S')
+        time = time.astimezone(tz.gettz('UTC'))
+        return time.isoformat()
 
 
 class DomainResource(ODataResource):
@@ -111,24 +127,14 @@ class DomainResource(ODataResource):
 
     def dehydrate(self, bundle):
         bundle.data['domain'] = bundle.obj[6]
-        bundle.data['created_on'] = self.convert_date(bundle.obj[0])
+        bundle.data['created_on'] = self.convert_datetime(bundle.obj[0])
         bundle.data['num_apps'] = bundle.obj[1]
         bundle.data['num_mobile_users'] = bundle.obj[2]
         bundle.data['num_web_users'] = bundle.obj[3]
         bundle.data['num_sms_last_30_days'] = bundle.obj[4]
-        bundle.data['last_form_submission'] = self.convert_date(bundle.obj[5])
+        bundle.data['last_form_submission'] = self.convert_datetime(bundle.obj[5])
 
         return bundle
-
-    @staticmethod
-    def convert_date(date_string):
-        # OData's edm:DateTimeOffset expects datetimes in ISO format: https://docs.oasis-open.org/odata/odata/v4.0/errata02/os/complete/part3-csdl/odata-v4.0-errata02-os-part3-csdl-complete.html#_Toc406398065  # noqa: E501
-        if not date_string:
-            return None
-
-        time = datetime.strptime(date_string, '%Y/%m/%d %H:%M:%S')
-        time = time.astimezone(tz.gettz('UTC'))
-        return time.isoformat()
 
     def alter_list_data_to_serialize(self, request, data):
         result = super().alter_list_data_to_serialize(request, data)
@@ -139,3 +145,126 @@ class DomainResource(ODataResource):
 
     def get_primary_key(self):
         return 'domain'
+
+
+class WebUserResource(ODataResource):
+    email = fields.CharField()
+    name = fields.CharField()
+    role = fields.CharField()
+    last_login = fields.DateTimeField(null=True)
+    last_access_date = fields.DateField(null=True)
+    status = fields.CharField()
+    domain = fields.CharField()
+
+    def get_object_list(self, request):
+        account = BillingAccount.get_account_by_domain(request.domain)
+        report = EnterpriseWebUserReport(account, request.couch_user)
+        return report.rows
+
+    def obj_get_list(self, bundle, **kwargs):
+        return self.get_object_list(bundle.request)
+
+    def dehydrate(self, bundle):
+        bundle.data['email'] = bundle.obj[0]
+        bundle.data['name'] = self.convert_not_available(bundle.obj[1])
+        bundle.data['role'] = bundle.obj[2]
+        bundle.data['last_login'] = self.convert_datetime(self.convert_not_available(bundle.obj[3]))
+        bundle.data['last_access_date'] = self.convert_not_available(bundle.obj[4])
+        bundle.data['status'] = bundle.obj[5]
+        bundle.data['domain'] = bundle.obj[7]
+
+        return bundle
+
+    @classmethod
+    def convert_not_available(cls, value):
+        return None if value == 'N/A' else value
+
+    def alter_list_data_to_serialize(self, request, data):
+        result = super().alter_list_data_to_serialize(request, data)
+        path = urljoin(request.get_full_path(), 'schema/#feed')
+        result['@odata.context'] = request.build_absolute_uri(path)
+
+        return result
+
+    def get_primary_key(self):
+        return 'email'
+
+
+class MobileUserResource(ODataResource):
+    username = fields.CharField()
+    name = fields.CharField()
+    email = fields.CharField()
+    role = fields.CharField()
+    created_at = fields.DateTimeField()
+    last_sync = fields.DateTimeField()
+    last_submission = fields.DateTimeField()
+    commcare_version = fields.CharField(blank=True)
+    user_id = fields.CharField()
+    domain = fields.CharField()
+
+    def get_object_list(self, request):
+        account = BillingAccount.get_account_by_domain(request.domain)
+        report = EnterpriseMobileWorkerReport(account, request.couch_user)
+        return report.rows
+
+    def obj_get_list(self, bundle, **kwargs):
+        return self.get_object_list(bundle.request)
+
+    def dehydrate(self, bundle):
+        bundle.data['username'] = bundle.obj[0]
+        bundle.data['name'] = bundle.obj[1]
+        bundle.data['email'] = bundle.obj[2]
+        bundle.data['role'] = bundle.obj[3]
+        bundle.data['created_at'] = self.convert_datetime(bundle.obj[4])
+        bundle.data['last_sync'] = self.convert_datetime(bundle.obj[5])
+        bundle.data['last_submission'] = self.convert_datetime(bundle.obj[6])
+        bundle.data['commcare_version'] = bundle.obj[7]
+        bundle.data['user_id'] = bundle.obj[8]
+        bundle.data['domain'] = bundle.obj[10]
+
+        return bundle
+
+    def alter_list_data_to_serialize(self, request, data):
+        result = super().alter_list_data_to_serialize(request, data)
+        path = urljoin(request.get_full_path(), 'schema/#feed')
+        result['@odata.context'] = request.build_absolute_uri(path)
+
+        return result
+
+    def get_primary_key(self):
+        return 'user_id'
+
+
+class ODataFeedResource(ODataResource):
+    domain = fields.CharField(null=True)
+    num_feeds_used = fields.IntegerField(null=True)
+    num_feeds_available = fields.IntegerField(null=True)
+    report_name = fields.CharField(null=True)
+    report_rows = fields.IntegerField(null=True)
+
+    def get_object_list(self, request):
+        account = BillingAccount.get_account_by_domain(request.domain)
+        report = EnterpriseODataReport(account, request.couch_user)
+        return report.rows
+
+    def obj_get_list(self, bundle, **kwargs):
+        return self.get_object_list(bundle.request)
+
+    def dehydrate(self, bundle):
+        bundle.data['num_feeds_used'] = bundle.obj[0]
+        bundle.data['num_feeds_available'] = bundle.obj[1]
+        bundle.data['report_name'] = bundle.obj[2]
+        bundle.data['report_rows'] = bundle.obj[3]
+        bundle.data['domain'] = bundle.obj[5] if len(bundle.obj) >= 5 else None
+
+        return bundle
+
+    def alter_list_data_to_serialize(self, request, data):
+        result = super().alter_list_data_to_serialize(request, data)
+        path = urljoin(request.get_full_path(), 'schema/#feed')
+        result['@odata.context'] = request.build_absolute_uri(path)
+
+        return result
+
+    def get_primary_key(self):
+        return 'report_name'
