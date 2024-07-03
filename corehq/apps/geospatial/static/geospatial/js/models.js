@@ -771,12 +771,8 @@ hqDefine('geospatial/js/models', [
         self.saveGeoPolygon = function () {
             let data = self.mapObj.drawControls.getAll();
             if (data.features.length) {
-                let name = window.prompt(gettext("Name of the Area"));
-                if (name === null) {
-                    return;
-                }
-                if (name === '') {
-                    alertUser.alert_user(gettext("Please enter the name for the area!"), 'warning', false, true);
+                const name = window.prompt(gettext("Name of the Area"));
+                if (!validateSavedPolygonName(name)) {
                     return;
                 }
                 data['name'] = name;
@@ -802,13 +798,28 @@ hqDefine('geospatial/js/models', [
                         self.selectedSavedPolygonId(ret.id);
                         self.shouldRefreshPage(true);
                     },
-                    error: function () {
-                        alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
+                    error: function (response) {
+                        const responseText = response.responseText;
+                        if (responseText) {
+                            alertUser.alert_user(gettext(responseText), 'danger');
+                        } else {
+                            alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
+                        }
                     },
                 });
             }
         };
 
+        function validateSavedPolygonName(name) {
+            if (name === null) {
+                return false;
+            }
+            if (name === '') {
+                alertUser.alert_user(gettext("Please enter the name for the area!"), 'warning', false, true);
+                return false;
+            }
+            return true;
+        }
     };
 
     return {
