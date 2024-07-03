@@ -453,7 +453,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
             del feature['id']
         self.assertEqual(saved_polygons[0].geo_json, geo_json_data)
 
-    def _validate_error_message(self, response, message):
+    def _assert_error_message(self, response, message):
         error = response.content.decode("utf-8")
         self.assertEqual(response.status_code, 400)
         self.assertEqual(error, message,)
@@ -461,17 +461,17 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
     @flag_enabled('GEOSPATIAL')
     def test_geo_json_validation(self):
         response = self.client.generic('POST', self.endpoint, 'foobar')
-        self._validate_error_message(
+        self._assert_error_message(
             response,
             message='POST Body must be a valid json in {"geo_json": <geo_json>} format'
         )
         response = self._make_post_request({'foo': 'bar'})
-        self._validate_error_message(
+        self._assert_error_message(
             response,
             message='Empty geo_json POST field'
         )
         response = self._make_post_request({'geo_json': {'foo': 'bar'}})
-        self._validate_error_message(
+        self._assert_error_message(
             response,
             message='Invalid GeoJSON, geo_json must be a FeatureCollection of Polygons'
         )
@@ -484,7 +484,7 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
             name='foobar',
         )
         response = self._make_post_request({'geo_json': _sample_geojson_data(name='FooBAR')})
-        self._validate_error_message(
+        self._assert_error_message(
             response,
             message='GeoPolygon with given name already exists! Please use a different name.'
         )
