@@ -50,7 +50,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
                         "class": "form-check-input",
                         "name": "selectionAll",
                         "value": "all",
-                        # data attribute below is detected on htmx:beforeSend,
+                        # data attribute below is detected on htmx:configRequest,
                         # inserts `pageRowIds` into request
                         "data-select-all": "js-select-row",
                         # htmx
@@ -135,7 +135,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         data_store = self.data_store(self.request)
         is_selected = 'selectionAll' in request.POST
 
-        # `pageRowIds` is inserted in htmx:beforeSend event listener
+        # `pageRowIds` is inserted in htmx:configRequest event listener
         # in data_cleaning.js and, selecting values for checkboxes with
         # the `js-select-row` css class.
         row_ids = request.POST.getlist('pageRowIds')
