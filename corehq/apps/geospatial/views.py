@@ -91,6 +91,13 @@ class GeoPolygonListView(BaseDomainView):
             return HttpResponseBadRequest(
                 'Invalid GeoJSON, geo_json must be a FeatureCollection of Polygons'
             )
+
+        geo_polygon_name = geo_json.pop('name')
+        if GeoPolygon.objects.filter(domain=self.domain, name__iexact=geo_polygon_name).exists():
+            return HttpResponseBadRequest(
+                'GeoPolygon with given name already exists! Please use a different name.'
+            )
+
         # Drop ids since they are specific to the Mapbox draw event
         for feature in geo_json["features"]:
             del feature['id']
