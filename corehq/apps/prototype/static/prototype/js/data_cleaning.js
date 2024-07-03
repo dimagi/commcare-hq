@@ -37,10 +37,10 @@ hqDefine("prototype/js/data_cleaning",[
             htmx.trigger(evt.detail.elt.dataset.refreshTable, 'refreshTable');
         }
     });
-    document.body.addEventListener('htmx:beforeSend', function (evt) {
+    document.body.addEventListener('htmx:configRequest', function (evt) {
         if (evt.detail.elt.dataset.selectAll) {
             let isSelected = evt.detail.elt.checked;
-            evt.detail.requestConfig.parameters.pageRowIds = _.map(
+            evt.detail.parameters.pageRowIds = _.map(
                 document.getElementsByClassName(evt.detail.elt.dataset.selectAll), function (el) {
                     el.checked = isSelected;
 
