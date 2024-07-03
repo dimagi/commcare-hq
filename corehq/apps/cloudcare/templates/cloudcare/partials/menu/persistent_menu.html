@@ -12,7 +12,7 @@
   <div id="persistent-menu-container" class="persistent-menu-toggle collapse container-fluid h-100">
     <div class="row h-100">
       <div id="persistent-menu-content" class="col-3">
-        <%= _.template($('#persistent-menu-commands').text())({commands: persistentMenu}) %>
+        <ul></ul>
       </div>
       <div id="persistent-menu-overlay" class="col">
         <button id="persistent-menu-collapse"
@@ -26,13 +26,7 @@
   </div>
 </script>
 
-<script type="text/template" id="persistent-menu-commands">
-  <ul>
-    <% for(var i = 0; i < commands.length; i++) { %>
-      <li><%- commands[i].displayText %></li>
-      <% if (!_.isEmpty(commands[i].commands)) { %>
-        <%= _.template($('#persistent-menu-commands').text())({commands: commands[i].commands}) %>
-      <% } %>
-    <% } %>
-  </ul>
+<script type="text/template" id="persistent-menu-item">
+  <%- displayText %>
+  <ul></ul>
 </script>

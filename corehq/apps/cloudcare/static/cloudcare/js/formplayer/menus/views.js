@@ -2,6 +2,7 @@
 hqDefine("cloudcare/js/formplayer/menus/views", [
     'jquery',
     'underscore',
+    'backbone',
     'backbone.marionette',
     'DOMPurify/dist/purify.min',
     'hqwebapp/js/initial_page_data',
@@ -17,6 +18,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 ], function (
     $,
     _,
+    Backbone,
     Marionette,
     DOMPurify,
     initialPageData,
@@ -1489,14 +1491,44 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
     });
 
+    const PersistentMenuItemView = Marionette.View.extend({
+        tagName: "li",
+        template: _.template($("#persistent-menu-item").html() || ""),
+        regions: {
+            tree: {
+                el: 'ul',
+                replaceElement: true
+            }
+        },
+        onRender: function () {
+            if (!_.isEmpty(this.model.get('commands'))) {
+                this.showChildView('tree', new PersistentMenuListView({
+                    collection: new Backbone.Collection(this.model.get('commands')),
+                }));
+            }
+        },
+    });
+
+    const PersistentMenuListView = Marionette.CollectionView.extend({
+        tagName: "ul",
+        childView: PersistentMenuItemView,
+    });
+
     const PersistentMenuView = Marionette.View.extend({
         tagName: "div",
         template: _.template($("#persistent-menu-template").html() || ""),
         ui: {
             container: "#persistent-menu-container",
         },
+        regions: {
+            menu: "#persistent-menu-content ul",
+        },
         events: {
             "show.bs.collapse": "expand",
+            "click @ui.command": "navigate",
+        },
+        onRender: function () {
+            this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
         },
         setHeights: function () {
             const boundingRect = this.ui.container[0].closest('#cloudcare-app-context').getBoundingClientRect();
