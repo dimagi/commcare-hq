@@ -1210,7 +1210,7 @@ class BaseUploadUser(BaseUserSettingsView):
             user_specs, group_specs = self.process_workbook(workbook, self.domain, self.is_web_upload)
             task_ref = self.upload_users(
                 request, user_specs, group_specs, self.domain, self.is_web_upload)
-            return self.get_success_response(request, task_ref)
+            return self._get_success_response(request, task_ref)
         except WorkbookJSONError as e:
             messages.error(request, str(e))
             return self.get(request, *args, **kwargs)

@@ -3,10 +3,11 @@ from contextlib import contextmanager
 from copy import deepcopy
 from io import BytesIO
 from openpyxl import Workbook
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.test import TestCase, Client
+from django.test.client import RequestFactory
 from django.urls import reverse
 
 from corehq import privileges
@@ -33,7 +34,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser, HQApiKey,
 )
-from corehq.apps.users.views import _delete_user_role, _update_role_from_view
+from corehq.apps.users.views import _delete_user_role, _update_role_from_view, BaseUploadUser
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.test_utils import (
@@ -561,3 +562,36 @@ class BulkUserUploadAPITest(TestCase):
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.json(), {'success': False, 'message': 'Unexpected error'})
         mock_notify_exception.assert_called_once_with(None, message='Unexpected error')
+
+
+class BaseUploadUserTest(TestCase):
+    def setUp(self):
+        self.domain = 'test-domain'
+        self.factory = RequestFactory()
+        self.view = BaseUploadUser()
+        self.view.request = self.factory.get('/')
+        self.view.args = []
+        self.view.kwargs = {'domain': self.domain}
+        self.view._domain = self.domain
+        self.view.is_web_upload = True
+
+    @patch('corehq.apps.users.views.reverse')
+    @patch('corehq.apps.users.views.BaseUploadUser.upload_users')
+    @patch('corehq.apps.users.views.BaseUploadUser.process_workbook')
+    @patch('corehq.apps.users.views.get_workbook')
+    def test_post_success(self, mock_get_workbook, mock_process_workbook, mock_upload_users, mock_reverse):
+        mock_get_workbook.return_value = Mock()
+        mock_process_workbook.return_value = (Mock(), Mock())
+        mock_task_ref = Mock()
+        mock_upload_users.return_value = mock_task_ref
+        mock_reverse.return_value = '/success/'
+
+        request = self.factory.post('/', {'bulk_upload_file': Mock()})
+        response = self.view.post(request)
+
+        mock_reverse.assert_called_once_with(
+            'web_user_upload_status',
+            args=[self.domain, mock_task_ref.download_id]
+        )
+        self.assertIsInstance(response, HttpResponseRedirect)
+        self.assertEqual(response.url, '/success/')
