@@ -30,24 +30,7 @@
   </div>
 </div>
 
-<div class="panel" id="polygon-filters">
-  <div class="row">
-    {% include 'geospatial/partials/saved_polygon_filter.html' %}
-  </div>
-  <div class="alert alert-info" style="margin-top:10px;" data-bind="visible: shouldRefreshPage">
-    {% blocktrans %}
-      Please
-      <a href="">refresh the page</a>
-      to apply the polygon filtering changes.
-    {% endblocktrans %}
-  </div>
-  <div class="alert alert-warning" data-bind="visible: hasUrlError">
-    {% blocktrans %}
-      There are too many polygons on the map. Please remove some before refreshing the page, otherwise the
-      newly added polygons will be lost.
-    {% endblocktrans %}
-  </div>
-</div>
+{% include 'geospatial/partials/saved_polygon_filter.html' with uses_disbursement='false' %}
 <div id="case-grouping-map" style="height: 500px"></div>
 
 <div class="panel-body-datatable">

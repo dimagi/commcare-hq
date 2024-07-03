@@ -800,6 +800,7 @@ hqDefine('geospatial/js/models', [
                         );
                         // redraw using mapControlsModelInstance
                         self.selectedSavedPolygonId(ret.id);
+                        self.shouldRefreshPage(true);
                     },
                     error: function () {
                         alertUser.alert_user(gettext(unexpectedErrorMessage), 'danger');
