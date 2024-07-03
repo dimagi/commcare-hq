@@ -6,6 +6,9 @@ from django.utils.translation import gettext as _
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.custom_data_fields.models import (
+    COMMCARE_LOCATION_ID,
+    COMMCARE_LOCATION_IDS,
+    COMMCARE_PRIMARY_CASE_SHARING_ID,
     COMMCARE_PROJECT,
     PROFILE_SLUG,
     CustomDataFieldsProfile,
@@ -64,6 +67,9 @@ class UserData:
             **(self.profile.fields if self.profile else {}),
             PROFILE_SLUG: self.profile_id or '',
             COMMCARE_PROJECT: self.domain,
+            COMMCARE_LOCATION_ID: self._couch_user.location_id,
+            COMMCARE_LOCATION_IDS: self._couch_user.location_ids,
+            COMMCARE_PRIMARY_CASE_SHARING_ID: self._couch_user.location_id,
         }
 
     def to_dict(self):
