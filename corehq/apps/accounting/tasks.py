@@ -42,6 +42,7 @@ from corehq.apps.accounting.models import (
     BillingAccountWebUserHistory,
     CreditLine,
     Currency,
+    FormSubmittingMobileWorkerHistory,
     DomainUserHistory,
     FeatureType,
     InvoicingPlan,
@@ -72,6 +73,7 @@ from corehq.apps.accounting.utils.subscription import (
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.forms import FormES
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.users.models import CommCareUser, FakeUser
 from corehq.const import (
@@ -808,6 +810,44 @@ def calculate_users_in_all_domains(today=None):
     # to get around our billing system.
     from corehq.apps.enterprise.tasks import auto_deactivate_mobile_workers
     auto_deactivate_mobile_workers.delay()
+
+
+def count_form_submitting_mobile_workers(domain, start, end):
+    """
+    Returns the count of mobile workers who have submitted a form in the time specified.
+    """
+    form_counts_by_worker = (
+        FormES(for_export=True)
+        .domain(domain)
+        .submitted(gte=start, lt=end)
+        .user_type('mobile')
+        .user_aggregation()
+        .size(0)
+        .run()
+        .aggregations.user.normalized_buckets
+    )
+    return len(form_counts_by_worker)
+
+
+@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+def calculate_form_submitting_mobile_workers_in_all_domains(today=None):
+    today = today or datetime.date.today()
+    date_start = today - relativedelta(months=1)
+    for domain in Domain.get_all_names():
+        num_workers = count_form_submitting_mobile_workers(domain, date_start, today)
+        record_date = today - relativedelta(days=1)
+        try:
+            FormSubmittingMobileWorkerHistory.objects.create(
+                domain=domain,
+                num_users=num_workers,
+                record_date=record_date
+            )
+        except Exception as e:
+            log_accounting_error(
+                f"""Something went wrong while creating FormSubmittingMobileWorkerHistory
+                  for domain {domain}: {e}""",
+                show_stack_trace=True,
+            )
 
 
 @periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
