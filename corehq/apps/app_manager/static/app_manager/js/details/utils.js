@@ -80,6 +80,12 @@ hqDefine("app_manager/js/details/utils", function () {
                 label: gettext('Conditional ID Mapping'),
             });
         }
+        if (addOns.calc_xpaths) {
+            formats.push({
+                value: "translatable-enum",
+                label: gettext('Translatable Text'),
+            });
+        }
 
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('VELLUM_CASE_MICRO_IMAGE')) {
             formats.push({
