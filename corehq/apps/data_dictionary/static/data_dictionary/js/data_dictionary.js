@@ -24,7 +24,17 @@ hqDefine("data_dictionary/js/data_dictionary", [
     DOMPurify,
     toggles
 ) {
-    var caseType = function (name, fhirResourceType, deprecated, moduleCount, geoCaseProp, isSafeToDelete) {
+    var caseType = function (
+        name,
+        fhirResourceType,
+        deprecated,
+        moduleCount,
+        geoCaseProp,
+        isSafeToDelete,
+        changeSaveButton,
+        resetSaveButton,
+        dataUrl
+    ) {
         var self = {};
         self.name = name || gettext("No Name");
         self.deprecated = deprecated;
@@ -34,13 +44,45 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.groups = ko.observableArray();
         self.geoCaseProp = geoCaseProp;
         self.canDelete = isSafeToDelete;
+        self.changeSaveButton = changeSaveButton;
+        self.resetSaveButton = resetSaveButton;
+        self.dataUrl = dataUrl;
 
-        self.init = function (groupData, changeSaveButton) {
+        self.fetchCaseProperties = function () {
+            if (self.groups().length === 0) {
+                let caseTypeUrl = self.dataUrl + self.name + '/';
+                recurseChunks(caseTypeUrl);
+            }
+        }
+
+        const recurseChunks = function (nextUrl) {
+            $.getJSON(nextUrl, function (data) {
+                setCaseProperties(data.groups);
+                self.resetSaveButton();
+                nextUrl = data._links.next;
+                if (nextUrl) {
+                    recurseChunks(nextUrl);
+                }
+            });
+        }
+
+        const setCaseProperties = function (groupData) {
             for (let group of groupData) {
-                let groupObj = groupsViewModel(self.name, group.id, group.name, group.description, group.deprecated);
-                groupObj.name.subscribe(changeSaveButton);
-                groupObj.description.subscribe(changeSaveButton);
-                groupObj.toBeDeprecated.subscribe(changeSaveButton);
+                let groupObj = _.find(self.groups(), function (g) {
+                    return g.id === group.id;
+                });
+                if (!groupObj) {
+                    groupObj = groupsViewModel(
+                        self.name,
+                        group.id,
+                        group.name,
+                        group.description,
+                        group.deprecated,
+                        self.changeSaveButton
+                    );
+                    groupObj.properties.subscribe(self.changeSaveButton);
+                    self.groups.push(groupObj);
+                }
 
                 for (let prop of group.properties) {
                     const isGeoCaseProp = (self.geoCaseProp === prop.name && prop.data_type === 'gps');
@@ -48,34 +90,31 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         self.canDelete = false;
                     }
 
-                    var propObj = propertyListItem(prop.name, prop.label, false, group.name, self.name, prop.data_type,
-                        prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath, isGeoCaseProp, prop.is_safe_to_delete, prop.id, prop.index, groupObj.name());
-                    subscribePropObservable(propObj, propObj.description, changeSaveButton);
-                    subscribePropObservable(propObj, propObj.label, changeSaveButton);
-                    subscribePropObservable(propObj, propObj.fhirResourcePropPath, changeSaveButton);
-                    subscribePropObservable(propObj, propObj.dataType, changeSaveButton);
-                    subscribePropObservable(propObj, propObj.deprecated, changeSaveButton);
-                    subscribePropObservable(propObj, propObj.deleted, changeSaveButton);
-                    subscribePropObservable(propObj, propObj.removeFHIRResourcePropertyPath, changeSaveButton);
-                    propObj.allowedValues.on('change', changeSaveButton);
-                    propObj.allowedValues.on('change', propObj.allowedValuesChanged);
+                    var propObj = propertyListItem(
+                        prop,
+                        false,
+                        group.name,
+                        self.name,
+                        isGeoCaseProp,
+                        groupObj.name(),
+                        self.changeSaveButton
+                );
                     groupObj.properties.push(propObj);
                 }
-                groupObj.properties.subscribe(changeSaveButton);
-                self.groups.push(groupObj);
             }
         };
-
-        function subscribePropObservable(propObj, prop, changeSaveButton) {
-            prop.subscribe(changeSaveButton);
-            propObj.trackObservableChange(prop);
-        }
 
         return self;
     };
 
-    var groupsViewModel = function (caseType, id, name, description, deprecated) {
+    var groupsViewModel = function (
+        caseType,
+        id,
+        name,
+        description,
+        deprecated,
+        changeSaveButton
+    ) {
         var self = {};
         self.id = id;
         self.name = ko.observable(name);
@@ -98,30 +137,42 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.showGroupPropertyTransferWarning = ko.computed(function () {
             return self.toBeDeprecated() && !deprecated && self.properties().length > 0;
         });
+
+        self.name.subscribe(changeSaveButton);
+        self.description.subscribe(changeSaveButton);
+        self.toBeDeprecated.subscribe(changeSaveButton);
+        // Don't subscribe self.properties until they have been loaded
+
         return self;
     };
 
-    var propertyListItem = function (name, label, isGroup, groupName, caseType, dataType, description, allowedValues,
-        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, isGeoCaseProp, isSafeToDelete, id, index,
-        loadedGroup) {
+    var propertyListItem = function (
+        prop,
+        isGroup,
+        groupName,
+        caseType,
+        isGeoCaseProp,
+        loadedGroup,
+        changeSaveButton
+    ) {
         var self = {};
-        self.id = id;
-        self.name = name;
-        self.label = ko.observable(label);
+        self.id = prop.id;
+        self.name = prop.name;
+        self.label = ko.observable(prop.label);
         self.expanded = ko.observable(true);
         self.isGroup = isGroup;
         self.group = ko.observable(groupName);
         self.caseType = caseType;
-        self.dataType = ko.observable(dataType);
-        self.description = ko.observable(description);
-        self.fhirResourcePropPath = ko.observable(fhirResourcePropPath);
-        self.originalResourcePropPath = fhirResourcePropPath;
-        self.deprecated = ko.observable(deprecated || false);
+        self.dataType = ko.observable(prop.data_type);
+        self.description = ko.observable(prop.description);
+        self.fhirResourcePropPath = ko.observable(prop.fhir_resource_prop_path);
+        self.originalResourcePropPath = prop.fhir_resource_prop_path;
+        self.deprecated = ko.observable(prop.deprecated || false);
         self.isGeoCaseProp = ko.observable(isGeoCaseProp);
-        self.isSafeToDelete = ko.observable(isSafeToDelete);
+        self.isSafeToDelete = ko.observable(prop.isSafeToDelete);
         self.deleted = ko.observable(false);
         self.hasChanges = false;
-        self.index = index;
+        self.index = prop.index;
         self.loadedGroup = loadedGroup;  // The group this case property is part of when page was loaded. Used to identify group changes
 
         self.trackObservableChange = function (observable) {
@@ -145,7 +196,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.hasChanges = true;
         };
 
-        self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
+        self.removeFHIRResourcePropertyPath = ko.observable(prop.removeFHIRResourcePropertyPath || false);
         let subTitle;
         if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
             subTitle = gettext("When importing data, CommCare will not save a row if its cells don't match these valid values.");
@@ -159,7 +210,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             {"key": gettext("valid value"), "value": gettext("description")}, /* placeholders */
             10 /* maxDisplay */
         );
-        self.allowedValues.val(allowedValues);
+        self.allowedValues.val(prop.allowedValues);
         if (initialPageData.get('read_only_mode')) {
             self.allowedValues.setEdit(false);
         }
@@ -212,6 +263,22 @@ hqDefine("data_dictionary/js/data_dictionary", [
             });
         };
 
+        subscribePropObservable(self.description);
+        subscribePropObservable(self.label);
+        subscribePropObservable(self.fhirResourcePropPath);
+        subscribePropObservable(self.dataType);
+        subscribePropObservable(self.deprecated);
+        subscribePropObservable(self.deleted);
+        subscribePropObservable(self.removeFHIRResourcePropertyPath);
+        self.allowedValues.on('change', changeSaveButton);
+        self.allowedValues.on('change', self.allowedValuesChanged);
+        self.hasChanges = true;
+
+        function subscribePropObservable(prop) {
+            prop.subscribe(changeSaveButton);
+            self.trackObservableChange(prop);
+        }
+
         return self;
     };
 
@@ -223,7 +290,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.removefhirResourceType = ko.observable(false);
         self.newPropertyName = ko.observable();
         self.newGroupName = ko.observable();
-        self.caseGroupList = ko.observableArray();
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
         self.fhirResourceTypes = ko.observableArray(fhirResourceTypes);
@@ -240,7 +306,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             save: function () {
                 const groups = [];
                 const properties = [];
-                _.each(self.caseGroupList(), function (group, index) {
+                _.each(self.activeCaseTypeData(), function (group, index) {
                     if (group.name() !== "") {
                         let groupData = {
                             'caseType': group.caseType,
@@ -311,7 +377,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.saveButton.fire('change');
         };
 
+        const resetSaveButton = function () {
+            self.saveButton.setState('saved');
+        }
+
         self.init = function (callback) {
+            // Get list of case types
             $.getJSON(dataUrl, {load_deprecated_case_types: self.showDeprecatedCaseTypes()})
                 .done(function (data) {
                     _.each(data.case_types, function (caseTypeData) {
@@ -321,20 +392,37 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             caseTypeData.is_deprecated,
                             caseTypeData.module_count,
                             data.geo_case_property,
-                            caseTypeData.is_safe_to_delete
+                            caseTypeData.is_safe_to_delete,
+                            changeSaveButton,
+                            resetSaveButton,
+                            dataUrl
                         );
-                        caseTypeObj.init(caseTypeData.groups, changeSaveButton);
                         self.caseTypes.push(caseTypeObj);
                     });
-                    if (self.caseTypes().length) {
-                        self.goToCaseType(self.caseTypes()[0]);
+                    if (
+                        self.caseTypes().length
+                        // Check that hash navigation has not already loaded the first case type
+                        && self.caseTypes()[0] !== self.getHashNavigationCaseType()
+                    ) {
+                        // `self.goToCaseType()` calls `caseType.fetchCaseProperties()`
+                        // to fetch the case properties of the first case type
+                        let caseType = self.caseTypes()[0]
+                        self.goToCaseType(caseType);
+                        caseType.groups.subscribe(changeSaveButton)
                     }
-                    self.caseGroupList.subscribe(changeSaveButton);
                     self.fhirResourceType.subscribe(changeSaveButton);
                     self.removefhirResourceType.subscribe(changeSaveButton);
                     callback();
                 });
         };
+
+        self.getHashNavigationCaseType = function () {
+            let fullHash = window.location.hash.split('?')[0],
+                hash = fullHash.substring(1);
+            return _.find(self.caseTypes(), function (prop) {
+                return prop.name === hash;
+            });
+        }
 
         self.getActiveCaseType = function () {
             return _.find(self.caseTypes(), function (prop) {
@@ -342,15 +430,16 @@ hqDefine("data_dictionary/js/data_dictionary", [
             });
         };
 
-        self.activeCaseTypeData = function () {
-            var caseTypes = self.caseTypes();
-            if (caseTypes.length) {
-                var caseType = self.getActiveCaseType();
-                if (caseType) {
-                    return caseType.groups();
-                }
+        self.getCaseTypeGroupsObservable = function () {
+            let caseType = self.getActiveCaseType();
+            if (caseType) {
+                return caseType.groups;  // The observable, not its value
             }
-            return [];
+        };
+
+        self.activeCaseTypeData = function () {
+            const groupsObs = self.getCaseTypeGroupsObservable();
+            return (groupsObs) ? groupsObs() : [];
         };
 
         self.isActiveCaseTypeDeprecated = function () {
@@ -420,10 +509,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     return;
                 }
             }
+            caseType.fetchCaseProperties();
             self.activeCaseType(caseType.name);
             self.fhirResourceType(caseType.fhirResourceType());
             self.removefhirResourceType(false);
-            self.caseGroupList(self.activeCaseTypeData());
             self.saveButton.setState('saved');
         };
 
@@ -479,25 +568,38 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newCaseProperty = function () {
             if (_.isString(self.newPropertyName()) && self.newPropertyName().trim()) {
-                let lastGroup = self.caseGroupList()[self.caseGroupList().length - 1];
-                var prop = propertyListItem(self.newPropertyName(), self.newPropertyName(), false, lastGroup.name(), self.activeCaseType(), '', '', {});
-                prop.dataType.subscribe(changeSaveButton);
-                prop.description.subscribe(changeSaveButton);
-                prop.label.subscribe(changeSaveButton);
-                prop.fhirResourcePropPath.subscribe(changeSaveButton);
-                prop.deprecated.subscribe(changeSaveButton);
-                prop.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
-                prop.allowedValues.on('change', changeSaveButton);
-                prop.hasChanges = true;
+                let lastGroup = self.activeCaseTypeData()[self.activeCaseTypeData().length - 1];
+                const prop = {
+                    'name': self.newPropertyName(),
+                    'label': self.newPropertyName(),
+                    'allowedValues': {}
+                }
+                let propObj = propertyListItem(
+                    prop,
+                    false,
+                    lastGroup.name(),
+                    self.activeCaseType(),
+                    false,
+                    lastGroup.name(),
+                    changeSaveButton
+                );
                 self.newPropertyName(undefined);
-                lastGroup.properties.push(prop);
+                lastGroup.properties.push(propObj);
             }
         };
 
         self.newGroup = function () {
             if (_.isString(self.newGroupName()) && self.newGroupName().trim()) {
-                var group = groupsViewModel(self.activeCaseType(), null, self.newGroupName(), '', false);
-                self.caseGroupList.push(group);
+                var group = groupsViewModel(
+                    self.activeCaseType(),
+                    null,
+                    self.newGroupName(),
+                    '',
+                    false,
+                    changeSaveButton
+                );
+                let groupsObs = self.getCaseTypeGroupsObservable();
+                groupsObs.push(group);  // TODO: Broken for computed value
                 self.newGroupName(undefined);
             }
         };
@@ -587,18 +689,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
     };
 
     $(function () {
-        var dataUrl = initialPageData.reverse('data_dictionary_json'),
+        var dataUrl = initialPageData.reverse('data_dictionary_json_case_types'),
             casePropertyUrl = initialPageData.reverse('update_case_property'),
             typeChoices = initialPageData.get('typeChoices'),
             fhirResourceTypes = initialPageData.get('fhirResourceTypes'),
             viewModel = dataDictionaryModel(dataUrl, casePropertyUrl, typeChoices, fhirResourceTypes);
 
         function doHashNavigation() {
-            let fullHash = window.location.hash.split('?')[0],
-                hash = fullHash.substring(1);
-            let caseType = _.find(viewModel.caseTypes(), function (prop) {
-                return prop.name === hash;
-            });
+            let caseType = viewModel.getHashNavigationCaseType();
             if (caseType) {
                 viewModel.goToCaseType(caseType);
             }
