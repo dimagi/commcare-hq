@@ -112,6 +112,13 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
         restoreAsKeyAction: _.extend(BaseAppView.restoreAsKeyAction),
         settingsKeyAction: _.extend(BaseAppView.settingsKeyAction),
 
+        // Cannot append at the end of the parent because there are
+        // special grid items.
+        attachHtml: function attachHtml(els, $container) {
+            let childElement = $container.find("#put-apps-here");
+            $container[0].insertBefore(els, childElement[0]);
+        },
+
         initialize: function (options) {
             this.shouldShowIncompleteForms = options.shouldShowIncompleteForms;
         },
