@@ -18,6 +18,7 @@ IGNORE_MODELS = {
     "accounting.CustomerInvoice",
     "accounting.CustomerInvoiceCommunicationHistory",
     "accounting.DefaultProductPlan",
+    "accounting.DomainSubmittingMobileWorkerHistory",
     "accounting.DomainUserHistory",
     "accounting.Feature",
     "accounting.FeatureRate",
