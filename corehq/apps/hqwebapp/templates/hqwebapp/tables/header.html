@@ -1,0 +1,37 @@
+{% load querystring from django_tables2 %}
+
+<thead {{ table.attrs.thead.as_html }}>
+<tr>
+    {% for column in table.columns %}
+      <th {{ column.attrs.th.as_html }} scope="col">
+        {% if column.orderable %}
+          {% if column.sort_existing %}
+            <a {% if use_htmx_links %}class="link"
+               hx-get="{{ request.path_info }}{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}"
+               hx-trigger="click"
+               hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+               hx-swap="outerHTML"
+               {% else %}
+               href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}"
+               {% endif %}>
+              {{ column.header }}
+            </a>
+          {% else %}
+            <a {% if use_htmx_links %}class="link"
+               hx-get="{{ request.path_info }}{% querystring %}&{{ table.prefixed_order_by_field }}={{ column.order_by_alias.next }}"
+               hx-trigger="click"
+               hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+               hx-swap="outerHTML"
+               {% else %}
+               href="{% querystring %}&{{ table.prefixed_order_by_field }}={{ column.order_by_alias.next }}"
+               {% endif %}>
+              {{ column.header }}
+            </a>
+          {% endif %}
+        {% else %}
+          {{ column.header }}
+        {% endif %}
+      </th>
+    {% endfor %}
+</tr>
+</thead>
