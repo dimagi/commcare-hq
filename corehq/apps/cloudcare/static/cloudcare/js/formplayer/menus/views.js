@@ -1500,12 +1500,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 replaceElement: true
             }
         },
+        triggers: {
+            "click a": "click:persistent:menu:command"  // magically calls onClickPersistentMenuCommand
+        },
         onRender: function () {
             if (!_.isEmpty(this.model.get('commands'))) {
                 this.showChildView('tree', new PersistentMenuListView({
                     collection: new Backbone.Collection(this.model.get('commands')),
                 }));
             }
+        },
+        onClickPersistentMenuCommand: function (event) {
+            console.log(this.model.get('index'), this.model.get('selections'));
         },
     });
 
@@ -1525,7 +1531,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         events: {
             "show.bs.collapse": "expand",
-            "click @ui.command": "navigate",
         },
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
