@@ -32,6 +32,7 @@ from corehq.apps.accounting.models import (
     DomainUserHistory,
     EntryPoint,
     FeatureType,
+    FormSubmittingMobileWorkerHistory,
     Invoice,
     InvoicingPlan,
     LineItem,
@@ -554,6 +555,7 @@ class LineItemFactory(object):
         try:
             return {
                 FeatureType.SMS: SmsLineItemFactory,
+                FeatureType.FORM_SUBMITTING_MOBILE_WORKER: FormSubmittingMobileWorkerLineItemFactory,
                 FeatureType.USER: UserLineItemFactory,
                 FeatureType.WEB_USER: WebUserLineItemFactory,
             }[feature_type]
@@ -723,6 +725,7 @@ class FeatureLineItemFactory(LineItemFactory):
 
 
 class UserLineItemFactory(FeatureLineItemFactory):
+    history_cls = DomainUserHistory
 
     @property
     def unit_cost(self):
@@ -748,9 +751,9 @@ class UserLineItemFactory(FeatureLineItemFactory):
             total_users = 0
             for domain in self.subscribed_domains:
                 try:
-                    history = DomainUserHistory.objects.get(domain=domain, record_date=date)
+                    history = self.history_cls.objects.get(domain=domain, record_date=date)
                     total_users += history.num_users
-                except DomainUserHistory.DoesNotExist:
+                except self.history_cls.DoesNotExist:
                     if not deleted_domain_exists(domain):
                         # this checks to see if the domain still exists
                         # before raising an error. If it was deleted the
@@ -792,6 +795,14 @@ class UserLineItemFactory(FeatureLineItemFactory):
     @property
     def unit_description(self):
         return self._unit_description_by_user_type("mobile user")
+
+
+class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
+    history_cls = FormSubmittingMobileWorkerHistory
+
+    @property
+    def unit_description(self):
+        return super()._unit_description_by_user_type("form-submitting mobile worker")
 
 
 class WebUserLineItemFactory(UserLineItemFactory):
