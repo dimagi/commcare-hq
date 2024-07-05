@@ -5,13 +5,18 @@ from django.test import TestCase
 from corehq.apps.accounting import tasks
 from corehq.apps.accounting.models import (
     BillingAccountWebUserHistory,
+    DomainSubmittingMobileWorkerHistory,
     DomainUserHistory,
     SoftwarePlanEdition,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from corehq.apps.domain.tests.test_utils import delete_all_domains
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.form_processor.utils.xform import TestFormMetadata
+from corehq.util.test_utils import make_es_ready_form
 
 
 class TestDomainUserHistory(BaseInvoiceTestCase):
@@ -49,6 +54,56 @@ class TestDomainUserHistory(BaseInvoiceTestCase):
         self.assertEqual(domain_user_history.domain, self.domain.name)
         self.assertEqual(domain_user_history.num_users, self.num_users)
         self.assertEqual(domain_user_history.record_date, self.record_date)
+
+
+@es_test(requires=[form_adapter], setup_class=True)
+class TestDomainSubmittingMobileWorkerHistory(BaseInvoiceTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.one_day_ago = datetime.date.today() - datetime.timedelta(days=1)
+        cls.one_week_ago_dt = datetime.datetime.combine(
+            cls.one_day_ago - datetime.timedelta(days=6), datetime.time()
+        )
+        cls.num_workers = 5
+        cls.num_submitting_workers = 3
+
+        generator.arbitrary_commcare_users_for_domain(cls.domain.name, cls.num_workers)
+        for user in cls.domain.all_users()[:cls.num_submitting_workers]:
+            form_pair = make_es_ready_form(
+                TestFormMetadata(
+                    domain=cls.domain.name,
+                    user_id=user.user_id,
+                    received_on=cls.one_week_ago_dt
+                )
+            )
+            form_adapter.index(form_pair.json_form, refresh=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_users()
+        delete_all_domains()
+        return super().tearDownClass()
+
+    def test_domain_submitting_mobile_worker_history(self):
+        submitting_worker_history = DomainSubmittingMobileWorkerHistory.objects.create(
+            domain=self.domain.name,
+            num_users=self.num_submitting_workers,
+            record_date=self.one_day_ago
+        )
+        self.assertEqual(submitting_worker_history.domain, self.domain.name)
+        self.assertEqual(submitting_worker_history.num_users, self.num_submitting_workers)
+        self.assertEqual(submitting_worker_history.record_date, self.one_day_ago)
+
+    def test_calculate_submitting_mobile_workers_in_all_domains(self):
+        tasks.calculate_submitting_mobile_workers_in_all_domains()
+        self.assertEqual(DomainSubmittingMobileWorkerHistory.objects.count(), 1)
+        submitting_worker_history = DomainSubmittingMobileWorkerHistory.objects.first()
+        self.assertEqual(submitting_worker_history.domain, self.domain.name)
+        self.assertEqual(submitting_worker_history.num_users, self.num_submitting_workers)
+        self.assertEqual(submitting_worker_history.record_date, self.one_day_ago)
 
 
 class TestBillingAccountWebUserHistory(TestCase):
