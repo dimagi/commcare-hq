@@ -17,6 +17,8 @@ from corehq.apps.custom_data_fields.models import (
     is_system_key,
 )
 
+LOCATION_KEYS = {COMMCARE_LOCATION_ID, COMMCARE_LOCATION_IDS, COMMCARE_PRIMARY_CASE_SHARING_ID}
+
 
 class UserDataError(Exception):
     ...
@@ -77,6 +79,10 @@ class UserData:
             provided_data[COMMCARE_LOCATION_IDS] = user_location_data(self._couch_user.assigned_location_ids)
 
         return provided_data
+
+    @property
+    def _keys_provided_by_system(self):
+        return set(self._provided_by_system.keys()) | LOCATION_KEYS
 
     def to_dict(self):
         return {
@@ -174,8 +180,8 @@ class UserData:
         return self.to_dict().get(key, default)
 
     def __setitem__(self, key, value):
-        if key in self._provided_by_system:
-            if value == self._provided_by_system[key]:
+        if key in self._keys_provided_by_system:
+            if key in self._provided_by_system and value == self._provided_by_system[key]:
                 return
             raise UserDataError(_("'{}' cannot be set directly").format(key))
         self._local_to_user[key] = value

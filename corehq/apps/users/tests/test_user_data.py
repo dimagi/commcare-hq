@@ -430,3 +430,9 @@ class TestUserDataModel(TestCase):
             'commcare_location_ids': f"{self.loc1.location_id} {self.loc2.location_id}",
             'commcare_primary_case_sharing_id': self.loc1.location_id,
         })
+
+    def test_change_data_provided_by_system_will_raise_user_data_error(self):
+        user_data = self.user.get_user_data(self.domain)
+
+        with self.assertRaisesMessage(UserDataError, "'commcare_location_id' cannot be set directly"):
+            user_data['commcare_location_id'] = self.loc1.location_id
