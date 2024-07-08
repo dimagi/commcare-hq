@@ -1517,6 +1517,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const PersistentMenuListView = Marionette.CollectionView.extend({
         tagName: "ul",
+        className: "list-unstyled",
         childView: PersistentMenuItemView,
     });
 
@@ -1524,7 +1525,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         tagName: "div",
         template: _.template($("#persistent-menu-template").html() || ""),
         regions: {
-            menu: "#persistent-menu-content ul",
+            menu: "#persistent-menu-content",
         },
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
