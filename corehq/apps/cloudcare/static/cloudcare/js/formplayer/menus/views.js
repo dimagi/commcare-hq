@@ -10,6 +10,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     'analytix/js/kissmetrix',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/markdown',
@@ -26,6 +27,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     kissmetrics,
     constants,
     FormplayerFrontend,
+    AppsAPI,
     UsersModels,
     formplayerUtils,
     markdown,
@@ -1530,6 +1532,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
+        },
+        templateContext: function () {
+            const appId = formplayerUtils.currentUrlToObject().appId,
+                  currentApp = AppsAPI.getAppEntity(appId),
+                  appName = currentApp.get('name'),
+                  imageUri = currentApp.get('imageUri');
+            return {
+                appName: appName,
+                imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+            };
         },
     });
 
