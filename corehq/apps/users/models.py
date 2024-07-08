@@ -2075,8 +2075,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 return
             self.assigned_location_ids.append(location.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(location.location_id)
-            user_data = self.get_user_data(self.domain)
-            user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
             if commit:
                 self.save()
         else:
@@ -2099,7 +2097,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             raise AssertionError("You can't set an unsaved location")
 
         user_data = self.get_user_data(self.domain)
-        user_data['commcare_location_id'] = location.location_id
 
         if not location.location_type.administrative:
             # just need to trigger a get or create to make sure
@@ -2109,14 +2106,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.create_location_delegates([location])
 
-        user_data['commcare_primary_case_sharing_id'] = location.location_id
         self.update_fixture_status(UserLookupTableType.LOCATION)
         self.location_id = location.location_id
         self.get_domain_membership(self.domain).location_id = location.location_id
         if self.location_id not in self.assigned_location_ids:
             self.assigned_location_ids.append(self.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(self.location_id)
-            user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
         self.get_sql_location.reset_cache(self)
         if commit:
             self.save()
@@ -2137,18 +2132,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self._remove_location_from_user(old_primary_location_id)
 
         user_data = self.get_user_data(self.domain)
-        if self.assigned_location_ids:
-            user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
-        elif user_data.get('commcare_location_ids', None):
-            del user_data['commcare_location_ids']
 
         if self.assigned_location_ids and fall_back_to_next:
             new_primary_location_id = self.assigned_location_ids[0]
             self.set_location(SQLLocation.objects.get(location_id=new_primary_location_id))
         else:
-            user_data.pop('commcare_location_id', None)
             user_data.pop('commtrack-supply-point', None)
-            user_data.pop('commcare_primary_case_sharing_id', None)
             self.location_id = None
             self.clear_location_delegates()
             self.update_fixture_status(UserLookupTableType.LOCATION)
@@ -2170,11 +2159,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             self._remove_location_from_user(location_id)
 
-            user_data = self.get_user_data(self.domain)
-            if self.assigned_location_ids:
-                user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
-            else:
-                user_data.pop('commcare_location_ids', None)
             self.save()
 
     def _remove_location_from_user(self, location_id):
@@ -2206,11 +2190,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.assigned_location_ids = location_ids
         self.get_domain_membership(self.domain).assigned_location_ids = location_ids
-        user_data = self.get_user_data(self.domain)
-        if location_ids:
-            user_data['commcare_location_ids'] = user_location_data(location_ids)
-        else:
-            user_data.pop('commcare_location_ids', None)
 
         # try to set primary-location if not set already
         if not self.location_id and location_ids:
