@@ -24,7 +24,6 @@ from corehq.apps.users.dbaccessors import (
     get_web_user_count,
 )
 from corehq.apps.users.models import CouchUser, Invitation
-from corehq.util.quickcache import quickcache
 
 
 class EnterpriseReport:
@@ -209,10 +208,23 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 class EnterpriseFormReport(EnterpriseReport):
     title = _('Mobile Form Submissions')
 
-    def __init__(self, account, couch_user):
+    def __init__(self, account, couch_user, start_date=None, end_date=None, num_days=30):
         super().__init__(account, couch_user)
-        self.window = 30
-        self.subtitle = _("past {} days").format(self.window)
+        if not end_date:
+            end_date = datetime.utcnow()
+
+        if start_date:
+            self.datespan = DateSpan(start_date, end_date)
+            self.subtitle = _("{} to {}").format(
+                start_date.date(),
+                end_date.date(),
+            )
+        else:
+            self.datespan = DateSpan(end_date - timedelta(days=num_days), end_date)
+            self.subtitle = _("past {} days").format(num_days)
+
+        if self.datespan.enddate - self.datespan.startdate > timedelta(days=90):
+            raise ValueError(_('Date ranges with more than 90 days are not supported'))
 
     @property
     def headers(self):
@@ -221,19 +233,17 @@ class EnterpriseFormReport(EnterpriseReport):
 
     def _query(self, domain_name):
         time_filter = form_es.submitted
-        datespan = DateSpan(datetime.now() - timedelta(days=self.window), datetime.utcnow())
 
         users_filter = form_es.user_id(UserES().domain(domain_name).mobile_users().show_inactive()
                                     .values_list('_id', flat=True))
 
         query = (form_es.FormES()
                  .domain(domain_name)
-                 .filter(time_filter(gte=datespan.startdate,
-                                     lt=datespan.enddate_adjusted))
+                 .filter(time_filter(gte=self.datespan.startdate,
+                                     lt=self.datespan.enddate_adjusted))
                  .filter(users_filter))
         return query
 
-    @quickcache(['self.account.id', 'domain_name'], timeout=60)
     def hits(self, domain_name):
         return self._query(domain_name).run().hits
 
