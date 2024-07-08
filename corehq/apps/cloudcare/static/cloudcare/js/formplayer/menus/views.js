@@ -1493,6 +1493,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const PersistentMenuItemView = Marionette.View.extend({
         tagName: "li",
+        className: "list-group-item",
         template: _.template($("#persistent-menu-item").html() || ""),
         regions: {
             tree: {
@@ -1517,31 +1518,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const PersistentMenuListView = Marionette.CollectionView.extend({
         tagName: "ul",
+        className: "list-group",
         childView: PersistentMenuItemView,
     });
 
     const PersistentMenuView = Marionette.View.extend({
         tagName: "div",
         template: _.template($("#persistent-menu-template").html() || ""),
-        ui: {
-            container: "#persistent-menu-container",
-        },
         regions: {
-            menu: "#persistent-menu-content ul",
-        },
-        events: {
-            "show.bs.collapse": "expand",
+            menu: "#persistent-menu-content",
         },
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
-        },
-        setHeights: function () {
-            const boundingRect = this.ui.container[0].closest('#cloudcare-app-context').getBoundingClientRect();
-            this.ui.container[0].style.height = `${boundingRect.height}px`;
-            this.ui.container[0].style.top = `${boundingRect.y}px`;
-        },
-        expand: function (event) {
-            this.setHeights();
         },
     });
 
