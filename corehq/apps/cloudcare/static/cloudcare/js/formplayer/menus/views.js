@@ -1511,7 +1511,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             }
         },
         onClickPersistentMenuCommand: function (event) {
-            console.log(this.model.get('index'), this.model.get('selections'));
+            FormplayerFrontend.trigger("persistentMenuSelect", this.model.get('selections'));
         },
     });
 
