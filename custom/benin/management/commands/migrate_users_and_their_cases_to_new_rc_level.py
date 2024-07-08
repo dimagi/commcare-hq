@@ -32,6 +32,9 @@ class Command(BaseCommand):
             '--village_id'
         )
         parser.add_argument(
+            '--commune_id'
+        )
+        parser.add_argument(
             '--dry_run',
             action='store_true',
             default=False,
@@ -67,12 +70,21 @@ class Command(BaseCommand):
         """
         dry_run = options['dry_run']
         village_id = options['village_id']
+        commune_id = options['commune_id']
         run_in_celery = options['run_in_celery']
+
+        assert not village_id and commune_id, "Provide either village ID or commune ID, cannot use both"
 
         start_time = time.time()
         logger.info("Started processing of script")
         if village_id:
             villages = SQLLocation.active_objects.get_locations([village_id])
+        elif commune_id:
+            villages = _find_child_locations(
+                domain=domain,
+                location_id=commune_id,
+                location_type_code=LOCATION_TYPE_VILLAGE
+            )
         else:
             villages = _find_locations(domain=domain, location_type_code=LOCATION_TYPE_VILLAGE)
         logger.info(f"Total number of villages found: {len(villages)}")
@@ -127,6 +139,9 @@ def _find_locations(domain, location_type_code):
         location_type__code=location_type_code
     )
 
+def _find_child_locations(domain, location_id, location_type_code):
+    loc = SQLLocation.active_objects.get(domain=domain, location_id=location_id)
+    return loc.get_descendants().filter(location_type__code=location_type_code)
 
 def _find_rc_users_at_location(domain, location):
     # return users with usertype as 'rc'
