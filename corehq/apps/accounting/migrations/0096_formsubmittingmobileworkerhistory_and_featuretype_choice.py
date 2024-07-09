@@ -14,13 +14,13 @@ class Migration(migrations.Migration):
             model_name='creditline',
             name='feature_type',
             field=models.CharField(blank=True, choices=[('User', 'User'), ('SMS', 'SMS'), ('Web User', 'Web User'), (
-                'Submitting Mobile Worker', 'Submitting Mobile Worker')], max_length=40, null=True),
+                'Form-Submitting Mobile Worker', 'Form-Submitting Mobile Worker')], max_length=40, null=True),
         ),
         migrations.AlterField(
             model_name='feature',
             name='feature_type',
             field=models.CharField(choices=[('User', 'User'), ('SMS', 'SMS'), ('Web User', 'Web User'),
-                                   ('Submitting Mobile Worker', 'Submitting Mobile Worker')], db_index=True, max_length=40),
+                                   ('Form-Submitting Mobile Worker', 'Form-Submitting Mobile Worker')], db_index=True, max_length=40),
         ),
         migrations.CreateModel(
             name='FormSubmittingMobileWorkerHistory',
