@@ -170,8 +170,6 @@ class FormattedDetailColumn(object):
             return
 
         sort = None
-        if self.column.format == 'translatable-enum':
-            return sort
 
         if self.sort_xpath_function:
             if self.sort_element and self.sort_element.type == 'index':
@@ -193,8 +191,9 @@ class FormattedDetailColumn(object):
                             locale_id=self.id_strings.current_language()
                         ).node
                     )
-                xpath_variable = sx.XPathVariable(name='calculated_property', xpath=xpath)
-                sort.text.xpath.variables.node.append(xpath_variable.node)
+                if self.column.format != 'translatable-enum':
+                    xpath_variable = sx.XPathVariable(name='calculated_property', xpath=xpath)
+                    sort.text.xpath.variables.node.append(xpath_variable.node)
 
         if self.sort_element:
             if not sort:
@@ -515,6 +514,17 @@ class EnumImage(Enum):
 
 @register_format_type('translatable-enum')
 class TranslatableEnum(Enum):
+    @property
+    def sort_node(self):
+        node = super(TranslatableEnum, self).sort_node
+        if node:
+            variables = self.variables
+            for key in variables:
+                node.text.xpath.node.append(
+                    sx.XPathVariable(name=key, locale_id=variables[key]).node
+                )
+        return node
+
     def _make_xpath(self, type):
         return sx.XPathEnum.build(
             enum=self.column.enum,
