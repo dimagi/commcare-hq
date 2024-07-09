@@ -5,9 +5,7 @@
     vertical-align: middle;
     transition: background 1s;
   }
-  .module-column-name {
-    position: relative;
-  }
+
   tr:hover {
     .module-column {
       background-color: $cc-bg;
