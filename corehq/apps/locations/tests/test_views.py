@@ -7,6 +7,8 @@ from django.urls import reverse
 from unittest import mock
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.exceptions import LocationConsistencyError
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.views import LocationTypesView
@@ -28,6 +30,7 @@ OTHER_DETAILS = {
 }
 
 
+@es_test(requires=[user_adapter])
 class LocationTypesViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
