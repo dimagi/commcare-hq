@@ -26,3 +26,14 @@
   background-repeat: no-repeat;
   background-position: center;
 }
+
+.persistent-menu {
+  ul {
+    padding-left: $spacer;
+    padding-top: $spacer / 2;
+  }
+  > ul {  // top level list only
+    padding-left: 0;
+    padding-top: 0;
+  }
+}
