@@ -1,15 +1,17 @@
 --- 
 +++ 
-@@ -3,14 +3,14 @@
+@@ -3,14 +3,12 @@
      border: none;
      text-align: left;
      vertical-align: middle;
 -    .transition(background 1s);
+-  }
+-  .module-column-name {
+-    position: relative;
+-  }
 +    transition: background 1s;
-   }
-   .module-column-name {
-     position: relative;
-   }
++  }
++
    tr:hover {
      .module-column {
 -      background-color: @cc-bg;
@@ -17,7 +19,7 @@
      }
    }
  }
-@@ -44,7 +44,7 @@
+@@ -44,7 +42,7 @@
  }
  
  .module-icon-container {
@@ -26,7 +28,7 @@
    text-align: center;
    margin: 0 auto;
  
-@@ -54,15 +54,15 @@
+@@ -54,15 +52,15 @@
  }
  
  .module-icon-user {
@@ -45,7 +47,7 @@
    position: absolute;
    top: 50%;
  
-@@ -70,29 +70,29 @@
+@@ -70,29 +68,29 @@
  
  .module-audio-control {
    .module-audio-icon {
@@ -85,7 +87,7 @@
    .module-column-name h3 {
      font-size: 20px;
    }
-@@ -107,7 +107,7 @@
+@@ -107,7 +105,7 @@
  }
  
  .module-table .module-case-list-header {
@@ -94,7 +96,7 @@
    color: white;
    padding: 20px 10px;
    cursor: default;
-@@ -127,6 +127,7 @@
+@@ -127,6 +125,7 @@
  .module-table .module-case-list-column-checkbox {
    cursor: default;
    width: 35px;
@@ -102,7 +104,7 @@
    vertical-align: middle;
  }
  
-@@ -135,31 +136,15 @@
+@@ -135,31 +134,15 @@
  }
  
  .module-table-case-list tbody tr:nth-child(even) > td {
@@ -136,7 +138,7 @@
  }
  
  .module-table-case-list tbody tr:hover .module-case-list-column-empty {
-@@ -188,13 +173,13 @@
+@@ -188,13 +171,13 @@
    }
  
    th, td {
@@ -153,7 +155,7 @@
    color: black;
    padding-top: 1rem;
    padding-bottom: 1rem;
-@@ -206,16 +191,16 @@
+@@ -206,16 +189,16 @@
  
  .module-table-case-detail tbody tr:nth-child(odd) {
    th, td {
@@ -173,7 +175,7 @@
      border-top-color: transparent;
      border-left-color: transparent;
      border-right-color: transparent;
-@@ -224,7 +209,7 @@
+@@ -224,7 +207,7 @@
  
  .module-case-detail-continue {
    width: 100%;
@@ -182,7 +184,7 @@
  }
  
  .module-case-detail-btn {
-@@ -269,7 +254,7 @@
+@@ -269,7 +252,7 @@
    bottom: 0;
    position: fixed;
    background-color: rgba(255, 255, 255, 0.9);
@@ -191,7 +193,7 @@
    text-align: center;
  }
  
-@@ -299,7 +284,7 @@
+@@ -299,7 +282,7 @@
    }
  }
  
