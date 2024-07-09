@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                                    ('Submitting Mobile Worker', 'Submitting Mobile Worker')], db_index=True, max_length=40),
         ),
         migrations.CreateModel(
-            name='DomainSubmittingMobileWorkerHistory',
+            name='FormSubmittingMobileWorkerHistory',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('domain', models.CharField(max_length=256)),

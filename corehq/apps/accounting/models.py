@@ -129,13 +129,13 @@ class FeatureType(object):
     USER = "User"
     SMS = "SMS"
     WEB_USER = "Web User"
-    SUBMITTING_MOBILE_WORKER = "Submitting Mobile Worker"
+    FORM_SUBMITTING_MOBILE_WORKER = "Form-Submitting Mobile Worker"
 
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
         (WEB_USER, WEB_USER),
-        (SUBMITTING_MOBILE_WORKER, SUBMITTING_MOBILE_WORKER),
+        (FORM_SUBMITTING_MOBILE_WORKER, FORM_SUBMITTING_MOBILE_WORKER),
     )
     EDITIONED_FEATURES = [
         USER,
@@ -3986,11 +3986,11 @@ class DomainUserHistory(DomainUserHistoryBase):
     pass
 
 
-class DomainSubmittingMobileWorkerHistory(DomainUserHistoryBase):
+class FormSubmittingMobileWorkerHistory(DomainUserHistoryBase):
     """
     The number of form-submitting mobile workers in a domain for the month
     preceeding the record date.
-    TODO: Create by task calculate_submitting_mobile_workers_in_all_domains
+    TODO: Create by task calculate_form_submitting_mobile_workers_in_all_domains
     on the first of every month. Will be used to bill clients for the
     appropriate number of form-submitting mobile workers.
     """

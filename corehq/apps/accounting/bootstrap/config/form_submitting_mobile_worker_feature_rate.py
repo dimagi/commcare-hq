@@ -3,6 +3,6 @@ from corehq.apps.accounting.models import FeatureType
 
 BOOTSTRAP_CONFIG = {
     "feature_rates": {
-        FeatureType.SUBMITTING_MOBILE_WORKER: dict(monthly_limit=2000, per_excess_fee=Decimal('3.00'))
+        FeatureType.FORM_SUBMITTING_MOBILE_WORKER: dict(monthly_limit=2000, per_excess_fee=Decimal('3.00'))
     }
 }
