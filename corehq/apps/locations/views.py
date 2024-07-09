@@ -345,6 +345,8 @@ class LocationTypesView(BaseDomainView):
                                           if loc_type.include_without_expanding_id else None),
             'include_only': list(loc_type.include_only.values_list('pk', flat=True)),
             'expand_view_child_data_to': loc_type.expand_view_child_data_to_id,
+            'has_users_setting': loc_type.has_users,
+            'actually_has_users': does_location_type_have_users(loc_type),
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     @method_decorator(lock_locations)
@@ -372,6 +374,7 @@ class LocationTypesView(BaseDomainView):
             loc_type.parent_type = parent
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
+            loc_type.has_users = kwargs.get('has_users')
             loc_type.code = unicode_slug(code)
             sql_loc_types[pk] = loc_type
             loc_type.save()

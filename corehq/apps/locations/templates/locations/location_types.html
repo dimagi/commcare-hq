@@ -168,6 +168,18 @@
                   </span>
                 </th>
               {% endif %}
+              {% if request|toggle_enabled:"LOCATION_HAS_USERS" %}
+                <th data-bind="visible: advanced_mode">
+                  {% trans "Has Users" %}
+                  <span class="hq-help-template"
+                        data-title="{% trans "Has Users" %}"
+                        data-content="{% blocktrans %}
+                            <p>Indicates whether locations of this level can have users assigned.</p>
+                            <p>You cannot turn this setting off if there are users assigned to one of the locations.</p>
+                        {% endblocktrans %}">
+                  </span>
+                </th>
+              {% endif %}
               <th></th>
             </tr>
             </thead>
@@ -255,6 +267,11 @@
                                     optionsCaption: '\u2013{% trans 'default' %}\u2013',
                                     enable: view_descendants">
                   </select>
+                </td>
+              {% endif %}
+              {% if request|toggle_enabled:"LOCATION_HAS_USERS" %}
+                <td data-bind="visible: $parent.advanced_mode">
+                  <input data-bind="checked: has_users_setting, disable: has_users_setting() && actually_has_users()" type="checkbox" />
                 </td>
               {% endif %}
               <td>
