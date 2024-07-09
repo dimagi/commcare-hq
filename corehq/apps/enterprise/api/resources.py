@@ -1,9 +1,11 @@
 from dateutil import tz
 from datetime import datetime
 from tastypie import fields
+from tastypie.exceptions import ImmediateHttpResponse
 from urllib.parse import urljoin
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.template.loader import render_to_string
+from django.utils.translation import gettext as _
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import ODataAuthentication
 from corehq.apps.enterprise.enterprise import (
@@ -13,9 +15,32 @@ from corehq.apps.enterprise.enterprise import (
     EnterpriseFormReport,
     EnterpriseODataReport,
 )
-from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.odata.utils import FieldMetadata
+from corehq.apps.accounting.utils.account import (
+    request_has_permissions_for_enterprise_admin,
+    get_account_or_404,
+)
+
+from corehq.apps.accounting.models import BillingAccount
+
+
+class EnterpriseODataAuthentication(ODataAuthentication):
+    def is_authenticated(self, request, **kwargs):
+        authenticated = super().is_authenticated(request, **kwargs)
+        if authenticated is not True:
+            return authenticated
+
+        domain = kwargs['domain'] if 'domain' in kwargs else request.domain
+        account = get_account_or_404(domain)
+        if not request_has_permissions_for_enterprise_admin(request, account):
+            raise ImmediateHttpResponse(
+                HttpResponseForbidden(_(
+                    "You do not have permission to view this feed."
+                ))
+            )
+
+        return True
 
 
 class ODataResource(HqBaseResource):
@@ -112,7 +137,12 @@ class ODataResource(HqBaseResource):
         return time.isoformat()
 
 
-class DomainResource(ODataResource):
+class ODataEnterpriseResource(ODataResource):
+    class Meta(ODataResource.Meta):
+        authentication = EnterpriseODataAuthentication()
+
+
+class DomainResource(ODataEnterpriseResource):
     domain = fields.CharField()
     created_on = fields.DateTimeField()
     num_apps = fields.IntegerField()
@@ -144,7 +174,7 @@ class DomainResource(ODataResource):
         return 'domain'
 
 
-class WebUserResource(ODataResource):
+class WebUserResource(ODataEnterpriseResource):
     email = fields.CharField()
     name = fields.CharField()
     role = fields.CharField()
@@ -180,7 +210,7 @@ class WebUserResource(ODataResource):
         return 'email'
 
 
-class MobileUserResource(ODataResource):
+class MobileUserResource(ODataEnterpriseResource):
     username = fields.CharField()
     name = fields.CharField()
     email = fields.CharField()
@@ -218,7 +248,7 @@ class MobileUserResource(ODataResource):
         return 'user_id'
 
 
-class ODataFeedResource(ODataResource):
+class ODataFeedResource(ODataEnterpriseResource):
     domain = fields.CharField(null=True)
     num_feeds_used = fields.IntegerField(null=True)
     num_feeds_available = fields.IntegerField(null=True)
@@ -246,7 +276,7 @@ class ODataFeedResource(ODataResource):
         return 'report_name'
 
 
-class FormSubmissionResource(ODataResource):
+class FormSubmissionResource(ODataEnterpriseResource):
     form_name = fields.CharField()
     submitted = fields.DateTimeField()
     app_name = fields.CharField()
