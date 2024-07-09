@@ -9,7 +9,10 @@ from django.utils.translation import gettext as _
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+# from dimagi.utils.couch import CriticalSection, get_redis_lock, release_lock
 from dimagi.utils.couch import CriticalSection
+
 from soil import DownloadBase
 
 from casexml.apps.case.mock import CaseBlock
@@ -134,6 +137,9 @@ def run_case_update_rules(now=None):
                 run_case_update_rules_for_domain.delay(domain, now)
 
 
+REDIS_TOTAL_UPDATES_KEY = "total_case_updates"
+
+
 @task(serializer='pickle', queue='case_rule_queue')
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
@@ -143,6 +149,9 @@ def run_case_update_rules_for_domain(domain, now=None):
 
     domain_obj = Domain.get_by_name(domain)
     max_allowed_updates = domain_obj.auto_case_update_limit or settings.MAX_RULE_UPDATES_IN_ONE_RUN
+
+    redis_client = get_redis_client()
+    redis_client.set(REDIS_TOTAL_UPDATES_KEY, 0)
     total_updates = 0
     for case_type in all_rule_case_types:
         run_record = DomainCaseRuleRun.objects.create(
