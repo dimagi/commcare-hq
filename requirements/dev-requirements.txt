@@ -838,7 +838,7 @@ xmltodict==0.13.0
     # via ddtrace
 yapf==0.31.0
     # via -r dev-requirements.in
-zipp==3.7.0
+zipp==3.19.1
     # via importlib-metadata
 zope-event==5.0
     # via gevent
