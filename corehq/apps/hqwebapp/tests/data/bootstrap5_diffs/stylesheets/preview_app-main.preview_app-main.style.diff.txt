@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,25 +1,18 @@
+@@ -1,25 +1,19 @@
 -@import '../../hqwebapp/less/_hq/includes/variables.less';
 -@import '../../hqwebapp/less/_hq/includes/mixins.less';
 -
@@ -29,3 +29,4 @@
 -@import "preview_app/datepicker";
 -@import "preview_app/panels";
  @import "preview_app/debugger";
++@import "preview_app/case-tile";
