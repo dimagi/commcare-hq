@@ -58,7 +58,7 @@ celery==5.2.7
     # via
     #   -r base-requirements.in
     #   django-celery-results
-certifi==2023.7.22
+certifi==2024.7.4
     # via
     #   requests
     #   sentry-sdk
@@ -224,7 +224,7 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
     # via -r base-requirements.in
-djangorestframework==3.13.1
+djangorestframework==3.15.2
     # via -r base-requirements.in
 docutils==0.18.1
     # via
@@ -588,7 +588,6 @@ pytz==2024.1
     #   -r base-requirements.in
     #   babel
     #   celery
-    #   djangorestframework
     #   twilio
 pyyaml==6.0
     # via
