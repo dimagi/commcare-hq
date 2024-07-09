@@ -1273,6 +1273,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'Case update rule limits are only modifiable by Dimagi admins. '
                 'Please reach out to support@dimagi.com if you wish to update this setting.'
             )
+            # This restriction exists to give SaaS more control over this setting,
+            # since it impacts infrastructure
 
     @property
     def current_values(self):
