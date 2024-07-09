@@ -1,0 +1,17 @@
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block content %}
+  <div class="m-3">
+    <h1 class="py-3 m-0">
+      {% trans "Simple Pagination: HTMX + Django Tables2" %}
+    </h1>
+  </div>
+  <div class="mx-3"
+       hx-get="{% url "prototype_htmx_table_view" %}"
+       hx-trigger="load"
+       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  </div>
+{% endblock %}
