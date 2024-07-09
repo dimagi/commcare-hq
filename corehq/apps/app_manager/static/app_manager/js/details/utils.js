@@ -1,3 +1,4 @@
+'use strict';
 /* globals DOMPurify */
 /**
  * Contains a few UI utilities for the Display Properties

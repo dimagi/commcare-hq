@@ -271,8 +271,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping', functi
             if (self.values_are_icons() || self.keys_are_conditions()) {
                 // Expressions can contain whatever
                 return false;
-            }
-            else if (self.values_are_translatable()) {
+            } else if (self.values_are_translatable()) {
                 // Keys should only be letters, numbers, - and _
                 return key.match(/[^A-Za-z0-9-_]/);
             }
