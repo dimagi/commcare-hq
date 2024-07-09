@@ -108,11 +108,12 @@ def _ensure_features(feature_rates, edition, verbose, apps):
 
     features = []
     for feature_type in feature_rates.keys():
-        feature_name = feature_type
         if feature_type in FeatureType.EDITIONED_FEATURES:
-            feature_name = f"{feature_name} {edition}"
+            feature_name = f"{feature_type} {edition}"
             if edition == SoftwarePlanEdition.ENTERPRISE:
                 feature_name = f"Dimagi Only {feature_name}"
+        else:
+            feature_name = feature_type
         try:
             feature = Feature.objects.get(name=feature_name)
             if verbose:
