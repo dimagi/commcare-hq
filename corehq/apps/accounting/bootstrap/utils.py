@@ -108,20 +108,19 @@ def _ensure_features(feature_rates, edition, verbose, apps):
 
     features = []
     for feature_type in feature_rates.keys():
-        if feature_type not in FeatureType.EDITIONED_FEATURES:
-            feature = Feature(name=feature_type, feature_type=feature_type)
-        else:
-            feature = Feature(name=f"{feature_type} {edition}", feature_type=feature_type)
+        feature_name = feature_type
+        if feature_type in FeatureType.EDITIONED_FEATURES:
+            feature_name = f"{feature_name} {edition}"
             if edition == SoftwarePlanEdition.ENTERPRISE:
-                feature.name = f"Dimagi Only {feature.name}"
+                feature_name = f"Dimagi Only {feature_name}"
         try:
-            feature = Feature.objects.get(name=feature.name)
+            feature = Feature.objects.get(name=feature_name)
             if verbose:
                 log_accounting_info(
                     f"Feature '{feature.name}' already exists. Using existing feature to add rate."
                 )
         except Feature.DoesNotExist:
-            feature.save()
+            feature = Feature.objects.create(name=feature_name, feature_type=feature_type)
             if verbose:
                 log_accounting_info(f"Creating Feature: {feature}")
         features.append(feature)
