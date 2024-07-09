@@ -1495,7 +1495,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const PersistentMenuItemView = Marionette.View.extend({
         tagName: "li",
-        className: "list-group-item",
         template: _.template($("#persistent-menu-item").html() || ""),
         regions: {
             tree: {
@@ -1520,7 +1519,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const PersistentMenuListView = Marionette.CollectionView.extend({
         tagName: "ul",
-        className: "list-group",
+        className: "list-unstyled",
         childView: PersistentMenuItemView,
     });
 
