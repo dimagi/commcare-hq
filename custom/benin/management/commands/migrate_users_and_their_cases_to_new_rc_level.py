@@ -108,6 +108,12 @@ def process_updates_for_village(domain, village_id, dry_run):
     logger.info(f"Total number of users in village {village.name}: {len(users)}")
     for user in users:
         user_rc_number = user.get_user_data(domain).get('rc_number')
+        user_user_type = user.get_user_data(domain).get('usertype')
+        user_stats_str = ' '.join([
+            'Active' if user.is_active else 'Deactivated',
+            user_rc_number if user_rc_number else 'RC:None',
+            user_user_type if user_user_type else 'Type:None'
+        ])
         if user_rc_number:
             try:
                 new_user_rc_location = _find_child_location_with_name(
@@ -115,8 +121,8 @@ def process_updates_for_village(domain, village_id, dry_run):
                     location_name=user_rc_number
                 )
             except MultipleMatchingLocationsFound:
-                logger.error(f"Multiple matching locations found for user {user.username}:{user.user_id} "
-                             f"with rc number {user_rc_number}")
+                logger.error(f"[{user_stats_str}] Multiple matching locations found for user "
+                             f"{user.username}:{user.user_id} with rc number {user_rc_number}")
             else:
                 if new_user_rc_location:
                     _update_cases(domain=domain, user=user, current_owner_id=village.location_id,
@@ -124,12 +130,12 @@ def process_updates_for_village(domain, village_id, dry_run):
                                   dry_run=dry_run)
                     _update_users_location(user=user, existing_location=village,
                                            new_location=new_user_rc_location, dry_run=dry_run)
-                    logger.info(f"User {user.username}:{user.user_id} updates completed.")
+                    logger.info(f"[{user_stats_str}] User {user.username}:{user.user_id} updates completed.")
                 else:
-                    logger.error(f"User {user.username}:{user.user_id} rc {user_rc_number} location "
-                                 f"not found")
+                    logger.error(f"[{user_stats_str}] User {user.username}:{user.user_id} rc "
+                                 f"{user_rc_number} location not found")
         else:
-            logger.error(f"User {user.username}:{user.user_id} missing rc number")
+            logger.error(f"[{user_stats_str}] User {user.username}:{user.user_id} missing rc number")
     logger.info(f"Updates for village {village.name} processed.")
 
 
