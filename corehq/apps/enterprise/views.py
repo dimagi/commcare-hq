@@ -19,6 +19,7 @@ from django.views.decorators.http import require_POST
 
 from django_prbac.utils import has_privilege
 from memoized import memoized
+import codecs
 
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.enterprise.decorators import require_enterprise_admin
@@ -99,8 +100,12 @@ def enterprise_dashboard_download(request, domain, slug, export_hash):
     content = redis.get(export_hash)
 
     if content:
-        file = ContentFile(content)
-        response = HttpResponse(file, Format.FORMAT_DICT[Format.UNZIPPED_CSV])
+        encoding = 'UTF-8'
+        # Specifying a leading Byte Order Marker (BOM) allows Excel to automatically detect the encoding
+        # Without this, Excel defaults to ASCII
+        file = ContentFile(codecs.BOM_UTF8 + content.encode(encoding))
+        mimetype = '{}; charset={}'.format(Format.FORMAT_DICT[Format.UNZIPPED_CSV]['mimetype'], encoding)
+        response = HttpResponse(file, content_type=mimetype, charset=encoding)
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
         return response
 
