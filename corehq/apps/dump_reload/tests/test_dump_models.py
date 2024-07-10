@@ -21,6 +21,7 @@ IGNORE_MODELS = {
     "accounting.DomainUserHistory",
     "accounting.Feature",
     "accounting.FeatureRate",
+    "accounting.FormSubmittingMobileWorkerHistory",
     "accounting.Invoice",
     "accounting.InvoiceCommunicationHistory",
     "accounting.LineItem",
