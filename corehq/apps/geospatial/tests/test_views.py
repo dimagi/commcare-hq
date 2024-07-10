@@ -424,23 +424,26 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
         GeoPolygon.objects.all().delete()
         super().tearDown()
 
+    def _make_post_request(self, data):
+        return self.client.post(
+            self.endpoint,
+            data=data,
+            content_type='application/json',
+        )
+
     @flag_enabled('GEOSPATIAL')
     def test_not_logged_in(self):
         response = Client().post(self.endpoint, _sample_geojson_data())
         self.assertRedirects(response, f"{self.login_url}?next={self.endpoint}")
 
     def test_feature_flag_not_enabled(self):
-        response = self.client.post(self.endpoint, _sample_geojson_data())
+        response = self._make_post_request({'geo_json': _sample_geojson_data()})
         self.assertTrue(response.status_code == 404)
 
     @flag_enabled('GEOSPATIAL')
     def test_save_polygon(self):
         geo_json_data = _sample_geojson_data()
-        response = self.client.post(
-            self.endpoint,
-            data={"geo_json": geo_json_data},
-            content_type="application/json"
-        )
+        response = self._make_post_request({'geo_json': geo_json_data})
         self.assertEqual(response.status_code, 200)
         saved_polygons = GeoPolygon.objects.filter(domain=self.domain)
         self.assertEqual(len(saved_polygons), 1)
@@ -449,6 +452,42 @@ class TestGeoPolygonListView(BaseGeospatialViewClass):
         for feature in geo_json_data["features"]:
             del feature['id']
         self.assertEqual(saved_polygons[0].geo_json, geo_json_data)
+
+    def _assert_error_message(self, response, message):
+        error = response.content.decode("utf-8")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(error, message,)
+
+    @flag_enabled('GEOSPATIAL')
+    def test_geo_json_validation(self):
+        response = self.client.generic('POST', self.endpoint, 'foobar')
+        self._assert_error_message(
+            response,
+            message='POST Body must be a valid json in {"geo_json": <geo_json>} format'
+        )
+        response = self._make_post_request({'foo': 'bar'})
+        self._assert_error_message(
+            response,
+            message='Empty geo_json POST field'
+        )
+        response = self._make_post_request({'geo_json': {'foo': 'bar'}})
+        self._assert_error_message(
+            response,
+            message='Invalid GeoJSON, geo_json must be a FeatureCollection of Polygons'
+        )
+
+    @flag_enabled('GEOSPATIAL')
+    def test_name_validation(self):
+        GeoPolygon.objects.create(
+            domain=self.domain,
+            geo_json={},
+            name='foobar',
+        )
+        response = self._make_post_request({'geo_json': _sample_geojson_data(name='FooBAR')})
+        self._assert_error_message(
+            response,
+            message='GeoPolygon with given name already exists! Please use a different name.'
+        )
 
 
 class TestGeoPolygonDetailView(BaseGeospatialViewClass):
@@ -502,7 +541,7 @@ class TestGeoPolygonDetailView(BaseGeospatialViewClass):
         self.assertEqual(len(saved_polygons), 0)
 
 
-def _sample_geojson_data():
+def _sample_geojson_data(name='test-2'):
     data = {
         "type": "FeatureCollection",
         "features": [
@@ -524,6 +563,6 @@ def _sample_geojson_data():
                 }
             }
         ],
-        "name": "test-2",
+        "name": name,
     }
     return data

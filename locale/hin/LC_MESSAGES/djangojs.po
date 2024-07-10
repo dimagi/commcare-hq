@@ -3522,6 +3522,26 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Max cases per user"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Min cases per user"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Max distance to case"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "minutes"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Max travel time"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid ""
 "Oops! Something went wrong! Please check that your geospatial settings are "
 "configured correctly or contact admin if the problem persists."

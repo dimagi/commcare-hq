@@ -23,9 +23,10 @@ requirejs.config({
         "tempusDominus": "@eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
         "underscore": "underscore/underscore",
         "nvd3/nv.d3.latest.min": "nvd3-1.8.6/build/nv.d3.min",
+        "stripe": "https://js.stripe.com/v2/?noext",
     },
     shim: {
-        "accounting/js/lib/stripe": { exports: 'Stripe' },
+        "stripe": { exports: 'Stripe' },
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
         "ace-builds/src-min-noconflict/mode-json": { deps: ["ace-builds/src-min-noconflict/ace"] },
         "ace-builds/src-min-noconflict/mode-xml": { deps: ["ace-builds/src-min-noconflict/ace"] },

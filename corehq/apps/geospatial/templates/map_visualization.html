@@ -67,12 +67,7 @@
         </button>
     </div>
 </div>
-<div class="row panel" id="mapControls">
-    {% include 'geospatial/partials/saved_polygon_filter.html' %}
-    <a id="btnRunDisbursement" class="col-sm-2 btn btn-primary" style="float:right; margin-right:1em" data-bind="attr: { disabled: btnRunDisbursementDisabled }">
-        {% trans 'Run Disbursement' %}
-    </a>
-</div>
+{% include 'geospatial/partials/saved_polygon_filter.html' with uses_disbursement='true' %}
 <div id="disbursement-spinner">
   <h4 id="loading" class="hide"
       data-bind="visible: isBusy(), css: {hide: false}">

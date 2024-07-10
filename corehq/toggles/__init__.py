@@ -2888,3 +2888,10 @@ SMART_LINKS_FOR_WEB_USERS = StaticToggle(
     tag=TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+LOCATION_HAS_USERS = StaticToggle(
+    slug='location_has_users',
+    label='USH Dev: Allows marking whether a location should have users assigned or not.',
+    tag=TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
