@@ -321,7 +321,7 @@ class TestUserDataModel(TestCase):
             'commcare_profile': '',
         })
 
-    def test_add_primary_location_when_no_location_previously_assigned_and_user_data_updated(self):
+    def test_add_primary_location_when_no_location_previously_assigned_updates_user_data(self):
         # Set primary location
         self.user.set_location(self.loc1)
         user_data = self.user.get_user_data(self.domain)
@@ -334,7 +334,7 @@ class TestUserDataModel(TestCase):
             'commcare_primary_case_sharing_id': self.loc1.location_id,
         })
 
-    def test_add_primary_location_when_there_is_location_previously_assigned_and_user_data_updated(self):
+    def test_add_primary_location_when_there_is_location_previously_assigned_updates_user_data(self):
         # Set primary location to loc1
         self.user.set_location(self.loc1)
         user_data = self.user.get_user_data(self.domain)
@@ -356,7 +356,7 @@ class TestUserDataModel(TestCase):
             'commcare_primary_case_sharing_id': self.loc2.location_id,
         })
 
-    def test_append_location_and_user_data_updated(self):
+    def test_append_location_updates_user_data(self):
         # Set primary location
         self.user.set_location(self.loc1)
         user_data = self.user.get_user_data(self.domain)
@@ -379,7 +379,7 @@ class TestUserDataModel(TestCase):
             'commcare_primary_case_sharing_id': self.loc1.location_id,
         })
 
-    def test_remove_primary_location_and_user_data_updated(self):
+    def test_remove_primary_location_updates_user_data(self):
         # Set primary location
         self.user.set_location(self.loc1)
         user_data = self.user.get_user_data(self.domain)
@@ -398,7 +398,7 @@ class TestUserDataModel(TestCase):
             'commcare_profile': '',
         })
 
-    def test_remove_assigned_location_and_user_data_updated(self):
+    def test_remove_assigned_location_updates_user_data(self):
         self.user.reset_locations(self.loc_ids)
         user_data = self.user.get_user_data(self.domain)
         self.assertEqual(user_data.to_dict(), {
@@ -419,7 +419,7 @@ class TestUserDataModel(TestCase):
             'commcare_primary_case_sharing_id': self.loc1.location_id,
         })
 
-    def test_reset_locations_and_user_data_updated(self):
+    def test_reset_locations_updates_user_data(self):
         self.user.reset_locations(self.loc_ids)
 
         user_data = self.user.get_user_data(self.domain)

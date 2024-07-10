@@ -81,7 +81,7 @@ class UserData:
         return provided_data
 
     @property
-    def _keys_provided_by_system(self):
+    def _system_keys(self):
         return set(self._provided_by_system.keys()) | LOCATION_KEYS
 
     def to_dict(self):
@@ -180,7 +180,7 @@ class UserData:
         return self.to_dict().get(key, default)
 
     def __setitem__(self, key, value):
-        if key in self._keys_provided_by_system:
+        if key in self._system_keys:
             if key in self._provided_by_system and value == self._provided_by_system[key]:
                 return
             raise UserDataError(_("'{}' cannot be set directly").format(key))
