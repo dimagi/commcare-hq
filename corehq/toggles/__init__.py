@@ -1958,6 +1958,17 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     """
 )
 
+DO_NOT_RATE_LIMIT_REPEATERS = StaticToggle(
+    'do_not_rate_limit_repeaters',
+    'Do not rate limit repeaters for this project, on a temporary basis.',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    There is no known use case for this, but it's available as an escape valve
+    when repeater rate limiting isn't working right.
+    """
+)
+
 TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE = StaticToggle(
     'test_form_submission_rate_limit_response',
     "Respond to all form submissions with a 429 response",

@@ -366,6 +366,7 @@ class Repeater(RepeaterSuperProxy):
         self.next_attempt_at = now + interval
         self.save()
 
+
     def reset_next_attempt(self):
         if self.last_attempt_at or self.next_attempt_at:
             self.last_attempt_at = None
