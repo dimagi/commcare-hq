@@ -59,17 +59,17 @@ class BaseInvoiceTestCase(BaseAccountingTest):
         cls.domain = generator.arbitrary_domain()
 
         cls.subscription_length = 15  # months
-        subscription_start_date = datetime.date(2016, 2, 23)
+        cls.subscription_start_date = datetime.date(2016, 2, 23)
         cls.subscription_is_active = False
         if cls.is_testing_web_user_feature:
             # make sure the subscription is still active when we count web users
             cls.subscription_is_active = True
-        subscription_end_date = add_months_to_date(subscription_start_date, cls.subscription_length)
+        cls.subscription_end_date = add_months_to_date(cls.subscription_start_date, cls.subscription_length)
         cls.subscription = generator.generate_domain_subscription(
             cls.account,
             cls.domain,
-            date_start=subscription_start_date,
-            date_end=subscription_end_date,
+            date_start=cls.subscription_start_date,
+            date_end=cls.subscription_end_date,
             is_active=cls.subscription_is_active
         )
 
