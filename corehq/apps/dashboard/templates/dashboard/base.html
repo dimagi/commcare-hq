@@ -15,6 +15,11 @@
 
 {% block content %}
   {% initial_page_data 'dashboard_tiles' dashboard_tiles %}
+  {% initial_page_data 'domain_subscription' domain_subscription %}
+  {% initial_page_data 'domain_subscription_edition' domain_subscription_edition %}
+  {% initial_page_data 'domain_subscription_service_type' domain_subscription_service_type %}
+  {% initial_page_data 'is_test_domain' is_test_domain %}
+  {% initial_page_data 'is_domain_active' is_domain_active %}
   {% registerurl 'dashboard_tile' domain '---' %}
   {% registerurl 'dashboard_tile_total' domain '---' %}
   <div class="container" id="hq-content">
