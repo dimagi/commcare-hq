@@ -48,6 +48,8 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.resetSaveButton = resetSaveButton;
         self.dataUrl = dataUrl;
 
+        self.groups.subscribe(changeSaveButton)
+
         self.fetchCaseProperties = function () {
             if (self.groups().length === 0) {
                 let caseTypeUrl = self.dataUrl + self.name + '/';
@@ -408,7 +410,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         // to fetch the case properties of the first case type
                         let caseType = self.caseTypes()[0]
                         self.goToCaseType(caseType);
-                        caseType.groups.subscribe(changeSaveButton)
                     }
                     self.fhirResourceType.subscribe(changeSaveButton);
                     self.removefhirResourceType.subscribe(changeSaveButton);
