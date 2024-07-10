@@ -1,16 +1,16 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-<div id="configure-columns-form"
+<div id="{{ container_id }}"
      hx-swap="outerHTML"
      data-refresh-table="{{ table_selector }}">
 
   <div class="mb-3">
     <h5>
-      Visible Columns
+      {% trans "Visible Columns" %}
     </h5>
     <form hx-post="{{ request.path_info }}"
-          hx-target="#configure-columns-form"
+          hx-target="#{{ container_id }}"
           hx-trigger="end">
       <ul class="list-group sortable">
         {% for column in columns %}
@@ -21,8 +21,8 @@
               <span class="ps-2">{{ column.config.header }}</span>
             </a>
             <button class="btn btn-outline-danger btn-sm"
-                    id="delete-column-{{ column.slug }}"
-                    hx-target="#configure-columns-form"
+                    aria-label="{% trans "Close" %}"
+                    hx-target="#{{ container_id }}"
                     hx-delete="{{ request.path_info }}?column={{ column.slug }}">
               <i class="fa-solid fa-close"></i>
             </button>
@@ -35,10 +35,11 @@
     <div class="card mb-3">
       <div class="card-body">
         <form hx-put="{{ request.path_info }}"
-              hx-target="#configure-columns-form">
+              hx-target="#{{ container_id }}">
           <div class="mb-3">
             <label for="property"
-                   class="form-label">Select property to add:
+                   class="form-label">
+              {% trans "Select property to add" %}:
             </label>
             <select class="form-select"
                     name="add_column">
@@ -50,7 +51,7 @@
           <div class="mb-3" >
             <button type="submit"
                     class="btn btn-outline-primary">
-              <i class="fa-solid fa-plus"></i> Add Column
+              <i class="fa-solid fa-plus"></i> {% trans "Add Column" %}
             </button>
           </div>
         </form>
