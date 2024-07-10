@@ -1,3 +1,4 @@
+'use strict';
 /**
  * Model for a column in the Display Properties section of case list/detail.
  *
@@ -245,6 +246,7 @@ hqDefine("app_manager/js/details/column", function () {
                 multimedia: self.screen.config.multimedia,
                 values_are_icons: self.original.format === 'enum-image',
                 keys_are_conditions: self.original.format === 'conditional-enum',
+                values_are_translatable: self.original.format === 'translatable-enum',
             };
             self.enum_extra = uiElement.key_value_mapping(o);
         }());
@@ -394,13 +396,16 @@ hqDefine("app_manager/js/details/column", function () {
                         fireChange();
                     });
                     self.date_extra.value = format.val();
-                } else if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
+                } else if (this.val() === "enum" || this.val() === "enum-image"
+                           || this.val() === 'conditional-enum' || this.val() === 'translatable-enum') {
                     self.enum_extra.values_are_icons(this.val() === 'enum-image');
                     self.enum_extra.keys_are_conditions(this.val() === 'conditional-enum');
+                    self.enum_extra.values_are_translatable(this.val() === 'translatable-enum');
                     self.format.ui.parent().append(self.enum_extra.ui);
                 } else if (this.val() === "clickable-icon") {
                     self.enum_extra.values_are_icons(true);
                     self.enum_extra.keys_are_conditions(true);
+                    self.enum_extra.values_are_translatable(true);
                     self.format.ui.parent().append(self.enum_extra.ui);
                     self.format.ui.parent().append(self.endpointActionLabel);
                     self.format.ui.parent().append(self.action_form_extra.ui);
