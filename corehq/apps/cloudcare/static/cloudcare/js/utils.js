@@ -380,7 +380,7 @@ hqDefine('cloudcare/js/utils', [
         let picker = hqTempusDominus.createDatePicker($el.get(0), options);
 
         $el.attr("placeholder", dateFormat);
-        $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
+        // $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
 
         return picker;
     };
