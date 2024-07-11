@@ -96,9 +96,13 @@ class ODataResource(HqBaseResource):
         self.throttle_check(request)
         self.log_throttled_access(request)
 
+        primary_key = self.get_primary_key()
+        if not (isinstance(primary_key, list) or isinstance(primary_key, tuple)):
+            primary_key = (primary_key,)
+
         metadata = render_to_string('api/odata_metadata.xml', {
             'fields': self.get_fields(),
-            'primary_key': self.get_primary_key(),
+            'primary_key': primary_key,
         })
 
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
