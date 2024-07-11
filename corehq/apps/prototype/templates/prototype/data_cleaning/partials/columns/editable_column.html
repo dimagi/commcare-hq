@@ -3,13 +3,15 @@
 
 <div class="editable-column-container"
      x-data='{ isEditing: false,
+               isSubmitting: false,
                cellValue: "{% if edited_value %}{{ edited_value }}{% else %}{{ value }}{% endif %}" }'
    {% if is_partial_update %}
      x-init="$dispatch('updateApplyEditsButton', {{ table.has_edits|BOOL }})"
    {% endif %}>
+
   <div class="inline-edit-block"
        x-show="!isEditing"
-       @dblclick="isEditing = true">
+       @dblclick="isEditing = !isSubmitting">
     {% if edited_value %}
       <form hx-post="{{ request.path_info }}{% querystring %}"
             hx-action="cancel_edit"
@@ -21,7 +23,8 @@
         <div class="badge text-bg-danger">{{ value }}</div>
         <div class="badge text-bg-success">{{ edited_value }}</div>
         <button type="submit"
-                class="btn btn-outline-danger btn-sm htmx-loading">
+                class="btn btn-outline-danger btn-sm htmx-loading"
+                @click="isSubmitting = true">
           <i class="fa fa-close"></i>
         </button>
       </form>
@@ -30,10 +33,12 @@
     {% endif %}
     <button class="btn btn-link btn-sm inline-edit-button"
             type="button"
-            @click="isEditing = true">
+            @click="isEditing = true"
+            :disabled="isSubmitting">
        <i class="fa fa-pencil"></i>
     </button>
   </div>
+
   <div x-show="isEditing">
     <form hx-post="{{ request.path_info }}{% querystring %}"
           hx-action="edit_cell_value"
@@ -48,15 +53,18 @@
                name="newValue"
                x-model="cellValue">
         <button class="btn btn-primary htmx-loading"
-                type="submit">
+                type="submit"
+                @click="isSubmitting = true">
           <i class="fa fa-check"></i>
         </button>
         <button class="btn btn-outline-danger"
                 type="button"
+                :disabled="isSubmitting"
                 @click="isEditing = false">
           <i class="fa fa-close"></i>
         </button>
       </div>
     </form>
   </div>
+
 </div>
