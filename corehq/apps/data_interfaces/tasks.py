@@ -137,7 +137,7 @@ def run_case_update_rules(now=None):
 
 
 REDIS_TOTAL_UPDATES_KEY = "total_case_updates"
-LOCK_TIMEOUT = 60
+LOCK_TIMEOUT = 60 * 60
 
 
 @task(serializer='pickle', queue='case_rule_queue')
@@ -153,6 +153,7 @@ def run_case_update_rules_for_domain(domain, now=None):
     redis_client = get_redis_client()
     redis_lock_key = f"update_lock_{domain}"
     redis_client.set(REDIS_TOTAL_UPDATES_KEY, 0)
+
     for case_type in all_rule_case_types:
         run_record = DomainCaseRuleRun.objects.create(
             domain=domain,
@@ -168,8 +169,10 @@ def run_case_update_rules_for_domain(domain, now=None):
                                         now, run_record.pk, case_type, db=db)
             lock = get_redis_lock(redis_lock_key, LOCK_TIMEOUT, name="case_update_lock")
             lock = acquire_lock(lock, degrade_gracefully=True, blocking=True)
-            total_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY))
-            release_lock(lock, degrade_gracefully=True)
+            try:
+                total_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY))
+            finally:
+                release_lock(lock, degrade_gracefully=True)
             if total_updates >= max_allowed_updates:
                 break
         if total_updates >= max_allowed_updates:
@@ -193,11 +196,14 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=N
 
     redis_client = get_redis_client()
     redis_lock_key = f"update_lock_{domain}"
-    lock = get_redis_lock(redis_lock_key, LOCK_TIMEOUT, name="case_update_lock")
 
+    lock = get_redis_lock(redis_lock_key, LOCK_TIMEOUT, name="case_update_lock")
     lock = acquire_lock(lock, degrade_gracefully=True, blocking=True)
-    curr_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY))
-    release_lock(lock, degrade_gracefully=True)
+
+    try:
+        curr_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY))
+    finally:
+        release_lock(lock, degrade_gracefully=True)
 
     run = iter_cases_and_run_rules(domain, iterator, rules, now, run_id, case_type, db,
                                    curr_updates=curr_updates)
@@ -208,10 +214,12 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=N
             rule.save(update_fields=['last_run'])
 
     lock = acquire_lock(lock, degrade_gracefully=True, blocking=True)
-    curr_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY)) \
-        + run.case_update_result.total_updates
-    redis_client.set(REDIS_TOTAL_UPDATES_KEY, curr_updates)
-    release_lock(lock, degrade_gracefully=True)
+    try:
+        curr_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY)) \
+            + run.case_update_result.total_updates
+        redis_client.set(REDIS_TOTAL_UPDATES_KEY, curr_updates)
+    finally:
+        release_lock(lock, degrade_gracefully=True)
 
 
 @task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)
