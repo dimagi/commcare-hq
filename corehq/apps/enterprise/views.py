@@ -94,10 +94,7 @@ def enterprise_dashboard_total(request, domain, slug):
 @require_enterprise_admin
 @login_and_domain_required
 def enterprise_dashboard_download(request, domain, slug, export_hash):
-    report = EnterpriseReport.create(slug, request.account.id, request.couch_user)
-
-    redis = get_redis_client()
-    content = redis.get(export_hash)
+    content = _get_export_content(export_hash)
 
     if content:
         encoding = 'UTF-8'
@@ -106,11 +103,24 @@ def enterprise_dashboard_download(request, domain, slug, export_hash):
         file = ContentFile(codecs.BOM_UTF8 + content.encode(encoding))
         mimetype = '{}; charset={}'.format(Format.FORMAT_DICT[Format.UNZIPPED_CSV]['mimetype'], encoding)
         response = HttpResponse(file, content_type=mimetype, charset=encoding)
-        response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
+
+        filename = _get_export_filename(request, slug)
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+
         return response
 
     return HttpResponseNotFound(_("That report was not found. Please remember that "
                                   "download links expire after 24 hours."))
+
+
+def _get_export_content(export_hash):
+    redis = get_redis_client()
+    return redis.get(export_hash)
+
+
+def _get_export_filename(request, slug):
+    report = EnterpriseReport.create(slug, request.account.id, request.couch_user)
+    return report.filename
 
 
 @require_enterprise_admin
