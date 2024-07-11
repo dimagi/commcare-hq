@@ -2,6 +2,7 @@
 hqDefine("cloudcare/js/formplayer/menus/views", [
     'jquery',
     'underscore',
+    'backbone',
     'backbone.marionette',
     'DOMPurify/dist/purify.min',
     'hqwebapp/js/initial_page_data',
@@ -9,6 +10,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     'analytix/js/kissmetrix',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/markdown',
@@ -17,6 +19,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 ], function (
     $,
     _,
+    Backbone,
     Marionette,
     DOMPurify,
     initialPageData,
@@ -24,6 +27,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     kissmetrics,
     constants,
     FormplayerFrontend,
+    AppsAPI,
     UsersModels,
     formplayerUtils,
     markdown,
@@ -1489,6 +1493,57 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
     });
 
+    const PersistentMenuItemView = Marionette.View.extend({
+        tagName: "li",
+        template: _.template($("#persistent-menu-item").html() || ""),
+        regions: {
+            tree: {
+                el: 'ul',
+                replaceElement: true
+            }
+        },
+        triggers: {
+            "click a": "click:persistent:menu:command"  // magically calls onClickPersistentMenuCommand
+        },
+        onRender: function () {
+            if (!_.isEmpty(this.model.get('commands'))) {
+                this.showChildView('tree', new PersistentMenuListView({
+                    collection: new Backbone.Collection(this.model.get('commands')),
+                }));
+            }
+        },
+        onClickPersistentMenuCommand: function (event) {
+            FormplayerFrontend.trigger("persistentMenuSelect", this.model.get('selections'));
+        },
+    });
+
+    const PersistentMenuListView = Marionette.CollectionView.extend({
+        tagName: "ul",
+        className: "list-unstyled",
+        childView: PersistentMenuItemView,
+    });
+
+    const PersistentMenuView = Marionette.View.extend({
+        tagName: "div",
+        template: _.template($("#persistent-menu-template").html() || ""),
+        regions: {
+            menu: "#persistent-menu-content",
+        },
+        onRender: function () {
+            this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
+        },
+        templateContext: function () {
+            const appId = formplayerUtils.currentUrlToObject().appId,
+                  currentApp = AppsAPI.getAppEntity(appId),
+                  appName = currentApp.get('name'),
+                  imageUri = currentApp.get('imageUri');
+            return {
+                appName: appName,
+                imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+            };
+        },
+    });
+
     return {
         buildCaseTileStyles: buildCaseTileStyles,
         BreadcrumbListView: function (options) {
@@ -1529,6 +1584,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
+        },
+        PersistentMenuView: function (options) {
+            return new PersistentMenuView(options);
         },
     };
 })
