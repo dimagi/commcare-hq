@@ -2379,6 +2379,12 @@ class CaseExportDataSchema(ExportDataSchema):
 
         parent_types = builder.get_case_relationships_for_case_type(case_type)
         case_schemas = []
+
+        if not for_bulk_export and domain_has_privilege(app.domain, privileges.DATA_DICTIONARY):
+            # reset case property group names before setting them through case property mapping
+            # to remove group names for deleted/deprecated properties/groups
+            cls._reset_case_property_group_name(current_schema)
+
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             app.domain,
             case_property_mapping,
@@ -2433,6 +2439,14 @@ class CaseExportDataSchema(ExportDataSchema):
         )
 
         return ordered_case_properties
+
+    @classmethod
+    def _reset_case_property_group_name(cls, schema):
+        for group_schema in schema.group_schemas:
+            if group_schema.path == MAIN_TABLE:
+                for item in group_schema.items:
+                    if isinstance(item, ScalarItem):
+                        item.case_property_group_name = ''
 
     @classmethod
     def _generate_schema_from_case_property_mapping(cls, domain, case_property_mapping, parent_types, app_id,
