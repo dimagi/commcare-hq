@@ -160,6 +160,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
             'module_id',
             'multimedia',
             'values_are_icons',
+            'values_are_translatable',
         ]);
 
         var self = {};
@@ -170,6 +171,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
         self.duplicatedItems = ko.observableArray();
         self.values_are_icons = ko.observable(options.values_are_icons || false);
         self.keys_are_conditions = ko.observable(options.keys_are_conditions || false);
+        self.values_are_translatable = ko.observable(options.values_are_translatable || false);
         self.multimedia = options.multimedia;
 
         self.getPropertyName = function () {
@@ -193,6 +195,13 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
                     duplicated: gettext('Calculation is duplicated'),
                     addButton: gettext('Add Key, Value Mapping'),
                     badXML: gettext('Calculation contains an invalid character.'),
+                };
+            } else if (self.values_are_translatable()) {
+                return {
+                    placeholder: gettext('Key'),
+                    duplicated: gettext('This key is already defined'),
+                    addButton: gettext('Add Key, Translation Mapping'),
+                    badXML: gettext('Key contains invalid characters.'),
                 };
             } else {
                 return {
@@ -262,8 +271,10 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
             if (self.values_are_icons() || self.keys_are_conditions()) {
                 // Expressions can contain whatever
                 return false;
+            } else if (self.values_are_translatable()) {
+                // Keys should only be letters, numbers, - and _
+                return key.match(/[^A-Za-z0-9-_]/);
             }
-
             // IDs shouldn't have invalid XML characters
             return key.match(/[&<>"']/);
         };
@@ -300,6 +311,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
         m.buttonText = options.buttonText || gettext("Edit"),
         m.values_are_icons = ko.observable(options.values_are_icons || false);
         m.keys_are_conditions = ko.observable(options.keys_are_conditions || false);
+        m.values_are_translatable = ko.observable(options.values_are_translatable || false);
         m.openModal = function () {
             // create a throw-away modal every time
             // lets us create a sandbox for editing that you can cancel
@@ -312,6 +324,7 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-mapping', functi
                 items: m.getItems(),
                 values_are_icons: m.values_are_icons(),
                 keys_are_conditions: m.keys_are_conditions(),
+                values_are_translatable: m.values_are_translatable(),
                 multimedia: m.multimedia,
                 property_name: options.property_name,
             });
