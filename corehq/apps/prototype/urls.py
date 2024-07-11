@@ -3,6 +3,7 @@ from corehq.apps.prototype.views import example
 from corehq.apps.prototype.views.data_cleaning.main import (
     CaseDataCleaningPrototypeView,
     reset_data,
+    slow_simulator,
 )
 from corehq.apps.prototype.views.data_cleaning.forms import (
     ConfigureColumnsFormView,
@@ -38,4 +39,6 @@ urlpatterns = [
         name=CleanDataFormView.urlname),
     url(r'^htmx/cleaning/reset/$', reset_data,
         name="data_cleaning_reset_data"),
+    url(r'^htmx/cleaning/slow/$', slow_simulator,
+        name="data_cleaning_slow"),
 ]
