@@ -259,7 +259,7 @@ def clear_expired_oauth_tokens():
     call_command('cleartokens')
 
 
-@periodic_task(run_every=crontab(day_of_week=1))
+@periodic_task(run_every=crontab(minute=0, hour=1, day_of_week='mon'))
 def send_domain_ucr_data_info_to_admins():
     from corehq.apps.reports.dispatcher import AdminReportDispatcher
     from corehq.apps.reports.filters.select import UCRRebuildStatusFilter
