@@ -1,3 +1,4 @@
+import copy
 import random
 
 from django.core.cache import cache
@@ -22,7 +23,7 @@ class BaseCacheStore:
         cache.set(self.cache_key, data)
 
     def get(self):
-        return cache.get(self.cache_key, self.default_value)
+        return cache.get(self.cache_key, copy.deepcopy(self.default_value))
 
     def delete(self):
         cache.delete(self.cache_key)
