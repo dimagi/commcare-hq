@@ -10,6 +10,7 @@ class FakeCaseTable(tables.Table):
     configure_columns_form_id = "configure-columns-form"
     filter_form_id = "filter-columns-form"
     clean_data_form_id = "clean-columns-form"
+    loading_indicator_id = "loading-table-hx"
     available_columns = [
         ("full_name", EditableColumn(
             verbose_name=gettext_lazy("Name"),
