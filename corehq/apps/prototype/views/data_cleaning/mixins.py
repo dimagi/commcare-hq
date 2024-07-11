@@ -31,11 +31,11 @@ class HtmxResponseException(Exception):
 class HtmxActionMixin:
     """
     A mixin for TemplateView classes that dispatches requests from HTMX where
-    the triggering element has the ``hx-action`` attribute specified and
+    the triggering element has the ``hq-hx-action`` attribute specified and
     the ``HTTP_HX_ACTION`` is present.
 
     The dispatch method will then route the action request to the instance
-    method with the same name as the slug present in hx-action. A security requirement
+    method with the same name as the slug present in hq-hx-action. A security requirement
     is that the receiving method must be decorated with @hx_action()
 
     The method will receive the arguments ``request``, ``*args``, ``**kwargs`` and
@@ -43,7 +43,7 @@ class HtmxActionMixin:
     ``super().get(request, *args, **kwargs)``, or an equivalent method.
 
     Example trigger element in requesting HTML:
-        <div hx-action="make_edit" hx-post="{{ url_to_view }}"...></div>
+        <div hq-hx-action="make_edit" hx-post="{{ url_to_view }}"...></div>
 
     Example usage in receiving TemplateView:
         @htmx_action()

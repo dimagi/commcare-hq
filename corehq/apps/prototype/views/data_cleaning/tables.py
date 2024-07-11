@@ -68,7 +68,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
                         # htmx
                         "hx-swap": "none",
                         "hx-post": self.request.get_full_path(),
-                        "hx-action": "select_page",
+                        "hq-hx-action": "select_page",
                         "hx-disabled-elt": ".js-disable-on-select-all",
                         # alpine
                         # `pageNumRecordsSelected`, `pageTotalRecords`: defined in table_with_status_bar.html
@@ -79,7 +79,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
                         # htmx
                         "hx-swap": "none",
                         "hx-post": self.request.get_full_path(),
-                        "hx-action": "select_row",
+                        "hq-hx-action": "select_row",
                         "hx-vals": self.get_checkbox_hx_vals,
                         "hx-disabled-elt": "this",
                         # alpine

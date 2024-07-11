@@ -4,7 +4,7 @@ hqDefine("prototype/js/data_cleaning",[
     'underscore',
     'sortablejs',
     'es6!hqwebapp/js/bootstrap5_loader',
-    'prototype/js/htmx_action',  // support hx-action attributes
+    'prototype/js/htmx_action',  // support hq-hx-action attributes
     'prototype/js/hq_htmx_loading',  // support hq-hx-loading attributes
 ], function (_, Sortable, bootstrap) {
     let htmx = window.htmx;

@@ -28,7 +28,7 @@
          x-show="numRecordsSelected > 0">
       <button class="btn btn-outline-danger btn-sm"
               type="button"
-              hx-action="select_all"
+              hq-hx-action="select_all"
               hx-post="{{ request.path_info }}{% querystring %}"
               hx-vals='{"selectAll": false}'
               hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
@@ -43,7 +43,7 @@
          x-show="numRecordsSelected > 0 && numRecordsSelected < totalRecords">
       <button class="btn btn-outline-primary btn-sm"
               type="button"
-              hx-action="select_all"
+              hq-hx-action="select_all"
               hx-post="{{ request.path_info }}{% querystring %}"
               hx-vals='{"selectAll": true}'
               hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
@@ -64,7 +64,7 @@
         <button class="btn btn-outline-danger btn-sm ms-2"
                 type="button"
                 hx-swap="none"
-                hx-action="clear_filters"
+                hq-hx-action="clear_filters"
                 hx-post="{{ request.path_info }}{% querystring %}"
                 hq-hx-loading="{{ table.loading_indicator_id  }}"
                 hx-on::after-request="htmx.trigger('#{{ table.filter_form_id }}', 'refreshFilters');">
@@ -82,7 +82,7 @@
       <button class="btn btn-success btn-sm ms-2"
               type="button"
               hx-post="{{ request.path_info }}{% querystring %}"
-              hx-action="apply_edits"
+              hq-hx-action="apply_edits"
               hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
               hx-swap="outerHTML"
               hq-hx-loading="{{ table.loading_indicator_id  }}">

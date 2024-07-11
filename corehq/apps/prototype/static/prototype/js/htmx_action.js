@@ -5,9 +5,10 @@ hqDefine("prototype/js/htmx_action",[
     let htmx = window.htmx;
     // todo: bundle htmx and include this where htmx is initialized
     document.body.addEventListener('htmx:configRequest', function (evt) {
-        if (evt.detail.elt.hasAttribute('hx-action')) {
+        if (evt.detail.elt.hasAttribute('hq-hx-action')) {
             // Add hx action header to request if hx-action attribute is present
-            evt.detail.headers['HX-Action'] = evt.detail.elt.getAttribute('hx-action');
+            // todo rename to hq-hx-action
+            evt.detail.headers['HX-Action'] = evt.detail.elt.getAttribute('hq-hx-action');
         }
     });
 });
