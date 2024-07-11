@@ -1,0 +1,39 @@
+@mixin htmx-spinner($width) {
+  position: absolute;
+  height: $width;
+  width: $width;
+  $offset: $width / 2;
+  left: calc(50% - $offset);
+  top: calc(50% - $offset);
+}
+
+form.htmx-request {
+  .htmx-loading {
+    position: relative;
+    &::before {
+      content: " ";
+      @extend .spinner-border;
+      @extend .spinner-border-sm;
+      @include htmx-spinner(22px);
+    }
+    &.btn-sm::before {
+      @include htmx-spinner(18px);
+    }
+  }
+  .input-group .btn.htmx-loading::before {
+    vertical-align: -0.28em;
+  }
+}
+
+.htmx-request.page-link {
+  background-color: $blue-300;
+  color: $white;
+  position: relative;
+
+  &::after {
+    content: " ";
+    @extend .spinner-border;
+    @extend .spinner-border-sm;
+    @include htmx-spinner(22px);
+  }
+}
