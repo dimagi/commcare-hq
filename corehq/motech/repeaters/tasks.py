@@ -33,6 +33,7 @@ from .models import (
     get_payload,
     send_request,
 )
+from corehq import toggles
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),
@@ -161,7 +162,7 @@ def _process_repeat_record(repeat_record):
         return
 
     try:
-        if repeat_record.repeater.is_paused:
+        if repeat_record.repeater.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain):
             # postpone repeat record by MAX_RETRY_WAIT so that it is not fetched
             # in the next check to process repeat records, which helps to avoid
             # clogging the queue
