@@ -220,7 +220,10 @@ class RepeaterManager(models.Manager):
         """
         Return all Repeaters ready to be forwarded.
         """
-        not_paused = models.Q(is_paused=False)
+        not_paused = ~(
+            models.Q(is_paused=True)
+            | models.Q(domain__in=toggles.PAUSE_DATA_FORWARDING.get_enabled_domains())
+        )
         next_attempt_not_in_the_future = (
             models.Q(next_attempt_at__isnull=True)
             | models.Q(next_attempt_at__lte=timezone.now())
