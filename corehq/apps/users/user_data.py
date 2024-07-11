@@ -181,7 +181,7 @@ class UserData:
 
     def __setitem__(self, key, value):
         if key in self._system_keys:
-            if key in self._provided_by_system and value == self._provided_by_system[key]:
+            if value == self._provided_by_system.get(key, object()):
                 return
             raise UserDataError(_("'{}' cannot be set directly").format(key))
         self._local_to_user[key] = value
