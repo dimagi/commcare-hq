@@ -362,6 +362,8 @@ class Repeater(RepeaterSuperProxy):
     def set_next_attempt(self):
         now = datetime.utcnow()
         interval = _get_retry_interval(self.last_attempt_at, now)
+        self.last_attempt_at = now
+        self.next_attempt_at = now + interval
         # Save using QuerySet.update() to avoid a possible race condition
         # with self.pause(), etc. and to skip the unnecessary functionality
         # in RepeaterSuperProxy.save().
@@ -372,6 +374,8 @@ class Repeater(RepeaterSuperProxy):
 
     def reset_next_attempt(self):
         if self.last_attempt_at or self.next_attempt_at:
+            self.last_attempt_at = None
+            self.next_attempt_at = None
             # Avoid a possible race condition with self.pause(), etc.
             Repeater.objects.filter(id=self.repeater_id).update(
                 last_attempt_at=None,
