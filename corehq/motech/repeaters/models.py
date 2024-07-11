@@ -375,9 +375,6 @@ class Repeater(RepeaterSuperProxy):
             self.next_attempt_at = None
             self.save()
 
-    def get_attempt_info(self, repeat_record):
-        return None
-
     @property
     def verify(self):
         return not self.connection_settings.skip_cert_verify
@@ -1021,7 +1018,6 @@ class RepeatRecord(models.Model):
         # although the Couch RepeatRecord did the same.
         code = getattr(response, "status_code", None)
         state = State.Empty if code == 204 else State.Success
-        self.repeater.reset_next_attempt()
         self.attempt_set.create(state=state, message=format_response(response) or '')
         self.state = state
         self.next_check = None
@@ -1033,7 +1029,6 @@ class RepeatRecord(models.Model):
         service is assumed to be in a good state, so do not back off, so
         that this repeat record does not hold up the rest.
         """
-        self.repeater.reset_next_attempt()
         self._add_failure_attempt(message, MAX_ATTEMPTS, retry)
 
     def add_server_failure_attempt(self, message):
@@ -1047,7 +1042,6 @@ class RepeatRecord(models.Model):
            days and will hold up all other payloads.
 
         """
-        self.repeater.set_next_attempt()
         self._add_failure_attempt(message, MAX_BACKOFF_ATTEMPTS)
 
     def _add_failure_attempt(self, message, max_attempts, retry=True):
@@ -1097,10 +1091,6 @@ class RepeatRecord(models.Model):
             return max(a.created_at for a in self.attempts)
         except ValueError:
             return None
-
-    @property
-    def next_attempt_at(self):
-        return self.repeater.next_attempt_at
 
     @property
     def url(self):
