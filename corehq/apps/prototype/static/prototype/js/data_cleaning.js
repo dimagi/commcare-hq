@@ -5,6 +5,7 @@ hqDefine("prototype/js/data_cleaning",[
     'sortablejs',
     'es6!hqwebapp/js/bootstrap5_loader',
     'prototype/js/htmx_action',  // support hx-action attributes
+    'prototype/js/hq_htmx_loading',  // support hq-hx-loading attributes
 ], function (_, Sortable, bootstrap) {
     let htmx = window.htmx;
     htmx.onLoad(function (content) {
