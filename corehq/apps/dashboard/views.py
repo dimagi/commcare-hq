@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.http.response import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -11,6 +12,7 @@ from dimagi.utils.web import json_response
 from corehq import privileges
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.mixins import BillingModalsMixin
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_paused_plan_context
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.dashboard.models import (
@@ -107,6 +109,8 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
             ),
         }
         context.update(get_paused_plan_context(self.request, self.domain))
+        if settings.ANALYTICS_IDS.get('GTM_ID'):
+            context.update(_get_domain_metrics(self.domain_object))
         return context
 
 
@@ -272,3 +276,17 @@ def _get_default_tiles(request):
             help_text=_("Visit CommCare's knowledge base"),
         ),
     ]
+
+
+def _get_domain_metrics(domain_obj):
+    domain_metrics = {
+        'is_test_domain': domain_obj.is_test,
+        # domain is considered active if a form was submitted in last 30 days
+        'is_domain_active': domain_obj.recent_submissions(),
+    }
+    subscription = Subscription.visible_objects.filter(subscriber__domain=domain_obj.name, is_active=True)
+    if subscription:
+        domain_metrics['domain_subscription'] = subscription[0].plan_version.plan.name
+        domain_metrics['domain_subscription_edition'] = subscription[0].plan_version.plan.edition
+        domain_metrics['domain_subscription_service_type'] = subscription[0].service_type
+    return domain_metrics

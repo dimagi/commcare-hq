@@ -4,6 +4,7 @@ hqDefine("dashboard/js/dashboard", [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'analytix/js/gtm',
     'hqwebapp/js/bootstrap5/components.ko',    // pagination widget
     'hqwebapp/js/bootstrap5/main',     // post-link function
     'hqwebapp/js/bootstrap5/knockout_bindings.ko',  // popover
@@ -11,7 +12,8 @@ hqDefine("dashboard/js/dashboard", [
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
+    gtmAnalytics,
 ) {
     var tileModel = function (options) {
         var self = {};
@@ -117,5 +119,16 @@ hqDefine("dashboard/js/dashboard", [
         $("#dashboard-tiles").koApplyBindings(dashboardModel({
             tiles: initialPageData.get("dashboard_tiles"),
         }));
+        
+        gtmAnalytics.sendEvent(
+            'domainMetrics',
+            {
+                'domainSubscription': initialPageData.get('domain_subscription'),
+                'domainSubscriptionEdition': initialPageData.get('domain_subscription_edition'),
+                'domainSubscriptionServiceType': initialPageData.get('domain_subscription_service_type'),
+                'isTestDomain': initialPageData.get('is_test_domain'),
+                'isDomainActive': initialPageData.get('is_domain_active'),
+            }
+        );
     });
 });
