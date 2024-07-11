@@ -1138,6 +1138,13 @@ HIDE_SYNC_BUTTON = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+PAUSE_DATA_FORWARDING = StaticToggle(
+    'pause_data_forwarding',
+    "Pause all data forwarding from this domain",
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 PERSISTENT_MENU_SETTING = StaticToggle(
     "persistent_menu_setting",
     "Show Persistent Menu option in Web Apps settings",
@@ -1714,8 +1721,8 @@ MOBILE_RECOVERY_MEASURES = StaticToggle(
 
 PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
-    'ICDS: Used for ICDS emergencies when UCR sync is killing the DB',
-    TAG_CUSTOM,
+    'Prevent Mobile UCR sync (when a UCR sync is causing operational problems)',
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description='Prevents mobile UCRs from being generated or included in the sync payload',
 )
@@ -2037,17 +2044,6 @@ ACCOUNTING_TESTING_TOOLS = StaticToggle(
     'Enable Accounting Testing Tools',
     TAG_INTERNAL,
     [NAMESPACE_USER]
-)
-
-SELF_SERVICE_ANNUAL_RENEWALS = StaticToggle(
-    'self_service_annual_renewals',
-    'Allow self service renewal for Pay Annually software plans',
-    TAG_SAAS_CONDITIONAL,
-    [NAMESPACE_USER],
-    description=(
-        "Allows billing admin users to choose between Pay Monthly or Pay Annually plans when renewing"
-        "This is a temporary flag to be removed upon completion of self service annual renewals feature."
-    )
 )
 
 ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
@@ -2880,7 +2876,7 @@ USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
 RESTRICT_DATA_SOURCE_REBUILD = StaticToggle(
     slug='restrict_data_source_rebuilds',
     label='Restrict data source rebuilt from UI',
-    tag=TAG_SOLUTIONS,
+    tag=TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     description='Restrict data source rebuilt from UI if the relevant data for the data source crosses a threshold'
 )
@@ -2897,5 +2893,12 @@ SMART_LINKS_FOR_WEB_USERS = StaticToggle(
     slug='smart_links_for_web_users',
     label='USH: Allow web users to use smart links without logging in as before',
     tag=TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+LOCATION_HAS_USERS = StaticToggle(
+    slug='location_has_users',
+    label='USH Dev: Allows marking whether a location should have users assigned or not.',
+    tag=TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN],
 )

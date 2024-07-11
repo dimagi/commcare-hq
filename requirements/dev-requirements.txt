@@ -58,7 +58,7 @@ celery==5.2.7
     # via
     #   -r base-requirements.in
     #   django-celery-results
-certifi==2023.7.22
+certifi==2024.7.4
     # via
     #   requests
     #   sentry-sdk
@@ -224,14 +224,14 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
     # via -r base-requirements.in
-djangorestframework==3.13.1
+djangorestframework==3.15.2
     # via -r base-requirements.in
 docutils==0.18.1
     # via
     #   myst-parser
     #   sphinx
     #   sphinx-rtd-theme
-dropbox==11.36.0
+dropbox==11.36.2
     # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
@@ -270,7 +270,7 @@ gevent==23.9.1
     #   -r base-requirements.in
     #   django-websocket-redis
     #   git-build-branch
-git-build-branch==0.1.15
+git-build-branch==0.1.16
     # via -r dev-requirements.in
 gnureadline==8.1.2
     # via -r dev-requirements.in
@@ -588,7 +588,6 @@ pytz==2024.1
     #   -r base-requirements.in
     #   babel
     #   celery
-    #   djangorestframework
     #   twilio
 pyyaml==6.0
     # via
@@ -797,7 +796,7 @@ unidecode==1.2.0
     # via pyphonetics
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==1.26.18
+urllib3==1.26.19
     # via
     #   -r docs-requirements.in
     #   botocore

@@ -487,9 +487,7 @@ class TestSubscriptionRenewalViews(TestCase):
     def test_renewal_page_context(self):
         edition = SoftwarePlanEdition.PRO
         subscription = self._generate_subscription(edition)
-
-        with patch('corehq.toggles.SELF_SERVICE_ANNUAL_RENEWALS.enabled_for_request', return_value=True):
-            response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
+        response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
 
         self.assertEqual(response.status_code, 200)
 
@@ -515,9 +513,7 @@ class TestSubscriptionRenewalViews(TestCase):
     def test_non_self_renewable_edition(self):
         # a billing admin may still view the renewal page even if their plan is not self-renewable
         self._generate_subscription(SoftwarePlanEdition.ENTERPRISE)
-
-        with patch('corehq.toggles.SELF_SERVICE_ANNUAL_RENEWALS.enabled_for_request', return_value=True):
-            response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
+        response = self.client.get(reverse('domain_subscription_renewal', args=[self.domain.name]))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['renewal_choices'], {})
@@ -527,12 +523,10 @@ class TestSubscriptionRenewalViews(TestCase):
         edition = SoftwarePlanEdition.PRO
         annual_plan = True
         subscription = self._generate_subscription(edition, annual_plan=annual_plan)
-
-        with patch('corehq.toggles.SELF_SERVICE_ANNUAL_RENEWALS.enabled_for_request', return_value=True):
-            response = self.client.post(
-                reverse('domain_subscription_renewal_confirmation', args=[self.domain.name]),
-                data={'is_annual_plan': annual_plan, 'plan_edition': edition, 'from_plan_page': True}
-            )
+        response = self.client.post(
+            reverse('domain_subscription_renewal_confirmation', args=[self.domain.name]),
+            data={'is_annual_plan': annual_plan, 'plan_edition': edition, 'from_plan_page': True}
+        )
 
         self.assertEqual(response.status_code, 200)
 

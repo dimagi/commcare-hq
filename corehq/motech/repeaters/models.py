@@ -352,7 +352,7 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def is_ready(self):
-        if self.is_paused:
+        if self.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(self.domain):
             return False
         if not (self.next_attempt_at is None
                 or self.next_attempt_at < timezone.now()):

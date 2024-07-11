@@ -1028,6 +1028,25 @@ class RelatedDocExpressionDbTest(TestCase):
         doc = self._get_doc(user_id)
         self.assertEqual(user_id, expression(doc, EvaluationContext(doc, 0)))
 
+    def test_user_data_lookup(self):
+        user = CommCareUser.create(self.domain, 'username', "123", None, None,
+                                   user_data={'favorite_color': 'indigo'})
+        self.addCleanup(user.delete, None, None)
+        expression = ExpressionFactory.from_spec({
+            "type": "related_doc",
+            "related_doc_type": 'CommCareUser',
+            "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "related_id"
+            },
+            "value_expression": {
+                "type": "property_path",
+                "property_path": ["user_data", "favorite_color"],
+            },
+        })
+        doc = self._get_doc(user._id)
+        self.assertEqual('indigo', expression(doc, EvaluationContext(doc, 0)))
+
     @staticmethod
     def _get_expression(doc_type):
         return ExpressionFactory.from_spec({
