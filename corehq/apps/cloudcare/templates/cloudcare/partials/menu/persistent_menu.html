@@ -1,0 +1,32 @@
+{% load i18n %}
+
+<script type="text/template" id="persistent-menu-template">
+  <button type="button"
+          data-bs-toggle="offcanvas"
+          data-bs-target="#persistent-menu-container"
+          aria-expanded="false"
+          aria-controls="persistent-menu-container"
+          class="position-fixed top-50 start-0 persistent-menu-toggle show">
+    <i class = "fa text-muted fa-arrow-right"></i>
+  </button>
+  <div id="persistent-menu-container" class="offcanvas offcanvas-start" tabindex="-1" aria-labelledby="persistent-menu-label">
+    <div class="offcanvas-header">
+      <% if (!imageUrl) { %>
+        <i class="fcc fcc-flower persistent-menu-appicon" aria-hidden="true"></i>
+      <% } else { %>
+        <i class="fcc appicon-custom persistent-menu-appicon" aria-hidden="true"
+           style="background-image: url('<%- imageUrl %>');"></i>
+      <% } %>
+      <h5 class="offcanvas-title" id="persistent-menu-label"><%- appName %></h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <div id="persistent-menu-content"></div>
+    </div>
+  </div>
+</script>
+
+<script type="text/template" id="persistent-menu-item">
+  <a href="#"><%- displayText %></a>
+  <ul></ul>
+</script>

@@ -12,3 +12,19 @@
 #menu-region .module-menu-container {
   padding-bottom: 6px;
 }
+
+.persistent-menu-appicon {
+  height: 2em;
+  width: 2em;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+
+#persistent-menu-content {
+  li {
+    padding-left: 2em;
+    padding-top: 1em;
+  }
+}
