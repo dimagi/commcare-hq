@@ -11,7 +11,7 @@ from xml.sax.saxutils import escape
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.suite_xml.xml_models import (
-    Detail, XPathVariable, TileGroup, Style, EndpointAction
+    Detail, DetailVariable, XPathVariable, TileGroup, Style, EndpointAction
 )
 
 TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
@@ -113,6 +113,7 @@ class CaseTileHelper(object):
             for template_field in case_tile_template_config(self.detail.case_tile_template).fields:
                 column = self._get_matched_detail_column(template_field)
                 context[template_field] = self._get_column_context(column)
+            context['custom_variables'] = self._get_custom_variables(self.detail.custom_variables_dict)
 
             # Populate the template
             detail_as_string = self._case_tile_template_string.format(**context)
@@ -181,14 +182,14 @@ class CaseTileHelper(object):
             "prefix": escape(
                 column.header.get(default_lang, "")
             ),
-            "format": column.format
+            "format": column.format,
+            "variables": '',
+            "endpoint_action": '',
         }
 
-        context['variables'] = ''
-        if column.format in ["enum", "conditional-enum", "enum-image", "clickable-icon"]:
+        if column.format in ["enum", "conditional-enum", "enum-image", "clickable-icon", "translatable-enum"]:
             context["variables"] = self._get_enum_variables(column)
 
-        context['endpoint_action'] = ''
         if column.endpoint_action_id:
             context["endpoint_action"] = self._get_endpoint_action(column.endpoint_action_id)
         return context
@@ -200,6 +201,10 @@ class CaseTileHelper(object):
         else:
             xpath_function = self._escape_xpath_function(get_column_generator(
                 self.app, self.module, self.detail, column).xpath_function)
+        if column.format == "translatable-enum":
+            for enum in column.enum:
+                if enum.key in xpath_function and 'k' + enum.key not in xpath_function:
+                    xpath_function = xpath_function.replace(enum.key, 'k' + enum.key)
         return xpath_function
 
     @staticmethod
@@ -274,3 +279,15 @@ class CaseTileHelper(object):
         elif initial_field.sort_node.order is None:
             return incoming_field
         return min(initial_field, incoming_field, key=lambda field: field.sort_node.order)
+
+    @staticmethod
+    def _get_custom_variables(custom_var_dict):
+        variables = []
+        for var_name, var_function in custom_var_dict.items():
+            variables.append(
+                DetailVariable(
+                    name=var_name,
+                    function=var_function
+                ).serialize()
+            )
+        return ''.join([bytes(variable).decode('utf-8') for variable in variables])

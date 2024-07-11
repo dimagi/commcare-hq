@@ -1,3 +1,4 @@
+'use strict';
 /* globals DOMPurify */
 /**
  * Contains a few UI utilities for the Display Properties
@@ -78,6 +79,12 @@ hqDefine("app_manager/js/details/utils", function () {
             formats.push({
                 value: "conditional-enum",
                 label: gettext('Conditional ID Mapping'),
+            });
+        }
+        if (addOns.calc_xpaths) {
+            formats.push({
+                value: "translatable-enum",
+                label: gettext('Translatable Text'),
             });
         }
 
