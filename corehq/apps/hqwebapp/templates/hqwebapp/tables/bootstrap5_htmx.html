@@ -12,12 +12,17 @@
 {% block table-container-attrs %}
   hx-get="{{ request.path_info }}{% querystring %}"
   hx-replace-url="{% querystring %}"
+  hx-swap="outerHTML"
   hx-trigger="refreshTable"
+  hq-hx-loading="{{ table.loading_indicator_id  }}"
 {% endblock %}
 
-{% block before_table %}
-  <div class="htmx-indicator">
-    <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Updating..." %}
+{% block after_table %}
+  <div {% if table.loading_indicator_id %}id="{{ table.loading_indicator_id  }}"{% endif %}
+       class="table-loading-indicator">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">{% trans "Loading..." %}</span>
+    </div>
   </div>
 {% endblock %}
 
@@ -25,22 +30,26 @@
   name="{{ table.per_page_field }}"
   hx-get="{{ request.path_info }}"
   hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+  hx-swap="outerHTML"
+  hq-hx-loading="{{ table.loading_indicator_id  }}"
 {% endblock %}
 
 {% block prev-page-link-attr %}
-    hx-get="{{ request.path_info }}{% querystring table.prefixed_page_field=table.page.previous_page_number %}"
-    hx-replace-url="{% querystring table.prefixed_page_field=table.page.previous_page_number %}"
-    hx-trigger="click"
-    hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
-    hx-swap="outerHTML"
+  hx-get="{{ request.path_info }}{% querystring table.prefixed_page_field=table.page.previous_page_number %}"
+  hx-replace-url="{% querystring table.prefixed_page_field=table.page.previous_page_number %}"
+  hx-trigger="click"
+  hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+  hx-swap="outerHTML"
+  hq-hx-loading="{{ table.loading_indicator_id  }}"
 {% endblock %}
 
 {% block next-page-link-attr %}
-    hx-get="{{ request.path_info }}{% querystring table.prefixed_page_field=table.page.next_page_number %}"
-    hx-replace-url="{% querystring table.prefixed_page_field=table.page.next_page_number %}"
-    hx-trigger="click"
-    hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
-    hx-swap="outerHTML"
+  hx-get="{{ request.path_info }}{% querystring table.prefixed_page_field=table.page.next_page_number %}"
+  hx-replace-url="{% querystring table.prefixed_page_field=table.page.next_page_number %}"
+  hx-trigger="click"
+  hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+  hx-swap="outerHTML"
+  hq-hx-loading="{{ table.loading_indicator_id  }}"
 {% endblock %}
 
 {% block pagination.range %}
@@ -53,6 +62,7 @@
          hx-trigger="click"
          hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
          hx-swap="outerHTML"
+         hq-hx-loading="{{ table.loading_indicator_id  }}"
           {% endif %}>
         {{ p }}
       </a>
