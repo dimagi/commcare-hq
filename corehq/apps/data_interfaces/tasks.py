@@ -10,8 +10,7 @@ from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-# from dimagi.utils.couch import CriticalSection, get_redis_lock, release_lock
-from dimagi.utils.couch import CriticalSection
+from dimagi.utils.couch import CriticalSection, get_redis_lock, acquire_lock, release_lock
 
 from soil import DownloadBase
 
@@ -138,6 +137,7 @@ def run_case_update_rules(now=None):
 
 
 REDIS_TOTAL_UPDATES_KEY = "total_case_updates"
+LOCK_TIMEOUT = 60
 
 
 @task(serializer='pickle', queue='case_rule_queue')
@@ -151,8 +151,8 @@ def run_case_update_rules_for_domain(domain, now=None):
     max_allowed_updates = domain_obj.auto_case_update_limit or settings.MAX_RULE_UPDATES_IN_ONE_RUN
 
     redis_client = get_redis_client()
+    redis_lock_key = f"update_lock_{domain}"
     redis_client.set(REDIS_TOTAL_UPDATES_KEY, 0)
-    total_updates = 0
     for case_type in all_rule_case_types:
         run_record = DomainCaseRuleRun.objects.create(
             domain=domain,
@@ -162,9 +162,14 @@ def run_case_update_rules_for_domain(domain, now=None):
             workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
 
+        total_updates = 0
         for db in get_db_aliases_for_partitioned_query():
-            total_updates = run_case_update_rules_for_domain_and_db.delay(domain,
+            run_case_update_rules_for_domain_and_db.delay(domain,
                                         now, run_record.pk, case_type, db=db)
+            lock = get_redis_lock(redis_lock_key, LOCK_TIMEOUT, name="case_update_lock")
+            lock = acquire_lock(lock, degrade_gracefully=True, blocking=True)
+            total_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY))
+            release_lock(lock, degrade_gracefully=True)
             if total_updates >= max_allowed_updates:
                 break
         if total_updates >= max_allowed_updates:
@@ -178,21 +183,35 @@ def run_case_update_rules_for_domain(domain, now=None):
     queue='case_rule_queue',
     serializer='pickle',
 )
-def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, total_updates, db=None):
+def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=None):
     rules = list(
         AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case_type)
     )
 
     modified_before = AutomaticUpdateRule.get_boundary_date(rules, now)
     iterator = AutomaticUpdateRule.iter_cases(domain, case_type, db=db, modified_lte=modified_before)
-    run = iter_cases_and_run_rules(domain, iterator, rules, now, run_id, case_type, db)
-    total_updates += run.case_update_result.total_updates
+
+    redis_client = get_redis_client()
+    redis_lock_key = f"update_lock_{domain}"
+    lock = get_redis_lock(redis_lock_key, LOCK_TIMEOUT, name="case_update_lock")
+
+    lock = acquire_lock(lock, degrade_gracefully=True, blocking=True)
+    curr_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY))
+    release_lock(lock, degrade_gracefully=True)
+
+    run = iter_cases_and_run_rules(domain, iterator, rules, now, run_id, case_type, db,
+                                   curr_updates=curr_updates)
 
     if run.status == DomainCaseRuleRun.STATUS_FINISHED:
         for rule in rules:
             rule.last_run = now
             rule.save(update_fields=['last_run'])
-    return total_updates
+
+    lock = acquire_lock(lock, degrade_gracefully=True, blocking=True)
+    curr_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY)) \
+        + run.case_update_result.total_updates
+    redis_client.set(REDIS_TOTAL_UPDATES_KEY, curr_updates)
+    release_lock(lock, degrade_gracefully=True)
 
 
 @task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)
