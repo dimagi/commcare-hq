@@ -404,19 +404,31 @@ def excel_commit(request, domain):
         case_upload.check_file()
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
-    num_cases = 0
-    worksheet_titles = _get_workbook_sheet_names(case_upload)
-    for i in range(len(worksheet_titles)):
-        with case_upload.get_spreadsheet(i) as spreadsheet:
-            num_cases += spreadsheet.max_row - 1
 
-    if not request.GET.get('confirm', False):
-        context = {
-            'num_cases': num_cases,
-            'domain': domain
-        }
-        context.update(_case_importer_breadcrumb_context(_('Confirm Import'), domain))
-        return render(request, 'case_importer/confirm_import.html', context)
+    if not request.POST.get('confirm'):
+        num_cases = 0
+        worksheet_titles = _get_workbook_sheet_names(case_upload)
+        for i in range(len(worksheet_titles)):
+            with case_upload.get_spreadsheet(i) as spreadsheet:
+                num_cases += spreadsheet.max_row
+        # 1,000 is an estimate of when users could start to run into infrastructure issues
+        # Before merging, find an accurate threshold
+        if num_cases >= 1000:
+            context = {
+                'num_cases': num_cases,
+                'domain': domain,
+                'case_type': request.POST.get('case_type'),
+                'search_column': request.POST.get('search_column'),
+                'search_field': request.POST.get('search_field'),
+                'create_new_cases': request.POST.get('create_new_cases'),
+                'columns': request.POST.get('columns'),
+                'excel_fields': request.POST.get('excel_fields'),
+                'case_field_specs': request.POST.get('case_field_specs'),
+                'is_bulk_import': request.POST.get('is_bulk_import'),
+                'mirroring_enabled': request.POST.get('mirroring_enabled')
+            }
+            context.update(_case_importer_breadcrumb_context(_('Confirm Import'), domain))
+            return render(request, 'case_importer/confirm_import.html', context)
 
     case_type = request.POST['case_type']
     all_configs = []

@@ -2,13 +2,14 @@
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load humanize %}
 
 {% requirejs_main_b5 "case_importer/js/main" %}
 
 {% block page_content %}
     {% include 'case_importer/partials/help_message.html' %}
     <div class="container">
-        <form action="{% url 'excel_commit' domain %}?confirm=true" method="post" class="form-horizontal">
+        <form action="{% url 'excel_commit' domain %}" method="post" class="form-horizontal">
             {% csrf_token %}
             <input type="hidden" name="case_type" value="your_case_type_value">
             <input type="hidden" name="search_column" value="{{ search_column }}">
@@ -20,6 +21,7 @@
             <input type="hidden" name="domain" value="{{ domain }}">
             <input type="hidden" name="is_bulk_import" value="{{ is_bulk_import }}">
             <input type="hidden" name="mirroring_enabled" value="{{ mirroring_enabled }}">
+            <input type="hidden" name="confirm" value="true">
             <fieldset>
                 <legend>
                     {% trans "Confirm Import" %}
@@ -29,7 +31,7 @@
             <div class="alert alert-warning">
                 <p>
                     <i class="fa fa-warning"></i>
-                    {{ _("You are about to import") }} {{ num_cases }} {{ _("cases. Do you wish to proceed?") }}
+                    {{ _("You are about to import an Excel file with") }} {{ num_cases|intcomma }} {{ _("rows. Do you wish to proceed?") }}
                 </p>
             </div>
 
