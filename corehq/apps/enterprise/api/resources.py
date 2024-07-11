@@ -1,28 +1,30 @@
-from dateutil import tz
 from datetime import datetime
-from tastypie import fields
-from tastypie.exceptions import ImmediateHttpResponse
 from urllib.parse import urljoin
+
 from django.http import HttpResponse, HttpResponseForbidden
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
+
+from dateutil import tz
+from tastypie import fields
+from tastypie.exceptions import ImmediateHttpResponse
+
+from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.utils.account import (
+    get_account_or_404,
+    request_has_permissions_for_enterprise_admin,
+)
+from corehq.apps.api.odata.utils import FieldMetadata
+from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import ODataAuthentication
 from corehq.apps.enterprise.enterprise import (
     EnterpriseDomainReport,
-    EnterpriseWebUserReport,
-    EnterpriseMobileWorkerReport,
     EnterpriseFormReport,
+    EnterpriseMobileWorkerReport,
     EnterpriseODataReport,
+    EnterpriseWebUserReport,
 )
-from corehq.apps.api.odata.views import add_odata_headers
-from corehq.apps.api.odata.utils import FieldMetadata
-from corehq.apps.accounting.utils.account import (
-    request_has_permissions_for_enterprise_admin,
-    get_account_or_404,
-)
-
-from corehq.apps.accounting.models import BillingAccount
 
 
 class EnterpriseODataAuthentication(ODataAuthentication):
@@ -71,7 +73,7 @@ class ODataResource(HqBaseResource):
         # are not valid attribute names in XML -- instead, they need to be implemented on the object's element.
         # https://docs.oasis-open.org/odata/odata-atom-format/v4.0/cs02/odata-atom-format-v4.0-cs02.html#_Entity
         # provides an example.
-        # In the interrim, we forcing JSON to avoid XML is the best option
+        # In the interrim, it seems forcing JSON to avoid XML is the best option
         return 'application/json'
 
     def create_response(self, request, data, response_class=HttpResponse, **response_kwargs):
@@ -273,7 +275,7 @@ class ODataFeedResource(ODataEnterpriseResource):
         return bundle
 
     def get_primary_key(self):
-        return 'report_name'
+        return 'report_name'  # very odd report that makes coming up with an actual key challenging
 
 
 class FormSubmissionResource(ODataEnterpriseResource):
