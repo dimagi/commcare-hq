@@ -33,6 +33,11 @@ hqDefine("prototype/js/data_cleaning",[
             });
         }
     });
+    document.body.addEventListener('htmx:afterRequest', function (evt) {
+        if (evt.detail.elt.classList.contains('htmx-request')) {
+            evt.detail.elt.classList.remove('htmx-request');
+        }
+    });
     document.body.addEventListener('htmx:afterSwap', function (evt) {
         if (evt.detail.elt.dataset.refreshTable) {
             htmx.trigger(evt.detail.elt.dataset.refreshTable, 'refreshTable');
