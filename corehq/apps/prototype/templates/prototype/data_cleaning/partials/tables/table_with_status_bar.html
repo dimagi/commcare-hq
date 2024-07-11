@@ -45,8 +45,8 @@
               hx-post="{{ request.path_info }}{% querystring %}"
               hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
               hx-vals='{"selectAll": true}'>
-        {% blocktrans %}
-          Select All {{ table.page.paginator.count }} Records
+        {% blocktrans with table.page.paginator.count as num_records %}
+          Select All {{ num_records }} Records
         {% endblocktrans %}
       </button>
     </div>
@@ -54,8 +54,8 @@
     {%  if table.has_filters %}
       <div class="ps-2 ms-2">
         <i class="fa-solid fa-filter"></i>
-        {% blocktrans %}
-          Filter Applied: {{ table.page.paginator.count }} Matching Records
+        {% blocktrans with table.page.paginator.count as num_records %}
+          Filter Applied: {{ num_records }} Matching Records
         {% endblocktrans %}
         <button class="btn btn-outline-danger btn-sm ms-2"
                 type="button"
