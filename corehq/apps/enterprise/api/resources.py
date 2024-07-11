@@ -283,6 +283,7 @@ class ODataFeedResource(ODataEnterpriseResource):
 
 
 class FormSubmissionResource(ODataEnterpriseResource):
+    form_id = fields.CharField()
     form_name = fields.CharField()
     submitted = fields.DateTimeField()
     app_name = fields.CharField()
@@ -293,20 +294,22 @@ class FormSubmissionResource(ODataEnterpriseResource):
         enddate = datetime.strptime(request.GET['enddate'], '%Y-%m-%d') if 'enddate' in request.GET else None
         startdate = datetime.strptime(request.GET['startdate'], '%Y-%m-%d') if 'startdate' in request.GET else None
         account = BillingAccount.get_account_by_domain(request.domain)
-        report = EnterpriseFormReport(account, request.couch_user, start_date=startdate, end_date=enddate)
+        report = EnterpriseFormReport(
+            account, request.couch_user, start_date=startdate, end_date=enddate, include_form_id=True)
         return report.rows
 
     def obj_get_list(self, bundle, **kwargs):
         return self.get_object_list(bundle.request)
 
     def dehydrate(self, bundle):
-        bundle.data['form_name'] = bundle.obj[0]
-        bundle.data['submitted'] = self.convert_datetime(bundle.obj[1])
-        bundle.data['app_name'] = bundle.obj[2]
-        bundle.data['mobile_user'] = bundle.obj[3]
-        bundle.data['domain'] = bundle.obj[5]
+        bundle.data['form_id'] = bundle.obj[0]
+        bundle.data['form_name'] = bundle.obj[1]
+        bundle.data['submitted'] = self.convert_datetime(bundle.obj[2])
+        bundle.data['app_name'] = bundle.obj[3]
+        bundle.data['mobile_user'] = bundle.obj[4]
+        bundle.data['domain'] = bundle.obj[6]
 
         return bundle
 
     def get_primary_key(self):
-        return 'form_name'
+        return ('form_id', 'submitted',)
