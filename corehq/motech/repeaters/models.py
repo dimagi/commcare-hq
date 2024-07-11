@@ -352,6 +352,9 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def is_ready(self):
+        """
+        Returns True if there are repeat records to be sent.
+        """
         if self.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(self.domain):
             return False
         if not (self.next_attempt_at is None
@@ -1275,16 +1278,6 @@ def _get_retry_interval(last_checked, now):
     interval = max(MIN_RETRY_WAIT, interval)
     interval = min(MAX_RETRY_WAIT, interval)
     return interval
-
-
-def attempt_forward_now(repeater: Repeater):  # unused
-    from corehq.motech.repeaters.tasks import process_repeater
-
-    if not domain_can_forward(repeater.domain):
-        return
-    if not repeater.is_ready:  # only place that uses Repeater.is_ready
-        return
-    process_repeater.delay(repeater.id.hex)
 
 
 def get_payload(repeater: Repeater, repeat_record: RepeatRecord) -> str:
