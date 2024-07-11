@@ -37,3 +37,30 @@ form.htmx-request {
     @include htmx-spinner(22px);
   }
 }
+
+.htmx-request[type="checkbox"] {
+  position: relative;
+
+  &::after {
+    content: " ";
+    color: $blue-400;
+    @extend .spinner-border;
+    @extend .spinner-border-sm;
+    @include htmx-spinner(22px);
+  }
+}
+
+button.htmx-request {
+  position: relative;
+  &::before {
+    content: " ";
+    @extend .spinner-border;
+    @extend .spinner-border-sm;
+    @include htmx-spinner(22px);
+    opacity: .5;
+  }
+
+  &.btn-sm::before {
+    @include htmx-spinner(18px);
+  }
+}
