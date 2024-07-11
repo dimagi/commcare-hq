@@ -7,6 +7,7 @@ from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection, get_redis_lock
 
+from corehq import toggles
 from corehq.apps.celery import periodic_task, task
 from corehq.motech.models import RequestLog
 from corehq.util.metrics import (
@@ -17,6 +18,7 @@ from corehq.util.metrics import (
 )
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.soft_assert import soft_assert
+from corehq.util.timer import TimingContext
 
 from .const import (
     CHECK_REPEATERS_INTERVAL,
@@ -33,7 +35,9 @@ from .models import (
     get_payload,
     send_request,
 )
-from corehq import toggles
+
+from ..rate_limiter import report_repeater_usage
+
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),
@@ -168,7 +172,10 @@ def _process_repeat_record(repeat_record):
             # clogging the queue
             repeat_record.postpone_by(MAX_RETRY_WAIT)
         elif repeat_record.is_queued():
-            repeat_record.fire()
+            with TimingContext() as timer:
+                repeat_record.fire()
+            # round up to the nearest millisecond, meaning always at least 1ms
+            report_repeater_usage(repeat_record.domain, milliseconds=int(timer.duration * 1000) + 1)
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
 
