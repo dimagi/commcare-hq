@@ -1299,6 +1299,43 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         return sample_doc, expected_indicators
 
 
+class TestRaceCondition(TestCase):
+    domain = 'test-race-condition'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.connx = ConnectionSettings.objects.create(
+            domain=cls.domain,
+            url='https://example.com/api/',
+        )
+        cls.repeater = CaseRepeater(
+            domain=cls.domain,
+            connection_settings_id=cls.connx.id,
+            format='case_json',
+        )
+        cls.repeater.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.repeater.delete()
+        cls.connx.delete()
+        super().tearDownClass()
+
+    def test_pause_and_set_next_attempt(self):
+        repeater_a = Repeater.objects.get(id=self.repeater.repeater_id)
+        repeater_b = Repeater.objects.get(id=self.repeater.repeater_id)
+        self.assertIsNone(repeater_a.next_attempt_at)
+        self.assertFalse(repeater_b.is_paused)
+
+        repeater_a.set_next_attempt()
+        repeater_b.pause()
+
+        repeater_c = Repeater.objects.get(id=self.repeater.repeater_id)
+        self.assertIsNotNone(repeater_c.next_attempt_at)
+        self.assertTrue(repeater_c.is_paused)
+
+
 def fromisoformat(isoformat):
     """
     Return a datetime from a string in ISO 8601 date time format
