@@ -10,7 +10,10 @@ from corehq.apps.hqwebapp.decorators import (
     use_htmx,
 )
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.prototype.models.data_cleaning.cache_store import FakeCaseDataStore
+from corehq.apps.prototype.models.data_cleaning.cache_store import (
+    FakeCaseDataStore,
+    SlowSimulatorStore,
+)
 
 
 @method_decorator(use_htmx, name='dispatch')
@@ -42,4 +45,22 @@ def reset_data(request):
     return JsonResponse({
         "cleared": True,
         "username": data_store.username,
+    })
+
+
+@require_superuser
+def slow_simulator(request):
+    slow_store = SlowSimulatorStore(request)
+    username = request.GET.get('username')
+    slow_sate = request.GET.get('slow_state')
+    if username:
+        slow_store.username = username
+    if slow_sate:
+        slow_store.set(int(slow_sate))
+    else:
+        slow_store.delete()
+    return JsonResponse({
+        "updated": True,
+        "slow_state": slow_sate,
+        "username": slow_store.username,
     })
