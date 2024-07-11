@@ -41,4 +41,5 @@ def reset_data(request):
     data_store.delete()
     return JsonResponse({
         "cleared": True,
+        "username": data_store.username,
     })
