@@ -45,6 +45,11 @@ class FilterColumnStore(BaseCacheStore):
     default_value = []
 
 
+class SlowSimulatorStore(BaseCacheStore):
+    slug = 'prototype-slow-simulator'
+    default_value = 0
+
+
 class FakeCaseDataStore(BaseCacheStore):
     slug = 'prototype-case-data-store'
 

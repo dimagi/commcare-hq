@@ -1,3 +1,5 @@
+import time
+
 from django.http import HttpResponseForbidden, HttpResponse
 
 
@@ -61,6 +63,8 @@ class HtmxActionMixin:
     to return the appropriate error template based on the HTMX Action.
     """
     default_htmx_error_template = "prototype/htmx/partials/htmx_action_error.html"
+    simulate_slow_response = False
+    slow_response_time = 5  # in seconds
 
     def get_htmx_error_context(self, **kwargs):
         """
@@ -100,6 +104,9 @@ class HtmxActionMixin:
         )
 
     def dispatch(self, request, *args, **kwargs):
+        if self.simulate_slow_response:
+            time.sleep(self.slow_response_time)
+
         action = request.META.get('HTTP_HX_ACTION')
         if not action:
             return super().dispatch(request, *args, **kwargs)

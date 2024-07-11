@@ -6,7 +6,11 @@ from django.utils.decorators import method_decorator
 from django_tables2 import columns, config, rows
 
 from corehq import toggles
-from corehq.apps.prototype.models.data_cleaning.cache_store import VisibleColumnStore, FakeCaseDataStore
+from corehq.apps.prototype.models.data_cleaning.cache_store import (
+    VisibleColumnStore,
+    FakeCaseDataStore,
+    SlowSimulatorStore,
+)
 from corehq.apps.prototype.models.data_cleaning.columns import EditableColumn
 from corehq.apps.prototype.models.data_cleaning.filters import ColumnFilter
 from corehq.apps.prototype.models.data_cleaning.tables import FakeCaseTable
@@ -20,6 +24,14 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
     table_class = FakeCaseTable
     data_store = FakeCaseDataStore
     template_name = 'prototype/htmx/single_table.html'
+
+    @property
+    def simulate_slow_response(self):
+        return bool(SlowSimulatorStore(self.request).get())
+
+    @property
+    def slow_response_time(self):
+        return SlowSimulatorStore(self.request).get()
 
     def get_queryset(self):
         table_data = self.data_store(self.request).get()
