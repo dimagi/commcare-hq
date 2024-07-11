@@ -362,15 +362,21 @@ class Repeater(RepeaterSuperProxy):
     def set_next_attempt(self):
         now = datetime.utcnow()
         interval = _get_retry_interval(self.last_attempt_at, now)
-        self.last_attempt_at = now
-        self.next_attempt_at = now + interval
-        self.save()
+        # Save using QuerySet.update() to avoid a possible race condition
+        # with self.pause(), etc. and to skip the unnecessary functionality
+        # in RepeaterSuperProxy.save().
+        Repeater.objects.filter(id=self.repeater_id).update(
+            last_attempt_at=now,
+            next_attempt_at=now + interval,
+        )
 
     def reset_next_attempt(self):
         if self.last_attempt_at or self.next_attempt_at:
-            self.last_attempt_at = None
-            self.next_attempt_at = None
-            self.save()
+            # Avoid a possible race condition with self.pause(), etc.
+            Repeater.objects.filter(id=self.repeater_id).update(
+                last_attempt_at=None,
+                next_attempt_at=None,
+            )
 
     def get_attempt_info(self, repeat_record):
         return None
@@ -412,15 +418,15 @@ class Repeater(RepeaterSuperProxy):
 
     def pause(self):
         self.is_paused = True
-        self.save()
+        Repeater.objects.filter(id=self.repeater_id).update(is_paused=True)
 
     def resume(self):
         self.is_paused = False
-        self.save()
+        Repeater.objects.filter(id=self.repeater_id).update(is_paused=False)
 
     def retire(self):
         self.is_deleted = True
-        self.save()
+        Repeater.objects.filter(id=self.repeater_id).update(is_deleted=True)
 
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)
