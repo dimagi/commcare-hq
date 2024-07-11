@@ -59,7 +59,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
                         "class": "select-header"
                     },
                     "th__input": {
-                        "class": "form-check-input",
+                        "class": "form-check-input js-disable-on-select-all",
                         "name": "selectionAll",
                         "value": "all",
                         # data attribute below is detected on htmx:configRequest,
@@ -69,17 +69,19 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
                         "hx-swap": "none",
                         "hx-post": self.request.get_full_path(),
                         "hx-action": "select_page",
+                        "hx-disabled-elt": ".js-disable-on-select-all",
                         # alpine
                         # `pageNumRecordsSelected`, `pageTotalRecords`: defined in table_with_status_bar.html
                         ":checked": "pageNumRecordsSelected == pageTotalRecords",
                     },
                     "td__input": {
-                        "class": "form-check-input js-select-row",
+                        "class": "form-check-input js-select-row js-disable-on-select-all",
                         # htmx
                         "hx-swap": "none",
                         "hx-post": self.request.get_full_path(),
                         "hx-action": "select_row",
                         "hx-vals": self.get_checkbox_hx_vals,
+                        "hx-disabled-elt": "this",
                         # alpine
                         "x-init": "if ($el.checked) { pageNumRecordsSelected++; }",
                         # `isRowSelected`: defined in FakeCaseTable.Meta.row_attrs
