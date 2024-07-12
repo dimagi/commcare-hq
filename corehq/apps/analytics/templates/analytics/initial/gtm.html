@@ -11,3 +11,15 @@
 {% if ANALYTICS_CONFIG.HQ_INSTANCE %}
   {% initial_analytics_data 'gtm.hqInstance' ANALYTICS_CONFIG.HQ_INSTANCE %}
 {% endif %}
+{% if request.project %}
+  {% if request.project.is_test == 'true' %}
+    {% initial_analytics_data 'gtm.isTestDomain' 'yes' %}
+  {% elif request.project.is_test == 'false' %}
+    {% initial_analytics_data 'gtm.isTestDomain' 'no' %}
+  {% endif %}
+  {% initial_analytics_data 'gtm.isDomainActive' request.project.recent_submissions %}
+{% endif %}
+{% if request.subscription %}
+  {% initial_analytics_data 'gtm.domainSubscriptionEdition' request.subscription.plan_version.plan.edition %}
+  {% initial_analytics_data 'gtm.domainSubscriptionServiceType' request.subscription.service_type %}
+{% endif %}
