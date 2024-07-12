@@ -19,9 +19,15 @@
   padding: $spacer / 2;
 }
 
+$persistent-menu-image-size: 2rem;
+
 .persistent-menu-image {
-  height: 2em;
-  width: 2em;
+  height: $persistent-menu-image-size;
+  width: $persistent-menu-image-size;
+  line-height: $persistent-menu-image-size;
+  text-align: center;
+  font-size: $persistent-menu-image-size / 2;
+  vertical-align: middle;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
