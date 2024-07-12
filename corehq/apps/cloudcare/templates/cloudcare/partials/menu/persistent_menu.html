@@ -1,14 +1,14 @@
 {% load i18n %}
 
 <script type="text/template" id="persistent-menu-template">
-  <button type="button"
+  <div type="button"
           data-bs-toggle="offcanvas"
           data-bs-target="#persistent-menu-container"
           aria-expanded="false"
           aria-controls="persistent-menu-container"
-          class="position-fixed top-50 start-0 persistent-menu-toggle show">
-    <i class = "fa text-muted fa-arrow-right"></i>
-  </button>
+          class="position-fixed top-50 start-0 rounded-end persistent-menu-toggle">
+    <i class="fa fa-chevron-right"></i>
+  </div>
   <div id="persistent-menu-container" class="offcanvas offcanvas-start" tabindex="-1" aria-labelledby="persistent-menu-label">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title" id="persistent-menu-label">
