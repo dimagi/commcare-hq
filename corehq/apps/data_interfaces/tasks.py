@@ -142,6 +142,7 @@ LOCK_TIMEOUT = 60 * 60
 
 @task(serializer='pickle', queue='case_rule_queue')
 def run_case_update_rules_for_domain(domain, now=None):
+    print(f"Starting run_case_update_rules_for_domain for domain: {domain}")
     now = now or datetime.utcnow()
 
     domain_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
@@ -153,8 +154,10 @@ def run_case_update_rules_for_domain(domain, now=None):
     redis_client = get_redis_client()
     redis_lock_key = f"update_lock_{domain}"
     redis_client.set(REDIS_TOTAL_UPDATES_KEY, 0)
+    print(f"Initialized total updates in Redis for domain {domain}")
 
     for case_type in all_rule_case_types:
+        print(f"Processing case type: {case_type}")
         run_record = DomainCaseRuleRun.objects.create(
             domain=domain,
             started_on=datetime.utcnow(),
@@ -165,17 +168,23 @@ def run_case_update_rules_for_domain(domain, now=None):
 
         total_updates = 0
         for db in get_db_aliases_for_partitioned_query():
+            print(f"Starting subtask for case type: {case_type}, db: {db}")
             run_case_update_rules_for_domain_and_db.delay(domain,
                                         now, run_record.pk, case_type, db=db)
             lock = get_redis_lock(redis_lock_key, LOCK_TIMEOUT, name="case_update_lock")
+            print("Attempting to acquire lock")
             lock = acquire_lock(lock, degrade_gracefully=True, blocking=True)
             try:
                 total_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY))
+                print(f"Total updates so far: {total_updates}")
             finally:
                 release_lock(lock, degrade_gracefully=True)
+                print("Released lock")
             if total_updates >= max_allowed_updates:
+                print(f"Reached max allowed updates inside db loop: {max_allowed_updates}")
                 break
         if total_updates >= max_allowed_updates:
+            print(f"Reached max allowed updates: {max_allowed_updates}")
             break
 
 
@@ -187,6 +196,8 @@ def run_case_update_rules_for_domain(domain, now=None):
     serializer='pickle',
 )
 def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=None):
+    print(f"Starting run_case_update_rules_for_domain_and_db for domain: {domain}, \
+            case type: {case_type}, db: {db}")
     rules = list(
         AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case_type)
     )
@@ -198,12 +209,15 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=N
     redis_lock_key = f"update_lock_{domain}"
 
     lock = get_redis_lock(redis_lock_key, LOCK_TIMEOUT, name="case_update_lock")
+    print("Attempting to acquire lock in subtask")
     lock = acquire_lock(lock, degrade_gracefully=True, blocking=True)
 
     try:
         curr_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY))
+        print(f"Current updates before processing: {curr_updates}")
     finally:
         release_lock(lock, degrade_gracefully=True)
+        print("Released lock in subtask")
 
     run = iter_cases_and_run_rules(domain, iterator, rules, now, run_id, case_type, db,
                                    curr_updates=curr_updates)
@@ -212,14 +226,17 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=N
         for rule in rules:
             rule.last_run = now
             rule.save(update_fields=['last_run'])
+        print(f"Finished processing rules for domain: {domain}, case type: {case_type}, db: {db}")
 
     lock = acquire_lock(lock, degrade_gracefully=True, blocking=True)
     try:
         curr_updates = int(redis_client.get(REDIS_TOTAL_UPDATES_KEY)) \
             + run.case_update_result.total_updates
         redis_client.set(REDIS_TOTAL_UPDATES_KEY, curr_updates)
+        print(f"Updated total updates in Redis: {curr_updates}")
     finally:
         release_lock(lock, degrade_gracefully=True)
+        print("Released lock after updating total updates")
 
 
 @task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)

@@ -197,6 +197,7 @@ def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_typ
         CaseRuleActionResult,
         DomainCaseRuleRun,
     )
+    print(f"Starting iter_cases_and_run_rules for domain: {domain}, case type: {case_type}")
     HALT_AFTER = 23 * 60 * 60
 
     domain_obj = Domain.get_by_name(domain)
@@ -219,6 +220,8 @@ def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_typ
             or migration_in_progress
         ):
             notify_error("Halting rule run for domain %s and case type %s." % (domain, case_type))
+            print(f"Halting run for domain: {domain}, case type: {case_type}. Max updates: {max_allowed_updates}, \
+                  Current updates: {curr_updates}")
 
             return DomainCaseRuleRun.done(
                 run_id, cases_checked, case_update_result, db=db, halted=True
@@ -228,6 +231,8 @@ def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_typ
         if progress_helper is not None:
             progress_helper.increment_current_case_count()
         cases_checked += 1
+    print(f"Finished iter_cases_and_run_rules for domain: {domain}, case type: {case_type}. \
+          Cases checked: {cases_checked}")
     return DomainCaseRuleRun.done(run_id, cases_checked, case_update_result, db=db)
 
 
