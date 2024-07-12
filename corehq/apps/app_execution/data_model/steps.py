@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 from typing import Any, ClassVar
 
-from attr import define
+from attr import Factory, define
 from attrs import asdict
 
 from ..exceptions import AppExecutionError
@@ -36,20 +36,7 @@ class CommandStep(Step):
     value: str = ""
     """Display text of the command to execute"""
 
-    id: str = ""
-    """ID of the command to execute"""
-
-    def to_json(self):
-        data = super().to_json()
-        for key in ["value", "id"]:
-            if not getattr(self, key):
-                data.pop(key)
-        return data
-
     def get_request_data(self, session, data):
-        if self.id:
-            return _append_selection(data, self.id)
-
         commands = {c["displayText"].lower(): c for c in session.data.get("commands", [])}
 
         try:
@@ -57,6 +44,18 @@ class CommandStep(Step):
         except KeyError:
             raise AppExecutionError(f"Command not found: {self.value}: {commands.keys()}")
         return _append_selection(data, command["index"])
+
+
+@define
+class CommandIdStep(Step):
+    type: ClassVar[str] = "command_id"
+    is_form_step: ClassVar[bool] = False
+
+    value: str = ""
+    """ID of the command to execute"""
+
+    def get_request_data(self, session, data):
+        return _append_selection(data, self.value)
 
 
 @define
@@ -229,32 +228,56 @@ class AnswerQuestionStep(Step):
     type: ClassVar[str] = "answer_question"
     is_form_step: ClassVar[bool] = True
     question_text: str
+    value: str
+
+    @classmethod
+    def from_json(cls, data):
+        data.pop("question_id", None)
+        return cls(**data)
+
+    def get_request_data(self, session, data):
+        return {
+            **data,
+            **_get_answer_data(session, "caption", self.question_text, self.value)
+        }
+
+    def __str__(self):
+        return f"Answer Question: {self.question_text} = {self.value}"
+
+
+@define
+class AnswerQuestionIdStep(Step):
+    type: ClassVar[str] = "answer_question_id"
+    is_form_step: ClassVar[bool] = True
     question_id: str
     value: str
 
     def get_request_data(self, session, data):
-        try:
-            question = [
-                node for node in session.data["tree"]
-                if (
-                    (self.question_text and node["caption"] == self.question_text)
-                    or (self.question_id and node["question_id"] == self.question_id)
-                )
-            ][0]
-        except IndexError:
-            raise AppExecutionError(f"Question not found: {self.question_text or self.question_id}")
-
         return {
             **data,
-            "action": "answer",
-            "answersToValidate": {},
-            "answer": self.value,
-            "ix": question["ix"],
-            "session_id": session.data["session_id"]
+            **_get_answer_data(session, "question_id", self.question_id, self.value)
         }
 
     def __str__(self):
-        return f"Answer Question: {self.question_text or self.question_id} = {self.value}"
+        return f"Answer Question: {self.question_id} = {self.value}"
+
+
+def _get_answer_data(session, node_field_name, node_value, answer):
+    try:
+        question = [
+            node for node in session.data["tree"]
+            if node[node_field_name] == node_value
+        ][0]
+    except IndexError:
+        raise AppExecutionError(f"Question not found: {node_value}")
+
+    return {
+        "action": "answer",
+        "answersToValidate": {},
+        "answer": answer,
+        "ix": question["ix"],
+        "session_id": session.data["session_id"]
+    }
 
 
 @define
@@ -280,8 +303,8 @@ class SubmitFormStep(Step):
 @define
 class FormStep(Step):
     type: ClassVar[str] = "form"
-    is_form_step: ClassVar[bool] = True
-    children: list[Any]
+    is_form_step: ClassVar[bool] = False  # the children are all form steps but this one isn't
+    children: list[Any] = Factory(list)
 
     def to_json(self):
         return {

@@ -2,19 +2,27 @@
 <div class="row">
   <div class="col">
     <h3>Logs</h3>
-    <pre class="text-bg-light border rounded-3 p-3">{{ output }}</pre>
-    {% if success %}
+    <pre class="text-bg-light border rounded-3 p-3">{{ log.output }}</pre>
+    {% if log.success %}
       <div class="text-bg-success p-3">
         <strong>{% trans "Success" %}</strong>
       </div>
     {% else %}
       <div class="text-bg-danger p-3">
-        <strong>{% trans "Error:" %}</strong> {{ error }}
+        <strong>{% trans "Error:" %}</strong> {{ log.error }}
       </div>
     {% endif %}
   </div>
   <div class="col">
-    <h3>{% trans "Workflow" %}</h3>
+    <h3>
+      {% trans "Workflow" %}
+      <span class="hq-help-template"
+            data-title="{% trans 'Current Workflow' %}"
+            data-content="{% blocktrans %}
+              The workflow shown here is the current version which may differ from the version
+              executed at the time of this run.
+            {% endblocktrans %}"></span>
+    </h3>
     <pre class="text-bg-light border rounded-3 p-3">{{ workflow_json }}</pre>
   </div>
 </div>
