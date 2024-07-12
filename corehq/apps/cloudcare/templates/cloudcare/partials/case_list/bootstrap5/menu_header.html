@@ -17,9 +17,9 @@
     <% } %>
   </div>
   <% if (title.length > 0) { %>
-    <h1  aria-label="<%- title %>" tabindex="0" class="page-title"><%- title %></h1>
+    <h1 aria-label="<%- title %>" class="page-title d-none d-md-block"><%- title %></h1>
   <% } %>
   <% if (sidebarEnabled && description.length > 0) { %>
-    <div aria-label="<%- description %>" tabindex="0" class="query-description"><%= description %></div>
+    <div aria-label="<%- description %>" class="query-description"><%= description %></div>
   <% } %>
 </div>

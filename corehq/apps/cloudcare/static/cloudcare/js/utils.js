@@ -36,22 +36,6 @@ hqDefine('cloudcare/js/utils', [
         showSpinner: false,
     });
 
-    var getFormUrl = function (urlRoot, appId, moduleId, formId, instanceId) {
-        var url = urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
-        if (instanceId) {
-            url += '?instance_id=' + instanceId;
-        }
-        return url;
-    };
-
-    var getSubmitUrl = function (urlRoot, appId) {
-        // deprecated but still called from "touchforms-inline"
-        // which is used to fill out forms from within case details view
-        // use app.getSubmitUrl instead
-        // todo: replace and remove
-        return urlRoot + "/" + appId + "/";
-    };
-
     var showError = function (message, $el, reportToHq) {
         message = getErrorMessage(message);
         // Make message more user friendly since html isn't useful here
@@ -424,7 +408,7 @@ hqDefine('cloudcare/js/utils', [
 
         $el.on("focusout", $el.data("DateTimePicker").hide);
         $el.attr("placeholder", dateFormat);
-        $el.attr("pattern", "[0-9-/]+");
+        $el.attr("pattern", "[0-9\-/]+");   // eslint-disable-line no-useless-escape
     };
 
     var initTimePicker = function ($el, selectedTime, timeFormat) {
@@ -486,8 +470,6 @@ hqDefine('cloudcare/js/utils', [
         parseInputDate: parseInputDate,
         initDatePicker: initDatePicker,
         initTimePicker: initTimePicker,
-        getFormUrl: getFormUrl,
-        getSubmitUrl: getSubmitUrl,
         showError: showError,
         showWarning: showWarning,
         showHTMLError: showHTMLError,

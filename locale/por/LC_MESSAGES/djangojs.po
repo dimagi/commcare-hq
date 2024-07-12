@@ -159,6 +159,22 @@ msgstr "Próximo"
 msgid "Your trial request has been received!"
 msgstr ""
 
+#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
+msgid "Seconds"
+msgstr ""
+
+#: corehq/apps/app_execution/static/app_execution/js/workflow_charts.js
+msgid "Chart"
+msgstr ""
+
+#: corehq/apps/app_execution/static/app_execution/js/workflow_logs.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
+#: corehq/apps/registry/static/registry/js/registry_logs.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
+#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
+msgid "Show All Dates"
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js
 #: corehq/apps/locations/static/locations/js/location_types.js
@@ -361,6 +377,10 @@ msgid "There is an error in your property name: "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "You can only have one property with the 'Image' format"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "All properties must be below a tab."
 msgstr ""
 
@@ -479,6 +499,11 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Conditional ID Mapping"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Image"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/download_async_modal.js
@@ -2539,10 +2564,6 @@ msgid "Hide Path"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Image"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Video"
 msgstr ""
 
@@ -3511,13 +3532,35 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
-msgid "Name of the Area"
+msgid "Max cases per user"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Min cases per user"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Max distance to case"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "minutes"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid "Max travel time"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
 msgid ""
 "Oops! Something went wrong! Please check that your geospatial settings are "
 "configured correctly or contact admin if the problem persists."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
+msgid ""
+"Please ensure that the filtered area includes both casesand mobile workers "
+"before attempting to run disbursement."
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/geospatial_map.js
@@ -3533,9 +3576,21 @@ msgid "Mobile Worker"
 msgstr ""
 
 #: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Refreshing Page..."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
 msgid ""
 "Warning! This action will clear the current disbursement. Please confirm if "
 "you want to proceed."
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Name of the Area"
+msgstr ""
+
+#: corehq/apps/geospatial/static/geospatial/js/models.js
+msgid "Please enter the name for the area!"
 msgstr ""
 
 #: corehq/apps/groups/static/groups/js/group_members.js
@@ -3572,6 +3627,16 @@ msgstr ""
 msgid ""
 "Danny is pretty sad that you had to encounter this issue. He's making sure "
 "it gets fixed as soon as possible."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
+msgid "Incorrect Format"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/email-request.js
+#: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/email-request.js
+msgid "Only Dimagi email addresses can be included"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap3/inactivity.js
@@ -3656,13 +3721,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
 msgid "Clear"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js
-#: corehq/apps/registry/static/registry/js/registry_logs.js
-#: corehq/apps/reports/static/reports/js/filters/bootstrap3/main.js
-#: corehq/apps/reports/static/reports/js/filters/bootstrap5/main.js
-msgid "Show All Dates"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
@@ -3892,6 +3950,12 @@ msgstr ""
 
 #: corehq/apps/locations/static/locations/js/widgets.js
 msgid "Choose a primary location"
+msgstr ""
+
+#: corehq/apps/prototype/static/prototype/js/example/knockout_pagination.js
+msgid ""
+"Could not load data. Please try again later or report an issue if this "
+"problem persists."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/bootstrap3/password.js
@@ -4269,14 +4333,16 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Success!"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
 #: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed"
 msgstr ""
 
@@ -4666,6 +4732,20 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "View-Only Mobile Workers"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Manage Tableau Configuration</strong> &mdash; manage tableau "
+"configuration for web users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View tableau configuration for web users"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only tableau configuration for web users"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
@@ -5148,19 +5228,23 @@ msgstr ""
 msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed to fetch attempts"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed to fetch payload"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed to send"
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Failed to cancel"
 msgstr ""
 

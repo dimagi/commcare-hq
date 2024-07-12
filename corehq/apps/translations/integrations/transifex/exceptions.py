@@ -1,6 +1,4 @@
-
-
-class ResourceMissing(Exception):
+class TransifexApiException(Exception):
     pass
 
 

@@ -252,9 +252,7 @@ def flag_crispy_forms_in_template(line):
     if re.search(regex, line):
         flags.append([
             "check crispy",
-            "This template uses crispy forms. "
-            "Please ensure the form looks good after migration, and refer to "
-            "the updated Style Guide for current best practices, especially with checkbox fields."
+            _get_change_guide("crispy")
         ])
     return flags
 

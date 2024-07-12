@@ -1,10 +1,10 @@
 --- 
 +++ 
-@@ -2,12 +2,12 @@
+@@ -2,17 +2,17 @@
  {% load i18n %}
  
  <script type="text/template" id="query-view-item-template">
-+  {# todo B5: Field grouping spacing and hover effects are a mess #}
++  <% if (contentTag !== 'td') { %><td><% } %>
    <<%- contentTag %>
      class="<% if (contentTag === 'td') { %>col-sm-6 <% } %>query-caption
 -           <% if (required) { %> required<% } %>
@@ -12,10 +12,17 @@
 +           <% if (required) { %> required<% } %>">
      <div class="d-flex justify-content-between">
 -      <label class="control-label" for="<%- text ? text : "" %>">
-+      <label class="form-label" for="<%- text ? text : "" %>">
++      <label class="form-label fw-bold" for="<%- text ? text : "" %>">
          <%- text ? text : "" %>
        </label>
        <% if (typeof hint !== "undefined" && hint !== null) { %>
+-      <div class="hq-help">
+-        <a href="#" tabindex="-1"  data-title="<%- text ? text : "" %>" data-content="<%- hint ? hint : "" %>">
++      <div class="hq-help" data-bs-toggle="popover">
++        <a href="#" tabindex="-1" title="<%- text ? text : "" %>" data-bs-content="<%- hint ? hint : "" %>">
+           <i class="fa fa-question-circle icon-question-sign" tabindex="0"></i>
+         </a>
+       </div>
 @@ -20,8 +20,7 @@
      </div>
    </<%- contentTag %>>
@@ -52,7 +59,7 @@
            <%- itemsetChoicesDict[key] %>
          </label>
        </div>
-@@ -81,17 +84,19 @@
+@@ -81,17 +84,20 @@
      <% } else { %>
      <input id="<%- text ? text : "" %>"
             type="text"
@@ -77,4 +84,5 @@
 +            </div>
              <% } %>
    </<%- contentTag %>>
++  <% if (contentTag !== 'td') { %></td><% } %>
  </script>

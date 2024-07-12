@@ -1,0 +1,22 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load i18n %}
+{% block js-inline %} {{ block.super }}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.querySelector('form');
+      form.addEventListener('submit', function (event) {
+        document.getElementById("submit-button").disabled = true;
+      });
+    });
+  </script>
+{% endblock %}
+{% block page_content %}
+  {% blocktrans asvar title_text with name=workflow.name %}Testing {{ name }}{% endblocktrans %}
+  {% include "app_execution/components/title_bar.html" with workflow_id=workflow.id show_run=False title_text=title_text %}
+  <form method="post" class="mt-3">
+    {% csrf_token %}
+    <button id="submit-button" type="submit" class="btn btn-primary" data-loading-text="{% translate 'Running...' %}">
+      {% translate 'Run' %}
+    </button>
+  </form>
+{% endblock %}

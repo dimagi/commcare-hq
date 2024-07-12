@@ -84,7 +84,7 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         runs = []
-        all_es_index_adapters = list(get_all_expected_es_indices())
+        all_es_index_adapters = get_all_expected_es_indices(ignore_subindices=True)
 
         if options['reset']:
             indices_needing_reindex = all_es_index_adapters

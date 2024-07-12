@@ -87,6 +87,7 @@ class LocationType(models.Model):
     administrative = models.BooleanField(default=False)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
+    has_users = models.BooleanField(default=True)
 
     # Sync optimization controls
     _expand_from = models.ForeignKey(

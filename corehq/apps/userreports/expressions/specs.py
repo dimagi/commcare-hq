@@ -600,19 +600,21 @@ class RelatedDocExpressionSpec(JsonObject):
     @staticmethod
     @ucr_context_cache(vary_on=('related_doc_type', 'doc_id',))
     def _get_document(related_doc_type, doc_id, evaluation_context):
+        domain = evaluation_context.root_doc['domain']
+        assert domain
         document_store = get_document_store_for_doc_type(
-            evaluation_context.root_doc['domain'], related_doc_type,
-            load_source="related_doc_expression")
+            domain, related_doc_type, load_source="related_doc_expression")
         try:
             doc = document_store.get_document(doc_id)
         except DocumentNotFoundError:
             return None
-        if evaluation_context.root_doc['domain'] != doc.get('domain'):
+        if domain != doc.get('domain'):
             return None
+        if related_doc_type == 'CommCareUser':
+            doc['user_data'] = CommCareUser.wrap(doc).get_user_data(domain).to_dict()
         return doc
 
     def get_value(self, doc_id, evaluation_context):
-        assert evaluation_context.root_doc['domain']
         doc = self._get_document(self.related_doc_type, doc_id, evaluation_context)
         # explicitly use a new evaluation context since this is a new document
         return self._value_expression(doc, EvaluationContext(doc, 0))

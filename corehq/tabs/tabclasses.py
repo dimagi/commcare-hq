@@ -1126,8 +1126,47 @@ class ApplicationsTab(UITab):
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
             ))
+        if toggles.APP_TESTING.enabled_for_request(self._request):
+            submenu_context.append(dropdown_dict(
+                _('Application Testing'),
+                url=(reverse('app_execution:workflow_list', args=[self.domain])),
+            ))
 
         return submenu_context
+
+    @property
+    @memoized
+    def sidebar_items(self):
+        return [
+            (_("Application Test Flows"), [
+                {
+                    'title': "Workflow List",
+                    'url': reverse("app_execution:workflow_list", args=[self.domain]),
+                    'subpages': [
+                        {
+                            'title': _("New"),
+                            'urlname': "new_workflow",
+                        },
+                        {
+                            'title': _("Edit"),
+                            'urlname': "edit_workflow",
+                        },
+                        {
+                            'title': _("Run"),
+                            'urlname': "test_workflow",
+                        },
+                        {
+                            'title': _("Logs"),
+                            'urlname': "workflow_logs",
+                        },
+                        {
+                            'title': _("Log Details"),
+                            'urlname': "workflow_log",
+                        },
+                    ],
+                },
+            ]),
+        ]
 
     @property
     def _is_viewable(self):
@@ -1868,10 +1907,6 @@ class TranslationsTab(UITab):
                         'url': reverse('download_translations', args=[self.domain]),
                         'title': _('Download Translations')
                     },
-                    {
-                        'url': reverse('migrate_transifex_project', args=[self.domain]),
-                        'title': _('Migrate Project')
-                    },
                 ]))
         if self._request.user.is_staff:
             items.append((_('Translations'), [
@@ -2505,9 +2540,6 @@ class AdminTab(UITab):
                 {'title': GlobalThresholds.page_title,
                  'url': reverse(GlobalThresholds.urlname),
                  'icon': 'fa fa-fire'},
-                {'title': 'Auto App Workflows',
-                 'url': reverse('app_execution:workflow_list'),
-                 'icon': 'fcc fcc-chart-report'},
             ]
             user_operations = user_operations + [
                 {'title': _('Grant superuser privileges'),

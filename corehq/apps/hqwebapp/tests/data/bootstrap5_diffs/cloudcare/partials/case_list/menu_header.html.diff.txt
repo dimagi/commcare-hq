@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -2,16 +2,16 @@
+@@ -2,24 +2,24 @@
  {% load i18n %}
  
  <div class="page-header menu-header clearfix" id="case-list-menu-header">
@@ -21,8 +21,13 @@
          {% trans "Refine search" %}
        </button>
      <% } %>
-@@ -22,4 +22,4 @@
+   </div>
+   <% if (title.length > 0) { %>
+-    <h1 aria-label="<%- title %>" class="page-title"><%- title %></h1>
++    <h1 aria-label="<%- title %>" class="page-title d-none d-md-block"><%- title %></h1>
+   <% } %>
    <% if (sidebarEnabled && description.length > 0) { %>
-     <div aria-label="<%- description %>" tabindex="0" class="query-description"><%= description %></div>
+-    <div aria-label="<%- description %>" tabindex="0" class="query-description"><%= description %></div>
++    <div aria-label="<%- description %>" class="query-description"><%= description %></div>
    <% } %>
 -</div>+</div>

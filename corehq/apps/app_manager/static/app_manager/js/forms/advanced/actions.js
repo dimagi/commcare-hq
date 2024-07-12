@@ -669,6 +669,17 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             });
             self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
 
+            self.hasDeprecatedProperties = ko.computed(function () {
+                if (privileges.hasPrivilege('data_dictionary')) {
+                    for (const p of self.case_properties()) {
+                        if (p.isDeprecated()) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            });
+
             return self;
         },
         unwrap: function (self) {

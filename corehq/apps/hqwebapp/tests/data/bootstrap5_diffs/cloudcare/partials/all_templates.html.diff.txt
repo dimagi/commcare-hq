@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,69 +1,69 @@
+@@ -1,68 +1,68 @@
 -{% include 'cloudcare/partials/bootstrap3/case_detail.html' %}
 +{% include 'cloudcare/partials/bootstrap5/case_detail.html' %}
  
@@ -57,16 +57,15 @@
 +{% include 'cloudcare/partials/form_entry/bootstrap5/entry_unsupported.html' %}
 +{% include 'cloudcare/partials/form_entry/bootstrap5/form.html' %}
  {% include 'cloudcare/partials/form_entry/form_navigation.html' %}
- {% include 'cloudcare/partials/form_entry/grouped_element_tile_row.html' %}
+-{% include 'cloudcare/partials/form_entry/bootstrap3/grouped_element_tile_row.html' %}
 -{% include 'cloudcare/partials/form_entry/bootstrap3/help_multimedia.html' %}
 -{% include 'cloudcare/partials/form_entry/bootstrap3/multimedia.html' %}
 -{% include 'cloudcare/partials/form_entry/bootstrap3/question.html' %}
--{% include 'cloudcare/partials/form_entry/bootstrap3/repeat_juncture.html' %}
 -{% include 'cloudcare/partials/form_entry/bootstrap3/sub_group.html' %}
++{% include 'cloudcare/partials/form_entry/bootstrap5/grouped_element_tile_row.html' %}
 +{% include 'cloudcare/partials/form_entry/bootstrap5/help_multimedia.html' %}
 +{% include 'cloudcare/partials/form_entry/bootstrap5/multimedia.html' %}
 +{% include 'cloudcare/partials/form_entry/bootstrap5/question.html' %}
-+{% include 'cloudcare/partials/form_entry/bootstrap5/repeat_juncture.html' %}
 +{% include 'cloudcare/partials/form_entry/bootstrap5/sub_group.html' %}
  
 -{% include 'cloudcare/partials/grid_view/bootstrap3/grid.html' %}

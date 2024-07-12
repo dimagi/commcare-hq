@@ -2,18 +2,18 @@
 {% load i18n %}
 
 <script type="text/template" id="query-view-item-template">
-  {# todo B5: Field grouping spacing and hover effects are a mess #}
+  <% if (contentTag !== 'td') { %><td><% } %>
   <<%- contentTag %>
     class="<% if (contentTag === 'td') { %>col-sm-6 <% } %>query-caption
            <% if (required) { %> required<% } %>">
     <div class="d-flex justify-content-between">
-      <label class="form-label" for="<%- text ? text : "" %>">
+      <label class="form-label fw-bold" for="<%- text ? text : "" %>">
         <%- text ? text : "" %>
       </label>
       <% if (typeof hint !== "undefined" && hint !== null) { %>
-      <div class="hq-help">
-        <a href="#" tabindex="-1"  data-title="<%- text ? text : "" %>" data-content="<%- hint ? hint : "" %>">
-          <i class="fa fa-question-circle icon-question-sign"></i>
+      <div class="hq-help" data-bs-toggle="popover">
+        <a href="#" tabindex="-1" title="<%- text ? text : "" %>" data-bs-content="<%- hint ? hint : "" %>">
+          <i class="fa fa-question-circle icon-question-sign" tabindex="0"></i>
         </a>
       </div>
       <% } %>
@@ -99,4 +99,5 @@
             </div>
             <% } %>
   </<%- contentTag %>>
+  <% if (contentTag !== 'td') { %></td><% } %>
 </script>
