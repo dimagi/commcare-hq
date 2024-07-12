@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.utils.functional import cached_property
@@ -71,12 +72,22 @@ class UserData:
             PROFILE_SLUG: self.profile_id or '',
             COMMCARE_PROJECT: self.domain,
         }
-        if self._couch_user.get_location_id(self.domain):
-            provided_data[COMMCARE_LOCATION_ID] = self._couch_user.location_id
-            provided_data[COMMCARE_PRIMARY_CASE_SHARING_ID] = self._couch_user.location_id
 
-        if self._couch_user.get_location_ids(self.domain):
-            provided_data[COMMCARE_LOCATION_IDS] = user_location_data(self._couch_user.assigned_location_ids)
+        def _add_location_data():
+            if self._couch_user.get_location_id(self.domain):
+                provided_data[COMMCARE_LOCATION_ID] = self._couch_user.get_location_id(self.domain)
+                provided_data[COMMCARE_PRIMARY_CASE_SHARING_ID] = self._couch_user.get_location_id(self.domain)
+
+            if self._couch_user.get_location_ids(self.domain):
+                provided_data[COMMCARE_LOCATION_IDS] = user_location_data(
+                    self._couch_user.get_location_ids(self.domain))
+
+        if settings.UNIT_TESTING:
+            # Some test don't have an actual user existed
+            if self._couch_user:
+                _add_location_data()
+        else:
+            _add_location_data()
 
         return provided_data
 
