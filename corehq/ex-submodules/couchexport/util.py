@@ -5,12 +5,16 @@ from decimal import Decimal
 import dateutil
 from openpyxl.styles import numbers
 
-from corehq.apps.export.const import EMPTY_VALUE, MISSING_VALUE
+from corehq.apps.export.const import (
+    EMPTY_VALUE,
+    EXCEL_DIRTY_LEADING_CHARS,
+    EXCEL_ESCAPE_CHAR,
+    MISSING_VALUE,
+)
 
 _dirty_chars = re.compile(
     '[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
 )
-_dirty_leading_chars = ('=', '+', '-', '@', '\t', '\r')
 
 
 def get_excel_format_value(value):
@@ -177,8 +181,8 @@ def get_legacy_excel_safe_value(value):
 
 
 def sanitize(value):
-    if value.startswith(_dirty_leading_chars) and value != MISSING_VALUE:
-        value = f"'{value}"
+    if value.startswith(EXCEL_DIRTY_LEADING_CHARS):
+        value = f"{EXCEL_ESCAPE_CHAR}{value}"
     return _dirty_chars.sub('?', value)
 
 
