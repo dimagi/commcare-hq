@@ -2444,8 +2444,8 @@ class CaseExportDataSchema(ExportDataSchema):
     def _case_property_groups_to_be_added(domain, for_bulk_export):
         return not for_bulk_export and domain_has_privilege(domain, privileges.DATA_DICTIONARY)
 
-    @classmethod
-    def _reset_case_property_group_name(cls, schema):
+    @staticmethod
+    def _reset_case_property_group_name(schema):
         for group_schema in schema.group_schemas:
             if group_schema.path == MAIN_TABLE:
                 for item in group_schema.items:
