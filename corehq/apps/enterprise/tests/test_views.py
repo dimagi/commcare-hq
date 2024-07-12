@@ -39,10 +39,6 @@ class EnterpriseDashboardDownloadTests(SimpleTestCase):
         reload(views)
 
     def setUp(self):
-        super().setUp()
-        self._patch_decorators()
-        reload(views)
-
         filename_patcher = patch.object(views, '_get_export_filename', return_value='test_file.csv')
         self.mock_get_filename = filename_patcher.start()
         self.addCleanup(filename_patcher.stop)
