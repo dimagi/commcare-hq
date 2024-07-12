@@ -6,6 +6,8 @@ from openpyxl.utils.exceptions import InvalidFileException
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext as _
 
+from corehq.apps.export.const import EXCEL_DIRTY_LEADING_CHARS, EXCEL_ESCAPE_CHAR
+
 
 class InvalidExcelFileException(Exception):
     pass
@@ -116,7 +118,7 @@ class IteratorJSONReader(object):
         # try boolean
         try:
             field, nothing = field.split('?')
-            assert(nothing.strip() == '')
+            assert (nothing.strip() == '')
         except Exception:
             pass
         else:
@@ -216,9 +218,22 @@ class WorksheetJSONReader(IteratorJSONReader):
                 else:
                     # Specifically check for None so that we can allow a value of 0
                     return value if value is not None else ''
+
+            def _unescape_dirty_leading_chars(value):
+                """
+                Remove extra `'` that would have been added on export
+                """
+                if value.startswith(EXCEL_ESCAPE_CHAR) and value[1] in EXCEL_DIRTY_LEADING_CHARS:
+                    return value[1:]
+                return value
+
+            def _clean_value(value):
+                value = _convert_float(value)
+                return _unescape_dirty_leading_chars(value)
+
             for row in self.worksheet.iter_rows():
                 cell_values = [
-                    _convert_float(cell.value)
+                    _clean_value(cell.value)
                     for cell in row[:width]
                 ]
                 if not any(cell != '' for cell in cell_values):
