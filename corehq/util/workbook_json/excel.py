@@ -1,12 +1,17 @@
 import io
-from zipfile import BadZipfile
 from tempfile import NamedTemporaryFile
-import openpyxl
-from openpyxl.utils.exceptions import InvalidFileException
+from zipfile import BadZipfile
+
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.translation import gettext as _
 
-from corehq.apps.export.const import EXCEL_DIRTY_LEADING_CHARS, EXCEL_ESCAPE_CHAR
+import openpyxl
+from openpyxl.utils.exceptions import InvalidFileException
+
+from corehq.apps.export.const import (
+    EXCEL_DIRTY_LEADING_CHARS,
+    EXCEL_ESCAPE_CHAR,
+)
 
 
 class InvalidExcelFileException(Exception):
