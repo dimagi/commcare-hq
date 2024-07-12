@@ -8,7 +8,7 @@
  }
  
  .cloudcare-home-content {
-@@ -13,13 +13,11 @@
+@@ -13,29 +13,26 @@
  }
  
  .page-header {
@@ -20,12 +20,21 @@
 +    font-size: 1.5rem;
      text-transform: uppercase;
 -    color: @cc-neutral-mid;
+-    padding-left: 1.5rem;
 +    color: $cc-neutral-mid;
-     padding-left: 1.5rem;
++    padding-left: 12px;
      font-weight: bold;
      margin-top: 0px;
-@@ -28,14 +26,6 @@
+   }
+ }
  
++.page-header-apps {
++  padding-left: 0;
++  h1 {
++    padding-left: 0;
++  }
++}
++
  .page-footer {
    padding: 14px 8px 7px;
 -}
