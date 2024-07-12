@@ -14,7 +14,15 @@
     {% endif %}
   </div>
   <div class="col">
-    <h3>{% trans "Workflow" %}</h3>
+    <h3>
+      {% trans "Workflow" %}
+      <span class="hq-help-template"
+            data-title="{% trans 'Current Workflow' %}"
+            data-content="{% blocktrans %}
+              The workflow shown here is the current version which may differ from the version
+              executed at the time of this run.
+            {% endblocktrans %}"></span>
+    </h3>
     <pre class="text-bg-light border rounded-3 p-3">{{ workflow_json }}</pre>
   </div>
 </div>
