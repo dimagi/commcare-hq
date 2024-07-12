@@ -1493,6 +1493,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
     });
 
+    /* Handle an individual menu item. Also contains a child list view */
     const PersistentMenuItemView = Marionette.View.extend({
         tagName: "li",
         template: _.template($("#persistent-menu-item").html() || ""),
@@ -1517,12 +1518,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
     });
 
+    /* Handle a collection of sibling menu items at the same level */
     const PersistentMenuListView = Marionette.CollectionView.extend({
         tagName: "ul",
         className: "list-unstyled",
         childView: PersistentMenuItemView,
     });
 
+    /*
+      This view operates on a collection of persistent menu items, each of which
+      may contain its own collection in a recursive tree structure.
+      PersistentMenuView manages the top level of the menu
+    */
     const PersistentMenuView = Marionette.View.extend({
         tagName: "div",
         template: _.template($("#persistent-menu-template").html() || ""),

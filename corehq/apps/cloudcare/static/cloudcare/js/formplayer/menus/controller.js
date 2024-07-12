@@ -178,6 +178,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         }
     };
 
+    // Store an array of the commands needed to navigate to each nested menu item
     var _insertSelections = function (menuCommand, priorSelections) {
         menuCommand.selections = _.union(priorSelections || [], [menuCommand.index]);
         _.each(menuCommand.commands || [], command => _insertSelections(command, menuCommand.selections));
