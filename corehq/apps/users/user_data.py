@@ -71,11 +71,11 @@ class UserData:
             PROFILE_SLUG: self.profile_id or '',
             COMMCARE_PROJECT: self.domain,
         }
-        if getattr(self._couch_user, 'location_id', None):
+        if self._couch_user.get_location_id(self.domain):
             provided_data[COMMCARE_LOCATION_ID] = self._couch_user.location_id
             provided_data[COMMCARE_PRIMARY_CASE_SHARING_ID] = self._couch_user.location_id
 
-        if getattr(self._couch_user, 'assigned_location_ids', None):
+        if self._couch_user.get_location_ids(self.domain):
             provided_data[COMMCARE_LOCATION_IDS] = user_location_data(self._couch_user.assigned_location_ids)
 
         return provided_data
