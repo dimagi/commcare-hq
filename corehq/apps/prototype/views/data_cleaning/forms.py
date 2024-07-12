@@ -34,7 +34,7 @@ class ConfigureColumnsFormView(TemplateView):
                 }
                 for c in FakeCaseTable.get_visible_columns(visible_columns)],
             "new_column_choices": new_column_choices,
-            "table_selector": f"#{FakeCaseTable.css_id}",
+            "table_selector": f"#{FakeCaseTable.container_id}",
             "container_id": FakeCaseTable.configure_columns_form_id,
         })
         return context
@@ -73,7 +73,7 @@ class FilterColumnsFormView(TemplateView):
         context.update({
             "add_filter_form": filter_form or AddColumnFilterForm(FakeCaseTable),
             "column_filters": ColumnFilter.get_filters_from_cache(self.request),
-            "table_selector": f"#{FakeCaseTable.css_id}",
+            "table_selector": f"#{FakeCaseTable.container_id}",
             "container_id": FakeCaseTable.filter_form_id,
         })
         return context
@@ -106,7 +106,7 @@ class CleanDataFormView(TemplateView):
             "clean_data_form": clean_data_form or CleanColumnDataForm(
                 FakeCaseTable, FakeCaseDataStore(self.request)
             ),
-            "table_selector": f"#{FakeCaseTable.css_id}",
+            "table_selector": f"#{FakeCaseTable.container_id}",
             "container_id": FakeCaseTable.clean_data_form_id,
         })
         return context

@@ -39,6 +39,41 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
             self.request, table_data
         )
 
+    def get_table_kwargs(self):
+        visible_columns = VisibleColumnStore(self.request).get()
+        return {
+            'extra_columns': self.table_class.get_visible_columns(
+                visible_columns,
+                allow_row_selection=True,
+                extra_select_all_rows_attrs={
+                    "class": "form-check-input js-disable-on-select-all",
+                    "name": "selectionAll",  # used in hx_action response below
+                    "value": "all",
+                    # htmx
+                    "hx-swap": "none",
+                    "hx-post": self.request.get_full_path(),
+                    "hq-hx-action": "select_page",
+                    "hx-disabled-elt": ".js-disable-on-select-all",
+                    "hq-hx-table-select-all": "js-select-row",
+                    "hq-hx-table-select-all-trigger": "click",
+                    "hq-hx-table-select-all-param": "pageRowIds",
+                },
+                extra_select_row_attrs={
+                    "class": "form-check-input js-select-row js-disable-on-select-all",
+                    # htmx
+                    "hx-swap": "none",
+                    "hx-post": self.request.get_full_path(),
+                    "hq-hx-action": "select_row",
+                    "hx-vals": self.get_checkbox_hx_vals,
+                    "hx-disabled-elt": "this",
+                },
+                extra_select_checkbox_kwargs={
+                    "accessor": "id",
+                    "checked": self.is_record_checked,
+                },
+            ),
+        }
+
     @staticmethod
     def is_record_checked(value, record):
         return record.get("selected", False)
@@ -48,60 +83,6 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         return json.dumps({
             "recordId": record["id"],
         })
-
-    def get_table_kwargs(self):
-        visible_columns = VisibleColumnStore(self.request).get()
-        extra_columns = [
-            ("selection", columns.CheckBoxColumn(
-                accessor="id",
-                attrs={
-                    "th": {
-                        "class": "select-header"
-                    },
-                    "th__input": {
-                        "class": "form-check-input js-disable-on-select-all",
-                        "name": "selectionAll",
-                        "value": "all",
-                        # data attribute below is detected on htmx:configRequest,
-                        # inserts `pageRowIds` into request
-                        "data-select-all": "js-select-row",
-                        # htmx
-                        "hx-swap": "none",
-                        "hx-post": self.request.get_full_path(),
-                        "hq-hx-action": "select_page",
-                        "hx-disabled-elt": ".js-disable-on-select-all",
-                        # alpine
-                        # `pageNumRecordsSelected`, `pageTotalRecords`: defined in table_with_status_bar.html
-                        ":checked": "pageNumRecordsSelected == pageTotalRecords",
-                    },
-                    "td__input": {
-                        "class": "form-check-input js-select-row js-disable-on-select-all",
-                        # htmx
-                        "hx-swap": "none",
-                        "hx-post": self.request.get_full_path(),
-                        "hq-hx-action": "select_row",
-                        "hx-vals": self.get_checkbox_hx_vals,
-                        "hx-disabled-elt": "this",
-                        # alpine
-                        "x-init": "if ($el.checked) { pageNumRecordsSelected++; }",
-                        # `isRowSelected`: defined in FakeCaseTable.Meta.row_attrs
-                        # `pageNumRecordsSelected`, `numRecordsSelected`: defined in table_with_status_bar.html
-                        "@click": "if ($event.target.checked != isRowSelected) {"
-                                  "  $event.target.checked ? numRecordsSelected++ : numRecordsSelected--;"
-                                  "  $event.target.checked ? pageNumRecordsSelected++ : pageNumRecordsSelected--; "
-                                  "}"
-                                  "isRowSelected = $event.target.checked;"
-                    },
-                },
-                orderable=False,
-                checked=self.is_record_checked,
-            ))
-        ]
-        extra_columns.extend(self.table_class.get_visible_columns(visible_columns))
-        return {
-            'template_name': "prototype/data_cleaning/partials/tables/table_with_status_bar.html",
-            'extra_columns': extra_columns,
-        }
 
     def get(self, request, *args, **kwargs):
         try:

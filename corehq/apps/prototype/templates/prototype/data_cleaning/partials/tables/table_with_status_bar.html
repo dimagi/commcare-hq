@@ -31,7 +31,7 @@
               hq-hx-action="select_all"
               hx-post="{{ request.path_info }}{% querystring %}"
               hx-vals='{"selectAll": false}'
-              hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+              hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
               hx-swap="outerHTML"
               hq-hx-loading="{{ table.loading_indicator_id  }}">
         {% blocktrans %}
@@ -46,7 +46,7 @@
               hq-hx-action="select_all"
               hx-post="{{ request.path_info }}{% querystring %}"
               hx-vals='{"selectAll": true}'
-              hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+              hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
               hx-swap="outerHTML"
               hq-hx-loading="{{ table.loading_indicator_id  }}">
         {% blocktrans with table.page.paginator.count as num_records %}
@@ -83,7 +83,7 @@
               type="button"
               hx-post="{{ request.path_info }}{% querystring %}"
               hq-hx-action="apply_edits"
-              hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+              hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
               hx-swap="outerHTML"
               hq-hx-loading="{{ table.loading_indicator_id  }}">
         <i class="fa-solid fa-check"></i> {% trans "Apply Edits to Selected Rows" %}
