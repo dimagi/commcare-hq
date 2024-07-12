@@ -1658,6 +1658,55 @@ def subscribe_to_data_source_changes(request, domain, config_id):
     return HttpResponse(status=201)
 
 
+@csrf_exempt
+@require_POST
+@api_auth()
+@require_permission(HqPermissions.view_reports)
+@toggles.SUPERSET_ANALYTICS.required_decorator()
+@api_throttle
+def unsubscribe_from_data_source(request, domain, config_id):
+    repeater = DataSourceRepeater.objects.filter(
+        domain=domain,
+        options={"data_source_id": config_id},
+    )
+
+    if 'client_id' not in request.POST:
+        return HttpResponse(
+            status=422,
+            content="The client_id parameter is required",
+        )
+    client_id = request.POST['client_id']
+
+    try:
+        conn_settings = ConnectionSettings.objects.get(client_id=client_id)
+    except ConnectionSettings.DoesNotExist:
+        return HttpResponse(
+            status=422,
+            content="Invalid client_id"
+        )
+
+    repeater = DataSourceRepeater.objects.filter(
+        domain=domain,
+        connection_settings_id=conn_settings.id,
+        options={"data_source_id": config_id},
+    )
+    if not repeater.exists():
+        return HttpResponse(
+            status=422,
+            content="Invalid data source ID"
+        )
+    repeater.delete()
+
+    subscriber_repeaters_query = DataSourceRepeater.objects.filter(
+        connection_settings_id=conn_settings.id
+    )
+
+    if subscriber_repeaters_query.count() == 0:
+        ConnectionSettings.objects.filter(id=conn_settings.id).delete()
+
+    return HttpResponse(status=200)
+
+
 def _get_report_filter(domain, report_id, filter_id):
     report = get_report_config_or_404(report_id, domain)[0]
     report_filter = report.get_ui_filter(filter_id)
