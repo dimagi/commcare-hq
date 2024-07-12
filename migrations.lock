@@ -114,6 +114,9 @@ accounting
  0092_revert_application_error_report_priv
  0093_defaultproductplan_is_annual_plan
  0094_add_annual_softwareplans
+ 0095_update_softwareplan_visibilities
+ 0096_formsubmittingmobileworkerhistory_and_featuretype_choice
+ 0097_add_form_submitting_mobile_worker_feature
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -592,6 +595,7 @@ geospatial
  0004_auto_20230920_0821
  0005_auto_20240202_0807
  0006_geoconfig_max_cases_per_user_and_more
+ 0007_geoconfig_max_case_distance_and_more
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -686,6 +690,7 @@ locations
  0019_auto_20200924_1753
  0020_delete_locationrelation
  0021_add_fixture_queryset_case_sync_restriction
+ 0022_locationtype_has_users
 mobile_auth
  0001_initial
  0002_delete_sqlmobileauthkeyrecord
@@ -821,6 +826,8 @@ repeaters
  0007_lengthen_payload_id
  0008_sqlrepeatrecords
  0009_add_domain_to_indexes
+ 0010_rm_couch_artifacts
+ 0011_remove_obsolete_entities
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -838,6 +845,8 @@ reports
  0014_querystringhash
  0015_tableauserver_allowed_tableau_groups
  0016_alter_tableauuser_role
+ 0017_alter_tableauuser_tableau_user_id
+ 0018_alter_tableauuser_role
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -1233,6 +1242,8 @@ users
  0066_add_profile_permissions
  0067_alter_invitation_tableau_role
  0068_grant_web_apps_to_default_mobile_worker_role
+ 0069_alter_invitation_custom_user_data_and_more
+ 0070_alter_invitation_tableau_role
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

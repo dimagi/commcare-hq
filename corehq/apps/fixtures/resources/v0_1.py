@@ -19,6 +19,7 @@ from corehq.apps.fixtures.models import (
 )
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import HqPermissions
+from corehq.util.validation import JSONSchemaValidator
 
 
 def convert_fdt(fdi, type_cache=None):
@@ -108,11 +109,54 @@ class InternalFixtureResource(FixtureResource):
 
 
 class LookupTableResource(HqBaseResource):
+    """Lookup Table API resource
+
+    Example ``fields`` format:
+
+        "fields": [
+            {
+                "field_name": "tree",
+                "properties": ["family"]
+            }
+        ]
+
+    Example ``item_attributes`` format:
+
+        "item_attributes": ["name", "height"]
+    """
     id = UUIDField(attribute='id', readonly=True, unique=True)
     is_global = tp_f.BooleanField(attribute='is_global')
     tag = tp_f.CharField(attribute='tag')
     fields = tp_f.ListField(attribute='fields')
     item_attributes = tp_f.ListField(attribute='item_attributes')
+
+    validate_deserialized_data = JSONSchemaValidator({
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+            "fields": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^(field_)?name$": {"type": "string"},
+                    },
+                    "properties": {
+                        "properties": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                    },
+                    "additionalProperties": False,
+                    "oneOf": [
+                        {"not": {"required": ["field_name"]}},
+                        {"not": {"required": ["name"]}},
+                    ],
+                },
+            },
+            "item_attributes": {"type": "array", "items": {"type": "string"}}
+        },
+    })
 
     def dehydrate_fields(self, bundle):
         return [
@@ -138,13 +182,15 @@ class LookupTableResource(HqBaseResource):
         clear_fixture_cache(kwargs['domain'])
         return ImmediateHttpResponse(response=HttpAccepted())
 
-    def obj_create(self, bundle, request=None, **kwargs):
-        def adapt(field):
-            if "name" not in field and "field_name" in field:
-                field = field.copy()
-                field["name"] = field.pop("field_name")
-            return field
+    @staticmethod
+    def _adapt_field(field):
+        if "field_name" in field:
+            field = field.copy()
+            field["name"] = field.pop("field_name")
+        return field
 
+    def obj_create(self, bundle, request=None, **kwargs):
+        adapt = self._adapt_field
         tag = bundle.data.get("tag")
         if LookupTable.objects.domain_tag_exists(kwargs['domain'], tag):
             raise BadRequest(f"A lookup table with name {tag} already exists")
@@ -177,7 +223,8 @@ class LookupTableResource(HqBaseResource):
 
         if 'fields' in bundle.data:
             save = True
-            bundle.obj.fields = [TypeField(**f) for f in bundle.data['fields']]
+            adapt = self._adapt_field
+            bundle.obj.fields = [TypeField(**adapt(f)) for f in bundle.data['fields']]
 
         if 'item_attributes' in bundle.data:
             save = True
@@ -218,10 +265,74 @@ class FieldsDictField(tp_f.DictField):
 
 
 class LookupTableItemResource(HqBaseResource):
+    """Lookup Table Row API resource
+
+    Example ``fields`` format:
+
+        "fields": {
+            "tree": {
+                "field_list": [
+                    {
+                        "field_value": "pine",
+                        "properties": {"family": "Pinaceae"}
+                    }
+                ]
+            }
+        }
+
+    Note: the object containing "field_list" is superfluous and could
+    be replaced with the "field_list" property value. Maybe in a
+    API version?
+
+    Example ``item_attributes`` format:
+
+        "item_attributes": {
+            "name": "Western White Pine Tree",
+            "height": "30-50 meters",
+        }
+    """
     id = UUIDField(attribute='id', readonly=True, unique=True)
     data_type_id = UUIDField(attribute='table_id')
     fields = FieldsDictField(attribute='fields')
     item_attributes = tp_f.DictField(attribute='item_attributes')
+
+    validate_deserialized_data = JSONSchemaValidator({
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+            "fields": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "object",
+                    "properties": {"field_list": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "patternProperties": {
+                                "^(field_)?value$": {"type": "string"},
+                            },
+                            "properties": {
+                                "properties": {
+                                    "type": "object",
+                                    "additionalProperties": {"type": "string"},
+                                },
+                            },
+                            "additionalProperties": False,
+                            "oneOf": [
+                                {"not": {"required": ["field_value"]}},
+                                {"not": {"required": ["value"]}},
+                            ],
+                        },
+                    }},
+                    "additionalProperties": False,
+                },
+            },
+            "item_attributes": {
+                "type": "object",
+                "additionalProperties": {"type": "string"},
+            }
+        },
+    })
 
     # It appears that sort_key is not included in any user facing UI. It is only defined as
     # the order of rows in the excel file when uploaded. We'll keep this behavior by incrementing

@@ -22,11 +22,9 @@ hqDefine("geospatial/js/geospatial_map", [
         'default': "#0e00ff", // Blue
         'selected': "#0b940d", // Dark Green
     };
-    const DEFAULT_POLL_TIME_MS = 1500;
 
     const MAP_CONTAINER_ID = 'geospatial-map';
 
-    var saveGeoJSONUrl = initialPageData.reverse('geo_polygon');
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
     var disbursementRunner;
 
@@ -36,48 +34,19 @@ hqDefine("geospatial/js/geospatial_map", [
     function showMapControls(state) {
         $("#geospatial-map").toggle(state);
         $("#case-buttons").toggle(state);
-        $("#mapControls").toggle(state);
+        $("#polygon-filters").toggle(state);
         $("#user-filters-panel").toggle(state);
     }
-
-    var saveGeoJson = function () {
-        const data = mapModel.drawControls.getAll();
-        if (data.features.length) {
-            let name = window.prompt(gettext("Name of the Area"));
-            data['name'] = name;
-
-            $.ajax({
-                type: 'post',
-                url: saveGeoJSONUrl,
-                dataType: 'json',
-                data: JSON.stringify({'geo_json': data}),
-                contentType: "application/json; charset=utf-8",
-                success: function (ret) {
-                    delete data.name;
-                    // delete drawn area
-                    mapModel.drawControls.deleteAll();
-                    console.log('newPoly', name);
-                    polygonFilterModel.savedPolygons.push(
-                        new models.SavedPolygon({
-                            name: name,
-                            id: ret.id,
-                            geo_json: data,
-                        })
-                    );
-                    // redraw using mapControlsModelInstance
-                    polygonFilterModel.selectedSavedPolygonId(ret.id);
-                },
-            });
-        }
-    };
 
     var disbursementRunnerModel = function () {
         var self = {};
 
-        self.pollUrl = ko.observable('');
         self.isBusy = ko.observable(false);
+        self.showParams = ko.observable(false);
+        self.parameters = ko.observableArray([]);
 
         self.disbursementErrorMessage = ko.observable('');
+        self.showUnassignedCasesError = ko.observable(false);
 
         self.setBusy = function (isBusy) {
             self.isBusy(isBusy);
@@ -132,6 +101,28 @@ hqDefine("geospatial/js/geospatial_map", [
                 });
             });
 
+            self.setDisbursementParameters = function (parameters) {
+                var parametersList = [
+                    {name: gettext("Max cases per user"), value: parameters.max_cases_per_user},
+                    {name: gettext("Min cases per user"), value: parameters.min_cases_per_user},
+                ];
+
+                if (parameters.max_case_distance) {
+                    const maxCaseDistanceParamValue = `${parameters.max_case_distance} km`;
+                    parametersList.push({name: gettext("Max distance to case"), value: maxCaseDistanceParamValue});
+                }
+
+                if (parameters.max_case_travel_time_seconds) {
+                    const travelParamValue = `${parameters.max_case_travel_time_seconds / 60} ${gettext("minutes")}`;
+                    parametersList.push(
+                        {name: gettext("Max travel time"), value: travelParamValue}
+                    );
+                }
+
+                self.parameters(parametersList);
+                self.showParams(true);
+            };
+
             let userData = users.map(function (c) {
                 return {
                     id: c.itemId,
@@ -147,15 +138,15 @@ hqDefine("geospatial/js/geospatial_map", [
                 data: JSON.stringify({'users': userData, "cases": caseData}),
                 contentType: "application/json; charset=utf-8",
                 success: function (ret) {
-                    if (ret.error) {
-                        self.disbursementErrorMessage(ret.error);
-                        self.setBusy(false);
+                    self.setDisbursementParameters(ret["parameters"]);
+
+                    if (ret['unassigned'].length) {
+                        self.showUnassignedCasesError(true);
+                    }
+                    if (ret['assignments']) {
+                        self.handleDisbursementResults(ret['assignments']);
                     } else {
-                        if (ret['poll_url'] !== undefined) {
-                            self.startPoll(ret['poll_url']);
-                        } else {
-                            self.handleDisbursementResults(ret['result']);
-                        }
+                        self.setBusy(false);
                     }
                 },
                 error: function () {
@@ -165,32 +156,6 @@ hqDefine("geospatial/js/geospatial_map", [
                     self.setBusy(false);
                 },
             });
-        };
-
-        self.startPoll = function (pollUrl) {
-            if (!self.isBusy()) {
-                self.setBusy(true);
-            }
-            self.pollUrl(pollUrl);
-            self.doPoll();
-        };
-
-        self.doPoll = function () {
-            var tick = function () {
-                $.ajax({
-                    method: 'GET',
-                    url: self.pollUrl(),
-                    success: function (data) {
-                        const result = data.result;
-                        if (!data) {
-                            setTimeout(tick, DEFAULT_POLL_TIME_MS);
-                        } else {
-                            self.handleDisbursementResults(result);
-                        }
-                    },
-                });
-            };
-            tick();
         };
 
         function connectUserWithCasesOnMap(user, cases) {
@@ -260,15 +225,15 @@ hqDefine("geospatial/js/geospatial_map", [
 
     function selectMapItemsInPolygons() {
         let features = mapModel.drawControls.getAll().features;
-        if (polygonFilterModel.activeSavedPolygon) {
-            features = features.concat(polygonFilterModel.activeSavedPolygon.geoJson.features);
+        if (polygonFilterModel.activeSavedPolygon()) {
+            features = features.concat(polygonFilterModel.activeSavedPolygon().geoJson.features);
         }
         mapModel.selectAllMapItems(features);
     }
 
     function initPolygonFilters() {
         // Assumes `map` var is initialized
-        const $mapControlDiv = $("#mapControls");
+        const $mapControlDiv = $("#polygon-filters");
         polygonFilterModel = new models.PolygonFilter(mapModel, false, true);
         polygonFilterModel.loadPolygons(initialPageData.get('saved_polygons'));
         if ($mapControlDiv.length) {
@@ -276,27 +241,13 @@ hqDefine("geospatial/js/geospatial_map", [
             $mapControlDiv.koApplyBindings(polygonFilterModel);
         }
 
-        const $saveDrawnArea = $("#btnSaveDrawnArea");
-        $saveDrawnArea.click(function () {
-            if (mapModel && mapModel.mapInstance) {
-                saveGeoJson();
-            }
-        });
-
-        var $exportDrawnArea = $("#btnExportDrawnArea");
-        $exportDrawnArea.click(function () {
-            if (mapModel && mapModel.mapInstance) {
-                polygonFilterModel.exportGeoJson("btnExportDrawnArea");
-            }
-        });
-
         var $runDisbursement = $("#btnRunDisbursement");
         $runDisbursement.click(function () {
             $('#disbursement-clear-message').hide();
             if (mapModel && mapModel.mapInstance && !polygonFilterModel.btnRunDisbursementDisabled()) {
                 let selectedCases = mapModel.caseMapItems();
                 let selectedUsers = mapModel.userMapItems();
-                if (mapModel.mapHasPolygons() || polygonFilterModel.activeSavedPolygon) {
+                if (mapModel.mapHasPolygons() || polygonFilterModel.activeSavedPolygon()) {
                     selectedCases = mapModel.caseMapItems().filter(function (caseItem) {
                         return caseItem.isSelected();
                     });
@@ -314,6 +265,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     disbursementRunner.disbursementErrorMessage(errorMessage);
                 } else {
                     disbursementRunner.disbursementErrorMessage('');
+                    disbursementRunner.showUnassignedCasesError(false);
                 }
                 if (hasValidData) {
                     disbursementRunner.runCaseDisbursementAlgorithm(selectedCases, selectedUsers);
@@ -449,8 +401,10 @@ hqDefine("geospatial/js/geospatial_map", [
             showMapControls(false);
 
             disbursementRunner = new disbursementRunnerModel();
+
             $("#disbursement-spinner").koApplyBindings(disbursementRunner);
             $("#disbursement-error").koApplyBindings(disbursementRunner);
+            $("#disbursement-params").koApplyBindings(disbursementRunner);
 
             return;
         }

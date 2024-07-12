@@ -18,12 +18,11 @@ from crispy_forms.helper import FormHelper
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.programs.models import Program
-from corehq.apps.users.forms import BaseLocationForm
+from corehq.apps.users.forms import BaseLocationForm, BaseTableauUserForm
 from corehq.apps.users.models import CouchUser
 
 
@@ -490,21 +489,24 @@ class AdminInvitesUserForm(BaseLocationForm):
     role = forms.ChoiceField(choices=(), label="Project Role")
 
     def __init__(self, data=None, excluded_emails=None, is_add_user=None,
-                 role_choices=(), should_show_location=False, *, domain, **kwargs):
+                 role_choices=(), should_show_location=False, can_edit_tableau_config=False,
+                 *, domain, **kwargs):
+        self.request = kwargs.get('request')
         super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
+        self.can_edit_tableau_config = can_edit_tableau_config
         domain_obj = Domain.get_by_name(domain)
         self.fields['role'].choices = role_choices
         if domain_obj:
             if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
                 self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)
                 from corehq.apps.users.views.mobile import UserFieldsView
-                definition = CustomDataFieldsDefinition.get(domain_obj.name, UserFieldsView.field_type)
-                if definition:
-                    profiles = definition.get_profiles()
-                    if len(profiles) > 0:
-                        self.fields['profile'].choices = [('', '')] + [
-                            (profile.id, profile.name) for profile in profiles
-                        ]
+                self.valid_profiles = UserFieldsView.get_user_accessible_profiles(
+                    self.domain, self.request.couch_user
+                )
+                if len(self.valid_profiles) > 0:
+                    self.fields['profile'].choices = [('', '')] + [
+                        (profile.id, profile.name) for profile in self.valid_profiles
+                    ]
             if domain_obj.commtrack_enabled:
                 self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
                 programs = Program.by_domain(domain_obj.name)
@@ -512,13 +514,17 @@ class AdminInvitesUserForm(BaseLocationForm):
                 self.fields['program'].choices = choices
 
         self.excluded_emails = excluded_emails or []
+
+        if self.can_edit_tableau_config:
+            self._initialize_tableau_fields(data, domain)
+
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
         self.helper.form_class = 'form-horizontal form-ko-validation'
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.layout = crispy.Layout(
+        fields = [
             crispy.Fieldset(
                 gettext("Information for new Web User"),
                 crispy.Field(
@@ -528,9 +534,26 @@ class AdminInvitesUserForm(BaseLocationForm):
                 ),
                 'role',
                 'profile' if ('profile' in self.fields and len(self.fields['profile'].choices) > 0) else None,
-                'assigned_locations' if should_show_location else None,
-                'primary_location' if should_show_location else None,
-            ),
+            )
+        ]
+        if should_show_location:
+            fields.append(
+                crispy.Fieldset(
+                    gettext("Location Settings"),
+                    'assigned_locations',
+                    'primary_location',
+                )
+            )
+        if self.can_edit_tableau_config:
+            fields.append(
+                crispy.Fieldset(
+                    gettext("Tableau Configuration"),
+                    'tableau_role',
+                    'tableau_group_indices' if len(self.fields['tableau_group_indices'].choices) > 0 else None
+                ),
+            )
+        self.helper.layout = crispy.Layout(
+            *fields,
             crispy.HTML(
                 render_to_string(
                     'users/partials/confirm_trust_identity_provider_message.html',
@@ -556,6 +579,14 @@ class AdminInvitesUserForm(BaseLocationForm):
             ),
         )
 
+    def clean_profile(self):
+        profile_id = self.cleaned_data['profile']
+        if profile_id and profile_id not in {str(p.id) for p in self.valid_profiles}:
+            raise forms.ValidationError(
+                _('Invalid profile selected. Please select a valid profile.'),
+            )
+        return profile_id
+
     def clean_email(self):
         email = self.cleaned_data['email'].strip()
         if email in self.excluded_emails:
@@ -565,7 +596,26 @@ class AdminInvitesUserForm(BaseLocationForm):
 
     def clean(self):
         cleaned_data = super(AdminInvitesUserForm, self).clean()
+
+        if (('tableau_role' in cleaned_data or 'tableau_group_indices' in cleaned_data)
+        and not self.can_edit_tableau_config):
+            raise forms.ValidationError(_("You do not have permission to edit Tableau Configuraion."))
+
+        if 'tableau_group_indices' in cleaned_data:
+            cleaned_data['tableau_group_ids'] = [
+                self.tableau_form.allowed_tableau_groups[int(i)].id
+                for i in cleaned_data['tableau_group_indices']
+            ]
+            del cleaned_data['tableau_group_indices']
+
         for field in cleaned_data:
             if isinstance(cleaned_data[field], str):
                 cleaned_data[field] = cleaned_data[field].strip()
         return cleaned_data
+
+    def _initialize_tableau_fields(self, data, domain):
+        self.tableau_form = BaseTableauUserForm(data, domain=domain)
+        self.fields['tableau_group_indices'] = self.tableau_form.fields["groups"]
+        self.fields['tableau_group_indices'].label = _('Tableau Groups')
+        self.fields['tableau_role'] = self.tableau_form.fields['role']
+        self.fields['tableau_role'].label = _('Tableau Role')

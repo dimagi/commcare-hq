@@ -53,7 +53,7 @@ celery==5.2.7
     #   -r base-requirements.in
     #   django-celery-results
     #   flower
-certifi==2023.7.22
+certifi==2024.7.4
     # via
     #   -r prod-requirements.in
     #   requests
@@ -199,9 +199,9 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
     # via -r base-requirements.in
-djangorestframework==3.13.1
+djangorestframework==3.15.2
     # via -r base-requirements.in
-dropbox==11.36.0
+dropbox==11.36.2
     # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
@@ -493,7 +493,6 @@ pytz==2024.1
     # via
     #   -r base-requirements.in
     #   celery
-    #   djangorestframework
     #   flower
     #   twilio
 pyyaml==6.0
@@ -619,7 +618,7 @@ toolz==0.12.1
     # via pyseeyou
 toposort==1.7
     # via -r base-requirements.in
-tornado==6.3.3
+tornado==6.4.1
     # via flower
 traitlets==5.1.1
     # via
@@ -650,7 +649,7 @@ unidecode==1.2.0
     # via pyphonetics
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==1.26.18
+urllib3==1.26.19
     # via
     #   botocore
     #   elasticsearch5

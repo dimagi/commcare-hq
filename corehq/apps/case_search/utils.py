@@ -3,7 +3,6 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import wraps
-from io import BytesIO
 
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
@@ -17,6 +16,7 @@ from dimagi.utils.logging import notify_exception
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.app_manager.util import module_offers_search
+from corehq.apps.es import cases as case_es
 from corehq.apps.case_search.const import (
     CASE_SEARCH_MAX_RESULTS,
     COMMCARE_PROJECT,
@@ -44,13 +44,11 @@ from corehq.apps.es.case_search import (
     reverse_index_case_query,
     wrap_case_search_hit,
 )
-from corehq.apps.hqadmin.utils import get_download_url
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 
@@ -65,45 +63,31 @@ class CaseSearchProfiler:
     queries: list = field(default_factory=list)
     _query_number: int = 0
 
-    def run_query(self, slug, es_query):
-        self._query_number += 1
-        if self.debug_mode:
-            es_query = es_query.enable_profiling()
+    def get_case_search_class(self, slug=None):
+        profiler = self
 
-        tc = self.timing_context(f'run query #{self._query_number}: {slug}')
-        timer = tc.peek()
-        with tc:
-            results = es_query.run()
+        class ProfiledCaseSearchES(CaseSearchES):
+            def run(self):
+                profiler._query_number += 1
+                if profiler.debug_mode:
+                    self.es_query['profile'] = True
 
-        if self.debug_mode:
-            self.queries.append({
-                'slug': slug,
-                'query_number': self._query_number,
-                'query': es_query.raw_query,
-                'duration': timer.duration,
-                'profile_url': self._get_profile_url(slug, self._query_number, results.raw.get('profile')),
-            })
-        return results
+                tc = profiler.timing_context(f'run query #{profiler._query_number}: {slug}')
+                timer = tc.peek()
+                with tc:
+                    results = super().run()
 
-    def add_query(self, slug, es_query):
-        self._query_number += 1
-        if self.debug_mode:
-            self.queries.append({
-                'slug': slug,
-                'query_number': self._query_number,
-                'query': es_query.raw_query,
-                'duration': None,
-                'profile_url': None,
-            })
+                if profiler.debug_mode:
+                    profiler.queries.append({
+                        'slug': slug,
+                        'query_number': profiler._query_number,
+                        'query': self.raw_query,
+                        'duration': timer.duration,
+                        'profile_json': results.raw.pop('profile'),
+                    })
+                return results
 
-    @staticmethod
-    def _get_profile_url(slug, query_number, profile_json):
-        timestamp = get_timestamp_for_filename()
-        name = f'es_profile_{query_number}_{slug}_{timestamp}.json'
-        io = BytesIO()
-        io.write(json.dumps(profile_json).encode('utf-8'))
-        io.seek(0)
-        return get_download_url(io, name, content_type='application/json')
+        return ProfiledCaseSearchES
 
 
 def time_function():
@@ -171,7 +155,7 @@ def get_primary_case_search_results(helper, case_types, criteria, commcare_sort=
         notify_exception(None, str(e), details={'exception_type': type(e)})
         raise CaseSearchUserError(str(e))
 
-    results = helper.profiler.run_query('main', search_es)
+    results = search_es.run()
     with helper.profiler.timing_context('wrap_cases'):
         cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
     return cases
@@ -195,9 +179,11 @@ class QueryHelper:
         self.domain = domain
         self.profiler = CaseSearchProfiler()
 
-    def get_base_queryset(self):
+    def get_base_queryset(self, slug=None):
+        # slug is only informational, used for profiling
+        _CaseSearchES = self.profiler.get_case_search_class(slug)
         # See case_search_bha.py docstring for context on index_name
-        return CaseSearchES(index=self.config.index_name or None).domain(self.domain)
+        return _CaseSearchES(index=self.config.index_name or None).domain(self.domain)
 
     def wrap_case(self, es_hit, include_score=False):
         return wrap_case_search_hit(es_hit, include_score=include_score)
@@ -223,8 +209,9 @@ class RegistryQueryHelper(QueryHelper):
         self._couch_user = couch_user
         self._registry_helper = registry_helper
 
-    def get_base_queryset(self):
-        return CaseSearchES().domain(self._registry_helper.visible_domains)
+    def get_base_queryset(self, slug=None):
+        _CaseSearchES = self.profiler.get_case_search_class(slug)
+        return _CaseSearchES().domain(self._registry_helper.visible_domains)
 
     def wrap_case(self, es_hit, include_score=False):
         case = super().wrap_case(es_hit, include_score)
@@ -257,7 +244,7 @@ class CaseSearchQueryBuilder:
         max_results = CASE_SEARCH_MAX_RESULTS
         if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
             max_results = 1500
-        return (self.helper.get_base_queryset()
+        return (self.helper.get_base_queryset('main')
                 .case_type(self.case_types)
                 .is_closed(False)
                 .size(max_results))
@@ -283,6 +270,8 @@ class CaseSearchQueryBuilder:
                 for xpath in xpaths:
                     search_es = search_es.filter(self._build_filter_from_xpath(xpath))
                 return search_es
+        elif criteria.key == 'case_id':
+            return search_es.filter(case_es.case_ids(criteria.value))
         elif criteria.key == 'owner_id':
             if not criteria.is_empty:
                 return search_es.filter(case_search.owner(criteria.value))
@@ -523,12 +512,10 @@ def get_child_case_types(app):
 
 @time_function()
 def get_child_case_results(helper, parent_case_ids, child_case_types=None):
-    query = helper.get_base_queryset().get_child_cases(parent_case_ids, "parent")
+    query = helper.get_base_queryset('get_child_case_results').get_child_cases(parent_case_ids, "parent")
     if child_case_types:
         query = query.case_type(child_case_types)
-
-    results = helper.profiler.run_query('get_child_case_results', query)
-    return [helper.wrap_case(result) for result in results.hits]
+    return [helper.wrap_case(result) for result in query.run().hits]
 
 
 @time_function()
@@ -542,9 +529,8 @@ def get_expanded_case_results(helper, custom_related_case_property, cases):
 
 @time_function()
 def _get_case_search_cases(helper, case_ids):
-    query = helper.get_base_queryset().case_ids(case_ids)
-    results = helper.profiler.run_query('_get_case_search_cases', query)
-    return [helper.wrap_case(result) for result in results.hits]
+    query = helper.get_base_queryset('_get_case_search_cases').case_ids(case_ids)
+    return [helper.wrap_case(result) for result in query.run().hits]
 
 
 # Warning: '_tag_is_related_case' may cause the relevant user-defined properties to be overwritten.
