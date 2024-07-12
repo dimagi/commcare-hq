@@ -1429,7 +1429,6 @@ LOGGING = {
             'filename': "%s/%s" % (FILEPATH, "data_interfaces.log"),
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 10,
-            'flush': True
         }
     },
     'root': {

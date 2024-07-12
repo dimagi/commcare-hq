@@ -1181,6 +1181,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
 
     @classmethod
     def setUpClass(cls):
+        print("setting up!")
         super(CaseRuleEndToEndTests, cls).setUpClass()
         cls.domain_object = Domain(name=cls.domain)
         cls.domain_object.save()
