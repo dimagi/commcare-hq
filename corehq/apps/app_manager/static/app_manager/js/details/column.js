@@ -231,6 +231,9 @@ hqDefine("app_manager/js/details/column", function () {
                     }
                 }
             }
+        } else {
+            // Restrict Translatable Text usage to Calculated Properties only
+            menuOptions.splice(-1)
         }
 
         self.format = uiElement.select(menuOptions).val(self.original.format || null);
