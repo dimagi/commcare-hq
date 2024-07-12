@@ -13,6 +13,7 @@ from corehq.apps.app_execution.forms import AppWorkflowConfigForm
 from corehq.apps.app_execution.har_parser import parse_har_from_string
 from corehq.apps.app_execution.models import AppExecutionLog, AppWorkflowConfig
 from corehq.apps.app_execution.tasks import run_app_workflow
+from corehq.apps.app_execution.workflow_dsl import workflow_to_dsl
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -231,6 +232,6 @@ def workflow_log(request, domain, pk):
             reverse("app_execution:workflow_log", args=[domain, pk]),
             add_parent=True,
             log=log,
-            workflow_json=log.workflow.workflow_json
+            workflow_json=workflow_to_dsl(log.workflow.workflow)
         )
     )
