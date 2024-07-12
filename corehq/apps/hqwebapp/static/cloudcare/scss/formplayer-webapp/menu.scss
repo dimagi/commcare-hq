@@ -19,7 +19,7 @@
   padding: $spacer / 2;
 }
 
-.persistent-menu-appicon {
+.persistent-menu-image {
   height: 2em;
   width: 2em;
   background-size: contain;
@@ -32,6 +32,7 @@
     padding-left: $spacer;
     padding-top: $spacer / 2;
   }
+
   > ul {  // top level list only
     padding-left: 0;
     padding-top: 0;

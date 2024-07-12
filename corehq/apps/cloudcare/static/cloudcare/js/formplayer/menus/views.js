@@ -1506,6 +1506,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         triggers: {
             "click a": "click:persistent:menu:command"  // magically calls onClickPersistentMenuCommand
         },
+        templateContext: function () {
+            const appId = formplayerUtils.currentUrlToObject().appId,
+                  imageUri = this.model.get('imageUri');
+            return {
+                imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+            };
+        },
         onRender: function () {
             if (!_.isEmpty(this.model.get('commands'))) {
                 this.showChildView('tree', new PersistentMenuListView({

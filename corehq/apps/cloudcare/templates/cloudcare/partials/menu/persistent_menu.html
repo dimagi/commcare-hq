@@ -13,10 +13,10 @@
     <div class="offcanvas-header">
       <h5 class="offcanvas-title" id="persistent-menu-label">
         <% if (imageUri) { %>
-          <i class="fcc persistent-menu-appicon align-middle" aria-hidden="true"
+          <i class="fcc persistent-menu-image align-middle" aria-hidden="true"
              style="background-image: url('<%- imageUri %>');"></i>
         <% } else { %>
-          <i class="fcc fcc-flower persistent-menu-appicon align-middle" aria-hidden="true"></i>
+          <i class="fcc fcc-flower persistent-menu-image align-middle" aria-hidden="true"></i>
         <% } %>
         <span class="align-middle"><%- appName %></span>
       </h5>
@@ -29,6 +29,14 @@
 </script>
 
 <script type="text/template" id="persistent-menu-item">
-  <a href="#"><%- displayText %></a>
+  <div>
+    <% if (imageUri) { %>
+      <i class="fcc persistent-menu-image align-middle" aria-hidden="true"
+         style="background-image: url('<%- imageUri %>');"></i>
+    <% } else { %>
+      <i class="fa fa-arrow-up-right-from-square persistent-menu-image align-middle" aria-hidden="true"></i>
+    <% } %>
+    <a class="align-middle" href="#"><%- displayText %></a>
+  </div>
   <ul></ul>
 </script>
