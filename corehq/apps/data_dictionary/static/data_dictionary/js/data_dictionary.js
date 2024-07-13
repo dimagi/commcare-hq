@@ -274,7 +274,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
         subscribePropObservable(self.removeFHIRResourcePropertyPath);
         self.allowedValues.on('change', changeSaveButton);
         self.allowedValues.on('change', self.allowedValuesChanged);
-        self.hasChanges = true;
 
         function subscribePropObservable(prop) {
             prop.subscribe(changeSaveButton);
