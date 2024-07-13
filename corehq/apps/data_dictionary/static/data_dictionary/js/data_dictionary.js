@@ -55,7 +55,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 let caseTypeUrl = self.dataUrl + self.name + '/';
                 recurseChunks(caseTypeUrl);
             }
-        }
+        };
 
         const recurseChunks = function (nextUrl) {
             $.getJSON(nextUrl, function (data) {
@@ -66,7 +66,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     recurseChunks(nextUrl);
                 }
             });
-        }
+        };
 
         const setCaseProperties = function (groupData) {
             for (let group of groupData) {
@@ -408,7 +408,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     ) {
                         // `self.goToCaseType()` calls `caseType.fetchCaseProperties()`
                         // to fetch the case properties of the first case type
-                        let caseType = self.caseTypes()[0]
+                        let caseType = self.caseTypes()[0];
                         self.goToCaseType(caseType);
                     }
                     self.fhirResourceType.subscribe(changeSaveButton);
@@ -573,7 +573,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 const prop = {
                     'name': self.newPropertyName(),
                     'label': self.newPropertyName(),
-                    'allowedValues': {}
+                    'allowedValues': {},
                 }
                 let propObj = propertyListItem(
                     prop,
