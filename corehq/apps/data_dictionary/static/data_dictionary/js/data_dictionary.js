@@ -82,7 +82,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         group.deprecated,
                         self.changeSaveButton
                     );
-                    groupObj.properties.subscribe(self.changeSaveButton);
                     self.groups.push(groupObj);
                 }
 
@@ -143,7 +142,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.name.subscribe(changeSaveButton);
         self.description.subscribe(changeSaveButton);
         self.toBeDeprecated.subscribe(changeSaveButton);
-        // Don't subscribe self.properties until they have been loaded
+        self.properties.subscribe(changeSaveButton);
 
         return self;
     };
