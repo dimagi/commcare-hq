@@ -1783,6 +1783,13 @@ SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'sumologic_logs',
     'Send logs to sumologic',
     TAG_INTERNAL,
+    namespaces=[NAMESPACE_OTHER],
+)
+
+SUMOLOGIC_LOGS_PER_DOMAIN = DynamicallyPredictablyRandomToggle(
+    'sumologic_logs_per_domain',
+    'Send logs to sumologic per domain',
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
