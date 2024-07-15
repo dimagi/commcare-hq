@@ -753,18 +753,22 @@ class TestUnsubscribeFromDataSource(TestCase):
         return self.client.post(path, data=data, **extras)
 
     def _subscribe_to_datasource(self, datasource_id):
-        post_data = {
-            'webhook_url': 'https://hostname.com/webhook',
-            'client_id': self.CLIENT_ID,
-            'client_secret': 'client_secret',
-            'token_url': 'https://hostname.com/token',
-            'refresh_url': 'https://hostname.com/refresh',
-        }
-        path = reverse("subscribe_to_configurable_data_source", args=(self.DOMAIN, datasource_id,))
-        return self.client.post(
-            path,
-            data=post_data,
-            HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
+        conn_settings, __ = ConnectionSettings.objects.update_or_create(
+            client_id=self.CLIENT_ID,
+            defaults={
+                'domain': self.DOMAIN,
+                'name': "testy",
+                'auth_type': "oauth2_client",
+                'client_secret': 'client_secret',
+                'url': "",
+                'token_url': 'token_url',
+            }
+        )
+        DataSourceRepeater.objects.create(
+            name=f"{datasource_id} name",
+            domain=self.DOMAIN,
+            data_source_id=datasource_id,
+            connection_settings_id=conn_settings.id,
         )
 
     @flag_enabled('SUPERSET_ANALYTICS')
