@@ -571,8 +571,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
             if tableau_group_ids is None:
                 tableau_group_ids = []
             from corehq.apps.reports.util import get_tableau_groups_by_ids, update_tableau_user
-            update_tableau_user(domain=domain, username=self.username,
-                    role=tableau_role, groups=get_tableau_groups_by_ids(tableau_group_ids, domain))
+            update_tableau_user(domain=domain, username=self.username, role=tableau_role,
+                                groups=get_tableau_groups_by_ids(tableau_group_ids, domain),
+                                blocking_exception=False)
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
