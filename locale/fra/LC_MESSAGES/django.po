@@ -14206,6 +14206,10 @@ msgid "Column {} in \"{}\" sheet is missing a header"
 msgstr ""
 
 #: corehq/apps/data_dictionary/views.py
+msgid "skip and limit must be positive integers"
+msgstr ""
+
+#: corehq/apps/data_dictionary/views.py
 msgid "Case Type 'name' is required"
 msgstr ""
 
@@ -22969,24 +22973,6 @@ msgid "Export Groups"
 msgstr ""
 
 #: corehq/apps/geospatial/templates/case_grouping_map.html
-msgid ""
-"\n"
-"      Please\n"
-"      <a href=\"\">refresh the page</a>\n"
-"      to apply the polygon filtering changes.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/case_grouping_map.html
-msgid ""
-"\n"
-"      There are too many polygons on the map. Please remove some before "
-"refreshing the page, otherwise the\n"
-"      newly added polygons will be lost.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/geospatial/templates/case_grouping_map.html
 msgid "Summary of Case Grouping"
 msgstr ""
 
@@ -23036,6 +23022,28 @@ msgstr ""
 
 #: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
 msgid "Save Area"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
+msgid "Run Disbursement"
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
+msgid ""
+"\n"
+"          Please\n"
+"          <a href=\"\">refresh the page</a>\n"
+"          to apply the polygon filtering changes.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/geospatial/templates/geospatial/partials/saved_polygon_filter.html
+msgid ""
+"\n"
+"          There are too many polygons on the map. Please remove some before "
+"refreshing the page, otherwise the\n"
+"          newly added polygons will be lost.\n"
+"        "
 msgstr ""
 
 #: corehq/apps/geospatial/templates/gps_capture.html
@@ -23206,10 +23214,6 @@ msgstr "Masquer les options de filtre"
 #: corehq/apps/reports/templates/reports/standard/partials/bootstrap5/filter_panel.html
 msgid "Show Filter Options"
 msgstr "Options de filtre d'affichage"
-
-#: corehq/apps/geospatial/templates/map_visualization.html
-msgid "Run Disbursement"
-msgstr ""
 
 #: corehq/apps/geospatial/templates/map_visualization.html
 msgid "Running disbursement algorithm..."
@@ -31484,6 +31488,18 @@ msgstr "Date sensible"
 #: corehq/apps/reports/standard/deployments.py
 msgid "Application Status"
 msgstr "Statut de vos Applications"
+
+#: corehq/apps/reports/standard/deployments.py
+#, fuzzy
+#| msgid "User Location"
+msgid "Assigned Location(s)"
+msgstr "Site de l'Utilisateur"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid ""
+"Assigned locations for the user, with the primary location highlighted in "
+"bold."
+msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Last Submission"

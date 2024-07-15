@@ -137,7 +137,7 @@ class CounterCache(object):
 
     def incr(self, key, delta=1):
         value = self.shared_cache.incr(key, delta, ignore_key_check=True)
-        if value == 1:
+        if value == delta:
             self.shared_cache.expire(key, timeout=self.timeout)
         self.local_cache.set(key, value, timeout=self.memoized_timeout)
         return value

@@ -1138,6 +1138,13 @@ HIDE_SYNC_BUTTON = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+PAUSE_DATA_FORWARDING = StaticToggle(
+    'pause_data_forwarding',
+    "Pause all data forwarding from this domain",
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 PERSISTENT_MENU_SETTING = StaticToggle(
     "persistent_menu_setting",
     "Show Persistent Menu option in Web Apps settings",
