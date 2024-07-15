@@ -720,29 +720,28 @@ class TestSubscribeToDataSource(TestCase):
 
 class TestUnsubscribeFromDataSource(TestCase):
 
-    urlname = "unsubscribe_from_configurable_data_source"
-    domain = "test-domain"
-    client_id = "client_id"
+    DOMAIN = "test-domain"
+    CLIENT_ID = "client_id"
     USERNAME = "username"
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.project = Domain.get_or_create_with_name(cls.domain, is_active=True)
+        cls.project = Domain.get_or_create_with_name(cls.DOMAIN, is_active=True)
 
         cls.api_user_role = UserRole.create(
-            cls.domain, 'api-user', permissions=HqPermissions(access_api=True, view_reports=True)
+            cls.DOMAIN, 'api-user', permissions=HqPermissions(access_api=True, view_reports=True)
         )
-        cls.user = WebUser.create(cls.domain, cls.USERNAME, "password", None, None,
+        cls.user = WebUser.create(cls.DOMAIN, cls.USERNAME, "password", None, None,
                                   role_id=cls.api_user_role.get_id)
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
         cls.domain_api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user),
                                                                name='domain-scoped',
-                                                               domain=cls.domain)
+                                                               domain=cls.DOMAIN)
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete(deleted_by_domain=cls.domain, deleted_by=None)
+        cls.user.delete(deleted_by_domain=cls.DOMAIN, deleted_by=None)
         cls.project.delete()
         super().tearDownClass()
 
@@ -750,18 +749,18 @@ class TestUnsubscribeFromDataSource(TestCase):
         return f'ApiKey {self.USERNAME}:{api_key.key}'
 
     def _post_request(self, domain, data_source_id, data=None, **extras):
-        path = reverse(self.urlname, args=(domain, data_source_id,))
+        path = reverse("unsubscribe_from_configurable_data_source", args=(domain, data_source_id,))
         return self.client.post(path, data=data, **extras)
 
     def _subscribe_to_datasource(self, datasource_id):
         post_data = {
             'webhook_url': 'https://hostname.com/webhook',
-            'client_id': self.client_id,
+            'client_id': self.CLIENT_ID,
             'client_secret': 'client_secret',
             'token_url': 'https://hostname.com/token',
             'refresh_url': 'https://hostname.com/refresh',
         }
-        path = reverse("subscribe_to_configurable_data_source", args=(self.domain, datasource_id,))
+        path = reverse("subscribe_to_configurable_data_source", args=(self.DOMAIN, datasource_id,))
         return self.client.post(
             path,
             data=post_data,
@@ -774,15 +773,15 @@ class TestUnsubscribeFromDataSource(TestCase):
         data_source_id = "data_source_id"
         self._subscribe_to_datasource(data_source_id)
 
-        conn_settings = ConnectionSettings.objects.get(client_id=self.client_id)
+        conn_settings = ConnectionSettings.objects.get(client_id=self.CLIENT_ID)
         connection_settings_id = conn_settings.id
 
         repeaters = DataSourceRepeater.objects.filter(connection_settings_id=connection_settings_id)
         self.assertEqual(repeaters.count(), 1)
 
         response = self._post_request(
-            domain=self.domain,
-            data={"client_id": self.client_id},
+            domain=self.DOMAIN,
+            data={"client_id": self.CLIENT_ID},
             data_source_id=data_source_id,
             HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
         )
@@ -800,15 +799,15 @@ class TestUnsubscribeFromDataSource(TestCase):
         self._subscribe_to_datasource(data_source_id_1)
         self._subscribe_to_datasource(data_source_id_2)
 
-        conn_settings = ConnectionSettings.objects.get(client_id=self.client_id)
+        conn_settings = ConnectionSettings.objects.get(client_id=self.CLIENT_ID)
         connection_settings_id = conn_settings.id
 
         repeaters = DataSourceRepeater.objects.filter(connection_settings_id=connection_settings_id)
         self.assertEqual(repeaters.count(), 2)
 
         response = self._post_request(
-            domain=self.domain,
-            data={"client_id": self.client_id},
+            domain=self.DOMAIN,
+            data={"client_id": self.CLIENT_ID},
             data_source_id=data_source_id_1,
             HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
         )
@@ -822,7 +821,7 @@ class TestUnsubscribeFromDataSource(TestCase):
     @flag_enabled('API_THROTTLE_WHITELIST')
     def test_missing_client_id(self):
         response = self._post_request(
-            domain=self.domain,
+            domain=self.DOMAIN,
             data={},
             data_source_id='datasource_id',
             HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
@@ -834,7 +833,7 @@ class TestUnsubscribeFromDataSource(TestCase):
     @flag_enabled('API_THROTTLE_WHITELIST')
     def test_invalid_client_id(self):
         response = self._post_request(
-            domain=self.domain,
+            domain=self.DOMAIN,
             data={'client_id': 'client_id'},
             data_source_id='datasource_id',
             HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
@@ -848,7 +847,7 @@ class TestUnsubscribeFromDataSource(TestCase):
         self._subscribe_to_datasource('datasource_id')
 
         response = self._post_request(
-            domain=self.domain,
+            domain=self.DOMAIN,
             data={'client_id': 'client_id'},
             data_source_id='invalid_datasource_id',
             HTTP_AUTHORIZATION=self._construct_api_auth_header(self.domain_api_key),
