@@ -46,7 +46,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('Auto-login'),
     gettext_noop('Auto-manage URLs'),
     gettext_noop('Automatic'),
-    gettext_noop('Automatically resizes images within forms. Follow <a href=\'https://confluence.dimagi.com/display/commcarepublic/Auto-Resize+Images+on+Android\'> the instructions here</a> to determine which value to use.'),
+    gettext_noop('Automatically resizes images within forms. Follow <a href=\'https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/Images+in+CommCare\'> the instructions here</a> to determine which value to use.'),
     gettext_noop('Automatically trigger a two-way sync on a regular schedule'),
     gettext_noop('Basic'),
     gettext_noop('Both Hierarchical and Flat Fixture'),
