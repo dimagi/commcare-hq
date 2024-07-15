@@ -149,6 +149,13 @@
       window.USE_BOOTSTRAP5 = {{ use_bootstrap5|BOOL }};
     </script>
 
+    {% if request.use_htmx %}
+      <script type="text/javascript" src="{% static "htmx.org/dist/htmx.min.js" %}"></script>
+    {% endif %}
+    {% if request.use_alpinejs %}
+      <script type="text/javascript" src="{% static 'alpinejs/dist/cdn.min.js' %}"></script>
+    {% endif %}
+
     {% if not requirejs_main %}
       {% javascript_libraries use_bootstrap5=use_bootstrap5 underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
     {% endif %}

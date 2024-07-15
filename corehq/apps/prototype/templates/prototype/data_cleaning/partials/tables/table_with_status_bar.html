@@ -1,0 +1,59 @@
+{% extends "hqwebapp/tables/bootstrap5_htmx.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+{% load hq_shared_tags %}
+
+{% block table-container-attrs %}
+  hx-get="{{ request.path_info }}{% querystring %}"
+  hx-trigger="refreshTable, refreshAll"
+  x-data="{
+    num_selected: {{ table.num_selected_records }},
+    total_records: {{ table.page.paginator.count }},
+    page_total_records: {{ table.paginator.per_page }},
+    page_num_selected: 0,
+  }"
+{% endblock %}
+
+{% block before_table %}
+  <div class="d-flex align-items-center">
+    <div class="my-1">
+      <i class="fa-solid fa-circle-check"></i>
+      <span x-text="num_selected"></span> Records Selected
+    </div>
+    <div x-show="num_selected > 0" class="ps-2">
+      <button type="button"
+              hx-post="{{ request.path_info }}{% querystring %}"
+              hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+              hx-vals='{"selectAll": false}'
+              class="btn btn-outline-danger btn-sm">
+        Cancel Selection
+      </button>
+    </div>
+    <div x-show="num_selected > 0 && num_selected < total_records" class="ps-2">
+      <button type="button"
+              hx-post="{{ request.path_info }}{% querystring %}"
+              hx-target="{% if table.css_id %}#{{ table.css_id }}{% else %}div.table-container{% endif %}"
+              hx-vals='{"selectAll": true}'
+              class="btn btn-outline-primary btn-sm">
+        Select All {{ table.page.paginator.count }} Records
+      </button>
+    </div>
+
+    {%  if table.has_filters %}
+      <div class="ps-2 ms-2">
+        <i class="fa-solid fa-filter"></i>
+        Filter Applied: {{ table.page.paginator.count }} Matching Records
+        <button type="button"
+                id="clear-filters-button"
+                hx-post="{{ request.path_info }}{% querystring %}"
+                hx-swap="none"
+                hx-on::after-request="htmx.trigger('#{{ table.filter_form_id }}', 'refreshFilters');"
+                hx-vals='{"clearFilters": true}'
+                class="btn btn-outline-danger btn-sm ms-2">
+          <i class="fa-solid fa-close"></i> Clear Filters
+        </button>
+      </div>
+    {% endif %}
+  </div>
+  {{ block.super }}
+{% endblock %}

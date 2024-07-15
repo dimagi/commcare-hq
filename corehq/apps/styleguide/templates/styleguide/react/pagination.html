@@ -1,0 +1,44 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block javascript %}
+  <script src="{% static 'react/styleguide/pagination.js' %}"></script>
+{% endblock javascript %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">React Pagination Examples</h1>
+  <p class="sg-lead">
+    Here are various pagination options
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#paginationSync">Synchronous Pagination</a></li>
+      <li><a href="#paginationAsync">Asynchronous Pagination</a></li>
+      <li><a href="#componentCode">Component Code</a></li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <div>
+    <h2 id="paginationSync">Synchronous Pagination</h2>
+    {% include 'styleguide/react/partials/paginationSync.html' %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.paginationSync %}
+  </div>
+
+  <div>
+    <h2 id="paginationAsync">Asynchronous Pagination</h2>
+    {% include 'styleguide/react/partials/paginationAsync.html' %}
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.paginationAsync %}
+  </div>
+
+  <div>
+    <h2 id="componentCode">Component Code</h2>
+    {% include 'styleguide/bootstrap5/code_display.html' with content=examples.componentCode %}
+  </div>
+{% endblock content %}
