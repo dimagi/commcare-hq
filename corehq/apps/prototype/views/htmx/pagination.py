@@ -24,7 +24,7 @@ class HtmxPaginationView(BasePageView):
 
 
 class FakeDataTable(tables.Table):
-    css_id = "fake-data-test"
+    container_id = "fake-data-test"
     name = columns.Column(
         verbose_name=gettext_lazy("Name"),
     )
