@@ -2773,7 +2773,8 @@ FILTERED_BULK_USER_DOWNLOAD = FrozenPrivilegeToggle(
         For mobile users, enables bulk deletion page and bulk lookup page.
         For web users, enables filtered download page.
     """,
-    help_link='https://confluence.dimagi.com/display/commcarepublic/Bulk+User+Management'
+    help_link=('https://dimagi.atlassian.net/wiki/spaces/'
+               'commcarepublic/pages/2143957165/Bulk+Mobile+User+Management')
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(
@@ -2858,7 +2859,6 @@ USH_RESTORE_FILE_LOCATION_CASE_SYNC_RESTRICTION = StaticToggle(
     'USH: Limit the location-owned cases that show up in a user\'s restore file',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://dimagi.atlassian.net/wiki/spaces/USH/pages/2252210196/Prevent+Syncing+of+Lower+Level+Locations',  # noqa: E501
     description="""
     In the 'Organizational Level' section of location management, web admins can specify which org level to
     expand to when syncing the location-owned cases included in a user's restore file. Limits cases in a user's
