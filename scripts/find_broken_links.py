@@ -2,6 +2,7 @@ import os
 import re
 import requests
 import collections
+import csv
 
 
 def find_files(directory):
@@ -20,7 +21,7 @@ def extract_links(file_path):
     return links
 
 
-def check_link(url):
+def check_link_broken(url):
     try:
         response = requests.get(url, timeout=10)
         if "Page Not Found" in response.text:
@@ -37,12 +38,14 @@ def main():
     for file_path in files:
         links = extract_links(file_path)
         for link in links:
-            if check_link(link):
+            if check_link_broken(link):
                 broken_links[link].append(file_path[1:])
-    print("Broken links:\n")
-    for link, file_path_list in broken_links.items():
-        for file_path in file_path_list:
-            print(file_path, "\n", link, "\n")
+    with open("broken_links.csv", mode="w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow(["Link", "File Path"])
+        for link, file_paths in broken_links.items():
+            for file_path in file_paths:
+                writer.writerow([link, file_path])
 
 
 if __name__ == "__main__":
