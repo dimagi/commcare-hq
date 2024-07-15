@@ -1696,13 +1696,10 @@ def unsubscribe_from_data_source(request, domain, config_id):
             content="Invalid data source ID"
         )
     repeater.delete()
+    conn_settings.clear_caches()
 
-    subscriber_repeaters_query = DataSourceRepeater.objects.filter(
-        connection_settings_id=conn_settings.id
-    )
-
-    if subscriber_repeaters_query.count() == 0:
-        ConnectionSettings.objects.filter(id=conn_settings.id).delete()
+    if not conn_settings.used_by:
+        conn_settings.delete()
 
     return HttpResponse(status=200)
 
