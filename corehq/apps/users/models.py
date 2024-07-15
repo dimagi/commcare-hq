@@ -562,8 +562,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
             self.get_domain_membership(domain).program_id = program_id
         if domain_obj.uses_locations:
             if primary_location_id:
-                self.set_location(domain, primary_location_id)
-            self.reset_locations(domain, assigned_location_ids)
+                self.set_location(domain, primary_location_id, commit=False)
+            self.reset_locations(domain, assigned_location_ids, commit=False)
         if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
             user_data = self.get_user_data(domain_obj.name)
             user_data.update({}, profile_id=profile.id)
@@ -2556,7 +2556,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             self.set_location(domain, location)
 
-    def set_location(self, domain, location_object_or_id):
+    def set_location(self, domain, location_object_or_id, commit=True):
         # set the primary location for user's domain_membership
         if isinstance(location_object_or_id, str):
             location_id = location_object_or_id
@@ -2572,7 +2572,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             membership.assigned_location_ids.append(location_id)
             self.get_sql_locations.reset_cache(self)
         self.get_sql_location.reset_cache(self)
-        self.save()
+        if commit:
+            self.save()
 
     def unset_location(self, domain, fall_back_to_next=False, commit=True):
         """
