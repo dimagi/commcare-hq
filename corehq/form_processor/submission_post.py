@@ -21,7 +21,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
 from corehq.apps.receiverwrapper.rate_limiter import report_case_usage, report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.toggles import ASYNC_RESTORE, NAMESPACE_OTHER, SUMOLOGIC_LOGS, BLOCK_SUMOLOGIC_LOGS
+from corehq.toggles import ASYNC_RESTORE, BLOCK_SUMOLOGIC_LOGS, NAMESPACE_OTHER, SUMOLOGIC_LOGS
 from corehq.apps.app_manager.dbaccessors import get_current_app
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
