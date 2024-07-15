@@ -9,8 +9,7 @@ def find_files(directory):
     file_list = []
     for root, _, files in os.walk(directory):
         for file in files:
-            if file.endswith(".md") or file.endswith(".html"):
-                file_list.append(os.path.join(root, file))
+            file_list.append(os.path.join(root, file))
     return file_list
 
 
@@ -21,13 +20,13 @@ def extract_links(file_path):
     return links
 
 
-def check_link_broken(url):
+def check_link_broken(url, file_path):
     try:
-        response = requests.get(url, timeout=10)
-        if "Page Not Found" in response.text:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 404:
             return True
     except requests.RequestException as e:
-        print(f"Error accessing {url}: {e}")
+        print(f"Error accessing {url} in file {file_path}: {e}\n")
     return False
 
 
@@ -38,7 +37,7 @@ def main():
     for file_path in files:
         links = extract_links(file_path)
         for link in links:
-            if check_link_broken(link):
+            if check_link_broken(link, file_path):
                 broken_links[link].append(file_path[1:])
     with open("broken_links.csv", mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
