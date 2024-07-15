@@ -155,7 +155,8 @@ def run_case_update_rules_for_domain(domain, now=None):
         )
 
         for db in get_db_aliases_for_partitioned_query():
-            result = run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk, case_type, total_updates, db=db)
+            result = run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk,
+                                                                   case_type, total_updates, db=db)
             updates = result.get()
             total_updates += updates
             if total_updates >= max_allowed_updates:

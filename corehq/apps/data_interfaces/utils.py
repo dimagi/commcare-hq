@@ -192,7 +192,7 @@ def _get_sql_repeat_record(domain, record_id):
 
 
 def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_type, db=None, progress_helper=None,
-                             curr_updates = 0):
+                             curr_updates=0):
     from corehq.apps.data_interfaces.models import (
         CaseRuleActionResult,
         DomainCaseRuleRun,
