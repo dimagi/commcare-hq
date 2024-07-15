@@ -8,8 +8,7 @@ def find_files(directory):
     file_list = []
     for root, _, files in os.walk(directory):
         for file in files:
-            if file.endswith(".md") or file.endswith(".html"):
-                file_list.append(os.path.join(root, file))
+            file_list.append(os.path.join(root, file))
     return file_list
 
 
