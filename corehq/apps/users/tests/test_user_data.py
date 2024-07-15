@@ -1,9 +1,12 @@
+from datetime import datetime
 import uuid
 from unittest.mock import patch, PropertyMock
 
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
+from corehq.apps.commtrack.tests.util import make_loc
 
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, Field, CustomDataFieldsDefinition
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -140,8 +143,18 @@ def _get_profile(self, profile_id):
 
 
 @patch('corehq.apps.users.user_data.UserData._get_profile', new=_get_profile)
-class TestUserDataModel(SimpleTestCase):
-    domain = 'test-user-data-model'
+class TestUserDataModel(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestUserDataModel, cls).setUpClass()
+        cls.domain = 'test-user-data-model'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.loc1 = make_loc('1', 'loc1', cls.domain)
+        cls.loc2 = make_loc('2', 'loc2', cls.domain)
+        cls.loc_ids = [loc.location_id for loc in [cls.loc1, cls.loc2]]
 
     def setUp(self):
         self.user_fields = []
@@ -151,10 +164,20 @@ class TestUserDataModel(SimpleTestCase):
 
         self.addCleanup(field_patcher.stop)
 
+        self.user = CommCareUser.create(
+            domain=self.domain,
+            username='cc1',
+            password='***',
+            created_by=None,
+            created_via=None,
+            last_login=datetime.now()
+        )
+        self.addCleanup(self.user.delete, self.domain, deleted_by=None)
+
     def init_user_data(self, raw_user_data=None, profile_id=None):
         return UserData(
             raw_user_data=raw_user_data or {},
-            couch_user=None,  # This is only used for saving to the db
+            couch_user=self.user,
             domain=self.domain,
             profile_id=profile_id,
         )
@@ -289,3 +312,127 @@ class TestUserDataModel(SimpleTestCase):
         changed = user_data.remove_unrecognized({'a', 'b'})
         self.assertFalse(changed)
         self.assertEqual(user_data.raw, {})
+
+    def test_no_location_info_in_user_data_when_no_location_assigned(self):
+        user_data = self.user.get_user_data(self.domain)
+
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': '',
+        })
+
+    def test_add_primary_location_when_no_location_previously_assigned_updates_user_data(self):
+        # Set primary location
+        self.user.set_location(self.loc1)
+        user_data = self.user.get_user_data(self.domain)
+
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': '',
+            'commcare_location_id': self.loc1.location_id,
+            'commcare_location_ids': self.loc1.location_id,
+            'commcare_primary_case_sharing_id': self.loc1.location_id,
+        })
+
+    def test_add_primary_location_when_there_is_location_previously_assigned_updates_user_data(self):
+        # Set primary location to loc1
+        self.user.set_location(self.loc1)
+        user_data = self.user.get_user_data(self.domain)
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': '',
+            'commcare_location_id': self.loc1.location_id,
+            'commcare_location_ids': self.loc1.location_id,
+            'commcare_primary_case_sharing_id': self.loc1.location_id,
+        })
+
+        # Set primary location to loc2
+        self.user.set_location(self.loc2)
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': '',
+            'commcare_location_id': self.loc2.location_id,
+            'commcare_location_ids': f"{self.loc1.location_id} {self.loc2.location_id}",
+            'commcare_primary_case_sharing_id': self.loc2.location_id,
+        })
+
+    def test_append_location_updates_user_data(self):
+        # Set primary location
+        self.user.set_location(self.loc1)
+        user_data = self.user.get_user_data(self.domain)
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': '',
+            'commcare_location_id': self.loc1.location_id,
+            'commcare_location_ids': self.loc1.location_id,
+            'commcare_primary_case_sharing_id': self.loc1.location_id,
+        })
+
+        # Append a location but not change primary location
+        self.user.add_to_assigned_locations(self.loc2)
+
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': '',
+            'commcare_location_id': self.loc1.location_id,
+            'commcare_location_ids': f"{self.loc1.location_id} {self.loc2.location_id}",
+            'commcare_primary_case_sharing_id': self.loc1.location_id,
+        })
+
+    def test_remove_primary_location_updates_user_data(self):
+        # Set primary location
+        self.user.set_location(self.loc1)
+        user_data = self.user.get_user_data(self.domain)
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': '',
+            'commcare_location_id': self.loc1.location_id,
+            'commcare_location_ids': self.loc1.location_id,
+            'commcare_primary_case_sharing_id': self.loc1.location_id,
+        })
+
+        self.user.unset_location()
+
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': '',
+        })
+
+    def test_remove_assigned_location_updates_user_data(self):
+        self.user.reset_locations(self.loc_ids)
+        user_data = self.user.get_user_data(self.domain)
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': '',
+            'commcare_location_id': self.loc1.location_id,
+            'commcare_location_ids': f"{self.loc1.location_id} {self.loc2.location_id}",
+            'commcare_primary_case_sharing_id': self.loc1.location_id,
+        })
+
+        self.user.unset_location_by_id(self.loc2.location_id)
+
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': '',
+            'commcare_location_id': self.loc1.location_id,
+            'commcare_location_ids': f"{self.loc1.location_id}",
+            'commcare_primary_case_sharing_id': self.loc1.location_id,
+        })
+
+    def test_reset_locations_updates_user_data(self):
+        self.user.reset_locations(self.loc_ids)
+
+        user_data = self.user.get_user_data(self.domain)
+        self.assertEqual(user_data.to_dict(), {
+            'commcare_project': self.domain,
+            'commcare_profile': '',
+            'commcare_location_id': self.loc1.location_id,
+            'commcare_location_ids': f"{self.loc1.location_id} {self.loc2.location_id}",
+            'commcare_primary_case_sharing_id': self.loc1.location_id,
+        })
+
+    def test_change_data_provided_by_system_will_raise_user_data_error(self):
+        user_data = self.user.get_user_data(self.domain)
+
+        with self.assertRaisesMessage(UserDataError, "'commcare_location_id' cannot be set directly"):
+            user_data['commcare_location_id'] = self.loc1.location_id
