@@ -9,7 +9,7 @@ from corehq.util.quickcache import quickcache
 
 class BaseCacheStore:
     slug = None
-    timeout = 24 * 60 * 60 * 60
+    timeout = 2 * 60 * 60
     default_value = None
 
     def __init__(self, request):
@@ -20,7 +20,7 @@ class BaseCacheStore:
         return f"{self.username}:saas-prototype:{self.slug}"
 
     def set(self, data):
-        cache.set(self.cache_key, data)
+        cache.set(self.cache_key, data, self.timeout)
 
     def get(self):
         return cache.get(self.cache_key, copy.deepcopy(self.default_value))

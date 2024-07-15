@@ -1,13 +1,13 @@
 from django.http import QueryDict
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
+from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.prototype.forms.data_cleaning import AddColumnFilterForm, CleanColumnDataForm
 from corehq.apps.prototype.models.data_cleaning.cache_store import VisibleColumnStore, FakeCaseDataStore
 from corehq.apps.prototype.models.data_cleaning.columns import CaseDataCleaningColumnManager
-from corehq.apps.prototype.models.data_cleaning.filters import ColumnFilter
 from corehq.apps.prototype.models.data_cleaning.tables import FakeCaseTable
 
 
@@ -69,6 +69,7 @@ class FilterColumnsFormView(TemplateView):
     template_name = "prototype/data_cleaning/partials/forms/filter_columns_form.html"
 
     @property
+    @memoized
     def column_manager(self):
         return CaseDataCleaningColumnManager(self.request)
 
@@ -77,7 +78,7 @@ class FilterColumnsFormView(TemplateView):
         filter_form = kwargs.pop('filter_form') if 'filter_form' in kwargs else None
         context.update({
             "add_filter_form": filter_form or AddColumnFilterForm(self.column_manager),
-            "column_filters": ColumnFilter.get_filters_from_cache(self.request),
+            "column_filters": self.column_manager.get_filters(),
             "table_selector": f"#{FakeCaseTable.container_id}",
             "container_id": self.column_manager.filter_form_id,
         })
@@ -85,7 +86,7 @@ class FilterColumnsFormView(TemplateView):
 
     def delete(self, request, *args, **kwargs):
         index = int(request.GET['index'])
-        ColumnFilter.delete_filter(request, index)
+        self.column_manager.delete_filter(index)
         response = super().get(request, *args, **kwargs)
         return response
 

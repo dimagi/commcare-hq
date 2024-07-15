@@ -7,6 +7,7 @@ from django.utils.translation import gettext as _
 from django_tables2 import columns
 
 from corehq.apps.prototype.models.data_cleaning.cache_store import FilterColumnStore, FakeCaseDataStore
+from corehq.apps.prototype.models.data_cleaning.filters import ColumnFilter
 
 
 class EditableColumn(columns.TemplateColumn):
@@ -53,6 +54,8 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
     configure_columns_form_id = "configure-columns-form"
     filter_form_id = "filter-columns-form"
     clean_data_form_id = "clean-columns-form"
+    filter_store_class = None
+    column_filter_class = ColumnFilter
 
     def __init__(self, request):
         self.request = request
@@ -72,29 +75,54 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def has_filters(self):
-        """
-        Returns boolean indicating whether filters are applied to the columns
-        """
-        pass
-
-    @abstractmethod
-    def clear_filters(self):
-        """
-        Override with to clear filters applied to columns
-        """
-        pass
-
-    @abstractmethod
     def has_edits(self):
         """
         Returns boolean indicating whether edits are applied to the columns
         """
         pass
 
+    @property
+    def filter_store(self):
+        return self.filter_store_class(self.request)
+
+    def has_filters(self):
+        return len(self.filter_store.get()) > 0
+
+    def clear_filters(self):
+        self.filter_store.set([])
+
+    @classmethod
+    def get_column_map(cls):
+        return dict(cls.get_available_columns())
+
+    def get_filters(self):
+        column_map = self.get_column_map()
+        return [
+            self.column_filter_class(column_map, *args)
+            for args in self.filter_store.get()
+        ]
+
+    def get_filtered_table_data(self, table_data):
+        for column_filter in self.get_filters():
+            table_data = column_filter.apply_filter(table_data)
+        return table_data
+
+    def add_filter(self, slug, match, value):
+        filters = self.filter_store.get()
+        filters.append([slug, match, value])
+        self.filter_store.set(filters)
+
+    def delete_filter(self, index):
+        filters = self.filter_store.get()
+        try:
+            del filters[index]
+        except IndexError:
+            pass
+        self.filter_store.set(filters)
+
     @classmethod
     def get_visible_columns(cls, column_slugs):
-        column_map = dict(cls.get_available_columns())
+        column_map = cls.get_column_map()
         visible_columns = [(slug, column_map[slug]) for slug in column_slugs]
         return visible_columns
 
@@ -107,6 +135,7 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
 
 
 class CaseDataCleaningColumnManager(BaseDataCleaningColumnManager):
+    filter_store_class = FilterColumnStore
 
     @classmethod
     def get_available_columns(cls):
@@ -133,12 +162,6 @@ class CaseDataCleaningColumnManager(BaseDataCleaningColumnManager):
                 verbose_name=_("Status"),
             )),
         ]
-
-    def has_filters(self):
-        return len(FilterColumnStore(self.request).get()) > 0
-
-    def clear_filters(self):
-        FilterColumnStore(self.request).set([])
 
     def has_edits(self):
         rows = FakeCaseDataStore(self.request).get()

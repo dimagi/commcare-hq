@@ -9,7 +9,7 @@
   x-data="{
     numRecordsSelected: {{ table.num_selected_records }},
     totalRecords: {{ table.page.paginator.count }},
-    pageTotalRecords: {{ table.paginator.per_page }},
+    pageTotalRecords: {{ table.paginated_rows|length }},
     pageNumRecordsSelected: 0,
   }"
   x-init="$dispatch('numRecordsSelectedChanged', numRecordsSelected);

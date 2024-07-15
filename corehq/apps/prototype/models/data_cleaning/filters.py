@@ -1,8 +1,5 @@
 from django.utils.translation import gettext_lazy
 
-from corehq.apps.prototype.models.data_cleaning.cache_store import FilterColumnStore
-from corehq.apps.prototype.models.data_cleaning.columns import CaseDataCleaningColumnManager
-
 
 class ColumnMatchType:
     EXACT = "exact"
@@ -28,9 +25,9 @@ class ColumnMatchType:
 class ColumnFilter:
     """Not intended for production use!
     Use this only for in-memory prototype!"""
-    column_manager = CaseDataCleaningColumnManager
 
-    def __init__(self, slug, match, value):
+    def __init__(self, column_map, slug, match, value):
+        self.column_map = column_map
         self.slug = slug
         self.match = match
         self.value = value
@@ -39,39 +36,9 @@ class ColumnFilter:
         return dict(ColumnMatchType.OPTIONS)[self.match]
 
     def column_name(self):
-        return dict(self.column_manager.get_available_columns())[self.slug].verbose_name
+        return self.column_map[self.slug].verbose_name
 
-    @classmethod
-    def get_filters_from_cache(cls, request):
-        return [
-            cls(*args)
-            for args in FilterColumnStore(request).get()
-        ]
-
-    @classmethod
-    def add_filter(cls, request, slug, match, value):
-        filter_store = FilterColumnStore(request)
-        filters = filter_store.get()
-        filters.append([slug, match, value])
-        filter_store.set(filters)
-
-    @classmethod
-    def delete_filter(cls, request, index):
-        filter_store = FilterColumnStore(request)
-        filters = filter_store.get()
-        try:
-            del filters[index]
-        except IndexError:
-            pass
-        filter_store.set(filters)
-
-    @classmethod
-    def filter_table_from_cache(cls, request, table_data):
-        for column_filter in cls.get_filters_from_cache(request):
-            table_data = column_filter.get_filtered_table_data(table_data)
-        return table_data
-
-    def get_filtered_table_data(self, table_data):
+    def apply_filter(self, table_data):
         match_function = dict(ColumnMatchType.MATCH_FUNCTION)[self.match]
         return [data for data in table_data
                 if match_function(data.get(self.slug), self.value)]

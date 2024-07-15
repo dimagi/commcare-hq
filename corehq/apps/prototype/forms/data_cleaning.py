@@ -9,27 +9,31 @@ from crispy_forms.helper import FormHelper
 
 from corehq.apps.prototype.models.data_cleaning.actions import CleaningActionType
 from corehq.apps.prototype.models.data_cleaning.columns import EditableColumn
-from corehq.apps.prototype.models.data_cleaning.filters import ColumnMatchType, ColumnFilter
+from corehq.apps.prototype.models.data_cleaning.filters import ColumnMatchType
 
 
 class AddColumnFilterForm(forms.Form):
     slug = forms.ChoiceField(
         label=gettext_lazy("Column"),
         choices=(),
+        required=False
     )
     match = forms.ChoiceField(
         label=gettext_lazy("Match Type"),
         choices=ColumnMatchType.OPTIONS,
+        required=False
     )
     value = forms.CharField(
         label=gettext_lazy("Value"),
+        required=False
     )
 
     def __init__(self, column_manager, *args, **kwargs):
+        self.column_manager = column_manager
         super().__init__(*args, **kwargs)
         self.fields['slug'].choices = [
             (c[0], c[1].verbose_name)
-            for c in column_manager.get_available_columns()
+            for c in self.column_manager.get_available_columns()
         ]
 
         self.helper = FormHelper()
@@ -45,8 +49,7 @@ class AddColumnFilterForm(forms.Form):
         )
 
     def add_filter(self, request):
-        ColumnFilter.add_filter(
-            request,
+        self.column_manager.add_filter(
             self.cleaned_data['slug'],
             self.cleaned_data['match'],
             self.cleaned_data['value'],
@@ -78,7 +81,15 @@ class CleanColumnDataForm(forms.Form):
     )
 
     def __init__(self, column_manager, data_store, *args, **kwargs):
+        self.column_manager = column_manager
         self.data_store = data_store
+        self.filtered_ids = []
+        if self.column_manager.has_filters():
+            self.filtered_ids = [
+                record["id"] for record in self.column_manager.get_filtered_table_data(
+                    self.data_store.get()
+                )
+            ]
         super().__init__(*args, **kwargs)
 
         self.fields['slug'].choices = [
@@ -161,6 +172,8 @@ class CleanColumnDataForm(forms.Form):
         for row in rows:
             if not row["selected"]:
                 continue
+            if self.filtered_ids and row["id"] not in self.filtered_ids:
+                continue
             row[edited_slug] = replace_all_string
         self.data_store.set(rows)
 
@@ -172,6 +185,8 @@ class CleanColumnDataForm(forms.Form):
         edited_slug = EditableColumn.get_edited_slug(slug)
         for row in rows:
             if not row["selected"]:
+                continue
+            if self.filtered_ids and row["id"] not in self.filtered_ids:
                 continue
             column = row[slug]
             if find_string in column:

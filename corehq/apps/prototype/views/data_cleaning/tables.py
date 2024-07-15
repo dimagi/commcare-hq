@@ -1,5 +1,6 @@
 import json
 
+from memoized import memoized
 from django.http import Http404
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -12,7 +13,6 @@ from corehq.apps.prototype.models.data_cleaning.cache_store import (
     SlowSimulatorStore,
 )
 from corehq.apps.prototype.models.data_cleaning.columns import EditableColumn, CaseDataCleaningColumnManager
-from corehq.apps.prototype.models.data_cleaning.filters import ColumnFilter
 from corehq.apps.prototype.models.data_cleaning.tables import FakeCaseTable
 from corehq.apps.prototype.views.data_cleaning.mixins import HtmxActionMixin, hx_action
 from corehq.apps.prototype.views.htmx.pagination import SavedPaginatedTableView
@@ -23,17 +23,29 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
     urlname = "prototype_data_cleaning_htmx"
     table_class = FakeCaseTable
     column_manager_class = CaseDataCleaningColumnManager
-    data_store = FakeCaseDataStore
+    data_store_class = FakeCaseDataStore
     template_name = 'prototype/htmx/single_table.html'
 
+    @property
+    @memoized
+    def column_manager(self):
+        return self.column_manager_class(self.request)
+
+    @property
+    def data_store(self):
+        return self.data_store_class(self.request)
+
     def get_queryset(self):
-        table_data = self.data_store(self.request).get()
-        return ColumnFilter.filter_table_from_cache(
-            self.request, table_data
+        return self.column_manager.get_filtered_table_data(
+            self.data_store_class(self.request).get()
         )
 
+    @property
+    @memoized
+    def record_ids(self):
+        return [record["id"] for record in self.get_queryset()]
+
     def get_table_kwargs(self):
-        column_manager = self.column_manager_class(self.request)
         extra_columns = [self.table_class.get_row_select_column(
             extra_select_all_rows_attrs={
                 "class": "form-check-input js-disable-on-select-all",
@@ -62,11 +74,11 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
                 "checked": self.is_record_checked,
             },
         )]
-        extra_columns.extend(column_manager.get_visible_columns(
+        extra_columns.extend(self.column_manager.get_visible_columns(
             VisibleColumnStore(self.request).get()
         ))
         return {
-            'column_manager': column_manager,
+            'column_manager': self.column_manager,
             'extra_columns': extra_columns,
         }
 
@@ -93,17 +105,19 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
 
     @hx_action('post')
     def apply_edits(self, request, *args, **kwargs):
-        data_store = self.data_store(self.request)
-        all_rows = data_store.get()
+        all_rows = self.data_store.get()
+        has_edits = self.column_manager.has_edits()
         for row in all_rows:
             if not row['selected']:
+                continue
+            if has_edits and row['id'] not in self.record_ids:
                 continue
             edited_keys = [k for k in row.keys() if k.endswith('__edited')]
             for edited_key in edited_keys:
                 original_key = edited_key.replace('__edited', '')
                 row[original_key] = row[edited_key]
                 del row[edited_key]
-        data_store.set(all_rows)
+        self.data_store.set(all_rows)
         return self.get(request, *args, **kwargs)
 
     @hx_action('post')
@@ -114,16 +128,14 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
     @hx_action('post')
     def select_all(self, request, *args, **kwargs):
         is_selected = request.POST['selectAll'] == 'true'
-        data_store = self.data_store(self.request)
-        all_rows = data_store.get()
+        all_rows = self.data_store.get()
         for row in all_rows:
             row['selected'] = is_selected
-        data_store.set(all_rows)
+        self.data_store.set(all_rows)
         return self.get(request, *args, **kwargs)
 
     @hx_action('post')
     def select_page(self, request, *args, **kwargs):
-        data_store = self.data_store(self.request)
         is_selected = 'selectionAll' in request.POST
 
         # `pageRowIds` is inserted in htmx:configRequest event listener
@@ -131,19 +143,18 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         # the `js-select-row` css class.
         row_ids = request.POST.getlist('pageRowIds')
 
-        all_rows = data_store.get()
+        all_rows = self.data_store.get()
         for row_id in row_ids:
             all_rows[int(row_id)]['selected'] = is_selected
-        data_store.set(all_rows)
+        self.data_store.set(all_rows)
         return self.render_htmx_no_response(request, *args, **kwargs)
 
     @hx_action('post')
     def select_row(self, request, *args, **kwargs):
         is_selected = 'selection' in request.POST
-        data_store = self.data_store(self.request)
-        all_rows = data_store.get()
+        all_rows = self.data_store.get()
         all_rows[self.record_id]['selected'] = is_selected
-        data_store.set(all_rows)
+        self.data_store.set(all_rows)
         return self.render_htmx_no_response(request, *args, **kwargs)
 
     @property
@@ -158,7 +169,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         return record_id
 
     def get_record(self):
-        all_rows = self.data_store(self.request).get()
+        all_rows = self.data_store.get()
         return all_rows[self.record_id]
 
     @property
@@ -200,18 +211,16 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
 
     @hx_action('post')
     def cancel_edit(self, request, *args, **kwargs):
-        data_store = self.data_store(self.request)
-        all_rows = data_store.get()
+        all_rows = self.data_store.get()
         edited_slug = EditableColumn.get_edited_slug(self.column_slug)
         if edited_slug in all_rows[self.record_id]:
             del all_rows[self.record_id][edited_slug]
-        data_store.set(all_rows)
+        self.data_store.set(all_rows)
         return self.render_table_cell_response(request, *args, **kwargs)
 
     @hx_action('post')
     def edit_cell_value(self, request, *args, **kwargs):
-        data_store = self.data_store(self.request)
-        all_rows = data_store.get()
+        all_rows = self.data_store.get()
         edited_slug = EditableColumn.get_edited_slug(self.column_slug)
         new_value = request.POST['newValue']
         original_value = all_rows[self.record_id][self.column_slug]
@@ -221,7 +230,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         elif original_value == new_value and all_rows[self.record_id].get(edited_slug):
             # delete an existing edited value
             del all_rows[self.record_id][edited_slug]
-        data_store.set(all_rows)
+        self.data_store.set(all_rows)
         return self.render_table_cell_response(request, *args, **kwargs)
 
     @property
