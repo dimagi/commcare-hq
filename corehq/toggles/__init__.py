@@ -1783,7 +1783,7 @@ SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'sumologic_logs',
     'Send logs to sumologic',
     TAG_INTERNAL,
-    namespaces=[NAMESPACE_OTHER],
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 TARGET_COMMCARE_FLAVOR = StaticToggle(
