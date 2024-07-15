@@ -56,7 +56,7 @@ global_repeater_rate_limiter = RateLimiter(
 )
 
 
-SHOULD_RATE_LIMIT_REPEATERS = settings.UNIT_TESTING
+SHOULD_RATE_LIMIT_REPEATERS = not settings.UNIT_TESTING
 
 
 @run_only_when(lambda: SHOULD_RATE_LIMIT_REPEATERS)
