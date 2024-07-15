@@ -1665,11 +1665,6 @@ def subscribe_to_data_source_changes(request, domain, config_id):
 @toggles.SUPERSET_ANALYTICS.required_decorator()
 @api_throttle
 def unsubscribe_from_data_source(request, domain, config_id):
-    repeater = DataSourceRepeater.objects.filter(
-        domain=domain,
-        options={"data_source_id": config_id},
-    )
-
     if 'client_id' not in request.POST:
         return HttpResponse(
             status=422,
