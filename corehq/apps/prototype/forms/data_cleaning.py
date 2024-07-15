@@ -25,11 +25,11 @@ class AddColumnFilterForm(forms.Form):
         label=gettext_lazy("Value"),
     )
 
-    def __init__(self, table_config, *args, **kwargs):
+    def __init__(self, column_manager, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['slug'].choices = [
             (c[0], c[1].verbose_name)
-            for c in table_config.available_columns
+            for c in column_manager.get_available_columns()
         ]
 
         self.helper = FormHelper()
@@ -77,13 +77,13 @@ class CleanColumnDataForm(forms.Form):
         required=False,
     )
 
-    def __init__(self, table_config, data_store, *args, **kwargs):
+    def __init__(self, column_manager, data_store, *args, **kwargs):
         self.data_store = data_store
         super().__init__(*args, **kwargs)
 
         self.fields['slug'].choices = [
             ('', _("Select a property...")),
-        ] + table_config.get_editable_column_options()
+        ] + column_manager.get_editable_column_options()
 
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(

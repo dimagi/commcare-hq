@@ -1,7 +1,7 @@
 from django.utils.translation import gettext_lazy
 
 from corehq.apps.prototype.models.data_cleaning.cache_store import FilterColumnStore
-from corehq.apps.prototype.models.data_cleaning.tables import FakeCaseTable
+from corehq.apps.prototype.models.data_cleaning.columns import CaseDataCleaningColumnManager
 
 
 class ColumnMatchType:
@@ -28,7 +28,7 @@ class ColumnMatchType:
 class ColumnFilter:
     """Not intended for production use!
     Use this only for in-memory prototype!"""
-    table_config = FakeCaseTable
+    column_manager = CaseDataCleaningColumnManager
 
     def __init__(self, slug, match, value):
         self.slug = slug
@@ -39,7 +39,7 @@ class ColumnFilter:
         return dict(ColumnMatchType.OPTIONS)[self.match]
 
     def column_name(self):
-        return dict(FakeCaseTable.available_columns)[self.slug].verbose_name
+        return dict(self.column_manager.get_available_columns())[self.slug].verbose_name
 
     @classmethod
     def get_filters_from_cache(cls, request):

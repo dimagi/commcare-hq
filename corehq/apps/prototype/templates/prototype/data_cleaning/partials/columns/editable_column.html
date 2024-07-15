@@ -6,7 +6,7 @@
                isSubmitting: false,
                cellValue: "{% if edited_value %}{{ edited_value }}{% else %}{{ value }}{% endif %}" }'
    {% if is_partial_update %}
-     x-init="$dispatch('updateApplyEditsButton', {{ table.has_edits|BOOL }})"
+     x-init="$dispatch('updateApplyEditsButton', {{ table.column_manager.has_edits|BOOL }})"
    {% endif %}>
 
   <div class="inline-edit-block"

@@ -11,7 +11,7 @@ from corehq.apps.prototype.models.data_cleaning.cache_store import (
     FakeCaseDataStore,
     SlowSimulatorStore,
 )
-from corehq.apps.prototype.models.data_cleaning.columns import EditableColumn
+from corehq.apps.prototype.models.data_cleaning.columns import EditableColumn, CaseDataCleaningColumnManager
 from corehq.apps.prototype.models.data_cleaning.filters import ColumnFilter
 from corehq.apps.prototype.models.data_cleaning.tables import FakeCaseTable
 from corehq.apps.prototype.views.data_cleaning.mixins import HtmxActionMixin, hx_action
@@ -22,16 +22,9 @@ from corehq.apps.prototype.views.htmx.pagination import SavedPaginatedTableView
 class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
     urlname = "prototype_data_cleaning_htmx"
     table_class = FakeCaseTable
+    column_manager_class = CaseDataCleaningColumnManager
     data_store = FakeCaseDataStore
     template_name = 'prototype/htmx/single_table.html'
-
-    @property
-    def simulate_slow_response(self):
-        return bool(SlowSimulatorStore(self.request).get())
-
-    @property
-    def slow_response_time(self):
-        return SlowSimulatorStore(self.request).get()
 
     def get_queryset(self):
         table_data = self.data_store(self.request).get()
@@ -40,38 +33,41 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         )
 
     def get_table_kwargs(self):
-        visible_columns = VisibleColumnStore(self.request).get()
+        column_manager = self.column_manager_class(self.request)
+        extra_columns = [self.table_class.get_row_select_column(
+            extra_select_all_rows_attrs={
+                "class": "form-check-input js-disable-on-select-all",
+                "name": "selectionAll",  # used in hx_action response below
+                "value": "all",
+                # htmx
+                "hx-swap": "none",
+                "hx-post": self.request.get_full_path(),
+                "hq-hx-action": "select_page",
+                "hx-disabled-elt": ".js-disable-on-select-all",
+                "hq-hx-table-select-all": "js-select-row",
+                "hq-hx-table-select-all-trigger": "click",
+                "hq-hx-table-select-all-param": "pageRowIds",
+            },
+            extra_select_row_attrs={
+                "class": "form-check-input js-select-row js-disable-on-select-all",
+                # htmx
+                "hx-swap": "none",
+                "hx-post": self.request.get_full_path(),
+                "hq-hx-action": "select_row",
+                "hx-vals": self.get_checkbox_hx_vals,
+                "hx-disabled-elt": "this",
+            },
+            extra_select_checkbox_kwargs={
+                "accessor": "id",
+                "checked": self.is_record_checked,
+            },
+        )]
+        extra_columns.extend(column_manager.get_visible_columns(
+            VisibleColumnStore(self.request).get()
+        ))
         return {
-            'extra_columns': self.table_class.get_visible_columns(
-                visible_columns,
-                allow_row_selection=True,
-                extra_select_all_rows_attrs={
-                    "class": "form-check-input js-disable-on-select-all",
-                    "name": "selectionAll",  # used in hx_action response below
-                    "value": "all",
-                    # htmx
-                    "hx-swap": "none",
-                    "hx-post": self.request.get_full_path(),
-                    "hq-hx-action": "select_page",
-                    "hx-disabled-elt": ".js-disable-on-select-all",
-                    "hq-hx-table-select-all": "js-select-row",
-                    "hq-hx-table-select-all-trigger": "click",
-                    "hq-hx-table-select-all-param": "pageRowIds",
-                },
-                extra_select_row_attrs={
-                    "class": "form-check-input js-select-row js-disable-on-select-all",
-                    # htmx
-                    "hx-swap": "none",
-                    "hx-post": self.request.get_full_path(),
-                    "hq-hx-action": "select_row",
-                    "hx-vals": self.get_checkbox_hx_vals,
-                    "hx-disabled-elt": "this",
-                },
-                extra_select_checkbox_kwargs={
-                    "accessor": "id",
-                    "checked": self.is_record_checked,
-                },
-            ),
+            'column_manager': column_manager,
+            'extra_columns': extra_columns,
         }
 
     @staticmethod
@@ -112,7 +108,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
 
     @hx_action('post')
     def clear_filters(self, request, *args, **kwargs):
-        self.table_class.clear_filters(request)
+        self.column_manager.clear_filters()
         return self.get(request, *args, **kwargs)
 
     @hx_action('post')
@@ -173,7 +169,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         return slug
 
     def get_column(self):
-        return dict(self.table_class.available_columns)[self.column_slug]
+        return dict(self.column_manager_class.get_available_columns())[self.column_slug]
 
     def get_cell_context_data(self, request):
         column = self.get_column()
@@ -181,7 +177,10 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         value = record[self.column_slug]
 
         table = config.RequestConfig(request).configure(
-            self.table_class(data=[])
+            self.table_class(
+                column_manager=self.column_manager_class(self.request),
+                data=[]
+            )
         )
 
         bound_row = rows.BoundRow(record, table=table)
@@ -224,3 +223,11 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
             del all_rows[self.record_id][edited_slug]
         data_store.set(all_rows)
         return self.render_table_cell_response(request, *args, **kwargs)
+
+    @property
+    def simulate_slow_response(self):
+        return bool(SlowSimulatorStore(self.request).get())
+
+    @property
+    def slow_response_time(self):
+        return SlowSimulatorStore(self.request).get()

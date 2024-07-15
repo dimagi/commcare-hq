@@ -55,7 +55,7 @@
       </button>
     </div>
 
-    {%  if table.has_filters %}
+    {%  if table.column_manager.has_filters %}
       <div class="ps-2 ms-2">
         <i class="fa-solid fa-filter"></i>
         {% blocktrans with table.page.paginator.count as num_records %}
@@ -67,14 +67,14 @@
                 hq-hx-action="clear_filters"
                 hx-post="{{ request.path_info }}{% querystring %}"
                 hq-hx-loading="{{ table.loading_indicator_id  }}"
-                hx-on::after-request="htmx.trigger('#{{ table.filter_form_id }}', 'refreshFilters');">
+                hx-on::after-request="htmx.trigger('#{{ table.column_manager.filter_form_id }}', 'refreshFilters');">
           <i class="fa-solid fa-close"></i> {% trans "Clear Filters" %}
         </button>
       </div>
     {% endif %}
 
     <div class="ps-2 ms-2 edit-button"
-         x-data="{ hasEdits: {{ table.has_edits|BOOL }} }"
+         x-data="{ hasEdits: {{ table.column_manager.has_edits|BOOL }} }"
          x-show="hasEdits && numRecordsSelected > 0"
          @update-apply-edits-button.camel.window="hasEdits = $event.detail">
       <i class="fa-solid fa-pencil"></i>
