@@ -1,23 +1,26 @@
 from django.utils.translation import gettext_lazy
 from django_tables2 import columns, tables
 
-from corehq.apps.prototype.models.data_cleaning.cache_store import FilterColumnStore
+from corehq.apps.prototype.models.data_cleaning.cache_store import FilterColumnStore, FakeCaseDataStore
+from corehq.apps.prototype.models.data_cleaning.columns import EditableColumn
 
 
 class FakeCaseTable(tables.Table):
     css_id = "fake-case-table"
+    configure_columns_form_id = "configure-columns-form"
     filter_form_id = "filter-columns-form"
+    clean_data_form_id = "clean-columns-form"
     available_columns = [
-        ("full_name", columns.Column(
+        ("full_name", EditableColumn(
             verbose_name=gettext_lazy("Name"),
         )),
-        ("color", columns.Column(
+        ("color", EditableColumn(
             verbose_name=gettext_lazy("Color"),
         )),
-        ("big_cat", columns.Column(
+        ("big_cat", EditableColumn(
             verbose_name=gettext_lazy("Big Cats"),
         )),
-        ("planet", columns.Column(
+        ("planet", EditableColumn(
             verbose_name=gettext_lazy("Planet"),
         )),
         ("submitted_on", columns.Column(
@@ -36,8 +39,8 @@ class FakeCaseTable(tables.Table):
             'class': 'table table-striped',
         }
         row_attrs = {
-            "x-data": "{ is_selected: $el.firstElementChild.firstElementChild.checked }",
-            ":class": "{ 'table-primary': is_selected }",
+            "x-data": "{ isRowSelected: $el.firstElementChild.firstElementChild.checked }",
+            ":class": "{ 'table-primary': isRowSelected }",
         }
 
     def __init__(self, *args, **kwargs):
@@ -53,9 +56,27 @@ class FakeCaseTable(tables.Table):
         column_map = dict(cls.available_columns)
         return [(slug, column_map[slug]) for slug in column_slugs]
 
+    @classmethod
+    def get_editable_column_options(cls):
+        return [
+            (slug, col.verbose_name) for slug, col in cls.available_columns
+            if type(col) is EditableColumn
+        ]
+
     def has_filters(self):
         if hasattr(self, 'request'):
             return len(FilterColumnStore(self.request).get()) > 0
+        return False
+
+    def has_edits(self):
+        # todo make this better...
+        #  this was a quick solution for prototype, obviously not production solution
+        if hasattr(self, 'request'):
+            rows = FakeCaseDataStore(self.request).get()
+            for row in rows:
+                edited_keys = [k for k in row.keys() if k.endswith("__edited")]
+                if edited_keys:
+                    return True
         return False
 
     @classmethod
