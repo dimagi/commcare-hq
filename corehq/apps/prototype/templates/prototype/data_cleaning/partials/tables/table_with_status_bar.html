@@ -73,7 +73,7 @@
       </div>
     {% endif %}
 
-    <div class="ps-2 ms-2 edit-button"
+    <div class="ps-2 ms-2"
          x-data="{ hasEdits: {{ table.column_manager.has_edits|BOOL }} }"
          x-show="hasEdits && numRecordsSelected > 0"
          @update-apply-edits-button.camel.window="hasEdits = $event.detail">
