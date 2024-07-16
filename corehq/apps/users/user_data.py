@@ -82,11 +82,9 @@ class UserData:
                 provided_data[COMMCARE_LOCATION_IDS] = user_location_data(
                     self._couch_user.get_location_ids(self.domain))
 
-        if settings.UNIT_TESTING:
-            # Some test don't have an actual user existed
-            if self._couch_user:
-                _add_location_data()
-        else:
+        # Some test don't have an actual user existed
+        # Web User don't store location fields in user data
+        if self._couch_user and self._couch_user.is_commcare_user() or not settings.UNIT_TESTING:
             _add_location_data()
 
         return provided_data
