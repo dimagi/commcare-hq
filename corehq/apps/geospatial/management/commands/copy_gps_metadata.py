@@ -3,18 +3,17 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.mock import CaseBlock
-from dimagi.utils.chunked import chunked
 
+from corehq.apps.es import FormES
 from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.document_stores import FormDocumentStore
 
-FORM_ID_CHUNK_SIZE = 1000
+FORMS_CHUNK_SIZE = 1000
 CASE_BLOCK_CHUNK_SIZE = 100
 
 
 class Command(BaseCommand):
-    help = "Copy GPS coordinates from form metadata to case property"
+    help = 'Copy GPS coordinates from form metadata to case property'
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
@@ -71,16 +70,24 @@ class Command(BaseCommand):
         if case_blocks_chunk:
             if not is_dry_run:
                 submit_chunk(domain, case_blocks_chunk)
-        print(f"Submitted {total_case_updates} case updates")
+        print(f'Submitted {total_case_updates} case updates')
 
 
 def iter_forms_with_location(domain, xmlns=None):
-    doc_store = FormDocumentStore(domain, xmlns)
-    doc_ids = doc_store.iter_document_ids()
-    for doc_ids_chunk in chunked(doc_ids, FORM_ID_CHUNK_SIZE):
-        for doc in doc_store.iter_documents(doc_ids_chunk):
-            if doc['meta'].get('location'):
-                yield doc
+    offset = 0
+    while True:
+        query = FormES().domain(domain)
+        if xmlns:
+            query = query.xmlns(xmlns)
+        query = query.sort('received_on').size(FORMS_CHUNK_SIZE).start(offset)
+        for es_form in query.run().hits:
+            # For an example value of `es_form`, see
+            # corehq.apps.geospatial.tests.test_copy_gps_metadata.TestGetFormCases
+            if es_form['form']['meta'].get('location'):
+                yield es_form['form']
+        if query.run().total < FORMS_CHUNK_SIZE:
+            break
+        offset += FORMS_CHUNK_SIZE
 
 
 def get_form_cases(form, case_type=None):
