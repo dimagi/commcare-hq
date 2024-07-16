@@ -55,6 +55,11 @@ hqDefine('analytix/js/gtm', [
                 isCommCare: _get('userIsCommCareUser', 'no', 'yes'),
                 domain: _get('domain', 'none'),
                 hqEnvironment: _get('hqInstance', 'none'),
+                isTestDomain: _get('isTestDomain', 'none'),
+                isDomainActive: _get('isDomainActive', 'no', 'yes'),
+                domainSubscription: _get('domainSubscription', 'none'),
+                domainSubscriptionEdition: _get('domainSubscriptionEdition', 'none'),
+                domainSubscriptionServiceType: _get('domainSubscriptionServiceType', 'none'),
             };
             // userProperties are sent first to be available for use as early as possible
             gtmSendEvent('userProperties', userProperties);
