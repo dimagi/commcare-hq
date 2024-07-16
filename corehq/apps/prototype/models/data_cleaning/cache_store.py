@@ -51,6 +51,11 @@ class SlowSimulatorStore(BaseCacheStore):
     default_value = 0
 
 
+class ShowWhitespacesStore(BaseCacheStore):
+    slug = 'prototype-slow-simulator'
+    default_value = False
+
+
 class FakeCaseDataStore(BaseCacheStore):
     slug = 'prototype-case-data-store'
 

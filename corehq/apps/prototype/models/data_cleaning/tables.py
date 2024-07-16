@@ -7,7 +7,7 @@ class FakeCaseTable(tables.Table):
 
     class Meta:
         attrs = {
-            'class': 'table table-striped',
+            'class': 'table table-striped align-middle',
         }
         template_name = "prototype/data_cleaning/partials/tables/table_with_status_bar.html"
         row_attrs = {

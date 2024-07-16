@@ -1,10 +1,11 @@
 {% load django_tables2 %}
 {% load hq_shared_tags %}
+{% load data_cleaning_tags %}
 
 <div class="editable-column-container"
      x-data='{ isEditing: false,
                isSubmitting: false,
-               cellValue: "{% if edited_value %}{{ edited_value }}{% else %}{{ value }}{% endif %}" }'
+               cellValue: "{% if edited_value %}{{ edited_value|escapejs }}{% else %}{{ value|escapejs }}{% endif %}" }'
    {% if is_partial_update %}
      x-init="$dispatch('updateApplyEditsButton', {{ table.column_manager.has_edits|BOOL }})"
    {% endif %}>
@@ -20,16 +21,51 @@
             hx-disabled-elt="find button"
             hx-swap="outerHTML"
             hx-target="closest .editable-column-container">
-        <div class="badge text-bg-danger">{{ value }}</div>
-        <div class="badge text-bg-success">{{ edited_value }}</div>
-        <button type="submit"
-                class="btn btn-outline-danger btn-sm htmx-loading"
-                @click="isSubmitting = true">
-          <i class="fa fa-close"></i>
-        </button>
+
+        <div class="d-flex align-items-center">
+          <div class="dc-diff-view">
+            <div class="dc-diff-before">
+              <span x-show="!$store.whitespaces.show">
+                {{ value }}
+              </span>
+              <span x-show="$store.whitespaces.show">
+                {{ value|whitespaces }}
+              </span>
+            </div>
+            <br />
+            <div class="dc-diff-after">
+              <span x-show="!$store.whitespaces.show">
+                {{ edited_value }}
+              </span>
+              <span x-show="$store.whitespaces.show">
+                {{ edited_value|whitespaces }}
+              </span>
+            </div>
+          </div>
+          <div class="ms-2">
+            <button type="submit"
+                    class="btn btn-outline-danger btn-sm htmx-loading"
+                    @click="isSubmitting = true">
+              <i class="fa fa-close"></i>
+            </button>
+          </div>
+        </div>
+
       </form>
     {% else %}
-      {{ value }}
+
+      {% if value %}
+        <div x-show="!$store.whitespaces.show">
+          {{ value }}
+        </div>
+        <div class="dc-value"
+             x-show="$store.whitespaces.show">
+          {{ value|whitespaces }}
+        </div>
+      {% else %}
+        &nbsp;
+      {% endif %}
+
     {% endif %}
     <button class="btn btn-link btn-sm inline-edit-button"
             type="button"

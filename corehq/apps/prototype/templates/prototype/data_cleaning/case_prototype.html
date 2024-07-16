@@ -15,6 +15,25 @@
       <div>
         {% include "prototype/data_cleaning/partials/button_bar.html" %}
       </div>
+      <div class="ps-3">
+        <div class="form-check form-switch">
+          <input class="form-check-input"
+                 id="showWhitespacesSwitch"
+                 type="checkbox"
+                 role="switch"
+                 name="show_whitespaces"
+                 hq-hx-action="toggle_whitespace"
+                 hx-post="{{ request.path }}"
+                 hx-swap="none"
+                 hx-disabled-elt="this"
+                 x-init="$store.whitespaces.show = {{ show_whitespaces|BOOL }}"
+                 x-model="$store.whitespaces.show">
+          <label class="form-check-label"
+                 for="showWhitespacesSwitch">
+            {% trans "Show Whitespaces" %}
+          </label>
+        </div>
+      </div>
     </div>
     <div class="mx-3"
          hx-get="{% url "prototype_data_cleaning_htmx" %}{% querystring %}"

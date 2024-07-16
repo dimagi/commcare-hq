@@ -14,13 +14,14 @@ from corehq.apps.prototype.models.data_cleaning.cache_store import (
     FakeCaseDataStore,
     SlowSimulatorStore,
 )
+from corehq.apps.prototype.views.data_cleaning.mixins import HtmxActionMixin, hx_action
 
 
 @method_decorator(use_htmx, name='dispatch')
 @method_decorator(use_alpinejs, name='dispatch')
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.SAAS_PROTOTYPE.required_decorator(), name='dispatch')
-class CaseDataCleaningPrototypeView(BasePageView):
+class CaseDataCleaningPrototypeView(HtmxActionMixin, BasePageView):
     urlname = "prototype_data_cleaning_case"
     template_name = 'prototype/data_cleaning/case_prototype.html'
 
@@ -32,7 +33,18 @@ class CaseDataCleaningPrototypeView(BasePageView):
     def page_context(self):
         return {
             "case_type": "child",
+            "show_whitespaces": ShowWhitespacesStore(self.request).get(),
         }
+
+    @hx_action('post')
+    def toggle_whitespace(self, request, *args, **kwargs):
+        space_store = ShowWhitespacesStore(request)
+        if 'show_whitespaces' in request.POST:
+            space_store.set(True)
+        else:
+            space_store.delete()
+        return self.render_htmx_no_response(request, *args, **kwargs)
+
 
 
 @require_superuser

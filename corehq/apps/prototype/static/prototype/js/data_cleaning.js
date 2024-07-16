@@ -1,17 +1,18 @@
 'use strict';
 
 hqDefine("prototype/js/data_cleaning",[
+    'underscore',
     'sortablejs',
     'es6!hqwebapp/js/bootstrap5_loader',
     'prototype/js/htmx_action',
     'prototype/js/hq_htmx_loading',
     'prototype/js/hq_htmx_select_all',
-], function (Sortable, bootstrap) {
+], function (_, Sortable, bootstrap) {
     let htmx = window.htmx;
+    // htmx.config.defaultSwapStyle = "outerHTML";
     htmx.onLoad(function (content) {
-        let sortables = content.querySelectorAll(".sortable");
-        for (let i = 0; i < sortables.length; i++) {
-            let sortable = sortables[i];
+
+        _.each(content.querySelectorAll(".sortable"), function (sortable) {
             let sortableInstance = new Sortable(sortable, {
                 animation: 150,
 
@@ -31,7 +32,11 @@ hqDefine("prototype/js/data_cleaning",[
             sortable.addEventListener("htmx:afterSwap", function () {
                 sortableInstance.option("disabled", false);
             });
-        }
+        });
+
+        _.each(document.querySelectorAll('[data-bs-toggle="tooltip"]'), function (el) {
+            new bootstrap.Tooltip(el);
+        });
     });
     document.body.addEventListener('htmx:afterRequest', function (evt) {
         if (evt.detail.elt.classList.contains('htmx-request')) {
