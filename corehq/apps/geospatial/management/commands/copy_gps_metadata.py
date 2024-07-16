@@ -25,13 +25,16 @@ class Command(BaseCommand):
             action='store_true',
             help='Flag forms with multiple cases',
         )
+        parser.add_argument('--dry-run', action='store_true')
 
     def handle(self, *args, **options):
         domain = options['domain']
+        is_dry_run = options['dry_run']
         geo_case_property = get_geo_case_property(domain)
 
         latest_case_gps = {}
         case_blocks_chunk = []
+        total_case_updates = 0
         for form in iter_forms_with_location(domain, options.get('xmlns')):
             cases = get_form_cases(form, options.get('case_type'))
             if options['flag_multiple'] and len(cases) > 1:
@@ -40,6 +43,8 @@ class Command(BaseCommand):
                     f"{', '.join([case['@case_id'] for case in cases])}",
                     file=self.stderr,
                 )
+                # To log output to STDERR, use
+                #     $ ./manage.py copy_gps_metadata ... 2> errors.log
                 continue
 
             for case in cases:
@@ -51,6 +56,7 @@ class Command(BaseCommand):
                     # This form has an older location
                     continue
 
+                total_case_updates += 1
                 latest_case_gps[case['@case_id']] = gps_taken_at
                 case_block = get_case_block(
                     case['@case_id'],
@@ -59,10 +65,13 @@ class Command(BaseCommand):
                 )
                 case_blocks_chunk.append(case_block)
                 if len(case_blocks_chunk) >= CASE_BLOCK_CHUNK_SIZE:
-                    submit_chunk(domain, case_blocks_chunk)
+                    if not is_dry_run:
+                        submit_chunk(domain, case_blocks_chunk)
                     case_blocks_chunk = []
         if case_blocks_chunk:
-            submit_chunk(domain, case_blocks_chunk)
+            if not is_dry_run:
+                submit_chunk(domain, case_blocks_chunk)
+        print(f"Submitted {total_case_updates} case updates")
 
 
 def iter_forms_with_location(domain, xmlns=None):
