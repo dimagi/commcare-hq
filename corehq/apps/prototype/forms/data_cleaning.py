@@ -149,12 +149,6 @@ class CleanColumnDataForm(forms.Form):
             ),
         )
 
-    def clean(self):
-        action = self.cleaned_data['action']
-        if action in CleaningActionType.FIND_ACTIONS:
-            if not self.cleaned_data['find_string']:
-                self.add_error('find_string', _("Please include a value to find and replace."))
-
     def apply_actions_to_data(self):
         action_map = {
             CleaningActionType.REPLACE: self._replace,
@@ -189,8 +183,10 @@ class CleanColumnDataForm(forms.Form):
             if self.filtered_ids and row["id"] not in self.filtered_ids:
                 continue
             column = row[slug]
-            if find_string in column:
+            if find_string and find_string in column:
                 row[edited_slug] = column.replace(find_string, replace_string)
+            elif find_string == column:
+                row[edited_slug] = replace_string
         self.data_store.set(rows)
 
     def _strip_whitespace(self):
