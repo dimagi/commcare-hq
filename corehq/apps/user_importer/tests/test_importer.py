@@ -1839,7 +1839,12 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
     def test_uncategorized_data(self):
         self._test_uncategorized_data(is_web_upload=True)
 
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_user_data_ignores_location_fields(self):
+        # Users have a “primary location” and a list of “assigned locations”.
+        # These are stored directly on the user model and stored in duplicate in the user data.
+        # But it is for mobile workers only. Web User don't store a duplicate in user data.
+        # This test ensures user data don't store a duplicate when create new Web User or edit existing Web User.
         self.setup_locations()
         import_users_and_groups(
             self.domain.name,
