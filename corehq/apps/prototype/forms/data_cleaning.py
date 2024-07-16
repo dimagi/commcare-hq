@@ -1,4 +1,5 @@
 import json
+import re
 
 from django import forms
 from django.utils.translation import gettext as _, gettext_lazy
@@ -190,5 +191,16 @@ class CleanColumnDataForm(forms.Form):
         self.data_store.set(rows)
 
     def _strip_whitespace(self):
-        # todo
-        pass
+        pattern = r"(^[ ]+)|([ ]+$)|([ ]{2,})|([\n]+)|([\t]+)"
+        rows = self.data_store.get()
+        slug = self.cleaned_data['slug']
+        edited_slug = EditableColumn.get_edited_slug(slug)
+        for row in rows:
+            if not row["selected"]:
+                continue
+            if self.filtered_ids and row["id"] not in self.filtered_ids:
+                continue
+            column = row[slug]
+            if re.search(pattern, column):
+                row[edited_slug] = re.sub(pattern, '', column)
+        self.data_store.set(rows)
