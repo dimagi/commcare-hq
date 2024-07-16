@@ -13,6 +13,9 @@ from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.prototype.models.data_cleaning.cache_store import (
     FakeCaseDataStore,
     SlowSimulatorStore,
+    VisibleColumnStore,
+    FilterColumnStore,
+    ShowWhitespacesStore,
 )
 from corehq.apps.prototype.views.data_cleaning.mixins import HtmxActionMixin, hx_action
 
@@ -46,17 +49,25 @@ class CaseDataCleaningPrototypeView(HtmxActionMixin, BasePageView):
         return self.render_htmx_no_response(request, *args, **kwargs)
 
 
-
 @require_superuser
 def reset_data(request):
-    data_store = FakeCaseDataStore(request)
-    username = request.GET.get('username')
-    if username:
-        data_store.username = username
-    data_store.delete()
+    stores = [
+        VisibleColumnStore,
+        FakeCaseDataStore,
+        FilterColumnStore,
+        ShowWhitespacesStore,
+    ]
+    applied_to_user = None
+    for store_class in stores:
+        data_store = store_class(request)
+        username = request.GET.get('username')
+        if username:
+            data_store.username = username
+        applied_to_user = data_store.username
+        data_store.delete()
     return JsonResponse({
         "cleared": True,
-        "username": data_store.username,
+        "username": applied_to_user,
     })
 
 
