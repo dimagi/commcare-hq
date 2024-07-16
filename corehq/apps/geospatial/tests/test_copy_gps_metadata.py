@@ -1,9 +1,11 @@
 import doctest
+from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
 from corehq.apps.geospatial.management.commands.copy_gps_metadata import (
     get_form_cases,
+    iter_forms_with_location,
 )
 
 
@@ -135,12 +137,70 @@ class TestGetFormCases(SimpleTestCase):
             }
         )
 
-    def test_get_no_form_cases(self):
+    def test_get_form_cases_with_other_case_type(self):
         cases = get_form_cases(self.es_form['form'], 'not-a-case-type')
         self.assertEqual(
             set(c['@case_id'] for c in cases),
             set()
         )
+
+    def test_form_with_no_cases(self):
+        empty_es_form = {
+            'doc_type': 'XFormInstance',
+            'form': {
+                '@version': '1',
+                '@uiVersion': '1',
+                '@xmlns': 'http://commcarehq.org/case',
+                'meta': {},
+                'case': [],
+                '#type': 'system',
+            }
+        }
+        cases = get_form_cases(empty_es_form['form'])
+        self.assertEqual(len(cases), 0)
+
+
+class TestIterFormsWithLocation(SimpleTestCase):
+
+    @patch('corehq.apps.es.forms.FormES.run')
+    def test_location_in_metadata_yields_form(self, mock_run):
+        mock_run.return_value = self.es_query_set([{
+            'form': {
+                'meta': {'location': '55.948 -3.199'},
+                '@id': 'form1'
+            }
+        }])
+        forms = list(iter_forms_with_location('test-domain'))
+        self.assertEqual(len(forms), 1)
+        self.assertEqual(forms[0]['@id'], 'form1')
+
+    @patch('corehq.apps.es.forms.FormES.run')
+    def test_no_location_in_metadata_skips_form(self, mock_run):
+        mock_run.return_value = self.es_query_set([{
+            'form': {
+                'meta': {},
+                '@id': 'form1'
+            }
+        }])
+        forms = list(iter_forms_with_location('test-domain'))
+        self.assertEqual(len(forms), 0)
+
+    @patch('corehq.apps.es.forms.FormES.run')
+    def test_multiple_forms_returned(self, mock_run):
+        mock_run.return_value = self.es_query_set([
+            {'form': {'meta': {'location': '55.948 -3.199'}, '@id': 'form1'}},
+            {'form': {'meta': {'location': '55.948 -3.199'}, '@id': 'form2'}}
+        ])
+        forms = list(iter_forms_with_location('test-domain'))
+        self.assertEqual(len(forms), 2)
+        self.assertEqual(forms[0]['@id'], 'form1')
+        self.assertEqual(forms[1]['@id'], 'form2')
+
+    def es_query_set(self, docs):
+        return type('ESFakeResponse', (object,), {
+            'hits': docs,
+            'total': len(docs)
+        })
 
 
 def test_doctests():
