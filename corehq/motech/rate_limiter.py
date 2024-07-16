@@ -28,7 +28,7 @@ def _get_per_user_repeater_wait_milliseconds_rate_definition(domain):
                 per_hour=30,
                 per_minute=0.6,
                 per_second=None,
-            ),
+            ).times(1000),
         ),
         constant_rate_definition=get_dynamic_rate_definition(
             'repeater_wait_milliseconds',
@@ -51,7 +51,7 @@ global_repeater_rate_limiter = RateLimiter(
             per_hour=360000,
             per_minute=6000,
             per_second=100,
-        )
+        ).times(1000)
     ).get_rate_limits(),
 )
 
