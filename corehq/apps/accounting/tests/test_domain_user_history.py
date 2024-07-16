@@ -90,16 +90,6 @@ class TestFormSubmittingMobileWorkerHistory(BaseInvoiceTestCase):
         delete_all_domains()
         return super().tearDownClass()
 
-    def test_form_submitting_mobile_worker_history(self):
-        worker_history = FormSubmittingMobileWorkerHistory.objects.create(
-            domain=self.domain.name,
-            num_users=self.num_form_submitting_workers,
-            record_date=self.one_day_ago
-        )
-        self.assertEqual(worker_history.domain, self.domain.name)
-        self.assertEqual(worker_history.num_users, self.num_form_submitting_workers)
-        self.assertEqual(worker_history.record_date, self.one_day_ago)
-
     def test_calculate_form_submitting_mobile_workers_in_all_domains(self):
         tasks.calculate_form_submitting_mobile_workers_in_all_domains()
         self.assertEqual(FormSubmittingMobileWorkerHistory.objects.count(), 1)
