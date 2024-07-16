@@ -61,7 +61,26 @@ class FakeCaseDataStore(BaseCacheStore):
 
     @property
     def default_value(self):
-        return _get_fake_data(100)
+        return _get_fake_data(111)
+
+
+def _simulate_issues(value, can_be_missing=False):
+    is_missing = bool(random.getrandbits(1))
+    if is_missing and can_be_missing:
+        return ""
+
+    num_pre_space = random.choice([0, 1, 2, 4])
+    num_post_space = random.choice([0, 1, 2, 4])
+    value = ' ' * num_pre_space + value + ' ' * num_post_space
+
+    newline = bool(random.getrandbits(1))
+    if newline:
+        value = value + "\n"
+
+    tab = bool(random.getrandbits(1))
+    if tab:
+        value = "\t" + value
+    return value
 
 
 @quickcache(['num_entries'])
@@ -72,10 +91,10 @@ def _get_fake_data(num_entries):
         rows.append({
             "id": row,
             "selected": False,
-            "full_name": f"{fake_data.get_first_name()} {fake_data.get_last_name()}",
-            "color": fake_data.get_color(),
-            "big_cat": fake_data.get_big_cat(),
-            "planet": fake_data.get_planet(),
+            "full_name": _simulate_issues(f"{fake_data.get_first_name()} {fake_data.get_last_name()}"),
+            "color": _simulate_issues(fake_data.get_color(), True),
+            "big_cat": _simulate_issues(fake_data.get_big_cat(), True),
+            "planet": _simulate_issues(fake_data.get_planet(), True),
             "submitted_on": fake_data.get_past_date(),
             "app": fake_data.get_fake_app(),
             "status": random.choice(status),
