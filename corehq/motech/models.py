@@ -279,6 +279,12 @@ class ConnectionSettings(models.Model):
         self.is_deleted = True
         self.save()
 
+    def clear_caches(self):
+        try:
+            del self.used_by
+        except AttributeError:
+            pass
+
 
 class RequestLog(models.Model):
     """
