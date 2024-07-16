@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.mock import CaseBlock
@@ -28,6 +30,7 @@ class Command(BaseCommand):
         domain = options['domain']
         geo_case_property = get_geo_case_property(domain)
 
+        latest_case_gps = {}
         case_blocks_chunk = []
         for form in iter_forms_with_location(domain, options.get('xmlns')):
             cases = get_form_cases(form, options.get('case_type'))
@@ -38,7 +41,17 @@ class Command(BaseCommand):
                     file=self.stderr,
                 )
                 continue
+
             for case in cases:
+                gps_taken_at = as_datetime(form['meta']['timeStart'])
+                if (
+                    case['@case_id'] in latest_case_gps
+                    and gps_taken_at < latest_case_gps[case['@case_id']]
+                ):
+                    # This form has an older location
+                    continue
+
+                latest_case_gps[case['@case_id']] = gps_taken_at
                 case_block = get_case_block(
                     case['@case_id'],
                     geo_case_property,
@@ -71,6 +84,21 @@ def get_form_cases(form, case_type=None):
         ):
             cases.append(case)
     return cases
+
+
+def as_datetime(js_datetime_str):
+    """
+    Convert a JavaScript datetime string to a Python datetime object
+
+    >>> as_datetime('2024-07-15T22:08:24.439433Z')
+    datetime.datetime(2024, 7, 15, 22, 8, 24, 439433)
+    >>> as_datetime('2024-07-15T22:08:24.439433+01:00')
+    Traceback (most recent call last):
+        ...
+    ValueError: time data '2024-07-15T22:08:24.439433+01:00' does not match format '%Y-%m-%dT%H:%M:%S.%fZ'
+
+    """
+    return datetime.strptime(js_datetime_str, '%Y-%m-%dT%H:%M:%S.%fZ')
 
 
 def get_case_block(case_id, case_property, value):
