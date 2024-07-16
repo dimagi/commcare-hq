@@ -9,7 +9,8 @@
             "clinic_id": "5020280",
             "instanceID": "7H46J37FGH3",
             "user_id": "f7f0c79e-8b79-11df-b7de-005056c00008",
-            "username": "admin"
+            "username": "admin",
+            "formLoadTime": "111"
         },
         "assessment": {
             "categories": "other"
@@ -68,7 +69,8 @@
     "user_id": "f7f0c79e-8b79-11df-b7de-005056c00008",
     "deprecated_form_id": null,
     "doc_type": "XFormInstance",
-    "backend_id": "sql"
+    "backend_id": "sql",
+    "form_load_time": null
 }
 
 

@@ -46,6 +46,7 @@ class TestMeta(TestCase, TestFileMixin):
             'deviceID': None,
             'clinic_id': '5020280',
             'location': None,
+            'formLoadTime': '111',
         }
         self._check_metadata(xform, result)
 
@@ -71,6 +72,7 @@ class TestMeta(TestCase, TestFileMixin):
             'deviceID': None,
             'clinic_id': '5020280',
             'location': None,
+            'formLoadTime': '111',
         }
         self._check_metadata(xform, result)
 
@@ -90,6 +92,7 @@ class TestMeta(TestCase, TestFileMixin):
             'deprecatedID': None,
             'deviceID': 'commconnect',
             'location': None,
+            'formLoadTime': '111',
         }
         self._check_metadata(xform, result)
 
@@ -109,6 +112,7 @@ class TestMeta(TestCase, TestFileMixin):
             'deprecatedID': None,
             'deviceID': 'commconnect',
             'location': None,
+            'formLoadTime': '111',
         }
         self._check_metadata(xform, result)
 
@@ -139,6 +143,7 @@ class TestMeta(TestCase, TestFileMixin):
             'deprecatedID': None,
             'deviceID': 'commconnect',
             'location': '42.3739063 -71.1109113 0.0 886.0',
+            'formLoadTime': None,
         }
         self._check_metadata(xform, result)
 

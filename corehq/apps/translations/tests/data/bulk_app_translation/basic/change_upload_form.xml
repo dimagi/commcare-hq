@@ -30,6 +30,7 @@ xmlns:vellum="http://commcarehq.org/xforms/vellum">
                     <orx:instanceID/>
                     <cc:appVersion/>
                     <orx:drift/>
+                    <orx:formLoadTime/>
                     </orx:meta>
                 </data>
             </instance>
