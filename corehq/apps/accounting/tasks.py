@@ -5,7 +5,7 @@ import json
 from datetime import date
 
 from django.conf import settings
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import F, Q
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
@@ -42,9 +42,9 @@ from corehq.apps.accounting.models import (
     BillingAccountWebUserHistory,
     CreditLine,
     Currency,
-    FormSubmittingMobileWorkerHistory,
     DomainUserHistory,
     FeatureType,
+    FormSubmittingMobileWorkerHistory,
     InvoicingPlan,
     Subscription,
     SubscriptionAdjustment,
@@ -842,7 +842,7 @@ def calculate_form_submitting_mobile_workers_in_all_domains(today=None):
                 num_users=num_workers,
                 record_date=record_date
             )
-        except Exception as e:
+        except IntegrityError as e:
             log_accounting_error(
                 f"""Something went wrong while creating FormSubmittingMobileWorkerHistory
                   for domain {domain}: {e}""",
