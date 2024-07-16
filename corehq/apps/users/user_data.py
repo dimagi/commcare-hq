@@ -1,17 +1,24 @@
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models, transaction
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from corehq.apps.users.util import user_location_data
 
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.custom_data_fields.models import (
+    COMMCARE_LOCATION_ID,
+    COMMCARE_LOCATION_IDS,
+    COMMCARE_PRIMARY_CASE_SHARING_ID,
     COMMCARE_PROJECT,
     PROFILE_SLUG,
     CustomDataFieldsProfile,
     CustomDataFieldsDefinition,
     is_system_key,
 )
+
+LOCATION_KEYS = {COMMCARE_LOCATION_ID, COMMCARE_LOCATION_IDS, COMMCARE_PRIMARY_CASE_SHARING_ID}
 
 
 class UserDataError(Exception):
@@ -60,11 +67,33 @@ class UserData:
 
     @property
     def _provided_by_system(self):
-        return {
+        provided_data = {
             **(self.profile.fields if self.profile else {}),
             PROFILE_SLUG: self.profile_id or '',
             COMMCARE_PROJECT: self.domain,
         }
+
+        def _add_location_data():
+            if self._couch_user.get_location_id(self.domain):
+                provided_data[COMMCARE_LOCATION_ID] = self._couch_user.get_location_id(self.domain)
+                provided_data[COMMCARE_PRIMARY_CASE_SHARING_ID] = self._couch_user.get_location_id(self.domain)
+
+            if self._couch_user.get_location_ids(self.domain):
+                provided_data[COMMCARE_LOCATION_IDS] = user_location_data(
+                    self._couch_user.get_location_ids(self.domain))
+
+        if settings.UNIT_TESTING:
+            # Some test don't have an actual user existed
+            if self._couch_user:
+                _add_location_data()
+        else:
+            _add_location_data()
+
+        return provided_data
+
+    @property
+    def _system_keys(self):
+        return set(self._provided_by_system.keys()) | LOCATION_KEYS
 
     def to_dict(self):
         return {
@@ -162,8 +191,8 @@ class UserData:
         return self.to_dict().get(key, default)
 
     def __setitem__(self, key, value):
-        if key in self._provided_by_system:
-            if value == self._provided_by_system[key]:
+        if key in self._system_keys:
+            if value == self._provided_by_system.get(key, object()):
                 return
             raise UserDataError(_("'{}' cannot be set directly").format(key))
         self._local_to_user[key] = value
