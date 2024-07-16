@@ -32,7 +32,6 @@ class TestUserInvitation(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        # super(TestCase, cls).setUpTestData()
         cls.domain = "domain"
         cls.factory = RequestFactory()
         cls.project = bootstrap_domain(cls.domain)
