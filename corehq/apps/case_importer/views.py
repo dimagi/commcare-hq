@@ -411,9 +411,8 @@ def excel_commit(request, domain):
         for i in range(len(worksheet_titles)):
             with case_upload.get_spreadsheet(i) as spreadsheet:
                 num_cases += spreadsheet.max_row
-        # 1,000 is an estimate of when users could start to run into infrastructure issues
-        # Before merging, find an accurate threshold
-        if num_cases >= 500:
+        THRESHOLD = 100 * 1000
+        if num_cases >= THRESHOLD:
             context = {
                 'num_cases': num_cases,
                 'domain': domain,

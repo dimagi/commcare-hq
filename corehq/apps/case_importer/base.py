@@ -63,7 +63,7 @@ class ImportCases(DataInterface):
                 'urlname': 'excel_fields'
             },
             {
-                'title': gettext_noop('Confirm Import'),
+                'title': gettext_noop('Warning: Confirm Import'),
                 'urlname': 'excel_commit'
             }
         ]
