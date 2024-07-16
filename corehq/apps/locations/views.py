@@ -72,6 +72,9 @@ from corehq.apps.locations.dbaccessors import get_filtered_locations_count
 
 logger = logging.getLogger(__name__)
 
+VALID_LOCATION_TYPE_PROPERTIES = ['name', 'parent_type', 'administrative', 'shares_cases', 'view_descendants',
+                                  'pk', 'expand_view_child_data_to', 'has_users']
+
 
 @location_safe
 @locations_access_required
@@ -342,6 +345,8 @@ class LocationTypesView(BaseDomainView):
                                           if loc_type.include_without_expanding_id else None),
             'include_only': list(loc_type.include_only.values_list('pk', flat=True)),
             'expand_view_child_data_to': loc_type.expand_view_child_data_to_id,
+            'has_users_setting': loc_type.has_users,
+            'actually_has_users': does_location_type_have_users(loc_type),
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     @method_decorator(lock_locations)
@@ -352,7 +357,7 @@ class LocationTypesView(BaseDomainView):
         def _is_fake_pk(pk):
             return isinstance(pk, str) and pk.startswith("fake-pk-")
 
-        def mk_loctype(name, parent_type, administrative,
+        def _mk_loctype(name, parent_type, administrative,
                        shares_cases, view_descendants, pk, code, **kwargs):
             parent = sql_loc_types[parent_type] if parent_type else None
 
@@ -369,11 +374,12 @@ class LocationTypesView(BaseDomainView):
             loc_type.parent_type = parent
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
+            loc_type.has_users = kwargs.get('has_users')
             loc_type.code = unicode_slug(code)
             sql_loc_types[pk] = loc_type
             loc_type.save()
 
-        def unique_name_and_code():
+        def _unique_name_and_code():
             current_location_types = LocationType.objects.by_domain(request.domain)
             for location_type in current_location_types:
                 if location_type.pk in payload_loc_type_name_by_pk:
@@ -389,7 +395,12 @@ class LocationTypesView(BaseDomainView):
                         return False
             return True
 
-        def _verify_has_users_config(loc_type_payload, pk):
+        def _validate_properties(loc_type):
+            for prop in VALID_LOCATION_TYPE_PROPERTIES:
+                if prop not in loc_type:
+                    raise LocationConsistencyError("Missing an organization level property!")
+
+        def _validate_has_users_config(loc_type_payload, pk):
             if not loc_type.get('has_users'):
                 if _is_fake_pk(pk):
                     return
@@ -403,10 +414,7 @@ class LocationTypesView(BaseDomainView):
         payload_loc_type_name_by_pk = {}
         payload_loc_type_code_by_pk = {}
         for loc_type in loc_types:
-            for prop in ['name', 'parent_type', 'administrative',
-                         'shares_cases', 'view_descendants', 'pk', 'expand_view_child_data_to']:
-                if prop not in loc_type:
-                    raise LocationConsistencyError("Missing an organization level property!")
+            _validate_properties(loc_type)
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
@@ -415,7 +423,7 @@ class LocationTypesView(BaseDomainView):
             if loc_type.get('code'):
                 payload_loc_type_code_by_pk[loc_type['pk']] = loc_type['code']
             if toggles.LOCATION_HAS_USERS.enabled(self.domain):
-                _verify_has_users_config(loc_type, pk)
+                _validate_has_users_config(loc_type, pk)
         names = list(payload_loc_type_name_by_pk.values())
         names_are_unique = len(names) == len(set(names))
         codes = list(payload_loc_type_code_by_pk.values())
@@ -423,7 +431,7 @@ class LocationTypesView(BaseDomainView):
         if not names_are_unique or not codes_are_unique:
             raise LocationConsistencyError("'name' and 'code' are supposed to be unique")
 
-        if not unique_name_and_code():
+        if not _unique_name_and_code():
             messages.error(request, LocationConsistencyError(_(
                 "Looks like you are assigning a location name/code to a different location "
                 "in the same request. Please do this in two separate updates by using a "
@@ -437,7 +445,7 @@ class LocationTypesView(BaseDomainView):
 
         for loc_type in hierarchy:
             # make all locations in order
-            mk_loctype(**loc_type)
+            _mk_loctype(**loc_type)
 
         for loc_type in hierarchy:
             # apply sync boundaries (expand_from, expand_to and include_without_expanding) after the
