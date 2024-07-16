@@ -2446,14 +2446,15 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               user_data=None, by_domain_required_for_log=True, **kwargs):
+               user_data=None, by_domain_required_for_log=True, commit=True, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
                                               date, user_data, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
-        web_user.save()
-        web_user.log_user_create(domain, created_by, created_via,
-                                 by_domain_required_for_log=by_domain_required_for_log)
+        if commit:
+            web_user.save()
+            web_user.log_user_create(domain, created_by, created_via,
+                                     by_domain_required_for_log=by_domain_required_for_log)
         return web_user
 
     def add_domain_membership(self, domain, timezone=None, **kwargs):

@@ -13,6 +13,10 @@ from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models_role import UserRole
 
 
+class InvitationTestException(Exception):
+    pass
+
+
 class StubbedWebUserInvitationForm(WebUserInvitationForm):
 
     def __init__(self, *args, **kwargs):
@@ -42,6 +46,10 @@ class TestUserInvitation(TestCase):
         cls.project.delete()
         delete_all_users()
         return super().tearDownClass()
+
+    def tearDown(cls):
+        delete_all_users()
+        return super().tearDown()
 
     def test_redirect_if_invite_does_not_exist(self):
         request = Mock()
@@ -117,12 +125,7 @@ class TestUserInvitation(TestCase):
 
         self.assertTrue(form.is_valid())
 
-    @patch('corehq.apps.users.models.Invitation._send_confirmation_email')
-    @patch('corehq.apps.users.views.web.login')
-    @patch('corehq.apps.users.views.web.messages')
-    def test_successful_accept_invite_and_user_created(self, mock_messages, mock_login,
-                                                       mock_confirmation_email):
-        self.assertIsNone(WebUser.get_by_username('test5@dimagi.com'))
+    def _setup_invitation_and_request(self):
         invite_uuid = "e1bd37f5-9ff8-4853-b953-fd75483a0ec7"
         request = self.factory.post(f"/join/{invite_uuid}")
         request.user = AnonymousUser()
@@ -141,6 +144,28 @@ class TestUserInvitation(TestCase):
             invited_by="system@dimagi.com",
             role=self.role1.get_qualified_id()
         )
+        return request, invite_uuid
+
+    @patch('corehq.apps.users.models.Invitation._send_confirmation_email')
+    @patch('corehq.apps.users.views.web.login')
+    @patch('corehq.apps.users.views.web.messages')
+    def test_successful_accept_invite_and_user_created(self, mock_messages, mock_login,
+                                                       mock_confirmation_email):
+        self.assertIsNone(WebUser.get_by_username('test5@dimagi.com'))
+        request, invite_uuid = self._setup_invitation_and_request()
         response = UserInvitationView()(request, invite_uuid, domain=self.domain)
         self.assertEqual(302, response.status_code)
         self.assertTrue(WebUser.get_by_username('test5@dimagi.com'))
+
+    @patch('corehq.apps.users.models.Invitation._send_confirmation_email')
+    @patch('corehq.apps.users.views.web.login')
+    @patch('corehq.apps.users.views.web.messages')
+    @patch('corehq.apps.users.models.Invitation.accept_invitation_and_join_domain')
+    def test_atomic_user_invite(self, accept_invitation_mock, mock_messages, mock_login,
+                                mock_confirmation_email):
+        accept_invitation_mock.side_effect = Mock(side_effect=InvitationTestException())
+        request, invite_uuid = self._setup_invitation_and_request()
+        with self.assertRaises(InvitationTestException):
+            response = UserInvitationView()(request, invite_uuid, domain=self.domain)
+            self.assertEqual(400, response.status_code)
+        self.assertIsNone(WebUser.get_by_username('test5@dimagi.com'))
