@@ -18,21 +18,31 @@ class Command(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument('--xmlns', required=False)
         parser.add_argument('--case-type', required=False)
+        parser.add_argument(
+            '--flag-multiple',
+            action='store_true',
+            help='Flag forms with multiple cases',
+        )
 
     def handle(self, *args, **options):
         domain = options['domain']
-        xmlns = options.get('xmlns')
-        case_type = options.get('case_type')
         geo_case_property = get_geo_case_property(domain)
 
         case_blocks_chunk = []
-        for form in iter_forms_with_location(domain, xmlns):
-            gps = form['meta']['location']
-            for case in iter_form_cases(form, case_type):
+        for form in iter_forms_with_location(domain, options.get('xmlns')):
+            cases = get_form_cases(form, options.get('case_type'))
+            if options['flag_multiple'] and len(cases) > 1:
+                print(
+                    f"Form {form['@id']} has multiple cases: "
+                    f"{', '.join([case['@case_id'] for case in cases])}",
+                    file=self.stderr,
+                )
+                continue
+            for case in cases:
                 case_block = get_case_block(
                     case['@case_id'],
                     geo_case_property,
-                    gps
+                    form['meta']['location'],
                 )
                 case_blocks_chunk.append(case_block)
                 if len(case_blocks_chunk) >= CASE_BLOCK_CHUNK_SIZE:
@@ -51,14 +61,16 @@ def iter_forms_with_location(domain, xmlns=None):
                 yield doc
 
 
-def iter_form_cases(form, case_type=None):
+def get_form_cases(form, case_type=None):
+    cases = []
     for case in form.get('case', []):
         if (
             case_type is None
             # Only "create" specifies case type
             or case.get('create', {}).get('case_type') == case_type
         ):
-            yield case
+            cases.append(case)
+    return cases
 
 
 def get_case_block(case_id, case_property, value):
