@@ -478,7 +478,9 @@ class UCRDataLoadReport(AdminReport):
     ]
     emailable = False
     exportable = False
-    default_rows = 10
+    disable_pagination = True
+    ajax_pagination = False
+    use_datatables = False
 
     def __init__(self, request, *args, **kwargs):
         self.table_data = UCRRebuildRestrictionTable(
