@@ -223,7 +223,7 @@ class CleanColumnDataForm(forms.Form):
         self.data_store.set(rows)
 
     def _strip_whitespace(self):
-        pattern = r"(^[ ]+)|([ ]+$)|([ ]{2,})|([\n]+)|([\t]+)"
+        pattern = r"(^[\s]+)|([\s]+$)"
         rows = self.data_store.get()
         slug = self.cleaned_data['slug']
         edited_slug = EditableColumn.get_edited_slug(slug)
