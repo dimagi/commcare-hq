@@ -36,30 +36,28 @@ class ConfigureColumnsFormView(TemplateView):
                 for c in CaseDataCleaningColumnManager.get_visible_columns(visible_columns)],
             "new_column_choices": new_column_choices,
             "table_selector": f"#{FakeCaseTable.container_id}",
+            "table_loading_id": FakeCaseTable.loading_indicator_id,
             "container_id": CaseDataCleaningColumnManager.configure_columns_form_id,
         })
         return context
 
     def post(self, request, *args, **kwargs):
         VisibleColumnStore(request).set(request.POST.getlist('columns'))
-        response = super().get(request, *args, **kwargs)
-        return response
+        return super().get(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
         column_store = VisibleColumnStore(request)
         columns = column_store.get()
         columns.remove(request.GET['column'])
         column_store.set(columns)
-        response = super().get(request, *args, **kwargs)
-        return response
+        return super().get(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
         column_store = VisibleColumnStore(request)
         columns = column_store.get()
         columns.append(QueryDict(request.body)['add_column'])
         column_store.set(columns)
-        response = super().get(request, *args, **kwargs)
-        return response
+        return super().get(request, *args, **kwargs)
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -80,23 +78,27 @@ class FilterColumnsFormView(TemplateView):
             "add_filter_form": filter_form or AddColumnFilterForm(self.column_manager),
             "column_filters": self.column_manager.get_filters(),
             "table_selector": f"#{FakeCaseTable.container_id}",
+            "table_loading_id": FakeCaseTable.loading_indicator_id,
             "container_id": self.column_manager.filter_form_id,
         })
         return context
 
+    def post(self, request, *args, **kwargs):
+        filter_slugs = request.POST.getlist('column_filters')
+        self.column_manager.reorder_filters(filter_slugs)
+        return super().get(request, *args, **kwargs)
+
     def delete(self, request, *args, **kwargs):
         index = int(request.GET['index'])
         self.column_manager.delete_filter(index)
-        response = super().get(request, *args, **kwargs)
-        return response
+        return super().get(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
         filter_form = AddColumnFilterForm(self.column_manager, QueryDict(request.body))
         if filter_form.is_valid():
             filter_form.add_filter(request)
             filter_form = None
-        response = super().get(request, filter_form=filter_form, *args, **kwargs)
-        return response
+        return super().get(request, filter_form=filter_form, *args, **kwargs)
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -121,6 +123,7 @@ class CleanDataFormView(TemplateView):
                 self.column_manager, self.case_data_store
             ),
             "table_selector": f"#{FakeCaseTable.container_id}",
+            "table_loading_id": FakeCaseTable.loading_indicator_id,
             "container_id": self.column_manager.clean_data_form_id,
         })
         return context
@@ -132,5 +135,4 @@ class CleanDataFormView(TemplateView):
         if clean_data_form.is_valid():
             clean_data_form.apply_actions_to_data()
             clean_data_form = None
-        response = super().get(request, clean_data_form=clean_data_form, *args, **kwargs)
-        return response
+        return super().get(request, clean_data_form=clean_data_form, *args, **kwargs)

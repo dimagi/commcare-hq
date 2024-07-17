@@ -112,6 +112,15 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
         filters.append([slug, match, value])
         self.filter_store.set(filters)
 
+    def reorder_filters(self, filter_slugs):
+        stored_filters = self.filter_store.get()
+        slug_to_filter = dict((f[0], f) for f in stored_filters)
+        reordered_filters = []
+        for slug in filter_slugs:
+            if slug_to_filter.get(slug):
+                reordered_filters.append(slug_to_filter[slug])
+        self.filter_store.set(reordered_filters)
+
     def delete_filter(self, index):
         filters = self.filter_store.get()
         try:

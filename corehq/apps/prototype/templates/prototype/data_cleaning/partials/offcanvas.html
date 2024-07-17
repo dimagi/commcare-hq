@@ -1,7 +1,9 @@
+{% load i18n %}
+
 <div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="editOffcanvas">
   <div class="offcanvas-header">
     <h5 class="offcanvas-title">
-        <i class="fa-solid fa-shower"></i> Clean Data
+        <i class="fa-solid fa-shower"></i> {% trans "Clean Data" %}
     </h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
@@ -14,7 +16,7 @@
 <div class="offcanvas offcanvas-end" tabindex="-1" id="configureColumnsOffcanvas">
   <div class="offcanvas-header">
     <h5 class="offcanvas-title">
-      <i class="fa-solid fa-table-columns"></i> Configure Columns
+      <i class="fa-solid fa-table-columns"></i> {% trans "Configure Columns" %}
     </h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
@@ -27,7 +29,7 @@
 <div class="offcanvas offcanvas-end" tabindex="-1" id="filterDataOffcanvas">
   <div class="offcanvas-header">
     <h5 class="offcanvas-title">
-      <i class="fa-solid fa-filter"></i> Filter Data
+      <i class="fa-solid fa-filter"></i> {% trans "Filter Values" %}
     </h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>

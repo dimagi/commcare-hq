@@ -6,7 +6,9 @@
      hq-hx-refresh="{{ table_selector }}">
 
   <form hx-post="{{ request.path_info }}"
-        hx-target="#{{ container_id }}">
+        hx-target="#{{ container_id }}"
+        hq-hx-loading="{{ table_loading_id }}"
+        hx-disabled-elt="find button">
     {% crispy clean_data_form %}
   </form>
 </div>
