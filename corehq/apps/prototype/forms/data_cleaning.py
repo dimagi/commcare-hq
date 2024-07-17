@@ -185,15 +185,16 @@ class CleanColumnDataForm(forms.Form):
         action_fn = action_map[self.cleaned_data['action']]
         action_fn()
 
+    def _skip_row(self, row):
+        return not row["selected"] or (self.filtered_ids and row["id"] not in self.filtered_ids)
+
     def _replace(self):
         rows = self.data_store.get()
         slug = self.cleaned_data['slug']
         replace_all_string = self.cleaned_data['replace_all_string']
         edited_slug = EditableColumn.get_edited_slug(slug)
         for row in rows:
-            if not row["selected"]:
-                continue
-            if self.filtered_ids and row["id"] not in self.filtered_ids:
+            if self._skip_row(row):
                 continue
             row[edited_slug] = replace_all_string
         self.data_store.set(rows)
@@ -206,9 +207,7 @@ class CleanColumnDataForm(forms.Form):
         use_regex = self.cleaned_data['use_regex']
         edited_slug = EditableColumn.get_edited_slug(slug)
         for row in rows:
-            if not row["selected"]:
-                continue
-            if self.filtered_ids and row["id"] not in self.filtered_ids:
+            if self._skip_row(row):
                 continue
             value = row.get(edited_slug, row[slug])
             if find_string and use_regex:
@@ -229,9 +228,7 @@ class CleanColumnDataForm(forms.Form):
         slug = self.cleaned_data['slug']
         edited_slug = EditableColumn.get_edited_slug(slug)
         for row in rows:
-            if not row["selected"]:
-                continue
-            if self.filtered_ids and row["id"] not in self.filtered_ids:
+            if self._skip_row(row):
                 continue
             value = row.get(edited_slug, row[slug])
             if re.search(pattern, value):
