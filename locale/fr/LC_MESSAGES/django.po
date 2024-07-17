@@ -2949,7 +2949,7 @@ msgid "\"Do Not Invoice\" Reason"
 msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/partials/subscriptions_tab.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_test.html
+#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -3537,25 +3537,20 @@ msgstr ""
 msgid "Workflow"
 msgstr ""
 
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Average Timings"
+#: corehq/apps/app_execution/templates/app_execution/components/logs.html
+msgid "Current Workflow"
 msgstr ""
 
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/enterprise/enterprise.py
-msgid "App Name"
+#: corehq/apps/app_execution/templates/app_execution/components/logs.html
+msgid ""
+"\n"
+"              The workflow shown here is the current version which may "
+"differ from the version\n"
+"              executed at the time of this run.\n"
+"            "
 msgstr ""
 
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
-msgid "Last Run"
-msgstr ""
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-msgid "Last 10 Runs"
-msgstr ""
-
+#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
 #: corehq/apps/app_manager/templates/app_manager/module_view.html
@@ -3578,14 +3573,48 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_assertions.html
-msgid "Test"
-msgstr ""
-
+#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/tabs/tabclasses.py
 msgid "Logs"
+msgstr ""
+
+#: corehq/apps/app_execution/templates/app_execution/components/title_bar.html
+#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
+#: corehq/apps/app_execution/templates/app_execution/workflow_run.html
+#: corehq/tabs/tabclasses.py
+msgid "Run"
+msgstr ""
+
+#: corehq/apps/app_execution/templates/app_execution/workflow_form.html
+#, python-format
+msgid ""
+"\n"
+"      Editing \"%(workflow_name)s\"\n"
+"    "
+msgstr ""
+
+#: corehq/apps/app_execution/templates/app_execution/workflow_form.html
+msgid "New workflow"
+msgstr ""
+
+#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
+#: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
+msgid "Average Timings"
+msgstr ""
+
+#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
+#: corehq/apps/enterprise/enterprise.py
+msgid "App Name"
+msgstr ""
+
+#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+msgid "Last Run"
+msgstr ""
+
+#: corehq/apps/app_execution/templates/app_execution/workflow_list.html
+msgid "Last 10 Runs"
 msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
@@ -3647,12 +3676,8 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"      Workflow Execution Log for %(workflow_name)s: %(date)s\n"
-"    "
-msgstr ""
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_log.html
-msgid "Edit Workflow"
+"    Workflow Execution Log for %(workflow_name)s: %(date)s\n"
+"  "
 msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/workflow_log.html
@@ -3695,7 +3720,8 @@ msgid "Error"
 msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
-msgid "Logs for workflow"
+#, python-format
+msgid "Logs for workflow \"%(name)s\""
 msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
@@ -3729,22 +3755,13 @@ msgstr ""
 msgid "Max Timings"
 msgstr ""
 
-#: corehq/apps/app_execution/templates/app_execution/workflow_test.html
+#: corehq/apps/app_execution/templates/app_execution/workflow_run.html
 #, python-format
 msgid "Testing %(name)s"
 msgstr ""
 
-#: corehq/apps/app_execution/templates/app_execution/workflow_test.html
+#: corehq/apps/app_execution/templates/app_execution/workflow_run.html
 msgid "Running..."
-msgstr ""
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_test.html
-msgid "Run Again"
-msgstr ""
-
-#: corehq/apps/app_execution/templates/app_execution/workflow_test.html
-#: corehq/tabs/tabclasses.py
-msgid "Run"
 msgstr ""
 
 #: corehq/apps/app_execution/views.py
@@ -7720,6 +7737,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_assertions.html
 msgid "Add custom assertions that you will use elsewhere."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_assertions.html
+msgid "Test"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/custom_assertions.html
@@ -27058,6 +27079,20 @@ msgid ""
 "\n"
 "                            <p>Only include cases that show up in the user's "
 "restore file down to this level (inclusive).</p>\n"
+"                        "
+msgstr ""
+
+#: corehq/apps/locations/templates/locations/location_types.html
+msgid "Has Users"
+msgstr ""
+
+#: corehq/apps/locations/templates/locations/location_types.html
+msgid ""
+"\n"
+"                            <p>Indicates whether locations of this level can "
+"have users assigned.</p>\n"
+"                            <p>You cannot turn this setting off if there are "
+"users assigned to one of the locations.</p>\n"
 "                        "
 msgstr ""
 
