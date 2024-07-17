@@ -19,7 +19,7 @@ def get_standard_ratio_rate_definition(events_per_day):
 
 def delay_and_report_rate_limit(domain, max_wait, delay_rather_than_reject, datadog_metric, limiter):
     """
-    Attempt to acquire permission from the rate limiter waiting up to 15 seconds.
+    Attempt to acquire permission from the rate limiter waiting up to :max_wait: seconds.
 
     When delay_rather_than_reject is False
 

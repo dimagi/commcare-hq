@@ -6,10 +6,9 @@ from corehq.project_limits.rate_limiter import (
     PerUserRateDefinition,
     RateLimiter,
 )
-from corehq.project_limits.shortcuts import delay_and_report_rate_limit
 from corehq.toggles import DO_NOT_RATE_LIMIT_REPEATERS
 from corehq.util.decorators import silence_and_report_error, run_only_when
-from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics import metrics_gauge, metrics_counter
 from corehq.util.quickcache import quickcache
 
 repeater_rate_limiter = RateLimiter(
@@ -28,7 +27,7 @@ def _get_per_user_repeater_wait_milliseconds_rate_definition(domain):
                 per_hour=30,
                 per_minute=0.6,
                 per_second=None,
-            ),
+            ).times(1000),
         ),
         constant_rate_definition=get_dynamic_rate_definition(
             'repeater_wait_milliseconds',
@@ -51,37 +50,30 @@ global_repeater_rate_limiter = RateLimiter(
             per_hour=360000,
             per_minute=6000,
             per_second=100,
-        )
+        ).times(1000)
     ).get_rate_limits(),
 )
 
 
-SHOULD_RATE_LIMIT_REPEATERS = settings.UNIT_TESTING
+SHOULD_RATE_LIMIT_REPEATERS = not settings.UNIT_TESTING
 
 
 @run_only_when(lambda: SHOULD_RATE_LIMIT_REPEATERS)
 @silence_and_report_error("Exception raised in the repeater rate limiter",
                           'commcare.repeaters.rate_limiter_errors')
-def rate_limit_repeater(domain, delay_rather_than_reject=False, max_wait=15):
-    allow_repeater_usage = (
-        global_repeater_rate_limiter.allow_usage()
-        or repeater_rate_limiter.allow_usage(domain))
-
-    if allow_repeater_usage:
+def rate_limit_repeater(domain):
+    if global_repeater_rate_limiter.allow_usage() or repeater_rate_limiter.allow_usage(domain):
         allow_usage = True
     elif DO_NOT_RATE_LIMIT_REPEATERS.enabled(domain):
         allow_usage = True
-        delay_and_report_rate_limit(
-            domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
-            datadog_metric='commcare.repeaters.rate_limited.test',
-            limiter=repeater_rate_limiter
-        )
+        metrics_counter('commcare.repeaters.rate_limited.test', tags={
+            'domain': domain,
+        })
     else:
-        allow_usage = delay_and_report_rate_limit(
-            domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
-            datadog_metric='commcare.repeaters.rate_limited',
-            limiter=repeater_rate_limiter
-        )
+        allow_usage = False
+        metrics_counter('commcare.repeaters.rate_limited', tags={
+            'domain': domain,
+        })
 
     return not allow_usage
 
