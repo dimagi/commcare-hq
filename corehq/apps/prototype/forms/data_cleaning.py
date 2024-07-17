@@ -125,6 +125,7 @@ class CleanColumnDataForm(forms.Form):
                     crispy.Div(
                         crispy.Div(
                             'find_string',
+                            hqcrispy.CheckboxField('use_regex'),
                             'replace_string',
                         ),
                         css_class="card-body",
