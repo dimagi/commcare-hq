@@ -3,6 +3,7 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.xform import extract_case_blocks
 
 from corehq.apps.es import FormES
 from corehq.apps.geospatial.utils import get_geo_case_property
@@ -22,7 +23,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--flag-multiple',
             action='store_true',
-            help='Flag forms with multiple cases',
+            help='Flag and skip forms with multiple cases',
         )
         parser.add_argument('--dry-run', action='store_true')
 
@@ -59,8 +60,8 @@ class Command(BaseCommand):
                 latest_case_gps[case['@case_id']] = gps_taken_at
                 case_block = get_case_block(
                     case['@case_id'],
-                    geo_case_property,
-                    form['meta']['location'],
+                    case_property=geo_case_property,
+                    value=form_location(form),
                 )
                 case_blocks_chunk.append(case_block)
                 if len(case_blocks_chunk) >= CASE_BLOCK_CHUNK_SIZE:
@@ -81,25 +82,50 @@ def iter_forms_with_location(domain, xmlns=None):
             query = query.xmlns(xmlns)
         query = query.sort('received_on').size(FORMS_CHUNK_SIZE).start(offset)
         for es_form in query.run().hits:
-            # For an example value of `es_form`, see
-            # corehq.apps.geospatial.tests.test_copy_gps_metadata.TestGetFormCases
-            if es_form['form']['meta'].get('location'):
+            if form_location(es_form['form']):
+                # For example values of `es_form['form']`, see
+                # corehq/apps/geospatial/tests/test_copy_gps_metadata.py
                 yield es_form['form']
         if query.run().total < FORMS_CHUNK_SIZE:
             break
         offset += FORMS_CHUNK_SIZE
 
 
+def form_location(form):
+    """
+    Extracts the form's location.
+
+    >>> form_location({'meta': {'location': {'#text': '12.345 67.890'}}})
+    '12.345 67.890'
+    >>> form_location({'meta': {'location': 'New York'}})
+    'New York'
+    >>> form_location({'meta': {'location': {'city': 'New York'}}})
+    Traceback (most recent call last):
+        ...
+    ValueError: Invalid location: {'city': 'New York'}
+    >>> form_location({'meta': {}}) is None
+    True
+
+    """
+    location = form['meta'].get('location')
+    if not location:
+        return None
+    try:
+        return location['#text']
+    except (KeyError, TypeError) as err:
+        if isinstance(location, str):
+            return location
+        raise ValueError(f"Invalid location: {location!r}") from err
+
+
 def get_form_cases(form, case_type=None):
-    cases = []
-    for case in form.get('case', []):
-        if (
-            case_type is None
-            # Only "create" specifies case type
-            or case.get('create', {}).get('case_type') == case_type
-        ):
-            cases.append(case)
-    return cases
+    cases = extract_case_blocks(form)
+    if case_type is None:
+        return cases
+    return [
+        c for c in cases
+        if c.get('create', {}).get('case_type') == case_type
+    ]
 
 
 def as_datetime(js_datetime_str):
