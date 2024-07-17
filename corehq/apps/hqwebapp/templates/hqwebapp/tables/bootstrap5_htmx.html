@@ -13,7 +13,7 @@
   hx-get="{{ request.path_info }}{% querystring %}"
   hx-replace-url="{% querystring %}"
   hx-swap="outerHTML"
-  hx-trigger="refreshTable"
+  hx-trigger="hqRefresh"
   hq-hx-loading="{{ table.loading_indicator_id  }}"
 {% endblock %}
 
