@@ -8,6 +8,8 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import BootstrapSwitchInput
 from corehq.apps.prototype.models.data_cleaning.actions import CleaningActionType
 from corehq.apps.prototype.models.data_cleaning.columns import EditableColumn
 from corehq.apps.prototype.models.data_cleaning.filters import ColumnMatchType
@@ -71,6 +73,15 @@ class CleanColumnDataForm(forms.Form):
     find_string = forms.CharField(
         label=gettext_lazy("Find:"),
         required=False,
+    )
+    use_regex = forms.CharField(
+        label="",
+        required=False,
+        widget=BootstrapSwitchInput(
+            inline_label=gettext_lazy(
+                "Use regular expression"
+            ),
+        ),
     )
     replace_string = forms.CharField(
         label=gettext_lazy("Replace with:"),
@@ -139,6 +150,12 @@ class CleanColumnDataForm(forms.Form):
                         css_class="btn btn-primary",
                         **({':disabled': '!slug || !action'})
                     ),
+                    twbscrispy.StrictButton(
+                        _("Close"),
+                        type="button",
+                        data_bs_dismiss="offcanvas",
+                        css_class="btn btn-outline-primary",
+                    ),
                     css_class="py-3 d-lex flex-row-reverse"
                 ),
                 x_data=json.dumps({
@@ -149,6 +166,15 @@ class CleanColumnDataForm(forms.Form):
                 }),
             ),
         )
+
+    def clean(self):
+        action = self.cleaned_data['action']
+        if action in CleaningActionType.FIND_ACTIONS:
+            if self.cleaned_data['use_regex']:
+                try:
+                    re.compile(self.cleaned_data['find_string'])
+                except re.error:
+                    self.add_error('find_string', _("Not a valid regular expression"))
 
     def apply_actions_to_data(self):
         action_map = {
@@ -177,16 +203,23 @@ class CleanColumnDataForm(forms.Form):
         slug = self.cleaned_data['slug']
         find_string = self.cleaned_data['find_string']
         replace_string = self.cleaned_data['replace_string']
+        use_regex = self.cleaned_data['use_regex']
         edited_slug = EditableColumn.get_edited_slug(slug)
         for row in rows:
             if not row["selected"]:
                 continue
             if self.filtered_ids and row["id"] not in self.filtered_ids:
                 continue
-            column = row[slug]
-            if find_string and find_string in column:
-                row[edited_slug] = column.replace(find_string, replace_string)
-            elif find_string == column:
+            value = row.get(edited_slug, row[slug])
+            if find_string and use_regex:
+                row[edited_slug] = re.sub(
+                    re.compile(find_string),
+                    replace_string,
+                    value
+                )
+            elif find_string and find_string in value:
+                row[edited_slug] = value.replace(find_string, replace_string)
+            elif find_string == value:
                 row[edited_slug] = replace_string
         self.data_store.set(rows)
 
