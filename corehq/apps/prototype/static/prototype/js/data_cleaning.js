@@ -7,6 +7,7 @@ hqDefine("prototype/js/data_cleaning",[
     'prototype/js/htmx_action',
     'prototype/js/hq_htmx_loading',
     'prototype/js/hq_htmx_select_all',
+    'prototype/js/hq_htmx_refresh',
 ], function (_, Sortable, bootstrap) {
     let htmx = window.htmx;
     // htmx.config.defaultSwapStyle = "outerHTML";
@@ -41,11 +42,6 @@ hqDefine("prototype/js/data_cleaning",[
     document.body.addEventListener('htmx:afterRequest', function (evt) {
         if (evt.detail.elt.classList.contains('htmx-request')) {
             evt.detail.elt.classList.remove('htmx-request');
-        }
-    });
-    document.body.addEventListener('htmx:afterSwap', function (evt) {
-        if (evt.detail.elt.dataset.refreshTable) {
-            htmx.trigger(evt.detail.elt.dataset.refreshTable, 'refreshTable');
         }
     });
     document.body.addEventListener('htmx:responseError', function (evt) {
