@@ -54,6 +54,7 @@ from corehq.apps.accounting.models import (
     Feature,
     FeatureRate,
     FeatureType,
+    FormSubmittingMobileWorkerHistory,
     FundingSource,
     Invoice,
     InvoicingPlan,
@@ -2064,10 +2065,11 @@ class TriggerInvoiceForm(forms.Form):
     num_users = forms.IntegerField(
         label="Number of Users",
         required=False,
-        help_text="This is part of accounting tests and overwrites the "
-                  "DomainUserHistory recorded for this month. Please leave "
-                  "this blank to use what is already in the system."
-    )
+        help_text="This is part of accounting tests and will overwrite the "
+                  "current month's recorded history for the user type "
+                  "selected below. Please leave this blank to use what is "
+                  "already in the system.")
+    user_type = forms.ChoiceField(label="User Type", required=False)
 
     def __init__(self, *args, **kwargs):
         self.show_testing_options = kwargs.pop('show_testing_options')
@@ -2080,6 +2082,10 @@ class TriggerInvoiceForm(forms.Form):
         self.fields['year'].initial = one_month_ago.year
         self.fields['year'].choices = [
             (y, y) for y in range(one_month_ago.year, 2012, -1)
+        ]
+        self.fields['user_type'].choices = [
+            ("all_mobile", "All mobile workers"),
+            ("form_submitting", "Form-submitting mobile workers"),
         ]
 
         self.helper = FormHelper()
@@ -2098,9 +2104,13 @@ class TriggerInvoiceForm(forms.Form):
             )
         ]
         if self.show_testing_options:
-            details.append(crispy.Field('num_users', css_class='input_large'))
+            details.extend([
+                crispy.Field('num_users', css_class='input_large'),
+                crispy.Field('user_type', css_class='input_large'),
+            ])
         else:
             del self.fields['num_users']
+            del self.fields['user_type']
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(*details),
@@ -2123,15 +2133,19 @@ class TriggerInvoiceForm(forms.Form):
         self.clean_previous_invoices(invoice_start, invoice_end, domain_obj.name)
 
         if self.show_testing_options and self.cleaned_data['num_users']:
+            user_type = self.cleaned_data['user_type']
+            history_cls = (FormSubmittingMobileWorkerHistory
+                           if user_type == 'form_submitting'
+                           else DomainUserHistory)
             num_users = int(self.cleaned_data['num_users'])
-            existing_histories = DomainUserHistory.objects.filter(
+            existing_histories = history_cls.objects.filter(
                 domain=domain_obj.name,
                 record_date__gte=invoice_start,
                 record_date__lte=invoice_end,
             )
             if existing_histories.exists():
                 existing_histories.all().delete()
-            DomainUserHistory.objects.create(
+            history_cls.objects.create(
                 domain=domain_obj.name,
                 record_date=invoice_end,
                 num_users=num_users
