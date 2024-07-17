@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load django_tables2 %}
 {% load hq_shared_tags %}
 {% load data_cleaning_tags %}
@@ -67,11 +68,12 @@
       {% endif %}
 
     {% endif %}
-    <button class="btn btn-link btn-sm inline-edit-button"
+    <button class="btn btn-link btn-sm inline-edit-action"
             type="button"
             @click="isEditing = true"
             :disabled="isSubmitting">
-       <i class="fa fa-pencil"></i>
+      <i class="fa fa-pencil"></i>
+      <span class="visually-hidden">{% trans "Edit Value" %}</span>
     </button>
   </div>
 

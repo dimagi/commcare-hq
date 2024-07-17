@@ -129,14 +129,16 @@
   }
 }
 
-
 .table tbody tr td .inline-edit-block {
   display: block;
   background-color: transparent;
+  cursor: text;
   transition: background-color .5s ease-in-out;
   position: relative;
+  padding: $spacer * 0.5;
+  margin: $spacer * -0.5;
 
-  .inline-edit-button {
+  .inline-edit-action {
     position: absolute;
     right: 0;
     top: calc(50% - 12px);
@@ -144,24 +146,25 @@
     transition: opacity .5s ease-in-out;
   }
 
-  &:hover {
-    background-color: $gray-200;
-    &:nth-child(odd) {
-      background-color: $gray-300;
-    }
+  .inline-edit-action-text {
+    top: calc(50% - 6px);
+    right: $spacer * 0.5;
+    font-size: 10px;
+    line-height: 11px;
+    text-transform: uppercase;
+    font-weight: bold;
   }
 
-  &:hover .inline-edit-button {
+  &:hover {
+    background-color: rgba(0, 0, 0, .06);
+  }
+
+  &:hover .inline-edit-action {
     display: block;
     opacity: 1;
-  }
-}
 
-.table tbody tr.table-primary td .inline-edit-block {
-  &:hover {
-    background-color: $blue-100;
-    &:nth-child(odd) {
-      background-color: $blue-200;
+    &.inline-edit-action-text {
+      opacity: .75;
     }
   }
 }

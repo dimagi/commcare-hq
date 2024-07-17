@@ -10,11 +10,20 @@ from corehq.apps.prototype.models.data_cleaning.cache_store import FilterColumnS
 from corehq.apps.prototype.models.data_cleaning.filters import ColumnFilter
 
 
+class SystemPropertyColumn(columns.TemplateColumn):
+    template_name = "prototype/data_cleaning/partials/columns/system_property_column.html"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            template_name=self.template_name,
+            *args, **kwargs
+        )
+
+
 class EditableColumn(columns.TemplateColumn):
     template_name = "prototype/data_cleaning/partials/columns/editable_column.html"
 
     def __init__(self, *args, **kwargs):
-        self.cell_edit_url = kwargs.pop('cell_edit_url', None)
         super().__init__(
             template_name=self.template_name,
             *args, **kwargs
@@ -161,13 +170,13 @@ class CaseDataCleaningColumnManager(BaseDataCleaningColumnManager):
             ("planet", EditableColumn(
                 verbose_name=_("Planet"),
             )),
-            ("submitted_on", columns.Column(
+            ("submitted_on", SystemPropertyColumn(
                 verbose_name=_("Submitted On"),
             )),
-            ("app", columns.Column(
+            ("app", SystemPropertyColumn(
                 verbose_name=_("Application"),
             )),
-            ("status", columns.Column(
+            ("status", SystemPropertyColumn(
                 verbose_name=_("Status"),
             )),
         ]
