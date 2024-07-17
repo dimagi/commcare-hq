@@ -71,65 +71,62 @@
     </div>{# /preview-text #}
 
     {% block base_container %}
-      <div class="container" style="background-image: url('https://s3.amazonaws.com/dimagidotcom-staging-staticfiles/test/hero-bg.jpg'); line-height: 1.5em; font-size: 15px; font-weight: 400; color: #1c2126; width: 680px; background-color: #ffffff; margin: 0 auto; overflow: hidden; ">
-        <div class="hero" style="background-image: url('{{ url_prefix }}{% static 'registration/images/hero-bg.jpg' %}'); background-color: #333333; height: 330px; width: 100%; background-position: center; background-repeat: no-repeat; background-size: cover;">
+    <div class="container" style="background-image: url('https://s3.amazonaws.com/dimagidotcom-staging-staticfiles/test/hero-bg.jpg'); line-height: 1.5em; font-size: 15px; font-weight: 400; color: #1c2126; width: 680px; background-color: #ffffff; margin: 0 auto; overflow: hidden; ">
+      <div class="hero" style="background-image: url('{{ url_prefix }}{% static 'registration/images/hero-bg.png' %}'); background-color: #5d70d2; height: 383px; width: 100%; background-position: center right; background-repeat: no-repeat; background-size: cover;" class="hero">
 
-          {# START Dimagi Logo #}
-          <div style="text-align: center; padding: 20px 0;">
-            <img src="{{ url_prefix }}{% static 'registration/images/dimagi.png' %}" width="53" height="25" />
+
+        {% block hero %}
+
+          {# START CommCare by Dimagi Logo #}
+          <div style="text-align: left; padding-top: 29px; padding-left: 43px;">
+            <img src="{{ url_prefix }}{% static 'registration/images/commcare_by_dimagi.png' %}" width="228" height="51"
+                 alt="CommCare by Dimagi" />
           </div>
-          {# END Dimagi Logo #}
+          {# END CommCare by Dimagi Logo #}
 
-          {% block hero %}
-            {# START CommCare HQ Logo #}
-            <div style="text-align: center; padding-bottom: 10px;">
-              <img src="{{ url_prefix }}{% static 'registration/images/commcare.png' %}" width="250" height="52" />
-            </div>
-            {# END CommCare HQ Logo #}
-
-            {# START CTA Headline #}
-            <div style="text-align: center; font-weight: 800; color: #ffffff; font-size: 30px; line-height: 1.1em; padding-bottom: 15px;">
-              {% block cta_headline %}
-                CTA HEADLINE -- Replace!
+          {# START CTA Button #}
+          <div style="text-align: left; padding-top: 160px; padding-left: 43px;">
+            <a class="btn"
+               href="{% block cta_url %}#{% endblock %}"
+               style="color: #5d70d2; text-decoration: none; padding: 13px 21px; background-color: #ffffff; border-radius: 5px; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
+              {% block cta_text %}
+                CTA Text -- Replace!
               {% endblock %}
-            </div>
-            {# END CTA Headline #}
-
-            {# START CTA Button #}
-            <div style="text-align: center; margin-top: 0px;">
-              <a class="btn"
-                href="{% block cta_url %}#{% endblock %}"
-                style="color: #ffffff; text-decoration: none; padding: 15px 20px; background-color: #5c6ac5; border-radius: 5px; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
-                {% block cta_text %}
-                  CTA Text -- Replace!
-                {% endblock %}
-              </a>
-            </div>
-            {# END CTA Button #}
-
-          {% endblock %}
-
-        </div>{# /hero #}
-
-        <div class="content" style="padding: 20px 45px 35px; line-height: 1.2em; background-color: #f4f5fa; color: #1c2126;">
-
-          <div style="text-align: center; font-size: 1.6em; line-height: 1.2em; margin: 15px 0;">
-            {% block lead_text %}Lead Text -- Replace!{% endblock %}
+            </a>
           </div>
+          {# END CTA Button #}
 
-          {% block content %}
-            <div style="text-align: center; line-height: 1.2em; margin: 15px 0;">
-              {% block secondary_text %}
-                Secondary Text -- Replace!
-              {% endblock %}
-            </div>
+        {% endblock %}
+
+      </div>{# /hero #}
+
+      <div class="content" style="padding: 20px 45px 35px; line-height: 1.2em; background-color: #f4f5fa; color: #1c2126;">
+
+        {# START CTA Headline #}
+        <div style="text-align: center; font-weight: 800; font-size: 30px; line-height: 1.1em; padding: 10px 0;">
+          {% block cta_headline %}
+            CTA HEADLINE -- Replace!
           {% endblock %}
+        </div>
+        {# END CTA Headline #}
 
-        </div>{# /content #}
+        <div style="text-align: center; font-size: 1.6em; line-height: 1.2em; margin: 15px 0;">
+          {% block lead_text %}Lead Text -- Replace!{% endblock %}
+        </div>
 
-      </div>{# /container #}
+        {% block content %}
+          <div style="text-align: center; line-height: 1.2em; margin: 15px 0;">
+            {% block secondary_text %}
+              Secondary Text -- Replace!
+            {% endblock %}
+          </div>
+        {% endblock %}
+
+      </div>{# /content #}
+
+    </div>{# /container #}
     {% endblock %}
-
+    
     <div class="footer" style="width: 680px; margin: 0 auto; font-size: 13px; text-align: left; background-color: #ffffff;">
       <div class="footer-content" style="padding: 20px 45px; line-height: 1.2em; color: #999999; font-size: .8em;">
 
