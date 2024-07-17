@@ -499,6 +499,7 @@ hqDefine("geospatial/js/case_grouping_map",[
                 setCaseGroups();
             } else {
                 clearCaseGroups();
+                mapModel.fitMapBounds(mapModel.caseMapItems());
             }
         };
         return self;
