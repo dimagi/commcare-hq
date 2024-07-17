@@ -20,6 +20,38 @@
 {% block before_table %}
   <div class="d-flex align-items-center pb-2">
 
+    <div class="pe-2"
+         x-data="{ hasEdits: {{ table.column_manager.has_edits|BOOL }} }"
+         x-show="hasEdits && numRecordsSelected > 0"
+         @update-apply-edits-button.camel.window="hasEdits = $event.detail">
+      <div class="input-group">
+        <div class="input-group-text">
+          <i class="fa-solid fa-pencil me-2"></i>
+          {% trans "Edit selected records" %}:
+        </div>
+        <button class="btn btn-outline-danger"
+                type="button"
+                hx-post="{{ request.path_info }}{% querystring %}"
+                hq-hx-action="revert_edits"
+                hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+                hx-swap="outerHTML"
+                hx-disable-elt="this"
+                hq-hx-loading="{{ table.loading_indicator_id  }}">
+          <i class="fa-solid fa-undo"></i> {% trans "Undo" %}
+        </button>
+        <button class="btn btn-success"
+                type="button"
+                hx-post="{{ request.path_info }}{% querystring %}"
+                hq-hx-action="commit_edits"
+                hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+                hx-swap="outerHTML"
+                hx-disable-elt="this"
+                hq-hx-loading="{{ table.loading_indicator_id  }}">
+          <i class="fa-solid fa-check-double"></i> {% trans "Apply" %}
+        </button>
+      </div>
+    </div>
+
     {%  if table.column_manager.has_filters %}
       <div class="pe-2">
         <div class="input-group">
@@ -83,37 +115,6 @@
       </div>
     </div>
 
-    <div class="ps-2"
-         x-data="{ hasEdits: {{ table.column_manager.has_edits|BOOL }} }"
-         x-show="hasEdits && numRecordsSelected > 0"
-         @update-apply-edits-button.camel.window="hasEdits = $event.detail">
-      <div class="input-group">
-        <div class="input-group-text">
-          <i class="fa-solid fa-pencil me-2"></i>
-          {% trans "Edit selected records" %}:
-        </div>
-        <button class="btn btn-outline-danger"
-                type="button"
-                hx-post="{{ request.path_info }}{% querystring %}"
-                hq-hx-action="revert_edits"
-                hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
-                hx-swap="outerHTML"
-                hx-disable-elt="this"
-                hq-hx-loading="{{ table.loading_indicator_id  }}">
-          <i class="fa-solid fa-undo"></i> {% trans "Undo" %}
-        </button>
-        <button class="btn btn-success"
-                type="button"
-                hx-post="{{ request.path_info }}{% querystring %}"
-                hq-hx-action="commit_edits"
-                hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
-                hx-swap="outerHTML"
-                hx-disable-elt="this"
-                hq-hx-loading="{{ table.loading_indicator_id  }}">
-          <i class="fa-solid fa-check-double"></i> {% trans "Apply" %}
-        </button>
-      </div>
-    </div>
 
   </div>
 {% endblock %}
