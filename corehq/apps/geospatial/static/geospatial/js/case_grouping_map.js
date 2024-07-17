@@ -496,10 +496,8 @@ hqDefine("geospatial/js/case_grouping_map",[
             // reset the warning banner
             self.groupsLocked(!self.groupsLocked());
             if (self.groupsLocked()) {
-                mapModel.mapInstance.scrollZoom.disable();
                 setCaseGroups();
             } else {
-                mapModel.mapInstance.scrollZoom.enable();
                 clearCaseGroups();
             }
         };
