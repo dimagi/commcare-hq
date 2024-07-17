@@ -13,8 +13,8 @@ from django.forms.utils import ErrorList
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.dates import MONTHS
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
@@ -50,6 +50,7 @@ from corehq.apps.accounting.models import (
     CustomerBillingRecord,
     CustomerInvoice,
     DefaultProductPlan,
+    DomainUserHistory,
     EntryPoint,
     Feature,
     FeatureRate,
@@ -69,7 +70,6 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionType,
     WireBillingRecord,
-    DomainUserHistory,
 )
 from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.accounting.utils import (
@@ -594,9 +594,12 @@ class SubscriptionForm(forms.Form):
         if is_existing:
             # circular import
             from corehq.apps.accounting.views import (
-                SoftwarePlanVersionView, ManageBillingAccountView
+                ManageBillingAccountView,
+                SoftwarePlanVersionView,
             )
-            from corehq.apps.domain.views.settings import DefaultProjectSettingsView
+            from corehq.apps.domain.views.settings import (
+                DefaultProjectSettingsView,
+            )
             self.fields['account'].initial = subscription.account.id
             account_field = hqcrispy.B3TextField(
                 'account',
@@ -847,7 +850,9 @@ class SubscriptionForm(forms.Form):
                     or not account.billingcontactinfo.email_list
                 )
             ):
-                from corehq.apps.accounting.views import ManageBillingAccountView
+                from corehq.apps.accounting.views import (
+                    ManageBillingAccountView,
+                )
                 raise forms.ValidationError(format_html(_(
                     "Please update 'Client Contact Emails' "
                     '<strong><a href={link} target="_blank">here</a></strong> '
@@ -2006,7 +2011,10 @@ class AnnualPlanContactForm(forms.Form):
         self.domain = domain
         self.web_user = web_user
         super(AnnualPlanContactForm, self).__init__(data, *args, **kwargs)
-        from corehq.apps.domain.views.accounting import SelectPlanView, DomainSubscriptionView
+        from corehq.apps.domain.views.accounting import (
+            DomainSubscriptionView,
+            SelectPlanView,
+        )
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
