@@ -5,6 +5,10 @@
 
 {% requirejs_main_b5 "prototype/js/data_cleaning" %}
 
+{% block alpine_js_pre_init %}
+  <script src="{% static "prototype/js/dc_alpine_init.js" %}"></script>
+{% endblock %}
+
 {% block content %}
   {# note: we can also insert X-CSRFToken header on `body` element in base template--current best-practice from our other codebases #}
   <div hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
