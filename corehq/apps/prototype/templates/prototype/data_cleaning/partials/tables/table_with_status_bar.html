@@ -20,40 +20,43 @@
 {% block before_table %}
   <div class="d-flex align-items-center mb-2">
     <div class="my-1">
-      <i class="fa-solid fa-circle-check"></i>
-      {% blocktrans %}
-        <span x-text="numRecordsSelected"></span> Records Selected
-      {% endblocktrans %}
-    </div>
-    <div class="ps-2"
-         x-show="numRecordsSelected > 0">
-      <button class="btn btn-outline-danger btn-sm"
-              type="button"
-              hq-hx-action="select_all"
-              hx-post="{{ request.path_info }}{% querystring %}"
-              hx-vals='{"selectAll": false}'
-              hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
-              hx-swap="outerHTML"
-              hq-hx-loading="{{ table.loading_indicator_id  }}">
-        {% blocktrans %}
-          Cancel Selection
-        {% endblocktrans %}
-      </button>
-    </div>
-    <div class="ps-2"
-         x-show="numRecordsSelected > 0 && numRecordsSelected < totalRecords">
-      <button class="btn btn-outline-primary btn-sm"
-              type="button"
-              hq-hx-action="select_all"
-              hx-post="{{ request.path_info }}{% querystring %}"
-              hx-vals='{"selectAll": true}'
-              hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
-              hx-swap="outerHTML"
-              hq-hx-loading="{{ table.loading_indicator_id  }}">
-        {% blocktrans with table.page.paginator.count as num_records %}
-          Select All {{ num_records }} Records
-        {% endblocktrans %}
-      </button>
+      <div class="input-group">
+        <div class="input-group-text"
+             :class="(numRecordsSelected > 0) || 'rounded-end'">
+          <i class="fa-solid fa-circle-check"></i>
+          <span class="ps-2">
+            {% blocktrans %}
+              <span x-text="numRecordsSelected"></span> Records Selected
+            {% endblocktrans %}
+          </span>
+        </div>
+        <button class="btn btn-outline-danger"
+                type="button"
+                x-show="numRecordsSelected > 0"
+                :class="(numRecordsSelected > 0 && numRecordsSelected < totalRecords) || 'rounded-end'"
+                hq-hx-action="select_all"
+                hx-post="{{ request.path_info }}{% querystring %}"
+                hx-vals='{"selectAll": false}'
+                hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+                hx-swap="outerHTML"
+                hq-hx-loading="{{ table.loading_indicator_id  }}">
+          <span class="visually-hidden">{% trans "Cancel Selection" %}</span>
+          <i class="fa fa-close"></i>
+        </button>
+        <button class="btn btn-outline-primary"
+                type="button"
+                x-show="numRecordsSelected > 0 && numRecordsSelected < totalRecords"
+                hq-hx-action="select_all"
+                hx-post="{{ request.path_info }}{% querystring %}"
+                hx-vals='{"selectAll": true}'
+                hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+                hx-swap="outerHTML"
+                hq-hx-loading="{{ table.loading_indicator_id  }}">
+          {% blocktrans with table.page.paginator.count as num_records %}
+            Select All ({{ num_records }})
+          {% endblocktrans %}
+        </button>
+      </div>
     </div>
 
     {%  if table.column_manager.has_filters %}
