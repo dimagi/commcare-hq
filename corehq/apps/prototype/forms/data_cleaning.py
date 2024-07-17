@@ -233,7 +233,7 @@ class CleanColumnDataForm(forms.Form):
                 continue
             if self.filtered_ids and row["id"] not in self.filtered_ids:
                 continue
-            column = row[slug]
-            if re.search(pattern, column):
-                row[edited_slug] = re.sub(pattern, '', column)
+            value = row.get(edited_slug, row[slug])
+            if re.search(pattern, value):
+                row[edited_slug] = re.sub(pattern, '', value)
         self.data_store.set(rows)
