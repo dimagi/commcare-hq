@@ -104,13 +104,16 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
                 raise err
 
     @hx_action('post')
-    def apply_edits(self, request, *args, **kwargs):
-        all_rows = self.data_store.get()
+    def commit_edits(self, request, *args, **kwargs):
         has_edits = self.column_manager.has_edits()
+        if not has_edits:
+            return self.get(request, *args, **kwargs)
+
+        all_rows = self.data_store.get()
         for row in all_rows:
             if not row['selected']:
                 continue
-            if has_edits and row['id'] not in self.record_ids:
+            if row['id'] not in self.record_ids:
                 continue
             edited_keys = [k for k in row.keys() if k.endswith('__edited')]
             for edited_key in edited_keys:
@@ -118,6 +121,25 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
                 row[original_key] = row[edited_key]
                 del row[edited_key]
         self.data_store.set(all_rows)
+        return self.get(request, *args, **kwargs)
+
+    @hx_action('post')
+    def revert_edits(self, request, *args, **kwargs):
+        has_edits = self.column_manager.has_edits()
+        if not has_edits:
+            return self.get(request, *args, **kwargs)
+
+        all_rows = self.data_store.get()
+        for row in all_rows:
+            if not row['selected']:
+                continue
+            if row['id'] not in self.record_ids:
+                continue
+            edited_keys = [k for k in row.keys() if k.endswith('__edited')]
+            for edited_key in edited_keys:
+                del row[edited_key]
+        self.data_store.set(all_rows)
+
         return self.get(request, *args, **kwargs)
 
     @hx_action('post')
