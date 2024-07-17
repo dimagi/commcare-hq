@@ -25,12 +25,12 @@ from .const import (
     CHECK_REPEATERS_KEY,
     CHECK_REPEATERS_PARTITION_COUNT,
     MAX_RETRY_WAIT,
+    MIN_RETRY_WAIT,
     State,
 )
 from .models import RepeatRecord, domain_can_forward
 
-from ..rate_limiter import report_repeater_usage
-
+from ..rate_limiter import report_repeater_usage, rate_limit_repeater
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),
@@ -164,6 +164,9 @@ def _process_repeat_record(repeat_record):
             # in the next check to process repeat records, which helps to avoid
             # clogging the queue
             repeat_record.postpone_by(MAX_RETRY_WAIT)
+        elif rate_limit_repeater(repeat_record.domain):
+            # wait a smaller amount of time so that it gets retried after cool-off
+            repeat_record.postpone_by(MIN_RETRY_WAIT)
         elif repeat_record.is_queued():
             with TimingContext() as timer:
                 repeat_record.fire()
