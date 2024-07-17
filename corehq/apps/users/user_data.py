@@ -84,7 +84,7 @@ class UserData:
 
         # Some test don't have an actual user existed
         # Web User don't store location fields in user data
-        if self._couch_user and self._couch_user.is_commcare_user() or not settings.UNIT_TESTING:
+        if (self._couch_user or not settings.UNIT_TESTING) and self._couch_user.is_commcare_user():
             _add_location_data()
 
         return provided_data
