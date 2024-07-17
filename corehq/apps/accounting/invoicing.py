@@ -725,7 +725,6 @@ class FeatureLineItemFactory(LineItemFactory):
 
 
 class UserLineItemFactory(FeatureLineItemFactory):
-    history_cls = DomainUserHistory
 
     @property
     def unit_cost(self):
@@ -748,19 +747,23 @@ class UserLineItemFactory(FeatureLineItemFactory):
         dates = self.all_month_ends_in_invoice()
         excess_users = 0
         for date in dates:
-            total_users = 0
-            for domain in self.subscribed_domains:
-                try:
-                    history = self.history_cls.objects.get(domain=domain, record_date=date)
-                    total_users += history.num_users
-                except self.history_cls.DoesNotExist:
-                    if not deleted_domain_exists(domain):
-                        # this checks to see if the domain still exists
-                        # before raising an error. If it was deleted the
-                        # loop will continue
-                        raise
+            total_users = self.total_users_for_date(date)
             excess_users += max(total_users - self.rate.monthly_limit, 0)
         return excess_users
+
+    def total_users_for_date(self, date):
+        total_users = 0
+        for domain in self.subscribed_domains:
+            try:
+                history = DomainUserHistory.objects.get(domain=domain, record_date=date)
+                total_users += history.num_users
+            except DomainUserHistory.DoesNotExist:
+                if not deleted_domain_exists(domain):
+                    # this checks to see if the domain still exists
+                    # before raising an error. If it was deleted the
+                    # loop will continue
+                    raise
+        return total_users
 
     def all_month_ends_in_invoice(self):
         _, month_end = get_first_last_days(self.invoice.date_end.year, self.invoice.date_end.month)
@@ -798,7 +801,17 @@ class UserLineItemFactory(FeatureLineItemFactory):
 
 
 class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
-    history_cls = FormSubmittingMobileWorkerHistory
+
+    def total_users_for_date(self, date):
+        total_users = 0
+        for domain in self.subscribed_domains:
+            try:
+                history = FormSubmittingMobileWorkerHistory.objects.get(domain=domain, record_date=date)
+                total_users += history.num_users
+            except FormSubmittingMobileWorkerHistory.DoesNotExist:
+                if not deleted_domain_exists(domain):
+                    raise
+        return total_users
 
     @property
     def unit_description(self):
@@ -807,22 +820,14 @@ class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
 
 class WebUserLineItemFactory(UserLineItemFactory):
 
-    @property
-    @memoized
-    def quantity(self):
-        # Iterate through all months in the invoice date range to aggregate total users into one line item
-        dates = self.all_month_ends_in_invoice()
-        excess_users = 0
-        for date in dates:
-            total_users = 0
-            try:
-                history = BillingAccountWebUserHistory.objects.get(
-                    billing_account=self.subscription.account, record_date=date)
-                total_users += history.num_users
-            except BillingAccountWebUserHistory.DoesNotExist:
-                raise
-            excess_users += max(total_users - self.rate.monthly_limit, 0)
-        return excess_users
+    def total_users_for_date(self, date):
+        try:
+            history = BillingAccountWebUserHistory.objects.get(
+                billing_account=self.subscription.account, record_date=date)
+            total_users = history.num_users
+        except BillingAccountWebUserHistory.DoesNotExist:
+            raise
+        return total_users
 
     @property
     def unit_description(self):
