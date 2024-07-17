@@ -47,7 +47,7 @@ class AddColumnFilterForm(forms.Form):
             twbscrispy.StrictButton(
                 _("Add Filter"),
                 type="submit",
-                css_class="btn-primary",
+                css_class="btn-primary htmx-loading",
             ),
         )
 
@@ -147,8 +147,7 @@ class CleanColumnDataForm(forms.Form):
                     twbscrispy.StrictButton(
                         _("Preview Changes"),
                         type="submit",
-                        data_bs_dismiss="offcanvas",
-                        css_class="btn btn-primary",
+                        css_class="btn btn-primary htmx-loading",
                         **({':disabled': '!slug || !action'})
                     ),
                     twbscrispy.StrictButton(
