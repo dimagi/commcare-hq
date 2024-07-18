@@ -417,20 +417,19 @@ def test_update_gruntfile():
         'case_importer',
     ];
     """
-    mocha_paths = ["cloudcare/spec/mocha.html", "cloudcare/spec/form_entry/mocha.html"]
+    mocha_paths = ["notifications/spec/mocha.html"]
     result = update_gruntfile(filedata, mocha_paths)
     expected_result = """
     var apps = [
         'app_manager',
         'export/ko',
-        'notifications',
+        'notifications/bootstrap3',
+        'notifications/bootstrap5',
         'reports_core/choiceListUtils',
         'locations',
         'userreports',
-        'cloudcare/bootstrap3',
-        'cloudcare/bootstrap5',
-        'cloudcare/form_entry/bootstrap3',
-        'cloudcare/form_entry/bootstrap5',
+        'cloudcare',
+        'cloudcare/form_entry',
         'hqwebapp',
         'case_importer',
     ];
