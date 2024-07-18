@@ -1,3 +1,5 @@
+from unittest import expectedFailure
+
 from elasticsearch5.transport import Transport
 
 from unittest.mock import patch
@@ -376,6 +378,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         with patch.object(query, "scroll", scroll_then_delete_one):
             self.assertEqual([doc1], list(query.scroll_ids_to_disk_and_iter_docs()))
 
+    @expectedFailure  # Requires Elasticsearch 7+
     def test_search_after(self):
         last_hit = [
             '2024-07-15T22:08:24.434748Z',  # received_on
@@ -411,6 +414,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             "size": SIZE_LIMIT
         })
 
+    @expectedFailure  # Requires Elasticsearch 7+
     def test_pit(self):
         pit_id = '46ToAwMDaWR5BXV1aWQyKwZub2RlXzMAAAAAAAAAACoBYwADaWR4B'
         keep_alive = '1m'
@@ -430,6 +434,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             'size': SIZE_LIMIT
         })
 
+    @expectedFailure  # Requires Elasticsearch 7+
     @patch.object(Transport, 'perform_request')
     def test_open_pit_as_context_manager(self, mock_perform_request):
         expected_pit_id = '46ToAwMDaWR5BXV1aWQyKwZub2RlXzMAAAAAAAAAACoB'

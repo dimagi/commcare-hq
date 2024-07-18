@@ -369,6 +369,7 @@ class ESQuery(object):
         query._size = size
         return query
 
+    # Elasticsearch 7+
     def search_after(self, last_hit):
         """
         Uses ``search_after`` instead of ``start`` for pagination.
@@ -381,12 +382,15 @@ class ESQuery(object):
         See:
         https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html#search-after
         """
+        assert self.elastic_major_version >= 7, \
+            "search_after is only available in Elasticsearch 7+"
         if not isinstance(last_hit, list):
             last_hit = [last_hit]
         query = self.clone()
         query.es_query['search_after'] = last_hit
         return query
 
+    # Elasticsearch 7+
     def pit(self, pit_id, keep_alive='1m'):
         """
         Set the point in time (PIT) for the query.
@@ -399,6 +403,8 @@ class ESQuery(object):
 
         See: https://www.elastic.co/guide/en/elasticsearch/reference/current/point-in-time-api.html
         """
+        assert self.elastic_major_version >= 7, \
+            "PIT is only available in Elasticsearch 7+"
         query = self.clone()
         query.es_query['pit'] = {
             'id': pit_id,
@@ -406,6 +412,7 @@ class ESQuery(object):
         }
         return query
 
+    # Elasticsearch 7+
     @contextmanager
     def open_pit(self, keep_alive='1m'):
         """
@@ -419,6 +426,8 @@ class ESQuery(object):
         For ``keep_alive`` time units, see:
         https://www.elastic.co/guide/en/elasticsearch/reference/current/api-conventions.html#time-units
         """
+        assert self.elastic_major_version >= 7, \
+            "PIT is only available in Elasticsearch 7+"
         response = self.adapter.transport.perform_request(
             'POST',
             '/_pit',
