@@ -1,3 +1,4 @@
+import random
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -25,7 +26,7 @@ from .const import (
     CHECK_REPEATERS_KEY,
     CHECK_REPEATERS_PARTITION_COUNT,
     MAX_RETRY_WAIT,
-    MIN_RETRY_WAIT,
+    RATE_LIMITER_DELAY_RANGE,
     State,
 )
 from .models import RepeatRecord, domain_can_forward
@@ -165,8 +166,9 @@ def _process_repeat_record(repeat_record):
             # clogging the queue
             repeat_record.postpone_by(MAX_RETRY_WAIT)
         elif rate_limit_repeater(repeat_record.domain):
-            # wait a smaller amount of time so that it gets retried after cool-off
-            repeat_record.postpone_by(MIN_RETRY_WAIT)
+            # Spread retries evenly over the range defined by RATE_LIMITER_DELAY_RANGE
+            # with the intent of avoiding clumping and spreading load
+            repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
         elif repeat_record.is_queued():
             with TimingContext() as timer:
                 repeat_record.fire()
