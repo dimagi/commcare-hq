@@ -87,6 +87,7 @@ Language
 """
 import json
 from collections import namedtuple
+from contextlib import contextmanager
 from copy import deepcopy
 import textwrap
 
@@ -348,19 +349,90 @@ class ESQuery(object):
         return query
 
     def start(self, start):
-        """Pagination.  Analagous to SQL offset."""
+        """
+        Pagination.  Analogous to SQL offset.
+
+        If you need to page through more than 10,000 hits, use
+        ``search_after`` instead. See:
+        https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html
+        """
         query = self.clone()
         query._start = start
         return query
 
     def size(self, size):
-        """Restrict number of results returned. Analagous to SQL limit, except
+        """Restrict number of results returned. Analogous to SQL limit, except
         when performing a scroll, in which case this value becomes the number of
         results to fetch per scroll request.
         """
         query = self.clone()
         query._size = size
         return query
+
+    def search_after(self, last_hit):
+        """
+        Uses ``search_after`` instead of ``start`` for pagination.
+
+        Must be used with ``sort()``. The value of param ``last_hit``
+        must be the last value of the sort field(s).
+
+        Should be used with ``pit()``.
+
+        See:
+        https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html#search-after
+        """
+        if not isinstance(last_hit, list):
+            last_hit = [last_hit]
+        query = self.clone()
+        query.es_query['search_after'] = last_hit
+        return query
+
+    def pit(self, pit_id, keep_alive='1m'):
+        """
+        Set the point in time (PIT) for the query.
+
+        The PIT is a unique identifier for a point in time. It is used
+        to prevent changes to the index from affecting the results of
+        the query.
+
+        The PIT is valid for the duration specified by ``keep_alive``.
+
+        See: https://www.elastic.co/guide/en/elasticsearch/reference/current/point-in-time-api.html
+        """
+        query = self.clone()
+        query.es_query['pit'] = {
+            'id': pit_id,
+            'keep_alive': keep_alive,
+        }
+        return query
+
+    @contextmanager
+    def open_pit(self, keep_alive='1m'):
+        """
+        Opens a unique point in time (PIT) identifier, and closes it
+        when it is finished being used.
+
+        The PIT is valid for the duration specified by ``keep_alive``.
+
+        See: https://www.elastic.co/guide/en/elasticsearch/reference/current/point-in-time-api.html
+
+        For ``keep_alive`` time units, see:
+        https://www.elastic.co/guide/en/elasticsearch/reference/current/api-conventions.html#time-units
+        """
+        response = self.adapter.transport.perform_request(
+            'POST',
+            '/_pit',
+            params={'keep_alive': keep_alive},
+        )
+        pit_id = response['id']
+        try:
+            yield pit_id
+        finally:
+            self.adapter.transport.perform_request(
+                'DELETE',
+                '/_pit',
+                body={'id': pit_id},
+            )
 
     @property
     def raw_query(self):

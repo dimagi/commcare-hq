@@ -1,3 +1,5 @@
+from elasticsearch5.transport import Transport
+
 from unittest.mock import patch
 
 from django.test import SimpleTestCase
@@ -373,3 +375,75 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         real_scroll = query.scroll
         with patch.object(query, "scroll", scroll_then_delete_one):
             self.assertEqual([doc1], list(query.scroll_ids_to_disk_and_iter_docs()))
+
+    def test_search_after(self):
+        last_hit = [
+            '2024-07-15T22:08:24.434748Z',  # received_on
+            'd4ec54dc9c48496e8b10ffbed3d4962a'  # instance_id
+        ]
+        query = (
+            HQESQuery('forms')
+            .domain('test-domain')
+            # Note: sort sequence must match last_hit sequence
+            .sort('received_on', desc=True)
+            .sort('instance_id', reset_sort=False)  # Tiebreaker field
+            .search_after(last_hit)
+        )
+
+        self.checkQuery(query, {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"domain.exact": "test-domain"}},
+                        {"match_all": {}}
+                    ],
+                    "must": {"match_all": {}}
+                }
+            },
+            "sort": [
+                {"received_on": {"order": "desc"}},
+                {"instance_id": {"order": "asc"}}
+            ],
+            "search_after": [
+                "2024-07-15T22:08:24.434748Z",
+                "d4ec54dc9c48496e8b10ffbed3d4962a"
+            ],
+            "size": SIZE_LIMIT
+        })
+
+    def test_pit(self):
+        pit_id = '46ToAwMDaWR5BXV1aWQyKwZub2RlXzMAAAAAAAAAACoBYwADaWR4B'
+        keep_alive = '1m'
+        query = HQESQuery('forms').pit(pit_id, keep_alive)
+
+        self.checkQuery(query, {
+            "query": {
+                "bool": {
+                    "filter": [{"match_all": {}}],
+                    "must": {"match_all": {}}
+                }
+            },
+            'pit': {
+                'id': pit_id,
+                'keep_alive': keep_alive
+            },
+            'size': SIZE_LIMIT
+        })
+
+    @patch.object(Transport, 'perform_request')
+    def test_open_pit_as_context_manager(self, mock_perform_request):
+        expected_pit_id = '46ToAwMDaWR5BXV1aWQyKwZub2RlXzMAAAAAAAAAACoB'
+        mock_perform_request.return_value = {"id": expected_pit_id}
+
+        with HQESQuery('forms').open_pit() as pit_id:
+            self.assertEqual(pit_id, expected_pit_id)
+            mock_perform_request.assert_called_once_with(
+                'POST',
+                '/_pit',
+                params={'keep_alive': '1m'}
+            )
+        mock_perform_request.assert_called_with(
+            'DELETE',
+            '/_pit',
+            body={'id': expected_pit_id}
+        )
