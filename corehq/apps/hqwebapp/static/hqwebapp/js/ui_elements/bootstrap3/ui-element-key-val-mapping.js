@@ -199,9 +199,9 @@ hqDefine('hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-mapping', functi
             } else if (self.values_are_translatable()) {
                 return {
                     placeholder: gettext('Key'),
-                    duplicated: gettext('This key is already defined'), // what is being duplicated?
+                    duplicated: gettext('This key is already defined'),
                     addButton: gettext('Add Key, Translation Mapping'),
-                    badXML: gettext('Key contains invalid characters.'), //hmmm need to restrict both key and value tho
+                    badXML: gettext('Key contains invalid characters.'),
                 };
             } else {
                 return {
