@@ -157,29 +157,53 @@ class CaseDataCleaningColumnManager(BaseDataCleaningColumnManager):
 
     @classmethod
     def get_available_columns(cls):
-        return [
-            ("full_name", EditableColumn(
+        available_columns = [
+            ("name", EditableColumn(
                 verbose_name=_("Name"),
             )),
-            ("color", EditableColumn(
-                verbose_name=_("Color"),
+        ]
+        case_properties = [
+            'hight',
+            'conducted_delivery',
+            'date_of_delivery',
+            'delivery_location',
+            'dob',
+            'edd',
+            'height',
+            'lmp',
+            'spoken_language',
+            'time_of_day',
+            'mother_status',
+        ]
+        available_columns.extend([(prop, EditableColumn(verbose_name=prop))
+                        for prop in case_properties])
+        available_columns.extend([
+            ("owner_name", SystemPropertyColumn(
+                verbose_name=_("Owner"),
             )),
-            ("big_cat", EditableColumn(
-                verbose_name=_("Big Cats"),
+            ("opened_date", SystemPropertyColumn(
+                verbose_name=_("Created Date"),
             )),
-            ("planet", EditableColumn(
-                verbose_name=_("Planet"),
+            ("opened_by", SystemPropertyColumn(
+                verbose_name=_("Created By"),
             )),
-            ("submitted_on", SystemPropertyColumn(
-                verbose_name=_("Submitted On"),
+            ("last_modified_date", SystemPropertyColumn(
+                verbose_name=_("Modified Date"),
             )),
-            ("app", SystemPropertyColumn(
-                verbose_name=_("Application"),
+            ("last_modified_by_user_username", SystemPropertyColumn(
+                verbose_name=_("Modified By"),
             )),
             ("status", SystemPropertyColumn(
                 verbose_name=_("Status"),
             )),
-        ]
+            ("closed_date", SystemPropertyColumn(
+                verbose_name=_("Closed Date"),
+            )),
+            ("closed_by_username", SystemPropertyColumn(
+                verbose_name=_("Closed By"),
+            )),
+        ])
+        return available_columns
 
     def has_edits(self):
         rows = FakeCaseDataStore(self.request).get()
