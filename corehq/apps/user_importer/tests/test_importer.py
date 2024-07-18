@@ -1666,6 +1666,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         cls.other_role = UserRole.create(cls.domain.name, 'admin')
         cls.other_domain_role = UserRole.create(cls.other_domain.name, 'view-apps')
         create_enterprise_permissions("a@a.com", cls.domain_name, [cls.other_domain.name])
+        # Enterprise subscription will have all the privileges including LOCATIONS
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
@@ -1840,6 +1841,10 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self._test_uncategorized_data(is_web_upload=True)
 
     def test_user_data_ignores_location_fields(self):
+        # Users have a “primary location” and a list of “assigned locations”.
+        # These are stored directly on the user model and stored in duplicate in the user data.
+        # But it is for mobile workers only. Web User don't store a duplicate in user data.
+        # This test ensures user data don't store a duplicate when create new Web User or edit existing Web User.
         self.setup_locations()
         import_users_and_groups(
             self.domain.name,
@@ -2010,7 +2015,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         self.assertIsNotNone(Invitation.objects.filter(email='123@email.com').first())
         self.assertEqual(Invitation.objects.filter(email='123@email.com').first().domain, self.other_domain.name)
 
-    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_web_user_location_add(self):
         self.setup_locations()
         import_users_and_groups(
@@ -2034,7 +2038,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         change_messages.update(UserChangeMessage.role_change(self.role))
         self.assertDictEqual(user_history.change_messages, change_messages)
 
-    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_web_user_location_remove(self):
         self.setup_locations()
         import_users_and_groups(
@@ -2070,7 +2073,6 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin, TestUserDataMixin
         change_messages.update(UserChangeMessage.primary_location_info(None))
         self.assertDictEqual(user_history.change_messages, change_messages)
 
-    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_invite_location_add(self):
         self.setup_locations()
         import_users_and_groups(
