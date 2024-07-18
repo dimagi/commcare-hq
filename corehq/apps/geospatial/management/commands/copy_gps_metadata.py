@@ -75,20 +75,14 @@ class Command(BaseCommand):
 
 
 def iter_forms_with_location(domain, xmlns=None):
-    offset = 0
-    while True:
-        query = FormES().domain(domain)
-        if xmlns:
-            query = query.xmlns(xmlns)
-        query = query.sort('received_on').size(FORMS_CHUNK_SIZE).start(offset)
-        for es_form in query.run().hits:
-            if form_location(es_form['form']):
-                # For example values of `es_form['form']`, see
-                # corehq/apps/geospatial/tests/test_copy_gps_metadata.py
-                yield es_form['form']
-        if query.run().total < FORMS_CHUNK_SIZE:
-            break
-        offset += FORMS_CHUNK_SIZE
+    query = FormES().domain(domain).sort('received_on', desc=True)
+    if xmlns:
+        query = query.xmlns(xmlns)
+    for es_form in query.scroll_ids_to_disk_and_iter_docs():
+        if form_location(es_form['form']):
+            # For example values of `es_form['form']`, see
+            # corehq/apps/geospatial/tests/test_copy_gps_metadata.py
+            yield es_form['form']
 
 
 def form_location(form):

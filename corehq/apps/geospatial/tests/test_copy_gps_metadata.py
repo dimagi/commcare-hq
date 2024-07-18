@@ -72,26 +72,26 @@ class TestGetFormCases(SimpleTestCase):
 
 
 class TestIterFormsWithLocation(SimpleTestCase):
-    @patch('corehq.apps.es.forms.FormES.run')
-    def test_location_in_metadata_yields_form(self, mock_run):
-        mock_run.return_value = self.es_query_set([
+    @patch('corehq.apps.es.forms.FormES.scroll_ids_to_disk_and_iter_docs')
+    def test_location_in_metadata_yields_form(self, mock_scroll):
+        mock_scroll.return_value = (f for f in [
             {'form': {'meta': {'location': '55.948 -3.199'}, '@id': 'form1'}},
         ])
         forms = list(iter_forms_with_location('test-domain'))
         self.assertEqual(len(forms), 1)
         self.assertEqual(forms[0]['@id'], 'form1')
 
-    @patch('corehq.apps.es.forms.FormES.run')
-    def test_no_location_in_metadata_skips_form(self, mock_run):
-        mock_run.return_value = self.es_query_set([
+    @patch('corehq.apps.es.forms.FormES.scroll_ids_to_disk_and_iter_docs')
+    def test_no_location_in_metadata_skips_form(self, mock_scroll):
+        mock_scroll.return_value = (f for f in [
             {'form': {'meta': {}, '@id': 'form1'}},
         ])
         forms = list(iter_forms_with_location('test-domain'))
         self.assertEqual(len(forms), 0)
 
-    @patch('corehq.apps.es.forms.FormES.run')
-    def test_multiple_forms_returned(self, mock_run):
-        mock_run.return_value = self.es_query_set([
+    @patch('corehq.apps.es.forms.FormES.scroll_ids_to_disk_and_iter_docs')
+    def test_multiple_forms_returned(self, mock_scroll):
+        mock_scroll.return_value = (f for f in [
             {'form': {'meta': {'location': '55.948 -3.199'}, '@id': 'form1'}},
             {'form': {'meta': {'location': '55.948 -3.199'}, '@id': 'form2'}},
         ])
@@ -99,13 +99,6 @@ class TestIterFormsWithLocation(SimpleTestCase):
         self.assertEqual(len(forms), 2)
         self.assertEqual(forms[0]['@id'], 'form1')
         self.assertEqual(forms[1]['@id'], 'form2')
-
-    @staticmethod
-    def es_query_set(docs):
-        return type('ESFakeResponse', (object,), {
-            'hits': docs,
-            'total': len(docs),
-        })
 
 
 def test_doctests():
