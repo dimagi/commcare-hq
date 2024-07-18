@@ -512,7 +512,7 @@ def get_matching_tableau_users_from_other_domains(user):
 
 
 @atomic
-def add_tableau_user(domain, username, blocking_exception=False):
+def add_tableau_user(domain, username):
     '''
     Creates a TableauUser object with the given username and a default role of Viewer, and adds a new user with
     these details to the Tableau instance.
@@ -531,10 +531,8 @@ def add_tableau_user(domain, username, blocking_exception=False):
                 if e.code != 409017:  # This is the "user already added to site" code.
                     raise
     except TableauAPIError as e:
-        if blocking_exception:
-            raise
-        else:
-            _notify_tableau_exception(e, domain)
+        # Don't block main thread
+        _notify_tableau_exception(e, domain)
 
 
 def _add_tableau_user_local(session, username, role=DEFAULT_TABLEAU_ROLE):
