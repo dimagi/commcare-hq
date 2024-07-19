@@ -1965,6 +1965,20 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     """
 )
 
+RATE_LIMIT_REPEATERS = DynamicallyPredictablyRandomToggle(
+    'rate_limit_repeaters',
+    'Apply rate limiting to data forwarding (repeaters)',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Rate limits are based on aggregate time spent waiting on data forwarding responses
+    within tasks for each project within the last second, minute, hour, day, and week windows.
+    Project allowances are based on the number of mobile workers in the project or subscription.
+    Rate limits are only applied (to any project) when global thresholds are surpassed.
+    The specific per-domain and global thresholds can be dynamically updated within the Django Admin.
+    """
+)
+
 TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE = StaticToggle(
     'test_form_submission_rate_limit_response',
     "Respond to all form submissions with a 429 response",
