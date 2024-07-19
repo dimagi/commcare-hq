@@ -2111,17 +2111,24 @@ class TriggerInvoiceForm(forms.Form):
                 placeholder="Search for Project"
             )
         ]
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(*details)
+        )
+
         if self.show_testing_options:
-            details.extend([
+            testing_options = [
+                'Testing Options',
                 crispy.Field('num_mobile_workers', css_class='input_large'),
                 crispy.Field('num_form_submitting_workers', css_class='input_large'),
-            ])
+            ]
+            self.helper.layout.append(
+                crispy.Fieldset(*testing_options)
+            )
         else:
             del self.fields['num_mobile_workers']
             del self.fields['num_form_submitting_workers']
 
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(*details),
+        self.helper.layout.append(
             hqcrispy.FormActions(
                 StrictButton(
                     "Trigger Invoice",
