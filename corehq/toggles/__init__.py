@@ -390,13 +390,13 @@ class PredictablyRandomToggle(StaticToggle):
             return False
         elif namespace is not Ellipsis and namespace not in self.namespaces:
             return False
-        elif item and super(PredictablyRandomToggle, self).enabled(f'!{item}', namespace):
+        elif item and super().enabled(f'!{item}', namespace):
             # if there is an explicit entry for the item preceded by '!', always disable
             return False
         elif item and deterministic_random(self._get_identifier(item)) < self.randomness:
             return True
         else:
-            return super(PredictablyRandomToggle, self).enabled(item, namespace)
+            return super().enabled(item, namespace)
 
 
 class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
