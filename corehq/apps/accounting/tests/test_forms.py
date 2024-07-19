@@ -370,17 +370,17 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
 
     def test_show_testing_options(self):
         self.init_form(self.form_data(), show_testing_options=False)
-        self.assertNotIn('num_users', self.form.fields)
-        self.assertNotIn('user_type', self.form.fields)
+        self.assertNotIn('num_mobile_workers', self.form.fields)
+        self.assertNotIn('num_form_submitting_workers', self.form.fields)
 
         self.init_form(self.form_data(), show_testing_options=True)
-        self.assertIn('num_users', self.form.fields)
-        self.assertIn('user_type', self.form.fields)
+        self.assertIn('num_mobile_workers', self.form.fields)
+        self.assertIn('num_form_submitting_workers', self.form.fields)
 
-    def test_num_users_all_mobile_workers(self):
+    def test_num_mobile_workers(self):
         num_users = 10
         self.init_form(
-            self.form_data(num_users=num_users, user_type='all_mobile'),
+            self.form_data(num_mobile_workers=num_users),
             show_testing_options=True
         )
         self.form.full_clean()
@@ -391,10 +391,10 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
         )
         self.assertEqual(user_history.num_users, num_users)
 
-    def test_num_users_form_submitting_mobile_workers(self):
+    def test_num_form_submitting_mobile_workers(self):
         num_users = 5
         self.init_form(
-            self.form_data(num_users=num_users, user_type='form_submitting'),
+            self.form_data(num_form_submitting_workers=num_users),
             show_testing_options=True
         )
         self.form.full_clean()

@@ -2070,14 +2070,18 @@ class TriggerInvoiceForm(forms.Form):
     month = forms.ChoiceField(label="Statement Period Month")
     year = forms.ChoiceField(label="Statement Period Year")
     domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
-    num_users = forms.IntegerField(
-        label="Number of Users",
+    num_mobile_workers = forms.IntegerField(
+        label="Number of Mobile Workers",
         required=False,
-        help_text="This is part of accounting tests and will overwrite the "
-                  "current month's recorded history for the user type "
-                  "selected below. Please leave this blank to use what is "
-                  "already in the system.")
-    user_type = forms.ChoiceField(label="User Type", required=False)
+        help_text="This will overwrite the DomainUserHistory recorded for this month. "
+                  "Please leave this blank to use what is already in the system."
+    )
+    num_form_submitting_workers = forms.IntegerField(
+        label="Number of Form-Submitting Mobile Workers",
+        required=False,
+        help_text="This will overwrite the FormSubmittingMobileWorkerHistory recorded for this month. "
+                  "Please leave this blank to use what is already in the system."
+    )
 
     def __init__(self, *args, **kwargs):
         self.show_testing_options = kwargs.pop('show_testing_options')
@@ -2090,10 +2094,6 @@ class TriggerInvoiceForm(forms.Form):
         self.fields['year'].initial = one_month_ago.year
         self.fields['year'].choices = [
             (y, y) for y in range(one_month_ago.year, 2012, -1)
-        ]
-        self.fields['user_type'].choices = [
-            ("all_mobile", "All mobile workers"),
-            ("form_submitting", "Form-submitting mobile workers"),
         ]
 
         self.helper = FormHelper()
@@ -2113,12 +2113,12 @@ class TriggerInvoiceForm(forms.Form):
         ]
         if self.show_testing_options:
             details.extend([
-                crispy.Field('num_users', css_class='input_large'),
-                crispy.Field('user_type', css_class='input_large'),
+                crispy.Field('num_mobile_workers', css_class='input_large'),
+                crispy.Field('num_form_submitting_workers', css_class='input_large'),
             ])
         else:
-            del self.fields['num_users']
-            del self.fields['user_type']
+            del self.fields['num_mobile_workers']
+            del self.fields['num_form_submitting_workers']
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(*details),
@@ -2140,24 +2140,18 @@ class TriggerInvoiceForm(forms.Form):
 
         self.clean_previous_invoices(invoice_start, invoice_end, domain_obj.name)
 
-        if self.show_testing_options and self.cleaned_data['num_users']:
-            user_type = self.cleaned_data['user_type']
-            history_cls = (FormSubmittingMobileWorkerHistory
-                           if user_type == 'form_submitting'
-                           else DomainUserHistory)
-            num_users = int(self.cleaned_data['num_users'])
-            existing_histories = history_cls.objects.filter(
-                domain=domain_obj.name,
-                record_date__gte=invoice_start,
-                record_date__lte=invoice_end,
-            )
-            if existing_histories.exists():
-                existing_histories.all().delete()
-            history_cls.objects.create(
-                domain=domain_obj.name,
-                record_date=invoice_end,
-                num_users=num_users
-            )
+        if self.show_testing_options:
+            if self.cleaned_data['num_mobile_workers']:
+                num_users = int(self.cleaned_data['num_mobile_workers'])
+                self._overwrite_user_history(
+                    DomainUserHistory, domain_obj.name, num_users, invoice_start, invoice_end
+                )
+            if self.cleaned_data['num_form_submitting_workers']:
+                num_users = int(self.cleaned_data['num_form_submitting_workers'])
+                self._overwrite_user_history(
+                    FormSubmittingMobileWorkerHistory,
+                    domain_obj.name, num_users, invoice_start, invoice_end
+                )
 
         invoice_factory = DomainInvoiceFactory(
             invoice_start, invoice_end, domain_obj, recipients=[settings.ACCOUNTS_EMAIL]
@@ -2184,6 +2178,21 @@ class TriggerInvoiceForm(forms.Form):
                     ),
                 )
             )
+
+    @staticmethod
+    def _overwrite_user_history(history_cls, domain, num_users, invoice_start, invoice_end):
+        existing_histories = history_cls.objects.filter(
+            domain=domain,
+            record_date__gte=invoice_start,
+            record_date__lte=invoice_end,
+        )
+        if existing_histories.exists():
+            existing_histories.all().delete()
+        history_cls.objects.create(
+            domain=domain,
+            record_date=invoice_end,
+            num_users=num_users
+        )
 
     def clean(self):
         today = datetime.date.today()
