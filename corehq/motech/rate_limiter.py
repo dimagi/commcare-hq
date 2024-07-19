@@ -6,7 +6,7 @@ from corehq.project_limits.rate_limiter import (
     PerUserRateDefinition,
     RateLimiter,
 )
-from corehq.toggles import RATE_LIMIT_REPEATERS
+from corehq.toggles import RATE_LIMIT_REPEATERS, NAMESPACE_DOMAIN
 from corehq.util.decorators import silence_and_report_error, run_only_when
 from corehq.util.metrics import metrics_gauge, metrics_counter
 from corehq.util.quickcache import quickcache
@@ -64,7 +64,7 @@ SHOULD_RATE_LIMIT_REPEATERS = not settings.UNIT_TESTING
 def rate_limit_repeater(domain):
     if global_repeater_rate_limiter.allow_usage() or repeater_rate_limiter.allow_usage(domain):
         allow_usage = True
-    elif not RATE_LIMIT_REPEATERS.enabled(domain):
+    elif not RATE_LIMIT_REPEATERS.enabled(domain, namespace=NAMESPACE_DOMAIN):
         allow_usage = True
         metrics_counter('commcare.repeaters.rate_limited.test', tags={
             'domain': domain,
