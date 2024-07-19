@@ -1965,14 +1965,17 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     """
 )
 
-DO_NOT_RATE_LIMIT_REPEATERS = StaticToggle(
-    'do_not_rate_limit_repeaters',
-    'Do not rate limit repeaters for this project, on a temporary basis.',
+RATE_LIMIT_REPEATERS = DynamicallyPredictablyRandomToggle(
+    'rate_limit_repeaters',
+    'Apply rate limiting to data forwarding (repeaters)',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description="""
-    There is no known use case for this, but it's available as an escape valve
-    when repeater rate limiting isn't working right.
+    Rate limits are based on aggregate time spent waiting on data forwarding responses
+    within tasks for each project within the last second, minute, hour, day, and week windows.
+    Project allowances are based on the number of mobile workers in the project or subscription.
+    Rate limits are only applied (to any project) when global thresholds are surpassed.
+    The specific per-domain and global thresholds can be dynamically updated within the Django Admin.
     """
 )
 
