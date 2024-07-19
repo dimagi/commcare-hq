@@ -352,6 +352,9 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def is_ready(self):
+        """
+        Returns True if there are repeat records to be sent.
+        """
         if self.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(self.domain):
             return False
         if not (self.next_attempt_at is None
@@ -364,16 +367,23 @@ class Repeater(RepeaterSuperProxy):
         interval = _get_retry_interval(self.last_attempt_at, now)
         self.last_attempt_at = now
         self.next_attempt_at = now + interval
-        self.save()
+        # Save using QuerySet.update() to avoid a possible race condition
+        # with self.pause(), etc. and to skip the unnecessary functionality
+        # in RepeaterSuperProxy.save().
+        Repeater.objects.filter(id=self.repeater_id).update(
+            last_attempt_at=now,
+            next_attempt_at=now + interval,
+        )
 
     def reset_next_attempt(self):
         if self.last_attempt_at or self.next_attempt_at:
             self.last_attempt_at = None
             self.next_attempt_at = None
-            self.save()
-
-    def get_attempt_info(self, repeat_record):
-        return None
+            # Avoid a possible race condition with self.pause(), etc.
+            Repeater.objects.filter(id=self.repeater_id).update(
+                last_attempt_at=None,
+                next_attempt_at=None,
+            )
 
     @property
     def verify(self):
@@ -412,15 +422,15 @@ class Repeater(RepeaterSuperProxy):
 
     def pause(self):
         self.is_paused = True
-        self.save()
+        Repeater.objects.filter(id=self.repeater_id).update(is_paused=True)
 
     def resume(self):
         self.is_paused = False
-        self.save()
+        Repeater.objects.filter(id=self.repeater_id).update(is_paused=False)
 
     def retire(self):
         self.is_deleted = True
-        self.save()
+        Repeater.objects.filter(id=self.repeater_id).update(is_deleted=True)
 
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)
@@ -1018,7 +1028,6 @@ class RepeatRecord(models.Model):
         # although the Couch RepeatRecord did the same.
         code = getattr(response, "status_code", None)
         state = State.Empty if code == 204 else State.Success
-        self.repeater.reset_next_attempt()
         self.attempt_set.create(state=state, message=format_response(response) or '')
         self.state = state
         self.next_check = None
@@ -1030,7 +1039,6 @@ class RepeatRecord(models.Model):
         service is assumed to be in a good state, so do not back off, so
         that this repeat record does not hold up the rest.
         """
-        self.repeater.reset_next_attempt()
         self._add_failure_attempt(message, MAX_ATTEMPTS, retry)
 
     def add_server_failure_attempt(self, message):
@@ -1044,7 +1052,6 @@ class RepeatRecord(models.Model):
            days and will hold up all other payloads.
 
         """
-        self.repeater.set_next_attempt()
         self._add_failure_attempt(message, MAX_BACKOFF_ATTEMPTS)
 
     def _add_failure_attempt(self, message, max_attempts, retry=True):
@@ -1094,10 +1101,6 @@ class RepeatRecord(models.Model):
             return max(a.created_at for a in self.attempts)
         except ValueError:
             return None
-
-    @property
-    def next_attempt_at(self):
-        return self.repeater.next_attempt_at
 
     @property
     def url(self):
@@ -1275,16 +1278,6 @@ def _get_retry_interval(last_checked, now):
     interval = max(MIN_RETRY_WAIT, interval)
     interval = min(MAX_RETRY_WAIT, interval)
     return interval
-
-
-def attempt_forward_now(repeater: Repeater):  # unused
-    from corehq.motech.repeaters.tasks import process_repeater
-
-    if not domain_can_forward(repeater.domain):
-        return
-    if not repeater.is_ready:  # only place that uses Repeater.is_ready
-        return
-    process_repeater.delay(repeater.id.hex)
 
 
 def get_payload(repeater: Repeater, repeat_record: RepeatRecord) -> str:

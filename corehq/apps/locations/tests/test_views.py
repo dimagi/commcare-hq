@@ -7,10 +7,13 @@ from django.urls import reverse
 from unittest import mock
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.exceptions import LocationConsistencyError
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.views import LocationTypesView
 from corehq.apps.users.models import WebUser
+from corehq.util.test_utils import flag_enabled
 
 OTHER_DETAILS = {
     'expand_from': None,
@@ -23,9 +26,11 @@ OTHER_DETAILS = {
     'shares_cases': False,
     'view_descendants': False,
     'expand_view_child_data_to': None,
+    'has_users': True,
 }
 
 
+@es_test(requires=[user_adapter])
 class LocationTypesViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -116,7 +121,7 @@ class LocationTypesViewTest(TestCase):
         loc_type2 = OTHER_DETAILS.copy()
         loc_type1.update({'name': "new name", 'pk': self.loc_type1.pk,
                           'view_descendants': True, 'expand_view_child_data_to': self.loc_type2.pk,
-                          'code': self.loc_type1.code})
+                          'code': self.loc_type1.code, 'shares_cases': True, 'has_users': True})
         loc_type2.update({'name': "new name 2", 'pk': self.loc_type2.pk, 'parent_type': self.loc_type1.pk,
                           'code': self.loc_type2.code})
         data = {'loc_types': [loc_type1, loc_type2]}
@@ -130,6 +135,19 @@ class LocationTypesViewTest(TestCase):
         loc_type1.update({'name': "new name", 'pk': self.loc_type1.pk, 'code': self.loc_type1.code})
         loc_type2.update({'name': "new name 2", 'pk': self.loc_type2.pk, 'parent_type': self.loc_type1.pk,
                           'view_descendants': True, 'expand_view_child_data_to': self.loc_type1.pk,
+                          'code': self.loc_type2.code})
+        data = {'loc_types': [loc_type1, loc_type2]}
+        with self.assertRaises(LocationConsistencyError):
+            self.send_request(data)
+
+    @flag_enabled('LOCATION_HAS_USERS')
+    @mock.patch('corehq.apps.locations.views.does_location_type_have_users', return_value=True)
+    def test_invalid_remove_has_users(self, _):
+        loc_type1 = OTHER_DETAILS.copy()
+        loc_type2 = OTHER_DETAILS.copy()
+        loc_type1.update({'name': "new name", 'pk': self.loc_type1.pk, 'code': self.loc_type1.code,
+                          'has_users': False})
+        loc_type2.update({'name': "new name 2", 'pk': self.loc_type2.pk, 'parent_type': self.loc_type1.pk,
                           'code': self.loc_type2.code})
         data = {'loc_types': [loc_type1, loc_type2]}
         with self.assertRaises(LocationConsistencyError):

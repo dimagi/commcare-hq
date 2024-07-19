@@ -5,8 +5,9 @@ from django.conf import settings
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
-from dimagi.utils.couch import CriticalSection, get_redis_lock
+from dimagi.utils.couch import get_redis_lock
 
+from corehq import toggles
 from corehq.apps.celery import periodic_task, task
 from corehq.motech.models import RequestLog
 from corehq.util.metrics import (
@@ -23,17 +24,9 @@ from .const import (
     CHECK_REPEATERS_KEY,
     CHECK_REPEATERS_PARTITION_COUNT,
     MAX_RETRY_WAIT,
-    RECORDS_AT_A_TIME,
     State,
 )
-from .models import (
-    Repeater,
-    RepeatRecord,
-    domain_can_forward,
-    get_payload,
-    send_request,
-)
-from corehq import toggles
+from .models import RepeatRecord, domain_can_forward
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),
@@ -179,29 +172,3 @@ metrics_gauge_task(
     run_every=crontab(),  # every minute
     multiprocess_mode=MPM_MAX
 )
-
-
-@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def process_repeater(repeater_id):
-    """
-    Worker task to send RepeatRecords in chronological order.
-
-    This function assumes that ``repeater`` checks have already
-    been performed. Call via ``models.attempt_forward_now()``.
-    """
-    repeater = Repeater.objects.get(id=repeater_id)
-    with CriticalSection(
-        [f'process-repeater-{repeater.repeater_id}'],
-        fail_hard=False, block=False, timeout=5 * 60 * 60,
-    ):
-        for repeat_record in repeater.repeat_records_ready[:RECORDS_AT_A_TIME]:
-            try:
-                payload = get_payload(repeater, repeat_record)
-            except Exception:
-                # The repeat record is cancelled if there is an error
-                # getting the payload. We can safely move to the next one.
-                continue
-            should_retry = not send_request(repeater,
-                                            repeat_record, payload)
-            if should_retry:
-                break
