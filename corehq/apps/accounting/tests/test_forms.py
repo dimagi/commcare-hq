@@ -5,13 +5,20 @@ from django.core.exceptions import ValidationError
 
 from dateutil.relativedelta import relativedelta
 
-from corehq.apps.accounting.forms import AdjustBalanceForm, SubscriptionForm
+from corehq.apps.accounting.exceptions import InvoiceError
+from corehq.apps.accounting.forms import (
+    AdjustBalanceForm,
+    SubscriptionForm,
+    TriggerInvoiceForm,
+)
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditAdjustmentReason,
     CreditLine,
     CustomerInvoice,
     DefaultProductPlan,
+    DomainUserHistory,
+    FormSubmittingMobileWorkerHistory,
     Invoice,
     SoftwarePlanEdition,
     Subscription,
@@ -25,6 +32,7 @@ from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
+from corehq.util.dates import get_first_last_days
 
 
 class TestAdjustBalanceForm(BaseInvoiceTestCase):
@@ -311,3 +319,88 @@ class TestSubscriptionForm(BaseAccountingTest):
         }
 
         self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
+
+
+class TestTriggerInvoiceForm(BaseInvoiceTestCase):
+
+    def setUp(self):
+        super().setUp()
+        statement_period = self.subscription.date_start + relativedelta(months=1)
+        self.statement_start, self.statement_end = get_first_last_days(
+            statement_period.year, statement_period.month
+        )
+        calculate_users_in_all_domains(self.statement_end + datetime.timedelta(days=1))
+
+    def init_form(self, form_data, show_testing_options=False):
+        self.form = TriggerInvoiceForm(
+            data=form_data,
+            show_testing_options=show_testing_options
+        )
+
+    def form_data(self, **kwargs):
+        form_data = {
+            'month': str(self.statement_start.month),
+            'year': str(self.statement_start.year),
+            'domain': self.domain.name,
+        }
+        form_data.update({k: str(v) for k, v in kwargs.items()})
+        return form_data
+
+    def test_trigger_invoice(self):
+        self.init_form(self.form_data())
+        self.form.full_clean()
+        self.form.trigger_invoice()
+
+        invoice = self.subscription.invoice_set.latest('date_created')
+        self.assertEqual(invoice.date_start, self.statement_start)
+        self.assertEqual(invoice.date_end, self.statement_end)
+
+    def test_clean_previous_invoices(self):
+        prev_invoice = Invoice.objects.create(
+            date_start=self.statement_start,
+            date_end=self.statement_end,
+            subscription=self.subscription
+        )
+        self.init_form(self.form_data())
+        self.form.full_clean()
+
+        with self.assertRaises(InvoiceError) as e:
+            self.form.clean_previous_invoices(self.statement_start, self.statement_end, self.domain.name)
+        self.assertIn(prev_invoice.invoice_number, str(e.exception))
+
+    def test_show_testing_options(self):
+        self.init_form(self.form_data(), show_testing_options=False)
+        self.assertNotIn('num_users', self.form.fields)
+        self.assertNotIn('user_type', self.form.fields)
+
+        self.init_form(self.form_data(), show_testing_options=True)
+        self.assertIn('num_users', self.form.fields)
+        self.assertIn('user_type', self.form.fields)
+
+    def test_num_users_all_mobile_workers(self):
+        num_users = 10
+        self.init_form(
+            self.form_data(num_users=num_users, user_type='all_mobile'),
+            show_testing_options=True
+        )
+        self.form.full_clean()
+        self.form.trigger_invoice()
+
+        user_history = DomainUserHistory.objects.get(
+            domain=self.domain.name, record_date=self.statement_end
+        )
+        self.assertEqual(user_history.num_users, num_users)
+
+    def test_num_users_form_submitting_mobile_workers(self):
+        num_users = 5
+        self.init_form(
+            self.form_data(num_users=num_users, user_type='form_submitting'),
+            show_testing_options=True
+        )
+        self.form.full_clean()
+        self.form.trigger_invoice()
+
+        user_history = FormSubmittingMobileWorkerHistory.objects.get(
+            domain=self.domain.name, record_date=self.statement_end
+        )
+        self.assertEqual(user_history.num_users, num_users)
