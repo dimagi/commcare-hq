@@ -166,7 +166,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                     "app_id": params.appId,
                     "endpoint_id": params.endpointId,
                     "endpoint_args": params.endpointArgs,
-                    "locale": displayOptions.language,
+                    "locale": params.changeLang || displayOptions.language,
                     "selections": params.selections,
                     "offset": params.page * casesPerPage,
                     "search_text": params.search,

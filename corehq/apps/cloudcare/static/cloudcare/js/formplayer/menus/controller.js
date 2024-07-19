@@ -148,13 +148,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
             if (!appPreview) {
-                let isFormEntry = !menuResponse.queryKey;
-                if (isFormEntry) {
-                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
-                }
-                if (menuResponse.type === constants.ENTITIES) {
-                    menusUtils.showMenuDropdown();
-                }
+                menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
