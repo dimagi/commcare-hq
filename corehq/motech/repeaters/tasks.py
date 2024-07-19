@@ -1,3 +1,4 @@
+import random
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -18,15 +19,19 @@ from corehq.util.metrics import (
 )
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.soft_assert import soft_assert
+from corehq.util.timer import TimingContext
 
 from .const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
     CHECK_REPEATERS_PARTITION_COUNT,
     MAX_RETRY_WAIT,
+    RATE_LIMITER_DELAY_RANGE,
     State,
 )
 from .models import RepeatRecord, domain_can_forward
+
+from ..rate_limiter import report_repeater_usage, rate_limit_repeater
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),
@@ -160,8 +165,15 @@ def _process_repeat_record(repeat_record):
             # in the next check to process repeat records, which helps to avoid
             # clogging the queue
             repeat_record.postpone_by(MAX_RETRY_WAIT)
+        elif rate_limit_repeater(repeat_record.domain):
+            # Spread retries evenly over the range defined by RATE_LIMITER_DELAY_RANGE
+            # with the intent of avoiding clumping and spreading load
+            repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
         elif repeat_record.is_queued():
-            repeat_record.fire()
+            with TimingContext() as timer:
+                repeat_record.fire()
+            # round up to the nearest millisecond, meaning always at least 1ms
+            report_repeater_usage(repeat_record.domain, milliseconds=int(timer.duration * 1000) + 1)
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
 
