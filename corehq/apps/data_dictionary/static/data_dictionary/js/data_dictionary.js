@@ -170,7 +170,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.originalResourcePropPath = prop.fhir_resource_prop_path;
         self.deprecated = ko.observable(prop.deprecated || false);
         self.isGeoCaseProp = ko.observable(isGeoCaseProp);
-        self.isSafeToDelete = ko.observable(prop.isSafeToDelete);
+        self.isSafeToDelete = ko.observable(prop.is_safe_to_delete);
         self.deleted = ko.observable(false);
         self.hasChanges = false;
         self.index = prop.index;
