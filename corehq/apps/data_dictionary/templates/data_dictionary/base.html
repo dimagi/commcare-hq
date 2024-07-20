@@ -93,7 +93,8 @@
                       {% trans "Description" %}
                   </label>
                   <div class="col-xs-12 col-sm-6 col-md-6 col-lg-8 controls">
-                    <textarea name="description" class="form-control vertical-resize"></textarea>
+                    <textarea name="description"
+                              class="form-control std-height vertical-resize"></textarea>
                   </div>
                 </div>
               </fieldset>
@@ -200,6 +201,7 @@
           <div class="table-row table-header">
           <div class="row-item-small"></div>
           <div class="row-item">{% trans "Case Property" %}</div>
+          <div class="row-item">{% trans "Label" %}</div>
           {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
             <div class="row-item">{% trans "Data Type" %}</div>
           {% endif %}
@@ -244,10 +246,9 @@
             {% endif %}
             <div class="row-item">
               <!-- ko if: name() !== ''-->
-              <textarea class="form-control vertical-resize" data-bind="
-                    value: $data.description,
-                    rows: 1"
-                    placeholder='{% trans "Click here to add a description" %}'></textarea>
+              <textarea class="form-control std-height vertical-resize"
+                        data-bind="value: $data.description, rows: 1"
+                        placeholder='{% trans "Click here to add a description" %}'></textarea>
               <!-- /ko -->
             </div>
             {% if fhir_integration_enabled %}
@@ -278,16 +279,14 @@
               <div class="row-item">
                 <div class="w-100">
                 <span data-bind="text: name"></span>
-                <div class="row mt-3">
-                  <label class="col-xs-2 py-2" for="prop-label">Label </label>
-                  <span class="col-xs-9">
-                    <input class="form-control"
-                          data-bind="value: $data.label, attr: {'placeholder': 'Click here to add Label'}"
-                          id="prop-label"
-                    />
-                  </span>
                 </div>
-                </div>
+              </div>
+              <div class="row-item">
+                <input class="form-control"
+                       id="prop-label"
+                       data-bind="
+                         value: $data.label,
+                         attr: {'placeholder': 'Click here to add a label'}" />
               </div>
               {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
                 <div class="row-item main-form">
@@ -310,11 +309,11 @@
                   </span>
                 </div>
               {% endif %}
-              <div class="row-item main-form">
-                              <textarea class="form-control vertical-resize" data-bind="
-                                value: $data.description,
-                                rows: 1"
-                                placeholder='{% trans "Click here to add a description" %}'></textarea>
+              <div class="row-item-big main-form">
+                <textarea class="form-control std-height vertical-resize"
+                          placeholder="{% trans 'Click here to add a description' %}"
+                          data-bind=" value: $data.description, rows: 1">
+                </textarea>
               </div>
             {% if fhir_integration_enabled %}
               <div class="row-item fhir-path">
