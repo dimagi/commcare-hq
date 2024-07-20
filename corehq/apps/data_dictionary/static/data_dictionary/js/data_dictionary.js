@@ -99,7 +99,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         isGeoCaseProp,
                         groupObj.name(),
                         self.changeSaveButton
-                );
+                    );
                     groupObj.properties.push(propObj);
                 }
             }
