@@ -211,7 +211,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             {"key": gettext("valid value"), "value": gettext("description")}, /* placeholders */
             10 /* maxDisplay */
         );
-        self.allowedValues.val(prop.allowedValues);
+        self.allowedValues.val(prop.allowed_values);
         if (initialPageData.get('read_only_mode')) {
             self.allowedValues.setEdit(false);
         }
