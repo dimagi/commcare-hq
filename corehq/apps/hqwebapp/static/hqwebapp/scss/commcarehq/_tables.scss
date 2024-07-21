@@ -177,6 +177,7 @@
   position: relative;
 
   .table-loading-indicator {
+    z-index: 1000;
     position: absolute;
     width: 100%;
     height: 100%;
@@ -198,6 +199,16 @@
       $_offset: $table-loading-spinner-size / 2;
       left: calc(50% - $_offset);
       top: calc(50% - $_offset);
+    }
+
+    .table-loading-progress {
+      z-index: 1000;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: $white;
+      font-weight: bold;
     }
   }
 }

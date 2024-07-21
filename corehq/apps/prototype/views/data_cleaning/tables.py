@@ -1,4 +1,6 @@
 import json
+import random
+import time
 
 from memoized import memoized
 from django.http import Http404
@@ -11,6 +13,7 @@ from corehq.apps.prototype.models.data_cleaning.cache_store import (
     VisibleColumnStore,
     FakeCaseDataStore,
     SlowSimulatorStore,
+    ApplyChangesSimulationStore,
 )
 from corehq.apps.prototype.models.data_cleaning.columns import EditableColumn, CaseDataCleaningColumnManager
 from corehq.apps.prototype.models.data_cleaning.tables import FakeCaseTable
@@ -105,26 +108,6 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
                 raise err
 
     @hx_action('post')
-    def commit_edits(self, request, *args, **kwargs):
-        has_edits = self.column_manager.has_edits()
-        if not has_edits:
-            return self.get(request, *args, **kwargs)
-
-        all_rows = self.data_store.get()
-        for row in all_rows:
-            if not row['selected']:
-                continue
-            if row['id'] not in self.record_ids:
-                continue
-            edited_keys = [k for k in row.keys() if k.endswith('__edited')]
-            for edited_key in edited_keys:
-                original_key = edited_key.replace('__edited', '')
-                row[original_key] = row[edited_key]
-                del row[edited_key]
-        self.data_store.set(all_rows)
-        return self.get(request, *args, **kwargs)
-
-    @hx_action('post')
     def revert_edits(self, request, *args, **kwargs):
         has_edits = self.column_manager.has_edits()
         if not has_edits:
@@ -179,6 +162,50 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         all_rows[self.record_id]['selected'] = is_selected
         self.data_store.set(all_rows)
         return self.render_htmx_no_response(request, *args, **kwargs)
+
+    def render_apply_changes_progress_response(self, request, *args, **kwargs):
+        progress_store = ApplyChangesSimulationStore(request)
+        progress = progress_store.get()
+        context = {
+            "progress": progress,
+            "show_done": progress >= 100,
+        }
+        self.template_name = "prototype/data_cleaning/partials/apply_changes_progress_bar.html"
+        response = self.render_htmx_partial_response(
+            request, self.template_name, context
+        )
+        if progress > 100:
+            progress_store.delete()
+            response['HX-Trigger'] = 'hqRefresh'
+        return response
+
+    @hx_action('get')
+    def simulate_apply_changes_progress(self, request, *args, **kwargs):
+        progress_store = ApplyChangesSimulationStore(request)
+        time.sleep(.3)
+        progress_store.set(progress_store.get() + random.choice(range(10, 30)))
+        return self.render_apply_changes_progress_response(request, *args, **kwargs)
+
+    @hx_action('post')
+    def commit_edits(self, request, *args, **kwargs):
+        has_edits = self.column_manager.has_edits()
+        if not has_edits:
+            return self.get(request, *args, **kwargs)
+
+        all_rows = self.data_store.get()
+        for row in all_rows:
+            if not row['selected']:
+                continue
+            if row['id'] not in self.record_ids:
+                continue
+            edited_keys = [k for k in row.keys() if k.endswith('__edited')]
+            for edited_key in edited_keys:
+                original_key = edited_key.replace('__edited', '')
+                row[original_key] = row[edited_key]
+                del row[edited_key]
+        self.data_store.set(all_rows)
+        # return self.get(request, *args, **kwargs)
+        return self.render_apply_changes_progress_response(request, *args, **kwargs)
 
     @property
     def record_id(self):

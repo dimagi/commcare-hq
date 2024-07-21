@@ -43,10 +43,10 @@
                 type="button"
                 hx-post="{{ request.path_info }}{% querystring %}"
                 hq-hx-action="commit_edits"
-                hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
                 hx-swap="outerHTML"
-                hx-disable-elt="this"
-                hq-hx-loading="{{ table.loading_indicator_id  }}">
+                hx-target="#apply-changes-progress"
+                hq-hx-loading="simulate-apply-changes-loader"
+                hx-disable-elt="this">
           <i class="fa-solid fa-check-double"></i> {% trans "Apply" %}
         </button>
       </div>
@@ -115,6 +115,16 @@
       </div>
     </div>
 
+  </div>
+{% endblock %}
 
+{% block after_table %}
+  {{ block.super }}
+  <div id="simulate-apply-changes-loader"
+       class="table-loading-indicator">
+    <div id="apply-changes-progress"></div>
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">{% trans "Loading..." %}</span>
+    </div>
   </div>
 {% endblock %}

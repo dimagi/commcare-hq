@@ -59,6 +59,11 @@ class ShowWhitespacesStore(BaseCacheStore):
     default_value = False
 
 
+class ApplyChangesSimulationStore(BaseCacheStore):
+    slug = 'prototype-apply-changes-sim'
+    default_value = 0
+
+
 class FakeCaseDataStore(BaseCacheStore):
     slug = 'prototype-case-data-store'
 
