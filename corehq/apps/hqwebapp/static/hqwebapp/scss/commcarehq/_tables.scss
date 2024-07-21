@@ -147,10 +147,14 @@
   }
 
   .inline-edit-action-text {
-    top: calc(50% - 6px);
-    right: $spacer * 0.5;
+    background-color: $white;
+    padding: $spacer * .25;
+    white-space: nowrap;
+    $_offset: $spacer * .6;
+    top: calc(50% - $_offset);
+    right: $spacer * 0.25;
     font-size: 10px;
-    line-height: 11px;
+    line-height: $spacer * .75;
     text-transform: uppercase;
     font-weight: bold;
   }
@@ -164,7 +168,7 @@
     opacity: 1;
 
     &.inline-edit-action-text {
-      opacity: .75;
+      opacity: 1;
     }
   }
 }
