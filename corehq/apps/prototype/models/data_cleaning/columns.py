@@ -116,9 +116,9 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
             table_data = column_filter.apply_filter(table_data)
         return table_data
 
-    def add_filter(self, slug, match, value):
+    def add_filter(self, slug, match, value, use_regex):
         filters = self.filter_store.get()
-        filters.append([slug, match, value])
+        filters.append([slug, match, value, use_regex])
         self.filter_store.set(filters)
 
     def reorder_filters(self, filter_slugs):
@@ -159,21 +159,21 @@ class CaseDataCleaningColumnManager(BaseDataCleaningColumnManager):
     def get_available_columns(cls):
         available_columns = [
             ("name", EditableColumn(
-                verbose_name=_("Name"),
+                verbose_name=_("name"),
             )),
         ]
         case_properties = [
             'hight',
+            'height',
             'conducted_delivery',
             'date_of_delivery',
             'delivery_location',
             'dob',
             'edd',
-            'height',
             'lmp',
+            'mother_status',
             'spoken_language',
             'time_of_day',
-            'mother_status',
         ]
         available_columns.extend([(prop, EditableColumn(verbose_name=prop))
                         for prop in case_properties])

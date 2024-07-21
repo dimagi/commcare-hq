@@ -26,6 +26,15 @@ class AddColumnFilterForm(forms.Form):
         choices=ColumnMatchType.OPTIONS,
         required=False
     )
+    use_regex = forms.BooleanField(
+        label="",
+        required=False,
+        widget=BootstrapSwitchInput(
+            inline_label=gettext_lazy(
+                "Use regular expression"
+            ),
+        ),
+    )
     value = forms.CharField(
         label=gettext_lazy("Value"),
         required=False
@@ -41,21 +50,61 @@ class AddColumnFilterForm(forms.Form):
 
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
-            'slug',
-            'match',
-            'value',
-            twbscrispy.StrictButton(
-                _("Add Filter"),
-                type="submit",
-                css_class="btn-primary htmx-loading",
+            crispy.Div(
+                'slug',
+                crispy.Field(
+                    'match',
+                    x_init="match = $el.value",
+                    x_model="match",
+                ),
+                crispy.Div(
+                    'value',
+                    x_show="!noValueMatch.includes(match)",
+                ),
+                crispy.Div(
+                    hqcrispy.CheckboxField('use_regex'),
+                    x_show="regexMatches.includes(match)",
+                ),
+                twbscrispy.StrictButton(
+                    _("Add Filter"),
+                    type="submit",
+                    css_class="btn-primary htmx-loading",
+                ),
+                x_data=json.dumps({
+                    "match": self.fields['match'].initial,
+                    "noValueMatch": ColumnMatchType.NO_VALUE_MATCHES,
+                    "regexMatches": ColumnMatchType.REGEX_MATCHES,
+                }),
             ),
         )
 
-    def add_filter(self, request):
+    def clean(self):
+        match = self.cleaned_data['match']
+        value = self.cleaned_data['value']
+        if match in ColumnMatchType.REGEX_MATCHES:
+            if self.cleaned_data['use_regex']:
+                try:
+                    re.compile(value)
+                except re.error:
+                    self.add_error('value', _("Not a valid regular expression"))
+        if match not in ColumnMatchType.NO_VALUE_MATCHES and not value:
+            if match in ColumnMatchType.NEGATIVE_STRING_MATCHES:
+                self.add_error('value', _('Please provide a value or use Match Type '
+                                          '"is not empty" or "is not null"'))
+            else:
+                self.add_error('value', _('Please provide a value or use Match Type '
+                                          '"is empty" or "is null"'))
+
+    def add_filter(self):
+        use_regex = self.cleaned_data['use_regex']
+        match = self.cleaned_data['match']
+        if match not in ColumnMatchType.REGEX_MATCHES:
+            use_regex = False
         self.column_manager.add_filter(
             self.cleaned_data['slug'],
-            self.cleaned_data['match'],
+            match,
             self.cleaned_data['value'],
+            use_regex,
         )
 
 
@@ -237,6 +286,9 @@ class CleanColumnDataForm(forms.Form):
             if self._skip_row(row):
                 continue
             value = row.get(edited_slug, row[slug])
+            if value is None:
+                continue
+            value = str(value)
             if find_string and use_regex:
                 row[edited_slug] = re.sub(
                     re.compile(find_string),
@@ -258,6 +310,9 @@ class CleanColumnDataForm(forms.Form):
             if self._skip_row(row):
                 continue
             value = row.get(edited_slug, row[slug])
+            if value is None:
+                continue
+            value = str(value)
             if re.search(pattern, value):
                 row[edited_slug] = re.sub(pattern, '', value)
         self.data_store.set(rows)

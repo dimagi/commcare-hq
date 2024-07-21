@@ -96,7 +96,7 @@ class FilterColumnsFormView(TemplateView):
     def put(self, request, *args, **kwargs):
         filter_form = AddColumnFilterForm(self.column_manager, QueryDict(request.body))
         if filter_form.is_valid():
-            filter_form.add_filter(request)
+            filter_form.add_filter()
             filter_form = None
         return super().get(request, filter_form=filter_form, *args, **kwargs)
 
