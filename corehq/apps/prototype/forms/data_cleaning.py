@@ -257,6 +257,9 @@ class CleanColumnDataForm(forms.Form):
             CleaningActionType.FIND_REPLACE: self._find_and_replace,
             CleaningActionType.STRIP: self._strip_whitespace,
             CleaningActionType.MERGE: self._merge_columns,
+            CleaningActionType.TITLE_CASE: self._title_case,
+            CleaningActionType.UPPER_CASE: self._upper_case,
+            CleaningActionType.LOWER_CASE: self._lower_case,
         }
         action_fn = action_map[self.cleaned_data['action']]
         return action_fn()
@@ -357,3 +360,41 @@ class CleanColumnDataForm(forms.Form):
             num_changes += 1
         self.data_store.set(rows)
         return num_changes
+
+    def _fix_words(self, fix_function):
+        num_changes = 0
+        words_pattern = r"([\S]+)"
+        rows = self.data_store.get()
+        slug = self.cleaned_data['slug']
+        edited_slug = EditableColumn.get_edited_slug(slug)
+        for row in rows:
+            if self._skip_row(row):
+                continue
+            value = row.get(edited_slug, row[slug])
+            if value is None:
+                continue
+
+            value = str(value)
+            new_value = re.sub(
+                words_pattern,
+                fix_function,
+                value
+            )
+
+            if value != new_value:
+                num_changes += 1
+                row[edited_slug] = new_value
+            elif row.get(edited_slug):
+                del row[edited_slug]
+
+        self.data_store.set(rows)
+        return num_changes
+
+    def _title_case(self):
+        return self._fix_words(lambda x: x.group().capitalize())
+
+    def _upper_case(self):
+        return self._fix_words(lambda x: x.group().upper())
+
+    def _lower_case(self):
+        return self._fix_words(lambda x: x.group().lower())
