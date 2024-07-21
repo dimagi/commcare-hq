@@ -259,12 +259,13 @@ class CleanColumnDataForm(forms.Form):
             CleaningActionType.MERGE: self._merge_columns,
         }
         action_fn = action_map[self.cleaned_data['action']]
-        action_fn()
+        return action_fn()
 
     def _skip_row(self, row):
         return not row["selected"] or (self.filtered_ids and row["id"] not in self.filtered_ids)
 
     def _replace(self):
+        num_changes = 0
         rows = self.data_store.get()
         slug = self.cleaned_data['slug']
         replace_all_string = self.cleaned_data['replace_all_string']
@@ -273,9 +274,12 @@ class CleanColumnDataForm(forms.Form):
             if self._skip_row(row):
                 continue
             row[edited_slug] = replace_all_string
+            num_changes += 1
         self.data_store.set(rows)
+        return num_changes
 
     def _find_and_replace(self):
+        num_changes = 0
         rows = self.data_store.get()
         slug = self.cleaned_data['slug']
         find_string = self.cleaned_data['find_string']
@@ -288,20 +292,31 @@ class CleanColumnDataForm(forms.Form):
             value = row.get(edited_slug, row[slug])
             if value is None:
                 continue
+
             value = str(value)
+            new_value = value
             if find_string and use_regex:
-                row[edited_slug] = re.sub(
+                new_value = re.sub(
                     re.compile(find_string),
                     replace_string,
                     value
                 )
             elif find_string and find_string in value:
-                row[edited_slug] = value.replace(find_string, replace_string)
+                new_value = value.replace(find_string, replace_string)
             elif find_string == value:
-                row[edited_slug] = replace_string
+                new_value = replace_string
+
+            if value != new_value:
+                num_changes += 1
+                row[edited_slug] = new_value
+            elif row.get(edited_slug):
+                del row[edited_slug]
+
         self.data_store.set(rows)
+        return num_changes
 
     def _strip_whitespace(self):
+        num_changes = 0
         pattern = r"(^[\s]+)|([\s]+$)"
         rows = self.data_store.get()
         slug = self.cleaned_data['slug']
@@ -312,12 +327,23 @@ class CleanColumnDataForm(forms.Form):
             value = row.get(edited_slug, row[slug])
             if value is None:
                 continue
+
             value = str(value)
+            new_value = value
             if re.search(pattern, value):
-                row[edited_slug] = re.sub(pattern, '', value)
+                new_value = re.sub(pattern, '', value)
+
+            if value != new_value:
+                num_changes += 1
+                row[edited_slug] = new_value
+            elif row.get(edited_slug):
+                del row[edited_slug]
+
         self.data_store.set(rows)
+        return num_changes
 
     def _merge_columns(self):
+        num_changes = 0
         rows = self.data_store.get()
         slug = self.cleaned_data['slug']
         edited_slug = EditableColumn.get_edited_slug(slug)
@@ -328,4 +354,6 @@ class CleanColumnDataForm(forms.Form):
                 continue
             merge_value = row.get(edited_merge_slug, row[merge_slug])
             row[edited_slug] = merge_value
+            num_changes += 1
         self.data_store.set(rows)
+        return num_changes

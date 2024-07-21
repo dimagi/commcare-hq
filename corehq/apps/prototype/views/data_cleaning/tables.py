@@ -25,6 +25,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
     column_manager_class = CaseDataCleaningColumnManager
     data_store_class = FakeCaseDataStore
     template_name = 'prototype/htmx/single_table.html'
+    paginate_by = 10
 
     @property
     @memoized
