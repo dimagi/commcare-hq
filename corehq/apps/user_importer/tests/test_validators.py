@@ -22,7 +22,7 @@ from corehq.apps.user_importer.validation import (
     UsernameValidator,
     BooleanColumnValidator,
     ConfirmationSmsValidator,
-    LocationAccessValidator,
+    LocationValidator,
     _get_invitation_or_editable_user,
 )
 from corehq.apps.users.dbaccessors import delete_all_users
@@ -300,7 +300,7 @@ def test_validating_sms_confirmation_entry():
         "is_active and is_account_confirmed must be either empty or set to False."
 
 
-class TestLocationAccessValidator(LocationHierarchyTestCase):
+class TestLocationValidator(LocationHierarchyTestCase):
 
     domain = 'test-domain'
     location_type_names = ['state', 'county', 'city']
@@ -319,13 +319,13 @@ class TestLocationAccessValidator(LocationHierarchyTestCase):
     @classmethod
     def setUpClass(cls):
         delete_all_users()
-        super(TestLocationAccessValidator, cls).setUpClass()
+        super(TestLocationValidator, cls).setUpClass()
         cls.upload_user = WebUser.create(cls.domain, 'username', 'password', None, None)
         cls.upload_user.set_location(cls.domain, cls.locations['Middlesex'])
         restrict_user_by_location(cls.domain, cls.upload_user)
         cls.editable_user = WebUser.create(cls.domain, 'editable-user', 'password', None, None)
-        cls.validator = LocationAccessValidator(cls.domain, cls.upload_user,
-                                                SiteCodeToLocationCache(cls.domain), True)
+        cls.validator = LocationValidator(cls.domain, cls.upload_user,
+                                          SiteCodeToLocationCache(cls.domain), True)
 
     def testSuccess(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Cambridge'].location_id])
@@ -345,7 +345,7 @@ class TestLocationAccessValidator(LocationHierarchyTestCase):
                                      "invitation")
 
     def testCantEditCommCareUser(self):
-        self.cc_user_validator = LocationAccessValidator(self.domain, self.upload_user,
+        self.cc_user_validator = LocationValidator(self.domain, self.upload_user,
                                                 SiteCodeToLocationCache(self.domain), False)
         self.editable_cc_user = CommCareUser.create(self.domain, 'cc-username', 'password', None, None)
         self.editable_cc_user.reset_locations([self.locations['Suffolk'].location_id])

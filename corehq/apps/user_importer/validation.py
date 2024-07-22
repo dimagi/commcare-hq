@@ -46,7 +46,7 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, all_us
         ExistingUserValidator(domain, all_specs),
         TargetDomainValidator(upload_domain),
         ProfileValidator(domain, upload_user, is_web_user_import, all_user_profiles_by_name),
-        LocationAccessValidator(domain, upload_user, location_cache, is_web_user_import)
+        LocationValidator(domain, upload_user, location_cache, is_web_user_import)
     ]
     if is_web_user_import:
         return validators + [RequiredWebFieldsValidator(domain), DuplicateValidator(domain, 'email', all_specs),
@@ -455,7 +455,7 @@ class ConfirmationSmsValidator(ImportValidator):
                     return self.error_existing_user.format(self.confirmation_sms_header, errors_formatted)
 
 
-class LocationAccessValidator(ImportValidator):
+class LocationValidator(ImportValidator):
     error_message_user_access = _("Based on your locations do not have permission to edit this user or user "
                                   "invitation")
     error_message_location_access = _("You do not have permission to assign or remove these locations: {}")
