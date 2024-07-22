@@ -59,6 +59,9 @@ from corehq.util.workbook_reading import (
     valid_extensions,
 )
 
+import math
+import time
+
 require_can_edit_data = require_permission(HqPermissions.edit_data)
 
 EXCEL_SESSION_ID = "excel_id"
@@ -364,6 +367,8 @@ def excel_fields(request, domain):
 
     case_field_specs = [field_spec.to_json() for field_spec in field_specs]
 
+    included_columns = request.POST.getlist('included_columns')
+
     context = {
         'case_type': case_type,
         'search_column': search_column,
@@ -375,6 +380,7 @@ def excel_fields(request, domain):
         'domain': domain,
         'mirroring_enabled': mirroring_enabled,
         'is_bulk_import': request.POST.get('is_bulk_import', 'False') == 'True',
+        'included_columns': included_columns,
     }
     context.update(_case_importer_breadcrumb_context(_('Match Excel Columns to Case Properties'), domain))
     return render(request, "case_importer/excel_fields.html", context)
@@ -397,6 +403,7 @@ def excel_commit(request, domain):
     addition of all the field data. See that class for
     more information.
     """
+    start_time = time.time()
     excel_id = request.session.get(EXCEL_SESSION_ID)
 
     case_upload = CaseUpload.get(excel_id)
@@ -406,15 +413,50 @@ def excel_commit(request, domain):
         return render_error(request, domain, get_importer_error_message(e))
 
     if not request.POST.get('confirm'):
+        NUM_CASES_THRESHOLD = 100000
+        Z_SCORE_THRESHOLD = 3
         num_cases = 0
+        outlier_col_exists = False
+        max_col = ""
         worksheet_titles = _get_workbook_sheet_names(case_upload)
         for i in range(len(worksheet_titles)):
             with case_upload.get_spreadsheet(i) as spreadsheet:
-                num_cases += spreadsheet.max_row
-        THRESHOLD = 100 * 1000
-        if num_cases >= THRESHOLD:
+                col_data_counts = [0 for _ in range(len(spreadsheet.get_header_columns()))]
+                for row_index, row in enumerate(spreadsheet.iter_rows(), start=1):
+                    if row_index == 1:
+                        continue
+                    row_empty = True
+                    for col_index, cell in enumerate(row):
+                        if cell is not None and cell != ' ':
+                            col_data_counts[col_index] += 1
+                            row_empty = False
+                    if not row_empty:
+                        num_cases += 1
+                if len(col_data_counts) > 1:
+                    mean = sum(col_data_counts) / len(col_data_counts)
+                    variance = sum((x - mean) ** 2 for x in col_data_counts) / len(col_data_counts)
+                    std_dev = math.sqrt(variance)
+                    if not std_dev:
+                        continue
+                    z_scores = [(x - mean) / std_dev for x in col_data_counts]
+                    print(z_scores)
+                    max_z_score_index = z_scores.index(max(z_scores))
+                    print(max_z_score_index)
+                    max_z_score = z_scores[max_z_score_index]
+                    print(max_z_score)
+                    print(spreadsheet.get_header_columns())
+                    max_col = spreadsheet.get_header_columns()[max_z_score_index]
+                    print("max_col: ", max_col)
+                    if max_z_score > Z_SCORE_THRESHOLD:
+                        outlier_col_exists = True
+                    else:
+                        max_col = ""
+                if outlier_col_exists:
+                    break
+        if num_cases > NUM_CASES_THRESHOLD or outlier_col_exists:
             context = {
                 'num_cases': num_cases,
+                'max_column': max_col,
                 'domain': domain,
                 'case_type': request.POST.get('case_type'),
                 'search_column': request.POST.get('search_column'),
@@ -427,6 +469,9 @@ def excel_commit(request, domain):
                 'mirroring_enabled': request.POST.get('mirroring_enabled')
             }
             context.update(_case_importer_breadcrumb_context(_('Confirm Import'), domain))
+            elapsed_time = time.time() - start_time
+            print(f"Elapsed time: {elapsed_time:.2f} seconds")
+
             return render(request, 'case_importer/confirm_import.html', context)
 
     case_type = request.POST['case_type']
