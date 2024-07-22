@@ -224,12 +224,20 @@ class CaseDataCleaningColumnManager(BaseDataCleaningColumnManager):
         histories = self.history_store.get()
         rows = self.data_store.get()
         histories.append(rows)
+        if len(histories) > 21:
+            del histories[0]
         self.history_store.set(histories)
 
     def rollback_history(self):
         if self.has_history():
             histories = self.history_store.get()
-            self.data_store.set(histories[-1])
+
+            previous_rows = histories[-1]
+            current_rows = self.data_store.get()
+            for ind, row in enumerate(previous_rows):
+                row["selected"] = current_rows[ind]["selected"]
+
+            self.data_store.set(previous_rows)
             if len(histories) == 1:
                 self.history_store.delete()
             else:
@@ -238,6 +246,16 @@ class CaseDataCleaningColumnManager(BaseDataCleaningColumnManager):
     def clear_history(self):
         if self.has_history():
             self.history_store.delete()
+
+    def clear_selected_history(self, row_ids):
+        if not self.has_history():
+            return
+        histories = self.history_store.get()
+        all_rows = self.data_store.get()
+        for ind in range(0, len(histories)):
+            for row_id in row_ids:
+                histories[ind][row_id] = all_rows[row_id]
+        self.history_store.set(histories)
 
     def has_edits(self):
         rows = self.data_store.get()

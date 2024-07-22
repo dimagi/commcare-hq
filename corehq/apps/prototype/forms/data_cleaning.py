@@ -263,7 +263,10 @@ class CleanColumnDataForm(forms.Form):
         }
         action_fn = action_map[self.cleaned_data['action']]
         self.column_manager.make_history_snapshot()
-        return action_fn()
+        num_changes = action_fn()
+        if num_changes == 0:
+            self.column_manager.rollback_history()
+        return num_changes
 
     def _skip_row(self, row):
         return not row["selected"] or (self.filtered_ids and row["id"] not in self.filtered_ids)

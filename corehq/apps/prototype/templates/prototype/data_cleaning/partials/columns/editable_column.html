@@ -6,7 +6,7 @@
 <div class="editable-column-container"
      x-data='{ isEditing: false,
                isSubmitting: false,
-               cellValue: "{% if edited_value %}{{ edited_value|dc_escapejs }}{% else %}{{ value|dc_escapejs }}{% endif %}" }'
+               cellValue: "{% if edited_value is not None %}{{ edited_value|dc_escapejs }}{% else %}{{ value|dc_escapejs }}{% endif %}" }'
    {% if is_partial_update %}
      x-init="$dispatch('updateApplyEditsButton', {{ table.column_manager.has_edits|BOOL }})"
    {% endif %}>
@@ -14,7 +14,7 @@
   <div class="inline-edit-block"
        x-show="!isEditing"
        @dblclick="isEditing = !isSubmitting">
-    {% if edited_value %}
+    {% if edited_value is not None %}
       <form hx-post="{{ request.path_info }}{% querystring %}"
             hq-hx-action="cancel_edit"
             hx-vals='{"column": "{{ column.accessor }}",

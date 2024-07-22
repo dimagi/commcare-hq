@@ -157,6 +157,25 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         return self.get(request, *args, **kwargs)
 
     @hx_action('post')
+    def clear_selected_edits(self, request, *args, **kwargs):
+        if self.column_manager.has_edits():
+            all_rows = self.data_store.get()
+            changed_row_ids = []
+            for row in all_rows:
+                if not row['selected']:
+                    continue
+                if row['id'] not in self.record_ids:
+                    continue
+                edited_keys = [k for k in row.keys() if k.endswith('__edited')]
+                for edited_key in edited_keys:
+                    del row[edited_key]
+                if edited_keys:
+                    changed_row_ids.append(row['id'])
+            self.data_store.set(all_rows)
+            self.column_manager.clear_selected_history(changed_row_ids)
+        return self.get(request, *args, **kwargs)
+
+    @hx_action('post')
     def rollback_history(self, request, *args, **kwargs):
         self.column_manager.rollback_history()
         return self.get(request, *args, **kwargs)
@@ -185,7 +204,32 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         return self.render_apply_changes_progress_response(request, *args, **kwargs)
 
     @hx_action('post')
-    def apply_changes(self, request, *args, **kwargs):
+    def apply_selected_changes(self, request, *args, **kwargs):
+        has_edits = self.column_manager.has_edits()
+        if not has_edits:
+            return self.get(request, *args, **kwargs)
+
+        all_rows = self.data_store.get()
+        changed_row_ids = []
+        for row in all_rows:
+            if not row['selected']:
+                continue
+            if row['id'] not in self.record_ids:
+                continue
+            edited_keys = [k for k in row.keys() if k.endswith('__edited')]
+            for edited_key in edited_keys:
+                original_key = edited_key.replace('__edited', '')
+                row[original_key] = row[edited_key]
+                del row[edited_key]
+            if edited_keys:
+                changed_row_ids.append(row['id'])
+        self.data_store.set(all_rows)
+
+        self.column_manager.clear_selected_history(changed_row_ids)
+        return self.render_apply_changes_progress_response(request, *args, **kwargs)
+
+    @hx_action('post')
+    def apply_all_changes(self, request, *args, **kwargs):
         self.column_manager.clear_history()
         has_edits = self.column_manager.has_edits()
         if not has_edits:
@@ -193,10 +237,6 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
 
         all_rows = self.data_store.get()
         for row in all_rows:
-            if not row['selected']:
-                continue
-            if row['id'] not in self.record_ids:
-                continue
             edited_keys = [k for k in row.keys() if k.endswith('__edited')]
             for edited_key in edited_keys:
                 original_key = edited_key.replace('__edited', '')
@@ -263,6 +303,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         all_rows = self.data_store.get()
         edited_slug = EditableColumn.get_edited_slug(self.column_slug)
         if edited_slug in all_rows[self.record_id]:
+            self.column_manager.make_history_snapshot()
             del all_rows[self.record_id][edited_slug]
         self.data_store.set(all_rows)
         return self.render_table_cell_response(request, *args, **kwargs)
@@ -275,9 +316,11 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         original_value = all_rows[self.record_id][self.column_slug]
         if original_value != new_value:
             # edit value only if it differs from the original value
+            self.column_manager.make_history_snapshot()
             all_rows[self.record_id][edited_slug] = new_value
         elif original_value == new_value and all_rows[self.record_id].get(edited_slug):
             # delete an existing edited value
+            self.column_manager.make_history_snapshot()
             del all_rows[self.record_id][edited_slug]
         self.data_store.set(all_rows)
         return self.render_table_cell_response(request, *args, **kwargs)
