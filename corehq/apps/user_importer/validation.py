@@ -4,12 +4,9 @@ from typing import NamedTuple, Optional
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.utils.translation import gettext as _
-
-from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
-from corehq.apps.users.dbaccessors import get_existing_usernames
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
+from django.utils.translation import gettext as _
 
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.enterprise.models import EnterprisePermissions
@@ -18,6 +15,8 @@ from corehq.apps.reports.util import get_allowed_tableau_groups_for_domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_other_user, user_can_change_locations
 from corehq.apps.user_importer.exceptions import UserUploadError
+from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
+from corehq.apps.users.dbaccessors import get_existing_usernames
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
 from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import normalize_username, raw_username
@@ -456,7 +455,7 @@ class ConfirmationSmsValidator(ImportValidator):
 
 
 class LocationValidator(ImportValidator):
-    error_message_user_access = _("Based on your locations do not have permission to edit this user or user "
+    error_message_user_access = _("Based on your locations you do not have permission to edit this user or user "
                                   "invitation")
     error_message_location_access = _("You do not have permission to assign or remove these locations: {}")
 
