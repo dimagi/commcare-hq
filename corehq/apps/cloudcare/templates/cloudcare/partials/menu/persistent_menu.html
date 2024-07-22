@@ -36,7 +36,10 @@
     <% } else { %>
       <i class="fa fa-arrow-up-right-from-square persistent-menu-image" aria-hidden="true"></i>
     <% } %>
-    <a class="align-middle" href="#"><%- displayText %></a>
+    <a class="align-middle" href="#"
+       data-bs-toggle="offcanvas" data-bs-target="#persistent-menu-container">
+      <%- displayText %>
+    </a>
   </div>
   <ul></ul>
 </script>
