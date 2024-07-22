@@ -161,9 +161,27 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         }
+
+        if (menuResponse.persistentMenu) {
+            const menuCommands = menuResponse.persistentMenu;
+            _.each(menuCommands, (command) => _insertSelections(command, []));
+            FormplayerFrontend.regions.getRegion('persistentMenu').show(
+                views.PersistentMenuView({
+                    collection: new Backbone.Collection(menuCommands),
+                }).render());
+        } else {
+            FormplayerFrontend.regions.getRegion('persistentMenu').empty();
+        }
+
         if (menuResponse.appVersion) {
             FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
         }
+    };
+
+    // Store an array of the commands needed to navigate to each nested menu item
+    var _insertSelections = function (menuCommand, priorSelections) {
+        menuCommand.selections = priorSelections.concat([menuCommand.index]);
+        _.each(menuCommand.commands || [], (command) => _insertSelections(command, menuCommand.selections));
     };
 
     var showSplitScreenQuery = function (menuResponse, menuListView) {
