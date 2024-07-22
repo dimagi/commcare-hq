@@ -1159,13 +1159,6 @@ bootstrap-daterangepicker@3.0.3:
     jquery ">=1.10"
     moment "^2.9.0"
 
-bootstrap-switch@3.3.2:
-  version "3.3.2"
-  resolved "https://registry.yarnpkg.com/bootstrap-switch/-/bootstrap-switch-3.3.2.tgz#79ddb49fadc308fb731e257f95957af48996eea7"
-  integrity sha1-ed20n63DCPtzHiV/lZV69ImW7qc=
-  dependencies:
-    jquery ">=1.9.0"
-
 bootstrap-timepicker@0.5.1:
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/bootstrap-timepicker/-/bootstrap-timepicker-0.5.1.tgz#1ee36b4a7c27904c7c96da0988b711c9ee9e99b7"
