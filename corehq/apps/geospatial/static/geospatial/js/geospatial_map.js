@@ -27,6 +27,8 @@ hqDefine("geospatial/js/geospatial_map", [
 
     const MAP_CONTAINER_ID = 'geospatial-map';
     const SHOW_USERS_QUERY_PARAM = 'show_users';
+    const USER_LOCATION_ID_QUERY_PARAM = 'user_location_id';
+    const USER_LOCATION_NAME_QUERY_PARAM = 'user_location_name';
 
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
     var disbursementRunner;
@@ -328,6 +330,22 @@ hqDefine("geospatial/js/geospatial_map", [
 
         self.onFiltersChange = function () {
             self.hasFiltersChanged(true);
+            self.setLocationQueryParams();
+        };
+
+        self.setLocationQueryParams = function () {
+            if (self.selectedLocation) {
+                utils.setQueryParam(USER_LOCATION_ID_QUERY_PARAM, self.selectedLocation);
+                const selectedLocationData = $("#location-filter-select").select2('data');
+                if (selectedLocationData.length) {
+                    // We shouldn't have more than 1, since this select2 doesn't have multi-select enabled
+                    const userLocationName = selectedLocationData[0].text;
+                    utils.setQueryParam(USER_LOCATION_NAME_QUERY_PARAM, userLocationName);
+                }
+            } else {
+                utils.clearQueryParam(USER_LOCATION_ID_QUERY_PARAM);
+                utils.clearQueryParam(USER_LOCATION_NAME_QUERY_PARAM);
+            }
         };
 
         self.toggleFilterMenu = function () {
