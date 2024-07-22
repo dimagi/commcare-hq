@@ -2571,6 +2571,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             membership.assigned_location_ids.append(location_id)
             self.get_sql_locations.reset_cache(self)
         self.get_sql_location.reset_cache(self)
+        from corehq.apps.fixtures.models import UserLookupTableType
+        self.update_fixture_status(UserLookupTableType.LOCATION)
         self.save()
 
     def unset_location(self, domain, fall_back_to_next=False, commit=True):
@@ -2581,7 +2583,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         membership = self.get_domain_membership(domain)
         old_location_id = membership.location_id
         if old_location_id:
-            membership.assigned_location_ids.remove(old_location_id)
+            self._remove_location_from_user(membership, old_location_id)
             self.get_sql_locations.reset_cache(self)
         if membership.assigned_location_ids and fall_back_to_next:
             membership.location_id = membership.assigned_location_ids[0]
@@ -2601,9 +2603,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             # check if primary location
             self.unset_location(domain, fall_back_to_next)
         else:
-            membership.assigned_location_ids.remove(location_id)
+            self._remove_location_from_user(membership, location_id)
             self.get_sql_locations.reset_cache(self)
             self.save()
+
+    def _remove_location_from_user(self, membership, location_id):
+        from corehq.apps.fixtures.models import UserLookupTableType
+        membership.assigned_location_ids.remove(location_id)
+        self.update_fixture_status(UserLookupTableType.LOCATION)
 
     def reset_locations(self, domain, location_ids, commit=True):
         """
@@ -2615,6 +2622,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if not membership.location_id and location_ids:
             membership.location_id = location_ids[0]
         self.get_sql_locations.reset_cache(self)
+        from corehq.apps.fixtures.models import UserLookupTableType
+        self.update_fixture_status(UserLookupTableType.LOCATION)
         if commit:
             self.save()
 
