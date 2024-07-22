@@ -1,13 +1,16 @@
-from django.http.request import HttpRequest
-from django.contrib.auth.models import User
-from django.test import SimpleTestCase, TestCase
-
 from unittest.mock import patch
 
-from corehq.apps.domain.auth import user_can_access_domain_specific_pages
+from django.contrib.auth.models import User
+from django.http.request import HttpRequest
+from django.test import SimpleTestCase, TestCase
+
+from corehq.apps.domain.auth import (
+    ApiKeyFallbackBackend,
+    HQApiKeyAuthentication,
+    user_can_access_domain_specific_pages,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser, HQApiKey
-from corehq.apps.domain.auth import ApiKeyFallbackBackend, HQApiKeyAuthentication
 
 
 class TestUserCanAccessDomainSpecificPages(SimpleTestCase):
