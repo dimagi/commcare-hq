@@ -25,6 +25,7 @@ from .views import (
     unarchive_location,
     unassign_users,
     count_locations,
+    bulk_location_upload_api,
 )
 
 settings_urls = [
@@ -33,6 +34,7 @@ settings_urls = [
     url(r'^location_search/$', LocationsSearchView.as_view(), name='location_search'),
     url(r'^location_types/$', LocationTypesView.as_view(), name=LocationTypesView.urlname),
     url(r'^import/$', waf_allow('XSS_BODY')(LocationImportView.as_view()), name=LocationImportView.urlname),
+    url(r'^import/bulk_location_upload_api/$', bulk_location_upload_api, name='bulk_location_upload_api'),
     url(r'^import_status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', LocationImportStatusView.as_view(),
         name=LocationImportStatusView.urlname),
     url(r'^location_importer_job_poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
