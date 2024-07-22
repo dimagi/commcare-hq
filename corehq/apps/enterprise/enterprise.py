@@ -33,6 +33,8 @@ class EnterpriseReport:
     FORM_SUBMISSIONS = 'form_submissions'
     ODATA_FEEDS = 'odata_feeds'
 
+    DATE_ROW_FORMAT = '%Y/%m/%d %H:%M:%S'
+
     title = _('Enterprise Report')
     subtitle = ''
 
@@ -71,7 +73,7 @@ class EnterpriseReport:
             raise EnterpriseReportError(_("Unrecognized report '{}'").format(slug))
 
     def format_date(self, date):
-        return date.strftime('%Y/%m/%d %H:%M:%S') if date else ''
+        return date.strftime(self.DATE_ROW_FORMAT) if date else ''
 
     def domain_properties(self, domain_obj):
         return [

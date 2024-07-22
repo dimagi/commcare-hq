@@ -19,6 +19,7 @@ from corehq.apps.api.odata.views import add_odata_headers
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import ODataAuthentication
 from corehq.apps.enterprise.enterprise import (
+    EnterpriseReport,
     EnterpriseDomainReport,
     EnterpriseFormReport,
     EnterpriseMobileWorkerReport,
@@ -83,12 +84,8 @@ class ODataResource(HqBaseResource):
 
     def get_schema(self, request, **kwargs):
         """
-        Returns a serialized form of the schema of the resource.
-
-        Calls ``build_schema`` to generate the data. This method only responds
-        to HTTP GET.
-
-        Should return a HttpResponse (200 OK).
+        Returns the OData Schema Representation of this resource, in XML.
+        Only supports GET requests.
         """
         # ripped from Tastypie Resource's get_schema, only skipping building the bundle and using create_response
         self.method_check(request, allowed=['get'])
@@ -136,7 +133,7 @@ class ODataResource(HqBaseResource):
         if not datetime_string:
             return None
 
-        time = datetime.strptime(datetime_string, '%Y/%m/%d %H:%M:%S')
+        time = datetime.strptime(datetime_string, EnterpriseReport.DATE_ROW_FORMAT)
         time = time.astimezone(tz.gettz('UTC'))
         return time.isoformat()
 
@@ -253,6 +250,11 @@ class MobileUserResource(ODataEnterpriseResource):
 
 
 class ODataFeedResource(ODataEnterpriseResource):
+    '''
+    A Resource for listing all Domain-level OData feeds which belong to the Enterprise.
+    Currently includes summary rows as well as individual reports
+    '''
+
     domain = fields.CharField(null=True)
     num_feeds_used = fields.IntegerField(null=True)
     num_feeds_available = fields.IntegerField(null=True)
