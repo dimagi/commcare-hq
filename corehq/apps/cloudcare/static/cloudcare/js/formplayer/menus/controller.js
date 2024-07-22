@@ -164,7 +164,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
 
         if (menuResponse.persistentMenu) {
             const menuCommands = menuResponse.persistentMenu;
-            _.each(menuCommands, _insertSelections);
+            _.each(menuCommands, (command) => _insertSelections(command, []));
             FormplayerFrontend.regions.getRegion('persistentMenu').show(
                 views.PersistentMenuView({
                     collection: new Backbone.Collection(menuCommands),
@@ -180,8 +180,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
 
     // Store an array of the commands needed to navigate to each nested menu item
     var _insertSelections = function (menuCommand, priorSelections) {
-        menuCommand.selections = _.union(priorSelections || [], [menuCommand.index]);
-        _.each(menuCommand.commands || [], command => _insertSelections(command, menuCommand.selections));
+        menuCommand.selections = priorSelections.concat([menuCommand.index]);
+        _.each(menuCommand.commands || [], (command) => _insertSelections(command, menuCommand.selections));
     };
 
     var showSplitScreenQuery = function (menuResponse, menuListView) {
