@@ -5,6 +5,20 @@
      hx-swap="outerHTML"
      hq-hx-refresh="{{ table_selector }}">
 
+  {% if num_changes is not None %}
+    <div class="alert alert-success alert-dismissible fade show"
+         id="numChangesDCAlert"
+         role="alert">
+      {% blocktrans %}
+        {{ num_changes }} changes made
+      {% endblocktrans %}
+      <button type="button"
+              class="btn-close"
+              data-bs-dismiss="alert"
+              aria-label="{% trans "Close" %}"></button>
+    </div>
+  {% endif %}
+
   <form hx-post="{{ request.path_info }}"
         hx-target="#{{ container_id }}"
         hq-hx-loading="{{ table_loading_id }}"

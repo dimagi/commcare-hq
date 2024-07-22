@@ -10,11 +10,20 @@ from corehq.apps.prototype.models.data_cleaning.cache_store import FilterColumnS
 from corehq.apps.prototype.models.data_cleaning.filters import ColumnFilter
 
 
+class SystemPropertyColumn(columns.TemplateColumn):
+    template_name = "prototype/data_cleaning/partials/columns/system_property_column.html"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            template_name=self.template_name,
+            *args, **kwargs
+        )
+
+
 class EditableColumn(columns.TemplateColumn):
     template_name = "prototype/data_cleaning/partials/columns/editable_column.html"
 
     def __init__(self, *args, **kwargs):
-        self.cell_edit_url = kwargs.pop('cell_edit_url', None)
         super().__init__(
             template_name=self.template_name,
             *args, **kwargs
@@ -107,9 +116,9 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
             table_data = column_filter.apply_filter(table_data)
         return table_data
 
-    def add_filter(self, slug, match, value):
+    def add_filter(self, slug, match, value, use_regex):
         filters = self.filter_store.get()
-        filters.append([slug, match, value])
+        filters.append([slug, match, value, use_regex])
         self.filter_store.set(filters)
 
     def reorder_filters(self, filter_slugs):
@@ -148,29 +157,53 @@ class CaseDataCleaningColumnManager(BaseDataCleaningColumnManager):
 
     @classmethod
     def get_available_columns(cls):
-        return [
-            ("full_name", EditableColumn(
-                verbose_name=_("Name"),
-            )),
-            ("color", EditableColumn(
-                verbose_name=_("Color"),
-            )),
-            ("big_cat", EditableColumn(
-                verbose_name=_("Big Cats"),
-            )),
-            ("planet", EditableColumn(
-                verbose_name=_("Planet"),
-            )),
-            ("submitted_on", columns.Column(
-                verbose_name=_("Submitted On"),
-            )),
-            ("app", columns.Column(
-                verbose_name=_("Application"),
-            )),
-            ("status", columns.Column(
-                verbose_name=_("Status"),
+        available_columns = [
+            ("name", EditableColumn(
+                verbose_name=_("name"),
             )),
         ]
+        case_properties = [
+            'hight',
+            'height',
+            'conducted_delivery',
+            'date_of_delivery',
+            'delivery_location',
+            'dob',
+            'edd',
+            'lmp',
+            'mother_status',
+            'spoken_language',
+            'time_of_day',
+        ]
+        available_columns.extend([(prop, EditableColumn(verbose_name=prop))
+                        for prop in case_properties])
+        available_columns.extend([
+            ("owner_name", SystemPropertyColumn(
+                verbose_name=_("Owner"),
+            )),
+            ("opened_date", SystemPropertyColumn(
+                verbose_name=_("Created Date"),
+            )),
+            ("opened_by", SystemPropertyColumn(
+                verbose_name=_("Created By"),
+            )),
+            ("last_modified_date", SystemPropertyColumn(
+                verbose_name=_("Modified Date"),
+            )),
+            ("last_modified_by_user_username", SystemPropertyColumn(
+                verbose_name=_("Modified By"),
+            )),
+            ("status", SystemPropertyColumn(
+                verbose_name=_("Status"),
+            )),
+            ("closed_date", SystemPropertyColumn(
+                verbose_name=_("Closed Date"),
+            )),
+            ("closed_by_username", SystemPropertyColumn(
+                verbose_name=_("Closed By"),
+            )),
+        ])
+        return available_columns
 
     def has_edits(self):
         rows = FakeCaseDataStore(self.request).get()
