@@ -386,6 +386,18 @@ class TestLocationValidator(LocationHierarchyTestCase):
         assert validation_result == self.validator.error_message_location_access.format(
             self.locations['Suffolk'].site_code)
 
+    @flag_enabled('LOCATION_HAS_USERS')
+    def test_location_not_has_users(self):
+        self.editable_user.reset_locations(self.domain, [self.locations['Middlesex'].location_id])
+        self.locations['Cambridge'].location_type.has_users = False
+        self.locations['Cambridge'].location_type.save()
+        user_spec = {'username': self.editable_user.username,
+                     'location_code': [self.locations['Cambridge'].site_code,
+                                       self.locations['Middlesex'].site_code]}
+        validation_result = self.validator.validate_spec(user_spec)
+        assert validation_result == self.validator.error_message_location_not_has_users.format(
+            self.locations['Cambridge'].site_code)
+
     @classmethod
     def tearDownClass(cls):
         super(LocationHierarchyTestCase, cls).tearDownClass()
