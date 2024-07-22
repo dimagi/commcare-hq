@@ -155,7 +155,7 @@
         {% trans "Enabled toggle items" %}
         {% if is_random %}
         <span data-bind="makeHqHelp: {
-            description: '{% trans "Items added here will be enabled regardless of the randomness" %}'}"></span>
+            description: '{% trans "Items added here will be enabled regardless of the randomness (or disabled if preceded by `!`)" %}'}"></span>
         {% endif %}
       </h4>
       <table class="table table-condensed"><!-- B5: add table-borderless and remove `border: none` inline styles on table cells -->
