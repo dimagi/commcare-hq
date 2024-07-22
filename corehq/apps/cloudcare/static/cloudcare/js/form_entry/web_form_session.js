@@ -228,7 +228,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 errorMessage = errors.NO_INTERNET_ERROR;
                 if (action === constants.SUBMIT) {
                     $('.submit').prop('disabled', false);
-                    $('.form-control').prop('disabled', false);
+                    $('.form-control, .form-select').prop('disabled', false);
                 }
             } else if (_.has(resp, 'responseJSON') && resp.responseJSON !== undefined) {
                 errorMessage = formEntryUtils.touchformsError(resp.responseJSON.message);
