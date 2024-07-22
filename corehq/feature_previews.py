@@ -158,8 +158,6 @@ CALLCENTER = FeaturePreview(
         'From here they can do things like monitor workers with performance issues, '
         'update their case with possible reasons for poor performance, '
         'and offer guidance towards solutions.'),
-    help_link=('https://help.commcarehq.org/display/'
-               'commcarepublic/How+to+set+up+a+Supervisor-Call+Center+Application'),
     save_fn=enable_callcenter,
     can_self_enable_fn=can_enable_callcenter,
 )

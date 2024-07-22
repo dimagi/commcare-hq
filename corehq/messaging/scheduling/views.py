@@ -1070,7 +1070,7 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
                 "download_url": reverse("download_conditional_alert", args=(self.domain,)),
                 "adjective": _("SMS alert content"),
                 "plural_noun": _("SMS alert content"),
-                "help_link": "https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956488/Conditional+Alerts", # noqa
+                "help_link": "https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143956488/Conditional+Alerts",  # noqa: E501
             },
         })
         context.update({
