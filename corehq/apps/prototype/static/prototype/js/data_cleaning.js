@@ -54,4 +54,11 @@ hqDefine("prototype/js/data_cleaning",[
         }));
         modal.show();
     });
+    var cleanDataOffcanvas = document.getElementById('editOffcanvas');
+    cleanDataOffcanvas.addEventListener('hidden.bs.offcanvas', function () {
+        if (document.getElementById('numChangesDCAlert')) {
+            var numChangesDCAlert = bootstrap.Alert.getOrCreateInstance('#numChangesDCAlert');
+            numChangesDCAlert.close();
+        }
+    });
 });

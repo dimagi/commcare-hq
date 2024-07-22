@@ -35,7 +35,7 @@ class CaseDataCleaningPrototypeView(HtmxActionMixin, BasePageView):
     @property
     def page_context(self):
         return {
-            "case_type": "child",
+            "case_type": "mother",
             "show_whitespaces": ShowWhitespacesStore(self.request).get(),
         }
 
