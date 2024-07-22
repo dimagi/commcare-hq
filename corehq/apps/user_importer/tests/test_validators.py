@@ -28,10 +28,10 @@ from corehq.apps.user_importer.validation import (
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, HqPermissions, Invitation, WebUser
 from corehq.apps.users.models_role import UserRole
-from corehq.util.test_utils import flag_enabled
 from corehq.apps.custom_data_fields.models import (CustomDataFieldsDefinition,
     CustomDataFieldsProfile)
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.util.test_utils import flag_enabled
 
 factory = Faker()
 Faker.seed(1571040848)
@@ -341,8 +341,7 @@ class TestLocationValidator(LocationHierarchyTestCase):
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
         validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == ("Based on your locations do not have permission to edit this user or user "
-                                     "invitation")
+        assert validation_result == self.validator.error_message_user_access
 
     def test_cant_edit_commcare_user(self):
         self.cc_user_validator = LocationValidator(self.domain, self.upload_user,
@@ -353,8 +352,7 @@ class TestLocationValidator(LocationHierarchyTestCase):
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
         validation_result = self.cc_user_validator.validate_spec(user_spec)
-        assert validation_result == ("Based on your locations do not have permission to edit this user or user "
-                                     "invitation")
+        assert validation_result == self.validator.error_message_user_access
 
     def test_cant_edit_invitation(self):
         self.invitation = Invitation.objects.create(
@@ -368,8 +366,7 @@ class TestLocationValidator(LocationHierarchyTestCase):
                      'location_code': [self.locations['Middlesex'].site_code,
                                        self.locations['Cambridge'].site_code]}
         validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == ("Based on your locations do not have permission to edit this user or user "
-                                     "invitation")
+        assert validation_result == self.validator.error_message_user_access
 
     def test_cant_add_location(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Cambridge'].location_id])
@@ -377,8 +374,8 @@ class TestLocationValidator(LocationHierarchyTestCase):
                      'location_code': [self.locations['Suffolk'].site_code,
                                        self.locations['Cambridge'].site_code]}
         validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == ("You do not have permission to assign or remove these locations: "
-                                     "suffolk")
+        assert validation_result == self.validator.error_message_location_access.format(
+            self.locations['Suffolk'].site_code)
 
     def test_cant_remove_location(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Suffolk'].location_id,
@@ -386,8 +383,8 @@ class TestLocationValidator(LocationHierarchyTestCase):
         user_spec = {'username': self.editable_user.username,
                      'location_code': [self.locations['Cambridge'].site_code]}
         validation_result = self.validator.validate_spec(user_spec)
-        assert validation_result == ("You do not have permission to assign or remove these locations: "
-                                     "suffolk")
+        assert validation_result == self.validator.error_message_location_access.format(
+            self.locations['Suffolk'].site_code)
 
     @classmethod
     def tearDownClass(cls):
