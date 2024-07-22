@@ -419,7 +419,15 @@ hqDefine("geospatial/js/geospatial_map", [
         // Hide the datatable rows but not the pagination bar
         $('.dataTables_scroll').hide();
 
-        if (xhr.responseJSON.aaData.length && mapModel.mapInstance) {
+        if (xhr.status !== 200) {
+            if (xhr.responseText.length) {
+                alertUser.alert_user(xhr.responseText, 'danger');
+            } else {
+                alertUser.alertUser(
+                    gettext('Oops! Something went wrong! Please report an issue if the problem persists.')
+                );
+            }
+        } else if (xhr.responseJSON.aaData.length && mapModel.mapInstance) {
             loadCases(xhr.responseJSON.aaData);
         }
     });
