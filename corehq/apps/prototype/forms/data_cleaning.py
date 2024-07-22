@@ -262,6 +262,7 @@ class CleanColumnDataForm(forms.Form):
             CleaningActionType.LOWER_CASE: self._lower_case,
         }
         action_fn = action_map[self.cleaned_data['action']]
+        self.column_manager.make_history_snapshot()
         return action_fn()
 
     def _skip_row(self, row):
@@ -311,6 +312,7 @@ class CleanColumnDataForm(forms.Form):
 
             if value != new_value:
                 num_changes += 1
+            if row[slug] != new_value:
                 row[edited_slug] = new_value
             elif row.get(edited_slug):
                 del row[edited_slug]
@@ -338,6 +340,7 @@ class CleanColumnDataForm(forms.Form):
 
             if value != new_value:
                 num_changes += 1
+            if row[slug] != new_value:
                 row[edited_slug] = new_value
             elif row.get(edited_slug):
                 del row[edited_slug]
@@ -383,6 +386,7 @@ class CleanColumnDataForm(forms.Form):
 
             if value != new_value:
                 num_changes += 1
+            if row[slug] != new_value:
                 row[edited_slug] = new_value
             elif row.get(edited_slug):
                 del row[edited_slug]

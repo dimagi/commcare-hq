@@ -16,6 +16,7 @@ from corehq.apps.prototype.models.data_cleaning.cache_store import (
     VisibleColumnStore,
     FilterColumnStore,
     ShowWhitespacesStore,
+    FakeCaseDataHistoryStore,
 )
 from corehq.apps.prototype.views.data_cleaning.mixins import HtmxActionMixin, hx_action
 
@@ -56,6 +57,7 @@ def reset_data(request):
         FakeCaseDataStore,
         FilterColumnStore,
         ShowWhitespacesStore,
+        FakeCaseDataHistoryStore,
     ]
     applied_to_user = None
     for store_class in stores:

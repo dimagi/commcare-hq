@@ -27,12 +27,18 @@
       <div class="input-group">
         <div class="input-group-text">
           <i class="fa-solid fa-pencil me-2"></i>
-          {% trans "Edit selected records" %}:
+          {% trans "Edits" %}:
         </div>
         <button class="btn btn-outline-danger"
                 type="button"
+                data-bs-toggle="modal"
+                data-bs-target="#clearAllEditsModal">
+          <i class="fa-solid fa-close"></i> {% trans "Clear" %}
+        </button>
+        <button class="btn btn-outline-secondary"
+                type="button"
                 hx-post="{{ request.path_info }}{% querystring %}"
-                hq-hx-action="revert_edits"
+                hq-hx-action="rollback_history"
                 hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
                 hx-swap="outerHTML"
                 hx-disable-elt="this"
@@ -42,7 +48,7 @@
         <button class="btn btn-success"
                 type="button"
                 hx-post="{{ request.path_info }}{% querystring %}"
-                hq-hx-action="commit_edits"
+                hq-hx-action="apply_changes"
                 hx-swap="outerHTML"
                 hx-target="#apply-changes-progress"
                 hq-hx-loading="simulate-apply-changes-loader"
@@ -125,6 +131,50 @@
     <div id="apply-changes-progress"></div>
     <div class="spinner-border" role="status">
       <span class="visually-hidden">{% trans "Loading..." %}</span>
+    </div>
+  </div>
+
+  <div class="modal fade"
+       id="clearAllEditsModal"
+       tabindex="-1"
+       aria-labelledby="clearAllEditsModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5"
+              id="clearAllEditsModalLabel">
+            {% trans "Clear All Edits" %}
+          </h1>
+          <button type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>
+            {% blocktrans %}
+              Are you sure you want to clear all edits made to the data and
+              start over with data cleaning?
+            {% endblocktrans %}
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  data-bs-dismiss="modal">{% trans "Close" %}</button>
+          <button type="button"
+                  data-bs-dismiss="modal"
+                  class="btn btn-outline-danger"
+                  hx-post="{{ request.path_info }}{% querystring %}"
+                  hq-hx-action="clear_all_edits"
+                  hx-target="{% if table.container_id %}#{{ table.container_id }}{% else %}div.table-container{% endif %}"
+                  hx-swap="outerHTML"
+                  hq-hx-loading="{{ table.loading_indicator_id  }}">
+            {% trans "Clear All Edits" %}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 {% endblock %}

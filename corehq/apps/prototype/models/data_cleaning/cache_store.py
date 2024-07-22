@@ -64,6 +64,11 @@ class ApplyChangesSimulationStore(BaseCacheStore):
     default_value = 0
 
 
+class FakeCaseDataHistoryStore(BaseCacheStore):
+    slug = 'prototype-case-data-history-store'
+    default_value = []
+
+
 class FakeCaseDataStore(BaseCacheStore):
     slug = 'prototype-case-data-store'
 

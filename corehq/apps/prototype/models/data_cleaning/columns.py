@@ -6,7 +6,11 @@ from django.utils.translation import gettext as _
 
 from django_tables2 import columns
 
-from corehq.apps.prototype.models.data_cleaning.cache_store import FilterColumnStore, FakeCaseDataStore
+from corehq.apps.prototype.models.data_cleaning.cache_store import (
+    FilterColumnStore,
+    FakeCaseDataStore,
+    FakeCaseDataHistoryStore,
+)
 from corehq.apps.prototype.models.data_cleaning.filters import ColumnFilter
 
 
@@ -205,8 +209,38 @@ class CaseDataCleaningColumnManager(BaseDataCleaningColumnManager):
         ])
         return available_columns
 
+    @property
+    def history_store(self):
+        return FakeCaseDataHistoryStore(self.request)
+
+    @property
+    def data_store(self):
+        return FakeCaseDataStore(self.request)
+
+    def has_history(self):
+        return bool(self.history_store.get())
+
+    def make_history_snapshot(self):
+        histories = self.history_store.get()
+        rows = self.data_store.get()
+        histories.append(rows)
+        self.history_store.set(histories)
+
+    def rollback_history(self):
+        if self.has_history():
+            histories = self.history_store.get()
+            self.data_store.set(histories[-1])
+            if len(histories) == 1:
+                self.history_store.delete()
+            else:
+                self.history_store.set(histories[:-1])
+
+    def clear_history(self):
+        if self.has_history():
+            self.history_store.delete()
+
     def has_edits(self):
-        rows = FakeCaseDataStore(self.request).get()
+        rows = self.data_store.get()
         for row in rows:
             edited_keys = [k for k in row.keys() if k.endswith("__edited")]
             if edited_keys:
