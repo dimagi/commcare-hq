@@ -327,7 +327,7 @@ class TestLocationValidator(LocationHierarchyTestCase):
         cls.validator = LocationValidator(cls.domain, cls.upload_user,
                                           SiteCodeToLocationCache(cls.domain), True)
 
-    def testSuccess(self):
+    def test_success(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Cambridge'].location_id])
         user_spec = {'username': self.editable_user.username,
                      'location_code': [self.locations['Middlesex'].site_code,
@@ -335,7 +335,7 @@ class TestLocationValidator(LocationHierarchyTestCase):
         validation_result = self.validator.validate_spec(user_spec)
         assert validation_result is None
 
-    def testCantEditWebUser(self):
+    def test_cant_edit_web_user(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Suffolk'].location_id])
         user_spec = {'username': self.editable_user.username,
                      'location_code': [self.locations['Middlesex'].site_code,
@@ -344,7 +344,7 @@ class TestLocationValidator(LocationHierarchyTestCase):
         assert validation_result == ("Based on your locations do not have permission to edit this user or user "
                                      "invitation")
 
-    def testCantEditCommCareUser(self):
+    def test_cant_edit_commcare_user(self):
         self.cc_user_validator = LocationValidator(self.domain, self.upload_user,
                                                 SiteCodeToLocationCache(self.domain), False)
         self.editable_cc_user = CommCareUser.create(self.domain, 'cc-username', 'password', None, None)
@@ -356,7 +356,7 @@ class TestLocationValidator(LocationHierarchyTestCase):
         assert validation_result == ("Based on your locations do not have permission to edit this user or user "
                                      "invitation")
 
-    def testCantEditInvitation(self):
+    def test_cant_edit_invitation(self):
         self.invitation = Invitation.objects.create(
             domain=self.domain,
             email='invite-user@dimagi.com',
@@ -371,7 +371,7 @@ class TestLocationValidator(LocationHierarchyTestCase):
         assert validation_result == ("Based on your locations do not have permission to edit this user or user "
                                      "invitation")
 
-    def testCantAddLocation(self):
+    def test_cant_add_location(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Cambridge'].location_id])
         user_spec = {'username': self.editable_user.username,
                      'location_code': [self.locations['Suffolk'].site_code,
@@ -380,7 +380,7 @@ class TestLocationValidator(LocationHierarchyTestCase):
         assert validation_result == ("You do not have permission to assign or remove these locations: "
                                      "suffolk")
 
-    def testCantRemoveLocation(self):
+    def test_cant_remove_location(self):
         self.editable_user.reset_locations(self.domain, [self.locations['Suffolk'].location_id,
                                                          self.locations['Cambridge'].location_id])
         user_spec = {'username': self.editable_user.username,
