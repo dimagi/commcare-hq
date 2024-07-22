@@ -5,6 +5,7 @@ hqDefine("geospatial/js/geospatial_map", [
     "hqwebapp/js/initial_page_data",
     "knockout",
     'geospatial/js/models',
+    'geospatial/js/utils',
     'hqwebapp/js/bootstrap3/alert_user',
     'select2/dist/js/select2.full.min',
 ], function (
@@ -12,6 +13,7 @@ hqDefine("geospatial/js/geospatial_map", [
     initialPageData,
     ko,
     models,
+    utils,
     alertUser
 ) {
     const caseMarkerColors = {
@@ -24,6 +26,7 @@ hqDefine("geospatial/js/geospatial_map", [
     };
 
     const MAP_CONTAINER_ID = 'geospatial-map';
+    const SHOW_USERS_QUERY_PARAM = 'show_users';
 
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
     var disbursementRunner;
@@ -332,6 +335,14 @@ hqDefine("geospatial/js/geospatial_map", [
             const shouldShow = self.showFilterMenu() ? 'show' : 'hide';
             $("#user-filters-panel .panel-body").collapse(shouldShow);
         };
+
+        self.shouldShowUsers.subscribe(function (shouldShowUsers) {
+            if (shouldShowUsers) {
+                utils.setQueryParam(SHOW_USERS_QUERY_PARAM, true);
+            } else {
+                utils.clearQueryParam(SHOW_USERS_QUERY_PARAM);
+            }
+        });
 
         return self;
     };
