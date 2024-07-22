@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     'underscore',
     'backbone',
     'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'cloudcare/js/markdown',
@@ -21,6 +22,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     _,
     Backbone,
     DOMPurify,
+    bootstrap,
     initialPageData,
     toggles,
     markdown,
@@ -148,20 +150,32 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         if (menuResponse.breadcrumbs) {
             menusUtils.showBreadcrumbs(menuResponse.breadcrumbs);
             if (!appPreview) {
-                let isFormEntry = !menuResponse.queryKey;
-                if (isFormEntry) {
-                    menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
-                }
-                if (menuResponse.type === constants.ENTITIES) {
-                    menusUtils.showMenuDropdown();
-                }
+                menusUtils.showMenuDropdown(menuResponse.langs, initialPageData.get('lang_code_name_mapping'));
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         }
+
+        if (menuResponse.persistentMenu) {
+            const menuCommands = menuResponse.persistentMenu;
+            _.each(menuCommands, (command) => _insertSelections(command, []));
+            FormplayerFrontend.regions.getRegion('persistentMenu').show(
+                views.PersistentMenuView({
+                    collection: new Backbone.Collection(menuCommands),
+                }).render());
+        } else {
+            FormplayerFrontend.regions.getRegion('persistentMenu').empty();
+        }
+
         if (menuResponse.appVersion) {
             FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
         }
+    };
+
+    // Store an array of the commands needed to navigate to each nested menu item
+    var _insertSelections = function (menuCommand, priorSelections) {
+        menuCommand.selections = priorSelections.concat([menuCommand.index]);
+        _.each(menuCommand.commands || [], (command) => _insertSelections(command, menuCommand.selections));
     };
 
     var showSplitScreenQuery = function (menuResponse, menuListView) {
@@ -255,8 +269,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
         $('#case-detail-modal').find('.js-detail-content').html(contentView.render().el);
         $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
-        $('#case-detail-modal').modal('show');
-
+        bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).show();
     };
 
     var getDetailList = function (detailObject) {

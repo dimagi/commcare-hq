@@ -9,6 +9,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     'backbone',
     'backbone.marionette',
     'markdown-it/dist/markdown-it',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'analytix/js/appcues',
     'analytix/js/google',
@@ -30,6 +31,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     Backbone,
     Marionette,
     markdowner,
+    bootstrap,
     initialPageData,
     appcues,
     GGAnalytics,
@@ -126,11 +128,11 @@ hqDefine("cloudcare/js/formplayer/app", [
 
     FormplayerFrontend.on('clearForm', function () {
         $('#webforms').html("");
-        $('.menu-scrollable-container').removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+        $('.menu-scrollable-container').removeClass("d-none");
         $('#webforms-nav').html("");
         $('#cloudcare-debugger').html("");
         $('.atwho-container').remove();
-        $('#case-detail-modal').modal('hide');
+        bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).hide();
     });
 
     FormplayerFrontend.getChannel().reply('clearMenu', function () {
@@ -290,8 +292,10 @@ hqDefine("cloudcare/js/formplayer/app", [
             return FormplayerFrontend.getChannel().request('resourceMap', resourcePath, appId);
         };
         var sess = WebFormSession.WebFormSession(data);
-        sess.renderFormXml(data, $('#webforms'));
-        $('.menu-scrollable-container').addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+        if (data.type !== Const.ENTITIES && data.type !== Const.QUERY) {
+            sess.renderFormXml(data, $('#webforms'));
+        }
+        $('.menu-scrollable-container').addClass("d-none");
     });
 
     FormplayerFrontend.on("start", function (model, options) {
@@ -365,7 +369,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                             "for offline use. Please reconnect to the Internet before " +
                             "continuing."), $("#cloudcare-notifications"));
                         $('.submit').prop('disabled', 'disabled');
-                        $('.form-control').prop('disabled', 'disabled');
+                        $('.form-control, .form-select').prop('disabled', 'disabled');
                     }
                 },reconnectTimingWindow);
             });
@@ -375,14 +379,14 @@ hqDefine("cloudcare/js/formplayer/app", [
                 if ((new Date() - offlineTime) > reconnectTimingWindow) {
                     CloudcareUtils.showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
                     $('.submit').prop('disabled', false);
-                    $('.form-control').prop('disabled', false);
+                    $('.form-control, .form-select').prop('disabled', false);
                 }
             }
         );
 
         window.addEventListener(
             'beforeprint', function () {
-                $('.panel.panel-default, .q.form-group').last().addClass('last');
+                $('.card, .q').last().addClass('last');
             }
         );
 
@@ -716,6 +720,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         urlObject.clearExceptApp();
         FormplayerFrontend.regions.getRegion('sidebar').empty();
         FormplayerFrontend.regions.getRegion('breadcrumb').empty();
+        FormplayerFrontend.regions.getRegion('persistentMenu').empty();
         if (currentUser.displayOptions.singleAppMode) {
             appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
             FormplayerFrontend.trigger("app:singleApp", appId);
