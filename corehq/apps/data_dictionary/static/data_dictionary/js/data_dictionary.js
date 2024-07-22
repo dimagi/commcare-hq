@@ -48,7 +48,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.resetSaveButton = resetSaveButton;
         self.dataUrl = dataUrl;
 
-        self.groups.subscribe(changeSaveButton)
+        self.groups.subscribe(changeSaveButton);
 
         self.fetchCaseProperties = function () {
             if (self.groups().length === 0) {
@@ -379,7 +379,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         const resetSaveButton = function () {
             self.saveButton.setState('saved');
-        }
+        };
 
         self.init = function (callback) {
             // Get list of case types
@@ -421,7 +421,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             return _.find(self.caseTypes(), function (prop) {
                 return prop.name === hash;
             });
-        }
+        };
 
         self.getActiveCaseType = function () {
             return _.find(self.caseTypes(), function (prop) {
@@ -572,7 +572,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                     'name': self.newPropertyName(),
                     'label': self.newPropertyName(),
                     'allowedValues': {},
-                }
+                };
                 let propObj = propertyListItem(
                     prop,
                     false,
