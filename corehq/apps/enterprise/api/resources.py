@@ -96,13 +96,11 @@ class ODataResource(HqBaseResource):
         self.throttle_check(request)
         self.log_throttled_access(request)
 
-        primary_key = self.get_primary_key()
-        if not (isinstance(primary_key, list) or isinstance(primary_key, tuple)):
-            primary_key = (primary_key,)
+        primary_keys = self.get_primary_keys()
 
         metadata = render_to_string('api/odata_metadata.xml', {
             'fields': self.get_fields(),
-            'primary_key': primary_key,
+            'primary_keys': primary_keys,
         })
 
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
@@ -129,7 +127,7 @@ class ODataResource(HqBaseResource):
 
         raise KeyError(type(field_object))
 
-    def get_primary_key(self):
+    def get_primary_keys(self):
         raise NotImplementedError()
 
     @classmethod
@@ -176,8 +174,8 @@ class DomainResource(ODataEnterpriseResource):
 
         return bundle
 
-    def get_primary_key(self):
-        return 'domain'
+    def get_primary_keys(self):
+        return ('domain',)
 
 
 class WebUserResource(ODataEnterpriseResource):
@@ -212,8 +210,8 @@ class WebUserResource(ODataEnterpriseResource):
     def convert_not_available(cls, value):
         return None if value == 'N/A' else value
 
-    def get_primary_key(self):
-        return 'email'
+    def get_primary_keys(self):
+        return ('email',)
 
 
 class MobileUserResource(ODataEnterpriseResource):
@@ -250,8 +248,8 @@ class MobileUserResource(ODataEnterpriseResource):
 
         return bundle
 
-    def get_primary_key(self):
-        return 'user_id'
+    def get_primary_keys(self):
+        return ('user_id',)
 
 
 class ODataFeedResource(ODataEnterpriseResource):
@@ -278,8 +276,8 @@ class ODataFeedResource(ODataEnterpriseResource):
 
         return bundle
 
-    def get_primary_key(self):
-        return 'report_name'  # very odd report that makes coming up with an actual key challenging
+    def get_primary_keys(self):
+        return ('report_name',)  # very odd report that makes coming up with an actual key challenging
 
 
 class FormSubmissionResource(ODataEnterpriseResource):
@@ -311,5 +309,5 @@ class FormSubmissionResource(ODataEnterpriseResource):
 
         return bundle
 
-    def get_primary_key(self):
+    def get_primary_keys(self):
         return ('form_id', 'submitted',)
