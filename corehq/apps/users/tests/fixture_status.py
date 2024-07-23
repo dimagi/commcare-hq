@@ -122,7 +122,7 @@ class TestFixtureStatus(TestCase):
         fake_location1 = MagicMock()
         fake_location2 = MagicMock()
         fake_location1.location_id = "misty_mountains"
-        fake_location2.location_id = "lonely_mountains"
+        fake_location2.location_id = "lonely_mountain"
 
         self.web_user.set_location(self.domain.name, fake_location1)
         self.web_user.reset_locations(self.domain.name, [fake_location1.location_id, fake_location2.location_id])
