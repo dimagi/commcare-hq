@@ -11,14 +11,17 @@
   </div>
   <div id="persistent-menu-container" class="offcanvas offcanvas-start" tabindex="-1" aria-labelledby="persistent-menu-label">
     <div class="offcanvas-header">
-      <h5 class="offcanvas-title" id="persistent-menu-label">
+      <h5 class="offcanvas-title position-relative" id="persistent-menu-label">
         <% if (imageUri) { %>
           <i class="fcc persistent-menu-image" aria-hidden="true"
              style="background-image: url('<%- imageUri %>');"></i>
         <% } else { %>
           <i class="fcc fcc-flower persistent-menu-image" aria-hidden="true"></i>
         <% } %>
-        <span class="align-middle"><%- appName %></span>
+        <a id="app-main" class="align-middle stretched-link text-reset"
+           data-bs-toggle="offcanvas" data-bs-target="#persistent-menu-container">
+          <%- appName %>
+        </a>
       </h5>
       <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>

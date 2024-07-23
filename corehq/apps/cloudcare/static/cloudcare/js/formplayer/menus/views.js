@@ -1545,6 +1545,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         regions: {
             menu: "#persistent-menu-content",
         },
+        events: {
+            'click #app-main': 'onClickAppMain',
+        },
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
         },
@@ -1557,6 +1560,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 appName: appName,
                 imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
             };
+        },
+        onClickAppMain: function () {
+            FormplayerFrontend.trigger("persistentMenuSelect");
         },
     });
 
