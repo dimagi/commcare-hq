@@ -200,7 +200,7 @@ class Command(BaseCommand):
                          'from a secure dropzone'),
         Role(slug=privileges.ATTENDANCE_TRACKING,
              name='Attendance Tracking',
-             description='Supports using CommCareHQ for attendance tracking'),
+             description='Supports using CommCare HQ for attendance tracking'),
         Role(slug=privileges.REGEX_FIELD_VALIDATION,
              name='Regular Field Validation',
              description='Regular field validation for custom data fields'),
@@ -220,9 +220,6 @@ class Command(BaseCommand):
              name='Bulk user management features',
              description='For mobile users, enables bulk deletion page and bulk lookup page. '
                          'For web users, enables filtered download page.'),
-        Role(slug=privileges.APPLICATION_ERROR_REPORT,
-             name='Application error report',
-             description='Show Application Error Report'),
         Role(slug=privileges.DATA_DICTIONARY,
              name='Data dictionary',
              description='Project level data dictionary of cases'),
@@ -237,7 +234,7 @@ class Command(BaseCommand):
              description='Support for finding duplicate cases'),
         Role(slug=privileges.CUSTOM_DOMAIN_ALERTS,
              name='Custom Domain Banners',
-             description='Allow projects to add banners for their users on CommCareHQ'),
+             description='Allow projects to add banners for their users on CommCare HQ'),
     ]
 
     BOOTSTRAP_PLANS = [

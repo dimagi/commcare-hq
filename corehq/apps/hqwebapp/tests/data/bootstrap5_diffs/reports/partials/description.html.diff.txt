@@ -1,0 +1,9 @@
+--- 
++++ 
+@@ -1,5 +1,5 @@
+ {% load i18n %}
+-<div class="panel-body">
++<div class="card-body">
+   {% if report.description %}
+     <h4>{% trans 'How can I use this report?' %}</h4>
+     <p>

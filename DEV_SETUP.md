@@ -676,9 +676,9 @@ for these packages.
 
 ```sh
 $ npm --version
-8.19.3
+10.2.4
 $ node --version
-v16.19.1
+v20.11.1
 ```
 
 On a clean Ubuntu 22.04 LTS install, the packaged nodejs version is expected to be v12. The

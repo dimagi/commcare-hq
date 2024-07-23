@@ -56,6 +56,9 @@ MANAGERS = ADMINS
 
 # default to the system's timezone settings
 TIME_ZONE = "UTC"
+# this preserves current behavior prior to Django 5.0,
+# where timezone support will be enabled by default
+USE_TZ = False
 
 
 # Language code for this installation. All choices can be found here:
@@ -231,10 +234,10 @@ DEFAULT_APPS = (
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'two_factor',
+    'two_factor.plugins.phonenumber',
     'ws4redis',
     'statici18n',
     'django_user_agents',
-    'logentry_admin',
     'oauth2_provider',
 )
 
@@ -367,6 +370,7 @@ HQ_APPS = (
     'pillowtop',
     'pillow_retry',
     'corehq.apps.styleguide',
+    'corehq.apps.prototype',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
     'corehq.motech',
@@ -382,6 +386,7 @@ HQ_APPS = (
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
+    'corehq.apps.app_execution',
 
     # custom reports
     'custom.reports.mc',
@@ -854,33 +859,9 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_MAJOR_VERSION = 2
+ELASTICSEARCH_MAJOR_VERSION = 5
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
-
-# The variables should be used while reindexing an index.
-# When the variables are set to true the data will be written to both primary and secondary indexes.
-
-ES_APPS_INDEX_MULTIPLEXED = False
-ES_CASE_SEARCH_INDEX_MULTIPLEXED = False
-ES_CASES_INDEX_MULTIPLEXED = False
-ES_DOMAINS_INDEX_MULTIPLEXED = False
-ES_FORMS_INDEX_MULTIPLEXED = False
-ES_GROUPS_INDEX_MULTIPLEXED = False
-ES_SMS_INDEX_MULTIPLEXED = False
-ES_USERS_INDEX_MULTIPLEXED = False
-
-
-# Setting the variable to True would mean that the primary index would become secondary and vice-versa
-# This should only be set to True after successfully running and verifying migration command on a particular index. 
-ES_APPS_INDEX_SWAPPED = True
-ES_CASE_SEARCH_INDEX_SWAPPED = True
-ES_CASES_INDEX_SWAPPED = True
-ES_DOMAINS_INDEX_SWAPPED = True
-ES_FORMS_INDEX_SWAPPED = True
-ES_GROUPS_INDEX_SWAPPED = True
-ES_SMS_INDEX_SWAPPED = True
-ES_USERS_INDEX_SWAPPED = True
 
 BITLY_OAUTH_TOKEN = None
 
@@ -1095,6 +1076,16 @@ CUSTOM_LANDING_TEMPLATE = {
 # used to override low-level index settings (number_of_replicas, number_of_shards, etc)
 ES_SETTINGS = None
 
+# The CASE_SEARCH_SUB_INDICES should look like this:
+# {
+#     'co-carecoordination-perf': {
+#         'index_cname': 'case_search_bha',
+#         'multiplex_writes': True,
+#     }
+# }
+# See case_search_bha.py docstring for context
+CASE_SEARCH_SUB_INDICES = {}
+
 PHI_API_KEY = None
 PHI_PASSWORD = None
 
@@ -1115,9 +1106,10 @@ SESSION_BYPASS_URLS = [
     r'^/a/{domain}/apps/download/',
 ]
 
-# Disable builtin throttling for two factor backup tokens, since we have our own
-# See corehq.apps.hqwebapp.signals and corehq.apps.hqwebapp.forms for details
-OTP_STATIC_THROTTLE_FACTOR = 0
+# Preserves behavior after upgrading past version 1.15.4 of django-two-factor-auth, which changed the factor to 10
+OTP_STATIC_THROTTLE_FACTOR = 1
+OTP_TOTP_THROTTLE_FACTOR = 1
+TWO_FACTOR_PHONE_THROTTLE_FACTOR = 1
 
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
 RATE_LIMIT_SUBMISSIONS = False
@@ -1155,6 +1147,7 @@ FCM_CREDS = None
 CONNECTID_USERINFO_URL = 'http://localhost:8080/o/userinfo'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
+MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
 
 # used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
 PERMANENT_DELETION_WINDOW = 30  # days
@@ -1617,7 +1610,6 @@ COUCHDB_APPS = [
 
     # custom reports
     'accounting',
-    ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
     ('export', META_DB),

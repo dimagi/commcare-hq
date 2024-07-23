@@ -1,7 +1,7 @@
-hqDefine("cloudcare/js/form_entry/const", function () {
+'use strict';
+hqDefine("cloudcare/js/form_entry/const", [], function () {
     return {
         GROUP_TYPE: 'sub-group',
-        REPEAT_TYPE: 'repeat-juncture',
         QUESTION_TYPE: 'question',
         GROUPED_ELEMENT_TILE_ROW_TYPE: 'grouped-element-tile-row',
 
@@ -46,6 +46,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         STRIPE_REPEATS: 'stripe-repeats',
         GROUP_BORDER: 'group-border',
         HINT_AS_PLACEHOLDER: 'hint-as-placeholder',
+        RECEIVER_FIELD_INDEXED: 'indexed',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,

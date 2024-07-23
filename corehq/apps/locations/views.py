@@ -28,7 +28,7 @@ from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
@@ -66,11 +66,14 @@ from .permissions import (
     user_can_edit_location_types,
 )
 from .tree_utils import assert_no_cycles
-from .util import load_locs_json, location_hierarchy_config
+from .util import does_location_type_have_users, load_locs_json, location_hierarchy_config
 from django.http import JsonResponse, HttpResponseBadRequest
 from corehq.apps.locations.dbaccessors import get_filtered_locations_count
 
 logger = logging.getLogger(__name__)
+
+VALID_LOCATION_TYPE_PROPERTIES = ['name', 'parent_type', 'administrative', 'shares_cases', 'view_descendants',
+                                  'pk', 'expand_view_child_data_to', 'has_users']
 
 
 @location_safe
@@ -265,6 +268,7 @@ class LocationOptionsController(EmwfOptionsController):
 
 
 @method_decorator(locations_access_required, name='dispatch')
+@location_safe
 class LocationsSearchView(EmwfOptionsView):
 
     @property
@@ -273,6 +277,7 @@ class LocationsSearchView(EmwfOptionsView):
         return LocationOptionsController(self.request, self.domain, self.search)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     urlname = 'location_fields_view'
     field_type = 'LocationFields'
@@ -339,6 +344,9 @@ class LocationTypesView(BaseDomainView):
             'include_without_expanding': (loc_type.include_without_expanding_id
                                           if loc_type.include_without_expanding_id else None),
             'include_only': list(loc_type.include_only.values_list('pk', flat=True)),
+            'expand_view_child_data_to': loc_type.expand_view_child_data_to_id,
+            'has_users_setting': loc_type.has_users,
+            'actually_has_users': does_location_type_have_users(loc_type),
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     @method_decorator(lock_locations)
@@ -349,7 +357,7 @@ class LocationTypesView(BaseDomainView):
         def _is_fake_pk(pk):
             return isinstance(pk, str) and pk.startswith("fake-pk-")
 
-        def mk_loctype(name, parent_type, administrative,
+        def _mk_loctype(name, parent_type, administrative,
                        shares_cases, view_descendants, pk, code, **kwargs):
             parent = sql_loc_types[parent_type] if parent_type else None
 
@@ -366,11 +374,12 @@ class LocationTypesView(BaseDomainView):
             loc_type.parent_type = parent
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
+            loc_type.has_users = kwargs.get('has_users')
             loc_type.code = unicode_slug(code)
             sql_loc_types[pk] = loc_type
             loc_type.save()
 
-        def unique_name_and_code():
+        def _unique_name_and_code():
             current_location_types = LocationType.objects.by_domain(request.domain)
             for location_type in current_location_types:
                 if location_type.pk in payload_loc_type_name_by_pk:
@@ -386,15 +395,26 @@ class LocationTypesView(BaseDomainView):
                         return False
             return True
 
+        def _validate_properties(loc_type):
+            for prop in VALID_LOCATION_TYPE_PROPERTIES:
+                if prop not in loc_type:
+                    raise LocationConsistencyError("Missing an organization level property!")
+
+        def _validate_has_users_config(loc_type_payload, pk):
+            if not loc_type.get('has_users'):
+                if _is_fake_pk(pk):
+                    return
+                if does_location_type_have_users(LocationType.objects.get(pk=pk, domain=self.domain)):
+                    raise LocationConsistencyError(f"Locations of the organization level '{loc_type['name']}' "
+                                                "have users assigned to them. You can't uncheck the "
+                                                "'Has Users' setting for this level!")
+
         loc_types = payload['loc_types']
         pks = []
         payload_loc_type_name_by_pk = {}
         payload_loc_type_code_by_pk = {}
         for loc_type in loc_types:
-            for prop in ['name', 'parent_type', 'administrative',
-                         'shares_cases', 'view_descendants', 'pk']:
-                if prop not in loc_type:
-                    raise LocationConsistencyError("Missing an organization level property!")
+            _validate_properties(loc_type)
             pk = loc_type['pk']
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
@@ -402,6 +422,8 @@ class LocationTypesView(BaseDomainView):
             payload_loc_type_name_by_pk[loc_type['pk']] = loc_type['name']
             if loc_type.get('code'):
                 payload_loc_type_code_by_pk[loc_type['pk']] = loc_type['code']
+            if toggles.LOCATION_HAS_USERS.enabled(self.domain):
+                _validate_has_users_config(loc_type, pk)
         names = list(payload_loc_type_name_by_pk.values())
         names_are_unique = len(names) == len(set(names))
         codes = list(payload_loc_type_code_by_pk.values())
@@ -409,7 +431,7 @@ class LocationTypesView(BaseDomainView):
         if not names_are_unique or not codes_are_unique:
             raise LocationConsistencyError("'name' and 'code' are supposed to be unique")
 
-        if not unique_name_and_code():
+        if not _unique_name_and_code():
             messages.error(request, LocationConsistencyError(_(
                 "Looks like you are assigning a location name/code to a different location "
                 "in the same request. Please do this in two separate updates by using a "
@@ -423,7 +445,7 @@ class LocationTypesView(BaseDomainView):
 
         for loc_type in hierarchy:
             # make all locations in order
-            mk_loctype(**loc_type)
+            _mk_loctype(**loc_type)
 
         for loc_type in hierarchy:
             # apply sync boundaries (expand_from, expand_to and include_without_expanding) after the
@@ -436,13 +458,13 @@ class LocationTypesView(BaseDomainView):
     def _attach_sync_boundaries_to_location_type(loc_type_data, loc_type_db):
         """Store the sync expansion boundaries along with the location type. i.e. where
         the user's locations start expanding from, and where they expand to
-
         """
         loc_type = loc_type_db[loc_type_data['pk']]
         expand_from_id = loc_type_data['expand_from']
         expand_to_id = loc_type_data['expand_to']
         include_without_expanding_id = loc_type_data['include_without_expanding']
         include_only_ids = loc_type_data['include_only']
+        expand_view_child_data_to_id = loc_type_data['expand_view_child_data_to']
         try:
             loc_type.expand_from = loc_type_db[expand_from_id] if expand_from_id else None
         except KeyError:        # expand_from location type was deleted
@@ -459,7 +481,26 @@ class LocationTypesView(BaseDomainView):
             loc_type.include_without_expanding = None
         include_only = LocationTypesView._get_include_only(include_only_ids, loc_type_db)
         loc_type.include_only.set(include_only)
+        try:
+            if LocationTypesView._is_descendent_loc_type(loc_type.pk, expand_view_child_data_to_id, loc_type_db):
+                loc_type.expand_view_child_data_to = loc_type_db[expand_view_child_data_to_id] \
+                    if expand_view_child_data_to_id else None
+            else:
+                raise LocationConsistencyError("Inconsistency in View Child Data")
+        except KeyError:        # expand_view_child_data_to location type was deleted
+            loc_type.expand_view_child_data_to = None
+
         loc_type.save()
+
+    @staticmethod
+    def _is_descendent_loc_type(possible_ancestor_id, descendent_id, loc_type_db):
+        parent_id = loc_type_db[descendent_id].parent_type_id
+        if parent_id is None:
+            return False
+        if parent_id == possible_ancestor_id:
+            return True
+        else:
+            return LocationTypesView._is_descendent_loc_type(possible_ancestor_id, parent_id, loc_type_db)
 
     @staticmethod
     def _get_include_only(include_only_ids, loc_type_db):
@@ -765,6 +806,8 @@ class EditLocationView(BaseEditLocationView):
     @memoized
     def users_form(self):
         if not (self.can_edit_commcare_users or self.can_access_all_locations):
+            return None
+        if toggles.LOCATION_HAS_USERS.enabled(self.domain) and not self.location.location_type.has_users:
             return None
         form = UsersAtLocationForm(
             request=self.request,

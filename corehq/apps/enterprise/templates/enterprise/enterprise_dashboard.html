@@ -1,10 +1,10 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block page_title %}{{ account.name }}{% endblock %}
 
-{% requirejs_main 'enterprise/js/enterprise_dashboard' %}
+{% requirejs_main_b5 'enterprise/js/enterprise_dashboard' %}
 
 {% block page_content %}
   {% registerurl "enterprise_dashboard_email" domain "---" %}
@@ -12,21 +12,21 @@
 
   <div class="row">
     {% for report in reports %}
-      <div class="col-sm-6 col-md-6 col-lg-3">
-        <div class="panel panel-default text-center report-panel" data-slug="{{ report.slug }}">
-          <div class="panel-heading">
-            <h3 class="panel-title">{{ report.title }}</h3>
-            <small>{{ report.subtitle|default:"&nbsp;" }}</small>
+      <div class="col-md-6 col-lg-6 col-xl-3">
+        <div class="card text-center report-panel mb-3" data-slug="{{ report.slug }}">
+          <div class="card-header">
+            <div class="fs-4">{{ report.title }}</div>
+            <div class="fs-6">{{ report.subtitle|default:"&nbsp;" }}</div>
           </div>
-          <div class="panel-body">
-            <h1 class="total">
+          <div class="card-body">
+            <h1 class="card-text total">
               <i class="fa fa-spin fa-spinner"></i>
             </h1>
             <br>
-            <a class="btn btn-primary btn-lg">
+            <button class="btn btn-primary btn-lg">
               <i class="fa fa-envelope"></i>
               {% trans "Email Report" %}
-            </a>
+            </button>
           </div>
         </div>
       </div>

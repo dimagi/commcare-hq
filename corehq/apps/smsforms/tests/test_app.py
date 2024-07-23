@@ -27,7 +27,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.util import utcnow
 
 
-@patch_user_data_db_layer
+@patch_user_data_db_layer()
 @patch('corehq.apps.smsforms.app.tfsms.start_session')
 class TestStartSession(TestCase):
     domain = "test-domain"

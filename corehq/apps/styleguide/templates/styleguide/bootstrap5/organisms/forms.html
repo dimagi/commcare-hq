@@ -1,0 +1,363 @@
+{% extends 'styleguide/bootstrap5/base.html' %}
+{% load hq_shared_tags %}
+
+{% block intro %}
+  <h1 class="sg-title mb-0" id="content">Forms</h1>
+  <p class="sg-lead">
+    HQ is largely a collection of forms.
+  </p>
+{% endblock intro %}
+
+{% block toc %}
+  <h5 class="my-2 ms-3">On this page</h5>
+  <hr class="my-2 ms-3">
+  <nav id="TableOfContents">
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#crispy-forms">Crispy Forms</a>
+        <ul>
+          <li><a href="#crispy-forms-simple">Simple Example</a></li>
+          <li><a href="#crispy-forms-knockout">Using Knockout</a></li>
+
+        </ul>
+      </li>
+      <li><a href="#html-forms">HTML Forms</a></li>
+      <li><a href="#validation">Form Validation</a>
+        <ul>
+          <li><a href="#field-errors">Showing Field Errors</a></li>
+          <li><a href="#form-errors">Showing Form Errors</a></li>
+          <li><a href="#cirspy-errors">Showing Errors in Crispy Forms</a></li>
+          <li><a href="#valid-fields">Marking Fields as Valid</a></li>
+          <li><a href="#valid-crispy">Valid Feedback in Crispy Forms</a></li>
+          <li><a href="#ko-validation">Knockout Validation</a></li>
+        </ul>
+      </li>
+      <li><a href="#field-states">Field States</a>
+        <ul>
+          <li><a href="#field-state-disabled-readonly">Disabled &amp; Readonly</a>
+            <ul>
+              <li><a href="#disabled-readonly-html">HTML Example</a></li>
+              <li><a href="#disabled-readonly-crispy">Crispy Forms</a></li>
+            </ul>
+          </li>
+          <li><a href="#field-state-placeholders-help">Placeholders &amp; Help Text</a>
+            <ul>
+              <li><a href="#placeholder-help-text-html">HTML Example</a></li>
+              <li><a href="#placeholder-help-text-crispy">Crispy Forms</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+{% endblock toc %}
+
+{% block content %}
+  <h2 id="overview">Overview</h2>
+  <p>
+    Forms in HQ are a mix of bespoke HTML and
+    <a href="http://django-crispy-forms.readthedocs.org/en/latest/" target="_blank">Crispy Forms</a>.
+    Different parts of HQ use these two approaches, and you should always consider existing context
+    when deciding whether to use Crispy Forms or HTML.
+  </p>
+  <p>
+    The benefit of Crispy Forms, and why you should opt for using it over bespoke HTML whenever possible,
+    is that the HTML for each form component is controlled by templates. From HTML is often affected
+    during a front-end migration (like Bootstrap). If a bespoke HTML form was used, that HTML needs
+    to be re-examined everywhere.
+    However, for forms using Crispy Forms, the relevant HTML only has to be changed once in the templates,
+    which makes the overall migration faster and easier.
+  </p>
+
+  <h2 id="crispy-forms" class="pt-4">
+    Crispy Forms
+  </h2>
+  <p>
+    <a href="http://django-crispy-forms.readthedocs.org/en/latest/" target="_blank">Crispy Forms</a>
+    generates HTML for forms based on form layouts defined in python. Use of this library contributes to consistency
+    in design and reduces boilerplate HTML writing. It also helps reduce HTML changes required during a front-end
+    migration.
+  </p>
+  <p>
+    Crispy Forms does not control the form's logic, processing, validation, or anything having to do with form data.
+    It is used to specify the layout and hooks for the display logic, for instance a <code>data-bind</code>
+    for Knockout. Django Forms still controls the remaining data-processing.
+  </p>
+
+  <h3 id="crispy-forms-simple" class="pt-3">
+    A Simple Example
+  </h3>
+  <p>
+    Below is a very simple crispy forms example. The point where Crispy Forms becomes a part of the form is when
+    <code>self.helper</code> is set. The layout of the form is then defined in
+    <code>self.helper.layout</code>.
+  </p>
+  <p>
+    To include this form in a template, <code>{% verbatim %}{% load crispy_forms_tags %}{% endverbatim %}</code>
+    must be included at the top of the template, and <code>{% verbatim %}{% crispy form %}{% endverbatim %}</code>
+    should be placed where the form should appear
+    &mdash; the variable <code>form</code> (or other variable name) is set in the template context.
+  </p>
+  <p>
+    Some additional notes:
+  </p>
+  <ul>
+    <li>
+      <p>
+        It's best practice to set <code>self.helper</code> to either <code>HQFormHelper</code> or <code>HQModalFormHelper</code>,
+        both defined in <code>hqwebapp.crispy</code>. These helpers help standardize the <code>label_class</code> and
+        <code>field_class</code> css classes, as well as the <code>form_class</code> css class.
+      </p>
+    </li>
+    <li>
+      <p>
+        <code>self.helper.form_action</code> is where you can set the url for the form to post to.
+      </p>
+    </li>
+    <li>
+      <p>
+        It is possible to override <code>self.helper.field_class</code> and <code>self.helper.form_class</code>, but
+        please do this sparingly. See Bootstrap's
+        <a href="https://getbootstrap.com/docs/5.3/layout/columns/" target="_blank">Column Documentation</a>
+        for more information about how to use these classes.
+      </p>
+    </li>
+  </ul>
+  {% include 'styleguide/bootstrap5/form_example.html' with content=examples.crispy_basic %}
+
+  <h3 id="crispy-forms-knockout" class="pt-3">
+    Using Knockout with Crispy Forms
+  </h3>
+  <p>
+    The example below demonstrates various ways Knockout Bindings can be applied within a Crispy Form. Please review the
+    comments in python code for further details.
+  </p>
+  {% include 'styleguide/bootstrap5/form_js_example.html' with content=examples.crispy_knockout %}
+
+  <h2 id="html-forms" class="pt-4">
+    HTML Forms
+  </h2>
+  <p>
+    HQ uses styles provided by <a href="https://getbootstrap.com/docs/5.3/forms/overview/" target="_blank">Bootstrap 5 Forms</a>.
+  </p>
+  <p>
+    Notes on the example below:
+  </p>
+  <ul>
+    <li>
+      <p>
+        Forms need to include a <code>{% verbatim %}{% csrf_token %}{% endverbatim %}</code> tag to protect against <a
+        href='https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)' target='_blank'>CSRF
+        attacks</a>. HQ will reject forms that do not contain this token.
+      </p>
+    </li>
+    <li>
+      <p>
+        The sets of grid classes (<code>col-sm-*</code>, etc.) can be replaced by
+        {% verbatim %}<code>{% css_field_class %}</code>, <code>{% css_label_class %}</code>, and
+        <code>{% css_action_class %}</code>{% endverbatim %}, which will fill in HQ's standard form
+        proportions. See comments in the HTML example below if usage isn't clear.
+      </p>
+    </li>
+    <li>
+      <p>
+        The dropdown here (and throughout this section) should use a select2, as discussed in
+        <a href='{% url 'styleguide_molecules_selections_b5' %}#select2' target='_blank'>Molecules > Selections</a>.
+      </p>
+    </li>
+    <li>
+      <p>
+        The textarea uses the <code>vertical-resize</code> CSS class to allow for long input.
+        Inputs that accept XPath expressions are especially likely to have very long input.
+        The text area does not support horizontal resizing, which can allow the user to expand a
+        textarea so that it overlaps with other elements or otherwise disrupts the page's layout.
+      </p>
+    </li>
+    <li>
+      <p>
+        The <code>autocomplete="off"</code> attribute on the inputs controls the browser's form autofill.
+        Most forms in HQ are unique to HQ and should always turn off autocomplete to prevent unexpected
+        automatic input. Exceptions would be forms that include information like a user's name and address.
+      </p>
+    </li>
+    <li>
+      <p>
+        This example does not show translations, but all user-facing text should be translated.
+      </p>
+    </li>
+  </ul>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.basic_form %}
+
+  <h2 id="validation" class="pt-4">
+    Form Validation
+  </h2>
+  <p>
+    Good error messages are specific, actionable, visually near the affected input. They occur as soon as a
+    problem is detected. They help the user figure out how to address the situation: "Sorry, this isn't
+    supported. Try XXX." Without any cues, the user is stuck in the same frustrating situation.
+  </p>
+
+  <h3 id="field-errors" class="pt-3">
+    Showing Field Errors
+  </h3>
+  <p>
+    Errors in forms should be displayed near the relevant field / input using the <code>is-invalid</code> class
+    directly on the errored <code>form-control</code> or <code>form-select</code>. The corresponding feedback
+    message can be provided beneath the relevant field inside of a <code>&lt;span class="invalid-feedback"&gt;</code>
+    element. This element should come before the <code>form-text</code> (help text) element.
+    See the example below, as well as
+    <a href="https://getbootstrap.com/docs/5.3/forms/validation/" target="_blank">Bootstrap5's Validation</a> docs
+    for more options.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.form_invalid %}
+
+  <h3 id="form-errors" class="pt-3">
+    Showing Form Errors
+  </h3>
+  <p>
+    Sometimes we encounter a situation where a general error was encountered when creating a form that can't be
+    pinpointed to a specific field. In this case, we should use the Django Messages framework to raise an error from
+    the view to the page. This might look something like:
+  </p>
+  <div class="card text-bg-light my-3">
+    <div class="card-body ">
+      <pre class="m-0">messages.error(request, gettext("This is an error"))</pre>
+    </div>
+  </div>
+  <p>
+    In javascript,
+    <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/alert_user.js"
+       target="_blank">alert_user.js</a> provides the same functionality.
+  </p>
+
+  <h3 id="cirspy-errors" class="pt-3">
+    Showing Errors in Crispy Forms
+  </h3>
+  <p>
+    Crispy Forms automatically adds the <code>is-invalid</code> and <code>valid-feedback</code> markup when a field
+    throws a <code>ValidationError</code> when calling <code>is_valid()</code> on the attached Django Form. The
+    example below shows how we can throw a field-level error.
+  </p>
+  <p>
+    We can also throw form-level <code>ValidationError</code>s in the main  <code>clean()</code> method of the form.
+    However, it is preferred that we use the Django Messages framework (as explained above) for raising
+    these general errors.
+  </p>
+  {% include 'styleguide/bootstrap5/form_example.html' with content=examples.crispy_errors %}
+
+  <h3 id="valid-fields" class="pt-3">
+    Marking Fields as Valid
+  </h3>
+  <p>
+    Valid fields be displayed near the relevant field / input using the <code>is-valid</code> class
+    directly on the valid <code>form-control</code> or <code>form-select</code>. The corresponding feedback
+    message can be provided beneath the relevant field inside of a <code>&lt;span class="valid-feedback"&gt;</code>
+    element. This element should come before the <code>form-text</code> (help text) element.
+  </p>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.form_valid %}
+
+  <h3 id="valid-crispy" class="pt-3">
+    Valid Feedback in Crispy Forms
+  </h3>
+  <p>
+    At the moment, Django Forms doesn't propagate valid feedback up to the form, so Crispy
+    Forms has no way to display this information automatically. In the real world, marking fields as
+    valid will likely come from client-side validation with Knockout Validation.
+  </p>
+
+  <h3 id="ko-validation" class="pt-3">
+    Knockout Validation
+  </h3>
+  <p>
+    <a href="https://github.com/Knockout-Contrib/Knockout-Validation" target="_blank">Knockout Validation</a>
+    is an extension of Knockout that we use to do client-side validation of form fields.
+  </p>
+  <p>
+    We have several custom validators that can be used as well as the built-in ones that
+    ship with Knockout Validation:
+  </p>
+  <ul>
+    <li>
+      <p>
+        <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/bootstrap5/validators.ko.js"
+           target="_blank">validators.ko.js</a> contains several custom validators. Use of these validators is
+        demonstrated in the example below.
+      </p>
+      <p>
+        <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js"
+           target="_blank">password_validators.ko.js</a> contains validators related to password checks.
+        <code>minimumPasswordLength</code> is demonstrated below, but <code>zxcvbnPassword</code> needs to
+        be used inside an AMD module setup.
+      </p>
+    </li>
+  </ul>
+  <p>
+    The example below makes use of most of our custom knockout validators (in various states) as well as
+    some built-in validators to demonstrate how we might use Knockout Validation to do client-side validation
+    on a user creation form. Please review the comments in the source code for additional guidance.
+  </p>
+  {% registerurl "styleguide_validate_ko_demo" %}
+  {% include 'styleguide/bootstrap5/form_js_example.html' with content=examples.crispy_knockout_validation %}
+
+  <h2 id="field-states" class="pt-4">
+    Field States
+  </h2>
+  <p>
+    In addition to validation states described above, there are other field states available.
+  </p>
+
+  <h3 id="field-state-disabled-readonly" class="pt-3">
+    Disabled &amp; Readonly / Plain Text Fields
+  </h3>
+  <p>
+    Disabling a field gives it a grayed out appearance, removes pointer events, and prevents focusing. This
+    can be done by adding the <code>disabled</code> attribute to the field.
+  </p>
+  <p>
+    Additionally, we can mark a field as readonly and plain text, which removes the input styling and prevents
+    the field from being editing, while also displaying the value as plain text.
+    To do this, add the <code>form-control-plaintext</code> class to the field AND the <code>readonly</code> attribute.
+    Note that this only works for <code>input</code> and <code>textarea</code> elements.
+  </p>
+  <p>
+    Generally it's best to use <code>disabled</code> on fields that are not editable due to permissions
+    or form logic, but would otherwise be editable. If a field cannot be editable by any means and the text is
+    intended to always be read-only, please use the <code>form-control-plaintext</code> class alongside the
+    <code>readonly</code> attribute.
+  </p>
+
+  <h4 id="disabled-readonly-html" class="pt-3">
+    HTML Example
+  </h4>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.disabled_fields %}
+
+  <h4 id="disabled-readonly-crispy" class="pt-3">
+    Crispy Forms Example
+  </h4>
+  {% include 'styleguide/bootstrap5/form_example.html' with content=examples.crispy_disabled_fields %}
+
+  <h3 id="field-state-placeholders-help" class="pt-3">
+    Placeholders &amp; Help Text
+  </h3>
+  <p>
+    Placeholders and help text are a great way to give the user guidance when filling out a form.
+    Placeholders insert "hint text" directly in a field that gets replaced by the inputted value,
+    while help text is text that appears beneath the field.
+  </p>
+  <p>
+    Placeholders are useful for providing example formatting for the expected input.
+  </p>
+  <p>
+    Help text is useful for providing detailed guidance or comments related to the field.
+  </p>
+  <h4 id="placeholder-help-text-html" class="pt-3">
+    HTML Example
+  </h4>
+  {% include 'styleguide/bootstrap5/code_example.html' with content=examples.placeholder_help_text %}
+
+  <h4 id="placeholder-help-text-crispy" class="pt-3">
+    Crispy Forms Example
+  </h4>
+  {% include 'styleguide/bootstrap5/form_example.html' with content=examples.crispy_placeholder_help_text %}
+
+{% endblock content %}

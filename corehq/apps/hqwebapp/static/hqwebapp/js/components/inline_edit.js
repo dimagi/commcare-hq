@@ -1,3 +1,4 @@
+'use strict';
 /*
  * Component for an inline editing widget: a piece of text that, when clicked on, turns into an input (textarea or
  * text input). The input is accompanied by a save button capable of saving the new value to the server via ajax.

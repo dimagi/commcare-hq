@@ -1,3 +1,4 @@
+"use strict";
 /* Behavior for app_view.html, specific to Application documents (i.e., not remote apps) */
 hqDefine("app_manager/js/app_view_application", function () {
     $(function () {

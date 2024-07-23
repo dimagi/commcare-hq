@@ -1,20 +1,45 @@
-/*global Backbone, DOMPurify, Marionette */
-
-hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
-    // 'hqwebapp/js/bootstrap3/hq.helpers' is a dependency. It needs to be added
-    // explicitly when webapps is migrated to requirejs
-    var kissmetrics = hqImport("analytix/js/kissmetrix"),
-        cloudcareUtils = hqImport("cloudcare/js/utils"),
-        markdown = hqImport("cloudcare/js/markdown"),
-        formEntryConstants = hqImport("cloudcare/js/form_entry/const"),
-        formplayerConstants = hqImport("cloudcare/js/formplayer/constants"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
-
+'use strict';
+hqDefine("cloudcare/js/formplayer/menus/views/query", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'DOMPurify/dist/purify.min',
+    'backbone.marionette',
+    'moment',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/markdown',
+    'cloudcare/js/utils',
+    'cloudcare/js/form_entry/const',
+    'cloudcare/js/form_entry/utils',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/utils/utils',
+    'hqwebapp/js/bootstrap3/hq.helpers',   // needed for hqHelp
+    'bootstrap-daterangepicker/daterangepicker',  // needed for $.daterangepicker
+    'cloudcare/js/formplayer/menus/api',    // needed for app:select:menus
+    'select2/dist/js/select2.full.min',
+], function (
+    $,
+    _,
+    Backbone,
+    DOMPurify,
+    Marionette,
+    moment,
+    initialPageData,
+    toggles,
+    kissmetrics,
+    markdown,
+    cloudcareUtils,
+    formEntryConstants,
+    formEntryUtils,
+    FormplayerFrontend,
+    formplayerConstants,
+    Collection,
+    formplayerUtils
+) {
     var separator = " to ",
         serverSeparator = "__",
         serverPrefix = "__range__",
@@ -121,7 +146,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 const geocoderValues = JSON.parse(sessionStorage.geocoderValues);
                 geocoderValues[model.id] = item.place_name;
                 sessionStorage.geocoderValues = JSON.stringify(geocoderValues);
-                var broadcastObj = formEntryUtils.getBroadcastObject(item);
+                var broadcastObj = formEntryUtils.getAddressBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
             };
@@ -401,7 +426,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
             }
-            this.parentView.notifyFieldChange(e, this, useDynamicSearch, formplayerConstants.queryInitiatedBy.FIELD_CHANGE);
+            this.parentView.notifyFieldChange(e, this, useDynamicSearch, formplayerConstants.requestInitiatedByTagsMapping.FIELD_CHANGE);
         },
 
         toggleBlankSearch: function (e) {
@@ -444,15 +469,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onRender: function () {
             this._initializeSelect2Dropdown();
-            this.ui.hqHelp.hqHelp({
-                placement: () => {
-                    if (this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled) {
-                        return 'auto bottom';
-                    } else {
-                        return 'auto right';
-                    }
-                },
-            });
+            const fallback = this.parentView.options.sidebarEnabled && this.parentView.smallScreenEnabled ?  'bottom' : 'right';
+            if (window.USE_BOOTSTRAP5) {
+                this.ui.hqHelp.hqHelp({placement: 'auto', fallbackPlacements: [fallback]});
+            } else {
+                this.ui.hqHelp.hqHelp({placement: 'auto ' + fallback});
+            }
             cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'));
             this.ui.dateRange.daterangepicker({
                 locale: {
@@ -492,7 +514,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
             });
             if (this.model.get('hidden') === 'true') {
-                this.$el.hide();
+                this.$el.addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
             }
         },
 
@@ -744,7 +766,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
             });
             if (invalidRequiredFields.length === 0) {
-                self.performSubmit(formplayerConstants.queryInitiatedBy.DYNAMIC_SEARCH);
+                self.performSubmit(formplayerConstants.requestInitiatedByTagsMapping.DYNAMIC_SEARCH);
             }
         },
 
@@ -802,7 +824,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return promise;
         },
 
-        _updateModelsForValidation: function (initiatedBy) {
+        _updateModelsForValidation: function (initiatedByTag) {
             var self = this;
             var promise = $.Deferred();
             self.updateModelsForValidation = promise;
@@ -813,8 +835,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 inputs: self.getAnswers(),
                 execute: false,
                 forceManualSearch: true,
-                initiatedBy: initiatedBy,
             });
+            urlObject.setRequestInitiatedByTag(initiatedByTag);
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
                 // Update models based on response
@@ -853,16 +875,21 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         onBeforeDetach: function () {
             this.smallScreenListener.stopListening();
+            for (const topic of this.geocoderTopics) {
+                $.unsubscribe(topic);
+            }
         },
 
         initGeocoders: function () {
             var self = this;
+            self.geocoderTopics = new Set();
             _.each(self._getChildModels(), function (model, i) {
                 var $field = $($(".query-field")[i]);
 
                 // Set geocoder receivers to subscribe
                 if (model.get('receive')) {
                     var topic = model.get('receive').split("-")[0];
+                    self.geocoderTopics.add(topic);
                     $.subscribe(topic, updateReceiver($field));
                 }
 

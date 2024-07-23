@@ -1,3 +1,3 @@
 hqDefine('settings/js/change_my_password', [
-    'registration/js/password',
+    'registration/js/bootstrap5/password',
 ], function () {});

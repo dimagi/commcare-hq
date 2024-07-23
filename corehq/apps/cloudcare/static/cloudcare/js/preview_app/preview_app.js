@@ -1,6 +1,11 @@
-hqDefine('cloudcare/js/preview_app/preview_app', function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-
+'use strict';
+hqDefine('cloudcare/js/preview_app/preview_app', [
+    'jquery',
+    'cloudcare/js/formplayer/app',
+], function (
+    $,
+    FormplayerFrontend
+) {
     var start = function (options) {
 
         $('#cloudcare-notifications').on('click', 'a', function () {
@@ -9,6 +14,12 @@ hqDefine('cloudcare/js/preview_app/preview_app', function () {
         });
 
         FormplayerFrontend.start(options);
+
+        if (localStorage.getItem("preview-tablet")) {
+            FormplayerFrontend.trigger('view:tablet');
+        } else {
+            FormplayerFrontend.trigger('view:phone');
+        }
     };
 
     return {

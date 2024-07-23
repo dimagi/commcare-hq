@@ -1,0 +1,22 @@
+<div id="feedback-example">
+  <feedback data-apply-bindings="false"
+            params="featureName: featureName,
+                    url: url"></feedback>
+</div>
+
+
+<script>
+  $(function () {
+    $("#feedback-example").koApplyBindings(function () {
+      let self = {};
+
+      self.featureName = 'My New Feature';
+
+      // ideally hqwebapp/js/initial_page_data should be in define() of the js module
+      let initialPageData = hqImport("hqwebapp/js/initial_page_data");
+      self.url = initialPageData.reverse("styleguide_submit_feedback_demo");
+
+      return self;
+    });
+  });
+</script>

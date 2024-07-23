@@ -1,0 +1,50 @@
+<div class="card card-hq-report">
+  <h2 class="h5 p-3 m-0">
+    Title for the Table Below
+  </h2>
+  <table id="example-datatable" class="table table-striped table-hover table-hq-report">
+    <thead>
+      <tr>
+        <th>Case Type</th>
+        <th>Name</th>
+        <th>Color</th>
+        <th>Big Cats</th>
+        <th>Date of Birth</th>
+        <th>Application</th>
+        <th>Opened On</th>
+        <th>Owner</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</div>
+
+<script>
+    $(function () {
+        let initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        let table = $('#example-datatable').dataTable({
+            // This defines the layout of the datatable and is important for getting everything to look standard
+            dom: "frt<'d-flex mb-1'<'p-2 ps-3'i><'p-2 ps-0'l><'ms-auto p-2 pe-3'p>>",
+            // hides the search bar, since we often use datatables with reports that have their own set of advanced filters beyond simple search
+            filter: false,
+            language: {
+                // in the past we used custom javascript to find the length menu text and update it. please avoid this. opt for using the language options
+                lengthMenu: "_MENU_ per page",
+            },
+            scrollX: "100%",
+            fixedColumns: {
+                left: 1,
+            },
+            columnDefs: [
+                { width: 80, targets: 0 }
+            ],
+            // this just pre-fills the datatables with a large set of data. server-side pagination can be enabled with the serverSide option as well as the "processing..." label. see datatable's docs for usage details
+            ajax: {
+               url: initialPageData.reverse("styleguide_datatables_data"),
+               type: "POST",
+            }
+        });
+    });
+</script>

@@ -15,7 +15,7 @@ from corehq import privileges
 from memoized import memoized
 from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
-from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, use_jquery_ui
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 
 from .models import (
@@ -78,6 +78,20 @@ class CustomDataFieldsForm(forms.Form):
                 if field not in slugs:
                     errors.add(_("Profile '{}' contains '{}' which is not a known field.").format(
                         profile['name'], field
+                    ))
+        return errors
+
+    @classmethod
+    def verify_no_empty_profile_fields(cls, data_fields, profiles):
+        errors = set()
+
+        required_field_names = {field['slug'] for field in data_fields if field['is_required']}
+        for profile in profiles:
+            profile_fields = json.loads(profile.get('fields', '{}'))
+            for slug, value in profile_fields.items():
+                if slug in required_field_names and not value:
+                    errors.add(_("Profile '{}' does not assign a value for required field '{}'").format(
+                        profile['name'], slug
                     ))
         return errors
 
@@ -151,6 +165,7 @@ class CustomDataFieldsForm(forms.Form):
         if data_fields is not None:
             errors.update(self.verify_no_profiles_missing_fields(data_fields, profiles))
             errors.update(self.verify_profiles_validate(data_fields, profiles))
+            errors.update(self.verify_no_empty_profile_fields(data_fields, profiles))
 
         if errors:
             separator = mark_safe('<br/>')  # nosec: no user input
@@ -246,6 +261,7 @@ class CustomDataModelMixin(object):
     show_purge_existing = False
     entity_string = None  # User, Group, Location, Product...
 
+    @use_bootstrap5
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(CustomDataModelMixin, self).dispatch(request, *args, **kwargs)
@@ -270,6 +286,11 @@ class CustomDataModelMixin(object):
     @memoized
     def get_profiles(self):
         return self.get_definition().get_profiles()
+
+    @classmethod
+    @memoized
+    def get_definition_for_domain(cls, domain):
+        return CustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
 
     @classmethod
     def validate_incoming_fields(cls, existing_fields, new_fields, can_edit_linked_data=False):
@@ -334,7 +355,7 @@ class CustomDataModelMixin(object):
             )
             if not created and obj.has_users_assigned:
                 refresh_es_for_profile_users.delay(self.domain, obj.id)
-                bulk_sync_usercases_if_applicable(obj.definition.domain, obj.user_ids_assigned())
+                bulk_sync_usercases_if_applicable(obj.definition.domain, list(obj.user_ids_assigned()))
             seen.add(obj.id)
 
         errors = []

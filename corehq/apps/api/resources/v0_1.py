@@ -61,7 +61,7 @@ class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMix
 
 class CommCareUserResource(UserResource):
     groups = fields.ListField(attribute='get_group_ids')
-    user_data = fields.DictField(attribute='user_data')
+    user_data = fields.DictField()
 
     class Meta(UserResource.Meta):
         authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)
@@ -149,7 +149,7 @@ class WebUserResource(UserResource):
         username = bundle.request.GET.get('web_username')
         if username:
             user = WebUser.get_by_username(username)
-            if not (user and user.is_member_of(domain)):
+            if not (user and user.is_member_of(domain) and user.is_active):
                 user = None
             return [user] if user else []
         return list(WebUser.by_domain(domain))

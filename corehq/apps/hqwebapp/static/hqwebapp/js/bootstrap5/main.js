@@ -46,11 +46,11 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
         wrap = wrap === undefined ? true : wrap;
         var el = $(
             '<div class="hq-help">' +
-                '<a href="#" tabindex="-1">' +
+                '<a href="#" tabindex="-1" data-bs-toggle="popover">' +
                     '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
         );
         _.each(['content', 'title', 'html', 'placement', 'container'], function (attr) {
-            $('a', el).data(attr, opts[attr]);
+            $('a', el).attr('data-bs-' + attr, opts[attr]);
         });
         if (wrap) {
             el.hqHelp();
@@ -161,7 +161,7 @@ hqDefine('hqwebapp/js/bootstrap5/main', [
                     }).addClass(cssClass),
                     $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-primary disabled'),
                     $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-primary disabled'),
-                    ui: $('<div/>').addClass('pull-right savebtn-bar ' + barClass),
+                    ui: $('<div/>').addClass('float-end savebtn-bar ' + barClass),
                     setStateWhenReady: function (state) {
                         if (this.state === 'saving') {
                             this.nextState = state;

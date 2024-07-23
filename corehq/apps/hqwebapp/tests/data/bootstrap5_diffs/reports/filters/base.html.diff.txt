@@ -1,0 +1,21 @@
+--- 
++++ 
+@@ -1,15 +1,15 @@
+ {% load i18n %}
+-<label for="{{ css_id }}" class="{{ css_label_class }}">{{ label }}</label>
++<label for="{{ css_id }}" class="{{ css_label_class }}">{{ badge }}</label>
+ <div class="{{ css_field_class }}">
+   {% if help_text %}
+     <div class="row">
+-    <div class="col-xs-6">
++    <div class="col-sm-6">
+   {% endif %}
+   {% block filter_content %}
+   {% endblock %}
+   {% if help_text %}
+     </div>
+-    <div class="col-xs-6">
++    <div class="col-sm-6">
+       {% if help_style_bubble %}
+         <span class="hq-help-template"
+               data-title="{% trans 'Help' %}"

@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('app_manager/js/forms/advanced/case_properties', function () {
     var caseConfigUtils = hqImport('app_manager/js/case_config_utils');
 
@@ -29,6 +30,14 @@ hqDefine('app_manager/js/forms/advanced/case_properties', function () {
                 write: function (value) {
                     self.updatedDescription(value);
                 },
+            });
+            self.isDeprecated = ko.computed(function () {
+                const config = self.action.caseConfig;
+                const depProps = config.deprecatedPropertiesDict[self.caseType()];
+                if (depProps && self.key() !== 'name') {
+                    return depProps.includes(self.key());
+                }
+                return false;
             });
             return self;
         },

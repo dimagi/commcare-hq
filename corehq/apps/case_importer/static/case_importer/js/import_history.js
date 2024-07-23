@@ -1,10 +1,11 @@
+"use strict";
 hqDefine('case_importer/js/import_history', [
     'jquery',
     'knockout',
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/bootstrap3/components.ko',
+    'hqwebapp/js/bootstrap5/components.ko',
 ], function (
     $,
     ko,

@@ -120,7 +120,7 @@ class LocationGroupTest(LocationGroupBase):
     def test_get_owner_ids(self):
         loc_type = self.loc.location_type
         self.assertFalse(loc_type.shares_cases)
-        owner_ids = self.user.get_owner_ids()
+        owner_ids = self.user.get_owner_ids(self.domain.name)
         self.assertEqual(1, len(owner_ids))
         self.assertEqual(self.user._id, owner_ids[0])
 
@@ -129,7 +129,7 @@ class LocationGroupTest(LocationGroupBase):
         loc_type.save()
         # we have to re-create the user object because various things are cached
         user = CommCareUser.wrap(self.user.to_json())
-        owner_ids = user.get_owner_ids()
+        owner_ids = user.get_owner_ids(self.domain.name)
         self.assertEqual(2, len(owner_ids))
         self.assertEqual(self.loc.location_id, owner_ids[1])
 

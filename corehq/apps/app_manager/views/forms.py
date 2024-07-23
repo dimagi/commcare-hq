@@ -112,6 +112,7 @@ from corehq.apps.app_manager.xform import (
 from corehq.apps.data_dictionary.util import (
     add_properties_to_data_dictionary,
     get_case_property_description_dict,
+    get_case_property_deprecated_dict,
 )
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -648,7 +649,14 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
     ]
 
 
-def get_form_view_context_and_template(request, domain, form, langs, current_lang, messages=messages):
+def get_form_view_context(
+        request,
+        domain,
+        form,
+        langs,
+        current_lang,
+        messages=messages,
+):
     # HELPME
     #
     # This method has been flagged for refactoring due to its complexity and
@@ -790,6 +798,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'moduleCaseTypes': module_case_types,
         'propertiesMap': case_properties_map,
         'propertyDescriptions': get_case_property_description_dict(domain),
+        'deprecatedProperties': get_case_property_deprecated_dict(domain),
         'questions': xform_questions,
         'reserved_words': load_case_reserved_words(),
         'usercasePropertiesMap': usercase_properties_map,
@@ -887,7 +896,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         })
 
     context.update({'case_config_options': case_config_options})
-    return "app_manager/form_view.html", context
+    return context
 
 
 def _get_form_link_context(app, module, form, langs):

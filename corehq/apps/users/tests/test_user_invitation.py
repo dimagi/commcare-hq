@@ -38,10 +38,12 @@ class TestUserInvitation(TestCase):
         domain = "domain"
 
         Invitation.objects.create(
+            email='test@dimagi.com',
             uuid=invite_uuid,
             domain=domain,
             is_accepted=True,
-            invited_on=datetime.date(2023, 9, 1)
+            invited_on=datetime.date(2023, 9, 1),
+            invited_by="system@dimagi.com",
         )
 
         response = UserInvitationView()(request, invite_uuid, domain=domain)

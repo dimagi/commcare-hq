@@ -115,7 +115,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
 class ManageNotificationView(BasePageView):
     urlname = 'manage_notifications'
     page_title = gettext_noop("Manage Notification")
-    template_name = 'notifications/manage_notifications.html'
+    template_name = 'notifications/bootstrap3/manage_notifications.html'
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):

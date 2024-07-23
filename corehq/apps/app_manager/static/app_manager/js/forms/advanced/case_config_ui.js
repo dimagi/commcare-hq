@@ -1,5 +1,5 @@
+"use strict";
 hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
-    'use strict';
 
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
@@ -47,6 +47,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
             self.setPropertiesMap(params.propertiesMap);
 
             self.descriptionDict = params.propertyDescriptions;
+            self.deprecatedPropertiesDict = params.deprecatedProperties;
 
             self.saveButton = hqImport("hqwebapp/js/bootstrap3/main").initSaveButton({
                 unsavedMessage: "You have unchanged case settings",

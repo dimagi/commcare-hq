@@ -1,0 +1,26 @@
+<div id="inline-edit-lang-example">
+  <inline-edit data-apply-bindings="false"
+               params="value: text,
+                       nodeName: 'input',
+                       url: url,
+                       rows: 1,
+                       lang: 'en',
+                       placeholder: gettext('Enter in label for english.'),
+                       errorMessage: gettext('Error updating comment. Please try again.'),"></inline-edit>
+</div>
+
+<script>
+  $(function () {
+    $("#inline-edit-lang-example").koApplyBindings(function () {
+      let self = {};
+
+      self.text = '';
+
+      // ideally hqwebapp/js/initial_page_data should be in define() of the js module
+      let initialPageData = hqImport("hqwebapp/js/initial_page_data");
+      self.url = initialPageData.reverse("styleguide_inline_edit_demo");
+
+      return self;
+    });
+  });
+</script>

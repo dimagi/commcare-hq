@@ -14,6 +14,7 @@ from corehq.apps.es.exceptions import (
     IndexAlreadySwappedException,
     IndexMultiplexedException,
     IndexNotMultiplexedException,
+    IndexNotSubindexException,
     TaskMissing,
 )
 from corehq.apps.es.index.settings import render_index_tuning_settings
@@ -41,8 +42,7 @@ class ESSyncUtil:
     def __init__(self):
         self.es = get_client()
 
-    def start_reindex(self, cname, reindex_batch_size=1000,
-                      purge_ids=False, requests_per_second=None):
+    def start_reindex(self, cname, reindex_batch_size=1000, requests_per_second=None):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -57,9 +57,7 @@ class ESSyncUtil:
 
         logger.info("Starting ReIndex process")
         task_id = es_manager.reindex(
-            source_index, destination_index,
-            batch_size=reindex_batch_size, purge_ids=purge_ids,
-            requests_per_second=requests_per_second
+            source_index, destination_index, requests_per_second=requests_per_second
         )
         logger.info(f"Copying docs from index {source_index} to index {destination_index}")
         task_number = task_id.split(':')[1]
@@ -82,6 +80,41 @@ class ESSyncUtil:
         print("\n\t"
             + f"cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "
             + f"\"grep '{task_number}.*ReindexResponse' /opt/data/elasticsearch*/logs/*.log\""
+            + "\n\n")
+
+    def backfill_subindex(self, subindex_cname, domain):
+        destination_adapter = doc_adapter_from_cname(subindex_cname)
+        if not destination_adapter.parent_index_cname:
+            raise IndexNotSubindexException(f"Adapter for {subindex_cname} does not have parent_index_cname set.")
+
+        source_adapter = doc_adapter_from_cname(destination_adapter.parent_index_cname)
+        source_index = source_adapter.index_name
+        destination_index = destination_adapter.index_name
+
+        logger.info("Starting process to backfill subindex")
+        task_id = es_manager.reindex(source_index, destination_index, query={"domain": domain})
+
+        logger.info(f"Copying docs from index {source_index} to subindex {destination_index} for {domain}")
+        task_number = task_id.split(':')[1]
+        print("\n\n\n")
+        logger.info("-----------------IMPORTANT-----------------")
+        logger.info(f"TASK NUMBER - {task_number}")
+        logger.info("-------------------------------------------")
+        logger.info("Save this Task Number, You will need it later for verifying your backfill process")
+        print("\n\n\n")
+        # This would display progress untill backfill process is completed
+        check_task_progress(task_id)
+
+        print("\n\n")
+
+        self.display_backfill_subindex_doc_counts_for_domain(source_adapter, destination_adapter, domain)
+
+        logger.info(f"Verify this backfill subindex process from elasticsearch logs using task id - {task_id}")
+        print("\n\n")
+        logger.info("You can use commcare-cloud to extract logs from cluster")
+        print("\n\t"
+            + f"cchq {settings.SERVER_ENVIRONMENT} run-shell-command elasticsearch "
+            + f"\"grep '{task_number}' /opt/data/elasticsearch*/logs/*.log\""
             + "\n\n")
 
     def _get_source_destination_indexes(self, adapter):
@@ -139,6 +172,22 @@ class ESSyncUtil:
 
         print(f"\nDoc Count In Old Index '{adapter.primary.index_name}' - {primary_count}")
         print(f"\nDoc Count In New Index '{adapter.secondary.index_name}' - {secondary_count}\n\n")
+
+    def display_backfill_subindex_doc_counts_for_domain(self, source_adapter, destination_adapter, domain):
+        if not destination_adapter.parent_index_cname:
+            raise IndexNotSubindexException(
+                f"Adapter for {destination_adapter.index_cname} does not have parent_index_cname set."
+            )
+
+        es_manager.index_refresh(destination_adapter.index_name)
+        es_manager.index_refresh(source_adapter.index_name)
+
+        query = {"query": {"term": {"domain": domain}}}
+        source_count = source_adapter.count(query)
+        destination_count = destination_adapter.count(query)
+
+        print(f"\nDoc Count In Source Index '{source_adapter.index_name}' in domain '{domain}' - {source_count}")  # noqa: E501
+        print(f"\nDoc Count In Partial Index '{destination_adapter.index_name}' in domain '{domain}' - {destination_count}\n")  # noqa: E501
 
     def perform_cleanup(self, adapter):
         logger.info("Performing required cleanup!")
@@ -227,7 +276,7 @@ class ESSyncUtil:
 
         current_index_name, older_index_name = self._get_current_and_older_index_name(cname)
 
-        if getattr(settings, f'ES_{cname.upper()}_INDEX_SWAPPED'):
+        if getattr(es_consts, f'ES_{cname.upper()}_INDEX_SWAPPED'):
             raise IndexAlreadySwappedException(
                 f"""Checkpoints can only be copied before swapping indexes.
                 Make sure you have set ES_{cname.upper()}_INDEX_SWAPPED to False."""
@@ -322,7 +371,7 @@ class ESSyncUtil:
         known_indices = set()
         for cname in CANONICAL_NAME_ADAPTER_MAP.keys():
             known_indices.update(self._get_current_and_older_index_name(cname))
-        return known_indices
+        return [index for index in known_indices if index]
 
     def display_shard_info(self):
         # Print the status of the shards in Elasticsearch cluster
@@ -530,14 +579,24 @@ class Command(BaseCommand):
         display_shard_info_cmd = subparsers.add_parser("display_shard_info")
         display_shard_info_cmd.set_defaults(func=self.es_helper.display_shard_info)
 
+        # Backfill subindex
+        backfill_subindex_cmd = subparsers.add_parser("backfill_subindex")
+        backfill_subindex_cmd.set_defaults(func=self.es_helper.backfill_subindex)
+        backfill_subindex_cmd.add_argument(
+            'index_cname',
+            choices=INDEXES,
+            help="""Cannonical Name of the index""",
+        )
+        backfill_subindex_cmd.add_argument(
+            'domain',
+            help="""Only includes documents from this domain""",
+        )
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
         if sub_cmd == 'start':
-            cmd_func(
-                options['index_cname'], options['batch_size'],
-                options['purge_ids'], options['requests_per_second']
-            )
+            cmd_func(options['index_cname'], options['batch_size'], options['requests_per_second'])
         elif sub_cmd == 'delete':
             cmd_func(options['index_cname'])
         elif sub_cmd == 'cleanup' or sub_cmd == 'display_doc_counts':
@@ -550,5 +609,7 @@ class Command(BaseCommand):
             cmd_func(options['index_cname'])
         elif sub_cmd == 'set_replicas':
             cmd_func(options["index_cname"])
+        elif sub_cmd == 'backfill_subindex':
+            cmd_func(options["index_cname"], options["domain"])
         elif sub_cmd in ['remove_residual_indices', 'display_shard_info']:
             cmd_func()

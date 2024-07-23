@@ -1,0 +1,36 @@
+$preview-navbar-height: 40px;
+
+.navbar-formplayer {
+  background-color: $cc-brand-mid;
+  min-height: $preview-navbar-height;
+  color: white;
+  margin-bottom: 0;
+
+  .navbar-nav {
+    margin-top: 0;
+    margin-bottom: 0;
+    float: left;
+  }
+  .navbar-right {
+    float: right;
+  }
+  .navbar-nav > li {
+    display: inline-block;
+    font-size: 2rem;
+  }
+  .navbar-nav > li > a {
+    color: white;
+    line-height: $preview-navbar-height;
+    padding-right: 19px;
+    transition: background $transition-speed;
+
+    &:link, &:focus, &:visited, &:hover {
+      color: white;
+      text-decoration: none;
+    }
+
+    &:hover {
+      background-color: $cc-brand-low;
+    }
+  }
+}

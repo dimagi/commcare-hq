@@ -1,3 +1,4 @@
+"use strict";
 hqDefine('accounting/js/base_subscriptions_main', [
     'jquery',
     'knockout',
@@ -10,7 +11,6 @@ hqDefine('accounting/js/base_subscriptions_main', [
     widgets
 ) {
     var subscriptionInfoHandlerModel = function () {
-        'use strict';
         var self = {};
 
         var asyncSelect2Handler = widgets.asyncSelect2Handler;

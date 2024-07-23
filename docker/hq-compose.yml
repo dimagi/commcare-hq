@@ -106,22 +106,6 @@ services:
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-redis:}/data
 
-  elasticsearch2:
-    build:
-      context: .
-      dockerfile: ./files/Dockerfile.es.2
-    environment:
-      ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
-    expose:
-      - "9200"
-    healthcheck:
-      test: bash -c 'exec 6<>/dev/tcp/elasticsearch2/9200'
-      interval: 10s
-      retries: 10
-    volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch2:}/usr/share/elasticsearch/data
-      - ./files/elasticsearch_2.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
-
   elasticsearch5:
     build:
       context: .

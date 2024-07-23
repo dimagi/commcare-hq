@@ -63,7 +63,12 @@ class TestSqlDataLoader(TestCase):
         model = {
             "model": "users.rolepermission",
             "pk": 1,
-            "fields": {"role": role.pk, "permission_fk": permission.pk, "allow_all": True, "allowed_items": []},
+            "fields": {
+                "role": role.pk,
+                "permission_fk": [permission.value],
+                "allow_all": True,
+                "allowed_items": [],
+            },
         }
         serialized_model = json.dumps(model)
 

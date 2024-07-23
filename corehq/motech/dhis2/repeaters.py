@@ -64,7 +64,7 @@ class Dhis2Instance(object):
         maximum supported version, but still saves and continues.
         """
         requests = self.connection_settings.get_requests(self)
-        metadata = fetch_metadata(requests)
+        metadata = fetch_system_metadata(requests)
         dhis2_version = metadata["system"]["version"]
         try:
             get_api_version(dhis2_version)
@@ -250,7 +250,7 @@ def get_api_version(dhis2_version):
 
 
     .. _DHIS 2 Developer guide: https://docs.dhis2.org/master/en/developer/html/webapi_browsing_the_web_api.html#webapi_api_versions
-    """
+    """  # noqa: E501
     try:
         api_version = LooseVersion(dhis2_version).version[1]
     except (AttributeError, IndexError):
@@ -258,19 +258,17 @@ def get_api_version(dhis2_version):
     return api_version
 
 
-def fetch_metadata(requests):
+def fetch_system_metadata(requests):
     """
-    Fetch metadata about a DHIS2 instance.
+    Fetch the system metadata about a DHIS2 instance.
 
-    Currently only used for determining what API version it supports.
-
-    .. NOTE::
-       Metadata is large (like a 100MB JSON document), and contains the
-       IDs one would need to compile a human-readable configuration into
-       one that maps to DHIS2 IDs.
-
+    Used for determining what API version it supports.
     """
-    response = requests.get('/api/metadata', raise_for_status=True)
+    response = requests.get(
+        '/api/metadata',
+        raise_for_status=True,
+        params={'filter': 'name:eq:system'}
+    )
     return response.json()
 
 

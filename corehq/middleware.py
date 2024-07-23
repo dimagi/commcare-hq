@@ -13,7 +13,6 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.views import LogoutView
 from django.utils.deprecation import MiddlewareMixin
-from sentry_sdk import add_breadcrumb
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import legacy_domain_re
@@ -120,12 +119,7 @@ class LogLongRequestMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
         request_timer = getattr(response, 'request_timer', None)
         if request_timer:
-            for sub in request_timer.to_list(exclude_root=True):
-                add_breadcrumb(
-                    category="timing",
-                    message=f"{sub.name}: {sub.duration:0.3f}",
-                    level="info",
-                )
+            request_timer.add_to_sentry_breadcrumbs()
 
         if hasattr(request, '_profile_starttime'):
             duration = datetime.datetime.utcnow() - request._profile_starttime
@@ -336,7 +330,7 @@ def get_view_func(view_fn, view_kwargs):
         try:
             class_name = dispatcher.get_report_class_name(domain, slug)
             return to_function(class_name) if class_name else None
-        except:
+        except Exception:
             # custom report dispatchers may do things differently
             return
 

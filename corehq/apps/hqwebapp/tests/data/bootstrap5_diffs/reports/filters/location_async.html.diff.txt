@@ -1,0 +1,43 @@
+--- 
++++ 
+@@ -8,9 +8,9 @@
+      data-auto-drill='{{ auto_drill|JSON }}'
+      data-locs='{% html_attr locations %}'>
+   {% if make_optional %}
+-    <div class="col-sm-12">
+-      <div class="form-group">
+-        <label class="control-label {{ css_label_class }}">{% trans "Location Filter" %}</label>
++    <div class="col-md-12">
++      <div class="form-group">  {# todo B5: css:form-group #}
++        <label class="form-label {{ css_label_class }}">{% trans "Location Filter" %}</label>
+         <div class="{{ css_field_class }}">
+           <select class="form-control"
+                   data-bind="value: show_location_filter">
+@@ -22,14 +22,14 @@
+     </div>
+   {% endif %}
+ 
+-  <div class="col-sm-12">
+-    <div class="form-group"
++  <div class="col-md-12">
++    <div class="form-group"  {# todo B5: css:form-group #}
+          data-bind="visible: show_location_filter_bool()">
+       {# this is wrong, see filters/single_option.html for a proper implementation #}
+-      <label class="control-label {{ css_label_class }}">{{ control_name }}<br>
++      <label class="form-label {{ css_label_class }}">{{ control_name }}<br>
+       </label>
+       <div class="{{ css_field_class }}">
+-        <div data-bind="foreach: selected_path" style="display: inline-block;">
++        <div data-bind="foreach: selected_path" style="display: inline-block;">  {# todo B5: inline style #}
+           {% block location_select %}
+             <select class="form-control"
+                     data-bind="options: children,
+@@ -38,7 +38,7 @@
+                                disable: !can_edit_children()"></select>
+           {% endblock %}
+         </div>
+-        <i id="loc_ajax" class="fa fa-spinner fa-spin hide"></i>
++        <i id="loc_ajax" class="fa fa-spinner fa-spin d-none"></i>
+       </div>
+       <input name="location_id" type="hidden" data-bind="value: selected_locid" />
+     </div>

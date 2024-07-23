@@ -29,7 +29,7 @@ from django.forms.widgets import Select
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes, smart_str
-from django.utils.functional import cached_property, lazy
+from django.utils.functional import cached_property
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
@@ -132,8 +132,6 @@ from corehq.toggles import (
 )
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-
-mark_safe_lazy = lazy(mark_safe, str)  # TODO: Use library method
 
 
 # used to resize uploaded custom logos, aspect ratio is preserved
@@ -268,8 +266,8 @@ class TransferDomainForm(forms.ModelForm):
 
     def clean_to_username(self):
         username = self.cleaned_data['to_username']
-
-        if not WebUser.get_by_username(username):
+        web_user = WebUser.get_by_username(username)
+        if not (web_user and web_user.is_active):
             raise forms.ValidationError(TransferDomainFormErrors.USER_DNE)
 
         return username
@@ -366,7 +364,7 @@ class DomainGlobalSettingsForm(forms.Form):
     call_center_enabled = BooleanField(
         label=gettext_lazy("Call Center Application"),
         required=False,
-        help_text=gettext_lazy("Call Center mode is a CommCareHQ module for managing "
+        help_text=gettext_lazy("Call Center mode is a CommCare HQ module for managing "
                     "call center workflows. It is still under "
                     "active development. Do not enable for your domain unless "
                     "you're actively piloting it.")
@@ -798,7 +796,7 @@ class PrivacySecurityForm(forms.Form):
     secure_submissions = BooleanField(
         label=gettext_lazy("Secure submissions"),
         required=False,
-        help_text=mark_safe_lazy(gettext_lazy(  # nosec: no user input
+        help_text=mark_safe(gettext_lazy(  # nosec: no user input
             "Secure Submissions prevents others from impersonating your mobile workers. "
             "This setting requires all deployed applications to be using secure "
             "submissions as well. "
@@ -1035,7 +1033,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             "Please rate the technical competency of the partner on a scale from "
             "1 to 5. 1 means low-competency, and we should expect LOTS of basic "
             "hand-holding. 5 means high-competency, so if they report a bug it's "
-            "probably a real issue with CommCareHQ or a really good idea."
+            "probably a real issue with CommCare HQ or a really good idea."
         ),
     )
     support_prioritization = IntegerField(
@@ -1169,7 +1167,8 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
     )
 
-    def __init__(self, domain, can_edit_eula, *args, **kwargs):
+    def __init__(self, domain, can_edit_eula, *args, user, **kwargs):
+        self.user = user
         super(DomainInternalForm, self).__init__(*args, **kwargs)
         self.domain = domain
         self.can_edit_eula = can_edit_eula
@@ -1267,6 +1266,13 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 ),
             ),
         )
+
+        if not self.user.is_staff:
+            self.fields['auto_case_update_limit'].disabled = True
+            self.fields['auto_case_update_limit'].help_text = (
+                'Case update rule limits are only modifiable by Dimagi admins. '
+                'Please reach out to support@dimagi.com if you wish to update this setting.'
+            )
 
     @property
     def current_values(self):
@@ -1804,6 +1810,9 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
     plan_edition = forms.CharField(
         widget=forms.HiddenInput,
     )
+    is_annual_plan = forms.CharField(
+        widget=forms.HiddenInput,
+    )
 
     def __init__(self, account, domain, creating_user, current_subscription,
                  renewed_version, data=None, *args, **kwargs):
@@ -1815,10 +1824,12 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.fields['plan_edition'].initial = renewed_version.plan.edition
+        self.fields['is_annual_plan'].initial = renewed_version.plan.is_annual_plan
 
         from corehq.apps.domain.views.accounting import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
             'plan_edition',
+            'is_annual_plan',
             crispy.Fieldset(
                 _("Basic Information"),
                 'company_name',
@@ -2298,7 +2309,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                         crispy.HTML(
                             _('<p><i class="fa fa-info-circle"></i> '
                               'Clicking "Update" will set up the '
-                              'subscription in CommCareHQ to one of our '
+                              'subscription in CommCare HQ to one of our '
                               'standard contracted plans.<br/> If you '
                               'need to set up a non-standard plan, '
                               'please email {}.</p>').format(settings.ACCOUNTS_EMAIL)

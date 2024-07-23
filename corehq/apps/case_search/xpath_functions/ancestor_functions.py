@@ -3,10 +3,11 @@ from eulxml.xpath import serialize
 from eulxml.xpath.ast import BinaryExpression, FunctionCall, Step
 
 from corehq.apps.case_search.const import OPERATOR_MAPPING, EQ
+from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import CaseFilterError, TooManyRelatedCasesError
 from corehq.apps.case_search.xpath_functions.utils import confirm_args_count
 from corehq.apps.case_search.const import MAX_RELATED_CASES
-from corehq.apps.es.case_search import CaseSearchES, reverse_index_case_query
+from corehq.apps.es.case_search import reverse_index_case_query
 
 
 def is_ancestor_comparison(node):
@@ -89,7 +90,8 @@ def _is_ancestor_path_expression(node):
 def _child_case_lookup(context, case_ids, identifier):
     """returns a list of all case_ids who have parents `case_id` with the relationship `identifier`
     """
-    return CaseSearchES().domain(context.domain).get_child_cases(case_ids, identifier).scroll_ids()
+    es_query = context.helper.get_base_queryset('_child_case_lookup').get_child_cases(case_ids, identifier)
+    return es_query.get_ids()
 
 
 def ancestor_exists(node, context):
@@ -133,22 +135,19 @@ def _validate_ancestor_exists_filter(node):
 
 
 def _get_case_ids_from_ast_filter(context, filter_node):
-    from corehq.apps.case_search.dsl_utils import unwrap_value
     if (isinstance(filter_node, BinaryExpression)
-    and serialize(filter_node.left) == "@case_id" and filter_node.op == EQ):
+            and serialize(filter_node.left) == "@case_id" and filter_node.op == EQ):
         # case id is provided in query i.e @case_id="b9eaf791-e427-482d-add4-2a60acf0362e"
         case_ids = unwrap_value(filter_node.right, context)
         return [case_ids] if isinstance(case_ids, str) else case_ids
     else:
         from corehq.apps.case_search.filter_dsl import build_filter_from_ast
         es_filter = build_filter_from_ast(filter_node, context)
-
-        es_query = CaseSearchES().domain(context.domain).filter(es_filter)
+        es_query = context.helper.get_base_queryset('_get_case_ids_from_ast_filter').filter(es_filter)
         if es_query.count() > MAX_RELATED_CASES:
             new_query = serialize(filter_node)
             raise TooManyRelatedCasesError(
                 gettext("The related case lookup you are trying to perform would return too many cases"),
                 new_query
             )
-
-        return es_query.scroll_ids()
+        return es_query.get_ids()

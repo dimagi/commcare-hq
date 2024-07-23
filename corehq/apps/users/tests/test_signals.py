@@ -58,7 +58,7 @@ class TestUserSignals(SimpleTestCase):
 
 
 @mock_out_couch()
-@patch_user_data_db_layer
+@patch_user_data_db_layer()
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock)
 @patch('corehq.apps.analytics.signals.update_hubspot_properties')
 @patch('corehq.apps.callcenter.tasks.sync_usercases')

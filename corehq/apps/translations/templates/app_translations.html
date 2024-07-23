@@ -11,60 +11,52 @@
 
   {% if not transifex_details_available %}
     <p class="text-error">
-            <span class="label label-danger">
-                {% trans 'Transifex integration not set for this domain' %}
-            </span>
+      <span class="label label-danger">
+          {% trans 'Transifex integration not set for this domain' %}
+      </span>
     </p>
   {% else %}
-    <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
-      <li><a data-toggle="tab" href="#create-trans-form" id="create-tab">{% trans "Create" %}</a></li>
-      <li><a data-toggle="tab" href="#update-trans-form" id="update-tab">{% trans "Update" %}</a></li>
-      <li><a data-toggle="tab" href="#push-trans-form" id="push-tab">{% trans "Push" %}</a></li>
-      <li><a data-toggle="tab" href="#pull-trans-form" id="pull-tab">{% trans "Pull" %}</a></li>
-      <li><a data-toggle="tab" href="#backup-trans-form" id="backup-tab">{% trans "BackUp" %}</a></li>
-      <li><a data-toggle="tab" href="#del-trans-form" id="delete-tab">{% trans "Delete" %}</a></li>
-    </ul>
-    <div class="tab-content">
-      <div id="create-trans-form" class="tab-pane">
-        <form class="form form-horizontal" name="product" method="post">
-          <legend>{% trans "Set Up New Project" %}</legend>
-          {% crispy create_form %}
-        </form>
-      </div>
-      <div id="update-trans-form" class="tab-pane">
-        <form class="form form-horizontal" name="product" method="post">
-          <legend>{% trans "Update Source Files" %}</legend>
-          {% crispy update_form %}
-        </form>
-      </div>
-      <div id="push-trans-form" class="tab-pane">
-        <form class="form form-horizontal" name="product" method="post">
+    <div>
+      <form class="form form-horizontal" name="product" method="post">
+        {% if page_action == 'create_update' %}
+          <legend>{% trans "Set Up or Update Resource" %}</legend>
+          <p>
+            {% blocktrans %}
+              Create a new resource or update an existing one in Transifex.
+            {% endblocktrans %}
+          </p>
+        {% elif page_action == 'push' %}
           <legend>{% trans "Push Target Language" %}</legend>
-          {% crispy push_form %}
-        </form>
-      </div>
-      <div id="pull-trans-form" class="tab-pane">
-        <form class="form form-horizontal" name="product" method="post">
+          <p>
+            {% blocktrans %}
+              Push translations for a target language to Transifex.
+            {% endblocktrans %}
+          </p>
+        {% elif page_action == 'pull' %}
           <legend>{% trans "Pull App Translations" %}</legend>
-          {% crispy pull_form %}
-        </form>
-      </div>
-      <div id="backup-trans-form" class="tab-pane">
-        <form class="form form-horizontal" name="product" method="post">
-          <legend>{% trans "BackUp Translations" %}</legend>
-          {% crispy backup_form %}
-        </form>
-      </div>
-      <div id="del-trans-form" class="tab-pane">
-        {% if delete_form %}
-          <form class="form form-horizontal" name="product" method="post">
-            <legend>{% trans "Delete Project" %}</legend>
-            {% crispy delete_form %}
-          </form>
-        {% else %}
-          <b>{% trans "Action permitted to only users with staff access" %}</b>
+          <p>
+            {% blocktrans %}
+              Pull all translations for a selected language, which will be emailed to you as an Excel file.
+            {% endblocktrans %}
+          </p>
+        {% elif page_action == 'backup' %}
+          <legend>{% trans "Backup App Translations" %}</legend>
+          <p>
+            {% blocktrans %}
+              Pull all translations for all languages in the project, which will be emailed to you as a zip file.
+            {% endblocktrans %}
+          </p>
+        {% elif page_action == 'delete' %}
+          <legend>{% trans "Delete Project Resources" %}</legend>
+            <p>
+              {% blocktrans %}
+                Delete all resources for the selected project. Use caution!
+              {% endblocktrans %}
+            </p>
         {% endif %}
-      </div>
+        </br>
+        {% crispy trans_form %}
+      </form>
     </div>
   {% endif %}
 {% endblock %}

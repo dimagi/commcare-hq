@@ -1,0 +1,55 @@
+<div class="row mb-3">
+  <label for="id_first_name"
+         class="col-form-label col-xs-12 col-sm-4 col-md-4 col-lg-3">
+    Full Name
+  </label>
+  <div class="col-xs-12 col-sm-8 col-md-8 col-lg-9">
+
+    <!-- this is how a valid input is marked with the is-valid class -->
+    <input class="form-control is-valid"
+           type="text"
+           name="full_name"
+           value="Jon Jackson"
+           id="id_first_name"
+           autocomplete="off" />
+
+    <!-- Note that span.valid-feedback element comes before .form-text -->
+    <span class="valid-feedback">
+      Looks good. Thank you!
+    </span>
+
+    <div class="form-text">This is the space for help text for a field.</div>
+  </div>
+</div>
+<div class="row mb-3">
+  <label for="id_favorite_color"
+         class="col-form-label col-xs-12 col-sm-4 col-md-4 col-lg-3">
+    Favorite Color
+  </label>
+  <div class="col-xs-12 col-sm-8 col-md-8 col-lg-9">
+    <select name="favorite_color"
+            class="form-select hqwebapp-select2 is-valid"
+            id="id_favorite_color">
+      <option value="red">Red</option>
+      <option value="green" selected>Green</option>
+      <option value="blue">Blue</option>
+    </select>
+    <span class="valid-feedback">
+      Great! Thanks for providing us your preference.
+    </span>
+  </div>
+</div>
+<div class="row mb-3">
+  <label for="id_hopes"
+         class="col-form-label col-xs-12 col-sm-4 col-md-4 col-lg-3">
+    Hopes and Dreams
+  </label>
+  <div class="col-xs-12 col-sm-8 col-md-8 col-lg-9">
+    <textarea name="hopes"
+              class="form-control vertical-resize is-valid"
+              id="id_hopes">Traveling to the stars...</textarea>
+    <span class="valid-feedback">
+      Fantastic. We love to hear it!
+    </span>
+  </div>
+</div>

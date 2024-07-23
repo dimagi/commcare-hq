@@ -6,7 +6,11 @@ from django.test import SimpleTestCase
 from corehq.apps.userreports.const import UCR_NAMED_FILTER
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import UCRExpression
-from corehq.motech.generic_inbound.backend.base import _execute_generic_api, _apply_api_filter, _validate_api_request
+from corehq.motech.generic_inbound.backend.base import (
+    _apply_api_filter,
+    _execute_generic_api,
+    _validate_api_request,
+)
 from corehq.motech.generic_inbound.exceptions import (
     GenericInboundRequestFiltered,
     GenericInboundValidationError,
@@ -35,6 +39,8 @@ class TestGenericInboundAPI(SimpleTestCase):
             domain=self.domain_name,
             transform_expression=UCRExpression(definition={})
         )
+        # mock 'get_validations' to prevent reverse foreign key lookup on unsaved obj
+        api_model.get_validations = lambda: []
         user = MockUser()
         context = get_evaluation_context(user, 'post', {}, {}, {})
         with self.assertRaises(BadSpecError):

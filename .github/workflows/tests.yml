@@ -54,7 +54,7 @@ jobs:
       env:
         TOKEN: ${{ secrets.CODECOV_TOKEN }}
       if: env.TOKEN != ''
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: coverage.xml
@@ -64,7 +64,7 @@ jobs:
       run: scripts/docker down
     - name: Upload test artifacts
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-artifacts
         path: artifacts

@@ -9,6 +9,7 @@
 {% block page_content %}
   {% initial_page_data "couch_user_id" couch_user.user_id %}
   {% initial_page_data "couch_user_username" couch_user.username %}
+  {% initial_page_data 'can_edit_original_profile' can_edit_original_profile %}
   {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
   {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
   {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}
@@ -43,6 +44,7 @@
     {% if not is_currently_logged_in_user and not request.is_view_only %}
       <li><a href="#user-permanent" data-toggle="tab">{% trans "Actions" %}</a></li>
     {% endif %}
+    <li><a href="#user-metadata" data-toggle="tab">{% trans "User Metadata" %}</a></li>
   </ul>
   <div class="tab-content" id="settings">
     <div class="tab-pane" id="basic-info">
@@ -65,6 +67,16 @@
             </a>
           {% endif %}
           {% include "users/partials/edit_commtrack_user_settings.html" %}
+          {% if support_info.locations %}
+            <h4>{% trans "[Support only] Assigned Locations" %}</h4>
+            <div class="list-group">
+              {% for location in support_info.locations %}
+                <a href="{% url "edit_location" domain location.location_id %}" class="list-group-item">
+                  {{ location.get_path_display }} <span class="badge">{{ location.location_type.name }}</span>
+                </a>
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
       </div>
     {% endif %}
@@ -85,8 +97,8 @@
         <div class="panel-body">
           <div class="form form-horizontal">
 
-            {% if form_user_update.loadtest_users_enabled %}
-            {% crispy form_user_update.action_form %}
+            {% if request|request_has_privilege:"LOADTEST_USERS" %}
+              {% crispy form_user_update.action_form %}
             {% endif %}
 
             <fieldset>
@@ -176,11 +188,74 @@
         </div>
       </div>
     {% endif %}
+    <div class="tab-pane" id="user-metadata">
+      <div class="panel-body">
+        <table class="table">
+          <tbody>
+            <tr>
+              <td>{% trans "Created On" %}</td>
+              <td>{{ couch_user.created_on|to_user_time:request }}</td>
+            </tr>
+            <tr>
+              <td>{% trans "Last Modified" %}</td>
+              <td>{{ couch_user.last_modified|to_user_time:request }}</td>
+            </tr>
+            <tr>
+              <td>{% trans "Last Login" %}</td>
+              <td>{{ couch_user.last_login|to_user_time:request }}</td>
+            </tr>
+            <tr>
+              <td>
+                {% trans "Last Sync" %}
+                <span class="hq-help-template"
+                  data-content="{% blocktrans %}
+                    Approximate date/time of the last time this user synced with the server from CommCare.
+                  {% endblocktrans %}">
+                </span>
+              </td>
+              <td>{{ couch_user.reporting_metadata.last_sync_for_user.sync_date|to_user_time:request }}</td>
+            </tr>
+            <tr>
+              <td>{% trans "Last Form Submission" %}</td>
+              <td>{{ couch_user.reporting_metadata.last_submission_for_user.submission_date|to_user_time:request }}</td>
+            </tr>
+            <tr>
+              <td>
+                {% trans "Devices" %}
+                <span class="hq-help-template"
+                  data-content="{% blocktrans %}
+                    List of devices used to access CommCare applications, with approximate last-use dates.
+                  {% endblocktrans %}">
+                </span>
+              </td>
+              <td>
+                <table class="table-condensed table-bordered">
+                  <thead>
+                    <tr>
+                      <th>{% trans "Device ID" %}</th>
+                      <th>{% trans "Last Used" %}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for device in couch_user.devices|dictsortreversed:"last_used" %}
+                      <tr>
+                        <td style="font-family: monospace">{{ device.device_id }}</td>
+                        <td>{{ device.last_used|to_user_time:request }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 {% endblock %}
 
 {% block modals %} {{ block.super }}
-  {% include 'users/partials/basic_info_modals.html' with user_type='mobile' %}
+  {% include 'users/partials/bootstrap3/basic_info_modals.html' with user_type='mobile' %}
   {% if not is_currently_logged_in_user %}
     <div id="delete_user_{{ couch_user.user_id }}" class="modal fade">
       <div class="modal-dialog">

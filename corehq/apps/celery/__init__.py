@@ -5,7 +5,10 @@ from celery.signals import setup_logging
 
 # Imported to give an idea of where decorators are defined and
 # we will be importing these decorators from this file in tasks
-from corehq.apps.celery.periodic import periodic_task  # noqa F401;
+from corehq.apps.celery.periodic import (  # noqa F401;
+    periodic_task,
+    periodic_task_when_true,
+)
 from corehq.apps.celery.shared_task import task  # noqa F401;
 
 

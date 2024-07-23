@@ -1,0 +1,11 @@
+{% load hq_shared_tags %}
+
+<script type="text/template" id="restore-as-banner-template">
+  {% if request|can_use_restore_as %}
+    <% if (restoreAs) { %>
+    <div class="restore-as-banner module-banner">
+      <%= message %>
+    </div>
+    <% } %>
+  {% endif %}
+</script>

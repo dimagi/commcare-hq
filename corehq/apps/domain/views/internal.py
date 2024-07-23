@@ -97,7 +97,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     def internal_settings_form(self):
         can_edit_eula = toggles.CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
-            return DomainInternalForm(self.request.domain, can_edit_eula, self.request.POST)
+            return DomainInternalForm(self.request.domain, can_edit_eula,
+                                      self.request.POST, user=self.request.user)
         initial = {
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
@@ -150,7 +151,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         initial['active_ucr_expressions'] = AllowedUCRExpressionSettings.get_allowed_ucr_expressions(
             domain_name=self.domain_object.name
         )
-        return DomainInternalForm(self.request.domain, can_edit_eula, initial=initial)
+        return DomainInternalForm(self.request.domain, can_edit_eula, initial=initial, user=self.request.user)
 
     @property
     def page_context(self):

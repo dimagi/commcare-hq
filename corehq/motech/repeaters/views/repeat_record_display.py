@@ -1,4 +1,3 @@
-from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
@@ -22,15 +21,15 @@ class RepeatRecordDisplay:
 
     @property
     def record_id(self):
-        return self.record.record_id
+        return self.record.id
 
     @property
     def last_checked(self):
         return self._format_date(self.record.last_checked)
 
     @property
-    def next_attempt_at(self):
-        return self._format_date(self.record.next_attempt_at)
+    def next_check(self):
+        return self._format_date(self.record.next_check)
 
     @property
     def url(self):

@@ -7,7 +7,7 @@ from dataclasses import InitVar, dataclass
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
-from django.conf.urls import re_path as url
+from django.urls import re_path as url
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import Max, Min, Q
@@ -34,7 +34,7 @@ from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
-from tastypie.resources import ModelResource, Resource, convert_post_to_patch
+from tastypie.resources import ModelResource, Resource
 
 
 from phonelog.models import DeviceReportEntry
@@ -113,6 +113,7 @@ from corehq.apps.users.dbaccessors import (
     get_all_user_id_username_pairs_by_domain,
     get_user_id_by_username,
 )
+from corehq.apps.users.exceptions import ModifyUserStatusException
 from corehq.apps.users.models import (
     CommCareUser,
     ConnectIDUserLink,
@@ -120,7 +121,12 @@ from corehq.apps.users.models import (
     HqPermissions,
     WebUser,
 )
-from corehq.apps.users.util import generate_mobile_username, raw_username
+from corehq.apps.users.util import (
+    generate_mobile_username,
+    raw_username,
+    log_user_change,
+    verify_modify_user_conditions,
+)
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound
@@ -137,7 +143,6 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
-
 
 MOCK_BULK_USER_ES = None
 EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 1000
@@ -326,6 +331,45 @@ class CommCareUserResource(v0_1.CommCareUserResource):
 
         return errors
 
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/activate/$" % self._meta.resource_name,
+                self.wrap_view('activate_user'), name="api_activate_user"),
+            url(r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/deactivate/$" % self._meta.resource_name,
+                self.wrap_view('deactivate_user'), name="api_deactivate_user"),
+        ]
+
+    @location_safe
+    def activate_user(self, request, **kwargs):
+        return self._modify_user_status(request, **kwargs, active=True)
+
+    @location_safe
+    def deactivate_user(self, request, **kwargs):
+        return self._modify_user_status(request, **kwargs, active=False)
+
+    def _modify_user_status(self, request, active, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+        self.throttle_check(request)
+
+        user = CommCareUser.get_by_user_id(kwargs['pk'], kwargs["domain"])
+        if not user:
+            raise NotFound()
+
+        try:
+            verify_modify_user_conditions(request, user, active)
+        except ModifyUserStatusException as e:
+            raise BadRequest(_(str(e)))
+
+        user.is_active = active
+        user.save(spawn_task=True)
+        log_user_change(by_domain=request.domain, for_domain=user.domain,
+                        couch_user=user, changed_by_user=request.couch_user,
+                        changed_via=USER_CHANGE_VIA_API, fields_changed={'is_active': user.is_active})
+
+        self.log_throttled_access(request)
+        return self.create_response(request, {}, response_class=http.HttpAccepted)
+
 
 class WebUserResource(v0_1.WebUserResource):
 
@@ -348,7 +392,8 @@ class AdminWebUserResource(v0_1.UserResource):
 
     def obj_get_list(self, bundle, **kwargs):
         if 'username' in bundle.request.GET:
-            return [WebUser.get_by_username(bundle.request.GET['username'])]
+            web_user = WebUser.get_by_username(bundle.request.GET['username'])
+            return [web_user] if web_user.is_active else []
         return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
 
     class Meta(AdminResourceMeta):
@@ -374,37 +419,7 @@ class GroupResource(v0_4.GroupResource):
         return self._meta.serializer.serialize(data, format, options)
 
     def patch_list(self, request=None, **kwargs):
-        """
-        Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1466
-        (BSD licensed) and modified to pass the kwargs to `obj_create` and support only create method
-        """
-        request = convert_post_to_patch(request)
-        deserialized = self.deserialize(request, request.body,
-                                        format=request.META.get('CONTENT_TYPE', 'application/json'))
-
-        collection_name = self._meta.collection_name
-        if collection_name not in deserialized:
-            raise BadRequest("Invalid data sent: missing '%s'" % collection_name)
-
-        if len(deserialized[collection_name]) and 'put' not in self._meta.detail_allowed_methods:
-            raise ImmediateHttpResponse(response=http.HttpMethodNotAllowed())
-
-        bundles_seen = []
-        status = http.HttpAccepted
-        for data in deserialized[collection_name]:
-
-            data = self.alter_deserialized_detail_data(request, data)
-            bundle = self.build_bundle(data=data, request=request)
-            try:
-
-                self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
-            except AssertionError as e:
-                status = http.HttpBadRequest
-                bundle.data['_id'] = str(e)
-            bundles_seen.append(bundle)
-
-        to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
-        return self.create_response(request, to_be_serialized, response_class=status)
+        return super().patch_list_replica(self.obj_create, request, **kwargs)
 
     def post_list(self, request, **kwargs):
         """

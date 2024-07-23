@@ -543,3 +543,15 @@ def _get_usercase_default_properties(domain):
 
     fields_def = CustomDataFieldsDefinition.get_or_create(domain, CUSTOM_USER_DATA_FIELD_TYPE)
     return [f.slug for f in fields_def.get_fields()]
+
+
+def expire_case_properties_caches(domain):
+    # expire all possible combinations of arguments
+    all_case_properties_by_domain.clear(domain=domain,
+                                        include_parent_properties=True, exclude_deprecated_properties=True)
+    all_case_properties_by_domain.clear(domain=domain,
+                                        include_parent_properties=True, exclude_deprecated_properties=False)
+    all_case_properties_by_domain.clear(domain=domain,
+                                        include_parent_properties=False, exclude_deprecated_properties=True)
+    all_case_properties_by_domain.clear(domain=domain,
+                                        include_parent_properties=False, exclude_deprecated_properties=False)

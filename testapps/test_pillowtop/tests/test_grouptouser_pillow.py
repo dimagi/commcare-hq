@@ -134,7 +134,7 @@ def _create_es_user(user_id, domain):
         last_name='Casual',
         is_active=True,
     )
-    with patch_user_data_db_layer:
+    with patch_user_data_db_layer():
         user_adapter.index(user, refresh=True)
     return user
 
