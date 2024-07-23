@@ -1,5 +1,6 @@
 import base64
 import binascii
+from datetime import datetime
 import logging
 import requests
 from functools import wraps
@@ -215,6 +216,9 @@ class ApiKeyFallbackBackend(object):
             return None
 
         try:
+            is_unexpired_filter = (
+                Q(api_keys__expiration_date__isnull=True) | Q(api_keys__expiration_date__gte=datetime.now())
+            )
             api_domain_filter = Q(api_keys__domain='')
             domain = getattr(request, 'domain', '')
             if domain:
@@ -222,7 +226,7 @@ class ApiKeyFallbackBackend(object):
 
             ip = get_ip(request)
             api_whitelist_filter = Q(api_keys__ip_allowlist=[]) | Q(api_keys__ip_allowlist__contains=[ip])
-            user = User.objects.get(api_domain_filter, api_whitelist_filter,
+            user = User.objects.get(is_unexpired_filter, api_domain_filter, api_whitelist_filter,
                 username=username, api_keys__key=password, api_keys__is_active=True)
         except (User.DoesNotExist, User.MultipleObjectsReturned):
             return None

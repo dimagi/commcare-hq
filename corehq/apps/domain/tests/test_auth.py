@@ -1,8 +1,11 @@
+from datetime import datetime
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.http.request import HttpRequest
 from django.test import SimpleTestCase, TestCase
+
+from freezegun import freeze_time
 
 from corehq.apps.domain.auth import (
     ApiKeyFallbackBackend,
@@ -128,6 +131,24 @@ class ApiKeyFallbackTests(TestCase):
 
         self.assertIsNone(self.backend.authenticate(request, 'test@dimagi.com', '1234'))
 
+    def test_can_use_current_key(self):
+        user = self._create_user('test@dimagi.com')
+        self._create_api_key_for_user(user, key='1234', expiration=datetime(year=2020, month=3, day=10))
+
+        request = self._create_request()
+
+        with freeze_time(datetime(year=2020, month=3, day=9)):
+            self.assertEqual(self.backend.authenticate(request, 'test@dimagi.com', '1234'), user)
+
+    def test_cannot_use_expired_key(self):
+        user = self._create_user('test@dimagi.com')
+        self._create_api_key_for_user(user, key='1234', expiration=datetime(year=2020, month=3, day=10))
+
+        request = self._create_request()
+
+        with freeze_time(datetime(year=2020, month=3, day=11)):
+            self.assertIsNone(self.backend.authenticate(request, 'test@dimagi.com', '1234'))
+
     def setUp(self):
         self.backend = ApiKeyFallbackBackend()
 
@@ -137,10 +158,25 @@ class ApiKeyFallbackTests(TestCase):
 
     @classmethod
     def _create_api_key_for_user(
-            cls, user, name='ApiKey', key='1234', is_active=True, allowed_ips=None, domain=''):
+        cls,
+        user,
+        name='ApiKey',
+        key='1234',
+        is_active=True,
+        allowed_ips=None,
+        domain='',
+        expiration=None
+    ):
         allowed_ips = allowed_ips or []
         return HQApiKey.objects.create(
-            user=user, key=key, name=name, ip_allowlist=allowed_ips, domain=domain, is_active=is_active)
+            user=user,
+            key=key,
+            name=name,
+            ip_allowlist=allowed_ips,
+            domain=domain,
+            is_active=is_active,
+            expiration_date=expiration
+        )
 
     @classmethod
     def _create_request(cls, can_use_api_key=True, for_domain='test-domain', ip=None):
@@ -228,16 +264,52 @@ class HQApiKeyAuthenticationTests(TestCase):
 
         self.assertEqual(response.status_code, 401)
 
+    def test_user_can_authenticate_with_current_key(self):
+        user = self._create_user('test@dimagi.com')
+        self._create_api_key_for_user(user, key='1234', expiration=datetime(year=2020, month=3, day=10))
+        request = self._create_request(username='test@dimagi.com', api_key='1234')
+
+        auth = HQApiKeyAuthentication()
+
+        with freeze_time(datetime(year=2020, month=3, day=9)):
+            self.assertTrue(auth.is_authenticated(request))
+
+    def test_user_cannot_authenticate_with_expired_key(self):
+        user = self._create_user('test@dimagi.com')
+        self._create_api_key_for_user(user, key='1234', expiration=datetime(year=2020, month=3, day=10))
+        request = self._create_request(username='test@dimagi.com', api_key='1234')
+
+        auth = HQApiKeyAuthentication()
+
+        with freeze_time(datetime(year=2020, month=3, day=11)):
+            response = auth.is_authenticated(request)
+            self.assertEqual(response.status_code, 401)
+
     @classmethod
     def _create_user(cls, username):
         return User.objects.create_user(username=username, password='password')
 
     @classmethod
     def _create_api_key_for_user(
-            cls, user, name='ApiKey', key='1234', is_active=True, allowed_ips=None, domain=''):
+            cls,
+            user,
+            name='ApiKey',
+            key='1234',
+            is_active=True,
+            allowed_ips=None,
+            domain='',
+            expiration=None
+    ):
         allowed_ips = allowed_ips or []
         return HQApiKey.objects.create(
-            user=user, key=key, name=name, ip_allowlist=allowed_ips, domain=domain, is_active=is_active)
+            user=user,
+            key=key,
+            name=name,
+            ip_allowlist=allowed_ips,
+            domain=domain,
+            is_active=is_active,
+            expiration_date=expiration
+        )
 
     @classmethod
     def _create_request(cls, username='test@dimagi.com', api_key='1234', for_domain='test-domain', ip=None):
