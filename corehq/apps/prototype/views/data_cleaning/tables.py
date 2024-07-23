@@ -11,7 +11,6 @@ from django_tables2 import columns, config, rows
 from corehq import toggles
 from corehq.apps.prototype.models.data_cleaning.cache_store import (
     VisibleColumnStore,
-    FakeCaseDataStore,
     SlowSimulatorStore,
     ApplyChangesSimulationStore,
 )
@@ -26,7 +25,6 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
     urlname = "prototype_data_cleaning_htmx"
     table_class = FakeCaseTable
     column_manager_class = CaseDataCleaningColumnManager
-    data_store_class = FakeCaseDataStore
     template_name = 'prototype/htmx/single_table.html'
     paginate_by = 10
 
@@ -35,17 +33,8 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
     def column_manager(self):
         return self.column_manager_class(self.request)
 
-    @property
-    def data_store(self):
-        return self.data_store_class(self.request)
-
     def get_queryset(self):
         return self.column_manager.get_filtered_data()
-
-    @property
-    @memoized
-    def record_ids(self):
-        return [record["id"] for record in self.get_queryset()]
 
     def get_table_kwargs(self):
         extra_columns = [self.table_class.get_row_select_column(
@@ -202,7 +191,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         return record_id
 
     def get_record(self):
-        all_rows = self.data_store.get()
+        all_rows = self.column_manager.get_all_rows()
         return all_rows[self.record_id]
 
     @property
@@ -244,17 +233,17 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
 
     @hx_action('post')
     def cancel_edit(self, request, *args, **kwargs):
-        all_rows = self.data_store.get()
+        all_rows = self.column_manager.get_all_rows()
         edited_slug = EditableColumn.get_edited_slug(self.column_slug)
         if edited_slug in all_rows[self.record_id]:
             self.column_manager.make_history_snapshot()
             del all_rows[self.record_id][edited_slug]
-        self.data_store.set(all_rows)
+        self.column_manager.update_all_rows(all_rows)
         return self.render_table_cell_response(request, *args, **kwargs)
 
     @hx_action('post')
     def edit_cell_value(self, request, *args, **kwargs):
-        all_rows = self.data_store.get()
+        all_rows = self.column_manager.get_all_rows()
         edited_slug = EditableColumn.get_edited_slug(self.column_slug)
         new_value = request.POST['newValue']
         original_value = all_rows[self.record_id][self.column_slug]
@@ -266,7 +255,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
             # delete an existing edited value
             self.column_manager.make_history_snapshot()
             del all_rows[self.record_id][edited_slug]
-        self.data_store.set(all_rows)
+        self.column_manager.update_all_rows(all_rows)
         return self.render_table_cell_response(request, *args, **kwargs)
 
     @property

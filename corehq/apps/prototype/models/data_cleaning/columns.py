@@ -142,7 +142,7 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
     def is_row_selected(self, row):
         return row['selected'] and row['id'] in self.filtered_record_ids
 
-    def update_rows(self, update_fn, only_selected=False, clear_history=False):
+    def update_rows_with_function(self, update_fn, only_selected=False, clear_history=False):
         all_rows = self.get_all_rows()
         changed_row_ids = []
         for row in all_rows:
@@ -167,7 +167,7 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
                 del row[edited_key]
             return len(edited_keys) > 0
 
-        self.update_rows(
+        self.update_rows_with_function(
             _clear_changes_to_row,
             only_selected=only_selected,
             clear_history=True
@@ -186,7 +186,7 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
                 del row[edited_key]
             return len(edited_keys) > 0
 
-        self.update_rows(
+        self.update_rows_with_function(
             _apply_changes_to_row,
             only_selected=only_selected,
             clear_history=True
