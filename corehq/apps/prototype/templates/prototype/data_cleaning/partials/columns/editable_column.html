@@ -40,7 +40,11 @@
             <br />
             <div class="dc-diff-after">
               <span x-show="!$store.whitespaces.show">
-                {{ edited_value }}
+                {% if edited_value == Ellipsis %}
+                  {% dc_null_value %}
+                {% else %}
+                  {{ edited_value }}
+                {% endif %}
               </span>
               <span x-show="$store.whitespaces.show">
                 {{ edited_value|whitespaces }}

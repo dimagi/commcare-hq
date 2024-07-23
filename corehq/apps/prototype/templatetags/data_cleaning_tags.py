@@ -26,7 +26,7 @@ def _replace_spaces(css_class, character, help_text):
 
 @register.filter
 def whitespaces(value):
-    if value is None:
+    if value is None or value is Ellipsis:
         return mark_safe(dc_null_value())
 
     # first, escape the string
@@ -50,7 +50,7 @@ def whitespaces(value):
 
 @register.filter
 def dc_escapejs(value):
-    if value is None:
+    if value is None or value is Ellipsis:
         return ""
     return escapejs(value)
 

@@ -108,15 +108,30 @@
   }
 }
 
-.dc-diff-before .dc-null-value {
+.dc-diff-before .dc-null-value,
+.dc-diff-after .dc-null-value {
   display: inline-block;
-  color: $red-500;
 
   .dc-info {
     top: -2px;
-    left: -8px;
+    left: -9px;
     font-size: $font-size-sm;
+    padding: 3px 6.5px;
+  }
+}
+
+.dc-diff-before .dc-null-value {
+  color: $red-500;
+
+  .dc-info {
     background-color: $red-500;
-    padding: 3px 6px;
+  }
+}
+
+.dc-diff-after .dc-null-value {
+  color: $green-500;
+
+  .dc-info {
+    background-color: $green-500;
   }
 }

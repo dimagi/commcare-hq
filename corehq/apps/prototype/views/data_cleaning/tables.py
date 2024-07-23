@@ -219,7 +219,8 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
             edited_keys = [k for k in row.keys() if k.endswith('__edited')]
             for edited_key in edited_keys:
                 original_key = edited_key.replace('__edited', '')
-                row[original_key] = row[edited_key]
+                edited_value = row[edited_key]
+                row[original_key] = None if edited_value is Ellipsis else edited_value
                 del row[edited_key]
             if edited_keys:
                 changed_row_ids.append(row['id'])
@@ -240,7 +241,8 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
             edited_keys = [k for k in row.keys() if k.endswith('__edited')]
             for edited_key in edited_keys:
                 original_key = edited_key.replace('__edited', '')
-                row[original_key] = row[edited_key]
+                edited_value = row[edited_key]
+                row[original_key] = None if edited_value is Ellipsis else edited_value
                 del row[edited_key]
         self.data_store.set(all_rows)
 

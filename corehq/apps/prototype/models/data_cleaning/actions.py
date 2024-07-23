@@ -9,6 +9,7 @@ class CleaningActionType:
     TITLE_CASE = 'title_case'
     UPPER_CASE = 'upper_case'
     LOWER_CASE = 'lower_case'
+    MAKE_NULL = 'make_null'
 
     OPTIONS = (
         (REPLACE, gettext_lazy("Replace")),
@@ -18,6 +19,7 @@ class CleaningActionType:
         (TITLE_CASE, gettext_lazy("Make Title Case")),
         (UPPER_CASE, gettext_lazy("Make Upper Case")),
         (LOWER_CASE, gettext_lazy("Make Lower Case")),
+        (MAKE_NULL, gettext_lazy("Make Value NULL")),
     )
 
     FIND_ACTIONS = (

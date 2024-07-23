@@ -260,6 +260,7 @@ class CleanColumnDataForm(forms.Form):
             CleaningActionType.TITLE_CASE: self._title_case,
             CleaningActionType.UPPER_CASE: self._upper_case,
             CleaningActionType.LOWER_CASE: self._lower_case,
+            CleaningActionType.MAKE_NULL: self._make_null,
         }
         action_fn = action_map[self.cleaned_data['action']]
         self.column_manager.make_history_snapshot()
@@ -271,19 +272,24 @@ class CleanColumnDataForm(forms.Form):
     def _skip_row(self, row):
         return not row["selected"] or (self.filtered_ids and row["id"] not in self.filtered_ids)
 
-    def _replace(self):
+    def _replace_with_value(self, new_value):
         num_changes = 0
         rows = self.data_store.get()
         slug = self.cleaned_data['slug']
-        replace_all_string = self.cleaned_data['replace_all_string']
         edited_slug = EditableColumn.get_edited_slug(slug)
         for row in rows:
             if self._skip_row(row):
                 continue
-            row[edited_slug] = replace_all_string
+            row[edited_slug] = new_value
             num_changes += 1
         self.data_store.set(rows)
         return num_changes
+
+    def _replace(self):
+        return self._replace_with_value(self.cleaned_data['replace_all_string'])
+
+    def _make_null(self):
+        return self._replace_with_value(Ellipsis)
 
     def _find_and_replace(self):
         num_changes = 0
