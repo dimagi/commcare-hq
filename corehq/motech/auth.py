@@ -12,6 +12,7 @@ from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import RequestException
 from requests_oauthlib import OAuth1, OAuth2Session
 
+import settings
 from corehq.motech.exceptions import ConfigurationError
 from corehq.util.public_only_requests.public_only_requests import make_session_public_only, get_public_only_session
 
@@ -356,7 +357,7 @@ class CustomValueAuth(AuthBase):
         self.header_value = header_value
 
     def __call__(self, r):
-        if not re.compile('^https').match(r.url):
+        if not settings.DEBUG and not re.compile('^https').match(r.url):
             raise RequestException(None, r, "Endpoint must be 'HTTPS' to use API Key auth")
         r.headers[self.header_name] = self.header_value
         return r
