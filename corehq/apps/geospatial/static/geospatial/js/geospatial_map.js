@@ -292,8 +292,8 @@ hqDefine("geospatial/js/geospatial_map", [
             const shouldShowUsers = utils.fetchQueryParam(SHOW_USERS_QUERY_PARAM) || false;
             self.shouldShowUsers(shouldShowUsers);
             const userLocationId = utils.fetchQueryParam(USER_LOCATION_ID_QUERY_PARAM);
-            self.selectedLocation = userLocationId;
             if (userLocationId) {
+                self.selectedLocation = userLocationId;
                 const userLocationName = utils.fetchQueryParam(USER_LOCATION_NAME_QUERY_PARAM);
                 const $filterSelect = $("#location-filter-select");
                 $filterSelect.append(new Option(userLocationName, self.selectedLocation));
