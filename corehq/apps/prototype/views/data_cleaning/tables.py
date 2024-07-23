@@ -40,9 +40,7 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         return self.data_store_class(self.request)
 
     def get_queryset(self):
-        return self.column_manager.get_filtered_table_data(
-            self.data_store_class(self.request).get()
-        )
+        return self.column_manager.get_filtered_data()
 
     @property
     @memoized
@@ -115,10 +113,10 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
     @hx_action('post')
     def select_all(self, request, *args, **kwargs):
         is_selected = request.POST['selectAll'] == 'true'
-        all_rows = self.data_store.get()
+        all_rows = self.column_manager.get_all_rows()
         for row in all_rows:
             row['selected'] = is_selected
-        self.data_store.set(all_rows)
+        self.column_manager.update_all_rows(all_rows)
         return self.get(request, *args, **kwargs)
 
     @hx_action('post')
@@ -130,49 +128,28 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
         # the `js-select-row` css class.
         row_ids = request.POST.getlist('pageRowIds')
 
-        all_rows = self.data_store.get()
+        all_rows = self.column_manager.get_all_rows()
         for row_id in row_ids:
             all_rows[int(row_id)]['selected'] = is_selected
-        self.data_store.set(all_rows)
+        self.column_manager.update_all_rows(all_rows)
         return self.render_htmx_no_response(request, *args, **kwargs)
 
     @hx_action('post')
     def select_row(self, request, *args, **kwargs):
         is_selected = 'selection' in request.POST
-        all_rows = self.data_store.get()
+        all_rows = self.column_manager.get_all_rows()
         all_rows[self.record_id]['selected'] = is_selected
-        self.data_store.set(all_rows)
+        self.column_manager.update_all_rows(all_rows)
         return self.render_htmx_no_response(request, *args, **kwargs)
 
     @hx_action('post')
-    def clear_all_edits(self, request, *args, **kwargs):
-        self.column_manager.clear_history()
-        if self.column_manager.has_edits():
-            all_rows = self.data_store.get()
-            for row in all_rows:
-                edited_keys = [k for k in row.keys() if k.endswith('__edited')]
-                for edited_key in edited_keys:
-                    del row[edited_key]
-            self.data_store.set(all_rows)
+    def clear_selected_edits(self, request, *args, **kwargs):
+        self.column_manager.clear_changes(only_selected=True)
         return self.get(request, *args, **kwargs)
 
     @hx_action('post')
-    def clear_selected_edits(self, request, *args, **kwargs):
-        if self.column_manager.has_edits():
-            all_rows = self.data_store.get()
-            changed_row_ids = []
-            for row in all_rows:
-                if not row['selected']:
-                    continue
-                if row['id'] not in self.record_ids:
-                    continue
-                edited_keys = [k for k in row.keys() if k.endswith('__edited')]
-                for edited_key in edited_keys:
-                    del row[edited_key]
-                if edited_keys:
-                    changed_row_ids.append(row['id'])
-            self.data_store.set(all_rows)
-            self.column_manager.clear_selected_history(changed_row_ids)
+    def clear_all_edits(self, request, *args, **kwargs):
+        self.column_manager.clear_changes()
         return self.get(request, *args, **kwargs)
 
     @hx_action('post')
@@ -205,47 +182,12 @@ class DataCleaningTableView(HtmxActionMixin, SavedPaginatedTableView):
 
     @hx_action('post')
     def apply_selected_changes(self, request, *args, **kwargs):
-        has_edits = self.column_manager.has_edits()
-        if not has_edits:
-            return self.get(request, *args, **kwargs)
-
-        all_rows = self.data_store.get()
-        changed_row_ids = []
-        for row in all_rows:
-            if not row['selected']:
-                continue
-            if row['id'] not in self.record_ids:
-                continue
-            edited_keys = [k for k in row.keys() if k.endswith('__edited')]
-            for edited_key in edited_keys:
-                original_key = edited_key.replace('__edited', '')
-                edited_value = row[edited_key]
-                row[original_key] = None if edited_value is Ellipsis else edited_value
-                del row[edited_key]
-            if edited_keys:
-                changed_row_ids.append(row['id'])
-        self.data_store.set(all_rows)
-
-        self.column_manager.clear_selected_history(changed_row_ids)
+        self.column_manager.apply_changes(only_selected=True)
         return self.render_apply_changes_progress_response(request, *args, **kwargs)
 
     @hx_action('post')
     def apply_all_changes(self, request, *args, **kwargs):
-        self.column_manager.clear_history()
-        has_edits = self.column_manager.has_edits()
-        if not has_edits:
-            return self.get(request, *args, **kwargs)
-
-        all_rows = self.data_store.get()
-        for row in all_rows:
-            edited_keys = [k for k in row.keys() if k.endswith('__edited')]
-            for edited_key in edited_keys:
-                original_key = edited_key.replace('__edited', '')
-                edited_value = row[edited_key]
-                row[original_key] = None if edited_value is Ellipsis else edited_value
-                del row[edited_key]
-        self.data_store.set(all_rows)
-
+        self.column_manager.apply_changes()
         return self.render_apply_changes_progress_response(request, *args, **kwargs)
 
     @property

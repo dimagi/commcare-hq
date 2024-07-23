@@ -155,11 +155,8 @@ class CleanColumnDataForm(forms.Form):
         self.data_store = data_store
         self.filtered_ids = []
         if self.column_manager.has_filters():
-            self.filtered_ids = [
-                record["id"] for record in self.column_manager.get_filtered_table_data(
-                    self.data_store.get()
-                )
-            ]
+            # todo simplify
+            self.filtered_ids = self.column_manager.filtered_record_ids
         super().__init__(*args, **kwargs)
 
         self.fields['slug'].choices = [

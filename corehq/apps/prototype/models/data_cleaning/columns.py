@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
+from memoized import memoized
 from django.template import Context, Template
 from django.template.loader import get_template
 from django.utils.translation import gettext as _
@@ -69,6 +70,8 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
     clean_data_form_id = "clean-columns-form"
     filter_store_class = None
     column_filter_class = ColumnFilter
+    data_store_class = None
+    data_store_history_class = None
 
     def __init__(self, request):
         self.request = request
@@ -87,12 +90,21 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
     def has_edits(self):
-        """
-        Returns boolean indicating whether edits are applied to the columns
-        """
-        pass
+        rows = self.data_store.get()
+        for row in rows:
+            edited_keys = [k for k in row.keys() if k.endswith("__edited")]
+            if edited_keys:
+                return True
+        return False
+
+    @property
+    def data_store(self):
+        return self.data_store_class(self.request)
+
+    @property
+    def history_store(self):
+        return self.data_store_history_class(self.request)
 
     @property
     def filter_store(self):
@@ -115,10 +127,68 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
             for args in self.filter_store.get()
         ]
 
-    def get_filtered_table_data(self, table_data):
+    def get_filtered_data(self):
+        data = self.data_store.get()
         for column_filter in self.get_filters():
-            table_data = column_filter.apply_filter(table_data)
-        return table_data
+            data = column_filter.apply_filter(data)
+        return data
+
+    def get_all_rows(self):
+        return self.data_store.get()
+
+    def update_all_rows(self, updated_rows):
+        return self.data_store.set(updated_rows)
+
+    def is_row_selected(self, row):
+        return row['selected'] and row['id'] in self.filtered_record_ids
+
+    def clear_changes(self, only_selected=False):
+        if not self.has_edits():
+            return
+        all_rows = self.get_all_rows()
+        changed_row_ids = []
+        for row in all_rows:
+            if only_selected and not self.is_row_selected(row):
+                continue
+            edited_keys = [k for k in row.keys() if k.endswith('__edited')]
+            for edited_key in edited_keys:
+                del row[edited_key]
+            if edited_keys and only_selected:
+                changed_row_ids.append(row['id'])
+        self.update_all_rows(all_rows)
+        if only_selected:
+            self.clear_selected_history(changed_row_ids)
+        else:
+            self.clear_history()
+
+    def apply_changes(self, only_selected=False):
+        if not self.has_edits():
+            return
+
+        all_rows = self.get_all_rows()
+        changed_row_ids = []
+        for row in all_rows:
+            if only_selected and not self.is_row_selected(row):
+                continue
+            edited_keys = [k for k in row.keys() if k.endswith('__edited')]
+            for edited_key in edited_keys:
+                original_key = edited_key.replace('__edited', '')
+                edited_value = row[edited_key]
+                row[original_key] = None if edited_value is Ellipsis else edited_value
+                del row[edited_key]
+            if edited_keys:
+                changed_row_ids.append(row['id'])
+
+        self.update_all_rows(all_rows)
+        if only_selected:
+            self.clear_selected_history(changed_row_ids)
+        else:
+            self.clear_history()
+
+    @property
+    @memoized
+    def filtered_record_ids(self):
+        return [record["id"] for record in self.get_filtered_data()]
 
     def add_filter(self, slug, match, value, use_regex):
         filters = self.filter_store.get()
@@ -155,9 +225,51 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
             if type(col) is EditableColumn
         ]
 
+    def has_history(self):
+        return bool(self.history_store.get())
+
+    def clear_history(self):
+        if self.has_history():
+            self.history_store.delete()
+
+    def clear_selected_history(self, row_ids):
+        if not self.has_history():
+            return
+        histories = self.history_store.get()
+        all_rows = self.data_store.get()
+        for ind in range(0, len(histories)):
+            for row_id in row_ids:
+                histories[ind][row_id] = all_rows[row_id]
+        self.history_store.set(histories)
+
+    def make_history_snapshot(self):
+        histories = self.history_store.get()
+        rows = self.data_store.get()
+        histories.append(rows)
+        if len(histories) > 21:
+            del histories[0]
+        self.history_store.set(histories)
+
+    def rollback_history(self):
+        if self.has_history():
+            histories = self.history_store.get()
+
+            previous_rows = histories[-1]
+            current_rows = self.data_store.get()
+            for ind, row in enumerate(previous_rows):
+                row["selected"] = current_rows[ind]["selected"]
+
+            self.data_store.set(previous_rows)
+            if len(histories) == 1:
+                self.history_store.delete()
+            else:
+                self.history_store.set(histories[:-1])
+
 
 class CaseDataCleaningColumnManager(BaseDataCleaningColumnManager):
     filter_store_class = FilterColumnStore
+    data_store_class = FakeCaseDataStore
+    data_store_history_class = FakeCaseDataHistoryStore
 
     @classmethod
     def get_available_columns(cls):
@@ -208,59 +320,3 @@ class CaseDataCleaningColumnManager(BaseDataCleaningColumnManager):
             )),
         ])
         return available_columns
-
-    @property
-    def history_store(self):
-        return FakeCaseDataHistoryStore(self.request)
-
-    @property
-    def data_store(self):
-        return FakeCaseDataStore(self.request)
-
-    def has_history(self):
-        return bool(self.history_store.get())
-
-    def make_history_snapshot(self):
-        histories = self.history_store.get()
-        rows = self.data_store.get()
-        histories.append(rows)
-        if len(histories) > 21:
-            del histories[0]
-        self.history_store.set(histories)
-
-    def rollback_history(self):
-        if self.has_history():
-            histories = self.history_store.get()
-
-            previous_rows = histories[-1]
-            current_rows = self.data_store.get()
-            for ind, row in enumerate(previous_rows):
-                row["selected"] = current_rows[ind]["selected"]
-
-            self.data_store.set(previous_rows)
-            if len(histories) == 1:
-                self.history_store.delete()
-            else:
-                self.history_store.set(histories[:-1])
-
-    def clear_history(self):
-        if self.has_history():
-            self.history_store.delete()
-
-    def clear_selected_history(self, row_ids):
-        if not self.has_history():
-            return
-        histories = self.history_store.get()
-        all_rows = self.data_store.get()
-        for ind in range(0, len(histories)):
-            for row_id in row_ids:
-                histories[ind][row_id] = all_rows[row_id]
-        self.history_store.set(histories)
-
-    def has_edits(self):
-        rows = self.data_store.get()
-        for row in rows:
-            edited_keys = [k for k in row.keys() if k.endswith("__edited")]
-            if edited_keys:
-                return True
-        return False
