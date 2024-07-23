@@ -142,48 +142,55 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
     def is_row_selected(self, row):
         return row['selected'] and row['id'] in self.filtered_record_ids
 
-    def clear_changes(self, only_selected=False):
-        if not self.has_edits():
-            return
+    def update_rows(self, update_fn, only_selected=False, clear_history=False):
         all_rows = self.get_all_rows()
         changed_row_ids = []
         for row in all_rows:
             if only_selected and not self.is_row_selected(row):
                 continue
+            has_changes = update_fn(row)
+            if has_changes:
+                changed_row_ids.append(row['id'])
+        self.update_all_rows(all_rows)
+        if clear_history and only_selected:
+            self.clear_selected_history(changed_row_ids)
+        elif clear_history:
+            self.clear_history()
+
+    def clear_changes(self, only_selected=False):
+        if not self.has_edits():
+            return
+
+        def _clear_changes_to_row(row):
             edited_keys = [k for k in row.keys() if k.endswith('__edited')]
             for edited_key in edited_keys:
                 del row[edited_key]
-            if edited_keys and only_selected:
-                changed_row_ids.append(row['id'])
-        self.update_all_rows(all_rows)
-        if only_selected:
-            self.clear_selected_history(changed_row_ids)
-        else:
-            self.clear_history()
+            return len(edited_keys) > 0
+
+        self.update_rows(
+            _clear_changes_to_row,
+            only_selected=only_selected,
+            clear_history=True
+        )
 
     def apply_changes(self, only_selected=False):
         if not self.has_edits():
             return
 
-        all_rows = self.get_all_rows()
-        changed_row_ids = []
-        for row in all_rows:
-            if only_selected and not self.is_row_selected(row):
-                continue
+        def _apply_changes_to_row(row):
             edited_keys = [k for k in row.keys() if k.endswith('__edited')]
             for edited_key in edited_keys:
                 original_key = edited_key.replace('__edited', '')
                 edited_value = row[edited_key]
                 row[original_key] = None if edited_value is Ellipsis else edited_value
                 del row[edited_key]
-            if edited_keys:
-                changed_row_ids.append(row['id'])
+            return len(edited_keys) > 0
 
-        self.update_all_rows(all_rows)
-        if only_selected:
-            self.clear_selected_history(changed_row_ids)
-        else:
-            self.clear_history()
+        self.update_rows(
+            _apply_changes_to_row,
+            only_selected=only_selected,
+            clear_history=True
+        )
 
     @property
     @memoized
