@@ -35,11 +35,9 @@ class VisibleColumnStore(BaseCacheStore):
         "name",
         "dob",
         "height",
-        "spoken_language",
         "mother_status",
         "date_of_delivery",
         "edd",
-        "time_of_day",
         "last_modified_date",
         "status",
     ]

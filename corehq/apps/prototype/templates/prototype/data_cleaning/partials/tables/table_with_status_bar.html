@@ -151,15 +151,15 @@
         </div>
         <div class="modal-body">
           <p x-show="numRecordsSelected > 0">
-            {% blocktrans %}
+            {% blocktrans with table.column_manager.total_records as total_records %}
               Proceeding will either clear changes to
               <strong><span x-text="numRecordsSelected"></span> selected records</strong> or
-              clear changes to <strong>all records</strong>.
+              clear changes to <strong>all {{ total_records }} records</strong>.
             {% endblocktrans %}
           </p>
           <p x-show="numRecordsSelected == 0">
-            {% blocktrans %}
-              Proceeding will clear changes made to <strong>all records</strong>,
+            {% blocktrans with table.column_manager.total_records as total_records %}
+              Proceeding will clear changes made to <strong>all {{ total_records }} records</strong>,
               and data cleaning will start over.
             {% endblocktrans %}
           </p>
@@ -215,15 +215,15 @@
         </div>
         <div class="modal-body">
           <p x-show="numRecordsSelected > 0">
-            {% blocktrans %}
+            {% blocktrans with table.column_manager.total_records as total_records %}
               Proceeding will apply changes to
               <strong><span x-text="numRecordsSelected"></span> selected records</strong> or
-              apply changes to <strong>all records</strong>.
+              apply changes to <strong>all {{ total_records }} records</strong>.
             {% endblocktrans %}
           </p>
           <p x-show="numRecordsSelected == 0">
-            {% blocktrans %}
-              Proceeding will apply changes made to <strong>all records</strong>.
+            {% blocktrans with table.column_manager.total_records as total_records %}
+              Proceeding will apply changes made to <strong>all {{ total_records }} records</strong>.
             {% endblocktrans %}
           </p>
           <p>

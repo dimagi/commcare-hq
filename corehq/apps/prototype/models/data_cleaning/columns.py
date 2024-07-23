@@ -136,6 +136,10 @@ class BaseDataCleaningColumnManager(metaclass=ABCMeta):
     def get_all_rows(self):
         return self.data_store.get()
 
+    @property
+    def total_records(self):
+        return len(self.data_store.get())
+
     def update_all_rows(self, updated_rows):
         return self.data_store.set(updated_rows)
 
@@ -286,13 +290,13 @@ class CaseDataCleaningColumnManager(BaseDataCleaningColumnManager):
             )),
         ]
         case_properties = [
-            'hight',
-            'height',
             'conducted_delivery',
             'date_of_delivery',
             'delivery_location',
             'dob',
             'edd',
+            'hight',
+            'height',
             'lmp',
             'mother_status',
             'spoken_language',

@@ -37,6 +37,7 @@ class AddColumnFilterForm(forms.Form):
     )
     value = forms.CharField(
         label=gettext_lazy("Value"),
+        strip=False,
         required=False
     )
 
@@ -121,6 +122,7 @@ class CleanColumnDataForm(forms.Form):
     )
     find_string = forms.CharField(
         label=gettext_lazy("Find:"),
+        strip=False,
         required=False,
     )
     use_regex = forms.CharField(
@@ -134,10 +136,12 @@ class CleanColumnDataForm(forms.Form):
     )
     replace_string = forms.CharField(
         label=gettext_lazy("Replace with:"),
+        strip=False,
         required=False,
     )
     replace_all_string = forms.CharField(
         label=gettext_lazy("Replace existing value with:"),
+        strip=False,
         required=False,
     )
     copy_slug = forms.ChoiceField(
@@ -271,15 +275,15 @@ class CleanColumnDataForm(forms.Form):
 
     def _replace_with_value(self, new_value):
         num_changes = 0
-        rows = self.data_store.get()
+        all_rows = self.column_manager.get_all_rows()
         slug = self.cleaned_data['slug']
         edited_slug = EditableColumn.get_edited_slug(slug)
-        for row in rows:
+        for row in all_rows:
             if self._skip_row(row):
                 continue
             row[edited_slug] = new_value
             num_changes += 1
-        self.data_store.set(rows)
+        self.column_manager.update_all_rows(all_rows)
         return num_changes
 
     def _replace(self):
@@ -288,22 +292,41 @@ class CleanColumnDataForm(forms.Form):
     def _make_null(self):
         return self._replace_with_value(Ellipsis)
 
-    def _find_and_replace(self):
+    def make_edits_to_rows(self, update_fn, skip_null_value=True, is_string_only=True):
         num_changes = 0
-        rows = self.data_store.get()
         slug = self.cleaned_data['slug']
-        find_string = self.cleaned_data['find_string']
-        replace_string = self.cleaned_data['replace_string']
-        use_regex = self.cleaned_data['use_regex']
         edited_slug = EditableColumn.get_edited_slug(slug)
-        for row in rows:
+        all_rows = self.column_manager.get_all_rows()
+        for row in all_rows:
             if self._skip_row(row):
                 continue
             value = row.get(edited_slug, row[slug])
-            if value is None:
+
+            if skip_null_value and (value is None or value is Ellipsis):
                 continue
 
-            value = str(value)
+            if is_string_only:
+                value = str(value)
+
+            new_value = update_fn(value)
+
+            if value != new_value:
+                num_changes += 1
+
+            if row[slug] != new_value:
+                row[edited_slug] = new_value
+            elif row.get(edited_slug):
+                del row[edited_slug]
+
+        self.column_manager.update_all_rows(all_rows)
+        return num_changes
+
+    def _find_and_replace(self):
+        find_string = self.cleaned_data['find_string']
+        replace_string = self.cleaned_data['replace_string']
+        use_regex = self.cleaned_data['use_regex']
+
+        def _find_replace_row_value(value):
             new_value = value
             if find_string and use_regex:
                 new_value = re.sub(
@@ -315,68 +338,48 @@ class CleanColumnDataForm(forms.Form):
                 new_value = value.replace(find_string, replace_string)
             elif find_string == value:
                 new_value = replace_string
+            return new_value
 
-            if value != new_value:
-                num_changes += 1
-            if row[slug] != new_value:
-                row[edited_slug] = new_value
-            elif row.get(edited_slug):
-                del row[edited_slug]
-
-        self.data_store.set(rows)
-        return num_changes
+        return self.make_edits_to_rows(
+            _find_replace_row_value
+        )
 
     def _strip_whitespace(self):
-        num_changes = 0
         pattern = r"(^[\s]+)|([\s]+$)"
-        rows = self.data_store.get()
-        slug = self.cleaned_data['slug']
-        edited_slug = EditableColumn.get_edited_slug(slug)
-        for row in rows:
-            if self._skip_row(row):
-                continue
-            value = row.get(edited_slug, row[slug])
-            if value is None:
-                continue
 
-            value = str(value)
+        def _strip_whitespaces_from_row_value(value):
             new_value = value
             if re.search(pattern, value):
                 new_value = re.sub(pattern, '', value)
+            return new_value
 
-            if value != new_value:
-                num_changes += 1
-            if row[slug] != new_value:
-                row[edited_slug] = new_value
-            elif row.get(edited_slug):
-                del row[edited_slug]
-
-        self.data_store.set(rows)
-        return num_changes
+        return self.make_edits_to_rows(
+            _strip_whitespaces_from_row_value
+        )
 
     def _copy_and_replace(self):
         num_changes = 0
-        rows = self.data_store.get()
+        all_rows = self.column_manager.get_all_rows()
         slug = self.cleaned_data['slug']
         edited_slug = EditableColumn.get_edited_slug(slug)
         copy_slug = self.cleaned_data['copy_slug']
         edited_copy_slug = EditableColumn.get_edited_slug(copy_slug)
-        for row in rows:
+        for row in all_rows:
             if self._skip_row(row):
                 continue
             copied_value = row.get(edited_copy_slug, row[copy_slug])
             row[edited_slug] = copied_value
             num_changes += 1
-        self.data_store.set(rows)
+        self.column_manager.update_all_rows(all_rows)
         return num_changes
 
     def _fix_words(self, fix_function):
         num_changes = 0
         words_pattern = r"([\S]+)"
-        rows = self.data_store.get()
+        all_rows = self.column_manager.get_all_rows()
         slug = self.cleaned_data['slug']
         edited_slug = EditableColumn.get_edited_slug(slug)
-        for row in rows:
+        for row in all_rows:
             if self._skip_row(row):
                 continue
             value = row.get(edited_slug, row[slug])
@@ -397,7 +400,7 @@ class CleanColumnDataForm(forms.Form):
             elif row.get(edited_slug):
                 del row[edited_slug]
 
-        self.data_store.set(rows)
+        self.column_manager.update_all_rows(all_rows)
         return num_changes
 
     def _title_case(self):
