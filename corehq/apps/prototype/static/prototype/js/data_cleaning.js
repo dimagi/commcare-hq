@@ -4,13 +4,14 @@ hqDefine("prototype/js/data_cleaning",[
     'underscore',
     'sortablejs',
     'es6!hqwebapp/js/bootstrap5_loader',
+    "prototype/js/htmx_utilities",
     'prototype/js/htmx_action',
     'prototype/js/hq_htmx_loading',
     'prototype/js/hq_htmx_select_all',
     'prototype/js/hq_htmx_refresh',
-], function (_, Sortable, bootstrap) {
+], function (_, Sortable, bootstrap, htmxUtils) {
     let htmx = window.htmx;
-    htmx.config.timeout = 30000;
+    htmx.config.timeout = 20000;
     htmx.onLoad(function (content) {
 
         _.each(content.querySelectorAll(".sortable"), function (sortable) {
@@ -45,18 +46,24 @@ hqDefine("prototype/js/data_cleaning",[
         }
     });
     document.body.addEventListener('htmx:responseError', function (evt) {
-        let modal = new bootstrap.Modal(document.getElementById('htmxRequestErrorModal'));
-        window.dispatchEvent(new CustomEvent('updateHtmxRequestErrorModal', {
-            detail: {
-                errorCode: evt.detail.xhr.status,
-                errorText: evt.detail.xhr.statusText,
-            },
-        }));
-        modal.show();
+        let errorCode = evt.detail.xhr.status;
+        if (errorCode === 504) {
+            htmxUtils.retryHtmxRequest(
+                evt, 'htmxRequestErrorModal'
+            );
+            return;
+        }
+
+        htmxUtils.triggerErrorModal(
+            'htmxRequestErrorModal',
+            errorCode,
+            evt.detail.xhr.statusText
+        );
     });
     document.body.addEventListener('htmx:timeout', function (evt) {
-        console.log("a request timed out");
-        console.log(evt);
+        htmxUtils.retryHtmxRequest(
+            evt, 'htmxRequestErrorModal'
+        );
     });
     var cleanDataOffcanvas = document.getElementById('editOffcanvas');
     cleanDataOffcanvas.addEventListener('hidden.bs.offcanvas', function () {
