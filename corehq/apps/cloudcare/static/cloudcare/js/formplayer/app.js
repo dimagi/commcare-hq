@@ -195,7 +195,6 @@ hqDefine("cloudcare/js/formplayer/app", [
 
     FormplayerFrontend.on('startForm', function (data) {
         FormplayerFrontend.permitIntervalSync = false;
-        FormplayerFrontend.trigger('setUnsavedFormInProgress');
         FormplayerFrontend.getChannel().request("clearMenu");
 
         data.onLoading = CloudcareUtils.formplayerLoading;
