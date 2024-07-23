@@ -1,3 +1,4 @@
+from contextlib import ExitStack
 from datetime import date
 
 from corehq.apps.userreports.specs import EvaluationContext
@@ -8,10 +9,15 @@ from custom.champ.utils import PREVENTION_XMLNS, TARGET_XMLNS
 ENHANCED_PEER_MOBILIZATION_DATA_SOURCE = 'enhanced_peer_mobilization.json'
 
 
-@patch_user_data_db_layer()
 class TestEnhancedPeerMobilization(TestDataSourceExpressions):
 
     data_source_name = ENHANCED_PEER_MOBILIZATION_DATA_SOURCE
+
+    def setUp(self):
+        super().setUp()
+        context = ExitStack()
+        context.enter_context(patch_user_data_db_layer())
+        self.addCleanup(context.close)
 
     def test_achievement_form_property(self):
         form = {
