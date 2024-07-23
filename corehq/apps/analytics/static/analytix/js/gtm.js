@@ -19,7 +19,25 @@ hqDefine('analytix/js/gtm', [
         _logger = logging.getLoggerForApi('Google Tag Manager'),
         _ready = $.Deferred();
 
+
     window.dataLayer = window.dataLayer || [];
+
+    function addUserPropertiesToDataLayer() {
+        var userPropertiesEvent = {
+            event: 'userProperties',
+            userId: _get('userId', 'none'),
+            isDimagi: _get('userIsDimagi', 'no', 'yes'),
+            isCommCare: _get('userIsCommCareUser', 'no', 'yes'),
+            domain: _get('domain', 'none'),
+            hqEnvironment: _get('hqInstance', 'none'),
+            isTestDomain: _get('isTestDomain', 'none'),
+            isDomainActive: _get('isDomainActive', 'no', 'yes'),
+            domainSubscription: _get('domainSubscription', 'none'),
+            domainSubscriptionEdition: _get('domainSubscriptionEdition', 'none'),
+            domainSubscriptionServiceType: _get('domainSubscriptionServiceType', 'none'),
+        };
+        window.dataLayer.push(userPropertiesEvent);
+    }
 
     /**
      * Helper function to send event to Google Tag Manager.
@@ -45,19 +63,14 @@ hqDefine('analytix/js/gtm', [
     };
 
     $(function () {
-        var apiId = _get('apiId'),
-            scriptUrl = '//www.googletagmanager.com/gtm.js?id=' + apiId;
+        // userProperties are added to dataLayer at earliest to be readily available once GTM loads
+        var apiId = _get('apiId');
+        if (apiId && initialAnalytics.getFn('global')(('isEnabled'))) {
+            addUserPropertiesToDataLayer();
+        }
 
+        var scriptUrl = '//www.googletagmanager.com/gtm.js?id=' + apiId;
         _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function () {
-            var userProperties = {
-                userId: _get('userId', 'none'),
-                isDimagi: _get('userIsDimagi', 'no', 'yes'),
-                isCommCare: _get('userIsCommCareUser', 'no', 'yes'),
-                domain: _get('domain', 'none'),
-                hqEnvironment: _get('hqInstance', 'none'),
-            };
-            // userProperties are sent first to be available for use as early as possible
-            gtmSendEvent('userProperties', userProperties);
             gtmSendEvent('gtm.js', {'gtm.start': new Date().getTime()});
         });
     });
