@@ -29,14 +29,14 @@
 </script>
 
 <script type="text/template" id="persistent-menu-item">
-  <div>
+  <div class="position-relative persistent-menu-item rounded">
     <% if (imageUri) { %>
       <i class="fcc persistent-menu-image" aria-hidden="true"
          style="background-image: url('<%- imageUri %>');"></i>
     <% } else { %>
       <i class="fa fa-arrow-up-right-from-square persistent-menu-image" aria-hidden="true"></i>
     <% } %>
-    <a class="align-middle" href="#"
+    <a class="align-middle stretched-link text-reset"
        data-bs-toggle="offcanvas" data-bs-target="#persistent-menu-container">
       <%- displayText %>
     </a>
