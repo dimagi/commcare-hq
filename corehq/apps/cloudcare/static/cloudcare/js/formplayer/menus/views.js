@@ -1508,9 +1508,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         templateContext: function () {
             const appId = formplayerUtils.currentUrlToObject().appId,
-                  imageUri = this.model.get('imageUri');
+                  imageUri = this.model.get('imageUri'),
+                  icons = {JUMP: 'fa-pencil', NEXT: 'fa-regular fa-folder'};
             return {
                 imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+                iconClass: icons[this.model.get('navigationState')] || 'fa-list-ul',
             };
         },
         onRender: function () {
