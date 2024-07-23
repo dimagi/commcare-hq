@@ -62,6 +62,7 @@ hqDefine("motech/js/connection_settings_detail", [
                     break;
                 case 'api_key':
                     visible = {
+                        'username': gettext("HTTP Header Name"),
                         'plaintext_password': gettext("API Key"),
                     };
                     break;

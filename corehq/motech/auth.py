@@ -342,19 +342,21 @@ class OAuth2PasswordGrantManager(AuthManager):
 
 
 class ApiKeyAuthManager(AuthManager):
-    def __init__(self, api_key):
+    def __init__(self, header_name, api_key):
+        self.header_name = header_name
         self.api_key = api_key
 
     def get_auth(self):
-        return CustomValueAuth(self.api_key)
+        return CustomValueAuth(self.header_name, self.api_key)
 
 
 class CustomValueAuth(AuthBase):
-    def __init__(self, header_value):
+    def __init__(self, header_name, header_value):
+        self.header_name = header_name or "Authorization"
         self.header_value = header_value
 
     def __call__(self, r):
         if not re.compile('^https').match(r.url):
             raise RequestException(None, r, "Endpoint must be 'HTTPS' to use API Key auth")
-        r.headers["Authorization"] = self.header_value
+        r.headers[self.header_name] = self.header_value
         return r
