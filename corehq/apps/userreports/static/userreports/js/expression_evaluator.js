@@ -81,7 +81,6 @@ hqDefine('userreports/js/expression_evaluator', function () {
         };
 
         self.evaluateExpression = function () {
-            console.log(self.documentId());
             self.error("");
             self.result("");
             if (self.hasParseError() || self.hasDocParseError()) {
