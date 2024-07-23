@@ -136,7 +136,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     });
 
     FormplayerFrontend.on('clearForm', function () {
-        FormplayerFrontend.trigger('setFormNotInProgress');
+        FormplayerFrontend.trigger('setUnsavedFormNotInProgress');
         $('#webforms').html("");
         $('.menu-scrollable-container').removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
         $('#webforms-nav').html("");
