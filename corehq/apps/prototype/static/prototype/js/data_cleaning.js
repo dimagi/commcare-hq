@@ -10,7 +10,7 @@ hqDefine("prototype/js/data_cleaning",[
     'prototype/js/hq_htmx_refresh',
 ], function (_, Sortable, bootstrap) {
     let htmx = window.htmx;
-    htmx.config.timeout = 2000;
+    htmx.config.timeout = 30000;
     htmx.onLoad(function (content) {
 
         _.each(content.querySelectorAll(".sortable"), function (sortable) {
