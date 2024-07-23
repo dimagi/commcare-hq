@@ -5,7 +5,7 @@ class CleaningActionType:
     REPLACE = 'replace'
     FIND_REPLACE = 'find_replace'
     STRIP = 'strip'
-    MERGE = 'merge'
+    COPY_REPLACE = 'copy_replace'
     TITLE_CASE = 'title_case'
     UPPER_CASE = 'upper_case'
     LOWER_CASE = 'lower_case'
@@ -14,8 +14,8 @@ class CleaningActionType:
     OPTIONS = (
         (REPLACE, gettext_lazy("Replace")),
         (FIND_REPLACE, gettext_lazy("Find & Replace")),
+        (COPY_REPLACE, gettext_lazy("Copy & Replace")),
         (STRIP, gettext_lazy("Strip Whitespaces")),
-        (MERGE, gettext_lazy("Merge")),
         (TITLE_CASE, gettext_lazy("Make Title Case")),
         (UPPER_CASE, gettext_lazy("Make Upper Case")),
         (LOWER_CASE, gettext_lazy("Make Lower Case")),
@@ -28,6 +28,6 @@ class CleaningActionType:
     REPLACE_ALL_ACTIONS = (
         REPLACE,
     )
-    MERGE_ACTIONS = (
-        MERGE,
+    COPY_ACTIONS = (
+        COPY_REPLACE,
     )

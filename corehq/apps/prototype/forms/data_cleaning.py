@@ -140,13 +140,13 @@ class CleanColumnDataForm(forms.Form):
         label=gettext_lazy("Replace existing value with:"),
         required=False,
     )
-    merge_slug = forms.ChoiceField(
-        label=gettext_lazy("Merge with property:"),
+    copy_slug = forms.ChoiceField(
+        label=gettext_lazy("Copy from property:"),
         choices=(),
         required=False,
         help_text=gettext_lazy(
             "The value from this property will replace the "
-            "value from the selected property above."
+            "value from the selected property at the top."
         ),
     )
 
@@ -166,7 +166,7 @@ class CleanColumnDataForm(forms.Form):
             ('', _("Select a property...")),
         ] + column_manager.get_editable_column_options()
 
-        self.fields['merge_slug'].choices = column_manager.get_editable_column_options()
+        self.fields['copy_slug'].choices = column_manager.get_editable_column_options()
 
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
@@ -206,11 +206,11 @@ class CleanColumnDataForm(forms.Form):
                 crispy.Div(
                     crispy.Div(
                         crispy.Div(
-                            'merge_slug',
+                            'copy_slug',
                         ),
                         css_class="card-body",
                     ),
-                    x_show="mergeActions.includes(action)",
+                    x_show="copyActions.includes(action)",
                     css_class="card mb-3",
                 ),
                 crispy.Div(
@@ -233,7 +233,7 @@ class CleanColumnDataForm(forms.Form):
                     "action": self.fields["action"].initial,
                     "findActions": CleaningActionType.FIND_ACTIONS,
                     "replaceAllActions": CleaningActionType.REPLACE_ALL_ACTIONS,
-                    "mergeActions": CleaningActionType.MERGE_ACTIONS,
+                    "copyActions": CleaningActionType.COPY_ACTIONS,
                 }),
             ),
         )
@@ -247,16 +247,16 @@ class CleanColumnDataForm(forms.Form):
                 except re.error:
                     self.add_error('find_string', _("Not a valid regular expression"))
 
-        if action in CleaningActionType.MERGE_ACTIONS:
-            if self.cleaned_data['slug'] == self.cleaned_data['merge_slug']:
-                self.add_error('merge_slug', _("Please select a different property."))
+        if action in CleaningActionType.COPY_ACTIONS:
+            if self.cleaned_data['slug'] == self.cleaned_data['copy_slug']:
+                self.add_error('copy_slug', _("Please select a different property."))
 
     def apply_actions_to_data(self):
         action_map = {
             CleaningActionType.REPLACE: self._replace,
             CleaningActionType.FIND_REPLACE: self._find_and_replace,
+            CleaningActionType.COPY_REPLACE: self._copy_and_replace,
             CleaningActionType.STRIP: self._strip_whitespace,
-            CleaningActionType.MERGE: self._merge_columns,
             CleaningActionType.TITLE_CASE: self._title_case,
             CleaningActionType.UPPER_CASE: self._upper_case,
             CleaningActionType.LOWER_CASE: self._lower_case,
@@ -357,18 +357,18 @@ class CleanColumnDataForm(forms.Form):
         self.data_store.set(rows)
         return num_changes
 
-    def _merge_columns(self):
+    def _copy_and_replace(self):
         num_changes = 0
         rows = self.data_store.get()
         slug = self.cleaned_data['slug']
         edited_slug = EditableColumn.get_edited_slug(slug)
-        merge_slug = self.cleaned_data['merge_slug']
-        edited_merge_slug = EditableColumn.get_edited_slug(merge_slug)
+        copy_slug = self.cleaned_data['copy_slug']
+        edited_copy_slug = EditableColumn.get_edited_slug(copy_slug)
         for row in rows:
             if self._skip_row(row):
                 continue
-            merge_value = row.get(edited_merge_slug, row[merge_slug])
-            row[edited_slug] = merge_value
+            copied_value = row.get(edited_copy_slug, row[copy_slug])
+            row[edited_slug] = copied_value
             num_changes += 1
         self.data_store.set(rows)
         return num_changes

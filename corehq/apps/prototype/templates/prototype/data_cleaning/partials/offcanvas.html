@@ -10,6 +10,7 @@
   <div class="offcanvas-body"
        hx-trigger="load"
        hx-get="{% url "data_cleaning_clean_data_form" %}">
+    {% include "prototype/data_cleaning/partials/htmx_loading_indicator.html" %}
   </div>
 </div>
 
@@ -23,6 +24,7 @@
   <div class="offcanvas-body"
        hx-trigger="load"
        hx-get="{% url "data_cleaning_configure_columns_form" %}">
+    {% include "prototype/data_cleaning/partials/htmx_loading_indicator.html" %}
   </div>
 </div>
 
@@ -36,5 +38,6 @@
   <div class="offcanvas-body"
        hx-trigger="load"
        hx-get="{% url "data_cleaning_filter_columns_form" %}">
+    {% include "prototype/data_cleaning/partials/htmx_loading_indicator.html" %}
   </div>
 </div>

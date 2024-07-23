@@ -1,4 +1,5 @@
 import copy
+import random
 
 from django.core.cache import cache
 
@@ -74,10 +75,18 @@ class FakeCaseDataStore(BaseCacheStore):
 
     @property
     def default_value(self):
-        return _get_fake_data(107)
+        return _get_fake_data_for_username(self.username)
+
+    def delete(self):
+        super().delete()
+        _get_fake_data_for_username.clear(self.username)
 
 
-@quickcache(['num_entries'])
+@quickcache(['username'])
+def _get_fake_data_for_username(username):
+    return _get_fake_data(random.choice(range(103, 154)))
+
+
 def _get_fake_data(num_entries):
     rows = []
     for row in range(0, num_entries):

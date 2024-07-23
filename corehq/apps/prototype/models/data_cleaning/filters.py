@@ -57,8 +57,8 @@ class ColumnMatchType:
     MATCH_FUNCTION = (
         (EXACT, lambda data, value: data is not None and str(data) == value),
         (IS_NOT, lambda data, value: data is not None and str(data) != value),
-        (CONTAINS, lambda data, value: data is not None and value in str(data)),
-        (CONTAINS_NOT, lambda data, value: data is not None and value not in str(data)),
+        (CONTAINS, lambda data, value: data is not None and value.lower() in str(data).lower()),
+        (CONTAINS_NOT, lambda data, value: data is not None and value.lower() not in str(data).lower()),
         (IS_EMPTY, lambda data, value: data is not None and str(data) == ""),
         (IS_NOT_EMPTY, lambda data, value: data is not None and str(data) != ""),
         (IS_NULL, lambda data, value: data is None),
