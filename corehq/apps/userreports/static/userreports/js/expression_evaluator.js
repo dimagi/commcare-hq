@@ -43,7 +43,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
         }, self);
 
         self.hasDocParseError = ko.computed(function () {
-            return self.getDocJSON() === null;
+            return self.docText() && self.getDocJSON() === null;
         }, self);
 
         self.formatJson = function () {
@@ -81,6 +81,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
         };
 
         self.evaluateExpression = function () {
+            console.log(self.documentId());
             self.error("");
             self.result("");
             if (self.hasParseError() || self.hasDocParseError()) {
