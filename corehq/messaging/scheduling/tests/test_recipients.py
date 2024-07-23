@@ -315,6 +315,34 @@ class SchedulingRecipientTest(TestCase):
                 recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE)
             self.assertEqual(instance.recipient.case_id, parent.case_id)
 
+    def test_host_parent_case_recipient(self):
+        with (
+            create_case(self.domain, 'person') as child,
+            create_case(self.domain, 'person') as parent,
+            create_case(self.domain, 'person') as host
+        ):
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain, case_id=child.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE
+            )
+            self.assertIsNone(instance.recipient)
+
+            # host case selected when there is no parent case
+            set_parent_case(self.domain, child, host, relationship='extension', identifier='host')
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain, case_id=child.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE
+            )
+            self.assertEqual(instance.recipient.case_id, host.case_id)
+
+            # parent selected when both parent and host cases are present
+            set_parent_case(self.domain, child, parent, relationship='child', identifier='parent')
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain, case_id=child.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE
+            )
+            self.assertEqual(instance.recipient.case_id, parent.case_id)
+
     def test_child_case_recipient(self):
         with create_case(self.domain, 'person') as child_1, \
                 create_case(self.domain, 'person') as child_2, \
