@@ -163,11 +163,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         }
 
         if (menuResponse.persistentMenu) {
-            const menuCommands = menuResponse.persistentMenu;
-            _.each(menuCommands, (command) => _insertSelections(command, []));
             FormplayerFrontend.regions.getRegion('persistentMenu').show(
                 views.PersistentMenuView({
-                    collection: new Backbone.Collection(menuCommands),
+                    collection: _toMenuCommands(menuResponse.persistentMenu, []),
                 }).render());
         } else {
             FormplayerFrontend.regions.getRegion('persistentMenu').empty();
@@ -178,10 +176,20 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         }
     };
 
-    // Store an array of the commands needed to navigate to each nested menu item
-    var _insertSelections = function (menuCommand, priorSelections) {
-        menuCommand.selections = priorSelections.concat([menuCommand.index]);
-        _.each(menuCommand.commands || [], (command) => _insertSelections(command, menuCommand.selections));
+    var _toMenuCommands = function (menuCommands, priorSelections) {
+        return new Backbone.Collection(_.map(menuCommands, function (menuCommand) {
+            const command = _.pick(menuCommand, [
+                'index',
+                'displayText',
+                'navigationState',
+                'imageUri',
+                'commands',
+            ]);
+            // Store an array of the commands needed to navigate to each nested menu item
+            command.selections = priorSelections.concat([command.index]);
+            command.commands = _toMenuCommands(command.commands, command.selections);
+            return new Backbone.Model(command);
+        }));
     };
 
     var showSplitScreenQuery = function (menuResponse, menuListView) {

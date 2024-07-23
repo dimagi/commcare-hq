@@ -1516,7 +1516,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         onRender: function () {
             if (!_.isEmpty(this.model.get('commands'))) {
                 this.showChildView('tree', new PersistentMenuListView({
-                    collection: new Backbone.Collection(this.model.get('commands')),
+                    collection: this.model.get('commands'),
                 }));
             }
         },
