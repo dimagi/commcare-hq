@@ -215,7 +215,11 @@ class ApiKeyFallbackBackend(object):
             return None
 
         try:
-            api_domain_filter = Q(api_keys__domain='') | Q(api_keys__domain=request.domain)
+            api_domain_filter = Q(api_keys__domain='')
+            domain = getattr(request, 'domain', '')
+            if domain:
+                api_domain_filter = api_domain_filter | Q(api_keys__domain=domain)
+
             ip = get_ip(request)
             api_whitelist_filter = Q(api_keys__ip_allowlist=[]) | Q(api_keys__ip_allowlist__contains=[ip])
             user = User.objects.get(api_domain_filter, api_whitelist_filter,
@@ -277,7 +281,10 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             return False
 
         # ensure API Key exists
-        domain_accessible = Q(domain='') | Q(domain=request.domain)
+        domain_accessible = Q(domain='')
+        domain = getattr(request, 'domain', '')
+        if domain:
+            domain_accessible = domain_accessible | Q(domain=domain)
         try:
             key = user.api_keys.get(domain_accessible, key=api_key)
         except HQApiKey.DoesNotExist:
