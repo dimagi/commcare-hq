@@ -87,7 +87,7 @@ hqDefine("cloudcare/js/formplayer/app", [
 
     FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm = function () {
         if (FormplayerFrontend.unsavedFormInProgress) {
-            const userConfirmedYes = window.confirm("You have a form in progress. Are you sure you want to navigate away?");
+            const userConfirmedYes = window.confirm(gettext("You have a form in progress. Are you sure you want to navigate away?"));
             if (!userConfirmedYes) {
                 return false;
             }
