@@ -1,8 +1,12 @@
 .dc-spaces {
   opacity: .5;
   background-color: transparent;
-  transition: .5s ease-in-out background-color;
+  font-weight: bold;
+  font-size: $font-size-base * 1.5;
+  line-height: $font-size-base * 1.5;
   position: relative;
+  vertical-align: middle;
+  transition: .5s ease-in-out background-color;
 
   &::before {
     position: absolute;
@@ -80,5 +84,54 @@
 
   .dc-spaces {
     color: $green-800;
+  }
+}
+
+.dc-null-value {
+  display: block;
+  position: relative;
+
+  .dc-info {
+    background-color: $gray-800;
+    color: $white;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    padding: 0 $spacer * .25;
+    transition: opacity .5s ease-in-out;
+  }
+  &:hover .dc-info {
+    display: block;
+    opacity: 1;
+  }
+}
+
+.dc-diff-before .dc-null-value,
+.dc-diff-after .dc-null-value {
+  display: inline-block;
+
+  .dc-info {
+    top: -2px;
+    left: -9px;
+    font-size: $font-size-sm;
+    padding: 3px 6.5px;
+  }
+}
+
+.dc-diff-before .dc-null-value {
+  color: $red-500;
+
+  .dc-info {
+    background-color: $red-500;
+  }
+}
+
+.dc-diff-after .dc-null-value {
+  color: $green-500;
+
+  .dc-info {
+    background-color: $green-500;
   }
 }

@@ -3,7 +3,7 @@ import random
 
 from django.core.cache import cache
 
-from corehq.apps.prototype.utils import fake_data
+from corehq.apps.prototype.utils.fake_case_data.mother_case import get_case_data_with_issues
 from corehq.util.quickcache import quickcache
 
 
@@ -32,11 +32,15 @@ class BaseCacheStore:
 class VisibleColumnStore(BaseCacheStore):
     slug = 'visible-column'
     default_value = [
-        "full_name",
-        "color",
-        "big_cat",
-        "submitted_on",
-        "app",
+        "name",
+        "dob",
+        "height",
+        "spoken_language",
+        "mother_status",
+        "date_of_delivery",
+        "edd",
+        "time_of_day",
+        "last_modified_date",
         "status",
     ]
 
@@ -56,47 +60,40 @@ class ShowWhitespacesStore(BaseCacheStore):
     default_value = False
 
 
+class ApplyChangesSimulationStore(BaseCacheStore):
+    slug = 'prototype-apply-changes-sim'
+    default_value = 0
+
+
+class FakeCaseDataHistoryStore(BaseCacheStore):
+    slug = 'prototype-case-data-history-store'
+    default_value = []
+
+
 class FakeCaseDataStore(BaseCacheStore):
     slug = 'prototype-case-data-store'
 
     @property
     def default_value(self):
-        return _get_fake_data(111)
+        return _get_fake_data_for_username(self.username)
+
+    def delete(self):
+        super().delete()
+        _get_fake_data_for_username.clear(self.username)
 
 
-def _simulate_issues(value, can_be_missing=False):
-    is_missing = bool(random.getrandbits(1))
-    if is_missing and can_be_missing:
-        return ""
-
-    num_pre_space = random.choice([0, 1, 2, 4])
-    num_post_space = random.choice([0, 1, 2, 4])
-    value = ' ' * num_pre_space + value + ' ' * num_post_space
-
-    newline = bool(random.getrandbits(1))
-    if newline:
-        value = value + "\n"
-
-    tab = bool(random.getrandbits(1))
-    if tab:
-        value = "\t" + value
-    return value
+@quickcache(['username'])
+def _get_fake_data_for_username(username):
+    return _get_fake_data(random.choice(range(103, 154)))
 
 
-@quickcache(['num_entries'])
 def _get_fake_data(num_entries):
     rows = []
-    status = ('open', 'closed')
     for row in range(0, num_entries):
+        case_data = get_case_data_with_issues()
         rows.append({
             "id": row,
             "selected": False,
-            "full_name": _simulate_issues(f"{fake_data.get_first_name()} {fake_data.get_last_name()}"),
-            "color": _simulate_issues(fake_data.get_color(), True),
-            "big_cat": _simulate_issues(fake_data.get_big_cat(), True),
-            "planet": _simulate_issues(fake_data.get_planet(), True),
-            "submitted_on": fake_data.get_past_date(),
-            "app": fake_data.get_fake_app(),
-            "status": random.choice(status),
+            **case_data,
         })
     return rows
