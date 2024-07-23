@@ -2,6 +2,7 @@
 hqDefine("cloudcare/js/formplayer/menus/views", [
     'jquery',
     'underscore',
+    'backbone',
     'backbone.marionette',
     'DOMPurify/dist/purify.min',
     'hqwebapp/js/initial_page_data',
@@ -9,6 +10,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     'analytix/js/kissmetrix',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/markdown',
@@ -17,6 +19,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 ], function (
     $,
     _,
+    Backbone,
     Marionette,
     DOMPurify,
     initialPageData,
@@ -24,6 +27,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     kissmetrics,
     constants,
     FormplayerFrontend,
+    AppsAPI,
     UsersModels,
     formplayerUtils,
     markdown,
@@ -41,7 +45,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 return 'tr';
             }
         },
-        className: "formplayer-request",
+        className: function () {
+            let classNames = "formplayer-request";
+            if (this.isGrid()) {
+                classNames += " col-sm-6 col-md-4 col-lg-3";
+            }
+            return classNames;
+        },
         attributes: function () {
             const displayText = this.options.model.attributes.displayText;
             return {
@@ -85,15 +95,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             e.preventDefault();
             const $playBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-play');
             const $pauseBtn = $playBtn.parent().find('.js-module-audio-pause');
-            const displayClass = window.USE_BOOTSTRAP5 ? "d-none" : "hide";
-            $pauseBtn.removeClass(displayClass);
-            $playBtn.addClass(displayClass);
+            $pauseBtn.removeClass("d-none");
+            $playBtn.addClass("d-none");
             const $audioElem = $playBtn.parent().find('.js-module-audio');
             if ($audioElem.data('isFirstPlay') !== 'yes') {
                 $audioElem.data('isFirstPlay', 'yes');
                 $audioElem.one('ended', function () {
-                    $playBtn.removeClass(displayClass);
-                    $pauseBtn.addClass(displayClass);
+                    $playBtn.removeClass("d-none");
+                    $pauseBtn.addClass("d-none");
                     $audioElem.data('isFirstPlay', 'no');
                 });
             }
@@ -102,9 +111,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         audioPause: function (e) {
             e.preventDefault();
             const $pauseBtn = $(e.originalEvent.srcElement).closest('.js-module-audio-pause');
-            const displayClass = window.USE_BOOTSTRAP5 ? "d-none" : "hide";
-            $pauseBtn.parent().find('.js-module-audio-play').removeClass(displayClass);
-            $pauseBtn.addClass(displayClass);
+            $pauseBtn.parent().find('.js-module-audio-play').removeClass("d-none");
+            $pauseBtn.addClass("d-none");
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
         },
         rowKeyAction: function (e) {
@@ -341,7 +349,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const $spinnerElement = $iconButton.find('i');
             $moduleIcon.css('display', 'none');
             $iconButton.addClass('disabled');
-            $spinnerElement.css('display', '');
+            $spinnerElement.removeClass("d-none");
 
             const currentUrlToObject = formplayerUtils.currentUrlToObject();
             currentUrlToObject.endpointArgs = {[endpointArg]: caseId};
@@ -351,7 +359,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             function resetIcon() {
                 $moduleIcon.css('display', '');
                 $iconButton.removeClass('disabled');
-                $spinnerElement.css('display', 'none');
+                $spinnerElement.addClass("d-none");
             }
 
             $.when(FormplayerFrontend.getChannel().request("icon:click", currentUrlToObject)).done(function () {
@@ -485,7 +493,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseTileView = CaseView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style panel panel-default",
+        className: "formplayer-request list-cell-wrapper-style card",
         template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileView.__super__.templateContext.apply(this, arguments);
@@ -509,7 +517,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseTileViewUnclickable = CaseTileView.extend({
         events: {},
-        className: "list-cell-wrapper-style panel panel-default",
+        className: "list-cell-wrapper-style card",
         rowClick: function () {},
     });
 
@@ -533,7 +541,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseTileGroupedView = CaseTileView.extend({
         tagName: "div",
-        className: "formplayer-request list-cell-wrapper-style case-tile-group panel panel-default",
+        className: "formplayer-request list-cell-wrapper-style case-tile-group card",
         template: _.template($("#case-tile-grouped-view-item-template").html() || ""),
         templateContext: function () {
             const dict = CaseTileGroupedView.__super__.templateContext.apply(this, arguments);
@@ -795,15 +803,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             const mapDiv = $('#module-case-list-map');
             const moduleCaseList = $('#module-case-list');
             const hideButton = $('#hide-map-button');
-            const displayClass = window.USE_BOOTSTRAP5 ? "d-none" : "hide";
-            if (!mapDiv.hasClass(displayClass)) {
-                mapDiv.addClass(displayClass);
-                moduleCaseList.removeClass('col-md-7 col-md-pull-5').addClass('col-md');
+            if (!mapDiv.hasClass("d-none")) {
+                mapDiv.addClass("d-none");
+                moduleCaseList.removeClass('col-lg-7').addClass('col-lg');
                 hideButton.text(gettext('Show Map'));
                 $(e.target).attr('aria-expanded', 'false');
             } else {
-                mapDiv.removeClass(displayClass);
-                moduleCaseList.addClass('col-md-7 col-md-pull-5').removeClass('col-md');
+                mapDiv.removeClass("d-none");
+                moduleCaseList.addClass('col-lg-7').removeClass('col-lg');
                 hideButton.text(gettext('Hide Map'));
                 $(e.target).attr('aria-expanded', 'true');
             }
@@ -854,7 +861,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
                     "of <%- value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
-                hqRequire(["hqwebapp/js/bootstrap3/alert_user"], function (alertUser) {
+                hqRequire(["hqwebapp/js/bootstrap5/alert_user"], function (alertUser) {
                     alertUser.alert_user(errorMessage, 'danger');
                 });
             }
@@ -1014,7 +1021,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             self.boundHandleScroll = self.handleScroll.bind(self);
             $(window).on('scroll', self.boundHandleScroll);
             if (self.shouldShowScrollButton()) {
-                $('#scroll-to-bottom').removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+                $('#scroll-to-bottom').removeClass("d-none");
             }
         },
 
@@ -1270,13 +1277,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     const BreadcrumbView = Marionette.View.extend({
         tagName: "li",
         template: _.template($("#breadcrumb-item-template").html() || ""),
-        className: function () {
-            if (window.USE_BOOTSTRAP5) {
-                return "breadcrumb-item";
-            } else {
-                return "breadcrumb-text";
-            }
-        },
+        className: "breadcrumb-item",
         attributes: function () {
             let attributes = {
                 "role": "link",
@@ -1427,13 +1428,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const DetailTabView = Marionette.View.extend({
         tagName: "li",
-        className: function () {
-            if (window.USE_BOOTSTRAP5) {
-                return "nav-item";
-            } else {
-                return this.options.model.get('active') ? 'active' : '';
-            }
-        },
+        className: "nav-item",
         attributes: {
             role: "presentation",
         },
@@ -1466,13 +1461,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 
     const CaseDetailFooterView = Marionette.View.extend({
         tagName: "div",
-        className: function () {
-            if (window.USE_BOOTSTRAP5) {
-                return "d-flex gap-2 justify-content-center";
-            } else {
-                return "";
-            }
-        },
+        className: "d-flex gap-2 justify-content-center",
         events: {
             "click #select-case": "selectCase",
         },
@@ -1501,6 +1490,71 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                     });
                 }
             }
+        },
+    });
+
+    /* Handle an individual menu item. Also contains a child list view */
+    const PersistentMenuItemView = Marionette.View.extend({
+        tagName: "li",
+        template: _.template($("#persistent-menu-item").html() || ""),
+        regions: {
+            tree: {
+                el: 'ul',
+                replaceElement: true
+            }
+        },
+        triggers: {
+            "click a": "click:persistent:menu:command"  // magically calls onClickPersistentMenuCommand
+        },
+        templateContext: function () {
+            const appId = formplayerUtils.currentUrlToObject().appId,
+                  imageUri = this.model.get('imageUri');
+            return {
+                imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+            };
+        },
+        onRender: function () {
+            if (!_.isEmpty(this.model.get('commands'))) {
+                this.showChildView('tree', new PersistentMenuListView({
+                    collection: new Backbone.Collection(this.model.get('commands')),
+                }));
+            }
+        },
+        onClickPersistentMenuCommand: function (event) {
+            FormplayerFrontend.trigger("persistentMenuSelect", this.model.get('selections'));
+        },
+    });
+
+    /* Handle a collection of sibling menu items at the same level */
+    const PersistentMenuListView = Marionette.CollectionView.extend({
+        tagName: "ul",
+        className: "list-unstyled",
+        childView: PersistentMenuItemView,
+    });
+
+    /*
+      This view operates on a collection of persistent menu items, each of which
+      may contain its own collection in a recursive tree structure.
+      PersistentMenuView manages the top level of the menu
+    */
+    const PersistentMenuView = Marionette.View.extend({
+        tagName: "div",
+        template: _.template($("#persistent-menu-template").html() || ""),
+        regions: {
+            menu: "#persistent-menu-content",
+        },
+        onRender: function () {
+            this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
+        },
+        templateContext: function () {
+            const appId = formplayerUtils.currentUrlToObject().appId,
+                  currentApp = AppsAPI.getAppEntity(appId),
+                  appName = currentApp.get('name'),
+                  imageUri = currentApp.get('imageUri');
+            return {
+                appName: appName,
+                imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+            };
         },
     });
 
@@ -1544,6 +1598,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
+        },
+        PersistentMenuView: function (options) {
+            return new PersistentMenuView(options);
         },
     };
 })
