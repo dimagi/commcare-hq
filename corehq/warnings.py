@@ -50,6 +50,8 @@ WHITELIST = [
         "elasticsearch6.connection.http_urllib3",
         "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
     ),
+    # Open files are leaked all over the place, it will probably take a long time to fix all of them
+    ("", "unclosed file", ResourceWarning),
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
