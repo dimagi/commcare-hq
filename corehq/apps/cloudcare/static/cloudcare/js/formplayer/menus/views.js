@@ -1508,15 +1508,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         templateContext: function () {
             const appId = formplayerUtils.currentUrlToObject().appId,
-                  imageUri = this.model.get('imageUri');
+                  imageUri = this.model.get('imageUri'),
+                  icons = {JUMP: 'fa-pencil', NEXT: 'fa-regular fa-folder'};
             return {
                 imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+                iconClass: icons[this.model.get('navigationState')] || 'fa-list-ul',
             };
         },
         onRender: function () {
             if (!_.isEmpty(this.model.get('commands'))) {
                 this.showChildView('tree', new PersistentMenuListView({
-                    collection: new Backbone.Collection(this.model.get('commands')),
+                    collection: this.model.get('commands'),
                 }));
             }
         },
@@ -1543,6 +1545,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         regions: {
             menu: "#persistent-menu-content",
         },
+        events: {
+            'click #app-main': 'onClickAppMain',
+        },
         onRender: function () {
             this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
         },
@@ -1555,6 +1560,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 appName: appName,
                 imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
             };
+        },
+        onClickAppMain: function () {
+            FormplayerFrontend.trigger("persistentMenuSelect");
         },
     });
 
