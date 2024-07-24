@@ -423,7 +423,7 @@ hqDefine("geospatial/js/geospatial_map", [
             if (xhr.responseText.length) {
                 alertUser.alert_user(xhr.responseText, 'danger');
             } else {
-                alertUser.alertUser(
+                alertUser.alert_user(
                     gettext('Oops! Something went wrong! Please report an issue if the problem persists.')
                 );
             }
