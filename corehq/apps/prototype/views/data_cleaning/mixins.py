@@ -2,6 +2,12 @@ import time
 
 from django.http import HttpResponseForbidden, HttpResponse
 
+from corehq.apps.prototype.utils.fake_case_data.issues import is_mostly_false
+
+
+class FakeGatewayTimeoutResponse(HttpResponse):
+    status_code = 504
+
 
 def hx_action(method='auto'):
     """
@@ -65,6 +71,7 @@ class HtmxActionMixin:
     default_htmx_error_template = "prototype/htmx/partials/htmx_action_error.html"
     simulate_slow_response = False
     slow_response_time = 5  # in seconds
+    simulate_flaky_gateway = False
 
     def get_htmx_error_context(self, **kwargs):
         """
@@ -106,6 +113,9 @@ class HtmxActionMixin:
     def dispatch(self, request, *args, **kwargs):
         if self.simulate_slow_response:
             time.sleep(self.slow_response_time)
+
+        if self.simulate_flaky_gateway and is_mostly_false():
+            return FakeGatewayTimeoutResponse()
 
         action = request.META.get('HTTP_HX_ACTION')
         if not action:
