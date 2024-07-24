@@ -200,7 +200,7 @@ class HQApiKeyAuthenticationTests(TestCase):
 
         auth = HQApiKeyAuthentication()
 
-        self.assertTrue(auth.is_authenticated(request))
+        self.assertIs(auth.is_authenticated(request), True)
 
     def test_bad_api_key_returns_unauthorized(self):
         user = self._create_user('test@dimagi.com')
@@ -231,7 +231,7 @@ class HQApiKeyAuthenticationTests(TestCase):
 
         auth = HQApiKeyAuthentication()
 
-        self.assertTrue(auth.is_authenticated(request))
+        self.assertIs(auth.is_authenticated(request), True)
 
     def test_does_not_allow_cross_domain_access(self):
         user = self._create_user('test@dimagi.com')
@@ -251,7 +251,7 @@ class HQApiKeyAuthenticationTests(TestCase):
 
         auth = HQApiKeyAuthentication()
 
-        self.assertTrue(auth.is_authenticated(request))
+        self.assertIs(auth.is_authenticated(request), True)
 
     def test_user_cannot_authenticate_with_an_ip_not_in_whitelist(self):
         user = self._create_user('test@dimagi.com')
@@ -272,7 +272,7 @@ class HQApiKeyAuthenticationTests(TestCase):
         auth = HQApiKeyAuthentication()
 
         with freeze_time(datetime(year=2020, month=3, day=9)):
-            self.assertTrue(auth.is_authenticated(request))
+            self.assertIs(auth.is_authenticated(request), True)
 
     def test_user_cannot_authenticate_with_expired_key(self):
         user = self._create_user('test@dimagi.com')
