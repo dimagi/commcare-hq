@@ -5,6 +5,7 @@ hqDefine("geospatial/js/geospatial_map", [
     "hqwebapp/js/initial_page_data",
     "knockout",
     'geospatial/js/models',
+    'geospatial/js/utils',
     'hqwebapp/js/bootstrap3/alert_user',
     'select2/dist/js/select2.full.min',
 ], function (
@@ -12,6 +13,7 @@ hqDefine("geospatial/js/geospatial_map", [
     initialPageData,
     ko,
     models,
+    utils,
     alertUser
 ) {
     const caseMarkerColors = {
@@ -24,6 +26,9 @@ hqDefine("geospatial/js/geospatial_map", [
     };
 
     const MAP_CONTAINER_ID = 'geospatial-map';
+    const SHOW_USERS_QUERY_PARAM = 'show_users';
+    const USER_LOCATION_ID_QUERY_PARAM = 'user_location_id';
+    const USER_LOCATION_NAME_QUERY_PARAM = 'user_location_name';
 
     var runDisbursementUrl = initialPageData.reverse('case_disbursement');
     var disbursementRunner;
@@ -283,6 +288,20 @@ hqDefine("geospatial/js/geospatial_map", [
         self.hasErrors = ko.observable(false);
         self.selectedLocation = null;
 
+        self.setUserFiltersFromUrl = function () {
+            const shouldShowUsers = utils.fetchQueryParam(SHOW_USERS_QUERY_PARAM) || false;
+            self.shouldShowUsers(shouldShowUsers);
+            const userLocationId = utils.fetchQueryParam(USER_LOCATION_ID_QUERY_PARAM);
+            if (userLocationId) {
+                self.selectedLocation = userLocationId;
+                const userLocationName = utils.fetchQueryParam(USER_LOCATION_NAME_QUERY_PARAM);
+                const $filterSelect = $("#location-filter-select");
+                $filterSelect.append(new Option(userLocationName, self.selectedLocation));
+                $filterSelect.val(self.selectedLocation).trigger('change');
+                self.loadUsers();
+            }
+        };
+
         self.loadUsers = function () {
             mapModel.removeMarkersFromMap(mapModel.userMapItems());
             mapModel.userMapItems([]);
@@ -325,6 +344,22 @@ hqDefine("geospatial/js/geospatial_map", [
 
         self.onFiltersChange = function () {
             self.hasFiltersChanged(true);
+            self.setLocationQueryParams();
+        };
+
+        self.setLocationQueryParams = function () {
+            if (self.selectedLocation) {
+                utils.setQueryParam(USER_LOCATION_ID_QUERY_PARAM, self.selectedLocation);
+                const selectedLocationData = $("#location-filter-select").select2('data');
+                if (selectedLocationData.length) {
+                    // We shouldn't have more than 1, since this select2 doesn't have multi-select enabled
+                    const userLocationName = selectedLocationData[0].text;
+                    utils.setQueryParam(USER_LOCATION_NAME_QUERY_PARAM, userLocationName);
+                }
+            } else {
+                utils.clearQueryParam(USER_LOCATION_ID_QUERY_PARAM);
+                utils.clearQueryParam(USER_LOCATION_NAME_QUERY_PARAM);
+            }
         };
 
         self.toggleFilterMenu = function () {
@@ -332,6 +367,14 @@ hqDefine("geospatial/js/geospatial_map", [
             const shouldShow = self.showFilterMenu() ? 'show' : 'hide';
             $("#user-filters-panel .panel-body").collapse(shouldShow);
         };
+
+        self.shouldShowUsers.subscribe(function (shouldShowUsers) {
+            if (shouldShowUsers) {
+                utils.setQueryParam(SHOW_USERS_QUERY_PARAM, true);
+            } else {
+                utils.clearQueryParam(SHOW_USERS_QUERY_PARAM);
+            }
+        });
 
         return self;
     };
@@ -360,6 +403,7 @@ hqDefine("geospatial/js/geospatial_map", [
                     },
                 },
             });
+            userFiltersInstance.setUserFiltersFromUrl();
         }
     }
 

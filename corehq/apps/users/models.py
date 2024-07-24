@@ -562,8 +562,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
             self.get_domain_membership(domain).program_id = program_id
         if domain_obj.uses_locations:
             if primary_location_id:
-                self.set_location(domain, primary_location_id)
-            self.reset_locations(domain, assigned_location_ids)
+                self.set_location(domain, primary_location_id, commit=False)
+            self.reset_locations(domain, assigned_location_ids, commit=False)
         if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES) and profile:
             user_data = self.get_user_data(domain_obj.name)
             user_data.update({}, profile_id=profile.id)
@@ -571,8 +571,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
             if tableau_group_ids is None:
                 tableau_group_ids = []
             from corehq.apps.reports.util import get_tableau_groups_by_ids, update_tableau_user
-            update_tableau_user(domain=domain, username=self.username,
-                    role=tableau_role, groups=get_tableau_groups_by_ids(tableau_group_ids, domain))
+            update_tableau_user(domain=domain, username=self.username, role=tableau_role,
+                                groups=get_tableau_groups_by_ids(tableau_group_ids, domain),
+                                blocking_exception=False)
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
@@ -1336,6 +1337,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         ).all()
 
     @classmethod
+    def total_by_domain(cls, domain, is_active=True):
+        data = cls.by_domain(domain, is_active, reduce=True)
+        return data[0].get('value', 0) if data else 0
+
+    @classmethod
     def ids_by_domain(cls, domain, is_active=True):
         flag = "active" if is_active else "inactive"
         if cls.__name__ == "CouchUser":
@@ -1348,11 +1354,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             reduce=False,
             include_docs=False,
         )]
-
-    @classmethod
-    def total_by_domain(cls, domain, is_active=True):
-        data = cls.by_domain(domain, is_active, reduce=True)
-        return data[0].get('value', 0) if data else 0
 
     @classmethod
     def phone_users_by_domain(cls, domain):
@@ -2445,14 +2446,15 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               user_data=None, by_domain_required_for_log=True, **kwargs):
+               user_data=None, by_domain_required_for_log=True, commit=True, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
                                               date, user_data, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
-        web_user.save()
-        web_user.log_user_create(domain, created_by, created_via,
-                                 by_domain_required_for_log=by_domain_required_for_log)
+        if commit:
+            web_user.save()
+            web_user.log_user_create(domain, created_by, created_via,
+                                     by_domain_required_for_log=by_domain_required_for_log)
         return web_user
 
     def add_domain_membership(self, domain, timezone=None, **kwargs):
@@ -2555,7 +2557,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             self.set_location(domain, location)
 
-    def set_location(self, domain, location_object_or_id):
+    def set_location(self, domain, location_object_or_id, commit=True):
         # set the primary location for user's domain_membership
         if isinstance(location_object_or_id, str):
             location_id = location_object_or_id
@@ -2571,7 +2573,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             membership.assigned_location_ids.append(location_id)
             self.get_sql_locations.reset_cache(self)
         self.get_sql_location.reset_cache(self)
-        self.save()
+        if commit:
+            self.save()
 
     def unset_location(self, domain, fall_back_to_next=False, commit=True):
         """

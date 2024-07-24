@@ -94,7 +94,7 @@ class HarParser:
     def _get_entity_select_step(self, request_data):
         last_selection = _get_last_selection(request_data)
         if is_action(last_selection):
-            return steps.CommandStep(id=last_selection)
+            return steps.CommandIdStep(value=last_selection)
         elif is_multi_select(last_selection):
             return steps.MultipleEntitySelectStep(values=request_data["selectedValues"])
         else:
@@ -115,9 +115,9 @@ class HarParser:
     def _extract_form_answer_step(self, request_data):
         tree = self.screen_data["tree"]
         tree_item = [question for question in tree if question["ix"] == request_data["ix"]][0]
-        step = steps.AnswerQuestionStep(question_text=tree_item["caption"],
-                                        question_id=tree_item["question_id"],
-                                        value=request_data["answer"])
+        step = steps.AnswerQuestionIdStep(
+            question_id=tree_item["question_id"],
+            value=request_data["answer"])
         return step
 
     def set_form_step(self):
