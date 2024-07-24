@@ -3783,10 +3783,8 @@ msgid "Workflow"
 msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/components/logs.html
-#, fuzzy
-#| msgid "Current Profiles"
 msgid "Current Workflow"
-msgstr "Perfiles Actuales"
+msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/components/logs.html
 msgid ""
@@ -3842,10 +3840,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/workflow_form.html
-#, fuzzy
-#| msgid "New Keyword"
 msgid "New workflow"
-msgstr "Nueva Palabra Clave"
+msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/workflow_list.html
 #: corehq/apps/app_execution/templates/app_execution/workflow_log_list.html
@@ -23904,6 +23900,36 @@ msgstr ""
 msgid "Commit"
 msgstr ""
 
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Create Account"
+msgid "Case count"
+msgstr "Crear Cuenta"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Confirm Account"
+msgid "Form count"
+msgstr "Confirme Cuenta"
+
+#: corehq/apps/hqadmin/reports.py
+msgid "UCR rebuild restriction status"
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Rebuild Case"
+msgid "Rebuild restricted"
+msgstr "Desarrollar de nuevo el Caso"
+
+#: corehq/apps/hqadmin/reports.py
+msgid "No rebuild restriction required"
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py
+msgid "UCR Domains Data Report"
+msgstr ""
+
 #: corehq/apps/hqadmin/templates/hqadmin/authenticate_as.html
 msgid ""
 "\n"
@@ -28060,19 +28086,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
-#, fuzzy
-#| msgid "Users"
 msgid "Has Users"
-msgstr "Usuarios"
+msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            To continue accessing %(feat_name)s after the "
-#| "trial period,\n"
-#| "                            subscribe to the %(req_plan)s Plan.\n"
-#| "                        "
 msgid ""
 "\n"
 "                            <p>Indicates whether locations of this level can "
@@ -28081,9 +28098,6 @@ msgid ""
 "users assigned to one of the locations.</p>\n"
 "                        "
 msgstr ""
-"\n"
-"Para continuar accediendo a %(feat_name)s después del período de prueba,\n"
-"suscríbase al Plan %(req_plan)s."
 
 #: corehq/apps/locations/templates/locations/location_types.html
 msgid "This field must be unique"
@@ -29013,6 +29027,12 @@ msgid "Username already taken. Please try another or log in."
 msgstr ""
 
 #: corehq/apps/registration/forms.py
+#, fuzzy
+#| msgid "Select one"
+msgid "Select a role"
+msgstr "Seleccione uno"
+
+#: corehq/apps/registration/forms.py
 msgid "Information for new Web User"
 msgstr "Información para el Usuario Web nuevo"
 
@@ -29489,7 +29509,7 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"            See <a href=\"https://dimagi.com/commcare/pricing/\" "
+"            See <a href=\"https://dimagi.com/commcare-pricing/\" "
 "target=\"_blank\">pricing</a> options.\n"
 "          "
 msgstr ""
@@ -31129,6 +31149,10 @@ msgstr "Haga clic para seleccionar repetidores"
 #: corehq/apps/reports/filters/select.py
 msgid "Record Status"
 msgstr "Grabar Estado"
+
+#: corehq/apps/reports/filters/select.py
+msgid "Rebuild restriction feature flag status"
+msgstr ""
 
 #: corehq/apps/reports/filters/simple.py
 #: corehq/motech/repeaters/views/repeat_records.py
@@ -45784,6 +45808,28 @@ msgstr ""
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Cancelled"
 msgstr "Cancelado"
+
+#: corehq/motech/repeaters/const.py
+#, fuzzy
+#| msgid "Enabled"
+msgid "Is enabled"
+msgstr "Habilitado"
+
+#: corehq/motech/repeaters/const.py
+#, fuzzy
+#| msgid "does not equal"
+msgid "Is not enabled"
+msgstr "no es equivalente"
+
+#: corehq/motech/repeaters/const.py
+msgid "Should be enabled"
+msgstr ""
+
+#: corehq/motech/repeaters/const.py
+#, fuzzy
+#| msgid "disabled"
+msgid "Can be disabled"
+msgstr "deshabilitado"
 
 #: corehq/motech/repeaters/expression/forms.py
 msgid ""
