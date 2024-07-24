@@ -119,7 +119,7 @@ class ApiKeyFallbackTests(TestCase):
         user = self._create_user('test@dimagi.com')
         self._create_api_key_for_user(user, key='1234', allowed_ips=['127.0.0.1'])
 
-        request = self._create_request(for_domain='test-domain2', ip='127.0.0.1')
+        request = self._create_request(ip='127.0.0.1')
 
         self.assertEqual(self.backend.authenticate(request, 'test@dimagi.com', '1234'), user)
 
@@ -127,7 +127,7 @@ class ApiKeyFallbackTests(TestCase):
         user = self._create_user('test@dimagi.com')
         self._create_api_key_for_user(user, key='1234', allowed_ips=['127.0.0.1'])
 
-        request = self._create_request(for_domain='test-domain2', ip='5.5.5.5')
+        request = self._create_request(ip='5.5.5.5')
 
         self.assertIsNone(self.backend.authenticate(request, 'test@dimagi.com', '1234'))
 
@@ -135,7 +135,7 @@ class ApiKeyFallbackTests(TestCase):
         user = self._create_user('test@dimagi.com')
         self._create_api_key_for_user(user, key='1234', allowed_ips=[])
 
-        request = self._create_request(for_domain='test-domain2', ip=None)
+        request = self._create_request(ip=None)
 
         self.assertEqual(self.backend.authenticate(request, 'test@dimagi.com', '1234'), user)
 
