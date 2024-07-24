@@ -43,4 +43,8 @@ $persistent-menu-image-size: 2rem;
     padding-left: 0;
     padding-top: 0;
   }
+
+  .persistent-menu-item:hover {
+    background-color: darken($cc-bg, 5);
+  }
 }
