@@ -199,7 +199,17 @@ def sms_data():
 
 @sharded
 class DocumentStoreDbTests(TestCase):
-    pass
+
+    def test_couch_documet_store(self):
+        # this one is not included with generate_cases below because
+        # get_db() should not be called during test collection
+        _test_document_store(
+            self,
+            CouchDocumentStore,
+            (get_db(), 'domain', 'doc_type'),
+            couch_data,
+            '_id',
+        )
 
 
 def _test_document_store(self, doc_store_cls, doc_store_args, data_context, id_field):
@@ -223,10 +233,3 @@ def _test_document_store(self, doc_store_cls, doc_store_args, data_context, id_f
 ], DocumentStoreDbTests)
 def test_documet_store(*args):
     _test_document_store(*args)
-
-
-def test_couch_documet_store():
-    # this one is separated out because get_db() should not be called
-    # during test collection
-    _test_document_store(
-        CouchDocumentStore, (get_db(), 'domain', 'doc_type'), couch_data, '_id')
