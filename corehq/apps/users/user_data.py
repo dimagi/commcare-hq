@@ -94,17 +94,11 @@ class UserData:
         return set(self._provided_by_system.keys()) | LOCATION_KEYS
 
     def to_dict(self):
-        combined_dict = {
+        return {
             **self._schema_defaults,
-            **self._local_to_user,
+            **{k: v for k, v in self._local_to_user.items() if k not in self._system_keys},
             **self._provided_by_system,
         }
-
-        # Ensure location keys are only from _provided_by_system
-        for key in LOCATION_KEYS:
-            if key in combined_dict and key not in self._provided_by_system:
-                del combined_dict[key]
-        return combined_dict
 
     @property
     def _schema_defaults(self):
