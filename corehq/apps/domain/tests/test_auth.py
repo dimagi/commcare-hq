@@ -131,6 +131,14 @@ class ApiKeyFallbackTests(TestCase):
 
         self.assertIsNone(self.backend.authenticate(request, 'test@dimagi.com', '1234'))
 
+    def test_allows_empty_ip_for_non_ip_restrictive_keys(self):
+        user = self._create_user('test@dimagi.com')
+        self._create_api_key_for_user(user, key='1234', allowed_ips=[])
+
+        request = self._create_request(for_domain='test-domain2', ip=None)
+
+        self.assertEqual(self.backend.authenticate(request, 'test@dimagi.com', '1234'), user)
+
     def test_can_use_current_key(self):
         user = self._create_user('test@dimagi.com')
         self._create_api_key_for_user(user, key='1234', expiration=datetime(year=2020, month=3, day=10))
@@ -179,7 +187,7 @@ class ApiKeyFallbackTests(TestCase):
         )
 
     @classmethod
-    def _create_request(cls, can_use_api_key=True, for_domain='test-domain', ip=None):
+    def _create_request(cls, can_use_api_key=True, for_domain='test-domain', ip='127.0.0.1'):
         request = HttpRequest()
         request.domain = for_domain
 
@@ -264,6 +272,16 @@ class HQApiKeyAuthenticationTests(TestCase):
 
         self.assertEqual(response.status_code, 401)
 
+    def test_allows_empty_ip_for_non_ip_restrictive_keys(self):
+        user = self._create_user('test@dimagi.com')
+        self._create_api_key_for_user(user, key='1234', allowed_ips=[])
+
+        auth = HQApiKeyAuthentication()
+
+        request = self._create_request(username='test@dimagi.com', api_key='1234', ip=None)
+
+        self.assertIs(auth.is_authenticated(request), True)
+
     def test_user_can_authenticate_with_current_key(self):
         user = self._create_user('test@dimagi.com')
         self._create_api_key_for_user(user, key='1234', expiration=datetime(year=2020, month=3, day=10))
@@ -312,7 +330,7 @@ class HQApiKeyAuthenticationTests(TestCase):
         )
 
     @classmethod
-    def _create_request(cls, username='test@dimagi.com', api_key='1234', for_domain='test-domain', ip=None):
+    def _create_request(cls, username='test@dimagi.com', api_key='1234', for_domain='test-domain', ip='127.0.0.1'):
         request = HttpRequest()
         request.domain = for_domain
         request.META['HTTP_AUTHORIZATION'] = f'ApiKey {username}:{api_key}'
