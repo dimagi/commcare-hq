@@ -73,7 +73,7 @@ class Command(BaseCommand):
         commune_id = options['commune_id']
         run_in_celery = options['run_in_celery']
 
-        assert not village_id and commune_id, "Provide either village ID or commune ID, cannot use both"
+        # assert not village_id and commune_id, "Provide either village ID or commune ID, cannot use both"
 
         start_time = time.time()
         logger.info("Started processing of script")
