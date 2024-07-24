@@ -1,6 +1,6 @@
 import base64
 import binascii
-from datetime import datetime
+from datetime import datetime, timezone as tz
 import logging
 import requests
 from functools import wraps
@@ -217,7 +217,7 @@ class ApiKeyFallbackBackend(object):
 
         try:
             is_unexpired_filter = (
-                Q(api_keys__expiration_date__isnull=True) | Q(api_keys__expiration_date__gte=datetime.now())
+                Q(api_keys__expiration_date__isnull=True) | Q(api_keys__expiration_date__gte=datetime.now(tz.utc))
             )
             api_domain_filter = Q(api_keys__domain='')
             domain = getattr(request, 'domain', '')

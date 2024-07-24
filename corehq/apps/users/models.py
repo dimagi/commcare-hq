@@ -3,7 +3,7 @@ import json
 import logging
 import re
 from collections import namedtuple
-from datetime import datetime, date
+from datetime import datetime, date, timezone as tz
 from hashlib import sha1
 from typing import List
 from uuid import uuid4
@@ -3080,7 +3080,7 @@ class ApiKeyManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset()\
             .filter(is_active=True)\
-            .exclude(expiration_date__lt=datetime.now())
+            .exclude(expiration_date__lt=datetime.now(tz.utc))
 
 
 class HQApiKey(models.Model):
