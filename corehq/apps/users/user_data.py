@@ -215,21 +215,21 @@ class UserData:
             self.profile_id = profile_id
         for k, v in data.items():
             if k != PROFILE_SLUG:
-                if v or k not in self._provided_by_system:
+                if v or k not in self._system_keys:
                     self[k] = v
         return original != self.to_dict() or original_profile != self.profile_id
 
     def __delitem__(self, key):
-        if key in self._provided_by_system:
+        if key in self._system_keys:
             raise UserDataError(_("{} cannot be deleted").format(key))
         del self._local_to_user[key]
 
     def pop(self, key, default=...):
+        if key in self._system_keys:
+            raise UserDataError(_("{} cannot be deleted").format(key))
         try:
             ret = self._local_to_user[key]
         except KeyError as e:
-            if key in self._provided_by_system:
-                raise UserDataError(_("{} cannot be deleted").format(key)) from e
             if default != ...:
                 return default
             raise e
