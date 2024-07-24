@@ -9,6 +9,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     'cloudcare/js/form_entry/task_queue',
     'cloudcare/js/form_entry/utils',
     'cloudcare/js/form_entry/form_ui',
+    'cloudcare/js/formplayer/utils/utils',
 ], function (
     $,
     ko,
@@ -18,7 +19,8 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     errors,
     taskQueue,
     formEntryUtils,
-    formUI
+    formUI,
+    utils,
 ) {
     function WebFormSession(params) {
         var self = {};
@@ -228,7 +230,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 errorMessage = errors.NO_INTERNET_ERROR;
                 if (action === constants.SUBMIT) {
                     $('.submit').prop('disabled', false);
-                    $('.form-control').prop('disabled', false);
+                    $('.form-control, .form-select').prop('disabled', false);
                 }
             } else if (_.has(resp, 'responseJSON') && resp.responseJSON !== undefined) {
                 errorMessage = formEntryUtils.touchformsError(resp.responseJSON.message);
@@ -472,7 +474,16 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
         };
 
         self.changeLang = function (lang) {
-            this.serverRequest(
+            if (!self.session_id) {
+                // Handling for language change on case list and case search screens,
+                // which don't have associated session_ids.
+                hqRequire(["cloudcare/js/formplayer/menus/controller"], function (menusController) {
+                    var urlObject = utils.currentUrlToObject()
+                    urlObject.changeLang = lang
+                    menusController.selectMenu(urlObject);
+                });
+            } else {
+                this.serverRequest(
                 {
                     'action': constants.CHANGE_LOCALE,
                     'locale': lang,
@@ -480,6 +491,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 function (resp) {
                     $.publish('session.reconcile', [resp, lang]);
                 });
+            }
         };
 
         self.submitForm = function (form) {
