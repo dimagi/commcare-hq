@@ -116,7 +116,7 @@ class IteratorJSONReader(object):
         # try boolean
         try:
             field, nothing = field.split('?')
-            assert(nothing.strip() == '')
+            assert nothing.strip() == ''
         except Exception:
             pass
         else:
