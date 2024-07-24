@@ -32,7 +32,7 @@ hqDefine("cloudcare/js/preview_app/main", [
         });
 
         $('.dragscroll').on('scroll', function () {
-            $('.form-control').blur();
+            $('.form-control, .form-select').blur();
         });
 
         // Adjust for those pesky scrollbars
