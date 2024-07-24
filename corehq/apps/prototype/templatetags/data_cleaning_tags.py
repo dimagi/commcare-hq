@@ -1,7 +1,8 @@
 import re
 
 from django import template
-from django.utils.html import escape, format_html
+from django.template.loader import render_to_string
+from django.utils.html import escape, format_html, escapejs
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
@@ -25,6 +26,9 @@ def _replace_spaces(css_class, character, help_text):
 
 @register.filter
 def whitespaces(value):
+    if value is None or value is Ellipsis:
+        return mark_safe(dc_null_value())
+
     # first, escape the string
     # we only want to mark safe markup related to spaces
     value = escape(value)
@@ -42,3 +46,15 @@ def whitespaces(value):
         )
 
     return mark_safe(value)  # no sec: we already escaped at the beginning
+
+
+@register.filter
+def dc_escapejs(value):
+    if value is None or value is Ellipsis:
+        return ""
+    return escapejs(value)
+
+
+@register.simple_tag
+def dc_null_value():
+    return render_to_string("prototype/data_cleaning/partials/columns/null_value.html")
