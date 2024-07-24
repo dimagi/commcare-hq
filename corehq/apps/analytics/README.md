@@ -112,5 +112,5 @@ Any `id` attribute added to html element for tracking through console should be 
 This should potentially avoid accidental removal of id attribute from these elements. (Similar approach may be followed for any tooling in case of tracking of elements through console.)
 
 > Dev Note: In case you testing locally with GTM activated i.e (GTM_ID included in settings), you would see errors (index not found exception) for the test
-> cases that processes base.html template and does not use @es_test with form_adapter. This happens because GTM includes domain.recent_submissions 
+> cases that processes base.html template and does not use @es_test with form_adapter. This happens because GTM includes domain.recent_submissions
 > which depends on form index in elastic search. This can be safely ignored and you can even run test cases by removing GTM_ID.

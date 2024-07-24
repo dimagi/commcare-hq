@@ -1725,6 +1725,55 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         # short-circuit after only a few domains
         return any(domain.granted_messaging_access for domain in domains)
 
+    @property
+    def fixture_statuses(self):
+        """Returns all of the last modified times for each fixture type"""
+        return get_fixture_statuses(self._id)
+
+    def fixture_status(self, fixture_type):
+        try:
+            return self.fixture_statuses[fixture_type]
+        except KeyError:
+            from corehq.apps.fixtures.models import UserLookupTableStatus
+            return UserLookupTableStatus.DEFAULT_LAST_MODIFIED
+
+    def update_fixture_status(self, fixture_type):
+        from corehq.apps.fixtures.models import UserLookupTableStatus
+        now = datetime.utcnow()
+        user_fixture_sync, new = UserLookupTableStatus.objects.get_or_create(
+            user_id=self._id,
+            fixture_type=fixture_type,
+            defaults={'last_modified': now},
+        )
+        if not new:
+            user_fixture_sync.last_modified = now
+            user_fixture_sync.save()
+        get_fixture_statuses.clear(self._id)
+
+
+@quickcache(['user_id'], skip_arg=lambda user_id: settings.UNIT_TESTING)
+def get_fixture_statuses(user_id):
+    from corehq.apps.fixtures.models import UserLookupTableType, UserLookupTableStatus
+    last_modifieds = {choice[0]: UserLookupTableStatus.DEFAULT_LAST_MODIFIED
+                    for choice in UserLookupTableType.CHOICES}
+    for fixture_status in UserLookupTableStatus.objects.filter(user_id=user_id):
+        last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
+    return last_modifieds
+
+
+def update_fixture_status_for_users(user_ids, fixture_type):
+    from corehq.apps.fixtures.models import UserLookupTableStatus
+    from dimagi.utils.chunked import chunked
+
+    now = datetime.utcnow()
+    for ids in chunked(user_ids, 50):
+        (UserLookupTableStatus.objects
+        .filter(user_id__in=ids,
+                fixture_type=fixture_type)
+        .update(last_modified=now))
+    for user_id in user_ids:
+        get_fixture_statuses.clear(user_id)
+
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
     domain = StringProperty()
@@ -2278,31 +2327,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return None
 
     @property
-    def fixture_statuses(self):
-        """Returns all of the last modified times for each fixture type"""
-        return get_fixture_statuses(self._id)
-
-    def fixture_status(self, fixture_type):
-        try:
-            return self.fixture_statuses[fixture_type]
-        except KeyError:
-            from corehq.apps.fixtures.models import UserLookupTableStatus
-            return UserLookupTableStatus.DEFAULT_LAST_MODIFIED
-
-    def update_fixture_status(self, fixture_type):
-        from corehq.apps.fixtures.models import UserLookupTableStatus
-        now = datetime.utcnow()
-        user_fixture_sync, new = UserLookupTableStatus.objects.get_or_create(
-            user_id=self._id,
-            fixture_type=fixture_type,
-            defaults={'last_modified': now},
-        )
-        if not new:
-            user_fixture_sync.last_modified = now
-            user_fixture_sync.save()
-        get_fixture_statuses.clear(self._id)
-
-    @property
     @memoized
     def memoized_usercase(self):
         return self.get_usercase()
@@ -2377,30 +2401,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def get_devices_fcm_tokens(self):
         return [device.fcm_token for device in self.devices if device.fcm_token]
-
-
-def update_fixture_status_for_users(user_ids, fixture_type):
-    from corehq.apps.fixtures.models import UserLookupTableStatus
-    from dimagi.utils.chunked import chunked
-
-    now = datetime.utcnow()
-    for ids in chunked(user_ids, 50):
-        (UserLookupTableStatus.objects
-         .filter(user_id__in=ids,
-                 fixture_type=fixture_type)
-         .update(last_modified=now))
-    for user_id in user_ids:
-        get_fixture_statuses.clear(user_id)
-
-
-@quickcache(['user_id'], skip_arg=lambda user_id: settings.UNIT_TESTING)
-def get_fixture_statuses(user_id):
-    from corehq.apps.fixtures.models import UserLookupTableType, UserLookupTableStatus
-    last_modifieds = {choice[0]: UserLookupTableStatus.DEFAULT_LAST_MODIFIED
-                      for choice in UserLookupTableType.CHOICES}
-    for fixture_status in UserLookupTableStatus.objects.filter(user_id=user_id):
-        last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
-    return last_modifieds
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
@@ -2552,6 +2552,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             membership.assigned_location_ids.append(location_id)
             self.get_sql_locations.reset_cache(self)
         self.get_sql_location.reset_cache(self)
+        from corehq.apps.fixtures.models import UserLookupTableType
+        self.update_fixture_status(UserLookupTableType.LOCATION)
         if commit:
             self.save()
 
@@ -2563,7 +2565,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         membership = self.get_domain_membership(domain)
         old_location_id = membership.location_id
         if old_location_id:
-            membership.assigned_location_ids.remove(old_location_id)
+            self._remove_location_from_user(membership, old_location_id)
             self.get_sql_locations.reset_cache(self)
         if membership.assigned_location_ids and fall_back_to_next:
             membership.location_id = membership.assigned_location_ids[0]
@@ -2583,9 +2585,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             # check if primary location
             self.unset_location(domain, fall_back_to_next)
         else:
-            membership.assigned_location_ids.remove(location_id)
+            self._remove_location_from_user(membership, location_id)
             self.get_sql_locations.reset_cache(self)
             self.save()
+
+    def _remove_location_from_user(self, membership, location_id):
+        from corehq.apps.fixtures.models import UserLookupTableType
+        membership.assigned_location_ids.remove(location_id)
+        self.update_fixture_status(UserLookupTableType.LOCATION)
 
     def reset_locations(self, domain, location_ids, commit=True):
         """
@@ -2597,6 +2604,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if not membership.location_id and location_ids:
             membership.location_id = location_ids[0]
         self.get_sql_locations.reset_cache(self)
+        from corehq.apps.fixtures.models import UserLookupTableType
+        self.update_fixture_status(UserLookupTableType.LOCATION)
         if commit:
             self.save()
 
