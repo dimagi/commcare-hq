@@ -80,21 +80,21 @@
     {% registerurl 'gaen_otp_view' request.domain %}
   {% endif %}
 
-  <!-- For now we won't touch this since the form entry code is coupled with it  -->
-
   <div id="cloudcare-main" class="cloudcare-home-content">
     <section id="cases"></section>
     <div id="menu-container">
       <section id="formplayer-progress-container"></section>
-      <div class="navbar navbar-cloudcare">
-        <div class="container-fluid">
-          <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> {% trans "Web Apps" %}</a>
+      <nav class="navbar navbar-cloudcare">
+        <div class="d-flex container-fluid">
+          <a class="navbar-brand flex-grow-1" href="{{ home_url }}"><i class="fcc fcc-flower"></i> {% trans "Web Apps" %}</a>
+          <div class="navbar-link flex-grow-1">
+            <div id="restore-as-region"></div>
+          </div>
           <ul class="nav navbar-nav navbar-right">
             <li class="nav-item"><a href="#" class="nav-link" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
           </ul>
         </div>
-      </div>
-      <div id="restore-as-region"></div>
+      </nav>
       <div id="breadcrumb-region" class="print-container"></div>
       <section id="cloudcare-notifications" class="container notifications-container"></section>
       <div class="container case-tile-container">
