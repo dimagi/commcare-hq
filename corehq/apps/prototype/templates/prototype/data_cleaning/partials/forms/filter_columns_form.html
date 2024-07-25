@@ -22,8 +22,11 @@
                 <i class="fa-solid fa-up-down"></i>
                 <input type="hidden" name="column_filters" value="{{ column_filter.slug }}"/>
                 <span class="ps-2">{{ column_filter.column_name }}</span>
-                <span class="ms-2 badge text-bg-secondary">{{ column_filter.match_name }}</span>
-                <span class="ps-2">"{{ column_filter.value }}"</span>
+                <span class="ms-2 badge text-bg-secondary">
+                  {{ column_filter.match_name }}
+                  {% if column_filter.use_regex %}(regex){% endif %}
+                </span>
+                <span class="ps-2">{{ column_filter.value }}</span>
               </a>
               <button class="btn btn-outline-danger btn-sm"
                       id="delete-column-filter-{{ column_filter.slug }}"
