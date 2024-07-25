@@ -1,5 +1,6 @@
 from memoized import memoized
 
+from corehq import toggles
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.es import GroupES, UserES, groups
 from corehq.apps.locations.models import SQLLocation
@@ -96,6 +97,9 @@ class EmwfOptionsController(object):
 
         if self.case_sharing_only:
             locations = locations.filter(location_type__shares_cases=True)
+        if (toggles.LOCATION_HAS_USERS.enabled(self.domain)
+                and not self.include_locations_with_no_users_allowed):
+            locations = locations.filter(location_type__has_users=True)
         return locations.accessible_to_user(self.domain, self.request.couch_user)
 
     def get_locations_size(self, query):
