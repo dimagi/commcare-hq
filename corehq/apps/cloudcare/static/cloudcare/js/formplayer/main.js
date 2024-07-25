@@ -10,7 +10,7 @@ hqDefine("cloudcare/js/formplayer/main", [
     FormplayerFrontEnd,
     sentry
 ) {
-    $(function () {
+    $(async function () {
         sentry.initSentry();
 
         window.MAPBOX_ACCESS_TOKEN = initialPageData.get('mapbox_access_token'); // maps api is loaded on-demand
@@ -24,6 +24,7 @@ hqDefine("cloudcare/js/formplayer/main", [
             singleAppMode: false,
             environment: initialPageData.get('environment'),
         };
+        await FormplayerFrontEnd.xsrfRequest;
         FormplayerFrontEnd.start(options);
 
         var $menuToggle = $('#commcare-menu-toggle'),
