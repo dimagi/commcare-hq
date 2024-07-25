@@ -1141,7 +1141,7 @@ class PrimaryLocationWidget(forms.Widget):
         })
 
 
-class BaseLocationForm(forms.Form):
+class SelectUserLocationForm(forms.Form):
     assigned_locations = forms.CharField(
         label=gettext_noop("Locations"),
         required=False,
@@ -1156,7 +1156,7 @@ class BaseLocationForm(forms.Form):
     def __init__(self, domain: str, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
         self.request = kwargs.pop('request')
-        super(BaseLocationForm, self).__init__(*args, **kwargs)
+        super(SelectUserLocationForm, self).__init__(*args, **kwargs)
         self.domain = domain
         self.fields['assigned_locations'].widget = LocationSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations',
@@ -1186,7 +1186,7 @@ class BaseLocationForm(forms.Form):
             self.domain, self.request.couch_user))
 
     def clean(self):
-        self.cleaned_data = super(BaseLocationForm, self).clean()
+        self.cleaned_data = super(SelectUserLocationForm, self).clean()
 
         primary_location_id = self.cleaned_data['primary_location']
         assigned_location_ids = self.cleaned_data.get('assigned_locations', [])
@@ -1210,7 +1210,7 @@ class BaseLocationForm(forms.Form):
         return self.cleaned_data
 
 
-class CommtrackUserForm(BaseLocationForm):
+class CommtrackUserForm(SelectUserLocationForm):
     program_id = forms.ChoiceField(
         label=gettext_noop("Program"),
         choices=(),

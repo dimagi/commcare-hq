@@ -22,7 +22,7 @@ from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.programs.models import Program
-from corehq.apps.users.forms import BaseLocationForm, BaseTableauUserForm
+from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
 from corehq.apps.users.models import CouchUser
 
 
@@ -483,7 +483,7 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
         return ""
 
 
-class AdminInvitesUserForm(BaseLocationForm):
+class AdminInvitesUserForm(SelectUserLocationForm):
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")
