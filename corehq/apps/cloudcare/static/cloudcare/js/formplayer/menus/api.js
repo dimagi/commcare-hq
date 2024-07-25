@@ -263,9 +263,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
         }
 
         // If an endpoint is provided, first claim any cases it references, then navigate
-        return FormplayerFrontend.xsrfRequest.then(function () {
-            return API.queryFormplayer(options, "get_endpoint");
-        });
+        return API.queryFormplayer(options, "get_endpoint");
     });
 
     FormplayerFrontend.getChannel().reply("icon:click", function (options) {
