@@ -17,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
     Sentry,
     FormplayerFrontend,
     Utils,
-    UsersModels,
+    UsersModels
 ) {
     function addBreadcrumb(collection, type, data) {
         Sentry.addBreadcrumb({

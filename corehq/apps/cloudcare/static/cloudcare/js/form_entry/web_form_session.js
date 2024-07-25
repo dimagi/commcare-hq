@@ -20,7 +20,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
     taskQueue,
     formEntryUtils,
     formUI,
-    utils,
+    utils
 ) {
     function WebFormSession(params) {
         var self = {};
