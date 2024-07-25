@@ -58,6 +58,7 @@ from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.toggles import (
+    LOCATION_HAS_USERS,
     TWO_STAGE_USER_PROVISIONING,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
@@ -1177,7 +1178,9 @@ class SelectUserLocationForm(forms.Form):
             locations = get_locations_from_ids(location_ids, self.domain)
         except SQLLocation.DoesNotExist:
             raise forms.ValidationError(_('One or more of the locations was not found.'))
-
+        if LOCATION_HAS_USERS.enabled(self.domain) and locations.filter(location_type__has_users=False).exists():
+            raise forms.ValidationError(
+                _('One or more of the locations you specified cannot have users assigned.'))
         return [location.location_id for location in locations]
 
     def _user_has_permission_to_access_locations(self, new_location_ids):
