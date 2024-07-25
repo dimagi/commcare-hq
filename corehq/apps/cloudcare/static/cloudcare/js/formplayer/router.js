@@ -287,6 +287,14 @@ hqDefine("cloudcare/js/formplayer/router", [
         menusController.selectMenu(options);
     });
 
+    FormplayerFrontend.on("persistentMenuSelect", function (selections) {
+        FormplayerFrontend.trigger("clearForm");
+        menusController.selectMenu({
+            'appId': utils.currentUrlToObject().appId,
+            'selections': selections,
+        });
+    });
+
     return {
         start: function () {
             return new Router({
