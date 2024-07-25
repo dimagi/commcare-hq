@@ -132,15 +132,15 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
                 // backwards compatibility - remove after FP deploy of #1374
                 _.defaults(response, {"hasDetails": true});
                 _.extend(this, _.pick(response, this.entityProperties));
-                if (response.locales && !UsersModels.getCurrentUser().displayOptions.singleAppMode){
-                    enableLanguageOption(response, this)
+                if (response.locales && !UsersModels.getCurrentUser().displayOptions.singleAppMode) {
+                    enableLanguageOption(response, this);
                 }
                 return response.entities;
             } else if (response.type === "query") {
                 addBreadcrumb(this, "query", sentryData);
                 _.extend(this, _.pick(response, this.queryProperties));
-                if (response.locales && !UsersModels.getCurrentUser().displayOptions.singleAppMode){
-                    enableLanguageOption(response, this)
+                if (response.locales && !UsersModels.getCurrentUser().displayOptions.singleAppMode) {
+                    enableLanguageOption(response, this);
                 }
                 return response.displays;
             } else if (response.details) {

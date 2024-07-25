@@ -478,19 +478,19 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 // Handling for language change on case list and case search screens,
                 // which don't have associated session_ids.
                 hqRequire(["cloudcare/js/formplayer/menus/controller"], function (menusController) {
-                    var urlObject = utils.currentUrlToObject()
-                    urlObject.changeLang = lang
+                    var urlObject = utils.currentUrlToObject();
+                    urlObject.changeLang = lang;
                     menusController.selectMenu(urlObject);
                 });
             } else {
                 this.serverRequest(
-                {
-                    'action': constants.CHANGE_LOCALE,
-                    'locale': lang,
-                },
-                function (resp) {
-                    $.publish('session.reconcile', [resp, lang]);
-                });
+                    {
+                        'action': constants.CHANGE_LOCALE,
+                        'locale': lang,
+                    },
+                    function (resp) {
+                        $.publish('session.reconcile', [resp, lang]);
+                    });
             }
         };
 
