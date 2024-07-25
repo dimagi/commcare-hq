@@ -11,9 +11,12 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.exceptions import LocationConsistencyError
 from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.locations.views import LocationTypesView
-from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
+from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.models import WebUser
+
 
 OTHER_DETAILS = {
     'expand_from': None,
@@ -152,3 +155,49 @@ class LocationTypesViewTest(TestCase):
         data = {'loc_types': [loc_type1, loc_type2]}
         with self.assertRaises(LocationConsistencyError):
             self.send_request(data)
+
+
+class LocationSearchViewTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(LocationSearchViewTest, cls).setUpClass()
+        delete_all_users()
+        cls.domain = "test-domain"
+        cls.project = create_domain(cls.domain)
+        cls.username = "request-er"
+        cls.password = "foobar"
+        cls.web_user = WebUser.create(cls.domain, cls.username, cls.password, None, None)
+        cls.web_user.add_domain_membership(cls.domain, is_admin=True)
+        cls.web_user.set_role(cls.domain, "admin")
+        cls.web_user.save()
+        cls.loc_type1 = LocationType(domain=cls.domain, name='type1', code='code1')
+        cls.loc_type1.save()
+        cls.loc1 = make_loc(
+            'loc_1', type=cls.loc_type1, domain=cls.domain
+        )
+        cls.loc2 = make_loc(
+            'loc_2', type=cls.loc_type1, domain=cls.domain
+        )
+
+    def setUp(self):
+        self.client.login(username=self.username, password=self.password)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+        delete_all_users()
+        return super().tearDownClass()
+
+    @mock.patch('django_prbac.decorators.has_privilege', return_value=True)
+    def send_request(self, url, data, _):
+        return self.client.get(url, {'json': json.dumps(data)})
+
+    def test_search_view_basic(self):
+        url = reverse('location_search', args=[self.domain])
+        data = {'q': 'loc'}
+        response = self.send_request(url, data)
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)['results']
+        self.assertEqual(results[0]['id'], self.loc1.location_id)
+        self.assertEqual(results[1]['id'], self.loc2.location_id)
+
