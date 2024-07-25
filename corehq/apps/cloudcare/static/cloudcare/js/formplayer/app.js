@@ -87,6 +87,17 @@ hqDefine("cloudcare/js/formplayer/app", [
         return Backbone.Radio.channel('formplayer');
     };
 
+    FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm = function () {
+        if (FormplayerFrontend.unsavedFormInProgress) {
+            const userConfirmedYes = window.confirm(gettext("You have a form in progress. Are you sure you want to navigate away?"));
+            if (!userConfirmedYes) {
+                return false;
+            }
+        }
+        FormplayerFrontend.trigger('setUnsavedFormNotInProgress');
+        return true;
+    };
+
     /**
      * This function maps a jr:// media path to its HTML path IE
      * jr://images/icon/mother.png -> https://commcarehq.org/hq/multimedia/file/CommCareImage/[app_id]/mother.png
@@ -127,6 +138,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     });
 
     FormplayerFrontend.on('clearForm', function () {
+        FormplayerFrontend.trigger('setUnsavedFormNotInProgress');
         $('#webforms').html("");
         $('.menu-scrollable-container').removeClass("d-none");
         $('#webforms-nav').html("");
@@ -759,6 +771,20 @@ hqDefine("cloudcare/js/formplayer/app", [
             var match = (window || this).location.href.match(/#(.*)$/);
             return match ? decodeURI(match[1]) : '';
         },
+    });
+
+    FormplayerFrontend.on("setUnsavedFormInProgress", function () {
+        FormplayerFrontend.unsavedFormInProgress = true;
+        window.onbeforeunload = function () {
+            return true;
+        };
+    });
+
+    FormplayerFrontend.on("setUnsavedFormNotInProgress", function () {
+        if (FormplayerFrontend.unsavedFormInProgress) {
+            FormplayerFrontend.unsavedFormInProgress = false;
+            window.onbeforeunload = null;
+        }
     });
 
     return FormplayerFrontend;
