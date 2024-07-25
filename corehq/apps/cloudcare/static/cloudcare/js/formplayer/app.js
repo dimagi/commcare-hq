@@ -46,21 +46,19 @@ hqDefine("cloudcare/js/formplayer/app", [
     TemplateCache
 ) {
     Marionette.setRenderer(TemplateCache.render);
-    var FormplayerFrontend = new Marionette.Application();
 
-    FormplayerFrontend.on("before:start", function (app, options) {
-        const xsrfRequest = new $.Deferred();
-        this.xsrfRequest = xsrfRequest.promise();
-        // Make a get call if the csrf token isn't available when the page loads.
-        if ($.cookie('XSRF-TOKEN') === undefined) {
-            $.get(
-                {url: options.formplayer_url + '/serverup', global: false, xhrFields: { withCredentials: true }}
-            ).always(() => { xsrfRequest.resolve(); });
-        } else {
-            // resolve immediately
-            xsrfRequest.resolve();
-        }
+    const WebApp = Marionette.Application.extend({
+        getXSRF: function (options) {
+            return $.get({
+                url: options.formplayer_url + '/serverup',
+                global: false, xhrFields: {withCredentials: true},
+            });
+        },
+    });
 
+    const FormplayerFrontend = new WebApp();
+
+    FormplayerFrontend.on("before:start", function () {
         if (!FormplayerFrontend.regions) {
             FormplayerFrontend.regions = CloudcareUtils.getRegionContainer();
         }
