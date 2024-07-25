@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load django_tables2 %}
 {% load hq_shared_tags %}
 {% load data_cleaning_tags %}
@@ -5,7 +6,7 @@
 <div class="editable-column-container"
      x-data='{ isEditing: false,
                isSubmitting: false,
-               cellValue: "{% if edited_value %}{{ edited_value|escapejs }}{% else %}{{ value|escapejs }}{% endif %}" }'
+               cellValue: "{% if edited_value is not None %}{{ edited_value|dc_escapejs }}{% else %}{{ value|dc_escapejs }}{% endif %}" }'
    {% if is_partial_update %}
      x-init="$dispatch('updateApplyEditsButton', {{ table.column_manager.has_edits|BOOL }})"
    {% endif %}>
@@ -13,7 +14,7 @@
   <div class="inline-edit-block"
        x-show="!isEditing"
        @dblclick="isEditing = !isSubmitting">
-    {% if edited_value %}
+    {% if edited_value is not None %}
       <form hx-post="{{ request.path_info }}{% querystring %}"
             hq-hx-action="cancel_edit"
             hx-vals='{"column": "{{ column.accessor }}",
@@ -26,7 +27,11 @@
           <div class="dc-diff-view">
             <div class="dc-diff-before">
               <span x-show="!$store.whitespaces.show">
-                {{ value }}
+                {% if value == None %}
+                  {% dc_null_value %}
+                {% else %}
+                  {{ value }}
+                {% endif %}
               </span>
               <span x-show="$store.whitespaces.show">
                 {{ value|whitespaces }}
@@ -35,7 +40,11 @@
             <br />
             <div class="dc-diff-after">
               <span x-show="!$store.whitespaces.show">
-                {{ edited_value }}
+                {% if edited_value == Ellipsis %}
+                  {% dc_null_value %}
+                {% else %}
+                  {{ edited_value }}
+                {% endif %}
               </span>
               <span x-show="$store.whitespaces.show">
                 {{ edited_value|whitespaces }}
@@ -63,15 +72,20 @@
           {{ value|whitespaces }}
         </div>
       {% else %}
-        &nbsp;
+        {% if value == None %}
+          {% dc_null_value %}
+        {% else %}
+          &nbsp;
+        {% endif %}
       {% endif %}
 
     {% endif %}
-    <button class="btn btn-link btn-sm inline-edit-button"
+    <button class="btn btn-link btn-sm inline-edit-action"
             type="button"
             @click="isEditing = true"
             :disabled="isSubmitting">
-       <i class="fa fa-pencil"></i>
+      <i class="fa fa-pencil"></i>
+      <span class="visually-hidden">{% trans "Edit Value" %}</span>
     </button>
   </div>
 
