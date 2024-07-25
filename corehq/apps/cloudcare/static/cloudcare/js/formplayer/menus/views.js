@@ -5,6 +5,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     'backbone',
     'backbone.marionette',
     'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'analytix/js/kissmetrix',
@@ -22,6 +23,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
     Backbone,
     Marionette,
     DOMPurify,
+    bootstrap,
     initialPageData,
     toggles,
     kissmetrics,
@@ -1563,6 +1565,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         onClickAppMain: function () {
             FormplayerFrontend.trigger("persistentMenuSelect");
+        },
+        onBeforeDetach: function () {
+            // Be sure to hide offcanvas element so scroll works properly
+            const openedCanvas = bootstrap.Offcanvas.getInstance(
+                document.getElementById('persistent-menu-container')
+            );
+            if (openedCanvas) {
+                openedCanvas.hide();
+            }
         },
     });
 
