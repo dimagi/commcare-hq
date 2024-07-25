@@ -778,4 +778,6 @@ def render_header(context, link_type=None):
     sorted_columns = context['request'].GET.getlist('sort')
     for column in context['table'].columns:
         column.sort_existing = column.name in sorted_columns
+        column.sort_done = f"-{column.name}" in sorted_columns
+        column.sort_new = not column.sort_existing and not column.sort_done
     return context
