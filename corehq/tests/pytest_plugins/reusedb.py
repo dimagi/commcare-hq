@@ -15,12 +15,13 @@ The `REUSE_DB` environment variable may be overridden with
 import logging
 import os
 import sys
-from contextlib import ExitStack, contextmanager
+from contextlib import ExitStack, contextmanager, nullcontext
 from functools import partial
 from unittest.mock import Mock, patch
 
 import pytest
 from pytest_django import fixtures as django_fixtures
+from pytest_django import plugin as django_plugin
 from pytest_django.plugin import DjangoDbBlocker, blocking_manager_key
 from unmagic import get_request, use
 
@@ -173,6 +174,23 @@ def django_db_setup():
         yield
     finally:
         _db_context.teardown_databases()
+
+
+@override_fixture(django_plugin._django_setup_unittest)
+def _django_setup_unittest():
+    """Do not unblock db for SimpleTestCase tests
+
+    Why is this not the default behavior of pytest-django?
+    """
+    from django.test import TransactionTestCase
+    request = get_request()
+    test_class = getattr(request, "cls", None)
+    if test_class and not issubclass(test_class, TransactionTestCase):
+        class db_blocker:
+            unblock = nullcontext
+    else:
+        db_blocker = request.getfixturevalue("django_db_blocker")
+    yield from _django_setup_unittest.super(request, db_blocker)
 
 
 class DeferredDatabaseContext:
