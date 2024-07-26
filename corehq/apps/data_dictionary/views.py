@@ -272,6 +272,22 @@ def data_dictionary_json_case_properties(request, domain, case_type_name):
             "properties": []
         })
 
+    # properties_queryset skips groups with no properties. Add them here
+    empty_groups = (
+        CasePropertyGroup.objects
+        .annotate(properties_count=Count('property'))
+        .filter(case_type=case_type)
+        .filter(properties_count=0)
+    )
+    for group in empty_groups:
+        case_type_data["groups"].append({
+            "id": group.id,
+            "name": group.name,
+            "description": group.description,
+            "deprecated": group.deprecated,
+            "properties": []
+        })
+
     return JsonResponse(case_type_data)
 
 
