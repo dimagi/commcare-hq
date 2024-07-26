@@ -7,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.python import Serializer
 from memoized import memoized
 
+from corehq.apps.cleanup.models import DeletedSQLDoc
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.sms.models import SMS, SQLMobileBackend
@@ -128,6 +129,11 @@ def get_databases():
             LookupTableRow._meta.db_table,
             make_uuid_getter(LookupTableRow),
             'LookupTableRow',
+        ),
+        _SQLDb(
+            DeletedSQLDoc._meta.db_table,
+            lambda id_: DeletedSQLDoc.objects.get(doc_id=id_),
+            'DeletedSQLDoc',
         ),
     ]
 
