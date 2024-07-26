@@ -42,9 +42,7 @@
     <div class="mx-3"
          hx-get="{% url "prototype_data_cleaning_htmx" %}{% querystring %}"
          hx-trigger="load">
-      <div class="htmx-indicator">
-        <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Loading..." %}
-      </div>
+      {% include "prototype/data_cleaning/partials/htmx_loading_indicator.html" %}
     </div>
     {% include "prototype/data_cleaning/partials/offcanvas.html" %}
   </div>
