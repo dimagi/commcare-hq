@@ -137,8 +137,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", [
             }
         },
         templateContext: function () {
-            var user = UsersModels.getCurrentUser(),
-                paginationConfig = utils.paginateOptions(
+            var paginationConfig = utils.paginateOptions(
                     this.options.pageNumber,
                     this.options.totalPages,
                     this.collection.totalSessions
@@ -148,7 +147,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", [
                 totalPages: this.options.totalPages,
                 currentPage: this.model.get('page') - 1,
                 limit: this.model.get("limit"),
-                isPreviewEnv: user.isAppPreview,
+                isAppPreview: UsersModels.getCurrentUser().isAppPreview,
             });
         },
     });
