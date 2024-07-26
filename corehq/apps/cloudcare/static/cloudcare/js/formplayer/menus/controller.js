@@ -4,7 +4,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     'underscore',
     'backbone',
     'DOMPurify/dist/purify.min',
-    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'cloudcare/js/markdown',
@@ -22,7 +21,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     _,
     Backbone,
     DOMPurify,
-    bootstrap,
     initialPageData,
     toggles,
     markdown,
@@ -257,7 +255,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
         $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
         $('#case-detail-modal').find('.js-detail-content').html(contentView.render().el);
         $('#case-detail-modal').find('.js-detail-footer-content').html(detailFooterView.render().el);
-        bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).show();
+        $('#case-detail-modal').modal('show');
+
     };
 
     var getDetailList = function (detailObject) {
