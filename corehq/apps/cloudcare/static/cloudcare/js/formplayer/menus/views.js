@@ -148,10 +148,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return _.template($(id).html() || "");
         },
         templateContext: function () {
-            const environment = UsersModels.getCurrentUser().environment;
             return {
                 title: this.options.title,
-                isAppPreview: environment === constants.PREVIEW_APP_ENVIRONMENT,
+                isAppPreview: UsersModels.getCurrentUser().isAppPreview,
             };
         },
         childViewOptions: function (model) {
