@@ -1,5 +1,7 @@
 from django.db import migrations
 
+from couchdbkit import ResourceNotFound
+
 from corehq.apps.users.util import user_location_data
 from corehq.apps.users.models import CommCareUser
 from corehq.util.django_migrations import skip_on_fresh_install
@@ -31,7 +33,10 @@ def revert_keys_in_data(apps, schema_editor):
     for user_data in SQLUserData.objects.all():
         user_id = user_data.user_id
 
-        commcare_user = CommCareUserCouch.get(user_id)
+        try:
+            commcare_user = CommCareUserCouch.get(user_id)
+        except ResourceNotFound:
+            continue
 
         data = user_data.data
         location_id = commcare_user.get('location_id')
