@@ -1114,7 +1114,7 @@ class GenericTabularReport(GenericReportView):
                 },
                 'bad_request_error_text': report_table['bad_request_error_text'],
                 'pagination': {
-                    'hide': getattr(report_table['pagination'], 'hide', False),
+                    'hide': report_table['pagination'].get('hide', False),
                     'is_on': pagination_on,
                     'source': report_table['pagination']['source'] if pagination_on else None,
                     'params': report_table['pagination']['params'] if pagination_on else None,
