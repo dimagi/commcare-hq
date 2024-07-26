@@ -79,7 +79,12 @@ def iter_forms_with_location(domain, xmlns=None):
     if xmlns:
         query = query.xmlns(xmlns)
     for es_form in query.scroll_ids_to_disk_and_iter_docs():
-        if form_location(es_form['form']):
+        try:
+            location = form_location(es_form['form'])
+        except ValueError:
+            # WAT?! This form was not submitted by CommCare. Move along.
+            continue
+        if location:
             # For example values of `es_form['form']`, see
             # corehq/apps/geospatial/tests/test_copy_gps_metadata.py
             yield es_form['form']
