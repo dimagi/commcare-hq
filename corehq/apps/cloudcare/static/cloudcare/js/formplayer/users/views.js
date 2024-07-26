@@ -29,13 +29,22 @@ hqDefine("cloudcare/js/formplayer/users/views", [
      * currently logged in (or restoring) as.
      */
     var RestoreAsBanner = Marionette.View.extend({
-        template: _.template($("#restore-as-banner-template").html() || ""),
         className: 'restore-as-banner-container',
         ui: {
             clear: '.js-clear-user',
         },
         events: {
             'click @ui.clear': 'onClickClearUser',
+        },
+        getTemplate: function () {
+            if (this.model.restoreAs) {
+                const templateId = (usersModels.getCurrentUser().isAppPreview ?
+                                    "#app-preview-restore-as-template" :
+                                    "#webapps-restore-as-template");
+                return _.template($(templateId).html() || "");
+            } else {
+                return "";
+            }
         },
         templateContext: function () {
             var template = "";
@@ -45,15 +54,12 @@ hqDefine("cloudcare/js/formplayer/users/views", [
                 template = gettext("Working as <b><%- restoreAs %></b>.");
             }
             template += " <a class='js-clear-user'>" + gettext("Use <%- username %>.") + "</a>";
-
-            var message = _.template(template)({
-                restoreAs: this.model.restoreAs,
-                username: this.model.getDisplayUsername(),
-                domain: usersModels.getCurrentUser().domain,
-            });
             return {
-                message: message,
-                restoreAs: this.model.restoreAs,
+                message: _.template(template)({
+                    restoreAs: this.model.restoreAs,
+                    username: this.model.getDisplayUsername(),
+                    domain: usersModels.getCurrentUser().domain,
+                }),
             };
         },
         onClickClearUser: function () {
