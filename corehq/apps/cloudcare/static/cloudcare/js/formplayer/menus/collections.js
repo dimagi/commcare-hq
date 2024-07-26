@@ -10,12 +10,14 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
     'sentry_browser',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/users/models',
 ], function (
     _,
     Backbone,
     Sentry,
     FormplayerFrontend,
-    Utils
+    Utils,
+    UsersModels
 ) {
     function addBreadcrumb(collection, type, data) {
         Sentry.addBreadcrumb({
@@ -23,6 +25,12 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
             message: "[response] " + type + ": " + collection.title + " (" + collection.queryKey + ")",
             data: data,
         });
+    }
+
+    function enableLanguageOption(response, collection) {
+        response.langs = response.locales.slice(1);
+        _.extend(collection, _.pick(response, collection.formProperties));
+        FormplayerFrontend.trigger('startForm', response);
     }
 
     var MenuSelect = Backbone.Collection.extend({
@@ -124,10 +132,16 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
                 // backwards compatibility - remove after FP deploy of #1374
                 _.defaults(response, {"hasDetails": true});
                 _.extend(this, _.pick(response, this.entityProperties));
+                if (response.locales && !UsersModels.getCurrentUser().displayOptions.singleAppMode) {
+                    enableLanguageOption(response, this);
+                }
                 return response.entities;
             } else if (response.type === "query") {
                 addBreadcrumb(this, "query", sentryData);
                 _.extend(this, _.pick(response, this.queryProperties));
+                if (response.locales && !UsersModels.getCurrentUser().displayOptions.singleAppMode) {
+                    enableLanguageOption(response, this);
+                }
                 return response.displays;
             } else if (response.details) {
                 addBreadcrumb(this, "details", sentryData);
