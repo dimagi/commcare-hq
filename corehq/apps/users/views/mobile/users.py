@@ -32,6 +32,8 @@ from memoized import memoized
 from casexml.apps.phone.models import SyncLogSQL
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.web import json_response
+from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
@@ -56,6 +58,7 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
     login_or_basic_ex,
+    api_auth,
 )
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
@@ -70,7 +73,7 @@ from corehq.apps.events.tasks import create_attendee_for_user
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.hqwebapp.decorators import use_multiselect
+from corehq.apps.hqwebapp.decorators import use_multiselect, waf_allow
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
@@ -85,6 +88,7 @@ from corehq.apps.registration.forms import (
 )
 from corehq.apps.sms.api import send_sms
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
+from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
     send_account_confirmation_sms_if_necessary,
@@ -1685,3 +1689,23 @@ def link_connectid_user(request, domain):
         return HttpResponse(status=201)
     else:
         return HttpResponse()
+
+
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@require_POST
+@api_auth()
+def bulk_user_upload_api(request, domain):
+    try:
+        file = request.FILES.get('bulk_upload_file')
+        if file is None:
+            raise UserUploadError(_('no file uploaded'))
+        workbook = get_workbook(file)
+        user_specs, group_specs = BaseUploadUser.process_workbook(workbook, domain, is_web_upload=False)
+        BaseUploadUser.upload_users(request, user_specs, group_specs, domain, is_web_upload=False)
+        return json_response({'success': True})
+    except (WorkbookJSONError, WorksheetNotFound, UserUploadError) as e:
+        return json_response({'success': False, 'message': _(str(e))}, status_code=400)
+    except Exception as e:
+        notify_exception(None, message=str(e))
+        return json_response({'success': False, 'message': str(e)}, status_code=500)
