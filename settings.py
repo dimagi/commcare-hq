@@ -115,6 +115,7 @@ STATICFILES_FINDERS = (
 
 STATICFILES_DIRS = [
     YARN_COMPONENTS,
+    ('react', os.path.join(FILEPATH, 'static_react')),
 ]
 
 # bleh, why did this submodule have to be removed?
@@ -233,6 +234,7 @@ DEFAULT_APPS = (
     'django_otp',
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
+    'django_tables2',
     'two_factor',
     'two_factor.plugins.phonenumber',
     'ws4redis',
