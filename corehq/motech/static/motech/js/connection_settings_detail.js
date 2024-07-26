@@ -1,3 +1,4 @@
+'use strict';
 hqDefine("motech/js/connection_settings_detail", [
     'jquery',
     'underscore',
@@ -72,7 +73,7 @@ hqDefine("motech/js/connection_settings_detail", [
                         'plaintext_password': null,
                     };
             }
-            _.each(_.pairs(allFields), function ([field, label]) {
+            _.each(_.keys(allFields), function (field) {
                 let div = $('#div_id_' + field);
                 if (field in visible) {
                     div.removeClass("d-none");
