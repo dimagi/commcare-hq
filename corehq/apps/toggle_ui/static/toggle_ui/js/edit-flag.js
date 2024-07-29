@@ -106,6 +106,9 @@ hqDefine('toggle_ui/js/edit-flag', [
         self.saveButtonBottom = self.createSaveButton();
 
         self.getNamespaceHtml = function (namespace, value) {
+            if (value && value[0] === '!') {
+                value = value.replace(/^!/, '');
+            }
             if (namespace === 'domain') {
                 return '<a href="' + initialPageData.reverse('domain_internal_settings', value) + '">domain <i class="fa fa-external-link"></i></a>';
             } else {
