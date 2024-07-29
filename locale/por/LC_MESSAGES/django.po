@@ -3598,10 +3598,8 @@ msgid "Workflow"
 msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/components/logs.html
-#, fuzzy
-#| msgid "Current Users"
 msgid "Current Workflow"
-msgstr "Usuários Atuais"
+msgstr ""
 
 #: corehq/apps/app_execution/templates/app_execution/components/logs.html
 msgid ""
@@ -23206,6 +23204,34 @@ msgstr ""
 msgid "Commit"
 msgstr ""
 
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Case tag"
+msgid "Case count"
+msgstr "Marcador do caso"
+
+#: corehq/apps/hqadmin/reports.py
+#, fuzzy
+#| msgid "Form Data"
+msgid "Form count"
+msgstr "Dados do Formulário"
+
+#: corehq/apps/hqadmin/reports.py
+msgid "UCR rebuild restriction status"
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restricted"
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py
+msgid "No rebuild restriction required"
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py
+msgid "UCR Domains Data Report"
+msgstr ""
+
 #: corehq/apps/hqadmin/templates/hqadmin/authenticate_as.html
 msgid ""
 "\n"
@@ -27231,10 +27257,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
-#, fuzzy
-#| msgid "Users"
 msgid "Has Users"
-msgstr "Usuários"
+msgstr ""
 
 #: corehq/apps/locations/templates/locations/location_types.html
 msgid ""
@@ -28148,6 +28172,12 @@ msgid "Username already taken. Please try another or log in."
 msgstr ""
 
 #: corehq/apps/registration/forms.py
+#, fuzzy
+#| msgid "Select a Menu"
+msgid "Select a role"
+msgstr "Selecione um menu "
+
+#: corehq/apps/registration/forms.py
 msgid "Information for new Web User"
 msgstr "Informação para o novo Usuário da Web"
 
@@ -28622,7 +28652,7 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"            See <a href=\"https://dimagi.com/commcare/pricing/\" "
+"            See <a href=\"https://dimagi.com/commcare-pricing/\" "
 "target=\"_blank\">pricing</a> options.\n"
 "          "
 msgstr ""
@@ -30208,6 +30238,10 @@ msgstr ""
 
 #: corehq/apps/reports/filters/select.py
 msgid "Record Status"
+msgstr ""
+
+#: corehq/apps/reports/filters/select.py
+msgid "Rebuild restriction feature flag status"
 msgstr ""
 
 #: corehq/apps/reports/filters/simple.py
@@ -44558,6 +44592,22 @@ msgstr ""
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
 msgid "Cancelled"
+msgstr ""
+
+#: corehq/motech/repeaters/const.py
+msgid "Is enabled"
+msgstr ""
+
+#: corehq/motech/repeaters/const.py
+msgid "Is not enabled"
+msgstr ""
+
+#: corehq/motech/repeaters/const.py
+msgid "Should be enabled"
+msgstr ""
+
+#: corehq/motech/repeaters/const.py
+msgid "Can be disabled"
 msgstr ""
 
 #: corehq/motech/repeaters/expression/forms.py
