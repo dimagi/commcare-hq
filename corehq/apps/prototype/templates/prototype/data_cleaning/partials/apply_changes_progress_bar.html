@@ -1,0 +1,26 @@
+{% load i18n %}
+
+<div class="table-loading-progress"
+     hx-get="{{ request.path_info }}"
+     hq-hx-action="simulate_apply_changes_progress"
+     hx-target="this"
+     hx-trigger="load"
+     hx-swap="outerHTML">
+  <div role="status" id="pblabel" tabindex="-1" autofocus>
+    {% if show_done %}
+      <i class="fa fa-spin fa-spinner me-1"></i>{% trans "Done. Refereshing table..." %}
+    {% else %}
+      {% trans "Applying Changes..." %}
+    {% endif %}
+  </div>
+  <div class="progress"
+       role="progressbar"
+       aria-label="{% trans "Applying Changes" %}"
+       aria-valuenow="{{ progress }}"
+       aria-valuemin="0"
+       aria-valuemax="100">
+    <div id="pb"
+         class="progress-bar bg-success"
+         style="width: {{ progress }}%"></div>
+  </div>
+</div>

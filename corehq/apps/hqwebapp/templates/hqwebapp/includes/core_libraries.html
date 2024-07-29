@@ -13,6 +13,8 @@
         hq: Include initial_page_data and hq.helpers.js, needed for most HQ pages.
 {% endcomment %}
 
+<script src="{% static "sortablejs/Sortable.min.js" %}"></script>
+
 {% if underscore or analytics or hq %}
     <script src="{% static 'underscore/underscore-min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/modernizr.js' %}"></script>

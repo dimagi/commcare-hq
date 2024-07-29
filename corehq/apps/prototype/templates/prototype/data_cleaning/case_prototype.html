@@ -1,0 +1,91 @@
+{% extends "hqwebapp/bootstrap5/base_navigation.html" %}
+{% load hq_shared_tags %}
+{% load django_tables2 %}
+{% load i18n %}
+
+{% requirejs_main_b5 "prototype/js/data_cleaning" %}
+
+{% block alpine_js_pre_init %}
+  <script src="{% static "prototype/js/dc_alpine_init.js" %}"></script>
+{% endblock %}
+
+{% block content %}
+  {# note: we can also insert X-CSRFToken header on `body` element in base template--current best-practice from our other codebases #}
+  <div hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <div class="d-flex align-items-center m-3">
+      <h1 class="fs-3 pe-3 py-3 m-0">
+        {% trans "Case Type" %} "{{ case_type }}"
+      </h1>
+      <div>
+        {% include "prototype/data_cleaning/partials/button_bar.html" %}
+      </div>
+      <div class="ps-3">
+        <div class="form-check form-switch">
+          <input class="form-check-input"
+                 id="showWhitespacesSwitch"
+                 type="checkbox"
+                 role="switch"
+                 name="show_whitespaces"
+                 hq-hx-action="toggle_whitespace"
+                 hx-post="{{ request.path }}"
+                 hx-swap="none"
+                 hx-disabled-elt="this"
+                 x-init="$store.whitespaces.show = {{ show_whitespaces|BOOL }}"
+                 x-model="$store.whitespaces.show">
+          <label class="form-check-label"
+                 for="showWhitespacesSwitch">
+            {% trans "Show Whitespaces" %}
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="mx-3"
+         hx-get="{% url "prototype_data_cleaning_htmx" %}{% querystring %}"
+         hx-trigger="load">
+      {% include "prototype/data_cleaning/partials/htmx_loading_indicator.html" %}
+    </div>
+    {% include "prototype/data_cleaning/partials/offcanvas.html" %}
+  </div>
+{% endblock %}
+
+{% block modals %}
+  <div id="htmxRequestErrorModal"
+       class="modal fade"
+       x-data="{ errorCode: '',
+                 errorText: '',
+                 updateError(evt) {
+                     this.errorCode = evt.detail.errorCode;
+                     this.errorText = evt.detail.errorText;
+                 },
+               }"
+       @update-htmx-request-error-modal.camel.window="updateError"
+       data-bs-backdrop="static"
+       data-bs-keyboard="false"
+       aria-labelledby="htmxRequestErrorModalTitle"
+       tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"
+              id="htmxRequestErrorModalTitle">
+            {% trans "Server Error Encountered" %}
+          </h5>
+          <button type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {# todo placeholder for passing HTMX errors to front end. simple UI for now :) #}
+          <p x-text="errorCode"></p>
+          <p x-text="errorText"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  data-bs-dismiss="modal">{% trans "Close" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
