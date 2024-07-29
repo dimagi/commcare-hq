@@ -96,7 +96,7 @@ class FilterColumnsFormView(TemplateView):
     def put(self, request, *args, **kwargs):
         filter_form = AddColumnFilterForm(self.column_manager, QueryDict(request.body))
         if filter_form.is_valid():
-            filter_form.add_filter(request)
+            filter_form.add_filter()
             filter_form = None
         return super().get(request, filter_form=filter_form, *args, **kwargs)
 
@@ -117,11 +117,13 @@ class CleanDataFormView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        clean_data_form = kwargs.pop('clean_data_form') if 'clean_data_form' in kwargs else None
+        clean_data_form = kwargs.pop('clean_data_form', None)
+        num_changes = kwargs.pop('num_changes', None)
         context.update({
             "clean_data_form": clean_data_form or CleanColumnDataForm(
                 self.column_manager, self.case_data_store
             ),
+            "num_changes": num_changes,
             "table_selector": f"#{FakeCaseTable.container_id}",
             "table_loading_id": FakeCaseTable.loading_indicator_id,
             "container_id": self.column_manager.clean_data_form_id,
@@ -132,7 +134,11 @@ class CleanDataFormView(TemplateView):
         clean_data_form = CleanColumnDataForm(
             self.column_manager, self.case_data_store, request.POST
         )
+        num_changes = None
         if clean_data_form.is_valid():
-            clean_data_form.apply_actions_to_data()
+            num_changes = clean_data_form.apply_actions_to_data()
             clean_data_form = None
-        return super().get(request, clean_data_form=clean_data_form, *args, **kwargs)
+        return super().get(request,
+                           clean_data_form=clean_data_form,
+                           num_changes=num_changes,
+                           *args, **kwargs)
