@@ -11,7 +11,7 @@ hqDefine("prototype/js/hq_htmx_loading",[
             }
         }
     });
-    document.body.addEventListener('htmx:afterRequest', function (evt) {
+    document.body.addEventListener('htmx:afterSwap', function (evt) {
         if (evt.detail.elt.hasAttribute('hq-hx-loading')) {
             let loadingElt = document.getElementById(evt.detail.elt.getAttribute('hq-hx-loading'));
             if (loadingElt && loadingElt.classList.contains('is-loading')) {
