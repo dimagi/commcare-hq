@@ -52,12 +52,12 @@ hqDefine("cloudcare/js/formplayer/app", [
                     global: false, xhrFields: { withCredentials: true }}
                 );
             }
-        }
+        },
     });
 
     var FormplayerFrontend = new WebApp();
 
-    FormplayerFrontend.on("before:start", function (app, options) {
+    FormplayerFrontend.on("before:start", function () {
 
         if (!FormplayerFrontend.regions) {
             FormplayerFrontend.regions = CloudcareUtils.getRegionContainer();

@@ -8,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/main", [
     $,
     initialPageData,
     FormplayerFrontEnd,
-    sentry,
+    sentry
 ) {
     $(function () {
         sentry.initSentry();
