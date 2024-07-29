@@ -11,6 +11,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/users/models',
+    "cloudcare/js/form_entry/web_form_session",
 ], function (
     _,
     Backbone,
@@ -18,6 +19,8 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
     FormplayerFrontend,
     Utils,
     UsersModels
+    UsersModels,
+    webFormSession
 ) {
     function addBreadcrumb(collection, type, data) {
         Sentry.addBreadcrumb({
@@ -30,7 +33,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
     function enableLanguageOption(response, collection) {
         response.langs = response.locales.slice(1);
         _.extend(collection, _.pick(response, collection.formProperties));
-        FormplayerFrontend.trigger('startForm', response);
+        webFormSession.applyLangListener()
     }
 
     var MenuSelect = Backbone.Collection.extend({

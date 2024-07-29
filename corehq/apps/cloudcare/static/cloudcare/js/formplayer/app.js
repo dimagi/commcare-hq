@@ -292,9 +292,7 @@ hqDefine("cloudcare/js/formplayer/app", [
             return FormplayerFrontend.getChannel().request('resourceMap', resourcePath, appId);
         };
         var sess = WebFormSession.WebFormSession(data);
-        if (data.type !== Const.ENTITIES && data.type !== Const.QUERY) {
-            sess.renderFormXml(data, $('#webforms'));
-        }
+        sess.renderFormXml(data, $('#webforms'));
         $('.menu-scrollable-container').addClass("d-none");
     });
 

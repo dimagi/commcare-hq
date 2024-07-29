@@ -275,7 +275,6 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
                 'formplayer.' + constants.PREV_QUESTION,
                 'formplayer.' + constants.QUESTIONS_FOR_INDEX,
                 'formplayer.' + constants.FORMATTED_QUESTIONS,
-                'formplayer.' + constants.CHANGE_LANG,
             ].join(' '));
             $.subscribe('formplayer.' + constants.SUBMIT, function (e, form) {
                 self.submitForm(form);
@@ -307,9 +306,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
             $.subscribe('formplayer.' + constants.FORMATTED_QUESTIONS, function (e, callback) {
                 self.getFormattedQuestions(callback);
             });
-            $.subscribe('formplayer.' + constants.CHANGE_LANG, function (e, lang) {
-                self.changeLang(lang);
-            });
+            applyLangListener(self);
         };
 
         self.loadForm = function ($form, initLang) {
@@ -474,24 +471,14 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
         };
 
         self.changeLang = function (lang) {
-            if (!self.session_id) {
-                // Handling for language change on case list and case search screens,
-                // which don't have associated session_ids.
-                hqRequire(["cloudcare/js/formplayer/menus/controller"], function (menusController) {
-                    var urlObject = utils.currentUrlToObject();
-                    urlObject.changeLang = lang;
-                    menusController.selectMenu(urlObject);
+            this.serverRequest(
+                {
+                    'action': constants.CHANGE_LOCALE,
+                    'locale': lang,
+                },
+                function (resp) {
+                    $.publish('session.reconcile', [resp, lang]);
                 });
-            } else {
-                this.serverRequest(
-                    {
-                        'action': constants.CHANGE_LOCALE,
-                        'locale': lang,
-                    },
-                    function (resp) {
-                        $.publish('session.reconcile', [resp, lang]);
-                    });
-            }
         };
 
         self.submitForm = function (form) {
@@ -615,7 +602,30 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
         return self;
     }
 
+    function applyLangListener(session) {
+        $.unsubscribe('formplayer.' + constants.CHANGE_LANG);
+        if (session) {
+            $.subscribe('formplayer.' + constants.CHANGE_LANG, function (e, lang) {
+                session.changeLang(lang);
+            });
+        } else {
+            $.subscribe('formplayer.' + constants.CHANGE_LANG, function (e, lang) {
+                changeLang(lang);
+            });
+        }
+
+    }
+
+    function changeLang(lang) {
+        hqRequire(["cloudcare/js/formplayer/menus/controller"], function (menusController) {
+                var urlObject = utils.currentUrlToObject()
+                urlObject.changeLang = lang
+                menusController.selectMenu(urlObject);
+            });
+    };
+
     return {
         WebFormSession: WebFormSession,
+        applyLangListener: applyLangListener,
     };
 });
