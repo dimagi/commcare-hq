@@ -16,5 +16,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(remove_unicel_backend)
+        migrations.RunPython(remove_unicel_backend, reverse_code=migrations.RunPython.noop)
     ]
