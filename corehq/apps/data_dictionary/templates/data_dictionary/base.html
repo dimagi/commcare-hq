@@ -124,7 +124,7 @@
 {% endblock %}
 
 {% block page_content %}
-  {% registerurl 'data_dictionary_json' domain %}
+  {% registerurl 'data_dictionary_json_case_types' domain %}
   {% registerurl 'update_case_property' domain %}
   {% registerurl 'deprecate_or_restore_case_type' domain '---' %}
   {% registerurl 'delete_case_type' domain '---' %}
@@ -215,7 +215,7 @@
             <div class="row-item-small"></div>
           {% endif %}
           </div>
-          <div data-bind="sortable: { data: caseGroupList, connectClass: 'groups', options: { handle: 'i.sortable-handle' } }">
+          <div data-bind="sortable: { data: activeCaseTypeData(), connectClass: 'groups', options: { handle: 'i.sortable-handle' } }">
           <div>
           <div class="group-deprecated" data-bind="visible: showGroupPropertyTransferWarning" style="display: none;">
             <b data-bind="text: name()"></b>
