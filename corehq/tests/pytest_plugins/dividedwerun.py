@@ -5,8 +5,6 @@ from unittest import TestCase
 import pytest
 from django.test import SimpleTestCase
 
-from .reusedb import SETUP_DATABASES_FUNCTION_NAME
-
 
 def pytest_addoption(parser):
     parser.addoption('--divided-we-run',
@@ -44,8 +42,6 @@ def pytest_collection_modifyitems(config, items):
     ) for bucket in "0123456789abcdef"}
     first, last = config.divided_we_run_range
     for item in items:
-        if item.name == SETUP_DATABASES_FUNCTION_NAME:
-            continue
         bucket = get_score(item)
         if bucket < first or bucket > last:
             item.add_marker(skip[bucket])
