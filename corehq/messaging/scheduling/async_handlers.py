@@ -72,7 +72,7 @@ class MessagingRecipientHandler(BaseAsyncHandler):
     def _get_user_organization_response(self, case_sharing_only=False):
         from corehq.apps.locations.views import LocationOptionsController
         controller = LocationOptionsController(self.request, self.request.domain,
-                                               self.data.get('searchString'), False,
+                                               self.data.get('searchString'),
                                                case_sharing_only=case_sharing_only)
         (count, results) = controller.get_options()
         return results[:10]

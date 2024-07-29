@@ -260,9 +260,8 @@ class LocationOptionsController(EmwfOptionsController):
     namespace_locations = False
     case_sharing_only = False
 
-    def __init__(self, *args):
-        args = list(args)
-        self.include_locations_with_no_users_allowed = args.pop(3)
+    def __init__(self, *args, include_locations_with_no_users_allowed=True):
+        self.include_locations_with_no_users_allowed = include_locations_with_no_users_allowed
         super().__init__(*args)
 
     @property
@@ -281,7 +280,7 @@ class LocationsSearchView(EmwfOptionsView):
     @memoized
     def options_controller(self):
         return LocationOptionsController(self.request, self.domain, self.search,
-                                         self.include_locations_with_no_users_allowed)
+            include_locations_with_no_users_allowed=self.include_locations_with_no_users_allowed)
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
