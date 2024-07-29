@@ -41,6 +41,8 @@ hqDefine("motech/js/connection_settings_detail", [
                     'client_id': gettext("Client ID"),
                     'plaintext_client_secret': gettext("Client Secret"),
                     'oauth_settings': null,
+                },
+                placeholders = {
                 };
             switch ($(this).val()) {
                 case '':  // Auth type is "None"
@@ -66,6 +68,7 @@ hqDefine("motech/js/connection_settings_detail", [
                         'username': gettext("HTTP Header Name"),
                         'plaintext_password': gettext("API Key"),
                     };
+                    placeholders['username'] = 'Authorization';
                     break;
                 default:
                     visible = {
@@ -78,8 +81,12 @@ hqDefine("motech/js/connection_settings_detail", [
                 if (field in visible) {
                     div.removeClass("d-none");
                     let label = visible[field] || allFields[field];
-                    if (label) {
-                        div.find('label').text(label);
+                    let labelElement = div.find('label');
+                    if (label && labelElement.length > 0 && labelElement.text() !== label) {
+                        labelElement.text(label);
+                        let fieldElement = $('#id_' + field);
+                        fieldElement.val('');  // clear current value
+                        fieldElement.attr('placeholder', placeholders[field] || '');
                     }
                 } else {
                     div.addClass("d-none");
