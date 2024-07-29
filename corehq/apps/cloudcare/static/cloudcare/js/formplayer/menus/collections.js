@@ -18,7 +18,6 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
     Sentry,
     FormplayerFrontend,
     Utils,
-    UsersModels
     UsersModels,
     webFormSession
 ) {

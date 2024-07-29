@@ -618,11 +618,11 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
 
     function changeLang(lang) {
         hqRequire(["cloudcare/js/formplayer/menus/controller"], function (menusController) {
-                var urlObject = utils.currentUrlToObject()
-                urlObject.changeLang = lang
-                menusController.selectMenu(urlObject);
-            });
-    };
+            var urlObject = utils.currentUrlToObject();
+            urlObject.changeLang = lang;
+            menusController.selectMenu(urlObject);
+        });
+    }
 
     return {
         WebFormSession: WebFormSession,
