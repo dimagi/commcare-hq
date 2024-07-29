@@ -47,7 +47,8 @@ hqDefine("cloudcare/js/formplayer/app", [
 ) {
     Marionette.setRenderer(TemplateCache.render);
     const WebApp = Marionette.Application.extend({
-        initialize(options) {
+        preStart(options) {
+            console.log(`options: ${ JSON.stringify(options) }`);
             if ($.cookie('XSRF-TOKEN') === undefined) {
                 $.get({
                     url: options.formplayer_url + '/serverup',
