@@ -16,7 +16,7 @@ import logging
 import os
 import sys
 from contextlib import ExitStack, contextmanager
-from pathlib import Path
+from functools import partial
 from unittest.mock import Mock, patch
 
 import pytest
@@ -55,7 +55,6 @@ bootstrap: Restore database state such as software plan versions and currencies
 migrate: Migrate the test databases before running tests.
 teardown: Skip database setup; do normal teardown after running tests.
 """
-SETUP_DATABASES_FUNCTION_NAME = f"{__name__} setup_databases"
 
 
 @pytest.hookimpl
@@ -129,32 +128,25 @@ def filter_and_sort(items, key, session):
         def should_run(item):
             return True
 
-    tests = sorted((t for t in items if should_run(t)), key=new_key)
-    if session.config.should_run_database_tests != "skip":
-        _db_context.setup_before_first_db_test(tests, is_db_test, session)
-    items[:] = tests
+    items[:] = sorted((t for t in items if should_run(t)), key=new_key)
 
 
 def reorder(key):
     """Translate django-pytest's test sorting key
 
     - 2 -> 0: non-db tests first (pytest-django normally runs them last)
-    -      1: DeferredDatabaseContext.setup_databases
-    - 0 -> 2: TestCase
-    - 1 -> 3: TransactionTestCase last
+    - 0 -> 1: tests using the 'db' fixture (TestCase)
+    - 1 -> 2: tests using the 'transactional_db' (TransactionTestCase) last
     """
-    def is_setup(item):
-        return item.name == SETUP_DATABASES_FUNCTION_NAME
-
     def new_key(item):
         fixtures = {f._id for f in getattr(item.obj, "unmagic_fixtures", [])}
         if "transactional_db" in fixtures:
-            return 3
-        if "db" in fixtures:
             return 2
-        return 1 if is_setup(item) else new_order[key(item)]
+        if "db" in fixtures:
+            return 1
+        return new_order[key(item)]
 
-    new_order = {2: 0, 0: 2, 1: 3}
+    new_order = {2: 0, 0: 1, 1: 2}
     return new_key
 
 
@@ -176,6 +168,7 @@ def django_db_setup():
     DeferredDatabaseContext, which handles other databases
     including Couch, Elasticsearch, BlobDB, and Redis.
     """
+    # HqDbBlocker.unblock() calls DeferredDatabaseContext.setup_databases()
     try:
         yield
     finally:
@@ -184,25 +177,8 @@ def django_db_setup():
 
 class DeferredDatabaseContext:
 
-    def setup_before_first_db_test(self, tests, is_db_test, session):
-        """Inject database setup just before the first test that needs it
-
-        Allows expensive setup to be avoided when there are no database
-        tests included in the test run. Database tests will not be run if
-        database setup fails.
-        """
-        setup = pytest.Function.from_parent(
-            pytest.Module.from_parent(session, path=Path(__file__), nodeid="reusedb"),
-            name=SETUP_DATABASES_FUNCTION_NAME,
-            callobj=lambda: self.setup_databases(session),
-        )
-        for i, test in enumerate(tests):
-            if is_db_test(test):
-                tests.insert(i, setup)
-                break
-
     @timelimit(480)
-    def setup_databases(self, session):
+    def setup_databases(self, db_blocker):
         """Setup databases for tests"""
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 
@@ -216,15 +192,21 @@ class DeferredDatabaseContext:
                 cleanup(clear_redis)
                 cleanup(delete_couch_databases)
 
+        def teardown(do_teardown):
+            with db_blocker.unblock():
+                do_teardown()
+
         assert "teardown_databases" not in self.__dict__, "already set up"
         db_blocker = get_request().getfixturevalue("django_db_blocker")
-        with db_blocker.unblock(), ExitStack() as stack:
+        self.setup_databases = lambda b: None  # do not set up more than once
+        session = get_request().session
+        with ExitStack() as stack:
             try:
                 setup(stack.enter_context, stack.callback)
             except BaseException:
                 session.shouldfail = "Abort: database setup failed"
                 raise
-            self.teardown_databases = stack.pop_all().close
+            self.teardown_databases = partial(teardown, stack.pop_all().close)
 
     def teardown_databases(self):
         """No-op to be replaced with ExitStack.close by setup_databases"""
@@ -404,7 +386,9 @@ class HqDbBlocker(DjangoDbBlocker):
         """Enable database access"""
         self._callbacks.append(self._block)
         self._unblock()
-        return super().unblock()
+        blocker = super().unblock()
+        _db_context.setup_databases(self)
+        return blocker
 
     def restore(self):
         self._callbacks.pop()()
