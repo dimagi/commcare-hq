@@ -13,11 +13,12 @@
   <i class="fa-solid fa-table-columns"></i> {% trans "Configure Columns" %}
 </button>
 <button type="button"
-        class="btn btn-outline-primary"
-        data-bs-toggle="offcanvas"
-        data-bs-target="#editOffcanvas"
+        class="btn"
         x-data="{ isCleaningAllowed: false }"
+        :class="isCleaningAllowed ? 'btn-primary' : 'btn-outline-primary'"
         :disabled="!isCleaningAllowed"
-        @num-records-selected-changed.camel.window="isCleaningAllowed = $event.detail > 0">
+        @num-records-selected-changed.camel.window="isCleaningAllowed = $event.detail > 0"
+        data-bs-toggle="offcanvas"
+        data-bs-target="#editOffcanvas">
   <i class="fa-solid fa-shower"></i> {% trans "Clean Data" %}
 </button>
