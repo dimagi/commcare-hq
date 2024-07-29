@@ -1,3 +1,4 @@
+import re
 from redis.exceptions import LockError
 from testil import assert_raises, eq
 
@@ -51,7 +52,7 @@ def simulate_reentrant_lock():
 @timelimit(0.1)
 def test_unreleased_lock():
     msg = "unreleased dict_values([ReentrantTestLock(name='unreleased', level=1)])"
-    with assert_raises(AssertionError, msg=msg):
+    with assert_raises(AssertionError, msg=re.compile("^" + re.escape(msg))):
         with reentrant_redis_locks():
             lock = get_redis_lock("unreleased", timeout=0.5, name="test")
             assert lock.acquire()
