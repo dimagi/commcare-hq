@@ -118,10 +118,13 @@ class CleanDataFormView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         clean_data_form = kwargs.pop('clean_data_form', None)
+        sticky_property = kwargs.pop('sticky_property', None)
         num_changes = kwargs.pop('num_changes', None)
         context.update({
             "clean_data_form": clean_data_form or CleanColumnDataForm(
-                self.column_manager, self.case_data_store
+                self.column_manager, self.case_data_store, initial={
+                    'slug': sticky_property,
+                }
             ),
             "num_changes": num_changes,
             "table_selector": f"#{FakeCaseTable.container_id}",
@@ -135,10 +138,13 @@ class CleanDataFormView(TemplateView):
             self.column_manager, self.case_data_store, request.POST
         )
         num_changes = None
+        sticky_property = None
         if clean_data_form.is_valid():
             num_changes = clean_data_form.apply_actions_to_data()
+            sticky_property = clean_data_form.cleaned_data["slug"]
             clean_data_form = None
         return super().get(request,
                            clean_data_form=clean_data_form,
+                           sticky_property=sticky_property,
                            num_changes=num_changes,
                            *args, **kwargs)
