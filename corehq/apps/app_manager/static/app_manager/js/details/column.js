@@ -398,7 +398,6 @@ hqDefine("app_manager/js/details/column", function () {
                 } else if (this.val() === "clickable-icon") {
                     self.enum_extra.values_are_icons(true);
                     self.enum_extra.keys_are_conditions(true);
-                    self.enum_extra.values_are_translatable(true);
                     self.format.ui.parent().append(self.enum_extra.ui);
                     self.format.ui.parent().append(self.endpointActionLabel);
                     self.format.ui.parent().append(self.action_form_extra.ui);

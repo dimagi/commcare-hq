@@ -86,18 +86,16 @@ class XPathEnum(TextXPath):
     @classmethod
     def build(cls, enum, format, type, template, get_template_context, get_value):
         variables = []
-        variable_keys = []
         for item in enum:
             v_key = item.key_as_variable
-            if format == 'translatable-enum':
-                variable_keys.append(v_key)
             v_val = get_value(v_key)
             variables.append(XPathVariable(name=v_key, locale_id=v_val))
         parts = []
         if format == 'translatable-enum':
             calculated_property = get_template_context()['calculated_property']
             # converting variables into suite.xml recognized variables (i.e. $variable > $kvariable)
-            for key in variable_keys:
+            for item in enum:
+                key = item.key_as_variable
                 if key[1:] in calculated_property:
                     calculated_property = calculated_property.replace(key[1:], key)
             parts.append(calculated_property)
