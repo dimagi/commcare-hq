@@ -1,14 +1,14 @@
 {% load i18n %}
 
 <script type="text/template" id="breadcrumb-item-template">
-  <%- data %>
+  <a href="#"><%- data %></a>
 </script>
 
 <script type="text/template" id="breadcrumb-list-template">
-  <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+  <nav style="--bsbreadcrumb-divider: '\f054';" class="breadcrumb-nav" aria-label="Breadcrumb">
     <ol class="breadcrumb">
       <li class="js-home breadcrumb-item" role="link" tabindex="0">
-        {% trans 'Home' %}
+        <a href="#">{% trans 'Home' %}</a>
       </li>
     </ol>
   </nav>
