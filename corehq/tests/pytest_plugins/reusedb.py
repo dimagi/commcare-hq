@@ -175,6 +175,7 @@ def django_db_setup():
     DeferredDatabaseContext, which handles other databases
     including Couch, Elasticsearch, BlobDB, and Redis.
     """
+    # HqDbBlocker.unblock() calls DeferredDatabaseContext.setup_databases()
     try:
         yield
     finally:
@@ -222,7 +223,6 @@ class DeferredDatabaseContext:
         assert "teardown_databases" not in self.__dict__, "already set up"
         self.setup_databases = lambda b: None  # do not setup more than once
         session = get_fixture_value("request").session
-        assert session.config.should_run_database_tests != "skip"
         with ExitStack() as stack:
             try:
                 setup(stack.enter_context, stack.callback)
