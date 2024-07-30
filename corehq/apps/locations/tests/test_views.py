@@ -157,10 +157,10 @@ class LocationTypesViewTest(TestCase):
             self.send_request(data)
 
 
-class LocationSearchViewTest(TestCase):
+class LocationsSearchViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
-        super(LocationSearchViewTest, cls).setUpClass()
+        super(LocationsSearchViewTest, cls).setUpClass()
         delete_all_users()
         cls.domain = "test-domain"
         cls.project = create_domain(cls.domain)
