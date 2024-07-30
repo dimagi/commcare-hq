@@ -642,6 +642,32 @@ def analytics_ab_test(parser, token):
     return _create_page_data(parser, token, 'analytics_ab_test')
 
 
+def _bundler_main(parser, token, flag, node_class):
+    bits = token.contents.split(None, 1)
+    if len(bits) == 1:
+        tag_name = bits[0]
+        value = None
+    else:
+        tag_name, value = bits
+
+    # Treat requirejs_main_b5 identically to requirejs_main
+    # Some templates check for {% if requirejs_main %}
+    tag_name = tag_name.rstrip("_b5")
+
+    if getattr(parser, flag, False):
+        raise TemplateSyntaxError(
+            "multiple '%s' tags not allowed (%s)" % tuple(bits))
+    setattr(parser, flag, True)
+
+    if value and (len(value) < 2 or value[0] not in '"\'' or value[0] != value[-1]):
+        raise TemplateSyntaxError("bad '%s' argument: %s" % tuple(bits))
+
+    # use a block to allow extension template to set <bundler>_main for base
+    return loader_tags.BlockNode("__" + tag_name, NodeList([
+        node_class(tag_name, value and value[1:-1])
+    ]))
+
+
 @register.tag
 def requirejs_main_b5(parser, token):
     """
@@ -665,29 +691,7 @@ def requirejs_main(parser, token):
     will have a value of `None` unless an extending template has a
     `{% requirejs_main "..." %}` with a value.
     """
-    bits = token.contents.split(None, 1)
-    if len(bits) == 1:
-        tag_name = bits[0]
-        value = None
-    else:
-        tag_name, value = bits
-
-    # Treat requirejs_main_b5 identically to requirejs_main
-    # Some templates check for {% if requirejs_main %}
-    tag_name = tag_name.rstrip("_b5")
-
-    if getattr(parser, "__saw_requirejs_main", False):
-        raise TemplateSyntaxError(
-            "multiple '%s' tags not allowed (%s)" % tuple(bits))
-    parser.__saw_requirejs_main = True
-
-    if value and (len(value) < 2 or value[0] not in '"\'' or value[0] != value[-1]):
-        raise TemplateSyntaxError("bad '%s' argument: %s" % tuple(bits))
-
-    # use a block to allow extension template to set requirejs_main for base
-    return loader_tags.BlockNode("__" + tag_name, NodeList([
-        RequireJSMainNode(tag_name, value and value[1:-1])
-    ]))
+    return _bundler_main(parser, token, "__saw_requirejs_main", RequireJSMainNode)
 
 
 @register.tag
@@ -702,42 +706,7 @@ def webpack_main(parser, token):
     will have a value of `None` unless an extending template has a
     `{% webpack_main "..." %}` with a value.
     """
-    bits = token.contents.split(None, 1)
-    if len(bits) == 1:
-        tag_name = bits[0]
-        value = None
-    else:
-        tag_name, value = bits
-
-    if getattr(parser, "__saw_webpack_main", False):
-        raise TemplateSyntaxError(
-            "multiple '%s' tags not allowed (%s)" % tuple(bits))
-    parser.__saw_webpack_main = True
-
-    if value and (len(value) < 2 or value[0] not in '"\'' or value[0] != value[-1]):
-        raise TemplateSyntaxError("bad '%s' argument: %s" % tuple(bits))
-
-    # use a block to allow extension template to set requirejs_main for base
-    return loader_tags.BlockNode("__" + tag_name, NodeList([
-        WebpackMainNode(tag_name, value and value[1:-1])
-    ]))
-
-
-class WebpackMainNode(template.Node):
-
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
-
-    def __repr__(self):
-        return "<RequireJSMain Node: %r>" % (self.value,)
-
-    def render(self, context):
-        if self.name not in context and self.value:
-            # set name in block parent context
-            context.dicts[-2]['use_js_bundler'] = True
-            context.dicts[-2][self.name] = f'webpack/{self.value}.js'
-        return ''
+    return _bundler_main(parser, token, "__saw_webpac k_main", WebpackMainNode)
 
 
 class RequireJSMainNode(template.Node):
@@ -749,12 +718,24 @@ class RequireJSMainNode(template.Node):
     def __repr__(self):
         return "<RequireJSMain Node: %r>" % (self.value,)
 
+    def get_path(self):
+        return self.value
+
     def render(self, context):
-        if self.name not in context:
+        if self.name not in context and self.value:
             # set name in block parent context
             context.dicts[-2]['use_js_bundler'] = True
-            context.dicts[-2][self.name] = self.value
+            context.dicts[-2][self.name] = self.get_path()
         return ''
+
+
+class WebpackMainNode(RequireJSMainNode):
+
+    def __repr__(self):
+        return "<WebpackMain Node: %r>" % (self.value,)
+
+    def get_path(self):
+        return f"webpack/{self.value}.js"
 
 
 @register.inclusion_tag('hqwebapp/basic_errors.html')
