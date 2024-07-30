@@ -201,7 +201,7 @@ def _django_setup_unittest():
 class DeferredDatabaseContext:
 
     @timelimit(480)
-    def setup_databases(self):
+    def setup_databases(self, db_blocker):
         """Setup databases for tests"""
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 
@@ -215,8 +215,12 @@ class DeferredDatabaseContext:
                 cleanup(clear_redis)
                 cleanup(delete_couch_databases)
 
+        def teardown():
+            with db_blocker.unblock():
+                do_teardown()
+
         assert "teardown_databases" not in self.__dict__, "already set up"
-        self.setup_databases = lambda: None  # do not setup more than once
+        self.setup_databases = lambda b: None  # do not setup more than once
         session = get_fixture_value("request").session
         assert session.config.should_run_database_tests != "skip"
         with ExitStack() as stack:
@@ -225,7 +229,8 @@ class DeferredDatabaseContext:
             except BaseException:
                 session.shouldfail = "Abort: database setup failed"
                 raise
-            self.teardown_databases = stack.pop_all().close
+            do_teardown = stack.pop_all().close
+            self.teardown_databases = teardown
 
     def teardown_databases(self):
         """No-op to be replaced with ExitStack.close by setup_databases"""
@@ -406,7 +411,7 @@ class HqDbBlocker(DjangoDbBlocker):
         self._callbacks.append(self._block)
         self._unblock()
         blocker = super().unblock()
-        _db_context.setup_databases()
+        _db_context.setup_databases(self)
         return blocker
 
     def restore(self):
