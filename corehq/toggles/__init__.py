@@ -390,10 +390,13 @@ class PredictablyRandomToggle(StaticToggle):
             return False
         elif namespace is not Ellipsis and namespace not in self.namespaces:
             return False
-        return (
-            (item and deterministic_random(self._get_identifier(item)) < self.randomness)
-            or super(PredictablyRandomToggle, self).enabled(item, namespace)
-        )
+        elif item and super().enabled(f'!{item}', namespace):
+            # if there is an explicit entry for the item preceded by '!', always disable
+            return False
+        elif item and deterministic_random(self._get_identifier(item)) < self.randomness:
+            return True
+        else:
+            return super().enabled(item, namespace)
 
 
 class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
@@ -1786,6 +1789,13 @@ SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
+BLOCK_SUMOLOGIC_LOGS = StaticToggle(
+    'block_sumologic_logs',
+    'Block sending logs to sumologic per domain',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 TARGET_COMMCARE_FLAVOR = StaticToggle(
     'target_commcare_flavor',
     'Target CommCare Flavor.',
@@ -1955,6 +1965,20 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     When an individual project is having problems with rate limiting,
     use this toggle to lift the restriction for them on a temporary basis,
     just to unblock them while we sort out the conversation with the client.
+    """
+)
+
+RATE_LIMIT_REPEATERS = DynamicallyPredictablyRandomToggle(
+    'rate_limit_repeaters',
+    'Apply rate limiting to data forwarding (repeaters)',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    Rate limits are based on aggregate time spent waiting on data forwarding responses
+    within tasks for each project within the last second, minute, hour, day, and week windows.
+    Project allowances are based on the number of mobile workers in the project or subscription.
+    Rate limits are only applied (to any project) when global thresholds are surpassed.
+    The specific per-domain and global thresholds can be dynamically updated within the Django Admin.
     """
 )
 

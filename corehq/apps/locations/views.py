@@ -813,6 +813,8 @@ class EditLocationView(BaseEditLocationView):
     def users_form(self):
         if not (self.can_edit_commcare_users or self.can_access_all_locations):
             return None
+        if toggles.LOCATION_HAS_USERS.enabled(self.domain) and not self.location.location_type.has_users:
+            return None
         form = UsersAtLocationForm(
             request=self.request,
             domain_object=self.domain_object,
