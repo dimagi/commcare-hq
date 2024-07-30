@@ -82,7 +82,7 @@ class TestReportConfig(TestCase):
         self.assertEqual(self.config.filters.get('enddate'), None)
 
 
-class TestReportNotification(SimpleTestCase):
+class TestReportNotification(TestCase):
     def test_unauthorized_user_cannot_view_report(self):
         report = ReportNotification(owner_id='5', domain='test_domain', recipient_emails=[])
         bad_user = self._create_user(id='3', is_domain_admin=False)
