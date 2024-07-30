@@ -1691,6 +1691,9 @@ def link_connectid_user(request, domain):
 @api_auth()
 def bulk_user_upload_api(request, domain):
     try:
+        if len(request.FILES) > 1:
+            raise UserUploadError(_("only one file can be uploaded at a time"))
+
         file = request.FILES.get('bulk_upload_file')
         if file is None:
             raise UserUploadError(_('no file uploaded'))

@@ -563,6 +563,23 @@ class BulkUserUploadAPITest(TestCase):
         self.assertEqual(response.json(), {'success': False, 'message': 'Unexpected error'})
         mock_notify_exception.assert_called_once_with(None, message='Unexpected error')
 
+    def test_cant_upload_multiple_files(self):
+        file1 = self._create_valid_workbook()
+        file2 = self._create_valid_workbook()
+
+        response = self.client.post(
+            self.url,
+            {'bulk_upload_file': file1, 'another_file': file2},
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
+            format='multipart'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {
+            'success': False,
+            'message': 'only one file can be uploaded at a time'
+        })
+
 
 class BaseUploadUserTest(TestCase):
     def setUp(self):

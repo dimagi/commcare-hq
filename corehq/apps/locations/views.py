@@ -1197,6 +1197,9 @@ def bulk_location_upload_api(request, domain, **kwargs):
 
 
 def _bulk_location_upload_api(request, domain):
+    if len(request.FILES) > 1:
+        raise LocationBulkImportError(_("only one file can be uploaded at a time"))
+
     upload_file = request.FILES.get("bulk_upload_file")
     if not upload_file:
         raise LocationBulkImportError(_("no file uploaded"))

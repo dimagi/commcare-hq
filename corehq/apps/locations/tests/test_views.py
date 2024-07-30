@@ -277,3 +277,20 @@ class BulkLocationUploadAPITest(TestCase):
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.json(), {'success': False, 'message': 'Some error'})
         mock_notify_exception.assert_called_once_with(None, message='Some error')
+
+    def test_cant_upload_multiple_files(self):
+        file1 = self._create_mock_file()
+        file2 = self._create_mock_file()
+
+        response = self.client.post(
+            self.url,
+            {'bulk_upload_file': file1, 'another_file': file2},
+            HTTP_AUTHORIZATION=f'ApiKey {self.user.username}:{self.api_key.key}',
+            format='multipart'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {
+            'success': False,
+            'message': 'only one file can be uploaded at a time'
+        })
