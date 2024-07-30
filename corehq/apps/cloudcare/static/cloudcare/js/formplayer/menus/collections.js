@@ -29,12 +29,6 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
         });
     }
 
-    function enableLanguageOption(response, collection) {
-        response.langs = response.locales.slice(1);
-        _.extend(collection, _.pick(response, collection.formProperties));
-        webFormSession.applyLangListener()
-    }
-
     var MenuSelect = Backbone.Collection.extend({
         commonProperties: [
             'appId',
@@ -120,6 +114,12 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
                 _.pick(response, ["queryKey", "selections"]),
                 _.identity
             );
+            if (response.locales && !UsersModels.getCurrentUser().displayOptions.singleAppMode
+                && (response.entities || response.type === "query")) {
+                    response.langs = response.locales.slice(1);
+                    _.extend(this, _.pick(response, this.formProperties));
+                    webFormSession.applyLangListener();
+                }
             if (response.commands) {
                 _.extend(this, _.pick(response, this.commandProperties));
                 addBreadcrumb(this, "menu", _.extend(sentryData, {
@@ -134,16 +134,10 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
                 // backwards compatibility - remove after FP deploy of #1374
                 _.defaults(response, {"hasDetails": true});
                 _.extend(this, _.pick(response, this.entityProperties));
-                if (response.locales && !UsersModels.getCurrentUser().displayOptions.singleAppMode) {
-                    enableLanguageOption(response, this);
-                }
                 return response.entities;
             } else if (response.type === "query") {
                 addBreadcrumb(this, "query", sentryData);
                 _.extend(this, _.pick(response, this.queryProperties));
-                if (response.locales && !UsersModels.getCurrentUser().displayOptions.singleAppMode) {
-                    enableLanguageOption(response, this);
-                }
                 return response.displays;
             } else if (response.details) {
                 addBreadcrumb(this, "details", sentryData);

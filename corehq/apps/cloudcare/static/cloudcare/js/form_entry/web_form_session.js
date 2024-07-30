@@ -604,15 +604,10 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
 
     function applyLangListener(session) {
         $.unsubscribe('formplayer.' + constants.CHANGE_LANG);
-        if (session) {
-            $.subscribe('formplayer.' + constants.CHANGE_LANG, function (e, lang) {
-                session.changeLang(lang);
-            });
-        } else {
-            $.subscribe('formplayer.' + constants.CHANGE_LANG, function (e, lang) {
-                changeLang(lang);
-            });
-        }
+        const fn = session ? session.changeLang : changeLang;
+        $.subscribe('formplayer.' + constants.CHANGE_LANG, function (e, lang) {
+            fn(lang);
+        });
 
     }
 
