@@ -22,7 +22,6 @@ def remove_keys_from_data(apps, schema_editor):
                 modified = True
 
         if modified:
-            user_data.data = data
             user_data.save()
 
 
@@ -48,7 +47,6 @@ def revert_keys_in_data(apps, schema_editor):
         if assigned_location_ids:
             data['commcare_location_ids'] = user_location_data(assigned_location_ids)
 
-        user_data.data = data
         user_data.save()
 
 
