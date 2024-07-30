@@ -1,12 +1,10 @@
+// These styles are overridden in preview_app/breadcrumbs.scss and
+// formplayer-webapp/breadcrumbs.scss
 #breadcrumb-region {
     position: sticky;
     position: -webkit-sticky;
     top: 0;
     z-index: $zindex-navbar-cloudcare - 1;
-}
-
-#breadcrumb-region .breadcrumb-item, .single-app-view .breadcrumb-item {
-    cursor: pointer;
 }
 
 #breadcrumb-region .breadcrumb,
@@ -19,24 +17,11 @@
 
   .breadcrumb-item {
     color: white;
-
     &:before {
-      padding: 0 6px 0 0;
-      content: '\f054';
-      font-family: 'FontAwesome';
+      font-family: "FontAwesome";  // supports bsbreadcrumb-divider: \f054
     }
-
     a {
       color: white;
     }
   }
-  .breadcrumb-item:first-child {
-    &:before {
-      display: none;
-    }
-  }
-}
-
-#breadcrumb__menu-dropdown {
-    cursor: pointer;
 }
