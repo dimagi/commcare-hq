@@ -21,7 +21,6 @@ from corehq.util.test_utils import flag_enabled
 from corehq.util.workbook_json.excel import WorkbookJSONError
 
 
-
 OTHER_DETAILS = {
     'expand_from': None,
     'expand_to': None,
