@@ -472,7 +472,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             number_generated = 0
             for name, expression in list(named_expression_specs.items()):
                 try:
-                    factory_context.named_expressions = named_expressions
+                    factory_context.named_expressions.replace(named_expressions)
                     named_expressions[name] = ExpressionFactory.from_spec(expression, factory_context)
                     number_generated += 1
                     del named_expression_specs[name]

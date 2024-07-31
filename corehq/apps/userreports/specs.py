@@ -1,14 +1,13 @@
-from dataclasses import dataclass, field
+import weakref
+from contextlib import contextmanager
 from datetime import datetime
-from typing import Optional
 
 from django.utils.translation import gettext
 from memoized import memoized
 
+from corehq import toggles
 from corehq.apps.userreports.exceptions import BadSpecError
 from dimagi.ext.jsonobject import StringProperty
-
-from corehq import toggles
 
 
 def TypeProperty(value):
@@ -20,20 +19,70 @@ def TypeProperty(value):
     return StringProperty(required=True, choices=[value])
 
 
-@dataclass
+class BaseContainer:
+    """Class used to manage access to named filters and expressions and
+    check for circular references.
+    """
+    def __init__(self, factory_context, expressions, domain=None):
+        self.factory_context = weakref.proxy(factory_context)
+        self.expressions = expressions
+        self.domain = domain
+        self.stack = []
+
+    def replace(self, expressions):
+        self.expressions = expressions
+
+    def get(self, name):
+        with self._search_scope(name):
+            from corehq.apps.userreports.models import LazyExpressionWrapper
+            all_expressions = self.expressions | self._get_db_expressions()
+            expr = all_expressions.get(name)
+            if not expr:
+                raise BadSpecError(gettext("Couldn't find named expression with name: {name}").format(name=name))
+            if isinstance(expr, LazyExpressionWrapper):
+                # unwrap here to force evaluation of the lazy expression and catch recursive references
+                expr = expr.unwrap()
+            return expr
+
+    @contextmanager
+    def _search_scope(self, name):
+        """Return a context manager that will raise an error if the name is already in the stack."""
+        if name in self.stack:
+            raise BadSpecError(gettext("Recursive expression reference: {name}").format(name=name))
+
+        self.stack.append(name)
+        try:
+            yield self
+        finally:
+            self.stack.pop()
+
+    @memoized
+    def _get_db_expressions(self):
+        if self.domain and toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
+            return self._load_db_expressions()
+        return {}
+
+    def _load_db_expressions(self):
+        raise NotImplementedError()
+
+
+class FilterContainer(BaseContainer):
+    def _load_db_expressions(self):
+        from corehq.apps.userreports.models import UCRExpression
+        return UCRExpression.objects.get_wrapped_filters_for_domain(self.domain, self.factory_context)
+
+
+class ExpressionContainer(BaseContainer):
+    def _load_db_expressions(self):
+        from corehq.apps.userreports.models import UCRExpression
+        return UCRExpression.objects.get_wrapped_expressions_for_domain(self.domain, self.factory_context)
+
+
 class FactoryContext:
-    named_expressions: dict
-    _named_expressions: dict = field(init=False, repr=False)
-
-    named_filters: dict
-    _named_filters: dict = field(init=False, repr=False)
-
-    domain: Optional[str] = None
-
-    def __post_init__(self):
-        """Initialize the stacks for tracking recursive references."""
-        self._expression_stack = []
-        self._filter_stack = []
+    def __init__(self, named_expressions, named_filters, domain=None):
+        self.named_expressions = ExpressionContainer(self, named_expressions, domain)
+        self.named_filters = FilterContainer(self, named_filters, domain)
+        self.domain = domain
 
     def expression_from_spec(self, spec):
         from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -43,64 +92,11 @@ class FactoryContext:
         from corehq.apps.userreports.filters.factory import FilterFactory
         return FilterFactory.from_spec(spec, self)
 
-    @property
-    @memoized
-    def named_filters(self):
-        raise Exception("Use get_named_filter instead of named_filters directly.")
-
-    @named_filters.setter
-    def named_filters(self, named_filters):
-        self._named_filters = named_filters
-
-    @property
-    @memoized
-    def _extra_filters(self):
-        extra_filters = {}
-        if self.domain and toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
-            from corehq.apps.userreports.models import UCRExpression
-            extra_filters = UCRExpression.objects.get_wrapped_filters_for_domain(self.domain, self)
-        return extra_filters
-
     def get_named_filter(self, name):
-        return self._get_named(name, self._named_filters | self._extra_filters, self._filter_stack)
-
-    @property
-    @memoized
-    def named_expressions(self):
-        raise Exception("Use get_named_expression instead of named_expressions directly.")
-
-    @named_expressions.setter
-    def named_expressions(self, named_expressions):
-        self._named_expressions = named_expressions
-
-    @property
-    @memoized
-    def _extra_expressions(self):
-        extra_expressions = {}
-        if self.domain and toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
-            from corehq.apps.userreports.models import UCRExpression
-            extra_expressions = UCRExpression.objects.get_wrapped_expressions_for_domain(self.domain, self)
-        return extra_expressions
+        return self.named_filters.get(name)
 
     def get_named_expression(self, name):
-        return self._get_named(name, self._named_expressions | self._extra_expressions, self._expression_stack)
-
-    def _get_named(self, name, named_dict, stack):
-        from corehq.apps.userreports.models import LazyExpressionWrapper
-        if name in stack:
-            raise BadSpecError(gettext("Recursive expression reference: {name}").format(name=name))
-
-        stack.append(name)
-        try:
-            expr = named_dict.get(name)
-            if not expr:
-                raise BadSpecError(gettext("Couldn't find named expression with name: {name}").format(name=name))
-            if isinstance(expr, LazyExpressionWrapper):
-                # unwrap here to force evaluation of the lazy expression and catch recursive references
-                expr = expr.unwrap()
-            return expr
-        finally:
-            stack.pop()
+        return self.named_expressions.get(name)
 
     @staticmethod
     def empty(domain=None):
