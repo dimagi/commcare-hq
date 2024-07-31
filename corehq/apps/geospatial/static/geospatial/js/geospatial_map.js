@@ -424,7 +424,8 @@ hqDefine("geospatial/js/geospatial_map", [
                 alertUser.alert_user(xhr.responseText, 'danger');
             } else {
                 alertUser.alert_user(
-                    gettext('Oops! Something went wrong! Please report an issue if the problem persists.')
+                    gettext('Oops! Something went wrong! Please report an issue if the problem persists.'),
+                    'danger'
                 );
             }
         } else if (xhr.responseJSON.aaData.length && mapModel.mapInstance) {
