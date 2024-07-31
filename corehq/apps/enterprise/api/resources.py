@@ -303,6 +303,10 @@ class ODataFeedResource(ODataEnterpriseReportResource):
 
 
 class FormSubmissionResource(ODataEnterpriseReportResource):
+    class Meta(ODataEnterpriseReportResource.Meta):
+        limit = 10000
+        max_limit = 20000
+
     form_id = fields.CharField()
     form_name = fields.CharField()
     submitted = fields.DateTimeField()
