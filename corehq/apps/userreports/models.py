@@ -466,24 +466,14 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     def named_expression_objects(self):
         named_expression_specs = deepcopy(self.named_expressions)
         named_expressions = {}
-        spec_error = None
-        factory_context = FactoryContext(named_expressions=named_expressions, named_filters={}, domain=self.domain)
-        while named_expression_specs:
-            number_generated = 0
-            for name, expression in list(named_expression_specs.items()):
-                try:
-                    factory_context.named_expressions.replace(named_expressions)
-                    named_expressions[name] = ExpressionFactory.from_spec(expression, factory_context)
-                    number_generated += 1
-                    del named_expression_specs[name]
-                except BadSpecError as bad_spec_error:
-                    # maybe a nested name resolution issue, try again on the next pass
-                    spec_error = bad_spec_error
-            if number_generated == 0 and named_expression_specs:
-                # we unsuccessfully generated anything on this pass and there are still unresolved
-                # references. we have to fail.
-                assert spec_error is not None
-                raise spec_error
+        factory_context = FactoryContext.empty(self.domain)
+        for name, expression in list(named_expression_specs.items()):
+            named_expressions[name] = LazyExpressionWrapper(expression, factory_context)
+
+        factory_context.named_expressions.replace(named_expressions)
+        # resolve expressions and make sure there are no circular references
+        for name in named_expression_specs:
+            named_expressions[name] = factory_context.get_named_expression(name)
         return named_expressions
 
     @property
@@ -1491,7 +1481,12 @@ class LazyExpressionWrapper:
 
     def unwrap(self):
         if self.wrapped_expression is None:
-            self.wrapped_expression = self.expression.wrapped_definition(self.factory_context)
+            if hasattr(self.expression, 'wrapped_definition'):
+                self.wrapped_expression = self.expression.wrapped_definition(self.factory_context)
+            elif isinstance(self.expression, dict):
+                self.wrapped_expression = ExpressionFactory.from_spec(self.expression, self.factory_context)
+            else:
+                raise ValueError(f"Invalid expression type: {self.expression}")
         return self.wrapped_expression
 
 
