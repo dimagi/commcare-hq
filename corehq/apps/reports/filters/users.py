@@ -202,7 +202,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         'When searching by location, put your location name in quotes to show only exact matches. '
         'To more easily find a location, you may specify multiple levels by separating with a "/". '
         'For example, "Massachusetts/Suffolk/Boston". '
-        '<a href="https://confluence.dimagi.com/display/commcarepublic/Search+for+Locations"'
+        '<a href="https://dimagi.atlassian.net/wiki/spaces/'
+        'commcarepublic/pages/2215051298/Organization+Data+Management"'
         'target="_blank">Learn more</a>.'
     ))
 

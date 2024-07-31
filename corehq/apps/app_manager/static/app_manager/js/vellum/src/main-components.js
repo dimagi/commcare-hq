@@ -49456,7 +49456,7 @@ define('vellum/core',[
                     title: gettext("Advanced"),
                     text: gettext("These are advanced settings and are not needed for most applications.  " +
                         "Please only change these if you have a specific need!"),
-                    link: "https://confluence.dimagi.com/display/commcarepublic/Application+Building"
+                    link: "https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946283/Application+Development"
                 }
             }
         ];
