@@ -1,0 +1,66 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<script type="text/template" id="detail-view-list-template">
+  <tbody>
+  </tbody>
+</script>
+
+<script type="text/template" id="detail-view-item-template">
+  <th><%- header %></th>
+  <% if (style.displayFormat === 'Graph') { %>
+  <td><iframe srcdoc="<%- data %>" height="300" width="300"></iframe></td>
+  <% } else if (style.displayFormat === 'Image') { %>
+  <td class="module-case-list-column"><img alt="<%- altText %>" class="module-icon" src="<%- resolveUri(data) %>"/></td>
+  <% } else if (style.displayFormat === 'Phone') { %>
+  <td><a href="tel:<%- data %>"><%- data %></a></td>
+  <% } else if (style.displayFormat === 'Markdown' && html) { %>
+  <td class="webapp-markdown-output"><%= html %></td>
+  <% } else { %>
+  <td><%- data %></td>
+  <% } %>
+</script>
+
+<script type="text/template" id="detail-view-tab-list-template">
+  <ul class="nav nav-tabs" role="tablist">
+  </ul>
+</script>
+
+<script type="text/template" id="detail-view-tab-item-template">
+  <a href="" role="tab" data-keyboard="true" data-toggle="tab"><%- title %></a>
+</script>
+
+<script type="text/template" id="module-case-detail-multi-select">
+  <button type="button"
+      class="btn btn-success btn-lg module-case-detail-btn"
+      id="select-case"
+      data-dismiss="modal">{% trans "Select" %}</button>
+  <button type="button"
+      class="btn btn-default btn-lg module-case-detail-btn"
+      data-dismiss="modal">{% trans "Cancel" %}</button>
+</script>
+
+<script type="text/template" id="module-case-detail">
+  <button type="button"
+          class="btn btn-success btn-lg module-case-detail-continue"
+          id="select-case"
+          data-dismiss="modal">{% trans "Continue" %}</button>
+</script>
+
+<div id="case-detail-modal" class="modal fade module-case-detail-modal" role="dialog" tabindex='-1'>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" aria-label='{% trans_html_attr "Close" %}' class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">{% trans "Case Detail" %}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="js-detail-tabs module-case-detail-tabs"></div>
+        <div class="js-detail-content"></div>
+      </div>
+      <div class="modal-footer">
+        <div class="js-detail-footer-content text-center"></div>
+      </div>
+    </div>
+  </div>
+</div>

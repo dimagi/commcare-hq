@@ -18,16 +18,16 @@
  #sidebar-region {
    background: transparent;
 -  @media (min-width: @screen-md-min) {
-+  @include media-breakpoint-up(lg) {
++  @include media-breakpoint-up(md) {
      width: 300px;
      position: absolute;
    }
 -  @media (max-width: @screen-sm-max) {
-+  @include media-breakpoint-down(lg) {
++  @include media-breakpoint-down(md) {
      max-width: 600px;
      margin: auto;
    }
-@@ -66,35 +69,39 @@
+@@ -66,10 +69,10 @@
  
  .query-description {
    a {
@@ -38,17 +38,9 @@
 -    color: @cc-brand-low;
 +    color: $cc-brand-low;
    }
--}
--
--.query-caption.required .control-label::before, .search-query-group-header.required .search-query-group-header-label::before {
--  content: '*';
--  font-weight: bold;
--  color: #c0392b;
--  margin: 0 3px;
--  float: left;
  }
  
- .search-query-group-header-label {
+@@ -85,16 +88,28 @@
    font-size: larger;
  }
  

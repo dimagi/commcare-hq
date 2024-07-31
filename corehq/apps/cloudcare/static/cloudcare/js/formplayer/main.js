@@ -31,14 +31,14 @@ hqDefine("cloudcare/js/formplayer/main", [
             $trialBanner = $('#cta-trial-banner');
         var hideMenu = function () {
             $menuToggle.data('minimized', 'yes');
-            $navbar.addClass("d-none");
-            $trialBanner.addClass("d-none");
+            $navbar.addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+            $trialBanner.addClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
             $menuToggle.text(gettext('Show Full Menu'));
         };
         var showMenu = function () {
             $menuToggle.data('minimized', 'no');
-            $navbar.removeClass("d-none");
-            $trialBanner.removeClass("d-none");
+            $navbar.removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
+            $trialBanner.removeClass(window.USE_BOOTSTRAP5 ? "d-none" : "hide");
             $navbar.css('margin-top', '');
             $menuToggle.text(gettext('Hide Full Menu'));
         };

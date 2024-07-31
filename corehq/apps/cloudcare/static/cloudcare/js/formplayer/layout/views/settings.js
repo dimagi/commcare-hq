@@ -7,6 +7,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
     'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
+    'bootstrap-switch/dist/js/bootstrap-switch', // bootstrapSwitch: only when window.USE_BOOTSTRAP5 is false
 ], function (
     $,
     _,
@@ -66,15 +67,18 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
             oneQuestionPerScreen: '.js-one-question-per-screen',
         },
         events: {
-            'change @ui.oneQuestionPerScreen': 'onChangeOneQuestionPerScreen',
+            'switchChange.bootstrapSwitch @ui.oneQuestionPerScreen': 'onChangeOneQuestionPerScreen',
         },
         onRender: function () {
-            if (this.currentUser.displayOptions.oneQuestionPerScreen) {
-                this.ui.oneQuestionPerScreen.attr("checked", "checked");
+            if (!window.USE_BOOTSTRAP5) {
+                this.ui.oneQuestionPerScreen.bootstrapSwitch(
+                    'state',
+                    this.currentUser.displayOptions.oneQuestionPerScreen
+                );
             }
         },
-        onChangeOneQuestionPerScreen: function (e) {
-            this.currentUser.displayOptions.oneQuestionPerScreen = e.target.checked;
+        onChangeOneQuestionPerScreen: function (e, switchValue) {
+            this.currentUser.displayOptions.oneQuestionPerScreen = switchValue;
             UsersModels.saveDisplayOptions(this.currentUser.displayOptions);
         },
     });
