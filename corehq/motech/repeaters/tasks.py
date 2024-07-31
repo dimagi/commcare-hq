@@ -26,7 +26,6 @@ from .const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
     CHECK_REPEATERS_PARTITION_COUNT,
-    ENDPOINT_TIMER,
     MAX_RETRY_WAIT,
     RATE_LIMITER_DELAY_RANGE,
     State,
@@ -145,7 +144,7 @@ def retry_process_repeat_record(repeat_record_id, domain):
 
 
 def _process_repeat_record(repeat_record):
-    time_spent_waiting = 0
+    request_duration = None
     with TimingContext('process_repeat_record') as timer:
         if repeat_record.state == State.Cancelled:
             return
@@ -177,20 +176,19 @@ def _process_repeat_record(repeat_record):
                 action = 'rate_limited'
             elif repeat_record.is_queued():
                 with TimingContext() as fire_timer:
-                    repeat_record.fire()
+                    request_duration = repeat_record.fire()
                 # round up to the nearest millisecond, meaning always at least 1ms
+                # still rate limit based on total time spent in repeat_record.fire(), not just request_duration
                 report_repeater_usage(repeat_record.domain, milliseconds=int(fire_timer.duration * 1000) + 1)
-                endpoint_timer = [timer for timer in fire_timer.subs if timer.name == ENDPOINT_TIMER][0]
-                time_spent_waiting = endpoint_timer.duration
                 action = 'attempted'
         except Exception:
             logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
             return
 
-    processing_time_in_ms = (timer.duration - time_spent_waiting) * 1000
+    processing_time = timer.duration - request_duration if request_duration else timer.duration
     metrics_histogram(
         'commcare.repeaters.repeat_record_processing.timing',
-        processing_time_in_ms,
+        processing_time * 1000,
         buckets=(100, 500, 1000, 5000),
         bucket_tag='duration',
         bucket_unit='ms',
