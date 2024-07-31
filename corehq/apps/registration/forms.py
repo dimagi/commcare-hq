@@ -495,7 +495,7 @@ class AdminInvitesUserForm(BaseLocationForm):
         super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
         self.can_edit_tableau_config = can_edit_tableau_config
         domain_obj = Domain.get_by_name(domain)
-        self.fields['role'].choices = role_choices
+        self.fields['role'].choices = [('', _("Select a role"))] + role_choices
         if domain_obj:
             if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
                 self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)

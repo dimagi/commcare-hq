@@ -270,8 +270,7 @@ class FormplayerSession:
         self.log("Starting app session:\n")
 
     def execute_step(self, step):
-        is_form_step = isinstance(step, (steps.AnswerQuestionStep, steps.SubmitFormStep))
-        if is_form_step and self.form_mode == const.FORM_MODE_IGNORE:
+        if getattr(step, "is_form_step", False) and self.form_mode == const.FORM_MODE_IGNORE:
             self.log_step(step, skipped=True)
             return
         if self.form_mode == const.FORM_MODE_NO_SUBMIT and isinstance(step, steps.SubmitFormStep):

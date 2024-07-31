@@ -4,6 +4,10 @@ from django.test import TestCase
 from unittest.mock import patch
 
 from corehq.apps.app_manager.models import LinkedApplication
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.updates import update_user_roles
@@ -12,9 +16,9 @@ from corehq.apps.reports.models import TableauServer, TableauVisualization
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.userreports.util import get_ucr_class_name
 from corehq.apps.users.models import HqPermissions, UserRole
-from corehq.util.test_utils import flag_enabled
-
 from corehq.apps.users.role_utils import UserRolePresets
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.util.test_utils import flag_enabled
 
 
 class TestUpdateRoles(TestCase):
@@ -313,6 +317,67 @@ class TestUpdateRoles(TestCase):
         # viz_3 should be included because it's in the downstream role's permission list and isn't linked upstream
         self.assertListEqual([str(downstream_viz_1.id), str(downstream_viz_3.id)],
                              roles['tableau_test'].permissions.view_tableau_list)
+
+    def test_profile_permissions(self):
+        upstream_definition = CustomDataFieldsDefinition(domain=self.upstream_domain,
+                                                         field_type=UserFieldsView.field_type)
+        upstream_definition.save()
+        upstream_profile1 = CustomDataFieldsProfile(
+            name='p1',
+            fields={},
+            definition=upstream_definition,
+        )
+        upstream_profile1.save()
+        upstream_profile2 = CustomDataFieldsProfile(
+            name='p2',
+            fields={},
+            definition=upstream_definition,
+        )
+        upstream_profile2.save()
+        upstream_profile3 = CustomDataFieldsProfile(
+            name='p3',
+            fields={},
+            definition=upstream_definition,
+        )
+        upstream_profile3.save()
+        downstream_definition = CustomDataFieldsDefinition(domain=self.downstream_domain,
+                                                           field_type=UserFieldsView.field_type)
+        downstream_definition.save()
+        downstream_profile1 = CustomDataFieldsProfile(
+            name='p1',
+            fields={},
+            definition=downstream_definition,
+            upstream_id=upstream_profile1.id
+        )
+        downstream_profile1.save()
+        downstream_profile2 = CustomDataFieldsProfile(
+            name='p2',
+            fields={},
+            definition=downstream_definition,
+        )
+        downstream_profile2.save()
+        downstream_profile3 = CustomDataFieldsProfile(
+            name='p3',
+            fields={},
+            definition=downstream_definition,
+            upstream_id=upstream_profile3.id
+        )
+        downstream_profile3.save()
+
+        self.upstream_profile_role = UserRole.create(self.upstream_domain,
+                                    'profile_test',
+                                    HqPermissions(edit_user_profile=False,
+                                                  edit_user_profile_list=[str(upstream_profile1.id),
+                                                                    str(upstream_profile2.id)]))
+        UserRole.create(
+            self.downstream_domain, 'profile_test', HqPermissions(edit_user_profile=False,
+                edit_user_profile_list=[str(downstream_profile1.id), str(downstream_profile2.id)]),
+            upstream_id=self.upstream_profile_role.get_id
+        )
+        update_user_roles(self.domain_link)
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        self.assertListEqual([str(downstream_profile1.id), str(downstream_profile2.id)],
+                             roles['profile_test'].permissions.edit_user_profile_list)
 
     def test_when_synced_role_with_name_change_conflicts_with_local_role_conflict_is_raised(self):
         renamed_role = self._create_user_role(self.upstream_domain, name='LocalRoleName')

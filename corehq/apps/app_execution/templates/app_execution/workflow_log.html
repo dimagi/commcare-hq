@@ -1,12 +1,10 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load i18n %}
 {% block page_content %}
-  <div class="mb-3">
-    <h2>{% blocktrans with workflow_name=log.config.name date=log.started|date %}
-      Workflow Execution Log for {{ workflow_name }}: {{ date }}
-    {% endblocktrans %}</h2>
-    <a class='btn btn-primary' href="{% url 'app_execution:edit_workflow' request.domain log.workflow_id %}">{% translate 'Edit Workflow' %}</a>
-  </div>
+  {% blocktrans asvar title_text with workflow_name=log.config.name date=log.started|date %}
+    Workflow Execution Log for {{ workflow_name }}: {{ date }}
+  {% endblocktrans %}
+  {% include "app_execution/components/title_bar.html" with workflow_id=log.workflow_id title_text=title_text%}
   <h3>{% translate 'Details' %}</h3>
   <p>
   <ul>
@@ -18,5 +16,5 @@
     </span></li>
   </ul>
   </p>
-  {% include "app_execution/components/logs.html" with output=log.output success=log.success error=log.error %}
+  {% include "app_execution/components/logs.html" with log=log %}
 {% endblock page_content %}

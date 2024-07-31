@@ -10,8 +10,6 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
 )
 
-FEATURE_TYPES = list(dict(FeatureType.CHOICES))
-
 
 def ensure_plans(config, verbose, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
@@ -31,11 +29,8 @@ def ensure_plans(config, verbose, apps):
             plan_deets['product_rate_monthly_fee'], plan_key.edition,
             verbose=verbose, apps=apps,
         )
-        features = _ensure_features(plan_key.edition, verbose, apps)
-        feature_rates = _ensure_feature_rates(
-            plan_deets['feature_rates'], features, plan_key.edition,
-            verbose=verbose, apps=apps,
-        )
+        features = _ensure_features(plan_deets['feature_rates'], plan_key.edition, verbose, apps)
+        feature_rates = ensure_feature_rates(plan_deets['feature_rates'], features, verbose=verbose, apps=apps)
 
         software_plan = _ensure_software_plan(plan_key, product, product_rate, verbose, apps)
         _ensure_software_plan_version(role, software_plan, product_rate, feature_rates, apps)
@@ -102,7 +97,7 @@ def _get_software_product(product_name, verbose, apps):
     return product
 
 
-def _ensure_features(edition, verbose, apps):
+def _ensure_features(feature_rates, edition, verbose, apps):
     """
     Ensures that all the Features necessary for the plans are created.
     """
@@ -112,29 +107,28 @@ def _ensure_features(edition, verbose, apps):
         log_accounting_info(f"Ensuring Features for plan: {edition}")
 
     features = []
-    for feature_type in FEATURE_TYPES:
-        # Don't prefix web user feature name with edition
-        if feature_type == FeatureType.WEB_USER:
-            feature = Feature(name=feature_type, feature_type=feature_type)
-        else:
-            feature = Feature(name=f"{feature_type} {edition}", feature_type=feature_type)
+    for feature_type in feature_rates.keys():
+        if feature_type in FeatureType.EDITIONED_FEATURES:
+            feature_name = f"{feature_type} {edition}"
             if edition == SoftwarePlanEdition.ENTERPRISE:
-                feature.name = f"Dimagi Only {feature.name}"
+                feature_name = f"Dimagi Only {feature_name}"
+        else:
+            feature_name = feature_type
         try:
-            feature = Feature.objects.get(name=feature.name)
+            feature = Feature.objects.get(name=feature_name)
             if verbose:
                 log_accounting_info(
                     f"Feature '{feature.name}' already exists. Using existing feature to add rate."
                 )
         except Feature.DoesNotExist:
-            feature.save()
+            feature = Feature.objects.create(name=feature_name, feature_type=feature_type)
             if verbose:
                 log_accounting_info(f"Creating Feature: {feature}")
         features.append(feature)
     return features
 
 
-def _ensure_feature_rates(feature_rates, features, edition, verbose, apps):
+def ensure_feature_rates(feature_rates, features, verbose, apps):
     """
     Ensures that all the FeatureRates necessary for the plans are created.
     """

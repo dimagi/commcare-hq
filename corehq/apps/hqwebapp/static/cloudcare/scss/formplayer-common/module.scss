@@ -5,7 +5,9 @@
     vertical-align: middle;
     transition: background 1s;
   }
-
+  .module-column-name {
+    position: relative;
+  }
   tr:hover {
     .module-column {
       background-color: $cc-bg;
@@ -125,7 +127,6 @@ button.clickable-icon {
 .module-table .module-case-list-column-checkbox {
   cursor: default;
   width: 35px;
-  border: 0;
   vertical-align: middle;
 }
 
