@@ -168,16 +168,19 @@ def _process_repeat_record(repeat_record):
                 # in the next check to process repeat records, which helps to avoid
                 # clogging the queue
                 repeat_record.postpone_by(MAX_RETRY_WAIT)
+                action = 'paused'
             elif rate_limit_repeater(repeat_record.domain):
                 # Spread retries evenly over the range defined by RATE_LIMITER_DELAY_RANGE
                 # with the intent of avoiding clumping and spreading load
                 repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
+                action = 'rate_limited'
             elif repeat_record.is_queued():
                 with TimingContext() as fire_timer:
                     repeat_record.fire()
                 # round up to the nearest millisecond, meaning always at least 1ms
                 report_repeater_usage(repeat_record.domain, milliseconds=int(fire_timer.duration * 1000) + 1)
                 time_spent_waiting = fire_timer.subs[0].duration
+                action = 'attempted'
         except Exception:
             logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
             return
@@ -187,7 +190,10 @@ def _process_repeat_record(repeat_record):
         'commcare.repeaters.repeat_record_processing.timing',
         processing_time,
         timing_buckets=(.01, .03, .1, .3, 1),
-        tags={'domain': repeat_record.domain},
+        tags={
+            'domain': repeat_record.domain,
+            'action': action,
+        },
     )
 
 
