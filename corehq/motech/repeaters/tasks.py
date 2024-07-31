@@ -26,6 +26,7 @@ from .const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
     CHECK_REPEATERS_PARTITION_COUNT,
+    ENDPOINT_TIMER,
     MAX_RETRY_WAIT,
     RATE_LIMITER_DELAY_RANGE,
     State,
@@ -179,7 +180,8 @@ def _process_repeat_record(repeat_record):
                     repeat_record.fire()
                 # round up to the nearest millisecond, meaning always at least 1ms
                 report_repeater_usage(repeat_record.domain, milliseconds=int(fire_timer.duration * 1000) + 1)
-                time_spent_waiting = fire_timer.subs[0].duration
+                endpoint_timer = [timer for timer in fire_timer.subs if timer.name == ENDPOINT_TIMER][0]
+                time_spent_waiting = endpoint_timer.duration
                 action = 'attempted'
         except Exception:
             logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))

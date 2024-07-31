@@ -121,6 +121,7 @@ from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 from .const import (
+    ENDPOINT_TIMER,
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
     MAX_RETRY_WAIT,
@@ -436,7 +437,7 @@ class Repeater(RepeaterSuperProxy):
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)
         try:
-            with TimingContext('endpoint_timing'):
+            with TimingContext(ENDPOINT_TIMER):
                 response = self.send_request(repeat_record, payload)
         except (Timeout, ConnectionError) as error:
             log_repeater_timeout_in_datadog(self.domain)
