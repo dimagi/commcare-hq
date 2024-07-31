@@ -29,12 +29,13 @@ hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", [
         },
 
         setProgress: function (done, total, duration) {
+            const invisibilityClass = window.USE_BOOTSTRAP5 ? "d-none" : "hide";
             if (done === 0) {
-                this.progressEl.find('.progress').addClass("d-none");
-                this.progressEl.find('.js-loading').removeClass("d-none");
+                this.progressEl.find('.progress').addClass(invisibilityClass);
+                this.progressEl.find('.js-loading').removeClass(invisibilityClass);
             } else {
-                this.progressEl.find('.progress').removeClass("d-none");
-                this.progressEl.find('.js-loading').addClass("d-none");
+                this.progressEl.find('.progress').removeClass(invisibilityClass);
+                this.progressEl.find('.js-loading').addClass(invisibilityClass);
             }
 
             var progress = total === 0 ? 0 : done / total;

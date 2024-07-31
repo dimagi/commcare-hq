@@ -6,7 +6,6 @@ hqDefine("cloudcare/js/formplayer/users/views", [
     'backbone.marionette',
     'hqwebapp/js/toggles',
     'cloudcare/js/formplayer/app',
-    'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/users/utils',
@@ -17,7 +16,6 @@ hqDefine("cloudcare/js/formplayer/users/views", [
     Marionette,
     toggles,
     FormplayerFrontend,
-    constants,
     formplayerUtils,
     usersModels,
     usersUtils
@@ -87,7 +85,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
                 message: _.template($('#user-data-template').html())(
                     { user: this.model.toJSON() }
                 ),
-                confirmText: gettext('Log in'),
+                confirmText: gettext('Yes, log in as this user'),
                 onConfirm: function () {
                     usersUtils.Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
@@ -155,14 +153,12 @@ hqDefine("cloudcare/js/formplayer/users/views", [
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
         },
         templateContext: function () {
-            const environment = usersModels.getCurrentUser().environment;
-            const paginationOptions = formplayerUtils.paginateOptions(
+            var paginationOptions = formplayerUtils.paginateOptions(
                 this.model.get('page') - 1,
                 this.totalPages(),
                 this.collection.total
             );
             return _.extend(paginationOptions, {
-                isAppPreview: environment === constants.PREVIEW_APP_ENVIRONMENT,
                 total: this.collection.total,
                 totalPages: this.totalPages(),
                 limit: this.limit,

@@ -5,7 +5,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     'underscore',
     'DOMPurify/dist/purify.min',
     'hqwebapp/js/toggles',
-    'es6!hqwebapp/js/bootstrap5_loader',
     'cloudcare/js/markdown',
     'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
@@ -18,7 +17,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
     _,
     DOMPurify,
     toggles,
-    bootstrap,
     markdown,
     cloudcareUtils,
     constants,
@@ -631,12 +629,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             $(document).on("click", ".help-text-trigger", function (event) {
                 event.preventDefault();
                 var container = $(event.currentTarget).closest(".caption");
-                bootstrap.Modal.getOrCreateInstance(container.find(".modal")).show();
+                container.find(".modal").modal('show');
             });
 
             $(document).on("click", ".unsupported-question-type-trigger", function (event) {
                 var container = $(event.currentTarget).closest(".widget");
-                bootstrap.Modal.getOrCreateInstance(container.find(".modal")).show();
+                container.find(".modal").modal('show');
             });
         };
 
@@ -797,7 +795,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         };
 
         let columnWidth = GroupedElementTileRow.calculateElementWidth(this.style);
-        this.elementTile = `col-md-${columnWidth}`;
+        this.elementTile = `col-sm-${columnWidth}`;
     }
 
     Group.prototype = Object.create(Container.prototype);
@@ -897,10 +895,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             return (self.error() || self.serverError()) && !self.dirty();
         });
 
-        self.isButton = self.datatype() === 'select' && self.stylesContains(constants.BUTTON_SELECT);
-        self.isLabel = self.datatype() === 'info';
         self.hasLabelContent = ko.computed(function () {
-            return !self.isButton && (
+            return (
                 ko.utils.unwrapObservable(self.caption)
                 || ko.utils.unwrapObservable(self.caption_markdown)
                 || ko.utils.unwrapObservable(self.help)
@@ -922,6 +918,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             return self.error() === null && self.serverError() === null;
         };
 
+        self.isButton = self.datatype() === 'select' && self.stylesContains(constants.BUTTON_SELECT);
+        self.isLabel = self.datatype() === 'info';
         self.entry = entries.getEntry(self);
         self.entryTemplate = function () {
             return self.entry.templateType + '-entry-ko-template';
@@ -1026,17 +1024,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         const columnWidth = GroupedElementTileRow.calculateElementWidth(self.style);
 
         if (self.stylesContains(constants.PER_ROW_PATTERN)) {
-            self.controlWidth = "";
-            self.labelWidth = "";
-            self.questionTileWidth = `col-md-${columnWidth}`;
+            self.controlWidth = constants.FULL_WIDTH;
+            self.labelWidth = constants.FULL_WIDTH;
+            self.questionTileWidth = `col-sm-${columnWidth}`;
         } else {
-            if (self.isLabel || self.isButton) {
-                self.controlWidth = "";
-                self.labelWidth = "";
-            } else {
-                self.controlWidth = constants.CONTROL_WIDTH;
-                self.labelWidth = constants.LABEL_WIDTH;
-            }
+            self.controlWidth = constants.CONTROL_WIDTH;
+            self.labelWidth = constants.LABEL_WIDTH;
             self.questionTileWidth = constants.FULL_WIDTH;
             if (!hasLabel) {
                 self.controlWidth += ' ' + constants.LABEL_OFFSET;
