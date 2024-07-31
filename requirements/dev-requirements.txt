@@ -561,8 +561,9 @@ pyrsistent==0.17.3
     # via jsonschema
 pyseeyou==1.0.2
     # via transifex-python
-pytest==8.2.2
+pytest @ git+https://github.com/millerdev/pytest.git@7843f289c99cba985c78ded49170bee300984ba2
     # via
+    #   -r test-requirements.in
     #   pytest-django
     #   pytest-unmagic
 pytest-django==4.8.0
