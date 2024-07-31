@@ -471,7 +471,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
         };
 
         self.changeLang = function (lang) {
-            this.serverRequest(
+            self.serverRequest(
                 {
                     'action': constants.CHANGE_LOCALE,
                     'locale': lang,

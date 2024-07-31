@@ -116,8 +116,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
             );
             if (response.locales && !UsersModels.getCurrentUser().displayOptions.singleAppMode
                 && (response.entities || response.type === "query")) {
-                    response.langs = response.locales.slice(1);
-                    _.extend(this, _.pick(response, this.formProperties));
+                    this.langs = response.locales.slice(1);
                     webFormSession.applyLangListener();
                 }
             if (response.commands) {
