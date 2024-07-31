@@ -185,11 +185,13 @@ def _process_repeat_record(repeat_record):
             logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
             return
 
-    processing_time = timer.duration - time_spent_waiting
+    processing_time_in_ms = (timer.duration - time_spent_waiting) * 1000
     metrics_histogram(
         'commcare.repeaters.repeat_record_processing.timing',
-        processing_time,
-        timing_buckets=(.01, .03, .1, .3, 1),
+        processing_time_in_ms,
+        buckets=(10, 30, 100, 300, 1000),
+        bucket_tag='duration',
+        bucket_unit='ms',
         tags={
             'domain': repeat_record.domain,
             'action': action,
