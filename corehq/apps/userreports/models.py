@@ -1486,10 +1486,13 @@ class LazyExpressionWrapper:
         self.wrapped_expression = None
 
     def __call__(self, *args, **kwargs):
+        self.unwrap()
+        return self.wrapped_expression(*args, **kwargs)
+
+    def unwrap(self):
         if self.wrapped_expression is None:
             self.wrapped_expression = self.expression.wrapped_definition(self.factory_context)
-
-        return self.wrapped_expression(*args, **kwargs)
+        return self.wrapped_expression
 
 
 class UCRExpression(models.Model):
