@@ -1,6 +1,8 @@
 import re
+import uuid
 from datetime import datetime, timedelta
 
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -339,3 +341,46 @@ class EnterpriseODataReport(EnterpriseReport):
             )
 
         return rows
+
+
+class CacheableReport:
+    CACHE_TIMEOUT = 600  # 10 minutes
+
+    def __init__(self, report, query_id=None):
+        self.report = report
+        self._new_query = query_id is None
+        self.query_id = query_id or uuid.uuid4().hex
+        self.redis_client = get_redis_client()
+
+    @property
+    def headers(self):
+        return self.report.headers
+
+    @property
+    def filename(self):
+        return self.report.filename
+
+    @property
+    def rows(self):
+        rows = None
+        if self._new_query:
+            rows = self.report.rows
+            self.redis_client.set(self.query_id, rows, timeout=self.CACHE_TIMEOUT)
+            print('##### stored new resuls at: ', self.query_id)
+        else:
+            rows = self.redis_client.get(self.query_id)
+            if rows is None:
+                raise ExpiredCacheException(self.query_id)
+            self.redis_client.touch(self.query_id, timeout=self.CACHE_TIMEOUT)
+            print(f'######### Retrieved existing results from {self.query_id}')
+
+        return rows
+
+    @property
+    def total(self):
+        return self.report.total
+
+
+class ExpiredCacheException(Exception):
+    def __init__(self, cache_id):
+        super().__init__(f'Cache {cache_id} has expired')

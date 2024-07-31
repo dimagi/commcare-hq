@@ -1,7 +1,7 @@
 from datetime import datetime
 from urllib.parse import urljoin
 
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotFound
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
@@ -25,6 +25,8 @@ from corehq.apps.enterprise.enterprise import (
     EnterpriseMobileWorkerReport,
     EnterpriseODataReport,
     EnterpriseWebUserReport,
+    CacheableReport,
+    ExpiredCacheException,
 )
 
 
@@ -145,12 +147,39 @@ class ODataResource(HqBaseResource):
         return time.isoformat()
 
 
-class ODataEnterpriseResource(ODataResource):
+class ODataEnterpriseReportResource(ODataResource):
     class Meta(ODataResource.Meta):
         authentication = EnterpriseODataAuthentication()
 
+    def get_list(self, request, **kwargs):
+        try:
+            response = super().get_list(request, **kwargs)
+        except ExpiredCacheException:
+            response = HttpResponseNotFound()
 
-class DomainResource(ODataEnterpriseResource):
+        return response
+
+    def get_object_list(self, request):
+        query_id = request.GET.get('query_id', None)
+        report = CacheableReport(self.get_report(request), query_id)
+        # HACK: Tastypie doesn't provide a hook to easily pass data to the paginator
+        # it is not ideal to perform a side effect within this get method, but the paginator
+        # assembles link data from the GET dictionary, so we are forced to modify the request somewhere
+        self._add_query_id_to_request(request, report.query_id)
+
+        return report.rows
+
+    def get_report(self, request):
+        raise NotImplementedError()
+
+    def _add_query_id_to_request(self, request, query_id):
+        if 'report' not in request.GET:
+            new_params = request.GET.copy()
+            new_params['query_id'] = query_id
+            request.GET = new_params
+
+
+class DomainResource(ODataEnterpriseReportResource):
     domain = fields.CharField()
     created_on = fields.DateTimeField()
     num_apps = fields.IntegerField()
@@ -159,10 +188,9 @@ class DomainResource(ODataEnterpriseResource):
     num_sms_last_30_days = fields.IntegerField()
     last_form_submission = fields.DateTimeField()
 
-    def get_object_list(self, request):
+    def get_report(self, request):
         account = BillingAccount.get_account_by_domain(request.domain)
-        report = EnterpriseDomainReport(account, request.couch_user)
-        return report.rows
+        return EnterpriseDomainReport(account, request.couch_user)
 
     def dehydrate(self, bundle):
         bundle.data['domain'] = bundle.obj[6]
@@ -179,7 +207,7 @@ class DomainResource(ODataEnterpriseResource):
         return ('domain',)
 
 
-class WebUserResource(ODataEnterpriseResource):
+class WebUserResource(ODataEnterpriseReportResource):
     email = fields.CharField()
     name = fields.CharField()
     role = fields.CharField()
@@ -188,10 +216,9 @@ class WebUserResource(ODataEnterpriseResource):
     status = fields.CharField()
     domain = fields.CharField()
 
-    def get_object_list(self, request):
+    def get_report(self, request):
         account = BillingAccount.get_account_by_domain(request.domain)
-        report = EnterpriseWebUserReport(account, request.couch_user)
-        return report.rows
+        return EnterpriseWebUserReport(account, request.couch_user)
 
     def dehydrate(self, bundle):
         bundle.data['email'] = bundle.obj[0]
@@ -212,7 +239,7 @@ class WebUserResource(ODataEnterpriseResource):
         return ('email',)
 
 
-class MobileUserResource(ODataEnterpriseResource):
+class MobileUserResource(ODataEnterpriseReportResource):
     username = fields.CharField()
     name = fields.CharField()
     email = fields.CharField()
@@ -224,10 +251,9 @@ class MobileUserResource(ODataEnterpriseResource):
     user_id = fields.CharField()
     domain = fields.CharField()
 
-    def get_object_list(self, request):
+    def get_report(self, request):
         account = BillingAccount.get_account_by_domain(request.domain)
-        report = EnterpriseMobileWorkerReport(account, request.couch_user)
-        return report.rows
+        return EnterpriseMobileWorkerReport(account, request.couch_user)
 
     def dehydrate(self, bundle):
         bundle.data['username'] = bundle.obj[0]
@@ -247,7 +273,7 @@ class MobileUserResource(ODataEnterpriseResource):
         return ('user_id',)
 
 
-class ODataFeedResource(ODataEnterpriseResource):
+class ODataFeedResource(ODataEnterpriseReportResource):
     '''
     A Resource for listing all Domain-level OData feeds which belong to the Enterprise.
     Currently includes summary rows as well as individual reports
@@ -259,10 +285,9 @@ class ODataFeedResource(ODataEnterpriseResource):
     report_name = fields.CharField(null=True)
     report_rows = fields.IntegerField(null=True)
 
-    def get_object_list(self, request):
+    def get_report(self, request):
         account = BillingAccount.get_account_by_domain(request.domain)
-        report = EnterpriseODataReport(account, request.couch_user)
-        return report.rows
+        return EnterpriseODataReport(account, request.couch_user)
 
     def dehydrate(self, bundle):
         bundle.data['num_feeds_used'] = bundle.obj[0]
@@ -277,7 +302,7 @@ class ODataFeedResource(ODataEnterpriseResource):
         return ('report_name',)  # very odd report that makes coming up with an actual key challenging
 
 
-class FormSubmissionResource(ODataEnterpriseResource):
+class FormSubmissionResource(ODataEnterpriseReportResource):
     form_id = fields.CharField()
     form_name = fields.CharField()
     submitted = fields.DateTimeField()
@@ -285,13 +310,12 @@ class FormSubmissionResource(ODataEnterpriseResource):
     mobile_user = fields.CharField()
     domain = fields.CharField()
 
-    def get_object_list(self, request):
+    def get_report(self, request):
         enddate = datetime.strptime(request.GET['enddate'], '%Y-%m-%d') if 'enddate' in request.GET else None
         startdate = datetime.strptime(request.GET['startdate'], '%Y-%m-%d') if 'startdate' in request.GET else None
         account = BillingAccount.get_account_by_domain(request.domain)
-        report = EnterpriseFormReport(
+        return EnterpriseFormReport(
             account, request.couch_user, start_date=startdate, end_date=enddate, include_form_id=True)
-        return report.rows
 
     def dehydrate(self, bundle):
         bundle.data['form_id'] = bundle.obj[0]

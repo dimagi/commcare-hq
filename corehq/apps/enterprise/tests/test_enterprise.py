@@ -1,13 +1,19 @@
 from django.test import SimpleTestCase, override_settings
 from datetime import datetime
 from freezegun import freeze_time
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
 
 from corehq.apps.export.models.new import FormExportInstance
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.dbaccessors import ODataExportFetcher
-from corehq.apps.enterprise.enterprise import EnterpriseODataReport, EnterpriseFormReport
+from corehq.apps.enterprise.enterprise import (
+    EnterpriseODataReport,
+    EnterpriseFormReport,
+    CacheableReport,
+    ExpiredCacheException,
+)
+from corehq.apps.enterprise import enterprise
 
 
 @override_settings(BASE_ADDRESS='localhost:8000')
@@ -175,3 +181,65 @@ class EnterpriseFormReportTests(SimpleTestCase):
     def test_specifying_timespans_up_to_90_days_works(self):
         end_date = datetime(month=10, day=1, year=2020)
         EnterpriseFormReport(self.billing_account, None, end_date=end_date, num_days=90)
+
+
+class CacheableReportTests(SimpleTestCase):
+    def setUp(self):
+        self.mock_redis = MagicMock()
+        redis_mocker = patch.object(enterprise, 'get_redis_client', lambda: self.mock_redis)
+        redis_mocker.start()
+        self.addCleanup(redis_mocker.stop)
+
+    def test_passes_through_properties(self):
+        base_report = self.make_report(headers=['header1'], rows=['row1'], filename='test.file', total=7)
+        report = CacheableReport(base_report)
+
+        self.assertEqual(report.headers, ['header1'])
+        self.assertEqual(report.rows, ['row1'])
+        self.assertEqual(report.filename, 'test.file')
+        self.assertEqual(report.total, 7)
+
+    def test_returns_cached_data_when_query_key_is_supplied(self):
+        rows_mock = PropertyMock(return_value=8)
+        base_report = self.make_report(rows=rows_mock)
+        report = CacheableReport(base_report, '12345')
+
+        self.mock_redis.get = lambda x: 'cached_value'
+
+        self.assertEqual(report.rows, 'cached_value')
+        rows_mock.assert_not_called()
+
+    def test_throws_exception_when_cache_is_empty(self):
+        base_report = self.make_report()
+        report = CacheableReport(base_report, '12345')
+
+        self.mock_redis.get = lambda x: None
+
+        with self.assertRaises(ExpiredCacheException):
+            report.rows
+
+    def test_stores_new_query_in_cache(self):
+        base_report = self.make_report()
+        report = CacheableReport(base_report)
+
+        report.rows
+        self.mock_redis.set.assert_called()
+
+    def test_accessing_previously_stored_value_updates_the_timeout(self):
+        base_report = self.make_report()
+        report = CacheableReport(base_report, '12345')
+
+        report.rows
+        self.mock_redis.touch.assert_called()
+
+    def make_report(self, headers=None, rows=None, filename='test.file', total=7):
+        headers = headers or ['header1']
+        rows = rows or ['row1']
+
+        report = MagicMock()
+        report.headers = headers
+        type(report).rows = rows
+        report.filename = filename
+        report.total = total
+
+        return report
