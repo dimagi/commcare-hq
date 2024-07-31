@@ -68,6 +68,13 @@ class ODataResource(HqBaseResource):
         del result['meta']
         return result
 
+    def get_object_list(self, request):
+        '''Intended to be overwritten in subclasses with query logic'''
+        raise NotImplementedError()
+
+    def obj_get_list(self, bundle, **kwargs):
+        return self.get_object_list(bundle.request)
+
     def determine_format(self, request):
         # Currently a hack to force JSON. XML is supported by OData, but "Control Information" fields
         # (https://docs.oasis-open.org/odata/odata-json-format/v4.01/odata-json-format-v4.01.html#_Toc38457735)
@@ -157,9 +164,6 @@ class DomainResource(ODataEnterpriseResource):
         report = EnterpriseDomainReport(account, request.couch_user)
         return report.rows
 
-    def obj_get_list(self, bundle, **kwargs):
-        return self.get_object_list(bundle.request)
-
     def dehydrate(self, bundle):
         bundle.data['domain'] = bundle.obj[6]
         bundle.data['created_on'] = self.convert_datetime(bundle.obj[0])
@@ -188,9 +192,6 @@ class WebUserResource(ODataEnterpriseResource):
         account = BillingAccount.get_account_by_domain(request.domain)
         report = EnterpriseWebUserReport(account, request.couch_user)
         return report.rows
-
-    def obj_get_list(self, bundle, **kwargs):
-        return self.get_object_list(bundle.request)
 
     def dehydrate(self, bundle):
         bundle.data['email'] = bundle.obj[0]
@@ -228,9 +229,6 @@ class MobileUserResource(ODataEnterpriseResource):
         report = EnterpriseMobileWorkerReport(account, request.couch_user)
         return report.rows
 
-    def obj_get_list(self, bundle, **kwargs):
-        return self.get_object_list(bundle.request)
-
     def dehydrate(self, bundle):
         bundle.data['username'] = bundle.obj[0]
         bundle.data['name'] = bundle.obj[1]
@@ -266,9 +264,6 @@ class ODataFeedResource(ODataEnterpriseResource):
         report = EnterpriseODataReport(account, request.couch_user)
         return report.rows
 
-    def obj_get_list(self, bundle, **kwargs):
-        return self.get_object_list(bundle.request)
-
     def dehydrate(self, bundle):
         bundle.data['num_feeds_used'] = bundle.obj[0]
         bundle.data['num_feeds_available'] = bundle.obj[1]
@@ -297,9 +292,6 @@ class FormSubmissionResource(ODataEnterpriseResource):
         report = EnterpriseFormReport(
             account, request.couch_user, start_date=startdate, end_date=enddate, include_form_id=True)
         return report.rows
-
-    def obj_get_list(self, bundle, **kwargs):
-        return self.get_object_list(bundle.request)
 
     def dehydrate(self, bundle):
         bundle.data['form_id'] = bundle.obj[0]
