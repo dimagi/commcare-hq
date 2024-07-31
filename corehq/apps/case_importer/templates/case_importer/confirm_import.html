@@ -31,7 +31,15 @@
             <div class="alert alert-warning">
                 <p>
                     <i class="fa fa-warning"></i>
-                    {{ _("Warning: You are about to import an Excel file with") }} {{ num_cases|intcomma }} {{ _("rows. Do you wish to proceed?") }}
+                    {% if outlier_column %}
+                        {% blocktrans with outlier_col=outlier_column%}
+                             Caution: The column "{{ outlier_col }}" in sheet "{{ outlier_sheet }}" has significantly more cases than other columns in the sheet. Do you wish to proceed?
+                        {% endblocktrans %}
+                    {% else %}
+                        {% blocktrans with num=num_cases|intcomma%}
+                            Caution: You are about to import {{ num }} cases. Do you wish to proceed?
+                        {% endblocktrans %}
+                    {% endif %}
                 </p>
             </div>
 
