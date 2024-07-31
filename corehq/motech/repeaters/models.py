@@ -116,6 +116,7 @@ from corehq.sql_db.util import paginate_query
 from corehq.util.metrics import metrics_counter
 from corehq.util.models import ForeignObject, foreign_init
 from corehq.util.quickcache import quickcache
+from corehq.util.timer import TimingContext
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
@@ -435,7 +436,8 @@ class Repeater(RepeaterSuperProxy):
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)
         try:
-            response = self.send_request(repeat_record, payload)
+            with TimingContext('endpoint_timing'):
+                response = self.send_request(repeat_record, payload)
         except (Timeout, ConnectionError) as error:
             log_repeater_timeout_in_datadog(self.domain)
             return self.handle_response(RequestConnectionError(error), repeat_record)

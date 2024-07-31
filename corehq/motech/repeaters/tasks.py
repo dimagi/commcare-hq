@@ -15,6 +15,7 @@ from corehq.util.metrics import (
     make_buckets_from_timedeltas,
     metrics_counter,
     metrics_gauge_task,
+    metrics_histogram,
     metrics_histogram_timer,
 )
 from corehq.util.metrics.const import MPM_MAX
@@ -143,39 +144,51 @@ def retry_process_repeat_record(repeat_record_id, domain):
 
 
 def _process_repeat_record(repeat_record):
-    if repeat_record.state == State.Cancelled:
-        return
+    time_spent_waiting = 0
+    with TimingContext('process_repeat_record') as timer:
+        if repeat_record.state == State.Cancelled:
+            return
 
-    if not domain_can_forward(repeat_record.domain) or repeat_record.exceeded_max_retries:
-        # When creating repeat records, we check if a domain can forward so
-        # we should never have a repeat record associated with a domain that
-        # cannot forward, but this is just to be sure
-        repeat_record.cancel()
-        repeat_record.save()
-        return
+        if not domain_can_forward(repeat_record.domain) or repeat_record.exceeded_max_retries:
+            # When creating repeat records, we check if a domain can forward so
+            # we should never have a repeat record associated with a domain that
+            # cannot forward, but this is just to be sure
+            repeat_record.cancel()
+            repeat_record.save()
+            return
 
-    if repeat_record.repeater.is_deleted:
-        repeat_record.cancel()
-        repeat_record.save()
-        return
+        if repeat_record.repeater.is_deleted:
+            repeat_record.cancel()
+            repeat_record.save()
+            return
 
-    try:
-        if repeat_record.repeater.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain):
-            # postpone repeat record by MAX_RETRY_WAIT so that it is not fetched
-            # in the next check to process repeat records, which helps to avoid
-            # clogging the queue
-            repeat_record.postpone_by(MAX_RETRY_WAIT)
-        elif rate_limit_repeater(repeat_record.domain):
-            # Spread retries evenly over the range defined by RATE_LIMITER_DELAY_RANGE
-            # with the intent of avoiding clumping and spreading load
-            repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
-        elif repeat_record.is_queued():
-            with TimingContext() as timer:
-                repeat_record.fire()
-            # round up to the nearest millisecond, meaning always at least 1ms
-            report_repeater_usage(repeat_record.domain, milliseconds=int(timer.duration * 1000) + 1)
-    except Exception:
-        logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
+        try:
+            if repeat_record.repeater.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain):
+                # postpone repeat record by MAX_RETRY_WAIT so that it is not fetched
+                # in the next check to process repeat records, which helps to avoid
+                # clogging the queue
+                repeat_record.postpone_by(MAX_RETRY_WAIT)
+            elif rate_limit_repeater(repeat_record.domain):
+                # Spread retries evenly over the range defined by RATE_LIMITER_DELAY_RANGE
+                # with the intent of avoiding clumping and spreading load
+                repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
+            elif repeat_record.is_queued():
+                with TimingContext() as fire_timer:
+                    repeat_record.fire()
+                # round up to the nearest millisecond, meaning always at least 1ms
+                report_repeater_usage(repeat_record.domain, milliseconds=int(fire_timer.duration * 1000) + 1)
+                time_spent_waiting = fire_timer.subs[0].duration
+        except Exception:
+            logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
+            return
+
+    processing_time = timer.duration - time_spent_waiting
+    metrics_histogram(
+        'commcare.repeaters.repeat_record_processing.timing',
+        processing_time,
+        timing_buckets=(.01, .03, .1, .3, 1),
+        tags={'domain': repeat_record.domain},
+    )
 
 
 metrics_gauge_task(
