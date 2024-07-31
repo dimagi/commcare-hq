@@ -131,6 +131,15 @@ $group-indent: 15px;
       height: 1em;
       vertical-align: baseline;
     }
+
+    .btn {
+      background-color: white;
+
+      &:hover {
+        background-color: var(--bsbtn-hover-bg)
+      }
+
+    }
   }
 
   .card-header {
