@@ -191,7 +191,7 @@ def _process_repeat_record(repeat_record):
     metrics_histogram(
         'commcare.repeaters.repeat_record_processing.timing',
         processing_time_in_ms,
-        buckets=(10, 30, 100, 300, 1000),
+        buckets=(100, 500, 1000, 5000),
         bucket_tag='duration',
         bucket_unit='ms',
         tags={
