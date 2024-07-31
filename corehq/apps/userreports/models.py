@@ -1462,15 +1462,34 @@ class UCRExpressionManager(models.Manager):
 
     def get_wrapped_filters_for_domain(self, domain, factory_context):
         return {
-            f.name: f.wrapped_definition(factory_context)
+            f.name: LazyExpressionWrapper(f, factory_context)
             for f in self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
         }
 
     def get_wrapped_expressions_for_domain(self, domain, factory_context):
         return {
-            f.name: f.wrapped_definition(factory_context)
+            f.name: LazyExpressionWrapper(f, factory_context)
             for f in self.get_expressions_for_domain(domain)
         }
+
+
+class LazyExpressionWrapper:
+    """Wrapper for expressions and filters coming from the database that performs the expression
+    wrapping lazily when the expression is called. This has two purposes:
+    1. Avoids the need to wrap all expressions at once when loading the factory context
+    2. Avoids errors in unrelated expressions
+    3. Avoids recursion errors when named expressions are used
+    """
+    def __init__(self, expression, factory_context):
+        self.expression = expression
+        self.factory_context = factory_context
+        self.wrapped_expression = None
+
+    def __call__(self, *args, **kwargs):
+        if self.wrapped_expression is None:
+            self.wrapped_expression = self.expression.wrapped_definition(self.factory_context)
+
+        return self.wrapped_expression(*args, **kwargs)
 
 
 class UCRExpression(models.Model):
