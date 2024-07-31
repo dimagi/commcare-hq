@@ -555,7 +555,7 @@ s3transfer==0.6.0
     # via boto3
 schema==0.7.5
     # via -r base-requirements.in
-sentry-sdk==1.19.1
+sentry-sdk==2.8.0
     # via -r base-requirements.in
 sh==2.0.3
     # via -r base-requirements.in
