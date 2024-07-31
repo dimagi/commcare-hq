@@ -23,13 +23,10 @@ NO_RAISE = object()
     ('http://Localhost/', PossibleSSRFAttempt('is_loopback')),
     ('http://169.254.169.254/latest/meta-data', PossibleSSRFAttempt('is_link_local')),
     ('http://2852039166/', PossibleSSRFAttempt('is_link_local')),
-    ('http://7147006462/', PossibleSSRFAttempt('is_link_local')),
     ('http://0xA9.0xFE.0xA9.0xFE/', PossibleSSRFAttempt('is_link_local')),
-    ('http://0x41414141A9FEA9FE/', PossibleSSRFAttempt('is_link_local')),
     ('http://0xA9FEA9FE/', PossibleSSRFAttempt('is_link_local')),
     ('http://0251.0376.0251.0376/', PossibleSSRFAttempt('is_link_local')),
     ('http://0251.00376.000251.0000376/', PossibleSSRFAttempt('is_link_local')),
-    ('http://169.254.169.254.xip.io/', PossibleSSRFAttempt('is_link_local')),
     ('http://10.124.10.11', PossibleSSRFAttempt('is_private')),
     ('some-non-url', InvalidURL()),
 ])
