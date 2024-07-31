@@ -45,17 +45,15 @@
   }
 }
 
-.pagination-container {
-  .form-select,
-  .pagination-lg .page-link,
-  .input-group-lg .form-control,
-  .input-group-lg .btn {
+.module-per-page-container {
+  .pagination-lg .form-control,
+  .pagination-lg .btn{
     font-size: 11px;
     height: 30px;
     padding: 5px 10px;
   }
-  .form-select {
-    padding: 5px 20px;  // extra padding for the sake of the arrow
+  .pagination-lg .btn [class*='fa-'] {
+    font-size: 11px;
   }
 }
 
@@ -131,7 +129,8 @@
 
 .module-banner {
   font-size: 11px;
-  padding: 6px;
+  padding-left: 6px;
+  padding-right: 6px;
 }
 
 .module-menu-bar-offset {
