@@ -6,6 +6,11 @@ ALGO_AES = 'aes'
 # Max number of cases per geohash
 MAX_GEOHASH_DOC_COUNT = 1_000
 
+# Travel modes
+TRAVEL_MODE_WALKING = "walking"
+TRAVEL_MODE_CYCLING = "cycling"
+TRAVEL_MODE_DRIVING = "driving"
+
 # Modified version of https://geojson.org/schema/FeatureCollection.json
 #   Modification 1 - Added top-level name attribute
 #   Modification 2 - geometry is limited to a polygon

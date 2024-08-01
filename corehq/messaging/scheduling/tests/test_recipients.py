@@ -5,6 +5,7 @@ from django.test import TestCase, override_settings
 
 from casexml.apps.case.tests.util import create_case
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
@@ -693,7 +694,7 @@ class SchedulingRecipientTest(TestCase):
                 'external_id': user.get_id,
                 'update': {'hq_user_id': user.get_id},
             }
-            return create_case(self.domain, 'commcare-user', **create_case_kwargs)
+            return create_case(self.domain, USERCASE_TYPE, **create_case_kwargs)
 
     def update_case_and_process_change(self, *args, **kwargs):
         with self.process_pillow_changes:

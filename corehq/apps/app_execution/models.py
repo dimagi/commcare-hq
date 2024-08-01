@@ -11,6 +11,7 @@ from corehq.apps.app_execution.data_model import AppWorkflow
 from corehq.apps.app_manager.dbaccessors import get_brief_app
 from corehq.sql_db.functions import MakeInterval
 from corehq.util.jsonattrs import AttrsObject
+from django.utils.translation import gettext_lazy
 
 
 class AppWorkflowManager(models.Manager):
@@ -23,9 +24,9 @@ class AppWorkflowManager(models.Manager):
 
 class AppWorkflowConfig(models.Model):
     FORM_MODE_CHOICES = [
-        (const.FORM_MODE_HUMAN, "Human: Answer each question individually and submit form"),
-        (const.FORM_MODE_NO_SUBMIT, "No Submit: Answer all questions but don't submit the form"),
-        (const.FORM_MODE_IGNORE, "Ignore: Do not complete or submit forms"),
+        (const.FORM_MODE_HUMAN, gettext_lazy("Human: Answer each question individually and submit form")),
+        (const.FORM_MODE_NO_SUBMIT, gettext_lazy("No Submit: Answer all questions but don't submit the form")),
+        (const.FORM_MODE_IGNORE, gettext_lazy("Ignore: Do not complete or submit forms")),
     ]
     name = models.CharField(max_length=255)
     domain = models.CharField(max_length=255)
@@ -34,11 +35,12 @@ class AppWorkflowConfig(models.Model):
     django_user = models.ForeignKey(User, on_delete=models.CASCADE)
     workflow = AttrsObject(AppWorkflow)
     form_mode = models.CharField(max_length=255, choices=FORM_MODE_CHOICES)
-    sync_before_run = models.BooleanField(default=False, help_text="Sync user data before running")
-    run_every = models.IntegerField(help_text="Number of minutes between runs", null=True, blank=True)
+    sync_before_run = models.BooleanField(default=False, help_text=gettext_lazy("Sync user data before running"))
+    run_every = models.IntegerField(
+        help_text=gettext_lazy("Number of minutes between runs"), null=True, blank=True)
     last_run = models.DateTimeField(null=True, blank=True)
     notification_emails = ArrayField(
-        models.EmailField(), default=list, help_text="Emails to notify on failure", blank=True
+        models.EmailField(), default=list, help_text=gettext_lazy("Emails to notify on failure"), blank=True
     )
 
     objects = AppWorkflowManager()

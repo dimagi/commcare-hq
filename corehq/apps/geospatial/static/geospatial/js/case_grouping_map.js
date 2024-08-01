@@ -496,11 +496,10 @@ hqDefine("geospatial/js/case_grouping_map",[
             // reset the warning banner
             self.groupsLocked(!self.groupsLocked());
             if (self.groupsLocked()) {
-                mapModel.mapInstance.scrollZoom.disable();
                 setCaseGroups();
             } else {
-                mapModel.mapInstance.scrollZoom.enable();
                 clearCaseGroups();
+                mapModel.fitMapBounds(mapModel.caseMapItems());
             }
         };
         return self;
@@ -544,9 +543,11 @@ hqDefine("geospatial/js/case_grouping_map",[
             });
             mapModel.mapInstance.on('draw.delete', function (e) {
                 polygonFilterInstance.removePolygonsFromFilterList(e.features);
+                polygonFilterInstance.btnSaveDisabled(!mapModel.mapHasPolygons());
             });
             mapModel.mapInstance.on('draw.create', function (e) {
                 polygonFilterInstance.addPolygonsToFilterList(e.features);
+                polygonFilterInstance.btnSaveDisabled(!mapModel.mapHasPolygons());
             });
         }
 

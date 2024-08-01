@@ -7,6 +7,7 @@
 {% requirejs_main 'users/js/edit_web_user' %}
 
 {% block page_content %}
+  {% initial_page_data 'can_edit_original_profile' can_edit_original_profile %}
   {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
   {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
   {% initial_page_data 'custom_fields_profile_slug' custom_fields_profile_slug %}
@@ -119,7 +120,6 @@
       {% csrf_token %}
       <input type="hidden" name="form_type" value="tableau" />
       <fieldset>
-        <legend>{% trans 'Tableau Configuration' %}</legend>
         {% crispy tableau_form %}
       </fieldset>
       {% if not request.is_view_only and edit_user_tableau_config%}

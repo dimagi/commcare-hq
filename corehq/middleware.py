@@ -269,7 +269,7 @@ class SentryContextMiddleware(MiddlewareMixin):
     def __init__(self, get_response):
         super(SentryContextMiddleware, self).__init__(get_response)
         try:
-            from sentry_sdk import configure_scope  # noqa: F401
+            from sentry_sdk import Scope  # noqa: F401
         except ImportError:
             raise MiddlewareNotUsed
 
@@ -277,15 +277,14 @@ class SentryContextMiddleware(MiddlewareMixin):
             raise MiddlewareNotUsed
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        from sentry_sdk import configure_scope
+        from sentry_sdk import Scope
+        scope = Scope.get_current_scope()
+        if getattr(request, 'couch_user', None):
+            scope.set_extra('couch_user_id', request.couch_user.get_id)
+            scope.set_tag('user.username', request.couch_user.username)
 
-        with configure_scope() as scope:
-            if getattr(request, 'couch_user', None):
-                scope.set_extra('couch_user_id', request.couch_user.get_id)
-                scope.set_tag('user.username', request.couch_user.username)
-
-            if getattr(request, 'domain', None):
-                scope.set_tag('domain', request.domain)
+        if getattr(request, 'domain', None):
+            scope.set_tag('domain', request.domain)
 
 
 class SelectiveSessionMiddleware(SessionMiddleware):

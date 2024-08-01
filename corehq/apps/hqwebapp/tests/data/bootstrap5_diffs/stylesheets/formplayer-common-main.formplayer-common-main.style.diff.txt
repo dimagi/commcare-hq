@@ -8,3 +8,11 @@
  
  /**
  These are the styles shared across both PREVIEW and the FULL PAGE WEB APP
+@@ -22,6 +22,7 @@
+ @import "formplayer-common/formnav";
+ @import "formplayer-common/markdown-table";
+ @import "formplayer-common/address";
++@import "formplayer-common/query";
+ @import "formplayer-common/webforms";
+ 
+ @import "debugger/debugger";

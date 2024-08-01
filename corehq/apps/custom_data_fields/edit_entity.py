@@ -62,13 +62,14 @@ class CustomDataEditor(object):
     """
 
     def __init__(self, field_view, domain, existing_custom_data=None, post_dict=None,
-                 prefix=None, required_only=False, ko_model=None):
+                 prefix=None, required_only=False, ko_model=None, request_user=None):
         self.field_view = field_view
         self.domain = domain
         self.existing_custom_data = existing_custom_data
         self.required_only = required_only
         self.ko_model = ko_model
         self.prefix = prefix if prefix is not None else CUSTOM_DATA_FIELD_PREFIX
+        self.request_user = request_user
         self.form = self.init_form(post_dict)
 
     @property
@@ -137,8 +138,28 @@ class CustomDataEditor(object):
 
     def init_form(self, post_dict=None):
         fields = OrderedDict()
-        if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
-            profiles = self.model.get_profiles()
+
+        from corehq.apps.users.views.mobile import UserFieldsView
+        has_profile_privilege_and_is_user_fields_view = (
+            domain_has_privilege(self.domain, privileges.APP_USER_PROFILES)
+            and self.field_view is UserFieldsView
+        )
+        if has_profile_privilege_and_is_user_fields_view:
+            original_profile_id = None
+            if self.existing_custom_data:
+                original_profile_id = self.existing_custom_data.get(PROFILE_SLUG, None)
+
+            profiles, can_edit_original_profile = self.field_view.get_displayable_profiles_and_edit_permission(
+                original_profile_id, self.domain, self.request_user
+            )
+
+            def validate_profile_slug(value):
+                from django.core.exceptions import ValidationError
+                if value not in [p.id for p in profiles]:
+                    raise ValidationError(
+                        _('Invalid profile selected. Please select a valid profile.'),
+                    )
+
             if profiles:
                 attrs = {
                     'data-placeholder': _('Select a profile'),
@@ -152,7 +173,8 @@ class CustomDataEditor(object):
                     widget=Select(choices=[
                         (p.id, p.name)
                         for p in profiles
-                    ], attrs=attrs)
+                    ], attrs=attrs),
+                    validators=[validate_profile_slug],
                 )
         for field in self.fields:
             fields[field.slug] = self._make_field(field)
@@ -205,7 +227,13 @@ class CustomDataEditor(object):
             fields = None
 
         # Add profile fields so that form validation passes
-        if fields:
+        if fields and has_profile_privilege_and_is_user_fields_view:
+
+            # When a field is disabled via knockout, it is not included in POST so this
+            # adds it back
+            if (post_dict and (with_prefix(PROFILE_SLUG, self.prefix)) not in post_dict
+                    and not can_edit_original_profile):
+                fields.update({with_prefix(PROFILE_SLUG, self.prefix): original_profile_id})
             try:
                 profile_fields = CustomDataFieldsProfile.objects.get(
                     id=int(fields.get(with_prefix(PROFILE_SLUG, self.prefix))),

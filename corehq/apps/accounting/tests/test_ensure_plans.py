@@ -104,7 +104,8 @@ class TestEnsurePlans(BaseAccountingTest):
             )
             self.assertEqual(sms_feature_rate.per_excess_fee, 0)
 
-            expected_visibility = (SoftwarePlanVisibility.ANNUAL
-                                   if is_annual_plan else SoftwarePlanVisibility.PUBLIC)
+            expected_visibility = (SoftwarePlanVisibility.INTERNAL
+                                   if edition == SoftwarePlanEdition.ENTERPRISE
+                                   else SoftwarePlanVisibility.PUBLIC)
             self.assertEqual(software_plan_version.plan.visibility, expected_visibility)
             self.assertEqual(software_plan_version.plan.is_annual_plan, is_annual_plan)

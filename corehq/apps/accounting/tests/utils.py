@@ -25,10 +25,10 @@ class DomainSubscriptionMixin(object):
     __accounts = None
 
     @classmethod
-    def setup_subscription(cls, domain_name, software_plan):
+    def setup_subscription(cls, domain_name, software_plan, use_annual_plan=False):
         generator.bootstrap_test_software_plan_versions()
 
-        plan = DefaultProductPlan.get_default_plan_version(edition=software_plan)
+        plan = DefaultProductPlan.get_default_plan_version(edition=software_plan, is_annual_plan=use_annual_plan)
         account = BillingAccount.get_or_create_account_by_domain(
             domain_name, created_by="automated-test" + cls.__name__
         )[0]

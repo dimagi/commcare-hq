@@ -247,7 +247,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 else:
                     days_left = (subscription.date_end - datetime.date.today()).days
                     next_subscription.update({
-                        'can_renew': days_left <= 30,
+                        'can_renew': days_left <= 90,
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
 
@@ -1543,6 +1543,23 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         )
 
     @property
+    def plan_is_self_renewable(self):
+        return self.subscription.plan_version.plan.edition in SoftwarePlanEdition.SELF_RENEWABLE_EDITIONS
+
+    @property
+    def renewal_choices(self):
+        edition = self.subscription.plan_version.plan.edition
+        if not self.plan_is_self_renewable:
+            return {}
+
+        monthly_plan = DefaultProductPlan.get_default_plan_version(
+            edition=edition, is_annual_plan=False)
+        annual_plan = DefaultProductPlan.get_default_plan_version(
+            edition=edition, is_annual_plan=True)
+        return {'monthly_plan': monthly_plan.user_facing_description,
+                'annual_plan': annual_plan.user_facing_description}
+
+    @property
     def page_context(self):
         context = super(SubscriptionRenewalView, self).page_context
 
@@ -1557,6 +1574,9 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         context.update({
             'current_edition': current_edition,
             'plan': self.subscription.plan_version.user_facing_description,
+            'is_annual_plan': self.subscription.plan_version.plan.is_annual_plan,
+            'is_self_renewable_plan': self.plan_is_self_renewable,
+            'renewal_choices': self.renewal_choices,
             'tile_css': 'tile-{}'.format(current_edition.lower()),
             'is_renewal_page': True,
         })
@@ -1584,7 +1604,8 @@ class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings,
     @property
     @memoized
     def next_plan_version(self):
-        plan_version = DefaultProductPlan.get_default_plan_version(self.new_edition)
+        plan_version = DefaultProductPlan.get_default_plan_version(self.new_edition,
+                                                                   is_annual_plan=self.is_annual_plan)
         if plan_version is None:
             try:
                 # needed for sending to sentry
@@ -1625,6 +1646,10 @@ class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings,
     @property
     def new_edition(self):
         return self.request.POST.get('plan_edition').title()
+
+    @property
+    def is_annual_plan(self):
+        return self.request.POST.get('is_annual_plan', '').lower() == 'true'
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
