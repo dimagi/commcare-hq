@@ -420,11 +420,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             parentOfDeletedGroup = parentOfDeletedGroup.children.find(c => c.ix.endsWith(ixParts[i]));
         }
         const siblingsOfDeletedGroup = parentOfDeletedGroup.children;
-        const lastPart = ixParts[ixParts.length - 1];
-        const lastPartPrefix = lastPart.substr(0, lastPart.lastIndexOf("_") + 1);
+
+        const lastPartPrefix = deletedGroupIx.substr(0, deletedGroupIx.lastIndexOf("_") + 1);
         parentOfDeletedGroup.children = siblingsOfDeletedGroup.filter(function (c) {
-            const childIxParts = c.ix.split(",");
-            return !childIxParts[childIxParts.length - 1].startsWith(lastPartPrefix);
+            return !c.ix.startsWith(lastPartPrefix);
         });
     }
 
