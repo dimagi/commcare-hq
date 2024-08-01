@@ -1913,9 +1913,10 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
             backend = cls.load_default_backend(backend_type, phone_number)
 
         if not backend:
-            raise BadSMSConfigException("No suitable backend found for phone "
-                                        "number and domain %s, %s" %
-                                        (phone_number, domain))
+            raise BadSMSConfigException("No gateway found "
+                                        "for phone number %s and domain %s. "
+                                        "To configure a gateway, please visit the SMS Connectivity Settings."
+                                        % (phone_number, domain))
 
         return backend
 
