@@ -17,7 +17,7 @@ $group-indent: 15px;
     padding-top: 3px;
   }
 
-  .form-control, .form-select {
+  .form-control {
     font-size: $form-text-size;
   }
 
@@ -48,10 +48,10 @@ $group-indent: 15px;
     padding-right: $form-text-indent;
   }
 
-  .q {
+  .form-group {
     margin-left: 0px;
     margin-right: 0px;
-    .caption {
+    .caption.control-label {
       display: block;
     }
   }
@@ -61,26 +61,26 @@ $group-indent: 15px;
     margin-right: $group-indent;
   }
 
-  .gr.card {
+  .gr.panel {
     border-radius: 0px;
   }
 
-  .rep.card {
+  .rep.panel {
     border-radius: 0px;
   }
 
-  .col-md-12,
-  .col-md-11,
-  .col-md-10,
-  .col-md-9,
-  .col-md-8,
-  .col-md-7,
-  .col-md-6,
-  .col-md-5,
-  .col-md-4,
-  .col-md-3,
-  .col-md-2,
-  .col-md-1 {
+  .col-sm-12,
+  .col-sm-11,
+  .col-sm-10,
+  .col-sm-9,
+  .col-sm-8,
+  .col-sm-7,
+  .col-sm-6,
+  .col-sm-5,
+  .col-sm-4,
+  .col-sm-3,
+  .col-sm-2,
+  .col-sm-1 {
     &:first-child {
       padding-left: 0;
     }
@@ -89,7 +89,7 @@ $group-indent: 15px;
     }
   }
 
-  .card-body {
+  .panel-body {
     @include media-breakpoint-down(md) {
       padding-left: 0px;
       padding-right: 0px;
@@ -97,7 +97,7 @@ $group-indent: 15px;
   }
 
   .stripe-repeats {
-    > .row, .card-body > .children > .row {
+    > .row, .panel-body > .children > .row {
       &:nth-of-type(odd) {
         background-color: $table-accent-bg;
       }
@@ -133,7 +133,7 @@ $group-indent: 15px;
     }
   }
 
-  .card-header {
+  .panel-heading {
     border-top-left-radius: 0px;
     border-top-right-radius: 0px;
   }
@@ -152,7 +152,7 @@ $group-indent: 15px;
     display: none;
   }
 
-  .q.required {
+  .form-group.required {
     transition: all .5s;
     margin-bottom: 0;
     label:before {
@@ -160,7 +160,7 @@ $group-indent: 15px;
     }
   }
 
-  .q.required.on {
+  .form-group.required.on {
     background-color: $cc-att-neg-hi;
     border: 10px solid $cc-att-neg-mid;
     border-bottom: none;
@@ -197,10 +197,6 @@ $group-indent: 15px;
 }
 
 @media print {
-  #content-container {
-    max-width: none;
-  }
-
   .form-container.print-container {
     margin: 0px;
     .page-header {
@@ -208,14 +204,14 @@ $group-indent: 15px;
     }
   }
 
-  .q {
+  .q.form-group {
     break-inside: avoid;
   }
 
-  .card.last,
-  .card.last *,
-  .q.last,
-  .q.last * {
+  .panel.panel-default.last,
+  .panel.panel-default.last *,
+  .q.form-group.last,
+  .q.form-group.last * {
     margin-bottom: 0px;
     padding-bottom: 0px;
     .widget-container {
@@ -238,11 +234,18 @@ $group-indent: 15px;
 .question-tile-row {
   display: flex;
   align-items: start;
-  * .q, * p, * .caption {
+  * .form-group, * p, * .control-label {
     padding-top: 0px !important;
     padding-bottom: 0px !important;
     margin-top: 0px !important;
     margin-bottom: 0px !important;
+  }
+}
+
+.question-tile-row {
+  .gr {
+    padding-right: 0px !important;
+    padding-left: 0px !important;
   }
 }
 
@@ -262,11 +265,4 @@ $group-indent: 15px;
 #next-error {
   position: fixed;
   bottom: 35px;
-}
-
-.my-05em-for-hs {
-    h1, h2, h3, h4, h5, h6 {
-        margin-top: 0.5em !important;
-        margin-bottom: 0.5em !important;
-    }
 }

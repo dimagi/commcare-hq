@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,44 +1,95 @@
+@@ -1,44 +1,94 @@
 -@import "_hq/includes/variables.less";
 -@import "_hq/includes/mixins.less";
  
@@ -61,7 +61,6 @@
 +@import "reboot";
 +@import "type";
 +@import "commcarehq/type";
-+@import "commcarehq/print";
 +@import "images";
 +@import "containers";
 +@import "commcarehq/containers";
