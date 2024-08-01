@@ -756,13 +756,13 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
 
         self.newRepeat = function () {
             $.publish('formplayer.' + constants.NEW_REPEAT, self);
-            $.publish('formplayer.dirty');
+            $.publish('formplayer.' + constants.DIRTY);
             $('.add').trigger('blur');
         };
 
         self.deleteRepeat = function () {
             $.publish('formplayer.' + constants.DELETE_REPEAT, self);
-            $.publish('formplayer.dirty');
+            $.publish('formplayer.' + constants.DIRTY);
         };
 
         self.hasAnyNestedQuestions = function () {
@@ -936,7 +936,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             publishAnswerEvent();
         };
         var publishAnswerEvent = _.throttle(function () {
-            $.publish('formplayer.dirty');
+            $.publish('formplayer.' + constants.DIRTY);
             $.publish('formplayer.' + constants.ANSWER, self);
         }, self.throttle);
         self.onchange = self.triggerAnswer;
