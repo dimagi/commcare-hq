@@ -43,7 +43,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     ProgressBar,
     UsersModels,
     WebFormSession,
-    TemplateCache
+    TemplateCache,
 ) {
     Marionette.setRenderer(TemplateCache.render);
     const FormplayerFrontend = new Marionette.Application();
@@ -52,7 +52,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         if ($.cookie('XSRF-TOKEN') === undefined) {
             await $.get({
                 url: options.formplayer_url + '/serverup',
-                global: false, xhrFields: { withCredentials: true }}
+                global: false, xhrFields: { withCredentials: true }},
             );
         }
 
@@ -313,7 +313,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                         FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                             UsersViews.RestoreAsBanner({
                                 model: user,
-                            })
+                            }),
                         );
                     });
                     if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
@@ -345,7 +345,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                 window.addEventListener(
                     "message",
                     HQEvents.Receiver(options.allowedHost),
-                    false
+                    false,
                 );
             });
         }
@@ -374,19 +374,19 @@ hqDefine("cloudcare/js/formplayer/app", [
                     $('.submit').prop('disabled', false);
                     $('.form-control, .form-select').prop('disabled', false);
                 }
-            }
+            },
         );
 
         window.addEventListener(
             'beforeprint', function () {
                 $('.card, .q').last().addClass('last');
-            }
+            },
         );
 
         window.addEventListener(
             'afterprint', function () {
                 $('.last').removeClass('last');
-            }
+            },
         );
     });
 
