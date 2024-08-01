@@ -6,9 +6,7 @@ from datetime import datetime
 from django.conf import settings
 from memoized import memoized
 
-import sys
-
-from sentry_sdk import configure_scope
+from sentry_sdk import Scope
 
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
@@ -105,8 +103,8 @@ class PillowBase(metaclass=ABCMeta):
         Main entry point for running pillows forever.
         """
         pillow_logging.info("Starting pillow %s" % self.__class__)
-        with configure_scope() as scope:
-            scope.set_tag("pillow_name", self.get_name())
+        scope = Scope.get_current_scope()
+        scope.set_tag("pillow_name", self.get_name())
         if self.is_dedicated_migration_process:
             for processor in self.processors:
                 processor.bootstrap_if_needed()
