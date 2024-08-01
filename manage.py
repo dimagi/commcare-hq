@@ -19,7 +19,7 @@ def main():
         GeventCommand('run_blob_migration'),
         GeventCommand('check_blob_logs'),
         GeventCommand('preindex_everything'),
-        GeventCommand('migrate'),
+        GeventCommand('migrate', exclude=['--skip-gevent']),
         GeventCommand('migrate_multi'),
         GeventCommand('prime_views'),
         GeventCommand('ptop_preindex'),
@@ -52,6 +52,7 @@ def main():
 class GeventCommand(object):
     command = attr.ib()
     contains = attr.ib(default=None)
+    exclude = attr.ib(default=None)
     http_adapter_pool_size = attr.ib(default=None)
 
 
@@ -60,8 +61,12 @@ def _patch_gevent_if_required(args, gevent_commands):
         return
     for gevent_command in gevent_commands:
         should_patch = args[1] == gevent_command.command
-        if gevent_command.contains:
-            should_patch = should_patch and gevent_command.contains in ' '.join(args)
+        contains = gevent_command.contains or []
+        exclude = gevent_command.exclude or []
+        arg_set = set(args)
+
+        should_patch = should_patch and set(contains).issubset(arg_set) and set(exclude).isdisjoint(arg_set)
+
         if should_patch:
             monkey.patch_all(subprocess=True)
             patch_psycopg()
