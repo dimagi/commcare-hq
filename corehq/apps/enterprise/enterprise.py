@@ -366,13 +366,11 @@ class CacheableReport:
         if self._new_query:
             rows = self.report.rows
             self.redis_client.set(self.query_id, rows, timeout=self.CACHE_TIMEOUT)
-            print('##### stored new resuls at: ', self.query_id)
         else:
             rows = self.redis_client.get(self.query_id)
             if rows is None:
                 raise ExpiredCacheException(self.query_id)
             self.redis_client.touch(self.query_id, timeout=self.CACHE_TIMEOUT)
-            print(f'######### Retrieved existing results from {self.query_id}')
 
         return rows
 
