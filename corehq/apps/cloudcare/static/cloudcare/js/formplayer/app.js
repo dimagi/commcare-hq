@@ -46,21 +46,15 @@ hqDefine("cloudcare/js/formplayer/app", [
     TemplateCache
 ) {
     Marionette.setRenderer(TemplateCache.render);
-    const WebApp = Marionette.Application.extend({
-        preStart(options) {
-            console.log(`options: ${ JSON.stringify(options) }`);
-            if ($.cookie('XSRF-TOKEN') === undefined) {
-                $.get({
-                    url: options.formplayer_url + '/serverup',
-                    global: false, xhrFields: { withCredentials: true }}
-                );
-            }
-        },
-    });
+    const FormplayerFrontend = new Marionette.Application();
 
-    var FormplayerFrontend = new WebApp();
-
-    FormplayerFrontend.on("before:start", function () {
+    FormplayerFrontend.on("before:start", async function (app, options) {
+        if ($.cookie('XSRF-TOKEN') === undefined) {
+            await $.get({
+                url: options.formplayer_url + '/serverup',
+                global: false, xhrFields: { withCredentials: true }}
+            );
+        }
 
         if (!FormplayerFrontend.regions) {
             FormplayerFrontend.regions = CloudcareUtils.getRegionContainer();
