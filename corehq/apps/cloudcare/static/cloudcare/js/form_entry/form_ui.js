@@ -421,10 +421,30 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         }
         const siblingsOfDeletedGroup = parentOfDeletedGroup.children;
 
-        const deletedGroupIxPrefix = deletedGroupIx.substr(0, deletedGroupIx.lastIndexOf("_") + 1);
+        const getIxPrefix = (ix) => ix.substr(0, ix.lastIndexOf("_") + 1);
+        const getIxNestedPosition = (ix) => ix.substr(ix.lastIndexOf("_") + 1, ix.lastIndexOf("_") + 2);
+
+        const deletedGroupIxPrefix = getIxPrefix(deletedGroupIx);
         parentOfDeletedGroup.children = siblingsOfDeletedGroup.filter(function (c) {
             return !c.ix.startsWith(deletedGroupIxPrefix);
         });
+
+        // Preserve the 'collapsed' state of the group upon rerendering.
+        // This is done by decrementing the ix of siblings that come after the deleted group.
+        let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
+        collapsedIx = collapsedIx.filter(item => item !== deletedGroupIx);
+        collapsedIx = collapsedIx.map(ix => {
+            if (ix.startsWith(deletedGroupIxPrefix)) {
+                let IxNestedPosition = getIxNestedPosition(ix);
+                if (IxNestedPosition > getIxNestedPosition(deletedGroupIx)) {
+                    IxNestedPosition--;
+                }
+                return getIxPrefix(ix) + IxNestedPosition;
+            }
+            return ix;
+        });
+        sessionStorage.setItem('collapsedIx', JSON.stringify(collapsedIx));
+
     }
 
     /**
@@ -669,7 +689,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
                 if (element.serverError) {
                     element.serverError(null);
                 }
-
                 response.children = allChildren;
                 self.fromJS(response);
             }
@@ -725,16 +744,23 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             }
         };
 
+        let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
         var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
         self.stripeRepeats = _.contains(styles, constants.STRIPE_REPEATS);
         self.collapsible = _.contains(styles, constants.COLLAPSIBLE) || self.repeatable;
         self.groupBorder = _.contains(styles, constants.GROUP_BORDER);
-        self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN) || self.repeatable);
+        self.showChildren = ko.observable(!self.collapsible || _.contains(styles, constants.COLLAPSIBLE_OPEN) || (self.repeatable && !collapsedIx.includes(self.rel_ix())));
         self.toggleChildren = function () {
             if (self.collapsible) {
                 if (self.showChildren()) {
+                    let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
+                    collapsedIx.push(self.rel_ix());
+                    sessionStorage.setItem('collapsedIx', JSON.stringify(collapsedIx));
                     self.showChildren(false);
                 } else {
+                    let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
+                    collapsedIx = collapsedIx.filter(e => e !== self.rel_ix());
+                    sessionStorage.setItem('collapsedIx', JSON.stringify(collapsedIx));
                     self.showChildren(true);
                 }
             }
