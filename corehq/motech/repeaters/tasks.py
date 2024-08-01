@@ -26,6 +26,7 @@ from .const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
     CHECK_REPEATERS_PARTITION_COUNT,
+    ENDPOINT_TIMER,
     MAX_RETRY_WAIT,
     RATE_LIMITER_DELAY_RANGE,
     State,
@@ -175,10 +176,12 @@ def _process_repeat_record(repeat_record):
                 repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
                 action = 'rate_limited'
             elif repeat_record.is_queued():
-                with TimingContext() as fire_timer:
-                    request_duration = repeat_record.fire()
+                with timer('fire_timing') as fire_timer:
+                    repeat_record.fire(timing_context=fire_timer)
+                request_duration = [
+                    sub_timer.duration for sub_timer in fire_timer.subs if sub_timer.name == ENDPOINT_TIMER
+                ][0]
                 # round up to the nearest millisecond, meaning always at least 1ms
-                # still rate limit based on total time spent in repeat_record.fire(), not just request_duration
                 report_repeater_usage(repeat_record.domain, milliseconds=int(fire_timer.duration * 1000) + 1)
                 action = 'attempted'
         except Exception:

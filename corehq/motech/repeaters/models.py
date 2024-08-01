@@ -68,6 +68,7 @@ import json
 import traceback
 import uuid
 from collections import defaultdict
+from contextlib import nullcontext
 from datetime import datetime, timedelta
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -116,11 +117,11 @@ from corehq.sql_db.util import paginate_query
 from corehq.util.metrics import metrics_counter
 from corehq.util.models import ForeignObject, foreign_init
 from corehq.util.quickcache import quickcache
-from corehq.util.timer import TimingContext
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
 from .const import (
+    ENDPOINT_TIMER,
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
     MAX_RETRY_WAIT,
@@ -433,27 +434,28 @@ class Repeater(RepeaterSuperProxy):
         self.is_deleted = True
         Repeater.objects.filter(id=self.repeater_id).update(is_deleted=True)
 
-    def fire_for_record(self, repeat_record):
+    def _time_request(self, repeat_record, payload, timing_context):
+        with timing_context(ENDPOINT_TIMER) if timing_context else nullcontext():
+            return self.send_request(repeat_record, payload)
+
+    def fire_for_record(self, repeat_record, timing_context=None):
         payload = self.get_payload(repeat_record)
         try:
-            with TimingContext() as timer:
-                response = self.send_request(repeat_record, payload)
+            response = self._time_request(repeat_record, payload, timing_context)
         except (Timeout, ConnectionError) as error:
             log_repeater_timeout_in_datadog(self.domain)
-            attempt = self.handle_response(RequestConnectionError(error), repeat_record)
+            return self.handle_response(RequestConnectionError(error), repeat_record)
         except RequestException as err:
-            attempt = self.handle_response(err, repeat_record)
+            return self.handle_response(err, repeat_record)
         except (PossibleSSRFAttempt, CannotResolveHost):
-            attempt = self.handle_response(Exception("Invalid URL"), repeat_record)
+            return self.handle_response(Exception("Invalid URL"), repeat_record)
         except Exception:
             # This shouldn't ever happen in normal operation and would mean code broke
             # we want to notify ourselves of the error detail and tell the user something vague
             notify_exception(None, "Unexpected error sending repeat record request")
-            attempt = self.handle_response(Exception("Internal Server Error"), repeat_record)
+            return self.handle_response(Exception("Internal Server Error"), repeat_record)
         else:
-            attempt = self.handle_response(response, repeat_record)
-
-        return attempt, timer.duration
+            return self.handle_response(response, repeat_record)
 
     @memoized
     def get_payload(self, repeat_record):
@@ -1152,11 +1154,10 @@ class RepeatRecord(models.Model):
     def repeater_type(self):
         return self.repeater.repeater_type
 
-    def fire(self, force_send=False):
-        request_duration = None
+    def fire(self, force_send=False, timing_context=None):
         if force_send or not self.succeeded:
             try:
-                attempt, request_duration = self.repeater.fire_for_record(self)
+                attempt = self.repeater.fire_for_record(self, timing_context=timing_context)
             except Exception as e:
                 log_repeater_error_in_datadog(self.domain, status_code=None,
                                               repeater_type=self.repeater_type)
@@ -1168,8 +1169,6 @@ class RepeatRecord(models.Model):
                 # or handle_payload_exception raises an exception. I'm okay with that. -DMR
                 self.add_attempt(attempt)
                 self.save()
-
-        return request_duration
 
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
