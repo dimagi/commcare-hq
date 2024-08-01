@@ -178,12 +178,10 @@ def _process_repeat_record(repeat_record):
             elif repeat_record.is_queued():
                 with timer('fire_timing') as fire_timer:
                     repeat_record.fire(timing_context=fire_timer)
-                request_duration = [
-                    sub_timer.duration for sub_timer in fire_timer.subs if sub_timer.name == ENDPOINT_TIMER
-                ][0]
                 # round up to the nearest millisecond, meaning always at least 1ms
                 report_repeater_usage(repeat_record.domain, milliseconds=int(fire_timer.duration * 1000) + 1)
                 action = 'attempted'
+                request_duration = [sub.duration for sub in fire_timer.root.subs if sub.name == ENDPOINT_TIMER][0]
         except Exception:
             logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
             return
