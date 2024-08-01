@@ -62,6 +62,7 @@ from corehq.apps.accounting.task_utils import (
     get_context_to_send_purchase_receipt,
 )
 from corehq.apps.accounting.utils import (
+    count_form_submitting_mobile_workers,
     get_change_status,
     log_accounting_error,
     log_accounting_info,
@@ -73,7 +74,6 @@ from corehq.apps.accounting.utils.subscription import (
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.forms import FormES
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.users.models import CommCareUser, FakeUser
 from corehq.const import (
@@ -810,23 +810,6 @@ def calculate_users_in_all_domains(today=None):
     # to get around our billing system.
     from corehq.apps.enterprise.tasks import auto_deactivate_mobile_workers
     auto_deactivate_mobile_workers.delay()
-
-
-def count_form_submitting_mobile_workers(domain, start, end):
-    """
-    Returns the count of mobile workers who have submitted a form in the time specified.
-    """
-    form_counts_by_worker = (
-        FormES(for_export=True)
-        .domain(domain)
-        .submitted(gte=start, lt=end)
-        .user_type('mobile')
-        .user_aggregation()
-        .size(0)
-        .run()
-        .aggregations.user.normalized_buckets
-    )
-    return len(form_counts_by_worker)
 
 
 @periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
