@@ -18,9 +18,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - {TEST: python, NOSE_DIVIDED_WE_RUN: '05'}
-        - {TEST: python, NOSE_DIVIDED_WE_RUN: '6a'}
-        - {TEST: python, NOSE_DIVIDED_WE_RUN: 'bf'}
         - {TEST: python-sharded-and-javascript}
     env:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
