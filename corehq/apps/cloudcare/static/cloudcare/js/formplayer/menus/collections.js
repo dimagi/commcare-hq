@@ -114,8 +114,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", [
                 _.pick(response, ["queryKey", "selections"]),
                 _.identity
             );
-            if (response.locales && !UsersModels.getCurrentUser().displayOptions.singleAppMode
-                && (response.entities || response.type === "query")) {
+            if (response.locales && !response.tree) {
                     this.langs = response.locales.slice(1);
                     webFormSession.applyLangListener();
                 }
