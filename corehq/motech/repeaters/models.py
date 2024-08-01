@@ -65,7 +65,6 @@ class.
 """
 import inspect
 import json
-import time
 import traceback
 import uuid
 from collections import defaultdict
@@ -117,6 +116,7 @@ from corehq.sql_db.util import paginate_query
 from corehq.util.metrics import metrics_counter
 from corehq.util.models import ForeignObject, foreign_init
 from corehq.util.quickcache import quickcache
+from corehq.util.timer import TimingContext
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 
@@ -435,32 +435,25 @@ class Repeater(RepeaterSuperProxy):
 
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)
-        # time how long the request takes
-        start_time = time.time()
         try:
-            response = self.send_request(repeat_record, payload)
+            with TimingContext() as timer:
+                response = self.send_request(repeat_record, payload)
         except (Timeout, ConnectionError) as error:
-            stop_time = time.time()
             log_repeater_timeout_in_datadog(self.domain)
             attempt = self.handle_response(RequestConnectionError(error), repeat_record)
         except RequestException as err:
-            stop_time = time.time()
             attempt = self.handle_response(err, repeat_record)
         except (PossibleSSRFAttempt, CannotResolveHost):
-            stop_time = time.time()
             attempt = self.handle_response(Exception("Invalid URL"), repeat_record)
         except Exception:
-            stop_time = time.time()
             # This shouldn't ever happen in normal operation and would mean code broke
             # we want to notify ourselves of the error detail and tell the user something vague
             notify_exception(None, "Unexpected error sending repeat record request")
             attempt = self.handle_response(Exception("Internal Server Error"), repeat_record)
         else:
-            stop_time = time.time()
             attempt = self.handle_response(response, repeat_record)
 
-        request_duration = stop_time - start_time
-        return attempt, request_duration
+        return attempt, timer.duration
 
     @memoized
     def get_payload(self, repeat_record):
