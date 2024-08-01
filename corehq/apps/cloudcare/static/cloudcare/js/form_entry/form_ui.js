@@ -432,7 +432,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         // Preserve the 'collapsed' state of the group upon rerendering.
         // This is done by decrementing the ix of siblings that come after the deleted group.
         let collapsedIx = JSON.parse(sessionStorage.getItem('collapsedIx')) || [];
-        collapsedIx = collapsedIx.filter(item => item !== deletedGroupIx);
+        collapsedIx = collapsedIx
+            .filter(ix => !ix.startsWith(deletedGroupIx) && ix !== deletedGroupIx);
         collapsedIx = collapsedIx.map(ix => {
             if (ix.startsWith(deletedGroupIxPrefix)) {
                 let IxNestedPosition = getIxNestedPosition(ix);
