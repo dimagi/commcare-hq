@@ -37,7 +37,7 @@ msgstr ""
 
 #: corehq/apps/accounting/filters.py
 msgid "Account Name"
-msgstr ""
+msgstr "Acc Name"
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
