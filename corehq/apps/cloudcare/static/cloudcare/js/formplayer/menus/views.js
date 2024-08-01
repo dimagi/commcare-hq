@@ -1322,6 +1322,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             'keydown .js-home': 'onKeyActionHome',
         },
         onClickHome: function () {
+            if (!FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm()) {
+                return;
+            }
             FormplayerFrontend.trigger('navigateHome');
         },
         onKeyActionHome: function (e) {
