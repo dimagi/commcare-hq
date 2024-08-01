@@ -216,8 +216,11 @@ function _run_tests {
     }
 
     function _test_javascript {
+        echo "###### Before javascript migrate #########"
         ./manage.py migrate --noinput
+        echo "####### After javascript migrate #######"
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
+        echo "##### Finished running server ######"
         _wait_for_runserver
         logmsg INFO "grunt test ${js_test_args[*]}"
         grunt test "${js_test_args[@]}"
