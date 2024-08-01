@@ -217,7 +217,7 @@ function _run_tests {
 
     function _test_javascript {
         echo "###### Before javascript migrate #########"
-        ./manage.py migrate --noinput
+        ./manage.py migrate --noinput --skip-gevent
         echo "####### After javascript migrate #######"
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         echo "##### Finished running server ######"
