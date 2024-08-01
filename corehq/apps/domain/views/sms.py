@@ -32,6 +32,7 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
 
     @property
     def page_context(self):
+        print("enters here")
         return {
             'rate_calc_form': PublicSMSRateCalculatorForm()
         }
@@ -56,7 +57,9 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
     @memoized
     def rate_calc_form(self):
         if self.request.method == 'POST':
+            print("enters post")
             return SMSRateCalculatorForm(self.domain, self.request.POST)
+        print("enters get")
         return SMSRateCalculatorForm(self.domain)
 
     @property

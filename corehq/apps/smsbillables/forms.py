@@ -49,6 +49,7 @@ class SMSRateCalculatorForm(forms.Form):
     def __init__(self, domain, *args, **kwargs):
         super(SMSRateCalculatorForm, self).__init__(*args, **kwargs)
         backends = SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, domain)
+        print("backends: ", backends)
 
         def _get_backend_info(backend):
             return backend.couch_id, "%s (%s)" % (backend.name, backend.hq_api_id)
