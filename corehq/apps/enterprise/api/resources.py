@@ -162,9 +162,12 @@ class ODataEnterpriseReportResource(ODataResource):
     def get_object_list(self, request):
         query_id = request.GET.get('query_id', None)
         report = CacheableReport(self.get_report(request), query_id)
-        # HACK: Tastypie doesn't provide a hook to easily pass data to the paginator
-        # it is not ideal to perform a side effect within this get method, but the paginator
-        # assembles link data from the GET dictionary, so we are forced to modify the request somewhere
+        # Because we are using a cacheable report, we need some way to tell tastypie to use
+        # the generated report for future page requests.
+        # By adding the report's query id to the request, the tastypie paginator will be able to
+        # use it when generating 'next page' links
+        # HACK: This is not ideal, as we are creeating a side effect within a 'get' method,
+        # but it doesn't seem that Tastypie provides an alternate means of modifying links
         self._add_query_id_to_request(request, report.query_id)
 
         return report.rows
