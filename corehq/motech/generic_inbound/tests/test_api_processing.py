@@ -89,7 +89,10 @@ class TestGenericInboundAPI(SimpleTestCase):
                 "property_value": "client"
             })
         validations.append(ConfigurableApiValidation(
-            name="is also patient", message="must be patient again", expression=client_validation_expression
+            api=api_model,
+            name="is also patient",
+            message="must be patient again",
+            expression=client_validation_expression,
         ))
         user = MockUser()
         # 1st validation should fail, 2nd should succeed
@@ -165,6 +168,12 @@ class TestGenericInboundAPINamedExpression(TestCase):
 
 
 def _get_api_with_validation(domain_name, expression=None):
+    api_model = ConfigurableAPI(
+        domain=domain_name,
+        transform_expression=UCRExpression(definition={
+            'type': 'dict', 'properties': {'case_type': 'patient'}
+        }),
+    )
     validation_expression = UCRExpression(
         expression_type=UCR_NAMED_FILTER,
         definition={
@@ -175,15 +184,12 @@ def _get_api_with_validation(domain_name, expression=None):
         })
     validations = [
         ConfigurableApiValidation(
-            name="is patient", message="must be patient", expression=validation_expression
+            api=api_model,
+            name="is patient",
+            message="must be patient",
+            expression=validation_expression,
         )
     ]
-    api_model = ConfigurableAPI(
-        domain=domain_name,
-        transform_expression=UCRExpression(definition={
-            'type': 'dict', 'properties': {'case_type': 'patient'}
-        }),
-    )
     # mock 'get_validations'
     api_model.get_validations = lambda: validations
     return api_model
