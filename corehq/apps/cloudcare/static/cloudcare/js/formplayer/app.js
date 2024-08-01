@@ -43,22 +43,17 @@ hqDefine("cloudcare/js/formplayer/app", [
     ProgressBar,
     UsersModels,
     WebFormSession,
-    TemplateCache
+    TemplateCache,
 ) {
     Marionette.setRenderer(TemplateCache.render);
-    var FormplayerFrontend = new Marionette.Application();
+    const FormplayerFrontend = new Marionette.Application();
 
-    FormplayerFrontend.on("before:start", function (app, options) {
-        const xsrfRequest = new $.Deferred();
-        this.xsrfRequest = xsrfRequest.promise();
-        // Make a get call if the csrf token isn't available when the page loads.
+    FormplayerFrontend.on("before:start", async function (app, options) {
         if ($.cookie('XSRF-TOKEN') === undefined) {
-            $.get(
-                {url: options.formplayer_url + '/serverup', global: false, xhrFields: { withCredentials: true }}
-            ).always(() => { xsrfRequest.resolve(); });
-        } else {
-            // resolve immediately
-            xsrfRequest.resolve();
+            await $.get({
+                url: options.formplayer_url + '/serverup',
+                global: false, xhrFields: { withCredentials: true }},
+            );
         }
 
         if (!FormplayerFrontend.regions) {
@@ -330,7 +325,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                         FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                             UsersViews.RestoreAsBanner({
                                 model: user,
-                            })
+                            }),
                         );
                     });
                     if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
@@ -362,7 +357,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                 window.addEventListener(
                     "message",
                     HQEvents.Receiver(options.allowedHost),
-                    false
+                    false,
                 );
             });
         }
@@ -391,19 +386,19 @@ hqDefine("cloudcare/js/formplayer/app", [
                     $('.submit').prop('disabled', false);
                     $('.form-control, .form-select').prop('disabled', false);
                 }
-            }
+            },
         );
 
         window.addEventListener(
             'beforeprint', function () {
                 $('.card, .q').last().addClass('last');
-            }
+            },
         );
 
         window.addEventListener(
             'afterprint', function () {
                 $('.last').removeClass('last');
-            }
+            },
         );
     });
 
