@@ -138,9 +138,11 @@ function run_tests {
         su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
         log_group_end  # only log group end on success (notice: `set -e`)
         if [ "$TEST" == "python-sharded-and-javascript" ]; then
+            echo "########### Pre test prod entrypoints #########"
             su cchq -c scripts/test-prod-entrypoints.sh
             scripts/test-make-requirements.sh
             scripts/test-serializer-pickle-files.sh
+            echo "########### Pre Test django migrations #########"
             su cchq -c scripts/test-django-migrations.sh
         fi
         delta=$(($(date +%s) - $now))
@@ -188,13 +190,16 @@ function _run_tests {
         if [ -n "$CI" ]; then
             logmsg INFO "coverage run manage.py test ${py_test_args[*]}"
             # `coverage` generates a file that's then sent to codecov
+            echo "####### About to run coverage #######"
             coverage run manage.py test "${py_test_args[@]}"
+            echo "####### End of coverage #########"
             coverage xml
             if [ -n "$TRAVIS" ]; then
                 bash <(curl -s https://codecov.io/bash)
             fi
         else
             logmsg INFO "./manage.py test ${py_test_args[*]}"
+            echo "######## Non coverage run #########"
             ./manage.py test "${py_test_args[@]}"
         fi
     }
