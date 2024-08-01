@@ -8,6 +8,8 @@
                 error: error,
                 required: $data.required,
                 on: $root.forceRequiredVisible,
+                'text-center': isButton && stylesContains('text-align-center'),
+                'text-end': isButton && stylesContains('text-align-right'),
             }
         ">
     <label class="caption form-label" data-bind="
