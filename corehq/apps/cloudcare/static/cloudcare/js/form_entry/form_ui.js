@@ -421,9 +421,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
         }
         const siblingsOfDeletedGroup = parentOfDeletedGroup.children;
 
-        const lastPartPrefix = deletedGroupIx.substr(0, deletedGroupIx.lastIndexOf("_") + 1);
+        const deletedGroupIxPrefix = deletedGroupIx.substr(0, deletedGroupIx.lastIndexOf("_") + 1);
         parentOfDeletedGroup.children = siblingsOfDeletedGroup.filter(function (c) {
-            return !c.ix.startsWith(lastPartPrefix);
+            return !c.ix.startsWith(deletedGroupIxPrefix);
         });
     }
 
