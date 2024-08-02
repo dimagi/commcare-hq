@@ -1030,13 +1030,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             self.labelWidth = "";
             self.questionTileWidth = `col-md-${columnWidth}`;
         } else {
-            if (self.isLabel || self.isButton) {
-                self.controlWidth = "";
-                self.labelWidth = "";
-            } else {
-                self.controlWidth = constants.CONTROL_WIDTH;
-                self.labelWidth = constants.LABEL_WIDTH;
-            }
+            self.controlWidth = constants.CONTROL_WIDTH;
+            self.labelWidth = constants.LABEL_WIDTH;
             self.questionTileWidth = constants.FULL_WIDTH;
             if (!hasLabel) {
                 self.controlWidth += ' ' + constants.LABEL_OFFSET;
