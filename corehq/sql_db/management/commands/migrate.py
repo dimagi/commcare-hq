@@ -11,12 +11,6 @@ class Command(migrate.Command):
         parser.add_argument('--no-reindex',
             action='store_false', dest='should_reindex', default=True,
             help='Skip Couch reindex operations, even if migrations ask for them.')
-        # NOTE: This is only enforced by migrate.py. If this command is called through code,
-        # this parameter will have no effect
-        parser.add_argument(
-            '--skip-gevent-patching', action='store_true', default=False,
-            help='when true, avoids monkey patching gevent'
-        )
 
     @no_translations
     def handle(self, *args, should_reindex, **options):

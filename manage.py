@@ -19,7 +19,7 @@ def main():
         GeventCommand('run_blob_migration'),
         GeventCommand('check_blob_logs'),
         GeventCommand('preindex_everything'),
-        GeventCommand('migrate', exclude=['--skip-gevent-patching']),
+        GeventCommand('migrate', env_exclude=['SKIP_GEVENT_PATCHING']),
         GeventCommand('migrate_multi'),
         GeventCommand('prime_views'),
         GeventCommand('ptop_preindex'),
@@ -52,7 +52,7 @@ def main():
 class GeventCommand(object):
     command = attr.ib()
     contains = attr.ib(default=None)
-    exclude = attr.ib(default=None)
+    env_exclude = attr.ib(default=None)
     http_adapter_pool_size = attr.ib(default=None)
 
 
@@ -61,11 +61,16 @@ def _patch_gevent_if_required(args, gevent_commands):
         return
     for gevent_command in gevent_commands:
         should_patch = args[1] == gevent_command.command
-        contains = gevent_command.contains or []
-        exclude = gevent_command.exclude or []
+        contains = set(gevent_command.contains or [])
+        env_exclude = set(gevent_command.env_exclude or [])
         arg_set = set(args)
 
-        should_patch = should_patch and set(contains).issubset(arg_set) and set(exclude).isdisjoint(arg_set)
+        should_include = contains.issubset(arg_set)
+        should_exclude = any(
+            [env_var in os.environ and os.environ[env_var] != '0' for env_var in env_exclude]
+        )
+
+        should_patch = should_patch and should_include and not should_exclude
 
         if should_patch:
             monkey.patch_all(subprocess=True)
