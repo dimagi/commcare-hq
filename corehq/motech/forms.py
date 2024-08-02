@@ -183,7 +183,6 @@ class ConnectionSettingsForm(forms.ModelForm):
                 ),
             ),
             crispy.Div(
-                "",
                 css_id='test-connection-result',
                 css_class='text-success d-none mb-3',
             ),
