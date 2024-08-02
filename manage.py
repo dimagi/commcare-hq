@@ -67,7 +67,7 @@ def _patch_gevent_if_required(args, gevent_commands):
 
         should_include = contains.issubset(arg_set)
         should_exclude = any(
-            [os.environ.get(env_var, '0') != '0' for env_var in env_exclude]
+            [os.environ.get(env_var) == '1' for env_var in env_exclude]
         )
 
         should_patch = should_patch and should_include and not should_exclude
