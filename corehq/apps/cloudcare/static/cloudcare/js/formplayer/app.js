@@ -145,6 +145,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         $('#cloudcare-debugger').html("");
         $('.atwho-container').remove();
         bootstrap.Modal.getOrCreateInstance($('#case-detail-modal')).hide();
+        sessionStorage.removeItem('collapsedIx');
     });
 
     FormplayerFrontend.getChannel().reply('clearMenu', function () {
