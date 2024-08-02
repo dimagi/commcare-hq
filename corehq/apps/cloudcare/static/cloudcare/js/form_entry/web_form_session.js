@@ -308,6 +308,13 @@ hqDefine("cloudcare/js/form_entry/web_form_session", [
             $.subscribe('formplayer.' + constants.CHANGE_LANG, function (e, lang) {
                 self.changeLang(lang);
             });
+            $.subscribe('formplayer.' + constants.DIRTY, function (e) {
+                hqRequire([
+                    "cloudcare/js/formplayer/app",
+                ], function (FormplayerFrontend) {
+                    FormplayerFrontend.trigger('setUnsavedFormInProgress');
+                });
+            });
         };
 
         self.loadForm = function ($form, initLang) {
