@@ -6,6 +6,7 @@ from django.db.models import IntegerChoices
 
 MAX_RETRY_WAIT = timedelta(days=7)
 MIN_RETRY_WAIT = timedelta(minutes=60)
+RATE_LIMITER_DELAY_RANGE = (timedelta(minutes=0), timedelta(minutes=15))
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
 CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT
 CHECK_REPEATERS_KEY = 'check-repeaters-key'

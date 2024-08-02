@@ -1,6 +1,7 @@
 from corehq.apps.enterprise.dispatcher import EnterpriseReportDispatcher
 from django.urls import include, re_path as url
 
+from corehq.apps.enterprise.api import v1_api
 from corehq.apps.enterprise.views import (
     add_enterprise_permissions_domain,
     disable_enterprise_permissions,
@@ -20,6 +21,7 @@ from corehq.apps.sso.views.enterprise_admin import (
     ManageSSOEnterpriseView,
     EditIdentityProviderEnterpriseView,
 )
+
 
 report_urls = [
     EnterpriseReportDispatcher.url_pattern(),
@@ -53,4 +55,5 @@ domain_specific = [
         name=ManageEnterpriseMobileWorkersView.urlname),
 
     url(r'^reports/', include(report_urls)),
+    url(r'^api/', include(v1_api.urls)),
 ]

@@ -56,7 +56,7 @@
        height: 25vh;
      }
  
-@@ -142,8 +142,8 @@
+@@ -142,20 +142,21 @@
        /* Horizontally center the text (icon) */
        line-height: 12px;
        /* Vertically center the text (icon) */
@@ -67,7 +67,8 @@
      }
    }
  
-@@ -151,11 +151,11 @@
+   .list-cell-wrapper-style {
++    display: block;         // override .card's display: flex rule
      margin: 10px 5px 0 5px;
      border-collapse: collapse;
      vertical-align: top;
@@ -81,7 +82,7 @@
      }
  
      .module-icon,
-@@ -165,14 +165,14 @@
+@@ -165,14 +166,14 @@
      }
  
      &:hover {
@@ -98,7 +99,7 @@
    }
  
    .case-tile-group{
-@@ -205,7 +205,7 @@
+@@ -205,7 +206,7 @@
      }
  
      .list-cell-wrapper-style {

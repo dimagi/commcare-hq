@@ -17,7 +17,6 @@ hqDefine('geospatial/js/models', [
     const DOWNPLAY_OPACITY = 0.2;
     const FEATURE_QUERY_PARAM = 'features';
     const SELECTED_FEATURE_ID_QUERY_PARAM = 'selected_feature_id';
-    const MAX_URL_LENGTH = 4500;
     const DEFAULT_CENTER_COORD = [-20.0, -0.0];
     const DISBURSEMENT_LAYER_PREFIX = 'route-';
     const saveGeoPolygonUrl = initialPageData.reverse('geo_polygons');
@@ -572,24 +571,14 @@ hqDefine('geospatial/js/models', [
         };
 
         function updatePolygonQueryParam() {
-            const url = new URL(window.location.href);
+            let success;
             if (Object.keys(self.polygons)) {
-                url.searchParams.set(FEATURE_QUERY_PARAM, JSON.stringify(self.polygons));
+                success = utils.setQueryParam(FEATURE_QUERY_PARAM, JSON.stringify(self.polygons));
             } else {
-                url.searchParams.delete(FEATURE_QUERY_PARAM);
+                success = utils.clearQueryParam(FEATURE_QUERY_PARAM);
             }
-            updateUrl(url);
-        }
-
-        function updateUrl(url) {
-            if (url.href.length <= MAX_URL_LENGTH) {
-                window.history.replaceState({ path: url.href }, '', url.href);
-                self.shouldRefreshPage(true);
-                self.hasUrlError(false);
-            } else {
-                self.shouldRefreshPage(false);
-                self.hasUrlError(true);
-            }
+            self.shouldRefreshPage(success);
+            self.hasUrlError(!success);
         }
 
         function updateSelectedSavedPolygonParam() {
@@ -600,17 +589,18 @@ hqDefine('geospatial/js/models', [
                 return;
             }
 
+            let success;
             if (self.selectedSavedPolygonId()) {
-                url.searchParams.set(SELECTED_FEATURE_ID_QUERY_PARAM, self.selectedSavedPolygonId());
+                success = utils.setQueryParam(SELECTED_FEATURE_ID_QUERY_PARAM, self.selectedSavedPolygonId());
             } else {
-                url.searchParams.delete(SELECTED_FEATURE_ID_QUERY_PARAM);
+                success = utils.clearQueryParam(SELECTED_FEATURE_ID_QUERY_PARAM);
             }
-            updateUrl(url);
+            self.shouldRefreshPage(success);
+            self.hasUrlError(!success);
         }
 
         self.loadPolygonFromQueryParam = function () {
-            const url = new URL(window.location.href);
-            const featureParam = url.searchParams.get(FEATURE_QUERY_PARAM);
+            const featureParam = utils.fetchQueryParam(FEATURE_QUERY_PARAM);
             if (featureParam) {
                 const features = JSON.parse(featureParam);
                 for (const featureId in features) {
@@ -622,8 +612,7 @@ hqDefine('geospatial/js/models', [
         };
 
         self.loadSelectedPolygonFromQueryParam = function () {
-            const url = new URL(window.location.href);
-            const selectedFeatureParam = url.searchParams.get(SELECTED_FEATURE_ID_QUERY_PARAM);
+            const selectedFeatureParam = utils.fetchQueryParam(SELECTED_FEATURE_ID_QUERY_PARAM);
             if (selectedFeatureParam) {
                 self.selectedSavedPolygonId(selectedFeatureParam);
             }
