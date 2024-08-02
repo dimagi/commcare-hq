@@ -18,6 +18,7 @@ from memoized import memoized
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.domain.utils import log_domain_changes
 from corehq.apps.ota.rate_limiter import restore_rate_limiter
+from corehq.motech.rate_limiter import repeater_rate_limiter
 from dimagi.utils.web import get_ip, json_request, json_response
 
 from corehq import feature_previews, privileges, toggles
@@ -303,6 +304,7 @@ class ProjectLimitsView(BaseAdminProjectSettingsView):
             ('Submission Rate Limits', submission_rate_limiter),
             ('Case Rate Limits', domain_case_rate_limiter),
             ('Restore Rate Limits', restore_rate_limiter),
+            ('Repeater Rate Limits', repeater_rate_limiter),
         ], self.domain)
 
 

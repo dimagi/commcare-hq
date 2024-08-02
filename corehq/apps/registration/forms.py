@@ -369,13 +369,13 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
         label="",
         help_text=mark_safe(_(
             """I have read and agree to Dimagi's
-                <a href="http://www.dimagi.com/terms/latest/privacy/"
+                <a href="https://dimagi.com/terms-privacy/"
                     target="_blank">Privacy Policy</a>,
-                <a href="http://www.dimagi.com/terms/latest/tos/"
+                <a href="https://dimagi.com/terms-of-service/"
                     target="_blank">Terms of Service</a>,
-                <a href="http://www.dimagi.com/terms/latest/ba/"
+                <a href="https://dimagi.com/terms-ba/"
                     target="_blank">Business Agreement</a>, and
-                <a href="http://www.dimagi.com/terms/latest/aup/"
+                <a href="https://dimagi.com/terms-aup/"
                     target="_blank">Acceptable Use Policy</a>.
                """))
     )
@@ -495,7 +495,7 @@ class AdminInvitesUserForm(BaseLocationForm):
         super(AdminInvitesUserForm, self).__init__(domain=domain, data=data, **kwargs)
         self.can_edit_tableau_config = can_edit_tableau_config
         domain_obj = Domain.get_by_name(domain)
-        self.fields['role'].choices = role_choices
+        self.fields['role'].choices = [('', _("Select a role"))] + role_choices
         if domain_obj:
             if domain_has_privilege(domain_obj.name, privileges.APP_USER_PROFILES):
                 self.fields['profile'] = forms.ChoiceField(choices=(), label="Profile", required=False)

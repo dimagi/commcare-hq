@@ -85,14 +85,6 @@ from corehq.util.log import send_HTML_email
 from corehq.util.serialization import deserialize_decimal
 from corehq.util.soft_assert import soft_assert
 
-_invoicing_complete_soft_assert = soft_assert(
-    to=[
-        '{}@{}'.format(name, 'dimagi.com')
-        for name in ['gbova', 'dmore', 'accounts']
-    ],
-    exponential_backoff=False,
-)
-
 
 @transaction.atomic
 def _activate_subscription(subscription):
@@ -283,6 +275,18 @@ def check_credit_line_balances():
                 )
 
 
+_invoicing_error_soft_assert = soft_assert(
+    to=settings.ACCOUNTS_EMAIL,
+    exponential_backoff=False,
+)
+
+
+def log_error_and_soft_assert(error_message):
+    log_accounting_error(error_message, show_stack_trace=True)
+    if not settings.UNIT_TESTING:
+        _invoicing_error_soft_assert(False, error_message)
+
+
 def generate_invoices_based_on_date(invoice_date):
     invoice_start, invoice_end = get_previous_month_date_range(invoice_date)
     log_accounting_info("Starting up invoices for %(start)s - %(end)s" % {
@@ -299,22 +303,13 @@ def generate_invoices_based_on_date(invoice_date):
             invoice_factory.create_invoices()
             log_accounting_info("Sent invoices for domain %s" % domain_obj.name)
         except CreditLineError as e:
-            log_accounting_error(
-                "There was an error utilizing credits for "
-                "domain %s: %s" % (domain_obj.name, e),
-                show_stack_trace=True,
-            )
+            log_error_and_soft_assert("There was an error utilizing credits for "
+                                "domain %s: %s" % (domain_obj.name, e))
         except InvoiceError as e:
-            log_accounting_error(
-                "Could not create invoice for domain %s: %s" % (domain_obj.name, e),
-                show_stack_trace=True,
-            )
+            log_error_and_soft_assert("Could not create invoice for domain %s: %s" % (domain_obj.name, e))
         except Exception as e:
-            log_accounting_error(
-                "Error occurred while creating invoice for "
-                "domain %s: %s" % (domain_obj.name, e),
-                show_stack_trace=True,
-            )
+            log_error_and_soft_assert("Error occurred while creating invoice for "
+                "domain %s: %s" % (domain_obj.name, e))
     all_customer_billing_accounts = BillingAccount.objects.filter(is_customer_billing_account=True)
     for account in all_customer_billing_accounts:
         try:
@@ -331,25 +326,13 @@ def generate_invoices_based_on_date(invoice_date):
             )
             invoice_factory.create_invoice()
         except CreditLineError as e:
-            log_accounting_error(
-                "There was an error utilizing credits for "
-                "domain %s: %s" % (domain_obj.name, e),
-                show_stack_trace=True,
-            )
+            log_error_and_soft_assert("There was an error utilizing credits for "
+                "domain %s: %s" % (domain_obj.name, e))
         except InvoiceError as e:
-            log_accounting_error(
-                "Could not create invoice for domain %s: %s" % (domain_obj.name, e),
-                show_stack_trace=True,
-            )
+            log_error_and_soft_assert("Could not create invoice for domain %s: %s" % (domain_obj.name, e))
         except Exception as e:
-            log_accounting_error(
-                "Error occurred while creating invoice for "
-                "domain %s: %s" % (domain_obj.name, e),
-                show_stack_trace=True,
-            )
-
-    if not settings.UNIT_TESTING:
-        _invoicing_complete_soft_assert(False, "Invoicing is complete!")
+            log_error_and_soft_assert("Error occurred while creating invoice for "
+                "domain %s: %s" % (domain_obj.name, e))
 
 
 @periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)

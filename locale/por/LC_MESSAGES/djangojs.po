@@ -377,6 +377,10 @@ msgid "There is an error in your property name: "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen.js
+msgid "You can only have one property with the 'Image' format"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen.js
 msgid "All properties must be below a tab."
 msgstr ""
 
@@ -495,6 +499,11 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/utils.js
 msgid "Conditional ID Mapping"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/utils.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+msgid "Image"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/download_async_modal.js
@@ -2555,10 +2564,6 @@ msgid "Hide Path"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-msgid "Image"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
 msgid "Video"
 msgstr ""
 
@@ -2925,7 +2930,7 @@ msgid "Log in as <%- username %>?"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js
-msgid "Yes, log in as this user"
+msgid "Log in"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
@@ -2958,130 +2963,6 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error breaking locks. Please report an issue if this persists."
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Go to today"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Clear selection"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Close the picker"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Month"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Previous Month"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Next Month"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Year"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Previous Year"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Next Year"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Decade"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Previous Decade"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Next Decade"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Previous Century"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Next Century"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Pick Hour"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Increment Hour"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Decrement Hour"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Pick Minute"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Increment Minute"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Decrement Minute"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Pick Second"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Increment Second"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Decrement Second"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-msgid "Toggle Period"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
-#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
-msgid "Select Time"
 msgstr ""
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js
@@ -3748,6 +3629,14 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Clear selection"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Close the picker"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "long"
 msgstr ""
 
@@ -3756,7 +3645,95 @@ msgid "2-digit"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Hour"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Minute"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Decrement Second"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Hour"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Minute"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Increment Second"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Century"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Decade"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Month"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Next Year"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Hour"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Minute"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Pick Second"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Century"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Decade"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Month"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Previous Year"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
 msgid "Select Date"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Decade"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Month"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Time"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Select Year"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
+msgid "Go to today"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/tempus_dominus.js
@@ -5253,6 +5230,10 @@ msgstr ""
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "Client Secret"
+msgstr ""
+
+#: corehq/motech/static/motech/js/connection_settings_detail.js
+msgid "HTTP Header Name"
 msgstr ""
 
 #: corehq/motech/static/motech/js/connection_settings_detail.js

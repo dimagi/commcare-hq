@@ -16,25 +16,32 @@ from dimagi.utils.rate_limit import rate_limit
 def run_app_workflows():
 
     for config in AppWorkflowConfig.objects.get_due():
-        session = config.get_formplayer_session()
-        log = config.appexecutionlog_set.create()
-        try:
-            success = execute_workflow(session, config.workflow)
-        except Exception as e:
-            log.success = False
-            log.error = str(e)
+        run_app_workflow(config, email_on_error=True)
 
-            # rate limit to prevent spamming: 1 email per config per 10 minutes
-            if rate_limit(f"task-execution-error-{config.pk}", actions_allowed=1, how_often=10 * 60):
-                _email_error(config, e, log)
-        else:
-            log.success = success
-        finally:
-            config.last_run = timezone.now()
-            config.save()
-            log.output = session.get_logs()
-            log.completed = timezone.now()
-            log.save()
+
+def run_app_workflow(config, email_on_error=False):
+    session = config.get_formplayer_session()
+    log = config.appexecutionlog_set.create()
+    try:
+        success = execute_workflow(session, config.workflow)
+    except Exception as e:
+        log.success = False
+        log.error = str(e)
+
+        # rate limit to prevent spamming: 1 email per config per 10 minutes
+        if email_on_error and rate_limit(
+            f"task-execution-error-{config.pk}", actions_allowed=1, how_often=10 * 60
+        ):
+            _email_error(config, e, log)
+    else:
+        log.success = success
+    finally:
+        config.last_run = timezone.now()
+        config.save()
+        log.output = session.get_logs()
+        log.completed = timezone.now()
+        log.save()
+    return log
 
 
 def _email_error(config, e, log):
