@@ -52,6 +52,7 @@ from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
+    UCRDataLoadReport,
 )
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
@@ -2601,7 +2602,7 @@ class AdminTab(UITab):
                     url=reverse('admin_report_dispatcher', args=(report.slug,)),
                     params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                 )
-            } for report in [DeviceLogSoftAssertReport, UserAuditReport]
+            } for report in [DeviceLogSoftAssertReport, UserAuditReport, UCRDataLoadReport]
         ]))
         return sections
 

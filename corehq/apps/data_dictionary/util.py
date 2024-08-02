@@ -425,6 +425,12 @@ def get_used_props_by_case_type(domain, case_type=None):
     return props_by_case_type
 
 
+def get_case_property_group_name_for_properties(domain, case_type_name):
+    return dict(CaseProperty.objects.filter(
+        case_type__name=case_type_name, case_type__domain=domain, deprecated=False, group__deprecated=False
+    ).values_list('name', 'group__name'))
+
+
 def update_url_query_params(url, params):
     """Adds query params to the url. Overrides the value if param already exists."""
     parsed_url = urlparse(url)

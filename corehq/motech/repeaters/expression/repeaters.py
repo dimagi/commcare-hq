@@ -29,12 +29,12 @@ class BaseExpressionRepeater(Repeater):
     @property
     @memoized
     def parsed_filter(self):
-        return FilterFactory.from_spec(self.configured_filter, FactoryContext.empty())
+        return FilterFactory.from_spec(self.configured_filter, FactoryContext.empty(domain=self.domain))
 
     @property
     @memoized
     def parsed_expression(self):
-        return ExpressionFactory.from_spec(self.configured_expression, FactoryContext.empty())
+        return ExpressionFactory.from_spec(self.configured_expression, FactoryContext.empty(domain=self.domain))
 
     @classmethod
     def available_for_domain(cls, domain):

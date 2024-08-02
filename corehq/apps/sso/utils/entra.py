@@ -70,7 +70,7 @@ def _get_user_principal_names(user_ids, token):
                 {
                     "id": str(i),
                     "method": "GET",
-                    "url": f"/users/{principal_id}?$select=userPrincipalName"
+                    "url": f"/users/{principal_id}?$select=userPrincipalName,accountEnabled"
                 } for i, principal_id in enumerate(chunk)
             ]
         }
@@ -96,7 +96,8 @@ def _get_user_principal_names(user_ids, token):
 
         # Extract userPrincipalName from batch response
         for resp in batch_result['responses']:
-            if 'body' in resp and 'userPrincipalName' in resp['body']:
+            if ('body' in resp and 'userPrincipalName' in resp['body']
+            and resp['body'].get('accountEnabled') is True):
                 user_principal_names.append(resp['body']['userPrincipalName'])
 
     return user_principal_names
