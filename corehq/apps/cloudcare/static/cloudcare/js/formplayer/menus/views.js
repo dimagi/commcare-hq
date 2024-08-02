@@ -1505,16 +1505,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         regions: {
             tree: {
                 el: 'ul',
-                replaceElement: true
-            }
+                replaceElement: true,
+            },
         },
         triggers: {
-            "click a": "click:persistent:menu:command"  // magically calls onClickPersistentMenuCommand
+            "click a": "click:persistent:menu:command",  // magically calls onClickPersistentMenuCommand
         },
         templateContext: function () {
             const appId = formplayerUtils.currentUrlToObject().appId,
-                  imageUri = this.model.get('imageUri'),
-                  icons = {JUMP: 'fa-pencil', NEXT: 'fa-regular fa-folder'};
+                imageUri = this.model.get('imageUri'),
+                icons = {JUMP: 'fa-pencil', NEXT: 'fa-regular fa-folder'};
             return {
                 imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 iconClass: icons[this.model.get('navigationState')] || 'fa-list-ul',
@@ -1527,7 +1527,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 }));
             }
         },
-        onClickPersistentMenuCommand: function (event) {
+        onClickPersistentMenuCommand: function () {
             FormplayerFrontend.trigger("persistentMenuSelect", this.model.get('selections'));
         },
     });
@@ -1558,9 +1558,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         templateContext: function () {
             const appId = formplayerUtils.currentUrlToObject().appId,
-                  currentApp = AppsAPI.getAppEntity(appId),
-                  appName = currentApp.get('name'),
-                  imageUri = currentApp.get('imageUri');
+                currentApp = AppsAPI.getAppEntity(appId),
+                appName = currentApp.get('name'),
+                imageUri = currentApp.get('imageUri');
             return {
                 appName: appName,
                 imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
