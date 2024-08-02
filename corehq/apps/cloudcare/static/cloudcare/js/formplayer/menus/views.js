@@ -1280,15 +1280,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         template: _.template($("#breadcrumb-item-template").html() || ""),
         className: "breadcrumb-item",
         attributes: function () {
-            let attributes = {
-                "role": "link",
-                "tabindex": "0",
-                "style": this.buildMaxWidth(),
-            };
-            if (this.options.model.get('ariaCurrentPage')) {
-                attributes['aria-current'] = 'page';
-            }
-            return attributes;
+            return {"style": this.buildMaxWidth()};
         },
         events: {
             "click": "crumbClick",
@@ -1308,6 +1300,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             if (e.keyCode === 13) {
                 this.crumbClick(e);
             }
+        },
+        templateContext: function () {
+            return {isCurrentPage: this.options.model.get('ariaCurrentPage')};
         },
     });
 
