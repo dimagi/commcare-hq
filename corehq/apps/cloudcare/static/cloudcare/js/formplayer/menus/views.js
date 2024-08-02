@@ -1390,15 +1390,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
                 languageOptionsEnabled: languageOptionsEnabled,
             };
         },
-        events: {
-            "keydown": "expandDropdown",
-        },
-        expandDropdown: function (e) {
-            if (e.keyCode === 13 || e.keyCode === 32) {
-                e.preventDefault();
-                $(this.ui.dropdownMenu).toggleClass("open");
-            }
-        },
     });
 
     const DetailView = Marionette.View.extend({
