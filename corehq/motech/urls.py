@@ -112,7 +112,7 @@ urlpatterns = [
     url(
         r'^forwarding/edit/ArcGISFormExpressionRepeater/(?P<repeater_id>\w+)/$',
         EditArcGISFormExpressionRepeaterView.as_view(),
-        {'repeater_type': 'CaseExpressionRepeater'},
+        {'repeater_type': 'ArcGISFormExpressionRepeater'},
         name=EditArcGISFormExpressionRepeaterView.urlname
     ),
     url(r'^forwarding/edit/(?P<repeater_type>\w+)/(?P<repeater_id>\w+)/$', EditRepeaterView.as_view(),
