@@ -246,7 +246,7 @@
 
 - name: "Auto-Resize Images"
   description: "Automatically resizes images within forms. Follow 
-  <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/Images+in+CommCare'>
+  <a href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/Images+in+CommCare#Auto-Resize-Images-on-Android'>
   the instructions here</a> to determine which value to use."
   id: "cc-resize-images"
   values:
