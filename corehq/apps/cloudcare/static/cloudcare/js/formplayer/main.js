@@ -24,7 +24,9 @@ hqDefine("cloudcare/js/formplayer/main", [
             singleAppMode: false,
             environment: initialPageData.get('environment'),
         };
-        FormplayerFrontEnd.start(options);
+        FormplayerFrontEnd.getXSRF(options).then(() =>
+            FormplayerFrontEnd.start(options)
+        );
 
         var $menuToggle = $('#commcare-menu-toggle'),
             $navbar = $('#hq-navigation'),
