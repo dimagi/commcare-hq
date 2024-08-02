@@ -162,7 +162,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         }
 
-        if (menuResponse.persistentMenu) {
+        if (!appPreview && menuResponse.persistentMenu) {
             FormplayerFrontend.regions.getRegion('persistentMenu').show(
                 views.PersistentMenuView({
                     collection: _toMenuCommands(menuResponse.persistentMenu, []),
