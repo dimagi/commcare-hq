@@ -1030,7 +1030,11 @@ class RelatedDocExpressionDbTest(TestCase):
 
     def test_other_lookups(self):
         user_id = uuid.uuid4().hex
-        CommCareUser.get_db().save_doc({'_id': user_id, 'domain': self.domain})
+        CommCareUser.get_db().save_doc({
+            '_id': user_id,
+            'doc_type': 'CommCareUser',
+            'domain': self.domain,
+        })
         expression = self._get_expression('CommCareUser')
         doc = self._get_doc(user_id)
         self.assertEqual(user_id, expression(doc, EvaluationContext(doc, 0)))

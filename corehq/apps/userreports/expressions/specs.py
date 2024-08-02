@@ -615,7 +615,7 @@ class RelatedDocExpressionSpec(JsonObject):
             raise BadSpecError(f'Unsupported related_doc_type {related_doc_type!r}')
 
         func = {
-            'CommCareUser': partial(_get_api_user, domain),
+            'CommCareUser': partial(_get_user, domain),
             'XFormInstance': partial(_get_doc, domain, 'XFormInstance'),
             'CommCareCase': partial(_get_doc, domain, 'CommCareCase'),
             'Group': partial(_get_doc, domain, 'Group'),
@@ -634,15 +634,78 @@ class RelatedDocExpressionSpec(JsonObject):
                                   str(self._value_expression))
 
 
-def _get_api_user(domain, doc_id):
-    from corehq.apps.api.resources.v0_5 import CommCareUserResource
+def _get_user(domain, doc_id):
+    # Whitelisted properties of CommCareUser are organized by the
+    # (sub)class that added them. If the value is a JsonObject instance
+    # that needs to be serialized, the property is given as a tuple,
+    # where the second value is the serializer function.
+    property_whitelist = (
+        # DocumentBase
+        '_id',
+        'doc_type',
 
+        # DjangoUserMixin
+        'username',
+        'first_name',
+        'last_name',
+        'email',
+        # 'password',
+        # 'is_staff',
+        # 'is_superuser',
+        'is_active',
+        'last_login',
+        'date_joined',
+
+        # EulaMixin
+        'eulas',
+
+        # CouchUser
+        'device_ids',
+        ('devices', lambda lst: [d.to_json() for d in lst]),
+        ('last_device', JsonObject.to_json),
+        'phone_numbers',
+        'created_on',
+        'last_modified',
+        'status',
+        'language',
+        'subscribed_to_commcare_users',
+        'announcements_seen',
+        'location_id',
+        'assigned_location_ids',
+        'has_built_app',
+        'analytics_enabled',
+        # two_factor_auth_disabled_until,
+        # login_attempts,
+        # attempt_date,
+        ('reporting_metadata', JsonObject.to_json),
+        # 'can_assign_superuser',
+
+        # SingleMembershipMixin
+        'domain_membership',
+
+        # CommCareUser
+        'domain',
+        'registering_device_id',
+        'loadtest_factor',
+        'is_loadtest_user',
+        'is_demo_user',
+        'demo_restore_id',
+        'is_account_confirmed',
+        'user_location_id',
+    )
     user = CommCareUser.get_by_user_id(doc_id, domain)
     if not user:
         return None
-    resource = CommCareUserResource(api_name='v0.5')
-    bundle = resource.build_bundle(obj=user)
-    return resource.full_dehydrate(bundle).data
+
+    doc = {}
+    for key in property_whitelist:
+        if isinstance(key, tuple):
+            key, func = key
+            doc[key] = func(getattr(user, key))
+        else:
+            doc[key] = getattr(user, key)
+    doc['user_data'] = user.get_user_data(domain).to_dict()
+    return doc
 
 
 def _get_doc(domain, doc_type, doc_id):
