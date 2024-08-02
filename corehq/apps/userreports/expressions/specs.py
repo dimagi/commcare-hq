@@ -1,5 +1,5 @@
 import textwrap
-from functools import cached_property
+from functools import cached_property, partial
 
 from jsonobject.base_properties import DefaultProperty
 from jsonpath_ng.ext import parse as jsonpath_parse
@@ -579,6 +579,14 @@ class RelatedDocExpressionSpec(JsonObject):
     doc_id_expression = DictProperty(required=True)
     value_expression = DictProperty(required=True)
 
+    SAFE_DOC_TYPES = (
+        'XFormInstance',
+        'CommCareCase',
+        'Group',
+        'Location',
+    )
+    SUPPORTED_RELATED_DOC_TYPES = SAFE_DOC_TYPES + ('CommCareUser',)
+
     def configure(self, doc_id_expression, value_expression):
         non_couch_doc_types = {
             CommCareCase.DOC_TYPE,
@@ -602,17 +610,18 @@ class RelatedDocExpressionSpec(JsonObject):
     def _get_document(related_doc_type, doc_id, evaluation_context):
         domain = evaluation_context.root_doc['domain']
         assert domain
-        document_store = get_document_store_for_doc_type(
-            domain, related_doc_type, load_source="related_doc_expression")
-        try:
-            doc = document_store.get_document(doc_id)
-        except DocumentNotFoundError:
-            return None
-        if domain != doc.get('domain'):
-            return None
-        if related_doc_type == 'CommCareUser':
-            doc['user_data'] = CommCareUser.wrap(doc).get_user_data(domain).to_dict()
-        return doc
+
+        if related_doc_type not in RelatedDocExpressionSpec.SUPPORTED_RELATED_DOC_TYPES:
+            raise BadSpecError(f'Unsupported related_doc_type {related_doc_type!r}')
+
+        func = {
+            'CommCareUser': partial(_get_api_user, domain),
+            'XFormInstance': partial(_get_doc, domain, 'XFormInstance'),
+            'CommCareCase': partial(_get_doc, domain, 'CommCareCase'),
+            'Group': partial(_get_doc, domain, 'Group'),
+            'Location': partial(_get_doc, domain, 'Location'),
+        }[related_doc_type]
+        return func(doc_id)
 
     def get_value(self, doc_id, evaluation_context):
         doc = self._get_document(self.related_doc_type, doc_id, evaluation_context)
@@ -623,6 +632,29 @@ class RelatedDocExpressionSpec(JsonObject):
         return "{}[{}]/{}".format(self.related_doc_type,
                                   str(self._doc_id_expression),
                                   str(self._value_expression))
+
+
+def _get_api_user(domain, doc_id):
+    from corehq.apps.api.resources.v0_5 import CommCareUserResource
+
+    user = CommCareUser.get_by_user_id(doc_id, domain)
+    if not user:
+        return None
+    resource = CommCareUserResource(api_name='v0.5')
+    bundle = resource.build_bundle(obj=user)
+    return resource.full_dehydrate(bundle).data
+
+
+def _get_doc(domain, doc_type, doc_id):
+    document_store = get_document_store_for_doc_type(
+        domain, doc_type, load_source="related_doc_expression")
+    try:
+        doc = document_store.get_document(doc_id)
+    except DocumentNotFoundError:
+        return None
+    if domain != doc.get('domain'):
+        return None
+    return doc
 
 
 class NestedExpressionSpec(JsonObject):
