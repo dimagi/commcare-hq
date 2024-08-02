@@ -1047,6 +1047,25 @@ class RelatedDocExpressionDbTest(TestCase):
         doc = self._get_doc(user._id)
         self.assertEqual('indigo', expression(doc, EvaluationContext(doc, 0)))
 
+    def test_password_lookup(self):
+        user = CommCareUser.create(self.domain, 'username', "123", None, None)
+        self.addCleanup(user.delete, None, None)
+        expression = ExpressionFactory.from_spec({
+            "type": "related_doc",
+            "related_doc_type": 'CommCareUser',
+            "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "related_id"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "password",
+            },
+        })
+        doc = self._get_doc(user._id)
+        value = expression(doc, EvaluationContext(doc, 0))
+        self.assertIsNone(value)
+
     @staticmethod
     def _get_expression(doc_type):
         return ExpressionFactory.from_spec({
