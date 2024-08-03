@@ -1322,13 +1322,13 @@ class TestRaceCondition(TestCase):
         cls.connx.delete()
         super().tearDownClass()
 
-    def test_pause_and_set_next_attempt(self):
+    def test_pause_and_set_backoff(self):
         repeater_a = Repeater.objects.get(id=self.repeater.repeater_id)
         repeater_b = Repeater.objects.get(id=self.repeater.repeater_id)
         self.assertIsNone(repeater_a.next_attempt_at)
         self.assertFalse(repeater_b.is_paused)
 
-        repeater_a.set_next_attempt()
+        repeater_a.set_backoff()
         repeater_b.pause()
 
         repeater_c = Repeater.objects.get(id=self.repeater.repeater_id)
