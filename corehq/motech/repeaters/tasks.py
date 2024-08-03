@@ -1,8 +1,8 @@
-import random
 from datetime import datetime, timedelta
 
 from django.conf import settings
 
+from celery import chord
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
@@ -23,8 +23,6 @@ from ..rate_limiter import rate_limit_repeater, report_repeater_usage
 from .const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
-    MAX_RETRY_WAIT,
-    RATE_LIMITER_DELAY_RANGE,
     State,
 )
 from .models import Repeater, RepeatRecord
@@ -87,11 +85,12 @@ def check_repeaters():
             timing_buckets=_check_repeaters_buckets,
         ):
             for repeater in iter_ready_repeaters():
-                if datetime.utcnow() > twentythree_hours_later:
-                    break
-
                 metrics_counter("commcare.repeaters.check.attempt_forward")
                 process_repeater.delay(repeater.domain, repeater.repeater_id)
+
+                if datetime.utcnow() > twentythree_hours_later:
+                    # Break after process_repeater() to avoid a stale lock
+                    break
     finally:
         check_repeater_lock.release()
 
@@ -122,7 +121,46 @@ def iter_ready_repeaters():
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeater(domain, repeater_id):
-    ...
+
+    def is_retry(repeat_record):
+        return repeat_record.state == State.Fail
+
+    lock_key = f'process_repeater_{repeater_id}'
+    repeater_lock = get_redis_lock(lock_key, timeout=23 * 60 * 60, name=lock_key)
+    if not repeater_lock.acquire(blocking=False):
+        return
+
+    try:
+        repeater = Repeater.objects.get(domain=domain, id=repeater_id)
+        repeat_records = repeater.repeat_records_ready[:repeater.num_workers]
+        header_tasks = [
+            retry_process_repeat_record.s(rr.id, rr.domain)
+            if is_retry(rr)
+            else process_repeat_record.s(rr.id, rr.domain)
+            for rr in repeat_records
+        ]
+        chord(header_tasks)(update_repeater.s(repeater.repeater_id))
+
+    finally:
+        repeater_lock.release()
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def update_repeater(repeat_record_states, repeater_id):
+    """
+    Determines whether the repeater should back off, based on the
+    results of `fire_repeat_record()` tasks.
+    """
+    repeater = Repeater.objects.get(id=repeater_id)
+    if any(s == State.Success for s in repeat_record_states):
+        # At least one repeat record was sent successfully.
+        repeater.reset_backoff()
+    elif all(s in (State.Empty, None) for s in repeat_record_states):
+        # Nothing was sent. Don't update the repeater.
+        pass
+    else:
+        # All sent payloads failed.
+        repeater.set_backoff()
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -131,7 +169,7 @@ def process_repeat_record(repeat_record_id, domain):
     NOTE: Keep separate from retry_process_repeat_record for monitoring purposes
     Domain is present here for domain tagging in datadog
     """
-    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
+    return _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -140,51 +178,19 @@ def retry_process_repeat_record(repeat_record_id, domain):
     NOTE: Keep separate from process_repeat_record for monitoring purposes
     Domain is present here for domain tagging in datadog
     """
-    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
+    return _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
 def _process_repeat_record(repeat_record):
-    # TODO: Will be unnecessary
-    if repeat_record.state == State.Cancelled:
-        return
-
-    # TODO: Will be unnecessary
-    if not domain_can_forward(repeat_record.domain) or repeat_record.exceeded_max_retries:
-        # When creating repeat records, we check if a domain can forward so
-        # we should never have a repeat record associated with a domain that
-        # cannot forward, but this is just to be sure
-        repeat_record.cancel()
-        repeat_record.save()
-        return
-
-    # TODO: Will be unnecessary
-    if repeat_record.repeater.is_deleted:
-        repeat_record.cancel()
-        repeat_record.save()
-        return
-
+    state_or_none = None
     try:
-        # TODO: Will be unnecessary
-        if repeat_record.repeater.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain):
-            # postpone repeat record by MAX_RETRY_WAIT so that it is not fetched
-            # in the next check to process repeat records, which helps to avoid
-            # clogging the queue
-            repeat_record.postpone_by(MAX_RETRY_WAIT)
-
-        # TODO: Will be unnecessary
-        elif rate_limit_repeater(repeat_record.domain):
-            # Spread retries evenly over the range defined by RATE_LIMITER_DELAY_RANGE
-            # with the intent of avoiding clumping and spreading load
-            repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
-
-        elif repeat_record.is_queued():
-            # TODO: This is all
-            with TimingContext() as timer:
-                repeat_record.fire()
-            # round up to the nearest millisecond, meaning always at least 1ms
-            report_repeater_usage(repeat_record.domain, milliseconds=int(timer.duration * 1000) + 1)
+        with TimingContext() as timer:
+            state_or_none = repeat_record.fire()
+        # round up to the nearest millisecond, meaning always at least 1ms
+        report_repeater_usage(repeat_record.domain, milliseconds=int(timer.duration * 1000) + 1)
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
+    return state_or_none
 
 
 metrics_gauge_task(
