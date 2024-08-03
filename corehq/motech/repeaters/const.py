@@ -1,15 +1,10 @@
 from datetime import timedelta
-from django.utils.translation import gettext_lazy as _
 
-from django.conf import settings
 from django.db.models import IntegerChoices
+from django.utils.translation import gettext_lazy as _
 
 MAX_RETRY_WAIT = timedelta(days=7)
 MIN_RETRY_WAIT = timedelta(minutes=60)
-RATE_LIMITER_DELAY_RANGE = (
-    timedelta(minutes=getattr(settings, 'MIN_REPEATER_RATE_LIMIT_DELAY', 0)),
-    timedelta(minutes=getattr(settings, 'MAX_REPEATER_RATE_LIMIT_DELAY', 15)),
-)
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
 ENDPOINT_TIMER = 'endpoint_timer'
@@ -17,6 +12,12 @@ ENDPOINT_TIMER = 'endpoint_timer'
 MAX_ATTEMPTS = 3
 # Number of exponential backoff attempts to an offline endpoint
 MAX_BACKOFF_ATTEMPTS = 6
+# The default number of workers that one repeater can use to send repeat
+# records at the same time. (In other words, HQ's capacity to DDOS
+# attack a remote API endpoint.) This is a guardrail to prevent one
+# domain from hogging repeat record queue workers and to ensure that
+# repeaters are iterated fairly.
+DEFAULT_REPEATER_WORKERS = 7
 
 
 class State(IntegerChoices):

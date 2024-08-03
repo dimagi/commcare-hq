@@ -124,6 +124,7 @@ from .const import (
     ENDPOINT_TIMER,
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
+    DEFAULT_REPEATER_WORKERS,
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
     State,
@@ -260,6 +261,7 @@ class Repeater(RepeaterSuperProxy):
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
+    # TODO: max_workers = models.IntegerField(default=0)
     options = JSONField(default=dict)
     connection_settings_id = models.IntegerField(db_index=True)
     is_deleted = models.BooleanField(default=False, db_index=True)
@@ -350,7 +352,11 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def repeat_records_ready(self):
-        return self.repeat_records.filter(state__in=(State.Pending, State.Fail))
+        return (
+            self.repeat_records
+            .filter(state__in=(State.Pending, State.Fail))
+            .order_by('registered_at')
+        )
 
     @property
     def domain_can_forward(self):
@@ -359,7 +365,7 @@ class Repeater(RepeaterSuperProxy):
             and not toggles.PAUSE_DATA_FORWARDING.enabled(self.domain)
         )
 
-    def set_next_attempt(self):
+    def set_backoff(self):
         now = datetime.utcnow()
         interval = _get_retry_interval(self.last_attempt_at, now)
         self.last_attempt_at = now
@@ -372,7 +378,7 @@ class Repeater(RepeaterSuperProxy):
             next_attempt_at=now + interval,
         )
 
-    def reset_next_attempt(self):
+    def reset_backoff(self):
         if self.last_attempt_at or self.next_attempt_at:
             self.last_attempt_at = None
             self.next_attempt_at = None
@@ -429,6 +435,11 @@ class Repeater(RepeaterSuperProxy):
     def retire(self):
         self.is_deleted = True
         Repeater.objects.filter(id=self.repeater_id).update(is_deleted=True)
+
+    @property
+    def num_workers(self):
+        # TODO: return self.max_workers or MAX_REPEATER_WORKERS
+        return DEFAULT_REPEATER_WORKERS
 
     def _time_request(self, repeat_record, payload, timing_context):
         with timing_context(ENDPOINT_TIMER) if timing_context else nullcontext():
@@ -1177,7 +1188,9 @@ class RepeatRecord(models.Model):
                     str(e),
                     traceback_str=traceback.format_exc()
                 )
-                raise
+            finally:
+                return self.state
+        return None
 
     # TODO: Drop: `process_repeater` task will call `process_repeat_record` tasks directly
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
