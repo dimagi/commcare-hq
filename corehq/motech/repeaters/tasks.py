@@ -69,6 +69,7 @@ def delete_old_request_logs():
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def check_repeaters():
+    # TODO: Drop partitions, because there are A LOT fewer repeaters to iterate than repeat records
     # this creates a task for all partitions
     # the Nth child task determines if a lock is available for the Nth partition
     for current_partition in range(CHECK_REPEATERS_PARTITION_COUNT):
@@ -132,9 +133,11 @@ def retry_process_repeat_record(repeat_record_id, domain):
 
 
 def _process_repeat_record(repeat_record):
+    # TODO: Will be unnecessary
     if repeat_record.state == State.Cancelled:
         return
 
+    # TODO: Will be unnecessary
     if not domain_can_forward(repeat_record.domain) or repeat_record.exceeded_max_retries:
         # When creating repeat records, we check if a domain can forward so
         # we should never have a repeat record associated with a domain that
@@ -143,22 +146,28 @@ def _process_repeat_record(repeat_record):
         repeat_record.save()
         return
 
+    # TODO: Will be unnecessary
     if repeat_record.repeater.is_deleted:
         repeat_record.cancel()
         repeat_record.save()
         return
 
     try:
+        # TODO: Will be unnecessary
         if repeat_record.repeater.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain):
             # postpone repeat record by MAX_RETRY_WAIT so that it is not fetched
             # in the next check to process repeat records, which helps to avoid
             # clogging the queue
             repeat_record.postpone_by(MAX_RETRY_WAIT)
+
+        # TODO: Will be unnecessary
         elif rate_limit_repeater(repeat_record.domain):
             # Spread retries evenly over the range defined by RATE_LIMITER_DELAY_RANGE
             # with the intent of avoiding clumping and spreading load
             repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
+
         elif repeat_record.is_queued():
+            # TODO: This is all
             with TimingContext() as timer:
                 repeat_record.fire()
             # round up to the nearest millisecond, meaning always at least 1ms

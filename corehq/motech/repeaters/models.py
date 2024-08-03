@@ -411,7 +411,8 @@ class Repeater(RepeaterSuperProxy):
             # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
             # to prevent serializing the repeater in the celery task payload
             repeat_record.__dict__["repeater"] = self
-        repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
+        # TODO: No, send the repeat record when it's its turn.
+        # repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
     def allowed_to_forward(self, payload):
@@ -1157,6 +1158,7 @@ class RepeatRecord(models.Model):
                 self.handle_payload_exception(e)
                 raise
 
+    # TODO: Drop: `process_repeater` task will call `process_repeat_record` tasks directly
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
             process_repeat_record,
