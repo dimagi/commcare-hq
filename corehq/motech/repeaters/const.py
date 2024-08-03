@@ -18,6 +18,10 @@ ENDPOINT_TIMER = 'endpoint_timer'
 MAX_ATTEMPTS = 3
 # Number of exponential backoff attempts to an offline endpoint
 MAX_BACKOFF_ATTEMPTS = 6
+# The default number of workers that one repeater can use to send repeat
+# records at the same time. (In other words, HQ's capacity to DDOS
+# attack a remote API endpoint, so keep it low.)
+DEFAULT_REPEATER_WORKERS = 7
 
 
 class State(IntegerChoices):
