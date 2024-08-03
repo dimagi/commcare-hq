@@ -11,7 +11,7 @@ RATE_LIMITER_DELAY_RANGE = (
     timedelta(minutes=getattr(settings, 'MAX_REPEATER_RATE_LIMIT_DELAY', 15)),
 )
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
-CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT
+CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT  # TODO: Drop
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
 ENDPOINT_TIMER = 'endpoint_timer'
 # Number of attempts to an online endpoint before cancelling payload
