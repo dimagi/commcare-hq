@@ -8,7 +8,6 @@ from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import get_redis_lock
 
-from corehq import toggles
 from corehq.apps.celery import periodic_task, task
 from corehq.motech.models import RequestLog
 from corehq.util.metrics import (
@@ -20,17 +19,15 @@ from corehq.util.metrics import (
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.timer import TimingContext
 
+from ..rate_limiter import rate_limit_repeater, report_repeater_usage
 from .const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
-    CHECK_REPEATERS_PARTITION_COUNT,
     MAX_RETRY_WAIT,
     RATE_LIMITER_DELAY_RANGE,
     State,
 )
-from .models import RepeatRecord, domain_can_forward
-
-from ..rate_limiter import report_repeater_usage, rate_limit_repeater
+from .models import Repeater, RepeatRecord
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),
@@ -69,32 +66,19 @@ def delete_old_request_logs():
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def check_repeaters():
-    # TODO: Drop partitions, because there are A LOT fewer repeaters to iterate than repeat records
-    # this creates a task for all partitions
-    # the Nth child task determines if a lock is available for the Nth partition
-    for current_partition in range(CHECK_REPEATERS_PARTITION_COUNT):
-        check_repeaters_in_partition.delay(current_partition)
-
-
-@task(queue=settings.CELERY_PERIODIC_QUEUE)
-def check_repeaters_in_partition(partition):
-    """
-    The CHECK_REPEATERS_PARTITION_COUNT constant dictates the total number of partitions
-    :param partition: index of partition to check
-    """
     start = datetime.utcnow()
     twentythree_hours_sec = 23 * 60 * 60
     twentythree_hours_later = start + timedelta(hours=23)
 
-    # Long timeout to allow all waiting repeat records to be iterated
-    lock_key = f"{CHECK_REPEATERS_KEY}_{partition}_in_{CHECK_REPEATERS_PARTITION_COUNT}"
+    # Long timeout to allow all waiting repeaters to be iterated
+    # TODO: Check how long it takes to iterate all repeaters on prod
     check_repeater_lock = get_redis_lock(
-        lock_key,
+        CHECK_REPEATERS_KEY,
         timeout=twentythree_hours_sec,
-        name=lock_key,
+        name=CHECK_REPEATERS_KEY,
     )
     if not check_repeater_lock.acquire(blocking=False):
-        metrics_counter("commcare.repeaters.check.locked_out", tags={'partition': partition})
+        metrics_counter("commcare.repeaters.check.locked_out")
         return
 
     try:
@@ -102,16 +86,43 @@ def check_repeaters_in_partition(partition):
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for record in RepeatRecord.objects.iter_partition(
-                    start, partition, CHECK_REPEATERS_PARTITION_COUNT):
-
+            for repeater in iter_ready_repeaters():
                 if datetime.utcnow() > twentythree_hours_later:
                     break
 
                 metrics_counter("commcare.repeaters.check.attempt_forward")
-                record.attempt_forward_now(is_retry=True)
+                process_repeater.delay(repeater.domain, repeater.repeater_id)
     finally:
         check_repeater_lock.release()
+
+
+def iter_ready_repeaters():
+    """
+    Cycles through repeaters (repeatedly ;) ) until there are no more
+    repeat records ready to be sent.
+    """
+    while True:
+        yielded = False
+        for repeater in Repeater.objects.all_ready():
+            if not repeater.domain_can_forward:
+                continue
+
+            if rate_limit_repeater(repeater.domain):
+                repeater.rate_limit()
+                continue
+
+            yielded = True
+            yield repeater
+
+        if not yielded:
+            # No repeaters are ready, or they are rate limited, or their
+            # domains can't forward or are paused.
+            return
+
+
+@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_repeater(domain, repeater_id):
+    ...
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
