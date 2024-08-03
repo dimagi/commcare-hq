@@ -1209,9 +1209,6 @@ class RepeatRecord(models.Model):
     def handle_payload_exception(self, exception):
         self.add_client_failure_attempt(str(exception), retry=False)
 
-    def add_attempt(self, attempt):
-        assert attempt is None, "SQL attempts are added/saved on create"
-
     def cancel(self):
         self.state = State.Cancelled
         self.next_check = None
