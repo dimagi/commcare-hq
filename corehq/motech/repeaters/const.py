@@ -8,12 +8,16 @@ MAX_RETRY_WAIT = timedelta(days=7)
 MIN_RETRY_WAIT = timedelta(minutes=60)
 RATE_LIMITER_DELAY_RANGE = (timedelta(minutes=0), timedelta(minutes=15))
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
-CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT
+CHECK_REPEATERS_PARTITION_COUNT = settings.CHECK_REPEATERS_PARTITION_COUNT  # TODO: Drop
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
 # Number of attempts to an online endpoint before cancelling payload
 MAX_ATTEMPTS = 3
 # Number of exponential backoff attempts to an offline endpoint
 MAX_BACKOFF_ATTEMPTS = 6
+# The maximum number of workers that one repeater can use to send repeat
+# records at the same time. (In other words, HQ's capacity to DDOS
+# attack a remote API endpoint, so keep it low.)
+MAX_REPEATER_WORKERS = 7
 
 
 class State(IntegerChoices):
