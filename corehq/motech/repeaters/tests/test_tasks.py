@@ -1,6 +1,8 @@
+from collections import namedtuple
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 from django.test import SimpleTestCase, TestCase
 
@@ -11,16 +13,23 @@ from corehq.form_processor.utils.xform import (
     TestFormMetadata,
 )
 from corehq.motech.models import ConnectionSettings, RequestLog
-from corehq.motech.repeaters.models import Repeater, RepeatRecord
+from corehq.motech.repeaters.const import State
+from corehq.motech.repeaters.models import FormRepeater, Repeater, RepeatRecord
 from corehq.motech.repeaters.tasks import (
     _process_repeat_record,
     delete_old_request_logs,
     iter_ready_repeaters,
+    process_repeater,
+    update_repeater,
 )
+from corehq.util.test_utils import _create_case
 
 DOMAIN = 'gaidhlig'
 PAYLOAD_IDS = ['aon', 'dha', 'trì', 'ceithir', 'coig', 'sia', 'seachd', 'ochd',
                'naoi', 'deich']
+
+
+ResponseMock = namedtuple('ResponseMock', 'status_code reason')
 
 
 class TestDeleteOldRequestLogs(TestCase):
@@ -164,3 +173,105 @@ class TestIterReadyRepeaters(SimpleTestCase):
             repeaters = list(iter_ready_repeaters())
             self.assertEqual(len(repeaters), 3)
             self.assertEqual(repeaters, [repeater_1, repeater_2, repeater_1])
+
+
+class TestProcessRepeater(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.set_backoff_patch = patch.object(FormRepeater, 'set_backoff')
+        cls.set_backoff_patch.start()
+
+        cls.conn_settings = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            url='http://www.example.com/api/'
+        )
+        cls.repeater = FormRepeater.objects.create(
+            domain=DOMAIN,
+            connection_settings=cls.conn_settings,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.repeater.delete()
+        cls.conn_settings.delete()
+        cls.set_backoff_patch.stop()
+        super().tearDownClass()
+
+    def test_process_repeater_sends_repeat_record(self):
+        payload, __ = _create_case(
+            domain=DOMAIN,
+            case_id=str(uuid4()),
+            case_type='case',
+            owner_id='abc123'
+        )
+        self.repeater.register(payload)
+
+        with patch('corehq.motech.repeaters.models.simple_request') as request_mock:
+            request_mock.return_value = ResponseMock(status_code=200, reason='OK')
+            process_repeater(DOMAIN, self.repeater.repeater_id)
+
+            request_mock.assert_called_once()
+
+    def test_process_repeater_updates_repeater(self):
+        payload, __ = _create_case(
+            domain=DOMAIN,
+            case_id=str(uuid4()),
+            case_type='case',
+            owner_id='abc123'
+        )
+        self.repeater.register(payload)
+
+        with patch('corehq.motech.repeaters.models.simple_request') as request_mock:
+            request_mock.return_value = ResponseMock(
+                status_code=429,
+                reason='Too Many Requests',
+            )
+            process_repeater(DOMAIN, self.repeater.repeater_id)
+
+        self.repeater.set_backoff.assert_called_once()
+
+
+class TestUpdateRepeater(SimpleTestCase):
+
+    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
+    def test_update_repeater_resets_backoff_on_success(self, mock_get_repeater):
+        mock_repeater = MagicMock()
+        mock_get_repeater.return_value = mock_repeater
+
+        update_repeater([State.Success, State.Fail, State.Empty, None], 1)
+
+        mock_repeater.set_backoff.assert_not_called()
+        mock_repeater.reset_backoff.assert_called_once()
+
+    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
+    def test_update_repeater_sets_backoff_on_failure(self, mock_get_repeater):
+        mock_repeater = MagicMock()
+        mock_get_repeater.return_value = mock_repeater
+
+        update_repeater([State.Fail, State.Empty, None], 1)
+
+        mock_repeater.set_backoff.assert_called_once()
+        mock_repeater.reset_backoff.assert_not_called()
+
+    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
+    def test_update_repeater_does_nothing_on_empty(self, mock_get_repeater):
+        mock_repeater = MagicMock()
+        mock_get_repeater.return_value = mock_repeater
+
+        update_repeater([State.Empty], 1)
+
+        mock_repeater.set_backoff.assert_not_called()
+        mock_repeater.reset_backoff.assert_not_called()
+
+    @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
+    def test_update_repeater_does_nothing_on_none(self, mock_get_repeater):
+        mock_repeater = MagicMock()
+        mock_get_repeater.return_value = mock_repeater
+
+        update_repeater([None], 1)
+
+        mock_repeater.set_backoff.assert_not_called()
+        mock_repeater.reset_backoff.assert_not_called()
