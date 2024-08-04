@@ -65,6 +65,7 @@ class.
 """
 import inspect
 import json
+import random
 import traceback
 import uuid
 from collections import defaultdict
@@ -122,8 +123,10 @@ from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 from .const import (
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
+    MAX_REPEATER_WORKERS,
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
+    RATE_LIMITER_DELAY_RANGE,
     State,
 )
 from .exceptions import RequestConnectionError, UnknownRepeater
@@ -258,6 +261,7 @@ class Repeater(RepeaterSuperProxy):
     is_paused = models.BooleanField(default=False)
     next_attempt_at = models.DateTimeField(null=True, blank=True)
     last_attempt_at = models.DateTimeField(null=True, blank=True)
+    # TODO: max_workers = models.IntegerField(default=1)
     options = JSONField(default=dict)
     connection_settings_id = models.IntegerField(db_index=True)
     is_deleted = models.BooleanField(default=False, db_index=True)
@@ -348,21 +352,26 @@ class Repeater(RepeaterSuperProxy):
 
     @property
     def repeat_records_ready(self):
-        return self.repeat_records.filter(state__in=(State.Pending, State.Fail))
+        return (
+            self.repeat_records
+            .filter(state__in=(State.Pending, State.Fail))
+            .order_by('registered_at')
+        )
 
     @property
-    def is_ready(self):
-        """
-        Returns True if there are repeat records to be sent.
-        """
-        if self.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(self.domain):
-            return False
-        if not (self.next_attempt_at is None
-                or self.next_attempt_at < timezone.now()):
-            return False
-        return self.repeat_records_ready.exists()
+    def domain_can_forward(self):
+        return (
+            domain_can_forward(self.domain)
+            and not toggles.PAUSE_DATA_FORWARDING.enabled(self.domain)
+        )
 
-    def set_next_attempt(self):
+    def rate_limit(self):
+        interval = random.uniform(*RATE_LIMITER_DELAY_RANGE)
+        Repeater.objects.filter(id=self.repeater_id).update(
+            next_attempt_at=datetime.utcnow() + interval,
+        )
+
+    def set_backoff(self):
         now = datetime.utcnow()
         interval = _get_retry_interval(self.last_attempt_at, now)
         self.last_attempt_at = now
@@ -375,7 +384,7 @@ class Repeater(RepeaterSuperProxy):
             next_attempt_at=now + interval,
         )
 
-    def reset_next_attempt(self):
+    def reset_backoff(self):
         if self.last_attempt_at or self.next_attempt_at:
             self.last_attempt_at = None
             self.next_attempt_at = None
@@ -411,7 +420,8 @@ class Repeater(RepeaterSuperProxy):
             # Prime the cache to prevent unnecessary lookup. Only do this for synchronous repeaters
             # to prevent serializing the repeater in the celery task payload
             repeat_record.__dict__["repeater"] = self
-        repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
+        # TODO: No, send the repeat record when it's its turn.
+        # repeat_record.attempt_forward_now(fire_synchronously=fire_synchronously)
         return repeat_record
 
     def allowed_to_forward(self, payload):
@@ -432,24 +442,29 @@ class Repeater(RepeaterSuperProxy):
         self.is_deleted = True
         Repeater.objects.filter(id=self.repeater_id).update(is_deleted=True)
 
+    @property
+    def num_workers(self):
+        # TODO: return min(self.max_workers, MAX_REPEATER_WORKERS)
+        return MAX_REPEATER_WORKERS
+
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)
         try:
             response = self.send_request(repeat_record, payload)
         except (Timeout, ConnectionError) as error:
             log_repeater_timeout_in_datadog(self.domain)
-            return self.handle_response(RequestConnectionError(error), repeat_record)
+            self.handle_response(RequestConnectionError(error), repeat_record)
         except RequestException as err:
-            return self.handle_response(err, repeat_record)
+            self.handle_response(err, repeat_record)
         except (PossibleSSRFAttempt, CannotResolveHost):
-            return self.handle_response(Exception("Invalid URL"), repeat_record)
+            self.handle_response(Exception("Invalid URL"), repeat_record)
         except Exception:
             # This shouldn't ever happen in normal operation and would mean code broke
             # we want to notify ourselves of the error detail and tell the user something vague
             notify_exception(None, "Unexpected error sending repeat record request")
-            return self.handle_response(Exception("Internal Server Error"), repeat_record)
+            self.handle_response(Exception("Internal Server Error"), repeat_record)
         else:
-            return self.handle_response(response, repeat_record)
+            self.handle_response(response, repeat_record)
 
     @memoized
     def get_payload(self, repeat_record):
@@ -474,12 +489,11 @@ class Repeater(RepeaterSuperProxy):
         result may be either a response object or an exception
         """
         if isinstance(result, Exception):
-            attempt = repeat_record.handle_exception(result)
+            repeat_record.handle_exception(result)
         elif is_response(result) and 200 <= result.status_code < 300 or result is True:
-            attempt = repeat_record.handle_success(result)
+            repeat_record.handle_success(result)
         else:
-            attempt = repeat_record.handle_failure(result)
-        return attempt
+            repeat_record.handle_failure(result)
 
     def get_headers(self, repeat_record):
         # to be overridden
@@ -1151,19 +1165,16 @@ class RepeatRecord(models.Model):
     def fire(self, force_send=False):
         if force_send or not self.succeeded:
             try:
-                attempt = self.repeater.fire_for_record(self)
+                self.repeater.fire_for_record(self)
             except Exception as e:
                 log_repeater_error_in_datadog(self.domain, status_code=None,
                                               repeater_type=self.repeater_type)
-                attempt = self.handle_payload_exception(e)
-                raise
+                self.handle_payload_exception(e)
             finally:
-                # pycharm warns attempt might not be defined.
-                # that'll only happen if fire_for_record raise a non-Exception exception (e.g. SIGINT)
-                # or handle_payload_exception raises an exception. I'm okay with that. -DMR
-                self.add_attempt(attempt)
-                self.save()
+                return self.state
+        return None
 
+    # TODO: Drop: `process_repeater` task will call `process_repeat_record` tasks directly
     def attempt_forward_now(self, *, is_retry=False, fire_synchronously=False):
         from corehq.motech.repeaters.tasks import (
             process_repeat_record,
@@ -1215,9 +1226,6 @@ class RepeatRecord(models.Model):
 
     def handle_payload_exception(self, exception):
         self.add_client_failure_attempt(str(exception), retry=False)
-
-    def add_attempt(self, attempt):
-        assert attempt is None, "SQL attempts are added/saved on create"
 
     def cancel(self):
         self.state = State.Cancelled
