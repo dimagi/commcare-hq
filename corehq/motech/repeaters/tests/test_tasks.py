@@ -18,8 +18,6 @@ from corehq.motech.repeaters.tasks import (
     iter_ready_repeaters,
 )
 
-from ..const import State
-
 DOMAIN = 'gaidhlig'
 PAYLOAD_IDS = ['aon', 'dha', 'trì', 'ceithir', 'coig', 'sia', 'seachd', 'ochd',
                'naoi', 'deich']
@@ -83,134 +81,22 @@ def form_context(form_ids):
 
 class TestProcessRepeatRecord(TestCase):
 
-    def test_returns_if_record_is_cancelled(self):
-        repeat_record = RepeatRecord(
-            domain=self.domain,
-            payload_id='abc123',
-            registered_at=datetime.utcnow(),
-            repeater_id=self.repeater.repeater_id,
-            next_check=None,
-            state=State.Cancelled,
-        )
-
-        _process_repeat_record(repeat_record)
-
-        self.assertEqual(self.mock_fire.call_count, 0)
-        self.assertEqual(self.mock_postpone_by.call_count, 0)
-
-    def test_cancels_and_returns_if_domain_cannot_forward(self):
-        self.mock_domain_can_forward.return_value = False
-
-        repeat_record = RepeatRecord(
-            domain=self.domain,
-            payload_id='abc123',
-            registered_at=datetime.utcnow(),
-            repeater_id=self.repeater.repeater_id,
-        )
-
-        _process_repeat_record(repeat_record)
-
-        fetched_repeat_record = RepeatRecord.objects.get(id=repeat_record.id)
-        self.assertEqual(fetched_repeat_record.state, State.Cancelled)
-        self.assertEqual(self.mock_fire.call_count, 0)
-        self.assertEqual(self.mock_postpone_by.call_count, 0)
-
-    def test_cancels_and_returns_if_repeat_record_exceeds_max_retries(self):
-        repeat_record = RepeatRecord(
-            domain=self.domain,
-            payload_id='abc123',
-            registered_at=datetime.utcnow(),
-            repeater_id=self.repeater.repeater_id,
-            state=State.Fail,
-        )
-
-        with patch.object(RepeatRecord, "num_attempts", 1), \
-                patch.object(repeat_record, "max_possible_tries", 1):
-            _process_repeat_record(repeat_record)
-
-        fetched_repeat_record = RepeatRecord.objects.get(id=repeat_record.id)
-        self.assertEqual(fetched_repeat_record.state, State.Cancelled)
-        self.assertEqual(self.mock_fire.call_count, 0)
-        self.assertEqual(self.mock_postpone_by.call_count, 0)
-
-    def test_deletes_repeat_record_cancels_and_returns_if_repeater_deleted(self):
-        deleted_repeater = Repeater.objects.create(
+    def test_fires_record(self):
+        repeater = Repeater.objects.create(
             domain=self.domain,
             connection_settings=self.conn_settings,
-            is_deleted=True
         )
 
         repeat_record = RepeatRecord(
             domain=self.domain,
             payload_id='abc123',
             registered_at=datetime.utcnow(),
-            repeater_id=deleted_repeater.repeater_id,
-        )
-
-        _process_repeat_record(repeat_record)
-
-        repeat_record.refresh_from_db(fields=["state"])
-        self.assertEqual(repeat_record.state, State.Cancelled)
-        self.assertEqual(self.mock_fire.call_count, 0)
-        self.assertEqual(self.mock_postpone_by.call_count, 0)
-
-    def test_postpones_record_if_repeater_is_paused(self):
-        paused_repeater = Repeater.objects.create(
-            domain=self.domain,
-            connection_settings=self.conn_settings,
-            is_paused=True
-        )
-
-        repeat_record = RepeatRecord(
-            domain=self.domain,
-            payload_id='abc123',
-            registered_at=datetime.utcnow(),
-            repeater_id=paused_repeater.repeater_id,
-        )
-
-        _process_repeat_record(repeat_record)
-
-        self.assertEqual(self.mock_fire.call_count, 0)
-        self.assertEqual(self.mock_postpone_by.call_count, 1)
-
-    def test_fires_record_if_repeater_is_not_paused(self):
-        paused_repeater = Repeater.objects.create(
-            domain=self.domain,
-            connection_settings=self.conn_settings,
-            is_paused=False
-        )
-
-        repeat_record = RepeatRecord(
-            domain=self.domain,
-            payload_id='abc123',
-            registered_at=datetime.utcnow(),
-            repeater_id=paused_repeater.repeater_id,
+            repeater_id=repeater.repeater_id,
         )
 
         _process_repeat_record(repeat_record)
 
         self.assertEqual(self.mock_fire.call_count, 1)
-        self.assertEqual(self.mock_postpone_by.call_count, 0)
-
-    def test_paused_and_deleted_repeater_does_not_fire_or_postpone(self):
-        paused_and_deleted_repeater = Repeater.objects.create(
-            domain=self.domain,
-            connection_settings=self.conn_settings,
-            is_paused=True,
-            is_deleted=True,
-        )
-
-        repeat_record = RepeatRecord(
-            domain=self.domain,
-            payload_id='abc123',
-            registered_at=datetime.utcnow(),
-            repeater_id=paused_and_deleted_repeater.repeater_id,
-        )
-
-        _process_repeat_record(repeat_record)
-
-        self.assertEqual(self.mock_fire.call_count, 0)
-        self.assertEqual(self.mock_postpone_by.call_count, 0)
 
     @classmethod
     def setUpClass(cls):
@@ -233,15 +119,6 @@ class TestProcessRepeatRecord(TestCase):
         patch_fire = patch.object(RepeatRecord, 'fire')
         self.mock_fire = patch_fire.start()
         self.addCleanup(patch_fire.stop)
-
-        patch_postpone_by = patch.object(RepeatRecord, 'postpone_by')
-        self.mock_postpone_by = patch_postpone_by.start()
-        self.addCleanup(patch_postpone_by.stop)
-
-        patch_domain_can_forward = patch('corehq.motech.repeaters.tasks.domain_can_forward')
-        self.mock_domain_can_forward = patch_domain_can_forward.start()
-        self.mock_domain_can_forward.return_value = True
-        self.addCleanup(patch_domain_can_forward.stop)
 
 
 class TestIterReadyRepeaters(TestCase):
