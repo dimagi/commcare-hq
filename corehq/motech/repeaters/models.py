@@ -416,7 +416,7 @@ class Repeater(RepeaterSuperProxy):
 
     def allowed_to_forward(self, payload):
         """
-        Return True/False depending on whether the payload meets forawrding criteria or not
+        Return True/False depending on whether the payload meets forwarding criteria or not
         """
         return True
 
