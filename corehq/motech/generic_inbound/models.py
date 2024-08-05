@@ -67,14 +67,14 @@ class ConfigurableAPI(models.Model):
     @property
     @memoized
     def parsed_expression(self):
-        return self.transform_expression.wrapped_definition(FactoryContext.empty())
+        return self.transform_expression.wrapped_definition(FactoryContext.empty(domain=self.domain))
 
     @property
     @memoized
     def parsed_filter(self):
         if not self.filter_expression:
             return None
-        return self.filter_expression.wrapped_definition(FactoryContext.empty())
+        return self.filter_expression.wrapped_definition(FactoryContext.empty(domain=self.domain))
 
     @cached_property
     def backend_class(self):
@@ -107,7 +107,7 @@ class ConfigurableApiValidation(models.Model):
     @property
     @memoized
     def parsed_expression(self):
-        return self.expression.wrapped_definition(FactoryContext.empty())
+        return self.expression.wrapped_definition(FactoryContext.empty(domain=self.api.domain))
 
     def get_error_context(self):
         return {
