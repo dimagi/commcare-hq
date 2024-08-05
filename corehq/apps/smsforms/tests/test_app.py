@@ -126,14 +126,7 @@ class TestStartSession(TestCase):
         expected_session_data = {
             'device_id': 'commconnect', 'app_version': self.app.version, 'domain': self.domain,
             'username': self.recipient.raw_username, 'user_id': self.recipient.get_id,
-            'user_data': {
-                'commcare_first_name': None,
-                'commcare_last_name': None,
-                'commcare_phone_number': None,
-                'commcare_profile': '',
-                'commcare_project': self.domain,
-                'commcare_user_type': 'web',
-            },
+            'user_data': self.web_user.get_user_session_data(self.domain),
             'app_id': None
         }
         xform_config_mock.assert_called_once_with(
