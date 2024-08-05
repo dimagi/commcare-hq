@@ -34,6 +34,7 @@ class TestStartSession(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.factory = AppFactory(domain=cls.domain)
         cls.app = cls.factory.app
         cls.module, cls.basic_form = cls.factory.new_basic_module('basic', 'patient')
