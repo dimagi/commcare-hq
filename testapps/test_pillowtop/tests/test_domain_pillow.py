@@ -86,7 +86,6 @@ class DomainPillowTest(TestCase):
         publish_domain_saved(domain_obj)
 
         # undelete
-        domain_obj = Domain.get_by_name(domain_name)
         domain_obj.doc_type = 'Domain'
         domain_obj.save()
 
