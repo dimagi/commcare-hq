@@ -14,11 +14,14 @@
     flex-grow: 1;
 
     .breadcrumb-item {
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
       &::before {
         color: $cc-neutral-hi;
+      }
+      a {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        display: block;
       }
     }
   }
