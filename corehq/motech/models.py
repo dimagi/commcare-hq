@@ -225,7 +225,7 @@ class ConnectionSettings(models.Model):
                 self.plaintext_password,
             )
         if self.auth_type == APIKEY_AUTH:
-            return ApiKeyAuthManager(self.plaintext_password)
+            return ApiKeyAuthManager(self.username, self.plaintext_password)
         if self.auth_type == OAUTH2_PWD:
             return OAuth2PasswordGrantManager(
                 self.url,
@@ -278,6 +278,12 @@ class ConnectionSettings(models.Model):
     def soft_delete(self):
         self.is_deleted = True
         self.save()
+
+    def clear_caches(self):
+        try:
+            del self.used_by
+        except AttributeError:
+            pass
 
 
 class RequestLog(models.Model):

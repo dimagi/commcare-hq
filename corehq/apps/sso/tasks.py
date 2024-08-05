@@ -121,7 +121,7 @@ def send_idp_cert_expires_reminder_emails(num_days):
             )
 
 
-@periodic_task(run_every=crontab(minute=0, hour=2), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour='*/4'), acks_late=True)
 def auto_deactivate_removed_sso_users():
     for idp in IdentityProvider.objects.filter(
         enable_user_deactivation=True,

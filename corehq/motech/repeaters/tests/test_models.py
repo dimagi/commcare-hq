@@ -21,7 +21,6 @@ from corehq.util.test_utils import _create_case
 from ..const import (
     MAX_ATTEMPTS,
     MAX_BACKOFF_ATTEMPTS,
-    MIN_RETRY_WAIT,
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
@@ -280,9 +279,6 @@ class AttemptsTests(RepeaterTestCase):
 
     def setUp(self):
         super().setUp()
-        self.just_now = timezone.now()
-        self.repeater.next_attempt_at = self.just_now
-        self.repeater.save()
         self.repeat_record = self.repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id='eggs',
@@ -292,7 +288,6 @@ class AttemptsTests(RepeaterTestCase):
     def test_add_success_attempt_true(self):
         self.repeat_record.add_success_attempt(response=True)
         self.assertEqual(self.repeat_record.state, RECORD_SUCCESS_STATE)
-        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_SUCCESS_STATE)
@@ -305,7 +300,6 @@ class AttemptsTests(RepeaterTestCase):
         resp.text = '<h1>Hello World</h1>'
         self.repeat_record.add_success_attempt(response=resp)
         self.assertEqual(self.repeat_record.state, RECORD_SUCCESS_STATE)
-        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_SUCCESS_STATE)
@@ -316,9 +310,6 @@ class AttemptsTests(RepeaterTestCase):
         message = '504: Gateway Timeout'
         self.repeat_record.add_server_failure_attempt(message=message)
         self.assertEqual(self.repeat_record.state, RECORD_FAILURE_STATE)
-        self.assertGreater(self.repeater.last_attempt_at, self.just_now)
-        self.assertEqual(self.repeater.next_attempt_at,
-                         self.repeater.last_attempt_at + MIN_RETRY_WAIT)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_FAILURE_STATE)
@@ -330,10 +321,6 @@ class AttemptsTests(RepeaterTestCase):
         while self.repeat_record.state != RECORD_CANCELLED_STATE:
             self.repeat_record.add_server_failure_attempt(message=message)
 
-        self.assertGreater(self.repeater.last_attempt_at, self.just_now)
-        # Interval is MIN_RETRY_WAIT because attempts were very close together
-        self.assertEqual(self.repeater.next_attempt_at,
-                         self.repeater.last_attempt_at + MIN_RETRY_WAIT)
         self.assertEqual(self.repeat_record.num_attempts,
                          MAX_BACKOFF_ATTEMPTS + 1)
         attempts = list(self.repeat_record.attempts)
@@ -347,8 +334,6 @@ class AttemptsTests(RepeaterTestCase):
         message = '409: Conflict'
         self.repeat_record.add_client_failure_attempt(message=message)
         self.assertEqual(self.repeat_record.state, RECORD_FAILURE_STATE)
-        self.assertIsNone(self.repeater.last_attempt_at)
-        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_FAILURE_STATE)
@@ -359,8 +344,6 @@ class AttemptsTests(RepeaterTestCase):
         message = '409: Conflict'
         while self.repeat_record.state != RECORD_CANCELLED_STATE:
             self.repeat_record.add_client_failure_attempt(message=message)
-        self.assertIsNone(self.repeater.last_attempt_at)
-        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts,
                          MAX_ATTEMPTS + 1)
         attempts = list(self.repeat_record.attempts)
@@ -374,8 +357,6 @@ class AttemptsTests(RepeaterTestCase):
         message = '422: Unprocessable Entity'
         while self.repeat_record.state != RECORD_CANCELLED_STATE:
             self.repeat_record.add_client_failure_attempt(message=message, retry=False)
-        self.assertIsNone(self.repeater.last_attempt_at)
-        self.assertIsNone(self.repeater.next_attempt_at)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state, RECORD_CANCELLED_STATE)
         self.assertEqual(self.repeat_record.attempts[0].message, message)
@@ -389,7 +370,6 @@ class AttemptsTests(RepeaterTestCase):
         self.assertEqual(self.repeat_record.state, RECORD_CANCELLED_STATE)
         # Note: Our payload issues do not affect how we deal with their
         #       server issues:
-        self.assertEqual(self.repeater.next_attempt_at, self.just_now)
         self.assertEqual(self.repeat_record.num_attempts, 1)
         self.assertEqual(self.repeat_record.attempts[0].state,
                          RECORD_CANCELLED_STATE)
