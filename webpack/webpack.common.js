@@ -74,6 +74,10 @@ const getAliases = function (directory) {
     const appsPath = path.resolve(__base, 'corehq', 'apps');
     const aliases = {
         "jquery": "jquery/dist/jquery.min",
+
+        // todo after completing requirejs migration, remove this file and the yarn modernizr post-install step
+        "modernizr": "hqwebapp/js/lib/modernizr",
+
         "ko.mapping": path.resolve(getStaticPathForApp('hqwebapp', 'js/lib/knockout_plugins/'),
             'knockout_mapping.ko.min'),
     };
@@ -119,6 +123,19 @@ module.exports = {
                 options: {
                     search: /\b(es6!)?hqwebapp\/js\/bootstrap5_loader\b/g,
                     replace: 'bootstrap5',
+                },
+            },
+
+            {
+                test: /modernizr\.js$/,
+                loader: "webpack-modernizr-loader",
+                options: {
+                    "options": [
+                        "setClasses",
+                    ],
+                    "feature-detects": [
+                        "test/svg/smil",
+                    ],
                 },
             },
         ],
