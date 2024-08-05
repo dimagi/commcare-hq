@@ -1245,6 +1245,7 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         self.config.save()
         self.adapter = get_indicator_adapter(self.config)
         self.adapter.build_table()
+        self.addCleanup(self.adapter.drop_table)
         self.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
         self.pillow = _get_pillow([self.config], processor_chunk_size=100)
 
