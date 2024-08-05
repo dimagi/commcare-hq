@@ -17,9 +17,13 @@ const getAppJsName = function (appName) {
     return appJsNames[appName] || appName;
 };
 
+const getStaticFolderForApp = function (appName) {
+    return path.resolve(__base, 'corehq', 'apps', appName, 'static');
+};
+
 const getStaticPathForApp = function (appName, directory) {
     directory = directory || "";
-    const staticFolder = path.resolve(__base, 'corehq', 'apps', appName, 'static');
+    const staticFolder = getStaticFolderForApp(appName);
 
     return path.resolve(staticFolder, getAppJsName(appName), directory);
 };
@@ -77,6 +81,11 @@ const getAliases = function (directory) {
 
         // todo after completing requirejs migration, remove this file and the yarn modernizr post-install step
         "modernizr": "hqwebapp/js/lib/modernizr",
+
+        "sentry_browser": path.resolve(getStaticFolderForApp('hqwebapp'),
+            'sentry/js/sentry.browser.7.28.0.min'),
+        "sentry_captureconsole": path.resolve(getStaticFolderForApp('hqwebapp'),
+            'sentry/js/sentry.captureconsole.7.28.0.min'),
 
         "ko.mapping": path.resolve(getStaticPathForApp('hqwebapp', 'js/lib/knockout_plugins/'),
             'knockout_mapping.ko.min'),
@@ -136,6 +145,18 @@ module.exports = {
                     "feature-detects": [
                         "test/svg/smil",
                     ],
+                },
+            },
+
+            {
+                test: /sentry\.browser/,
+                loader: "exports-loader",
+                options: {
+                    type: "commonjs",
+                    exports: {
+                        syntax: "single",
+                        name: "Sentry",
+                    },
                 },
             },
         ],
