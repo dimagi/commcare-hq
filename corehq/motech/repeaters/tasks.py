@@ -110,9 +110,6 @@ def iter_ready_repeaters():
                 repeater.rate_limit()
                 continue
 
-            if not get_repeater_lock(repeater.repeater_id).acquire(blocking=False):
-                continue
-
             yielded = True
             yield repeater
 
@@ -120,11 +117,6 @@ def iter_ready_repeaters():
             # No repeaters are ready, or they are rate limited, or their
             # domains can't forward or are paused.
             return
-
-
-def get_repeater_lock(repeater_id):
-    lock_key = f'process_repeater_{repeater_id}'
-    return get_redis_lock(lock_key, timeout=23 * 60 * 60, name=lock_key)
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -160,7 +152,6 @@ def update_repeater(repeat_record_states, repeater_id):
     else:
         # All sent payloads failed.
         repeater.set_backoff()
-    get_repeater_lock(repeater_id).release()
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
