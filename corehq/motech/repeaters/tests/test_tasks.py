@@ -258,7 +258,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
 
-        update_repeater(1, [State.Success, State.Fail, State.Empty, None])
+        update_repeater([State.Success, State.Fail, State.Empty, None], 1)
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_called_once()
@@ -268,7 +268,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
 
-        update_repeater(1, [State.Fail, State.Empty, None])
+        update_repeater([State.Fail, State.Empty, None], 1)
 
         mock_repeater.set_backoff.assert_called_once()
         mock_repeater.reset_backoff.assert_not_called()
@@ -278,7 +278,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
 
-        update_repeater(1, [State.Empty])
+        update_repeater([State.Empty], 1)
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_not_called()
@@ -288,7 +288,7 @@ class TestUpdateRepeater(SimpleTestCase):
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
 
-        update_repeater(1, [None])
+        update_repeater([None], 1)
 
         mock_repeater.set_backoff.assert_not_called()
         mock_repeater.reset_backoff.assert_not_called()
