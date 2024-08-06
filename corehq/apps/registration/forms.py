@@ -22,7 +22,7 @@ from corehq.apps.domain.forms import NoAutocompleteMixin, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.programs.models import Program
-from corehq.apps.users.forms import BaseLocationForm, BaseTableauUserForm
+from corehq.apps.users.forms import SelectUserLocationForm, BaseTableauUserForm
 from corehq.apps.users.models import CouchUser
 
 
@@ -369,13 +369,13 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
         label="",
         help_text=mark_safe(_(
             """I have read and agree to Dimagi's
-                <a href="http://www.dimagi.com/terms/latest/privacy/"
+                <a href="https://dimagi.com/terms-privacy/"
                     target="_blank">Privacy Policy</a>,
-                <a href="http://www.dimagi.com/terms/latest/tos/"
+                <a href="https://dimagi.com/terms-of-service/"
                     target="_blank">Terms of Service</a>,
-                <a href="http://www.dimagi.com/terms/latest/ba/"
+                <a href="https://dimagi.com/terms-ba/"
                     target="_blank">Business Agreement</a>, and
-                <a href="http://www.dimagi.com/terms/latest/aup/"
+                <a href="https://dimagi.com/terms-aup/"
                     target="_blank">Acceptable Use Policy</a>.
                """))
     )
@@ -483,7 +483,7 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
         return ""
 
 
-class AdminInvitesUserForm(BaseLocationForm):
+class AdminInvitesUserForm(SelectUserLocationForm):
     email = forms.EmailField(label="Email Address",
                              max_length=User._meta.get_field('email').max_length)
     role = forms.ChoiceField(choices=(), label="Project Role")

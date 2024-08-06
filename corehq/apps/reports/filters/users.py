@@ -215,7 +215,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     options_url = 'emwf_options_all_users'
     filter_help_inline = mark_safe(gettext_lazy(  # nosec: no user input
         '<i class="fa fa-info-circle"></i> See '
-        '<a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
+        '<a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/Organization+Data+Management#Search-for-Locations"'  # noqa: E501
         ' target="_blank"> Filter Definitions</a>.'))
 
     @property

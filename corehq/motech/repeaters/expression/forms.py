@@ -25,7 +25,7 @@ class CaseExpressionRepeaterForm(GenericRepeaterForm):
     def clean_configured_expression(self):
         try:
             ExpressionFactory.from_spec(
-                self.cleaned_data['configured_expression'], FactoryContext.empty()
+                self.cleaned_data['configured_expression'], FactoryContext.empty(domain=self.domain)
             )
         except BadSpecError as e:
             raise ValidationError(e)

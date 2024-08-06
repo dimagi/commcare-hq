@@ -247,6 +247,7 @@ RECAPTCHA_PUBLIC_KEY = ''
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3to5'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3to5"
+CRISPY_FAIL_SILENTLY = not DEBUG
 
 FIELD_AUDIT_AUDITORS = [
     "corehq.apps.users.auditors.HQAuditor",
