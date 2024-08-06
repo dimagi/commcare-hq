@@ -1030,10 +1030,15 @@ hqDefine("cloudcare/js/form_entry/form_ui", [
             self.labelWidth = "";
             self.questionTileWidth = `col-md-${columnWidth}`;
         } else {
-            self.controlWidth = constants.CONTROL_WIDTH;
-            self.labelWidth = constants.LABEL_WIDTH;
+            if (self.isLabel) {
+                self.controlWidth = "";
+                self.labelWidth = "";
+            } else {
+                self.controlWidth = constants.CONTROL_WIDTH;
+                self.labelWidth = constants.LABEL_WIDTH;
+            }
             self.questionTileWidth = constants.FULL_WIDTH;
-            if (!hasLabel) {
+            if (!hasLabel && !self.isLabel) {
                 self.controlWidth += ' ' + constants.LABEL_OFFSET;
             }
         }
