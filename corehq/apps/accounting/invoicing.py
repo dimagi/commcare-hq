@@ -797,7 +797,7 @@ class UserLineItemFactory(FeatureLineItemFactory):
 
     @property
     def unit_description(self):
-        return self._unit_description_by_user_type("mobile user")
+        return self._unit_description_by_user_type(_("mobile user"))
 
 
 class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
@@ -815,7 +815,7 @@ class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
 
     @property
     def unit_description(self):
-        return super()._unit_description_by_user_type("form-submitting mobile worker")
+        return super()._unit_description_by_user_type(_("form-submitting mobile worker"))
 
 
 class WebUserLineItemFactory(UserLineItemFactory):
@@ -831,7 +831,7 @@ class WebUserLineItemFactory(UserLineItemFactory):
 
     @property
     def unit_description(self):
-        return super()._unit_description_by_user_type("web user")
+        return super()._unit_description_by_user_type(_("web user"))
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):
