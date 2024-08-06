@@ -33,6 +33,7 @@ from .const import (
     HQ_CASE_SEARCH_INDEX_CANONICAL_NAME,
     INDEX_CONF_REINDEX,
     INDEX_CONF_STANDARD,
+    INDEX_SLOWLOG_CONF,
     SCROLL_KEEPALIVE,
     SCROLL_SIZE,
 )
@@ -316,6 +317,13 @@ class ElasticManageAdapter(BaseAdapter):
         :param index: ``str`` index for which to change the settings
         """
         return self._index_put_settings(index, INDEX_CONF_STANDARD)
+
+    def index_configure_slow_logs(self, index):
+        """Update an index with settings to collect logs on slow requests
+
+        :param index: ``str`` index for which to change the settings
+        """
+        return self._index_put_settings(index, INDEX_SLOWLOG_CONF)
 
     def _index_put_settings(self, index, settings):
         self._validate_single_index(index)
