@@ -456,7 +456,7 @@ def excel_commit(request, domain):
         return render_error(request, domain, get_importer_error_message(e))
 
     if not request.POST.get('confirm'):
-        NUM_CASES_THRESHOLD = 1
+        NUM_CASES_THRESHOLD = 100 * 1000
         num_cases, outlier_col, outlier_sheet = iterate_spreadsheets(case_upload)
 
         if num_cases >= NUM_CASES_THRESHOLD or outlier_col:
