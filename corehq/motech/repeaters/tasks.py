@@ -110,6 +110,9 @@ def iter_ready_repeaters():
                 repeater.rate_limit()
                 continue
 
+            if not get_repeater_lock(repeater.repeater_id).acquire(blocking=False):
+                continue
+
             yielded = True
             yield repeater
 
@@ -119,30 +122,26 @@ def iter_ready_repeaters():
             return
 
 
+def get_repeater_lock(repeater_id):
+    lock_key = f'process_repeater_{repeater_id}'
+    return get_redis_lock(lock_key, timeout=23 * 60 * 60, name=lock_key)
+
+
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeater(domain, repeater_id):
 
     def is_retry(repeat_record):
         return repeat_record.state == State.Fail
 
-    lock_key = f'process_repeater_{repeater_id}'
-    repeater_lock = get_redis_lock(lock_key, timeout=23 * 60 * 60, name=lock_key)
-    if not repeater_lock.acquire(blocking=False):
-        return
-
-    try:
-        repeater = Repeater.objects.get(domain=domain, id=repeater_id)
-        repeat_records = repeater.repeat_records_ready[:repeater.num_workers]
-        header_tasks = [
-            retry_process_repeat_record.s(rr.id, rr.domain)
-            if is_retry(rr)
-            else process_repeat_record.s(rr.id, rr.domain)
-            for rr in repeat_records
-        ]
-        chord(header_tasks)(update_repeater.s(repeater.repeater_id))
-
-    finally:
-        repeater_lock.release()
+    repeater = Repeater.objects.get(domain=domain, id=repeater_id)
+    repeat_records = repeater.repeat_records_ready[:repeater.num_workers]
+    header_tasks = [
+        retry_process_repeat_record.s(rr.id, rr.domain)
+        if is_retry(rr)
+        else process_repeat_record.s(rr.id, rr.domain)
+        for rr in repeat_records
+    ]
+    chord(header_tasks)(update_repeater.s(repeater.repeater_id))
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -161,6 +160,7 @@ def update_repeater(repeat_record_states, repeater_id):
     else:
         # All sent payloads failed.
         repeater.set_backoff()
+    get_repeater_lock(repeater_id).release()
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
