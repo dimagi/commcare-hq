@@ -16,7 +16,9 @@ MAX_ATTEMPTS = 3
 MAX_BACKOFF_ATTEMPTS = 6
 # The maximum number of workers that one repeater can use to send repeat
 # records at the same time. (In other words, HQ's capacity to DDOS
-# attack a remote API endpoint, so keep it low.)
+# attack a remote API endpoint.) This is a guardrail to prevent one
+# domain from hogging repeat record queue workers and to ensure that
+# repeaters are iterated fairly.
 MAX_REPEATER_WORKERS = 7
 
 
