@@ -835,6 +835,7 @@ REPEATER_CLASSES = [
     'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
     'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
     'corehq.motech.repeaters.expression.repeaters.CaseExpressionRepeater',
+    'corehq.motech.repeaters.expression.repeaters.ArcGISFormExpressionRepeater',
 ]
 
 # Override this in localsettings to add new repeater types
