@@ -121,6 +121,10 @@ class _IndexSettingsKey(SettingsKeyCollection):
 class _IndexTuningKey(SettingsKeyCollection):
     REPLICAS = "number_of_replicas"
     SHARDS = "number_of_shards"
+    SLOWLOG_SEARCH_QUERY_WARN = "index.search.slowlog.threshold.query.warn"
+    SLOWLOG_SEARCH_QUERY_INFO = "index.search.slowlog.threshold.query.info"
+    SLOWLOG_SEARCH_QUERY_DEBUG = "index.search.slowlog.threshold.query.debug"
+    SLOWLOG_SEARCH_QUERY_TRACE = "index.search.slowlog.threshold.query.trace"
 
 
 IndexSettingsKey = _IndexSettingsKey()
@@ -138,28 +142,40 @@ DEFAULT = "default"
 
 DEFAULT_REPLICAS = 0
 DEFAULT_SHARDS = 5
+DEFAULT_SLOWLOG_CONFIG = {
+    IndexTuningKey.SLOWLOG_SEARCH_QUERY_WARN: "10s",
+    IndexTuningKey.SLOWLOG_SEARCH_QUERY_INFO: "5s",
+    IndexTuningKey.SLOWLOG_SEARCH_QUERY_DEBUG: "2s",
+    IndexTuningKey.SLOWLOG_SEARCH_QUERY_TRACE: "500ms",
+}
 
 DEFAULT_TUNING_SETTINGS = {
     DEFAULT: {
         IndexTuningKey.REPLICAS: DEFAULT_REPLICAS,
         IndexTuningKey.SHARDS: DEFAULT_SHARDS,
+        **DEFAULT_SLOWLOG_CONFIG,
     },
     IndexSettingsKey.APPS: {
         IndexTuningKey.REPLICAS: 0,
+        **DEFAULT_SLOWLOG_CONFIG,
     },
     IndexSettingsKey.CASE_SEARCH: {
         IndexTuningKey.REPLICAS: 1,
         IndexTuningKey.SHARDS: 5,
+        **DEFAULT_SLOWLOG_CONFIG,
     },
     IndexSettingsKey.DOMAINS: {
         IndexTuningKey.REPLICAS: 0,
+        **DEFAULT_SLOWLOG_CONFIG,
     },
     IndexSettingsKey.USERS: {
         IndexTuningKey.REPLICAS: 0,
         IndexTuningKey.SHARDS: 2,
+        **DEFAULT_SLOWLOG_CONFIG,
     },
     IndexSettingsKey.CASE_SEARCH_BHA: {
         IndexTuningKey.REPLICAS: 1,
         IndexTuningKey.SHARDS: 2,
+        **DEFAULT_SLOWLOG_CONFIG,
     }
 }
