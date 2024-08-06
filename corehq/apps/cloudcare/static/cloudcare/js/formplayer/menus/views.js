@@ -148,10 +148,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return _.template($(id).html() || "");
         },
         templateContext: function () {
-            const environment = UsersModels.getCurrentUser().environment;
             return {
                 title: this.options.title,
-                isAppPreview: environment === constants.PREVIEW_APP_ENVIRONMENT,
+                isAppPreview: UsersModels.getCurrentUser().isAppPreview,
             };
         },
         childViewOptions: function (model) {
@@ -1281,15 +1280,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         template: _.template($("#breadcrumb-item-template").html() || ""),
         className: "breadcrumb-item",
         attributes: function () {
-            let attributes = {
-                "role": "link",
-                "tabindex": "0",
-                "style": this.buildMaxWidth(),
-            };
-            if (this.options.model.get('ariaCurrentPage')) {
-                attributes['aria-current'] = 'page';
-            }
-            return attributes;
+            return {"style": this.buildMaxWidth()};
         },
         events: {
             "click": "crumbClick",
@@ -1309,6 +1300,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             if (e.keyCode === 13) {
                 this.crumbClick(e);
             }
+        },
+        templateContext: function () {
+            return {isCurrentPage: this.options.model.get('ariaCurrentPage')};
         },
     });
 
@@ -1398,15 +1392,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
             return {
                 languageOptionsEnabled: languageOptionsEnabled,
             };
-        },
-        events: {
-            "keydown": "expandDropdown",
-        },
-        expandDropdown: function (e) {
-            if (e.keyCode === 13 || e.keyCode === 32) {
-                e.preventDefault();
-                $(this.ui.dropdownMenu).toggleClass("open");
-            }
         },
     });
 

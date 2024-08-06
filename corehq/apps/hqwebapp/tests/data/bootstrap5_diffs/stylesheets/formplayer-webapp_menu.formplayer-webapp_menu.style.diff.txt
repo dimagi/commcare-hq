@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -5,10 +5,46 @@
+@@ -5,10 +5,49 @@
  #menu-region .module-menu-container,
  #menu-region .module-case-list-container {
    background-color: white;
@@ -15,8 +15,11 @@
 +
 +.persistent-menu-toggle {
 +  color: white;
-+  background-color: $cc-brand-low;
++  background-color: $cc-brand-mid;
 +  padding: $spacer / 2;
++  &:hover {
++    background-color: $cc-brand-low;
++  }
 +}
 +
 +$persistent-menu-image-size: 2rem;
