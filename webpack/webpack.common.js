@@ -167,6 +167,7 @@ module.exports = {
     plugins: [
         new webpack.ProvidePlugin({
             '$': 'jquery',
+            'jQuery': 'jquery', // needed for bootstrap 3 to work
         }),
     ],
 
