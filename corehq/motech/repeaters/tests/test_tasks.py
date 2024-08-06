@@ -130,7 +130,7 @@ class TestProcessRepeatRecord(TestCase):
         self.addCleanup(patch_fire.stop)
 
 
-class TestIterReadyRepeaters(TestCase):
+class TestIterReadyRepeaters(SimpleTestCase):
 
     def test_no_ready_repeaters(self):
         with (
@@ -141,9 +141,7 @@ class TestIterReadyRepeaters(TestCase):
             patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
                   return_value=False)
         ):
-
-            with self.assertNumQueries(0):
-                self.assertFalse(next(iter_ready_repeaters(), False))
+            self.assertFalse(next(iter_ready_repeaters(), False))
 
     def test_not_domain_can_forward(self):
         with (
@@ -154,9 +152,7 @@ class TestIterReadyRepeaters(TestCase):
             patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
                   return_value=False)
         ):
-
-            with self.assertNumQueries(0):
-                self.assertFalse(next(iter_ready_repeaters(), False))
+            self.assertFalse(next(iter_ready_repeaters(), False))
 
     def test_pause_data_forwarding(self):
         with (
@@ -169,9 +165,7 @@ class TestIterReadyRepeaters(TestCase):
             patch('corehq.motech.repeaters.models.toggles.PAUSE_DATA_FORWARDING.enabled',
                   return_value=True)  # <--
         ):
-
-            with self.assertNumQueries(0):
-                self.assertFalse(next(iter_ready_repeaters(), False))
+            self.assertFalse(next(iter_ready_repeaters(), False))
 
     def test_rate_limit_repeater(self):
         with (
@@ -180,11 +174,10 @@ class TestIterReadyRepeaters(TestCase):
             patch('corehq.motech.repeaters.models.domain_can_forward',
                   return_value=True),
             patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
-                  return_value=True)  # <--
+                  return_value=True),  # <--
+            patch.object(Repeater, 'rate_limit')
         ):
-
-            with self.assertNumQueries(1):
-                self.assertFalse(next(iter_ready_repeaters(), False))
+            self.assertFalse(next(iter_ready_repeaters(), False))
 
     def test_successive_loops(self):
         repeater_1 = Repeater()
@@ -195,20 +188,11 @@ class TestIterReadyRepeaters(TestCase):
             patch('corehq.motech.repeaters.models.domain_can_forward',
                   return_value=True),
             patch('corehq.motech.repeaters.tasks.rate_limit_repeater',
-                  return_value=False),
-            patch('corehq.motech.repeaters.tasks.get_repeater_lock',
-                  new_callable=self.get_repeater_lock)
+                  return_value=False)
         ):
-
-            with self.assertNumQueries(0):
-                repeaters = list(iter_ready_repeaters())
-                self.assertEqual(len(repeaters), 3)
-                self.assertEqual(repeaters, [repeater_1, repeater_2, repeater_1])
-
-    @staticmethod
-    def get_repeater_lock():
-        Lock = type('Lock', (), {'acquire': lambda self, blocking: True})
-        return lambda repeater: Lock()
+            repeaters = list(iter_ready_repeaters())
+            self.assertEqual(len(repeaters), 3)
+            self.assertEqual(repeaters, [repeater_1, repeater_2, repeater_1])
 
 
 class TestProcessRepeater(TestCase):
