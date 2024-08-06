@@ -87,6 +87,8 @@ const getAliases = function (directory) {
         "sentry_captureconsole": path.resolve(getStaticFolderForApp('hqwebapp'),
             'sentry/js/sentry.captureconsole.7.28.0.min'),
 
+        "tempusDominus": "@eonasdan/tempus-dominus",
+
         "ko.mapping": path.resolve(getStaticPathForApp('hqwebapp', 'js/lib/knockout_plugins/'),
             'knockout_mapping.ko.min'),
     };
