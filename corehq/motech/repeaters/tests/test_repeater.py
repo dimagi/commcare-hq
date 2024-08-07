@@ -207,9 +207,9 @@ class RepeaterTest(BaseRepeaterTest):
         self.assertTrue(form.is_duplicate)
         self.assertEqual(len(self.repeat_records()), 2)
 
-    def test_repeater_failed_sends(self):
+    def test_server_failure_resends(self):
         """
-        This tests records that fail are requeued later
+        This tests records that encounter server errors are requeued later
         """
         def now():
             return datetime.utcnow()
@@ -219,8 +219,9 @@ class RepeaterTest(BaseRepeaterTest):
 
         for repeat_record in repeat_records:
             with patch(
-                    'corehq.motech.repeaters.models.simple_request',
-                    return_value=MockResponse(status_code=404, reason='Not Found')) as mock_request:
+                'corehq.motech.repeaters.models.simple_request',
+                return_value=MockResponse(status_code=503, reason='Service Unavailable')
+            ) as mock_request:
                 repeat_record.fire()
                 self.assertEqual(mock_request.call_count, 1)
 
@@ -238,6 +239,20 @@ class RepeaterTest(BaseRepeaterTest):
             next_check__lt=next_check_time,
         )
         self.assertEqual(len(repeat_records), 2)
+
+    def test_repeater_payload_failed_cancels(self):
+        """
+        This tests records with bad payloads are cancelled
+        """
+        with patch(
+            'corehq.motech.repeaters.models.simple_request',
+            return_value=MockResponse(status_code=400, reason='Bad Request')
+        ):
+            for repeat_record in self.repeat_records():
+                repeat_record.fire()
+
+        for repeat_record in self.repeat_records():
+            self.assertEqual(repeat_record.state, State.Cancelled)
 
     def test_update_failure_next_check(self):
         now = datetime.utcnow()
