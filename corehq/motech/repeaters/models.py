@@ -492,6 +492,9 @@ class Repeater(RepeaterSuperProxy):
             repeat_record.handle_exception(result)
         elif is_response(result) and 200 <= result.status_code < 300 or result is True:
             repeat_record.handle_success(result)
+        elif is_response(result) and 400 <= result.status_code < 500:
+            message = format_response(result)
+            repeat_record.handle_payload_error(message)
         else:
             repeat_record.handle_failure(result)
 
@@ -1169,7 +1172,7 @@ class RepeatRecord(models.Model):
             except Exception as e:
                 log_repeater_error_in_datadog(self.domain, status_code=None,
                                               repeater_type=self.repeater_type)
-                self.handle_payload_exception(e)
+                self.handle_payload_error(str(e))
             finally:
                 return self.state
         return None
@@ -1224,8 +1227,8 @@ class RepeatRecord(models.Model):
     def handle_exception(self, exception):
         self.add_client_failure_attempt(str(exception))
 
-    def handle_payload_exception(self, exception):
-        self.add_client_failure_attempt(str(exception), retry=False)
+    def handle_payload_error(self, message):
+        self.add_client_failure_attempt(message, retry=False)
 
     def cancel(self):
         self.state = State.Cancelled
