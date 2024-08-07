@@ -1,5 +1,11 @@
+from datetime import datetime, time, timedelta, timezone
+
 from django.core.cache import cache
 
+from corehq.apps.change_feed.topics import (
+    CASE_SQL,
+    get_all_kafka_partitons_for_topic,
+)
 from corehq.project_limits.models import AVG, PillowLagGaugeDefinition
 from corehq.util.quickcache import quickcache
 
@@ -86,3 +92,95 @@ class Gauge:
 
 
 case_pillow_lag_gauge = Gauge(feature_key=CASE_SQL, scope_fn=get_all_kafka_partitons_for_topic)
+
+
+class GaugeLimiter:
+
+    def __init__(self, gauge, get_gauge_definition):
+        """
+        :param gauge: ``Gauge`` An instance of Gauge class
+        :param get_gauge_defintions: ``function``
+            A function to get config that GaugeLimiter will use to
+            figure out throttling conditions.
+        """
+        self.gauge = gauge
+        self.gauge_definition_fn = get_gauge_definition
+
+    def wait(self):
+        if not self.allow_usage():
+            time.sleep(self.gauge_definition.throttle_for_seconds)
+
+    def allow_usage(self):
+        if not self.gauge_definition:
+            return False
+        computed_value = None
+        if self.gauge_definition.actionable_metric == AVG:
+            computed_value = self.gauge.avg()
+        else:
+            computed_value = self.gauge.max()
+        if computed_value < self.gauge_definition.acceptable_value:
+            return True
+        return False
+
+    @property
+    def gauge_definition(self):
+        """
+        Should return an instace of subclass of ThrottleDefinition
+        """
+        return self.gauge_definition_fn(self.gauge.feature_key)
+
+
+class PillowLagGaugeLimiter(GaugeLimiter):
+
+    def _has_pillow_reported_recently(self):
+        time_window = 15  # time window in minutes in which throttling should be applied
+        time_before_window = datetime.now(tz=timezone.utc) - timedelta(minutes=time_window)
+        return self.gauge.get_last_reported_time() > time_before_window
+
+    def allow_usage(self):
+        if not self.gauge_definition:
+            # No throttling if config to throttle is not set
+            return True
+        if self._is_ideal_throttle_condition() and self._has_pillow_reported_recently():
+            return False
+        return True
+
+    def _is_ideal_throttle_condition(self):
+        """
+        The ideal throttle conditions are -
+        - If throttler is enabled in the config AND
+        - If we have reported values from scopes AND
+        - The follwing conditions are considered -
+            - If both max_value and average_value are set on the Defintion model,
+            then both should be breached in order to throttle.
+            - If only max_value is defined, then only max_value would be observed.
+            - If only average_value is set, then only average value would be observed.
+        """
+        if not self.gauge_definition.is_enabled:
+            # if throttling is disabled, don't throttle
+            return False
+
+        max_observed_value = self.gauge.max()
+        avg_observed_value = self.gauge.avg()
+
+        if not (max_observed_value and avg_observed_value):
+            # No throttling if we don't have any values
+            return False
+
+        max_value = self.gauge_definition.max_value
+        average_value = self.gauge_definition.average_value
+
+        if max_value and average_value:
+            # If the max and average values are both set, consider both before throttling
+
+            if max_observed_value > max_value and avg_observed_value > average_value:
+                return True
+        elif max_value:
+            # If only max value is set, throttle based on max value of gauge.
+            if max_observed_value > max_value:
+                return True
+        elif average_value:
+            # If only averable value is set, throttle based on average value gauge.
+            if avg_observed_value > average_value:
+                return True
+        return False
