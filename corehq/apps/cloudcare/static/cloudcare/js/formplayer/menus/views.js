@@ -2,13 +2,16 @@
 hqDefine("cloudcare/js/formplayer/menus/views", [
     'jquery',
     'underscore',
+    'backbone',
     'backbone.marionette',
     'DOMPurify/dist/purify.min',
+    'es6!hqwebapp/js/bootstrap5_loader',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
     'analytix/js/kissmetrix',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/users/models',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/markdown',
@@ -17,13 +20,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
 ], function (
     $,
     _,
+    Backbone,
     Marionette,
     DOMPurify,
+    bootstrap,
     initialPageData,
     toggles,
     kissmetrics,
     constants,
     FormplayerFrontend,
+    AppsAPI,
     UsersModels,
     formplayerUtils,
     markdown,
@@ -1492,6 +1498,88 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
     });
 
+    /* Handle an individual menu item. Also contains a child list view */
+    const PersistentMenuItemView = Marionette.View.extend({
+        tagName: "li",
+        template: _.template($("#persistent-menu-item").html() || ""),
+        regions: {
+            tree: {
+                el: 'ul',
+                replaceElement: true,
+            },
+        },
+        triggers: {
+            "click a": "click:persistent:menu:command",  // magically calls onClickPersistentMenuCommand
+        },
+        templateContext: function () {
+            const appId = formplayerUtils.currentUrlToObject().appId,
+                imageUri = this.model.get('imageUri'),
+                  icons = {JUMP: 'fa-pencil', NEXT: 'fa-regular fa-folder', ENTITY_SELECT: 'fa-list-ul'};
+            return {
+                imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+                iconClass: icons[this.model.get('navigationState')] || 'fa-arrow-up-right-from-square',
+            };
+        },
+        onRender: function () {
+            if (!_.isEmpty(this.model.get('commands'))) {
+                this.showChildView('tree', new PersistentMenuListView({
+                    collection: this.model.get('commands'),
+                }));
+            }
+        },
+        onClickPersistentMenuCommand: function () {
+            FormplayerFrontend.trigger("persistentMenuSelect", this.model.get('selections'));
+        },
+    });
+
+    /* Handle a collection of sibling menu items at the same level */
+    const PersistentMenuListView = Marionette.CollectionView.extend({
+        tagName: "ul",
+        className: "list-unstyled",
+        childView: PersistentMenuItemView,
+    });
+
+    /*
+      This view operates on a collection of persistent menu items, each of which
+      may contain its own collection in a recursive tree structure.
+      PersistentMenuView manages the top level of the menu
+    */
+    const PersistentMenuView = Marionette.View.extend({
+        tagName: "div",
+        template: _.template($("#persistent-menu-template").html() || ""),
+        regions: {
+            menu: "#persistent-menu-content",
+        },
+        events: {
+            'click #app-main': 'onClickAppMain',
+        },
+        onRender: function () {
+            this.showChildView('menu', new PersistentMenuListView({collection: this.collection}));
+        },
+        templateContext: function () {
+            const appId = formplayerUtils.currentUrlToObject().appId,
+                currentApp = AppsAPI.getAppEntity(appId),
+                appName = currentApp.get('name'),
+                imageUri = currentApp.get('imageUri');
+            return {
+                appName: appName,
+                imageUri: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+            };
+        },
+        onClickAppMain: function () {
+            FormplayerFrontend.trigger("persistentMenuSelect");
+        },
+        onBeforeDetach: function () {
+            // Be sure to hide offcanvas element so scroll works properly
+            const openedCanvas = bootstrap.Offcanvas.getInstance(
+                document.getElementById('persistent-menu-container')
+            );
+            if (openedCanvas) {
+                openedCanvas.hide();
+            }
+        },
+    });
+
     return {
         buildCaseTileStyles: buildCaseTileStyles,
         BreadcrumbListView: function (options) {
@@ -1532,6 +1620,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", [
         },
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
+        },
+        PersistentMenuView: function (options) {
+            return new PersistentMenuView(options);
         },
     };
 })
