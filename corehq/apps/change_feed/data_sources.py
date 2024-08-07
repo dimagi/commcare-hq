@@ -73,7 +73,8 @@ def get_document_store(data_source_type, data_source_name, domain, load_source="
     return DocStoreLoadTracker(store, track_load)
 
 
-def get_document_store_for_doc_type(domain, doc_type, case_type_or_xmlns=None, load_source="unknown"):
+def get_document_store_for_doc_type(domain, doc_type, case_type_or_xmlns=None, load_source="unknown",
+                                    search_by_external_id=False):
     """Only applies to documents that have a document type:
     * forms
     * cases
@@ -86,7 +87,11 @@ def get_document_store_for_doc_type(domain, doc_type, case_type_or_xmlns=None, l
         store = FormDocumentStore(domain, xmlns=case_type_or_xmlns)
         load_counter = form_load_counter
     elif doc_type in document_types.CASE_DOC_TYPES:
-        store = CaseDocumentStore(domain, case_type=case_type_or_xmlns)
+        if search_by_external_id:
+            # ToDo: Update to look up by external ID instead
+            store = CaseDocumentStore(domain, case_type=case_type_or_xmlns)
+        else:
+            store = CaseDocumentStore(domain, case_type=case_type_or_xmlns)
         load_counter = case_load_counter
     elif doc_type == LOCATION_DOC_TYPE:
         return LocationDocumentStore(domain)
