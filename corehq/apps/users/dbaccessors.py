@@ -193,6 +193,10 @@ def _get_invitations_by_filters(domain, user_filters, count_only=False):
         filters["role"] = role.get_qualified_id()
 
     invitations = Invitation.by_domain(domain, **filters)
+    if 'web_user_assigned_location_ids' in user_filters.keys():
+        locations_accessible_to_user = SQLLocation.objects.get_locations_and_children(
+            user_filters['web_user_assigned_location_ids'])
+        invitations = invitations.filter(assigned_locations__in=locations_accessible_to_user)
     if count_only:
         return invitations.count()
     return invitations

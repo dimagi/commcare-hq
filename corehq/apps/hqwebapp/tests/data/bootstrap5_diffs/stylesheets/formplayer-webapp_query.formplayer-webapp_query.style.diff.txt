@@ -1,6 +1,11 @@
 --- 
 +++ 
-@@ -3,18 +3,18 @@
+@@ -1,20 +1,23 @@
+ .full-width {
+   width: 100%;
++  margin-left: 0;
++  margin-right: 0;
++  max-width: none;  // clear any max-widths set by bootstrap, such as in .container
  }
  
  .sidebar-push {
@@ -22,7 +27,7 @@
      max-width: 600px;
      margin: auto;
    }
-@@ -66,10 +66,10 @@
+@@ -66,35 +69,39 @@
  
  .query-description {
    a {
@@ -33,14 +38,46 @@
 -    color: @cc-brand-low;
 +    color: $cc-brand-low;
    }
+-}
+-
+-.query-caption.required .control-label::before, .search-query-group-header.required .search-query-group-header-label::before {
+-  content: '*';
+-  font-weight: bold;
+-  color: #c0392b;
+-  margin: 0 3px;
+-  float: left;
  }
  
-@@ -86,7 +86,7 @@
+ .search-query-group-header-label {
+   font-size: larger;
  }
  
- .search-query-group {
+-.search-query-group {
 -  background-color: @cc-bg;
++.table .search-query-group {   // .table needed for specificity, to override .table stylings
 +  background-color: $cc-bg;
++  border: none;
  }
  
  #query-group-content > tr {
+   background-color: white;
++
++  td {
++    border: none;
++  }
+ }
+ 
+-#query-properties td {
+-  border-top: 0px;
++#query-properties {
++  > tr:nth-of-type(odd) > :not(.search-query-group) {
++    background-color: $light;
++  }
++
++  td {
++    --bstable-bg-type: none;
++    border-top: 0px;
++  }
+ }
+ 
+ .search-query-group .table {

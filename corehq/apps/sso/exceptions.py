@@ -30,3 +30,12 @@ class EntraVerificationFailed(Exception):
 
     def __str__(self):
         return f"EntraVerificationFailed({self.error}, {self.message})"
+
+
+class EntraUnsupportedType(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+
+    def __str__(self):
+        return f"EntraUnsupportedTypeReceived({self.message})"

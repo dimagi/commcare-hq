@@ -16,6 +16,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.util import add_on_tableau_details
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
+from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.dbaccessors import (
     count_invitations_by_filters,
     count_mobile_users_by_filters,
@@ -25,7 +26,7 @@ from corehq.apps.users.dbaccessors import (
     get_mobile_users_by_filters,
     get_web_users_by_filters,
 )
-from corehq.apps.users.models import DeactivateMobileWorkerTrigger, UserRole
+from corehq.apps.users.models import DeactivateMobileWorkerTrigger, UserRole, CouchUser, HqPermissions
 from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
@@ -225,6 +226,7 @@ def make_invited_web_user_dict(invite, location_cache):
         'last_login (read only)': 'N/A',
         'remove': '',
         'domain': invite.domain,
+        'user_profile': invite.profile.name if invite.profile else '',
     }
 
 
@@ -300,7 +302,7 @@ def parse_mobile_users(domain, user_filters, task=None, total_count=None):
     return user_headers, get_user_rows(user_dicts, user_headers)
 
 
-def parse_web_users(domain, user_filters, task=None, total_count=None):
+def parse_web_users(domain, user_filters, owner, task=None, total_count=None):
     user_dicts = []
     max_location_length = 0
     (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
@@ -332,7 +334,8 @@ def parse_web_users(domain, user_filters, task=None, total_count=None):
         ))
     if is_cross_domain:
         user_headers += ['domain']
-    if TABLEAU_USER_SYNCING.enabled(domain):
+    if (TABLEAU_USER_SYNCING.enabled(domain)
+            and owner.has_permission(domain, get_permission_name(HqPermissions.view_user_tableau_config))):
         user_headers += ['tableau_role', 'tableau_groups']
         user_dicts = add_on_tableau_details(domain, user_dicts)
     return user_headers, get_user_rows(user_dicts, user_headers)
@@ -481,7 +484,9 @@ def dump_web_users(domain, download_id, user_filters, task, owner_id):
 
     DownloadBase.set_progress(task, 0, total_count)
 
-    user_headers, user_rows = parse_web_users(domain, user_filters, task, total_count)
+    owner = CouchUser.get_by_user_id(owner_id, domain)
+    user_headers, user_rows = parse_web_users(domain, user_filters,
+                                            owner, task, total_count)
 
     headers = [('users', [user_headers])]
     rows = [('users', user_rows)]

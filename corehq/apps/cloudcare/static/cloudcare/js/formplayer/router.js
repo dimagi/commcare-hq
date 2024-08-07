@@ -275,6 +275,9 @@ hqDefine("cloudcare/js/formplayer/router", [
     });
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
+        if (!FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm()) {
+            return;
+        }
         FormplayerFrontend.trigger("clearForm");
         var urlObject = utils.currentUrlToObject();
         urlObject.spliceSelections(index);

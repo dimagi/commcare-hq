@@ -8,6 +8,7 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.userreports.ui.fields import JsonField
@@ -118,10 +119,11 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
         ),
     )
     atom_feed_enabled = forms.BooleanField(
-        label=gettext_lazy('Atom feed enabled'),
+        label="",
         required=False,
-        help_text=gettext_lazy(
-            'Poll Atom feed for changes made in OpenMRS/Bahmni'
+        help_text=gettext_lazy("Poll Atom feed for changes made in OpenMRS/Bahmni"),
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy("Atom feed enabled"),
         ),
     )
 

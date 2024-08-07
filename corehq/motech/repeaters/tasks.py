@@ -1,4 +1,4 @@
-from contextlib import contextmanager
+import random
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -6,9 +6,9 @@ from django.conf import settings
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
-from dimagi.utils.couch import CriticalSection, get_redis_lock
-from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.couch import get_redis_lock
 
+from corehq import toggles
 from corehq.apps.celery import periodic_task, task
 from corehq.motech.models import RequestLog
 from corehq.util.metrics import (
@@ -19,23 +19,19 @@ from corehq.util.metrics import (
 )
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.soft_assert import soft_assert
+from corehq.util.timer import TimingContext
 
 from .const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
     CHECK_REPEATERS_PARTITION_COUNT,
     MAX_RETRY_WAIT,
-    RECORDS_AT_A_TIME,
+    RATE_LIMITER_DELAY_RANGE,
     State,
 )
-from .models import (
-    Repeater,
-    SQLRepeatRecord,
-    domain_can_forward,
-    get_payload,
-    is_sql_id,
-    send_request,
-)
+from .models import RepeatRecord, domain_can_forward
+
+from ..rate_limiter import report_repeater_usage, rate_limit_repeater
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(seconds=10),
@@ -108,7 +104,7 @@ def check_repeaters_in_partition(partition):
             "commcare.repeaters.check.processing",
             timing_buckets=_check_repeaters_buckets,
         ):
-            for record in SQLRepeatRecord.objects.iter_partition(
+            for record in RepeatRecord.objects.iter_partition(
                     start, partition, CHECK_REPEATERS_PARTITION_COUNT):
                 if not _soft_assert(
                     datetime.utcnow() < twentythree_hours_later,
@@ -134,8 +130,7 @@ def process_repeat_record(repeat_record_id, domain):
     NOTE: Keep separate from retry_process_repeat_record for monitoring purposes
     Domain is present here for domain tagging in datadog
     """
-    repeat_record = _get_repeat_record(repeat_record_id)
-    _process_repeat_record(repeat_record)
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
@@ -144,15 +139,7 @@ def retry_process_repeat_record(repeat_record_id, domain):
     NOTE: Keep separate from process_repeat_record for monitoring purposes
     Domain is present here for domain tagging in datadog
     """
-    repeat_record = _get_repeat_record(repeat_record_id)
-    _process_repeat_record(repeat_record)
-
-
-def _get_repeat_record(repeat_record_id):
-    if not is_sql_id(repeat_record_id):
-        # can be removed after all in-flight tasks with Couch ids have been processed
-        return SQLRepeatRecord.objects.get(couch_id=repeat_record_id)
-    return SQLRepeatRecord.objects.get(id=repeat_record_id)
+    _process_repeat_record(RepeatRecord.objects.get(id=repeat_record_id))
 
 
 def _process_repeat_record(repeat_record):
@@ -169,72 +156,31 @@ def _process_repeat_record(repeat_record):
 
     if repeat_record.repeater.is_deleted:
         repeat_record.cancel()
-        with _delete_couch_record(repeat_record):
-            repeat_record.save()
+        repeat_record.save()
         return
 
     try:
-        if repeat_record.repeater.is_paused:
+        if repeat_record.repeater.is_paused or toggles.PAUSE_DATA_FORWARDING.enabled(repeat_record.domain):
             # postpone repeat record by MAX_RETRY_WAIT so that it is not fetched
             # in the next check to process repeat records, which helps to avoid
             # clogging the queue
             repeat_record.postpone_by(MAX_RETRY_WAIT)
+        elif rate_limit_repeater(repeat_record.domain):
+            # Spread retries evenly over the range defined by RATE_LIMITER_DELAY_RANGE
+            # with the intent of avoiding clumping and spreading load
+            repeat_record.postpone_by(random.uniform(*RATE_LIMITER_DELAY_RANGE))
         elif repeat_record.is_queued():
-            repeat_record.fire()
+            with TimingContext() as timer:
+                repeat_record.fire()
+            # round up to the nearest millisecond, meaning always at least 1ms
+            report_repeater_usage(repeat_record.domain, milliseconds=int(timer.duration * 1000) + 1)
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record.id))
 
 
-@contextmanager
-def _delete_couch_record(repeat_record):
-    from django.db.models import Model
-
-    def delete(_, couch_object):
-        if not couch_object.doc_type.endswith(DELETED_SUFFIX):
-            couch_object.doc_type += DELETED_SUFFIX
-
-    if isinstance(repeat_record, Model):
-        assert not repeat_record._migration_get_custom_sql_to_couch_functions()
-        repeat_record._migration_get_custom_sql_to_couch_functions = lambda: [delete]
-        try:
-            yield
-        finally:
-            del repeat_record._migration_get_custom_sql_to_couch_functions
-            assert not repeat_record._migration_get_custom_sql_to_couch_functions()
-    else:
-        delete(..., repeat_record)
-        yield
-
-
 metrics_gauge_task(
     'commcare.repeaters.overdue',
-    SQLRepeatRecord.objects.count_overdue,
+    RepeatRecord.objects.count_overdue,
     run_every=crontab(),  # every minute
     multiprocess_mode=MPM_MAX
 )
-
-
-@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def process_repeater(repeater_id):
-    """
-    Worker task to send SQLRepeatRecords in chronological order.
-
-    This function assumes that ``repeater`` checks have already
-    been performed. Call via ``models.attempt_forward_now()``.
-    """
-    repeater = Repeater.objects.get(id=repeater_id)
-    with CriticalSection(
-        [f'process-repeater-{repeater.repeater_id}'],
-        fail_hard=False, block=False, timeout=5 * 60 * 60,
-    ):
-        for repeat_record in repeater.repeat_records_ready[:RECORDS_AT_A_TIME]:
-            try:
-                payload = get_payload(repeater, repeat_record)
-            except Exception:
-                # The repeat record is cancelled if there is an error
-                # getting the payload. We can safely move to the next one.
-                continue
-            should_retry = not send_request(repeater,
-                                            repeat_record, payload)
-            if should_retry:
-                break

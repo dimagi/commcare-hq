@@ -50,6 +50,7 @@ from corehq.apps.reports.util import (
     get_allowed_tableau_groups_for_domain,
     get_tableau_groups_for_user,
     update_tableau_user,
+    DEFAULT_TABLEAU_ROLE,
 )
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
@@ -57,6 +58,7 @@ from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.toggles import (
+    LOCATION_HAS_USERS,
     TWO_STAGE_USER_PROVISIONING,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
@@ -1140,7 +1142,7 @@ class PrimaryLocationWidget(forms.Widget):
         })
 
 
-class BaseLocationForm(forms.Form):
+class SelectUserLocationForm(forms.Form):
     assigned_locations = forms.CharField(
         label=gettext_noop("Locations"),
         required=False,
@@ -1155,10 +1157,11 @@ class BaseLocationForm(forms.Form):
     def __init__(self, domain: str, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
         self.request = kwargs.pop('request')
-        super(BaseLocationForm, self).__init__(*args, **kwargs)
+        super(SelectUserLocationForm, self).__init__(*args, **kwargs)
         self.domain = domain
         self.fields['assigned_locations'].widget = LocationSelectWidget(
-            self.domain, multiselect=True, id='id_assigned_locations'
+            self.domain, multiselect=True, id='id_assigned_locations',
+            include_locations_with_no_users_allowed=False
         )
         self.fields['assigned_locations'].help_text = ExpandedMobileWorkerFilter.location_search_help
         self.fields['primary_location'].widget = PrimaryLocationWidget(
@@ -1175,7 +1178,9 @@ class BaseLocationForm(forms.Form):
             locations = get_locations_from_ids(location_ids, self.domain)
         except SQLLocation.DoesNotExist:
             raise forms.ValidationError(_('One or more of the locations was not found.'))
-
+        if LOCATION_HAS_USERS.enabled(self.domain) and locations.filter(location_type__has_users=False).exists():
+            raise forms.ValidationError(
+                _('One or more of the locations you specified cannot have users assigned.'))
         return [location.location_id for location in locations]
 
     def _user_has_permission_to_access_locations(self, new_location_ids):
@@ -1184,7 +1189,7 @@ class BaseLocationForm(forms.Form):
             self.domain, self.request.couch_user))
 
     def clean(self):
-        self.cleaned_data = super(BaseLocationForm, self).clean()
+        self.cleaned_data = super(SelectUserLocationForm, self).clean()
 
         primary_location_id = self.cleaned_data['primary_location']
         assigned_location_ids = self.cleaned_data.get('assigned_locations', [])
@@ -1208,7 +1213,7 @@ class BaseLocationForm(forms.Form):
         return self.cleaned_data
 
 
-class CommtrackUserForm(BaseLocationForm):
+class CommtrackUserForm(SelectUserLocationForm):
     program_id = forms.ChoiceField(
         label=gettext_noop("Program"),
         choices=(),
@@ -1521,6 +1526,7 @@ class _UserFormSet(object):
             existing_custom_data=self.editable_user.get_user_data(self.domain).to_dict(),
             post_dict=self.data,
             ko_model="custom_fields",
+            request_user=self.request_user,
         )
 
     def is_valid(self):
@@ -1629,6 +1635,7 @@ class UserFilterForm(forms.Form):
             id='id_location_id',
             placeholder=_("All Locations"),
             attrs={'data-bind': 'value: location_id'},
+            include_locations_with_no_users_allowed=False
         )
         self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
             url=self.fields['location_id'].widget.query_url
@@ -1747,11 +1754,17 @@ class UserFilterForm(forms.Form):
             return False
         return None
 
+    def clean_location_id(self):
+        location_id = self.cleaned_data['location_id']
+        if location_id and not user_can_access_location_id(self.domain, self.couch_user, location_id):
+            raise forms.ValidationError("You do not have access to that location.")
+        return location_id
+
     def clean(self):
         data = self.cleaned_data
         user = self.couch_user
 
-        if not user.has_permission(self.domain, 'access_all_locations') and not data.get('location_id'):
+        if not data.get('location_id') and not user.has_permission(self.domain, 'access_all_locations'):
             # Add (web) user assigned_location_ids so as to
             # 1) reflect all locations user is assigned to ('All' option)
             # 2) restrict user access
@@ -1762,11 +1775,12 @@ class UserFilterForm(forms.Form):
         return data
 
 
-class TableauUserForm(forms.Form):
+class BaseTableauUserForm(forms.Form):
     role = forms.ChoiceField(
         label=gettext_noop("Role"),
         choices=TableauUser.Roles.choices,
         required=True,
+        initial=DEFAULT_TABLEAU_ROLE,
     )
     groups = forms.MultipleChoiceField(
         label=gettext_noop("Groups"),
@@ -1776,25 +1790,36 @@ class TableauUserForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request')
         self.domain = kwargs.pop('domain', None)
-        self.username = kwargs.pop('username', None)
-        super(TableauUserForm, self).__init__(*args, **kwargs)
+        super(BaseTableauUserForm, self).__init__(*args, **kwargs)
 
         self.allowed_tableau_groups = [
             TableauGroupTuple(group.name, group.id) for group in get_all_tableau_groups(self.domain)
             if group.name in get_allowed_tableau_groups_for_domain(self.domain)]
-        user_group_names = [group.name for group in get_tableau_groups_for_user(self.domain, self.username)]
         self.fields['groups'].choices = []
         self.fields['groups'].initial = []
         for i, group in enumerate(self.allowed_tableau_groups):
             # Add a choice for each tableau group on the server
             self.fields['groups'].choices.append((i, group.name))
-            if group.name in user_group_names:
+
+
+class TableauUserForm(BaseTableauUserForm):
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        readonly = kwargs.pop('readonly', True)
+        self.username = kwargs.pop('username', None)
+        super(TableauUserForm, self).__init__(*args, **kwargs)
+
+        user_group_names = [group.name for group in get_tableau_groups_for_user(self.domain, self.username)]
+        for i, group_name in self.fields['groups'].choices:
+            if group_name in user_group_names:
                 # Pre-choose groups that the user already belongs to
                 self.fields['groups'].initial.append(i)
-        if not self.fields['groups'].choices:
-            del self.fields['groups']
+
+        if readonly:
+            self.fields['role'].widget.attrs['readonly'] = True
+            self.fields['groups'].widget.attrs['disabled'] = True
 
         self.helper = FormHelper()
 
@@ -1805,6 +1830,16 @@ class TableauUserForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('Tableau Configuration'),
+                'role',
+                'groups' if len(self.fields['groups'].choices) > 0 else None
+            )
+        )
+
     def save(self, username, commit=True):
+        if not self.request.couch_user.has_permission(self.domain, 'edit_user_tableau_config'):
+            raise forms.ValidationError(_("You do not have permission to edit Tableau Configuraion."))
         groups = [self.allowed_tableau_groups[int(i)] for i in self.cleaned_data['groups']]
         update_tableau_user(self.domain, username, self.cleaned_data['role'], groups)

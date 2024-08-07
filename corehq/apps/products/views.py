@@ -481,6 +481,7 @@ class EditProductView(NewProductView):
         )
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class ProductFieldsView(CustomDataModelMixin, BaseCommTrackManageView):
     urlname = 'product_fields_view'
     field_type = 'ProductFields'

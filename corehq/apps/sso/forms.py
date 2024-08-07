@@ -8,6 +8,7 @@ from django.template.defaultfilters import slugify
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy, gettext
 from django.utils.translation import gettext as _
 
@@ -16,7 +17,6 @@ from crispy_forms import layout as crispy
 
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.sso import certificates
@@ -667,7 +667,7 @@ class BaseSsoEnterpriseSettingsForm(forms.Form):
         empty_value=None
     )
 
-    expiration_warning_message = mark_safe_lazy(gettext_lazy(  # nosec: no user input
+    expiration_warning_message = mark_safe(gettext_lazy(  # nosec: no user input
         'All existing API keys that do not comply with this expiration date policy will be updated to ensure a '
         'compliant expiration date is present. For keys that do not have an expiration date set, the date of '
         'expiration will be <span data-bind="text: expirationLength"></span> from today after clicking '

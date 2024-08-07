@@ -28,8 +28,8 @@ class RepeatRecordDisplay:
         return self._format_date(self.record.last_checked)
 
     @property
-    def next_attempt_at(self):
-        return self._format_date(self.record.next_attempt_at)
+    def next_check(self):
+        return self._format_date(self.record.next_check)
 
     @property
     def url(self):

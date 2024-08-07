@@ -10,7 +10,6 @@ hqDefine("cloudcare/js/form_entry/spec/web_form_session_spec", [
     "cloudcare/js/form_entry/task_queue",
     "cloudcare/js/form_entry/utils",
     "cloudcare/js/form_entry/web_form_session",
-    //"jasmine-fixture/dist/jasmine-fixture",     // affix - TODO: this errors in a try
 ], function (
     sinon,
     initialPageData,

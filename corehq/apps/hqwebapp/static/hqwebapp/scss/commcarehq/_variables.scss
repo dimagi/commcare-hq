@@ -117,8 +117,8 @@ $dimagi-mango: #FC5F36;
 
 // Base color overrides
 $blue: #5D70D2;
-$green: #3FA12A;
-$red: $dimagi-sunset;
+$green: #358623;
+$red: #E13019;
 $teal: #01A2A9;
 $yellow: $dimagi-marigold;
 $indigo: $dimagi-indigo;
@@ -130,6 +130,7 @@ $orange: $dimagi-mango;
 // Grays from default stylesheet — needed for reference
 $gray-100: #f8f9fa;
 $gray-200: #e9ecef;
+$gray-400: #ced4da;
 $gray-600: #6c757d;
 $gray-800: #343a40;
 
@@ -164,7 +165,7 @@ $theme-colors: (
 $body-color: $dark;
 $link-color: $blue-600;
 $link-hover-color:$blue-900;
-$border-color: $gray-200;
+$border-color: $gray-400;
 
 // New gradient for salmon
 
@@ -179,7 +180,7 @@ $salmon-800: shade-color($salmon, 60%);
 $salmon-900: shade-color($salmon, 80%);
 
 
-// Form Sates
+// Form States
 
 $form-feedback-valid-color:         $success;
 $form-feedback-invalid-color:       $danger;
@@ -223,3 +224,7 @@ $form-validation-states: (
     "border-color": $dark,
   )
 );
+
+// Make pagination-lg the same height as other lg inputs
+$pagination-padding-x-lg: 1.0rem;
+$pagination-padding-y-lg: 0.5rem;

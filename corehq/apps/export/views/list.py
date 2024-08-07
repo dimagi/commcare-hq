@@ -8,6 +8,7 @@ from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
@@ -67,7 +68,6 @@ from corehq.apps.export.views.utils import (
     ExportsPermissionsManager,
     user_can_view_deid_exports,
 )
-from corehq.apps.hqwebapp.utils.translation import mark_safe_lazy
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
     location_restricted_response,
@@ -497,7 +497,7 @@ class DeIdDashboardFeedListHelper(DashboardFeedListHelper):
 
 class BaseExportListView(BaseProjectDataView):
     template_name = 'export/export_list.html'
-    lead_text = mark_safe_lazy(gettext_lazy(  # nosec: no user input
+    lead_text = mark_safe(gettext_lazy(  # nosec: no user input
         '''
         Exports are a way to download data in a variety of formats (CSV, Excel, etc.)
         for use in third-party data analysis tools.

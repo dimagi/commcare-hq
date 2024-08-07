@@ -92,6 +92,7 @@ domain_specific = [
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
     url(r'^integration/', include('corehq.apps.integration.urls')),
     url(r'^registries/', include('corehq.apps.registry.urls')),
+    url(r'^apps/testing/', include("corehq.apps.app_execution.urls")),
 ]
 
 for url_module in extension_points.domain_specific_urls():
@@ -118,7 +119,6 @@ urlpatterns = [
     url(r'^hq/admin/', include('corehq.util.metrics.urls')),
     url(r'^hq/flags/', include('corehq.apps.toggle_ui.urls')),
     url(r'^hq/notifications/', include('corehq.apps.notifications.urls')),
-    url(r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
     url(r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
     url(r'^push/', include('corehq.messaging.smsbackends.push.urls')),
     url(r'^starfish/', include('corehq.messaging.smsbackends.starfish.urls')),
@@ -140,6 +140,7 @@ urlpatterns = [
     url(r'^builds/', include('corehq.apps.builds.urls')),
     url(r'^downloads/temp/', include('soil.urls')),
     url(r'^styleguide/', include('corehq.apps.styleguide.urls')),
+    url(r'^prototype/', include('corehq.apps.prototype.urls')),
     url(r'^500/$', use_bootstrap5(TemplateView.as_view(template_name='500.html'))),
     url(r'^404/$', use_bootstrap5(TemplateView.as_view(template_name='404.html'))),
     url(r'^403/$', use_bootstrap5(TemplateView.as_view(template_name='403.html'))),

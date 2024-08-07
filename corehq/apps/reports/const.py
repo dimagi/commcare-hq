@@ -4,13 +4,14 @@ USER_QUERY_LIMIT = 5000
 DEFAULT_PAGE_LIMIT = 10
 
 TABLEAU_ROLES = (
-    (_('Explorer - Can Publish'), 'ExplorerCanPublish'),
-    (_('Server Administrator'), 'ServerAdministrator'),
-    (_('Site Administrator - Explorer'), 'SiteAdministratorExplorer'),
-    (_('Site Administrator - Creator'), 'SiteAdministratorCreator'),
-    (_('Unlicensed'), 'Unlicensed'),
-    (_('Read Only'), 'ReadOnly'),
-    (_('Viewer'), 'Viewer')
+    ('Explorer', _('Explorer')),
+    ('ExplorerCanPublish', _('Explorer - Can Publish')),
+    ('ServerAdministrator', _('Server Administrator')),
+    ('SiteAdministratorExplorer', _('Site Administrator - Explorer')),
+    ('SiteAdministratorCreator', _('Site Administrator - Creator')),
+    ('Unlicensed', _('Unlicensed')),
+    ('ReadOnly', _('Read Only')),
+    ('Viewer', _('Viewer'))
 )
 
 HQ_TABLEAU_GROUP_NAME = 'HQ'

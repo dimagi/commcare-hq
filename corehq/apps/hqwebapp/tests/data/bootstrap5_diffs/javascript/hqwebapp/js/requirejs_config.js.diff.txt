@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -2,18 +2,25 @@
+@@ -2,19 +2,27 @@
  requirejs.config({
      baseUrl: '/static/',
      paths: {
@@ -26,9 +26,11 @@
          "sentry_captureconsole": "sentry/js/sentry.captureconsole.7.28.0.min",
 +        "tempusDominus": "@eonasdan/tempus-dominus/dist/js/tempus-dominus.min",
          "underscore": "underscore/underscore",
++        "nvd3/nv.d3.latest.min": "nvd3-1.8.6/build/nv.d3.min",
+         "stripe": "https://js.stripe.com/v2/?noext",
      },
      shim: {
-@@ -24,7 +31,6 @@
+@@ -25,7 +33,6 @@
          "ace-builds/src-min-noconflict/ext-searchbox": { deps: ["ace-builds/src-min-noconflict/ace"] },
          "At.js/dist/js/jquery.atwho": { deps: ['jquery', 'Caret.js/dist/jquery.caret'] },
          "backbone": { exports: "backbone" },
@@ -36,7 +38,7 @@
          "calendars/dist/js/jquery.calendars.picker": {
              deps: [
                  "calendars/dist/js/jquery.plugin",
-@@ -60,10 +66,14 @@
+@@ -61,10 +68,14 @@
              ],
          },
          "datatables.bootstrap": { deps: ['datatables'] },
@@ -52,7 +54,18 @@
          "hqwebapp/js/lib/modernizr": {
              exports: 'Modernizr',
          },
-@@ -98,7 +108,7 @@
+@@ -85,6 +96,10 @@
+             deps: ['d3/d3.min'],
+             exports: 'nv',
+         },
++        "nvd3/nv.d3.latest.min": {
++            deps: ['d3/d3.min'],
++            exports: 'nv',
++        },
+         "sentry_browser": { exports: "Sentry" },
+     },
+     wrapShim: true,
+@@ -99,7 +114,7 @@
          },
      },
  

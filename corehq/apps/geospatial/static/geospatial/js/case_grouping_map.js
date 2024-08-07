@@ -496,11 +496,10 @@ hqDefine("geospatial/js/case_grouping_map",[
             // reset the warning banner
             self.groupsLocked(!self.groupsLocked());
             if (self.groupsLocked()) {
-                mapModel.mapInstance.scrollZoom.disable();
                 setCaseGroups();
             } else {
-                mapModel.mapInstance.scrollZoom.enable();
                 clearCaseGroups();
+                mapModel.fitMapBounds(mapModel.caseMapItems());
             }
         };
         return self;
@@ -544,9 +543,11 @@ hqDefine("geospatial/js/case_grouping_map",[
             });
             mapModel.mapInstance.on('draw.delete', function (e) {
                 polygonFilterInstance.removePolygonsFromFilterList(e.features);
+                polygonFilterInstance.btnSaveDisabled(!mapModel.mapHasPolygons());
             });
             mapModel.mapInstance.on('draw.create', function (e) {
                 polygonFilterInstance.addPolygonsToFilterList(e.features);
+                polygonFilterInstance.btnSaveDisabled(!mapModel.mapHasPolygons());
             });
         }
 
@@ -570,6 +571,11 @@ hqDefine("geospatial/js/case_grouping_map",[
             const isAfterDataLoad = settings.url.includes('geospatial/json/case_grouping_map/');
             if (!isAfterDataLoad) {
                 return;
+            }
+
+            // Groups need to be unlocked to load new case data
+            if (groupLockModelInstance.groupsLocked()) {
+                groupLockModelInstance.toggleGroupLock();
             }
 
             // Hide the datatable rows but not the pagination bar

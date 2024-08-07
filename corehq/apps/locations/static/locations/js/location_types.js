@@ -1,3 +1,4 @@
+'use strict';
 hqDefine('locations/js/location_types', [
     'jquery',
     'knockout',
@@ -12,7 +13,6 @@ hqDefine('locations/js/location_types', [
     initialPageData,
     googleAnalytics
 ) {
-    'use strict';
     var ROOT_LOCATION_ID = -1;
 
     function locationSettingsViewModel(locTypes, commtrackEnabled) {
@@ -204,6 +204,8 @@ hqDefine('locations/js/location_types', [
         self.expand_from = ko.observable(locType.expand_from_root ? ROOT_LOCATION_ID : locType.expand_from);
         self.expand_to = ko.observable(locType.expand_to);
         self.expand_view_child_data_to = ko.observable(locType.expand_view_child_data_to);
+        self.has_users_setting = ko.observable(locType.has_users_setting || locType.has_users_setting === undefined); // new loc types default to true
+        self.actually_has_users = ko.observable(locType.actually_has_users);
         self.include_without_expanding = ko.observable(locType.include_without_expanding);
         self.include_only = ko.observableArray(locType.include_only || []);
 
@@ -365,6 +367,7 @@ hqDefine('locations/js/location_types', [
                 expand_from_root: self.expand_from() === ROOT_LOCATION_ID,
                 expand_to: self.expand_to() || null,
                 expand_view_child_data_to: self.expand_view_child_data_to() || null,
+                has_users: self.has_users_setting() === true,
                 include_without_expanding: self.include_without_expanding() || null,
                 include_only: self.include_only() || [],
             };

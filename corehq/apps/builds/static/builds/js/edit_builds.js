@@ -33,7 +33,7 @@ hqDefine('builds/js/edit_builds', [
 
         _.each(doc.menu, function (version) {
             self.versions.push(versionModel(
-                version.build.version, version.label
+                version.build.version, version.label, version.superuser_only
             ));
         });
         _.each(doc.defaults, function (versionDoc) {

@@ -24,21 +24,23 @@ hqDefine("cloudcare/js/formplayer/main", [
             singleAppMode: false,
             environment: initialPageData.get('environment'),
         };
-        FormplayerFrontEnd.start(options);
+        FormplayerFrontEnd.getXSRF(options).then(() =>
+            FormplayerFrontEnd.start(options)
+        );
 
         var $menuToggle = $('#commcare-menu-toggle'),
             $navbar = $('#hq-navigation'),
             $trialBanner = $('#cta-trial-banner');
         var hideMenu = function () {
             $menuToggle.data('minimized', 'yes');
-            $navbar.hide();
-            $trialBanner.hide();
+            $navbar.addClass("d-none");
+            $trialBanner.addClass("d-none");
             $menuToggle.text(gettext('Show Full Menu'));
         };
         var showMenu = function () {
             $menuToggle.data('minimized', 'no');
-            $navbar.show();
-            $trialBanner.show();
+            $navbar.removeClass("d-none");
+            $trialBanner.removeClass("d-none");
             $navbar.css('margin-top', '');
             $menuToggle.text(gettext('Hide Full Menu'));
         };
