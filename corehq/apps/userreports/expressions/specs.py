@@ -657,10 +657,10 @@ def _get_user(domain, doc_id):
         'date_joined',
 
         # EulaMixin
-        'eulas',
+        # 'eulas',
 
         # CouchUser
-        'device_ids',
+        # 'device_ids',
         ('devices', lambda lst: [d.to_json() for d in lst]),
         ('last_device', JsonObject.to_json),
         'phone_numbers',
@@ -668,12 +668,12 @@ def _get_user(domain, doc_id):
         'last_modified',
         'status',
         'language',
-        'subscribed_to_commcare_users',
-        'announcements_seen',
+        # 'subscribed_to_commcare_users',
+        # 'announcements_seen',
         'location_id',
         'assigned_location_ids',
-        'has_built_app',
-        'analytics_enabled',
+        # 'has_built_app',
+        # 'analytics_enabled',
         # two_factor_auth_disabled_until,
         # login_attempts,
         # attempt_date,
@@ -685,13 +685,13 @@ def _get_user(domain, doc_id):
 
         # CommCareUser
         'domain',
-        'registering_device_id',
+        # 'registering_device_id',
         'loadtest_factor',
         'is_loadtest_user',
         'is_demo_user',
         'demo_restore_id',
-        'is_account_confirmed',
-        'user_location_id',
+        # 'is_account_confirmed',
+        # 'user_location_id',
     )
     user = CommCareUser.get_by_user_id(doc_id, domain)
     if not user:
