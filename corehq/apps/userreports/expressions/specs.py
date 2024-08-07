@@ -661,8 +661,8 @@ def _get_user(domain, doc_id):
 
         # CouchUser
         # 'device_ids',
-        ('devices', lambda lst: [d.to_json() for d in lst]),
-        ('last_device', JsonObject.to_json),
+        ('devices', lambda lst: [_device_to_dict(d) for d in lst]),
+        ('last_device', _device_to_dict),
         'phone_numbers',
         'created_on',
         'last_modified',
@@ -718,6 +718,18 @@ def _get_doc(domain, doc_type, doc_id):
     if domain != doc.get('domain'):
         return None
     return doc
+
+
+def _device_to_dict(
+    device  # DeviceIdLastUsed
+):
+    whitelist = (
+        'device_id',
+        'last_used',
+        'commcare_version',
+        'app_meta',
+    )
+    return {k: v for k, v in device.to_json().items() if k in whitelist}
 
 
 class NestedExpressionSpec(JsonObject):
