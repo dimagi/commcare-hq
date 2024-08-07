@@ -247,7 +247,6 @@ RECAPTCHA_PUBLIC_KEY = ''
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3to5'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3to5"
-CRISPY_FAIL_SILENTLY = not DEBUG
 
 FIELD_AUDIT_AUDITORS = [
     "corehq.apps.users.auditors.HQAuditor",
@@ -2086,6 +2085,8 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
 
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+CRISPY_FAIL_SILENTLY = not DEBUG
 
 # NOTE: if you are adding a new setting that you intend to have other environments override,
 # make sure you add it before localsettings are imported (from localsettings import *)
