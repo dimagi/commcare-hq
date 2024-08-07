@@ -54,6 +54,7 @@ FEATURE_TYPE_TO_NAME = {
     FeatureType.SMS: _("SMS Messages"),
     FeatureType.USER: _("Mobile Workers"),
     FeatureType.WEB_USER: _("Web Users"),
+    FeatureType.FORM_SUBMITTING_MOBILE_WORKER: _("Form-Submitting Mobile Workers"),
 }
 
 
@@ -63,7 +64,8 @@ def get_feature_name(feature_type):
     return {
         FeatureType.USER: _("Mobile Users"),
         FeatureType.SMS: _("SMS"),
-        FeatureType.WEB_USER: _("Web Users")
+        FeatureType.WEB_USER: _("Web Users"),
+        FeatureType.FORM_SUBMITTING_MOBILE_WORKER: _("Form-Submitting Mobile Workers"),
     }[feature_type]
 
 
