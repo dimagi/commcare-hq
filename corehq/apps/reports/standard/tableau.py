@@ -43,7 +43,12 @@ class TableauView(BaseDomainView):
     def dispatch(self, request, *args, **kwargs):
         if self.visualization is None:
             raise Http404()
+        if not self._authenticate_request(request):
+            raise Http403
         return super().dispatch(request, *args, **kwargs)
+
+    def _authenticate_request(self, request):
+        return request.couch_user.can_view_tableau_viz(self.domain, self.visualization)
 
     @property
     def page_context(self):
