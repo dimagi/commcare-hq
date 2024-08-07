@@ -92,3 +92,86 @@ def auto_deactivate_mobile_workers():
         task_time.seconds,
         multiprocess_mode=MPM_LIVESUM
     )
+
+
+@task(queue="export_download_queue")
+def generate_enterprise_report(slug, billing_account_id, username, **kwargs):
+    report = EnterpriseReport.create(slug, billing_account_id, username, **kwargs)
+
+    rows = report.rows
+    progress = ReportTaskProgress(slug, username)
+    progress.set_data(rows)
+
+
+class TaskProgress:
+    STATUS_TIMEOUT = 600  # 10 minutes
+
+    STATUS_COMPLETE = 'COMPLETE'
+    STATUS_IN_PROGRESS = 'IN_PROGRESS'
+    STATUS_NEW = 'NEW'
+
+    def __init__(self, key, query_id=None):
+        self.key = key
+        self._query_id = query_id
+        self.redis_client = get_redis_client()
+
+    def get_status(self):
+        if self._query_id:
+            return self.STATUS_COMPLETE
+
+        status_dict = self.redis_client.get(self.key)
+        if not status_dict:
+            return self.STATUS_NEW
+
+        return status_dict['status']
+
+    def start_task(self, task):
+        status_dict = {
+            'status': self.STATUS_IN_PROGRESS,
+            'query_id': None,
+            'error': None,
+        }
+
+        self.redis_client.set(self.key, status_dict, timeout=self.STATUS_TIMEOUT)
+        task.delay()
+
+    def get_data(self):
+        query_id = self.get_query_id()
+        data = self.redis_client.get(query_id)
+        if data is None:
+            # Before raising an error for a missing value, ensure that the 'None' wasn't deliberately set
+            if not self.redis_client.has_key(query_id):
+                raise KeyError(query_id)
+
+        self.redis_client.touch(query_id, timeout=self.STATUS_TIMEOUT)
+
+        return data
+
+    def set_data(self, data):
+        if not self._query_id:
+            self._query_id = uuid.uuid4().hex
+        self.redis_client.set(self._query_id, data, timeout=self.STATUS_TIMEOUT)
+
+        status_dict = {
+            'status': self.STATUS_COMPLETE,
+            'query_id': self._query_id,
+            'error': None
+        }
+        self.redis_client.set(self.key, status_dict, timeout=self.STATUS_TIMEOUT)
+
+    def get_query_id(self):
+        if self._query_id:
+            return self._query_id
+
+        status_dict = self.redis_client.get(self.key)
+        self._query_id = status_dict['query_id']
+        return self._query_id
+
+    def clear_status(self):
+        self.redis_client.delete(self.key)  # clear status data to allow this key to be re-used
+
+
+class ReportTaskProgress(TaskProgress):
+    def __init__(self, slug, username, query_id=None, **kwargs):
+        key = f'report-gen-status-{slug}.{username}'
+        super().__init__(key, query_id=query_id)

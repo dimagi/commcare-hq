@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from dateutil import tz
-from tastypie import fields
+from tastypie import fields, http
 from tastypie.exceptions import ImmediateHttpResponse
 
 from corehq.apps.accounting.models import BillingAccount
@@ -20,14 +20,9 @@ from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import ODataAuthentication
 from corehq.apps.enterprise.enterprise import (
     EnterpriseReport,
-    EnterpriseDomainReport,
-    EnterpriseFormReport,
-    EnterpriseMobileWorkerReport,
-    EnterpriseODataReport,
-    EnterpriseWebUserReport,
-    CacheableReport,
-    ExpiredCacheException,
 )
+
+from corehq.apps.enterprise.tasks import generate_enterprise_report, ReportTaskProgress
 
 
 class EnterpriseODataAuthentication(ODataAuthentication):
@@ -148,31 +143,48 @@ class ODataResource(HqBaseResource):
 
 
 class ODataEnterpriseReportResource(ODataResource):
+    REPORT_SLUG = None  # Override with correct slug
+    # If this delay is too quick, clients like PowerBI
+    # will hit their maximum number of retries before the report is ever generated.
+    # If the delay is too long, then even reports that would generate in well under the retry
+    # window will be subject to this delay (PowerBI will subject them to it twice,
+    # as the data preview and actual request perform separate queries
+    RETRY_IN_PROGRESS_DELAY = 60
+
     class Meta(ODataResource.Meta):
         authentication = EnterpriseODataAuthentication()
 
-    def get_list(self, request, **kwargs):
-        try:
-            response = super().get_list(request, **kwargs)
-        except ExpiredCacheException:
-            response = HttpResponseNotFound()
-
-        return response
-
     def get_object_list(self, request):
         query_id = request.GET.get('query_id', None)
-        report = CacheableReport(self.get_report(request), query_id)
-        # Because we are using a cacheable report, we need some way to tell tastypie to use
-        # the generated report for future page requests.
-        # By adding the report's query id to the request, the tastypie paginator will be able to
-        # use it when generating 'next page' links
-        # HACK: This is not ideal, as we are creeating a side effect within a 'get' method,
-        # but it doesn't seem that Tastypie provides an alternate means of modifying links
-        self._add_query_id_to_request(request, report.query_id)
+        progress = ReportTaskProgress(
+            self.REPORT_SLUG, request.couch_user.username, query_id=query_id)
+        status = progress.get_status()
+        if status == ReportTaskProgress.STATUS_COMPLETE:
+            try:
+                data = progress.get_data()
+                progress.clear_status()  # Clear this request so that this user can issue new requests
+            except KeyError:
+                raise ImmediateHttpResponse(HttpResponseNotFound())
 
-        return report.rows
+            # Because we are using a cacheable report, we need some way to tell tastypie to use
+            # the generated report for future page requests.
+            # By adding the report's query id to the request, the tastypie paginator will be able to
+            # use it when generating 'next page' links
+            # HACK: This is not ideal, as we are creeating a side effect within a 'get' method,
+            # but it doesn't seem that Tastypie provides an alternate means of modifying links
+            self._add_query_id_to_request(request, progress.get_query_id())
+            return data
+        elif status == ReportTaskProgress.STATUS_NEW:
+            progress.start_task(self.get_report_task(request))
 
-    def get_report(self, request):
+        # PowerBI respects delays with only two response codes:
+        # 429 (TooManyRequests) and 503 (ServiceUnavailable). Although 503 is likely more semantically
+        # correct here, 5XX errors are treated differently by our monitoring, and
+        # PowerBI will only retry 503 requests 3 times, whereas 429s permit 6 retries
+        raise ImmediateHttpResponse(
+            response=http.HttpTooManyRequests(headers={'Retry-After': self.RETRY_IN_PROGRESS_DELAY}))
+
+    def get_report_task(self, request):
         raise NotImplementedError()
 
     def _add_query_id_to_request(self, request, query_id):
@@ -191,9 +203,15 @@ class DomainResource(ODataEnterpriseReportResource):
     num_sms_last_30_days = fields.IntegerField()
     last_form_submission = fields.DateTimeField()
 
-    def get_report(self, request):
+    REPORT_SLUG = EnterpriseReport.DOMAINS
+
+    def get_report_task(self, request):
         account = BillingAccount.get_account_by_domain(request.domain)
-        return EnterpriseDomainReport(account, request.couch_user)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username,
+        )
 
     def dehydrate(self, bundle):
         bundle.data['domain'] = bundle.obj[6]
@@ -219,9 +237,15 @@ class WebUserResource(ODataEnterpriseReportResource):
     status = fields.CharField()
     domain = fields.CharField()
 
-    def get_report(self, request):
+    REPORT_SLUG = EnterpriseReport.WEB_USERS
+
+    def get_report_task(self, request):
         account = BillingAccount.get_account_by_domain(request.domain)
-        return EnterpriseWebUserReport(account, request.couch_user)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username,
+        )
 
     def dehydrate(self, bundle):
         bundle.data['email'] = bundle.obj[0]
@@ -254,9 +278,15 @@ class MobileUserResource(ODataEnterpriseReportResource):
     user_id = fields.CharField()
     domain = fields.CharField()
 
-    def get_report(self, request):
+    REPORT_SLUG = EnterpriseReport.MOBILE_USERS
+
+    def get_report_task(self, request):
         account = BillingAccount.get_account_by_domain(request.domain)
-        return EnterpriseMobileWorkerReport(account, request.couch_user)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username,
+        )
 
     def dehydrate(self, bundle):
         bundle.data['username'] = bundle.obj[0]
@@ -288,9 +318,15 @@ class ODataFeedResource(ODataEnterpriseReportResource):
     report_name = fields.CharField(null=True)
     report_rows = fields.IntegerField(null=True)
 
-    def get_report(self, request):
+    REPORT_SLUG = EnterpriseReport.ODATA_FEEDS
+
+    def get_report_task(self, request):
         account = BillingAccount.get_account_by_domain(request.domain)
-        return EnterpriseODataReport(account, request.couch_user)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username,
+        )
 
     def dehydrate(self, bundle):
         bundle.data['num_feeds_used'] = bundle.obj[0]
@@ -317,12 +353,20 @@ class FormSubmissionResource(ODataEnterpriseReportResource):
     mobile_user = fields.CharField()
     domain = fields.CharField()
 
-    def get_report(self, request):
+    REPORT_SLUG = EnterpriseReport.FORM_SUBMISSIONS
+
+    def get_report_task(self, request):
         enddate = datetime.strptime(request.GET['enddate'], '%Y-%m-%d') if 'enddate' in request.GET else None
         startdate = datetime.strptime(request.GET['startdate'], '%Y-%m-%d') if 'startdate' in request.GET else None
         account = BillingAccount.get_account_by_domain(request.domain)
-        return EnterpriseFormReport(
-            account, request.couch_user, start_date=startdate, end_date=enddate, include_form_id=True)
+        return generate_enterprise_report.s(
+            self.REPORT_SLUG,
+            account.id,
+            request.couch_user.username,
+            start_date=startdate,
+            end_date=enddate,
+            include_form_id=True,
+        )
 
     def dehydrate(self, bundle):
         bundle.data['form_id'] = bundle.obj[0]
