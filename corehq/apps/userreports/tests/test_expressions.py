@@ -1034,6 +1034,7 @@ class RelatedDocExpressionDbTest(TestCase):
             '_id': user_id,
             'doc_type': 'CommCareUser',
             'domain': self.domain,
+            'username': f'user@{self.domain}.commcarehq.org',
         })
         expression = self._get_expression('CommCareUser')
         doc = self._get_doc(user_id)
