@@ -930,10 +930,22 @@ class RepeatRecordManager(models.Manager):
         return result
 
     def count_overdue(self, threshold=timedelta(minutes=10)):
-        return self.filter(
-            next_check__isnull=False,
-            next_check__lt=datetime.utcnow() - threshold
-        ).count()
+        overdue = datetime.utcnow() - threshold
+        repeater_not_paused = models.Q(repeater__is_paused=False)
+        repeater_next_attempt_overdue = (
+            models.Q(repeater__next_attempt_at__isnull=False)
+            | models.Q(repeater__next_attempt_at__lt=overdue)
+        )
+        ready_to_send = models.Q(
+            state__in=(State.Pending, State.Fail)
+        )
+        return (
+            self.get_queryset()
+            .filter(repeater_not_paused)
+            .filter(repeater_next_attempt_overdue)
+            .filter(ready_to_send)
+            .count()
+        )
 
     def iterate(self, domain, repeater_id=None, state=None, chunk_size=1000):
         db = router.db_for_read(self.model)
