@@ -186,7 +186,7 @@ class TableauVisualization(models.Model):
         items = [
             viz
             for viz in TableauVisualization.objects.filter(domain=domain)
-            if couch_user.can_view_tableau_viz(domain, f"{viz.id}")
+            if couch_user.can_view_tableau_viz(domain, viz)
         ]
         return sorted(items, key=lambda v: v.name.lower())
 
