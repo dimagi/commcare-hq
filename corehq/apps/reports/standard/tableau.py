@@ -12,8 +12,10 @@ from corehq import toggles
 from corehq.apps.reports.models import TableauVisualization
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.locations.permissions import location_safe
 
 
+@location_safe
 class TableauView(BaseDomainView):
     urlname = 'tableau'
     template_name = 'reports/bootstrap3/tableau_template.html'
@@ -74,6 +76,7 @@ class TableauView(BaseDomainView):
 
 @login_and_domain_required
 @require_POST
+@location_safe
 def tableau_visualization_ajax(request, domain):
     from requests_toolbelt.adapters import host_header_ssl
     visualization_data = {data: value[0] for data, value in dict(request.POST).items()}
