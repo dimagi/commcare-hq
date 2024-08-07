@@ -345,7 +345,6 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.registration',
-    'corehq.messaging.smsbackends.unicel',
     'corehq.messaging.smsbackends.vertex',
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
@@ -1716,7 +1715,6 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
     'corehq.messaging.smsbackends.infobip.models.InfobipBackend',
     'corehq.messaging.smsbackends.amazon_pinpoint.models.PinpointBackend',
-    'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
@@ -2087,6 +2085,8 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
 
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+CRISPY_FAIL_SILENTLY = not DEBUG
 
 # NOTE: if you are adding a new setting that you intend to have other environments override,
 # make sure you add it before localsettings are imported (from localsettings import *)

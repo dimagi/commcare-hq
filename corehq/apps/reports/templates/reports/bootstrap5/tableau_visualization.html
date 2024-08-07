@@ -13,6 +13,7 @@
     <td data-bind="text: title"></td>
     <td data-bind="text: server"></td>
     <td data-bind="text: view_url"></td>
+    <td data-bind="text: location_safe ? '{% trans 'Yes' %}' : '{% trans 'No' %}'"></td>
     <td class="col-lg-1"> <!-- actions -->
       <button type="button"
               data-bs-toggle="modal"
@@ -79,6 +80,7 @@
     <td data-bind="text: title"></td>
     <td data-bind="text: server"></td>
     <td data-bind="text: view_url"></td>
+    <td data-bind="text: location_safe ? '{% trans 'Yes' %}' : '{% trans 'No' %}'"></td>
     <td>{% trans 'Deleted' %}</td>
   </script>
 {% endblock %}
