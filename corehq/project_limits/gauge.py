@@ -1,6 +1,15 @@
 from django.core.cache import cache
 
+from corehq.project_limits.models import AVG, PillowLagGaugeDefinition
 from corehq.util.quickcache import quickcache
+
+
+@quickcache(['kafka_topic'], memoize_timeout=60, timeout=24 * 60 * 60)
+def get_pillow_throttle_definition(kafka_topic):
+    try:
+        return PillowLagGaugeDefinition.objects.get(key=kafka_topic)
+    except PillowLagGaugeDefinition.DoesNotExist:
+        return None
 
 
 class Gauge:

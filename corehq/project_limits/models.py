@@ -58,6 +58,15 @@ class GaugeDefinition(models.Model):
         pass
 
 
+class PillowLagGaugeDefinition(GaugeDefinition):
+
+    max_value = models.FloatField(default=None, blank=True, null=True)
+    average_value = models.FloatField(default=None, blank=True, null=True)
+
+    def _clear_caches(self):
+        from corehq.project_limits.gauge import get_pillow_throttle_definition
+        get_pillow_throttle_definition.clear(self.key)
+
 
 @architect.install('partition', type='range', subtype='date', constraint='week', column='date')
 class RateLimitedTwoFactorLog(models.Model):
