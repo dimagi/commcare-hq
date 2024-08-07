@@ -43,10 +43,10 @@ class TableauView(BaseDomainView):
 
     @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
     def dispatch(self, request, *args, **kwargs):
-        if self.visualization is None:
-            raise Http404()
         if not self._authenticate_request(request):
             raise Http403
+        if self.visualization is None:
+            raise Http404()
         return super().dispatch(request, *args, **kwargs)
 
     def _authenticate_request(self, request):
