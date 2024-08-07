@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from corehq.apps.users.models import HqPermissions, UserRole
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.apps.users.role_utils import (
     UserRolePresets,
     archive_custom_roles_for_domain,
@@ -9,7 +9,14 @@ from corehq.apps.users.role_utils import (
     reset_initial_roles_for_domain,
     unarchive_roles_for_domain,
     enable_attendance_coordinator_role_for_domain,
-    archive_attendance_coordinator_role_for_domain
+    archive_attendance_coordinator_role_for_domain,
+    get_commcare_analytics_roles_by_user_domains,
+)
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.permissions import (
+    COMMCARE_ANALYTICS_USER_PERMISSIONS,
+    COMMCARE_ANALYTICS_GAMMA,
+    COMMCARE_ANALYTICS_SQL_LAB,
 )
 
 
@@ -118,3 +125,57 @@ class RoleUtilsTests(TestCase):
         for role in UserRole.objects.get_by_domain(self.domain):
             if role.id != self.role1.id:
                 role.delete()
+
+
+class TestCommcareAnalyticsRolesByUser(TestCase):
+
+    USERNAME = "username"
+    PASSWORD = "***"
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = create_domain("domain1")
+        cls.user = WebUser.create("domain1", cls.USERNAME, cls.PASSWORD, None, None)
+        cls.user.domain_memberships[0].is_admin = True
+
+    @classmethod
+    def tearDownClass(cls):
+        for role in UserRole.objects.get_by_domain(cls.domain):
+            role.delete()
+
+        cls.user.delete(deleted_by_domain=cls.domain.name, deleted_by=None)
+        cls.domain.delete()
+
+    def test_admin_user(self):
+        self.assertTrue(self.user.get_domain_membership("domain1").is_admin)
+        analytics_roles = get_commcare_analytics_roles_by_user_domains(self.user)
+
+        self.assertTrue(analytics_roles["domain1"], COMMCARE_ANALYTICS_USER_PERMISSIONS)
+
+    def test_non_admin_user(self):
+        self.user.get_domain_membership("domain1").is_admin = False
+        self._set_analytics_roles(analytics_roles=None)
+
+        analytics_roles = get_commcare_analytics_roles_by_user_domains(self.user)
+        self.assertEqual(analytics_roles["domain1"], [])
+
+    def test_user_has_limited_roles(self):
+        analytics_roles = [
+            COMMCARE_ANALYTICS_GAMMA,
+            COMMCARE_ANALYTICS_SQL_LAB,
+        ]
+        self._set_analytics_roles(analytics_roles=analytics_roles)
+        self.user.get_domain_membership("domain1")
+
+        analytics_roles = get_commcare_analytics_roles_by_user_domains(self.user)
+        self.assertEqual(analytics_roles["domain1"], analytics_roles)
+
+    def _set_analytics_roles(self, analytics_roles=None):
+        permissions = HqPermissions()
+
+        if analytics_roles:
+            permissions.commcare_analytics_roles = True
+            permissions.commcare_analytics_roles_list = analytics_roles
+
+        role = UserRole.create(domain=self.domain, name="CCA Role", permissions=permissions)
+        self.user.set_role(self.domain.name, role.get_qualified_id())
