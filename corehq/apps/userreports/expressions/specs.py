@@ -686,10 +686,10 @@ def _get_user(domain, doc_id):
         # CommCareUser
         'domain',
         # 'registering_device_id',
-        'loadtest_factor',
-        'is_loadtest_user',
-        'is_demo_user',
-        'demo_restore_id',
+        # 'loadtest_factor',
+        # 'is_loadtest_user',
+        # 'is_demo_user',
+        # 'demo_restore_id',
         # 'is_account_confirmed',
         # 'user_location_id',
     )
