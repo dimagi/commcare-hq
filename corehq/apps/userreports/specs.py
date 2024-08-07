@@ -35,7 +35,7 @@ class BaseContainer:
     def get(self, name):
         with self._search_scope(name):
             from corehq.apps.userreports.models import LazyExpressionWrapper
-            all_expressions = self.expressions | self._get_db_expressions()
+            all_expressions = self._get_db_expressions() | self.expressions
             expr = all_expressions.get(name)
             if not expr:
                 raise BadSpecError(gettext("Couldn't find named expression with name: {name}").format(name=name))
