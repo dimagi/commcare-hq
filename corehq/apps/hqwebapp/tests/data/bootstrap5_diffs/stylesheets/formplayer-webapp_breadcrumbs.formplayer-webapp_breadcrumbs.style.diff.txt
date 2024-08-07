@@ -1,10 +1,9 @@
 --- 
 +++ 
-@@ -1,38 +1,28 @@
-+// Only webapps
- #breadcrumb-region .breadcrumb,
- .single-app-view .breadcrumb,
- .breadcrumb-form-container .breadcrumb {
+@@ -1,44 +1,29 @@
+-#breadcrumb-region .breadcrumb,
+-.single-app-view .breadcrumb,
+-.breadcrumb-form-container .breadcrumb {
 -  font-size: 2rem;
 -  padding-top: 1rem;
 -  padding-bottom: 1rem;
@@ -20,17 +19,13 @@
 -      vertical-align: top;
 -      line-height: 28px;
 -    }
-+  .breadcrumb-item {
-     text-overflow: ellipsis;
-     white-space: nowrap;
+-    text-overflow: ellipsis;
+-    white-space: nowrap;
 -    overflow: hidden
-+    overflow: hidden;
-+    &::before {
-+        color: $cc-neutral-hi;
-+    }
-   }
- }
- 
+-  }
+-}
+-
++// Only webapps
  #breadcrumb-region .breadcrumb-nav {
 -  background-color: @cc-brand-mid;
 +  background-color: white;
@@ -47,8 +42,25 @@
 +    padding: 0 0 0 $grid-gutter-width / 2;
      margin-bottom: 0;
      flex-grow: 1;
+-  }
+ 
+-  .btn-group {
+-    padding-right: 10px;
++    .breadcrumb-item {
++      &::before {
++        color: $cc-neutral-hi;
++      }
++      a {
++        white-space: nowrap;
++        text-overflow: ellipsis;
++        overflow: hidden;
++        display: block;
++      }
++    }
    }
-@@ -52,11 +42,5 @@
+ }
+ 
+@@ -52,11 +37,5 @@
      font-size: 12px;
      margin-bottom: 0px;
      padding-left: 33px;
