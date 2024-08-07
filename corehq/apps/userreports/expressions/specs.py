@@ -601,7 +601,7 @@ class RelatedDocExpressionSpec(JsonObject):
     def _get_document(self, related_doc_type, doc_id, evaluation_context):
         domain = evaluation_context.root_doc['domain']
         assert domain
-        document_store = self._get_document(domain, related_doc_type)
+        document_store = self._get_document_store(domain, related_doc_type)
         try:
             doc = document_store.get_document(doc_id)
         except DocumentNotFoundError:
