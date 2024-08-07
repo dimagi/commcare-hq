@@ -5,12 +5,13 @@ from memoized import memoized
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.repeaters.expression.repeater_generators import (
     ExpressionPayloadGenerator,
 )
 from corehq.motech.repeaters.models import OptionValue, Repeater
-from corehq.toggles import EXPRESSION_REPEATER
+from corehq.motech.repeaters.expression.repeater_generators import ArcGISFormExpressionPayloadGenerator
+from corehq.toggles import EXPRESSION_REPEATER, ARCGIS_INTEGRATION
 
 
 class BaseExpressionRepeater(Repeater):
@@ -78,3 +79,44 @@ class CaseExpressionRepeater(BaseExpressionRepeater):
     @memoized
     def payload_doc(self, repeat_record):
         return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain).to_json()
+
+
+class FormExpressionRepeater(BaseExpressionRepeater):
+
+    friendly_name = _("Configurable Form Repeater")
+
+    class Meta:
+        app_label = 'repeaters'
+        proxy = True
+
+    @property
+    def form_class_name(self):
+        return 'FormExpressionRepeater'
+
+    @memoized
+    def payload_doc(self, repeat_record):
+        return XFormInstance.objects.get_form(
+            repeat_record.payload_id,
+            repeat_record.domain,
+        )
+
+
+class ArcGISFormExpressionRepeater(FormExpressionRepeater):
+
+    friendly_name = _("Configurable ArcGIS Form Repeater")
+    payload_generator_classes = (ArcGISFormExpressionPayloadGenerator,)
+
+    class Meta:
+        app_label = 'repeaters'
+        proxy = True
+
+    @property
+    def form_class_name(self):
+        return 'ArcGISFormExpressionRepeater'
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        return (
+            super(ArcGISFormExpressionRepeater, cls).available_for_domain(domain)
+            and ARCGIS_INTEGRATION.enabled(domain)
+        )
