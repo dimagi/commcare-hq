@@ -77,7 +77,8 @@ def tableau_visualization_ajax(request, domain):
     target_site = visualization_data.pop('target_site')
 
     # Authenticate
-    if not request.couch_user.can_view_tableau_viz(domain, visualization_data.pop('viz_id')):
+    if not request.couch_user.can_view_tableau_viz(domain, TableauVisualization.objects.get(
+            id=visualization_data.pop('viz_id'))):
         raise Http403
 
     if toggles.EMBED_TABLEAU_REPORT_BY_USER.enabled(domain):
