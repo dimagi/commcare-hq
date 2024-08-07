@@ -4,12 +4,14 @@ from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
     CaseSearchProperty,
-    SortElement, DetailColumn,
+    DetailColumn,
+    MappingItem,
+    SortElement,
 )
+
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
-    TestXmlMixin,
     patch_get_xform_resource_overrides,
 )
 
@@ -176,3 +178,67 @@ class SuiteSortingTest(SimpleTestCase, SuiteMixin):
             </field>
         </partial>
         """, suite, "detail[1]/field[3]")
+
+    def test_calculated_property_with_translatable_text_as_sort_property(self):
+        factory = AppFactory(build_version='2.3.0')
+        module, form = factory.new_basic_module("my_module", None)
+        factory.form_requires_case(form)
+
+        module.case_details.short.display = 'short'
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'a'},
+                model='case',
+                field='a',
+                format='plain',
+                case_tile_field='header'
+            ),
+            DetailColumn(
+                header={'en': 'Fruit'},
+                model='case',
+                field='concat("3 ", $kfruit1)',
+                format='translatable-enum',
+                enum=[
+                    MappingItem(key='fruit1', value={'en': 'Apple', 'es': 'Manzana'}),
+                ],
+            ),
+        ]
+
+        module.case_details.short.sort_elements = [
+            SortElement(
+                field='concat("3 ", $kfruit1)',
+                type='string',
+                direction='descending',
+                blanks='first',
+            )
+        ]
+
+        self.assertXmlPartialEqual("""
+            <partial>
+                <field>
+                  <header>
+                    <text>
+                      <locale id="m0.case_short.case_concat(&quot;3 &quot;, $kfruit1)_2.header"/>
+                    </text>
+                  </header>
+                  <template>
+                    <text>
+                      <xpath function="concat(&quot;3 &quot;, $kkfruit1)">
+                        <variable name="kfruit1">
+                          <locale id="m0.case_short.case_concat(&quot;3 &quot;, $kfruit1)_2.enum.kfruit1"/>
+                        </variable>
+                      </xpath>
+                    </text>
+                  </template>
+                  <sort type="string" order="1" direction="descending" blanks="first">
+                    <text>
+                      <xpath function="concat(&quot;3 &quot;, $kkfruit1)">
+                        <variable name="kfruit1">
+                          <locale id="m0.case_short.case_concat(&quot;3 &quot;, $kfruit1)_2.enum.kfruit1"/>
+                        </variable>
+                      </xpath>
+                    </text>
+                  </sort>
+                </field>
+            </partial>
+            """, factory.app.create_suite(), 'detail/field[2]')
