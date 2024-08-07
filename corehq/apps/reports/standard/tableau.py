@@ -12,8 +12,10 @@ from corehq import toggles
 from corehq.apps.reports.models import TableauVisualization
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.locations.permissions import location_safe
 
 
+@location_safe
 class TableauView(BaseDomainView):
     urlname = 'tableau'
     template_name = 'reports/bootstrap3/tableau_template.html'
@@ -43,7 +45,12 @@ class TableauView(BaseDomainView):
     def dispatch(self, request, *args, **kwargs):
         if self.visualization is None:
             raise Http404()
+        if not self._authenticate_request(request):
+            raise Http403
         return super().dispatch(request, *args, **kwargs)
+
+    def _authenticate_request(self, request):
+        return request.couch_user.can_view_tableau_viz(self.domain, self.visualization)
 
     @property
     def page_context(self):
@@ -69,6 +76,7 @@ class TableauView(BaseDomainView):
 
 @login_and_domain_required
 @require_POST
+@location_safe
 def tableau_visualization_ajax(request, domain):
     from requests_toolbelt.adapters import host_header_ssl
     visualization_data = {data: value[0] for data, value in dict(request.POST).items()}
@@ -77,7 +85,8 @@ def tableau_visualization_ajax(request, domain):
     target_site = visualization_data.pop('target_site')
 
     # Authenticate
-    if not request.couch_user.can_view_tableau_viz(domain, visualization_data.pop('viz_id')):
+    if not request.couch_user.can_view_tableau_viz(domain, TableauVisualization.objects.get(
+            id=visualization_data.pop('viz_id'))):
         raise Http403
 
     if toggles.EMBED_TABLEAU_REPORT_BY_USER.enabled(domain):
