@@ -15,6 +15,19 @@ hqDefine("locations/js/widgets", [
         });
     }
 
+    function truncateLocationName(name, select) {
+        const fontSize = select.css('font-size');
+        const fontSizePixels = parseInt(fontSize.substring(0, fontSize.indexOf('px')));
+        const containerWidthPixels = select.parent().parent().width();
+        const containerWidthChars = Math.floor(containerWidthPixels / fontSizePixels);
+        let truncatedName = name;
+        if (name.length > containerWidthChars) {
+            const charLengthDiff = name.length - containerWidthChars;
+            truncatedName = `${name.substring(0, 5)}...${name.substring(charLengthDiff + 12, name.length)}`;
+        }
+        return truncatedName;
+    }
+
     function initAutocomplete($select) {
         var options = $select.data();
         $select.select2({
