@@ -11,7 +11,9 @@ hqDefine("locations/js/widgets", [
     function updateSelect2($source, $select) {
         $select.find("option").remove();
         _.each($source.select2('data'), function (result) {
-            $select.append(new Option(result.text || result.name, result.id));
+            const fullLengthName = result.text || result.name;
+            const truncatedName = truncateLocationName(fullLengthName, $select);
+            $select.append(new Option(truncatedName, result.id));
         });
     }
 
