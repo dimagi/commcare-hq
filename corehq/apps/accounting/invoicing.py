@@ -783,21 +783,14 @@ class UserLineItemFactory(FeatureLineItemFactory):
                 )
             )
         if self.quantity > 0:
-            return ngettext(
-                "Per-{user} fee exceeding limit of {monthly_limit} {user} "
-                "with plan above.{prorated_notice}",
-                "Per-{user} fee exceeding limit of {monthly_limit} {user}s "
-                "with plan above.{prorated_notice}",
-                self.rate.monthly_limit
-            ).format(
-                monthly_limit=self.rate.monthly_limit,
-                prorated_notice=prorated_notice,
-                user=user_type
+            return _(
+                f"Fee for each {user_type} exceeding the plan limit of {self.rate.monthly_limit}."
+                + prorated_notice
             )
 
     @property
     def unit_description(self):
-        return self._unit_description_by_user_type(_("mobile user"))
+        return self._unit_description_by_user_type("mobile user")
 
 
 class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
@@ -815,7 +808,7 @@ class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
 
     @property
     def unit_description(self):
-        return super()._unit_description_by_user_type(_("form-submitting mobile worker"))
+        return super()._unit_description_by_user_type("form-submitting mobile worker")
 
 
 class WebUserLineItemFactory(UserLineItemFactory):
@@ -831,7 +824,7 @@ class WebUserLineItemFactory(UserLineItemFactory):
 
     @property
     def unit_description(self):
-        return super()._unit_description_by_user_type(_("web user"))
+        return super()._unit_description_by_user_type("web user")
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):
