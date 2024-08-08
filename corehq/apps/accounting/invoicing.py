@@ -783,10 +783,9 @@ class UserLineItemFactory(FeatureLineItemFactory):
                 )
             )
         if self.quantity > 0:
-            return _(
-                f"Fee for each {user_type} exceeding the plan limit of {self.rate.monthly_limit}."
-                + prorated_notice
-            )
+            return _("Fee for each {user} exceeding the plan limit of {monthly_limit}.").format(
+                user=_(user_type), monthly_limit=self.rate.monthly_limit
+            ) + prorated_notice
 
     @property
     def unit_description(self):
