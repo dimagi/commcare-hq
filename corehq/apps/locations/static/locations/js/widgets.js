@@ -11,8 +11,23 @@ hqDefine("locations/js/widgets", [
     function updateSelect2($source, $select) {
         $select.find("option").remove();
         _.each($source.select2('data'), function (result) {
-            $select.append(new Option(result.text || result.name, result.id));
+            const fullLengthName = result.text || result.name;
+            const truncatedName = truncateLocationName(fullLengthName, $select);
+            $select.append(new Option(truncatedName, result.id));
         });
+    }
+
+    function truncateLocationName(name, select) {
+        const fontSize = select.css('font-size');
+        const fontSizePixels = parseInt(fontSize.substring(0, fontSize.indexOf('px')));
+        const containerWidthPixels = select.parent().parent().width();
+        const containerWidthChars = Math.floor(containerWidthPixels / fontSizePixels);
+        let truncatedName = name;
+        if (name.length > containerWidthChars) {
+            const charLengthDiff = name.length - containerWidthChars;
+            truncatedName = `${name.substring(0, 5)}...${name.substring(charLengthDiff + 12, name.length)}`;
+        }
+        return truncatedName;
     }
 
     function initAutocomplete($select) {
@@ -40,8 +55,14 @@ hqDefine("locations/js/widgets", [
                     };
                 },
             },
-            templateResult: function (result) { return result.text || result.name; },
-            templateSelection: function (result) { return result.text || result.name; },
+            templateResult: function (result) {
+                return result.text || result.name;
+            },
+            templateSelection: function (result) {
+                const fullLengthName = result.text || result.name;
+                const truncatedName = truncateLocationName(fullLengthName, $select);
+                return truncatedName;
+            },
         });
 
         var initial = options.initial;
