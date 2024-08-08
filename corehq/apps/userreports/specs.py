@@ -32,13 +32,13 @@ class BaseContainer:
     def replace(self, expressions):
         self.expressions = expressions
 
-    def get(self, name):
-        with self._search_scope(name):
+    def __getitem__(self, item):
+        with self._search_scope(item):
             from corehq.apps.userreports.models import LazyExpressionWrapper
             all_expressions = self._get_db_expressions() | self.expressions
-            expr = all_expressions.get(name)
+            expr = all_expressions.get(item)
             if not expr:
-                raise BadSpecError(gettext("Couldn't find named expression with name: {name}").format(name=name))
+                raise KeyError(item)
             if isinstance(expr, LazyExpressionWrapper):
                 # unwrap here to force evaluation of the lazy expression and catch recursive references
                 expr = expr.unwrap()
@@ -93,10 +93,16 @@ class FactoryContext:
         return FilterFactory.from_spec(spec, self)
 
     def get_named_filter(self, name):
-        return self.named_filters.get(name)
+        try:
+            return self.named_filters[name]
+        except KeyError as e:
+            raise BadSpecError(gettext("Named filter not found: {name}").format(name=name)) from e
 
     def get_named_expression(self, name):
-        return self.named_expressions.get(name)
+        try:
+            return self.named_expressions[name]
+        except KeyError as e:
+            raise BadSpecError(gettext("Named expression not found: {name}").format(name=name)) from e
 
     @staticmethod
     def empty(domain=None):
