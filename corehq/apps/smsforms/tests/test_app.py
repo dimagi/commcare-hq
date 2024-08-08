@@ -25,9 +25,9 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.users.tests.util import patch_user_data_db_layer
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.util import utcnow
+from corehq.tests.util.context import add_context
 
 
-@patch_user_data_db_layer()
 @patch('corehq.apps.smsforms.app.tfsms.start_session')
 class TestStartSession(TestCase):
     domain = "test-domain"
@@ -49,10 +49,10 @@ class TestStartSession(TestCase):
 
         cls.case = CommCareCase(domain=cls.domain, case_id=cls.case_id, case_json={'language_code': 'fr'})
         cls.web_user = WebUser(username='web-user@example.com', _id=uuid.uuid4().hex, language='hin')
+        cls.addClassCleanup(SQLXFormsSession.objects.all().delete)
 
-    @classmethod
-    def tearDownClass(cls):
-        SQLXFormsSession.objects.all().delete()
+    def setUp(self):
+        add_context(patch_user_data_db_layer(), self)
 
     def _start_session(self, yield_responses=False):
         if not self.recipient:
