@@ -27,7 +27,7 @@ class BaseContainer:
         self.factory_context = weakref.proxy(factory_context)
         self.expressions = expressions
         self.domain = domain
-        self.stack = []
+        self.stack = set()
 
     def replace(self, expressions):
         self.expressions = expressions
@@ -50,11 +50,11 @@ class BaseContainer:
         if name in self.stack:
             raise BadSpecError(gettext("Recursive expression reference: {name}").format(name=name))
 
-        self.stack.append(name)
+        self.stack.add(name)
         try:
             yield self
         finally:
-            self.stack.pop()
+            self.stack.remove(name)
 
     @memoized
     def _get_db_expressions(self):
