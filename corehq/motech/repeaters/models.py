@@ -70,6 +70,7 @@ import uuid
 from collections import defaultdict
 from contextlib import nullcontext
 from datetime import datetime, timedelta
+from http import HTTPStatus
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.db import models, router
@@ -477,17 +478,32 @@ class Repeater(RepeaterSuperProxy):
 
         result may be either a response object or an exception
         """
+        _4XX_retry_codes = (
+            HTTPStatus.REQUEST_TIMEOUT,
+            HTTPStatus.CONFLICT,
+            HTTPStatus.PRECONDITION_FAILED,
+            HTTPStatus.LOCKED,
+            HTTPStatus.FAILED_DEPENDENCY,
+            HTTPStatus.TOO_EARLY,
+            HTTPStatus.UPGRADE_REQUIRED,
+            HTTPStatus.PRECONDITION_REQUIRED,
+            HTTPStatus.TOO_MANY_REQUESTS,
+        )
+
         if isinstance(result, RequestConnectionError):
             repeat_record.handle_timeout(result)
         elif isinstance(result, Exception):
             repeat_record.handle_exception(result)
         elif is_response(result) and 200 <= result.status_code < 300 or result is True:
             repeat_record.handle_success(result)
-        elif is_response(result) and 400 <= result.status_code < 500:
+        elif not is_response(result) or (
+            500 <= result.status_code < 600
+            or result.status_code in _4XX_retry_codes
+        ):
+            repeat_record.handle_failure(result)
+        else:
             message = format_response(result)
             repeat_record.handle_payload_error(message)
-        else:
-            repeat_record.handle_failure(result)
 
     def get_headers(self, repeat_record):
         # to be overridden
